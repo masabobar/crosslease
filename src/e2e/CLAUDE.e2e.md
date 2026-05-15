@@ -26,6 +26,8 @@ pnpm e2e -- --grep "test title substring"
 pnpm e2e -- --headed --grep "test title substring"
 ```
 
+> **Known config path mismatch:** `package.json` scripts reference `--config=e2e/playwright.config.ts` but the file lives at `src/e2e/playwright.config.ts`. The scripts will fail until this is corrected in `package.json` (change to `--config=src/e2e/playwright.config.ts`). `playwright.config.ts` is also currently empty and needs to be populated with at least `baseURL` before any spec can run.
+
 ### Directory Structure
 
 ```
@@ -38,9 +40,31 @@ src/e2e/
 └── playwright.config.ts
 ```
 
+### App Architecture Relevant to E2E
+
+The app is a React 19 SPA (Vite dev server on port 5173 by default, Nginx on port 3000 in production). The backend is a separate FastAPI service configured via `VITE_API_URL`.
+
+- **Routing:** React Router v7 — test navigation by URL path, not by clicking nav links
+- **Async data:** TanStack Query v5 — await network idle or a visible loading indicator before asserting on data-driven content; don't poll with `waitForTimeout`
+- **UI components:** shadcn/ui primitives built on Base UI — locators should use `getByRole` with the ARIA role/label, not class names or Tailwind utilities
+- **Feature structure:** `src/features/<feature>/` (pattern established, currently empty) — one POM per feature area mirrors this layout
+
+### Environment Variables
+
+Copy `.env.example` to `.env.e2e` (git-ignored) and fill in values before running E2E locally:
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Backend base URL (default `http://localhost:8000`) |
+| `STAGING_BASE_URL` | Staging login entry point — used when running against staging |
+
+Auth state (tokens, cookies) is stored in `.auth/` (git-ignored) via Playwright's `storageState`. Never commit `.auth/`.
+
 ### Fixture Import Rule
 
 ESLint enforces that **all spec and page files import `test` and `expect` from `../../fixtures/test`**, never directly from `@playwright/test`. This is a hard lint error. `src/e2e/fixtures/test.ts` is the single re-export/extension point — create it before authoring any specs.
+
+> **Known ESLint pattern mismatch:** `eslint.config.js` uses `files: ['e2e/**/*.ts']` but files live under `src/e2e/`. The lint rule currently does **not** fire. Fix by changing the pattern to `src/e2e/**/*.ts` in `eslint.config.js`.
 
 ```ts
 // ✅ correct
