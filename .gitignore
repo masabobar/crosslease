@@ -23,6 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 
-# Tests
-.auth 
-.env.e2e*
+
