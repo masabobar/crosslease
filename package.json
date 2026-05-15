@@ -12,7 +12,10 @@
     "e2e": "playwright test --config=e2e/playwright.config.ts",
     "e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
     "e2e:report": "playwright show-report playwright-report",
-    "e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed"
+    "e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
+    "type-check": "tsc -b --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -47,6 +50,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^3.2.4"
   }
 }

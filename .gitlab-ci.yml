@@ -1,0 +1,153 @@
+image: docker:28.3.3
+
+# Docker-in-Docker configuration for building containers
+services:
+  - name: docker:28.3.3-dind # Pin specific version to avoid compatibility issues
+    alias: docker # Alias must match DOCKER_HOST
+    command: ['--tls=false'] # Prevent startup delays with non-TLS connections
+
+variables:
+  PROJECT_NAME: refinext
+  # Docker-in-Docker connection settings
+  DOCKER_HOST: tcp://docker:2375 # Connect to DinD service via unencrypted TCP
+  DOCKER_DRIVER: overlay2 # Recommended storage driver for modern Linux
+  DOCKER_TLS_CERTDIR: '' # Disable TLS verification for DinD connection
+  # Docker images
+  ALPINE_IMAGE: 'alpine:3.22.1' # For deployment stage
+  NODE_IMAGE: 'node:22-alpine' # For test stage
+  # Build optimization
+  DOCKER_BUILDKIT: 1 # Enable BuildKit for faster, smarter builds
+  BUILDKIT_PROGRESS: plain # Clean output format for CI logs
+
+cache:
+  untracked: true
+  key: $CI_BUILD_REF_NAME
+
+stages:
+  - test
+  - build
+  - deploy
+
+# Base template for Node.js jobs
+.node-base:
+  image: $NODE_IMAGE
+  services: [] # Remove inherited Docker services
+  tags:
+    - docker
+  before_script:
+    - corepack enable && corepack prepare pnpm@11.1.1 --activate
+    - pnpm install --frozen-lockfile
+
+# Parallel test jobs
+lint:
+  stage: test
+  extends: .node-base
+  script:
+    - echo "Running code linting..."
+    - pnpm run lint
+    - echo "Lint passed successfully"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+type-check:
+  stage: test
+  extends: .node-base
+  script:
+    - echo "Running TypeScript type checking..."
+    - pnpm run type-check
+    - echo "Type check passed successfully"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+unit-tests:
+  stage: test
+  extends: .node-base
+  script:
+    - echo "Running unit tests..."
+    - pnpm run test:run
+    - echo "Tests passed successfully"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+build:develop:
+  stage: build
+  tags:
+    - dind
+  interruptible: true # Cancel job if new commit is pushed
+  retry:
+    max: 2
+    when: runner_system_failure
+  environment:
+    name: Develop
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build
+      --target production
+      --build-arg BUILDKIT_INLINE_CACHE=1
+      --build-arg VITE_APP_STAGE=development
+      --build-arg PROJECT_NAME=$PROJECT_NAME
+      --build-arg VITE_API_URL=$VITE_API_URL
+      --cache-from $CI_REGISTRY_IMAGE:latest
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+deploy:develop:
+  stage: deploy
+  services: [] # Explicitly removes any inherited services
+  tags:
+    - docker
+  dependencies:
+    - build:develop
+  image: $ALPINE_IMAGE
+  before_script:
+    - apk add --no-cache gettext openssh-client
+  variables:
+    DEPLOY_HOST: 213.239.198.198
+    DEPLOY_PORT: 22250
+    DEPLOY_USER: refinext
+    DEPLOY_DIR: '/home/$DEPLOY_USER/frontend'
+  script:
+    # Export DOTENV variables to environment (if needed)
+    - |
+      if [ -n "$DOTENV" ]; then
+        echo "$DOTENV" > .env
+        export $(echo "$DOTENV" | xargs)
+      fi
+    - envsubst < docker-compose.tmpl > docker-compose.yml
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    # Create deployment directory if it doesn't exist
+    - ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
+    # Upload compose file
+    - scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT docker-compose.yml $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/
+    # Upload .env file if it exists
+    - |
+      if [ -f .env ]; then
+        scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT .env $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/
+      fi
+    # Deploy on remote server
+    - |
+      ssh -T -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "
+        set -e
+        cd $DEPLOY_DIR
+        docker compose down --remove-orphans || true
+        echo '$CI_REGISTRY_PASSWORD' | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY;
+        docker compose pull
+        docker compose up -d --remove-orphans
+        docker system prune -a -f --filter 'until=72h'
+      "
+  environment:
+    name: Develop
+    url: https://refinext-dev.projects.holycode.com/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# ------------------------- Staging & Production -------------------------
+# TODO: add build:staging, deploy:staging, build:production, deploy:production
+# once the target infrastructure (S3 + CloudFront or other) is decided.
