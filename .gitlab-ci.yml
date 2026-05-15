@@ -121,7 +121,7 @@ deploy:develop:
       fi
     - envsubst < docker-compose.tmpl > docker-compose.yml
     - eval $(ssh-agent -s)
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 -d)
     # Create deployment directory if it doesn't exist
     - ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
     # Upload compose file
