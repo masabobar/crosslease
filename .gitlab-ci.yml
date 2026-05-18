@@ -176,7 +176,8 @@ build:staging:
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:staging
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\/.*$/
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\/.*$/
 
 deploy:staging:
   stage: deploy
@@ -221,8 +222,10 @@ deploy:staging:
   environment:
     name: Staging
     url: https://refinext-st.projects.holycode.com/
+  when: manual
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\/.*$/
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\/.*$/
 
 # ------------------------- Production -------------------------
 # TODO: add build:production, deploy:production
