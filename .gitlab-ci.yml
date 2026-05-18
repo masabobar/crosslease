@@ -227,7 +227,6 @@ deploy:staging:
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^release\/.*$/
     - if: $CI_COMMIT_BRANCH =~ /^hotfix\/.*$/
-
 e2e-staging:
   stage: e2e
   image: mcr.microsoft.com/playwright:v1.60.0-jammy
@@ -258,6 +257,5 @@ e2e-staging:
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^release\/.*/
     - if: $CI_COMMIT_BRANCH =~ /^hotfix\/.*$/
-
 # ------------------------- Production -------------------------
 # TODO: add build:production, deploy:production
