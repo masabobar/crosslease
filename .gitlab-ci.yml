@@ -148,6 +148,81 @@ deploy:develop:
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
 
-# ------------------------- Staging & Production -------------------------
-# TODO: add build:staging, deploy:staging, build:production, deploy:production
-# once the target infrastructure (S3 + CloudFront or other) is decided.
+# ------------------------- Staging -------------------------
+
+build:staging:
+  stage: build
+  tags:
+    - dind
+  interruptible: true
+  retry:
+    max: 2
+    when: runner_system_failure
+  environment:
+    name: Staging
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:staging || true
+    - docker build
+      --target production
+      --build-arg BUILDKIT_INLINE_CACHE=1
+      --build-arg VITE_APP_STAGE=staging
+      --build-arg PROJECT_NAME=$PROJECT_NAME
+      --build-arg VITE_API_URL=$VITE_API_URL
+      --cache-from $CI_REGISTRY_IMAGE:staging
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      --tag $CI_REGISTRY_IMAGE:staging .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+deploy:staging:
+  stage: deploy
+  services: []
+  tags:
+    - docker
+  dependencies:
+    - build:staging
+  image: $ALPINE_IMAGE
+  before_script:
+    - apk add --no-cache gettext openssh-client
+  variables:
+    DEPLOY_HOST: refinext-st.projects.holycode.com
+    DEPLOY_PORT: 22251
+    DEPLOY_USER: refinext
+    DEPLOY_DIR: '/home/$DEPLOY_USER/frontend'
+  script:
+    - |
+      if [ -n "$DOTENV" ]; then
+        echo "$DOTENV" > .env
+        export $(echo "$DOTENV" | xargs)
+      fi
+    - envsubst < docker-compose.tmpl > docker-compose.yml
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - ssh -o StrictHostKeyChecking=no -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "mkdir -p $DEPLOY_DIR"
+    - scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT docker-compose.yml $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/
+    - |
+      if [ -f .env ]; then
+        scp -o StrictHostKeyChecking=no -P $DEPLOY_PORT .env $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/
+      fi
+    - |
+      ssh -T -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "
+        set -e
+        cd $DEPLOY_DIR
+        docker compose down --remove-orphans || true
+        echo '$CI_REGISTRY_PASSWORD' | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY;
+        docker compose pull
+        docker compose up -d --remove-orphans
+        docker system prune -a -f --filter 'until=72h'
+      "
+  environment:
+    name: Staging
+    url: https://refinext-st.projects.holycode.com/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ------------------------- Production -------------------------
+# TODO: add build:production, deploy:production
