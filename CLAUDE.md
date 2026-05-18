@@ -136,6 +136,26 @@ pnpm test         # run Vitest in watch mode
 pnpm test:run     # run Vitest once (used in CI)
 ```
 
+### E2E commands
+
+```bash
+pnpm e2e                                          # All tests, headless
+pnpm e2e:headed                                   # All tests, headed browser
+pnpm e2e:ui                                       # Playwright UI mode (interactive debugger)
+pnpm e2e:report                                   # Open last HTML report
+
+# Single spec file
+pnpm e2e -- src/e2e/specs/some-feature.spec.ts
+
+# Single test by title substring
+pnpm e2e -- --grep "test title substring"
+
+# Single test by title, headed (useful for debugging)
+pnpm e2e -- --headed --grep "test title substring"
+```
+
+> **Known script issue:** `e2e:headed` in `package.json` still references `--config=e2e/playwright.config.ts` (missing `src/` prefix) — it will fail until corrected to `--config=src/e2e/playwright.config.ts`.
+
 ---
 
 ## Project structure
@@ -325,7 +345,7 @@ Generic: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `UNAUTHORIZED`, `BAD_REQU
 ### Stack
 
 - **Vitest** — unit tests (already configured)
-- **Playwright** — E2E tests (add when features are built out)
+- **Playwright 1.60** — E2E tests; config at `src/e2e/playwright.config.ts`, all test files under `src/e2e/`
 
 No component testing (`@testing-library/react`). For a single product app it adds maintenance overhead without enough return — UI regressions are caught by E2E, logic is caught by unit tests. Add focused component tests only if a specific component has non-trivial internal logic.
 
@@ -372,7 +392,75 @@ it('increments count', () => {
 
 #### 4. E2E (Playwright)
 
-Add when real user flows exist. Cover the happy path and main error states per feature — not every edge case (unit tests handle those).
+Cover the happy path and main error states per feature — not every edge case (unit tests handle those).
+
+**Directory structure**
+
+```
+src/e2e/
+├── fixtures/        # Custom Playwright fixture definitions
+│   └── test.ts      # Re-exports extended `test` and `expect` — ONLY import source for specs
+├── helpers/         # Reusable utilities (auth, data builders, API helpers)
+├── pages/           # Page Object Model classes (one file per feature area)
+├── specs/           # Test specifications (one file per user story / AC group)
+└── playwright.config.ts
+```
+
+**Playwright config** (`src/e2e/playwright.config.ts`)
+
+- `baseURL`: `STAGING_BASE_URL` env var, falls back to `http://localhost:5173`
+- Runs Chromium only; `fullyParallel: true`; CI retries: 2, workers: 1
+- Traces on first retry; screenshots and video on failure
+- Output dir: `../../playwright-results` (repo root)
+- Auth setup project (storageState) is commented out pending D17 resolution
+
+**Environment variables** — copy `.env.e2e.example` to `.env.e2e` (git-ignored):
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Backend base URL (default `http://localhost:8000`) |
+| `STAGING_BASE_URL` | Staging entry point — used when running against staging |
+
+Auth state (tokens, cookies) is stored in `.auth/` (git-ignored) via Playwright's `storageState`. Never commit `.auth/`.
+
+**Fixture import rule (enforced by ESLint)**
+
+All spec and page files must import `test` and `expect` from `../../fixtures/test`, never from `@playwright/test` directly:
+
+```ts
+// correct
+import { test, expect } from '../../fixtures/test'
+
+// will fail lint
+import { test, expect } from '@playwright/test'
+```
+
+> **Known ESLint pattern issue:** `eslint.config.js` uses `files: ['e2e/**/*.ts']` but files live under `src/e2e/`. The lint rule does not currently fire. Fix by updating the pattern to `src/e2e/**/*.ts`.
+
+No `any` is permitted in any E2E file.
+
+**Page Object Model conventions**
+
+- One POM class per feature area (e.g., `LoginPage`, `UserManagementPage`)
+- Locators defined as class properties using `page.getByRole` / `page.getByTestId` — prefer accessible locators over CSS selectors or class names
+- POM methods encapsulate multi-step interactions; specs read as business-level flows
+
+**App architecture notes relevant to E2E**
+
+- React Router v7 SPA — test navigation by URL path; dev server on port 5173, Nginx on port 3000 in production
+- TanStack Query v5 — await network idle or a visible loading indicator before asserting on data-driven content; do not poll with `waitForTimeout`
+- UI primitives are Base UI — use `getByRole` with ARIA role/label, not CSS class names
+
+**Blocked specs** — use `test.fixme('…', …)` with the dependency ID in a comment (do not skip or delete):
+
+| ID | Required | Blocks |
+|---|---|---|
+| D16 | `TEST_TOKEN_TTL_SECONDS` env override | `session-management.spec.ts` |
+| D17 | `TEST_JWT_SECRET` or test-forge endpoint | `login.spec.ts` AC-14 |
+| D18 | Admin API to reset lockout counter per email | `account-lockout.spec.ts` |
+| D19 | Throwaway user creation/deletion API | lockout, expiry, invitation specs |
+| D20 | Second seeded Bank Tenant B with one test user | `tenant-isolation.spec.ts` |
+| D21 | `AUDITOR_VALIDITY_MINUTES` env override | `auditor-access.spec.ts`, `temp-access-expiry.spec.ts` |
 
 ---
 

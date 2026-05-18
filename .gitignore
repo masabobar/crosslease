@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+package-lock.json
+
+# E2E environment files
+.env.e2e*
+.auth/*
+
+# Playwright output
+playwright-results/
+playwright-report/
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +31,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+

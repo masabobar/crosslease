@@ -35,4 +35,19 @@ export default defineConfig([
       'no-unused-vars': 'off',
     },
   },
+
+  // ── E2E test files ────────────────────────────────────────────────────────
+  {
+    files: ['src/e2e/**/*.ts'],
+    ignores: ['src/e2e/playwright.config.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportDeclaration[source.value='@playwright/test']",
+          message: "Import from '../../fixtures/test' instead of '@playwright/test'.",
+        },
+      ],
+    },
+  },
 ])

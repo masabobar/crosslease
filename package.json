@@ -9,6 +9,10 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "e2e": "playwright test --config=src/e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config=src/e2e/playwright.config.ts --ui",
+    "e2e:report": "playwright show-report playwright-report",
+    "e2e:headed": "playwright test --config=src/e2e/playwright.config.ts --headed",
     "type-check": "tsc -b --noEmit",
     "test": "vitest",
     "test:run": "vitest run"
@@ -34,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^24.12.4",
