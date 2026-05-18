@@ -12,7 +12,7 @@
     "e2e": "playwright test --config=src/e2e/playwright.config.ts",
     "e2e:ui": "playwright test --config=src/e2e/playwright.config.ts --ui",
     "e2e:report": "playwright show-report playwright-report",
-    "e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
+    "e2e:headed": "playwright test --config=src/e2e/playwright.config.ts --headed",
     "type-check": "tsc -b --noEmit",
     "test": "vitest",
     "test:run": "vitest run"

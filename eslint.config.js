@@ -38,7 +38,7 @@ export default defineConfig([
 
   // ── E2E test files ────────────────────────────────────────────────────────
   {
-    files: ['e2e/**/*.ts'],
+    files: ['src/e2e/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       'no-restricted-syntax': [
