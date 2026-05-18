@@ -14,6 +14,7 @@ dist-ssr
 
 # E2E environment files
 .env.e2e*
+.auth/*
 
 # Playwright output
 playwright-results/
