@@ -68,3 +68,31 @@ Run the production build locally:
 ```bash
 docker compose --profile prod up
 ```
+
+## CI/CD
+
+### Environments
+
+| Environment | URL | Branch |
+|---|---|---|
+| Develop | https://refinext-dev.projects.holycode.com | `develop` |
+| Staging | https://refinext-st.projects.holycode.com | `release/*`, `hotfix/*` |
+
+### Dev flow
+
+1. Open MR → lint, type-check, and unit tests run automatically
+2. Merge to `develop` → image built and tagged `latest`, auto-deployed to dev
+
+### Staging flow
+
+1. Cut a `release/x.x.x` branch off `develop` (or `hotfix/x` for urgent fixes)
+2. Push the branch → image built and tagged `staging` automatically
+3. Go to GitLab CI pipeline → manually trigger `deploy:staging`
+
+### GitLab CI variables required
+
+| Variable | Scope | Description |
+|---|---|---|
+| `SSH_PRIVATE_KEY` | All | Deploy key authorized on both servers |
+| `VITE_API_URL` | Develop | Backend URL for the dev environment |
+| `VITE_API_URL` | Staging | Backend URL for the staging environment |
