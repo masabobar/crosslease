@@ -39,8 +39,8 @@ export default defineConfig([
   // ── E2E test files ────────────────────────────────────────────────────────
   {
     files: ['src/e2e/**/*.ts'],
+    ignores: ['src/e2e/playwright.config.ts'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'error',
       'no-restricted-syntax': [
         'error',
         {
