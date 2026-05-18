@@ -470,3 +470,13 @@ No `any` is permitted in any E2E file.
 - Snapshot tests — noisy, catch the wrong things
 - Coverage percentage targets — test behavior, not lines
 - Testing TypeScript types — the compiler handles that
+
+---
+
+## Git commits
+
+Stage only the changed files explicitly — no `git add -A` or `git add .`.
+
+Commit message: single line, conventional commit format — `type: short description`. No body, no newlines, no author attribution.
+
+Types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `test`, `style`.
