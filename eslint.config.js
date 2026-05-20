@@ -33,6 +33,8 @@ export default defineConfig([
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       // Unused vars handled by TypeScript compiler — disable the JS rule to avoid duplicates
       'no-unused-vars': 'off',
+      // Match TypeScript's convention: _-prefixed params are intentionally unused
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
 
