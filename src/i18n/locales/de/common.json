@@ -1,5 +1,8 @@
 {
   "app": {
     "name": "Refinext"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich."
   }
 }

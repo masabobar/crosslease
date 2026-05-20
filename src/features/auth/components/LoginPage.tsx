@@ -2,9 +2,9 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Navigate, useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { z } from "zod"
 import { Lock, User, AlertCircle, Shield, TrendingUp } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { LoginInputSchema } from "../api/schema"
 import type { LoginInput } from "../api/schema"
 import { login } from "../api/loginApi"
 import { useAuthStore } from "@/store/authStore"
@@ -19,8 +19,14 @@ export default function LoginPage() {
   const { setTokens } = useAuthStore()
   const [serverError, setServerError] = useState<string | null>(null)
 
+  const required = tCommon("validation.required")
+  const formSchema = z.object({
+    username: z.string().min(1, required),
+    password: z.string().min(1, required),
+  })
+
   const form = useForm<LoginInput>({
-    resolver: zodResolver(LoginInputSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: { username: "", password: "" },
   })
 
@@ -50,37 +56,37 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left — Branding */}
-      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-violet-50 to-violet-100 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-primary/5 to-primary/10 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-violet-200 rounded-full blur-3xl opacity-30" />
-          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-violet-200 rounded-full blur-3xl opacity-25" />
-          <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-violet-300 rounded-full blur-3xl opacity-20" />
+          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30" />
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-3xl opacity-25" />
+          <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-primary/30 rounded-full blur-3xl opacity-20" />
 
           <svg
-            className="absolute inset-0 w-full h-full opacity-[0.12]"
+            className="absolute inset-0 w-full h-full opacity-[0.12] text-primary"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
               d="M-100 200 Q 150 100, 400 200 T 900 200"
-              stroke="#7c3aed"
+              stroke="currentColor"
               strokeWidth="2"
               fill="none"
             />
             <path
               d="M-100 350 Q 200 250, 450 350 T 1000 350"
-              stroke="#8b5cf6"
+              stroke="currentColor"
               strokeWidth="2"
               fill="none"
             />
             <path
               d="M-100 500 Q 180 400, 420 500 T 950 500"
-              stroke="#6d28d9"
+              stroke="currentColor"
               strokeWidth="2"
               fill="none"
             />
             <path
               d="M-100 650 Q 220 550, 480 650 T 1000 650"
-              stroke="#a78bfa"
+              stroke="currentColor"
               strokeWidth="2"
               fill="none"
             />
@@ -89,18 +95,18 @@ export default function LoginPage() {
           <div
             className="absolute inset-0 opacity-[0.05]"
             style={{
-              backgroundImage: `linear-gradient(#7c3aed 1px, transparent 1px), linear-gradient(90deg, #7c3aed 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(var(--primary) 1px, transparent 1px), linear-gradient(90deg, var(--primary) 1px, transparent 1px)`,
               backgroundSize: "50px 50px",
             }}
           />
 
-          <div className="absolute top-20 right-20 w-32 h-32 border border-violet-300/40 rounded-2xl rotate-12 backdrop-blur-sm" />
-          <div className="absolute bottom-32 left-32 w-24 h-24 border border-violet-300/40 rounded-full backdrop-blur-sm" />
-          <div className="absolute top-40 right-40 w-3 h-3 bg-violet-500/60 rounded-full shadow-md shadow-violet-300/40" />
-          <div className="absolute top-60 right-60 w-2 h-2 bg-violet-400/60 rounded-full shadow-md shadow-violet-300/40" />
-          <div className="absolute bottom-40 left-40 w-3 h-3 bg-violet-400/60 rounded-full shadow-md shadow-violet-300/40" />
-          <div className="absolute bottom-60 right-1/3 w-2 h-2 bg-violet-400/60 rounded-full shadow-md shadow-violet-300/40" />
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-violet-200/40 to-transparent rounded-full blur-2xl" />
+          <div className="absolute top-20 right-20 w-32 h-32 border border-primary/30 rounded-2xl rotate-12 backdrop-blur-sm" />
+          <div className="absolute bottom-32 left-32 w-24 h-24 border border-primary/30 rounded-full backdrop-blur-sm" />
+          <div className="absolute top-40 right-40 w-3 h-3 bg-primary/50 rounded-full shadow-md shadow-primary/30" />
+          <div className="absolute top-60 right-60 w-2 h-2 bg-primary/40 rounded-full shadow-md shadow-primary/30" />
+          <div className="absolute bottom-40 left-40 w-3 h-3 bg-primary/40 rounded-full shadow-md shadow-primary/30" />
+          <div className="absolute bottom-60 right-1/3 w-2 h-2 bg-primary/40 rounded-full shadow-md shadow-primary/30" />
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-primary/15 to-transparent rounded-full blur-2xl" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-20 py-24 text-gray-900">
@@ -159,13 +165,10 @@ export default function LoginPage() {
       <div className="flex-1 lg:w-[55%] bg-muted flex items-center justify-center p-8">
         <div className="w-full max-w-xl">
           {/* Mobile logo */}
-          <div className="lg:hidden mb-8 text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-600 to-violet-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="lg:hidden mb-8 flex justify-center">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
               <TrendingUp size={32} className="text-white" strokeWidth={2.5} />
             </div>
-            <h1 className="font-bold text-foreground mb-2">
-              {tCommon("app.name")}
-            </h1>
           </div>
 
           <div className="bg-card rounded-2xl shadow-xl p-8 md:p-10">
@@ -241,6 +244,7 @@ export default function LoginPage() {
                 <div className="mt-2 text-right">
                   <button
                     type="button"
+                    onClick={() => navigate(PATHS.FORGOT_PASSWORD)}
                     className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
                   >
                     {t("login.forgotPassword")}
@@ -251,12 +255,12 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-violet-700 to-violet-600 hover:from-violet-600 hover:to-violet-500 text-white py-4 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               >
                 <span className="block text-lg">
                   {isSubmitting ? t("login.submitting") : t("login.submit")}
                 </span>
-                <span className="block text-xs mt-1 text-violet-100 font-normal">
+                <span className="block text-xs mt-1 text-primary-foreground/70 font-normal">
                   {t("login.submitSubtitle")}
                 </span>
               </button>
