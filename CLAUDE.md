@@ -518,6 +518,25 @@ The app uses `react-i18next`. English is bundled at startup; German is lazy-load
 
 Stage only the changed files explicitly — no `git add -A` or `git add .`.
 
-Commit message: single line, conventional commit format — `type: short description`. No body, no newlines, no author attribution.
+Commit message: single line, conventional commit format — `type: short description #TICKET`. No body, no newlines, no author attribution.
 
-Types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `test`, `style`.
+Every commit must end with either a Jira ticket (`#PRD1006-42`) or `#no-ticket` when there's no associated ticket.
+
+Types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `test`, `style`, `perf`, `build`, `revert`.
+
+Examples:
+- `feat: add lease table #PRD1006-42`
+- `fix: correct token refresh logic #PRD1006-7`
+- `chore: update dependencies #no-ticket`
+
+### Enforcement pipeline
+
+**pre-commit** (every commit):
+- `lint-staged` — ESLint (`--max-warnings=0`) + Prettier on staged `.ts`/`.tsx` files; Prettier on staged `.json`/`.md`
+- `scripts/check-forbidden-code.js` — blocks `console.log/warn/debug`, `debugger`, and focused tests (`.only`) in non-test files
+- `type-check` — full TypeScript compilation check
+
+**commit-msg:** commitlint — enforces conventional commit format and Jira ticket/`#no-ticket`
+
+**pre-push** (before pushing):
+- `test:run` — full Vitest suite
