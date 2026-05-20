@@ -4,5 +4,10 @@
   },
   "validation": {
     "required": "Dieses Feld ist erforderlich."
+  },
+  "notFound": {
+    "heading": "Seite nicht gefunden",
+    "message": "Die gesuchte Seite existiert nicht.",
+    "backHome": "Zur Startseite"
   }
 }

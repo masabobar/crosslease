@@ -12,6 +12,9 @@ const ResetPasswordPage = lazy(
   () => import("@/features/auth/components/ResetPasswordPage")
 )
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
+const NotFoundPage = lazy(
+  () => import("@/features/not-found/components/NotFoundPage")
+)
 
 export const router = createBrowserRouter([
   {
@@ -50,5 +53,13 @@ export const router = createBrowserRouter([
         element: <App />,
       },
     ],
+  },
+  {
+    path: "*",
+    element: (
+      <Suspense fallback={null}>
+        <NotFoundPage />
+      </Suspense>
+    ),
   },
 ])
