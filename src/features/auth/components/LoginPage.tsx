@@ -10,6 +10,9 @@ import { login } from "../api/loginApi"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function LoginPage() {
   const { t } = useTranslation("auth")
@@ -179,35 +182,35 @@ export default function LoginPage() {
               <p className="text-muted-foreground">{t("login.subtitle2")}</p>
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form
+              data-testid="login-form"
+              onSubmit={onSubmit}
+              className="space-y-6"
+            >
               {serverError && (
-                <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl flex items-start gap-3">
+                <div
+                  data-testid="login-error-message"
+                  className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl flex items-start gap-3"
+                >
                   <AlertCircle size={20} className="mt-0.5 shrink-0" />
                   <span className="text-sm">{serverError}</span>
                 </div>
               )}
 
               <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
+                <Label htmlFor="username" className="mb-2">
                   {t("login.username")}
-                </label>
-                <div className="relative">
-                  <User
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    size={20}
-                  />
-                  <input
-                    id="username"
-                    type="text"
-                    autoComplete="username"
-                    placeholder={t("login.usernamePlaceholder")}
-                    {...form.register("username")}
-                    className="w-full pl-12 pr-4 py-3.5 bg-card border border-border text-foreground rounded-xl outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
-                  />
-                </div>
+                </Label>
+                <Input
+                  id="username"
+                  type="text"
+                  autoComplete="username"
+                  placeholder={t("login.usernamePlaceholder")}
+                  data-testid="login-username-input"
+                  startIcon={<User size={20} />}
+                  className="pl-12 py-3.5 bg-card rounded-xl"
+                  {...form.register("username")}
+                />
                 {errors.username && (
                   <p className="mt-1.5 text-sm text-destructive">
                     {errors.username.message}
@@ -216,26 +219,19 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-foreground mb-2"
-                >
+                <Label htmlFor="password" className="mb-2">
                   {t("login.password")}
-                </label>
-                <div className="relative">
-                  <Lock
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                    size={20}
-                  />
-                  <input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="••••••••"
-                    {...form.register("password")}
-                    className="w-full pl-12 pr-4 py-3.5 bg-card border border-border text-foreground rounded-xl outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
-                  />
-                </div>
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  data-testid="login-password-input"
+                  startIcon={<Lock size={20} />}
+                  className="pl-12 py-3.5 bg-card rounded-xl"
+                  {...form.register("password")}
+                />
                 {errors.password && (
                   <p className="mt-1.5 text-sm text-destructive">
                     {errors.password.message}
@@ -244,18 +240,20 @@ export default function LoginPage() {
                 <div className="mt-2 text-right">
                   <button
                     type="button"
+                    data-testid="login-forgot-password-button"
                     onClick={() => navigate(PATHS.FORGOT_PASSWORD)}
-                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
                   >
                     {t("login.forgotPassword")}
                   </button>
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-4 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                data-testid="login-submit-button"
+                className="w-full h-auto py-4 rounded-xl font-semibold flex-col shadow-lg"
               >
                 <span className="block text-lg">
                   {isSubmitting ? t("login.submitting") : t("login.submit")}
@@ -263,7 +261,7 @@ export default function LoginPage() {
                 <span className="block text-xs mt-1 text-primary-foreground/70 font-normal">
                   {t("login.submitSubtitle")}
                 </span>
-              </button>
+              </Button>
             </form>
           </div>
         </div>
