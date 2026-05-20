@@ -1,0 +1,105 @@
+import { describe, it, expect } from "vitest"
+import {
+  ForgotPasswordInputSchema,
+  ResetPasswordInputSchema,
+  getPasswordRequirements,
+} from "./forgotPasswordSchema"
+
+describe("ForgotPasswordInputSchema", () => {
+  it("accepts a valid email", () => {
+    expect(() =>
+      ForgotPasswordInputSchema.parse({ email: "user@example.com" })
+    ).not.toThrow()
+  })
+
+  it("rejects empty string", () => {
+    expect(() => ForgotPasswordInputSchema.parse({ email: "" })).toThrow()
+  })
+
+  it("rejects a non-email string", () => {
+    expect(() =>
+      ForgotPasswordInputSchema.parse({ email: "notanemail" })
+    ).toThrow()
+  })
+})
+
+describe("ResetPasswordInputSchema", () => {
+  const VALID = "Abcdef1!"
+
+  it("accepts a fully valid password", () => {
+    expect(() =>
+      ResetPasswordInputSchema.parse({ password: VALID })
+    ).not.toThrow()
+  })
+
+  it("rejects a password shorter than 8 characters", () => {
+    expect(() => ResetPasswordInputSchema.parse({ password: "Ab1!" })).toThrow()
+  })
+
+  it("rejects a password without an uppercase letter", () => {
+    expect(() =>
+      ResetPasswordInputSchema.parse({ password: "abcdef1!" })
+    ).toThrow()
+  })
+
+  it("rejects a password without a lowercase letter", () => {
+    expect(() =>
+      ResetPasswordInputSchema.parse({ password: "ABCDEF1!" })
+    ).toThrow()
+  })
+
+  it("rejects a password without a number", () => {
+    expect(() =>
+      ResetPasswordInputSchema.parse({ password: "Abcdefg!" })
+    ).toThrow()
+  })
+
+  it("rejects a password without a symbol", () => {
+    expect(() =>
+      ResetPasswordInputSchema.parse({ password: "Abcdef12" })
+    ).toThrow()
+  })
+})
+
+describe("getPasswordRequirements", () => {
+  it("returns all false for an empty string", () => {
+    expect(getPasswordRequirements("")).toEqual({
+      minLength: false,
+      hasLower: false,
+      hasUpper: false,
+      hasNumber: false,
+      hasSymbol: false,
+    })
+  })
+
+  it("returns all true for a fully valid password", () => {
+    expect(getPasswordRequirements("Abcdef1!")).toEqual({
+      minLength: true,
+      hasLower: true,
+      hasUpper: true,
+      hasNumber: true,
+      hasSymbol: true,
+    })
+  })
+
+  it("detects minLength independently", () => {
+    expect(getPasswordRequirements("Abc1!").minLength).toBe(false)
+    expect(getPasswordRequirements("Abcdef1!").minLength).toBe(true)
+  })
+
+  it("detects missing uppercase independently", () => {
+    expect(getPasswordRequirements("abcdef1!").hasUpper).toBe(false)
+  })
+
+  it("detects missing lowercase independently", () => {
+    expect(getPasswordRequirements("ABCDEF1!").hasLower).toBe(false)
+  })
+
+  it("detects missing number independently", () => {
+    expect(getPasswordRequirements("Abcdefg!").hasNumber).toBe(false)
+  })
+
+  it("detects missing symbol independently", () => {
+    expect(getPasswordRequirements("Abcdef12").hasSymbol).toBe(false)
+  })
+})
