@@ -5,6 +5,12 @@ import App from "@/App"
 import { PATHS } from "./paths"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
+const ForgotPasswordPage = lazy(
+  () => import("@/features/auth/components/ForgotPasswordPage")
+)
+const ResetPasswordPage = lazy(
+  () => import("@/features/auth/components/ResetPasswordPage")
+)
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
 
 export const router = createBrowserRouter([
@@ -13,6 +19,22 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.FORGOT_PASSWORD,
+    element: (
+      <Suspense fallback={null}>
+        <ForgotPasswordPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.RESET_PASSWORD,
+    element: (
+      <Suspense fallback={null}>
+        <ResetPasswordPage />
       </Suspense>
     ),
   },
