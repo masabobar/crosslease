@@ -449,6 +449,7 @@ No `any` is permitted in any E2E file.
 
 - One POM class per feature area (e.g., `LoginPage`, `UserManagementPage`)
 - Locators defined as class properties using `page.getByRole` / `page.getByTestId` — prefer accessible locators over CSS selectors or class names
+- When creating new elements that need to be testable, add `data-testid` with a descriptive name (e.g. `data-testid="submit-button"`, not `data-testid="btn-1"`)
 - POM methods encapsulate multi-step interactions; specs read as business-level flows
 
 **App architecture notes relevant to E2E**
