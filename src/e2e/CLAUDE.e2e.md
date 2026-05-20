@@ -52,11 +52,11 @@ The app is a React 19 SPA (Vite dev server on port 5173 by default, Nginx on por
 
 ### Environment Variables
 
-Copy `.env.example` to `.env.e2e` (git-ignored) and fill in values before running E2E locally:
+Environment variables are stored in `.env.example` (git-ignored) and fill in values before running E2E locally:
 
-| Variable | Purpose |
-|---|---|
-| `VITE_API_URL` | Backend base URL (default `http://localhost:8000`) |
+| Variable           | Purpose                                                       |
+| ------------------ | ------------------------------------------------------------- |
+| `VITE_API_URL`     | Backend base URL (default `http://localhost:8000`)            |
 | `STAGING_BASE_URL` | Staging login entry point — used when running against staging |
 
 Auth state (tokens, cookies) is stored in `.auth/` (git-ignored) via Playwright's `storageState`. Never commit `.auth/`.
@@ -65,14 +65,12 @@ Auth state (tokens, cookies) is stored in `.auth/` (git-ignored) via Playwright'
 
 ESLint enforces that **all spec and page files import `test` and `expect` from `../../fixtures/test`**, never directly from `@playwright/test`. This is a hard lint error. `src/e2e/fixtures/test.ts` is the single re-export/extension point — create it before authoring any specs.
 
-> **Known ESLint pattern mismatch:** `eslint.config.js` uses `files: ['e2e/**/*.ts']` but files live under `src/e2e/`. The lint rule currently does **not** fire. Fix by changing the pattern to `src/e2e/**/*.ts` in `eslint.config.js`.
-
 ```ts
 // ✅ correct
-import { test, expect } from '../../fixtures/test'
+import { test, expect } from "../../fixtures/test";
 
 // ❌ will fail lint
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 ```
 
 No explicit `any` is permitted in any E2E file (`@typescript-eslint/no-explicit-any: error`).
@@ -80,24 +78,24 @@ No explicit `any` is permitted in any E2E file (`@typescript-eslint/no-explicit-
 ### Page Object Model Conventions
 
 - One POM class per feature area (e.g., `LoginPage`, `UserManagementPage`)
-- Locators are defined as class properties using `page.getByRole` / `page.getByTestId` — prefer accessible locators over CSS selectors
+- Locators are defined as class properties using `page.getByTestId` — prefer accessible locators over CSS selectors
 - POM methods encapsulate multi-step interactions and assertions; specs read as business-level flows
 
 ### Environment
 
-Auth state and secrets are never committed. The pattern file `.env.e2e.example` at the repo root documents required env vars. The `.auth/` directory (Playwright storage state) is git-ignored.
+Auth state and secrets are never committed. The pattern file `.env.e2e.example` at src/ root documents required env vars. The `.auth/` directory (Playwright storage state) is git-ignored.
 
 ### Blocking Dependencies (resolve before writing specs)
 
 These backend capabilities must be agreed with the dev team before the corresponding specs can be authored:
 
-| ID | What is needed | Blocks |
-|---|---|---|
-| D16 | `TEST_TOKEN_TTL_SECONDS` env override | `session-management.spec.ts` |
-| D17 | `TEST_JWT_SECRET` or test-forge endpoint for tampered/expired JWTs | `login.spec.ts` AC-14 |
-| D18 | Admin API to reset lockout counter per email | `account-lockout.spec.ts` |
-| D19 | Throwaway user creation/deletion API | lockout, expiry, invitation specs |
-| D20 | Second seeded Bank Tenant B with one test user | `tenant-isolation.spec.ts` |
-| D21 | `AUDITOR_VALIDITY_MINUTES` env override | `auditor-access.spec.ts`, `temp-access-expiry.spec.ts` |
+| ID  | What is needed                                                     | Blocks                                                 |
+| --- | ------------------------------------------------------------------ | ------------------------------------------------------ |
+| D16 | `TEST_TOKEN_TTL_SECONDS` env override                              | `session-management.spec.ts`                           |
+| D17 | `TEST_JWT_SECRET` or test-forge endpoint for tampered/expired JWTs | `login.spec.ts` AC-14                                  |
+| D18 | Admin API to reset lockout counter per email                       | `account-lockout.spec.ts`                              |
+| D19 | Throwaway user creation/deletion API                               | lockout, expiry, invitation specs                      |
+| D20 | Second seeded Bank Tenant B with one test user                     | `tenant-isolation.spec.ts`                             |
+| D21 | `AUDITOR_VALIDITY_MINUTES` env override                            | `auditor-access.spec.ts`, `temp-access-expiry.spec.ts` |
 
 Specs blocked by an open dependency are written as `test.fixme('…', …)` with the dependency ID in a comment — not skipped or deleted.
