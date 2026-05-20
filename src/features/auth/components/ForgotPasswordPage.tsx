@@ -9,8 +9,16 @@ import type { ForgotPasswordInput } from "../api/forgotPasswordSchema"
 import { requestPasswordReset } from "../api/forgotPasswordApi"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
-import { AppLogo } from "./AppLogo"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { AuthPageLayout } from "./AuthPageLayout"
+import {
+  AuthCard,
+  AuthCardHeader,
+  AuthCardBody,
+  AuthCardFooter,
+} from "./AuthCard"
 
 type Step = "enter-email" | "check-email"
 
@@ -63,126 +71,119 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted flex flex-col">
-      <header className="flex justify-center pt-8">
-        <AppLogo />
-      </header>
+    <AuthPageLayout>
+      {step === "enter-email" ? (
+        <AuthCard>
+          <AuthCardHeader>
+            <h1 className="text-xl font-semibold text-foreground">
+              {t("forgotPassword.enterEmail.title")}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("forgotPassword.enterEmail.subtitle")}
+            </p>
+          </AuthCardHeader>
 
-      <main className="flex-1 flex items-center justify-center px-4 pb-16">
-        {step === "enter-email" ? (
-          <div className="w-full max-w-[480px] bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-            <div className="px-6 pt-6 pb-5">
-              <h1 className="text-xl font-semibold text-foreground">
-                {t("forgotPassword.enterEmail.title")}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("forgotPassword.enterEmail.subtitle")}
-              </p>
-            </div>
-
-            <div className="px-6 pb-5">
-              <form id="forgot-password-form" onSubmit={onSubmit}>
-                <div>
-                  <label
-                    htmlFor="fp-email"
-                    className={cn(
-                      "block text-sm font-medium mb-1.5",
-                      errors.email ? "text-destructive" : "text-foreground"
-                    )}
-                  >
-                    {t("forgotPassword.enterEmail.emailLabel")}
-                  </label>
-                  <div className="relative">
-                    <User
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                      size={16}
-                    />
-                    <input
-                      id="fp-email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder={t(
-                        "forgotPassword.enterEmail.emailPlaceholder"
-                      )}
-                      data-testid="forgot-password-email-input"
-                      {...form.register("email")}
-                      className={cn(
-                        "w-full pl-9 pr-4 py-2.5 bg-background border text-foreground rounded-lg text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/30",
-                        errors.email
-                          ? "border-destructive focus-visible:border-destructive"
-                          : "border-border focus-visible:border-primary"
-                      )}
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="mt-1.5 text-xs text-destructive">
-                      {errors.email.message ??
-                        t("forgotPassword.enterEmail.errors.emailInvalid")}
-                    </p>
-                  )}
-                </div>
-              </form>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border">
-              <button
-                type="button"
-                data-testid="forgot-password-back-button"
-                onClick={() => navigate(PATHS.LOGIN)}
-                className="h-9 px-3.5 text-sm font-medium rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors"
-              >
-                {t("forgotPassword.enterEmail.backToSignIn")}
-              </button>
-              <button
-                type="submit"
-                form="forgot-password-form"
-                disabled={isSubmitting}
-                data-testid="forgot-password-submit-button"
-                className="h-9 px-3.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting
-                  ? t("forgotPassword.enterEmail.sending")
-                  : t("forgotPassword.enterEmail.sendResetLink")}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="w-full max-w-[480px] bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-            <div className="px-6 pt-6 pb-5">
-              <h1 className="text-xl font-semibold text-foreground">
-                {t("forgotPassword.checkEmail.title")}
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t("forgotPassword.checkEmail.body", {
-                  email: submittedEmail,
-                })}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t("forgotPassword.checkEmail.notReceived")}{" "}
-                <button
-                  onClick={handleResend}
-                  disabled={isResending}
-                  data-testid="check-email-resend-button"
-                  className="text-primary hover:text-primary/80 underline underline-offset-2 disabled:opacity-50 transition-colors"
+          <AuthCardBody>
+            <form
+              id="forgot-password-form"
+              data-testid="forgot-password-form"
+              onSubmit={onSubmit}
+            >
+              <div>
+                <Label
+                  htmlFor="fp-email"
+                  error={!!errors.email}
+                  className="mb-1.5"
                 >
-                  {t("forgotPassword.checkEmail.resendLink")}
-                </button>
-              </p>
-            </div>
+                  {t("forgotPassword.enterEmail.emailLabel")}
+                </Label>
+                <Input
+                  id="fp-email"
+                  type="text"
+                  autoComplete="email"
+                  placeholder={t("forgotPassword.enterEmail.emailPlaceholder")}
+                  data-testid="forgot-password-email-input"
+                  error={!!errors.email}
+                  startIcon={<User size={16} />}
+                  className="text-sm"
+                  {...form.register("email")}
+                />
+                {errors.email && (
+                  <p
+                    data-testid="forgot-password-email-error"
+                    className="mt-1.5 text-xs text-destructive"
+                  >
+                    {errors.email.message ??
+                      t("forgotPassword.enterEmail.errors.emailInvalid")}
+                  </p>
+                )}
+              </div>
+            </form>
+          </AuthCardBody>
 
-            <div className="flex items-center justify-end px-6 py-4 border-t border-border">
+          <AuthCardFooter>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              data-testid="forgot-password-back-button"
+              onClick={() => navigate(PATHS.LOGIN)}
+              className="px-3.5"
+            >
+              {t("forgotPassword.enterEmail.backToSignIn")}
+            </Button>
+            <Button
+              type="submit"
+              form="forgot-password-form"
+              size="lg"
+              disabled={isSubmitting}
+              data-testid="forgot-password-submit-button"
+              className="px-3.5"
+            >
+              {isSubmitting
+                ? t("forgotPassword.enterEmail.sending")
+                : t("forgotPassword.enterEmail.sendResetLink")}
+            </Button>
+          </AuthCardFooter>
+        </AuthCard>
+      ) : (
+        <AuthCard>
+          <AuthCardHeader>
+            <h1 className="text-xl font-semibold text-foreground">
+              {t("forgotPassword.checkEmail.title")}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("forgotPassword.checkEmail.body", {
+                email: submittedEmail,
+              })}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("forgotPassword.checkEmail.notReceived")}{" "}
               <button
-                type="button"
-                data-testid="check-email-back-button"
-                onClick={() => navigate(PATHS.LOGIN)}
-                className="h-9 px-3.5 text-sm font-medium rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                onClick={handleResend}
+                disabled={isResending}
+                data-testid="check-email-resend-button"
+                className="text-primary hover:text-primary/80 underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
-                {t("forgotPassword.checkEmail.backToSignIn")}
+                {t("forgotPassword.checkEmail.resendLink")}
               </button>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+            </p>
+          </AuthCardHeader>
+
+          <AuthCardFooter>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              data-testid="check-email-back-button"
+              onClick={() => navigate(PATHS.LOGIN)}
+              className="px-3.5"
+            >
+              {t("forgotPassword.checkEmail.backToSignIn")}
+            </Button>
+          </AuthCardFooter>
+        </AuthCard>
+      )}
+    </AuthPageLayout>
   )
 }
