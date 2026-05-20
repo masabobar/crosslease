@@ -1,1 +1,4 @@
-export const PATHS = {} as const
+export const PATHS = {
+  LOGIN: "/login",
+  DASHBOARD: "/",
+} as const
