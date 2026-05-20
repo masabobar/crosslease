@@ -219,6 +219,12 @@ import type { User } from '@/features/users/api/schema'
 
 ---
 
+## Responsive design
+
+This app is primarily used on desktop. Responsiveness is **not a priority** — do not spend time perfecting mobile layouts. That said, components should be semi-responsive: avoid fixed pixel widths that would break obviously on smaller viewports, use Tailwind's responsive prefixes where it costs nothing, but do not add breakpoint complexity just for mobile.
+
+---
+
 ## UI components
 
 Components in `src/components/ui/` are built with:
@@ -470,6 +476,41 @@ No `any` is permitted in any E2E file.
 - Snapshot tests — noisy, catch the wrong things
 - Coverage percentage targets — test behavior, not lines
 - Testing TypeScript types — the compiler handles that
+
+---
+
+## Internationalisation (i18n)
+
+The app uses `react-i18next`. English is bundled at startup; German is lazy-loaded on first language switch.
+
+**When adding a new string:**
+- Put it in the appropriate namespace JSON under `src/i18n/locales/en/`
+- Add the matching key to `src/i18n/locales/de/` (even if the value is the same for now — keeps the files in sync)
+- Never hardcode user-visible strings in components — always go through `t()`
+
+**When adding a new feature:**
+1. Create `src/i18n/locales/en/<feature>.json` and `src/i18n/locales/de/<feature>.json`
+2. Add the namespace to `CustomTypeOptions` in `src/i18n/types.d.ts`:
+   ```ts
+   resources: {
+     common: typeof enCommon
+     auth: typeof enAuth   // ← add here
+   }
+   ```
+3. Bundle the English namespace in `config.ts` under `resources.en`
+4. Add a German loader entry to `languageLoaders` in `config.ts`:
+   ```ts
+   de: async () => {
+     const [common, auth] = await Promise.all([
+       import('./locales/de/common.json'),
+       import('./locales/de/auth.json'),  // ← add here
+     ])
+     i18n.addResourceBundle('de', 'common', common.default)
+     i18n.addResourceBundle('de', 'auth', auth.default)  // ← and here
+   },
+   ```
+
+**Language switching** — call `changeLanguage(lang)` exported from `src/i18n/config.ts`. A future Zustand language store should call this and persist the choice to `localStorage`.
 
 ---
 
