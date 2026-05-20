@@ -26,19 +26,20 @@ pnpm e2e -- --grep "test title substring"
 pnpm e2e -- --headed --grep "test title substring"
 ```
 
-> **Known config path mismatch:** `package.json` scripts reference `--config=e2e/playwright.config.ts` but the file lives at `src/e2e/playwright.config.ts`. The scripts will fail until this is corrected in `package.json` (change to `--config=src/e2e/playwright.config.ts`). `playwright.config.ts` is also currently empty and needs to be populated with at least `baseURL` before any spec can run.
-
 ### Directory Structure
 
 ```
 src/e2e/
-├── fixtures/        # Custom Playwright fixture definitions
-│   └── test.ts      # Re-exports extended `test` and `expect` — ONLY import source for specs
-├── helpers/         # Reusable utilities (auth, data builders, API helpers)
-├── pages/           # Page Object Model classes (one file per feature area)
-├── specs/           # Test specifications (one file per user story / AC group)
+├── .auth/           # Playwright storageState files (git-ignored) — written at runtime
+├── fixtures/        # Custom Playwright fixture definitions (empty — create test.ts before authoring specs)
+├── helpers/         # Reusable utilities: auth, data builders, API helpers (empty)
+├── pages/           # Page Object Model classes, one file per feature area (empty)
+├── specs/           # Test specifications, one file per user story / AC group (empty)
+├── CLAUDE.e2e.md    # This file
 └── playwright.config.ts
 ```
+
+> **Status:** All subdirectories exist but are empty. The first file to create is `fixtures/test.ts` — it re-exports (and extends) `test` and `expect` from `@playwright/test` and is the **only** permitted import source for specs and page objects. No spec can be authored until this file exists.
 
 ### App Architecture Relevant to E2E
 
