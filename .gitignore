@@ -14,8 +14,9 @@ dist-ssr
 package-lock.json
 
 # E2E environment files
-.env.e2e*
+.env.e2e.example
 .auth/*
+/src/e2e/.claude/*
 
 # Playwright output
 playwright-results/
