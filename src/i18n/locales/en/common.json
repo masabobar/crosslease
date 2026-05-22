@@ -2,8 +2,32 @@
   "app": {
     "name": "Refinext"
   },
+  "loading": "Loading...",
   "validation": {
     "required": "This field is required."
+  },
+  "nav": {
+    "leasingPlatform": "Leasing Platform",
+    "main": "Main",
+    "dashboard": "Dashboard",
+    "refinancingRequests": "Refinancing requests",
+    "contracts": "Contracts",
+    "financing": "Financing",
+    "operations": "Operations",
+    "businessConfigurations": "Business configurations",
+    "rulesSetup": "Rules setup",
+    "platformAdministration": "Platform administration",
+    "userManagement": "User management",
+    "partnerManagement": "Partner Management",
+    "tenantManagement": "Tenant Management",
+    "coreBankingIntegration": "Core Banking integration",
+    "auditTrail": "Audit trail",
+    "logout": "Logout"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "platformAdministration": "Platform administration",
+    "userManagement": "User management"
   },
   "notFound": {
     "heading": "Page not found",

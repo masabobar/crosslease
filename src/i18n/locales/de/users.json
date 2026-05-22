@@ -1,0 +1,294 @@
+{
+  "page": {
+    "title": "User Management",
+    "subtitle": "Manage users and their permissions",
+    "inviteButton": "Invite users"
+  },
+  "roles": {
+    "system_admin": "Admin",
+    "support_user": "Support",
+    "auditor": "Auditor",
+    "front_office": "Front Office",
+    "back_office": "Back Office",
+    "leasing_company_user": "Leasing Co. User"
+  },
+  "statuses": {
+    "active": "Aktiv",
+    "invited": "Eingeladen",
+    "pending_activation": "Ausstehend",
+    "suspended": "Gesperrt",
+    "deactivated": "Deaktiviert",
+    "expired": "Abgelaufen"
+  },
+  "filter": {
+    "title": "Filter",
+    "label": "Benutzer filtern",
+    "close": "Filter schließen",
+    "sections": {
+      "identityAccess": "Identität & Zugriff",
+      "activity": "Aktivität",
+      "governanceAccount": "Governance & Konto"
+    },
+    "fields": {
+      "role": "Rolle",
+      "status": "Benutzerstatus",
+      "mfaStatus": "MFA-Status",
+      "tenant": "Mandant",
+      "leasingCompany": "Leasinggesellschaft",
+      "lastLoginRange": "Letzter Login Zeitraum",
+      "userCreationDate": "Erstellungsdatum",
+      "accessExpiry": "Ablaufdatum",
+      "auditEngagementStatus": "Audit-Status",
+      "lastRoleChangeDate": "Letzte Rollenänderung",
+      "lastPermissionChangeDate": "Letzte Berechtigungsänderung",
+      "originType": "Ursprungstyp",
+      "systemUserFlag": "Systembenutzer-Flag",
+      "serviceAccountFlag": "Dienstkonto-Flag"
+    },
+    "placeholders": {
+      "select": "Auswählen",
+      "chooseDate": "Datum wählen",
+      "tenant": "Mandant",
+      "leasingCompany": "Leasinggesellschaft"
+    },
+    "mfa": {
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert"
+    },
+    "flags": {
+      "humanUser": "Menschlicher Benutzer",
+      "systemUser": "Systembenutzer",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "apply": "Anwenden"
+    }
+  },
+  "inviteBanner": {
+    "pendingApproval": {
+      "title": "Genehmigung erforderlich",
+      "message": "{{name}} wurde erstellt. Das Konto bleibt im Status 'Ausstehend', bis ein zweiter Admin es genehmigt.",
+      "viewProfile": "Profil ansehen"
+    },
+    "invited": {
+      "title": "Benutzer erstellt",
+      "message": "{{name}} wurde hinzugefügt. Eine Einladung ist auf dem Weg an {{email}}.",
+      "viewProfile": "Profil ansehen"
+    }
+  },
+  "table": {
+    "actions": {
+      "approve": "Genehmigen"
+    }
+  },
+  "actions": {
+    "fields": {
+      "reason": "Grund",
+      "reasonPlaceholder": "Grund auswählen",
+      "comment": "Kommentar",
+      "commentPlaceholder": "Optional",
+      "effective_from": "Wirksam ab",
+      "effective_until": "Wirksam bis (optional)"
+    },
+    "suspend": {
+      "label": "Sperren",
+      "title": "Benutzer sperren",
+      "subtitle": "Der Zugriff von {{name}} wird sofort eingeschränkt.",
+      "submit": "Benutzer sperren",
+      "reasons": {
+        "temporary_access_restriction": "Vorübergehende Zugriffsbeschränkung",
+        "security_concern": "Sicherheitsbedenken",
+        "organizational_change": "Organisatorische Änderung",
+        "compliance_review": "Compliance-Prüfung",
+        "administrative_decision": "Verwaltungsentscheidung",
+        "other": "Sonstige"
+      },
+      "success": {
+        "title": "Benutzer gesperrt",
+        "message": "{{name}} wurde gesperrt."
+      }
+    },
+    "reactivate": {
+      "label": "Reaktivieren",
+      "title": "Benutzer reaktivieren",
+      "subtitle": "Der Zugriff von {{name}} wird wiederhergestellt.",
+      "submit": "Benutzer reaktivieren",
+      "reasons": {
+        "suspension_period_ended": "Sperrzeitraum beendet",
+        "administrative_decision": "Verwaltungsentscheidung",
+        "compliance_clearance": "Compliance-Freigabe",
+        "security_clearance": "Sicherheitsfreigabe",
+        "other": "Sonstige"
+      },
+      "success": {
+        "title": "Benutzer reaktiviert",
+        "message": "{{name}} wurde reaktiviert."
+      }
+    },
+    "deactivate": {
+      "label": "Deaktivieren",
+      "title": "Benutzer deaktivieren",
+      "subtitle": "Das Konto von {{name}} wird dauerhaft deaktiviert.",
+      "submit": "Benutzer deaktivieren",
+      "reasons": {
+        "offboarding": "Offboarding",
+        "organizational_change": "Organisatorische Änderung",
+        "compliance_restriction": "Compliance-Einschränkung",
+        "security_restriction": "Sicherheitseinschränkung",
+        "administrative_decision": "Verwaltungsentscheidung",
+        "other": "Sonstige"
+      },
+      "success": {
+        "title": "Benutzer deaktiviert",
+        "message": "{{name}} wurde deaktiviert."
+      }
+    },
+    "resend-invitation": {
+      "label": "Einladung erneut senden",
+      "title": "Einladung erneut senden",
+      "subtitle": "Eine neue Einladungs-E-Mail wird an {{name}} gesendet.",
+      "submit": "Einladung erneut senden",
+      "reasons": {
+        "invitation_expired": "Einladung abgelaufen",
+        "not_received": "Nicht erhalten",
+        "user_request": "Benutzeranfrage",
+        "administrative_action": "Verwaltungsaktion"
+      },
+      "success": {
+        "title": "Einladung erneut gesendet",
+        "message": "Eine neue Einladung wurde an {{name}} gesendet."
+      }
+    }
+  },
+  "detail": {
+    "loadError": "Benutzerdetails konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "drawer": {
+      "title": "Benutzerdetails",
+      "openFullProfile": "Vollständiges Profil öffnen",
+      "sections": {
+        "identity": "IDENTITÄT",
+        "roleScope": "ROLLE & BEREICH",
+        "status": "STATUS"
+      },
+      "fields": {
+        "userId": "Benutzer-ID",
+        "email": "E-Mail",
+        "invitedBy": "Eingeladen von",
+        "approvedBy": "Genehmigt von",
+        "role": "Rolle",
+        "tenant": "Mandant",
+        "accountStatus": "Kontostatus",
+        "mfa": "MFA",
+        "lastLogin": "Letzter Login"
+      }
+    },
+    "page": {
+      "lastLogin": "Letzter Login",
+      "activeSince": "Aktiv seit",
+      "sections": {
+        "identity": "BENUTZERIDENTITÄT",
+        "roleScope": "ROLLE & BEREICH"
+      },
+      "fields": {
+        "userId": "Benutzer-ID",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "email": "E-Mail",
+        "serviceAccountFlag": "Dienstkonto-Flag",
+        "role": "Rolle",
+        "roleClassification": "Rollenklassifizierung",
+        "tenant": "Mandant",
+        "accessValidityPeriod": "Zugangsgültigkeitszeitraum",
+        "auditEngagementValidUntil": "Prüfungsmandat gültig bis",
+        "effectiveTenantScope": "Effektiver Mandantenbereich",
+        "invitedBy": "Eingeladen von",
+        "invitedAt": "Eingeladen am",
+        "activatedAt": "Aktiviert am",
+        "accountStatus": "Kontostatus",
+        "invitationSent": "Einladung gesendet",
+        "activationTimestamp": "Aktivierungszeitstempel",
+        "lastLogin": "Letzter Login",
+        "lastActivity": "Letzte Aktivität",
+        "lastSuspensionReason": "Letzter Sperrgrund",
+        "lastDeactivationReason": "Letzter Deaktivierungsgrund"
+      },
+      "roleClassification": {
+        "platform": "Plattformrolle",
+        "tenantOperational": "Mandantenrolle"
+      },
+      "tabs": {
+        "lifecycle": "Lebenszyklus",
+        "authSecurity": "Authentifizierung & Sicherheit",
+        "auditGovernance": "Audit & Governance"
+      },
+      "authSecurity": {
+        "mfaStatus": "MFA / 2FA-Status",
+        "mfaMethod": "MFA-Methode",
+        "failedLoginAttempts": "Fehlgeschlagene Anmeldeversuche",
+        "accountLockoutStatus": "Kontosperrungsstatus",
+        "ssoProvider": "SSO / Identitätsanbieter",
+        "lastMfaReset": "Letzter MFA-Reset-Zeitstempel",
+        "authPolicy": "Angewendete Authentifizierungsrichtlinie",
+        "privilegedAccess": "Flag für privilegierten Zugang"
+      },
+      "actions": {
+        "edit": "Bearbeiten",
+        "suspendUser": "Benutzer sperren",
+        "deactivateUser": "Benutzer deaktivieren"
+      },
+      "values": {
+        "on": "Ein",
+        "off": "Aus",
+        "emailOtp": "E-Mail OTP",
+        "standard": "Standard",
+        "yes": "Ja",
+        "no": "Nein",
+        "enabled": "Aktiviert",
+        "notAvailable": "—"
+      }
+    }
+  },
+  "approveSuccess": {
+    "title": "Konto genehmigt",
+    "message": "{{name}} wurde genehmigt. Eine Aktivierungs-E-Mail ist auf dem Weg an {{email}}.",
+    "errorTitle": "Genehmigung fehlgeschlagen",
+    "errorFallback": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+  },
+  "modal": {
+    "title": "Create & invite users",
+    "subtitle": "User will be created in Pending activation state",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "role": "Role",
+      "tenant": "Tenant",
+      "tenantScope": "Tenant scope",
+      "accessValidFrom": "Access valid from",
+      "accessValidUntil": "Access valid until"
+    },
+    "placeholders": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "you@example.com",
+      "role": "Select a role",
+      "tenant": "Select a tenant"
+    },
+    "hints": {
+      "email": "Must be unique across the platform",
+      "tenantAuditor": "Auditor access must be scoped to exactly one tenant",
+      "tenantOperational": "Tenant-level operational users must belong to exactly one tenant",
+      "accessDates": "Required for Auditor users only"
+    },
+    "fourEyes": {
+      "title": "Four-Eyes approval required",
+      "description": "This role requires a second authorized admin to approve before the account activates. User remains in Pending Activation state until approval is completed."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submit": "Create & invite user"
+    }
+  }
+}

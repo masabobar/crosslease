@@ -1,0 +1,294 @@
+{
+  "page": {
+    "title": "User Management",
+    "subtitle": "Manage users and their permissions",
+    "inviteButton": "Invite users"
+  },
+  "roles": {
+    "system_admin": "Admin",
+    "support_user": "Support",
+    "auditor": "Auditor",
+    "front_office": "Front Office",
+    "back_office": "Back Office",
+    "leasing_company_user": "Leasing Co. User"
+  },
+  "statuses": {
+    "active": "Active",
+    "invited": "Invited",
+    "pending_activation": "Pending",
+    "suspended": "Suspended",
+    "deactivated": "Deactivated",
+    "expired": "Expired"
+  },
+  "filter": {
+    "title": "Filters",
+    "label": "Filter users",
+    "close": "Close filters",
+    "sections": {
+      "identityAccess": "Identity & Access",
+      "activity": "Activity",
+      "governanceAccount": "Governance & Account"
+    },
+    "fields": {
+      "role": "Role",
+      "status": "User status",
+      "mfaStatus": "MFA status",
+      "tenant": "Tenant",
+      "leasingCompany": "Leasing company",
+      "lastLoginRange": "Last login range",
+      "userCreationDate": "User creation date",
+      "accessExpiry": "Access expiry",
+      "auditEngagementStatus": "Audit engagement status",
+      "lastRoleChangeDate": "Last role change date",
+      "lastPermissionChangeDate": "Last permission change date",
+      "originType": "Origin type",
+      "systemUserFlag": "System user flag",
+      "serviceAccountFlag": "Service account flag"
+    },
+    "placeholders": {
+      "select": "Select",
+      "chooseDate": "Choose date",
+      "tenant": "Tenant",
+      "leasingCompany": "Leasing company"
+    },
+    "mfa": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "flags": {
+      "humanUser": "Human user",
+      "systemUser": "System user",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "apply": "Apply"
+    }
+  },
+  "inviteBanner": {
+    "pendingApproval": {
+      "title": "Approval needed",
+      "message": "{{name}} has been created. Account stays in Pending status until a second admin approves.",
+      "viewProfile": "View profile"
+    },
+    "invited": {
+      "title": "User created",
+      "message": "{{name}} has been added. An invitation is on its way to {{email}}.",
+      "viewProfile": "View profile"
+    }
+  },
+  "table": {
+    "actions": {
+      "approve": "Approve"
+    }
+  },
+  "actions": {
+    "fields": {
+      "reason": "Reason",
+      "reasonPlaceholder": "Select a reason",
+      "comment": "Comment",
+      "commentPlaceholder": "Optional",
+      "effective_from": "Effective from",
+      "effective_until": "Effective until (optional)"
+    },
+    "suspend": {
+      "label": "Suspend",
+      "title": "Suspend user",
+      "subtitle": "{{name}}'s access will be restricted immediately.",
+      "submit": "Suspend user",
+      "reasons": {
+        "temporary_access_restriction": "Temporary access restriction",
+        "security_concern": "Security concern",
+        "organizational_change": "Organizational change",
+        "compliance_review": "Compliance review",
+        "administrative_decision": "Administrative decision",
+        "other": "Other"
+      },
+      "success": {
+        "title": "User suspended",
+        "message": "{{name}} has been suspended."
+      }
+    },
+    "reactivate": {
+      "label": "Reactivate",
+      "title": "Reactivate user",
+      "subtitle": "{{name}}'s access will be restored.",
+      "submit": "Reactivate user",
+      "reasons": {
+        "suspension_period_ended": "Suspension period ended",
+        "administrative_decision": "Administrative decision",
+        "compliance_clearance": "Compliance clearance",
+        "security_clearance": "Security clearance",
+        "other": "Other"
+      },
+      "success": {
+        "title": "User reactivated",
+        "message": "{{name}} has been reactivated."
+      }
+    },
+    "deactivate": {
+      "label": "Deactivate",
+      "title": "Deactivate user",
+      "subtitle": "{{name}}'s account will be permanently deactivated.",
+      "submit": "Deactivate user",
+      "reasons": {
+        "offboarding": "Offboarding",
+        "organizational_change": "Organizational change",
+        "compliance_restriction": "Compliance restriction",
+        "security_restriction": "Security restriction",
+        "administrative_decision": "Administrative decision",
+        "other": "Other"
+      },
+      "success": {
+        "title": "User deactivated",
+        "message": "{{name}} has been deactivated."
+      }
+    },
+    "resend-invitation": {
+      "label": "Resend invitation",
+      "title": "Resend invitation",
+      "subtitle": "A new invitation email will be sent to {{name}}.",
+      "submit": "Resend invitation",
+      "reasons": {
+        "invitation_expired": "Invitation expired",
+        "not_received": "Not received",
+        "user_request": "User request",
+        "administrative_action": "Administrative action"
+      },
+      "success": {
+        "title": "Invitation resent",
+        "message": "A new invitation has been sent to {{name}}."
+      }
+    }
+  },
+  "detail": {
+    "loadError": "Failed to load user details. Please try again.",
+    "drawer": {
+      "title": "User details",
+      "openFullProfile": "Open full profile",
+      "sections": {
+        "identity": "IDENTITY",
+        "roleScope": "ROLE & SCOPE",
+        "status": "STATUS"
+      },
+      "fields": {
+        "userId": "User ID",
+        "email": "Email",
+        "invitedBy": "Invited by",
+        "approvedBy": "Approved by",
+        "role": "Role",
+        "tenant": "Tenant",
+        "accountStatus": "Account status",
+        "mfa": "MFA",
+        "lastLogin": "Last login"
+      }
+    },
+    "page": {
+      "lastLogin": "Last login",
+      "activeSince": "Active since",
+      "sections": {
+        "identity": "USER IDENTITY",
+        "roleScope": "ROLE & SCOPE"
+      },
+      "fields": {
+        "userId": "User ID",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "email": "Email",
+        "serviceAccountFlag": "Service account flag",
+        "role": "Role",
+        "roleClassification": "Role classification",
+        "tenant": "Tenant",
+        "accessValidityPeriod": "Access validity period",
+        "auditEngagementValidUntil": "Audit engagement valid until",
+        "effectiveTenantScope": "Effective tenant scope",
+        "invitedBy": "Invited by",
+        "invitedAt": "Invited at",
+        "activatedAt": "Activated at",
+        "accountStatus": "Account status",
+        "invitationSent": "Invitation sent",
+        "activationTimestamp": "Activation timestamp",
+        "lastLogin": "Last login",
+        "lastActivity": "Last activity",
+        "lastSuspensionReason": "Last suspension reason",
+        "lastDeactivationReason": "Last deactivation reason"
+      },
+      "roleClassification": {
+        "platform": "Platform-level role",
+        "tenantOperational": "Tenant-level operational role"
+      },
+      "tabs": {
+        "lifecycle": "Lifecycle",
+        "authSecurity": "Authentication & Security",
+        "auditGovernance": "Audit & governance"
+      },
+      "authSecurity": {
+        "mfaStatus": "MFA / 2FA status",
+        "mfaMethod": "MFA method",
+        "failedLoginAttempts": "Failed login attempts",
+        "accountLockoutStatus": "Account lockout status",
+        "ssoProvider": "SSO / Identity provider",
+        "lastMfaReset": "Last MFA reset timestamp",
+        "authPolicy": "Authentication policy applied",
+        "privilegedAccess": "Privileged access flag"
+      },
+      "actions": {
+        "edit": "Edit",
+        "suspendUser": "Suspend user",
+        "deactivateUser": "Deactivate user"
+      },
+      "values": {
+        "on": "On",
+        "off": "Off",
+        "emailOtp": "Email OTP",
+        "standard": "Standard",
+        "yes": "Yes",
+        "no": "No",
+        "enabled": "Enabled",
+        "notAvailable": "—"
+      }
+    }
+  },
+  "approveSuccess": {
+    "title": "Account approved",
+    "message": "{{name}} has been approved. An activation email is on its way to {{email}}.",
+    "errorTitle": "Approval failed",
+    "errorFallback": "Something went wrong. Please try again."
+  },
+  "modal": {
+    "title": "Create & invite users",
+    "subtitle": "User will be created in Pending activation state",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email address",
+      "role": "Role",
+      "tenant": "Tenant",
+      "tenantScope": "Tenant scope",
+      "accessValidFrom": "Access valid from",
+      "accessValidUntil": "Access valid until"
+    },
+    "placeholders": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "you@example.com",
+      "role": "Select a role",
+      "tenant": "Select a tenant"
+    },
+    "hints": {
+      "email": "Must be unique across the platform",
+      "tenantAuditor": "Auditor access must be scoped to exactly one tenant",
+      "tenantOperational": "Tenant-level operational users must belong to exactly one tenant",
+      "accessDates": "Required for Auditor users only"
+    },
+    "fourEyes": {
+      "title": "Four-Eyes approval required",
+      "description": "This role requires a second authorized admin to approve before the account activates. User remains in Pending Activation state until approval is completed."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submit": "Create & invite user"
+    }
+  }
+}
