@@ -1,7 +1,7 @@
-import axios from 'axios'
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { useAuthStore } from '@/store/authStore'
-import type { ApiErrorDetail } from '@/types/api'
+import axios from "axios"
+import type { AxiosError, InternalAxiosRequestConfig } from "axios"
+import { useAuthStore } from "@/store/authStore"
+import type { ApiErrorDetail } from "@/types/api"
 
 export class ApiError extends Error {
   code: string
@@ -12,10 +12,10 @@ export class ApiError extends Error {
     code: string,
     message: string,
     field?: string,
-    errors?: Array<{ field: string; message: string; input: unknown }>,
+    errors?: Array<{ field: string; message: string; input: unknown }>
   ) {
     super(message)
-    this.name = 'ApiError'
+    this.name = "ApiError"
     this.code = code
     this.field = field
     this.errors = errors
@@ -24,10 +24,10 @@ export class ApiError extends Error {
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 })
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(config => {
   const { accessToken } = useAuthStore.getState()
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`
@@ -38,33 +38,37 @@ api.interceptors.request.use((config) => {
 let refreshPromise: Promise<string> | null = null
 
 api.interceptors.response.use(
-  (response) => response.data.data,
+  response =>
+    response.data?.data !== undefined ? response.data.data : response.data,
   async (error: AxiosError) => {
-    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    const original = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean
+    }
 
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
 
       if (!refreshPromise) {
         refreshPromise = (async () => {
-          const { refreshToken, setTokens, clearTokens } = useAuthStore.getState()
+          const { refreshToken, setTokens, clearTokens } =
+            useAuthStore.getState()
 
           if (!refreshToken) {
             clearTokens()
-            throw new ApiError('UNAUTHORIZED', 'Session expired')
+            throw new ApiError("UNAUTHORIZED", "Session expired")
           }
 
           try {
             // TODO: update path when BE implements the refresh endpoint
             const { data } = await axios.post(
               `${import.meta.env.VITE_API_URL}/auth/token/refresh`,
-              { refresh_token: refreshToken },
+              { refresh_token: refreshToken }
             )
             setTokens(data.data.access_token, data.data.refresh_token)
             return data.data.access_token as string
           } catch {
             clearTokens()
-            throw new ApiError('INVALID_TOKEN', 'Session expired')
+            throw new ApiError("INVALID_TOKEN", "Session expired")
           }
         })().finally(() => {
           refreshPromise = null
@@ -79,10 +83,10 @@ api.interceptors.response.use(
     const detail = (error.response?.data as { detail?: ApiErrorDetail })?.detail
 
     throw new ApiError(
-      detail?.code ?? 'BAD_REQUEST',
-      detail?.message ?? 'Something went wrong',
+      detail?.code ?? "BAD_REQUEST",
+      detail?.message ?? "Something went wrong",
       detail?.field,
-      detail?.errors,
+      detail?.errors
     )
-  },
+  }
 )

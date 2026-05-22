@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Eye, EyeOff, CheckCircle, Circle, Check } from "lucide-react"
+import { Eye, EyeOff, CheckCircle, Circle, Check, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import {
   ResetPasswordInputSchema,
@@ -96,7 +96,8 @@ export default function ResetPasswordPage() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   data-testid="reset-password-input"
-                  className="text-sm"
+                  startIcon={<Lock size={16} />}
+                  className="pl-9 text-sm"
                   endAction={
                     <button
                       type="button"

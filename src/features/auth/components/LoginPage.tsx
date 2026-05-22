@@ -1,18 +1,40 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Navigate, useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 import { z } from "zod"
-import { Lock, User, AlertCircle, Shield, TrendingUp } from "lucide-react"
+import {
+  Lock,
+  Mail,
+  User,
+  AlertCircle,
+  Shield,
+  TrendingUp,
+  CircleAlert,
+  CircleCheckBig,
+  Loader2,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
-import type { LoginInput } from "../api/schema"
-import { login } from "../api/loginApi"
+import { login, verifyOtp, resendOtp } from "../api/loginApi"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { InputOTP } from "@/components/ui/input-otp"
+import { AppLogo } from "./AppLogo"
+
+type OtpHelper =
+  | { type: "none" }
+  | { type: "error"; message: string }
+  | { type: "success"; message: string }
+
+function maskEmail(email: string): string {
+  const atIndex = email.indexOf("@")
+  if (atIndex <= 1) return email
+  return `${email[0]}${"*".repeat(Math.min(atIndex - 1, 6))}${email.slice(atIndex)}`
+}
 
 export default function LoginPage() {
   const { t } = useTranslation("auth")
@@ -20,41 +42,233 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const accessToken = useAuthStore(s => s.accessToken)
   const { setTokens } = useAuthStore()
+
+  const [step, setStep] = useState<"credentials" | "otp">("credentials")
+  const [verificationToken, setVerificationToken] = useState("")
+  const [emailForOtp, setEmailForOtp] = useState("")
   const [serverError, setServerError] = useState<string | null>(null)
 
+  const [otpValue, setOtpValue] = useState("")
+  const [otpHelper, setOtpHelper] = useState<OtpHelper>({ type: "none" })
+  const [isOtpSubmitting, setIsOtpSubmitting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+
   const required = tCommon("validation.required")
-  const formSchema = z.object({
-    username: z.string().min(1, required),
+
+  const credentialsSchema = z.object({
+    email: z.string().min(1, required).email(required),
     password: z.string().min(1, required),
   })
 
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { username: "", password: "" },
+  const credentialsForm = useForm<z.infer<typeof credentialsSchema>>({
+    resolver: zodResolver(credentialsSchema),
+    defaultValues: { email: "", password: "" },
   })
 
-  const { isSubmitting, errors } = form.formState
+  const errorMessages: Record<string, string> = {
+    INVALID_CREDENTIALS: t("login.errors.INVALID_CREDENTIALS"),
+    ACCOUNT_LOCKED: t("login.errors.ACCOUNT_LOCKED"),
+    IP_THROTTLED: t("login.errors.IP_THROTTLED"),
+    ACCOUNT_NOT_ACTIVATED: t("login.errors.ACCOUNT_NOT_ACTIVATED"),
+    ACCOUNT_SUSPENDED: t("login.errors.ACCOUNT_SUSPENDED"),
+    ACCOUNT_DEACTIVATED: t("login.errors.ACCOUNT_DEACTIVATED"),
+    ACCOUNT_EXPIRED: t("login.errors.ACCOUNT_EXPIRED"),
+    INVALID_OTP: t("login.errors.INVALID_OTP"),
+    OTP_EXPIRED: t("login.errors.OTP_EXPIRED"),
+    OTP_MAX_ATTEMPTS: t("login.errors.OTP_MAX_ATTEMPTS"),
+    OTP_RESEND_THROTTLED: t("login.errors.OTP_RESEND_THROTTLED"),
+  }
 
   if (accessToken) {
     return <Navigate to={PATHS.DASHBOARD} replace />
   }
 
-  const onSubmit = form.handleSubmit(async data => {
+  const onCredentialsSubmit = credentialsForm.handleSubmit(async data => {
     setServerError(null)
     try {
       const result = await login(data)
-      setTokens(result.access_token, result.refresh_token)
-      navigate(PATHS.DASHBOARD)
+      setVerificationToken(result.verification_token)
+      setEmailForOtp(data.email)
+      setStep("otp")
     } catch (err) {
-      const errorMessages: Record<string, string> = {
-        INVALID_CREDENTIALS: t("login.errors.INVALID_CREDENTIALS"),
-        EMAIL_NOT_VERIFIED: t("login.errors.EMAIL_NOT_VERIFIED"),
-        ACCOUNT_DISABLED: t("login.errors.ACCOUNT_DISABLED"),
-      }
       const code = err instanceof ApiError ? err.code : ""
       setServerError(errorMessages[code] ?? t("login.errors.default"))
     }
   })
+
+  const handleOtpSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (otpValue.length !== 6 || isOtpSubmitting) return
+    setIsOtpSubmitting(true)
+    setOtpHelper({ type: "none" })
+    try {
+      const result = await verifyOtp({
+        verification_token: verificationToken,
+        code: otpValue,
+      })
+      setOtpHelper({ type: "success", message: t("login.otp.success") })
+      setTokens(result.access_token, result.refresh_token)
+      setTimeout(() => navigate(PATHS.DASHBOARD), 800)
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : ""
+      const message = errorMessages[code] ?? t("login.errors.default")
+      if (code === "OTP_EXPIRED" || code === "OTP_MAX_ATTEMPTS") {
+        setServerError(message)
+        setStep("credentials")
+        setOtpValue("")
+        setOtpHelper({ type: "none" })
+      } else {
+        setOtpHelper({ type: "error", message })
+      }
+      setIsOtpSubmitting(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (isResending) return
+    setIsResending(true)
+    setOtpHelper({ type: "none" })
+    try {
+      await resendOtp({ verification_token: verificationToken })
+      setOtpValue("")
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : ""
+      setOtpHelper({
+        type: "error",
+        message: errorMessages[code] ?? t("login.errors.default"),
+      })
+    } finally {
+      setIsResending(false)
+    }
+  }
+
+  const handleBackToCredentials = () => {
+    setStep("credentials")
+    setVerificationToken("")
+    setEmailForOtp("")
+    setOtpValue("")
+    setOtpHelper({ type: "none" })
+    setServerError(null)
+  }
+
+  if (step === "otp") {
+    const isSuccess = otpHelper.type === "success"
+
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="flex justify-center pt-8">
+          <AppLogo />
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-4 pb-24">
+          <div className="w-full max-w-[416px] bg-card rounded-2xl shadow-xl overflow-hidden">
+            <form onSubmit={handleOtpSubmit} data-testid="otp-form">
+              <div className="flex flex-col gap-6 p-4">
+                <div className="p-3 bg-primary/10 rounded-[14px] w-fit">
+                  <Mail size={24} className="text-primary" />
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <h2 className="text-xl font-semibold text-foreground leading-7">
+                    {t("login.otp.title")}
+                  </h2>
+                  <p className="text-base text-muted-foreground leading-6">
+                    {t("login.otp.subtitle", { email: maskEmail(emailForOtp) })}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <InputOTP
+                    value={otpValue}
+                    onChange={setOtpValue}
+                    hasError={otpHelper.type === "error"}
+                    disabled={isOtpSubmitting || isSuccess}
+                    autoFocus
+                  />
+
+                  {otpHelper.type !== "none" && (
+                    <div
+                      className="flex items-center gap-1.5"
+                      data-testid="otp-helper-text"
+                    >
+                      {otpHelper.type === "error" ? (
+                        <CircleAlert
+                          size={16}
+                          className="text-destructive shrink-0"
+                        />
+                      ) : (
+                        <CircleCheckBig
+                          size={16}
+                          className="text-green-600 shrink-0"
+                        />
+                      )}
+                      <span
+                        className={
+                          otpHelper.type === "error"
+                            ? "text-sm text-destructive"
+                            : "text-sm text-green-600"
+                        }
+                      >
+                        {otpHelper.message}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-base text-muted-foreground leading-6">
+                  {t("login.otp.didntReceive")}{" "}
+                  <button
+                    type="button"
+                    data-testid="otp-resend-button"
+                    disabled={isResending || isSuccess}
+                    onClick={handleResend}
+                    className="text-primary underline underline-offset-2 hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isResending
+                      ? t("login.otp.resending")
+                      : t("login.otp.resend")}
+                  </button>
+                </p>
+              </div>
+
+              <div className="border-t p-4 flex items-center justify-end gap-1.5 bg-slate-50/80">
+                <Button
+                  type="button"
+                  variant="outline"
+                  data-testid="otp-back-button"
+                  disabled={isOtpSubmitting || isSuccess}
+                  onClick={handleBackToCredentials}
+                >
+                  {t("login.otp.back")}
+                </Button>
+                <Button
+                  type="submit"
+                  data-testid="otp-submit-button"
+                  disabled={
+                    otpValue.length !== 6 || isOtpSubmitting || isSuccess
+                  }
+                >
+                  {isSuccess ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      {t("login.otp.redirecting")}
+                    </>
+                  ) : isOtpSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      {t("login.otp.submitting")}
+                    </>
+                  ) : (
+                    t("login.otp.submit")
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -164,7 +378,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right — Login form */}
+      {/* Right — Form */}
       <div className="flex-1 lg:w-[55%] bg-muted flex items-center justify-center p-8">
         <div className="w-full max-w-xl">
           {/* Mobile logo */}
@@ -184,7 +398,7 @@ export default function LoginPage() {
 
             <form
               data-testid="login-form"
-              onSubmit={onSubmit}
+              onSubmit={onCredentialsSubmit}
               className="space-y-6"
             >
               {serverError && (
@@ -198,22 +412,22 @@ export default function LoginPage() {
               )}
 
               <div>
-                <Label htmlFor="username" className="mb-2">
-                  {t("login.username")}
+                <Label htmlFor="email" className="mb-2">
+                  {t("login.email")}
                 </Label>
                 <Input
-                  id="username"
-                  type="text"
-                  autoComplete="username"
-                  placeholder={t("login.usernamePlaceholder")}
-                  data-testid="login-username-input"
-                  startIcon={<User size={20} />}
-                  className="pl-12 py-3.5 bg-card rounded-xl"
-                  {...form.register("username")}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder={t("login.emailPlaceholder")}
+                  data-testid="login-email-input"
+                  startIcon={<User size={16} />}
+                  className="py-3.5 bg-card rounded-xl"
+                  {...credentialsForm.register("email")}
                 />
-                {errors.username && (
+                {credentialsForm.formState.errors.email && (
                   <p className="mt-1.5 text-sm text-destructive">
-                    {errors.username.message}
+                    {credentialsForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
@@ -230,11 +444,11 @@ export default function LoginPage() {
                   data-testid="login-password-input"
                   startIcon={<Lock size={20} />}
                   className="pl-12 py-3.5 bg-card rounded-xl"
-                  {...form.register("password")}
+                  {...credentialsForm.register("password")}
                 />
-                {errors.password && (
+                {credentialsForm.formState.errors.password && (
                   <p className="mt-1.5 text-sm text-destructive">
-                    {errors.password.message}
+                    {credentialsForm.formState.errors.password.message}
                   </p>
                 )}
                 <div className="mt-2 text-right">
@@ -251,12 +465,14 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={credentialsForm.formState.isSubmitting}
                 data-testid="login-submit-button"
                 className="w-full h-auto py-4 rounded-xl font-semibold flex-col shadow-lg"
               >
                 <span className="block text-lg">
-                  {isSubmitting ? t("login.submitting") : t("login.submit")}
+                  {credentialsForm.formState.isSubmitting
+                    ? t("login.submitting")
+                    : t("login.submit")}
                 </span>
                 <span className="block text-xs mt-1 text-primary-foreground/70 font-normal">
                   {t("login.submitSubtitle")}
