@@ -6,11 +6,12 @@ export async function validateActivationToken(token: string): Promise<void> {
 
 export async function activateSetPassword(
   token: string,
-  password: string
+  password: string,
+  passwordConfirm: string
 ): Promise<void> {
   await api.post("/users/set-password", {
     token,
     password,
-    password_confirm: password,
+    password_confirm: passwordConfirm,
   })
 }

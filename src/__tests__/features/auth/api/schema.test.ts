@@ -4,7 +4,7 @@ import {
   LoginResponseSchema,
   MfaRequiredResponseSchema,
   VerifyOtpInputSchema,
-} from "./schema"
+} from "@/features/auth/api/schema"
 
 describe("LoginInputSchema", () => {
   it("accepts valid credentials", () => {

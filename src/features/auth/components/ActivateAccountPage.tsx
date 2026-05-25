@@ -53,6 +53,7 @@ export default function ActivateAccountPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
   const token = searchParams.get("token") ?? ""
@@ -63,10 +64,10 @@ export default function ActivateAccountPage() {
 
   const form = useForm<ActivateAccountInput>({
     resolver: zodResolver(ActivateAccountInputSchema),
-    defaultValues: { password: "" },
+    defaultValues: { password: "", password_confirm: "" },
   })
 
-  const { isSubmitting, submitCount } = form.formState
+  const { isSubmitting, submitCount, errors } = form.formState
   const hasSubmitted = submitCount > 0
   const password = useWatch({
     control: form.control,
@@ -91,7 +92,7 @@ export default function ActivateAccountPage() {
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
     try {
-      await activateSetPassword(token, data.password)
+      await activateSetPassword(token, data.password, data.password_confirm)
       setPageState("success")
       setTimeout(() => navigate(PATHS.LOGIN), 3000)
     } catch (err) {
@@ -321,6 +322,47 @@ export default function ActivateAccountPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              <div>
+                <Label htmlFor="activate-confirm" className="mb-1.5">
+                  {t("activateAccount.confirmPasswordLabel")}
+                </Label>
+                <Input
+                  id="activate-confirm"
+                  type={showConfirm ? "text" : "password"}
+                  autoComplete="new-password"
+                  data-testid="activate-confirm-input"
+                  startIcon={<Lock size={16} />}
+                  className="pl-9 text-sm"
+                  endAction={
+                    <button
+                      type="button"
+                      data-testid="activate-confirm-toggle-visibility"
+                      onClick={() => setShowConfirm(v => !v)}
+                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      aria-label={
+                        showConfirm
+                          ? t("activateAccount.hidePassword")
+                          : t("activateAccount.showPassword")
+                      }
+                    >
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  }
+                  {...form.register("password_confirm")}
+                />
+                {errors.password_confirm && (
+                  <p
+                    data-testid="activate-confirm-error"
+                    className="mt-1.5 text-sm text-destructive"
+                  >
+                    {errors.password_confirm.message ===
+                    "PASSWORDS_DO_NOT_MATCH"
+                      ? t("activateAccount.errors.PASSWORDS_DO_NOT_MATCH")
+                      : errors.password_confirm.message}
+                  </p>
+                )}
               </div>
             </div>
           </form>
