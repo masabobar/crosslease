@@ -1,7 +1,7 @@
 import { api } from "@/lib/api"
 
 export async function validateActivationToken(token: string): Promise<void> {
-  await api.get(`/users/validate-token?token=${encodeURIComponent(token)}`)
+  await api.get(`/auth/validate-token?token=${encodeURIComponent(token)}`)
 }
 
 export async function activateSetPassword(
@@ -9,7 +9,7 @@ export async function activateSetPassword(
   password: string,
   passwordConfirm: string
 ): Promise<void> {
-  await api.post("/users/set-password", {
+  await api.post("/auth/set-password", {
     token,
     password,
     password_confirm: passwordConfirm,
