@@ -17,6 +17,7 @@ import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
 import { UserTable } from "@/features/users/components/UserTable"
 import { UserFilterPanel } from "@/features/users/components/UserFilterPanel"
 import { useUsers } from "@/features/users/hooks/useUsers"
+import { useUserListParams } from "@/features/users/hooks/useUserListParams"
 import type {
   UserResponse,
   UserStatus,
@@ -29,8 +30,7 @@ import type {
   UserActionType,
   UserModalActionType,
 } from "@/features/users/types"
-import type { UserSortKey, UserSortOrder } from "@/features/users/api/schema"
-import { EMPTY_FILTER_STATE } from "@/features/users/types"
+import type { UserSortKey } from "@/features/users/api/schema"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useApproveUser } from "@/features/users/hooks/useApproveUser"
@@ -93,12 +93,17 @@ export default function UserManagementPage() {
     user: { id: string; first_name: string; last_name: string }
   } | null>(null)
   const [drawerUserId, setDrawerUserId] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState("")
-  const [appliedFilters, setAppliedFilters] =
-    useState<UserFilterState>(EMPTY_FILTER_STATE)
-  const [sortKey, setSortKey] = useState<UserSortKey | null>(null)
-  const [sortOrder, setSortOrder] = useState<UserSortOrder>("asc")
+  const {
+    page,
+    search,
+    appliedFilters,
+    sortKey,
+    sortOrder,
+    setPage,
+    setSearch,
+    setAppliedFilters,
+    setSort,
+  } = useUserListParams()
   const showToast = useToastStore(s => s.showToast)
   const { data: tenantsData } = useTenants()
   const { mutateAsync: approve } = useApproveUser()
@@ -126,35 +131,28 @@ export default function UserManagementPage() {
 
   function handleSort(key: UserSortKey) {
     if (sortKey === key) {
-      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"))
+      setSort(key, sortOrder === "asc" ? "desc" : "asc")
     } else {
-      setSortKey(key)
-      setSortOrder("asc")
+      setSort(key, "asc")
     }
-    setPage(1)
   }
 
   function handleApplyFilters(filters: UserFilterState) {
     setAppliedFilters(filters)
-    setPage(1)
   }
 
   function removeRoleFilter(role: UserRole) {
-    const next: UserFilterState = {
+    setAppliedFilters({
       ...appliedFilters,
       role: appliedFilters.role.filter((r: UserRole) => r !== role),
-    }
-    setAppliedFilters(next)
-    setPage(1)
+    })
   }
 
   function removeStatusFilter(status: string) {
-    const next: UserFilterState = {
+    setAppliedFilters({
       ...appliedFilters,
       status: appliedFilters.status.filter((s: string) => s !== status),
-    }
-    setAppliedFilters(next)
-    setPage(1)
+    })
   }
 
   async function handleAction(type: UserActionType, user: UserListItem) {
@@ -293,10 +291,7 @@ export default function UserManagementPage() {
               data-testid="user-search-input"
               placeholder="Search"
               value={search}
-              onChange={e => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
+              onChange={e => setSearch(e.target.value)}
               className="pr-9 w-64"
             />
             <Search
@@ -354,10 +349,9 @@ export default function UserManagementPage() {
             <FilterPill
               key="tenant"
               label={`Tenant: ${tenantsData?.tenants.find(ten => ten.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
-              onRemove={() => {
-                setAppliedFilters(f => ({ ...f, tenant_id: null }))
-                setPage(1)
-              }}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, tenant_id: null })
+              }
             />
           )}
         </div>
@@ -382,7 +376,7 @@ export default function UserManagementPage() {
           <button
             type="button"
             data-testid="pagination-prev-button"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -418,7 +412,7 @@ export default function UserManagementPage() {
           <button
             type="button"
             data-testid="pagination-next-button"
-            onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
+            onClick={() => setPage(Math.min(data.total_pages, page + 1))}
             disabled={page === data.total_pages}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
