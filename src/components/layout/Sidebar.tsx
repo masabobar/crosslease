@@ -16,11 +16,16 @@ import {
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
 import { useLogout } from "@/features/auth/hooks/useLogout"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { USER_MANAGEMENT_ALLOWED_ROLES } from "@/features/users/types"
 
 export function Sidebar() {
   const { t } = useTranslation("common")
   const location = useLocation()
   const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
+  const { data: currentUser } = useCurrentUser()
+  const canAccessUserManagement =
+    !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
 
@@ -202,21 +207,23 @@ export function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col gap-3 pl-8 pr-2">
-              <Link
-                to={PATHS.USER_MANAGEMENT}
-                data-testid="nav-user-management"
-                className={cn(
-                  "flex items-center justify-between text-sm whitespace-nowrap",
-                  isUserManagementActive
-                    ? "font-medium text-[#1d41a8]"
-                    : "text-foreground hover:text-[#1d41a8]"
-                )}
-              >
-                {t("nav.userManagement")}
-                {isUserManagementActive && (
-                  <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                )}
-              </Link>
+              {canAccessUserManagement && (
+                <Link
+                  to={PATHS.USER_MANAGEMENT}
+                  data-testid="nav-user-management"
+                  className={cn(
+                    "flex items-center justify-between text-sm whitespace-nowrap",
+                    isUserManagementActive
+                      ? "font-medium text-[#1d41a8]"
+                      : "text-foreground hover:text-[#1d41a8]"
+                  )}
+                >
+                  {t("nav.userManagement")}
+                  {isUserManagementActive && (
+                    <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                  )}
+                </Link>
+              )}
               {[
                 t("nav.partnerManagement"),
                 t("nav.tenantManagement"),
