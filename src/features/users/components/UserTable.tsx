@@ -11,89 +11,33 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import type { UserListItem } from "@/features/users/api/schema"
+import type {
+  UserListItem,
+  UserSortKey,
+  UserSortOrder,
+} from "@/features/users/api/schema"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { FOUR_EYES_ROLES } from "@/features/users/types"
 import type { UserRole, UserActionType } from "@/features/users/types"
 import { formatLastLogin, getInitials } from "@/features/users/utils"
 
-type SortKey =
-  | "name"
-  | "role"
-  | "tenant_name"
-  | "status"
-  | "last_login"
-  | "access_valid_until"
-type SortState = { key: SortKey | null; dir: "asc" | "desc" }
+type SortState = { key: UserSortKey | null; dir: UserSortOrder }
 
 type UserTableProps = {
   users: UserListItem[]
   isLoading: boolean
+  sort: SortState
+  onSort: (key: UserSortKey) => void
   onAction?: (type: UserActionType, user: UserListItem) => void
   onRowClick?: (user: UserListItem) => void
   viewerRole?: UserRole
 }
 
-function sortUsers(
-  users: UserListItem[],
-  key: SortKey | null,
-  dir: "asc" | "desc"
-): UserListItem[] {
-  if (!key) return users
-  return [...users].sort((a, b) => {
-    switch (key) {
-      case "name": {
-        const cmp = `${a.first_name} ${a.last_name}`
-          .toLowerCase()
-          .localeCompare(`${b.first_name} ${b.last_name}`.toLowerCase())
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "role": {
-        const cmp = a.role.localeCompare(b.role)
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "tenant_name": {
-        const va = a.tenant_name
-        const vb = b.tenant_name
-        if (va === null && vb === null) return 0
-        if (va === null) return 1
-        if (vb === null) return -1
-        const cmp = va.localeCompare(vb)
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "status": {
-        const cmp = a.status.localeCompare(b.status)
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "last_login": {
-        const ta = a.last_login ? new Date(a.last_login).getTime() : null
-        const tb = b.last_login ? new Date(b.last_login).getTime() : null
-        if (ta === null && tb === null) return 0
-        if (ta === null) return 1
-        if (tb === null) return -1
-        return dir === "asc" ? ta - tb : tb - ta
-      }
-      case "access_valid_until": {
-        const ta = a.access_valid_until
-          ? new Date(a.access_valid_until).getTime()
-          : null
-        const tb = b.access_valid_until
-          ? new Date(b.access_valid_until).getTime()
-          : null
-        if (ta === null && tb === null) return 0
-        if (ta === null) return 1
-        if (tb === null) return -1
-        return dir === "asc" ? ta - tb : tb - ta
-      }
-    }
-  })
-}
-
 type SortableHeaderProps = {
-  columnKey: SortKey
+  columnKey: UserSortKey
   sort: SortState
-  onSort: (key: SortKey) => void
+  onSort: (key: UserSortKey) => void
   children: React.ReactNode
 }
 
@@ -252,42 +196,28 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4]
 function UserTable({
   users,
   isLoading,
+  sort,
+  onSort,
   onAction,
   onRowClick,
   viewerRole,
 }: UserTableProps) {
-  const [sort, setSort] = useState<SortState>({ key: null, dir: "asc" })
-
-  function handleSort(key: SortKey) {
-    setSort(prev =>
-      prev.key === key
-        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: "asc" }
-    )
-  }
-
-  const sortedUsers = sortUsers(users, sort.key, sort.dir)
-
   return (
     <div className="w-full" data-testid="user-table">
       {/* Header row */}
       <div className="flex border-b border-border h-10 items-center">
         <div className="flex-1 min-w-0 px-2">
-          <SortableHeader columnKey="name" sort={sort} onSort={handleSort}>
+          <SortableHeader columnKey="name" sort={sort} onSort={onSort}>
             User
           </SortableHeader>
         </div>
         <div className="w-[200px] shrink-0 px-2">
-          <SortableHeader columnKey="role" sort={sort} onSort={handleSort}>
+          <SortableHeader columnKey="role" sort={sort} onSort={onSort}>
             Role
           </SortableHeader>
         </div>
         <div className="w-[200px] shrink-0 px-2">
-          <SortableHeader
-            columnKey="tenant_name"
-            sort={sort}
-            onSort={handleSort}
-          >
+          <SortableHeader columnKey="tenant_name" sort={sort} onSort={onSort}>
             Tenant
           </SortableHeader>
         </div>
@@ -295,16 +225,12 @@ function UserTable({
           MFA
         </div>
         <div className="w-[136px] shrink-0 px-2">
-          <SortableHeader columnKey="status" sort={sort} onSort={handleSort}>
+          <SortableHeader columnKey="status" sort={sort} onSort={onSort}>
             Status
           </SortableHeader>
         </div>
         <div className="w-[136px] shrink-0 px-2">
-          <SortableHeader
-            columnKey="last_login"
-            sort={sort}
-            onSort={handleSort}
-          >
+          <SortableHeader columnKey="last_login" sort={sort} onSort={onSort}>
             Last login
           </SortableHeader>
         </div>
@@ -359,7 +285,7 @@ function UserTable({
 
       {/* Data rows */}
       {!isLoading &&
-        sortedUsers.map(user => (
+        users.map(user => (
           <div
             key={user.id}
             data-testid={`user-row-${user.id}`}

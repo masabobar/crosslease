@@ -77,6 +77,16 @@ export type PaginatedUsersResponse = z.infer<
   typeof PaginatedUsersResponseSchema
 >
 
+export type UserSortKey =
+  | "name"
+  | "role"
+  | "tenant_name"
+  | "status"
+  | "last_login"
+  | "access_valid_until"
+
+export type UserSortOrder = "asc" | "desc"
+
 export type UsersQueryParams = {
   page?: number
   per_page?: number
@@ -84,6 +94,8 @@ export type UsersQueryParams = {
   role?: UserRole[]
   status?: UserStatus[]
   tenant_id?: string
+  sort_by?: UserSortKey
+  sort_order?: UserSortOrder
 }
 
 export const SUSPENSION_REASONS = [

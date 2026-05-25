@@ -29,6 +29,7 @@ import type {
   UserActionType,
   UserModalActionType,
 } from "@/features/users/types"
+import type { UserSortKey, UserSortOrder } from "@/features/users/api/schema"
 import { EMPTY_FILTER_STATE } from "@/features/users/types"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
@@ -96,6 +97,8 @@ export default function UserManagementPage() {
   const [search, setSearch] = useState("")
   const [appliedFilters, setAppliedFilters] =
     useState<UserFilterState>(EMPTY_FILTER_STATE)
+  const [sortKey, setSortKey] = useState<UserSortKey | null>(null)
+  const [sortOrder, setSortOrder] = useState<UserSortOrder>("asc")
   const showToast = useToastStore(s => s.showToast)
   const { data: tenantsData } = useTenants()
   const { mutateAsync: approve } = useApproveUser()
@@ -117,7 +120,19 @@ export default function UserManagementPage() {
         ? (appliedFilters.status as UserStatus[])
         : undefined,
     tenant_id: appliedFilters.tenant_id ?? undefined,
+    sort_by: sortKey ?? undefined,
+    sort_order: sortKey ? sortOrder : undefined,
   })
+
+  function handleSort(key: UserSortKey) {
+    if (sortKey === key) {
+      setSortOrder(prev => (prev === "asc" ? "desc" : "asc"))
+    } else {
+      setSortKey(key)
+      setSortOrder("asc")
+    }
+    setPage(1)
+  }
 
   function handleApplyFilters(filters: UserFilterState) {
     setAppliedFilters(filters)
@@ -353,6 +368,8 @@ export default function UserManagementPage() {
         <UserTable
           users={data?.users ?? []}
           isLoading={isLoading}
+          sort={{ key: sortKey, dir: sortOrder }}
+          onSort={handleSort}
           onAction={handleAction}
           onRowClick={user => setDrawerUserId(user.id)}
           viewerRole={currentUser?.role}
