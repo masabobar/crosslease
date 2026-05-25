@@ -27,7 +27,7 @@ describe("validateActivationToken", () => {
     mockApi.get.mockResolvedValue(undefined)
     await validateActivationToken("abc123")
     expect(mockApi.get).toHaveBeenCalledWith(
-      `/users/validate-token?token=${encodeURIComponent("abc123")}`
+      `/auth/validate-token?token=${encodeURIComponent("abc123")}`
     )
   })
 
@@ -43,7 +43,7 @@ describe("activateSetPassword", () => {
   it("calls api.post with token, password, and password_confirm as distinct values", async () => {
     mockApi.post.mockResolvedValue(undefined)
     await activateSetPassword("tok", "Abcdef1!", "Abcdef1@")
-    expect(mockApi.post).toHaveBeenCalledWith("/users/set-password", {
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/set-password", {
       token: "tok",
       password: "Abcdef1!",
       password_confirm: "Abcdef1@",

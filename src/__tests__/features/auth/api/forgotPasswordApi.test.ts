@@ -24,10 +24,10 @@ beforeEach(() => {
 })
 
 describe("requestPasswordReset", () => {
-  it("calls POST /users/forgot-password with the email", async () => {
+  it("calls POST /auth/forgot-password with the email", async () => {
     mockApi.post.mockResolvedValue(undefined)
     await requestPasswordReset("user@example.com")
-    expect(mockApi.post).toHaveBeenCalledWith("/users/forgot-password", {
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/forgot-password", {
       email: "user@example.com",
     })
   })
@@ -41,10 +41,10 @@ describe("requestPasswordReset", () => {
 })
 
 describe("validateResetToken", () => {
-  it("calls GET /users/validate-reset-token with the token as a query param", async () => {
+  it("calls GET /auth/validate-reset-token with the token as a query param", async () => {
     mockApi.get.mockResolvedValue(undefined)
     await validateResetToken("abc123")
-    expect(mockApi.get).toHaveBeenCalledWith("/users/validate-reset-token", {
+    expect(mockApi.get).toHaveBeenCalledWith("/auth/validate-reset-token", {
       params: { token: "abc123" },
     })
   })
@@ -58,10 +58,10 @@ describe("validateResetToken", () => {
 })
 
 describe("resetPassword", () => {
-  it("calls POST /users/reset-password with token, password, and password_confirm", async () => {
+  it("calls POST /auth/reset-password with token, password, and password_confirm", async () => {
     mockApi.post.mockResolvedValue(undefined)
     await resetPassword("tok", "Abcdef1!", "Abcdef1!")
-    expect(mockApi.post).toHaveBeenCalledWith("/users/reset-password", {
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/reset-password", {
       token: "tok",
       password: "Abcdef1!",
       password_confirm: "Abcdef1!",

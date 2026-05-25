@@ -9,6 +9,7 @@ import type { ForgotPasswordInput } from "../api/forgotPasswordSchema"
 import { requestPasswordReset } from "../api/forgotPasswordApi"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
+import { useToastStore } from "@/store/toastStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,6 +27,7 @@ export default function ForgotPasswordPage() {
   const { t } = useTranslation("auth")
   const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
+  const showToast = useToastStore(s => s.showToast)
   const [step, setStep] = useState<Step>("enter-email")
   const [submittedEmail, setSubmittedEmail] = useState("")
   const [isResending, setIsResending] = useState(false)
@@ -67,6 +69,21 @@ export default function ForgotPasswordPage() {
     setIsResending(true)
     try {
       await requestPasswordReset(submittedEmail)
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : ""
+      if (code === "PASSWORD_RESET_THROTTLED") {
+        showToast({
+          variant: "warning",
+          title: t("forgotPassword.checkEmail.resendThrottled.title"),
+          message: t("forgotPassword.checkEmail.resendThrottled.message"),
+        })
+      } else {
+        showToast({
+          variant: "warning",
+          title: t("forgotPassword.checkEmail.resendFailed.title"),
+          message: t("forgotPassword.checkEmail.resendFailed.message"),
+        })
+      }
     } finally {
       setIsResending(false)
     }

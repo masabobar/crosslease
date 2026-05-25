@@ -60,7 +60,7 @@ api.interceptors.response.use(
 
           try {
             const { data } = await axios.post(
-              `${import.meta.env.VITE_API_URL}/users/refresh-token`,
+              `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
               { refresh_token: refreshToken }
             )
             setTokens(data.data.access_token, data.data.refresh_token)

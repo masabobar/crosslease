@@ -32,8 +32,6 @@ export const USER_MANAGEMENT_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "support_user",
   "auditor",
-  "front_office",
-  "back_office",
 ]
 
 export type UserFilterState = {
