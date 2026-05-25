@@ -1,6 +1,10 @@
 import { useState } from "react"
 import { ChevronDown, Check, Calendar } from "lucide-react"
-import { Popover } from "@base-ui/react/popover"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"
 import { useTranslation } from "react-i18next"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { cn } from "@/lib/utils"
@@ -95,8 +99,8 @@ function MultiSelectDropdown<T extends string>({
         : `${value.length} selected`
 
   return (
-    <Popover.Root>
-      <Popover.Trigger
+    <Popover>
+      <PopoverTrigger
         data-testid={testId}
         className={cn(
           "w-full h-9 px-3 flex items-center justify-between",
@@ -117,41 +121,37 @@ function MultiSelectDropdown<T extends string>({
           size={14}
           className="text-muted-foreground shrink-0 ml-2"
         />
-      </Popover.Trigger>
+      </PopoverTrigger>
 
-      <Popover.Portal>
-        <Popover.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={4}
-          className="z-[60]"
-        >
-          <Popover.Popup className="w-[var(--anchor-width)] bg-white border border-border rounded-lg shadow-lg py-1 outline-none max-h-60 overflow-y-auto">
-            {options.map(option => {
-              const checked = value.includes(option)
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => toggle(option)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
-                >
-                  <span
-                    className={cn(
-                      "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                      checked ? "bg-primary border-primary" : "border-border"
-                    )}
-                  >
-                    {checked && <Check size={10} className="text-white" />}
-                  </span>
-                  {renderOption(option)}
-                </button>
-              )
-            })}
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
+      >
+        {options.map(option => {
+          const checked = value.includes(option)
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggle(option)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+            >
+              <span
+                className={cn(
+                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
+                  checked ? "bg-primary border-primary" : "border-border"
+                )}
+              >
+                {checked && <Check size={10} className="text-white" />}
+              </span>
+              {renderOption(option)}
+            </button>
+          )
+        })}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -213,8 +213,8 @@ function SingleSelectDropdown({
   }
 
   return (
-    <Popover.Root>
-      <Popover.Trigger
+    <Popover>
+      <PopoverTrigger
         data-testid={testId}
         className={cn(
           "w-full h-9 px-3 flex items-center justify-between",
@@ -231,39 +231,35 @@ function SingleSelectDropdown({
           size={14}
           className="text-muted-foreground shrink-0 ml-2"
         />
-      </Popover.Trigger>
+      </PopoverTrigger>
 
-      <Popover.Portal>
-        <Popover.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={4}
-          className="z-[60]"
-        >
-          <Popover.Popup className="w-[var(--anchor-width)] bg-white border border-border rounded-lg shadow-lg py-1 outline-none max-h-60 overflow-y-auto">
-            {options.map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => toggle(option.value)}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left text-sm",
-                  value === option.value
-                    ? "text-primary font-medium"
-                    : "text-foreground"
-                )}
-              >
-                {value === option.value && (
-                  <Check size={12} className="text-primary shrink-0" />
-                )}
-                {value !== option.value && <span className="size-3 shrink-0" />}
-                {option.label}
-              </button>
-            ))}
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
+      >
+        {options.map(option => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => toggle(option.value)}
+            className={cn(
+              "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left text-sm",
+              value === option.value
+                ? "text-primary font-medium"
+                : "text-foreground"
+            )}
+          >
+            {value === option.value && (
+              <Check size={12} className="text-primary shrink-0" />
+            )}
+            {value !== option.value && <span className="size-3 shrink-0" />}
+            {option.label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
 

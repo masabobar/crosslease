@@ -273,6 +273,7 @@ export default function UserManagementPage() {
         </div>
         {!isReadOnlyViewer && (
           <Button
+            size="lg"
             data-testid="invite-user-button"
             onClick={() => setIsModalOpen(true)}
           >
@@ -285,27 +286,27 @@ export default function UserManagementPage() {
       {/* Toolbar */}
       <div className="mt-6 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          {/* Search — icon on the right */}
-          <div className="relative">
-            <Input
-              data-testid="user-search-input"
-              placeholder="Search"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pr-9 w-64"
-            />
-            <Search
-              size={16}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-            />
-          </div>
+          {/* Search */}
+          <Input
+            data-testid="user-search-input"
+            placeholder="Search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-9 w-[288px]"
+            endAction={
+              <Search
+                size={16}
+                className="text-muted-foreground pointer-events-none"
+              />
+            }
+          />
 
           {/* Filter button — red dot when active */}
           <button
             type="button"
             data-testid="filter-button"
             onClick={() => setIsFilterOpen(true)}
-            className="relative border border-border rounded-xl p-2 text-muted-foreground hover:bg-muted transition-colors"
+            className="relative flex items-center justify-center border border-border rounded-[12px] p-[10px] text-muted-foreground hover:bg-muted transition-colors"
             aria-label={t("filter.label")}
           >
             <Filter size={16} />
@@ -318,7 +319,7 @@ export default function UserManagementPage() {
         <button
           type="button"
           data-testid="export-button"
-          className="shrink-0 flex items-center gap-1.5 border border-border rounded-xl px-3 h-9 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+          className="shrink-0 flex items-center gap-1.5 border border-border rounded-[12px] bg-background px-[10px] h-9 text-sm font-medium text-foreground hover:bg-muted transition-colors"
         >
           <FileDown size={16} />
           Export

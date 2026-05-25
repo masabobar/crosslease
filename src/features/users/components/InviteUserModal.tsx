@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import {
@@ -21,7 +22,6 @@ import type { UserResponse } from "@/features/users/api/schema"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { ApiError } from "@/lib/api"
-import { cn } from "@/lib/utils"
 
 type InviteUserModalProps = {
   open: boolean
@@ -359,15 +359,18 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 >
                   {t("modal.fields.accessValidFrom")}
                 </Label>
-                <Input
-                  id="accessValidFrom"
-                  type="date"
-                  data-testid="invite-access-valid-from"
-                  error={!!errors.accessValidFrom}
-                  className={cn(
-                    errors.accessValidFrom ? "border-destructive" : ""
+                <Controller
+                  control={form.control}
+                  name="accessValidFrom"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="accessValidFrom"
+                      data-testid="invite-access-valid-from"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={!!errors.accessValidFrom}
+                    />
                   )}
-                  {...form.register("accessValidFrom")}
                 />
                 {errors.accessValidFrom && (
                   <p className="mt-1 text-sm text-destructive">
@@ -384,15 +387,18 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 >
                   {t("modal.fields.accessValidUntil")}
                 </Label>
-                <Input
-                  id="accessValidUntil"
-                  type="date"
-                  data-testid="invite-access-valid-until"
-                  error={!!errors.accessValidUntil}
-                  className={cn(
-                    errors.accessValidUntil ? "border-destructive" : ""
+                <Controller
+                  control={form.control}
+                  name="accessValidUntil"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="accessValidUntil"
+                      data-testid="invite-access-valid-until"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={!!errors.accessValidUntil}
+                    />
                   )}
-                  {...form.register("accessValidUntil")}
                 />
                 {errors.accessValidUntil && (
                   <p className="mt-1 text-sm text-destructive">
