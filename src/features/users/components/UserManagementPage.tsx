@@ -248,7 +248,7 @@ export default function UserManagementPage() {
   const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
 
   return (
-    <div className="p-8">
+    <div className="p-8" data-testid="user-management-page">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">
@@ -259,7 +259,10 @@ export default function UserManagementPage() {
           </p>
         </div>
         {!isReadOnlyViewer && (
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button
+            data-testid="invite-user-button"
+            onClick={() => setIsModalOpen(true)}
+          >
             <UserPlus size={16} />
             {t("page.inviteButton")}
           </Button>
@@ -272,6 +275,7 @@ export default function UserManagementPage() {
           {/* Search — icon on the right */}
           <div className="relative">
             <Input
+              data-testid="user-search-input"
               placeholder="Search"
               value={search}
               onChange={e => {
@@ -289,6 +293,7 @@ export default function UserManagementPage() {
           {/* Filter button — red dot when active */}
           <button
             type="button"
+            data-testid="filter-button"
             onClick={() => setIsFilterOpen(true)}
             className="relative border border-border rounded-xl p-2 text-muted-foreground hover:bg-muted transition-colors"
             aria-label={t("filter.label")}
@@ -302,6 +307,7 @@ export default function UserManagementPage() {
 
         <button
           type="button"
+          data-testid="export-button"
           className="shrink-0 flex items-center gap-1.5 border border-border rounded-xl px-3 h-9 text-sm font-medium text-foreground hover:bg-muted transition-colors"
         >
           <FileDown size={16} />
@@ -358,6 +364,7 @@ export default function UserManagementPage() {
         <div className="mt-4 flex justify-end items-center gap-1">
           <button
             type="button"
+            data-testid="pagination-prev-button"
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -378,6 +385,7 @@ export default function UserManagementPage() {
               <button
                 key={item}
                 type="button"
+                data-testid={`pagination-page-${item}`}
                 onClick={() => setPage(item)}
                 className={
                   item === page
@@ -392,6 +400,7 @@ export default function UserManagementPage() {
 
           <button
             type="button"
+            data-testid="pagination-next-button"
             onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
             disabled={page === data.total_pages}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"

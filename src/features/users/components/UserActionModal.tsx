@@ -241,7 +241,11 @@ function UserActionModal({
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
-      <form onSubmit={onSubmit} className="px-6 py-4 space-y-5">
+      <form
+        onSubmit={onSubmit}
+        data-testid="user-action-form"
+        className="px-6 py-4 space-y-5"
+      >
         {/* Reason */}
         <div>
           <Label htmlFor="reason" error={!!errors.reason} className="mb-1.5">
@@ -314,6 +318,7 @@ function UserActionModal({
             </Label>
             <textarea
               id="comment"
+              data-testid="action-comment-input"
               className="w-full bg-background border border-border text-foreground text-sm rounded-lg outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary px-4 py-2.5 min-h-[80px] resize-none"
               placeholder={t("actions.fields.commentPlaceholder")}
               {...form.register("comment")}
@@ -331,12 +336,14 @@ function UserActionModal({
           <Button
             type="button"
             variant="outline"
+            data-testid="action-cancel-button"
             onClick={() => handleOpenChange(false)}
           >
             {t("modal.actions.cancel")}
           </Button>
           <Button
             type="submit"
+            data-testid="action-submit-button"
             variant={action === "deactivate" ? "destructive" : "default"}
             disabled={isSubmitting}
           >

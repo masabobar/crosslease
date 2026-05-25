@@ -174,6 +174,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
     <div className="relative">
       <button
         type="button"
+        data-testid={`user-row-menu-${user.id}`}
         onClick={() => setOpen(v => !v)}
         className="text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Actions"
@@ -187,6 +188,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {approveVisible && (
               <button
                 type="button"
+                data-testid="user-action-approve"
                 onClick={() => handleAction("approve")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -197,6 +199,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {resendVisible && (
               <button
                 type="button"
+                data-testid="user-action-resend-invitation"
                 onClick={() => handleAction("resend-invitation")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -207,6 +210,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {suspendVisible && (
               <button
                 type="button"
+                data-testid="user-action-suspend"
                 onClick={() => handleAction("suspend")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -217,6 +221,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {reactivateVisible && (
               <button
                 type="button"
+                data-testid="user-action-reactivate"
                 onClick={() => handleAction("reactivate")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -227,6 +232,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {deactivateVisible && (
               <button
                 type="button"
+                data-testid="user-action-deactivate"
                 onClick={() => handleAction("deactivate")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
               >
@@ -263,7 +269,7 @@ function UserTable({
   const sortedUsers = sortUsers(users, sort.key, sort.dir)
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="user-table">
       {/* Header row */}
       <div className="flex border-b border-border h-10 items-center">
         <div className="flex-1 min-w-0 px-2">
@@ -307,7 +313,7 @@ function UserTable({
 
       {/* Loading state */}
       {isLoading && (
-        <div className="space-y-0">
+        <div className="space-y-0" data-testid="user-table-loading">
           {SKELETON_ROWS.map(i => (
             <div
               key={i}
@@ -343,7 +349,10 @@ function UserTable({
 
       {/* Empty state */}
       {!isLoading && users.length === 0 && (
-        <div className="flex justify-center items-center h-[52px]">
+        <div
+          className="flex justify-center items-center h-[52px]"
+          data-testid="user-table-empty"
+        >
           <span className="text-sm text-muted-foreground">No users found.</span>
         </div>
       )}
@@ -353,6 +362,7 @@ function UserTable({
         sortedUsers.map(user => (
           <div
             key={user.id}
+            data-testid={`user-row-${user.id}`}
             className="flex border-b border-border h-[52px] items-center hover:bg-muted transition-colors cursor-pointer"
             onClick={() => onRowClick?.(user)}
           >
