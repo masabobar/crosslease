@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -9,7 +9,7 @@ import {
   getPasswordRequirements,
 } from "../api/forgotPasswordSchema"
 import type { ResetPasswordInput } from "../api/forgotPasswordSchema"
-import { resetPassword } from "../api/forgotPasswordApi"
+import { validateResetToken, resetPassword } from "../api/forgotPasswordApi"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
@@ -24,24 +24,36 @@ import {
 } from "./AuthCard"
 import { cn } from "@/lib/utils"
 
-type Step = "set-password" | "success"
+type PageState = "loading" | "valid" | "blocked" | "success"
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation("auth")
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [step, setStep] = useState<Step>("set-password")
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
   const token = searchParams.get("token") ?? ""
 
+  // Derive initial state from token presence — avoids synchronous setState in effect
+  const [pageState, setPageState] = useState<PageState>(() =>
+    token ? "loading" : "blocked"
+  )
+
+  useEffect(() => {
+    if (!token) return
+    validateResetToken(token)
+      .then(() => setPageState("valid"))
+      .catch(() => setPageState("blocked"))
+  }, [token])
+
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(ResetPasswordInputSchema),
-    defaultValues: { password: "" },
+    defaultValues: { password: "", password_confirm: "" },
   })
 
-  const { isSubmitting, submitCount } = form.formState
+  const { isSubmitting, submitCount, errors } = form.formState
   const hasSubmitted = submitCount > 0
   const password = useWatch({
     control: form.control,
@@ -53,12 +65,17 @@ export default function ResetPasswordPage() {
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
     try {
-      await resetPassword(token, data.password)
-      setStep("success")
+      await resetPassword(token, data.password, data.password_confirm)
+      setPageState("success")
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
       const messages: Record<string, string> = {
-        INVALID_TOKEN: t("resetPassword.setPassword.errors.INVALID_TOKEN"),
+        PASSWORD_RESET_TOKEN_INVALID: t(
+          "resetPassword.setPassword.errors.PASSWORD_RESET_TOKEN_INVALID"
+        ),
+        PASSWORD_RESET_TOKEN_EXPIRED: t(
+          "resetPassword.setPassword.errors.PASSWORD_RESET_TOKEN_EXPIRED"
+        ),
       }
       setServerError(
         messages[code] ?? t("resetPassword.setPassword.errors.default")
@@ -66,34 +83,102 @@ export default function ResetPasswordPage() {
     }
   })
 
+  if (pageState === "loading") {
+    return (
+      <AuthPageLayout>
+        <div
+          data-testid="reset-password-loading"
+          className="w-full max-w-[400px] flex items-center justify-center py-12"
+        >
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
+  if (pageState === "blocked") {
+    return (
+      <AuthPageLayout>
+        <div
+          data-testid="reset-password-blocked"
+          className="w-full max-w-[400px] bg-card rounded-xl shadow-sm border border-border p-6"
+        >
+          <h1 className="text-xl font-semibold text-foreground">
+            {t("resetPassword.blocked.title")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("resetPassword.blocked.body")}
+          </p>
+          <Button
+            type="button"
+            data-testid="reset-password-blocked-request-new"
+            onClick={() => navigate(PATHS.FORGOT_PASSWORD)}
+            className="mt-6 w-full h-9 px-3.5"
+          >
+            {t("resetPassword.blocked.requestNew")}
+          </Button>
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
+  if (pageState === "success") {
+    return (
+      <AuthPageLayout>
+        <div
+          className="w-full max-w-[400px] bg-card rounded-xl shadow-sm border border-border p-6"
+          data-testid="reset-password-success"
+        >
+          <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center mb-4">
+            <Check size={24} className="text-success" strokeWidth={2.5} />
+          </div>
+          <h1 className="text-xl font-semibold text-foreground">
+            {t("resetPassword.success.title")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("resetPassword.success.body")}
+          </p>
+          <Button
+            type="button"
+            data-testid="reset-password-back-to-sign-in"
+            onClick={() => navigate(PATHS.LOGIN)}
+            className="mt-6 w-full h-9 px-3.5"
+          >
+            {t("resetPassword.success.backToSignIn")}
+          </Button>
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
   return (
     <AuthPageLayout>
-      {step === "set-password" ? (
-        <AuthCard>
-          <AuthCardHeader>
-            <h1 className="text-xl font-semibold text-foreground">
-              {t("resetPassword.setPassword.title")}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("resetPassword.setPassword.subtitle")}
-            </p>
-          </AuthCardHeader>
+      <AuthCard>
+        <AuthCardHeader>
+          <h1 className="text-xl font-semibold text-foreground">
+            {t("resetPassword.setPassword.title")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("resetPassword.setPassword.subtitle")}
+          </p>
+        </AuthCardHeader>
 
-          <AuthCardBody>
-            {serverError && (
-              <div
-                data-testid="reset-password-error-message"
-                className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm"
-              >
-                {serverError}
-              </div>
-            )}
-
-            <form
-              id="reset-password-form"
-              data-testid="reset-password-form"
-              onSubmit={onSubmit}
+        <AuthCardBody>
+          {serverError && (
+            <div
+              data-testid="reset-password-error-message"
+              className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm"
             >
+              {serverError}
+            </div>
+          )}
+
+          <form
+            id="reset-password-form"
+            data-testid="reset-password-form"
+            onSubmit={onSubmit}
+          >
+            <div className="space-y-4">
               <div>
                 <Label htmlFor="rp-password" className="mb-1.5">
                   {t("resetPassword.setPassword.passwordLabel")}
@@ -166,48 +251,69 @@ export default function ResetPasswordPage() {
                   ))}
                 </ul>
               </div>
-            </form>
-          </AuthCardBody>
 
-          <AuthCardFooter>
-            <Button
-              type="submit"
-              form="reset-password-form"
-              size="lg"
-              disabled={isSubmitting}
-              data-testid="reset-password-submit-button"
-              className="px-3.5"
-            >
-              {isSubmitting
-                ? t("resetPassword.setPassword.updating")
-                : t("resetPassword.setPassword.updatePassword")}
-            </Button>
-          </AuthCardFooter>
-        </AuthCard>
-      ) : (
-        <div
-          className="w-full max-w-[400px] bg-card rounded-xl shadow-sm border border-border p-6"
-          data-testid="reset-password-success"
-        >
-          <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center mb-4">
-            <Check size={24} className="text-success" strokeWidth={2.5} />
-          </div>
-          <h1 className="text-xl font-semibold text-foreground">
-            {t("resetPassword.success.title")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("resetPassword.success.body")}
-          </p>
+              <div>
+                <Label htmlFor="rp-confirm" className="mb-1.5">
+                  {t("resetPassword.setPassword.confirmPasswordLabel")}
+                </Label>
+                <Input
+                  id="rp-confirm"
+                  type={showConfirm ? "text" : "password"}
+                  autoComplete="new-password"
+                  data-testid="reset-password-confirm-input"
+                  error={!!errors.password_confirm}
+                  startIcon={<Lock size={16} />}
+                  className="pl-9 text-sm"
+                  endAction={
+                    <button
+                      type="button"
+                      data-testid="reset-password-confirm-toggle-visibility"
+                      onClick={() => setShowConfirm(v => !v)}
+                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      aria-label={
+                        showConfirm
+                          ? t("resetPassword.setPassword.hidePassword")
+                          : t("resetPassword.setPassword.showPassword")
+                      }
+                    >
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  }
+                  {...form.register("password_confirm")}
+                />
+                {errors.password_confirm && (
+                  <p
+                    data-testid="reset-password-confirm-error"
+                    className="mt-1.5 text-xs text-destructive"
+                  >
+                    {errors.password_confirm.message ===
+                    "PASSWORDS_DO_NOT_MATCH"
+                      ? t(
+                          "resetPassword.setPassword.errors.PASSWORDS_DO_NOT_MATCH"
+                        )
+                      : errors.password_confirm.message}
+                  </p>
+                )}
+              </div>
+            </div>
+          </form>
+        </AuthCardBody>
+
+        <AuthCardFooter>
           <Button
-            type="button"
-            data-testid="reset-password-back-to-sign-in"
-            onClick={() => navigate(PATHS.LOGIN)}
-            className="mt-6 w-full h-9 px-3.5"
+            type="submit"
+            form="reset-password-form"
+            size="lg"
+            disabled={isSubmitting}
+            data-testid="reset-password-submit-button"
+            className="px-3.5"
           >
-            {t("resetPassword.success.backToSignIn")}
+            {isSubmitting
+              ? t("resetPassword.setPassword.updating")
+              : t("resetPassword.setPassword.updatePassword")}
           </Button>
-        </div>
-      )}
+        </AuthCardFooter>
+      </AuthCard>
     </AuthPageLayout>
   )
 }
