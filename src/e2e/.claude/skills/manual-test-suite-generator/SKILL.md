@@ -1,6 +1,6 @@
 ---
 name: manual-test-suite-generator
-description: "Convert Jira user story acceptance criteria into executable BDD test cases using Gherkin syntax. Invoke when the qa-lead pipeline reaches Stage 4, after jira-story-extractor (dor_status PASS) and requirements-design-comparator (comparison_status CLEAN or WARNINGS) have completed for the same story. Saves one .md file per story in src/e2e/tests/ named after the story ID and title subject (e.g. PRD1042-39 User Login.md). Each file contains Given-When-Then scenarios organized by AC. Focuses on happy path + main error states only — not every edge case. Auto-applies RefiNext domain rules to add negative tests for role access, Four-Eyes, tenant isolation, async operations, and state transitions. Flags uncovered ACs."
+description: "Convert Jira user story acceptance criteria into executable BDD test cases using Gherkin syntax. Invoke when the qa-lead pipeline reaches Stage 4, after jira-story-extractor (dor_status PASS) and requirements-design-comparator (comparison_status CLEAN or WARNINGS) have completed for the same story. Saves one .md file per story in src/e2e/tests/ named after the story ID and title subject (e.g. PRD1042-43 User Login.md). The generated Gherkin contains ONLY happy-path and main-error scenarios — edge-case and separate-feature ACs are listed in the scope filter table but produce NO Gherkin block. Flags uncovered ACs."
 allowed-tools: Read, Write, TaskCreate, TaskUpdate
 model: sonnet
 ---
@@ -59,8 +59,10 @@ For every AC in the story, assign one of four labels:
 |---|---|---|
 | `happy-path` | Core success flow — user completes the primary action | INCLUDE — 1 Scenario Outline covering all roles |
 | `main-error` | Directly blocks the user from completing the core workflow | INCLUDE — 1–2 scenarios max per error type |
-| `edge-case` | Boundary condition, implementation detail, rare state, or validation rule | SKIP |
-| `separate-feature` | Has its own user story, own ticket, or own test file | SKIP |
+| `edge-case` | Boundary condition, implementation detail, rare state, or validation rule | SKIP — appear in scope filter table only, no Gherkin |
+| `separate-feature` | Has its own user story, own ticket, or own test file | SKIP — appear in scope filter table only, no Gherkin |
+
+> **Hard rule:** The `.md` file contains Gherkin blocks **only** for `happy-path` and `main-error` ACs. `edge-case` and `separate-feature` ACs are listed in the scope filter table with their label and rationale, but produce **no Gherkin** — not conditional, not commented-out, not marked "fixme". Omit them entirely from the Gherkin output.
 
 **Classification rules:**
 - If the AC describes timing behaviour (timeouts, clock skew, token TTL) → `separate-feature`
@@ -326,11 +328,11 @@ Feature: Role-Based Access Control (US 28.12)
 
 ## AC coverage check
 
-After generating scenarios, run a coverage check:
-- Every AC in the story must have ≥ 1 scenario tracing to it
-- Flag gaps as `[UNCOVERED AC: AC-X]`
+After generating scenarios, run a coverage check and print the result to terminal output only — do not write it to the `.md` file:
+- Every `happy-path` and `main-error` AC must have ≥ 1 scenario tracing to it
+- Print gaps as `[UNCOVERED AC: AC-X]` in terminal output
 - Every scenario must cite its AC via `@ac-XX` tag and title suffix `(AC-XX)`
-- If a scenario cannot be traced to a specific AC, it is either a story gap (log it) or exploratory (label `@exploratory`)
+- If a scenario cannot be traced to a specific AC, it is either a story gap (log it to terminal) or exploratory (label `@exploratory`)
 
 ---
 
@@ -345,7 +347,7 @@ After generating scenarios, run a coverage check:
 - **Declarative, not scripted** — Write "I log in" not "click field, enter email, click button"
 - **Tag every scenario** — Use `@us-X.X`, `@ac-XX`, `@p0`, `@happy-path`, `@error-handling`
 - **Use semantic selectors** — `button:has-text("Login")` not `button.btn-primary-lg`
-- **Skip blocked ACs** — if a required environment override, seam, or API is unavailable, do not write a scenario; list the AC as blocked in the file header only
+- **Skip blocked ACs** — if a required environment override, seam, or API is unavailable, do not write a scenario and do not write a pending stub; list the AC in the Blocked ACs table in the file header only
 
 ### DON'T ❌
 
@@ -376,7 +378,7 @@ Scenario: Unauthorized API action rejected
 - `@ac-XX` — Acceptance Criterion (e.g., `@ac-03`)
 - `@p0` / `@p1` / `@p2` / `@p3` — Priority (P0 = blocker, P3 = nice-to-have)
 - `@happy-path` / `@error-handling` / `@compliance` / `@exploratory` — Scenario type
-- `@pending` — Blocked; no scenario generated; listed in file header only
+- `@pending` — Blocked; no scenario generated, no pending stub written; listed in the Blocked ACs table in the file header only
 
 ---
 

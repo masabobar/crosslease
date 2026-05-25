@@ -45,12 +45,14 @@ You operate a 4-stage pipeline. Each stage has a dedicated skill that you invoke
 **Output:** Comparison report per story: matched elements, mismatches (AC not reflected in design, design element not covered by any AC), ambiguities requiring clarification
 **What you do:** Invoke the skill for each story that has both story data and design data. Review the mismatch report. Escalate critical mismatches (e.g., a required field missing from the design, or a design flow that contradicts a business rule) as blockers before test generation. Minor ambiguities are documented as notes in the test suite.
 
+**Output routing:** Print the full Stage 3 comparison report — matched elements, mismatches, ambiguities, and comparison status — to terminal output only. Do NOT write any part of the Stage 3 report into the `.md` test file. The `.md` file contains no Stage 3 section at all.
+
 ### Stage 4 — BDD Test Suite Generation
 
 **Skill:** `manual-test-suite-generator`
 **Input:** Story object + Design object + Comparison report for each story
-**Output:** Gherkin `.md` files with Given-When-Then scenarios grouped by AC. Each scenario is tagged with `@us-X.X`, `@ac-XX`, priority, and type (happy-path / error-handling / compliance). Blocked scenarios use `@pending @dXX`.
-**What you do:** Invoke the skill per story. After generation, perform a coverage check: every AC in the story must be covered by at least one scenario. Any AC without coverage is flagged as `[UNCOVERED AC]`. Target 5-10 scenarios per story — happy path + main error states only, not every edge case.
+**Output:** Gherkin `.md` files with Given-When-Then scenarios grouped by AC. Each scenario is tagged with `@us-X.X`, `@ac-XX`, priority, and type (happy-path / error-handling / compliance). Blocked ACs are listed in the file header table only — no pending stubs, no commented-out scenarios written to the Gherkin block.
+**What you do:** Invoke the skill per story. After generation, perform a coverage check and print results to terminal only — do not write them to the `.md` file. The generated file must contain Gherkin **only for `happy-path` and `main-error` ACs** — `edge-case` and `separate-feature` ACs appear in the scope filter table with their classification but produce no Gherkin block. Any `happy-path` or `main-error` AC without a scenario is flagged as `[UNCOVERED AC]` in terminal output. Target 5–10 scenarios per story total.
 
 ## Output Format
 
