@@ -1,5 +1,86 @@
-import { useRef, type ClipboardEvent, type KeyboardEvent } from "react"
+import * as React from "react"
+import { OTPInput, OTPInputContext } from "input-otp"
+import { MinusIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+// ─── Shadcn composable exports ────────────────────────────────────────────────
+
+function InputOTPRoot({
+  className,
+  containerClassName,
+  ...props
+}: React.ComponentProps<typeof OTPInput> & { containerClassName?: string }) {
+  return (
+    <OTPInput
+      data-slot="input-otp"
+      containerClassName={cn(
+        "cn-input-otp flex items-center has-disabled:opacity-50",
+        containerClassName
+      )}
+      spellCheck={false}
+      className={cn("disabled:cursor-not-allowed", className)}
+      {...props}
+    />
+  )
+}
+
+function InputOTPGroup({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="input-otp-group"
+      className={cn(
+        "flex items-center rounded-lg has-aria-invalid:border-destructive has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20 dark:has-aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function InputOTPSlot({
+  index,
+  className,
+  ...props
+}: React.ComponentProps<"div"> & { index: number }) {
+  const inputOTPContext = React.useContext(OTPInputContext)
+  const { char, hasFakeCaret, isActive } = inputOTPContext?.slots[index] ?? {}
+
+  return (
+    <div
+      data-slot="input-otp-slot"
+      data-active={isActive}
+      className={cn(
+        "relative flex size-8 items-center justify-center border-y border-r border-input text-sm transition-all outline-none first:rounded-l-lg first:border-l last:rounded-r-lg aria-invalid:border-destructive data-[active=true]:z-10 data-[active=true]:border-ring data-[active=true]:ring-3 data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    >
+      {char}
+      {hasFakeCaret && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function InputOTPSeparator({ ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="input-otp-separator"
+      className="flex items-center [&_svg:not([class*='size-'])]:size-4"
+      role="separator"
+      {...props}
+    >
+      <MinusIcon />
+    </div>
+  )
+}
+
+export { InputOTPRoot, InputOTPGroup, InputOTPSlot, InputOTPSeparator }
+
+// ─── InputOTP: convenience wrapper preserving existing API ────────────────────
 
 type InputOTPProps = {
   value: string
@@ -18,98 +99,30 @@ function InputOTP({
   disabled = false,
   autoFocus = false,
 }: InputOTPProps) {
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-
-  const chars = Array.from({ length }, (_, i) => value[i] ?? "")
-
-  const focusAt = (index: number) => {
-    inputRefs.current[Math.min(Math.max(index, 0), length - 1)]?.focus()
-  }
-
-  const handleChange = (index: number, inputValue: string) => {
-    const digit = inputValue.replace(/\D/g, "").slice(-1)
-    if (!digit) return
-    const newValue = (
-      value.slice(0, index) +
-      digit +
-      value.slice(index + 1)
-    ).slice(0, length)
-    onChange(newValue)
-    if (index < length - 1) focusAt(index + 1)
-  }
-
-  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace") {
-      e.preventDefault()
-      if (chars[index] !== "") {
-        onChange(value.slice(0, index) + value.slice(index + 1))
-        if (index > 0) focusAt(index - 1)
-      } else if (index > 0) {
-        onChange(value.slice(0, index - 1) + value.slice(index))
-        focusAt(index - 1)
-      }
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault()
-      focusAt(index - 1)
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault()
-      focusAt(index + 1)
-    }
-  }
-
-  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, length)
-    onChange(pasted)
-    focusAt(Math.min(pasted.length, length - 1))
-  }
-
-  const handleFocus = (index: number) => {
-    const firstEmpty = chars.findIndex(c => c === "")
-    if (firstEmpty !== -1 && index > firstEmpty) {
-      focusAt(firstEmpty)
-    }
-  }
-
   return (
-    <div className="flex w-full" data-testid="otp-input">
-      {chars.map((char, i) => (
-        <input
-          key={i}
-          ref={el => {
-            inputRefs.current[i] = el
-          }}
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={2}
-          value={char}
-          autoFocus={autoFocus && i === 0}
-          disabled={disabled}
-          data-testid={`otp-input-${i}`}
-          onChange={e => handleChange(i, e.target.value)}
-          onKeyDown={e => handleKeyDown(i, e)}
-          onPaste={handlePaste}
-          onFocus={() => handleFocus(i)}
-          className={cn(
-            "flex-1 min-w-0 h-16 text-center text-base bg-card",
-            "focus:outline-none focus:z-10 relative transition-colors",
-            i === 0
-              ? "border rounded-l-[10px]"
-              : i === length - 1
-                ? "border-y border-r rounded-r-[10px]"
-                : "border-y border-r",
-            hasError
-              ? "border-destructive text-destructive"
-              : "border-input text-foreground focus:border-primary",
-            disabled && "opacity-50 cursor-not-allowed"
-          )}
-        />
-      ))}
-    </div>
+    <InputOTPRoot
+      maxLength={length}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      autoFocus={autoFocus}
+      containerClassName="w-full"
+    >
+      <InputOTPGroup className="w-full">
+        {Array.from({ length }, (_, i) => (
+          <InputOTPSlot
+            key={i}
+            index={i}
+            data-testid={`otp-input-${i}`}
+            className={cn(
+              "flex-1 h-16 text-base bg-card",
+              hasError && "aria-invalid:border-destructive"
+            )}
+            aria-invalid={hasError || undefined}
+          />
+        ))}
+      </InputOTPGroup>
+    </InputOTPRoot>
   )
 }
 

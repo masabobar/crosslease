@@ -1,4 +1,6 @@
 import { create } from "zustand"
+import { toast as sonnerToast } from "sonner"
+import type { ExternalToast } from "sonner"
 
 export type ToastVariant = "warning" | "success"
 
@@ -10,28 +12,32 @@ type ToastPayload = {
 }
 
 type ToastState = {
-  toast: ToastPayload | null
   showToast: (payload: ToastPayload) => void
   dismissToast: () => void
 }
 
-let _timer: ReturnType<typeof setTimeout> | null = null
+let _activeId: string | number | null = null
 
-export const useToastStore = create<ToastState>(set => ({
-  toast: null,
-  showToast: payload => {
-    if (_timer) clearTimeout(_timer)
-    set({ toast: payload })
-    _timer = setTimeout(() => {
-      set({ toast: null })
-      _timer = null
-    }, 5000)
+export const useToastStore = create<ToastState>(() => ({
+  showToast: ({ variant, title, message, actionLabel }: ToastPayload) => {
+    if (_activeId !== null) sonnerToast.dismiss(_activeId)
+
+    const opts: ExternalToast = {
+      description: message,
+      ...(actionLabel
+        ? { action: { label: actionLabel, onClick: () => {} } }
+        : {}),
+    }
+
+    _activeId =
+      variant === "success"
+        ? sonnerToast.success(title, opts)
+        : sonnerToast.warning(title, opts)
   },
   dismissToast: () => {
-    if (_timer) {
-      clearTimeout(_timer)
-      _timer = null
+    if (_activeId !== null) {
+      sonnerToast.dismiss(_activeId)
+      _activeId = null
     }
-    set({ toast: null })
   },
 }))

@@ -4,9 +4,9 @@ import { z } from "zod"
 import { useTranslation } from "react-i18next"
 import { DialogModal } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
 import {
   SUSPENSION_REASONS,
@@ -284,12 +284,18 @@ function UserActionModal({
               >
                 {t("actions.fields.effective_from")}
               </Label>
-              <Input
-                id="effective_from"
-                type="date"
-                data-testid="action-effective-from"
-                error={!!errors.effective_from}
-                {...form.register("effective_from")}
+              <Controller
+                control={form.control}
+                name="effective_from"
+                render={({ field }) => (
+                  <DatePicker
+                    id="effective_from"
+                    data-testid="action-effective-from"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.effective_from}
+                  />
+                )}
               />
               {errors.effective_from && (
                 <p className="mt-1 text-sm text-destructive">
@@ -302,11 +308,17 @@ function UserActionModal({
                 <Label htmlFor="effective_until" className="mb-1.5">
                   {t("actions.fields.effective_until")}
                 </Label>
-                <Input
-                  id="effective_until"
-                  type="date"
-                  data-testid="action-effective-until"
-                  {...form.register("effective_until")}
+                <Controller
+                  control={form.control}
+                  name="effective_until"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="effective_until"
+                      data-testid="action-effective-until"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
             )}
