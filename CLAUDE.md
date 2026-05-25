@@ -219,6 +219,12 @@ import type { User } from '@/features/users/api/schema'
 
 ---
 
+## Responsive design
+
+This app is primarily used on desktop. Responsiveness is **not a priority** — do not spend time perfecting mobile layouts. That said, components should be semi-responsive: avoid fixed pixel widths that would break obviously on smaller viewports, use Tailwind's responsive prefixes where it costs nothing, but do not add breakpoint complexity just for mobile.
+
+---
+
 ## UI components
 
 Components in `src/components/ui/` are built with:
@@ -443,6 +449,7 @@ No `any` is permitted in any E2E file.
 
 - One POM class per feature area (e.g., `LoginPage`, `UserManagementPage`)
 - Locators defined as class properties using `page.getByRole` / `page.getByTestId` — prefer accessible locators over CSS selectors or class names
+- When creating new elements that need to be testable, add `data-testid` with a descriptive name (e.g. `data-testid="submit-button"`, not `data-testid="btn-1"`)
 - POM methods encapsulate multi-step interactions; specs read as business-level flows
 
 **App architecture notes relevant to E2E**
@@ -473,10 +480,64 @@ No `any` is permitted in any E2E file.
 
 ---
 
+## Internationalisation (i18n)
+
+The app uses `react-i18next`. English is bundled at startup; German is lazy-loaded on first language switch.
+
+**When adding a new string:**
+- Put it in the appropriate namespace JSON under `src/i18n/locales/en/`
+- Add the matching key to `src/i18n/locales/de/` (even if the value is the same for now — keeps the files in sync)
+- Never hardcode user-visible strings in components — always go through `t()`
+
+**When adding a new feature:**
+1. Create `src/i18n/locales/en/<feature>.json` and `src/i18n/locales/de/<feature>.json`
+2. Add the namespace to `CustomTypeOptions` in `src/i18n/types.d.ts`:
+   ```ts
+   resources: {
+     common: typeof enCommon
+     auth: typeof enAuth   // ← add here
+   }
+   ```
+3. Bundle the English namespace in `config.ts` under `resources.en`
+4. Add a German loader entry to `languageLoaders` in `config.ts`:
+   ```ts
+   de: async () => {
+     const [common, auth] = await Promise.all([
+       import('./locales/de/common.json'),
+       import('./locales/de/auth.json'),  // ← add here
+     ])
+     i18n.addResourceBundle('de', 'common', common.default)
+     i18n.addResourceBundle('de', 'auth', auth.default)  // ← and here
+   },
+   ```
+
+**Language switching** — call `changeLanguage(lang)` exported from `src/i18n/config.ts`. A future Zustand language store should call this and persist the choice to `localStorage`.
+
+---
+
 ## Git commits
 
 Stage only the changed files explicitly — no `git add -A` or `git add .`.
 
-Commit message: single line, conventional commit format — `type: short description`. No body, no newlines, no author attribution.
+Commit message: single line, conventional commit format — `type: short description #TICKET`. No body, no newlines, no author attribution.
 
-Types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `test`, `style`.
+Every commit must end with either a Jira ticket (`#PRD1006-42`) or `#no-ticket` when there's no associated ticket.
+
+Types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `test`, `style`, `perf`, `build`, `revert`.
+
+Examples:
+- `feat: add lease table #PRD1006-42`
+- `fix: correct token refresh logic #PRD1006-7`
+- `chore: update dependencies #no-ticket`
+
+### Enforcement pipeline
+
+**pre-commit** (every commit):
+- `lint-staged` — ESLint (`--max-warnings=0`) + Prettier on staged `.ts`/`.tsx` files; Prettier on staged `.json`/`.md`
+- `scripts/check-forbidden-code.js` — blocks `console.log/warn/debug`, `debugger`, and focused tests (`.only`) in non-test files
+- `type-check` — full TypeScript compilation check
+
+**commit-msg:** commitlint — enforces conventional commit format and Jira ticket/`#no-ticket`
+
+**pre-push** (before pushing):
+- `test:run` — full Vitest suite
