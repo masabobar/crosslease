@@ -1,5 +1,4 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand"
 
 interface AuthState {
   accessToken: string | null
@@ -8,14 +7,9 @@ interface AuthState {
   clearTokens: () => void
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      accessToken: null,
-      refreshToken: null,
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      clearTokens: () => set({ accessToken: null, refreshToken: null }),
-    }),
-    { name: 'auth' },
-  ),
-)
+export const useAuthStore = create<AuthState>()(set => ({
+  accessToken: null,
+  refreshToken: null,
+  setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+  clearTokens: () => set({ accessToken: null, refreshToken: null }),
+}))

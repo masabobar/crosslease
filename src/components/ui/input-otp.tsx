@@ -75,7 +75,7 @@ function InputOTP({
   }
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full" data-testid="otp-input">
       {chars.map((char, i) => (
         <input
           key={i}
@@ -89,7 +89,7 @@ function InputOTP({
           value={char}
           autoFocus={autoFocus && i === 0}
           disabled={disabled}
-          data-testid={`otp-slot-${i}`}
+          data-testid={`otp-input-${i}`}
           onChange={e => handleChange(i, e.target.value)}
           onKeyDown={e => handleKeyDown(i, e)}
           onPaste={handlePaste}

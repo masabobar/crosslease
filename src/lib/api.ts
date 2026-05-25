@@ -59,9 +59,8 @@ api.interceptors.response.use(
           }
 
           try {
-            // TODO: update path when BE implements the refresh endpoint
             const { data } = await axios.post(
-              `${import.meta.env.VITE_API_URL}/auth/token/refresh`,
+              `${import.meta.env.VITE_API_URL}/users/refresh-token`,
               { refresh_token: refreshToken }
             )
             setTokens(data.data.access_token, data.data.refresh_token)
