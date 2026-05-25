@@ -26,38 +26,79 @@ describe("ForgotPasswordInputSchema", () => {
 describe("ResetPasswordInputSchema", () => {
   const VALID = "Abcdef1!"
 
-  it("accepts a fully valid password", () => {
+  it("accepts matching valid passwords", () => {
     expect(() =>
-      ResetPasswordInputSchema.parse({ password: VALID })
+      ResetPasswordInputSchema.parse({
+        password: VALID,
+        password_confirm: VALID,
+      })
     ).not.toThrow()
   })
 
+  it("rejects mismatched passwords", () => {
+    expect(() =>
+      ResetPasswordInputSchema.parse({
+        password: VALID,
+        password_confirm: "Different1!",
+      })
+    ).toThrow()
+  })
+
   it("rejects a password shorter than 8 characters", () => {
-    expect(() => ResetPasswordInputSchema.parse({ password: "Ab1!" })).toThrow()
+    expect(() =>
+      ResetPasswordInputSchema.parse({
+        password: "Ab1!",
+        password_confirm: "Ab1!",
+      })
+    ).toThrow()
   })
 
   it("rejects a password without an uppercase letter", () => {
     expect(() =>
-      ResetPasswordInputSchema.parse({ password: "abcdef1!" })
+      ResetPasswordInputSchema.parse({
+        password: "abcdef1!",
+        password_confirm: "abcdef1!",
+      })
     ).toThrow()
   })
 
   it("rejects a password without a lowercase letter", () => {
     expect(() =>
-      ResetPasswordInputSchema.parse({ password: "ABCDEF1!" })
+      ResetPasswordInputSchema.parse({
+        password: "ABCDEF1!",
+        password_confirm: "ABCDEF1!",
+      })
     ).toThrow()
   })
 
   it("rejects a password without a number", () => {
     expect(() =>
-      ResetPasswordInputSchema.parse({ password: "Abcdefg!" })
+      ResetPasswordInputSchema.parse({
+        password: "Abcdefg!",
+        password_confirm: "Abcdefg!",
+      })
     ).toThrow()
   })
 
   it("rejects a password without a symbol", () => {
     expect(() =>
-      ResetPasswordInputSchema.parse({ password: "Abcdef12" })
+      ResetPasswordInputSchema.parse({
+        password: "Abcdef12",
+        password_confirm: "Abcdef12",
+      })
     ).toThrow()
+  })
+
+  it("puts the mismatch error on the password_confirm path", () => {
+    const result = ResetPasswordInputSchema.safeParse({
+      password: VALID,
+      password_confirm: "Wrong1!",
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map(i => i.path.join("."))
+      expect(paths).toContain("password_confirm")
+    }
   })
 })
 
