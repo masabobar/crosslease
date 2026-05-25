@@ -491,9 +491,9 @@ export default function UserDetailPage() {
   const { data: user, isLoading, isError } = useUserDetail(id ?? null)
 
   return (
-    <div className="p-8">
+    <div className="p-8" data-testid="user-detail-page">
       {isLoading && (
-        <div className="space-y-6">
+        <div data-testid="user-detail-loading" className="space-y-6">
           <div className="h-28 bg-muted rounded-[10px] animate-pulse" />
           <div className="flex gap-6">
             <div className="flex-1 h-48 bg-muted rounded-[10px] animate-pulse" />
@@ -504,7 +504,10 @@ export default function UserDetailPage() {
       )}
 
       {isError && !isLoading && (
-        <div className="flex items-center justify-center h-40">
+        <div
+          data-testid="user-detail-error"
+          className="flex items-center justify-center h-40"
+        >
           <p className="text-sm text-muted-foreground">
             {t("detail.loadError")}
           </p>

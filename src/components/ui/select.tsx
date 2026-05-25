@@ -7,6 +7,7 @@ type SelectOption = { value: string; label: string }
 
 type SelectFieldProps = {
   id?: string
+  "data-testid"?: string
   value: string
   onValueChange: (value: string) => void
   options: SelectOption[]
@@ -19,6 +20,7 @@ type SelectFieldProps = {
 
 function SelectField({
   id,
+  "data-testid": testId,
   value,
   onValueChange,
   options,
@@ -38,6 +40,7 @@ function SelectField({
     >
       <Select.Trigger
         id={id}
+        data-testid={testId}
         className={cn(
           "w-full bg-background border text-foreground rounded-lg outline-none transition-colors",
           "flex items-center justify-between",

@@ -67,6 +67,7 @@ type MultiSelectProps<T extends string> = {
   placeholder: string
   renderOption: (option: T) => React.ReactNode
   getLabel: (option: T) => string
+  "data-testid"?: string
 }
 
 function MultiSelectDropdown<T extends string>({
@@ -76,6 +77,7 @@ function MultiSelectDropdown<T extends string>({
   placeholder,
   renderOption,
   getLabel,
+  "data-testid": testId,
 }: MultiSelectProps<T>) {
   function toggle(option: T) {
     onChange(
@@ -95,6 +97,7 @@ function MultiSelectDropdown<T extends string>({
   return (
     <Popover.Root>
       <Popover.Trigger
+        data-testid={testId}
         className={cn(
           "w-full h-9 px-3 flex items-center justify-between",
           "border border-border rounded-lg bg-background",
@@ -195,11 +198,13 @@ function SingleSelectDropdown({
   onChange,
   options,
   placeholder,
+  "data-testid": testId,
 }: {
   value: string | null
   onChange: (value: string | null) => void
   options: { value: string; label: string }[]
   placeholder: string
+  "data-testid"?: string
 }) {
   const selected = options.find(o => o.value === value)
 
@@ -210,6 +215,7 @@ function SingleSelectDropdown({
   return (
     <Popover.Root>
       <Popover.Trigger
+        data-testid={testId}
         className={cn(
           "w-full h-9 px-3 flex items-center justify-between",
           "border border-border rounded-lg bg-background",
@@ -343,6 +349,7 @@ function UserFilterPanel({
               placeholder={t("filter.placeholders.select")}
               renderOption={role => <RoleBadge role={role as UserRole} />}
               getLabel={role => t(`roles.${role}` as RolesKey)}
+              data-testid="filter-role-select"
             />
           </FilterField>
 
@@ -358,6 +365,7 @@ function UserFilterPanel({
                 <UserStatusBadge status={status as UserStatus} />
               )}
               getLabel={status => t(`statuses.${status}` as StatusesKey)}
+              data-testid="filter-status-select"
             />
           </FilterField>
 
@@ -379,6 +387,7 @@ function UserFilterPanel({
               onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
               options={tenantOptions}
               placeholder={t("filter.placeholders.tenant")}
+              data-testid="filter-tenant-select"
             />
           </FilterField>
 

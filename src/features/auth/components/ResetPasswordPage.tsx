@@ -81,12 +81,19 @@ export default function ResetPasswordPage() {
 
           <AuthCardBody>
             {serverError && (
-              <div className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
+              <div
+                data-testid="reset-password-error-message"
+                className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm"
+              >
                 {serverError}
               </div>
             )}
 
-            <form id="reset-password-form" onSubmit={onSubmit}>
+            <form
+              id="reset-password-form"
+              data-testid="reset-password-form"
+              onSubmit={onSubmit}
+            >
               <div>
                 <Label htmlFor="rp-password" className="mb-1.5">
                   {t("resetPassword.setPassword.passwordLabel")}
@@ -193,6 +200,7 @@ export default function ResetPasswordPage() {
           </p>
           <Button
             type="button"
+            data-testid="reset-password-back-to-sign-in"
             onClick={() => navigate(PATHS.LOGIN)}
             className="mt-6 w-full h-9 px-3.5"
           >

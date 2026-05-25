@@ -257,6 +257,7 @@ function UserActionModal({
             render={({ field }) => (
               <SelectField
                 id="reason"
+                data-testid="action-reason-select"
                 value={field.value}
                 onValueChange={field.onChange}
                 options={getReasonOptions()}
@@ -286,6 +287,7 @@ function UserActionModal({
               <Input
                 id="effective_from"
                 type="date"
+                data-testid="action-effective-from"
                 error={!!errors.effective_from}
                 {...form.register("effective_from")}
               />
@@ -303,6 +305,7 @@ function UserActionModal({
                 <Input
                   id="effective_until"
                   type="date"
+                  data-testid="action-effective-until"
                   {...form.register("effective_until")}
                 />
               </div>
