@@ -68,6 +68,7 @@ export default function LoginPage() {
   const errorMessages: Record<string, string> = {
     INVALID_CREDENTIALS: t("login.errors.INVALID_CREDENTIALS"),
     ACCOUNT_LOCKED: t("login.errors.ACCOUNT_LOCKED"),
+    ACCOUNT_DISABLED: t("login.errors.ACCOUNT_DISABLED"),
     IP_THROTTLED: t("login.errors.IP_THROTTLED"),
     ACCOUNT_NOT_ACTIVATED: t("login.errors.ACCOUNT_NOT_ACTIVATED"),
     ACCOUNT_SUSPENDED: t("login.errors.ACCOUNT_SUSPENDED"),
