@@ -4,7 +4,7 @@ Generated: 2026-05-25
 Story: PRD1042-43 — US 28.1 | USER MANAGEMENT | User Login
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (17 ACs, description present, stakeholder-reviewed, Dev in progress)
-ACs with Gherkin scenarios: 6 of 17 | Blocked: 4 (D16/D17/D18) | Excluded: 7 (edge-case or separate-feature — scope filter table only)
+ACs with Gherkin scenarios: 6 of 17 | Blocked: 6 (D16/D17/D18/D19) | Excluded: 5 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (Stage 2 COMPLETE)
 
 ---
@@ -14,6 +14,8 @@ Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (St
 | AC | Reason | Blocking dependency |
 |----|--------|---------------------|
 | AC-10 | Account lockout requires admin API to reset lockout counter per email between test runs | D18 — Admin API reset lockout endpoint |
+| AC-11 | Negative scenario (no valid role) requires throwaway user creation API to seed a roleless user | D19 — Throwaway user creation/deletion API |
+| AC-12 | Negative scenario (invalid tenant/LC scope) requires throwaway user creation API to seed an invalid-scope user | D19 — Throwaway user creation/deletion API |
 | AC-15 | JWT validation enforcement requires ability to forge expired/tampered/wrong-issuer tokens | D17 — TEST_JWT_SECRET or test-forge endpoint |
 | AC-16 | Token tampering protection requires same token-forge capability as AC-15 | D17 — TEST_JWT_SECRET or test-forge endpoint |
 | AC-17 | Session timeout requires configurable TTL override to avoid 30-min real-time wait | D16 — TEST_TOKEN_TTL_SECONDS env override |
@@ -34,8 +36,8 @@ Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (St
 | AC-08 | Invalid credentials — generic error | `main-error` | Directly blocks the user; primary security error state |
 | AC-09 | Account status validation (blocked accounts) | `main-error` | Directly blocks legitimate-credential users; key lifecycle gate |
 | AC-10 | Failed login attempts / lockout | `Blocked` | D18 — lockout counter reset API required |
-| AC-11 | Role validation (no valid role) | `edge-case` | Needs seeded user with no role (D19 dependency); auto-applied domain negative |
-| AC-12 | Scope validation (invalid tenant/LC scope) | `edge-case` | Needs seeded user with invalid scope (D19 dependency); auto-applied domain negative |
+| AC-11 | Role validation (no valid role) | `Blocked` | D19 — auto-applied domain negative; would generate 1 scenario once throwaway user API is available |
+| AC-12 | Scope validation (invalid tenant/LC scope) | `Blocked` | D19 — auto-applied domain negative; would generate 1 scenario once throwaway user API is available |
 | AC-13 | Permission enforcement | `separate-feature` | Covered by auth-guard specs across all feature stories; not login-specific |
 | AC-14 | Audit logging | `separate-feature` | Backend-only assertion; no E2E-assertable audit API; covered by backend integration tests |
 | AC-15 | JWT validation enforcement | `Blocked` | D17 — TEST_JWT_SECRET or test-forge endpoint required |
@@ -43,8 +45,8 @@ Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (St
 | AC-17 | Session timeout enforcement | `Blocked` | D16 — TEST_TOKEN_TTL_SECONDS env override required |
 
 **Gherkin generated for:** AC-01, AC-03, AC-06, AC-07, AC-08, AC-09
-**Blocked (pending stubs only):** AC-10, AC-15, AC-16, AC-17
-**No Gherkin (edge-case or separate-feature):** AC-02, AC-04, AC-05, AC-11, AC-12, AC-13, AC-14
+**Blocked (pending stubs only):** AC-10, AC-11, AC-12, AC-15, AC-16, AC-17
+**No Gherkin (edge-case or separate-feature):** AC-02, AC-04, AC-05, AC-13, AC-14
 
 ---
 
