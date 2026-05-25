@@ -32,6 +32,7 @@ export function Sidebar() {
 
   return (
     <aside
+      data-testid="app-sidebar"
       className={cn(
         "flex flex-col h-full bg-white border-r border-border shrink-0 transition-all duration-200",
         isCollapsed ? "w-14" : "w-64"
@@ -203,6 +204,7 @@ export function Sidebar() {
             <div className="flex flex-col gap-3 pl-8 pr-2">
               <Link
                 to={PATHS.USER_MANAGEMENT}
+                data-testid="nav-user-management"
                 className={cn(
                   "flex items-center justify-between text-sm whitespace-nowrap",
                   isUserManagementActive
@@ -236,6 +238,7 @@ export function Sidebar() {
       {/* Logout */}
       <div className="p-2 shrink-0 border-t border-border">
         <button
+          data-testid="sidebar-logout-button"
           onClick={() => doLogout()}
           disabled={isLoggingOut}
           className={cn(

@@ -133,7 +133,11 @@ function DrawerContent({
 
       {/* Bottom buttons */}
       <div className="px-3 py-4 border-t border-border bg-muted/30 flex flex-col gap-3 shrink-0">
-        <Button className="w-full gap-2" onClick={handleOpenFullProfile}>
+        <Button
+          data-testid="drawer-open-full-profile-button"
+          className="w-full gap-2"
+          onClick={handleOpenFullProfile}
+        >
           <CircleUserRound size={15} />
           {t("detail.drawer.openFullProfile")}
         </Button>
@@ -141,6 +145,7 @@ function DrawerContent({
           {isActive && (
             <Button
               variant="outline"
+              data-testid="drawer-suspend-button"
               className="flex-1 gap-1.5 text-sm"
               onClick={() => onAction("suspend", user)}
             >
@@ -151,6 +156,7 @@ function DrawerContent({
           {isSuspended && (
             <Button
               variant="outline"
+              data-testid="drawer-reactivate-button"
               className="flex-1 gap-1.5 text-sm"
               onClick={() => onAction("reactivate", user)}
             >
@@ -161,6 +167,7 @@ function DrawerContent({
           {(isActive || isSuspended) && (
             <Button
               variant="outline"
+              data-testid="drawer-deactivate-button"
               className="flex-1 gap-1.5 text-sm"
               onClick={() => onAction("deactivate", user)}
             >
@@ -194,7 +201,10 @@ function UserDetailDrawer({
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-[420px] z-40 bg-card border-l border-border shadow-xl flex flex-col">
+      <div
+        className="fixed right-0 top-0 h-full w-[420px] z-40 bg-card border-l border-border shadow-xl flex flex-col"
+        data-testid="user-detail-drawer"
+      >
         {isLoading && (
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">

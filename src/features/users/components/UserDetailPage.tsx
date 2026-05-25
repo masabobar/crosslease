@@ -99,15 +99,18 @@ function TabButton({
   active,
   onClick,
   children,
+  "data-testid": testId,
 }: {
   active: boolean
   onClick: () => void
   children: React.ReactNode
+  "data-testid"?: string
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      data-testid={testId}
       className={`flex items-center h-[26px] px-1.5 pb-4 pt-0.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
         active
           ? "border-primary text-foreground"
@@ -268,6 +271,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canSuspend && (
                 <button
                   type="button"
+                  data-testid="detail-suspend-button"
                   onClick={() => setActiveAction("suspend")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
@@ -278,6 +282,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canReactivate && (
                 <button
                   type="button"
+                  data-testid="detail-reactivate-button"
                   onClick={() => setActiveAction("reactivate")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
@@ -288,6 +293,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canDeactivate && (
                 <button
                   type="button"
+                  data-testid="detail-deactivate-button"
                   onClick={() => setActiveAction("deactivate")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
@@ -398,18 +404,21 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <TabButton
             active={activeTab === "lifecycle"}
             onClick={() => setActiveTab("lifecycle")}
+            data-testid="tab-lifecycle"
           >
             {t("detail.page.tabs.lifecycle")}
           </TabButton>
           <TabButton
             active={activeTab === "auth"}
             onClick={() => setActiveTab("auth")}
+            data-testid="tab-auth-security"
           >
             {t("detail.page.tabs.authSecurity")}
           </TabButton>
           <TabButton
             active={activeTab === "audit"}
             onClick={() => setActiveTab("audit")}
+            data-testid="tab-audit-governance"
           >
             {t("detail.page.tabs.auditGovernance")}
           </TabButton>

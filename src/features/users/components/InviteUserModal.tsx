@@ -185,7 +185,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="px-6 py-4 space-y-5">
+      <form
+        onSubmit={onSubmit}
+        data-testid="invite-user-form"
+        className="px-6 py-4 space-y-5"
+      >
         {/* First name + Last name */}
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -198,6 +202,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             </Label>
             <Input
               id="firstName"
+              data-testid="invite-first-name-input"
               error={!!errors.firstName}
               placeholder={t("modal.placeholders.firstName")}
               {...form.register("firstName")}
@@ -219,6 +224,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             </Label>
             <Input
               id="lastName"
+              data-testid="invite-last-name-input"
               error={!!errors.lastName}
               placeholder={t("modal.placeholders.lastName")}
               {...form.register("lastName")}
@@ -239,6 +245,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           <Input
             id="email"
             type="email"
+            data-testid="invite-email-input"
             error={!!errors.email}
             placeholder={t("modal.placeholders.email")}
             {...form.register("email")}
@@ -406,11 +413,16 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           <Button
             type="button"
             variant="outline"
+            data-testid="invite-cancel-button"
             onClick={() => handleOpenChange(false)}
           >
             {t("modal.actions.cancel")}
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            data-testid="invite-submit-button"
+            disabled={isSubmitting}
+          >
             {t("modal.actions.submit")}
           </Button>
         </div>

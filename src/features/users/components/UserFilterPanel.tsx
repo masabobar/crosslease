@@ -317,7 +317,10 @@ function UserFilterPanel({
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 inset-y-0 w-[420px] bg-white shadow-xl z-50 flex flex-col">
+      <div
+        className="fixed right-0 inset-y-0 w-[420px] bg-white shadow-xl z-50 flex flex-col"
+        data-testid="user-filter-panel"
+      >
         {/* Header */}
         <div className="px-4 py-4 border-b border-border shrink-0">
           <h2 className="text-sm font-semibold text-foreground">
@@ -460,6 +463,7 @@ function UserFilterPanel({
         <div className="border-t border-border px-4 py-3 flex gap-3 shrink-0">
           <button
             type="button"
+            data-testid="filter-cancel-button"
             onClick={onClose}
             className="flex-1 h-9 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
@@ -467,6 +471,7 @@ function UserFilterPanel({
           </button>
           <button
             type="button"
+            data-testid="filter-apply-button"
             onClick={handleApply}
             className="flex-1 h-9 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
           >
