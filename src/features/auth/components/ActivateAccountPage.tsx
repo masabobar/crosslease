@@ -121,7 +121,10 @@ export default function ActivateAccountPage() {
   if (pageState === "blocked-link") {
     return (
       <AuthPageLayout>
-        <div className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6">
+        <div
+          data-testid="activate-account-blocked-link"
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6"
+        >
           <div className="flex flex-col gap-3">
             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
               <Link2Off size={24} className="text-amber-600" />
@@ -146,7 +149,10 @@ export default function ActivateAccountPage() {
   if (pageState === "blocked-account") {
     return (
       <AuthPageLayout>
-        <div className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6">
+        <div
+          data-testid="activate-account-blocked-account"
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6"
+        >
           <div className="flex flex-col gap-3">
             <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center">
               <Clock size={24} className="text-amber-600" />
@@ -211,12 +217,19 @@ export default function ActivateAccountPage() {
 
         <AuthCardBody>
           {serverError && (
-            <div className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
+            <div
+              data-testid="activate-account-error-message"
+              className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm"
+            >
               {serverError}
             </div>
           )}
 
-          <form id="activate-account-form" onSubmit={onSubmit}>
+          <form
+            id="activate-account-form"
+            data-testid="activate-account-form"
+            onSubmit={onSubmit}
+          >
             <div className="flex flex-col gap-6">
               <div className="opacity-50">
                 <Label htmlFor="activate-email" className="mb-1.5">

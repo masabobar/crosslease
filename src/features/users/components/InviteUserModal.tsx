@@ -271,6 +271,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             render={({ field }) => (
               <SelectField
                 id="role"
+                data-testid="invite-role-select"
                 value={field.value}
                 onValueChange={val => {
                   field.onChange(val)
@@ -323,6 +324,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
               render={({ field }) => (
                 <SelectField
                   id="tenant"
+                  data-testid="invite-tenant-select"
                   value={field.value ?? ""}
                   onValueChange={field.onChange}
                   options={tenantOptions}
@@ -360,6 +362,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 <Input
                   id="accessValidFrom"
                   type="date"
+                  data-testid="invite-access-valid-from"
                   error={!!errors.accessValidFrom}
                   className={cn(
                     errors.accessValidFrom ? "border-destructive" : ""
@@ -384,6 +387,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 <Input
                   id="accessValidUntil"
                   type="date"
+                  data-testid="invite-access-valid-until"
                   error={!!errors.accessValidUntil}
                   className={cn(
                     errors.accessValidUntil ? "border-destructive" : ""
