@@ -8,6 +8,7 @@ import {
   UserRoundX,
   Ban,
   UserRoundCheck,
+  UserCheck,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
@@ -15,6 +16,7 @@ import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import {
   formatLastLogin,
   formatDate,
@@ -24,6 +26,7 @@ import {
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
+import { ApiError } from "@/lib/api"
 import type { UserDetail } from "@/features/users/api/schema"
 import type { UserRole } from "@/features/users/types"
 import { FOUR_EYES_ROLES } from "@/features/users/types"
@@ -197,6 +200,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const queryClient = useQueryClient()
   const [activeAction, setActiveAction] = useState<ActiveAction | null>(null)
   const [activeTab, setActiveTab] = useState<TabKey>("lifecycle")
+  const { mutateAsync: approve, isPending: isApproving } = useApproveUser()
 
   const isAdmin = currentUser?.role === "system_admin"
   const isActive = user.status === "active"
@@ -244,6 +248,33 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     void queryClient.invalidateQueries({
       queryKey: USERS_QUERY_KEYS.detail(user.id),
     })
+  }
+
+  async function handleApprove() {
+    try {
+      const result = await approve(user.id)
+      const approvedName = `${result.user.first_name} ${result.user.last_name}`
+      showToast({
+        variant: "success",
+        title: t("approveSuccess.title"),
+        message: t("approveSuccess.message", {
+          name: approvedName,
+          email: result.user.email,
+        }),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(user.id),
+      })
+    } catch (err) {
+      showToast({
+        variant: "warning",
+        title: t("approveSuccess.errorTitle"),
+        message:
+          err instanceof ApiError
+            ? err.message
+            : t("approveSuccess.errorFallback"),
+      })
+    }
   }
 
   return (
@@ -304,9 +335,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canApprove && (
                 <button
                   type="button"
-                  onClick={() => setActiveAction("suspend")}
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                  data-testid="detail-approve-button"
+                  disabled={isApproving}
+                  onClick={() => void handleApprove()}
+                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  <UserCheck size={16} />
                   {t("table.actions.approve")}
                 </button>
               )}
