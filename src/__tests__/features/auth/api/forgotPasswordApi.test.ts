@@ -3,7 +3,7 @@ import {
   requestPasswordReset,
   validateResetToken,
   resetPassword,
-} from "./forgotPasswordApi"
+} from "@/features/auth/api/forgotPasswordApi"
 
 vi.mock("@/lib/api", () => ({
   api: {

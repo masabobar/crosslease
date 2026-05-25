@@ -31,7 +31,7 @@ vi.mock("axios", () => {
 })
 
 // Import AFTER mock is set up (vi.mock is hoisted so ordering is safe)
-import { ApiError } from "./api"
+import { ApiError } from "@/lib/api"
 import { useAuthStore } from "@/store/authStore"
 import axios from "axios"
 

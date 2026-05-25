@@ -3,7 +3,7 @@ import {
   ForgotPasswordInputSchema,
   ResetPasswordInputSchema,
   getPasswordRequirements,
-} from "./forgotPasswordSchema"
+} from "@/features/auth/api/forgotPasswordSchema"
 
 describe("ForgotPasswordInputSchema", () => {
   it("accepts a valid email", () => {

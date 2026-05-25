@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   ActivateAccountInputSchema,
   decodeTokenEmail,
-} from "./activationSchema"
+} from "@/features/auth/api/activationSchema"
 
 const VALID = "Abcdef1!"
 

@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { validateActivationToken, activateSetPassword } from "./activationApi"
+import {
+  validateActivationToken,
+  activateSetPassword,
+} from "@/features/auth/api/activationApi"
 
 vi.mock("@/lib/api", () => ({
   api: {
