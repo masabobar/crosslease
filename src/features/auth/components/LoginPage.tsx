@@ -40,8 +40,8 @@ export default function LoginPage() {
   const { t } = useTranslation("auth")
   const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
-  const accessToken = useAuthStore(s => s.accessToken)
-  const { setTokens } = useAuthStore()
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const { setAuthenticated } = useAuthStore()
 
   const [step, setStep] = useState<"credentials" | "otp">("credentials")
   const [verificationToken, setVerificationToken] = useState("")
@@ -80,7 +80,7 @@ export default function LoginPage() {
     OTP_RESEND_THROTTLED: t("login.errors.OTP_RESEND_THROTTLED"),
   }
 
-  if (accessToken) {
+  if (isAuthenticated) {
     return <Navigate to={PATHS.DASHBOARD} replace />
   }
 
@@ -103,12 +103,12 @@ export default function LoginPage() {
     setIsOtpSubmitting(true)
     setOtpHelper({ type: "none" })
     try {
-      const result = await verifyOtp({
+      await verifyOtp({
         verification_token: verificationToken,
         code: otpValue,
       })
       setOtpHelper({ type: "success", message: t("login.otp.success") })
-      setTokens(result.access_token, result.refresh_token)
+      setAuthenticated(true)
       setTimeout(() => navigate(PATHS.DASHBOARD), 800)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""

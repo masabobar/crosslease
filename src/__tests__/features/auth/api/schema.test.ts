@@ -94,34 +94,17 @@ describe("LoginResponseSchema", () => {
     updated_at: "2026-01-01T00:00:00Z",
   }
 
-  it("accepts a valid login response", () => {
-    expect(() =>
-      LoginResponseSchema.parse({
-        access_token: "abc",
-        refresh_token: "xyz",
-        token_type: "bearer",
-        user: validUser,
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects missing access_token", () => {
-    expect(() =>
-      LoginResponseSchema.parse({
-        refresh_token: "xyz",
-        token_type: "bearer",
-        user: validUser,
-      })
-    ).toThrow()
+  it("accepts a valid verify-otp response with user only", () => {
+    expect(() => LoginResponseSchema.parse({ user: validUser })).not.toThrow()
   })
 
   it("rejects missing user", () => {
+    expect(() => LoginResponseSchema.parse({})).toThrow()
+  })
+
+  it("rejects invalid user shape", () => {
     expect(() =>
-      LoginResponseSchema.parse({
-        access_token: "abc",
-        refresh_token: "xyz",
-        token_type: "bearer",
-      })
+      LoginResponseSchema.parse({ user: { email: "bad-email" } })
     ).toThrow()
   })
 })

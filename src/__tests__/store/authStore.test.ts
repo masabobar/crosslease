@@ -3,28 +3,27 @@ import { useAuthStore } from "@/store/authStore"
 
 describe("useAuthStore", () => {
   beforeEach(() => {
-    useAuthStore.setState({ accessToken: null, refreshToken: null })
+    useAuthStore.setState({ isAuthenticated: false })
   })
 
-  it("setTokens stores both tokens", () => {
-    useAuthStore.getState().setTokens("acc-123", "ref-456")
-    const { accessToken, refreshToken } = useAuthStore.getState()
-    expect(accessToken).toBe("acc-123")
-    expect(refreshToken).toBe("ref-456")
+  it("setAuthenticated(true) marks the session as authenticated", () => {
+    useAuthStore.getState().setAuthenticated(true)
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
   })
 
-  it("clearTokens resets both tokens to null", () => {
-    useAuthStore.getState().setTokens("acc-123", "ref-456")
-    useAuthStore.getState().clearTokens()
-    expect(useAuthStore.getState().accessToken).toBeNull()
-    expect(useAuthStore.getState().refreshToken).toBeNull()
+  it("setAuthenticated(false) marks the session as unauthenticated", () => {
+    useAuthStore.getState().setAuthenticated(true)
+    useAuthStore.getState().setAuthenticated(false)
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })
 
-  it("store does not expose persist hydration API — no persist middleware", () => {
-    // When Zustand's persist middleware is active, the store exposes
-    // `persist.hasHydrated()` and `persist.onHydrate()` methods.
-    // A plain store without persist has no such API.
-    const storeApi = useAuthStore as unknown as Record<string, unknown>
-    expect(storeApi["persist"]).toBeUndefined()
+  it("clearAuth resets isAuthenticated to false", () => {
+    useAuthStore.getState().setAuthenticated(true)
+    useAuthStore.getState().clearAuth()
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+
+  it("initial state is unauthenticated", () => {
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })
 })

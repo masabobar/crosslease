@@ -6,10 +6,10 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { LC_ONLY_ROLES } from "@/features/users/types"
 
 export default function ProtectedLayout() {
-  const accessToken = useAuthStore(s => s.accessToken)
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
   const { data: currentUser, isLoading } = useCurrentUser()
 
-  if (!accessToken) {
+  if (!isAuthenticated) {
     return <Navigate to={PATHS.LOGIN} replace />
   }
 
