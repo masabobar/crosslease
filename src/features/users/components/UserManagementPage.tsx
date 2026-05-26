@@ -9,11 +9,11 @@ import {
   X,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
+import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
 import { UserTable } from "@/features/users/components/UserTable"
 import { UserFilterPanel } from "@/features/users/components/UserFilterPanel"
 import { useUsers } from "@/features/users/hooks/useUsers"
@@ -22,6 +22,7 @@ import type {
   UserResponse,
   UserStatus,
   UserListItem,
+  UserDetail,
 } from "@/features/users/api/schema"
 import type {
   UserRole,
@@ -36,7 +37,6 @@ import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { READ_ONLY_VIEWER_ROLES } from "@/features/users/types"
 import { ApiError } from "@/lib/api"
-import { adminUserDetail } from "@/router/paths"
 
 function buildPageNumbers(
   currentPage: number,
@@ -86,9 +86,9 @@ function FilterPill({ label, onRemove }: FilterPillProps) {
 
 export default function UserManagementPage() {
   const { t } = useTranslation("users")
-  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<{
     type: UserModalActionType
     user: { id: string; first_name: string; last_name: string }
@@ -177,6 +177,42 @@ export default function UserManagementPage() {
           variant: "warning",
           title: t("approveSuccess.errorTitle"),
           message,
+        })
+      }
+    } else {
+      setActiveAction({
+        type,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+        },
+      })
+    }
+  }
+
+  async function handleDrawerAction(type: UserActionType, user: UserDetail) {
+    setSelectedUserId(null)
+    if (type === "approve") {
+      try {
+        const result = await approve(user.id)
+        const name = `${result.user.first_name} ${result.user.last_name}`
+        showToast({
+          variant: "success",
+          title: t("approveSuccess.title"),
+          message: t("approveSuccess.message", {
+            name,
+            email: result.user.email,
+          }),
+        })
+      } catch (err) {
+        showToast({
+          variant: "warning",
+          title: t("approveSuccess.errorTitle"),
+          message:
+            err instanceof ApiError
+              ? err.message
+              : t("approveSuccess.errorFallback"),
         })
       }
     } else {
@@ -354,7 +390,7 @@ export default function UserManagementPage() {
           sort={{ key: sortKey, dir: sortOrder }}
           onSort={handleSort}
           onAction={handleAction}
-          onRowClick={user => navigate(adminUserDetail(user.id))}
+          onRowClick={user => setSelectedUserId(user.id)}
           viewerRole={currentUser?.role}
         />
       </div>
@@ -410,6 +446,13 @@ export default function UserManagementPage() {
           </button>
         </div>
       )}
+
+      <UserDetailDrawer
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onAction={(type, user) => void handleDrawerAction(type, user)}
+        viewerRole={currentUser?.role}
+      />
 
       {!isReadOnlyViewer && (
         <InviteUserModal

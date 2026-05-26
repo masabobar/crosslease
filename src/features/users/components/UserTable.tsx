@@ -18,12 +18,12 @@ import type {
 } from "@/features/users/api/schema"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
-import { FOUR_EYES_ROLES } from "@/features/users/types"
 import type { UserRole, UserActionType } from "@/features/users/types"
 import {
   formatLastLogin,
   formatDate,
   getInitials,
+  getUserActionVisibility,
 } from "@/features/users/utils"
 
 type SortState = { key: UserSortKey | null; dir: UserSortOrder }
@@ -82,24 +82,14 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
   const { t } = useTranslation("users")
   const [open, setOpen] = useState(false)
 
-  const isAdmin = viewerRole === "system_admin"
-
-  const approveVisible =
-    isAdmin &&
-    user.status === "pending_activation" &&
-    FOUR_EYES_ROLES.includes(user.role as UserRole)
-  const resendVisible = isAdmin && user.status === "invited"
-  const suspendVisible = isAdmin && user.status === "active"
-  const reactivateVisible = isAdmin && user.status === "suspended"
-  const deactivateVisible =
-    isAdmin && (user.status === "active" || user.status === "suspended")
-
-  const hasActions =
-    approveVisible ||
-    resendVisible ||
-    suspendVisible ||
-    reactivateVisible ||
-    deactivateVisible
+  const {
+    canApprove: approveVisible,
+    canResendInvitation: resendVisible,
+    canSuspend: suspendVisible,
+    canReactivate: reactivateVisible,
+    canDeactivate: deactivateVisible,
+    hasAnyAction: hasActions,
+  } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
 
   if (!hasActions) {
     return (
@@ -240,9 +230,6 @@ function UserTable({
             {t("table.columns.lastLogin")}
           </SortableHeader>
         </div>
-        <div className="w-[120px] shrink-0 px-2 text-sm font-medium text-foreground">
-          {t("table.columns.userId")}
-        </div>
         <div className="w-[136px] shrink-0 px-2">
           <SortableHeader
             columnKey="access_valid_until"
@@ -284,9 +271,6 @@ function UserTable({
               </div>
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-4 animate-pulse w-20" />
-              </div>
-              <div className="w-[120px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-16" />
               </div>
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-4 animate-pulse w-20" />
@@ -373,13 +357,6 @@ function UserTable({
             <div className="w-[136px] shrink-0 p-2">
               <span className="text-sm text-muted-foreground">
                 {formatLastLogin(user.last_login)}
-              </span>
-            </div>
-
-            {/* User ID cell */}
-            <div className="w-[120px] shrink-0 p-2">
-              <span className="text-xs text-muted-foreground font-mono">
-                {user.user_id}
               </span>
             </div>
 

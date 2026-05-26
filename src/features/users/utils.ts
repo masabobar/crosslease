@@ -1,3 +1,45 @@
+import { FOUR_EYES_ROLES } from "@/features/users/types"
+import type { UserRole } from "@/features/users/types"
+
+export type UserActionVisibility = {
+  canApprove: boolean
+  canResendInvitation: boolean
+  canSuspend: boolean
+  canReactivate: boolean
+  canDeactivate: boolean
+  hasAnyAction: boolean
+}
+
+export function getUserActionVisibility(
+  status: string,
+  role: string,
+  viewerRole: UserRole | null | undefined
+): UserActionVisibility {
+  const isAdmin = viewerRole === "system_admin"
+  const canApprove =
+    isAdmin &&
+    status === "pending_activation" &&
+    FOUR_EYES_ROLES.includes(role as UserRole)
+  const canResendInvitation = isAdmin && status === "invited"
+  const canSuspend = isAdmin && status === "active"
+  const canReactivate = isAdmin && status === "suspended"
+  const canDeactivate =
+    isAdmin && (status === "active" || status === "suspended")
+  return {
+    canApprove,
+    canResendInvitation,
+    canSuspend,
+    canReactivate,
+    canDeactivate,
+    hasAnyAction:
+      canApprove ||
+      canResendInvitation ||
+      canSuspend ||
+      canReactivate ||
+      canDeactivate,
+  }
+}
+
 export function formatLastLogin(dateStr: string | null): string {
   if (!dateStr) return "—"
 
