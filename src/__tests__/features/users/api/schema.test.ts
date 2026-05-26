@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   UserListItemSchema,
   PaginatedUsersResponseSchema,
+  UserStatusSchema,
 } from "@/features/users/api/schema"
 
 const validUserListItem = {
@@ -173,5 +174,39 @@ describe("PaginatedUsersResponseSchema", () => {
       users: [{ ...validUserListItem, email: "bad-email" }],
     }
     expect(() => PaginatedUsersResponseSchema.parse(response)).toThrow()
+  })
+})
+
+describe("UserStatusSchema", () => {
+  it("accepts pending_activation", () => {
+    expect(() => UserStatusSchema.parse("pending_activation")).not.toThrow()
+  })
+
+  it("accepts invited", () => {
+    expect(() => UserStatusSchema.parse("invited")).not.toThrow()
+  })
+
+  it("accepts active", () => {
+    expect(() => UserStatusSchema.parse("active")).not.toThrow()
+  })
+
+  it("accepts suspended", () => {
+    expect(() => UserStatusSchema.parse("suspended")).not.toThrow()
+  })
+
+  it("accepts deactivated", () => {
+    expect(() => UserStatusSchema.parse("deactivated")).not.toThrow()
+  })
+
+  it("accepts expired", () => {
+    expect(() => UserStatusSchema.parse("expired")).not.toThrow()
+  })
+
+  it("rejects unknown status string", () => {
+    expect(() => UserStatusSchema.parse("archived")).toThrow()
+  })
+
+  it("rejects empty string", () => {
+    expect(() => UserStatusSchema.parse("")).toThrow()
   })
 })

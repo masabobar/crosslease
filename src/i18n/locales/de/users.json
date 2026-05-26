@@ -86,6 +86,7 @@
       "mfa": "MFA",
       "status": "Status",
       "lastLogin": "Letzter Login",
+      "userId": "Benutzer-ID",
       "accessExpiry": "Zugang gültig bis"
     },
     "empty": "Keine Benutzer gefunden.",

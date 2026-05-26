@@ -240,6 +240,9 @@ function UserTable({
             {t("table.columns.lastLogin")}
           </SortableHeader>
         </div>
+        <div className="w-[120px] shrink-0 px-2 text-sm font-medium text-foreground">
+          {t("table.columns.userId")}
+        </div>
         <div className="w-[136px] shrink-0 px-2">
           <SortableHeader
             columnKey="access_valid_until"
@@ -281,6 +284,9 @@ function UserTable({
               </div>
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-4 animate-pulse w-20" />
+              </div>
+              <div className="w-[120px] shrink-0 p-2">
+                <div className="bg-muted rounded h-4 animate-pulse w-16" />
               </div>
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-4 animate-pulse w-20" />
@@ -367,6 +373,13 @@ function UserTable({
             <div className="w-[136px] shrink-0 p-2">
               <span className="text-sm text-muted-foreground">
                 {formatLastLogin(user.last_login)}
+              </span>
+            </div>
+
+            {/* User ID cell */}
+            <div className="w-[120px] shrink-0 p-2">
+              <span className="text-xs text-muted-foreground font-mono">
+                {user.user_id}
               </span>
             </div>
 
