@@ -42,5 +42,12 @@
     "title": "Zugriff verweigert",
     "subtitle": "Sie haben keine Berechtigung, diese Seite aufzurufen.",
     "backToDashboard": "Zum Dashboard"
+  },
+  "support": {
+    "contextBanner": "Support-Ansicht",
+    "viewingTenant": "Anzeige: {{tenant}}",
+    "allTenants": "Alle Mandanten",
+    "readOnly": "Nur Lesen",
+    "readOnlyDescription": "Sie befinden sich im Nur-Lesen-Modus. Es können keine Änderungen vorgenommen werden."
   }
 }
