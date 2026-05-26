@@ -14,7 +14,7 @@ export function RoleGuard({ allowed, children }: RoleGuardProps) {
   if (isLoading) return null
 
   if (!currentUser || !allowed.includes(currentUser.role)) {
-    return <Navigate to={PATHS.DASHBOARD} replace />
+    return <Navigate to={PATHS.FORBIDDEN} replace />
   }
 
   return <>{children}</>

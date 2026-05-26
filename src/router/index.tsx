@@ -20,6 +20,9 @@ const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
 const NotFoundPage = lazy(
   () => import("@/features/not-found/components/NotFoundPage")
 )
+const ForbiddenPage = lazy(
+  () => import("@/features/errors/components/ForbiddenPage")
+)
 const UserManagementPage = lazy(
   () => import("@/features/users/components/UserManagementPage")
 )
@@ -92,6 +95,14 @@ export const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: PATHS.FORBIDDEN,
+    element: (
+      <Suspense fallback={null}>
+        <ForbiddenPage />
+      </Suspense>
+    ),
   },
   {
     path: "*",

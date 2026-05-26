@@ -4,6 +4,7 @@ export const PATHS = {
   RESET_PASSWORD: "/reset-password",
   ACTIVATE_ACCOUNT: "/activate",
   DASHBOARD: "/",
+  FORBIDDEN: "/403",
   USER_MANAGEMENT: "/platform-administration/user-management",
   USER_DETAIL: "/platform-administration/user-management/:id",
 } as const

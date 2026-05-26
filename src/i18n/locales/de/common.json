@@ -33,5 +33,10 @@
     "heading": "Seite nicht gefunden",
     "message": "Die gesuchte Seite existiert nicht.",
     "backHome": "Zur Startseite"
+  },
+  "forbidden": {
+    "title": "Zugriff verweigert",
+    "subtitle": "Sie haben keine Berechtigung, diese Seite aufzurufen.",
+    "backToDashboard": "Zum Dashboard"
   }
 }
