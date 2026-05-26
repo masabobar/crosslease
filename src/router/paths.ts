@@ -7,4 +7,9 @@ export const PATHS = {
   FORBIDDEN: "/403",
   USER_MANAGEMENT: "/platform-administration/user-management",
   USER_DETAIL: "/platform-administration/user-management/:id",
+  LC_WORKSPACE: "/lc",
+  LC_REQUESTS: "/lc/requests",
+  LC_STATUS: "/lc/status",
+  LC_DOCUMENTS: "/lc/documents",
+  LC_PROPOSALS: "/lc/proposals",
 } as const

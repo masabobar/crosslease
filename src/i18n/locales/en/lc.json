@@ -1,0 +1,13 @@
+{
+  "workspace": {
+    "title": "Leasing Company Workspace",
+    "subtitle": "Manage your requests, documents, and proposals",
+    "sections": {
+      "requests": "My Requests",
+      "status": "Status Overview",
+      "documents": "Bank Documents",
+      "proposals": "Proposals"
+    },
+    "comingSoon": "This section is coming soon."
+  }
+}

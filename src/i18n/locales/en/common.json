@@ -22,7 +22,11 @@
     "tenantManagement": "Tenant Management",
     "coreBankingIntegration": "Core Banking integration",
     "auditTrail": "Audit trail",
-    "logout": "Logout"
+    "logout": "Logout",
+    "lcRequests": "My Requests",
+    "lcStatus": "Status Overview",
+    "lcDocuments": "Bank Documents",
+    "lcProposals": "Proposals"
   },
   "breadcrumb": {
     "home": "Home",

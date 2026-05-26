@@ -22,7 +22,11 @@
     "tenantManagement": "Mandantenverwaltung",
     "coreBankingIntegration": "Core-Banking-Integration",
     "auditTrail": "Audit-Trail",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "lcRequests": "Meine Anfragen",
+    "lcStatus": "Statusübersicht",
+    "lcDocuments": "Bankdokumente",
+    "lcProposals": "Vorschläge"
   },
   "breadcrumb": {
     "home": "Startseite",

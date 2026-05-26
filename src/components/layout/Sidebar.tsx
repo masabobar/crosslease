@@ -12,6 +12,10 @@ import {
   ShieldCheck,
   Users,
   LogOut,
+  FileText,
+  BarChart2,
+  FolderOpen,
+  Send,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
@@ -75,6 +79,69 @@ export function Sidebar() {
 
       {/* Nav content */}
       <nav className="flex flex-col gap-2 flex-1 overflow-y-auto p-2 min-h-0">
+        {/* LC user navigation — shown only for leasing company users */}
+        {isLcUser && (
+          <>
+            {[
+              {
+                key: "requests",
+                label: t("nav.lcRequests"),
+                icon: FileText,
+                path: PATHS.LC_REQUESTS,
+              },
+              {
+                key: "status",
+                label: t("nav.lcStatus"),
+                icon: BarChart2,
+                path: PATHS.LC_STATUS,
+              },
+              {
+                key: "documents",
+                label: t("nav.lcDocuments"),
+                icon: FolderOpen,
+                path: PATHS.LC_DOCUMENTS,
+              },
+              {
+                key: "proposals",
+                label: t("nav.lcProposals"),
+                icon: Send,
+                path: PATHS.LC_PROPOSALS,
+              },
+            ].map(({ key, label, icon: Icon, path }) => {
+              const isActive = location.pathname === path
+              return (
+                <Link
+                  key={key}
+                  to={path}
+                  data-testid={`nav-lc-${key}`}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-2 rounded-[10px]",
+                    isActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
+                  )}
+                >
+                  <Icon
+                    size={16}
+                    className={cn(
+                      "shrink-0",
+                      isActive ? "text-[#1d41a8]" : "text-muted-foreground"
+                    )}
+                  />
+                  {!isCollapsed && (
+                    <span
+                      className={cn(
+                        "flex-1 text-sm min-w-0 truncate",
+                        isActive ? "text-[#1d41a8]" : "text-foreground"
+                      )}
+                    >
+                      {label}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </>
+        )}
+
         {/* Internal-only navigation — completely hidden for LC users */}
         {!isLcUser && (
           <>

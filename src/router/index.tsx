@@ -4,7 +4,11 @@ import { lazy, Suspense } from "react"
 import App from "@/App"
 import { PATHS } from "./paths"
 import { RoleGuard } from "@/router/RoleGuard"
-import { USER_MANAGEMENT_ALLOWED_ROLES } from "@/features/users/types"
+import {
+  USER_MANAGEMENT_ALLOWED_ROLES,
+  INTERNAL_BANK_ROLES,
+  LC_ONLY_ROLES,
+} from "@/features/users/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -28,6 +32,9 @@ const UserManagementPage = lazy(
 )
 const UserDetailPage = lazy(
   () => import("@/features/users/components/UserDetailPage")
+)
+const LeasingCompanyWorkspacePage = lazy(
+  () => import("@/features/lc/components/LeasingCompanyWorkspacePage")
 )
 
 export const router = createBrowserRouter([
@@ -72,7 +79,11 @@ export const router = createBrowserRouter([
     children: [
       {
         path: PATHS.DASHBOARD,
-        element: <App />,
+        element: (
+          <RoleGuard allowed={INTERNAL_BANK_ROLES}>
+            <App />
+          </RoleGuard>
+        ),
       },
       {
         path: PATHS.USER_MANAGEMENT,
@@ -90,6 +101,56 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={USER_MANAGEMENT_ALLOWED_ROLES}>
               <UserDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_WORKSPACE,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_REQUESTS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_STATUS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_DOCUMENTS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_PROPOSALS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LeasingCompanyWorkspacePage />
             </RoleGuard>
           </Suspense>
         ),
