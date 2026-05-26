@@ -9,11 +9,11 @@ import {
   X,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
-import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
 import { UserTable } from "@/features/users/components/UserTable"
 import { UserFilterPanel } from "@/features/users/components/UserFilterPanel"
 import { useUsers } from "@/features/users/hooks/useUsers"
@@ -23,7 +23,6 @@ import type {
   UserStatus,
   UserListItem,
 } from "@/features/users/api/schema"
-import type { UserDetail } from "@/features/users/api/schema"
 import type {
   UserRole,
   UserFilterState,
@@ -37,6 +36,7 @@ import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { READ_ONLY_VIEWER_ROLES } from "@/features/users/types"
 import { ApiError } from "@/lib/api"
+import { adminUserDetail } from "@/router/paths"
 
 function buildPageNumbers(
   currentPage: number,
@@ -86,13 +86,13 @@ function FilterPill({ label, onRemove }: FilterPillProps) {
 
 export default function UserManagementPage() {
   const { t } = useTranslation("users")
+  const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [activeAction, setActiveAction] = useState<{
     type: UserModalActionType
     user: { id: string; first_name: string; last_name: string }
   } | null>(null)
-  const [drawerUserId, setDrawerUserId] = useState<string | null>(null)
   const {
     page,
     search,
@@ -189,18 +189,6 @@ export default function UserManagementPage() {
         },
       })
     }
-  }
-
-  function handleDrawerAction(type: UserModalActionType, user: UserDetail) {
-    setDrawerUserId(null)
-    setActiveAction({
-      type,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
-    })
   }
 
   function handleActionSuccess() {
@@ -366,13 +354,13 @@ export default function UserManagementPage() {
           sort={{ key: sortKey, dir: sortOrder }}
           onSort={handleSort}
           onAction={handleAction}
-          onRowClick={user => setDrawerUserId(user.id)}
+          onRowClick={user => navigate(adminUserDetail(user.id))}
           viewerRole={currentUser?.role}
         />
       </div>
 
-      {/* Pagination */}
-      {data && data.total_pages > 1 && (
+      {/* Pagination — always visible when data is present */}
+      {data && (
         <div className="mt-4 flex justify-end items-center gap-1">
           <button
             type="button"
@@ -447,12 +435,6 @@ export default function UserManagementPage() {
           onApply={handleApplyFilters}
         />
       )}
-
-      <UserDetailDrawer
-        userId={drawerUserId}
-        onClose={() => setDrawerUserId(null)}
-        onAction={handleDrawerAction}
-      />
     </div>
   )
 }

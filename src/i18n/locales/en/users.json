@@ -79,6 +79,16 @@
     }
   },
   "table": {
+    "columns": {
+      "user": "User",
+      "role": "Role",
+      "tenant": "Tenant",
+      "mfa": "MFA",
+      "status": "Status",
+      "lastLogin": "Last login",
+      "accessExpiry": "Access expiry"
+    },
+    "empty": "No users found.",
     "actions": {
       "approve": "Approve"
     }

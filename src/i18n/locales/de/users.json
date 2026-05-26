@@ -79,6 +79,16 @@
     }
   },
   "table": {
+    "columns": {
+      "user": "Benutzer",
+      "role": "Rolle",
+      "tenant": "Mandant",
+      "mfa": "MFA",
+      "status": "Status",
+      "lastLogin": "Letzter Login",
+      "accessExpiry": "Zugang gültig bis"
+    },
+    "empty": "Keine Benutzer gefunden.",
     "actions": {
       "approve": "Genehmigen"
     }
@@ -257,38 +267,38 @@
     "errorFallback": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
   },
   "modal": {
-    "title": "Create & invite users",
-    "subtitle": "User will be created in Pending activation state",
+    "title": "Benutzer erstellen & einladen",
+    "subtitle": "Der Benutzer wird im Status 'Ausstehende Aktivierung' erstellt",
     "fields": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "email": "Email address",
-      "role": "Role",
-      "tenant": "Tenant",
-      "tenantScope": "Tenant scope",
-      "accessValidFrom": "Access valid from",
-      "accessValidUntil": "Access valid until"
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail-Adresse",
+      "role": "Rolle",
+      "tenant": "Mandant",
+      "tenantScope": "Mandantenbereich",
+      "accessValidFrom": "Zugang gültig ab",
+      "accessValidUntil": "Zugang gültig bis"
     },
     "placeholders": {
-      "firstName": "First name",
-      "lastName": "Last name",
-      "email": "you@example.com",
-      "role": "Select a role",
-      "tenant": "Select a tenant"
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "sie@beispiel.de",
+      "role": "Rolle auswählen",
+      "tenant": "Mandant auswählen"
     },
     "hints": {
-      "email": "Must be unique across the platform",
-      "tenantAuditor": "Auditor access must be scoped to exactly one tenant",
-      "tenantOperational": "Tenant-level operational users must belong to exactly one tenant",
-      "accessDates": "Required for Auditor users only"
+      "email": "Muss plattformweit eindeutig sein",
+      "tenantAuditor": "Der Auditorzugang muss auf genau einen Mandanten beschränkt sein",
+      "tenantOperational": "Operative Benutzer auf Mandantenebene müssen genau einem Mandanten zugehören",
+      "accessDates": "Nur für Auditor-Benutzer erforderlich"
     },
     "fourEyes": {
-      "title": "Four-Eyes approval required",
-      "description": "This role requires a second authorized admin to approve before the account activates. User remains in Pending Activation state until approval is completed."
+      "title": "Vier-Augen-Genehmigung erforderlich",
+      "description": "Diese Rolle erfordert, dass ein zweiter autorisierter Admin das Konto genehmigt, bevor es aktiviert wird. Der Benutzer verbleibt bis zur Genehmigung im Status 'Ausstehende Aktivierung'."
     },
     "actions": {
-      "cancel": "Cancel",
-      "submit": "Create & invite user"
+      "cancel": "Abbrechen",
+      "submit": "Benutzer erstellen & einladen"
     }
   }
 }
