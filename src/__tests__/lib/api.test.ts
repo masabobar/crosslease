@@ -66,10 +66,7 @@ describe("ApiError", () => {
 
 describe("api response interceptor", () => {
   beforeEach(() => {
-    useAuthStore.setState({
-      accessToken: "access-tok",
-      refreshToken: "refresh-tok",
-    })
+    useAuthStore.setState({ isAuthenticated: true })
     vi.mocked(axios.post).mockReset()
   })
 
@@ -77,7 +74,7 @@ describe("api response interceptor", () => {
     expect(capturedHandlers.responseError).not.toBeNull()
   })
 
-  it("clears tokens when refresh fails on 401", async () => {
+  it("clears auth and throws when refresh fails on 401", async () => {
     vi.mocked(axios.post).mockRejectedValueOnce(new Error("Refresh failed"))
 
     const error = {
@@ -92,9 +89,7 @@ describe("api response interceptor", () => {
       ApiError
     )
 
-    const { accessToken, refreshToken } = useAuthStore.getState()
-    expect(accessToken).toBeNull()
-    expect(refreshToken).toBeNull()
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })
 
   it("does not attempt refresh when _retry is already true", async () => {
@@ -110,27 +105,6 @@ describe("api response interceptor", () => {
       ApiError
     )
     // axios.post (refresh call) should NOT have been called since _retry=true
-    expect(vi.mocked(axios.post)).not.toHaveBeenCalled()
-  })
-
-  it("clears tokens when there is no refresh token on 401", async () => {
-    useAuthStore.setState({ accessToken: "access-tok", refreshToken: null })
-
-    const error = {
-      response: { status: 401, data: {} },
-      config: { _retry: false, headers: {} },
-    }
-
-    if (!capturedHandlers.responseError)
-      throw new Error("Interceptor not registered")
-
-    await expect(capturedHandlers.responseError(error)).rejects.toBeInstanceOf(
-      ApiError
-    )
-
-    const { accessToken, refreshToken } = useAuthStore.getState()
-    expect(accessToken).toBeNull()
-    expect(refreshToken).toBeNull()
     expect(vi.mocked(axios.post)).not.toHaveBeenCalled()
   })
 

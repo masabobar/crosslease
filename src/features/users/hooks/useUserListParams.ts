@@ -62,12 +62,16 @@ export function useUserListParams(): UserListParams {
 
   const rawRoles = params.getAll("role")
   const rawStatuses = params.getAll("status")
+  const rawMfa = params.get("mfa_enabled")
   const appliedFilters: UserFilterState = {
     role: rawRoles.filter((v): v is UserRole =>
       USER_ROLES.includes(v as UserRole)
     ),
     status: rawStatuses.filter(v => VALID_STATUSES.includes(v)),
     tenant_id: params.get("tenant_id"),
+    // UI ready — not sent to API; persisted in URL for session continuity
+    mfa_enabled: rawMfa === "enabled" || rawMfa === "disabled" ? rawMfa : null,
+    lg_id: params.get("lg_id"),
   }
 
   const rawSortKey = params.get("sort_by")
@@ -91,6 +95,8 @@ export function useUserListParams(): UserListParams {
       role: filters.role,
       status: filters.status,
       tenant_id: filters.tenant_id,
+      mfa_enabled: filters.mfa_enabled,
+      lg_id: filters.lg_id,
       page: null,
     })
   }

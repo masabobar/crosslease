@@ -5,7 +5,7 @@ import { useAuthStore } from "@/store/authStore"
 import { PATHS } from "@/router/paths"
 
 export function useLogout() {
-  const clearTokens = useAuthStore(s => s.clearTokens)
+  const clearAuth = useAuthStore(s => s.clearAuth)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -13,7 +13,7 @@ export function useLogout() {
     mutationFn: logout,
     onSettled: () => {
       queryClient.clear()
-      clearTokens()
+      clearAuth()
       navigate(PATHS.LOGIN, { replace: true })
     },
   })

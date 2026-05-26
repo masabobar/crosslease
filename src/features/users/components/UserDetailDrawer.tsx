@@ -1,19 +1,31 @@
-import { UserRoundX, Ban, RotateCcw, CircleUserRound } from "lucide-react"
+import {
+  UserRoundX,
+  Ban,
+  RotateCcw,
+  CircleUserRound,
+  UserCheck,
+  Mail,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
-import { formatLastLogin, getInitials } from "@/features/users/utils"
+import {
+  formatLastLogin,
+  getInitials,
+  getUserActionVisibility,
+} from "@/features/users/utils"
 import { PATHS } from "@/router/paths"
-import type { UserModalActionType } from "@/features/users/types"
+import type { UserActionType, UserRole } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
 
 type UserDetailDrawerProps = {
   userId: string | null
   onClose: () => void
-  onAction: (type: UserModalActionType, user: UserDetail) => void
+  onAction: (type: UserActionType, user: UserDetail) => void
+  viewerRole?: UserRole | null
 }
 
 function SectionCard({
@@ -56,10 +68,12 @@ function DrawerContent({
   user,
   onClose,
   onAction,
+  viewerRole,
 }: {
   user: UserDetail
   onClose: () => void
-  onAction: (type: UserModalActionType, user: UserDetail) => void
+  onAction: (type: UserActionType, user: UserDetail) => void
+  viewerRole?: UserRole | null
 }) {
   const { t } = useTranslation("users")
   const navigate = useNavigate()
@@ -67,8 +81,13 @@ function DrawerContent({
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
 
-  const isActive = user.status === "active"
-  const isSuspended = user.status === "suspended"
+  const {
+    canApprove,
+    canResendInvitation,
+    canSuspend,
+    canReactivate,
+    canDeactivate,
+  } = getUserActionVisibility(user.status, user.role, viewerRole)
 
   function handleOpenFullProfile() {
     onClose()
@@ -141,8 +160,30 @@ function DrawerContent({
           <CircleUserRound size={15} />
           {t("detail.drawer.openFullProfile")}
         </Button>
+        {canApprove && (
+          <Button
+            variant="outline"
+            data-testid="drawer-approve-button"
+            className="w-full gap-1.5 text-sm"
+            onClick={() => onAction("approve", user)}
+          >
+            <UserCheck size={14} />
+            {t("table.actions.approve")}
+          </Button>
+        )}
+        {canResendInvitation && (
+          <Button
+            variant="outline"
+            data-testid="drawer-resend-invitation-button"
+            className="w-full gap-1.5 text-sm"
+            onClick={() => onAction("resend-invitation", user)}
+          >
+            <Mail size={14} />
+            {t("actions.resend-invitation.label")}
+          </Button>
+        )}
         <div className="flex gap-3">
-          {isActive && (
+          {canSuspend && (
             <Button
               variant="outline"
               data-testid="drawer-suspend-button"
@@ -153,7 +194,7 @@ function DrawerContent({
               {t("detail.page.actions.suspendUser")}
             </Button>
           )}
-          {isSuspended && (
+          {canReactivate && (
             <Button
               variant="outline"
               data-testid="drawer-reactivate-button"
@@ -164,7 +205,7 @@ function DrawerContent({
               {t("actions.reactivate.label")}
             </Button>
           )}
-          {(isActive || isSuspended) && (
+          {canDeactivate && (
             <Button
               variant="outline"
               data-testid="drawer-deactivate-button"
@@ -185,6 +226,7 @@ function UserDetailDrawer({
   userId,
   onClose,
   onAction,
+  viewerRole,
 }: UserDetailDrawerProps) {
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(userId)
@@ -245,7 +287,12 @@ function UserDetailDrawer({
         )}
 
         {user && !isLoading && (
-          <DrawerContent user={user} onClose={onClose} onAction={onAction} />
+          <DrawerContent
+            user={user}
+            onClose={onClose}
+            onAction={onAction}
+            viewerRole={viewerRole}
+          />
         )}
       </div>
     </>

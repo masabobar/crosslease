@@ -13,3 +13,7 @@ export const PATHS = {
   LC_DOCUMENTS: "/lc/documents",
   LC_PROPOSALS: "/lc/proposals",
 } as const
+
+export function adminUserDetail(id: string): string {
+  return PATHS.USER_DETAIL.replace(":id", id)
+}

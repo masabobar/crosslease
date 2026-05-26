@@ -365,14 +365,15 @@ function UserFilterPanel({
             />
           </FilterField>
 
+          {/* MFA filter: UI ready — backend does not support mfa_enabled filter yet */}
           <FilterField label={t("filter.fields.mfaStatus")}>
             <TextToggle
               options={[
                 { value: "enabled", label: t("filter.mfa.enabled") },
                 { value: "disabled", label: t("filter.mfa.disabled") },
               ]}
-              value={null}
-              onChange={() => {}}
+              value={staged.mfa_enabled}
+              onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
               disabled
             />
           </FilterField>
@@ -387,6 +388,7 @@ function UserFilterPanel({
             />
           </FilterField>
 
+          {/* LG filter: UI ready — backend does not support lg_id filter yet */}
           <FilterField label={t("filter.fields.leasingCompany")}>
             <DisabledSelect
               placeholder={t("filter.placeholders.leasingCompany")}
@@ -396,6 +398,8 @@ function UserFilterPanel({
           {/* ── ACTIVITY ── */}
           <SectionHeader>{t("filter.sections.activity")}</SectionHeader>
 
+          {/* Date range filters: UI ready — backend does not support last_login_from/to,
+              access_expiry_from/to, created_from/to filter params yet */}
           <FilterField label={t("filter.fields.lastLoginRange")}>
             <DisabledDateField
               placeholder={t("filter.placeholders.chooseDate")}

@@ -22,6 +22,7 @@ import {
   formatDate,
   formatDateTime,
   getInitials,
+  getUserActionVisibility,
 } from "@/features/users/utils"
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
@@ -29,9 +30,12 @@ import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
 import { ApiError } from "@/lib/api"
 import type { UserDetail } from "@/features/users/api/schema"
 import type { UserRole } from "@/features/users/types"
-import { FOUR_EYES_ROLES } from "@/features/users/types"
 
-type ActiveAction = "suspend" | "reactivate" | "deactivate"
+type ActiveAction =
+  | "suspend"
+  | "reactivate"
+  | "deactivate"
+  | "resend-invitation"
 
 const PLATFORM_ROLES: readonly UserRole[] = [
   "system_admin",
@@ -203,15 +207,13 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const { mutateAsync: approve, isPending: isApproving } = useApproveUser()
 
   const isAdmin = currentUser?.role === "system_admin"
-  const isActive = user.status === "active"
-  const isSuspended = user.status === "suspended"
-  const canSuspend = isAdmin && isActive
-  const canDeactivate = isAdmin && (isActive || isSuspended)
-  const canReactivate = isAdmin && isSuspended
-  const canApprove =
-    isAdmin &&
-    user.status === "pending_activation" &&
-    FOUR_EYES_ROLES.includes(user.role)
+  const {
+    canApprove,
+    canResendInvitation,
+    canSuspend,
+    canReactivate,
+    canDeactivate,
+  } = getUserActionVisibility(user.status, user.role, currentUser?.role)
 
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
@@ -241,6 +243,11 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         variant: "warning",
         title: t("actions.deactivate.success.title"),
         message: t("actions.deactivate.success.message", { name }),
+      },
+      "resend-invitation": {
+        variant: "success",
+        title: t("actions.resend-invitation.success.title"),
+        message: t("actions.resend-invitation.success.message", { name }),
       },
     }
     showToast(toastMap[activeAction])
@@ -342,6 +349,17 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                 >
                   <UserCheck size={16} />
                   {t("table.actions.approve")}
+                </button>
+              )}
+              {canResendInvitation && (
+                <button
+                  type="button"
+                  data-testid="detail-resend-invitation-button"
+                  onClick={() => setActiveAction("resend-invitation")}
+                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                >
+                  <Mail size={16} />
+                  {t("actions.resend-invitation.label")}
                 </button>
               )}
             </div>

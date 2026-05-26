@@ -91,13 +91,8 @@ describe("verifyOtp", () => {
     updated_at: "2026-01-01T00:00:00Z",
   }
 
-  it("calls POST /auth/verify-otp and returns a parsed login response", async () => {
-    mockApi.post.mockResolvedValue({
-      access_token: "acc",
-      refresh_token: "ref",
-      token_type: "bearer",
-      user: validUser,
-    })
+  it("calls POST /auth/verify-otp and returns the user object", async () => {
+    mockApi.post.mockResolvedValue({ user: validUser })
     const result = await verifyOtp({
       verification_token: "tok",
       code: "123456",
@@ -106,7 +101,7 @@ describe("verifyOtp", () => {
       verification_token: "tok",
       code: "123456",
     })
-    expect(result.access_token).toBe("acc")
+    expect(result.user.email).toBe("test@example.com")
   })
 
   it("propagates INVALID_OTP error code from the API", async () => {

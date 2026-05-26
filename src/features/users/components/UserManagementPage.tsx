@@ -22,8 +22,8 @@ import type {
   UserResponse,
   UserStatus,
   UserListItem,
+  UserDetail,
 } from "@/features/users/api/schema"
-import type { UserDetail } from "@/features/users/api/schema"
 import type {
   UserRole,
   UserFilterState,
@@ -88,11 +88,11 @@ export default function UserManagementPage() {
   const { t } = useTranslation("users")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<{
     type: UserModalActionType
     user: { id: string; first_name: string; last_name: string }
   } | null>(null)
-  const [drawerUserId, setDrawerUserId] = useState<string | null>(null)
   const {
     page,
     search,
@@ -191,16 +191,40 @@ export default function UserManagementPage() {
     }
   }
 
-  function handleDrawerAction(type: UserModalActionType, user: UserDetail) {
-    setDrawerUserId(null)
-    setActiveAction({
-      type,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
-    })
+  async function handleDrawerAction(type: UserActionType, user: UserDetail) {
+    setSelectedUserId(null)
+    if (type === "approve") {
+      try {
+        const result = await approve(user.id)
+        const name = `${result.user.first_name} ${result.user.last_name}`
+        showToast({
+          variant: "success",
+          title: t("approveSuccess.title"),
+          message: t("approveSuccess.message", {
+            name,
+            email: result.user.email,
+          }),
+        })
+      } catch (err) {
+        showToast({
+          variant: "warning",
+          title: t("approveSuccess.errorTitle"),
+          message:
+            err instanceof ApiError
+              ? err.message
+              : t("approveSuccess.errorFallback"),
+        })
+      }
+    } else {
+      setActiveAction({
+        type,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+        },
+      })
+    }
   }
 
   function handleActionSuccess() {
@@ -366,13 +390,13 @@ export default function UserManagementPage() {
           sort={{ key: sortKey, dir: sortOrder }}
           onSort={handleSort}
           onAction={handleAction}
-          onRowClick={user => setDrawerUserId(user.id)}
+          onRowClick={user => setSelectedUserId(user.id)}
           viewerRole={currentUser?.role}
         />
       </div>
 
-      {/* Pagination */}
-      {data && data.total_pages > 1 && (
+      {/* Pagination — always visible when data is present */}
+      {data && (
         <div className="mt-4 flex justify-end items-center gap-1">
           <button
             type="button"
@@ -423,6 +447,13 @@ export default function UserManagementPage() {
         </div>
       )}
 
+      <UserDetailDrawer
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onAction={(type, user) => void handleDrawerAction(type, user)}
+        viewerRole={currentUser?.role}
+      />
+
       {!isReadOnlyViewer && (
         <InviteUserModal
           open={isModalOpen}
@@ -447,12 +478,6 @@ export default function UserManagementPage() {
           onApply={handleApplyFilters}
         />
       )}
-
-      <UserDetailDrawer
-        userId={drawerUserId}
-        onClose={() => setDrawerUserId(null)}
-        onAction={handleDrawerAction}
-      />
     </div>
   )
 }

@@ -96,6 +96,16 @@ export type UsersQueryParams = {
   tenant_id?: string
   sort_by?: UserSortKey
   sort_order?: UserSortOrder
+  // UI ready — backend GET /api/v1/users does not support these filter params yet;
+  // params are defined here for type-completeness but are NOT sent to the API
+  mfa_enabled?: boolean | null
+  lg_id?: string | null
+  last_login_from?: string | null
+  last_login_to?: string | null
+  access_expiry_from?: string | null
+  access_expiry_to?: string | null
+  created_from?: string | null
+  created_to?: string | null
 }
 
 export const SUSPENSION_REASONS = [

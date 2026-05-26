@@ -18,9 +18,13 @@ import type {
 } from "@/features/users/api/schema"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
-import { FOUR_EYES_ROLES } from "@/features/users/types"
 import type { UserRole, UserActionType } from "@/features/users/types"
-import { formatLastLogin, getInitials } from "@/features/users/utils"
+import {
+  formatLastLogin,
+  formatDate,
+  getInitials,
+  getUserActionVisibility,
+} from "@/features/users/utils"
 
 type SortState = { key: UserSortKey | null; dir: UserSortOrder }
 
@@ -78,24 +82,14 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
   const { t } = useTranslation("users")
   const [open, setOpen] = useState(false)
 
-  const isAdmin = viewerRole === "system_admin"
-
-  const approveVisible =
-    isAdmin &&
-    user.status === "pending_activation" &&
-    FOUR_EYES_ROLES.includes(user.role as UserRole)
-  const resendVisible = isAdmin && user.status === "invited"
-  const suspendVisible = isAdmin && user.status === "active"
-  const reactivateVisible = isAdmin && user.status === "suspended"
-  const deactivateVisible =
-    isAdmin && (user.status === "active" || user.status === "suspended")
-
-  const hasActions =
-    approveVisible ||
-    resendVisible ||
-    suspendVisible ||
-    reactivateVisible ||
-    deactivateVisible
+  const {
+    canApprove: approveVisible,
+    canResendInvitation: resendVisible,
+    canSuspend: suspendVisible,
+    canReactivate: reactivateVisible,
+    canDeactivate: deactivateVisible,
+    hasAnyAction: hasActions,
+  } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
 
   if (!hasActions) {
     return (
@@ -202,36 +196,47 @@ function UserTable({
   onRowClick,
   viewerRole,
 }: UserTableProps) {
+  const { t } = useTranslation("users")
+
   return (
     <div className="w-full" data-testid="user-table">
       {/* Header row */}
       <div className="flex border-b border-border h-10 items-center">
         <div className="flex-1 min-w-0 px-2">
           <SortableHeader columnKey="name" sort={sort} onSort={onSort}>
-            User
+            {t("table.columns.user")}
           </SortableHeader>
         </div>
         <div className="w-[200px] shrink-0 px-2">
           <SortableHeader columnKey="role" sort={sort} onSort={onSort}>
-            Role
+            {t("table.columns.role")}
           </SortableHeader>
         </div>
         <div className="w-[200px] shrink-0 px-2">
           <SortableHeader columnKey="tenant_name" sort={sort} onSort={onSort}>
-            Tenant
+            {t("table.columns.tenant")}
           </SortableHeader>
         </div>
         <div className="w-[136px] shrink-0 px-2 text-sm font-medium text-foreground">
-          MFA
+          {t("table.columns.mfa")}
         </div>
         <div className="w-[136px] shrink-0 px-2">
           <SortableHeader columnKey="status" sort={sort} onSort={onSort}>
-            Status
+            {t("table.columns.status")}
           </SortableHeader>
         </div>
         <div className="w-[136px] shrink-0 px-2">
           <SortableHeader columnKey="last_login" sort={sort} onSort={onSort}>
-            Last login
+            {t("table.columns.lastLogin")}
+          </SortableHeader>
+        </div>
+        <div className="w-[136px] shrink-0 px-2">
+          <SortableHeader
+            columnKey="access_valid_until"
+            sort={sort}
+            onSort={onSort}
+          >
+            {t("table.columns.accessExpiry")}
           </SortableHeader>
         </div>
         <div className="shrink-0 w-8" />
@@ -267,6 +272,9 @@ function UserTable({
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-4 animate-pulse w-20" />
               </div>
+              <div className="w-[136px] shrink-0 p-2">
+                <div className="bg-muted rounded h-4 animate-pulse w-20" />
+              </div>
               <div className="shrink-0 w-8" />
             </div>
           ))}
@@ -279,7 +287,9 @@ function UserTable({
           className="flex justify-center items-center h-[52px]"
           data-testid="user-table-empty"
         >
-          <span className="text-sm text-muted-foreground">No users found.</span>
+          <span className="text-sm text-muted-foreground">
+            {t("table.empty")}
+          </span>
         </div>
       )}
 
@@ -326,12 +336,12 @@ function UserTable({
               {user.mfa_enabled === true ? (
                 <span className="flex items-center gap-1.5 text-sm text-foreground">
                   <span className="size-2 rounded-full bg-green-500 shrink-0" />
-                  On
+                  {t("detail.page.values.on")}
                 </span>
               ) : user.mfa_enabled === false ? (
                 <span className="flex items-center gap-1.5 text-sm text-foreground">
                   <span className="size-2 rounded-full bg-red-500 shrink-0" />
-                  Off
+                  {t("detail.page.values.off")}
                 </span>
               ) : (
                 <span className="text-sm text-muted-foreground">—</span>
@@ -347,6 +357,13 @@ function UserTable({
             <div className="w-[136px] shrink-0 p-2">
               <span className="text-sm text-muted-foreground">
                 {formatLastLogin(user.last_login)}
+              </span>
+            </div>
+
+            {/* Access expiry cell */}
+            <div className="w-[136px] shrink-0 p-2">
+              <span className="text-sm text-muted-foreground">
+                {formatDate(user.access_valid_until)}
               </span>
             </div>
 
