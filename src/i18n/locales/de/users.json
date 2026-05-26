@@ -98,8 +98,8 @@
     "fields": {
       "reason": "Grund",
       "reasonPlaceholder": "Grund auswählen",
-      "comment": "Kommentar",
-      "commentPlaceholder": "Optional",
+      "comment": "Kommentar (optional)",
+      "commentPlaceholder": "Kommentar hinzufügen...",
       "effective_from": "Wirksam ab",
       "effective_until": "Wirksam bis (optional)"
     },

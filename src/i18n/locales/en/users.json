@@ -98,8 +98,8 @@
     "fields": {
       "reason": "Reason",
       "reasonPlaceholder": "Select a reason",
-      "comment": "Comment",
-      "commentPlaceholder": "Optional",
+      "comment": "Comment (optional)",
+      "commentPlaceholder": "Add a comment...",
       "effective_from": "Effective from",
       "effective_until": "Effective until (optional)"
     },
