@@ -54,12 +54,18 @@ export type UserFilterState = {
   role: UserRole[]
   status: string[]
   tenant_id: string | null
+  // UI ready — backend GET /api/v1/users does not support mfa_enabled filter yet
+  mfa_enabled: string | null
+  // UI ready — backend GET /api/v1/users does not support lg_id filter yet
+  lg_id: string | null
 }
 
 export const EMPTY_FILTER_STATE: UserFilterState = {
   role: [],
   status: [],
   tenant_id: null,
+  mfa_enabled: null,
+  lg_id: null,
 }
 
 export type UserActionType =
