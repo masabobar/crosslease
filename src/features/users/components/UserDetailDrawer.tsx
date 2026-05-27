@@ -136,14 +136,7 @@ function DrawerContent({
           <Row label={t("detail.drawer.fields.accountStatus")}>
             <UserStatusBadge status={user.status} />
           </Row>
-          <Row label={t("detail.drawer.fields.mfa")}>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-sm text-foreground">
-                {t("detail.page.values.on")}
-              </span>
-            </span>
-          </Row>
+          <Row label={t("detail.drawer.fields.mfa")}>{"—"}</Row>
           <Row label={t("detail.drawer.fields.lastLogin")}>
             {formatLastLogin(user.last_login)}
           </Row>
