@@ -13,6 +13,7 @@ import {
 import { useTranslation } from "react-i18next"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
+import { UserStatusBanner } from "@/features/users/components/UserStatusBanner"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -286,6 +287,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
   return (
     <div className="flex flex-col gap-6">
+      <UserStatusBanner status={user.status} />
       {/* Hero card */}
       <div className="flex flex-col border border-border rounded-[10px]">
         {/* Top row: avatar + name + actions */}
