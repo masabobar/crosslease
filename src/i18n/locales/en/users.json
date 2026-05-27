@@ -258,6 +258,11 @@
         "no": "No",
         "enabled": "Enabled",
         "notAvailable": "—"
+      },
+      "banners": {
+        "suspended": "This account is currently suspended. Access to the platform is restricted.",
+        "expired": "This account has expired. The user can no longer access the platform.",
+        "deactivated": "This account has been permanently deactivated."
       }
     }
   },

@@ -258,6 +258,11 @@
         "no": "Nein",
         "enabled": "Aktiviert",
         "notAvailable": "—"
+      },
+      "banners": {
+        "suspended": "Dieses Konto ist derzeit gesperrt. Der Zugriff auf die Plattform ist eingeschränkt.",
+        "expired": "Dieses Konto ist abgelaufen. Der Benutzer kann nicht mehr auf die Plattform zugreifen.",
+        "deactivated": "Dieses Konto wurde dauerhaft deaktiviert."
       }
     }
   },
