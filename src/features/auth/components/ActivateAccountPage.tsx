@@ -37,6 +37,7 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
+import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { cn } from "@/lib/utils"
 
 type PageState =
@@ -251,9 +252,20 @@ export default function ActivateAccountPage() {
               </div>
 
               <div>
-                <Label htmlFor="activate-password" className="mb-1.5">
-                  {t("activateAccount.passwordLabel")}
-                </Label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label htmlFor="activate-password">
+                    {t("activateAccount.passwordLabel")}
+                  </Label>
+                  <GeneratePasswordButton
+                    onGenerate={pwd => {
+                      form.setValue("password", pwd, { shouldValidate: true })
+                      form.setValue("password_confirm", pwd, {
+                        shouldValidate: true,
+                      })
+                      setShowPassword(true)
+                    }}
+                  />
+                </div>
                 <Input
                   id="activate-password"
                   type={showPassword ? "text" : "password"}

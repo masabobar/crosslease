@@ -22,6 +22,7 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
+import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { cn } from "@/lib/utils"
 
 type PageState = "loading" | "valid" | "blocked" | "success"
@@ -180,9 +181,20 @@ export default function ResetPasswordPage() {
           >
             <div className="space-y-4">
               <div>
-                <Label htmlFor="rp-password" className="mb-1.5">
-                  {t("resetPassword.setPassword.passwordLabel")}
-                </Label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label htmlFor="rp-password">
+                    {t("resetPassword.setPassword.passwordLabel")}
+                  </Label>
+                  <GeneratePasswordButton
+                    onGenerate={pwd => {
+                      form.setValue("password", pwd, { shouldValidate: true })
+                      form.setValue("password_confirm", pwd, {
+                        shouldValidate: true,
+                      })
+                      setShowPassword(true)
+                    }}
+                  />
+                </div>
                 <Input
                   id="rp-password"
                   type={showPassword ? "text" : "password"}
