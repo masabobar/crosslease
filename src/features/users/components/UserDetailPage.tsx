@@ -30,7 +30,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
 import { ApiError } from "@/lib/api"
 import type { UserDetail } from "@/features/users/api/schema"
-import type { UserRole } from "@/features/users/types"
+import { READ_ONLY_VIEWER_ROLES, type UserRole } from "@/features/users/types"
 
 type ActiveAction =
   | "suspend"
@@ -208,6 +208,10 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const { mutateAsync: approve, isPending: isApproving } = useApproveUser()
 
   const isAdmin = currentUser?.role === "system_admin"
+  const isReadOnlyViewer =
+    currentUser?.role !== null &&
+    currentUser?.role !== undefined &&
+    READ_ONLY_VIEWER_ROLES.includes(currentUser.role)
   const {
     canApprove,
     canResendInvitation,
@@ -399,7 +403,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       <div className="flex gap-6">
         <SectionCard
           title={t("detail.page.sections.identity")}
-          onEdit={isAdmin ? () => {} : undefined}
+          onEdit={isReadOnlyViewer ? undefined : () => {}}
         >
           <DetailRow label={t("detail.page.fields.userId")}>
             {user.user_id}
@@ -413,21 +417,23 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <DetailRow label={t("detail.page.fields.email")}>
             {user.email}
           </DetailRow>
-          <DetailRow label={t("detail.page.fields.serviceAccountFlag")}>
-            {user.is_service_account !== null &&
-            user.is_service_account !== undefined
-              ? t(
-                  user.is_service_account
-                    ? "detail.page.values.enabled"
-                    : "detail.page.values.off"
-                )
-              : "—"}
-          </DetailRow>
+          {!isReadOnlyViewer && (
+            <DetailRow label={t("detail.page.fields.serviceAccountFlag")}>
+              {user.is_service_account !== null &&
+              user.is_service_account !== undefined
+                ? t(
+                    user.is_service_account
+                      ? "detail.page.values.enabled"
+                      : "detail.page.values.off"
+                  )
+                : "—"}
+            </DetailRow>
+          )}
         </SectionCard>
 
         <SectionCard
           title={t("detail.page.sections.roleScope")}
-          onEdit={isAdmin ? () => {} : undefined}
+          onEdit={isReadOnlyViewer ? undefined : () => {}}
         >
           <DetailRow label={t("detail.page.fields.role")}>
             <RoleBadge role={user.role} />
