@@ -70,6 +70,19 @@ unit-tests:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
+schema-drift:
+  stage: test
+  extends: .node-base
+  script:
+    - echo "Fetching latest OpenAPI spec from dev server..."
+    - curl -sf https://api.refinext-dev.projects.holycode.com/api/openapi.json -o openapi.json
+    - echo "Regenerating schemas..."
+    - pnpm run generate:api
+    - echo "Checking for drift..."
+    - git diff --exit-code openapi.json src/generated/api.ts
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 build:develop:
   stage: build
   tags:
