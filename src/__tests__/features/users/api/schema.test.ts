@@ -17,7 +17,6 @@ const validUserListItem = {
   mfa_enabled: true,
   status: "active",
   last_login: "2026-05-20T10:00:00Z",
-  access_valid_from: null,
   access_valid_until: null,
 }
 
@@ -33,7 +32,6 @@ describe("UserListItemSchema", () => {
       tenant_name: null,
       mfa_enabled: null,
       last_login: null,
-      access_valid_from: null,
       access_valid_until: null,
     }
     expect(() => UserListItemSchema.parse(item)).not.toThrow()
@@ -187,7 +185,6 @@ const validUserDetail = {
   status: "active",
   tenant_id: null,
   tenant_name: null,
-  access_valid_from: null,
   access_valid_until: null,
   invited_by_user_id: null,
   invited_at: null,
@@ -208,7 +205,6 @@ describe("UserDetailResponseSchema", () => {
       ...validUserDetail,
       tenant_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
       tenant_name: "Musterbank AG",
-      access_valid_from: "2026-01-01T00:00:00Z",
       access_valid_until: "2026-12-31T23:59:59Z",
       invited_by_user_id: "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
       invited_at: "2026-01-01T09:00:00Z",

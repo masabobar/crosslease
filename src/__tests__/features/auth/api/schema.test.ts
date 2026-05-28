@@ -84,7 +84,6 @@ describe("LoginResponseSchema", () => {
     role: "system_admin",
     tenant_id: null,
     status: "active",
-    access_valid_from: null,
     access_valid_until: null,
     invited_by: null,
     invited_at: null,

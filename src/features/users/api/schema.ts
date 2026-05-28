@@ -22,7 +22,6 @@ export const UserResponseSchema = z.object({
   permissions: z.array(z.string()).default([]),
   tenant_id: z.string().uuid().nullable(),
   status: UserStatusSchema,
-  access_valid_from: z.string().nullish(),
   access_valid_until: z.string().nullable(),
   invited_by: z.string().uuid().nullable(),
   invited_at: z.string().nullable(),
@@ -46,7 +45,6 @@ export type InviteUserInput = {
   email: string
   role: (typeof USER_ROLES)[number]
   tenant_id?: string | null
-  access_valid_from?: string | null
   access_valid_until?: string | null
 }
 
@@ -62,7 +60,6 @@ export const UserListItemSchema = z.object({
   mfa_enabled: z.boolean().nullable().optional(),
   status: UserStatusSchema,
   last_login: z.string().nullable(),
-  access_valid_from: z.string().nullable(),
   access_valid_until: z.string().nullable(),
 })
 export type UserListItem = z.infer<typeof UserListItemSchema>
@@ -178,7 +175,6 @@ export const UserDetailResponseSchema = z.object({
   status: UserStatusSchema,
   tenant_id: z.string().uuid().nullable(),
   tenant_name: z.string().nullable(),
-  access_valid_from: z.string().nullable(),
   access_valid_until: z.string().nullable(),
   invited_by_user_id: z.string().nullable(),
   invited_at: z.string().nullable(),

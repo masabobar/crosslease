@@ -137,10 +137,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           TENANT_SCOPED_ROLES.includes(role) && data.tenant
             ? data.tenant
             : undefined,
-        access_valid_from:
-          AUDITOR_DATE_RANGE_ROLES.includes(role) && data.accessValidFrom
-            ? new Date(data.accessValidFrom).toISOString()
-            : undefined,
         access_valid_until:
           AUDITOR_DATE_RANGE_ROLES.includes(role) && data.accessValidUntil
             ? new Date(data.accessValidUntil).toISOString()
@@ -160,7 +156,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             email: "email",
             role: "role",
             tenant_id: "tenant",
-            access_valid_from: "accessValidFrom",
             access_valid_until: "accessValidUntil",
           }
           for (const e of err.errors) {
