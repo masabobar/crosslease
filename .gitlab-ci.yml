@@ -74,9 +74,10 @@ schema-drift:
   stage: test
   extends: .node-base
   script:
-    - apk add --no-cache git jq
+    - apk add --no-cache git
     - echo "Fetching latest OpenAPI spec from dev server..."
-    - wget -q -O - https://api.refinext-dev.projects.holycode.com/api/openapi.json | jq . > openapi.json
+    - wget -q -O openapi.json https://api.refinext-dev.projects.holycode.com/api/openapi.json
+    - pnpm exec prettier --write openapi.json
     - echo "Regenerating schemas..."
     - pnpm run generate:api
     - echo "Checking for drift..."
