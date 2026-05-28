@@ -18,6 +18,7 @@ const BASE_USER: UserResponse = {
   last_name: "User",
   email: "test@example.com",
   role: "system_admin",
+  permissions: [],
   tenant_id: null,
   status: "active",
   access_valid_from: null,
