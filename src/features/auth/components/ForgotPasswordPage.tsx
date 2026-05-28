@@ -9,6 +9,7 @@ import type { ForgotPasswordInput } from "../api/forgotPasswordSchema"
 import { requestPasswordReset } from "../api/forgotPasswordApi"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
+import { useToastStore } from "@/store/toastStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,9 +27,11 @@ export default function ForgotPasswordPage() {
   const { t } = useTranslation("auth")
   const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
+  const showToast = useToastStore(s => s.showToast)
   const [step, setStep] = useState<Step>("enter-email")
   const [submittedEmail, setSubmittedEmail] = useState("")
   const [isResending, setIsResending] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
 
   const formSchema = z.object({
     email: z
@@ -45,19 +48,20 @@ export default function ForgotPasswordPage() {
   const { isSubmitting, errors } = form.formState
 
   const onSubmit = form.handleSubmit(async data => {
+    setServerError(null)
     try {
       await requestPasswordReset(data.email)
       setSubmittedEmail(data.email)
       setStep("check-email")
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
-      const messages: Record<string, string> = {
-        USER_NOT_FOUND: t("forgotPassword.enterEmail.errors.USER_NOT_FOUND"),
+      if (code === "PASSWORD_RESET_THROTTLED") {
+        setServerError(
+          t("forgotPassword.enterEmail.errors.PASSWORD_RESET_THROTTLED")
+        )
+      } else {
+        setServerError(t("forgotPassword.enterEmail.errors.default"))
       }
-      form.setError("email", {
-        message:
-          messages[code] ?? t("forgotPassword.enterEmail.errors.default"),
-      })
     }
   })
 
@@ -65,6 +69,21 @@ export default function ForgotPasswordPage() {
     setIsResending(true)
     try {
       await requestPasswordReset(submittedEmail)
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : ""
+      if (code === "PASSWORD_RESET_THROTTLED") {
+        showToast({
+          variant: "warning",
+          title: t("forgotPassword.checkEmail.resendThrottled.title"),
+          message: t("forgotPassword.checkEmail.resendThrottled.message"),
+        })
+      } else {
+        showToast({
+          variant: "warning",
+          title: t("forgotPassword.checkEmail.resendFailed.title"),
+          message: t("forgotPassword.checkEmail.resendFailed.message"),
+        })
+      }
     } finally {
       setIsResending(false)
     }
@@ -84,6 +103,14 @@ export default function ForgotPasswordPage() {
           </AuthCardHeader>
 
           <AuthCardBody>
+            {serverError && (
+              <div
+                data-testid="forgot-password-server-error"
+                className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm"
+              >
+                {serverError}
+              </div>
+            )}
             <form
               id="forgot-password-form"
               data-testid="forgot-password-form"

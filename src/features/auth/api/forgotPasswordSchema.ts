@@ -6,15 +6,21 @@ export const ForgotPasswordInputSchema = z.object({
 
 export type ForgotPasswordInput = z.infer<typeof ForgotPasswordInputSchema>
 
-export const ResetPasswordInputSchema = z.object({
-  password: z
-    .string()
-    .min(8)
-    .regex(/[a-z]/)
-    .regex(/[A-Z]/)
-    .regex(/[0-9]/)
-    .regex(/[^a-zA-Z0-9]/),
-})
+export const ResetPasswordInputSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8)
+      .regex(/[a-z]/)
+      .regex(/[A-Z]/)
+      .regex(/[0-9]/)
+      .regex(/[^a-zA-Z0-9]/),
+    password_confirm: z.string(),
+  })
+  .refine(data => data.password === data.password_confirm, {
+    message: "PASSWORDS_DO_NOT_MATCH",
+    path: ["password_confirm"],
+  })
 
 export type ResetPasswordInput = z.infer<typeof ResetPasswordInputSchema>
 

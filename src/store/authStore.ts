@@ -1,21 +1,22 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand"
+import { persist, createJSONStorage } from "zustand/middleware"
 
 interface AuthState {
-  accessToken: string | null
-  refreshToken: string | null
-  setTokens: (access: string, refresh: string) => void
-  clearTokens: () => void
+  isAuthenticated: boolean
+  setAuthenticated: (value: boolean) => void
+  clearAuth: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
-      accessToken: null,
-      refreshToken: null,
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-      clearTokens: () => set({ accessToken: null, refreshToken: null }),
+    set => ({
+      isAuthenticated: false,
+      setAuthenticated: isAuthenticated => set({ isAuthenticated }),
+      clearAuth: () => set({ isAuthenticated: false }),
     }),
-    { name: 'auth' },
-  ),
+    {
+      name: "auth",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
 )

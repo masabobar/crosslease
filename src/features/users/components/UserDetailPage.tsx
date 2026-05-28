@@ -8,27 +8,35 @@ import {
   UserRoundX,
   Ban,
   UserRoundCheck,
+  UserCheck,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
+import { UserStatusBanner } from "@/features/users/components/UserStatusBanner"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import {
   formatLastLogin,
   formatDate,
   formatDateTime,
   getInitials,
+  getUserActionVisibility,
 } from "@/features/users/utils"
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
+import { ApiError } from "@/lib/api"
 import type { UserDetail } from "@/features/users/api/schema"
-import type { UserRole } from "@/features/users/types"
-import { FOUR_EYES_ROLES } from "@/features/users/types"
+import { READ_ONLY_VIEWER_ROLES, type UserRole } from "@/features/users/types"
 
-type ActiveAction = "suspend" | "reactivate" | "deactivate"
+type ActiveAction =
+  | "suspend"
+  | "reactivate"
+  | "deactivate"
+  | "resend-invitation"
 
 const PLATFORM_ROLES: readonly UserRole[] = [
   "system_admin",
@@ -99,15 +107,18 @@ function TabButton({
   active,
   onClick,
   children,
+  "data-testid": testId,
 }: {
   active: boolean
   onClick: () => void
   children: React.ReactNode
+  "data-testid"?: string
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      data-testid={testId}
       className={`flex items-center h-[26px] px-1.5 pb-4 pt-0.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
         active
           ? "border-primary text-foreground"
@@ -194,25 +205,27 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const queryClient = useQueryClient()
   const [activeAction, setActiveAction] = useState<ActiveAction | null>(null)
   const [activeTab, setActiveTab] = useState<TabKey>("lifecycle")
+  const { mutateAsync: approve, isPending: isApproving } = useApproveUser()
 
   const isAdmin = currentUser?.role === "system_admin"
-  const isActive = user.status === "active"
-  const isSuspended = user.status === "suspended"
-  const canSuspend = isAdmin && isActive
-  const canDeactivate = isAdmin && (isActive || isSuspended)
-  const canReactivate = isAdmin && isSuspended
-  const canApprove =
-    isAdmin &&
-    user.status === "pending_activation" &&
-    FOUR_EYES_ROLES.includes(user.role)
+  const isReadOnlyViewer =
+    currentUser?.role !== null &&
+    currentUser?.role !== undefined &&
+    READ_ONLY_VIEWER_ROLES.includes(currentUser.role)
+  const {
+    canApprove,
+    canResendInvitation,
+    canSuspend,
+    canReactivate,
+    canDeactivate,
+  } = getUserActionVisibility(user.status, user.role, currentUser?.role)
 
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
 
-  const accessPeriod =
-    user.access_valid_from && user.access_valid_until
-      ? `${formatDate(user.access_valid_from)} – ${formatDate(user.access_valid_until)}`
-      : "—"
+  const accessPeriod = user.access_valid_until
+    ? formatDate(user.access_valid_until)
+    : "—"
 
   function handleActionSuccess() {
     if (!activeAction) return
@@ -235,6 +248,11 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         title: t("actions.deactivate.success.title"),
         message: t("actions.deactivate.success.message", { name }),
       },
+      "resend-invitation": {
+        variant: "success",
+        title: t("actions.resend-invitation.success.title"),
+        message: t("actions.resend-invitation.success.message", { name }),
+      },
     }
     showToast(toastMap[activeAction])
     setActiveAction(null)
@@ -243,8 +261,36 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     })
   }
 
+  async function handleApprove() {
+    try {
+      const result = await approve(user.id)
+      const approvedName = `${result.user.first_name} ${result.user.last_name}`
+      showToast({
+        variant: "success",
+        title: t("approveSuccess.title"),
+        message: t("approveSuccess.message", {
+          name: approvedName,
+          email: result.user.email,
+        }),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(user.id),
+      })
+    } catch (err) {
+      showToast({
+        variant: "warning",
+        title: t("approveSuccess.errorTitle"),
+        message:
+          err instanceof ApiError
+            ? err.message
+            : t("approveSuccess.errorFallback"),
+      })
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      <UserStatusBanner status={user.status} />
       {/* Hero card */}
       <div className="flex flex-col border border-border rounded-[10px]">
         {/* Top row: avatar + name + actions */}
@@ -268,6 +314,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canSuspend && (
                 <button
                   type="button"
+                  data-testid="detail-suspend-button"
                   onClick={() => setActiveAction("suspend")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
@@ -278,6 +325,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canReactivate && (
                 <button
                   type="button"
+                  data-testid="detail-reactivate-button"
                   onClick={() => setActiveAction("reactivate")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
@@ -288,6 +336,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canDeactivate && (
                 <button
                   type="button"
+                  data-testid="detail-deactivate-button"
                   onClick={() => setActiveAction("deactivate")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
@@ -298,10 +347,24 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {canApprove && (
                 <button
                   type="button"
-                  onClick={() => setActiveAction("suspend")}
+                  data-testid="detail-approve-button"
+                  disabled={isApproving}
+                  onClick={() => void handleApprove()}
+                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <UserCheck size={16} />
+                  {t("table.actions.approve")}
+                </button>
+              )}
+              {canResendInvitation && (
+                <button
+                  type="button"
+                  data-testid="detail-resend-invitation-button"
+                  onClick={() => setActiveAction("resend-invitation")}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
-                  {t("table.actions.approve")}
+                  <Mail size={16} />
+                  {t("actions.resend-invitation.label")}
                 </button>
               )}
             </div>
@@ -339,7 +402,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       <div className="flex gap-6">
         <SectionCard
           title={t("detail.page.sections.identity")}
-          onEdit={isAdmin ? () => {} : undefined}
+          onEdit={isReadOnlyViewer ? undefined : () => {}}
         >
           <DetailRow label={t("detail.page.fields.userId")}>
             {user.user_id}
@@ -353,21 +416,23 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <DetailRow label={t("detail.page.fields.email")}>
             {user.email}
           </DetailRow>
-          <DetailRow label={t("detail.page.fields.serviceAccountFlag")}>
-            {user.is_service_account !== null &&
-            user.is_service_account !== undefined
-              ? t(
-                  user.is_service_account
-                    ? "detail.page.values.enabled"
-                    : "detail.page.values.off"
-                )
-              : "—"}
-          </DetailRow>
+          {!isReadOnlyViewer && (
+            <DetailRow label={t("detail.page.fields.serviceAccountFlag")}>
+              {user.is_service_account !== null &&
+              user.is_service_account !== undefined
+                ? t(
+                    user.is_service_account
+                      ? "detail.page.values.enabled"
+                      : "detail.page.values.off"
+                  )
+                : "—"}
+            </DetailRow>
+          )}
         </SectionCard>
 
         <SectionCard
           title={t("detail.page.sections.roleScope")}
-          onEdit={isAdmin ? () => {} : undefined}
+          onEdit={isReadOnlyViewer ? undefined : () => {}}
         >
           <DetailRow label={t("detail.page.fields.role")}>
             <RoleBadge role={user.role} />
@@ -398,18 +463,21 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <TabButton
             active={activeTab === "lifecycle"}
             onClick={() => setActiveTab("lifecycle")}
+            data-testid="tab-lifecycle"
           >
             {t("detail.page.tabs.lifecycle")}
           </TabButton>
           <TabButton
             active={activeTab === "auth"}
             onClick={() => setActiveTab("auth")}
+            data-testid="tab-auth-security"
           >
             {t("detail.page.tabs.authSecurity")}
           </TabButton>
           <TabButton
             active={activeTab === "audit"}
             onClick={() => setActiveTab("audit")}
+            data-testid="tab-audit-governance"
           >
             {t("detail.page.tabs.auditGovernance")}
           </TabButton>
@@ -448,9 +516,9 @@ export default function UserDetailPage() {
   const { data: user, isLoading, isError } = useUserDetail(id ?? null)
 
   return (
-    <div className="p-8">
+    <div className="p-8" data-testid="user-detail-page">
       {isLoading && (
-        <div className="space-y-6">
+        <div data-testid="user-detail-loading" className="space-y-6">
           <div className="h-28 bg-muted rounded-[10px] animate-pulse" />
           <div className="flex gap-6">
             <div className="flex-1 h-48 bg-muted rounded-[10px] animate-pulse" />
@@ -461,7 +529,10 @@ export default function UserDetailPage() {
       )}
 
       {isError && !isLoading && (
-        <div className="flex items-center justify-center h-40">
+        <div
+          data-testid="user-detail-error"
+          className="flex items-center justify-center h-40"
+        >
           <p className="text-sm text-muted-foreground">
             {t("detail.loadError")}
           </p>

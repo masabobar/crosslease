@@ -1,10 +1,11 @@
+import * as React from "react"
+import { Input as InputPrimitive } from "@base-ui/react/input"
 import { cn } from "@/lib/utils"
-import type { ComponentProps, ReactNode } from "react"
 
-type InputProps = ComponentProps<"input"> & {
+type InputProps = React.ComponentProps<"input"> & {
   error?: boolean
-  startIcon?: ReactNode
-  endAction?: ReactNode
+  startIcon?: React.ReactNode
+  endAction?: React.ReactNode
 }
 
 function Input({
@@ -14,30 +15,30 @@ function Input({
   endAction,
   ...props
 }: InputProps) {
-  const inputClass = cn(
-    "w-full bg-background border text-foreground rounded-lg outline-none transition-colors placeholder:text-muted-foreground",
-    "focus-visible:ring-2 focus-visible:ring-primary/30",
-    error
-      ? "border-destructive focus-visible:border-destructive"
-      : "border-border focus-visible:border-primary",
-    startIcon ? "pl-9" : "pl-4",
-    endAction ? "pr-10" : "pr-4",
-    "py-2.5",
-    className
+  const inputEl = (
+    <InputPrimitive
+      data-slot="input"
+      aria-invalid={error || undefined}
+      className={cn(
+        "h-[36px] w-full min-w-0 rounded-[12px] border border-input bg-background px-[10px] text-sm transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        startIcon && "pl-9",
+        endAction && "pr-10",
+        className
+      )}
+      {...props}
+    />
   )
 
-  if (!startIcon && !endAction) {
-    return <input className={inputClass} {...props} />
-  }
+  if (!startIcon && !endAction) return inputEl
 
   return (
     <div className="relative">
       {startIcon && (
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
           {startIcon}
         </span>
       )}
-      <input className={inputClass} {...props} />
+      {inputEl}
       {endAction && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           {endAction}

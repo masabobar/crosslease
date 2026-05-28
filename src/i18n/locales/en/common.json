@@ -22,7 +22,11 @@
     "tenantManagement": "Tenant Management",
     "coreBankingIntegration": "Core Banking integration",
     "auditTrail": "Audit trail",
-    "logout": "Logout"
+    "logout": "Logout",
+    "lcRequests": "My Requests",
+    "lcStatus": "Status Overview",
+    "lcDocuments": "Bank Documents",
+    "lcProposals": "Proposals"
   },
   "breadcrumb": {
     "home": "Home",
@@ -33,5 +37,17 @@
     "heading": "Page not found",
     "message": "The page you're looking for doesn't exist.",
     "backHome": "Go back home"
+  },
+  "forbidden": {
+    "title": "Access Denied",
+    "subtitle": "You don't have permission to view this page.",
+    "backToDashboard": "Go to Dashboard"
+  },
+  "support": {
+    "contextBanner": "Support View",
+    "viewingTenant": "Viewing: {{tenant}}",
+    "allTenants": "All Tenants",
+    "readOnly": "Read Only",
+    "readOnlyDescription": "You are in read-only mode. No changes can be made."
   }
 }

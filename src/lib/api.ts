@@ -25,17 +25,10 @@ export class ApiError extends Error {
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 })
 
-api.interceptors.request.use(config => {
-  const { accessToken } = useAuthStore.getState()
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`
-  }
-  return config
-})
-
-let refreshPromise: Promise<string> | null = null
+let refreshPromise: Promise<void> | null = null
 
 api.interceptors.response.use(
   response =>
@@ -50,24 +43,16 @@ api.interceptors.response.use(
 
       if (!refreshPromise) {
         refreshPromise = (async () => {
-          const { refreshToken, setTokens, clearTokens } =
-            useAuthStore.getState()
-
-          if (!refreshToken) {
-            clearTokens()
-            throw new ApiError("UNAUTHORIZED", "Session expired")
-          }
+          const { clearAuth } = useAuthStore.getState()
 
           try {
-            // TODO: update path when BE implements the refresh endpoint
-            const { data } = await axios.post(
-              `${import.meta.env.VITE_API_URL}/auth/token/refresh`,
-              { refresh_token: refreshToken }
+            await axios.post(
+              `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+              {},
+              { withCredentials: true }
             )
-            setTokens(data.data.access_token, data.data.refresh_token)
-            return data.data.access_token as string
           } catch {
-            clearTokens()
+            clearAuth()
             throw new ApiError("INVALID_TOKEN", "Session expired")
           }
         })().finally(() => {
@@ -75,8 +60,7 @@ api.interceptors.response.use(
         })
       }
 
-      const newToken = await refreshPromise
-      original.headers.Authorization = `Bearer ${newToken}`
+      await refreshPromise
       return api(original)
     }
 

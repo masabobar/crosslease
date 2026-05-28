@@ -1,6 +1,10 @@
 import { useState } from "react"
 import { ChevronDown, Check, Calendar } from "lucide-react"
-import { Popover } from "@base-ui/react/popover"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"
 import { useTranslation } from "react-i18next"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { cn } from "@/lib/utils"
@@ -67,6 +71,7 @@ type MultiSelectProps<T extends string> = {
   placeholder: string
   renderOption: (option: T) => React.ReactNode
   getLabel: (option: T) => string
+  "data-testid"?: string
 }
 
 function MultiSelectDropdown<T extends string>({
@@ -76,6 +81,7 @@ function MultiSelectDropdown<T extends string>({
   placeholder,
   renderOption,
   getLabel,
+  "data-testid": testId,
 }: MultiSelectProps<T>) {
   function toggle(option: T) {
     onChange(
@@ -93,8 +99,9 @@ function MultiSelectDropdown<T extends string>({
         : `${value.length} selected`
 
   return (
-    <Popover.Root>
-      <Popover.Trigger
+    <Popover>
+      <PopoverTrigger
+        data-testid={testId}
         className={cn(
           "w-full h-9 px-3 flex items-center justify-between",
           "border border-border rounded-lg bg-background",
@@ -114,41 +121,37 @@ function MultiSelectDropdown<T extends string>({
           size={14}
           className="text-muted-foreground shrink-0 ml-2"
         />
-      </Popover.Trigger>
+      </PopoverTrigger>
 
-      <Popover.Portal>
-        <Popover.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={4}
-          className="z-[60]"
-        >
-          <Popover.Popup className="w-[var(--anchor-width)] bg-white border border-border rounded-lg shadow-lg py-1 outline-none max-h-60 overflow-y-auto">
-            {options.map(option => {
-              const checked = value.includes(option)
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => toggle(option)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
-                >
-                  <span
-                    className={cn(
-                      "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                      checked ? "bg-primary border-primary" : "border-border"
-                    )}
-                  >
-                    {checked && <Check size={10} className="text-white" />}
-                  </span>
-                  {renderOption(option)}
-                </button>
-              )
-            })}
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
+      >
+        {options.map(option => {
+          const checked = value.includes(option)
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => toggle(option)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+            >
+              <span
+                className={cn(
+                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
+                  checked ? "bg-primary border-primary" : "border-border"
+                )}
+              >
+                {checked && <Check size={10} className="text-white" />}
+              </span>
+              {renderOption(option)}
+            </button>
+          )
+        })}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -195,11 +198,13 @@ function SingleSelectDropdown({
   onChange,
   options,
   placeholder,
+  "data-testid": testId,
 }: {
   value: string | null
   onChange: (value: string | null) => void
   options: { value: string; label: string }[]
   placeholder: string
+  "data-testid"?: string
 }) {
   const selected = options.find(o => o.value === value)
 
@@ -208,8 +213,9 @@ function SingleSelectDropdown({
   }
 
   return (
-    <Popover.Root>
-      <Popover.Trigger
+    <Popover>
+      <PopoverTrigger
+        data-testid={testId}
         className={cn(
           "w-full h-9 px-3 flex items-center justify-between",
           "border border-border rounded-lg bg-background",
@@ -225,39 +231,35 @@ function SingleSelectDropdown({
           size={14}
           className="text-muted-foreground shrink-0 ml-2"
         />
-      </Popover.Trigger>
+      </PopoverTrigger>
 
-      <Popover.Portal>
-        <Popover.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={4}
-          className="z-[60]"
-        >
-          <Popover.Popup className="w-[var(--anchor-width)] bg-white border border-border rounded-lg shadow-lg py-1 outline-none max-h-60 overflow-y-auto">
-            {options.map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => toggle(option.value)}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left text-sm",
-                  value === option.value
-                    ? "text-primary font-medium"
-                    : "text-foreground"
-                )}
-              >
-                {value === option.value && (
-                  <Check size={12} className="text-primary shrink-0" />
-                )}
-                {value !== option.value && <span className="size-3 shrink-0" />}
-                {option.label}
-              </button>
-            ))}
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        sideOffset={4}
+        className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
+      >
+        {options.map(option => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => toggle(option.value)}
+            className={cn(
+              "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left text-sm",
+              value === option.value
+                ? "text-primary font-medium"
+                : "text-foreground"
+            )}
+          >
+            {value === option.value && (
+              <Check size={12} className="text-primary shrink-0" />
+            )}
+            {value !== option.value && <span className="size-3 shrink-0" />}
+            {option.label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -317,7 +319,10 @@ function UserFilterPanel({
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 inset-y-0 w-[420px] bg-white shadow-xl z-50 flex flex-col">
+      <div
+        className="fixed right-0 inset-y-0 w-[420px] bg-white shadow-xl z-50 flex flex-col"
+        data-testid="user-filter-panel"
+      >
         {/* Header */}
         <div className="px-4 py-4 border-b border-border shrink-0">
           <h2 className="text-sm font-semibold text-foreground">
@@ -340,6 +345,7 @@ function UserFilterPanel({
               placeholder={t("filter.placeholders.select")}
               renderOption={role => <RoleBadge role={role as UserRole} />}
               getLabel={role => t(`roles.${role}` as RolesKey)}
+              data-testid="filter-role-select"
             />
           </FilterField>
 
@@ -355,17 +361,19 @@ function UserFilterPanel({
                 <UserStatusBadge status={status as UserStatus} />
               )}
               getLabel={status => t(`statuses.${status}` as StatusesKey)}
+              data-testid="filter-status-select"
             />
           </FilterField>
 
+          {/* MFA filter: UI ready — backend does not support mfa_enabled filter yet */}
           <FilterField label={t("filter.fields.mfaStatus")}>
             <TextToggle
               options={[
                 { value: "enabled", label: t("filter.mfa.enabled") },
                 { value: "disabled", label: t("filter.mfa.disabled") },
               ]}
-              value={null}
-              onChange={() => {}}
+              value={staged.mfa_enabled}
+              onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
               disabled
             />
           </FilterField>
@@ -376,9 +384,11 @@ function UserFilterPanel({
               onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
               options={tenantOptions}
               placeholder={t("filter.placeholders.tenant")}
+              data-testid="filter-tenant-select"
             />
           </FilterField>
 
+          {/* LG filter: UI ready — backend does not support lg_id filter yet */}
           <FilterField label={t("filter.fields.leasingCompany")}>
             <DisabledSelect
               placeholder={t("filter.placeholders.leasingCompany")}
@@ -388,6 +398,8 @@ function UserFilterPanel({
           {/* ── ACTIVITY ── */}
           <SectionHeader>{t("filter.sections.activity")}</SectionHeader>
 
+          {/* Date range filters: UI ready — backend does not support last_login_from/to,
+              access_expiry_from/to, created_from/to filter params yet */}
           <FilterField label={t("filter.fields.lastLoginRange")}>
             <DisabledDateField
               placeholder={t("filter.placeholders.chooseDate")}
@@ -460,6 +472,7 @@ function UserFilterPanel({
         <div className="border-t border-border px-4 py-3 flex gap-3 shrink-0">
           <button
             type="button"
+            data-testid="filter-cancel-button"
             onClick={onClose}
             className="flex-1 h-9 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
@@ -467,6 +480,7 @@ function UserFilterPanel({
           </button>
           <button
             type="button"
+            data-testid="filter-apply-button"
             onClick={handleApply}
             className="flex-1 h-9 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
           >

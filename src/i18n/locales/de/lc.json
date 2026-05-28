@@ -1,0 +1,13 @@
+{
+  "workspace": {
+    "title": "Leasinggesellschaft Arbeitsbereich",
+    "subtitle": "Verwalten Sie Ihre Anfragen, Dokumente und Vorschläge",
+    "sections": {
+      "requests": "Meine Anfragen",
+      "status": "Statusübersicht",
+      "documents": "Bankdokumente",
+      "proposals": "Vorschläge"
+    },
+    "comingSoon": "Dieser Bereich ist in Kürze verfügbar."
+  }
+}
