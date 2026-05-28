@@ -22,7 +22,7 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
-import { GeneratePasswordButton } from "./GeneratePasswordButton"
+// import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { cn } from "@/lib/utils"
 
 type PageState = "loading" | "valid" | "blocked" | "success"
@@ -185,7 +185,7 @@ export default function ResetPasswordPage() {
                   <Label htmlFor="rp-password">
                     {t("resetPassword.setPassword.passwordLabel")}
                   </Label>
-                  <GeneratePasswordButton
+                  {/* <GeneratePasswordButton
                     onGenerate={pwd => {
                       form.setValue("password", pwd, { shouldValidate: true })
                       form.setValue("password_confirm", pwd, {
@@ -193,7 +193,7 @@ export default function ResetPasswordPage() {
                       })
                       setShowPassword(true)
                     }}
-                  />
+                  /> */}
                 </div>
                 <Input
                   id="rp-password"

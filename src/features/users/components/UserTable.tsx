@@ -24,6 +24,7 @@ import {
   formatDate,
   getInitials,
   getUserActionVisibility,
+  getUserListColumnVisibility,
 } from "@/features/users/utils"
 
 type SortState = { key: UserSortKey | null; dir: UserSortOrder }
@@ -197,6 +198,7 @@ function UserTable({
   viewerRole,
 }: UserTableProps) {
   const { t } = useTranslation("users")
+  const cols = getUserListColumnVisibility(viewerRole)
 
   return (
     <div className="w-full" data-testid="user-table">
@@ -212,33 +214,41 @@ function UserTable({
             {t("table.columns.role")}
           </SortableHeader>
         </div>
-        <div className="w-[200px] shrink-0 px-2">
-          <SortableHeader columnKey="tenant_name" sort={sort} onSort={onSort}>
-            {t("table.columns.tenant")}
-          </SortableHeader>
-        </div>
-        <div className="w-[136px] shrink-0 px-2 text-sm font-medium text-foreground">
-          {t("table.columns.mfa")}
-        </div>
+        {cols.tenant && (
+          <div className="w-[200px] shrink-0 px-2">
+            <SortableHeader columnKey="tenant_name" sort={sort} onSort={onSort}>
+              {t("table.columns.tenant")}
+            </SortableHeader>
+          </div>
+        )}
+        {cols.mfa && (
+          <div className="w-[136px] shrink-0 px-2 text-sm font-medium text-foreground">
+            {t("table.columns.mfa")}
+          </div>
+        )}
         <div className="w-[136px] shrink-0 px-2">
           <SortableHeader columnKey="status" sort={sort} onSort={onSort}>
             {t("table.columns.status")}
           </SortableHeader>
         </div>
-        <div className="w-[136px] shrink-0 px-2">
-          <SortableHeader columnKey="last_login" sort={sort} onSort={onSort}>
-            {t("table.columns.lastLogin")}
-          </SortableHeader>
-        </div>
-        <div className="w-[136px] shrink-0 px-2">
-          <SortableHeader
-            columnKey="access_valid_until"
-            sort={sort}
-            onSort={onSort}
-          >
-            {t("table.columns.accessExpiry")}
-          </SortableHeader>
-        </div>
+        {cols.lastLogin && (
+          <div className="w-[136px] shrink-0 px-2">
+            <SortableHeader columnKey="last_login" sort={sort} onSort={onSort}>
+              {t("table.columns.lastLogin")}
+            </SortableHeader>
+          </div>
+        )}
+        {cols.accessExpiry && (
+          <div className="w-[136px] shrink-0 px-2">
+            <SortableHeader
+              columnKey="access_valid_until"
+              sort={sort}
+              onSort={onSort}
+            >
+              {t("table.columns.accessExpiry")}
+            </SortableHeader>
+          </div>
+        )}
         <div className="shrink-0 w-8" />
       </div>
 
@@ -260,21 +270,29 @@ function UserTable({
               <div className="w-[200px] shrink-0 p-2">
                 <div className="bg-muted rounded h-5 animate-pulse w-24" />
               </div>
-              <div className="w-[200px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-20" />
-              </div>
-              <div className="w-[136px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-12" />
-              </div>
+              {cols.tenant && (
+                <div className="w-[200px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-20" />
+                </div>
+              )}
+              {cols.mfa && (
+                <div className="w-[136px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-12" />
+                </div>
+              )}
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-5 animate-pulse w-16" />
               </div>
-              <div className="w-[136px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-20" />
-              </div>
-              <div className="w-[136px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-20" />
-              </div>
+              {cols.lastLogin && (
+                <div className="w-[136px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-20" />
+                </div>
+              )}
+              {cols.accessExpiry && (
+                <div className="w-[136px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-20" />
+                </div>
+              )}
               <div className="shrink-0 w-8" />
             </div>
           ))}
@@ -325,28 +343,32 @@ function UserTable({
             </div>
 
             {/* Tenant cell */}
-            <div className="w-[200px] shrink-0 p-2">
-              <span className="text-sm text-foreground">
-                {user.tenant_name ?? "—"}
-              </span>
-            </div>
+            {cols.tenant && (
+              <div className="w-[200px] shrink-0 p-2">
+                <span className="text-sm text-foreground">
+                  {user.tenant_name ?? "—"}
+                </span>
+              </div>
+            )}
 
             {/* MFA cell */}
-            <div className="w-[136px] shrink-0 p-2">
-              {user.mfa_enabled === true ? (
-                <span className="flex items-center gap-1.5 text-sm text-foreground">
-                  <span className="size-2 rounded-full bg-green-500 shrink-0" />
-                  {t("detail.page.values.on")}
-                </span>
-              ) : user.mfa_enabled === false ? (
-                <span className="flex items-center gap-1.5 text-sm text-foreground">
-                  <span className="size-2 rounded-full bg-red-500 shrink-0" />
-                  {t("detail.page.values.off")}
-                </span>
-              ) : (
-                <span className="text-sm text-muted-foreground">—</span>
-              )}
-            </div>
+            {cols.mfa && (
+              <div className="w-[136px] shrink-0 p-2">
+                {user.mfa_enabled === true ? (
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
+                    <span className="size-2 rounded-full bg-green-500 shrink-0" />
+                    {t("detail.page.values.on")}
+                  </span>
+                ) : user.mfa_enabled === false ? (
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
+                    <span className="size-2 rounded-full bg-red-500 shrink-0" />
+                    {t("detail.page.values.off")}
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+            )}
 
             {/* Status cell */}
             <div className="w-[136px] shrink-0 p-2">
@@ -354,18 +376,22 @@ function UserTable({
             </div>
 
             {/* Last login cell */}
-            <div className="w-[136px] shrink-0 p-2">
-              <span className="text-sm text-muted-foreground">
-                {formatLastLogin(user.last_login)}
-              </span>
-            </div>
+            {cols.lastLogin && (
+              <div className="w-[136px] shrink-0 p-2">
+                <span className="text-sm text-muted-foreground">
+                  {formatLastLogin(user.last_login)}
+                </span>
+              </div>
+            )}
 
             {/* Access expiry cell */}
-            <div className="w-[136px] shrink-0 p-2">
-              <span className="text-sm text-muted-foreground">
-                {formatDate(user.access_valid_until)}
-              </span>
-            </div>
+            {cols.accessExpiry && (
+              <div className="w-[136px] shrink-0 p-2">
+                <span className="text-sm text-muted-foreground">
+                  {formatDate(user.access_valid_until)}
+                </span>
+              </div>
+            )}
 
             {/* Actions cell */}
             <div
