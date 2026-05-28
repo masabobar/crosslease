@@ -50,6 +50,29 @@ export const WRITE_ACTION_ROLES: readonly UserRole[] = [
   "back_office",
 ]
 
+// Roles that must not see sensitive authentication details in the user list
+// (MFA status, last login). Per US-04: support users receive only
+// "permitted support-level fields" and cannot see auth details.
+export const SENSITIVE_AUTH_RESTRICTED_ROLES: readonly UserRole[] = [
+  "support_user",
+]
+
+// Operational bank-tenant roles — scoped to their own tenant.
+// In the user list the Tenant column is redundant for these viewers
+// because the backend already filters to their tenant.
+export const OPERATIONAL_TENANT_ROLES: readonly UserRole[] = [
+  "front_office",
+  "back_office",
+]
+
+// Roles that can see the Access Expiry column. Per US-04 access expiry is
+// meaningful only for auditor users; system_admin also sees it to manage
+// auditor engagement windows.
+export const ACCESS_EXPIRY_VISIBLE_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "auditor",
+]
+
 export type UserFilterState = {
   role: UserRole[]
   status: string[]

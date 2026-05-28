@@ -5,6 +5,7 @@ import {
   formatDateTime,
   getInitials,
   getUserActionVisibility,
+  getUserListColumnVisibility,
 } from "@/features/users/utils"
 
 // ---------------------------------------------------------------------------
@@ -140,5 +141,95 @@ describe("getUserActionVisibility — additional cases", () => {
       "front_office"
     )
     expect(result.hasAnyAction).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getUserListColumnVisibility — per US-04 role-based column visibility
+// ---------------------------------------------------------------------------
+describe("getUserListColumnVisibility — system_admin", () => {
+  it("shows all columns including accessExpiry", () => {
+    const cols = getUserListColumnVisibility("system_admin")
+    expect(cols.tenant).toBe(true)
+    expect(cols.mfa).toBe(true)
+    expect(cols.lastLogin).toBe(true)
+    expect(cols.accessExpiry).toBe(true)
+  })
+})
+
+describe("getUserListColumnVisibility — auditor", () => {
+  it("shows all columns including accessExpiry", () => {
+    const cols = getUserListColumnVisibility("auditor")
+    expect(cols.tenant).toBe(true)
+    expect(cols.mfa).toBe(true)
+    expect(cols.lastLogin).toBe(true)
+    expect(cols.accessExpiry).toBe(true)
+  })
+})
+
+describe("getUserListColumnVisibility — support_user", () => {
+  it("hides mfa (sensitive auth detail)", () => {
+    expect(getUserListColumnVisibility("support_user").mfa).toBe(false)
+  })
+
+  it("hides lastLogin (sensitive auth detail)", () => {
+    expect(getUserListColumnVisibility("support_user").lastLogin).toBe(false)
+  })
+
+  it("hides accessExpiry (not an auditor manager role)", () => {
+    expect(getUserListColumnVisibility("support_user").accessExpiry).toBe(false)
+  })
+
+  it("shows tenant", () => {
+    expect(getUserListColumnVisibility("support_user").tenant).toBe(true)
+  })
+})
+
+describe("getUserListColumnVisibility — front_office", () => {
+  it("hides tenant (always same value for tenant-scoped role)", () => {
+    expect(getUserListColumnVisibility("front_office").tenant).toBe(false)
+  })
+
+  it("hides accessExpiry (not an auditor manager role)", () => {
+    expect(getUserListColumnVisibility("front_office").accessExpiry).toBe(false)
+  })
+
+  it("shows mfa and lastLogin", () => {
+    const cols = getUserListColumnVisibility("front_office")
+    expect(cols.mfa).toBe(true)
+    expect(cols.lastLogin).toBe(true)
+  })
+})
+
+describe("getUserListColumnVisibility — back_office", () => {
+  it("hides tenant (always same value for tenant-scoped role)", () => {
+    expect(getUserListColumnVisibility("back_office").tenant).toBe(false)
+  })
+
+  it("hides accessExpiry (not an auditor manager role)", () => {
+    expect(getUserListColumnVisibility("back_office").accessExpiry).toBe(false)
+  })
+
+  it("shows mfa and lastLogin", () => {
+    const cols = getUserListColumnVisibility("back_office")
+    expect(cols.mfa).toBe(true)
+    expect(cols.lastLogin).toBe(true)
+  })
+})
+
+describe("getUserListColumnVisibility — null/undefined viewerRole", () => {
+  it("hides accessExpiry when role is null (no confirmed auditor context)", () => {
+    expect(getUserListColumnVisibility(null).accessExpiry).toBe(false)
+  })
+
+  it("hides accessExpiry when role is undefined", () => {
+    expect(getUserListColumnVisibility(undefined).accessExpiry).toBe(false)
+  })
+
+  it("shows tenant, mfa, lastLogin when role is null", () => {
+    const cols = getUserListColumnVisibility(null)
+    expect(cols.tenant).toBe(true)
+    expect(cols.mfa).toBe(true)
+    expect(cols.lastLogin).toBe(true)
   })
 })

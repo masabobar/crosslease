@@ -1,5 +1,42 @@
-import { FOUR_EYES_ROLES } from "@/features/users/types"
+import {
+  ACCESS_EXPIRY_VISIBLE_ROLES,
+  FOUR_EYES_ROLES,
+  OPERATIONAL_TENANT_ROLES,
+  SENSITIVE_AUTH_RESTRICTED_ROLES,
+} from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
+
+export type UserListColumnVisibility = {
+  tenant: boolean
+  mfa: boolean
+  lastLogin: boolean
+  accessExpiry: boolean
+}
+
+/**
+ * Derives which optional columns are visible in the user list table based on
+ * the viewing user's role, per US-04 visibility rules.
+ *
+ * - support_user: cannot see sensitive auth details (MFA, last login)
+ * - front_office / back_office: tenant-scoped, so tenant column is always the
+ *   same value and is hidden to reduce noise
+ */
+export function getUserListColumnVisibility(
+  viewerRole: UserRole | null | undefined
+): UserListColumnVisibility {
+  const isOperationalTenantRole =
+    !!viewerRole && OPERATIONAL_TENANT_ROLES.includes(viewerRole)
+  const isSensitiveAuthRestricted =
+    !!viewerRole && SENSITIVE_AUTH_RESTRICTED_ROLES.includes(viewerRole)
+
+  return {
+    tenant: !isOperationalTenantRole,
+    mfa: !isSensitiveAuthRestricted,
+    lastLogin: !isSensitiveAuthRestricted,
+    accessExpiry:
+      !!viewerRole && ACCESS_EXPIRY_VISIBLE_ROLES.includes(viewerRole),
+  }
+}
 
 export type UserActionVisibility = {
   canApprove: boolean
