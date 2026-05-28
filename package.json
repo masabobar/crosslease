@@ -16,7 +16,9 @@
     "e2e:headed": "playwright test --config=src/e2e/playwright.config.ts --headed",
     "type-check": "tsc -b --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "generate:api": "openapi-zod-client openapi.json -o src/generated/api.ts",
+    "fetch:openapi": "curl -sf https://api.refinext-dev.projects.holycode.com/api/openapi.json -o openapi.json && pnpm generate:api"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -56,6 +58,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "@zodios/core": "^10.9.6",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -63,6 +66,7 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
+    "openapi-zod-client": "^1.18.3",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
