@@ -1,9 +1,6 @@
 {
   "openapi": "3.1.0",
-  "info": {
-    "title": "Refinext API",
-    "version": "0.1.0"
-  },
+  "info": { "title": "Refinext API", "version": "0.1.0" },
   "paths": {
     "/api/v1/auth/validate-token": {
       "get": {
@@ -27,19 +24,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -55,9 +46,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetPasswordRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SetPasswordRequest" }
             }
           },
           "required": true
@@ -65,19 +54,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -93,9 +76,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
             }
           },
           "required": true
@@ -105,9 +86,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MfaRequiredResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/MfaRequiredResponse" }
               }
             }
           },
@@ -115,9 +94,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -133,9 +110,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyOtpRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/VerifyOtpRequest" }
             }
           },
           "required": true
@@ -145,9 +120,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
               }
             }
           },
@@ -155,9 +128,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -173,9 +144,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResendOtpRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/ResendOtpRequest" }
             }
           },
           "required": true
@@ -183,19 +152,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -211,11 +174,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -229,11 +188,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -247,9 +202,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ForgotPasswordRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/ForgotPasswordRequest" }
             }
           },
           "required": true
@@ -257,19 +210,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -298,19 +245,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -326,9 +267,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }
             }
           },
           "required": true
@@ -336,19 +275,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -366,9 +299,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
               }
             }
           }
@@ -386,9 +317,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/UserResponse" }
               }
             }
           }
@@ -408,13 +337,8 @@
             "required": false,
             "schema": {
               "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 3
-                },
-                {
-                  "type": "null"
-                }
+                { "type": "string", "minLength": 3 },
+                { "type": "null" }
               ],
               "description": "Min 3 chars — searches first name, last name, and email",
               "title": "Search"
@@ -427,9 +351,7 @@
             "required": false,
             "schema": {
               "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/UserRole"
-              },
+              "items": { "$ref": "#/components/schemas/UserRole" },
               "description": "Multi-select role filter, e.g. ?role=system_admin&role=auditor",
               "default": [],
               "title": "Role"
@@ -442,9 +364,7 @@
             "required": false,
             "schema": {
               "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/UserStatus"
-              },
+              "items": { "$ref": "#/components/schemas/UserStatus" },
               "description": "Multi-select status filter, e.g. ?status=active&status=suspended",
               "default": [],
               "title": "Status"
@@ -457,13 +377,8 @@
             "required": false,
             "schema": {
               "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
               ],
               "description": "Filter by tenant UUID",
               "title": "Tenant Id"
@@ -513,9 +428,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -530,28 +443,20 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InviteUserRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/InviteUserRequest" }
             }
           }
         },
         "responses": {
           "201": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -569,11 +474,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "responses": {
@@ -581,9 +482,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserDetailResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/UserDetailResponse" }
               }
             }
           },
@@ -591,9 +490,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -611,11 +508,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "requestBody": {
@@ -631,19 +524,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -661,39 +548,27 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SuspendUserRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SuspendUserRequest" }
             }
           }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -711,39 +586,27 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReactivateUserRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/ReactivateUserRequest" }
             }
           }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -761,39 +624,27 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeactivateUserRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/DeactivateUserRequest" }
             }
           }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -809,28 +660,20 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTenantRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/CreateTenantRequest" }
             }
           }
         },
         "responses": {
           "201": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -880,9 +723,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -899,29 +740,19 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -938,11 +769,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "responses": {
@@ -950,9 +777,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TenantResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/TenantResponse" }
               }
             }
           },
@@ -960,9 +785,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -976,11 +799,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -992,11 +811,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -1045,18 +860,9 @@
       },
       "DeactivateUserRequest": {
         "properties": {
-          "reason": {
-            "$ref": "#/components/schemas/DeactivationReason"
-          },
+          "reason": { "$ref": "#/components/schemas/DeactivationReason" },
           "comment": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Comment",
             "description": "Optional free-text explanation"
           },
@@ -1099,9 +905,7 @@
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
@@ -1137,26 +941,16 @@
           },
           "tenant_id": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Tenant Id",
             "description": "Required for auditor and tenant-scoped roles; must be null for system_admin and support_user"
           },
           "access_valid_until": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Access Valid Until",
             "description": "Auditor only — end of access window"
@@ -1168,15 +962,8 @@
       },
       "LoginRequest": {
         "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          }
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "password": { "type": "string", "title": "Password" }
         },
         "type": "object",
         "required": ["email", "password"],
@@ -1184,9 +971,7 @@
       },
       "LoginResponse": {
         "properties": {
-          "user": {
-            "$ref": "#/components/schemas/UserResponse"
-          }
+          "user": { "$ref": "#/components/schemas/UserResponse" }
         },
         "type": "object",
         "required": ["user"],
@@ -1217,9 +1002,7 @@
       "PaginatedTenantsResponse": {
         "properties": {
           "tenants": {
-            "items": {
-              "$ref": "#/components/schemas/TenantListResponse"
-            },
+            "items": { "$ref": "#/components/schemas/TenantListResponse" },
             "type": "array",
             "title": "Tenants"
           },
@@ -1251,9 +1034,7 @@
       "PaginatedUsersResponse": {
         "properties": {
           "users": {
-            "items": {
-              "$ref": "#/components/schemas/UserListItem"
-            },
+            "items": { "$ref": "#/components/schemas/UserListItem" },
             "type": "array",
             "title": "Users"
           },
@@ -1284,18 +1065,9 @@
       },
       "ReactivateUserRequest": {
         "properties": {
-          "reason": {
-            "$ref": "#/components/schemas/ReactivationReason"
-          },
+          "reason": { "$ref": "#/components/schemas/ReactivationReason" },
           "comment": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Comment",
             "description": "Optional free-text explanation"
           }
@@ -1318,9 +1090,7 @@
       },
       "ResendInvitationRequest": {
         "properties": {
-          "reason": {
-            "$ref": "#/components/schemas/ResendReason"
-          }
+          "reason": { "$ref": "#/components/schemas/ResendReason" }
         },
         "type": "object",
         "required": ["reason"],
@@ -1399,18 +1169,9 @@
       },
       "SuspendUserRequest": {
         "properties": {
-          "reason": {
-            "$ref": "#/components/schemas/SuspensionReason"
-          },
+          "reason": { "$ref": "#/components/schemas/SuspensionReason" },
           "comment": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Comment",
             "description": "Optional free-text explanation"
           },
@@ -1422,13 +1183,8 @@
           },
           "effective_until": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Effective Until",
             "description": "Optional auto-reactivation date"
@@ -1452,34 +1208,13 @@
       },
       "TenantListResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "tenant_id": {
-            "type": "string",
-            "title": "Tenant Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "country": {
-            "type": "string",
-            "title": "Country"
-          },
-          "default_currency": {
-            "type": "string",
-            "title": "Default Currency"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TenantStatus"
-          }
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": { "type": "string", "title": "Tenant Id" },
+          "name": { "type": "string", "title": "Name" },
+          "code": { "type": "string", "title": "Code" },
+          "country": { "type": "string", "title": "Country" },
+          "default_currency": { "type": "string", "title": "Default Currency" },
+          "status": { "$ref": "#/components/schemas/TenantStatus" }
         },
         "type": "object",
         "required": [
@@ -1495,38 +1230,17 @@
       },
       "TenantResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "tenant_id": {
-            "type": "string",
-            "title": "Tenant Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": { "type": "string", "title": "Tenant Id" },
+          "name": { "type": "string", "title": "Name" },
+          "code": { "type": "string", "title": "Code" },
           "legal_entity_name": {
             "type": "string",
             "title": "Legal Entity Name"
           },
-          "country": {
-            "type": "string",
-            "title": "Country"
-          },
-          "default_currency": {
-            "type": "string",
-            "title": "Default Currency"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TenantStatus"
-          },
+          "country": { "type": "string", "title": "Country" },
+          "default_currency": { "type": "string", "title": "Default Currency" },
+          "status": { "$ref": "#/components/schemas/TenantStatus" },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -1560,113 +1274,53 @@
       },
       "UserDetailResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id"
-          },
-          "first_name": {
-            "type": "string",
-            "title": "First Name"
-          },
-          "last_name": {
-            "type": "string",
-            "title": "Last Name"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          },
-          "status": {
-            "$ref": "#/components/schemas/UserStatus"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
           "tenant_id": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Tenant Id"
           },
           "tenant_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Tenant Name"
           },
           "access_valid_until": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Access Valid Until"
           },
           "invited_by_user_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Invited By User Id"
           },
           "invited_at": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Invited At"
           },
           "activated_at": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Activated At"
           },
           "last_login": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Last Login"
           },
@@ -1698,78 +1352,35 @@
       },
       "UserListItem": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id"
-          },
-          "first_name": {
-            "type": "string",
-            "title": "First Name"
-          },
-          "last_name": {
-            "type": "string",
-            "title": "Last Name"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
           "tenant_id": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Tenant Id"
           },
           "tenant_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Tenant Name"
           },
-          "status": {
-            "$ref": "#/components/schemas/UserStatus"
-          },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
           "last_login": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Last Login"
           },
           "access_valid_until": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Access Valid Until"
           }
@@ -1792,110 +1403,57 @@
       },
       "UserResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id"
-          },
-          "first_name": {
-            "type": "string",
-            "title": "First Name"
-          },
-          "last_name": {
-            "type": "string",
-            "title": "Last Name"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
           "permissions": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Permissions"
           },
           "tenant_id": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Tenant Id"
           },
-          "status": {
-            "$ref": "#/components/schemas/UserStatus"
-          },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
           "access_valid_until": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Access Valid Until"
           },
           "invited_by": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Invited By"
           },
           "invited_at": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Invited At"
           },
           "activated_at": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Activated At"
           },
           "last_login": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
             ],
             "title": "Last Login"
           },
@@ -1957,34 +1515,14 @@
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
         },
         "type": "object",
         "required": ["loc", "msg", "type"],
