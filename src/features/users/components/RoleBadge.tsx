@@ -1,10 +1,10 @@
 import {
-  Settings,
-  Headphones,
-  BarChart2,
-  Building2,
-  AlertTriangle,
-  Key,
+  Shield,
+  Headset,
+  ClipboardCheck,
+  Users,
+  TriangleAlert,
+  KeyRound,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { UserRole } from "@/features/users/types"
@@ -16,21 +16,21 @@ type RoleBadgeProps = {
 }
 
 const ROLE_STYLES: Record<UserRole, string> = {
-  system_admin: "bg-gray-100 text-gray-700",
-  support_user: "bg-blue-100 text-blue-700",
-  auditor: "bg-purple-100 text-purple-700",
-  front_office: "bg-teal-100 text-teal-700",
-  back_office: "bg-red-100 text-red-700",
-  leasing_company_user: "bg-gray-100 text-gray-600",
+  system_admin: "border-[#7008e7] text-[#7008e7]",
+  support_user: "border-[#1447e6] text-[#1447e6]",
+  auditor: "border-[#a800b7] text-[#a800b7]",
+  front_office: "border-[#007a55] text-[#007a55]",
+  back_office: "border-[#c70036] text-[#c70036]",
+  leasing_company_user: "border-[#62748e] text-[#62748e]",
 }
 
-const ROLE_ICONS: Record<UserRole, typeof Settings> = {
-  system_admin: Settings,
-  support_user: Headphones,
-  auditor: BarChart2,
-  front_office: Building2,
-  back_office: AlertTriangle,
-  leasing_company_user: Key,
+const ROLE_ICONS: Record<UserRole, typeof Shield> = {
+  system_admin: Shield,
+  support_user: Headset,
+  auditor: ClipboardCheck,
+  front_office: Users,
+  back_office: TriangleAlert,
+  leasing_company_user: KeyRound,
 }
 
 function RoleBadge({ role, className }: RoleBadgeProps) {
@@ -40,7 +40,7 @@ function RoleBadge({ role, className }: RoleBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border",
         ROLE_STYLES[role],
         className
       )}
