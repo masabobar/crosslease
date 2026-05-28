@@ -75,7 +75,7 @@ schema-drift:
   extends: .node-base
   script:
     - echo "Fetching latest OpenAPI spec from dev server..."
-    - curl -sf https://api.refinext-dev.projects.holycode.com/api/openapi.json -o openapi.json
+    - wget -q -O openapi.json https://api.refinext-dev.projects.holycode.com/api/openapi.json
     - echo "Regenerating schemas..."
     - pnpm run generate:api
     - echo "Checking for drift..."
