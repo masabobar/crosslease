@@ -223,10 +223,9 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
 
-  const accessPeriod =
-    user.access_valid_from && user.access_valid_until
-      ? `${formatDate(user.access_valid_from)} – ${formatDate(user.access_valid_until)}`
-      : "—"
+  const accessPeriod = user.access_valid_until
+    ? formatDate(user.access_valid_until)
+    : "—"
 
   function handleActionSuccess() {
     if (!activeAction) return
