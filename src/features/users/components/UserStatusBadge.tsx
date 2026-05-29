@@ -48,6 +48,18 @@ const STATUS_CONFIG: Record<UserStatus, StatusConfig> = {
     text: "text-[#6b21a8]",
     label: "Expired",
   },
+  locked: {
+    container: "bg-[#fee2e2]",
+    dot: "bg-[#ef4444]",
+    text: "text-[#991b1b]",
+    label: "Locked",
+  },
+  archived: {
+    container: "bg-[#f1f5f9]",
+    dot: "bg-[#64748b]",
+    text: "text-[#374151]",
+    label: "Archived",
+  },
 }
 
 function UserStatusBadge({ status }: UserStatusBadgeProps) {

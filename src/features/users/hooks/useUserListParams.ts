@@ -19,6 +19,8 @@ const VALID_STATUSES: readonly string[] = [
   "suspended",
   "deactivated",
   "expired",
+  "locked",
+  "archived",
 ]
 
 type ParamUpdate = Record<string, string | readonly string[] | null>

@@ -6,6 +6,7 @@ import {
   getInitials,
   getUserActionVisibility,
   getUserListColumnVisibility,
+  getUserFilterVisibility,
 } from "@/features/users/utils"
 
 // ---------------------------------------------------------------------------
@@ -214,6 +215,105 @@ describe("getUserListColumnVisibility — back_office", () => {
     const cols = getUserListColumnVisibility("back_office")
     expect(cols.mfa).toBe(true)
     expect(cols.lastLogin).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getUserFilterVisibility — per US-28.5 role-based filter visibility
+// ---------------------------------------------------------------------------
+describe("getUserFilterVisibility — system_admin", () => {
+  it("shows all filters including governance", () => {
+    const vis = getUserFilterVisibility("system_admin")
+    expect(vis.tenant).toBe(true)
+    expect(vis.lg).toBe(true)
+    expect(vis.mfa).toBe(true)
+    expect(vis.lastLogin).toBe(true)
+    expect(vis.accessExpiry).toBe(true)
+    expect(vis.auditEngagementStatus).toBe(true)
+    expect(vis.systemUserFlag).toBe(true)
+    expect(vis.serviceAccountFlag).toBe(true)
+    expect(vis.originType).toBe(true)
+    expect(vis.lastRoleChangeDate).toBe(true)
+    expect(vis.lastPermissionChangeDate).toBe(true)
+  })
+})
+
+describe("getUserFilterVisibility — support_user", () => {
+  it("shows tenant and lg (cross-tenant role)", () => {
+    const vis = getUserFilterVisibility("support_user")
+    expect(vis.tenant).toBe(true)
+    expect(vis.lg).toBe(true)
+  })
+
+  it("hides mfa (no MFA column for support_user)", () => {
+    expect(getUserFilterVisibility("support_user").mfa).toBe(false)
+  })
+
+  it("hides lastLogin (no last login column for support_user)", () => {
+    expect(getUserFilterVisibility("support_user").lastLogin).toBe(false)
+  })
+
+  it("hides accessExpiry (not an auditor-manager role)", () => {
+    expect(getUserFilterVisibility("support_user").accessExpiry).toBe(false)
+  })
+
+  it("shows originType (all three management roles)", () => {
+    expect(getUserFilterVisibility("support_user").originType).toBe(true)
+  })
+
+  it("hides governance-only filters: auditEngagementStatus, systemUserFlag, serviceAccountFlag, lastRoleChangeDate, lastPermissionChangeDate", () => {
+    const vis = getUserFilterVisibility("support_user")
+    expect(vis.auditEngagementStatus).toBe(false)
+    expect(vis.systemUserFlag).toBe(false)
+    expect(vis.serviceAccountFlag).toBe(false)
+    expect(vis.lastRoleChangeDate).toBe(false)
+    expect(vis.lastPermissionChangeDate).toBe(false)
+  })
+})
+
+describe("getUserFilterVisibility — auditor", () => {
+  it("hides tenant and lg (scoped to assigned tenant by backend)", () => {
+    const vis = getUserFilterVisibility("auditor")
+    expect(vis.tenant).toBe(false)
+    expect(vis.lg).toBe(false)
+  })
+
+  it("shows mfa, lastLogin, accessExpiry", () => {
+    const vis = getUserFilterVisibility("auditor")
+    expect(vis.mfa).toBe(true)
+    expect(vis.lastLogin).toBe(true)
+    expect(vis.accessExpiry).toBe(true)
+  })
+
+  it("shows all governance filters", () => {
+    const vis = getUserFilterVisibility("auditor")
+    expect(vis.auditEngagementStatus).toBe(true)
+    expect(vis.systemUserFlag).toBe(true)
+    expect(vis.serviceAccountFlag).toBe(true)
+    expect(vis.originType).toBe(true)
+    expect(vis.lastRoleChangeDate).toBe(true)
+    expect(vis.lastPermissionChangeDate).toBe(true)
+  })
+})
+
+describe("getUserFilterVisibility — null/undefined viewerRole", () => {
+  it("hides tenant, lg, accessExpiry and all governance filters when role is unknown", () => {
+    const vis = getUserFilterVisibility(null)
+    expect(vis.tenant).toBe(false)
+    expect(vis.lg).toBe(false)
+    expect(vis.accessExpiry).toBe(false)
+    expect(vis.auditEngagementStatus).toBe(false)
+    expect(vis.systemUserFlag).toBe(false)
+    expect(vis.serviceAccountFlag).toBe(false)
+    expect(vis.originType).toBe(false)
+    expect(vis.lastRoleChangeDate).toBe(false)
+    expect(vis.lastPermissionChangeDate).toBe(false)
+  })
+
+  it("shows mfa and lastLogin when role is unknown (no restriction confirmed)", () => {
+    const vis = getUserFilterVisibility(null)
+    expect(vis.mfa).toBe(true)
+    expect(vis.lastLogin).toBe(true)
   })
 })
 

@@ -75,7 +75,7 @@ describe("UserListItemSchema", () => {
   })
 
   it("rejects unknown status value", () => {
-    const item = { ...validUserListItem, status: "archived" }
+    const item = { ...validUserListItem, status: "unknown_status" }
     expect(() => UserListItemSchema.parse(item)).toThrow()
   })
 
@@ -229,7 +229,7 @@ describe("UserDetailResponseSchema", () => {
   })
 
   it("rejects an unknown status value", () => {
-    const item = { ...validUserDetail, status: "archived" }
+    const item = { ...validUserDetail, status: "unknown_status" }
     expect(() => UserDetailResponseSchema.parse(item)).toThrow()
   })
 
@@ -303,8 +303,16 @@ describe("UserStatusSchema", () => {
     expect(() => UserStatusSchema.parse("expired")).not.toThrow()
   })
 
+  it("accepts locked", () => {
+    expect(() => UserStatusSchema.parse("locked")).not.toThrow()
+  })
+
+  it("accepts archived", () => {
+    expect(() => UserStatusSchema.parse("archived")).not.toThrow()
+  })
+
   it("rejects unknown status string", () => {
-    expect(() => UserStatusSchema.parse("archived")).toThrow()
+    expect(() => UserStatusSchema.parse("unknown_status")).toThrow()
   })
 
   it("rejects empty string", () => {

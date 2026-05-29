@@ -18,7 +18,9 @@
     "pending_activation": "Pending",
     "suspended": "Suspended",
     "deactivated": "Deactivated",
-    "expired": "Expired"
+    "expired": "Expired",
+    "locked": "Locked",
+    "archived": "Archived"
   },
   "filter": {
     "title": "Filters",

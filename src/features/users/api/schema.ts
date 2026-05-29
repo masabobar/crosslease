@@ -9,6 +9,8 @@ export const UserStatusSchema = z.enum([
   "suspended",
   "deactivated",
   "expired",
+  "locked",
+  "archived",
 ])
 export type UserStatus = z.infer<typeof UserStatusSchema>
 
