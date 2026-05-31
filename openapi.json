@@ -386,6 +386,34 @@
             "description": "Filter by tenant UUID"
           },
           {
+            "name": "last_login_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter users who logged in on or after this date (YYYY-MM-DD)",
+              "title": "Last Login From"
+            },
+            "description": "Filter users who logged in on or after this date (YYYY-MM-DD)"
+          },
+          {
+            "name": "last_login_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter users who logged in on or before this date (YYYY-MM-DD)",
+              "title": "Last Login To"
+            },
+            "description": "Filter users who logged in on or before this date (YYYY-MM-DD)"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -792,6 +820,130 @@
         }
       }
     },
+    "/api/v1/audit/events": {
+      "get": {
+        "tags": ["audit"],
+        "summary": "List Audit Events",
+        "operationId": "list_audit_events_api_v1_audit_events_get",
+        "parameters": [
+          {
+            "name": "event_class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Event Class"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "name": "from_dt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "From Dt"
+            }
+          },
+          {
+            "name": "to_dt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "To Dt"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAuditEventsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -819,6 +971,93 @@
   },
   "components": {
     "schemas": {
+      "AuditEventResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "event_class": { "type": "string", "title": "Event Class" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "entity_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Entity Id"
+          },
+          "old_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Old Data"
+          },
+          "new_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "New Data"
+          },
+          "changed_fields": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Changed Fields"
+          },
+          "actor_id": { "type": "string", "title": "Actor Id" },
+          "actor_type": { "type": "string", "title": "Actor Type" },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "correlation_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Correlation Id"
+          },
+          "session_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Session Id"
+          },
+          "payload": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Payload"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_class",
+          "event_type",
+          "entity_type",
+          "entity_id",
+          "old_data",
+          "new_data",
+          "changed_fields",
+          "actor_id",
+          "actor_type",
+          "tenant_id",
+          "correlation_id",
+          "session_id",
+          "payload",
+          "recorded_at"
+        ],
+        "title": "AuditEventResponse"
+      },
       "CreateTenantRequest": {
         "properties": {
           "name": {
@@ -998,6 +1237,22 @@
         "type": "object",
         "required": ["verification_token", "expires_in"],
         "title": "MfaRequiredResponse"
+      },
+      "PaginatedAuditEventsResponse": {
+        "properties": {
+          "events": {
+            "items": { "$ref": "#/components/schemas/AuditEventResponse" },
+            "type": "array",
+            "title": "Events"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["events", "total", "page", "per_page", "total_pages"],
+        "title": "PaginatedAuditEventsResponse"
       },
       "PaginatedTenantsResponse": {
         "properties": {

@@ -49,6 +49,8 @@ export async function fetchUsers(
   if (params.tenant_id) qs.set("tenant_id", params.tenant_id)
   if (params.sort_by) qs.set("sort_by", params.sort_by)
   if (params.sort_order) qs.set("sort_order", params.sort_order)
+  if (params.last_login_from) qs.set("last_login_from", params.last_login_from)
+  if (params.last_login_to) qs.set("last_login_to", params.last_login_to)
   const query = qs.toString()
   const data = await api.get(`/users${query ? `?${query}` : ""}`)
   return PaginatedUsersResponseSchema.parse(data)

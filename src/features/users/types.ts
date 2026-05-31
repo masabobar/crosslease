@@ -96,6 +96,8 @@ export type UserFilterState = {
   mfa_enabled: string | null
   // UI ready — backend GET /api/v1/users does not support lg_id filter yet
   lg_id: string | null
+  last_login_from: string | null
+  last_login_to: string | null
 }
 
 export const EMPTY_FILTER_STATE: UserFilterState = {
@@ -104,6 +106,8 @@ export const EMPTY_FILTER_STATE: UserFilterState = {
   tenant_id: null,
   mfa_enabled: null,
   lg_id: null,
+  last_login_from: null,
+  last_login_to: null,
 }
 
 export type UserActionType =

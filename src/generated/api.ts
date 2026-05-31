@@ -239,6 +239,34 @@ const TenantResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const AuditEventResponse = z
+  .object({
+    id: z.string().uuid(),
+    event_class: z.string(),
+    event_type: z.string(),
+    entity_type: z.union([z.string(), z.null()]),
+    entity_id: z.union([z.string(), z.null()]),
+    old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    changed_fields: z.union([z.array(z.string()), z.null()]),
+    actor_id: z.string(),
+    actor_type: z.string(),
+    tenant_id: z.union([z.string(), z.null()]),
+    correlation_id: z.union([z.string(), z.null()]),
+    session_id: z.union([z.string(), z.null()]),
+    payload: z.union([z.object({}).partial().passthrough(), z.null()]),
+    recorded_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const PaginatedAuditEventsResponse = z
+  .object({
+    events: z.array(AuditEventResponse),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
 
 export const schemas = {
   ValidationError,
@@ -272,6 +300,8 @@ export const schemas = {
   TenantListResponse,
   PaginatedTenantsResponse,
   TenantResponse,
+  AuditEventResponse,
+  PaginatedAuditEventsResponse,
 }
 
 const endpoints = makeApi([
@@ -281,6 +311,67 @@ const endpoints = makeApi([
     alias: "root__get",
     requestFormat: "json",
     response: z.unknown(),
+  },
+  {
+    method: "get",
+    path: "/api/v1/audit/events",
+    alias: "list_audit_events_api_v1_audit_events_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "event_class",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "event_type",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "entity_type",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "entity_id",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "actor_id",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "from_dt",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "to_dt",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+    ],
+    response: PaginatedAuditEventsResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
   {
     method: "post",
@@ -682,6 +773,16 @@ const endpoints = makeApi([
       },
       {
         name: "tenant_id",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "last_login_from",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "last_login_to",
         type: "Query",
         schema: search,
       },

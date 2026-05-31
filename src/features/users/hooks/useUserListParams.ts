@@ -74,6 +74,8 @@ export function useUserListParams(): UserListParams {
     // UI ready — not sent to API; persisted in URL for session continuity
     mfa_enabled: rawMfa === "enabled" || rawMfa === "disabled" ? rawMfa : null,
     lg_id: params.get("lg_id"),
+    last_login_from: params.get("last_login_from"),
+    last_login_to: params.get("last_login_to"),
   }
 
   const rawSortKey = params.get("sort_by")
@@ -99,6 +101,8 @@ export function useUserListParams(): UserListParams {
       tenant_id: filters.tenant_id,
       mfa_enabled: filters.mfa_enabled,
       lg_id: filters.lg_id,
+      last_login_from: filters.last_login_from,
+      last_login_to: filters.last_login_to,
       page: null,
     })
   }
