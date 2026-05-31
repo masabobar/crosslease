@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -32,6 +33,7 @@ import {
   EMPTY_FILTER_STATE,
 } from "@/features/users/types"
 import { getUserFilterVisibility, formatDate } from "@/features/users/utils"
+import { adminUserDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { X } from "lucide-react"
 
@@ -61,6 +63,7 @@ function buildPageNumbers(
 }
 
 export default function UserManagementPage() {
+  const navigate = useNavigate()
   const { t } = useTranslation("users")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -252,6 +255,7 @@ export default function UserManagementPage() {
       actionLabel: isPendingApproval
         ? t("inviteBanner.pendingApproval.viewProfile")
         : t("inviteBanner.invited.viewProfile"),
+      onAction: () => navigate(adminUserDetail(user.id)),
     })
     setIsModalOpen(false)
   }
