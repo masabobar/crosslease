@@ -2,12 +2,9 @@ import { useState, useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Eye, EyeOff, CheckCircle, Circle, Check, Lock } from "lucide-react"
+import { Eye, EyeOff, Check, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import {
-  ResetPasswordInputSchema,
-  getPasswordRequirements,
-} from "../api/forgotPasswordSchema"
+import { ResetPasswordInputSchema } from "../api/forgotPasswordSchema"
 import type { ResetPasswordInput } from "../api/forgotPasswordSchema"
 import { validateResetToken, resetPassword } from "../api/forgotPasswordApi"
 import { ApiError } from "@/lib/api"
@@ -22,8 +19,8 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
-// import { GeneratePasswordButton } from "./GeneratePasswordButton"
-import { cn } from "@/lib/utils"
+import { GeneratePasswordButton } from "./GeneratePasswordButton"
+import { PasswordStrengthBar } from "./PasswordStrengthBar"
 
 type PageState = "loading" | "valid" | "blocked" | "success"
 
@@ -54,14 +51,12 @@ export default function ResetPasswordPage() {
     defaultValues: { password: "", password_confirm: "" },
   })
 
-  const { isSubmitting, submitCount, errors } = form.formState
-  const hasSubmitted = submitCount > 0
+  const { isSubmitting, errors } = form.formState
   const password = useWatch({
     control: form.control,
     name: "password",
     defaultValue: "",
   })
-  const requirements = getPasswordRequirements(password)
 
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
@@ -185,7 +180,7 @@ export default function ResetPasswordPage() {
                   <Label htmlFor="rp-password">
                     {t("resetPassword.setPassword.passwordLabel")}
                   </Label>
-                  {/* <GeneratePasswordButton
+                  <GeneratePasswordButton
                     onGenerate={pwd => {
                       form.setValue("password", pwd, { shouldValidate: true })
                       form.setValue("password_confirm", pwd, {
@@ -193,7 +188,7 @@ export default function ResetPasswordPage() {
                       })
                       setShowPassword(true)
                     }}
-                  /> */}
+                  />
                 </div>
                 <Input
                   id="rp-password"
@@ -220,48 +215,9 @@ export default function ResetPasswordPage() {
                   {...form.register("password")}
                 />
 
-                <ul className="mt-3 space-y-1.5">
-                  {(
-                    [
-                      ["minLength", "minLength"],
-                      ["hasLower", "hasLower"],
-                      ["hasUpper", "hasUpper"],
-                      ["hasNumber", "hasNumber"],
-                      ["hasSymbol", "hasSymbol"],
-                    ] as const
-                  ).map(([key, i18nKey]) => (
-                    <li key={key} className="flex items-center gap-2">
-                      {requirements[key] ? (
-                        <CheckCircle
-                          size={16}
-                          className="text-success shrink-0"
-                        />
-                      ) : (
-                        <Circle
-                          size={16}
-                          className={cn(
-                            "shrink-0",
-                            hasSubmitted
-                              ? "text-destructive"
-                              : "text-muted-foreground/50"
-                          )}
-                        />
-                      )}
-                      <span
-                        className={cn(
-                          "text-xs",
-                          requirements[key]
-                            ? "text-muted-foreground"
-                            : hasSubmitted
-                              ? "text-destructive"
-                              : "text-muted-foreground"
-                        )}
-                      >
-                        {t(`resetPassword.setPassword.requirements.${i18nKey}`)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-3">
+                  <PasswordStrengthBar password={password} />
+                </div>
               </div>
 
               <div>
