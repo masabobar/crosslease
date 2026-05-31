@@ -48,6 +48,8 @@
     "placeholders": {
       "select": "Auswählen",
       "chooseDate": "Datum wählen",
+      "from": "Von",
+      "to": "Bis",
       "tenant": "Mandant",
       "leasingCompany": "Leasinggesellschaft"
     },

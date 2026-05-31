@@ -36,6 +36,7 @@ import { useToastStore } from "@/store/toastStore"
 import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { READ_ONLY_VIEWER_ROLES } from "@/features/users/types"
+import { getUserFilterVisibility } from "@/features/users/utils"
 import { ApiError } from "@/lib/api"
 
 function buildPageNumbers(
@@ -127,6 +128,8 @@ export default function UserManagementPage() {
     tenant_id: appliedFilters.tenant_id ?? undefined,
     sort_by: sortKey ?? undefined,
     sort_order: sortKey ? sortOrder : undefined,
+    last_login_from: appliedFilters.last_login_from ?? undefined,
+    last_login_to: appliedFilters.last_login_to ?? undefined,
   })
 
   function handleSort(key: UserSortKey) {
@@ -278,10 +281,15 @@ export default function UserManagementPage() {
     setIsModalOpen(false)
   }
 
+  const filterVis = getUserFilterVisibility(currentUser?.role)
   const activeFilterCount =
     appliedFilters.role.length +
     appliedFilters.status.length +
-    (appliedFilters.tenant_id ? 1 : 0)
+    (filterVis.tenant && appliedFilters.tenant_id ? 1 : 0) +
+    (filterVis.lastLogin &&
+    (appliedFilters.last_login_from || appliedFilters.last_login_to)
+      ? 1
+      : 0)
   const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
 
   return (
@@ -370,12 +378,30 @@ export default function UserManagementPage() {
               onRemove={() => removeStatusFilter(status)}
             />
           ))}
-          {appliedFilters.tenant_id && (
+          {filterVis.tenant && appliedFilters.tenant_id && (
             <FilterPill
               key="tenant"
               label={`Tenant: ${tenantsData?.tenants.find(ten => ten.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
               onRemove={() =>
                 setAppliedFilters({ ...appliedFilters, tenant_id: null })
+              }
+            />
+          )}
+          {filterVis.lastLogin && appliedFilters.last_login_from && (
+            <FilterPill
+              key="last_login_from"
+              label={`Last login from: ${appliedFilters.last_login_from}`}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, last_login_from: null })
+              }
+            />
+          )}
+          {filterVis.lastLogin && appliedFilters.last_login_to && (
+            <FilterPill
+              key="last_login_to"
+              label={`Last login to: ${appliedFilters.last_login_to}`}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, last_login_to: null })
               }
             />
           )}
@@ -476,6 +502,7 @@ export default function UserManagementPage() {
           onClose={() => setIsFilterOpen(false)}
           appliedFilters={appliedFilters}
           onApply={handleApplyFilters}
+          viewerRole={currentUser?.role}
         />
       )}
     </div>

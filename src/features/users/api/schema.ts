@@ -100,6 +100,7 @@ export type UsersQueryParams = {
   lg_id?: string | null
   last_login_from?: string | null
   last_login_to?: string | null
+  // Not yet supported by backend:
   access_expiry_from?: string | null
   access_expiry_to?: string | null
   created_from?: string | null

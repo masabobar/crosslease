@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
 import type { UserStatus } from "@/features/users/api/schema"
+import { getUserFilterVisibility } from "@/features/users/utils"
+import { DatePicker } from "@/components/ui/date-picker"
 
 // i18n key casts for dynamic lookups
 type RolesKey = `roles.${UserRole}`
@@ -31,6 +33,7 @@ type UserFilterPanelProps = {
   onClose: () => void
   appliedFilters: UserFilterState
   onApply: (filters: UserFilterState) => void
+  viewerRole?: UserRole | null
 }
 
 // ─── Section header with gray background ────────────────────────────────────
@@ -294,9 +297,11 @@ function UserFilterPanel({
   onClose,
   appliedFilters,
   onApply,
+  viewerRole,
 }: UserFilterPanelProps) {
   const { t } = useTranslation("users")
   const { data: tenantsData } = useTenants()
+  const filterVis = getUserFilterVisibility(viewerRole)
 
   const tenantOptions = (tenantsData?.tenants ?? [])
     .filter(ten => ten.status === "active")
@@ -366,45 +371,61 @@ function UserFilterPanel({
           </FilterField>
 
           {/* MFA filter: UI ready — backend does not support mfa_enabled filter yet */}
-          <FilterField label={t("filter.fields.mfaStatus")}>
-            <TextToggle
-              options={[
-                { value: "enabled", label: t("filter.mfa.enabled") },
-                { value: "disabled", label: t("filter.mfa.disabled") },
-              ]}
-              value={staged.mfa_enabled}
-              onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
-              disabled
-            />
-          </FilterField>
+          {filterVis.mfa && (
+            <FilterField label={t("filter.fields.mfaStatus")}>
+              <TextToggle
+                options={[
+                  { value: "enabled", label: t("filter.mfa.enabled") },
+                  { value: "disabled", label: t("filter.mfa.disabled") },
+                ]}
+                value={staged.mfa_enabled}
+                onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
+                disabled
+              />
+            </FilterField>
+          )}
 
-          <FilterField label={t("filter.fields.tenant")}>
-            <SingleSelectDropdown
-              value={staged.tenant_id}
-              onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
-              options={tenantOptions}
-              placeholder={t("filter.placeholders.tenant")}
-              data-testid="filter-tenant-select"
-            />
-          </FilterField>
+          {filterVis.tenant && (
+            <FilterField label={t("filter.fields.tenant")}>
+              <SingleSelectDropdown
+                value={staged.tenant_id}
+                onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
+                options={tenantOptions}
+                placeholder={t("filter.placeholders.tenant")}
+                data-testid="filter-tenant-select"
+              />
+            </FilterField>
+          )}
 
           {/* LG filter: UI ready — backend does not support lg_id filter yet */}
-          <FilterField label={t("filter.fields.leasingCompany")}>
-            <DisabledSelect
-              placeholder={t("filter.placeholders.leasingCompany")}
-            />
-          </FilterField>
+          {filterVis.lg && (
+            <FilterField label={t("filter.fields.leasingCompany")}>
+              <DisabledSelect
+                placeholder={t("filter.placeholders.leasingCompany")}
+              />
+            </FilterField>
+          )}
 
           {/* ── ACTIVITY ── */}
           <SectionHeader>{t("filter.sections.activity")}</SectionHeader>
 
-          {/* Date range filters: UI ready — backend does not support last_login_from/to,
-              access_expiry_from/to, created_from/to filter params yet */}
-          <FilterField label={t("filter.fields.lastLoginRange")}>
-            <DisabledDateField
-              placeholder={t("filter.placeholders.chooseDate")}
-            />
-          </FilterField>
+          {filterVis.lastLogin && (
+            <FilterField label={t("filter.fields.lastLoginRange")}>
+              <div className="flex gap-2">
+                <DatePicker
+                  value={staged.last_login_from ?? undefined}
+                  onChange={v => setStaged(s => ({ ...s, last_login_from: v }))}
+                  placeholder={t("filter.placeholders.from")}
+                />
+                <DatePicker
+                  value={staged.last_login_to ?? undefined}
+                  onChange={v => setStaged(s => ({ ...s, last_login_to: v }))}
+                  placeholder={t("filter.placeholders.to")}
+                />
+              </div>
+            </FilterField>
+          )}
+          {/* access_expiry_from/to, created_from/to — backend does not support yet */}
 
           <FilterField label={t("filter.fields.userCreationDate")}>
             <DisabledDateField
@@ -412,60 +433,80 @@ function UserFilterPanel({
             />
           </FilterField>
 
-          <FilterField label={t("filter.fields.accessExpiry")}>
-            <DisabledDateField
-              placeholder={t("filter.placeholders.chooseDate")}
-            />
-          </FilterField>
+          {filterVis.accessExpiry && (
+            <FilterField label={t("filter.fields.accessExpiry")}>
+              <DisabledDateField
+                placeholder={t("filter.placeholders.chooseDate")}
+              />
+            </FilterField>
+          )}
 
           {/* ── GOVERNANCE & ACCOUNT ── */}
           <SectionHeader>
             {t("filter.sections.governanceAccount")}
           </SectionHeader>
 
-          <FilterField label={t("filter.fields.auditEngagementStatus")}>
-            <DisabledSelect placeholder={t("filter.placeholders.select")} />
-          </FilterField>
+          {/* Audit Engagement Status: system_admin + auditor only */}
+          {filterVis.auditEngagementStatus && (
+            <FilterField label={t("filter.fields.auditEngagementStatus")}>
+              <DisabledSelect placeholder={t("filter.placeholders.select")} />
+            </FilterField>
+          )}
 
-          <FilterField label={t("filter.fields.lastRoleChangeDate")}>
-            <DisabledDateField
-              placeholder={t("filter.placeholders.chooseDate")}
-            />
-          </FilterField>
+          {/* Last Role Change Date: system_admin + auditor only */}
+          {filterVis.lastRoleChangeDate && (
+            <FilterField label={t("filter.fields.lastRoleChangeDate")}>
+              <DisabledDateField
+                placeholder={t("filter.placeholders.chooseDate")}
+              />
+            </FilterField>
+          )}
 
-          <FilterField label={t("filter.fields.lastPermissionChangeDate")}>
-            <DisabledDateField
-              placeholder={t("filter.placeholders.chooseDate")}
-            />
-          </FilterField>
+          {/* Last Permission Change Date: system_admin + auditor only */}
+          {filterVis.lastPermissionChangeDate && (
+            <FilterField label={t("filter.fields.lastPermissionChangeDate")}>
+              <DisabledDateField
+                placeholder={t("filter.placeholders.chooseDate")}
+              />
+            </FilterField>
+          )}
 
-          <FilterField label={t("filter.fields.originType")}>
-            <DisabledSelect placeholder={t("filter.placeholders.select")} />
-          </FilterField>
+          {/* Origin Type: system_admin + auditor + support_user */}
+          {filterVis.originType && (
+            <FilterField label={t("filter.fields.originType")}>
+              <DisabledSelect placeholder={t("filter.placeholders.select")} />
+            </FilterField>
+          )}
 
-          <FilterField label={t("filter.fields.systemUserFlag")}>
-            <TextToggle
-              options={[
-                { value: "human", label: t("filter.flags.humanUser") },
-                { value: "system", label: t("filter.flags.systemUser") },
-              ]}
-              value={null}
-              onChange={() => {}}
-              disabled
-            />
-          </FilterField>
+          {/* System User Flag: system_admin + auditor only */}
+          {filterVis.systemUserFlag && (
+            <FilterField label={t("filter.fields.systemUserFlag")}>
+              <TextToggle
+                options={[
+                  { value: "human", label: t("filter.flags.humanUser") },
+                  { value: "system", label: t("filter.flags.systemUser") },
+                ]}
+                value={null}
+                onChange={() => {}}
+                disabled
+              />
+            </FilterField>
+          )}
 
-          <FilterField label={t("filter.fields.serviceAccountFlag")}>
-            <TextToggle
-              options={[
-                { value: "enabled", label: t("filter.flags.enabled") },
-                { value: "disabled", label: t("filter.flags.disabled") },
-              ]}
-              value={null}
-              onChange={() => {}}
-              disabled
-            />
-          </FilterField>
+          {/* Service Account Flag: system_admin + auditor only */}
+          {filterVis.serviceAccountFlag && (
+            <FilterField label={t("filter.fields.serviceAccountFlag")}>
+              <TextToggle
+                options={[
+                  { value: "enabled", label: t("filter.flags.enabled") },
+                  { value: "disabled", label: t("filter.flags.disabled") },
+                ]}
+                value={null}
+                onChange={() => {}}
+                disabled
+              />
+            </FilterField>
+          )}
         </div>
 
         {/* Footer */}

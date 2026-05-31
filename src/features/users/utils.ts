@@ -1,8 +1,11 @@
 import {
   ACCESS_EXPIRY_VISIBLE_ROLES,
   FOUR_EYES_ROLES,
+  GOVERNANCE_FILTER_ROLES,
   OPERATIONAL_TENANT_ROLES,
   SENSITIVE_AUTH_RESTRICTED_ROLES,
+  TENANT_FILTER_VISIBLE_ROLES,
+  USER_MANAGEMENT_ALLOWED_ROLES,
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
@@ -35,6 +38,57 @@ export function getUserListColumnVisibility(
     lastLogin: !isSensitiveAuthRestricted,
     accessExpiry:
       !!viewerRole && ACCESS_EXPIRY_VISIBLE_ROLES.includes(viewerRole),
+  }
+}
+
+export type UserFilterVisibility = {
+  tenant: boolean
+  lg: boolean
+  mfa: boolean
+  lastLogin: boolean
+  accessExpiry: boolean
+  // Governance filters — per US-05 v2 filter visibility matrix
+  auditEngagementStatus: boolean
+  systemUserFlag: boolean
+  serviceAccountFlag: boolean
+  originType: boolean
+  lastRoleChangeDate: boolean
+  lastPermissionChangeDate: boolean
+}
+
+/**
+ * Derives which filter panel controls are visible for a given viewer role,
+ * per US-05 v2 filter visibility matrix.
+ *
+ * - support_user: no MFA / last-login / access-expiry / governance filters
+ *   (except originType which is visible to all three management roles)
+ * - auditor: no tenant / LG (already scoped to assigned tenant by the backend)
+ */
+export function getUserFilterVisibility(
+  viewerRole: UserRole | null | undefined
+): UserFilterVisibility {
+  const isSensitiveAuthRestricted =
+    !!viewerRole && SENSITIVE_AUTH_RESTRICTED_ROLES.includes(viewerRole)
+  const canFilterByTenant =
+    !!viewerRole && TENANT_FILTER_VISIBLE_ROLES.includes(viewerRole)
+  const isGovernanceRole =
+    !!viewerRole && GOVERNANCE_FILTER_ROLES.includes(viewerRole)
+  const isManagementRole =
+    !!viewerRole && USER_MANAGEMENT_ALLOWED_ROLES.includes(viewerRole)
+
+  return {
+    tenant: canFilterByTenant,
+    lg: canFilterByTenant,
+    mfa: !isSensitiveAuthRestricted,
+    lastLogin: !isSensitiveAuthRestricted,
+    accessExpiry:
+      !!viewerRole && ACCESS_EXPIRY_VISIBLE_ROLES.includes(viewerRole),
+    auditEngagementStatus: isGovernanceRole,
+    systemUserFlag: isGovernanceRole,
+    serviceAccountFlag: isGovernanceRole,
+    originType: isManagementRole,
+    lastRoleChangeDate: isGovernanceRole,
+    lastPermissionChangeDate: isGovernanceRole,
   }
 }
 

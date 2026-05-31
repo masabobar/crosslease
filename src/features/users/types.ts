@@ -36,6 +36,21 @@ export const USER_MANAGEMENT_ALLOWED_ROLES: readonly UserRole[] = [
 
 export const LC_ONLY_ROLES: readonly UserRole[] = ["leasing_company_user"]
 
+// Roles that can use cross-tenant filters (Tenant + LG dropdowns).
+// Auditor is excluded: the backend scopes their results to their assigned tenant.
+export const TENANT_FILTER_VISIBLE_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "support_user",
+]
+
+// Roles that see governance-related filters (Audit Engagement Status, System User Flag,
+// Service Account Flag, Origin Type, Last Role/Permission Change Date).
+// Per US-05 v2 filter visibility matrix.
+export const GOVERNANCE_FILTER_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "auditor",
+]
+
 export const INTERNAL_BANK_ROLES: readonly UserRole[] = [
   "system_admin",
   "support_user",
@@ -81,6 +96,8 @@ export type UserFilterState = {
   mfa_enabled: string | null
   // UI ready — backend GET /api/v1/users does not support lg_id filter yet
   lg_id: string | null
+  last_login_from: string | null
+  last_login_to: string | null
 }
 
 export const EMPTY_FILTER_STATE: UserFilterState = {
@@ -89,6 +106,8 @@ export const EMPTY_FILTER_STATE: UserFilterState = {
   tenant_id: null,
   mfa_enabled: null,
   lg_id: null,
+  last_login_from: null,
+  last_login_to: null,
 }
 
 export type UserActionType =

@@ -86,18 +86,24 @@ describe("fetchUsers", () => {
     expect(url).not.toContain("lg_id")
   })
 
-  it("does NOT send date range params to the API (not supported by backend)", async () => {
+  it("sends last_login_from and last_login_to params to the API", async () => {
     await fetchUsers({
       last_login_from: "2026-01-01",
       last_login_to: "2026-12-31",
+    })
+    const url = mockApi.get.mock.calls[0][0] as string
+    expect(url).toContain("last_login_from=2026-01-01")
+    expect(url).toContain("last_login_to=2026-12-31")
+  })
+
+  it("does NOT send unsupported date range params to the API", async () => {
+    await fetchUsers({
       access_expiry_from: "2026-01-01",
       access_expiry_to: "2026-12-31",
       created_from: "2026-01-01",
       created_to: "2026-12-31",
     })
     const url = mockApi.get.mock.calls[0][0] as string
-    expect(url).not.toContain("last_login_from")
-    expect(url).not.toContain("last_login_to")
     expect(url).not.toContain("access_expiry_from")
     expect(url).not.toContain("access_expiry_to")
     expect(url).not.toContain("created_from")
