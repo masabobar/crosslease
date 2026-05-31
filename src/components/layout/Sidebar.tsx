@@ -2,15 +2,11 @@ import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import {
-  Settings,
   ChevronDown,
   ChevronRight,
   ChevronsLeft,
-  LayoutDashboard,
-  Cog,
-  SlidersHorizontal,
-  ShieldCheck,
-  Users,
+  Home,
+  SquareTerminal,
   LogOut,
   FileText,
   BarChart2,
@@ -36,12 +32,17 @@ export function Sidebar() {
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
+  const [isPlatformAdminExpanded, setIsPlatformAdminExpanded] = useState(() =>
+    location.pathname.startsWith("/platform-administration")
+  )
 
   const isMainActive = location.pathname === PATHS.DASHBOARD
   const isPlatformAdminActive = location.pathname.startsWith(
     "/platform-administration"
   )
-  const isUserManagementActive = location.pathname === PATHS.USER_MANAGEMENT
+  const isUserManagementActive =
+    location.pathname === PATHS.USER_MANAGEMENT ||
+    location.pathname.startsWith(PATHS.USER_MANAGEMENT + "/")
 
   return (
     <aside
@@ -60,7 +61,20 @@ export function Sidebar() {
             isCollapsed && "cursor-pointer hover:opacity-90 transition-opacity"
           )}
         >
-          <Settings size={16} className="text-white" />
+          <svg
+            viewBox="0 0 13.5 14.8333"
+            fill="none"
+            className="size-4 text-white"
+            aria-hidden="true"
+          >
+            <path
+              d="M3.41667 0.75H10.0833M2.08333 3.41667H11.4167M2.08333 6.08333H11.4167C12.153 6.08333 12.75 6.68029 12.75 7.41667V12.75C12.75 13.4864 12.153 14.0833 11.4167 14.0833H2.08333C1.34695 14.0833 0.75 13.4864 0.75 12.75V7.41667C0.75 6.68029 1.34695 6.08333 2.08333 6.08333Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
         {!isCollapsed && (
           <>
@@ -155,7 +169,7 @@ export function Sidebar() {
                   isMainActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
                 )}
               >
-                <LayoutDashboard
+                <Home
                   size={16}
                   className={cn(
                     "shrink-0",
@@ -215,48 +229,45 @@ export function Sidebar() {
               )}
             </div>
 
-            {/* Flat items */}
+            {/* Flat items — no sub-navigation */}
             {[
-              { key: "operations", label: t("nav.operations"), icon: Cog },
+              { key: "operations", label: t("nav.operations") },
               {
                 key: "businessConfigurations",
                 label: t("nav.businessConfigurations"),
-                icon: SlidersHorizontal,
               },
               {
                 key: "rulesSetup",
                 label: t("nav.rulesSetup"),
-                icon: ShieldCheck,
               },
-            ].map(({ key, label, icon: Icon }) => (
+            ].map(({ key, label }) => (
               <div
                 key={key}
                 className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-default"
               >
-                <Icon size={16} className="text-muted-foreground shrink-0" />
+                <SquareTerminal
+                  size={16}
+                  className="text-muted-foreground shrink-0"
+                />
                 {!isCollapsed && (
-                  <>
-                    <span className="flex-1 text-sm text-foreground min-w-0 truncate">
-                      {label}
-                    </span>
-                    <ChevronRight
-                      size={16}
-                      className="text-muted-foreground shrink-0"
-                    />
-                  </>
+                  <span className="flex-1 text-sm text-foreground min-w-0 truncate">
+                    {label}
+                  </span>
                 )}
               </div>
             ))}
 
             {/* Platform administration group */}
             <div className="flex flex-col gap-2">
-              <div
+              <button
+                type="button"
+                onClick={() => setIsPlatformAdminExpanded(prev => !prev)}
                 className={cn(
-                  "flex items-center gap-2 px-2 py-2 rounded-[10px]",
-                  isPlatformAdminActive ? "bg-[#dbe9fc]" : ""
+                  "flex items-center gap-2 w-full px-2 py-2 rounded-[10px]",
+                  isPlatformAdminActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
                 )}
               >
-                <Users
+                <SquareTerminal
                   size={16}
                   className={cn(
                     "shrink-0",
@@ -269,7 +280,7 @@ export function Sidebar() {
                   <>
                     <span
                       className={cn(
-                        "flex-1 text-sm min-w-0 truncate",
+                        "flex-1 text-left text-sm min-w-0 truncate",
                         isPlatformAdminActive
                           ? "text-[#1d41a8]"
                           : "text-foreground"
@@ -277,19 +288,31 @@ export function Sidebar() {
                     >
                       {t("nav.platformAdministration")}
                     </span>
-                    <ChevronDown
-                      size={16}
-                      className={cn(
-                        "shrink-0",
-                        isPlatformAdminActive
-                          ? "text-[#1d41a8]"
-                          : "text-muted-foreground"
-                      )}
-                    />
+                    {isPlatformAdminExpanded ? (
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0",
+                          isPlatformAdminActive
+                            ? "text-[#1d41a8]"
+                            : "text-muted-foreground"
+                        )}
+                      />
+                    ) : (
+                      <ChevronRight
+                        size={16}
+                        className={cn(
+                          "shrink-0",
+                          isPlatformAdminActive
+                            ? "text-[#1d41a8]"
+                            : "text-muted-foreground"
+                        )}
+                      />
+                    )}
                   </>
                 )}
-              </div>
-              {!isCollapsed && (
+              </button>
+              {!isCollapsed && isPlatformAdminExpanded && (
                 <div className="flex flex-col gap-3 pl-8 pr-2">
                   {canAccessUserManagement && (
                     <Link

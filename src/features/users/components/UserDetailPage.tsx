@@ -174,17 +174,14 @@ function AuthSecurityTab() {
         <span>{t("detail.page.authSecurity.privilegedAccess")}</span>
       </div>
       <div className="flex flex-col gap-3 text-sm text-foreground">
-        <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-          {t("detail.page.values.on")}
-        </span>
-        <span>{t("detail.page.values.emailOtp")}</span>
-        <span>—</span>
-        <span>{t("detail.page.values.no")}</span>
         <span>—</span>
         <span>—</span>
-        <span>{t("detail.page.values.standard")}</span>
-        <span>{t("detail.page.values.no")}</span>
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
+        <span>—</span>
       </div>
     </div>
   )
