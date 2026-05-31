@@ -11,7 +11,7 @@ describe("ActivateAccountInputSchema", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: VALID,
-        password_confirm: VALID,
+        passwordConfirm: VALID,
       })
     ).not.toThrow()
   })
@@ -20,16 +20,28 @@ describe("ActivateAccountInputSchema", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: VALID,
-        password_confirm: "Different1!",
+        passwordConfirm: "Different1!",
       })
     ).toThrow()
+  })
+
+  it("puts the mismatch error on the passwordConfirm path", () => {
+    const result = ActivateAccountInputSchema.safeParse({
+      password: VALID,
+      passwordConfirm: "Wrong1!",
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map(i => i.path.join("."))
+      expect(paths).toContain("passwordConfirm")
+    }
   })
 
   it("rejects password shorter than 8 characters", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: "Ab1!",
-        password_confirm: "Ab1!",
+        passwordConfirm: "Ab1!",
       })
     ).toThrow()
   })
@@ -38,7 +50,7 @@ describe("ActivateAccountInputSchema", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: "abcdef1!",
-        password_confirm: "abcdef1!",
+        passwordConfirm: "abcdef1!",
       })
     ).toThrow()
   })
@@ -47,7 +59,7 @@ describe("ActivateAccountInputSchema", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: "ABCDEF1!",
-        password_confirm: "ABCDEF1!",
+        passwordConfirm: "ABCDEF1!",
       })
     ).toThrow()
   })
@@ -56,7 +68,7 @@ describe("ActivateAccountInputSchema", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: "Abcdefg!",
-        password_confirm: "Abcdefg!",
+        passwordConfirm: "Abcdefg!",
       })
     ).toThrow()
   })
@@ -65,21 +77,9 @@ describe("ActivateAccountInputSchema", () => {
     expect(() =>
       ActivateAccountInputSchema.parse({
         password: "Abcdef12",
-        password_confirm: "Abcdef12",
+        passwordConfirm: "Abcdef12",
       })
     ).toThrow()
-  })
-
-  it("puts the mismatch error on the password_confirm path", () => {
-    const result = ActivateAccountInputSchema.safeParse({
-      password: VALID,
-      password_confirm: "Wrong1!",
-    })
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      const paths = result.error.issues.map(i => i.path.join("."))
-      expect(paths).toContain("password_confirm")
-    }
   })
 })
 

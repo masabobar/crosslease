@@ -11,11 +11,11 @@ export const ActivateAccountInputSchema = z
       .regex(/[A-Z]/)
       .regex(/[0-9]/)
       .regex(/[^a-zA-Z0-9]/),
-    password_confirm: z.string(),
+    passwordConfirm: z.string(),
   })
-  .refine(data => data.password === data.password_confirm, {
-    message: "PASSWORDS_DO_NOT_MATCH",
-    path: ["password_confirm"],
+  .refine(data => data.password === data.passwordConfirm, {
+    message: "passwords_mismatch",
+    path: ["passwordConfirm"],
   })
 
 export type ActivateAccountInput = z.infer<typeof ActivateAccountInputSchema>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import clLogo from "@/assets/cl-logo.png"
+import clLogo from "@/assets/crosslease-logo.png"
 import { PATHS } from "@/router/paths"
 
 export function AppLogo() {
