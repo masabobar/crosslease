@@ -9,6 +9,7 @@ type ToastPayload = {
   title: string
   message: string
   actionLabel?: string
+  onAction?: () => void
 }
 
 type ToastState = {
@@ -19,13 +20,19 @@ type ToastState = {
 let _activeId: string | number | null = null
 
 export const useToastStore = create<ToastState>(() => ({
-  showToast: ({ variant, title, message, actionLabel }: ToastPayload) => {
+  showToast: ({
+    variant,
+    title,
+    message,
+    actionLabel,
+    onAction,
+  }: ToastPayload) => {
     if (_activeId !== null) sonnerToast.dismiss(_activeId)
 
     const opts: ExternalToast = {
       description: message,
       ...(actionLabel
-        ? { action: { label: actionLabel, onClick: () => {} } }
+        ? { action: { label: actionLabel, onClick: () => onAction?.() } }
         : {}),
     }
 
