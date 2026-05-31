@@ -303,14 +303,6 @@ describe("UserStatusSchema", () => {
     expect(() => UserStatusSchema.parse("expired")).not.toThrow()
   })
 
-  it("accepts locked", () => {
-    expect(() => UserStatusSchema.parse("locked")).not.toThrow()
-  })
-
-  it("accepts archived", () => {
-    expect(() => UserStatusSchema.parse("archived")).not.toThrow()
-  })
-
   it("rejects unknown status string", () => {
     expect(() => UserStatusSchema.parse("unknown_status")).toThrow()
   })

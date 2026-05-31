@@ -9,8 +9,6 @@ export const UserStatusSchema = z.enum([
   "suspended",
   "deactivated",
   "expired",
-  "locked",
-  "archived",
 ])
 export type UserStatus = z.infer<typeof UserStatusSchema>
 
@@ -102,6 +100,7 @@ export type UsersQueryParams = {
   lg_id?: string | null
   last_login_from?: string | null
   last_login_to?: string | null
+  // Not yet supported by backend:
   access_expiry_from?: string | null
   access_expiry_to?: string | null
   created_from?: string | null

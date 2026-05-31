@@ -12,6 +12,7 @@ import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
 import type { UserStatus } from "@/features/users/api/schema"
 import { getUserFilterVisibility } from "@/features/users/utils"
+import { DatePicker } from "@/components/ui/date-picker"
 
 // i18n key casts for dynamic lookups
 type RolesKey = `roles.${UserRole}`
@@ -26,8 +27,6 @@ const ALL_STATUSES: UserStatus[] = [
   "suspended",
   "deactivated",
   "expired",
-  "locked",
-  "archived",
 ]
 
 type UserFilterPanelProps = {
@@ -410,15 +409,23 @@ function UserFilterPanel({
           {/* ── ACTIVITY ── */}
           <SectionHeader>{t("filter.sections.activity")}</SectionHeader>
 
-          {/* Date range filters: UI ready — backend does not support last_login_from/to,
-              access_expiry_from/to, created_from/to filter params yet */}
           {filterVis.lastLogin && (
             <FilterField label={t("filter.fields.lastLoginRange")}>
-              <DisabledDateField
-                placeholder={t("filter.placeholders.chooseDate")}
-              />
+              <div className="flex gap-2">
+                <DatePicker
+                  value={staged.last_login_from ?? undefined}
+                  onChange={v => setStaged(s => ({ ...s, last_login_from: v }))}
+                  placeholder={t("filter.placeholders.from")}
+                />
+                <DatePicker
+                  value={staged.last_login_to ?? undefined}
+                  onChange={v => setStaged(s => ({ ...s, last_login_to: v }))}
+                  placeholder={t("filter.placeholders.to")}
+                />
+              </div>
             </FilterField>
           )}
+          {/* access_expiry_from/to, created_from/to — backend does not support yet */}
 
           <FilterField label={t("filter.fields.userCreationDate")}>
             <DisabledDateField

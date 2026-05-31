@@ -18,9 +18,7 @@
     "pending_activation": "Ausstehend",
     "suspended": "Gesperrt",
     "deactivated": "Deaktiviert",
-    "expired": "Abgelaufen",
-    "locked": "Gesperrt",
-    "archived": "Archiviert"
+    "expired": "Abgelaufen"
   },
   "filter": {
     "title": "Filter",
@@ -50,6 +48,8 @@
     "placeholders": {
       "select": "Auswählen",
       "chooseDate": "Datum wählen",
+      "from": "Von",
+      "to": "Bis",
       "tenant": "Mandant",
       "leasingCompany": "Leasinggesellschaft"
     },
