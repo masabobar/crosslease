@@ -1,5 +1,17 @@
 # refinext-app
 
+## API-first rule (MANDATORY before any FE implementation)
+
+Before writing any FE code for a screen — whether from a design or a task description — read the corresponding API endpoint(s) in `refinext-api`:
+
+- **Request fields:** every form field the design shows must map to an actual API field. Don't skip fields just because the design omits them (e.g. `password_confirm`).
+- **Post-action navigation:** check whether the endpoint leaves the user authenticated or not. Success redirects must match that state — don't send an unauthenticated user to a protected route.
+- **Error codes:** note what codes the endpoint can return and handle each one in the UI.
+
+Check the route schema and service logic in `refinext-api` directly. Do this before touching any component or form.
+
+---
+
 ## Code standards
 
 ### TypeScript
