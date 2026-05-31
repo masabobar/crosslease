@@ -1,21 +1,13 @@
 import { useState } from "react"
-import {
-  UserPlus,
-  Search,
-  Filter,
-  FileDown,
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from "lucide-react"
+import { UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
 import { UserTable } from "@/features/users/components/UserTable"
 import { UserFilterPanel } from "@/features/users/components/UserFilterPanel"
+import { UserQuickFilters } from "@/features/users/components/UserQuickFilters"
 import { useUsers } from "@/features/users/hooks/useUsers"
 import { useUserListParams } from "@/features/users/hooks/useUserListParams"
 import type {
@@ -35,9 +27,13 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { READ_ONLY_VIEWER_ROLES } from "@/features/users/types"
-import { getUserFilterVisibility } from "@/features/users/utils"
+import {
+  READ_ONLY_VIEWER_ROLES,
+  EMPTY_FILTER_STATE,
+} from "@/features/users/types"
+import { getUserFilterVisibility, formatDate } from "@/features/users/utils"
 import { ApiError } from "@/lib/api"
+import { X } from "lucide-react"
 
 function buildPageNumbers(
   currentPage: number,
@@ -62,27 +58,6 @@ function buildPageNumbers(
   }
 
   return result
-}
-
-type FilterPillProps = {
-  label: string
-  onRemove: () => void
-}
-
-function FilterPill({ label, onRemove }: FilterPillProps) {
-  return (
-    <span className="inline-flex items-center gap-[3px] pl-[8px] pr-[6px] py-[3px] rounded-full bg-[#0284c7] text-[12px] font-medium text-white leading-none shrink-0">
-      {label}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="p-0 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
-        aria-label={`Remove ${label} filter`}
-      >
-        <X size={11} strokeWidth={2.5} />
-      </button>
-    </span>
-  )
 }
 
 export default function UserManagementPage() {
@@ -282,15 +257,16 @@ export default function UserManagementPage() {
   }
 
   const filterVis = getUserFilterVisibility(currentUser?.role)
+  const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
   const activeFilterCount =
     appliedFilters.role.length +
     appliedFilters.status.length +
     (filterVis.tenant && appliedFilters.tenant_id ? 1 : 0) +
+    (filterVis.mfa && appliedFilters.mfa_enabled ? 1 : 0) +
     (filterVis.lastLogin &&
     (appliedFilters.last_login_from || appliedFilters.last_login_to)
       ? 1
       : 0)
-  const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
 
   return (
     <div className="p-8" data-testid="user-management-page">
@@ -315,96 +291,132 @@ export default function UserManagementPage() {
         )}
       </div>
 
-      {/* Toolbar */}
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <Input
-            data-testid="user-search-input"
-            placeholder="Search"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="h-9 w-[288px]"
-            endAction={
-              <Search
-                size={16}
-                className="text-muted-foreground pointer-events-none"
-              />
-            }
-          />
+      {/* Quick filter row */}
+      <UserQuickFilters
+        className="mt-6"
+        search={search}
+        onSearchChange={setSearch}
+        appliedFilters={appliedFilters}
+        filterVisibility={filterVis}
+        onFilterChange={update =>
+          setAppliedFilters({ ...appliedFilters, ...update })
+        }
+        onOpenAdvanced={() => setIsFilterOpen(true)}
+      />
 
-          {/* Filter button — red dot when active */}
+      {/* Active filter pills */}
+      {activeFilterCount > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-[#314158] shrink-0">Filters:</span>
+
+          {appliedFilters.role.map((role: UserRole) => (
+            <span
+              key={`role-${role}`}
+              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0"
+            >
+              {`Role: ${t(`roles.${role}` as `roles.${UserRole}`)}`}
+              <button
+                type="button"
+                onClick={() => removeRoleFilter(role)}
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label={`Remove role ${role} filter`}
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          ))}
+
+          {filterVis.tenant && appliedFilters.tenant_id && (
+            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
+              {`Tenant: ${tenantsData?.tenants.find(t => t.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
+              <button
+                type="button"
+                onClick={() =>
+                  setAppliedFilters({ ...appliedFilters, tenant_id: null })
+                }
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label="Remove tenant filter"
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          )}
+
+          {filterVis.mfa && appliedFilters.mfa_enabled && (
+            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
+              {`MFA: ${t(`filter.mfa.${appliedFilters.mfa_enabled}` as "filter.mfa.enabled" | "filter.mfa.disabled")}`}
+              <button
+                type="button"
+                onClick={() =>
+                  setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
+                }
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label="Remove MFA filter"
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          )}
+
+          {appliedFilters.status.map((status: string) => (
+            <span
+              key={`status-${status}`}
+              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0"
+            >
+              {`Status: ${t(`statuses.${status}` as `statuses.${UserStatus}`)}`}
+              <button
+                type="button"
+                onClick={() => removeStatusFilter(status)}
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label={`Remove status ${status} filter`}
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          ))}
+
+          {filterVis.lastLogin &&
+            (appliedFilters.last_login_from ||
+              appliedFilters.last_login_to) && (
+              <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
+                {[
+                  "Last login range:",
+                  appliedFilters.last_login_from
+                    ? formatDate(appliedFilters.last_login_from)
+                    : null,
+                  appliedFilters.last_login_from && appliedFilters.last_login_to
+                    ? "–"
+                    : null,
+                  appliedFilters.last_login_to
+                    ? formatDate(appliedFilters.last_login_to)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAppliedFilters({
+                      ...appliedFilters,
+                      last_login_from: null,
+                      last_login_to: null,
+                    })
+                  }
+                  className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                  aria-label="Remove last login filter"
+                >
+                  <X size={11} strokeWidth={2.5} />
+                </button>
+              </span>
+            )}
+
           <button
             type="button"
-            data-testid="filter-button"
-            onClick={() => setIsFilterOpen(true)}
-            className="relative flex items-center justify-center border border-border rounded-[12px] p-[10px] text-muted-foreground hover:bg-muted transition-colors"
-            aria-label={t("filter.label")}
+            onClick={() => setAppliedFilters(EMPTY_FILTER_STATE)}
+            className="px-2 text-xs font-medium text-destructive hover:opacity-80 transition-opacity"
           >
-            <Filter size={16} />
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-red-500" />
-            )}
+            Clear all
           </button>
-        </div>
-
-        <button
-          type="button"
-          data-testid="export-button"
-          className="shrink-0 flex items-center gap-1.5 border border-border rounded-[12px] bg-background px-[10px] h-9 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-        >
-          <FileDown size={16} />
-          Export
-        </button>
-      </div>
-
-      {/* Active filter pills — second row */}
-      {activeFilterCount > 0 && (
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-muted-foreground shrink-0">
-            Filters:
-          </span>
-          {appliedFilters.role.map((role: UserRole) => (
-            <FilterPill
-              key={`role-${role}`}
-              label={`Role: ${t(`roles.${role}` as `roles.${UserRole}`)}`}
-              onRemove={() => removeRoleFilter(role)}
-            />
-          ))}
-          {appliedFilters.status.map((status: string) => (
-            <FilterPill
-              key={`status-${status}`}
-              label={`Status: ${t(`statuses.${status}` as `statuses.${UserStatus}`)}`}
-              onRemove={() => removeStatusFilter(status)}
-            />
-          ))}
-          {filterVis.tenant && appliedFilters.tenant_id && (
-            <FilterPill
-              key="tenant"
-              label={`Tenant: ${tenantsData?.tenants.find(ten => ten.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, tenant_id: null })
-              }
-            />
-          )}
-          {filterVis.lastLogin && appliedFilters.last_login_from && (
-            <FilterPill
-              key="last_login_from"
-              label={`Last login from: ${appliedFilters.last_login_from}`}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, last_login_from: null })
-              }
-            />
-          )}
-          {filterVis.lastLogin && appliedFilters.last_login_to && (
-            <FilterPill
-              key="last_login_to"
-              label={`Last login to: ${appliedFilters.last_login_to}`}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, last_login_to: null })
-              }
-            />
-          )}
         </div>
       )}
 
