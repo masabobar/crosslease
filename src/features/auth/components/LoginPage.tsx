@@ -162,7 +162,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex-1 flex items-center justify-center px-4 pb-24">
-          <div className="w-full max-w-[416px] bg-card rounded-2xl shadow-xl overflow-hidden">
+          <div className="w-full max-w-[416px] bg-card rounded-[14px] shadow-xl overflow-hidden">
             <form onSubmit={handleOtpSubmit} data-testid="otp-form">
               <div className="flex flex-col gap-6 p-4">
                 <div className="p-3 bg-primary/10 rounded-[14px] w-fit">
