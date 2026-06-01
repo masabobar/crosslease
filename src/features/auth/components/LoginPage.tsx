@@ -207,7 +207,7 @@ export default function LoginPage() {
                         className={
                           otpHelper.type === "error"
                             ? "text-sm text-destructive"
-                            : "text-sm text-green-600"
+                            : "text-base text-green-600"
                         }
                       >
                         {otpHelper.message}
