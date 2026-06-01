@@ -30,19 +30,17 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
 
-# Accept build arguments for environment variables
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
 ARG VITE_APP_STAGE
 ARG PROJECT_NAME
 ARG VITE_API_URL
-
-# Set environment variables for build
 ENV VITE_APP_STAGE=$VITE_APP_STAGE
 ENV PROJECT_NAME=$PROJECT_NAME
 ENV VITE_API_URL=$VITE_API_URL
 
-WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
 
