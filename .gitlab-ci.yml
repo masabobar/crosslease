@@ -129,6 +129,7 @@ deploy:develop:
     DEPLOY_PORT: 22250
     DEPLOY_USER: refinext
     DEPLOY_DIR: "/home/$DEPLOY_USER/frontend"
+    IMAGE_TAG: latest
   script:
     # Export DOTENV variables to environment (if needed)
     - |
@@ -212,6 +213,7 @@ deploy:staging:
     DEPLOY_PORT: 22251
     DEPLOY_USER: refinext
     DEPLOY_DIR: "/home/$DEPLOY_USER/frontend"
+    IMAGE_TAG: staging
   script:
     - |
       if [ -n "$DOTENV" ]; then
