@@ -105,6 +105,7 @@ build:develop:
       --build-arg VITE_APP_STAGE=development
       --build-arg PROJECT_NAME=$PROJECT_NAME
       --build-arg VITE_API_URL=$VITE_API_URL
+      --build-arg BUILD_ID=$CI_COMMIT_SHA
       --cache-from $CI_REGISTRY_IMAGE:latest
       --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       --tag $CI_REGISTRY_IMAGE:latest .
@@ -186,6 +187,7 @@ build:staging:
       --build-arg VITE_APP_STAGE=staging
       --build-arg PROJECT_NAME=$PROJECT_NAME
       --build-arg VITE_API_URL=$VITE_API_URL
+      --build-arg BUILD_ID=$CI_COMMIT_SHA
       --cache-from $CI_REGISTRY_IMAGE:staging
       --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       --tag $CI_REGISTRY_IMAGE:staging .

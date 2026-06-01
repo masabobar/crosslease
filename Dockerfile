@@ -49,7 +49,7 @@ RUN pnpm run build
 # -----------------------------------------------------------------------------
 FROM nginx:alpine AS production
 
-# Copy built assets from builder stage
+ARG BUILD_ID
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration for port 3000
