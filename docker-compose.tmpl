@@ -1,6 +1,6 @@
 services:
   app:
-    image: $CI_REGISTRY_IMAGE:latest
+    image: $CI_REGISTRY_IMAGE:$IMAGE_TAG
     container_name: refinext_app
     ports:
       - "3000:3000"
