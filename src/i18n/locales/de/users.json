@@ -15,7 +15,8 @@
   "statuses": {
     "active": "Aktiv",
     "invited": "Eingeladen",
-    "pending_activation": "Ausstehend",
+    "pending_approval": "Ausstehend",
+    "rejected": "Abgelehnt",
     "suspended": "Gesperrt",
     "deactivated": "Deaktiviert",
     "expired": "Abgelaufen"

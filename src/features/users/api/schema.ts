@@ -3,14 +3,17 @@ import { USER_ROLES } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
 export const UserStatusSchema = z.enum([
-  "pending_activation",
+  "pending_approval",
   "invited",
   "active",
   "suspended",
   "deactivated",
   "expired",
+  "rejected",
 ])
 export type UserStatus = z.infer<typeof UserStatusSchema>
+
+export const USER_STATUSES = UserStatusSchema.options
 
 export const UserResponseSchema = z.object({
   id: z.string().uuid(),
@@ -20,7 +23,7 @@ export const UserResponseSchema = z.object({
   email: z.string().email(),
   role: z.enum(USER_ROLES),
   permissions: z.array(z.string()).default([]),
-  tenant_id: z.string().uuid().nullable(),
+  tenant_id: z.string().nullable(),
   status: UserStatusSchema,
   access_valid_until: z.string().nullable(),
   invited_by: z.string().uuid().nullable(),
@@ -55,7 +58,7 @@ export const UserListItemSchema = z.object({
   last_name: z.string(),
   email: z.string().email(),
   role: z.enum(USER_ROLES),
-  tenant_id: z.string().uuid().nullable(),
+  tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
   mfa_enabled: z.boolean().nullable().optional(),
   status: UserStatusSchema,
@@ -174,7 +177,7 @@ export const UserDetailResponseSchema = z.object({
   email: z.string().email(),
   role: z.enum(USER_ROLES),
   status: UserStatusSchema,
-  tenant_id: z.string().uuid().nullable(),
+  tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
   access_valid_until: z.string().nullable(),
   invited_by_user_id: z.string().nullable(),

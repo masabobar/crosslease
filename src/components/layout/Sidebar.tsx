@@ -7,7 +7,7 @@ import {
   ChevronsLeft,
   Home,
   SquareTerminal,
-  LogOut,
+  Shield,
   FileText,
   BarChart2,
   FolderOpen,
@@ -15,17 +15,16 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
-import { useLogout } from "@/features/auth/hooks/useLogout"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   USER_MANAGEMENT_ALLOWED_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
+import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
   const { t } = useTranslation("common")
   const location = useLocation()
-  const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
   const { data: currentUser } = useCurrentUser()
   const canAccessUserManagement =
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
@@ -52,7 +51,7 @@ export function Sidebar() {
         isCollapsed ? "w-14" : "w-64"
       )}
     >
-      {/* Brand header */}
+      {/* ── Brand header ── */}
       <div className="flex items-center gap-2 p-2 shrink-0">
         <button
           onClick={isCollapsed ? () => setIsCollapsed(false) : undefined}
@@ -91,7 +90,7 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Nav content */}
+      {/* ── Nav content ── */}
       <nav className="flex flex-col gap-2 flex-1 overflow-y-auto p-2 min-h-0">
         {/* LC user navigation — shown only for leasing company users */}
         {isLcUser && (
@@ -159,7 +158,7 @@ export function Sidebar() {
         {/* Internal-only navigation — completely hidden for LC users */}
         {!isLcUser && (
           <>
-            {/* Main group */}
+            {/* ── Main group (expandable) ── */}
             <div className="flex flex-col gap-2">
               <button
                 type="button"
@@ -229,35 +228,38 @@ export function Sidebar() {
               )}
             </div>
 
-            {/* Flat items — no sub-navigation */}
+            {/* ── Flat items with right chevron ── */}
             {[
               { key: "operations", label: t("nav.operations") },
               {
                 key: "businessConfigurations",
                 label: t("nav.businessConfigurations"),
               },
-              {
-                key: "rulesSetup",
-                label: t("nav.rulesSetup"),
-              },
+              { key: "rulesSetup", label: t("nav.rulesSetup") },
             ].map(({ key, label }) => (
               <div
                 key={key}
-                className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-default"
+                className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-default hover:bg-muted"
               >
                 <SquareTerminal
                   size={16}
                   className="text-muted-foreground shrink-0"
                 />
                 {!isCollapsed && (
-                  <span className="flex-1 text-sm text-foreground min-w-0 truncate">
-                    {label}
-                  </span>
+                  <>
+                    <span className="flex-1 text-sm text-foreground min-w-0 truncate">
+                      {label}
+                    </span>
+                    <ChevronRight
+                      size={16}
+                      className="text-muted-foreground shrink-0"
+                    />
+                  </>
                 )}
               </div>
             ))}
 
-            {/* Platform administration group */}
+            {/* ── Platform administration group (expandable) ── */}
             <div className="flex flex-col gap-2">
               <button
                 type="button"
@@ -267,7 +269,7 @@ export function Sidebar() {
                   isPlatformAdminActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
                 )}
               >
-                <SquareTerminal
+                <Shield
                   size={16}
                   className={cn(
                     "shrink-0",
@@ -351,21 +353,21 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* Logout */}
-      <div className="p-2 shrink-0 border-t border-border">
-        <button
-          data-testid="sidebar-logout-button"
-          onClick={() => doLogout()}
-          disabled={isLoggingOut}
-          className={cn(
-            "flex items-center gap-2 w-full px-2 py-2 rounded-[10px] text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors disabled:opacity-50",
-            isCollapsed && "justify-center"
-          )}
-        >
-          <LogOut size={16} className="shrink-0" />
-          {!isCollapsed && t("nav.logout")}
-        </button>
-      </div>
+      {/* ── Powered by CrossLease ── */}
+      {!isCollapsed && (
+        <div className="px-2 py-2 shrink-0">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-muted-foreground whitespace-nowrap">
+              {t("nav.poweredBy")}
+            </p>
+            <img
+              src={crossleaseLogo}
+              alt="CrossLease"
+              className="h-2 w-auto object-contain object-left"
+            />
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

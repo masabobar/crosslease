@@ -23,6 +23,7 @@
     "coreBankingIntegration": "Core Banking integration",
     "auditTrail": "Audit trail",
     "logout": "Logout",
+    "poweredBy": "Powered by",
     "lcRequests": "My Requests",
     "lcStatus": "Status Overview",
     "lcDocuments": "Bank Documents",

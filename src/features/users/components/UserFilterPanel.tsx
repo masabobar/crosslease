@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { parseISO } from "date-fns"
 import { ChevronDown, Check, Calendar } from "lucide-react"
 import {
   Popover,
@@ -10,6 +11,7 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
+import { USER_STATUSES } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
 import { getUserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -20,14 +22,7 @@ type StatusesKey = `statuses.${UserStatus}`
 import { RoleBadge } from "./RoleBadge"
 import { UserStatusBadge } from "./UserStatusBadge"
 
-const ALL_STATUSES: UserStatus[] = [
-  "active",
-  "invited",
-  "pending_activation",
-  "suspended",
-  "deactivated",
-  "expired",
-]
+const ALL_STATUSES: readonly UserStatus[] = USER_STATUSES
 
 type UserFilterPanelProps = {
   onClose: () => void
@@ -414,13 +409,35 @@ function UserFilterPanel({
               <div className="flex gap-2">
                 <DatePicker
                   value={staged.last_login_from ?? undefined}
-                  onChange={v => setStaged(s => ({ ...s, last_login_from: v }))}
+                  onChange={v =>
+                    setStaged(s => {
+                      const newFrom = parseISO(v)
+                      const currentTo = s.last_login_to
+                        ? parseISO(s.last_login_to)
+                        : null
+                      return {
+                        ...s,
+                        last_login_from: v,
+                        last_login_to:
+                          currentTo && currentTo < newFrom
+                            ? null
+                            : s.last_login_to,
+                      }
+                    })
+                  }
                   placeholder={t("filter.placeholders.from")}
+                  maxDate={new Date()}
                 />
                 <DatePicker
                   value={staged.last_login_to ?? undefined}
                   onChange={v => setStaged(s => ({ ...s, last_login_to: v }))}
                   placeholder={t("filter.placeholders.to")}
+                  maxDate={new Date()}
+                  minDate={
+                    staged.last_login_from
+                      ? parseISO(staged.last_login_from)
+                      : undefined
+                  }
                 />
               </div>
             </FilterField>

@@ -242,7 +242,7 @@ export default function UserManagementPage() {
 
   function handleInviteSuccess(user: UserResponse) {
     const name = `${user.first_name} ${user.last_name}`
-    const isPendingApproval = user.status === "pending_activation"
+    const isPendingApproval = user.status === "pending_approval"
 
     showToast({
       variant: isPendingApproval ? "warning" : "success",

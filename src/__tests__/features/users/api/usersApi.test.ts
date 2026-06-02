@@ -55,6 +55,12 @@ describe("fetchUsers", () => {
     expect(url).toContain("role=auditor")
   })
 
+  it("appends leasing_company_user as a role filter param", async () => {
+    await fetchUsers({ role: ["leasing_company_user"] })
+    const url = mockApi.get.mock.calls[0][0] as string
+    expect(url).toContain("role=leasing_company_user")
+  })
+
   it("appends multiple status params using append()", async () => {
     await fetchUsers({ status: ["active", "suspended"] })
     const url = mockApi.get.mock.calls[0][0] as string
