@@ -70,6 +70,21 @@ unit-tests:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
+schema-drift:
+  stage: test
+  extends: .node-base
+  script:
+    - apk add --no-cache git
+    - echo "Fetching latest OpenAPI spec from dev server..."
+    - wget -q -O openapi.json https://api.refinext-dev.projects.holycode.com/api/openapi.json
+    - pnpm exec prettier --write openapi.json
+    - echo "Regenerating schemas..."
+    - pnpm run generate:api
+    - echo "Checking for drift..."
+    - git diff --exit-code openapi.json src/generated/api.ts
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 build:develop:
   stage: build
   tags:
@@ -90,6 +105,7 @@ build:develop:
       --build-arg VITE_APP_STAGE=development
       --build-arg PROJECT_NAME=$PROJECT_NAME
       --build-arg VITE_API_URL=$VITE_API_URL
+      --build-arg BUILD_ID=$CI_COMMIT_SHA
       --cache-from $CI_REGISTRY_IMAGE:latest
       --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       --tag $CI_REGISTRY_IMAGE:latest .
@@ -113,6 +129,7 @@ deploy:develop:
     DEPLOY_PORT: 22250
     DEPLOY_USER: refinext
     DEPLOY_DIR: "/home/$DEPLOY_USER/frontend"
+    IMAGE_TAG: latest
   script:
     # Export DOTENV variables to environment (if needed)
     - |
@@ -171,6 +188,7 @@ build:staging:
       --build-arg VITE_APP_STAGE=staging
       --build-arg PROJECT_NAME=$PROJECT_NAME
       --build-arg VITE_API_URL=$VITE_API_URL
+      --build-arg BUILD_ID=$CI_COMMIT_SHA
       --cache-from $CI_REGISTRY_IMAGE:staging
       --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
       --tag $CI_REGISTRY_IMAGE:staging .
@@ -195,6 +213,7 @@ deploy:staging:
     DEPLOY_PORT: 22251
     DEPLOY_USER: refinext
     DEPLOY_DIR: "/home/$DEPLOY_USER/frontend"
+    IMAGE_TAG: staging
   script:
     - |
       if [ -n "$DOTENV" ]; then

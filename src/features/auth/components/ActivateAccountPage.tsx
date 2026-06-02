@@ -5,17 +5,18 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import {
   Eye,
   EyeOff,
-  CheckCircle,
-  Circle,
   Lock,
   User,
   Check,
+  Clock,
+  Link2Off,
+  ArrowRight,
+  Mail,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import {
   ActivateAccountInputSchema,
   decodeTokenEmail,
-  getPasswordRequirements,
 } from "../api/activationSchema"
 import type { ActivateAccountInput } from "../api/activationSchema"
 import {
@@ -34,60 +35,89 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
-import { cn } from "@/lib/utils"
+import { GeneratePasswordButton } from "./GeneratePasswordButton"
+import { PasswordStrengthBar } from "./PasswordStrengthBar"
 
-type PageState = "loading" | "invalid" | "ready" | "success"
+type PageState =
+  | "loading"
+  | "blocked-link"
+  | "blocked-account"
+  | "ready"
+  | "success"
+
+const LINK_BLOCKED_CODES = new Set(["INVALID_TOKEN", "PASSWORD_ALREADY_SET"])
+const REDIRECT_SECONDS = 5
 
 export default function ActivateAccountPage() {
   const { t } = useTranslation("auth")
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [blockedReason, setBlockedReason] = useState<string | null>(null)
+  const [countdown, setCountdown] = useState(REDIRECT_SECONDS)
 
   const token = searchParams.get("token") ?? ""
   const [pageState, setPageState] = useState<PageState>(() =>
-    token ? "loading" : "invalid"
+    token ? "loading" : "blocked-link"
   )
   const [email] = useState(() => (token ? (decodeTokenEmail(token) ?? "") : ""))
 
   const form = useForm<ActivateAccountInput>({
     resolver: zodResolver(ActivateAccountInputSchema),
-    defaultValues: { password: "" },
+    defaultValues: { password: "", passwordConfirm: "" },
   })
 
-  const { isSubmitting, submitCount } = form.formState
-  const hasSubmitted = submitCount > 0
+  const { isSubmitting } = form.formState
   const password = useWatch({
     control: form.control,
     name: "password",
     defaultValue: "",
   })
-  const requirements = getPasswordRequirements(password)
 
   useEffect(() => {
     if (pageState !== "loading") return
 
     validateActivationToken(token)
       .then(() => setPageState("ready"))
-      .catch(() => setPageState("invalid"))
+      .catch((err: unknown) => {
+        const code = err instanceof ApiError ? err.code : ""
+        if (LINK_BLOCKED_CODES.has(code)) {
+          setPageState("blocked-link")
+        } else {
+          setBlockedReason(err instanceof ApiError ? err.message : null)
+          setPageState("blocked-account")
+        }
+      })
   }, [token, pageState])
+
+  useEffect(() => {
+    if (pageState !== "success") return
+    if (countdown <= 0) {
+      navigate(PATHS.LOGIN)
+      return
+    }
+    const id = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(id)
+  }, [pageState, countdown, navigate])
 
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
     try {
-      await activateSetPassword(token, data.password)
+      await activateSetPassword(token, data.password, data.passwordConfirm)
       setPageState("success")
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
-      const messages: Record<string, string> = {
-        INVALID_TOKEN: t("activateAccount.errors.INVALID_TOKEN"),
-        PASSWORD_ALREADY_SET: t("activateAccount.errors.PASSWORD_ALREADY_SET"),
-        PASSWORD_POLICY_VIOLATION: t(
-          "activateAccount.errors.PASSWORD_POLICY_VIOLATION"
-        ),
+      if (LINK_BLOCKED_CODES.has(code)) {
+        setPageState("blocked-link")
+        return
       }
-      setServerError(messages[code] ?? t("activateAccount.errors.default"))
+      setServerError(
+        code === "PASSWORD_POLICY_VIOLATION"
+          ? t("activateAccount.errors.PASSWORD_POLICY_VIOLATION")
+          : t("activateAccount.errors.default")
+      )
     }
   })
 
@@ -101,27 +131,84 @@ export default function ActivateAccountPage() {
     )
   }
 
-  if (pageState === "invalid") {
+  if (pageState === "blocked-link") {
     return (
       <AuthPageLayout>
-        <div className="w-full max-w-[480px] bg-card rounded-xl shadow-sm border border-border p-6">
-          <div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center mb-4">
-            <span className="text-destructive text-2xl font-semibold">!</span>
+        <div
+          data-testid="activate-account-blocked-link"
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6"
+        >
+          <div className="flex flex-col gap-3">
+            <div className="w-12 h-12 bg-amber-100 rounded-[14px] flex items-center justify-center">
+              <Link2Off size={24} className="text-amber-600" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <h1 className="text-xl font-semibold text-foreground">
+                {t("activateAccount.blockedLink.title")}
+              </h1>
+              <p className="text-base text-muted-foreground">
+                {t("activateAccount.blockedLink.body")}
+              </p>
+            </div>
           </div>
-          <h1 className="text-xl font-semibold text-foreground">
-            {t("activateAccount.invalidToken.title")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("activateAccount.invalidToken.body")}
-          </p>
-          <Button
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              className="w-full flex items-center gap-2 px-4 py-2 h-9 bg-background border border-border rounded-[12px] text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <Mail size={16} className="shrink-0" />
+              <span className="flex-1 text-left">
+                {t("activateAccount.blockedLink.requestInvitation")}
+              </span>
+              <ArrowRight size={16} className="shrink-0" />
+            </button>
+            <p className="text-xs text-slate-500 text-center">
+              {t("activateAccount.blockedLink.goToSite")}
+            </p>
+          </div>
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
+  if (pageState === "blocked-account") {
+    return (
+      <AuthPageLayout>
+        <div
+          data-testid="activate-account-blocked-account"
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6"
+        >
+          <div className="flex flex-col gap-3">
+            <div className="w-12 h-12 bg-[rgba(2,132,199,0.1)] rounded-[14px] flex items-center justify-center">
+              <Clock size={24} className="text-sky-600" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <h1 className="text-xl font-semibold text-foreground">
+                {t("activateAccount.blockedAccount.title")}
+              </h1>
+              <p className="text-base text-muted-foreground">
+                {t("activateAccount.blockedAccount.body")}
+              </p>
+            </div>
+          </div>
+          {blockedReason && (
+            <div className="border-l-[3px] border-primary bg-slate-100 rounded-[12px] p-4 text-sm text-foreground/80">
+              <span className="font-semibold">
+                {t("activateAccount.blockedAccount.reason")}
+              </span>{" "}
+              {blockedReason}
+            </div>
+          )}
+          <button
             type="button"
-            variant="outline"
-            onClick={() => navigate(PATHS.LOGIN)}
-            className="mt-6 w-full h-9 px-3.5"
+            className="w-full flex items-center gap-2 px-4 py-2 h-9 bg-background border border-border rounded-[12px] text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
           >
-            {t("activateAccount.invalidToken.backToSignIn")}
-          </Button>
+            <Mail size={16} className="shrink-0" />
+            <span className="flex-1 text-left">
+              {t("activateAccount.blockedAccount.contactAdmin")}
+            </span>
+            <ArrowRight size={16} className="shrink-0" />
+          </button>
         </div>
       </AuthPageLayout>
     )
@@ -131,25 +218,37 @@ export default function ActivateAccountPage() {
     return (
       <AuthPageLayout>
         <div
-          className="w-full max-w-[480px] bg-card rounded-xl shadow-sm border border-border p-6"
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6 items-center"
           data-testid="activate-account-success"
         >
-          <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center mb-4">
-            <Check size={24} className="text-success" strokeWidth={2.5} />
+          <div className="flex flex-col items-center gap-3 w-full">
+            <div className="bg-success/10 p-3 rounded-[14px]">
+              <Check size={24} className="text-success" strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col gap-3 text-center w-full">
+              <h1 className="text-xl font-semibold text-foreground">
+                {t("activateAccount.success.title")}
+              </h1>
+              <p className="text-base text-muted-foreground">
+                {t("activateAccount.success.body")}
+              </p>
+            </div>
           </div>
-          <h1 className="text-xl font-semibold text-foreground">
-            {t("activateAccount.success.title")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("activateAccount.success.body")}
-          </p>
-          <Button
-            type="button"
-            onClick={() => navigate(PATHS.LOGIN)}
-            className="mt-6 w-full h-9 px-3.5"
-          >
-            {t("activateAccount.success.signIn")}
-          </Button>
+          <div className="flex flex-col items-center gap-2 w-full">
+            <Button
+              type="button"
+              className="w-full"
+              onClick={() => navigate(PATHS.LOGIN)}
+            >
+              {t("activateAccount.success.goToLogin")}
+              <ArrowRight size={16} />
+            </Button>
+            <p className="text-xs text-slate-400 text-center">
+              {t("activateAccount.success.autoRedirect", {
+                seconds: countdown,
+              })}
+            </p>
+          </div>
         </div>
       </AuthPageLayout>
     )
@@ -162,19 +261,26 @@ export default function ActivateAccountPage() {
           <h1 className="text-xl font-semibold text-foreground">
             {t("activateAccount.title")}
           </h1>
-          <p className="mt-1 text-base text-muted-foreground">
+          <p className="mt-3 text-base text-muted-foreground">
             {t("activateAccount.subtitle")}
           </p>
         </AuthCardHeader>
 
         <AuthCardBody>
           {serverError && (
-            <div className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
+            <div
+              data-testid="activate-account-error-message"
+              className="mb-4 px-3.5 py-2.5 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm"
+            >
               {serverError}
             </div>
           )}
 
-          <form id="activate-account-form" onSubmit={onSubmit}>
+          <form
+            id="activate-account-form"
+            data-testid="activate-account-form"
+            onSubmit={onSubmit}
+          >
             <div className="flex flex-col gap-6">
               <div className="opacity-50">
                 <Label htmlFor="activate-email" className="mb-1.5">
@@ -195,9 +301,17 @@ export default function ActivateAccountPage() {
               </div>
 
               <div>
-                <Label htmlFor="activate-password" className="mb-1.5">
-                  {t("activateAccount.passwordLabel")}
-                </Label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label htmlFor="activate-password">
+                    {t("activateAccount.passwordLabel")}
+                  </Label>
+                  <GeneratePasswordButton
+                    onGenerate={pwd => {
+                      form.setValue("password", pwd, { shouldValidate: true })
+                      setShowPassword(true)
+                    }}
+                  />
+                </div>
                 <Input
                   id="activate-password"
                   type={showPassword ? "text" : "password"}
@@ -224,48 +338,48 @@ export default function ActivateAccountPage() {
                   {...form.register("password")}
                 />
 
-                <ul className="mt-3 space-y-1.5">
-                  {(
-                    [
-                      ["minLength", "minLength"],
-                      ["hasLower", "hasLower"],
-                      ["hasUpper", "hasUpper"],
-                      ["hasNumber", "hasNumber"],
-                      ["hasSymbol", "hasSymbol"],
-                    ] as const
-                  ).map(([key, i18nKey]) => (
-                    <li key={key} className="flex items-center gap-2">
-                      {requirements[key] ? (
-                        <CheckCircle
-                          size={16}
-                          className="text-success shrink-0"
-                        />
+                <div className="mt-3">
+                  <PasswordStrengthBar password={password} />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="activate-password-confirm" className="mb-1.5">
+                  {t("activateAccount.confirmPasswordLabel")}
+                </Label>
+                <Input
+                  id="activate-password-confirm"
+                  type={showPasswordConfirm ? "text" : "password"}
+                  autoComplete="new-password"
+                  data-testid="activate-password-confirm-input"
+                  startIcon={<Lock size={16} />}
+                  className="pl-9 text-sm"
+                  endAction={
+                    <button
+                      type="button"
+                      data-testid="activate-toggle-confirm-visibility"
+                      onClick={() => setShowPasswordConfirm(v => !v)}
+                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      aria-label={
+                        showPasswordConfirm
+                          ? t("activateAccount.hidePassword")
+                          : t("activateAccount.showPassword")
+                      }
+                    >
+                      {showPasswordConfirm ? (
+                        <EyeOff size={16} />
                       ) : (
-                        <Circle
-                          size={16}
-                          className={cn(
-                            "shrink-0",
-                            hasSubmitted
-                              ? "text-destructive"
-                              : "text-muted-foreground/50"
-                          )}
-                        />
+                        <Eye size={16} />
                       )}
-                      <span
-                        className={cn(
-                          "text-xs",
-                          requirements[key]
-                            ? "text-muted-foreground"
-                            : hasSubmitted
-                              ? "text-destructive"
-                              : "text-muted-foreground"
-                        )}
-                      >
-                        {t(`activateAccount.requirements.${i18nKey}`)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                    </button>
+                  }
+                  {...form.register("passwordConfirm")}
+                />
+                {form.formState.errors.passwordConfirm && (
+                  <p className="mt-1.5 text-sm text-destructive">
+                    {t("activateAccount.errors.passwords_mismatch")}
+                  </p>
+                )}
               </div>
             </div>
           </form>

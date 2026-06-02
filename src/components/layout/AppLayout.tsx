@@ -1,7 +1,8 @@
 import { Outlet } from "react-router-dom"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
-import { Toast } from "@/components/ui/Toast"
+import { SupportContextBanner } from "./SupportContextBanner"
+import { Toaster } from "@/components/ui/sonner"
 
 export function AppLayout() {
   return (
@@ -9,11 +10,12 @@ export function AppLayout() {
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <Header />
+        <SupportContextBanner />
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
-      <Toast />
+      <Toaster position="top-right" />
     </div>
   )
 }

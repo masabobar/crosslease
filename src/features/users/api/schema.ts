@@ -19,9 +19,9 @@ export const UserResponseSchema = z.object({
   last_name: z.string(),
   email: z.string().email(),
   role: z.enum(USER_ROLES),
+  permissions: z.array(z.string()).default([]),
   tenant_id: z.string().uuid().nullable(),
   status: UserStatusSchema,
-  access_valid_from: z.string().nullable(),
   access_valid_until: z.string().nullable(),
   invited_by: z.string().uuid().nullable(),
   invited_at: z.string().nullable(),
@@ -45,7 +45,6 @@ export type InviteUserInput = {
   email: string
   role: (typeof USER_ROLES)[number]
   tenant_id?: string | null
-  access_valid_from?: string | null
   access_valid_until?: string | null
 }
 
@@ -61,7 +60,6 @@ export const UserListItemSchema = z.object({
   mfa_enabled: z.boolean().nullable().optional(),
   status: UserStatusSchema,
   last_login: z.string().nullable(),
-  access_valid_from: z.string().nullable(),
   access_valid_until: z.string().nullable(),
 })
 export type UserListItem = z.infer<typeof UserListItemSchema>
@@ -77,6 +75,16 @@ export type PaginatedUsersResponse = z.infer<
   typeof PaginatedUsersResponseSchema
 >
 
+export type UserSortKey =
+  | "name"
+  | "role"
+  | "tenant_name"
+  | "status"
+  | "last_login"
+  | "access_valid_until"
+
+export type UserSortOrder = "asc" | "desc"
+
 export type UsersQueryParams = {
   page?: number
   per_page?: number
@@ -84,6 +92,19 @@ export type UsersQueryParams = {
   role?: UserRole[]
   status?: UserStatus[]
   tenant_id?: string
+  sort_by?: UserSortKey
+  sort_order?: UserSortOrder
+  // UI ready — backend GET /api/v1/users does not support these filter params yet;
+  // params are defined here for type-completeness but are NOT sent to the API
+  mfa_enabled?: boolean | null
+  lg_id?: string | null
+  last_login_from?: string | null
+  last_login_to?: string | null
+  // Not yet supported by backend:
+  access_expiry_from?: string | null
+  access_expiry_to?: string | null
+  created_from?: string | null
+  created_to?: string | null
 }
 
 export const SUSPENSION_REASONS = [
@@ -155,7 +176,6 @@ export const UserDetailResponseSchema = z.object({
   status: UserStatusSchema,
   tenant_id: z.string().uuid().nullable(),
   tenant_name: z.string().nullable(),
-  access_valid_from: z.string().nullable(),
   access_valid_until: z.string().nullable(),
   invited_by_user_id: z.string().nullable(),
   invited_at: z.string().nullable(),

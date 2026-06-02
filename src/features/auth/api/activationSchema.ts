@@ -2,15 +2,21 @@ import { z } from "zod"
 
 export { getPasswordRequirements } from "./forgotPasswordSchema"
 
-export const ActivateAccountInputSchema = z.object({
-  password: z
-    .string()
-    .min(8)
-    .regex(/[a-z]/)
-    .regex(/[A-Z]/)
-    .regex(/[0-9]/)
-    .regex(/[^a-zA-Z0-9]/),
-})
+export const ActivateAccountInputSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8)
+      .regex(/[a-z]/)
+      .regex(/[A-Z]/)
+      .regex(/[0-9]/)
+      .regex(/[^a-zA-Z0-9]/),
+    passwordConfirm: z.string(),
+  })
+  .refine(data => data.password === data.passwordConfirm, {
+    message: "passwords_mismatch",
+    path: ["passwordConfirm"],
+  })
 
 export type ActivateAccountInput = z.infer<typeof ActivateAccountInputSchema>
 

@@ -1,0 +1,1807 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Refinext API", "version": "0.1.0" },
+  "paths": {
+    "/api/v1/auth/validate-token": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Validate invitation token before showing activation form",
+        "description": "Pre-validate the invitation token before the user fills in the activation form.\n\n**Checks:** JWT signature, expiry, and SHA-256 hash match against `invite_token_hash` in the database.\n\n**Returns:** `TOKEN_VALID` success — frontend can safely display the set-password form",
+        "operationId": "validate_activation_token_api_v1_auth_validate_token_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Invitation token from the email link",
+              "title": "Token"
+            },
+            "description": "Invitation token from the email link"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/set-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Set password and activate account",
+        "description": "Complete account activation by setting the initial password.\n\n**Requirements:**\n- Valid, unexpired invitation token\n- Password min 8 chars, at least 1 uppercase letter and 1 number\n- `password` and `password_confirm` must match\n\n**Effect:** Sets password hash, changes status to `active`, records `activated_at`, clears `invite_token_hash`.\n\n**Returns:** `ACCOUNT_ACTIVATED` success — user can now log in",
+        "operationId": "set_password_api_v1_auth_set_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Step 1: validate credentials and send OTP",
+        "description": "First step of the two-step login flow.\n\n**Flow:**\n1. Validates email and password\n2. Checks account status (active, not locked, not suspended)\n3. Generates a 6-digit OTP and sends it to the user's email\n4. Returns a short-lived `verification_token` (5 min) to be used in `/verify-otp`\n\n**Rate limiting:** 5 failed IP attempts per 10 min triggers IP throttle; 5 failed user attempts triggers a 15-min account lock.\n\n**Returns:** `verification_token` + `expires_in` seconds",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MfaRequiredResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/verify-otp": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Step 2: verify OTP and issue token pair",
+        "description": "Second step of the two-step login flow.\n\n**Flow:**\n1. Validates `verification_token` (must not be expired)\n2. Verifies the 6-digit OTP code (max 3 attempts)\n3. Evicts oldest session if `MAX_CONCURRENT_SESSIONS` (5) is reached\n4. Issues `access_token` (15 min) + `refresh_token` (7 days) as HTTP-only cookies\n\n**Returns:** Full user object. Tokens are delivered via HTTP-only Secure cookies.",
+        "operationId": "verify_otp_api_v1_auth_verify_otp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyOtpRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/resend-otp": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend OTP code",
+        "description": "Resend the OTP code for an in-progress login.\n\n**Requirements:**\n- `verification_token` from `/login` must still be valid\n- 60-second cooldown between resend requests\n\n**Returns:** Generic success — new OTP sent to email",
+        "operationId": "resend_otp_api_v1_auth_resend_otp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResendOtpRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout current session",
+        "description": "Invalidate the current session.\n\n**Requirements:** Valid `access_token` cookie.\n\n**Effect:** Blacklists the current access JTI and its paired refresh JTI; removes the refresh JTI from the active sessions set. Clears both auth cookies.\n\n**Returns:** Generic success",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout from all devices",
+        "description": "Invalidate all active sessions for the current user.\n\n**Requirements:** Valid `access_token` cookie.\n\n**Effect:** Sets a `logout_all` timestamp in Redis; all tokens issued before this timestamp are rejected on next request. Clears the entire active sessions set. Clears both auth cookies.\n\n**Returns:** Generic success",
+        "operationId": "logout_all_api_v1_auth_logout_all_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset email",
+        "description": "Send a password reset link to the given email address.\n\n**Security:** Always returns 200 regardless of whether the email exists — prevents user enumeration.\n\n**Rate limiting:** 300s cooldown per email, max 3 requests/hour per email, IP throttle shared with login.\n\n**Effect (if user exists):** Generates a JWT reset token (1h TTL), stores its SHA-256 hash, sends an email with the reset link.\n\n**Returns:** Generic success regardless of outcome",
+        "operationId": "forgot_password_api_v1_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ForgotPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/validate-reset-token": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Validate password reset token before showing form",
+        "description": "Pre-validate the reset token before the user fills in the new password form.\n\n**Checks:** JWT signature, expiry, and SHA-256 hash match against `password_reset_token_hash` in the database.\n\n**Returns:** `TOKEN_VALID` success — frontend can safely display the reset-password form",
+        "operationId": "validate_reset_token_api_v1_auth_validate_reset_token_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Password reset token from the email link",
+              "title": "Token"
+            },
+            "description": "Password reset token from the email link"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Set new password using reset token",
+        "description": "Complete the password reset flow by setting a new password.\n\n**Requirements:**\n- Valid, unexpired reset token (1h TTL)\n- Password min 8 chars, at least 1 uppercase letter and 1 number\n- `password` and `password_confirm` must match\n\n**Effect:** Updates password hash, clears `password_reset_token_hash`, invalidates all active sessions (`logout_all` timestamp + clears session set).\n\n**Returns:** `PASSWORD_RESET_SUCCESS` — user must log in again on all devices",
+        "operationId": "reset_password_api_v1_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh-token": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Rotate token pair using refresh token",
+        "description": "Exchange a valid refresh token for a new access + refresh token pair.\n\n**Requirements:** Valid `refresh_token` HTTP-only cookie.\n\n**Validations (in order):**\n1. JWT signature + not expired\n2. Token type must be `refresh`\n3. Not blacklisted (`token:blacklist:{jti}`)\n4. Not invalidated by `logout_all` timestamp\n5. Server-side session exists (Redis Sorted Set)\n6. Absolute session timeout not exceeded (`session_iat`, 8h max)\n7. User exists and is active\n\n**Effect:** Old refresh JTI blacklisted, new token pair issued with the same `session_iat` (preserves absolute timeout). New tokens delivered via HTTP-only Secure cookies.\n\n**Returns:** Full user object. All failures return 401 `SESSION_EXPIRED`.",
+        "operationId": "refresh_token_api_v1_auth_refresh_token_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user profile",
+        "description": "Return the profile of the currently authenticated user.\n\n**Requirements:** Valid `access_token` HTTP-only cookie.\n\n**Returns:** Full `UserResponse` for the token owner",
+        "operationId": "get_me_api_v1_users_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List all users with filters",
+        "description": "Paginated, filterable list of all users. Requires `user:list` permission.\n\n**Returns:** `PaginatedUsersResponse` with `tenant_name` resolved via JOIN",
+        "operationId": "list_users_api_v1_users_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 3 },
+                { "type": "null" }
+              ],
+              "description": "Min 3 chars — searches first name, last name, and email",
+              "title": "Search"
+            },
+            "description": "Min 3 chars — searches first name, last name, and email"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/UserRole" },
+              "description": "Multi-select role filter, e.g. ?role=system_admin&role=auditor",
+              "default": [],
+              "title": "Role"
+            },
+            "description": "Multi-select role filter, e.g. ?role=system_admin&role=auditor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/UserStatus" },
+              "description": "Multi-select status filter, e.g. ?status=active&status=suspended",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Multi-select status filter, e.g. ?status=active&status=suspended"
+          },
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "description": "Filter by tenant UUID",
+              "title": "Tenant Id"
+            },
+            "description": "Filter by tenant UUID"
+          },
+          {
+            "name": "last_login_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter users who logged in on or after this date (YYYY-MM-DD)",
+              "title": "Last Login From"
+            },
+            "description": "Filter users who logged in on or after this date (YYYY-MM-DD)"
+          },
+          {
+            "name": "last_login_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter users who logged in on or before this date (YYYY-MM-DD)",
+              "title": "Last Login To"
+            },
+            "description": "Filter users who logged in on or before this date (YYYY-MM-DD)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-based)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-based)"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Results per page, max 100",
+              "default": 20,
+              "title": "Per Page"
+            },
+            "description": "Results per page, max 100"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedUsersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Invite a new user",
+        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active\n- `auditor` — `access_valid_until` required\n\n**Effect:** Creates user record; for tenant-level roles sends activation email with invite link (48h TTL).\n\n**Returns:** Created `UserResponse` with status `invited` or `pending_activation`",
+        "operationId": "invite_user_api_v1_users_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InviteUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user detail",
+        "description": "Return full detail for a single user. Requires `system_admin` role.\n\n**Returns:** `UserDetailResponse` including `tenant_name` and `invited_by_user_id` (human-readable USR-XXXXX format)",
+        "operationId": "get_user_api_v1_users__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/resend-invitation": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Resend invitation email",
+        "description": "Resend the invitation email to a user in `invited` status. Requires `system_admin` role.\n\n**Rate limiting:** 300s cooldown per user, max 3 resends/hour per user.\n\n**Returns:** Updated `UserResponse` with refreshed invite token",
+        "operationId": "resend_invitation_api_v1_users__id__resend_invitation_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendInvitationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/suspend": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Suspend an active user",
+        "description": "Suspend an active user. Requires `system_admin` role.\n\n**Scheduling:**\n- `effective_from <= now` — immediate suspension, logs `SUSPENDED` event\n- `effective_from > now` — schedules Celery task, logs `SUSPENSION_SCHEDULED` event\n- `effective_until` provided — schedules auto-reactivation via Celery\n\n**Guard:** Cannot suspend the last active `system_admin`.\n\n**Returns:** Updated `UserResponse` with status `suspended`",
+        "operationId": "suspend_user_api_v1_users__id__suspend_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SuspendUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/reactivate": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Reactivate a suspended user",
+        "description": "Reactivate a suspended user. Requires `system_admin` role.\n\n**Requirements:** User must be in `suspended` status (deactivated users cannot be reactivated).\n\n**Returns:** Updated `UserResponse` with status `active`",
+        "operationId": "reactivate_user_api_v1_users__id__reactivate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReactivateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/deactivate": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Permanently deactivate a user",
+        "description": "Permanently deactivate a user. Requires `system_admin` role.\n\n**Scheduling:**\n- `effective_from <= now` — immediate deactivation, logs `DEACTIVATED` event\n- `effective_from > now` — schedules Celery task, logs `DEACTIVATION_SCHEDULED` event\n\n**Guard:** Cannot deactivate the last active `system_admin`.\n\n**Note:** Deactivation is permanent — deactivated users cannot be reactivated.\n\n**Returns:** Updated `UserResponse` with status `deactivated`",
+        "operationId": "deactivate_user_api_v1_users__id__deactivate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeactivateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants": {
+      "post": {
+        "tags": ["Tenants"],
+        "summary": "Create Tenant",
+        "operationId": "create_tenant_api_v1_tenants_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTenantRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Tenants"],
+        "summary": "List Tenants",
+        "operationId": "list_tenants_api_v1_tenants_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedTenantsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{id}/activate": {
+      "post": {
+        "tags": ["Tenants"],
+        "summary": "Activate Tenant",
+        "operationId": "activate_tenant_api_v1_tenants__id__activate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{id}": {
+      "get": {
+        "tags": ["Tenants"],
+        "summary": "Get Tenant",
+        "operationId": "get_tenant_api_v1_tenants__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TenantResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit/events": {
+      "get": {
+        "tags": ["audit"],
+        "summary": "List Audit Events",
+        "operationId": "list_audit_events_api_v1_audit_events_get",
+        "parameters": [
+          {
+            "name": "event_class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Event Class"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "title": "Entity Id"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Actor Id"
+            }
+          },
+          {
+            "name": "from_dt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "From Dt"
+            }
+          },
+          {
+            "name": "to_dt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "To Dt"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedAuditEventsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuditEventResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "event_class": { "type": "string", "title": "Event Class" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "entity_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Entity Id"
+          },
+          "old_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Old Data"
+          },
+          "new_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "New Data"
+          },
+          "changed_fields": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Changed Fields"
+          },
+          "actor_id": { "type": "string", "title": "Actor Id" },
+          "actor_type": { "type": "string", "title": "Actor Type" },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "correlation_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Correlation Id"
+          },
+          "session_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Session Id"
+          },
+          "payload": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Payload"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_class",
+          "event_type",
+          "entity_type",
+          "entity_id",
+          "old_data",
+          "new_data",
+          "changed_fields",
+          "actor_id",
+          "actor_type",
+          "tenant_id",
+          "correlation_id",
+          "session_id",
+          "payload",
+          "recorded_at"
+        ],
+        "title": "AuditEventResponse"
+      },
+      "CreateTenantRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 2,
+            "pattern": "^[A-Za-z0-9_\\-]+$",
+            "title": "Code"
+          },
+          "legal_entity_name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 2,
+            "title": "Legal Entity Name"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "default_currency": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 3,
+            "title": "Default Currency",
+            "default": "EUR"
+          }
+        },
+        "type": "object",
+        "required": ["name", "code", "legal_entity_name", "country"],
+        "title": "CreateTenantRequest"
+      },
+      "DeactivateUserRequest": {
+        "properties": {
+          "reason": { "$ref": "#/components/schemas/DeactivationReason" },
+          "comment": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Comment",
+            "description": "Optional free-text explanation"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Effective From",
+            "description": "Deactivation date — past/now for immediate, future for scheduled"
+          }
+        },
+        "type": "object",
+        "required": ["reason", "effective_from"],
+        "title": "DeactivateUserRequest"
+      },
+      "DeactivationReason": {
+        "type": "string",
+        "enum": [
+          "offboarding",
+          "organizational_change",
+          "compliance_restriction",
+          "security_restriction",
+          "administrative_decision",
+          "other"
+        ],
+        "title": "DeactivationReason"
+      },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Email address of the account to reset"
+          }
+        },
+        "type": "object",
+        "required": ["email"],
+        "title": "ForgotPasswordRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InviteUserRequest": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name",
+            "description": "User's first name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name",
+            "description": "User's last name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Must be unique across all users"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "Determines tenant requirement and initial status"
+          },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id",
+            "description": "Required for auditor and tenant-scoped roles; must be null for system_admin and support_user"
+          },
+          "access_valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Access Valid Until",
+            "description": "Auditor only — end of access window"
+          }
+        },
+        "type": "object",
+        "required": ["first_name", "last_name", "email", "role"],
+        "title": "InviteUserRequest"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "password": { "type": "string", "title": "Password" }
+        },
+        "type": "object",
+        "required": ["email", "password"],
+        "title": "LoginRequest"
+      },
+      "LoginResponse": {
+        "properties": {
+          "user": { "$ref": "#/components/schemas/UserResponse" }
+        },
+        "type": "object",
+        "required": ["user"],
+        "title": "LoginResponse"
+      },
+      "MfaRequiredResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "MFA_REQUIRED"
+          },
+          "verification_token": {
+            "type": "string",
+            "title": "Verification Token",
+            "description": "Short-lived JWT (5 min) to be passed to /verify-otp"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Seconds until verification_token expires"
+          }
+        },
+        "type": "object",
+        "required": ["verification_token", "expires_in"],
+        "title": "MfaRequiredResponse"
+      },
+      "PaginatedAuditEventsResponse": {
+        "properties": {
+          "events": {
+            "items": { "$ref": "#/components/schemas/AuditEventResponse" },
+            "type": "array",
+            "title": "Events"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["events", "total", "page", "per_page", "total_pages"],
+        "title": "PaginatedAuditEventsResponse"
+      },
+      "PaginatedTenantsResponse": {
+        "properties": {
+          "tenants": {
+            "items": { "$ref": "#/components/schemas/TenantListResponse" },
+            "type": "array",
+            "title": "Tenants"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of tenants"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page",
+            "description": "Tenants per page"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages"
+          }
+        },
+        "type": "object",
+        "required": ["tenants", "total", "page", "per_page", "total_pages"],
+        "title": "PaginatedTenantsResponse"
+      },
+      "PaginatedUsersResponse": {
+        "properties": {
+          "users": {
+            "items": { "$ref": "#/components/schemas/UserListItem" },
+            "type": "array",
+            "title": "Users"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of users matching current filters"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number (1-based)"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page",
+            "description": "Number of results per page"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages"
+          }
+        },
+        "type": "object",
+        "required": ["users", "total", "page", "per_page", "total_pages"],
+        "title": "PaginatedUsersResponse"
+      },
+      "ReactivateUserRequest": {
+        "properties": {
+          "reason": { "$ref": "#/components/schemas/ReactivationReason" },
+          "comment": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Comment",
+            "description": "Optional free-text explanation"
+          }
+        },
+        "type": "object",
+        "required": ["reason"],
+        "title": "ReactivateUserRequest"
+      },
+      "ReactivationReason": {
+        "type": "string",
+        "enum": [
+          "suspension_period_ended",
+          "administrative_decision",
+          "compliance_clearance",
+          "security_clearance",
+          "other",
+          "suspension_expired"
+        ],
+        "title": "ReactivationReason"
+      },
+      "ResendInvitationRequest": {
+        "properties": {
+          "reason": { "$ref": "#/components/schemas/ResendReason" }
+        },
+        "type": "object",
+        "required": ["reason"],
+        "title": "ResendInvitationRequest"
+      },
+      "ResendOtpRequest": {
+        "properties": {
+          "verification_token": {
+            "type": "string",
+            "title": "Verification Token",
+            "description": "Token received from /login"
+          }
+        },
+        "type": "object",
+        "required": ["verification_token"],
+        "title": "ResendOtpRequest"
+      },
+      "ResendReason": {
+        "type": "string",
+        "enum": [
+          "invitation_expired",
+          "not_received",
+          "user_request",
+          "administrative_action",
+          "other"
+        ],
+        "title": "ResendReason"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token",
+            "description": "Password reset token from the email link"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password",
+            "description": "Min 8 chars, at least 1 uppercase and 1 number"
+          },
+          "password_confirm": {
+            "type": "string",
+            "title": "Password Confirm",
+            "description": "Must match password"
+          }
+        },
+        "type": "object",
+        "required": ["token", "password", "password_confirm"],
+        "title": "ResetPasswordRequest"
+      },
+      "SetPasswordRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token",
+            "description": "Invitation token from the activation email link"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password",
+            "description": "Min 8 chars, at least 1 uppercase and 1 number"
+          },
+          "password_confirm": {
+            "type": "string",
+            "title": "Password Confirm",
+            "description": "Must match password"
+          }
+        },
+        "type": "object",
+        "required": ["token", "password", "password_confirm"],
+        "title": "SetPasswordRequest"
+      },
+      "SuspendUserRequest": {
+        "properties": {
+          "reason": { "$ref": "#/components/schemas/SuspensionReason" },
+          "comment": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Comment",
+            "description": "Optional free-text explanation"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Effective From",
+            "description": "Suspension start — past/now for immediate, future for scheduled"
+          },
+          "effective_until": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Effective Until",
+            "description": "Optional auto-reactivation date"
+          }
+        },
+        "type": "object",
+        "required": ["reason", "effective_from"],
+        "title": "SuspendUserRequest"
+      },
+      "SuspensionReason": {
+        "type": "string",
+        "enum": [
+          "temporary_access_restriction",
+          "security_concern",
+          "organizational_change",
+          "compliance_review",
+          "administrative_decision",
+          "other"
+        ],
+        "title": "SuspensionReason"
+      },
+      "TenantListResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": { "type": "string", "title": "Tenant Id" },
+          "name": { "type": "string", "title": "Name" },
+          "code": { "type": "string", "title": "Code" },
+          "country": { "type": "string", "title": "Country" },
+          "default_currency": { "type": "string", "title": "Default Currency" },
+          "status": { "$ref": "#/components/schemas/TenantStatus" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "code",
+          "country",
+          "default_currency",
+          "status"
+        ],
+        "title": "TenantListResponse"
+      },
+      "TenantResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": { "type": "string", "title": "Tenant Id" },
+          "name": { "type": "string", "title": "Name" },
+          "code": { "type": "string", "title": "Code" },
+          "legal_entity_name": {
+            "type": "string",
+            "title": "Legal Entity Name"
+          },
+          "country": { "type": "string", "title": "Country" },
+          "default_currency": { "type": "string", "title": "Default Currency" },
+          "status": { "$ref": "#/components/schemas/TenantStatus" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "name",
+          "code",
+          "legal_entity_name",
+          "country",
+          "default_currency",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TenantResponse"
+      },
+      "TenantStatus": {
+        "type": "string",
+        "enum": ["draft", "active", "suspended", "archived"],
+        "title": "TenantStatus"
+      },
+      "UserDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "tenant_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tenant Name"
+          },
+          "access_valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Access Valid Until"
+          },
+          "invited_by_user_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Invited By User Id"
+          },
+          "invited_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Invited At"
+          },
+          "activated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Activated At"
+          },
+          "last_login": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Last Login"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "first_name",
+          "last_name",
+          "email",
+          "role",
+          "status",
+          "tenant_id",
+          "tenant_name",
+          "access_valid_until",
+          "invited_by_user_id",
+          "invited_at",
+          "activated_at",
+          "last_login",
+          "created_at"
+        ],
+        "title": "UserDetailResponse"
+      },
+      "UserListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "tenant_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tenant Name"
+          },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
+          "last_login": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Last Login"
+          },
+          "access_valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Access Valid Until"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "first_name",
+          "last_name",
+          "email",
+          "role",
+          "tenant_id",
+          "tenant_name",
+          "status",
+          "last_login",
+          "access_valid_until"
+        ],
+        "title": "UserListItem"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "first_name": { "type": "string", "title": "First Name" },
+          "last_name": { "type": "string", "title": "Last Name" },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "permissions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "status": { "$ref": "#/components/schemas/UserStatus" },
+          "access_valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Access Valid Until"
+          },
+          "invited_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Invited By"
+          },
+          "invited_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Invited At"
+          },
+          "activated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Activated At"
+          },
+          "last_login": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Last Login"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "first_name",
+          "last_name",
+          "email",
+          "role",
+          "tenant_id",
+          "status",
+          "access_valid_until",
+          "invited_by",
+          "invited_at",
+          "activated_at",
+          "last_login",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserResponse"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "system_admin",
+          "support_user",
+          "auditor",
+          "front_office",
+          "back_office",
+          "leasing_company_user"
+        ],
+        "title": "UserRole"
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": [
+          "pending_activation",
+          "invited",
+          "active",
+          "suspended",
+          "deactivated",
+          "expired"
+        ],
+        "title": "UserStatus"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      },
+      "VerifyOtpRequest": {
+        "properties": {
+          "verification_token": {
+            "type": "string",
+            "title": "Verification Token",
+            "description": "Token received from /login"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "title": "Code",
+            "description": "6-digit OTP code from email"
+          }
+        },
+        "type": "object",
+        "required": ["verification_token", "code"],
+        "title": "VerifyOtpRequest"
+      }
+    }
+  }
+}

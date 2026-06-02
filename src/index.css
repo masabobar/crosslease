@@ -136,6 +136,12 @@
   html {
     @apply font-sans;
     }
+  button, [role="button"], a, select, label[for], summary {
+    @apply cursor-pointer;
+    }
+  button:disabled, [role="button"][aria-disabled="true"] {
+    @apply cursor-not-allowed;
+    }
 
   input:-webkit-autofill,
   input:-webkit-autofill:hover,

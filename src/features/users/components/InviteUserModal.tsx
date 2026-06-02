@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import {
@@ -21,7 +22,6 @@ import type { UserResponse } from "@/features/users/api/schema"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { ApiError } from "@/lib/api"
-import { cn } from "@/lib/utils"
 
 type InviteUserModalProps = {
   open: boolean
@@ -137,10 +137,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           TENANT_SCOPED_ROLES.includes(role) && data.tenant
             ? data.tenant
             : undefined,
-        access_valid_from:
-          AUDITOR_DATE_RANGE_ROLES.includes(role) && data.accessValidFrom
-            ? new Date(data.accessValidFrom).toISOString()
-            : undefined,
         access_valid_until:
           AUDITOR_DATE_RANGE_ROLES.includes(role) && data.accessValidUntil
             ? new Date(data.accessValidUntil).toISOString()
@@ -160,7 +156,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             email: "email",
             role: "role",
             tenant_id: "tenant",
-            access_valid_from: "accessValidFrom",
             access_valid_until: "accessValidUntil",
           }
           for (const e of err.errors) {
@@ -185,7 +180,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="px-6 py-4 space-y-5">
+      <form
+        onSubmit={onSubmit}
+        data-testid="invite-user-form"
+        className="px-6 py-4 space-y-5"
+      >
         {/* First name + Last name */}
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -198,6 +197,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             </Label>
             <Input
               id="firstName"
+              data-testid="invite-first-name-input"
               error={!!errors.firstName}
               placeholder={t("modal.placeholders.firstName")}
               {...form.register("firstName")}
@@ -219,6 +219,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             </Label>
             <Input
               id="lastName"
+              data-testid="invite-last-name-input"
               error={!!errors.lastName}
               placeholder={t("modal.placeholders.lastName")}
               {...form.register("lastName")}
@@ -239,6 +240,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           <Input
             id="email"
             type="email"
+            data-testid="invite-email-input"
             error={!!errors.email}
             placeholder={t("modal.placeholders.email")}
             {...form.register("email")}
@@ -264,6 +266,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             render={({ field }) => (
               <SelectField
                 id="role"
+                data-testid="invite-role-select"
                 value={field.value}
                 onValueChange={val => {
                   field.onChange(val)
@@ -316,6 +319,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
               render={({ field }) => (
                 <SelectField
                   id="tenant"
+                  data-testid="invite-tenant-select"
                   value={field.value ?? ""}
                   onValueChange={field.onChange}
                   options={tenantOptions}
@@ -350,14 +354,18 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 >
                   {t("modal.fields.accessValidFrom")}
                 </Label>
-                <Input
-                  id="accessValidFrom"
-                  type="date"
-                  error={!!errors.accessValidFrom}
-                  className={cn(
-                    errors.accessValidFrom ? "border-destructive" : ""
+                <Controller
+                  control={form.control}
+                  name="accessValidFrom"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="accessValidFrom"
+                      data-testid="invite-access-valid-from"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={!!errors.accessValidFrom}
+                    />
                   )}
-                  {...form.register("accessValidFrom")}
                 />
                 {errors.accessValidFrom && (
                   <p className="mt-1 text-sm text-destructive">
@@ -374,14 +382,18 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 >
                   {t("modal.fields.accessValidUntil")}
                 </Label>
-                <Input
-                  id="accessValidUntil"
-                  type="date"
-                  error={!!errors.accessValidUntil}
-                  className={cn(
-                    errors.accessValidUntil ? "border-destructive" : ""
+                <Controller
+                  control={form.control}
+                  name="accessValidUntil"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="accessValidUntil"
+                      data-testid="invite-access-valid-until"
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={!!errors.accessValidUntil}
+                    />
                   )}
-                  {...form.register("accessValidUntil")}
                 />
                 {errors.accessValidUntil && (
                   <p className="mt-1 text-sm text-destructive">
@@ -406,11 +418,16 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           <Button
             type="button"
             variant="outline"
+            data-testid="invite-cancel-button"
             onClick={() => handleOpenChange(false)}
           >
             {t("modal.actions.cancel")}
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            data-testid="invite-submit-button"
+            disabled={isSubmitting}
+          >
             {t("modal.actions.submit")}
           </Button>
         </div>

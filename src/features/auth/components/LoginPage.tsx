@@ -40,8 +40,8 @@ export default function LoginPage() {
   const { t } = useTranslation("auth")
   const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
-  const accessToken = useAuthStore(s => s.accessToken)
-  const { setTokens } = useAuthStore()
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const { setAuthenticated } = useAuthStore()
 
   const [step, setStep] = useState<"credentials" | "otp">("credentials")
   const [verificationToken, setVerificationToken] = useState("")
@@ -68,6 +68,7 @@ export default function LoginPage() {
   const errorMessages: Record<string, string> = {
     INVALID_CREDENTIALS: t("login.errors.INVALID_CREDENTIALS"),
     ACCOUNT_LOCKED: t("login.errors.ACCOUNT_LOCKED"),
+    ACCOUNT_DISABLED: t("login.errors.ACCOUNT_DISABLED"),
     IP_THROTTLED: t("login.errors.IP_THROTTLED"),
     ACCOUNT_NOT_ACTIVATED: t("login.errors.ACCOUNT_NOT_ACTIVATED"),
     ACCOUNT_SUSPENDED: t("login.errors.ACCOUNT_SUSPENDED"),
@@ -79,7 +80,7 @@ export default function LoginPage() {
     OTP_RESEND_THROTTLED: t("login.errors.OTP_RESEND_THROTTLED"),
   }
 
-  if (accessToken) {
+  if (isAuthenticated) {
     return <Navigate to={PATHS.DASHBOARD} replace />
   }
 
@@ -102,12 +103,12 @@ export default function LoginPage() {
     setIsOtpSubmitting(true)
     setOtpHelper({ type: "none" })
     try {
-      const result = await verifyOtp({
+      await verifyOtp({
         verification_token: verificationToken,
         code: otpValue,
       })
       setOtpHelper({ type: "success", message: t("login.otp.success") })
-      setTokens(result.access_token, result.refresh_token)
+      setAuthenticated(true)
       setTimeout(() => navigate(PATHS.DASHBOARD), 800)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
@@ -161,7 +162,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex-1 flex items-center justify-center px-4 pb-24">
-          <div className="w-full max-w-[416px] bg-card rounded-2xl shadow-xl overflow-hidden">
+          <div className="w-full max-w-[416px] bg-card rounded-[14px] shadow-xl overflow-hidden">
             <form onSubmit={handleOtpSubmit} data-testid="otp-form">
               <div className="flex flex-col gap-6 p-4">
                 <div className="p-3 bg-primary/10 rounded-[14px] w-fit">
@@ -206,7 +207,7 @@ export default function LoginPage() {
                         className={
                           otpHelper.type === "error"
                             ? "text-sm text-destructive"
-                            : "text-sm text-green-600"
+                            : "text-base text-green-600"
                         }
                       >
                         {otpHelper.message}

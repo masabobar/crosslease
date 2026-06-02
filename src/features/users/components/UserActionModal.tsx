@@ -4,9 +4,9 @@ import { z } from "zod"
 import { useTranslation } from "react-i18next"
 import { DialogModal } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
 import {
   SUSPENSION_REASONS,
@@ -241,7 +241,11 @@ function UserActionModal({
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
-      <form onSubmit={onSubmit} className="px-6 py-4 space-y-5">
+      <form
+        onSubmit={onSubmit}
+        data-testid="user-action-form"
+        className="px-6 py-4 space-y-5"
+      >
         {/* Reason */}
         <div>
           <Label htmlFor="reason" error={!!errors.reason} className="mb-1.5">
@@ -253,6 +257,7 @@ function UserActionModal({
             render={({ field }) => (
               <SelectField
                 id="reason"
+                data-testid="action-reason-select"
                 value={field.value}
                 onValueChange={field.onChange}
                 options={getReasonOptions()}
@@ -279,11 +284,18 @@ function UserActionModal({
               >
                 {t("actions.fields.effective_from")}
               </Label>
-              <Input
-                id="effective_from"
-                type="date"
-                error={!!errors.effective_from}
-                {...form.register("effective_from")}
+              <Controller
+                control={form.control}
+                name="effective_from"
+                render={({ field }) => (
+                  <DatePicker
+                    id="effective_from"
+                    data-testid="action-effective-from"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.effective_from}
+                  />
+                )}
               />
               {errors.effective_from && (
                 <p className="mt-1 text-sm text-destructive">
@@ -296,10 +308,17 @@ function UserActionModal({
                 <Label htmlFor="effective_until" className="mb-1.5">
                   {t("actions.fields.effective_until")}
                 </Label>
-                <Input
-                  id="effective_until"
-                  type="date"
-                  {...form.register("effective_until")}
+                <Controller
+                  control={form.control}
+                  name="effective_until"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="effective_until"
+                      data-testid="action-effective-until"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
             )}
@@ -314,6 +333,7 @@ function UserActionModal({
             </Label>
             <textarea
               id="comment"
+              data-testid="action-comment-input"
               className="w-full bg-background border border-border text-foreground text-sm rounded-lg outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary px-4 py-2.5 min-h-[80px] resize-none"
               placeholder={t("actions.fields.commentPlaceholder")}
               {...form.register("comment")}
@@ -331,12 +351,14 @@ function UserActionModal({
           <Button
             type="button"
             variant="outline"
+            data-testid="action-cancel-button"
             onClick={() => handleOpenChange(false)}
           >
             {t("modal.actions.cancel")}
           </Button>
           <Button
             type="submit"
+            data-testid="action-submit-button"
             variant={action === "deactivate" ? "destructive" : "default"}
             disabled={isSubmitting}
           >

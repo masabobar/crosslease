@@ -57,7 +57,10 @@ export function Header() {
     : ""
 
   return (
-    <header className="flex items-center justify-between px-6 h-14 bg-white border-b border-border shrink-0">
+    <header
+      className="flex items-center justify-between px-6 h-14 bg-white border-b border-border shrink-0"
+      data-testid="app-header"
+    >
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5">
         {crumbs.map((crumb, i) => {
@@ -114,6 +117,7 @@ export function Header() {
         {/* Profile */}
         <div className="relative">
           <button
+            data-testid="header-profile-button"
             className="flex items-center gap-2 rounded-xl hover:bg-muted px-2 py-1 transition-colors"
             onClick={() => setProfileOpen(v => !v)}
           >
@@ -137,6 +141,7 @@ export function Header() {
               />
               <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-border rounded-xl shadow-lg min-w-[140px] py-1">
                 <button
+                  data-testid="header-logout-button"
                   onClick={() => {
                     setProfileOpen(false)
                     doLogout()

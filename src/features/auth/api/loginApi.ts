@@ -11,15 +11,15 @@ import type {
 export async function login(
   credentials: LoginInput
 ): Promise<MfaRequiredResponse> {
-  const data = await api.post("/users/login", credentials)
+  const data = await api.post("/auth/login", credentials)
   return MfaRequiredResponseSchema.parse(data)
 }
 
 export async function verifyOtp(input: VerifyOtpInput): Promise<LoginResponse> {
-  const data = await api.post("/users/verify-otp", input)
+  const data = await api.post("/auth/verify-otp", input)
   return LoginResponseSchema.parse(data)
 }
 
 export async function resendOtp(input: ResendOtpInput): Promise<void> {
-  await api.post("/users/resend-otp", input)
+  await api.post("/auth/resend-otp", input)
 }

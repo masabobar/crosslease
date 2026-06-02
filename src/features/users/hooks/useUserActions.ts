@@ -23,8 +23,11 @@ export function useSuspendUser() {
       userId: string
       input: SuspendUserInput
     }) => suspendUser(userId, input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
+      queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
+      })
     },
   })
 }
@@ -39,8 +42,11 @@ export function useReactivateUser() {
       userId: string
       input: ReactivateUserInput
     }) => reactivateUser(userId, input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
+      queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
+      })
     },
   })
 }
@@ -55,8 +61,11 @@ export function useDeactivateUser() {
       userId: string
       input: DeactivateUserInput
     }) => deactivateUser(userId, input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
+      queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
+      })
     },
   })
 }

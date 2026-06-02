@@ -11,89 +11,38 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import type { UserListItem } from "@/features/users/api/schema"
+import type {
+  UserListItem,
+  UserSortKey,
+  UserSortOrder,
+} from "@/features/users/api/schema"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
-import { FOUR_EYES_ROLES } from "@/features/users/types"
 import type { UserRole, UserActionType } from "@/features/users/types"
-import { formatLastLogin, getInitials } from "@/features/users/utils"
+import {
+  formatLastLogin,
+  formatDate,
+  getInitials,
+  getUserActionVisibility,
+  getUserListColumnVisibility,
+} from "@/features/users/utils"
 
-type SortKey =
-  | "name"
-  | "role"
-  | "tenant_name"
-  | "status"
-  | "last_login"
-  | "access_valid_until"
-type SortState = { key: SortKey | null; dir: "asc" | "desc" }
+type SortState = { key: UserSortKey | null; dir: UserSortOrder }
 
 type UserTableProps = {
   users: UserListItem[]
   isLoading: boolean
+  sort: SortState
+  onSort: (key: UserSortKey) => void
   onAction?: (type: UserActionType, user: UserListItem) => void
   onRowClick?: (user: UserListItem) => void
   viewerRole?: UserRole
 }
 
-function sortUsers(
-  users: UserListItem[],
-  key: SortKey | null,
-  dir: "asc" | "desc"
-): UserListItem[] {
-  if (!key) return users
-  return [...users].sort((a, b) => {
-    switch (key) {
-      case "name": {
-        const cmp = `${a.first_name} ${a.last_name}`
-          .toLowerCase()
-          .localeCompare(`${b.first_name} ${b.last_name}`.toLowerCase())
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "role": {
-        const cmp = a.role.localeCompare(b.role)
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "tenant_name": {
-        const va = a.tenant_name
-        const vb = b.tenant_name
-        if (va === null && vb === null) return 0
-        if (va === null) return 1
-        if (vb === null) return -1
-        const cmp = va.localeCompare(vb)
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "status": {
-        const cmp = a.status.localeCompare(b.status)
-        return dir === "asc" ? cmp : -cmp
-      }
-      case "last_login": {
-        const ta = a.last_login ? new Date(a.last_login).getTime() : null
-        const tb = b.last_login ? new Date(b.last_login).getTime() : null
-        if (ta === null && tb === null) return 0
-        if (ta === null) return 1
-        if (tb === null) return -1
-        return dir === "asc" ? ta - tb : tb - ta
-      }
-      case "access_valid_until": {
-        const ta = a.access_valid_until
-          ? new Date(a.access_valid_until).getTime()
-          : null
-        const tb = b.access_valid_until
-          ? new Date(b.access_valid_until).getTime()
-          : null
-        if (ta === null && tb === null) return 0
-        if (ta === null) return 1
-        if (tb === null) return -1
-        return dir === "asc" ? ta - tb : tb - ta
-      }
-    }
-  })
-}
-
 type SortableHeaderProps = {
-  columnKey: SortKey
+  columnKey: UserSortKey
   sort: SortState
-  onSort: (key: SortKey) => void
+  onSort: (key: UserSortKey) => void
   children: React.ReactNode
 }
 
@@ -134,24 +83,14 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
   const { t } = useTranslation("users")
   const [open, setOpen] = useState(false)
 
-  const isAdmin = viewerRole === "system_admin"
-
-  const approveVisible =
-    isAdmin &&
-    user.status === "pending_activation" &&
-    FOUR_EYES_ROLES.includes(user.role as UserRole)
-  const resendVisible = isAdmin && user.status === "invited"
-  const suspendVisible = isAdmin && user.status === "active"
-  const reactivateVisible = isAdmin && user.status === "suspended"
-  const deactivateVisible =
-    isAdmin && (user.status === "active" || user.status === "suspended")
-
-  const hasActions =
-    approveVisible ||
-    resendVisible ||
-    suspendVisible ||
-    reactivateVisible ||
-    deactivateVisible
+  const {
+    canApprove: approveVisible,
+    canResendInvitation: resendVisible,
+    canSuspend: suspendVisible,
+    canReactivate: reactivateVisible,
+    canDeactivate: deactivateVisible,
+    hasAnyAction: hasActions,
+  } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
 
   if (!hasActions) {
     return (
@@ -174,6 +113,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
     <div className="relative">
       <button
         type="button"
+        data-testid={`user-row-menu-${user.id}`}
         onClick={() => setOpen(v => !v)}
         className="text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Actions"
@@ -187,6 +127,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {approveVisible && (
               <button
                 type="button"
+                data-testid="user-action-approve"
                 onClick={() => handleAction("approve")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -197,6 +138,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {resendVisible && (
               <button
                 type="button"
+                data-testid="user-action-resend-invitation"
                 onClick={() => handleAction("resend-invitation")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -207,6 +149,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {suspendVisible && (
               <button
                 type="button"
+                data-testid="user-action-suspend"
                 onClick={() => handleAction("suspend")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -217,6 +160,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {reactivateVisible && (
               <button
                 type="button"
+                data-testid="user-action-reactivate"
                 onClick={() => handleAction("reactivate")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -227,6 +171,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {deactivateVisible && (
               <button
                 type="button"
+                data-testid="user-action-deactivate"
                 onClick={() => handleAction("deactivate")}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
               >
@@ -246,68 +191,70 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4]
 function UserTable({
   users,
   isLoading,
+  sort,
+  onSort,
   onAction,
   onRowClick,
   viewerRole,
 }: UserTableProps) {
-  const [sort, setSort] = useState<SortState>({ key: null, dir: "asc" })
-
-  function handleSort(key: SortKey) {
-    setSort(prev =>
-      prev.key === key
-        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: "asc" }
-    )
-  }
-
-  const sortedUsers = sortUsers(users, sort.key, sort.dir)
+  const { t } = useTranslation("users")
+  const cols = getUserListColumnVisibility(viewerRole)
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="user-table">
       {/* Header row */}
       <div className="flex border-b border-border h-10 items-center">
         <div className="flex-1 min-w-0 px-2">
-          <SortableHeader columnKey="name" sort={sort} onSort={handleSort}>
-            User
+          <SortableHeader columnKey="name" sort={sort} onSort={onSort}>
+            {t("table.columns.user")}
           </SortableHeader>
         </div>
         <div className="w-[200px] shrink-0 px-2">
-          <SortableHeader columnKey="role" sort={sort} onSort={handleSort}>
-            Role
+          <SortableHeader columnKey="role" sort={sort} onSort={onSort}>
+            {t("table.columns.role")}
           </SortableHeader>
         </div>
-        <div className="w-[200px] shrink-0 px-2">
-          <SortableHeader
-            columnKey="tenant_name"
-            sort={sort}
-            onSort={handleSort}
-          >
-            Tenant
-          </SortableHeader>
-        </div>
-        <div className="w-[136px] shrink-0 px-2 text-sm font-medium text-foreground">
-          MFA
-        </div>
+        {cols.tenant && (
+          <div className="w-[200px] shrink-0 px-2">
+            <SortableHeader columnKey="tenant_name" sort={sort} onSort={onSort}>
+              {t("table.columns.tenant")}
+            </SortableHeader>
+          </div>
+        )}
+        {cols.mfa && (
+          <div className="w-[136px] shrink-0 px-2 text-sm font-medium text-foreground">
+            {t("table.columns.mfa")}
+          </div>
+        )}
         <div className="w-[136px] shrink-0 px-2">
-          <SortableHeader columnKey="status" sort={sort} onSort={handleSort}>
-            Status
+          <SortableHeader columnKey="status" sort={sort} onSort={onSort}>
+            {t("table.columns.status")}
           </SortableHeader>
         </div>
-        <div className="w-[136px] shrink-0 px-2">
-          <SortableHeader
-            columnKey="last_login"
-            sort={sort}
-            onSort={handleSort}
-          >
-            Last login
-          </SortableHeader>
-        </div>
+        {cols.lastLogin && (
+          <div className="w-[136px] shrink-0 px-2">
+            <SortableHeader columnKey="last_login" sort={sort} onSort={onSort}>
+              {t("table.columns.lastLogin")}
+            </SortableHeader>
+          </div>
+        )}
+        {cols.accessExpiry && (
+          <div className="w-[136px] shrink-0 px-2">
+            <SortableHeader
+              columnKey="access_valid_until"
+              sort={sort}
+              onSort={onSort}
+            >
+              {t("table.columns.accessExpiry")}
+            </SortableHeader>
+          </div>
+        )}
         <div className="shrink-0 w-8" />
       </div>
 
       {/* Loading state */}
       {isLoading && (
-        <div className="space-y-0">
+        <div className="space-y-0" data-testid="user-table-loading">
           {SKELETON_ROWS.map(i => (
             <div
               key={i}
@@ -323,18 +270,29 @@ function UserTable({
               <div className="w-[200px] shrink-0 p-2">
                 <div className="bg-muted rounded h-5 animate-pulse w-24" />
               </div>
-              <div className="w-[200px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-20" />
-              </div>
-              <div className="w-[136px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-12" />
-              </div>
+              {cols.tenant && (
+                <div className="w-[200px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-20" />
+                </div>
+              )}
+              {cols.mfa && (
+                <div className="w-[136px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-12" />
+                </div>
+              )}
               <div className="w-[136px] shrink-0 p-2">
                 <div className="bg-muted rounded h-5 animate-pulse w-16" />
               </div>
-              <div className="w-[136px] shrink-0 p-2">
-                <div className="bg-muted rounded h-4 animate-pulse w-20" />
-              </div>
+              {cols.lastLogin && (
+                <div className="w-[136px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-20" />
+                </div>
+              )}
+              {cols.accessExpiry && (
+                <div className="w-[136px] shrink-0 p-2">
+                  <div className="bg-muted rounded h-4 animate-pulse w-20" />
+                </div>
+              )}
               <div className="shrink-0 w-8" />
             </div>
           ))}
@@ -343,16 +301,22 @@ function UserTable({
 
       {/* Empty state */}
       {!isLoading && users.length === 0 && (
-        <div className="flex justify-center items-center h-[52px]">
-          <span className="text-sm text-muted-foreground">No users found.</span>
+        <div
+          className="flex justify-center items-center h-[52px]"
+          data-testid="user-table-empty"
+        >
+          <span className="text-sm text-muted-foreground">
+            {t("table.empty")}
+          </span>
         </div>
       )}
 
       {/* Data rows */}
       {!isLoading &&
-        sortedUsers.map(user => (
+        users.map(user => (
           <div
             key={user.id}
+            data-testid={`user-row-${user.id}`}
             className="flex border-b border-border h-[52px] items-center hover:bg-muted transition-colors cursor-pointer"
             onClick={() => onRowClick?.(user)}
           >
@@ -379,28 +343,32 @@ function UserTable({
             </div>
 
             {/* Tenant cell */}
-            <div className="w-[200px] shrink-0 p-2">
-              <span className="text-sm text-foreground">
-                {user.tenant_name ?? "—"}
-              </span>
-            </div>
+            {cols.tenant && (
+              <div className="w-[200px] shrink-0 p-2">
+                <span className="text-sm text-foreground">
+                  {user.tenant_name ?? "—"}
+                </span>
+              </div>
+            )}
 
             {/* MFA cell */}
-            <div className="w-[136px] shrink-0 p-2">
-              {user.mfa_enabled === true ? (
-                <span className="flex items-center gap-1.5 text-sm text-foreground">
-                  <span className="size-2 rounded-full bg-green-500 shrink-0" />
-                  On
-                </span>
-              ) : user.mfa_enabled === false ? (
-                <span className="flex items-center gap-1.5 text-sm text-foreground">
-                  <span className="size-2 rounded-full bg-red-500 shrink-0" />
-                  Off
-                </span>
-              ) : (
-                <span className="text-sm text-muted-foreground">—</span>
-              )}
-            </div>
+            {cols.mfa && (
+              <div className="w-[136px] shrink-0 p-2">
+                {user.mfa_enabled === true ? (
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
+                    <span className="size-2 rounded-full bg-green-500 shrink-0" />
+                    {t("detail.page.values.on")}
+                  </span>
+                ) : user.mfa_enabled === false ? (
+                  <span className="flex items-center gap-1.5 text-sm text-foreground">
+                    <span className="size-2 rounded-full bg-red-500 shrink-0" />
+                    {t("detail.page.values.off")}
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+            )}
 
             {/* Status cell */}
             <div className="w-[136px] shrink-0 p-2">
@@ -408,11 +376,22 @@ function UserTable({
             </div>
 
             {/* Last login cell */}
-            <div className="w-[136px] shrink-0 p-2">
-              <span className="text-sm text-muted-foreground">
-                {formatLastLogin(user.last_login)}
-              </span>
-            </div>
+            {cols.lastLogin && (
+              <div className="w-[136px] shrink-0 p-2">
+                <span className="text-sm text-muted-foreground">
+                  {formatLastLogin(user.last_login)}
+                </span>
+              </div>
+            )}
+
+            {/* Access expiry cell */}
+            {cols.accessExpiry && (
+              <div className="w-[136px] shrink-0 p-2">
+                <span className="text-sm text-muted-foreground">
+                  {formatDate(user.access_valid_until)}
+                </span>
+              </div>
+            )}
 
             {/* Actions cell */}
             <div

@@ -1,41 +1,41 @@
 import { useState } from "react"
-import {
-  UserPlus,
-  Search,
-  Filter,
-  FileDown,
-  ChevronLeft,
-  ChevronRight,
-  X,
-} from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
 import { UserTable } from "@/features/users/components/UserTable"
 import { UserFilterPanel } from "@/features/users/components/UserFilterPanel"
+import { UserQuickFilters } from "@/features/users/components/UserQuickFilters"
 import { useUsers } from "@/features/users/hooks/useUsers"
+import { useUserListParams } from "@/features/users/hooks/useUserListParams"
 import type {
   UserResponse,
   UserStatus,
   UserListItem,
+  UserDetail,
 } from "@/features/users/api/schema"
-import type { UserDetail } from "@/features/users/api/schema"
 import type {
   UserRole,
   UserFilterState,
   UserActionType,
   UserModalActionType,
 } from "@/features/users/types"
-import { EMPTY_FILTER_STATE } from "@/features/users/types"
+import type { UserSortKey } from "@/features/users/api/schema"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { READ_ONLY_VIEWER_ROLES } from "@/features/users/types"
+import {
+  READ_ONLY_VIEWER_ROLES,
+  EMPTY_FILTER_STATE,
+} from "@/features/users/types"
+import { getUserFilterVisibility, formatDate } from "@/features/users/utils"
+import { adminUserDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
+import { X } from "lucide-react"
 
 function buildPageNumbers(
   currentPage: number,
@@ -62,40 +62,27 @@ function buildPageNumbers(
   return result
 }
 
-type FilterPillProps = {
-  label: string
-  onRemove: () => void
-}
-
-function FilterPill({ label, onRemove }: FilterPillProps) {
-  return (
-    <span className="inline-flex items-center gap-[3px] pl-[8px] pr-[6px] py-[3px] rounded-full bg-[#0284c7] text-[12px] font-medium text-white leading-none shrink-0">
-      {label}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="p-0 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
-        aria-label={`Remove ${label} filter`}
-      >
-        <X size={11} strokeWidth={2.5} />
-      </button>
-    </span>
-  )
-}
-
 export default function UserManagementPage() {
+  const navigate = useNavigate()
   const { t } = useTranslation("users")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<{
     type: UserModalActionType
     user: { id: string; first_name: string; last_name: string }
   } | null>(null)
-  const [drawerUserId, setDrawerUserId] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState("")
-  const [appliedFilters, setAppliedFilters] =
-    useState<UserFilterState>(EMPTY_FILTER_STATE)
+  const {
+    page,
+    search,
+    appliedFilters,
+    sortKey,
+    sortOrder,
+    setPage,
+    setSearch,
+    setAppliedFilters,
+    setSort,
+  } = useUserListParams()
   const showToast = useToastStore(s => s.showToast)
   const { data: tenantsData } = useTenants()
   const { mutateAsync: approve } = useApproveUser()
@@ -117,29 +104,36 @@ export default function UserManagementPage() {
         ? (appliedFilters.status as UserStatus[])
         : undefined,
     tenant_id: appliedFilters.tenant_id ?? undefined,
+    sort_by: sortKey ?? undefined,
+    sort_order: sortKey ? sortOrder : undefined,
+    last_login_from: appliedFilters.last_login_from ?? undefined,
+    last_login_to: appliedFilters.last_login_to ?? undefined,
   })
+
+  function handleSort(key: UserSortKey) {
+    if (sortKey === key) {
+      setSort(key, sortOrder === "asc" ? "desc" : "asc")
+    } else {
+      setSort(key, "asc")
+    }
+  }
 
   function handleApplyFilters(filters: UserFilterState) {
     setAppliedFilters(filters)
-    setPage(1)
   }
 
   function removeRoleFilter(role: UserRole) {
-    const next: UserFilterState = {
+    setAppliedFilters({
       ...appliedFilters,
       role: appliedFilters.role.filter((r: UserRole) => r !== role),
-    }
-    setAppliedFilters(next)
-    setPage(1)
+    })
   }
 
   function removeStatusFilter(status: string) {
-    const next: UserFilterState = {
+    setAppliedFilters({
       ...appliedFilters,
       status: appliedFilters.status.filter((s: string) => s !== status),
-    }
-    setAppliedFilters(next)
-    setPage(1)
+    })
   }
 
   async function handleAction(type: UserActionType, user: UserListItem) {
@@ -178,16 +172,40 @@ export default function UserManagementPage() {
     }
   }
 
-  function handleDrawerAction(type: UserModalActionType, user: UserDetail) {
-    setDrawerUserId(null)
-    setActiveAction({
-      type,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
-    })
+  async function handleDrawerAction(type: UserActionType, user: UserDetail) {
+    setSelectedUserId(null)
+    if (type === "approve") {
+      try {
+        const result = await approve(user.id)
+        const name = `${result.user.first_name} ${result.user.last_name}`
+        showToast({
+          variant: "success",
+          title: t("approveSuccess.title"),
+          message: t("approveSuccess.message", {
+            name,
+            email: result.user.email,
+          }),
+        })
+      } catch (err) {
+        showToast({
+          variant: "warning",
+          title: t("approveSuccess.errorTitle"),
+          message:
+            err instanceof ApiError
+              ? err.message
+              : t("approveSuccess.errorFallback"),
+        })
+      }
+    } else {
+      setActiveAction({
+        type,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+        },
+      })
+    }
   }
 
   function handleActionSuccess() {
@@ -237,18 +255,25 @@ export default function UserManagementPage() {
       actionLabel: isPendingApproval
         ? t("inviteBanner.pendingApproval.viewProfile")
         : t("inviteBanner.invited.viewProfile"),
+      onAction: () => navigate(adminUserDetail(user.id)),
     })
     setIsModalOpen(false)
   }
 
+  const filterVis = getUserFilterVisibility(currentUser?.role)
+  const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
   const activeFilterCount =
     appliedFilters.role.length +
     appliedFilters.status.length +
-    (appliedFilters.tenant_id ? 1 : 0)
-  const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
+    (filterVis.tenant && appliedFilters.tenant_id ? 1 : 0) +
+    (filterVis.mfa && appliedFilters.mfa_enabled ? 1 : 0) +
+    (filterVis.lastLogin &&
+    (appliedFilters.last_login_from || appliedFilters.last_login_to)
+      ? 1
+      : 0)
 
   return (
-    <div className="p-8">
+    <div className="p-8" data-testid="user-management-page">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">
@@ -259,86 +284,143 @@ export default function UserManagementPage() {
           </p>
         </div>
         {!isReadOnlyViewer && (
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button
+            size="lg"
+            data-testid="invite-user-button"
+            onClick={() => setIsModalOpen(true)}
+          >
             <UserPlus size={16} />
             {t("page.inviteButton")}
           </Button>
         )}
       </div>
 
-      {/* Toolbar */}
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {/* Search — icon on the right */}
-          <div className="relative">
-            <Input
-              placeholder="Search"
-              value={search}
-              onChange={e => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="pr-9 w-64"
-            />
-            <Search
-              size={16}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-            />
-          </div>
+      {/* Quick filter row */}
+      <UserQuickFilters
+        className="mt-6"
+        search={search}
+        onSearchChange={setSearch}
+        appliedFilters={appliedFilters}
+        filterVisibility={filterVis}
+        onFilterChange={update =>
+          setAppliedFilters({ ...appliedFilters, ...update })
+        }
+        onOpenAdvanced={() => setIsFilterOpen(true)}
+      />
 
-          {/* Filter button — red dot when active */}
+      {/* Active filter pills */}
+      {activeFilterCount > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-[#314158] shrink-0">Filters:</span>
+
+          {appliedFilters.role.map((role: UserRole) => (
+            <span
+              key={`role-${role}`}
+              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0"
+            >
+              {`Role: ${t(`roles.${role}` as `roles.${UserRole}`)}`}
+              <button
+                type="button"
+                onClick={() => removeRoleFilter(role)}
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label={`Remove role ${role} filter`}
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          ))}
+
+          {filterVis.tenant && appliedFilters.tenant_id && (
+            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
+              {`Tenant: ${tenantsData?.tenants.find(t => t.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
+              <button
+                type="button"
+                onClick={() =>
+                  setAppliedFilters({ ...appliedFilters, tenant_id: null })
+                }
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label="Remove tenant filter"
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          )}
+
+          {filterVis.mfa && appliedFilters.mfa_enabled && (
+            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
+              {`MFA: ${t(`filter.mfa.${appliedFilters.mfa_enabled}` as "filter.mfa.enabled" | "filter.mfa.disabled")}`}
+              <button
+                type="button"
+                onClick={() =>
+                  setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
+                }
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label="Remove MFA filter"
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          )}
+
+          {appliedFilters.status.map((status: string) => (
+            <span
+              key={`status-${status}`}
+              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0"
+            >
+              {`Status: ${t(`statuses.${status}` as `statuses.${UserStatus}`)}`}
+              <button
+                type="button"
+                onClick={() => removeStatusFilter(status)}
+                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                aria-label={`Remove status ${status} filter`}
+              >
+                <X size={11} strokeWidth={2.5} />
+              </button>
+            </span>
+          ))}
+
+          {filterVis.lastLogin &&
+            (appliedFilters.last_login_from ||
+              appliedFilters.last_login_to) && (
+              <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
+                {[
+                  "Last login range:",
+                  appliedFilters.last_login_from
+                    ? formatDate(appliedFilters.last_login_from)
+                    : null,
+                  appliedFilters.last_login_from && appliedFilters.last_login_to
+                    ? "–"
+                    : null,
+                  appliedFilters.last_login_to
+                    ? formatDate(appliedFilters.last_login_to)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAppliedFilters({
+                      ...appliedFilters,
+                      last_login_from: null,
+                      last_login_to: null,
+                    })
+                  }
+                  className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                  aria-label="Remove last login filter"
+                >
+                  <X size={11} strokeWidth={2.5} />
+                </button>
+              </span>
+            )}
+
           <button
             type="button"
-            onClick={() => setIsFilterOpen(true)}
-            className="relative border border-border rounded-xl p-2 text-muted-foreground hover:bg-muted transition-colors"
-            aria-label={t("filter.label")}
+            onClick={() => setAppliedFilters(EMPTY_FILTER_STATE)}
+            className="px-2 text-xs font-medium text-destructive hover:opacity-80 transition-opacity"
           >
-            <Filter size={16} />
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-red-500" />
-            )}
+            Clear all
           </button>
-        </div>
-
-        <button
-          type="button"
-          className="shrink-0 flex items-center gap-1.5 border border-border rounded-xl px-3 h-9 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-        >
-          <FileDown size={16} />
-          Export
-        </button>
-      </div>
-
-      {/* Active filter pills — second row */}
-      {activeFilterCount > 0 && (
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-muted-foreground shrink-0">
-            Filters:
-          </span>
-          {appliedFilters.role.map((role: UserRole) => (
-            <FilterPill
-              key={`role-${role}`}
-              label={`Role: ${t(`roles.${role}` as `roles.${UserRole}`)}`}
-              onRemove={() => removeRoleFilter(role)}
-            />
-          ))}
-          {appliedFilters.status.map((status: string) => (
-            <FilterPill
-              key={`status-${status}`}
-              label={`Status: ${t(`statuses.${status}` as `statuses.${UserStatus}`)}`}
-              onRemove={() => removeStatusFilter(status)}
-            />
-          ))}
-          {appliedFilters.tenant_id && (
-            <FilterPill
-              key="tenant"
-              label={`Tenant: ${tenantsData?.tenants.find(ten => ten.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
-              onRemove={() => {
-                setAppliedFilters(f => ({ ...f, tenant_id: null }))
-                setPage(1)
-              }}
-            />
-          )}
         </div>
       )}
 
@@ -347,18 +429,21 @@ export default function UserManagementPage() {
         <UserTable
           users={data?.users ?? []}
           isLoading={isLoading}
+          sort={{ key: sortKey, dir: sortOrder }}
+          onSort={handleSort}
           onAction={handleAction}
-          onRowClick={user => setDrawerUserId(user.id)}
+          onRowClick={user => setSelectedUserId(user.id)}
           viewerRole={currentUser?.role}
         />
       </div>
 
-      {/* Pagination */}
-      {data && data.total_pages > 1 && (
+      {/* Pagination — always visible when data is present */}
+      {data && (
         <div className="mt-4 flex justify-end items-center gap-1">
           <button
             type="button"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            data-testid="pagination-prev-button"
+            onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -378,6 +463,7 @@ export default function UserManagementPage() {
               <button
                 key={item}
                 type="button"
+                data-testid={`pagination-page-${item}`}
                 onClick={() => setPage(item)}
                 className={
                   item === page
@@ -392,7 +478,8 @@ export default function UserManagementPage() {
 
           <button
             type="button"
-            onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
+            data-testid="pagination-next-button"
+            onClick={() => setPage(Math.min(data.total_pages, page + 1))}
             disabled={page === data.total_pages}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -401,6 +488,13 @@ export default function UserManagementPage() {
           </button>
         </div>
       )}
+
+      <UserDetailDrawer
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onAction={(type, user) => void handleDrawerAction(type, user)}
+        viewerRole={currentUser?.role}
+      />
 
       {!isReadOnlyViewer && (
         <InviteUserModal
@@ -424,14 +518,9 @@ export default function UserManagementPage() {
           onClose={() => setIsFilterOpen(false)}
           appliedFilters={appliedFilters}
           onApply={handleApplyFilters}
+          viewerRole={currentUser?.role}
         />
       )}
-
-      <UserDetailDrawer
-        userId={drawerUserId}
-        onClose={() => setDrawerUserId(null)}
-        onAction={handleDrawerAction}
-      />
     </div>
   )
 }
