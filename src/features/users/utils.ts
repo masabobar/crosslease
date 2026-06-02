@@ -109,7 +109,7 @@ export function getUserActionVisibility(
   const isAdmin = viewerRole === "system_admin"
   const canApprove =
     isAdmin &&
-    status === "pending_activation" &&
+    status === "pending_approval" &&
     FOUR_EYES_ROLES.includes(role as UserRole)
   const canResendInvitation = isAdmin && status === "invited"
   const canSuspend = isAdmin && status === "active"

@@ -8,6 +8,7 @@ import {
   getUserListColumnVisibility,
   getUserFilterVisibility,
 } from "@/features/users/utils"
+import { USER_ROLES } from "@/features/users/types"
 
 // ---------------------------------------------------------------------------
 // formatLastLogin
@@ -101,18 +102,18 @@ describe("getInitials", () => {
 // getUserActionVisibility — additional cases
 // ---------------------------------------------------------------------------
 describe("getUserActionVisibility — additional cases", () => {
-  it("returns canApprove: true when viewer=system_admin, status=pending_activation, role=system_admin (FOUR_EYES_ROLE)", () => {
+  it("returns canApprove: true when viewer=system_admin, status=pending_approval, role=system_admin (FOUR_EYES_ROLE)", () => {
     const result = getUserActionVisibility(
-      "pending_activation",
+      "pending_approval",
       "system_admin",
       "system_admin"
     )
     expect(result.canApprove).toBe(true)
   })
 
-  it("returns canApprove: false when viewer=system_admin, status=pending_activation, role=front_office (not a FOUR_EYES_ROLE)", () => {
+  it("returns canApprove: false when viewer=system_admin, status=pending_approval, role=front_office (not a FOUR_EYES_ROLE)", () => {
     const result = getUserActionVisibility(
-      "pending_activation",
+      "pending_approval",
       "front_office",
       "system_admin"
     )
@@ -314,6 +315,25 @@ describe("getUserFilterVisibility — null/undefined viewerRole", () => {
     const vis = getUserFilterVisibility(null)
     expect(vis.mfa).toBe(true)
     expect(vis.lastLogin).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// USER_ROLES — role filter dropdown source of truth
+// ---------------------------------------------------------------------------
+describe("USER_ROLES — filter dropdown source of truth", () => {
+  it("includes leasing_company_user (must appear in Roles filter on User Management page)", () => {
+    expect(USER_ROLES).toContain("leasing_company_user")
+  })
+
+  it("contains all 6 expected roles", () => {
+    expect(USER_ROLES).toContain("system_admin")
+    expect(USER_ROLES).toContain("support_user")
+    expect(USER_ROLES).toContain("auditor")
+    expect(USER_ROLES).toContain("front_office")
+    expect(USER_ROLES).toContain("back_office")
+    expect(USER_ROLES).toContain("leasing_company_user")
+    expect(USER_ROLES.length).toBe(6)
   })
 })
 

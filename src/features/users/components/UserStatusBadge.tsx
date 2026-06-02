@@ -30,11 +30,17 @@ const STATUS_CONFIG: Record<UserStatus, StatusConfig> = {
     text: "text-[#9a3412]",
     label: "Suspended",
   },
-  pending_activation: {
+  pending_approval: {
     container: "bg-[#fef3c6]",
     dot: "bg-[#f59e0b]",
     text: "text-[#92400e]",
     label: "Pending",
+  },
+  rejected: {
+    container: "bg-[#fee2e2]",
+    dot: "bg-[#ef4444]",
+    text: "text-[#991b1b]",
+    label: "Rejected",
   },
   deactivated: {
     container: "bg-[#f1f5f9]",

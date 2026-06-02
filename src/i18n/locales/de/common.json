@@ -23,6 +23,7 @@
     "coreBankingIntegration": "Core-Banking-Integration",
     "auditTrail": "Audit-Trail",
     "logout": "Abmelden",
+    "poweredBy": "Powered by",
     "lcRequests": "Meine Anfragen",
     "lcStatus": "Statusübersicht",
     "lcDocuments": "Bankdokumente",

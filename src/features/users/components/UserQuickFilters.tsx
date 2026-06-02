@@ -1,3 +1,4 @@
+import { parseISO } from "date-fns"
 import { Calendar, Check, FileDown, Filter, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -8,6 +9,7 @@ import {
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
+import { USER_STATUSES } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
 import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -17,14 +19,7 @@ import { UserStatusBadge } from "./UserStatusBadge"
 
 export type QuickFilterKey = "role" | "tenant" | "mfa" | "status" | "lastLogin"
 
-const ALL_STATUSES: UserStatus[] = [
-  "active",
-  "invited",
-  "pending_activation",
-  "suspended",
-  "deactivated",
-  "expired",
-]
+const ALL_STATUSES: readonly UserStatus[] = USER_STATUSES
 
 const MFA_OPTIONS = [
   { value: "enabled", label: "Enabled" },
@@ -223,13 +218,32 @@ export function UserQuickFilters({
             <div className="flex gap-2">
               <DatePicker
                 value={appliedFilters.last_login_from ?? undefined}
-                onChange={v => onFilterChange({ last_login_from: v })}
+                onChange={v => {
+                  const newFrom = parseISO(v)
+                  const currentTo = appliedFilters.last_login_to
+                    ? parseISO(appliedFilters.last_login_to)
+                    : null
+                  onFilterChange({
+                    last_login_from: v,
+                    last_login_to:
+                      currentTo && currentTo < newFrom
+                        ? null
+                        : appliedFilters.last_login_to,
+                  })
+                }}
                 placeholder="From"
+                maxDate={new Date()}
               />
               <DatePicker
                 value={appliedFilters.last_login_to ?? undefined}
                 onChange={v => onFilterChange({ last_login_to: v })}
                 placeholder="To"
+                maxDate={new Date()}
+                minDate={
+                  appliedFilters.last_login_from
+                    ? parseISO(appliedFilters.last_login_from)
+                    : undefined
+                }
               />
             </div>
           </div>
@@ -287,8 +301,9 @@ export function UserQuickFilters({
                   side="bottom"
                   align="start"
                   className={cn(
-                    "p-0 py-1 max-h-60 overflow-y-auto",
-                    key === "lastLogin" ? "w-72 py-0" : "w-48"
+                    "p-0 py-1",
+                    key === "lastLogin" ? "w-72 py-0" : "w-48",
+                    key === "tenant" && "max-h-60 overflow-y-auto"
                   )}
                 >
                   {renderPopoverContent(key)}

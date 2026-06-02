@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
+import { USER_STATUSES } from "@/features/users/api/schema"
 import type { UserSortKey, UserSortOrder } from "@/features/users/api/schema"
 
 const VALID_SORT_KEYS: readonly string[] = [
@@ -12,16 +13,7 @@ const VALID_SORT_KEYS: readonly string[] = [
   "access_valid_until",
 ]
 
-const VALID_STATUSES: readonly string[] = [
-  "pending_activation",
-  "invited",
-  "active",
-  "suspended",
-  "deactivated",
-  "expired",
-  "locked",
-  "archived",
-]
+const VALID_STATUSES: readonly string[] = USER_STATUSES
 
 type ParamUpdate = Record<string, string | readonly string[] | null>
 

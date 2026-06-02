@@ -80,13 +80,24 @@ export function PasswordStrengthBar({ password }: { password: string }) {
     4: t("passwordStrength.strong"),
   }
 
-  const hints: Record<StrengthLevel, string> = {
-    0: t("passwordStrength.hintEmpty"),
-    1: t("passwordStrength.hintWeak"),
-    2: t("passwordStrength.hintFair"),
-    3: t("passwordStrength.hintGood"),
-    4: t("passwordStrength.hintStrong"),
-  }
+  const reqs = getPasswordRequirements(password)
+  const missing: string[] = []
+  if (!reqs.minLength) missing.push(t("passwordStrength.req.minLength"))
+  if (!reqs.hasUpper) missing.push(t("passwordStrength.req.hasUpper"))
+  if (!reqs.hasLower) missing.push(t("passwordStrength.req.hasLower"))
+  if (!reqs.hasNumber) missing.push(t("passwordStrength.req.hasNumber"))
+  if (!reqs.hasSymbol) missing.push(t("passwordStrength.req.hasSymbol"))
+
+  const hint = !password
+    ? t("passwordStrength.hintEmpty")
+    : missing.length === 0
+      ? t("passwordStrength.hintStrong")
+      : t("passwordStrength.needs", {
+          items:
+            missing.length === 1
+              ? missing[0]
+              : `${missing.slice(0, -1).join(", ")} ${t("passwordStrength.and")} ${missing[missing.length - 1]}`,
+        })
 
   return (
     <div className="flex flex-col gap-2">
@@ -121,9 +132,7 @@ export function PasswordStrengthBar({ password }: { password: string }) {
           size={16}
           className={cn("shrink-0 mt-px", config.hintIconColor)}
         />
-        <p className={cn("text-xs leading-4", config.hintTextColor)}>
-          {hints[level]}
-        </p>
+        <p className={cn("text-xs leading-4", config.hintTextColor)}>{hint}</p>
       </div>
     </div>
   )
