@@ -62,6 +62,7 @@ const UserResponse = z
     permissions: z.array(z.string()).optional(),
     tenant_id: z.union([z.string(), z.null()]),
     status: UserStatus,
+    phone_number: z.union([z.string(), z.null()]),
     access_valid_until: z.union([z.string(), z.null()]),
     invited_by: z.union([z.string(), z.null()]),
     invited_at: z.union([z.string(), z.null()]),
@@ -97,6 +98,7 @@ const UserListItem = z
     tenant_id: z.union([z.string(), z.null()]),
     tenant_name: z.union([z.string(), z.null()]),
     status: UserStatus,
+    phone_number: z.union([z.string(), z.null()]),
     last_login: z.union([z.string(), z.null()]),
     access_valid_until: z.union([z.string(), z.null()]),
   })
@@ -131,12 +133,65 @@ const UserDetailResponse = z
     status: UserStatus,
     tenant_id: z.union([z.string(), z.null()]),
     tenant_name: z.union([z.string(), z.null()]),
+    phone_number: z.union([z.string(), z.null()]),
+    pending_email: z.union([z.string(), z.null()]),
     access_valid_until: z.union([z.string(), z.null()]),
     invited_by_user_id: z.union([z.string(), z.null()]),
     invited_at: z.union([z.string(), z.null()]),
     activated_at: z.union([z.string(), z.null()]),
     last_login: z.union([z.string(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const EditUserRequest = z
+  .object({
+    first_name: z.union([z.string(), z.null()]),
+    last_name: z.union([z.string(), z.null()]),
+    phone_number: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const ChangeEmailRequest = z
+  .object({ new_email: z.string().email() })
+  .passthrough()
+const GovernedActionType = z.enum([
+  "tenant_create",
+  "user_platform_invite",
+  "user_role_change",
+  "user_auditor_period_update",
+  "user_email_change",
+])
+const GovernedActionStatus = z.enum([
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+  "expired",
+])
+const GovernedActionResponse = z
+  .object({
+    id: z.string().uuid(),
+    action_type: GovernedActionType,
+    subject_type: z.string(),
+    subject_id: z.union([z.string(), z.null()]),
+    tenant_id: z.union([z.string(), z.null()]),
+    status: GovernedActionStatus,
+    initiator_id: z.string().uuid(),
+    approver_id: z.union([z.string(), z.null()]),
+    display_snapshot: z.object({}).partial().passthrough(),
+    initiator_snapshot: z.object({}).partial().passthrough(),
+    approver_snapshot: z.union([
+      z.object({}).partial().passthrough(),
+      z.null(),
+    ]),
+    execution_params: z.object({}).partial().passthrough(),
+    reason: z.union([z.string(), z.null()]),
+    approver_comment: z.union([z.string(), z.null()]),
+    expires_at: z.union([z.string(), z.null()]),
+    resolved_at: z.union([z.string(), z.null()]),
+    correlation_id: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
 const ResendReason = z.enum([
@@ -203,45 +258,6 @@ const CreateTenantRequest = z
     legal_entity_name: z.string().min(2).max(300),
     country: z.string().min(2).max(100),
     default_currency: z.string().min(3).max(10).optional().default("EUR"),
-  })
-  .passthrough()
-const GovernedActionType = z.enum([
-  "tenant_create",
-  "user_platform_invite",
-  "user_role_change",
-  "user_auditor_period_update",
-])
-const GovernedActionStatus = z.enum([
-  "pending",
-  "approved",
-  "rejected",
-  "withdrawn",
-  "expired",
-])
-const GovernedActionResponse = z
-  .object({
-    id: z.string().uuid(),
-    action_type: GovernedActionType,
-    subject_type: z.string(),
-    subject_id: z.union([z.string(), z.null()]),
-    tenant_id: z.union([z.string(), z.null()]),
-    status: GovernedActionStatus,
-    initiator_id: z.string().uuid(),
-    approver_id: z.union([z.string(), z.null()]),
-    display_snapshot: z.object({}).partial().passthrough(),
-    initiator_snapshot: z.object({}).partial().passthrough(),
-    approver_snapshot: z.union([
-      z.object({}).partial().passthrough(),
-      z.null(),
-    ]),
-    execution_params: z.object({}).partial().passthrough(),
-    reason: z.union([z.string(), z.null()]),
-    approver_comment: z.union([z.string(), z.null()]),
-    expires_at: z.union([z.string(), z.null()]),
-    resolved_at: z.union([z.string(), z.null()]),
-    correlation_id: z.union([z.string(), z.null()]),
-    created_at: z.string().datetime({ offset: true }),
-    updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
 const TenantStatus = z.enum([
@@ -385,6 +401,11 @@ export const schemas = {
   PaginatedUsersResponse,
   InviteUserRequest,
   UserDetailResponse,
+  EditUserRequest,
+  ChangeEmailRequest,
+  GovernedActionType,
+  GovernedActionStatus,
+  GovernedActionResponse,
   ResendReason,
   ResendInvitationRequest,
   SuspensionReason,
@@ -394,9 +415,6 @@ export const schemas = {
   DeactivationReason,
   DeactivateUserRequest,
   CreateTenantRequest,
-  GovernedActionType,
-  GovernedActionStatus,
-  GovernedActionResponse,
   TenantStatus,
   TenantListResponse,
   PaginatedTenantsResponse,
@@ -757,6 +775,31 @@ const endpoints = makeApi([
 **Checks:** JWT signature, expiry, and SHA-256 hash match against &#x60;invite_token_hash&#x60; in the database.
 
 **Returns:** &#x60;TOKEN_VALID&#x60; success — frontend can safely display the set-password form`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "token",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/auth/verify-email-change",
+    alias: "verify_email_change_api_v1_auth_verify_email_change_post",
+    description: `Verify and apply an email address change. No authentication required — called via link in email.
+
+Validates the token, updates user.email to pending_email, clears pending state,
+and invalidates all active sessions.`,
     requestFormat: "json",
     parameters: [
       {
@@ -1202,6 +1245,65 @@ On reject/withdraw/expire the tenant is archived.
       },
     ],
     response: UserDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/users/:id",
+    alias: "edit_user_api_v1_users__id__patch",
+    description: `Update first_name, last_name and/or phone_number. Requires &#x60;user:edit&#x60; permission.
+
+Allowed statuses: active, invited, pending_approval, suspended.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: EditUserRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: UserDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/users/:id/change-email",
+    alias: "change_email_api_v1_users__id__change_email_post",
+    description: `Initiate a Four-Eyes email change request. Requires &#x60;user:edit&#x60; permission.
+
+Allowed statuses: active, invited, pending_approval.
+After approval: verification email sent for active users; invite resent for invited users.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ new_email: z.string().email() }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GovernedActionResponse,
     errors: [
       {
         status: 422,
