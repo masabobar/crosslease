@@ -465,7 +465,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Invite a new user",
-        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active\n- `auditor` — `access_valid_until` required\n\n**Effect:** Creates user record; for tenant-level roles sends activation email with invite link (48h TTL).\n\n**Returns:** Created `UserResponse` with status `invited` or `pending_activation`",
+        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.",
         "operationId": "invite_user_api_v1_users_post",
         "requestBody": {
           "required": true,
@@ -683,6 +683,7 @@
       "post": {
         "tags": ["Tenants"],
         "summary": "Create Tenant",
+        "description": "Initiate a Four-Eyes tenant creation request. Requires `system_admin` role.\n\nTenant is pre-created in `draft` status. The governed action remains pending\nuntil a different system_admin approves it. After approval the tenant stays\nin `draft` — activate separately via `POST /tenants/{id}/activate`.\nOn reject/withdraw/expire the tenant is archived.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
         "operationId": "create_tenant_api_v1_tenants_post",
         "requestBody": {
           "required": true,
@@ -695,7 +696,13 @@
         "responses": {
           "201": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -820,6 +827,403 @@
         }
       }
     },
+    "/api/v1/users/{user_id}/change-role": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Request a role change",
+        "description": "Initiate a Four-Eyes role change request for a user. Requires `user:change_role` permission.\n\nUser must be in `active` status. The request remains pending until a different\nsystem_admin approves it. Only one pending role-change request is allowed per user at a time.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
+        "operationId": "initiate_role_change_api_v1_users__user_id__change_role_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateRoleChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/update-access-period": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Request an auditor access period update",
+        "description": "Initiate a Four-Eyes access period update for an auditor user. Requires `user:update_access_period` permission.\n\nUser must be an active auditor. New period must be in the future.\nThe request remains pending until a different system_admin approves it.\nOnly one pending period-update request is allowed per user at a time.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
+        "operationId": "initiate_auditor_period_update_api_v1_users__user_id__update_access_period_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAuditorAccessPeriodRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governed-actions": {
+      "get": {
+        "tags": ["Governed Actions"],
+        "summary": "List governed actions",
+        "description": "List governed actions. Requires `governed_action:list` permission.\n\nAuditors see only actions scoped to their tenant.",
+        "operationId": "list_governed_actions_api_v1_governed_actions_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/GovernedActionStatus" },
+              "description": "Filter by status, e.g. ?status=pending&status=approved",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by status, e.g. ?status=pending&status=approved"
+          },
+          {
+            "name": "action_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/GovernedActionType" },
+              "description": "Filter by action type, e.g. ?action_type=USER_ROLE_CHANGE",
+              "default": [],
+              "title": "Action Type"
+            },
+            "description": "Filter by action type, e.g. ?action_type=USER_ROLE_CHANGE"
+          },
+          {
+            "name": "initiator_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "description": "Filter by initiator",
+              "title": "Initiator Id"
+            },
+            "description": "Filter by initiator"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedGovernedActionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governed-actions/{id}": {
+      "get": {
+        "tags": ["Governed Actions"],
+        "summary": "Get governed action detail",
+        "description": "Get a single governed action by ID. Requires `governed_action:read` permission.\n\nAuditors can only read actions belonging to their tenant.",
+        "operationId": "get_governed_action_api_v1_governed_actions__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governed-actions/{id}/approve": {
+      "post": {
+        "tags": ["Governed Actions"],
+        "summary": "Approve a governed action",
+        "description": "Approve a pending governed action and execute it. Requires `governed_action:approve` permission.\n\nInitiator cannot approve their own action (Four-Eyes principle).",
+        "operationId": "approve_governed_action_api_v1_governed_actions__id__approve_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApproveRejectRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governed-actions/{id}/reject": {
+      "post": {
+        "tags": ["Governed Actions"],
+        "summary": "Reject a governed action",
+        "description": "Reject a pending governed action. Requires `governed_action:approve` permission.\n\nInitiator cannot reject their own action (Four-Eyes principle).",
+        "operationId": "reject_governed_action_api_v1_governed_actions__id__reject_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ApproveRejectRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governed-actions/{id}/withdraw": {
+      "post": {
+        "tags": ["Governed Actions"],
+        "summary": "Withdraw a governed action",
+        "description": "Withdraw a pending governed action. Only the initiator can withdraw.\nReturns 404 if the action does not exist or the caller is not the initiator (no information leak).",
+        "operationId": "withdraw_governed_action_api_v1_governed_actions__id__withdraw_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Action not found or caller is not the initiator"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/governed-actions/{id}/re-initiate": {
+      "post": {
+        "tags": ["Governed Actions"],
+        "summary": "Re-initiate an expired governed action",
+        "description": "Re-initiate an expired governed action. Creates a new pending governed action with a fresh TTL.\nThe expired record remains unchanged. New action shares the same `correlation_id`.\n\n**Primary path:** Only the original initiator can re-initiate. Reason is optional.\n\n**Secondary path:** If the original initiator is inactive (suspended/deactivated),\nany `system_admin` may re-initiate. Reason is mandatory in this case.\n\nReturns 404 if the caller is not the original initiator and the original initiator is still active.",
+        "operationId": "re_initiate_governed_action_api_v1_governed_actions__id__re_initiate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReInitiateRequest",
+                "default": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Action not found or caller is not the original initiator"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/events": {
       "get": {
         "tags": ["audit"],
@@ -827,12 +1231,21 @@
         "operationId": "list_audit_events_api_v1_audit_events_get",
         "parameters": [
           {
-            "name": "event_class",
+            "name": "entity_type",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Event Class"
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "action_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Action Type"
             }
           },
           {
@@ -842,15 +1255,6 @@
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
               "title": "Event Type"
-            }
-          },
-          {
-            "name": "entity_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Entity Type"
             }
           },
           {
@@ -872,6 +1276,33 @@
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
               "title": "Actor Id"
+            }
+          },
+          {
+            "name": "actor_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Actor Type"
+            }
+          },
+          {
+            "name": "trigger_source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Trigger Source"
+            }
+          },
+          {
+            "name": "sensitive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "title": "Sensitive"
             }
           },
           {
@@ -944,6 +1375,43 @@
         }
       }
     },
+    "/api/v1/audit/events/{event_id}": {
+      "get": {
+        "tags": ["audit"],
+        "summary": "Get Audit Event",
+        "operationId": "get_audit_event_api_v1_audit_events__event_id__get",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditEventResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -967,19 +1435,97 @@
           }
         }
       }
+    },
+    "/internal/test/session": {
+      "post": {
+        "tags": ["Internal - Test Hooks"],
+        "summary": "Test Session",
+        "description": "Create a real authenticated session for any user without going through 2FA.\n\nReplicates the tail of verify_otp: evicts oldest session if needed, issues\naccess + refresh tokens as HTTP-only cookies.\n\nUser status is NOT checked — QA can obtain a session for suspended or\ndeactivated users to test authenticated edge-case scenarios.",
+        "operationId": "test_session_internal_test_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TestSessionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/test/otp": {
+      "get": {
+        "tags": ["Internal - Test Hooks"],
+        "summary": "Test Get Otp",
+        "description": "Return the current valid OTP code for a user.\n\nUse after POST /api/v1/auth/login to retrieve the generated OTP without\nneeding email access. Returns 404 if no active (non-expired, non-used) OTP\nexists for the given email.",
+        "operationId": "test_get_otp_internal_test_otp_get",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Email" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OTPResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ApproveRejectRequest": {
+        "properties": {
+          "comment": {
+            "anyOf": [
+              { "type": "string", "minLength": 10 },
+              { "type": "null" }
+            ],
+            "title": "Comment",
+            "examples": ["string"]
+          }
+        },
+        "type": "object",
+        "title": "ApproveRejectRequest"
+      },
       "AuditEventResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "event_class": { "type": "string", "title": "Event Class" },
-          "event_type": { "type": "string", "title": "Event Type" },
-          "entity_type": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Entity Type"
-          },
+          "audit_seq": { "type": "integer", "title": "Audit Seq" },
+          "entity_type": { "type": "string", "title": "Entity Type" },
           "entity_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -987,6 +1533,14 @@
             ],
             "title": "Entity Id"
           },
+          "entity_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Entity Display"
+          },
+          "action_type": { "type": "string", "title": "Action Type" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "actor_id": { "type": "string", "title": "Actor Id" },
+          "actor_type": { "type": "string", "title": "Actor Type" },
           "old_data": {
             "anyOf": [
               { "additionalProperties": true, "type": "object" },
@@ -1008,8 +1562,18 @@
             ],
             "title": "Changed Fields"
           },
-          "actor_id": { "type": "string", "title": "Actor Id" },
-          "actor_type": { "type": "string", "title": "Actor Type" },
+          "trigger_source": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Trigger Source"
+          },
+          "reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Reason"
+          },
+          "comment": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Comment"
+          },
           "tenant_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -1032,6 +1596,7 @@
             ],
             "title": "Payload"
           },
+          "sensitive": { "type": "boolean", "title": "Sensitive" },
           "recorded_at": {
             "type": "string",
             "format": "date-time",
@@ -1041,22 +1606,40 @@
         "type": "object",
         "required": [
           "id",
-          "event_class",
-          "event_type",
+          "audit_seq",
           "entity_type",
           "entity_id",
+          "entity_display",
+          "action_type",
+          "event_type",
+          "actor_id",
+          "actor_type",
           "old_data",
           "new_data",
           "changed_fields",
-          "actor_id",
-          "actor_type",
+          "trigger_source",
+          "reason",
+          "comment",
           "tenant_id",
           "correlation_id",
           "session_id",
           "payload",
+          "sensitive",
           "recorded_at"
         ],
         "title": "AuditEventResponse"
+      },
+      "AuditorPeriodUpdateReason": {
+        "type": "string",
+        "enum": [
+          "regulatory_audit",
+          "internal_audit",
+          "compliance_review",
+          "investigation",
+          "temporary_review_access",
+          "other"
+        ],
+        "title": "AuditorPeriodUpdateReason"
       },
       "CreateTenantRequest": {
         "properties": {
@@ -1141,6 +1724,139 @@
         "required": ["email"],
         "title": "ForgotPasswordRequest"
       },
+      "GovernedActionResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "action_type": { "$ref": "#/components/schemas/GovernedActionType" },
+          "subject_type": { "type": "string", "title": "Subject Type" },
+          "subject_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Subject Id"
+          },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "status": { "$ref": "#/components/schemas/GovernedActionStatus" },
+          "initiator_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Initiator Id"
+          },
+          "approver_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Approver Id"
+          },
+          "display_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Display Snapshot"
+          },
+          "initiator_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Initiator Snapshot"
+          },
+          "approver_snapshot": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Approver Snapshot"
+          },
+          "execution_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Execution Params"
+          },
+          "reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Reason"
+          },
+          "approver_comment": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Approver Comment"
+          },
+          "expires_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Expires At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Resolved At"
+          },
+          "correlation_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Correlation Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "action_type",
+          "subject_type",
+          "subject_id",
+          "tenant_id",
+          "status",
+          "initiator_id",
+          "approver_id",
+          "display_snapshot",
+          "initiator_snapshot",
+          "approver_snapshot",
+          "execution_params",
+          "reason",
+          "approver_comment",
+          "expires_at",
+          "resolved_at",
+          "correlation_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "GovernedActionResponse"
+      },
+      "GovernedActionStatus": {
+        "type": "string",
+        "enum": ["pending", "approved", "rejected", "withdrawn", "expired"],
+        "title": "GovernedActionStatus"
+      },
+      "GovernedActionType": {
+        "type": "string",
+        "enum": [
+          "tenant_create",
+          "user_platform_invite",
+          "user_role_change",
+          "user_auditor_period_update"
+        ],
+        "title": "GovernedActionType"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1151,6 +1867,22 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "InitiateRoleChangeRequest": {
+        "properties": {
+          "new_role": { "$ref": "#/components/schemas/UserRole" },
+          "reason": {
+            "anyOf": [
+              { "type": "string", "minLength": 10 },
+              { "type": "null" }
+            ],
+            "title": "Reason",
+            "examples": ["string"]
+          }
+        },
+        "type": "object",
+        "required": ["new_role"],
+        "title": "InitiateRoleChangeRequest"
       },
       "InviteUserRequest": {
         "properties": {
@@ -1238,6 +1970,19 @@
         "required": ["verification_token", "expires_in"],
         "title": "MfaRequiredResponse"
       },
+      "OTPResponse": {
+        "properties": {
+          "code": { "type": "string", "title": "Code" },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": ["code", "expires_at"],
+        "title": "OTPResponse"
+      },
       "PaginatedAuditEventsResponse": {
         "properties": {
           "events": {
@@ -1253,6 +1998,22 @@
         "type": "object",
         "required": ["events", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedAuditEventsResponse"
+      },
+      "PaginatedGovernedActionsResponse": {
+        "properties": {
+          "actions": {
+            "items": { "$ref": "#/components/schemas/GovernedActionResponse" },
+            "type": "array",
+            "title": "Actions"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["actions", "total", "page", "per_page", "total_pages"],
+        "title": "PaginatedGovernedActionsResponse"
       },
       "PaginatedTenantsResponse": {
         "properties": {
@@ -1317,6 +2078,20 @@
         "type": "object",
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
+      },
+      "ReInitiateRequest": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              { "type": "string", "minLength": 10 },
+              { "type": "null" }
+            ],
+            "title": "Reason",
+            "examples": ["string"]
+          }
+        },
+        "type": "object",
+        "title": "ReInitiateRequest"
       },
       "ReactivateUserRequest": {
         "properties": {
@@ -1524,8 +2299,36 @@
       },
       "TenantStatus": {
         "type": "string",
-        "enum": ["draft", "active", "suspended", "archived"],
+        "enum": [
+          "draft",
+          "active",
+          "suspended",
+          "archived",
+          "rejected",
+          "expired"
+        ],
         "title": "TenantStatus"
+      },
+      "TestSessionRequest": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["email"],
+        "title": "TestSessionRequest"
+      },
+      "UpdateAuditorAccessPeriodRequest": {
+        "properties": {
+          "new_access_valid_until": {
+            "type": "string",
+            "format": "date-time",
+            "title": "New Access Valid Until"
+          },
+          "reason": { "$ref": "#/components/schemas/AuditorPeriodUpdateReason" }
+        },
+        "type": "object",
+        "required": ["new_access_valid_until", "reason"],
+        "title": "UpdateAuditorAccessPeriodRequest"
       },
       "UserDetailResponse": {
         "properties": {
@@ -1758,12 +2561,13 @@
       "UserStatus": {
         "type": "string",
         "enum": [
-          "pending_activation",
+          "pending_approval",
           "invited",
           "active",
           "suspended",
           "deactivated",
-          "expired"
+          "expired",
+          "rejected"
         ],
         "title": "UserStatus"
       },
