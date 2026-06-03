@@ -63,6 +63,7 @@ const UserResponse = z
     tenant_id: z.union([z.string(), z.null()]),
     status: UserStatus,
     phone_number: z.union([z.string(), z.null()]),
+    profile_picture_url: z.union([z.string(), z.null()]).optional(),
     access_valid_until: z.union([z.string(), z.null()]),
     invited_by: z.union([z.string(), z.null()]),
     invited_at: z.union([z.string(), z.null()]),
@@ -86,6 +87,13 @@ const ResetPasswordRequest = z
     password_confirm: z.string(),
   })
   .passthrough()
+const UpdateMeRequest = z
+  .object({ phone_number: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const Body_upload_picture_api_v1_users_me_picture_post = z
+  .object({ file: z.string() })
+  .passthrough()
 const search = z.union([z.string(), z.null()]).optional()
 const UserListItem = z
   .object({
@@ -99,6 +107,7 @@ const UserListItem = z
     tenant_name: z.union([z.string(), z.null()]),
     status: UserStatus,
     phone_number: z.union([z.string(), z.null()]),
+    profile_picture_url: z.union([z.string(), z.null()]).optional(),
     last_login: z.union([z.string(), z.null()]),
     access_valid_until: z.union([z.string(), z.null()]),
   })
@@ -135,6 +144,7 @@ const UserDetailResponse = z
     tenant_name: z.union([z.string(), z.null()]),
     phone_number: z.union([z.string(), z.null()]),
     pending_email: z.union([z.string(), z.null()]),
+    profile_picture_url: z.union([z.string(), z.null()]),
     access_valid_until: z.union([z.string(), z.null()]),
     invited_by_user_id: z.union([z.string(), z.null()]),
     invited_at: z.union([z.string(), z.null()]),
@@ -396,6 +406,8 @@ export const schemas = {
   ResendOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  UpdateMeRequest,
+  Body_upload_picture_api_v1_users_me_picture_post,
   search,
   UserListItem,
   PaginatedUsersResponse,
@@ -1044,6 +1056,31 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/media/:media_id",
+    alias: "serve_media_api_v1_media__media_id__get",
+    description: `Stream a media file from S3. Requires valid session.
+
+Access is granted if the caller owns the file or is a system_admin.
+Returns 404 for non-existent or unauthorized files (non-disclosing).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "media_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/tenants",
     alias: "create_tenant_api_v1_tenants_post",
@@ -1632,6 +1669,62 @@ Returns 409 if still processing, 422 if failed.`,
 **Returns:** Full &#x60;UserResponse&#x60; for the token owner`,
     requestFormat: "json",
     response: UserResponse,
+  },
+  {
+    method: "patch",
+    path: "/api/v1/users/me",
+    alias: "update_me_api_v1_users_me_patch",
+    description: `Update the current user&#x27;s own profile. Only &#x60;phone_number&#x60; can be changed.
+Requires valid &#x60;access_token&#x60; cookie.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateMeRequest,
+      },
+    ],
+    response: UserResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/users/me/picture",
+    alias: "upload_picture_api_v1_users_me_picture_post",
+    description: `Upload or replace the current user&#x27;s profile picture.
+
+Accepts JPEG, PNG or WebP — max 5 MB. Converted to JPEG and stored in S3.
+Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/media/{id}&#x60; (authenticated).`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ file: z.string() }).passthrough(),
+      },
+    ],
+    response: UserResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/users/me/picture",
+    alias: "delete_picture_endpoint_api_v1_users_me_picture_delete",
+    description: `Delete the current user&#x27;s profile picture. Idempotent — returns 204 even if none exists.`,
+    requestFormat: "json",
+    response: z.void(),
   },
   {
     method: "get",

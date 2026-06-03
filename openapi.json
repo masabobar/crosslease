@@ -357,6 +357,81 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update own profile",
+        "description": "Update the current user's own profile. Only `phone_number` can be changed.\nRequires valid `access_token` cookie.",
+        "operationId": "update_me_api_v1_users_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateMeRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/picture": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Upload or replace profile picture",
+        "description": "Upload or replace the current user's profile picture.\n\nAccepts JPEG, PNG or WebP — max 5 MB. Converted to JPEG and stored in S3.\nCreates a `MediaObject` record. File is served via `GET /api/v1/media/{id}` (authenticated).",
+        "operationId": "upload_picture_api_v1_users_me_picture_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_picture_api_v1_users_me_picture_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete profile picture",
+        "description": "Delete the current user's profile picture. Idempotent — returns 204 even if none exists.",
+        "operationId": "delete_picture_endpoint_api_v1_users_me_picture_delete",
+        "responses": { "204": { "description": "Successful Response" } }
       }
     },
     "/api/v1/users": {
@@ -1722,6 +1797,40 @@
         }
       }
     },
+    "/api/v1/media/{media_id}": {
+      "get": {
+        "tags": ["Media"],
+        "summary": "Stream a media file (authenticated)",
+        "description": "Stream a media file from S3. Requires valid session.\n\nAccess is granted if the caller owns the file or is a system_admin.\nReturns 404 for non-existent or unauthorized files (non-disclosing).",
+        "operationId": "serve_media_api_v1_media__media_id__get",
+        "parameters": [
+          {
+            "name": "media_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Media Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -1951,6 +2060,18 @@
         ],
         "title": "AuditorPeriodUpdateReason"
       },
+      "Body_upload_picture_api_v1_users_me_picture_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_upload_picture_api_v1_users_me_picture_post"
+      },
       "ChangeEmailRequest": {
         "properties": {
           "new_email": {
@@ -2059,7 +2180,8 @@
               },
               { "type": "null" }
             ],
-            "title": "Phone Number"
+            "title": "Phone Number",
+            "examples": ["+38761123456"]
           }
         },
         "type": "object",
@@ -2685,6 +2807,25 @@
         "required": ["new_access_valid_until", "reason"],
         "title": "UpdateAuditorAccessPeriodRequest"
       },
+      "UpdateMeRequest": {
+        "properties": {
+          "phone_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30,
+                "minLength": 7,
+                "pattern": "^\\+?[0-9\\s\\-\\(\\)]{7,30}$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Phone Number",
+            "examples": ["+38761123456"]
+          }
+        },
+        "type": "object",
+        "title": "UpdateMeRequest"
+      },
       "UserDetailResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -2712,6 +2853,10 @@
           "pending_email": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Pending Email"
+          },
+          "profile_picture_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Profile Picture Url"
           },
           "access_valid_until": {
             "anyOf": [
@@ -2764,6 +2909,7 @@
           "tenant_name",
           "phone_number",
           "pending_email",
+          "profile_picture_url",
           "access_valid_until",
           "invited_by_user_id",
           "invited_at",
@@ -2796,6 +2942,10 @@
           "phone_number": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Phone Number"
+          },
+          "profile_picture_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Profile Picture Url"
           },
           "last_login": {
             "anyOf": [
@@ -2853,6 +3003,10 @@
           "phone_number": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Phone Number"
+          },
+          "profile_picture_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Profile Picture Url"
           },
           "access_valid_until": {
             "anyOf": [
