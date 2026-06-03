@@ -426,6 +426,8 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 
 ## Scenarios summary
 
+**Order: happy-path rows first, main-error rows second.** Never interleave.
+
 | Tag | Scenario | AC | Priority |
 |-----|----------|----|----------|
 | `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0 |
@@ -488,7 +490,7 @@ Feature: <Story Title> (US X.X — <story-id>)
 1. **Header** — six fields exactly as shown; `DoR status` includes AC count, description/stakeholder status, and Jira status in parentheses; `Figma design` includes node ID, file key, screen name, and PARTIAL/COMPLETE note
 2. **Blocked ACs** — always the first section after the header, before the Scope Filter; omit the section entirely if there are no blocked ACs
 3. **AC Scope Filter** — column names are `AC | Description | Classification | Rationale`; `Classification` values are exactly `happy-path`, `main-error`, `edge-case`, `separate-feature`, or `Blocked` (title-case for Blocked); ends with the three-line `**Gherkin generated for / Blocked / No Gherkin**` summary
-4. **Scenarios summary** — table plus `Active scenario blocks: N (N Outlines + N Scenarios)` line; backtick-wrap tag values (e.g. `` `@happy-path` ``)
+4. **Scenarios summary** — table plus `Active scenario blocks: N (N Outlines + N Scenarios)` line; backtick-wrap tag values (e.g. `` `@happy-path` ``); all `@happy-path` rows must appear before any `@main-error` rows — never interleave
 5. **Feature file** — one single fenced `gherkin` block containing the Feature header, Background, and all scenarios; scenario groups separated by `# ---` comment blocks; never split into per-AC sections
 6. **Comment block format** — exactly 75 dashes, keyword on first line (`# HAPPY PATH`, `# MAIN ERROR`), 1–3 explanation lines, 75 dashes closing; always present before every scenario group
 7. **Blockers and Gaps Summary** — always the last section; `Severity` values are `CRITICAL`, `MAJOR`, `MINOR`, `BLOCKER (<ID>)`, or `INFO`; `BLOCKER` entries use the dependency ID in parentheses

@@ -14,3 +14,4 @@
 - [Project — PRD1042-73 Story Processed](project-prd1042-73.md) — US 28.6 User Detail View, 16 ACs, DoR PASS, Figma PARTIAL (Auth & Security + Governance sections absent), Stage 3 WARNINGS, 6 scenario blocks, 2 MAJOR design gaps
 - [Project — PRD1042-46 Story Processed](project-prd1042-46.md) — US 28.9 Account Lockout, 13 ACs, DoR PASS, no Figma (backend security story), Stage 3 WARNINGS, 5 scenario blocks, 3 MAJOR design gaps
 - [Project — PRD1042-47 Story Processed](project-prd1042-47.md) — US 28.10 Session Management, 13 ACs, DoR PASS, no Figma (backend security story), Stage 3 WARNINGS, 5 scenario blocks, 2 MAJOR design gaps
+- [Project — PRD1042-69 Story Processed](project-prd1042-69.md) — US 28.25 Secure Logout, 9 ACs, DoR PASS, no Figma (backend security story), Stage 3 WARNINGS, 5 scenario blocks, AC-08 blocked by R1/PRD1042-76
