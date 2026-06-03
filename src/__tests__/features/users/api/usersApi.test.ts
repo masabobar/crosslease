@@ -174,14 +174,31 @@ describe("inviteUser", () => {
     expect(mockApi.post).toHaveBeenCalledWith("/users", input)
   })
 
-  it("returns the parsed InviteUserResponse", async () => {
+  it("returns direct user response when role does not require four-eyes approval", async () => {
     const result = await inviteUser({
       first_name: "Anna",
       last_name: "Müller",
       email: "anna@example.com",
       role: "system_admin",
     })
+    if (!("user" in result)) throw new Error("Expected direct user response")
     expect(result.user.email).toBe("anna.mueller@example.com")
+  })
+
+  it("returns governed action response when role requires four-eyes approval", async () => {
+    mockApi.post.mockResolvedValue({
+      id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      action_type: "user_invite",
+      subject_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      status: "pending",
+    })
+    const result = await inviteUser({
+      first_name: "Anna",
+      last_name: "Müller",
+      email: "anna@example.com",
+      role: "system_admin",
+    })
+    expect("id" in result).toBe(true)
   })
 
   it("throws when API response does not match InviteUserResponseSchema", async () => {
@@ -203,12 +220,12 @@ describe("approveUser", () => {
     expect(mockApi.post).toHaveBeenCalledWith("/users/user-123/approve", {})
   })
 
-  it("returns the parsed InviteUserResponse", async () => {
+  it("returns the parsed UserActionResponse", async () => {
     const result = await approveUser("user-123")
     expect(result.user.id).toBe("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
   })
 
-  it("throws when API response does not match InviteUserResponseSchema", async () => {
+  it("throws when API response does not match UserActionResponseSchema", async () => {
     mockApi.post.mockResolvedValue({ bad: "data" })
     await expect(approveUser("user-123")).rejects.toThrow()
   })
@@ -225,12 +242,12 @@ describe("suspendUser", () => {
     expect(mockApi.post).toHaveBeenCalledWith("/users/user-123/suspend", input)
   })
 
-  it("returns the parsed InviteUserResponse", async () => {
+  it("returns the parsed UserActionResponse", async () => {
     const result = await suspendUser("user-123", input)
     expect(result.user.id).toBe("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
   })
 
-  it("throws when API response does not match InviteUserResponseSchema", async () => {
+  it("throws when API response does not match UserActionResponseSchema", async () => {
     mockApi.post.mockResolvedValue({ bad: "data" })
     await expect(suspendUser("user-123", input)).rejects.toThrow()
   })
@@ -247,12 +264,12 @@ describe("reactivateUser", () => {
     )
   })
 
-  it("returns the parsed InviteUserResponse", async () => {
+  it("returns the parsed UserActionResponse", async () => {
     const result = await reactivateUser("user-123", input)
     expect(result.user.id).toBe("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
   })
 
-  it("throws when API response does not match InviteUserResponseSchema", async () => {
+  it("throws when API response does not match UserActionResponseSchema", async () => {
     mockApi.post.mockResolvedValue({ bad: "data" })
     await expect(reactivateUser("user-123", input)).rejects.toThrow()
   })
@@ -272,12 +289,12 @@ describe("deactivateUser", () => {
     )
   })
 
-  it("returns the parsed InviteUserResponse", async () => {
+  it("returns the parsed UserActionResponse", async () => {
     const result = await deactivateUser("user-123", input)
     expect(result.user.id).toBe("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
   })
 
-  it("throws when API response does not match InviteUserResponseSchema", async () => {
+  it("throws when API response does not match UserActionResponseSchema", async () => {
     mockApi.post.mockResolvedValue({ bad: "data" })
     await expect(deactivateUser("user-123", input)).rejects.toThrow()
   })
@@ -294,12 +311,12 @@ describe("resendInvitation", () => {
     )
   })
 
-  it("returns the parsed InviteUserResponse", async () => {
+  it("returns the parsed UserActionResponse", async () => {
     const result = await resendInvitation("user-123", input)
     expect(result.user.id).toBe("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")
   })
 
-  it("throws when API response does not match InviteUserResponseSchema", async () => {
+  it("throws when API response does not match UserActionResponseSchema", async () => {
     mockApi.post.mockResolvedValue({ bad: "data" })
     await expect(resendInvitation("user-123", input)).rejects.toThrow()
   })

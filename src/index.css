@@ -153,3 +153,140 @@
     transition: background-color 9999s ease-in-out 0s !important;
   }
 }
+
+/* ─── Toast (Sonner) overrides ──────────────────────────────────── */
+
+[data-sonner-toaster] {
+  width: 576px !important;
+}
+[data-sonner-toaster] [data-sonner-toast] {
+  width: 100% !important;
+}
+
+/* Explicit border + background per variant (Sonner CSS vars don't always cascade) */
+[data-sonner-toast].cn-toast[data-type="info"] {
+  background: var(--card) !important;
+  border-color: var(--info) !important;
+}
+[data-sonner-toast].cn-toast[data-type="success"] {
+  background: var(--card) !important;
+  border-color: var(--success) !important;
+}
+[data-sonner-toast].cn-toast[data-type="warning"] {
+  background: var(--card) !important;
+  border-color: var(--warning) !important;
+}
+[data-sonner-toast].cn-toast[data-type="error"] {
+  background: var(--card) !important;
+  border-color: var(--destructive) !important;
+}
+
+/* Icon badge — rounded container with tinted background */
+[data-sonner-toast].cn-toast .cn-toast-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 6px !important;
+  padding: 4px !important;
+  flex-shrink: 0;
+}
+[data-sonner-toast].cn-toast[data-type="info"] .cn-toast-icon {
+  color: var(--info);
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+}
+[data-sonner-toast].cn-toast[data-type="success"] .cn-toast-icon {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+[data-sonner-toast].cn-toast[data-type="warning"] .cn-toast-icon {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+[data-sonner-toast].cn-toast[data-type="error"] .cn-toast-icon {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+}
+
+/* Action button — outlined with 10px radius (matches Figma rounded-field) */
+[data-sonner-toast].cn-toast .cn-toast-action {
+  height: auto !important;
+  padding: 4px 8px !important;
+  border-radius: 10px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  background: transparent !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+[data-sonner-toast].cn-toast:not([data-type]) .cn-toast-action,
+[data-sonner-toast].cn-toast[data-type="default"] .cn-toast-action {
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+[data-sonner-toast].cn-toast[data-type="info"] .cn-toast-action {
+  color: var(--info) !important;
+  border-color: var(--info) !important;
+}
+[data-sonner-toast].cn-toast[data-type="success"] .cn-toast-action {
+  color: var(--success) !important;
+  border-color: var(--success) !important;
+}
+[data-sonner-toast].cn-toast[data-type="warning"] .cn-toast-action {
+  color: var(--warning) !important;
+  border-color: var(--warning) !important;
+}
+[data-sonner-toast].cn-toast[data-type="error"] .cn-toast-action {
+  color: var(--destructive) !important;
+  border-color: var(--destructive) !important;
+}
+
+/* Close button — reposition from absolute top-left to inline right */
+[data-sonner-toast].cn-toast .cn-toast-close {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  order: 999;
+  width: 20px !important;
+  height: 20px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 4px !important;
+  padding: 2px !important;
+  flex-shrink: 0;
+}
+
+[data-sonner-toast].cn-toast .cn-toast-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Close button color per variant */
+[data-sonner-toast].cn-toast:not([data-type]) .cn-toast-close,
+[data-sonner-toast].cn-toast[data-type="default"] .cn-toast-close {
+  color: var(--muted-foreground) !important;
+}
+[data-sonner-toast].cn-toast[data-type="info"] .cn-toast-close { color: var(--info) !important; }
+[data-sonner-toast].cn-toast[data-type="success"] .cn-toast-close { color: var(--success) !important; }
+[data-sonner-toast].cn-toast[data-type="warning"] .cn-toast-close { color: var(--warning) !important; }
+[data-sonner-toast].cn-toast[data-type="error"] .cn-toast-close { color: var(--destructive) !important; }
+
+/* Title text — text-sm/medium, foreground */
+[data-sonner-toast].cn-toast .cn-toast-title {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25rem !important;
+  color: var(--foreground) !important;
+}
+
+/* Description text — text-sm/regular, muted at 80% opacity (per Figma) */
+[data-sonner-toast].cn-toast .cn-toast-description {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.25rem !important;
+  color: var(--muted-foreground) !important;
+  opacity: 0.8;
+}

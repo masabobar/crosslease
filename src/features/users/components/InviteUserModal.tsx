@@ -21,13 +21,22 @@ import {
 import type { UserRole } from "@/features/users/types"
 import type { UserResponse } from "@/features/users/api/schema"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
+export type InviteSuccessResult =
+  | { type: "invited"; user: UserResponse }
+  | {
+      type: "pending_approval"
+      firstName: string
+      lastName: string
+      email: string
+      subjectId: string | null
+    }
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { ApiError } from "@/lib/api"
 
 type InviteUserModalProps = {
   open: boolean
   onClose: () => void
-  onSuccess?: (user: UserResponse) => void
+  onSuccess?: (result: InviteSuccessResult) => void
 }
 
 const formSchema = z
@@ -141,7 +150,17 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       })
       form.reset()
       onClose()
-      onSuccess?.(result.user)
+      if ("user" in result) {
+        onSuccess?.({ type: "invited", user: result.user })
+      } else {
+        onSuccess?.({
+          type: "pending_approval",
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          subjectId: result.subject_id,
+        })
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         const errMessage = t(`errors.${err.code}`, {
