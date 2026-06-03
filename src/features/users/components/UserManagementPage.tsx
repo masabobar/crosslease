@@ -29,10 +29,7 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import {
-  READ_ONLY_VIEWER_ROLES,
-  EMPTY_FILTER_STATE,
-} from "@/features/users/types"
+import { EMPTY_FILTER_STATE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import {
   getUserFilterVisibility,
   formatDate,
@@ -93,9 +90,7 @@ export default function UserManagementPage() {
   const { data: tenantsData } = useTenants()
   const { handleApprove } = useApproveWithToast()
   const { data: currentUser } = useCurrentUser()
-  const isReadOnlyViewer = currentUser
-    ? READ_ONLY_VIEWER_ROLES.includes(currentUser.role)
-    : false
+  const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
 
   const { data, isLoading } = useUsers({
     page,
@@ -227,7 +222,7 @@ export default function UserManagementPage() {
             {t("page.subtitle")}
           </p>
         </div>
-        {!isReadOnlyViewer && (
+        {canInvite && (
           <Button
             size="lg"
             data-testid="invite-user-button"
@@ -465,7 +460,7 @@ export default function UserManagementPage() {
         viewerRole={currentUser?.role}
       />
 
-      {!isReadOnlyViewer && (
+      {canInvite && (
         <InviteUserModal
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
