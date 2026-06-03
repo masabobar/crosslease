@@ -1,1 +1,33 @@
 pnpm test:run
+
+echo ""
+echo "Checking for OpenAPI schema drift..."
+
+OPENAPI_URL="https://api.refinext-dev.projects.holycode.com/api/openapi.json"
+TEMP_DIR=$(mktemp -d)
+
+cleanup() {
+  rm -rf "$TEMP_DIR"
+}
+trap cleanup EXIT
+
+if ! curl -sf --connect-timeout 5 "$OPENAPI_URL" -o "$TEMP_DIR/openapi.json" 2>/dev/null; then
+  echo "⚠️  Could not reach dev API — skipping schema drift check."
+  exit 0
+fi
+
+pnpm exec prettier --write "$TEMP_DIR/openapi.json" 2>/dev/null
+pnpm exec openapi-zod-client "$TEMP_DIR/openapi.json" -o "$TEMP_DIR/api.ts" 2>/dev/null
+
+DRIFT=0
+diff -q openapi.json "$TEMP_DIR/openapi.json" >/dev/null 2>&1 || DRIFT=1
+diff -q src/generated/api.ts "$TEMP_DIR/api.ts" >/dev/null 2>&1 || DRIFT=1
+
+if [ "$DRIFT" -eq 1 ]; then
+  echo "❌ OpenAPI schema drift detected — backend has new or changed endpoints."
+  echo "   Run: pnpm fetch:openapi && pnpm exec prettier --write openapi.json"
+  echo "   Then: git add openapi.json src/generated/api.ts && git commit"
+  exit 1
+fi
+
+echo "✅ OpenAPI schema in sync."
