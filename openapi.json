@@ -1522,8 +1522,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by entity type. Values: `user`, `contract`, `financing`, `request`, `document`, `partner`, `system`",
               "title": "Entity Type"
-            }
+            },
+            "description": "Filter by entity type. Values: `user`, `contract`, `financing`, `request`, `document`, `partner`, `system`"
           },
           {
             "name": "action_type",
@@ -1531,8 +1533,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by action type. Values: `create`, `update`, `state_transition`, `access`, `approval`, `rejection`",
               "title": "Action Type"
-            }
+            },
+            "description": "Filter by action type. Values: `create`, `update`, `state_transition`, `access`, `approval`, `rejection`"
           },
           {
             "name": "event_type",
@@ -1540,8 +1544,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by specific event. Examples: `user.suspended`, `auth.login_failed`, `security.permission_denied`, `user.invited`, `user.role_changed`",
               "title": "Event Type"
-            }
+            },
+            "description": "Filter by specific event. Examples: `user.suspended`, `auth.login_failed`, `security.permission_denied`, `user.invited`, `user.role_changed`"
           },
           {
             "name": "entity_id",
@@ -1552,8 +1558,10 @@
                 { "type": "string", "format": "uuid" },
                 { "type": "null" }
               ],
+              "description": "Filter by affected entity UUID (e.g. user ID)",
               "title": "Entity Id"
-            }
+            },
+            "description": "Filter by affected entity UUID (e.g. user ID)"
           },
           {
             "name": "actor_id",
@@ -1561,8 +1569,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by actor UUID (who performed the action)",
               "title": "Actor Id"
-            }
+            },
+            "description": "Filter by actor UUID (who performed the action)"
           },
           {
             "name": "actor_type",
@@ -1570,8 +1580,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by actor type. Values: `human_user`, `system`, `anonymous`, `scheduled_job`",
               "title": "Actor Type"
-            }
+            },
+            "description": "Filter by actor type. Values: `human_user`, `system`, `anonymous`, `scheduled_job`"
           },
           {
             "name": "trigger_source",
@@ -1579,8 +1591,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by trigger source. Values: `manual`, `automatic`, `scheduled_job`, `lifecycle_engine`",
               "title": "Trigger Source"
-            }
+            },
+            "description": "Filter by trigger source. Values: `manual`, `automatic`, `scheduled_job`, `lifecycle_engine`"
           },
           {
             "name": "sensitive",
@@ -1588,8 +1602,10 @@
             "required": false,
             "schema": {
               "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "Filter security-sensitive events only (e.g. permission denied, cross-tenant attempts)",
               "title": "Sensitive"
-            }
+            },
+            "description": "Filter security-sensitive events only (e.g. permission denied, cross-tenant attempts)"
           },
           {
             "name": "from_dt",
@@ -1600,8 +1616,10 @@
                 { "type": "string", "format": "date-time" },
                 { "type": "null" }
               ],
+              "description": "Filter events recorded at or after this datetime (ISO 8601, e.g. `2026-06-01T00:00:00Z`)",
               "title": "From Dt"
-            }
+            },
+            "description": "Filter events recorded at or after this datetime (ISO 8601, e.g. `2026-06-01T00:00:00Z`)"
           },
           {
             "name": "to_dt",
@@ -1612,8 +1630,10 @@
                 { "type": "string", "format": "date-time" },
                 { "type": "null" }
               ],
+              "description": "Filter events recorded at or before this datetime (ISO 8601, e.g. `2026-06-02T23:59:59Z`)",
               "title": "To Dt"
-            }
+            },
+            "description": "Filter events recorded at or before this datetime (ISO 8601, e.g. `2026-06-02T23:59:59Z`)"
           },
           {
             "name": "page",
@@ -1622,9 +1642,11 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
+              "description": "Page number (1-based)",
               "default": 1,
               "title": "Page"
-            }
+            },
+            "description": "Page number (1-based)"
           },
           {
             "name": "per_page",
@@ -1634,9 +1656,11 @@
               "type": "integer",
               "maximum": 200,
               "minimum": 1,
+              "description": "Results per page (max 200)",
               "default": 50,
               "title": "Per Page"
-            }
+            },
+            "description": "Results per page (max 200)"
           }
         ],
         "responses": {

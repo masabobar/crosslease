@@ -12,7 +12,6 @@ import { UserQuickFilters } from "@/features/users/components/UserQuickFilters"
 import { useUsers } from "@/features/users/hooks/useUsers"
 import { useUserListParams } from "@/features/users/hooks/useUserListParams"
 import type {
-  UserResponse,
   UserStatus,
   UserListItem,
   UserDetail,
@@ -24,6 +23,8 @@ import type {
   UserModalActionType,
 } from "@/features/users/types"
 import type { UserSortKey } from "@/features/users/api/schema"
+import { UserStatusSchema } from "@/features/users/api/schema"
+import type { InviteSuccessResult } from "@/features/users/components/InviteUserModal"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
@@ -174,24 +175,33 @@ export default function UserManagementPage() {
     setActiveAction(null)
   }
 
-  function handleInviteSuccess(user: UserResponse) {
-    const name = `${user.first_name} ${user.last_name}`
-    const isPendingApproval = user.status === "pending_approval"
-
-    showToast({
-      variant: isPendingApproval ? "warning" : "success",
-      title: isPendingApproval
-        ? t("inviteBanner.pendingApproval.title")
-        : t("inviteBanner.invited.title"),
-      message: isPendingApproval
-        ? t("inviteBanner.pendingApproval.message", { name })
-        : t("inviteBanner.invited.message", { name, email: user.email }),
-      actionLabel: isPendingApproval
-        ? t("inviteBanner.pendingApproval.viewProfile")
-        : t("inviteBanner.invited.viewProfile"),
-      onAction: () => navigate(adminUserDetail(user.id)),
-    })
-    setIsModalOpen(false)
+  function handleInviteSuccess(result: InviteSuccessResult) {
+    if (result.type === UserStatusSchema.enum.pending_approval) {
+      const name = `${result.firstName} ${result.lastName}`
+      showToast({
+        variant: "warning",
+        title: t("inviteBanner.pendingApproval.title"),
+        message: t("inviteBanner.pendingApproval.message", { name }),
+        actionLabel: result.subjectId
+          ? t("inviteBanner.pendingApproval.viewProfile")
+          : undefined,
+        onAction: result.subjectId
+          ? () => navigate(adminUserDetail(result.subjectId!))
+          : undefined,
+      })
+    } else {
+      const name = `${result.user.first_name} ${result.user.last_name}`
+      showToast({
+        variant: "success",
+        title: t("inviteBanner.invited.title"),
+        message: t("inviteBanner.invited.message", {
+          name,
+          email: result.user.email,
+        }),
+        actionLabel: t("inviteBanner.invited.viewProfile"),
+        onAction: () => navigate(adminUserDetail(result.user.id)),
+      })
+    }
   }
 
   const filterVis = getUserFilterVisibility(currentUser?.role)

@@ -36,10 +36,25 @@ export const UserResponseSchema = z.object({
 
 export type UserResponse = z.infer<typeof UserResponseSchema>
 
-export const InviteUserResponseSchema = z.object({
+// Direct user action response: { user: UserResponse } — approve, suspend, deactivate, etc.
+export const UserActionResponseSchema = z.object({
   user: UserResponseSchema,
 })
+export type UserActionResponse = z.infer<typeof UserActionResponseSchema>
 
+// Four-eyes path: API returns GovernedActionResponse instead of user data
+const GovernedActionInviteResponseSchema = z.object({
+  id: z.string().uuid(),
+  action_type: z.string(),
+  subject_id: z.string().uuid().nullable(),
+  status: z.string(),
+})
+
+// Invite can return either shape depending on whether the role requires 4-eye approval
+export const InviteUserResponseSchema = z.union([
+  UserActionResponseSchema,
+  GovernedActionInviteResponseSchema,
+])
 export type InviteUserResponse = z.infer<typeof InviteUserResponseSchema>
 
 export const InviteUserInputSchema = z.object({
