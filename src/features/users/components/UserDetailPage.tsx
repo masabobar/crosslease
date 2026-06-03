@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { useParams } from "react-router-dom"
 import {
   Mail,
@@ -17,39 +17,34 @@ import { UserStatusBanner } from "@/features/users/components/UserStatusBanner"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useApproveUser } from "@/features/users/hooks/useApproveUser"
+import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
 import {
   formatLastLogin,
   formatDate,
   formatDateTime,
   getInitials,
   getUserActionVisibility,
+  buildActionToastPayload,
 } from "@/features/users/utils"
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
-import { ApiError } from "@/lib/api"
 import type { UserDetail } from "@/features/users/api/schema"
-import { READ_ONLY_VIEWER_ROLES, type UserRole } from "@/features/users/types"
-
-type ActiveAction =
-  | "suspend"
-  | "reactivate"
-  | "deactivate"
-  | "resend-invitation"
-
-const PLATFORM_ROLES: readonly UserRole[] = [
-  "system_admin",
-  "support_user",
-  "auditor",
-]
+import {
+  AUDITOR_DATE_RANGE_ROLES,
+  PLATFORM_USER_ROLES,
+  READ_ONLY_VIEWER_ROLES,
+  SYSTEM_ADMIN_ROLE,
+  type UserRole,
+  type UserModalActionType,
+} from "@/features/users/types"
 
 function getRoleClassificationKey(
   role: UserRole
 ):
   | "detail.page.roleClassification.platform"
   | "detail.page.roleClassification.tenantOperational" {
-  if (PLATFORM_ROLES.includes(role))
+  if (PLATFORM_USER_ROLES.includes(role))
     return "detail.page.roleClassification.platform"
   return "detail.page.roleClassification.tenantOperational"
 }
@@ -59,7 +54,7 @@ function DetailRow({
   children,
 }: {
   label: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="flex items-start gap-2 py-0 text-sm leading-5">
@@ -71,11 +66,17 @@ function DetailRow({
 
 type SectionCardProps = {
   title: string
-  children: React.ReactNode
+  children: ReactNode
   onEdit?: () => void
+  "data-testid"?: string
 }
 
-function SectionCard({ title, children, onEdit }: SectionCardProps) {
+function SectionCard({
+  title,
+  children,
+  onEdit,
+  "data-testid": editTestId,
+}: SectionCardProps) {
   const { t } = useTranslation("users")
   return (
     <div className="bg-muted border border-border rounded-[10px] flex flex-col flex-1 min-w-0">
@@ -86,6 +87,7 @@ function SectionCard({ title, children, onEdit }: SectionCardProps) {
         {onEdit && (
           <button
             type="button"
+            data-testid={editTestId}
             onClick={onEdit}
             className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
           >
@@ -111,7 +113,7 @@ function TabButton({
 }: {
   active: boolean
   onClick: () => void
-  children: React.ReactNode
+  children: ReactNode
   "data-testid"?: string
 }) {
   return (
@@ -144,10 +146,10 @@ function LifecycleTab({ user }: { user: UserDetail }) {
         {formatDateTime(user.activated_at)}
       </DetailRow>
       <DetailRow label={t("detail.page.fields.lastLogin")}>
-        {formatLastLogin(user.last_login)}
+        {formatLastLogin(user.last_login, t)}
       </DetailRow>
       <DetailRow label={t("detail.page.fields.lastActivity")}>
-        {formatLastLogin(user.last_activity ?? user.last_login)}
+        {formatLastLogin(user.last_activity ?? user.last_login, t)}
       </DetailRow>
       <DetailRow label={t("detail.page.fields.lastSuspensionReason")}>
         {user.last_suspension_reason ?? "—"}
@@ -200,11 +202,13 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const { data: currentUser } = useCurrentUser()
   const showToast = useToastStore(s => s.showToast)
   const queryClient = useQueryClient()
-  const [activeAction, setActiveAction] = useState<ActiveAction | null>(null)
+  const [activeAction, setActiveAction] = useState<UserModalActionType | null>(
+    null
+  )
   const [activeTab, setActiveTab] = useState<TabKey>("lifecycle")
-  const { mutateAsync: approve, isPending: isApproving } = useApproveUser()
+  const { handleApprove, isPending: isApproving } = useApproveWithToast()
 
-  const isAdmin = currentUser?.role === "system_admin"
+  const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
   const isReadOnlyViewer =
     currentUser?.role !== null &&
     currentUser?.role !== undefined &&
@@ -226,63 +230,11 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
   function handleActionSuccess() {
     if (!activeAction) return
-    const toastMap: Record<
-      ActiveAction,
-      { variant: "success" | "warning"; title: string; message: string }
-    > = {
-      suspend: {
-        variant: "warning",
-        title: t("actions.suspend.success.title"),
-        message: t("actions.suspend.success.message", { name }),
-      },
-      reactivate: {
-        variant: "success",
-        title: t("actions.reactivate.success.title"),
-        message: t("actions.reactivate.success.message", { name }),
-      },
-      deactivate: {
-        variant: "warning",
-        title: t("actions.deactivate.success.title"),
-        message: t("actions.deactivate.success.message", { name }),
-      },
-      "resend-invitation": {
-        variant: "success",
-        title: t("actions.resend-invitation.success.title"),
-        message: t("actions.resend-invitation.success.message", { name }),
-      },
-    }
-    showToast(toastMap[activeAction])
+    showToast(buildActionToastPayload(activeAction, name, t))
     setActiveAction(null)
     void queryClient.invalidateQueries({
       queryKey: USERS_QUERY_KEYS.detail(user.id),
     })
-  }
-
-  async function handleApprove() {
-    try {
-      const result = await approve(user.id)
-      const approvedName = `${result.user.first_name} ${result.user.last_name}`
-      showToast({
-        variant: "success",
-        title: t("approveSuccess.title"),
-        message: t("approveSuccess.message", {
-          name: approvedName,
-          email: result.user.email,
-        }),
-      })
-      void queryClient.invalidateQueries({
-        queryKey: USERS_QUERY_KEYS.detail(user.id),
-      })
-    } catch (err) {
-      showToast({
-        variant: "warning",
-        title: t("approveSuccess.errorTitle"),
-        message:
-          err instanceof ApiError
-            ? err.message
-            : t("approveSuccess.errorFallback"),
-      })
-    }
   }
 
   return (
@@ -346,7 +298,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   type="button"
                   data-testid="detail-approve-button"
                   disabled={isApproving}
-                  onClick={() => void handleApprove()}
+                  onClick={() => void handleApprove(user.id)}
                   className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <UserCheck size={16} />
@@ -380,7 +332,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               {t("detail.page.lastLogin")}
             </span>
             <span className="text-sm text-foreground">
-              {formatLastLogin(user.last_login)}
+              {formatLastLogin(user.last_login, t)}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -397,10 +349,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
       {/* Identity + Role cards */}
       <div className="flex gap-6">
-        <SectionCard
-          title={t("detail.page.sections.identity")}
-          onEdit={isReadOnlyViewer ? undefined : () => {}}
-        >
+        <SectionCard title={t("detail.page.sections.identity")}>
           <DetailRow label={t("detail.page.fields.userId")}>
             {user.user_id}
           </DetailRow>
@@ -427,10 +376,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           )}
         </SectionCard>
 
-        <SectionCard
-          title={t("detail.page.sections.roleScope")}
-          onEdit={isReadOnlyViewer ? undefined : () => {}}
-        >
+        <SectionCard title={t("detail.page.sections.roleScope")}>
           <DetailRow label={t("detail.page.fields.role")}>
             <RoleBadge role={user.role} />
           </DetailRow>
@@ -444,7 +390,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
             {accessPeriod}
           </DetailRow>
           <DetailRow label={t("detail.page.fields.auditEngagementValidUntil")}>
-            {user.role === "auditor"
+            {AUDITOR_DATE_RANGE_ROLES.includes(user.role)
               ? formatDate(user.access_valid_until)
               : "—"}
           </DetailRow>
@@ -486,23 +432,18 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         </div>
       </div>
 
-      {activeAction &&
-      activeAction !== "suspend" &&
-      activeAction !== "reactivate" &&
-      activeAction !== "deactivate"
-        ? null
-        : activeAction && (
-            <UserActionModal
-              action={activeAction}
-              user={{
-                id: user.id,
-                first_name: user.first_name,
-                last_name: user.last_name,
-              }}
-              onClose={() => setActiveAction(null)}
-              onSuccess={handleActionSuccess}
-            />
-          )}
+      {activeAction && (
+        <UserActionModal
+          action={activeAction}
+          user={{
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+          }}
+          onClose={() => setActiveAction(null)}
+          onSuccess={handleActionSuccess}
+        />
+      )}
     </div>
   )
 }

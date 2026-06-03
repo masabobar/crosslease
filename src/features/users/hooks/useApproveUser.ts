@@ -6,8 +6,11 @@ export function useApproveUser() {
 
   return useMutation({
     mutationFn: (userId: string) => approveUser(userId),
-    onSuccess: () => {
+    onSuccess: (_result, userId) => {
       queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
+      queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(userId),
+      })
     },
   })
 }

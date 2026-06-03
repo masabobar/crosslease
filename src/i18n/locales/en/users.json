@@ -2,7 +2,24 @@
   "page": {
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
-    "inviteButton": "Invite users"
+    "inviteButton": "Invite users",
+    "filters": {
+      "label": "Filters:",
+      "roleLabel": "Role",
+      "tenantLabel": "Tenant",
+      "statusLabel": "Status",
+      "lastLoginLabel": "Last login range",
+      "clearAll": "Clear all",
+      "rolePill": "Role: {{value}}",
+      "tenantPill": "Tenant: {{value}}",
+      "mfaPill": "MFA: {{value}}",
+      "statusPill": "Status: {{value}}",
+      "lastLoginRangePill": "Last login range: {{range}}"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    }
   },
   "roles": {
     "system_admin": "Admin",
@@ -67,7 +84,8 @@
     "actions": {
       "cancel": "Cancel",
       "apply": "Apply"
-    }
+    },
+    "selectedCount": "{{count}} selected"
   },
   "inviteBanner": {
     "pendingApproval": {
@@ -309,5 +327,29 @@
       "cancel": "Cancel",
       "submit": "Create & invite user"
     }
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "EMAIL_ALREADY_EXISTS": "This email address is already in use."
+  },
+  "quickFilters": {
+    "searchPlaceholder": "Search",
+    "noTenantsAvailable": "No tenants available",
+    "advancedFilters": "Advanced filters",
+    "export": "Export",
+    "buttons": {
+      "role": "Role",
+      "tenant": "Tenant",
+      "mfa": "MFA",
+      "status": "Status",
+      "lastLogin": "Last login"
+    }
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}}d ago"
   }
 }

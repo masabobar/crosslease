@@ -1,14 +1,235 @@
-# refinext-app
+# RefiNext Frontend
+
+**Type:** FE-only — React 19 + TypeScript + Vite + Tailwind v4
+**BE repo:** `../refinext-api/` (read-only reference — API source of truth)
+**openapi.json:** `./openapi.json` (run `pnpm fetch:openapi` to refresh from dev API)
+**Swagger (local):** `http://localhost:3530/api/docs`
+
+---
+
+## 📋 DOCUMENT HIERARCHY
+
+**Read priority order:**
+
+1. **Project Planning** (`.project-management/`)
+   - `input/scope.md`, `input/backlog/phase-*.md`
+   - `input/screens/screen-map.md`
+   - `output/docs/technical-spec.md`
+   - `output/phases/phase-N.md`
+
+2. **Core Standards** (`CLAUDE.md` — this file)
+
+3. **Specialized Rules** (`.claude/rules/`) — load by category
+
+   **Always:**
+   - `code-quality.md` — SOLID & DRY (MANDATORY)
+   - `documentation.md` — English-only, file sizes, style
+   - `permissions.md` — NEVER auto-modify settings.json (CRITICAL)
+   - `testing.md` — test types, coverage
+   - `git.md` — conventional commits, NO AI credits
+
+   **Conditional:**
+   - `api-first.md` — before any FE story: contract verification gate
+   - `screen-driven-backlog.md` — one screen per story
+   - `anonymization.md` — when generating docs from client input
+
+4. **Project Rules** (`.project-management/rules/project-rules.md`) — ALWAYS read
+
+**Conflicts:** Project rules > Specialized rules > Core standards
+
+---
+
+## 🎯 COMMANDS
+
+| Command                      | When to use                                 |
+| ---------------------------- | ------------------------------------------- |
+| `/execute-work story US-XXX` | Implement a specific story                  |
+| `/execute-work phase N`      | Run all stories in a phase sequentially     |
+| `/project-status`            | Full written status report                  |
+| `/add-scope`                 | Add a new story to the backlog              |
+| `/add-bug`                   | File a bug                                  |
+| `/run-tests all`             | Run unit tests + type-check + lint manually |
+| `/promote-requirement`       | Move a future story to an active phase      |
+| `/resolve-questions`         | Answer open clarification questions         |
+
+**Live status:** open `.project-management/output/progress/DASHBOARD.md`
+
+---
+
+## CRITICAL PRE-IMPLEMENTATION
+
+**Before ANY code changes:**
+
+1. **Read the technical spec** — `output/docs/technical-spec.md`
+2. **Read existing code** — understand current patterns before modifying
+3. **Plan (MANDATORY)** — `/execute-work` auto-enters plan mode; for manual work use TodoWrite
+4. **API contract check** — read `../refinext-api/` source or `openapi.json` before touching any screen that calls the API (see API-first rule below)
+
+---
+
+## BEHAVIORAL GUIDELINES
+
+### Think before coding
+
+- State assumptions explicitly before implementing. If uncertain, ask — don't guess silently.
+- If multiple valid interpretations exist, name them and ask which to pursue. Don't pick one arbitrarily.
+- If a simpler approach exists, say so and push back. A junior dev implements what's asked; a senior asks if it's the right thing.
+- If something is unclear, stop and name what's confusing. Clarifying questions come **before** implementation, not after mistakes.
+
+### Simplicity first
+
+- Minimum code that solves the problem. Nothing speculative.
+- No features, flexibility, or configurability beyond what was asked.
+- No abstractions for single-use code.
+- No error handling for impossible scenarios — trust internal code and framework guarantees; only validate at system boundaries (user input, external APIs).
+- A bug fix doesn't need surrounding cleanup. A one-shot operation doesn't need a helper.
+- If you write 200 lines and it could be 50, rewrite it.
+- Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### Surgical changes
+
+- Touch only what the task requires. Don't improve adjacent code, comments, or formatting.
+- Match existing style even if you'd do it differently.
+- If you notice unrelated dead code or issues, **mention them** — don't fix them silently.
+- When your changes make imports/variables/functions unused, remove those orphans. Don't remove pre-existing dead code unless asked.
+- Every changed line should trace directly to the request.
+
+### Verifiable goals
+
+For multi-step tasks, open with a brief plan that names the check for each step:
+
+```
+1. [step] → verify: [how you'll confirm it worked]
+2. [step] → verify: [how you'll confirm it worked]
+```
+
+This lets the loop close independently without constant clarification.
+
+---
+
+## ⚠️ BEFORE EVERY COMMIT — ASK FOR JIRA TICKET
+
+**MANDATORY:** Before creating any git commit, ask the user for the Jira ticket number.
+
+```
+"What is the Jira ticket number for this commit? (or reply #no-ticket)"
+```
+
+Include in the commit message: `feat: description #PRD1042-XX`
+
+**NEVER** create a commit without first asking.
+
+---
+
+## 📋 PLAN MODE (MANDATORY)
+
+**Activates automatically** when running `/execute-work`.
+**Activates manually** when user says "plan this" or "enter plan mode".
+
+```
+📋 [PLAN MODE ACTIVATED]
+
+Step 1: READ ALL CONTEXT
+✅ Technical spec
+✅ Backlog story
+✅ Core standards (CLAUDE.md)
+✅ Project rules (project-rules.md)
+✅ API contract (openapi.json or ../refinext-api/)
+
+Step 2: CREATE DETAILED PLAN
+🎯 Scope / Breakdown / Estimates / Dependencies / Risks
+
+Step 3: WAIT FOR APPROVAL
+✅ Proceed? [Yes/No/Revise]
+```
+
+Never start coding without plan approval.
+
+---
+
+## WORKFLOW
+
+```
+-1. SYNC → in refinext-app: git checkout develop && git pull origin develop, then create new branch (feat/*, fix/*, etc.)
+    ALSO → in ../refinext-api: git pull origin develop
+0. PLAN MODE → analyze, create plan, get approval
+1. IMPLEMENT → code changes following standards below
+2. TEST → pnpm test:run + pnpm type-check + pnpm lint
+3. VALIDATE → coverage > 80%, i18n keys added, Zod schemas present
+4. ASK FOR JIRA TICKET → then commit (no AI credits)
+5. UPDATE → DASHBOARD.md auto-updates
+```
+
+---
+
+## QUALITY GATES — MASTER CHECKLIST
+
+**Before marking ANY story complete:**
+
+**Code:**
+
+- [ ] SOLID & DRY principles followed
+- [ ] No TypeScript/linting errors (`pnpm type-check`, `pnpm lint`)
+- [ ] Follows project conventions (see Code Standards below)
+
+**Testing:**
+
+- [ ] All unit tests passing (`pnpm test:run`)
+- [ ] Coverage ≥ 80%
+
+**i18n:**
+
+- [ ] No hardcoded user-visible strings — all through `t()`
+- [ ] Keys added to both `en/<feature>.json` and `de/<feature>.json`
+- [ ] New namespace registered in `types.d.ts` and `config.ts`
+
+**API data:**
+
+- [ ] All API responses validated through Zod schemas (`features/<name>/api/schema.ts`)
+- [ ] No raw `response.data as SomeType`
+
+**FE story gate:**
+
+- [ ] Story scoped to one screen; title follows `ScreenName — Action` pattern
+- [ ] API contract verified before implementation (see API-first rule)
+- [ ] New interactive elements have `data-testid` attributes
+
+**Security:**
+
+- [ ] No secrets committed
+- [ ] No sensitive data in `console.log`
+- [ ] Role-based gating uses correct wire values from `project-rules.md`
+
+---
+
+## MUST NOT DO
+
+❌ Over-engineering — no unrequested features
+❌ Premature abstractions — three similar lines beats a helper
+❌ `useEffect` for data fetching — use React Query
+❌ `useMemo` / `useCallback` / `React.memo` — React Compiler handles this
+❌ Plain TS interfaces for API data — always Zod + `z.infer<>`
+❌ Default exports except page-level route components
+❌ Barrel files (`index.ts` re-exports)
+❌ `git add -A` or `git add .`
+❌ AI attribution in commits
+
+---
 
 ## API-first rule (MANDATORY before any FE implementation)
 
-Before writing any FE code for a screen — whether from a design or a task description — read the corresponding API endpoint(s) in `refinext-api`:
+Before writing any FE code for a screen — whether from a design or a task description — read the corresponding API endpoint(s):
+
+1. Check `openapi.json` (run `pnpm fetch:openapi` if stale)
+2. For source-level detail (service logic, validation rules): read `../refinext-api/`
+
+Verify:
 
 - **Request fields:** every form field the design shows must map to an actual API field. Don't skip fields just because the design omits them (e.g. `password_confirm`).
-- **Post-action navigation:** check whether the endpoint leaves the user authenticated or not. Success redirects must match that state — don't send an unauthenticated user to a protected route.
+- **Post-action navigation:** check whether the endpoint leaves the user authenticated. Success redirects must match that state — don't send an unauthenticated user to a protected route.
 - **Error codes:** note what codes the endpoint can return and handle each one in the UI.
 
-Check the route schema and service logic in `refinext-api` directly. Do this before touching any component or form.
+Do this before touching any component or form.
 
 ---
 
@@ -166,6 +387,7 @@ pnpm lint         # run ESLint
 pnpm type-check   # TypeScript check without emitting
 pnpm test         # run Vitest in watch mode
 pnpm test:run     # run Vitest once (used in CI)
+pnpm fetch:openapi  # refresh openapi.json from dev API + regenerate src/generated/api.ts
 ```
 
 ## Project structure
@@ -180,6 +402,7 @@ src/
   router/           # React Router config + route path constants
   lib/              # utilities (cn, api client, etc.)
   types/            # global shared TypeScript types
+  i18n/             # i18next config + locales/{en,de}/<feature>.json
 ```
 
 Feature folders follow this internal structure:
@@ -260,7 +483,7 @@ docker compose up
 
 BuildKit must be enabled (`DOCKER_BUILDKIT=1`) for cache mounts to work.
 
-See `refinext-app-notes.md` for full rationale on Docker and CI/CD decisions.
+See `.project-management/docs/refinext-app-notes.md` for full rationale on Docker and CI/CD decisions.
 
 ---
 
@@ -357,7 +580,7 @@ Generic: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `UNAUTHORIZED`, `BAD_REQU
 
 **Enums:**
 
-- `UserRole`: `system_admin` | `support_user` | `auditor` | `front_office` | `back_office_risk` | `leasing_company_user`
+- `UserRole`: `system_admin` | `support_user` | `auditor` | `front_office` | `back_office` | `leasing_company_user`
 - `UserType`: `platform` | `bank_tenant` | `leasing_company`
 - `UserStatus`: `active` | `invited` | `suspended` | `expired` | `deactivated`
 
@@ -494,9 +717,9 @@ The app uses `react-i18next`. English is bundled at startup; German is lazy-load
 
 Stage only the changed files explicitly — no `git add -A` or `git add .`.
 
-Commit message: single line, conventional commit format — `type: short description #TICKET`. No body, no newlines, no author attribution.
+Commit message: single line, conventional commit format — `type: short description #TICKET`. No body, no newlines, **no AI attribution** (`Co-Authored-By: Claude` or similar lines are forbidden).
 
-Every commit must end with either a Jira ticket (`#PRD1006-42`) or `#no-ticket` when there's no associated ticket.
+Every commit must end with either a Jira ticket (`#PRD1006-42`) or `#no-ticket` when there is no associated ticket.
 
 Types: `feat`, `fix`, `chore`, `refactor`, `ci`, `docs`, `test`, `style`, `perf`, `build`, `revert`.
 
@@ -519,3 +742,12 @@ Examples:
 **pre-push** (before pushing):
 
 - `test:run` — full Vitest suite
+
+---
+
+## Related docs
+
+- `.project-management/rules/project-rules.md` — domain rules, roles, session rules, API conventions
+- `.project-management/rules/I18N-RULES.md` — i18n completion checklist
+- `.claude/rules/` — coding, testing, git, screen-driven backlog rules
+- `.project-management/output/progress/DASHBOARD.md` — live project status

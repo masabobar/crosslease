@@ -50,5 +50,12 @@
     "allTenants": "All Tenants",
     "readOnly": "Read Only",
     "readOnlyDescription": "You are in read-only mode. No changes can be made."
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "yesterday": "yesterday"
   }
 }

@@ -13,6 +13,7 @@ import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
+import { getInitials } from "@/features/users/utils"
 
 type Crumb = { labelKey?: string; label?: string; path?: string }
 
@@ -50,7 +51,7 @@ export function Header() {
         .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
 
   const initials = currentUser
-    ? `${currentUser.first_name[0] ?? ""}${currentUser.last_name[0] ?? ""}`.toUpperCase()
+    ? getInitials(currentUser.first_name, currentUser.last_name)
     : ""
   const fullName = currentUser
     ? `${currentUser.first_name} ${currentUser.last_name}`
@@ -103,12 +104,12 @@ export function Header() {
       <div className="flex items-center gap-4 shrink-0">
         <div className="flex items-center gap-1.5">
           {[Bell, ClipboardList, Settings].map((Icon, i) => (
-            <button
+            <div
               key={i}
-              className="flex items-center justify-center w-9 h-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-xl text-muted-foreground opacity-40"
             >
               <Icon size={16} />
-            </button>
+            </div>
           ))}
         </div>
 

@@ -187,6 +187,7 @@ export default function ForgotPasswordPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {t("forgotPassword.checkEmail.notReceived")}{" "}
               <button
+                type="button"
                 onClick={handleResend}
                 disabled={isResending}
                 data-testid="check-email-resend-button"

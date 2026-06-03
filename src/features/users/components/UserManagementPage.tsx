@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
+import { UserPlus, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
@@ -26,22 +26,27 @@ import type {
 import type { UserSortKey } from "@/features/users/api/schema"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
-import { useApproveUser } from "@/features/users/hooks/useApproveUser"
+import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   READ_ONLY_VIEWER_ROLES,
   EMPTY_FILTER_STATE,
 } from "@/features/users/types"
-import { getUserFilterVisibility, formatDate } from "@/features/users/utils"
+import {
+  getUserFilterVisibility,
+  formatDate,
+  buildActionToastPayload,
+} from "@/features/users/utils"
 import { adminUserDetail } from "@/router/paths"
-import { ApiError } from "@/lib/api"
-import { X } from "lucide-react"
+
+const USERS_PAGE_SIZE = 10
+const MAX_VISIBLE_PAGE_NUMBERS = 5
 
 function buildPageNumbers(
   currentPage: number,
   totalPages: number
 ): Array<number | "..."> {
-  if (totalPages <= 5) {
+  if (totalPages <= MAX_VISIBLE_PAGE_NUMBERS) {
     return Array.from({ length: totalPages }, (_, i) => i + 1)
   }
 
@@ -85,7 +90,7 @@ export default function UserManagementPage() {
   } = useUserListParams()
   const showToast = useToastStore(s => s.showToast)
   const { data: tenantsData } = useTenants()
-  const { mutateAsync: approve } = useApproveUser()
+  const { handleApprove } = useApproveWithToast()
   const { data: currentUser } = useCurrentUser()
   const isReadOnlyViewer = currentUser
     ? READ_ONLY_VIEWER_ROLES.includes(currentUser.role)
@@ -93,16 +98,11 @@ export default function UserManagementPage() {
 
   const { data, isLoading } = useUsers({
     page,
-    per_page: 10,
+    per_page: USERS_PAGE_SIZE,
     search: search || undefined,
-    role:
-      appliedFilters.role.length > 0
-        ? (appliedFilters.role as UserRole[])
-        : undefined,
+    role: appliedFilters.role.length > 0 ? appliedFilters.role : undefined,
     status:
-      appliedFilters.status.length > 0
-        ? (appliedFilters.status as UserStatus[])
-        : undefined,
+      appliedFilters.status.length > 0 ? appliedFilters.status : undefined,
     tenant_id: appliedFilters.tenant_id ?? undefined,
     sort_by: sortKey ?? undefined,
     sort_order: sortKey ? sortOrder : undefined,
@@ -138,105 +138,39 @@ export default function UserManagementPage() {
 
   async function handleAction(type: UserActionType, user: UserListItem) {
     if (type === "approve") {
-      try {
-        const result = await approve(user.id)
-        const name = `${result.user.first_name} ${result.user.last_name}`
-        showToast({
-          variant: "success",
-          title: t("approveSuccess.title"),
-          message: t("approveSuccess.message", {
-            name,
-            email: result.user.email,
-          }),
-        })
-      } catch (err) {
-        const message =
-          err instanceof ApiError
-            ? err.message
-            : t("approveSuccess.errorFallback")
-        showToast({
-          variant: "warning",
-          title: t("approveSuccess.errorTitle"),
-          message,
-        })
-      }
-    } else {
-      setActiveAction({
-        type,
-        user: {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-        },
-      })
+      await handleApprove(user.id)
+      return
     }
+    setActiveAction({
+      type,
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+    })
   }
 
   async function handleDrawerAction(type: UserActionType, user: UserDetail) {
     setSelectedUserId(null)
     if (type === "approve") {
-      try {
-        const result = await approve(user.id)
-        const name = `${result.user.first_name} ${result.user.last_name}`
-        showToast({
-          variant: "success",
-          title: t("approveSuccess.title"),
-          message: t("approveSuccess.message", {
-            name,
-            email: result.user.email,
-          }),
-        })
-      } catch (err) {
-        showToast({
-          variant: "warning",
-          title: t("approveSuccess.errorTitle"),
-          message:
-            err instanceof ApiError
-              ? err.message
-              : t("approveSuccess.errorFallback"),
-        })
-      }
-    } else {
-      setActiveAction({
-        type,
-        user: {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-        },
-      })
+      await handleApprove(user.id)
+      return
     }
+    setActiveAction({
+      type,
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+    })
   }
 
   function handleActionSuccess() {
     if (!activeAction) return
     const name = `${activeAction.user.first_name} ${activeAction.user.last_name}`
-    const toastMap: Record<
-      UserModalActionType,
-      { variant: "success" | "warning"; title: string; message: string }
-    > = {
-      suspend: {
-        variant: "warning",
-        title: t("actions.suspend.success.title"),
-        message: t("actions.suspend.success.message", { name }),
-      },
-      reactivate: {
-        variant: "success",
-        title: t("actions.reactivate.success.title"),
-        message: t("actions.reactivate.success.message", { name }),
-      },
-      deactivate: {
-        variant: "warning",
-        title: t("actions.deactivate.success.title"),
-        message: t("actions.deactivate.success.message", { name }),
-      },
-      "resend-invitation": {
-        variant: "success",
-        title: t("actions.resend-invitation.success.title"),
-        message: t("actions.resend-invitation.success.message", { name }),
-      },
-    }
-    showToast(toastMap[activeAction.type])
+    showToast(buildActionToastPayload(activeAction.type, name, t))
     setActiveAction(null)
   }
 
@@ -311,16 +245,21 @@ export default function UserManagementPage() {
       {/* Active filter pills */}
       {activeFilterCount > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="text-sm text-[#314158] shrink-0">Filters:</span>
+          <span className="text-sm text-foreground shrink-0">
+            {t("page.filters.label")}
+          </span>
 
           {appliedFilters.role.map((role: UserRole) => (
             <span
               key={`role-${role}`}
-              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0"
+              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0"
             >
-              {`Role: ${t(`roles.${role}` as `roles.${UserRole}`)}`}
+              {t("page.filters.rolePill", {
+                value: t(`roles.${role}` as `roles.${UserRole}`),
+              })}
               <button
                 type="button"
+                data-testid={`filter-pill-remove-role-${role}`}
                 onClick={() => removeRoleFilter(role)}
                 className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
                 aria-label={`Remove role ${role} filter`}
@@ -331,10 +270,16 @@ export default function UserManagementPage() {
           ))}
 
           {filterVis.tenant && appliedFilters.tenant_id && (
-            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
-              {`Tenant: ${tenantsData?.tenants.find(t => t.id === appliedFilters.tenant_id)?.name ?? appliedFilters.tenant_id}`}
+            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
+              {t("page.filters.tenantPill", {
+                value:
+                  tenantsData?.tenants.find(
+                    ten => ten.id === appliedFilters.tenant_id
+                  )?.name ?? appliedFilters.tenant_id,
+              })}
               <button
                 type="button"
+                data-testid="filter-pill-remove-tenant"
                 onClick={() =>
                   setAppliedFilters({ ...appliedFilters, tenant_id: null })
                 }
@@ -347,10 +292,17 @@ export default function UserManagementPage() {
           )}
 
           {filterVis.mfa && appliedFilters.mfa_enabled && (
-            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
-              {`MFA: ${t(`filter.mfa.${appliedFilters.mfa_enabled}` as "filter.mfa.enabled" | "filter.mfa.disabled")}`}
+            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
+              {t("page.filters.mfaPill", {
+                value: t(
+                  `filter.mfa.${appliedFilters.mfa_enabled}` as
+                    | "filter.mfa.enabled"
+                    | "filter.mfa.disabled"
+                ),
+              })}
               <button
                 type="button"
+                data-testid="filter-pill-remove-mfa"
                 onClick={() =>
                   setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
                 }
@@ -362,14 +314,17 @@ export default function UserManagementPage() {
             </span>
           )}
 
-          {appliedFilters.status.map((status: string) => (
+          {appliedFilters.status.map(status => (
             <span
               key={`status-${status}`}
-              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0"
+              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0"
             >
-              {`Status: ${t(`statuses.${status}` as `statuses.${UserStatus}`)}`}
+              {t("page.filters.statusPill", {
+                value: t(`statuses.${status}` as `statuses.${UserStatus}`),
+              })}
               <button
                 type="button"
+                data-testid={`filter-pill-remove-status-${status}`}
                 onClick={() => removeStatusFilter(status)}
                 className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
                 aria-label={`Remove status ${status} filter`}
@@ -382,23 +337,26 @@ export default function UserManagementPage() {
           {filterVis.lastLogin &&
             (appliedFilters.last_login_from ||
               appliedFilters.last_login_to) && (
-              <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none shrink-0">
-                {[
-                  "Last login range:",
-                  appliedFilters.last_login_from
-                    ? formatDate(appliedFilters.last_login_from)
-                    : null,
-                  appliedFilters.last_login_from && appliedFilters.last_login_to
-                    ? "–"
-                    : null,
-                  appliedFilters.last_login_to
-                    ? formatDate(appliedFilters.last_login_to)
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+              <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
+                {t("page.filters.lastLoginRangePill", {
+                  range: [
+                    appliedFilters.last_login_from
+                      ? formatDate(appliedFilters.last_login_from)
+                      : null,
+                    appliedFilters.last_login_from &&
+                    appliedFilters.last_login_to
+                      ? "–"
+                      : null,
+                    appliedFilters.last_login_to
+                      ? formatDate(appliedFilters.last_login_to)
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" "),
+                })}
                 <button
                   type="button"
+                  data-testid="filter-pill-remove-last-login"
                   onClick={() =>
                     setAppliedFilters({
                       ...appliedFilters,
@@ -416,10 +374,11 @@ export default function UserManagementPage() {
 
           <button
             type="button"
+            data-testid="filters-clear-all"
             onClick={() => setAppliedFilters(EMPTY_FILTER_STATE)}
             className="px-2 text-xs font-medium text-destructive hover:opacity-80 transition-opacity"
           >
-            Clear all
+            {t("page.filters.clearAll")}
           </button>
         </div>
       )}
@@ -448,7 +407,7 @@ export default function UserManagementPage() {
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft size={14} />
-            Previous
+            {t("page.pagination.previous")}
           </button>
 
           {pageNumbers.map((item, idx) =>
@@ -483,7 +442,7 @@ export default function UserManagementPage() {
             disabled={page === data.total_pages}
             className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+            {t("page.pagination.next")}
             <ChevronRight size={14} />
           </button>
         </div>

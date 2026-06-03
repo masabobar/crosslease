@@ -1,4 +1,6 @@
 import { useState } from "react"
+
+const COPIED_RESET_DELAY_MS = 2000
 import { Wand2, CheckCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { generatePassword } from "../utils/generatePassword"
@@ -24,13 +26,14 @@ export function GeneratePasswordButton({
     }
 
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
   }
 
   return (
     <button
       type="button"
       onClick={handleClick}
+      data-testid="generate-password-button"
       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
     >
       {copied ? (

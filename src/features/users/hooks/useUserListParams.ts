@@ -2,7 +2,11 @@ import { useSearchParams } from "react-router-dom"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
 import { USER_STATUSES } from "@/features/users/api/schema"
-import type { UserSortKey, UserSortOrder } from "@/features/users/api/schema"
+import type {
+  UserStatus,
+  UserSortKey,
+  UserSortOrder,
+} from "@/features/users/api/schema"
 
 const VALID_SORT_KEYS: readonly string[] = [
   "name",
@@ -61,7 +65,9 @@ export function useUserListParams(): UserListParams {
     role: rawRoles.filter((v): v is UserRole =>
       USER_ROLES.includes(v as UserRole)
     ),
-    status: rawStatuses.filter(v => VALID_STATUSES.includes(v)),
+    status: rawStatuses.filter((v): v is UserStatus =>
+      VALID_STATUSES.includes(v as UserStatus)
+    ),
     tenant_id: params.get("tenant_id"),
     // UI ready — not sent to API; persisted in URL for session continuity
     mfa_enabled: rawMfa === "enabled" || rawMfa === "disabled" ? rawMfa : null,
