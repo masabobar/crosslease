@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next"
 import { Shield } from "lucide-react"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { SUPPORT_USER_ROLE } from "@/features/users/types"
 
 export function SupportContextBanner() {
   const { t } = useTranslation("common")
   const { data: currentUser } = useCurrentUser()
 
-  if (!currentUser || currentUser.role !== "support_user") {
+  if (!currentUser || currentUser.role !== SUPPORT_USER_ROLE) {
     return null
   }
 

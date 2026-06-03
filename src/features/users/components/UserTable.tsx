@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import {
   MoreHorizontal,
   UserCheck,
@@ -27,6 +27,10 @@ import {
   getUserListColumnVisibility,
 } from "@/features/users/utils"
 
+const COL_NAME = "w-[200px] shrink-0"
+const COL_NARROW = "w-[136px] shrink-0"
+const ROW_H = "h-[52px]"
+
 type SortState = { key: UserSortKey | null; dir: UserSortOrder }
 
 type UserTableProps = {
@@ -43,7 +47,7 @@ type SortableHeaderProps = {
   columnKey: UserSortKey
   sort: SortState
   onSort: (key: UserSortKey) => void
-  children: React.ReactNode
+  children: ReactNode
 }
 
 function SortableHeader({
@@ -55,6 +59,7 @@ function SortableHeader({
   return (
     <button
       type="button"
+      data-testid={`sort-${columnKey}`}
       onClick={() => onSort(columnKey)}
       className="flex items-center gap-0.5 text-sm font-medium text-foreground hover:text-foreground/70 transition-colors"
     >
@@ -186,7 +191,8 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
   )
 }
 
-const SKELETON_ROWS = [0, 1, 2, 3, 4]
+const SKELETON_ROW_COUNT = 5
+const SKELETON_ROWS = Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => i)
 
 function UserTable({
   users,
@@ -209,37 +215,39 @@ function UserTable({
             {t("table.columns.user")}
           </SortableHeader>
         </div>
-        <div className="w-[200px] shrink-0 px-2">
+        <div className={`${COL_NAME} px-2`}>
           <SortableHeader columnKey="role" sort={sort} onSort={onSort}>
             {t("table.columns.role")}
           </SortableHeader>
         </div>
         {cols.tenant && (
-          <div className="w-[200px] shrink-0 px-2">
+          <div className={`${COL_NAME} px-2`}>
             <SortableHeader columnKey="tenant_name" sort={sort} onSort={onSort}>
               {t("table.columns.tenant")}
             </SortableHeader>
           </div>
         )}
         {cols.mfa && (
-          <div className="w-[136px] shrink-0 px-2 text-sm font-medium text-foreground">
+          <div
+            className={`${COL_NARROW} px-2 text-sm font-medium text-foreground`}
+          >
             {t("table.columns.mfa")}
           </div>
         )}
-        <div className="w-[136px] shrink-0 px-2">
+        <div className={`${COL_NARROW} px-2`}>
           <SortableHeader columnKey="status" sort={sort} onSort={onSort}>
             {t("table.columns.status")}
           </SortableHeader>
         </div>
         {cols.lastLogin && (
-          <div className="w-[136px] shrink-0 px-2">
+          <div className={`${COL_NARROW} px-2`}>
             <SortableHeader columnKey="last_login" sort={sort} onSort={onSort}>
               {t("table.columns.lastLogin")}
             </SortableHeader>
           </div>
         )}
         {cols.accessExpiry && (
-          <div className="w-[136px] shrink-0 px-2">
+          <div className={`${COL_NARROW} px-2`}>
             <SortableHeader
               columnKey="access_valid_until"
               sort={sort}
@@ -258,7 +266,7 @@ function UserTable({
           {SKELETON_ROWS.map(i => (
             <div
               key={i}
-              className="flex border-b border-border h-[52px] items-center"
+              className={`flex border-b border-border ${ROW_H} items-center`}
             >
               <div className="flex-1 min-w-0 p-2 flex items-center gap-2">
                 <div className="bg-muted rounded-full size-8 animate-pulse shrink-0" />
@@ -267,29 +275,29 @@ function UserTable({
                   <div className="bg-muted rounded h-3 animate-pulse w-44" />
                 </div>
               </div>
-              <div className="w-[200px] shrink-0 p-2">
+              <div className={`${COL_NAME} p-2`}>
                 <div className="bg-muted rounded h-5 animate-pulse w-24" />
               </div>
               {cols.tenant && (
-                <div className="w-[200px] shrink-0 p-2">
+                <div className={`${COL_NAME} p-2`}>
                   <div className="bg-muted rounded h-4 animate-pulse w-20" />
                 </div>
               )}
               {cols.mfa && (
-                <div className="w-[136px] shrink-0 p-2">
+                <div className={`${COL_NARROW} p-2`}>
                   <div className="bg-muted rounded h-4 animate-pulse w-12" />
                 </div>
               )}
-              <div className="w-[136px] shrink-0 p-2">
+              <div className={`${COL_NARROW} p-2`}>
                 <div className="bg-muted rounded h-5 animate-pulse w-16" />
               </div>
               {cols.lastLogin && (
-                <div className="w-[136px] shrink-0 p-2">
+                <div className={`${COL_NARROW} p-2`}>
                   <div className="bg-muted rounded h-4 animate-pulse w-20" />
                 </div>
               )}
               {cols.accessExpiry && (
-                <div className="w-[136px] shrink-0 p-2">
+                <div className={`${COL_NARROW} p-2`}>
                   <div className="bg-muted rounded h-4 animate-pulse w-20" />
                 </div>
               )}
@@ -302,7 +310,7 @@ function UserTable({
       {/* Empty state */}
       {!isLoading && users.length === 0 && (
         <div
-          className="flex justify-center items-center h-[52px]"
+          className={`flex justify-center items-center ${ROW_H}`}
           data-testid="user-table-empty"
         >
           <span className="text-sm text-muted-foreground">
@@ -317,7 +325,7 @@ function UserTable({
           <div
             key={user.id}
             data-testid={`user-row-${user.id}`}
-            className="flex border-b border-border h-[52px] items-center hover:bg-muted transition-colors cursor-pointer"
+            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted transition-colors cursor-pointer`}
             onClick={() => onRowClick?.(user)}
           >
             {/* User cell */}
@@ -338,13 +346,13 @@ function UserTable({
             </div>
 
             {/* Role cell */}
-            <div className="w-[200px] shrink-0 p-2">
+            <div className={`${COL_NAME} p-2`}>
               <RoleBadge role={user.role} />
             </div>
 
             {/* Tenant cell */}
             {cols.tenant && (
-              <div className="w-[200px] shrink-0 p-2">
+              <div className={`${COL_NAME} p-2`}>
                 <span className="text-sm text-foreground">
                   {user.tenant_name ?? "—"}
                 </span>
@@ -353,7 +361,7 @@ function UserTable({
 
             {/* MFA cell */}
             {cols.mfa && (
-              <div className="w-[136px] shrink-0 p-2">
+              <div className={`${COL_NARROW} p-2`}>
                 {user.mfa_enabled === true ? (
                   <span className="flex items-center gap-1.5 text-sm text-foreground">
                     <span className="size-2 rounded-full bg-green-500 shrink-0" />
@@ -371,22 +379,22 @@ function UserTable({
             )}
 
             {/* Status cell */}
-            <div className="w-[136px] shrink-0 p-2">
+            <div className={`${COL_NARROW} p-2`}>
               <UserStatusBadge status={user.status} />
             </div>
 
             {/* Last login cell */}
             {cols.lastLogin && (
-              <div className="w-[136px] shrink-0 p-2">
+              <div className={`${COL_NARROW} p-2`}>
                 <span className="text-sm text-muted-foreground">
-                  {formatLastLogin(user.last_login)}
+                  {formatLastLogin(user.last_login, t)}
                 </span>
               </div>
             )}
 
             {/* Access expiry cell */}
             {cols.accessExpiry && (
-              <div className="w-[136px] shrink-0 p-2">
+              <div className={`${COL_NARROW} p-2`}>
                 <span className="text-sm text-muted-foreground">
                   {formatDate(user.access_valid_until)}
                 </span>

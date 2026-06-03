@@ -22,6 +22,10 @@ package-lock.json
 playwright-results/
 playwright-report/
 
+# Project management & Claude config (internal tooling, not for source control)
+.project-management/
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

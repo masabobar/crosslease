@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSearchParams, useNavigate } from "react-router-dom"
@@ -23,6 +24,7 @@ import {
   validateActivationToken,
   activateSetPassword,
 } from "../api/activationApi"
+import { AUTH_QUERY_KEYS } from "../api/queryKeys"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
@@ -55,14 +57,44 @@ export default function ActivateAccountPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
-  const [blockedReason, setBlockedReason] = useState<string | null>(null)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [isFormBlocked, setIsFormBlocked] = useState(false)
   const [countdown, setCountdown] = useState(REDIRECT_SECONDS)
 
   const token = searchParams.get("token") ?? ""
-  const [pageState, setPageState] = useState<PageState>(() =>
-    token ? "loading" : "blocked-link"
-  )
   const [email] = useState(() => (token ? (decodeTokenEmail(token) ?? "") : ""))
+
+  const { isLoading: isValidating, error: validationError } = useQuery({
+    queryKey: AUTH_QUERY_KEYS.validateActivationToken(token),
+    queryFn: async () => {
+      await validateActivationToken(token)
+      return null
+    },
+    enabled: !!token,
+    retry: false,
+    staleTime: Infinity,
+  })
+
+  const pageState: PageState = (() => {
+    if (!token || isFormBlocked) return "blocked-link"
+    if (isSuccess) return "success"
+    if (isValidating) return "loading"
+    if (validationError) {
+      const code =
+        validationError instanceof ApiError ? validationError.code : ""
+      return LINK_BLOCKED_CODES.has(code) ? "blocked-link" : "blocked-account"
+    }
+    return "ready"
+  })()
+
+  const blockedReason = (() => {
+    if (!validationError) return null
+    const code = validationError instanceof ApiError ? validationError.code : ""
+    if (LINK_BLOCKED_CODES.has(code)) return null
+    return validationError instanceof ApiError
+      ? t(`errors.${validationError.code}`, { defaultValue: "" }) || null
+      : null
+  })()
 
   const form = useForm<ActivateAccountInput>({
     resolver: zodResolver(ActivateAccountInputSchema),
@@ -77,40 +109,25 @@ export default function ActivateAccountPage() {
   })
 
   useEffect(() => {
-    if (pageState !== "loading") return
-
-    validateActivationToken(token)
-      .then(() => setPageState("ready"))
-      .catch((err: unknown) => {
-        const code = err instanceof ApiError ? err.code : ""
-        if (LINK_BLOCKED_CODES.has(code)) {
-          setPageState("blocked-link")
-        } else {
-          setBlockedReason(err instanceof ApiError ? err.message : null)
-          setPageState("blocked-account")
-        }
+    if (!isSuccess) return
+    const id = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) navigate(PATHS.LOGIN)
+        return c - 1
       })
-  }, [token, pageState])
-
-  useEffect(() => {
-    if (pageState !== "success") return
-    if (countdown <= 0) {
-      navigate(PATHS.LOGIN)
-      return
-    }
-    const id = setTimeout(() => setCountdown(c => c - 1), 1000)
-    return () => clearTimeout(id)
-  }, [pageState, countdown, navigate])
+    }, 1000)
+    return () => clearInterval(id)
+  }, [isSuccess, navigate])
 
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
     try {
       await activateSetPassword(token, data.password, data.passwordConfirm)
-      setPageState("success")
+      setIsSuccess(true)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
       if (LINK_BLOCKED_CODES.has(code)) {
-        setPageState("blocked-link")
+        setIsFormBlocked(true)
         return
       }
       setServerError(
@@ -154,6 +171,7 @@ export default function ActivateAccountPage() {
           <div className="flex flex-col gap-2">
             <button
               type="button"
+              data-testid="activate-account-request-invitation-button"
               className="w-full flex items-center gap-2 px-4 py-2 h-9 bg-background border border-border rounded-[12px] text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <Mail size={16} className="shrink-0" />
@@ -201,6 +219,7 @@ export default function ActivateAccountPage() {
           )}
           <button
             type="button"
+            data-testid="activate-account-contact-admin-button"
             className="w-full flex items-center gap-2 px-4 py-2 h-9 bg-background border border-border rounded-[12px] text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <Mail size={16} className="shrink-0" />

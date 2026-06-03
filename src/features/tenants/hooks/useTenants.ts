@@ -3,11 +3,12 @@ import {
   fetchTenants,
   TENANTS_QUERY_KEYS,
 } from "@/features/tenants/api/tenantsApi"
+import { FIVE_MINUTES_MS } from "@/lib/constants"
 
 export function useTenants() {
   return useQuery({
     queryKey: TENANTS_QUERY_KEYS.list(),
     queryFn: fetchTenants,
-    staleTime: 5 * 60 * 1000,
+    staleTime: FIVE_MINUTES_MS,
   })
 }

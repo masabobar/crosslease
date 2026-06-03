@@ -13,12 +13,10 @@ import {
   REACTIVATION_REASONS,
   DEACTIVATION_REASONS,
   RESEND_REASONS,
-} from "@/features/users/api/schema"
-import type {
-  SuspensionReason,
-  ReactivationReason,
-  DeactivationReason,
-  ResendReason,
+  SuspendUserInputSchema,
+  ReactivateUserInputSchema,
+  DeactivateUserInputSchema,
+  ResendInvitationInputSchema,
 } from "@/features/users/api/schema"
 import {
   useSuspendUser,
@@ -65,6 +63,70 @@ const ACTION_CONFIG = {
   },
 } as const
 
+// Form schemas compose from the canonical API schemas. effective_from is overridden to optional
+// so the field can be empty mid-edit; superRefine adds the required-field UX error on submit.
+// REACTIVATE and RESEND include the date fields solely to keep the FormValues union type uniform.
+const SUSPEND_SCHEMA = SuspendUserInputSchema.extend({
+  reason: z.enum(SUSPENSION_REASONS, { error: "required" }),
+  effective_from: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.effective_from)
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "required",
+      path: ["effective_from"],
+    })
+})
+
+const REACTIVATE_SCHEMA = ReactivateUserInputSchema.extend({
+  reason: z.enum(REACTIVATION_REASONS, { error: "required" }),
+  effective_from: z.string().optional(),
+  effective_until: z.string().optional(),
+})
+
+const DEACTIVATE_SCHEMA = DeactivateUserInputSchema.extend({
+  reason: z.enum(DEACTIVATION_REASONS, { error: "required" }),
+  effective_from: z.string().optional(),
+  effective_until: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.effective_from)
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "required",
+      path: ["effective_from"],
+    })
+})
+
+const RESEND_SCHEMA = ResendInvitationInputSchema.extend({
+  reason: z.enum(RESEND_REASONS, { error: "required" }),
+  comment: z.string().optional(),
+  effective_from: z.string().optional(),
+  effective_until: z.string().optional(),
+})
+
+type SuspendFormValues = z.infer<typeof SUSPEND_SCHEMA>
+type ReactivateFormValues = z.infer<typeof REACTIVATE_SCHEMA>
+type DeactivateFormValues = z.infer<typeof DEACTIVATE_SCHEMA>
+type ResendFormValues = z.infer<typeof RESEND_SCHEMA>
+type FormValues =
+  | SuspendFormValues
+  | ReactivateFormValues
+  | DeactivateFormValues
+  | ResendFormValues
+
+function getActionSchema(action: UserModalActionType) {
+  switch (action) {
+    case "suspend":
+      return SUSPEND_SCHEMA
+    case "reactivate":
+      return REACTIVATE_SCHEMA
+    case "deactivate":
+      return DEACTIVATE_SCHEMA
+    case "resend-invitation":
+      return RESEND_SCHEMA
+  }
+}
+
 function UserActionModal({
   action,
   user,
@@ -80,32 +142,15 @@ function UserActionModal({
   const { mutateAsync: resend } = useResendInvitation()
 
   const config = ACTION_CONFIG[action]
-  const required = tCommon("validation.required")
   const today = new Date().toISOString().split("T")[0]
 
-  const formSchema = z
-    .object({
-      reason: z.string().min(1, required),
-      comment: z.string().optional(),
-      effective_from: z.string().optional(),
-      effective_until: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-      if (config.needsEffectiveFrom && !data.effective_from) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: required,
-          path: ["effective_from"],
-        })
-      }
-    })
-
-  type FormValues = z.infer<typeof formSchema>
+  const resolveMsg = (msg: string | undefined) =>
+    msg === "required" ? tCommon("validation.required") : msg
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getActionSchema(action)),
     defaultValues: {
-      reason: "",
+      reason: undefined,
       comment: "",
       effective_from: config.needsEffectiveFrom ? today : "",
       effective_until: "",
@@ -152,11 +197,11 @@ function UserActionModal({
     const userId = user.id
     try {
       switch (action) {
-        case "suspend":
+        case "suspend": {
           await suspend({
             userId,
             input: {
-              reason: data.reason as SuspensionReason,
+              reason: data.reason as SuspendFormValues["reason"],
               comment: data.comment?.trim() || undefined,
               effective_from: new Date(data.effective_from!).toISOString(),
               effective_until: data.effective_until
@@ -165,37 +210,45 @@ function UserActionModal({
             },
           })
           break
-        case "reactivate":
+        }
+        case "reactivate": {
           await reactivate({
             userId,
             input: {
-              reason: data.reason as ReactivationReason,
+              reason: data.reason as ReactivateFormValues["reason"],
               comment: data.comment?.trim() || undefined,
             },
           })
           break
-        case "deactivate":
+        }
+        case "deactivate": {
           await deactivate({
             userId,
             input: {
-              reason: data.reason as DeactivationReason,
+              reason: data.reason as DeactivateFormValues["reason"],
               comment: data.comment?.trim() || undefined,
               effective_from: new Date(data.effective_from!).toISOString(),
             },
           })
           break
-        case "resend-invitation":
+        }
+        case "resend-invitation": {
           await resend({
             userId,
-            input: { reason: data.reason as ResendReason },
+            input: { reason: data.reason as ResendFormValues["reason"] },
           })
           break
+        }
       }
       form.reset()
       onSuccess()
     } catch (err) {
       if (err instanceof ApiError) {
-        form.setError("root", { message: err.message })
+        form.setError("root", {
+          message: t(`errors.${err.code}`, {
+            defaultValue: t("errors.generic"),
+          }),
+        })
       }
     }
   })
@@ -268,7 +321,7 @@ function UserActionModal({
           />
           {errors.reason && (
             <p className="mt-1 text-sm text-destructive">
-              {errors.reason.message}
+              {resolveMsg(errors.reason.message)}
             </p>
           )}
         </div>
@@ -299,7 +352,7 @@ function UserActionModal({
               />
               {errors.effective_from && (
                 <p className="mt-1 text-sm text-destructive">
-                  {errors.effective_from.message}
+                  {resolveMsg(errors.effective_from.message)}
                 </p>
               )}
             </div>

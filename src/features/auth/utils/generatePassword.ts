@@ -1,3 +1,5 @@
+const GENERATED_PASSWORD_LENGTH = 12
+
 const LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
 const UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const DIGITS = "0123456789"
@@ -19,8 +21,7 @@ export function generatePassword(): string {
     SYMBOLS[randomIndex(SYMBOLS.length)],
   ]
 
-  // Fill remaining 12 characters from the full charset
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < GENERATED_PASSWORD_LENGTH; i++) {
     chars.push(ALL_CHARS[randomIndex(ALL_CHARS.length)])
   }
 

@@ -526,6 +526,173 @@
         }
       }
     },
+    "/api/v1/users/export": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Initiate async user list export",
+        "description": "Initiate an async user list export. Requires `user:export` permission.\n\nReturns immediately with a job_id. Poll `/export/status/{job_id}` for status,\nthen download via `/export/download/{job_id}` when ready.\n\nMax 3 concurrent active jobs per user — returns 429 if exceeded.\n\n# TODO: PRD1042-37 — add audit event USER_LIST_EXPORTED when AuditService is available",
+        "operationId": "initiate_export_api_v1_users_export_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 3 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/UserRole" },
+              "default": [],
+              "title": "Role"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/UserStatus" },
+              "default": [],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "tenant_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "last_login_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Last Login From"
+            }
+          },
+          {
+            "name": "last_login_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Last Login To"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(csv|xlsx)$",
+              "description": "Export format: csv or xlsx",
+              "default": "csv",
+              "title": "Format"
+            },
+            "description": "Export format: csv or xlsx"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/export/status/{job_id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Check export job status",
+        "description": "Poll export job status. Returns 404 for non-existent or not-owned jobs (non-disclosing).",
+        "operationId": "export_status_api_v1_users_export_status__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Job Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/export/download/{job_id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Download completed export file",
+        "description": "Download a completed export file. Non-disclosing 404 for non-existent or not-owned jobs.\nReturns 409 if still processing, 422 if failed.",
+        "operationId": "export_download_api_v1_users_export_download__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Job Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/{id}": {
       "get": {
         "tags": ["Users"],

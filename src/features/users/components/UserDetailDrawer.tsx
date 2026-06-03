@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   UserRoundX,
   Ban,
@@ -28,12 +29,12 @@ type UserDetailDrawerProps = {
   viewerRole?: UserRole | null
 }
 
-function SectionCard({
+function DrawerSectionCard({
   title,
   children,
 }: {
   title: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="rounded-xl border border-border overflow-hidden">
@@ -47,13 +48,7 @@ function SectionCard({
   )
 }
 
-function Row({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
+function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center px-4 py-3 gap-4">
       <span className="text-sm text-muted-foreground w-[108px] shrink-0">
@@ -112,35 +107,35 @@ function DrawerContent({
       {/* Scrollable sections */}
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 bg-card">
         {/* IDENTITY card */}
-        <SectionCard title={t("detail.drawer.sections.identity")}>
+        <DrawerSectionCard title={t("detail.drawer.sections.identity")}>
           <Row label={t("detail.drawer.fields.userId")}>{user.user_id}</Row>
           <Row label={t("detail.drawer.fields.email")}>{user.email}</Row>
           <Row label={t("detail.drawer.fields.invitedBy")}>
             {user.invited_by_user_id ?? "—"}
           </Row>
           <Row label={t("detail.drawer.fields.approvedBy")}>—</Row>
-        </SectionCard>
+        </DrawerSectionCard>
 
         {/* ROLE & SCOPE card */}
-        <SectionCard title={t("detail.drawer.sections.roleScope")}>
+        <DrawerSectionCard title={t("detail.drawer.sections.roleScope")}>
           <Row label={t("detail.drawer.fields.role")}>
             <RoleBadge role={user.role} />
           </Row>
           <Row label={t("detail.drawer.fields.tenant")}>
             {user.tenant_name ?? "—"}
           </Row>
-        </SectionCard>
+        </DrawerSectionCard>
 
         {/* STATUS card */}
-        <SectionCard title={t("detail.drawer.sections.status")}>
+        <DrawerSectionCard title={t("detail.drawer.sections.status")}>
           <Row label={t("detail.drawer.fields.accountStatus")}>
             <UserStatusBadge status={user.status} />
           </Row>
           <Row label={t("detail.drawer.fields.mfa")}>{"—"}</Row>
           <Row label={t("detail.drawer.fields.lastLogin")}>
-            {formatLastLogin(user.last_login)}
+            {formatLastLogin(user.last_login, t)}
           </Row>
-        </SectionCard>
+        </DrawerSectionCard>
       </div>
 
       {/* Bottom buttons */}

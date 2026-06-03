@@ -25,6 +25,15 @@ import { Label } from "@/components/ui/label"
 import { InputOTP } from "@/components/ui/input-otp"
 import { AppLogo } from "./AppLogo"
 
+const SUCCESS_REDIRECT_DELAY_MS = 800
+
+const credentialsSchema = z.object({
+  email: z.string().min(1, "required").email("required"),
+  password: z.string().min(1, "required"),
+})
+
+type CredentialsInput = z.infer<typeof credentialsSchema>
+
 type OtpHelper =
   | { type: "none" }
   | { type: "error"; message: string }
@@ -53,14 +62,10 @@ export default function LoginPage() {
   const [isOtpSubmitting, setIsOtpSubmitting] = useState(false)
   const [isResending, setIsResending] = useState(false)
 
-  const required = tCommon("validation.required")
+  const resolveMsg = (msg: string | undefined) =>
+    msg === "required" ? tCommon("validation.required") : msg
 
-  const credentialsSchema = z.object({
-    email: z.string().min(1, required).email(required),
-    password: z.string().min(1, required),
-  })
-
-  const credentialsForm = useForm<z.infer<typeof credentialsSchema>>({
+  const credentialsForm = useForm<CredentialsInput>({
     resolver: zodResolver(credentialsSchema),
     defaultValues: { email: "", password: "" },
   })
@@ -109,7 +114,7 @@ export default function LoginPage() {
       })
       setOtpHelper({ type: "success", message: t("login.otp.success") })
       setAuthenticated(true)
-      setTimeout(() => navigate(PATHS.DASHBOARD), 800)
+      setTimeout(() => navigate(PATHS.DASHBOARD), SUCCESS_REDIRECT_DELAY_MS)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
       const message = errorMessages[code] ?? t("login.errors.default")
@@ -428,7 +433,7 @@ export default function LoginPage() {
                 />
                 {credentialsForm.formState.errors.email && (
                   <p className="mt-1.5 text-sm text-destructive">
-                    {credentialsForm.formState.errors.email.message}
+                    {resolveMsg(credentialsForm.formState.errors.email.message)}
                   </p>
                 )}
               </div>
@@ -449,7 +454,9 @@ export default function LoginPage() {
                 />
                 {credentialsForm.formState.errors.password && (
                   <p className="mt-1.5 text-sm text-destructive">
-                    {credentialsForm.formState.errors.password.message}
+                    {resolveMsg(
+                      credentialsForm.formState.errors.password.message
+                    )}
                   </p>
                 )}
                 <div className="mt-2 text-right">

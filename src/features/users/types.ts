@@ -1,3 +1,5 @@
+import type { UserStatus } from "@/features/users/api/schema"
+
 export const USER_ROLES = [
   "system_admin",
   "support_user",
@@ -90,7 +92,7 @@ export const ACCESS_EXPIRY_VISIBLE_ROLES: readonly UserRole[] = [
 
 export type UserFilterState = {
   role: UserRole[]
-  status: string[]
+  status: UserStatus[]
   tenant_id: string | null
   // UI ready — backend GET /api/v1/users does not support mfa_enabled filter yet
   mfa_enabled: string | null
@@ -117,3 +119,12 @@ export type UserActionType =
   | "deactivate"
   | "resend-invitation"
 export type UserModalActionType = Exclude<UserActionType, "approve">
+
+export const SYSTEM_ADMIN_ROLE = "system_admin" as const
+export const SUPPORT_USER_ROLE = "support_user" as const
+
+export const PLATFORM_USER_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "support_user",
+  "auditor",
+]

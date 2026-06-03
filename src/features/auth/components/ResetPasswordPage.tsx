@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useSearchParams } from "react-router-dom"
@@ -7,6 +8,7 @@ import { useTranslation } from "react-i18next"
 import { ResetPasswordInputSchema } from "../api/forgotPasswordSchema"
 import type { ResetPasswordInput } from "../api/forgotPasswordSchema"
 import { validateResetToken, resetPassword } from "../api/forgotPasswordApi"
+import { AUTH_QUERY_KEYS } from "../api/queryKeys"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
@@ -33,18 +35,26 @@ export default function ResetPasswordPage() {
   const [serverError, setServerError] = useState<string | null>(null)
 
   const token = searchParams.get("token") ?? ""
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  // Derive initial state from token presence — avoids synchronous setState in effect
-  const [pageState, setPageState] = useState<PageState>(() =>
-    token ? "loading" : "blocked"
-  )
+  const { isLoading: isValidating, error: validationError } = useQuery({
+    queryKey: AUTH_QUERY_KEYS.validateResetToken(token),
+    queryFn: async () => {
+      await validateResetToken(token)
+      return null
+    },
+    enabled: !!token,
+    retry: false,
+    staleTime: Infinity,
+  })
 
-  useEffect(() => {
-    if (!token) return
-    validateResetToken(token)
-      .then(() => setPageState("valid"))
-      .catch(() => setPageState("blocked"))
-  }, [token])
+  const pageState: PageState = (() => {
+    if (!token) return "blocked"
+    if (isSuccess) return "success"
+    if (isValidating) return "loading"
+    if (validationError) return "blocked"
+    return "valid"
+  })()
 
   const form = useForm<ResetPasswordInput>({
     resolver: zodResolver(ResetPasswordInputSchema),
@@ -62,7 +72,7 @@ export default function ResetPasswordPage() {
     setServerError(null)
     try {
       await resetPassword(token, data.password, data.password_confirm)
-      setPageState("success")
+      setIsSuccess(true)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
       const messages: Record<string, string> = {

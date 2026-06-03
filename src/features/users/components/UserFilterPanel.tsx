@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { parseISO } from "date-fns"
 import { ChevronDown, Check, Calendar } from "lucide-react"
 import {
@@ -22,8 +22,6 @@ type StatusesKey = `statuses.${UserStatus}`
 import { RoleBadge } from "./RoleBadge"
 import { UserStatusBadge } from "./UserStatusBadge"
 
-const ALL_STATUSES: readonly UserStatus[] = USER_STATUSES
-
 type UserFilterPanelProps = {
   onClose: () => void
   appliedFilters: UserFilterState
@@ -33,7 +31,7 @@ type UserFilterPanelProps = {
 
 // ─── Section header with gray background ────────────────────────────────────
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
+function SectionHeader({ children }: { children: ReactNode }) {
   return (
     <div className="bg-muted border-y border-border/50 px-4 py-2.5">
       <p className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
@@ -50,7 +48,7 @@ function FilterField({
   children,
 }: {
   label: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="px-4 py-3">
@@ -67,8 +65,9 @@ type MultiSelectProps<T extends string> = {
   onChange: (value: T[]) => void
   options: T[]
   placeholder: string
-  renderOption: (option: T) => React.ReactNode
+  renderOption: (option: T) => ReactNode
   getLabel: (option: T) => string
+  getMultiLabel: (count: number) => string
   "data-testid"?: string
 }
 
@@ -79,6 +78,7 @@ function MultiSelectDropdown<T extends string>({
   placeholder,
   renderOption,
   getLabel,
+  getMultiLabel,
   "data-testid": testId,
 }: MultiSelectProps<T>) {
   function toggle(option: T) {
@@ -94,7 +94,7 @@ function MultiSelectDropdown<T extends string>({
       ? placeholder
       : value.length === 1
         ? getLabel(value[0])
-        : `${value.length} selected`
+        : getMultiLabel(value.length)
 
   return (
     <Popover>
@@ -133,6 +133,7 @@ function MultiSelectDropdown<T extends string>({
             <button
               key={option}
               type="button"
+              data-testid={`filter-option-${option}`}
               onClick={() => toggle(option)}
               className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
             >
@@ -174,6 +175,7 @@ function TextToggle({
         <button
           key={opt.value}
           type="button"
+          data-testid={`filter-toggle-${opt.value}`}
           onClick={() => onChange(value === opt.value ? null : opt.value)}
           className={cn(
             "px-3 py-1 text-sm rounded-full border transition-colors",
@@ -241,6 +243,7 @@ function SingleSelectDropdown({
           <button
             key={option.value}
             type="button"
+            data-testid={`filter-panel-option-${option.value}`}
             onClick={() => toggle(option.value)}
             className={cn(
               "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left text-sm",
@@ -338,13 +341,12 @@ function UserFilterPanel({
           <FilterField label={t("filter.fields.role")}>
             <MultiSelectDropdown
               value={staged.role}
-              onChange={roles =>
-                setStaged(s => ({ ...s, role: roles as UserRole[] }))
-              }
+              onChange={roles => setStaged(s => ({ ...s, role: roles }))}
               options={[...USER_ROLES]}
               placeholder={t("filter.placeholders.select")}
-              renderOption={role => <RoleBadge role={role as UserRole} />}
+              renderOption={role => <RoleBadge role={role} />}
               getLabel={role => t(`roles.${role}` as RolesKey)}
+              getMultiLabel={count => t("filter.selectedCount", { count })}
               data-testid="filter-role-select"
             />
           </FilterField>
@@ -355,12 +357,11 @@ function UserFilterPanel({
               onChange={statuses =>
                 setStaged(s => ({ ...s, status: statuses }))
               }
-              options={[...ALL_STATUSES]}
+              options={[...USER_STATUSES]}
               placeholder={t("filter.placeholders.select")}
-              renderOption={status => (
-                <UserStatusBadge status={status as UserStatus} />
-              )}
+              renderOption={status => <UserStatusBadge status={status} />}
               getLabel={status => t(`statuses.${status}` as StatusesKey)}
+              getMultiLabel={count => t("filter.selectedCount", { count })}
               data-testid="filter-status-select"
             />
           </FilterField>
