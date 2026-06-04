@@ -18,7 +18,8 @@
     },
     "pagination": {
       "previous": "Previous",
-      "next": "Next"
+      "next": "Next",
+      "rowsPerPage": "Rows per page"
     }
   },
   "roles": {
