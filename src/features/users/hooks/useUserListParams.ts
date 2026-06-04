@@ -19,15 +19,20 @@ const VALID_SORT_KEYS: readonly string[] = [
 
 const VALID_STATUSES: readonly string[] = USER_STATUSES
 
+export const PAGE_SIZES = [10, 20, 50, 100] as const
+export type PageSize = (typeof PAGE_SIZES)[number]
+
 type ParamUpdate = Record<string, string | readonly string[] | null>
 
 export type UserListParams = {
   page: number
+  perPage: PageSize
   search: string
   appliedFilters: UserFilterState
   sortKey: UserSortKey | null
   sortOrder: UserSortOrder
   setPage: (page: number) => void
+  setPerPage: (size: PageSize) => void
   setSearch: (search: string) => void
   setAppliedFilters: (filters: UserFilterState) => void
   setSort: (key: UserSortKey, order: UserSortOrder) => void
@@ -56,6 +61,12 @@ export function useUserListParams(): UserListParams {
   }
 
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1)
+  const rawPerPage = Number(params.get("per_page") ?? "10")
+  const perPage: PageSize = (PAGE_SIZES as readonly number[]).includes(
+    rawPerPage
+  )
+    ? (rawPerPage as PageSize)
+    : 10
   const search = params.get("q") ?? ""
 
   const rawRoles = params.getAll("role")
@@ -86,6 +97,10 @@ export function useUserListParams(): UserListParams {
 
   function setPage(p: number) {
     update({ page: p === 1 ? null : String(p) })
+  }
+
+  function setPerPage(size: PageSize) {
+    update({ per_page: size === 10 ? null : String(size), page: null })
   }
 
   function setSearch(q: string) {
@@ -119,11 +134,13 @@ export function useUserListParams(): UserListParams {
 
   return {
     page,
+    perPage,
     search,
     appliedFilters,
     sortKey,
     sortOrder,
     setPage,
+    setPerPage,
     setSearch,
     setAppliedFilters,
     setSort,
