@@ -23,6 +23,10 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
     { labelKey: "breadcrumb.platformAdministration" },
     { labelKey: "breadcrumb.userManagement" },
   ],
+  [PATHS.PENDING_APPROVALS]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.pendingApprovals" },
+  ],
 }
 
 export function Header() {

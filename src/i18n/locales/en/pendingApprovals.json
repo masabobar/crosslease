@@ -1,0 +1,106 @@
+{
+  "page": {
+    "title": "Pending approvals",
+    "subtitle": "Review and act on requests submitted by other administrators under the four-eyes policy.",
+    "breadcrumb": {
+      "home": "Home",
+      "pendingApprovals": "Pending approvals"
+    }
+  },
+  "tabs": {
+    "all": "All",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "expired": "Expired"
+  },
+  "search": {
+    "placeholder": "Search"
+  },
+  "actionTypes": {
+    "user_role_change": "Role change",
+    "user_platform_invite": "Platform invite",
+    "user_email_change": "Email change",
+    "user_auditor_period_update": "Access period update",
+    "tenant_create": "Tenant create"
+  },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "expired": "Expired"
+  },
+  "row": {
+    "user": "User",
+    "by": "By",
+    "submitted": "Submitted",
+    "resolved": "Resolved",
+    "expires": "Expires in",
+    "reviewRequest": "Review request",
+    "youSubmitted": "You submitted this request",
+    "withdraw": "Withdraw",
+    "reInitiate": "Re-initiate",
+    "approvedBy": "Approved by",
+    "rejectedBy": "Rejected by"
+  },
+  "modal": {
+    "action": "ACTION",
+    "actionType": "Action type",
+    "affectedUser": "Affected user",
+    "tenant": "Tenant",
+    "change": "CHANGE",
+    "current": "CURRENT",
+    "proposed": "PROPOSED",
+    "submittedBy": "SUBMITTED BY",
+    "submittedByLabel": "Submitted by",
+    "roleAtTime": "Role at time",
+    "tenantAtTime": "Tenant at time",
+    "submittedAt": "Submitted at",
+    "justification": "YOUR JUSTIFICATION",
+    "justificationPlaceholder": "Add a comment (optional for approval, required for rejection)",
+    "justificationRequired": "Required",
+    "cancel": "Cancel",
+    "reject": "Reject",
+    "approve": "Approve",
+    "email": "Email",
+    "errors": {
+      "GOVERNED_ACTION_FORBIDDEN": "You cannot approve your own request.",
+      "ACTION_NOT_PENDING": "This action is no longer pending.",
+      "ACTION_EXPIRED": "This request has expired. Please re-initiate.",
+      "default": "An error occurred. Please try again."
+    }
+  },
+  "toast": {
+    "approved": {
+      "title": "Approved request",
+      "message": "Request was approved. {{name}}'s {{action}} is now in effect."
+    },
+    "rejected": {
+      "title": "Request rejected",
+      "message": "{{action}} request has been rejected."
+    },
+    "withdrawn": {
+      "title": "Request withdrawn",
+      "message": "{{action}} request has been withdrawn."
+    },
+    "reInitiated": {
+      "title": "Re-initiated",
+      "message": "{{action}} request has been re-submitted for approval."
+    }
+  },
+  "empty": {
+    "title": "No requests found",
+    "message": "There are no approval requests matching the current filters."
+  },
+  "view": "View",
+  "roles": {
+    "system_admin": "Admin",
+    "support_user": "Support",
+    "auditor": "Auditor",
+    "front_office": "Front Office",
+    "back_office": "Back Office",
+    "leasing_company_user": "Leasing Co. User"
+  }
+}

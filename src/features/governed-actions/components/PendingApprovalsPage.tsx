@@ -1,0 +1,245 @@
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import { Search } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
+import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
+import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
+import { ActionRow } from "@/features/governed-actions/components/ActionRow"
+import { ReviewRequestModal } from "@/features/governed-actions/components/ReviewRequestModal"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useToastStore } from "@/store/toastStore"
+import type {
+  GovernedAction,
+  GovernedActionStatus,
+} from "@/features/governed-actions/api/schema"
+
+type Tab = "all" | GovernedActionStatus
+
+const TABS: Tab[] = [
+  "all",
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+  "expired",
+]
+
+export default function PendingApprovalsPage() {
+  const { t } = useTranslation("pendingApprovals")
+  const { showToast } = useToastStore()
+  const { data: currentUser } = useCurrentUser()
+
+  const [activeTab, setActiveTab] = useState<Tab>("all")
+  const [search, setSearch] = useState("")
+  const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const statusFilter =
+    activeTab === "all" ? undefined : ([activeTab] as GovernedActionStatus[])
+
+  const { data, isLoading } = useGovernedActions({ status: statusFilter })
+
+  const withdrawAction = useWithdrawAction()
+  const reInitiateAction = useReInitiateAction()
+
+  const canReview = currentUser?.role === "system_admin"
+
+  const actions = data?.actions ?? []
+
+  const filtered = search.trim()
+    ? actions.filter(a => {
+        const q = search.toLowerCase()
+        const typeName = t(`actionTypes.${a.action_type}`).toLowerCase()
+        const snap = a.initiator_snapshot as Record<string, unknown>
+        const firstName =
+          typeof snap.first_name === "string"
+            ? snap.first_name.toLowerCase()
+            : ""
+        const lastName =
+          typeof snap.last_name === "string" ? snap.last_name.toLowerCase() : ""
+        return (
+          typeName.includes(q) ||
+          firstName.includes(q) ||
+          lastName.includes(q) ||
+          `${firstName} ${lastName}`.includes(q)
+        )
+      })
+    : actions
+
+  function handleReview(action: GovernedAction) {
+    setReviewAction(action)
+    setModalOpen(true)
+  }
+
+  function handleWithdraw(action: GovernedAction) {
+    withdrawAction.mutate(
+      { id: action.id },
+      {
+        onSuccess: () => {
+          showToast({
+            variant: "default",
+            title: t("toast.withdrawn.title"),
+            message: t("toast.withdrawn.message", {
+              action: t(`actionTypes.${action.action_type}`),
+            }),
+          })
+        },
+      }
+    )
+  }
+
+  function handleReInitiate(action: GovernedAction) {
+    reInitiateAction.mutate(
+      { id: action.id },
+      {
+        onSuccess: () => {
+          showToast({
+            variant: "success",
+            title: t("toast.reInitiated.title"),
+            message: t("toast.reInitiated.message", {
+              action: t(`actionTypes.${action.action_type}`),
+            }),
+          })
+        },
+      }
+    )
+  }
+
+  function handleModalSuccess(
+    verdict: "approved" | "rejected",
+    action: GovernedAction
+  ) {
+    const actionLabel = t(`actionTypes.${action.action_type}`)
+
+    if (verdict === "approved") {
+      const snap = action.display_snapshot as Record<string, unknown>
+      const name =
+        typeof snap.full_name === "string"
+          ? snap.full_name
+          : ((): string => {
+              const initiator = action.initiator_snapshot as Record<
+                string,
+                unknown
+              >
+              return typeof initiator.first_name === "string"
+                ? `${initiator.first_name} ${initiator.last_name}`
+                : "—"
+            })()
+      showToast({
+        variant: "success",
+        title: t("toast.approved.title"),
+        message: t("toast.approved.message", { name, action: actionLabel }),
+      })
+    } else {
+      showToast({
+        variant: "default",
+        title: t("toast.rejected.title"),
+        message: t("toast.rejected.message", { action: actionLabel }),
+      })
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      {/* Page header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-semibold">{t("page.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("page.subtitle")}</p>
+      </div>
+
+      {/* Search + View toggle */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Search */}
+        <div className="relative w-[288px]">
+          <input
+            type="text"
+            placeholder={t("search.placeholder")}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full h-8 pl-3 pr-8 text-sm border border-border rounded-[12px] bg-white focus:outline-none focus:ring-2 focus:ring-ring"
+            data-testid="search-input"
+          />
+          <Search
+            size={16}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          />
+        </div>
+
+        {/* Status toggle group */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            {t("view", { defaultValue: "View" })}
+          </span>
+          <div className="flex items-center border border-border rounded-[10px] overflow-hidden h-9">
+            {TABS.map((tab, i) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "h-full px-2.5 text-sm font-medium whitespace-nowrap transition-colors",
+                  activeTab === tab
+                    ? "bg-white text-foreground"
+                    : "bg-slate-100 text-foreground hover:bg-slate-200",
+                  i === 0 && "rounded-l-[10px]",
+                  i === TABS.length - 1 && "rounded-r-[10px]"
+                )}
+                data-testid={`tab-${tab}`}
+              >
+                {t(`tabs.${tab}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="flex flex-col gap-2">
+        {isLoading && (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            {t("loading", { defaultValue: "Loading…" })}
+          </div>
+        )}
+
+        {!isLoading && filtered.length === 0 && (
+          <div
+            className="flex flex-col items-center justify-center gap-2 py-16 text-center"
+            data-testid="empty-state"
+          >
+            <p className="text-sm font-medium text-foreground">
+              {t("empty.title")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("empty.message")}
+            </p>
+          </div>
+        )}
+
+        {!isLoading &&
+          filtered.map(action => (
+            <ActionRow
+              key={action.id}
+              action={action}
+              currentUserId={currentUser?.id ?? ""}
+              canReview={canReview}
+              onReview={handleReview}
+              onWithdraw={handleWithdraw}
+              onReInitiate={handleReInitiate}
+            />
+          ))}
+      </div>
+
+      {/* Review modal */}
+      <ReviewRequestModal
+        open={modalOpen}
+        onOpenChange={open => {
+          setModalOpen(open)
+          if (!open) setReviewAction(null)
+        }}
+        action={reviewAction}
+        onSuccess={handleModalSuccess}
+      />
+    </div>
+  )
+}

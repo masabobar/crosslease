@@ -27,12 +27,14 @@
     "lcRequests": "My Requests",
     "lcStatus": "Status Overview",
     "lcDocuments": "Bank Documents",
-    "lcProposals": "Proposals"
+    "lcProposals": "Proposals",
+    "pendingApprovals": "Pending approvals"
   },
   "breadcrumb": {
     "home": "Home",
     "platformAdministration": "Platform administration",
-    "userManagement": "User management"
+    "userManagement": "User management",
+    "pendingApprovals": "Pending approvals"
   },
   "notFound": {
     "heading": "Page not found",

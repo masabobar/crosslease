@@ -1,0 +1,275 @@
+import { useTranslation } from "react-i18next"
+import {
+  UserRound,
+  CircleArrowUp,
+  Calendar,
+  CalendarClock,
+  Building2,
+  Clock,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
+import type {
+  GovernedAction,
+  ActorSnapshot,
+  PlatformInviteSnapshot,
+  RoleChangeSnapshot,
+  EmailChangeSnapshot,
+} from "@/features/governed-actions/api/schema"
+
+const DOT_COLOR: Record<string, string> = {
+  pending: "bg-amber-400",
+  approved: "bg-green-500",
+  rejected: "bg-red-500",
+  withdrawn: "bg-gray-400",
+  expired: "bg-gray-400",
+}
+
+const BORDER_COLOR: Record<string, string> = {
+  pending: "border-l-2 border-l-amber-400",
+  approved: "",
+  rejected: "border-l-2 border-l-red-500",
+  withdrawn: "",
+  expired: "",
+}
+
+function formatRelativeExpiry(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return "0h"
+  const hours = Math.ceil(diff / (1000 * 60 * 60))
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d`
+}
+
+function formatDateTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+}
+
+function formatRelativeSubmitted(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime()
+  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+  const days = Math.floor(hours / 24)
+  const absolute = formatDateTime(dateStr)
+  if (hours < 1) return `just now (${absolute})`
+  if (hours < 24) return `${hours}h ago (${absolute})`
+  return `${days}d ago (${absolute})`
+}
+
+function getSubjectDisplay(action: GovernedAction): string {
+  const snap = action.display_snapshot
+  if (action.action_type === "user_platform_invite") {
+    return (snap as unknown as PlatformInviteSnapshot).full_name ?? "—"
+  }
+  if (action.action_type === "user_role_change") {
+    const s = snap as unknown as RoleChangeSnapshot
+    return s.old_role && s.new_role ? `${s.old_role} → ${s.new_role}` : "—"
+  }
+  if (action.action_type === "user_email_change") {
+    const s = snap as unknown as EmailChangeSnapshot
+    return s.new_email ?? "—"
+  }
+  return "—"
+}
+
+function getInitiatorName(action: GovernedAction): string {
+  const snap = action.initiator_snapshot as unknown as ActorSnapshot
+  if (!snap?.first_name) return "—"
+  return `${snap.first_name} ${snap.last_name}`
+}
+
+function getApproverName(action: GovernedAction): string {
+  if (!action.approver_snapshot) return "—"
+  const snap = action.approver_snapshot as unknown as ActorSnapshot
+  if (!snap?.first_name) return "—"
+  return `${snap.first_name} ${snap.last_name}`
+}
+
+type Props = {
+  action: GovernedAction
+  currentUserId: string
+  canReview: boolean
+  onReview: (action: GovernedAction) => void
+  onWithdraw: (action: GovernedAction) => void
+  onReInitiate: (action: GovernedAction) => void
+}
+
+export function ActionRow({
+  action,
+  currentUserId,
+  canReview,
+  onReview,
+  onWithdraw,
+  onReInitiate,
+}: Props) {
+  const { t } = useTranslation("pendingApprovals")
+  const isOwnSubmission = action.initiator_id === currentUserId
+  const isPending = action.status === "pending"
+  const isExpired = action.status === "expired"
+  const isRejected = action.status === "rejected"
+  const isApproved = action.status === "approved"
+
+  const metaItems: React.ReactNode[] = [
+    <span key="user" className="flex items-center gap-1">
+      <UserRound size={12} />
+      <span className="font-medium text-foreground/80">
+        {t("row.user")}:
+      </span>{" "}
+      {getSubjectDisplay(action)}
+    </span>,
+    <span key="by" className="flex items-center gap-1">
+      <CircleArrowUp size={12} />
+      <span className="font-medium text-foreground/80">
+        {t("row.by")}:
+      </span>{" "}
+      {getInitiatorName(action)}
+    </span>,
+    ...(isPending && action.created_at
+      ? [
+          <span key="submitted" className="flex items-center gap-1">
+            <Calendar size={12} />
+            <span className="font-medium text-foreground/80">
+              {t("row.submitted")}:
+            </span>{" "}
+            {formatRelativeSubmitted(action.created_at)}
+          </span>,
+        ]
+      : []),
+    ...(!isPending && action.resolved_at
+      ? [
+          <span key="resolved" className="flex items-center gap-1">
+            <CalendarClock size={12} />
+            <span className="font-medium text-foreground/80">
+              {t("row.resolved")}:
+            </span>{" "}
+            {formatDateTime(action.resolved_at)}
+          </span>,
+        ]
+      : []),
+    ...(isApproved && action.approver_snapshot
+      ? [
+          <span key="approvedBy" className="flex items-center gap-1">
+            <UserRound size={12} />
+            <span className="font-medium text-foreground/80">
+              {t("row.approvedBy")}:
+            </span>{" "}
+            {getApproverName(action)}
+          </span>,
+        ]
+      : []),
+    ...(isRejected && action.approver_snapshot
+      ? [
+          <span key="rejectedBy" className="flex items-center gap-1">
+            <UserRound size={12} />
+            <span className="font-medium text-foreground/80">
+              {t("row.rejectedBy")}:
+            </span>{" "}
+            {getApproverName(action)}
+          </span>,
+        ]
+      : []),
+    ...(isPending && action.expires_at
+      ? [
+          <span
+            key="expires"
+            className="flex items-center gap-1 text-amber-600 font-medium"
+          >
+            <Clock size={12} />
+            {t("row.expires")} {formatRelativeExpiry(action.expires_at)}
+          </span>,
+        ]
+      : []),
+    ...(action.tenant_id
+      ? [
+          <span key="tenant" className="flex items-center gap-1">
+            <Building2 size={12} />
+            {action.tenant_id}
+          </span>,
+        ]
+      : []),
+  ]
+
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border",
+        BORDER_COLOR[action.status]
+      )}
+      data-testid={`approval-row-${action.id}`}
+    >
+      {/* Left: info */}
+      <div className="flex flex-col gap-2 min-w-0">
+        {/* Title row */}
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "size-2 rounded-full shrink-0 mt-0.5",
+              DOT_COLOR[action.status]
+            )}
+          />
+          <span className="text-sm font-medium text-foreground">
+            {t(`actionTypes.${action.action_type}`)}
+          </span>
+          <ActionStatusBadge status={action.status} />
+        </div>
+
+        {/* Meta row with dot separators */}
+        <div className="flex flex-wrap items-center gap-y-1 pl-4 text-xs text-muted-foreground">
+          {metaItems.flatMap((item, i) =>
+            i === 0
+              ? [item]
+              : [
+                  <span
+                    key={`sep-${i}`}
+                    className="mx-1.5 text-muted-foreground/40 select-none"
+                  >
+                    ·
+                  </span>,
+                  item,
+                ]
+          )}
+        </div>
+      </div>
+
+      {/* Right: CTA */}
+      <div className="shrink-0 ml-6 flex flex-col items-end gap-1">
+        {isPending && canReview && !isOwnSubmission && (
+          <Button
+            size="sm"
+            data-testid={`review-btn-${action.id}`}
+            onClick={() => onReview(action)}
+          >
+            {t("row.reviewRequest")}
+          </Button>
+        )}
+        {isPending && isOwnSubmission && (
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-xs text-muted-foreground italic">
+              {t("row.youSubmitted")}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              data-testid={`withdraw-btn-${action.id}`}
+              onClick={() => onWithdraw(action)}
+            >
+              {t("row.withdraw")}
+            </Button>
+          </div>
+        )}
+        {(isExpired || isRejected) && isOwnSubmission && (
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid={`re-initiate-btn-${action.id}`}
+            onClick={() => onReInitiate(action)}
+          >
+            {t("row.reInitiate")}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
