@@ -1554,12 +1554,11 @@ Only one pending period-update request is allowed per user at a time.
     method: "get",
     path: "/api/v1/users/export",
     alias: "initiate_export_api_v1_users_export_get",
-    description: `Initiate an async user list export. Requires &#x60;user:export&#x60; permission.
+    description: `Initiate user list export. Requires &#x60;user:export&#x60; permission.
 
-Returns immediately with a job_id. Poll &#x60;/export/status/{job_id}&#x60; for status,
-then download via &#x60;/export/download/{job_id}&#x60; when ready.
-
-Max 3 concurrent active jobs per user — returns 429 if exceeded.
+Always async — returns &#x60;202 { job_id, status, poll_url }&#x60; immediately.
+Poll &#x60;/export/status/{job_id}&#x60;, download via &#x60;/export/download/{job_id}&#x60; when ready.
+Max 3 concurrent jobs per user → &#x60;429&#x60; if exceeded.
 
 # TODO: PRD1042-37 — add audit event USER_LIST_EXPORTED when AuditService is available`,
     requestFormat: "json",
@@ -1618,7 +1617,9 @@ Max 3 concurrent active jobs per user — returns 429 if exceeded.
     path: "/api/v1/users/export/download/:job_id",
     alias: "export_download_api_v1_users_export_download__job_id__get",
     description: `Download a completed export file. Non-disclosing 404 for non-existent or not-owned jobs.
-Returns 409 if still processing, 422 if failed.`,
+Returns 409 if still processing, 422 if failed.
+If the file has expired (job TTL passed), automatically re-generates with the same filters
+and returns 202 with a new job_id.`,
     requestFormat: "json",
     parameters: [
       {
