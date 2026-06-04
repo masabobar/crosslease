@@ -113,11 +113,14 @@ function ChainEntry({
   description,
   date,
   status,
+  correlationId,
 }: {
   description: string
   date: string
   status: StatusKey
+  correlationId?: string | null
 }) {
+  const { t } = useTranslation("pendingApprovals")
   const dotColor: Record<StatusKey, string> = {
     pending: "bg-[#d97706]",
     approved: "bg-green-500",
@@ -126,17 +129,31 @@ function ChainEntry({
     withdrawn: "bg-slate-300",
   }
   return (
-    <div className="flex items-start gap-2 w-full">
-      <div className="flex items-start self-stretch pr-2 pt-1.5 shrink-0">
-        <div className={cn("size-2 rounded-full shrink-0", dotColor[status])} />
-      </div>
-      <div className="flex flex-1 items-center min-w-0 gap-3">
-        <div className="flex flex-col flex-1 min-w-0 opacity-80">
-          <p className="text-sm text-foreground">{description}</p>
-          <p className="text-sm text-muted-foreground">{date}</p>
+    <div className="flex flex-col gap-2 w-full">
+      <div className="flex items-start gap-2 w-full">
+        <div className="flex items-start self-stretch pr-2 pt-1.5 shrink-0">
+          <div
+            className={cn("size-2 rounded-full shrink-0", dotColor[status])}
+          />
         </div>
-        <StatusBadge status={status} />
+        <div className="flex flex-1 items-center min-w-0 gap-3">
+          <div className="flex flex-col flex-1 min-w-0 opacity-80">
+            <p className="text-sm text-foreground">{description}</p>
+            <p className="text-sm text-muted-foreground">{date}</p>
+          </div>
+          <StatusBadge status={status} />
+        </div>
       </div>
+      {correlationId && (
+        <div className="flex flex-col gap-0.5 pl-4">
+          <p className="text-xs text-muted-foreground">
+            {t("drawer.correlationId")}
+          </p>
+          <p className="text-xs font-mono text-foreground/70 break-all">
+            {correlationId}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -274,7 +291,7 @@ const HAS_CHANGE_SECTION = new Set([
   "user_platform_invite",
 ])
 
-export function ViewDetailsDrawer({ open, onClose, action }: Props) {
+export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
   const { t } = useTranslation("pendingApprovals")
   const [justificationExpanded, setJustificationExpanded] = useState(true)
   const [chainExpanded, setChainExpanded] = useState(true)
@@ -419,6 +436,7 @@ export function ViewDetailsDrawer({ open, onClose, action }: Props) {
               description={t("drawer.chainCurrentRequest")}
               date={action.created_at ? formatDateTime(action.created_at) : "—"}
               status={action.status as StatusKey}
+              correlationId={action.correlation_id}
             />
           </InfoCard>
         </div>

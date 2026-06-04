@@ -7,7 +7,7 @@ import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdraw
 import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
 import { ActionRow } from "@/features/governed-actions/components/ActionRow"
 import { ReviewRequestModal } from "@/features/governed-actions/components/ReviewRequestModal"
-import { ViewDetailsDrawer } from "@/features/governed-actions/components/ViewDetailsDrawer"
+import { PendingApprovalDetailDrawer } from "@/features/governed-actions/components/PendingApprovalDetailDrawer"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import type {
@@ -260,7 +260,7 @@ export default function PendingApprovalsPage() {
       </div>
 
       {/* Details drawer */}
-      <ViewDetailsDrawer
+      <PendingApprovalDetailDrawer
         open={!!detailsAction}
         onClose={() => setDetailsAction(null)}
         action={detailsAction}

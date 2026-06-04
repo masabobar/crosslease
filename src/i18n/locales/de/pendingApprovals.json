@@ -130,6 +130,7 @@
     "requestChain": "ANFRAGEKETTE",
     "request": "Anfrage",
     "chainCurrentRequest": "Aktuelle Anfrage",
+    "correlationId": "Korrelations-ID",
     "email": "E-Mail",
     "role": "Rolle"
   },

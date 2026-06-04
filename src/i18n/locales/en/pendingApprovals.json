@@ -130,6 +130,7 @@
     "requestChain": "REQUEST CHAIN",
     "request": "request",
     "chainCurrentRequest": "Current request",
+    "correlationId": "Correlation ID",
     "email": "Email",
     "role": "Role"
   },
