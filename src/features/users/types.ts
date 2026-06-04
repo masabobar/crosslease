@@ -18,6 +18,7 @@ export const FOUR_EYES_ROLES: readonly UserRole[] = [
 ]
 
 export const TENANT_SCOPED_ROLES: readonly UserRole[] = [
+  "auditor",
   "front_office",
   "back_office",
   "leasing_company_user",

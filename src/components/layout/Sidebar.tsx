@@ -42,6 +42,7 @@ export function Sidebar() {
   const isUserManagementActive =
     location.pathname === PATHS.USER_MANAGEMENT ||
     location.pathname.startsWith(PATHS.USER_MANAGEMENT + "/")
+  const isPendingApprovalsActive = location.pathname === PATHS.PENDING_APPROVALS
 
   return (
     <aside
@@ -329,6 +330,23 @@ export function Sidebar() {
                     >
                       {t("nav.userManagement")}
                       {isUserManagementActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
+                  {canAccessUserManagement && (
+                    <Link
+                      to={PATHS.PENDING_APPROVALS}
+                      data-testid="nav-pending-approvals"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap",
+                        isPendingApprovalsActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.pendingApprovals")}
+                      {isPendingApprovalsActive && (
                         <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
                       )}
                     </Link>

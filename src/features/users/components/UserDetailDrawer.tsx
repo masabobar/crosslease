@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
@@ -219,20 +220,17 @@ function UserDetailDrawer({
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(userId)
 
-  if (!userId) return null
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-30 bg-black/10"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Panel */}
-      <div
-        className="fixed right-0 top-0 h-full w-[420px] z-40 bg-card border-l border-border shadow-xl flex flex-col"
+    <Sheet
+      open={!!userId}
+      onOpenChange={o => {
+        if (!o) onClose()
+      }}
+    >
+      <SheetContent
+        side="right"
+        className="w-[420px] sm:max-w-[420px] gap-0 p-0 bg-card"
+        showCloseButton={false}
         data-testid="user-detail-drawer"
       >
         {isLoading && (
@@ -282,8 +280,8 @@ function UserDetailDrawer({
             viewerRole={viewerRole}
           />
         )}
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   )
 }
 

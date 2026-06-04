@@ -1,0 +1,146 @@
+{
+  "page": {
+    "title": "Ausstehende Genehmigungen",
+    "subtitle": "Überprüfen und bearbeiten Sie Anfragen anderer Administratoren gemäß der Vier-Augen-Richtlinie.",
+    "breadcrumb": {
+      "home": "Startseite",
+      "pendingApprovals": "Ausstehende Genehmigungen"
+    }
+  },
+  "tabs": {
+    "all": "Alle",
+    "pending": "Ausstehend",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "withdrawn": "Zurückgezogen",
+    "expired": "Abgelaufen"
+  },
+  "search": {
+    "placeholder": "Suchen"
+  },
+  "actionTypes": {
+    "user_role_change": "Rollenänderung",
+    "user_platform_invite": "Plattform-Einladung",
+    "user_email_change": "E-Mail-Änderung",
+    "user_auditor_period_update": "Zugangszeitraum-Aktualisierung",
+    "tenant_create": "Mandant erstellen"
+  },
+  "status": {
+    "pending": "Ausstehend",
+    "approved": "Genehmigt",
+    "rejected": "Abgelehnt",
+    "withdrawn": "Zurückgezogen",
+    "expired": "Abgelaufen"
+  },
+  "row": {
+    "user": "Benutzer",
+    "by": "Von",
+    "submitted": "Eingereicht",
+    "resolved": "Erledigt",
+    "expires": "Läuft ab in",
+    "reviewRequest": "Anfrage prüfen",
+    "youSubmitted": "Sie haben diese Anfrage gestellt",
+    "withdraw": "Zurückziehen",
+    "reInitiate": "Neu einreichen",
+    "approvedBy": "Genehmigt von",
+    "rejectedBy": "Abgelehnt von"
+  },
+  "modal": {
+    "action": "AKTION",
+    "actionType": "Aktionstyp",
+    "affectedUser": "Betroffener Benutzer",
+    "tenant": "Mandant",
+    "change": "ÄNDERUNG",
+    "current": "AKTUELL",
+    "proposed": "VORGESCHLAGEN",
+    "submittedBy": "EINGEREICHT VON",
+    "submittedByLabel": "Eingereicht von",
+    "roleAtTime": "Rolle zum Zeitpunkt",
+    "tenantAtTime": "Mandant zum Zeitpunkt",
+    "submittedAt": "Eingereicht am",
+    "submission": "EINREICHUNG",
+    "reasonFromSubmitter": "GRUND DES EINREICHERS",
+    "requestChain": "ANFRAGEKETTE",
+    "request": "Anfrage",
+    "chainCurrentRequest": "Aktuelle Anfrage",
+    "mfaRequired": "Genehmigung erfordert Schritt-hoch-MFA-Verifizierung",
+    "justificationLabel": "Ihre Begründung",
+    "justificationHint": "Erforderlich · im Prüfprotokoll gespeichert",
+    "justification": "IHRE BEGRÜNDUNG",
+    "justificationPlaceholder": "Kommentar hinzufügen (optional für Genehmigung, erforderlich für Ablehnung)",
+    "justificationRequired": "Erforderlich",
+    "justificationTooShort": "Mindestens {{min}} Zeichen erforderlich",
+    "cancel": "Abbrechen",
+    "reject": "Ablehnen",
+    "approve": "Genehmigen",
+    "email": "E-Mail",
+    "errors": {
+      "GOVERNED_ACTION_FORBIDDEN": "Sie können Ihre eigene Anfrage nicht genehmigen.",
+      "ACTION_NOT_PENDING": "Diese Aktion ist nicht mehr ausstehend.",
+      "ACTION_EXPIRED": "Diese Anfrage ist abgelaufen. Bitte erneut einreichen.",
+      "default": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    }
+  },
+  "toast": {
+    "approved": {
+      "title": "Anfrage genehmigt",
+      "message": "Anfrage wurde genehmigt. {{name}}s {{action}} ist jetzt in Kraft."
+    },
+    "rejected": {
+      "title": "Abgelehnte Anfrage",
+      "message": "Anfrage wurde abgelehnt. {{name}}s {{action}} tritt nicht in Kraft."
+    },
+    "withdrawn": {
+      "title": "Anfrage zurückgezogen",
+      "message": "{{action}}-Anfrage wurde zurückgezogen."
+    },
+    "reInitiated": {
+      "title": "Neu eingereicht",
+      "message": "{{action}}-Anfrage wurde erneut zur Genehmigung eingereicht."
+    }
+  },
+  "empty": {
+    "allCaughtUp": {
+      "title": "Alles erledigt",
+      "subtitle": "Keine ausstehenden Genehmigungen erfordern Ihre Überprüfung. Neue Anfragen anderer Admins erscheinen hier in Echtzeit."
+    },
+    "filtered": {
+      "title": "Keine Anfragen gefunden",
+      "subtitle": "Wechseln Sie zu Alle, um die vollständige Historie anzuzeigen."
+    },
+    "viewAuditLog": "Prüfprotokoll anzeigen"
+  },
+  "drawer": {
+    "action": "AKTION",
+    "actionType": "Aktionstyp",
+    "affectedUser": "Betroffener Benutzer",
+    "tenant": "Mandant",
+    "change": "ÄNDERUNG",
+    "previous": "VORHERIG",
+    "current": "AKTUELL",
+    "submission": "EINREICHUNG",
+    "name": "Name",
+    "roleAtTime": "Rolle zum Zeitpunkt",
+    "tenantAtTime": "Mandant zum Zeitpunkt",
+    "submittedAt": "Eingereicht am",
+    "resolvedAt": "Erledigt am",
+    "reasonFromSubmitter": "GRUND DES EINREICHERS",
+    "approver": "GENEHMIGER",
+    "approverJustification": "BEGRÜNDUNG DES GENEHMIGERS",
+    "requestChain": "ANFRAGEKETTE",
+    "request": "Anfrage",
+    "chainCurrentRequest": "Aktuelle Anfrage",
+    "correlationId": "Korrelations-ID",
+    "email": "E-Mail",
+    "role": "Rolle"
+  },
+  "view": "Anzeigen",
+  "roles": {
+    "system_admin": "Admin",
+    "support_user": "Support",
+    "auditor": "Prüfer",
+    "front_office": "Front Office",
+    "back_office": "Back Office",
+    "leasing_company_user": "Leasinggesellschaft"
+  }
+}
