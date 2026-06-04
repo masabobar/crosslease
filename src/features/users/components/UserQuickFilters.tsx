@@ -1,4 +1,6 @@
+import { parseISO } from "date-fns"
 import { Calendar, Check, FileDown, Filter, Search } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import {
   Popover,
@@ -8,6 +10,7 @@ import {
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
+import { USER_STATUSES } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
 import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -17,38 +20,22 @@ import { UserStatusBadge } from "./UserStatusBadge"
 
 export type QuickFilterKey = "role" | "tenant" | "mfa" | "status" | "lastLogin"
 
-const ALL_STATUSES: UserStatus[] = [
-  "active",
-  "invited",
-  "pending_activation",
-  "suspended",
-  "deactivated",
-  "expired",
-]
+const MFA_OPTIONS = [{ value: "enabled" }, { value: "disabled" }] as const
 
-const MFA_OPTIONS = [
-  { value: "enabled", label: "Enabled" },
-  { value: "disabled", label: "Disabled" },
-] as const
+type MfaOptionValue = (typeof MFA_OPTIONS)[number]["value"]
 
 type FilterButtonConfig = {
   key: QuickFilterKey
-  label: string
   icon: "filter" | "calendar"
   visibilityKey?: keyof UserFilterVisibility
 }
 
 const FILTER_BUTTONS: FilterButtonConfig[] = [
-  { key: "role", label: "Role", icon: "filter" },
-  { key: "tenant", label: "Tenant", icon: "filter", visibilityKey: "tenant" },
-  { key: "mfa", label: "MFA", icon: "filter", visibilityKey: "mfa" },
-  { key: "status", label: "Status", icon: "filter" },
-  {
-    key: "lastLogin",
-    label: "Last login",
-    icon: "calendar",
-    visibilityKey: "lastLogin",
-  },
+  { key: "role", icon: "filter" },
+  { key: "tenant", icon: "filter", visibilityKey: "tenant" },
+  { key: "mfa", icon: "filter", visibilityKey: "mfa" },
+  { key: "status", icon: "filter" },
+  { key: "lastLogin", icon: "calendar", visibilityKey: "lastLogin" },
 ]
 
 function getFilterCount(key: QuickFilterKey, filters: UserFilterState): number {
@@ -88,7 +75,16 @@ export function UserQuickFilters({
   onExport,
   className,
 }: UserQuickFiltersProps) {
+  const { t } = useTranslation("users")
   const { data: tenantsData } = useTenants()
+
+  const buttonLabels: Record<QuickFilterKey, string> = {
+    role: t("quickFilters.buttons.role"),
+    tenant: t("quickFilters.buttons.tenant"),
+    mfa: t("quickFilters.buttons.mfa"),
+    status: t("quickFilters.buttons.status"),
+    lastLogin: t("quickFilters.buttons.lastLogin"),
+  }
 
   const visibleButtons = FILTER_BUTTONS.filter(
     ({ visibilityKey }) => !visibilityKey || filterVisibility[visibilityKey]
@@ -103,6 +99,7 @@ export function UserQuickFilters({
             <button
               key={role}
               type="button"
+              data-testid={`filter-option-role-${role}`}
               onClick={() =>
                 onFilterChange({
                   role: checked
@@ -132,7 +129,7 @@ export function UserQuickFilters({
         if (tenants.length === 0) {
           return (
             <p className="px-3 py-2 text-sm text-muted-foreground">
-              No tenants available
+              {t("quickFilters.noTenantsAvailable")}
             </p>
           )
         }
@@ -142,6 +139,7 @@ export function UserQuickFilters({
             <button
               key={tenant.id}
               type="button"
+              data-testid={`filter-option-tenant-${tenant.id}`}
               onClick={() =>
                 onFilterChange({ tenant_id: selected ? null : tenant.id })
               }
@@ -170,6 +168,7 @@ export function UserQuickFilters({
             <button
               key={opt.value}
               type="button"
+              data-testid={`filter-option-mfa-${opt.value}`}
               onClick={() =>
                 onFilterChange({ mfa_enabled: checked ? null : opt.value })
               }
@@ -183,18 +182,21 @@ export function UserQuickFilters({
               >
                 {checked && <Check size={10} className="text-white" />}
               </span>
-              <span className="text-sm text-foreground">{opt.label}</span>
+              <span className="text-sm text-foreground">
+                {t(`filter.mfa.${opt.value}` as `filter.mfa.${MfaOptionValue}`)}
+              </span>
             </button>
           )
         })
 
       case "status":
-        return ALL_STATUSES.map((status: UserStatus) => {
+        return USER_STATUSES.map((status: UserStatus) => {
           const checked = appliedFilters.status.includes(status)
           return (
             <button
               key={status}
               type="button"
+              data-testid={`filter-option-status-${status}`}
               onClick={() =>
                 onFilterChange({
                   status: checked
@@ -223,13 +225,32 @@ export function UserQuickFilters({
             <div className="flex gap-2">
               <DatePicker
                 value={appliedFilters.last_login_from ?? undefined}
-                onChange={v => onFilterChange({ last_login_from: v })}
-                placeholder="From"
+                onChange={v => {
+                  const newFrom = parseISO(v)
+                  const currentTo = appliedFilters.last_login_to
+                    ? parseISO(appliedFilters.last_login_to)
+                    : null
+                  onFilterChange({
+                    last_login_from: v,
+                    last_login_to:
+                      currentTo && currentTo < newFrom
+                        ? null
+                        : appliedFilters.last_login_to,
+                  })
+                }}
+                placeholder={t("filter.placeholders.from")}
+                maxDate={new Date()}
               />
               <DatePicker
                 value={appliedFilters.last_login_to ?? undefined}
                 onChange={v => onFilterChange({ last_login_to: v })}
-                placeholder="To"
+                placeholder={t("filter.placeholders.to")}
+                maxDate={new Date()}
+                minDate={
+                  appliedFilters.last_login_from
+                    ? parseISO(appliedFilters.last_login_from)
+                    : undefined
+                }
               />
             </div>
           </div>
@@ -242,7 +263,7 @@ export function UserQuickFilters({
       <div className="flex items-center gap-6">
         <Input
           data-testid="user-search-input"
-          placeholder="Search"
+          placeholder={t("quickFilters.searchPlaceholder")}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           className="h-8 w-[288px]"
@@ -255,7 +276,7 @@ export function UserQuickFilters({
         />
 
         <div className="flex items-center gap-2">
-          {visibleButtons.map(({ key, label, icon }) => {
+          {visibleButtons.map(({ key, icon }) => {
             const count = getFilterCount(key, appliedFilters)
             const isActive = count > 0
 
@@ -276,7 +297,7 @@ export function UserQuickFilters({
                       className="shrink-0 text-muted-foreground"
                     />
                   )}
-                  {label}
+                  {buttonLabels[key]}
                   {isActive && (
                     <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none">
                       {count}
@@ -287,8 +308,9 @@ export function UserQuickFilters({
                   side="bottom"
                   align="start"
                   className={cn(
-                    "p-0 py-1 max-h-60 overflow-y-auto",
-                    key === "lastLogin" ? "w-72 py-0" : "w-48"
+                    "p-0 py-1",
+                    key === "lastLogin" ? "w-72 py-0" : "w-48",
+                    key === "tenant" && "max-h-60 overflow-y-auto"
                   )}
                 >
                   {renderPopoverContent(key)}
@@ -303,7 +325,7 @@ export function UserQuickFilters({
             onClick={onOpenAdvanced}
             className="inline-flex items-center h-8 px-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted transition-colors whitespace-nowrap"
           >
-            Advanced filters
+            {t("quickFilters.advancedFilters")}
           </button>
         </div>
       </div>
@@ -315,7 +337,7 @@ export function UserQuickFilters({
         className="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted transition-colors"
       >
         <FileDown size={16} className="shrink-0 text-muted-foreground" />
-        Export
+        {t("quickFilters.export")}
       </button>
     </div>
   )

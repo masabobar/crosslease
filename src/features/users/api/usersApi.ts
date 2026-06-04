@@ -1,6 +1,7 @@
 import { api } from "@/lib/api"
 import {
   InviteUserResponseSchema,
+  UserActionResponseSchema,
   UserResponseSchema,
   PaginatedUsersResponseSchema,
   UserDetailResponseSchema,
@@ -8,6 +9,7 @@ import {
 import type {
   InviteUserInput,
   InviteUserResponse,
+  UserActionResponse,
   UserResponse,
   PaginatedUsersResponse,
   UsersQueryParams,
@@ -56,41 +58,41 @@ export async function fetchUsers(
   return PaginatedUsersResponseSchema.parse(data)
 }
 
-export async function approveUser(userId: string): Promise<InviteUserResponse> {
+export async function approveUser(userId: string): Promise<UserActionResponse> {
   const data = await api.post(`/users/${userId}/approve`, {})
-  return InviteUserResponseSchema.parse(data)
+  return UserActionResponseSchema.parse(data)
 }
 
 export async function suspendUser(
   userId: string,
   input: SuspendUserInput
-): Promise<InviteUserResponse> {
+): Promise<UserActionResponse> {
   const data = await api.post(`/users/${userId}/suspend`, input)
-  return InviteUserResponseSchema.parse(data)
+  return UserActionResponseSchema.parse(data)
 }
 
 export async function reactivateUser(
   userId: string,
   input: ReactivateUserInput
-): Promise<InviteUserResponse> {
+): Promise<UserActionResponse> {
   const data = await api.post(`/users/${userId}/reactivate`, input)
-  return InviteUserResponseSchema.parse(data)
+  return UserActionResponseSchema.parse(data)
 }
 
 export async function deactivateUser(
   userId: string,
   input: DeactivateUserInput
-): Promise<InviteUserResponse> {
+): Promise<UserActionResponse> {
   const data = await api.post(`/users/${userId}/deactivate`, input)
-  return InviteUserResponseSchema.parse(data)
+  return UserActionResponseSchema.parse(data)
 }
 
 export async function resendInvitation(
   userId: string,
   input: ResendInvitationInput
-): Promise<InviteUserResponse> {
+): Promise<UserActionResponse> {
   const data = await api.post(`/users/${userId}/resend-invitation`, input)
-  return InviteUserResponseSchema.parse(data)
+  return UserActionResponseSchema.parse(data)
 }
 
 export async function fetchUserById(id: string): Promise<UserDetail> {

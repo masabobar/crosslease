@@ -23,6 +23,7 @@
     "coreBankingIntegration": "Core Banking integration",
     "auditTrail": "Audit trail",
     "logout": "Logout",
+    "poweredBy": "Powered by",
     "lcRequests": "My Requests",
     "lcStatus": "Status Overview",
     "lcDocuments": "Bank Documents",
@@ -49,5 +50,12 @@
     "allTenants": "All Tenants",
     "readOnly": "Read Only",
     "readOnlyDescription": "You are in read-only mode. No changes can be made."
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "yesterday": "yesterday"
   }
 }

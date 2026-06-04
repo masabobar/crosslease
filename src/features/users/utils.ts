@@ -4,10 +4,14 @@ import {
   GOVERNANCE_FILTER_ROLES,
   OPERATIONAL_TENANT_ROLES,
   SENSITIVE_AUTH_RESTRICTED_ROLES,
+  SYSTEM_ADMIN_ROLE,
   TENANT_FILTER_VISIBLE_ROLES,
   USER_MANAGEMENT_ALLOWED_ROLES,
 } from "@/features/users/types"
-import type { UserRole } from "@/features/users/types"
+import type { UserRole, UserModalActionType } from "@/features/users/types"
+import type { UserStatus } from "@/features/users/api/schema"
+
+const DATE_LOCALE = "en-GB"
 
 export type UserListColumnVisibility = {
   tenant: boolean
@@ -102,15 +106,13 @@ export type UserActionVisibility = {
 }
 
 export function getUserActionVisibility(
-  status: string,
-  role: string,
+  status: UserStatus,
+  role: UserRole,
   viewerRole: UserRole | null | undefined
 ): UserActionVisibility {
-  const isAdmin = viewerRole === "system_admin"
+  const isAdmin = viewerRole === SYSTEM_ADMIN_ROLE
   const canApprove =
-    isAdmin &&
-    status === "pending_activation" &&
-    FOUR_EYES_ROLES.includes(role as UserRole)
+    isAdmin && status === "pending_approval" && FOUR_EYES_ROLES.includes(role)
   const canResendInvitation = isAdmin && status === "invited"
   const canSuspend = isAdmin && status === "active"
   const canReactivate = isAdmin && status === "suspended"
@@ -131,23 +133,37 @@ export function getUserActionVisibility(
   }
 }
 
-export function formatLastLogin(dateStr: string | null): string {
+type Translator = (
+  key:
+    | "time.justNow"
+    | "time.minutesAgo"
+    | "time.hoursAgo"
+    | "time.yesterday"
+    | "time.daysAgo",
+  options?: Record<string, unknown>
+) => string
+
+export function formatLastLogin(dateStr: string | null, t: Translator): string {
   if (!dateStr) return "—"
 
   const date = new Date(dateStr)
   const now = new Date()
+  const MS_PER_MINUTE = 1000 * 60
+  const MS_PER_HOUR = MS_PER_MINUTE * 60
+  const MS_PER_DAY = MS_PER_HOUR * 24
+
   const diffMs = now.getTime() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / (1000 * 60))
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffMinutes = Math.floor(diffMs / MS_PER_MINUTE)
+  const diffHours = Math.floor(diffMs / MS_PER_HOUR)
+  const diffDays = Math.floor(diffMs / MS_PER_DAY)
 
-  if (diffMinutes < 1) return "just now"
-  if (diffMinutes < 60) return `${diffMinutes}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays === 1) return "yesterday"
-  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffMinutes < 1) return t("time.justNow")
+  if (diffMinutes < 60) return t("time.minutesAgo", { count: diffMinutes })
+  if (diffHours < 24) return t("time.hoursAgo", { count: diffHours })
+  if (diffDays === 1) return t("time.yesterday")
+  if (diffDays < 7) return t("time.daysAgo", { count: diffDays })
 
-  return date.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString(DATE_LOCALE, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -156,7 +172,7 @@ export function formatLastLogin(dateStr: string | null): string {
 
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—"
-  return new Date(dateStr).toLocaleDateString("en-GB", {
+  return new Date(dateStr).toLocaleDateString(DATE_LOCALE, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -166,9 +182,57 @@ export function formatDate(dateStr: string | null): string {
 export function formatDateTime(dateStr: string | null): string {
   if (!dateStr) return "—"
   const date = new Date(dateStr)
-  return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+  return `${date.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString(DATE_LOCALE, { hour: "2-digit", minute: "2-digit" })}`
 }
 
 export function getInitials(firstName: string, lastName: string): string {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
+
+type ActionToastKey =
+  | "actions.suspend.success.title"
+  | "actions.suspend.success.message"
+  | "actions.reactivate.success.title"
+  | "actions.reactivate.success.message"
+  | "actions.deactivate.success.title"
+  | "actions.deactivate.success.message"
+  | "actions.resend-invitation.success.title"
+  | "actions.resend-invitation.success.message"
+
+type ActionTranslator = (
+  key: ActionToastKey,
+  options?: Record<string, unknown>
+) => string
+
+export function buildActionToastPayload(
+  action: UserModalActionType,
+  name: string,
+  t: ActionTranslator
+): { variant: "success" | "warning"; title: string; message: string } {
+  const map: Record<
+    UserModalActionType,
+    { variant: "success" | "warning"; title: string; message: string }
+  > = {
+    suspend: {
+      variant: "warning",
+      title: t("actions.suspend.success.title"),
+      message: t("actions.suspend.success.message", { name }),
+    },
+    reactivate: {
+      variant: "success",
+      title: t("actions.reactivate.success.title"),
+      message: t("actions.reactivate.success.message", { name }),
+    },
+    deactivate: {
+      variant: "warning",
+      title: t("actions.deactivate.success.title"),
+      message: t("actions.deactivate.success.message", { name }),
+    },
+    "resend-invitation": {
+      variant: "success",
+      title: t("actions.resend-invitation.success.title"),
+      message: t("actions.resend-invitation.success.message", { name }),
+    },
+  }
+  return map[action]
 }

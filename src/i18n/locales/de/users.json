@@ -2,7 +2,24 @@
   "page": {
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
-    "inviteButton": "Invite users"
+    "inviteButton": "Invite users",
+    "filters": {
+      "label": "Filter:",
+      "roleLabel": "Rolle",
+      "tenantLabel": "Mandant",
+      "statusLabel": "Status",
+      "lastLoginLabel": "Letzter Login Zeitraum",
+      "clearAll": "Alle löschen",
+      "rolePill": "Rolle: {{value}}",
+      "tenantPill": "Mandant: {{value}}",
+      "mfaPill": "MFA: {{value}}",
+      "statusPill": "Status: {{value}}",
+      "lastLoginRangePill": "Letzter Login Zeitraum: {{range}}"
+    },
+    "pagination": {
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
   },
   "roles": {
     "system_admin": "Admin",
@@ -15,7 +32,8 @@
   "statuses": {
     "active": "Aktiv",
     "invited": "Eingeladen",
-    "pending_activation": "Ausstehend",
+    "pending_approval": "Ausstehend",
+    "rejected": "Abgelehnt",
     "suspended": "Gesperrt",
     "deactivated": "Deaktiviert",
     "expired": "Abgelaufen"
@@ -66,7 +84,8 @@
     "actions": {
       "cancel": "Abbrechen",
       "apply": "Anwenden"
-    }
+    },
+    "selectedCount": "{{count}} ausgewählt"
   },
   "inviteBanner": {
     "pendingApproval": {
@@ -308,5 +327,29 @@
       "cancel": "Abbrechen",
       "submit": "Benutzer erstellen & einladen"
     }
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "EMAIL_ALREADY_EXISTS": "Diese E-Mail-Adresse wird bereits verwendet."
+  },
+  "quickFilters": {
+    "searchPlaceholder": "Suchen",
+    "noTenantsAvailable": "Keine Mandanten verfügbar",
+    "advancedFilters": "Erweiterte Filter",
+    "export": "Exportieren",
+    "buttons": {
+      "role": "Rolle",
+      "tenant": "Mandant",
+      "mfa": "MFA",
+      "status": "Status",
+      "lastLogin": "Letzter Login"
+    }
+  },
+  "time": {
+    "justNow": "Gerade eben",
+    "minutesAgo": "Vor {{count}} Min.",
+    "hoursAgo": "Vor {{count}} Std.",
+    "yesterday": "Gestern",
+    "daysAgo": "Vor {{count}} Tagen"
   }
 }

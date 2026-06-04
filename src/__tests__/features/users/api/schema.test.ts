@@ -74,6 +74,11 @@ describe("UserListItemSchema", () => {
     expect(() => UserListItemSchema.parse(item)).toThrow()
   })
 
+  it("accepts leasing_company_user as a valid role (visible in Roles filter)", () => {
+    const item = { ...validUserListItem, role: "leasing_company_user" }
+    expect(() => UserListItemSchema.parse(item)).not.toThrow()
+  })
+
   it("rejects unknown status value", () => {
     const item = { ...validUserListItem, status: "unknown_status" }
     expect(() => UserListItemSchema.parse(item)).toThrow()
@@ -238,6 +243,11 @@ describe("UserDetailResponseSchema", () => {
     expect(() => UserDetailResponseSchema.parse(item)).toThrow()
   })
 
+  it("accepts leasing_company_user as a valid role", () => {
+    const item = { ...validUserDetail, role: "leasing_company_user" }
+    expect(() => UserDetailResponseSchema.parse(item)).not.toThrow()
+  })
+
   it("accepts absent last_activity (truly optional)", () => {
     const item = Object.fromEntries(
       Object.entries({
@@ -279,8 +289,12 @@ describe("UserDetailResponseSchema", () => {
 })
 
 describe("UserStatusSchema", () => {
-  it("accepts pending_activation", () => {
-    expect(() => UserStatusSchema.parse("pending_activation")).not.toThrow()
+  it("accepts pending_approval", () => {
+    expect(() => UserStatusSchema.parse("pending_approval")).not.toThrow()
+  })
+
+  it("accepts rejected", () => {
+    expect(() => UserStatusSchema.parse("rejected")).not.toThrow()
   })
 
   it("accepts invited", () => {

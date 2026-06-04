@@ -23,6 +23,7 @@
     "coreBankingIntegration": "Core-Banking-Integration",
     "auditTrail": "Audit-Trail",
     "logout": "Abmelden",
+    "poweredBy": "Powered by",
     "lcRequests": "Meine Anfragen",
     "lcStatus": "Statusübersicht",
     "lcDocuments": "Bankdokumente",
@@ -49,5 +50,12 @@
     "allTenants": "Alle Mandanten",
     "readOnly": "Nur Lesen",
     "readOnlyDescription": "Sie befinden sich im Nur-Lesen-Modus. Es können keine Änderungen vorgenommen werden."
+  },
+  "time": {
+    "justNow": "gerade eben",
+    "minutesAgo": "vor {{count}} Min.",
+    "hoursAgo": "vor {{count}} Std.",
+    "daysAgo": "vor {{count}} T.",
+    "yesterday": "gestern"
   }
 }

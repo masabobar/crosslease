@@ -16,6 +16,8 @@ type DatePickerProps = {
   placeholder?: string
   error?: boolean
   disabled?: boolean
+  minDate?: Date
+  maxDate?: Date
   id?: string
   "data-testid"?: string
   className?: string
@@ -27,6 +29,8 @@ function DatePicker({
   placeholder = "Select date",
   error,
   disabled,
+  minDate,
+  maxDate,
   id,
   "data-testid": testId,
   className,
@@ -34,6 +38,11 @@ function DatePicker({
   const [open, setOpen] = useState(false)
 
   const selected = value ? parseISO(value) : undefined
+
+  const disabledDays = [
+    ...(minDate ? [{ before: minDate }] : []),
+    ...(maxDate ? [{ after: maxDate }] : []),
+  ]
 
   return (
     <Popover open={open} onOpenChange={(isOpen: boolean) => setOpen(isOpen)}>
@@ -66,6 +75,7 @@ function DatePicker({
               setOpen(false)
             }
           }}
+          disabled={disabledDays.length > 0 ? disabledDays : undefined}
           initialFocus
         />
       </PopoverContent>

@@ -2,7 +2,7 @@ import { create } from "zustand"
 import { toast as sonnerToast } from "sonner"
 import type { ExternalToast } from "sonner"
 
-export type ToastVariant = "warning" | "success"
+export type ToastVariant = "default" | "info" | "success" | "warning" | "error"
 
 type ToastPayload = {
   variant: ToastVariant
@@ -18,6 +18,18 @@ type ToastState = {
 }
 
 let _activeId: string | number | null = null
+
+function dispatchToast(
+  variant: ToastVariant,
+  title: string,
+  opts: ExternalToast
+): string | number {
+  if (variant === "info") return sonnerToast.info(title, opts)
+  if (variant === "success") return sonnerToast.success(title, opts)
+  if (variant === "warning") return sonnerToast.warning(title, opts)
+  if (variant === "error") return sonnerToast.error(title, opts)
+  return sonnerToast(title, opts)
+}
 
 export const useToastStore = create<ToastState>(() => ({
   showToast: ({
@@ -36,10 +48,7 @@ export const useToastStore = create<ToastState>(() => ({
         : {}),
     }
 
-    _activeId =
-      variant === "success"
-        ? sonnerToast.success(title, opts)
-        : sonnerToast.warning(title, opts)
+    _activeId = dispatchToast(variant, title, opts)
   },
   dismissToast: () => {
     if (_activeId !== null) {

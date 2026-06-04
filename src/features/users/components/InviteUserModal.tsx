@@ -12,6 +12,7 @@ import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import {
+  LC_ONLY_ROLES,
   USER_ROLES,
   FOUR_EYES_ROLES,
   TENANT_SCOPED_ROLES,
@@ -20,14 +21,61 @@ import {
 import type { UserRole } from "@/features/users/types"
 import type { UserResponse } from "@/features/users/api/schema"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
+export type InviteSuccessResult =
+  | { type: "invited"; user: UserResponse }
+  | {
+      type: "pending_approval"
+      firstName: string
+      lastName: string
+      email: string
+      subjectId: string | null
+    }
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { ApiError } from "@/lib/api"
 
 type InviteUserModalProps = {
   open: boolean
   onClose: () => void
-  onSuccess?: (user: UserResponse) => void
+  onSuccess?: (result: InviteSuccessResult) => void
 }
+
+const formSchema = z
+  .object({
+    firstName: z.string().min(1, "required"),
+    lastName: z.string().min(1, "required"),
+    email: z.string().min(1, "required"),
+    role: z.enum(USER_ROLES, { error: "required" }),
+    tenant: z.string().optional(),
+    accessValidFrom: z.string().optional(),
+    accessValidUntil: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (TENANT_SCOPED_ROLES.includes(data.role) && !data.tenant) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "required",
+        path: ["tenant"],
+      })
+    }
+    if (AUDITOR_DATE_RANGE_ROLES.includes(data.role)) {
+      if (!data.accessValidFrom) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "required",
+          path: ["accessValidFrom"],
+        })
+      }
+      if (!data.accessValidUntil) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "required",
+          path: ["accessValidUntil"],
+        })
+      }
+    }
+  })
+
+type FormValues = z.infer<typeof formSchema>
 
 function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { t } = useTranslation("users")
@@ -35,46 +83,8 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { mutateAsync: invite } = useInviteUser()
   const { data: tenantsData, isLoading: isTenantsLoading } = useTenants()
 
-  const required = tCommon("validation.required")
-
-  const formSchema = z
-    .object({
-      firstName: z.string().min(1, required),
-      lastName: z.string().min(1, required),
-      email: z.string().min(1, required),
-      role: z.string().min(1, required),
-      tenant: z.string().optional(),
-      accessValidFrom: z.string().optional(),
-      accessValidUntil: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-      const role = data.role as UserRole
-      if (TENANT_SCOPED_ROLES.includes(role) && !data.tenant) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: required,
-          path: ["tenant"],
-        })
-      }
-      if (AUDITOR_DATE_RANGE_ROLES.includes(role)) {
-        if (!data.accessValidFrom) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: required,
-            path: ["accessValidFrom"],
-          })
-        }
-        if (!data.accessValidUntil) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: required,
-            path: ["accessValidUntil"],
-          })
-        }
-      }
-    })
-
-  type FormValues = z.infer<typeof formSchema>
+  const resolveMsg = (msg: string | undefined) =>
+    msg === "required" ? tCommon("validation.required") : msg
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,7 +92,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       firstName: "",
       lastName: "",
       email: "",
-      role: "",
+      role: undefined,
       tenant: "",
       accessValidFrom: "",
       accessValidUntil: "",
@@ -95,17 +105,14 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
     .filter(t => t.status === "active")
     .map(t => ({ value: t.id, label: t.name }))
 
-  const selectedRole = useWatch({ control: form.control, name: "role" }) as
-    | UserRole
-    | ""
+  const selectedRole = useWatch({ control: form.control, name: "role" })
 
   const isTenantScoped =
-    selectedRole !== "" && TENANT_SCOPED_ROLES.includes(selectedRole)
+    !!selectedRole && TENANT_SCOPED_ROLES.includes(selectedRole)
   const isAuditorDateRange =
-    selectedRole !== "" && AUDITOR_DATE_RANGE_ROLES.includes(selectedRole)
-  const isFourEyes =
-    selectedRole !== "" && FOUR_EYES_ROLES.includes(selectedRole)
-  const isLeasingUser = selectedRole === "leasing_company_user"
+    !!selectedRole && AUDITOR_DATE_RANGE_ROLES.includes(selectedRole)
+  const isFourEyes = !!selectedRole && FOUR_EYES_ROLES.includes(selectedRole)
+  const isLeasingUser = !!selectedRole && LC_ONLY_ROLES.includes(selectedRole)
 
   const tenantLabel = isLeasingUser
     ? t("modal.fields.tenantScope")
@@ -126,29 +133,41 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   }
 
   const onSubmit = form.handleSubmit(async data => {
-    const role = data.role as UserRole
     try {
       const result = await invite({
         first_name: data.firstName,
         last_name: data.lastName,
         email: data.email,
-        role,
+        role: data.role,
         tenant_id:
-          TENANT_SCOPED_ROLES.includes(role) && data.tenant
+          TENANT_SCOPED_ROLES.includes(data.role) && data.tenant
             ? data.tenant
             : undefined,
         access_valid_until:
-          AUDITOR_DATE_RANGE_ROLES.includes(role) && data.accessValidUntil
+          AUDITOR_DATE_RANGE_ROLES.includes(data.role) && data.accessValidUntil
             ? new Date(data.accessValidUntil).toISOString()
             : undefined,
       })
       form.reset()
       onClose()
-      onSuccess?.(result.user)
+      if ("user" in result) {
+        onSuccess?.({ type: "invited", user: result.user })
+      } else {
+        onSuccess?.({
+          type: "pending_approval",
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          subjectId: result.subject_id,
+        })
+      }
     } catch (err) {
       if (err instanceof ApiError) {
+        const errMessage = t(`errors.${err.code}`, {
+          defaultValue: t("errors.generic"),
+        })
         if (err.code === "EMAIL_ALREADY_EXISTS") {
-          form.setError("email", { message: err.message })
+          form.setError("email", { message: errMessage })
         } else if (err.errors?.length) {
           const fieldMap: Record<string, keyof typeof data> = {
             first_name: "firstName",
@@ -160,10 +179,10 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           }
           for (const e of err.errors) {
             const formField = fieldMap[e.field]
-            if (formField) form.setError(formField, { message: e.message })
+            if (formField) form.setError(formField, { message: errMessage })
           }
         } else {
-          form.setError("root", { message: err.message })
+          form.setError("root", { message: errMessage })
         }
       }
     }
@@ -204,7 +223,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             />
             {errors.firstName && (
               <p className="mt-1 text-sm text-destructive">
-                {errors.firstName.message}
+                {resolveMsg(errors.firstName.message)}
               </p>
             )}
           </div>
@@ -226,7 +245,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             />
             {errors.lastName && (
               <p className="mt-1 text-sm text-destructive">
-                {errors.lastName.message}
+                {resolveMsg(errors.lastName.message)}
               </p>
             )}
           </div>
@@ -250,7 +269,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           </p>
           {errors.email && (
             <p className="mt-1 text-sm text-destructive">
-              {errors.email.message}
+              {resolveMsg(errors.email.message)}
             </p>
           )}
         </div>
@@ -287,7 +306,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           />
           {errors.role && (
             <p className="mt-1 text-sm text-destructive">
-              {errors.role.message}
+              {resolveMsg(errors.role.message)}
             </p>
           )}
         </div>
@@ -336,7 +355,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             <p className="mt-1 text-sm text-muted-foreground">{tenantHint}</p>
             {errors.tenant && (
               <p className="mt-1 text-sm text-destructive">
-                {errors.tenant.message}
+                {resolveMsg(errors.tenant.message)}
               </p>
             )}
           </div>
@@ -369,7 +388,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 />
                 {errors.accessValidFrom && (
                   <p className="mt-1 text-sm text-destructive">
-                    {errors.accessValidFrom.message}
+                    {resolveMsg(errors.accessValidFrom.message)}
                   </p>
                 )}
               </div>
@@ -397,7 +416,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 />
                 {errors.accessValidUntil && (
                   <p className="mt-1 text-sm text-destructive">
-                    {errors.accessValidUntil.message}
+                    {resolveMsg(errors.accessValidUntil.message)}
                   </p>
                 )}
               </div>

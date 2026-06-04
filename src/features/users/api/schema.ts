@@ -3,14 +3,17 @@ import { USER_ROLES } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
 export const UserStatusSchema = z.enum([
-  "pending_activation",
+  "pending_approval",
   "invited",
   "active",
   "suspended",
   "deactivated",
   "expired",
+  "rejected",
 ])
 export type UserStatus = z.infer<typeof UserStatusSchema>
+
+export const USER_STATUSES = UserStatusSchema.options
 
 export const UserResponseSchema = z.object({
   id: z.string().uuid(),
@@ -20,7 +23,7 @@ export const UserResponseSchema = z.object({
   email: z.string().email(),
   role: z.enum(USER_ROLES),
   permissions: z.array(z.string()).default([]),
-  tenant_id: z.string().uuid().nullable(),
+  tenant_id: z.string().nullable(),
   status: UserStatusSchema,
   access_valid_until: z.string().nullable(),
   invited_by: z.string().uuid().nullable(),
@@ -33,20 +36,36 @@ export const UserResponseSchema = z.object({
 
 export type UserResponse = z.infer<typeof UserResponseSchema>
 
-export const InviteUserResponseSchema = z.object({
+// Direct user action response: { user: UserResponse } — approve, suspend, deactivate, etc.
+export const UserActionResponseSchema = z.object({
   user: UserResponseSchema,
 })
+export type UserActionResponse = z.infer<typeof UserActionResponseSchema>
 
+// Four-eyes path: API returns GovernedActionResponse instead of user data
+const GovernedActionInviteResponseSchema = z.object({
+  id: z.string().uuid(),
+  action_type: z.string(),
+  subject_id: z.string().uuid().nullable(),
+  status: z.string(),
+})
+
+// Invite can return either shape depending on whether the role requires 4-eye approval
+export const InviteUserResponseSchema = z.union([
+  UserActionResponseSchema,
+  GovernedActionInviteResponseSchema,
+])
 export type InviteUserResponse = z.infer<typeof InviteUserResponseSchema>
 
-export type InviteUserInput = {
-  first_name: string
-  last_name: string
-  email: string
-  role: (typeof USER_ROLES)[number]
-  tenant_id?: string | null
-  access_valid_until?: string | null
-}
+export const InviteUserInputSchema = z.object({
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  email: z.string().email(),
+  role: z.enum(USER_ROLES),
+  tenant_id: z.string().nullable().optional(),
+  access_valid_until: z.string().nullable().optional(),
+})
+export type InviteUserInput = z.infer<typeof InviteUserInputSchema>
 
 export const UserListItemSchema = z.object({
   id: z.string().uuid(),
@@ -55,7 +74,7 @@ export const UserListItemSchema = z.object({
   last_name: z.string(),
   email: z.string().email(),
   role: z.enum(USER_ROLES),
-  tenant_id: z.string().uuid().nullable(),
+  tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
   mfa_enabled: z.boolean().nullable().optional(),
   status: UserStatusSchema,
@@ -144,27 +163,31 @@ export const RESEND_REASONS = [
 ] as const
 export type ResendReason = (typeof RESEND_REASONS)[number]
 
-export type SuspendUserInput = {
-  reason: SuspensionReason
-  comment?: string
-  effective_from: string
-  effective_until?: string
-}
+export const SuspendUserInputSchema = z.object({
+  reason: z.enum(SUSPENSION_REASONS),
+  comment: z.string().optional(),
+  effective_from: z.string(),
+  effective_until: z.string().optional(),
+})
+export type SuspendUserInput = z.infer<typeof SuspendUserInputSchema>
 
-export type ReactivateUserInput = {
-  reason: ReactivationReason
-  comment?: string
-}
+export const ReactivateUserInputSchema = z.object({
+  reason: z.enum(REACTIVATION_REASONS),
+  comment: z.string().optional(),
+})
+export type ReactivateUserInput = z.infer<typeof ReactivateUserInputSchema>
 
-export type DeactivateUserInput = {
-  reason: DeactivationReason
-  comment?: string
-  effective_from: string
-}
+export const DeactivateUserInputSchema = z.object({
+  reason: z.enum(DEACTIVATION_REASONS),
+  comment: z.string().optional(),
+  effective_from: z.string(),
+})
+export type DeactivateUserInput = z.infer<typeof DeactivateUserInputSchema>
 
-export type ResendInvitationInput = {
-  reason: ResendReason
-}
+export const ResendInvitationInputSchema = z.object({
+  reason: z.enum(RESEND_REASONS),
+})
+export type ResendInvitationInput = z.infer<typeof ResendInvitationInputSchema>
 
 export const UserDetailResponseSchema = z.object({
   id: z.string().uuid(),
@@ -174,7 +197,7 @@ export const UserDetailResponseSchema = z.object({
   email: z.string().email(),
   role: z.enum(USER_ROLES),
   status: UserStatusSchema,
-  tenant_id: z.string().uuid().nullable(),
+  tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
   access_valid_until: z.string().nullable(),
   invited_by_user_id: z.string().nullable(),
