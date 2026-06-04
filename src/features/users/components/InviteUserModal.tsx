@@ -118,7 +118,9 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
     ? t("modal.fields.tenantScope")
     : t("modal.fields.tenant")
 
-  const tenantHint = t("modal.hints.tenantOperational")
+  const tenantHint = isAuditorDateRange
+    ? t("modal.hints.tenantAuditor")
+    : t("modal.hints.tenantOperational")
 
   const roleOptions: SelectOption[] = USER_ROLES.map(role => ({
     value: role,
