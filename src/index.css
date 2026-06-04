@@ -250,6 +250,7 @@
   left: auto !important;
   transform: none !important;
   order: 999;
+  margin-left: auto !important;
   width: 20px !important;
   height: 20px !important;
   border: none !important;
