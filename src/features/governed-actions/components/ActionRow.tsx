@@ -273,7 +273,7 @@ export function ActionRow({
             </Button>
           </div>
         )}
-        {(isExpired || isRejected) && isOwnSubmission && (
+        {isExpired && isOwnSubmission && (
           <Button
             size="sm"
             variant="outline"
