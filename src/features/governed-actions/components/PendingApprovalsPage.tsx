@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Search } from "lucide-react"
+import { Activity, Check, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
 import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
 import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
 import { ActionRow } from "@/features/governed-actions/components/ActionRow"
 import { ReviewRequestModal } from "@/features/governed-actions/components/ReviewRequestModal"
+import { ViewDetailsDrawer } from "@/features/governed-actions/components/ViewDetailsDrawer"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import type {
@@ -34,6 +35,9 @@ export default function PendingApprovalsPage() {
   const [search, setSearch] = useState("")
   const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [detailsAction, setDetailsAction] = useState<GovernedAction | null>(
+    null
+  )
 
   const statusFilter =
     activeTab === "all" ? undefined : ([activeTab] as GovernedActionStatus[])
@@ -78,7 +82,7 @@ export default function PendingApprovalsPage() {
       {
         onSuccess: () => {
           showToast({
-            variant: "default",
+            variant: "info",
             title: t("toast.withdrawn.title"),
             message: t("toast.withdrawn.message", {
               action: t(`actionTypes.${action.action_type}`),
@@ -106,38 +110,37 @@ export default function PendingApprovalsPage() {
     )
   }
 
-  function handleModalSuccess(
-    verdict: "approved" | "rejected",
-    action: GovernedAction
-  ) {
-    const actionLabel = t(`actionTypes.${action.action_type}`)
+  function resolvePersonName(action: GovernedAction): string {
+    const snap = action.display_snapshot as Record<string, unknown>
+    if (typeof snap.full_name === "string") return snap.full_name
+    const initiator = action.initiator_snapshot as Record<string, unknown>
+    return typeof initiator.first_name === "string"
+      ? `${initiator.first_name} ${initiator.last_name}`
+      : "—"
+  }
 
-    if (verdict === "approved") {
-      const snap = action.display_snapshot as Record<string, unknown>
-      const name =
-        typeof snap.full_name === "string"
-          ? snap.full_name
-          : ((): string => {
-              const initiator = action.initiator_snapshot as Record<
-                string,
-                unknown
-              >
-              return typeof initiator.first_name === "string"
-                ? `${initiator.first_name} ${initiator.last_name}`
-                : "—"
-            })()
-      showToast({
-        variant: "success",
-        title: t("toast.approved.title"),
-        message: t("toast.approved.message", { name, action: actionLabel }),
-      })
-    } else {
-      showToast({
-        variant: "default",
-        title: t("toast.rejected.title"),
-        message: t("toast.rejected.message", { action: actionLabel }),
-      })
-    }
+  function handleApproveSuccess(action: GovernedAction) {
+    const actionLabel = t(`actionTypes.${action.action_type}`)
+    const name = resolvePersonName(action)
+    showToast({
+      variant: "success",
+      title: t("toast.approved.title"),
+      message: t("toast.approved.message", { name, action: actionLabel }),
+    })
+  }
+
+  function handleViewDetails(action: GovernedAction) {
+    setDetailsAction(action)
+  }
+
+  function handleRejectSuccess(action: GovernedAction) {
+    const actionLabel = t(`actionTypes.${action.action_type}`)
+    const name = resolvePersonName(action)
+    showToast({
+      variant: "error",
+      title: t("toast.rejected.title"),
+      message: t("toast.rejected.message", { name, action: actionLabel }),
+    })
   }
 
   return (
@@ -204,15 +207,40 @@ export default function PendingApprovalsPage() {
 
         {!isLoading && filtered.length === 0 && (
           <div
-            className="flex flex-col items-center justify-center gap-2 py-16 text-center"
+            className="flex flex-col items-center gap-4 py-12 border border-border rounded-[10px] bg-card"
             data-testid="empty-state"
           >
-            <p className="text-sm font-medium text-foreground">
-              {t("empty.title")}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {t("empty.message")}
-            </p>
+            {activeTab === "all" && !search.trim() ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-3 rounded-[14px] bg-green-500/10">
+                  <Check size={24} className="text-green-600" />
+                </div>
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <p className="text-lg font-semibold text-foreground">
+                    {t("empty.allCaughtUp.title")}
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-[364px]">
+                    {t("empty.allCaughtUp.subtitle")}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1 text-center">
+                <p className="text-lg font-semibold text-foreground">
+                  {t("empty.filtered.title")}
+                </p>
+                <p className="text-sm text-muted-foreground max-w-[364px]">
+                  {t("empty.filtered.subtitle")}
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-2.5 py-2 text-sm font-medium border border-border rounded-[12px] bg-card hover:bg-muted transition-colors"
+            >
+              <Activity size={16} />
+              {t("empty.viewAuditLog")}
+            </button>
           </div>
         )}
 
@@ -226,9 +254,17 @@ export default function PendingApprovalsPage() {
               onReview={handleReview}
               onWithdraw={handleWithdraw}
               onReInitiate={handleReInitiate}
+              onViewDetails={handleViewDetails}
             />
           ))}
       </div>
+
+      {/* Details drawer */}
+      <ViewDetailsDrawer
+        open={!!detailsAction}
+        onClose={() => setDetailsAction(null)}
+        action={detailsAction}
+      />
 
       {/* Review modal */}
       <ReviewRequestModal
@@ -238,7 +274,8 @@ export default function PendingApprovalsPage() {
           if (!open) setReviewAction(null)
         }}
         action={reviewAction}
-        onSuccess={handleModalSuccess}
+        onApproveSuccess={handleApproveSuccess}
+        onRejectSuccess={handleRejectSuccess}
       />
     </div>
   )

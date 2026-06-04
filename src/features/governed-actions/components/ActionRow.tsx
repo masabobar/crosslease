@@ -94,6 +94,7 @@ type Props = {
   onReview: (action: GovernedAction) => void
   onWithdraw: (action: GovernedAction) => void
   onReInitiate: (action: GovernedAction) => void
+  onViewDetails: (action: GovernedAction) => void
 }
 
 export function ActionRow({
@@ -103,6 +104,7 @@ export function ActionRow({
   onReview,
   onWithdraw,
   onReInitiate,
+  onViewDetails,
 }: Props) {
   const { t } = useTranslation("pendingApprovals")
   const isOwnSubmission = action.initiator_id === currentUserId
@@ -193,11 +195,17 @@ export function ActionRow({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={cn(
-        "flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border",
+        "flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors",
         BORDER_COLOR[action.status]
       )}
       data-testid={`approval-row-${action.id}`}
+      onClick={() => onViewDetails(action)}
+      onKeyDown={e => {
+        if (e.key === "Enter" || e.key === " ") onViewDetails(action)
+      }}
     >
       {/* Left: info */}
       <div className="flex flex-col gap-2 min-w-0">
@@ -239,7 +247,10 @@ export function ActionRow({
           <Button
             size="sm"
             data-testid={`review-btn-${action.id}`}
-            onClick={() => onReview(action)}
+            onClick={e => {
+              e.stopPropagation()
+              onReview(action)
+            }}
           >
             {t("row.reviewRequest")}
           </Button>
@@ -253,7 +264,10 @@ export function ActionRow({
               size="sm"
               variant="outline"
               data-testid={`withdraw-btn-${action.id}`}
-              onClick={() => onWithdraw(action)}
+              onClick={e => {
+                e.stopPropagation()
+                onWithdraw(action)
+              }}
             >
               {t("row.withdraw")}
             </Button>
@@ -264,7 +278,10 @@ export function ActionRow({
             size="sm"
             variant="outline"
             data-testid={`re-initiate-btn-${action.id}`}
-            onClick={() => onReInitiate(action)}
+            onClick={e => {
+              e.stopPropagation()
+              onReInitiate(action)
+            }}
           >
             {t("row.reInitiate")}
           </Button>

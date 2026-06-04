@@ -58,9 +58,18 @@
     "roleAtTime": "Rolle zum Zeitpunkt",
     "tenantAtTime": "Mandant zum Zeitpunkt",
     "submittedAt": "Eingereicht am",
+    "submission": "EINREICHUNG",
+    "reasonFromSubmitter": "GRUND DES EINREICHERS",
+    "requestChain": "ANFRAGEKETTE",
+    "request": "Anfrage",
+    "chainCurrentRequest": "Aktuelle Anfrage",
+    "mfaRequired": "Genehmigung erfordert Schritt-hoch-MFA-Verifizierung",
+    "justificationLabel": "Ihre Begründung",
+    "justificationHint": "Erforderlich · im Prüfprotokoll gespeichert",
     "justification": "IHRE BEGRÜNDUNG",
     "justificationPlaceholder": "Kommentar hinzufügen (optional für Genehmigung, erforderlich für Ablehnung)",
     "justificationRequired": "Erforderlich",
+    "justificationTooShort": "Mindestens {{min}} Zeichen erforderlich",
     "cancel": "Abbrechen",
     "reject": "Ablehnen",
     "approve": "Genehmigen",
@@ -78,8 +87,8 @@
       "message": "Anfrage wurde genehmigt. {{name}}s {{action}} ist jetzt in Kraft."
     },
     "rejected": {
-      "title": "Anfrage abgelehnt",
-      "message": "{{action}}-Anfrage wurde abgelehnt."
+      "title": "Abgelehnte Anfrage",
+      "message": "Anfrage wurde abgelehnt. {{name}}s {{action}} tritt nicht in Kraft."
     },
     "withdrawn": {
       "title": "Anfrage zurückgezogen",
@@ -91,8 +100,38 @@
     }
   },
   "empty": {
-    "title": "Keine Anfragen gefunden",
-    "message": "Es gibt keine Genehmigungsanfragen, die den aktuellen Filtern entsprechen."
+    "allCaughtUp": {
+      "title": "Alles erledigt",
+      "subtitle": "Keine ausstehenden Genehmigungen erfordern Ihre Überprüfung. Neue Anfragen anderer Admins erscheinen hier in Echtzeit."
+    },
+    "filtered": {
+      "title": "Keine Anfragen gefunden",
+      "subtitle": "Wechseln Sie zu Alle, um die vollständige Historie anzuzeigen."
+    },
+    "viewAuditLog": "Prüfprotokoll anzeigen"
+  },
+  "drawer": {
+    "action": "AKTION",
+    "actionType": "Aktionstyp",
+    "affectedUser": "Betroffener Benutzer",
+    "tenant": "Mandant",
+    "change": "ÄNDERUNG",
+    "previous": "VORHERIG",
+    "current": "AKTUELL",
+    "submission": "EINREICHUNG",
+    "name": "Name",
+    "roleAtTime": "Rolle zum Zeitpunkt",
+    "tenantAtTime": "Mandant zum Zeitpunkt",
+    "submittedAt": "Eingereicht am",
+    "resolvedAt": "Erledigt am",
+    "reasonFromSubmitter": "GRUND DES EINREICHERS",
+    "approver": "GENEHMIGER",
+    "approverJustification": "BEGRÜNDUNG DES GENEHMIGERS",
+    "requestChain": "ANFRAGEKETTE",
+    "request": "Anfrage",
+    "chainCurrentRequest": "Aktuelle Anfrage",
+    "email": "E-Mail",
+    "role": "Rolle"
   },
   "view": "Anzeigen",
   "roles": {
