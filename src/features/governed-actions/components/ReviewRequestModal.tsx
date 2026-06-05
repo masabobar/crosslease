@@ -367,6 +367,7 @@ export function ReviewRequestModal({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <SectionLabel>{t("modal.requestChain")}</SectionLabel>
+            {/* NOTE: raw <button> — inline text + chevron toggle in a flex row; shadcn Button adds padding that misaligns the justify-between layout */}
             <button
               type="button"
               className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -397,6 +398,7 @@ export function ReviewRequestModal({
             {t("modal.justificationLabel")}
           </label>
           <div className="border border-border rounded-xl bg-white px-2.5 py-1">
+            {/* NOTE: raw <textarea> — renders borderless inside a custom styled container; shadcn Textarea's own border/bg would create a double-border */}
             <textarea
               className="w-full h-16 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none resize-none"
               value={comment}

@@ -30,6 +30,7 @@ export function GeneratePasswordButton({
   }
 
   return (
+    // NOTE: raw <button> — compact xs-text utility with 13px icons; shadcn Button's fixed height (h-9), padding, and base font-size break the layout
     <button
       type="button"
       onClick={handleClick}

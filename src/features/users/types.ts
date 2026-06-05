@@ -125,6 +125,7 @@ export type UserModalActionType = Exclude<UserActionType, "approve">
 
 export const SYSTEM_ADMIN_ROLE = "system_admin" as const
 export const SUPPORT_USER_ROLE = "support_user" as const
+export const AUDITOR_ROLE = "auditor" as const
 
 export const PLATFORM_USER_ROLES: readonly UserRole[] = [
   "system_admin",

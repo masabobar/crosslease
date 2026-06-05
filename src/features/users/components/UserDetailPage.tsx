@@ -56,6 +56,7 @@ import type {
 } from "@/features/users/api/schema"
 import {
   AUDITOR_DATE_RANGE_ROLES,
+  AUDITOR_ROLE,
   PLATFORM_USER_ROLES,
   READ_ONLY_VIEWER_ROLES,
   SYSTEM_ADMIN_ROLE,
@@ -876,7 +877,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           onEdit={
             isAdmin
               ? () => {
-                  if (user.role === "auditor") {
+                  if (user.role === AUDITOR_ROLE) {
                     setIsEditingAuditorPeriod(true)
                   } else {
                     setIsEditingRole(true)

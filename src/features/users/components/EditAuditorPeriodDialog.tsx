@@ -18,6 +18,7 @@ import {
   AUDITOR_PERIOD_UPDATE_REASONS,
   type AuditorPeriodUpdateReason,
 } from "@/features/users/api/schema"
+import { AUDITOR_ROLE } from "@/features/users/types"
 import { formatDate } from "@/features/users/utils"
 
 const AuditorPeriodFormSchema = z.object({
@@ -99,7 +100,7 @@ export function EditAuditorPeriodDialog({
                 <span className="text-sm text-foreground">
                   {t("detail.page.editRole.currentRole")}
                 </span>
-                <RoleBadge role="auditor" />
+                <RoleBadge role={AUDITOR_ROLE} />
               </div>
 
               {/* Separator */}
