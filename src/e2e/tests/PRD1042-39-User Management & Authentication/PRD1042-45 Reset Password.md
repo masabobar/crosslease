@@ -11,32 +11,32 @@ Figma design: Node 167:18629, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Set a new 
 
 ## Blocked ACs (no scenarios generated)
 
-| AC | Reason | Blocking dependency |
-|----|--------|---------------------|
+| AC    | Reason                                                                                                     | Blocking dependency                          |
+| ----- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | AC-02 | Token-in-body assertion requires ability to inspect server response body and verify token is never exposed | D17 — TEST_JWT_SECRET or test-forge endpoint |
-| AC-06 | Token expiry enforcement requires configurable TTL override to avoid real-time wait for expiry | D17 — TEST_JWT_SECRET or test-forge endpoint |
+| AC-06 | Token expiry enforcement requires configurable TTL override to avoid real-time wait for expiry             | D17 — TEST_JWT_SECRET or test-forge endpoint |
 
 ---
 
 ## AC Scope Filter
 
-| AC | Description | Classification | Rationale |
-|----|-------------|----------------|-----------|
-| AC-01 | Reset request returns generic success regardless of email existence | `main-error` | Account enumeration prevention — primary security behavior at the Forgot Password step |
-| AC-02 | HTTP response + body identical; token never in response body | `Blocked` | Server-side assertion; requires D17 (test-forge endpoint); token-in-body is API integration concern |
-| AC-03 | Rate limiting — 3/email/hour, IP-based throttle | `separate-feature` | Requires dedicated rate-limiting spec and controlled request injection infrastructure |
-| AC-04 | Cryptographically secure token; hashed storage; never in response | `edge-case` | Backend implementation detail; API integration test layer |
-| AC-05 | Reset link delivered via email only; configurable expiry | `happy-path` | Core happy-path step — user receives email with reset link |
-| AC-06 | Token expiry enforced server-side | `Blocked` | Token lifecycle; requires time-manipulation override (D17); separate spec |
-| AC-07 | Valid token grants access to password reset page | `happy-path` | Core happy-path step — valid token renders "Set a new password" screen |
-| AC-08 | Invalid/expired/used token blocked; generic error message | `main-error` | Primary error branch — directly blocks the flow |
-| AC-09 | Password validation server-side; confirm mismatch blocks submission | `main-error` | Core UI validation visible in design |
-| AC-10 | Password updated; MFA gate for security-sensitive roles | `happy-path` | Core submission step; MFA path bifurcation scoped to one additional scenario |
-| AC-11 | Old password invalidated post-reset | `edge-case` | Post-reset consequence; API integration or login-feature test |
-| AC-12 | All active sessions terminated | `separate-feature` | Cross-device session invalidation; separate session management spec |
-| AC-13 | Single-use token; replay prevented | `edge-case` | Token lifecycle; backend integration test |
-| AC-14 | Post-reset login with new password only | `main-error` | Core post-reset verification — must be able to log in with new password and be denied with old |
-| AC-15 | Audit logging without sensitive data exposure | `edge-case` | Backend/BAIT compliance; not an E2E UI flow |
+| AC    | Description                                                         | Classification     | Rationale                                                                                           |
+| ----- | ------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
+| AC-01 | Reset request returns generic success regardless of email existence | `main-error`       | Account enumeration prevention — primary security behavior at the Forgot Password step              |
+| AC-02 | HTTP response + body identical; token never in response body        | `Blocked`          | Server-side assertion; requires D17 (test-forge endpoint); token-in-body is API integration concern |
+| AC-03 | Rate limiting — 3/email/hour, IP-based throttle                     | `separate-feature` | Requires dedicated rate-limiting spec and controlled request injection infrastructure               |
+| AC-04 | Cryptographically secure token; hashed storage; never in response   | `edge-case`        | Backend implementation detail; API integration test layer                                           |
+| AC-05 | Reset link delivered via email only; configurable expiry            | `happy-path`       | Core happy-path step — user receives email with reset link                                          |
+| AC-06 | Token expiry enforced server-side                                   | `Blocked`          | Token lifecycle; requires time-manipulation override (D17); separate spec                           |
+| AC-07 | Valid token grants access to password reset page                    | `happy-path`       | Core happy-path step — valid token renders "Set a new password" screen                              |
+| AC-08 | Invalid/expired/used token blocked; generic error message           | `main-error`       | Primary error branch — directly blocks the flow                                                     |
+| AC-09 | Password validation server-side; confirm mismatch blocks submission | `main-error`       | Core UI validation visible in design                                                                |
+| AC-10 | Password updated; MFA gate for security-sensitive roles             | `happy-path`       | Core submission step; MFA path bifurcation scoped to one additional scenario                        |
+| AC-11 | Old password invalidated post-reset                                 | `edge-case`        | Post-reset consequence; API integration or login-feature test                                       |
+| AC-12 | All active sessions terminated                                      | `separate-feature` | Cross-device session invalidation; separate session management spec                                 |
+| AC-13 | Single-use token; replay prevented                                  | `edge-case`        | Token lifecycle; backend integration test                                                           |
+| AC-14 | Post-reset login with new password only                             | `main-error`       | Core post-reset verification — must be able to log in with new password and be denied with old      |
+| AC-15 | Audit logging without sensitive data exposure                       | `edge-case`        | Backend/BAIT compliance; not an E2E UI flow                                                         |
 
 **Gherkin generated for:** AC-01, AC-05, AC-07, AC-08, AC-09, AC-10, AC-14
 **Blocked (pending stubs only):** AC-02, AC-06
@@ -46,18 +46,18 @@ Figma design: Node 167:18629, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Set a new 
 
 ## Scenarios summary
 
-| Tag | Scenario | AC | Priority |
-|-----|----------|----|----------|
-| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails) | AC-01 | P0 |
-| `@happy-path` | Valid reset request triggers email delivery with reset link | AC-05 | P0 |
-| `@happy-path` | Opening a valid reset link shows the Set a new password screen | AC-07 | P0 |
-| `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states) | AC-08 | P0 |
-| `@main-error` | Weak password that does not meet policy is rejected | AC-09 | P0 |
-| `@main-error` | Mismatched password confirmation blocks submission | AC-09 | P0 |
-| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles) | AC-10 | P0 |
-| `@happy-path` | Security-sensitive role requires MFA verification before password is committed | AC-10 | P1 |
-| `@main-error` | User can log in with new password after successful reset | AC-14 | P0 |
-| `@main-error` | Old password is rejected after successful reset | AC-14 | P0 |
+| Tag           | Scenario                                                                                        | AC    | Priority |
+| ------------- | ----------------------------------------------------------------------------------------------- | ----- | -------- |
+| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)     | AC-01 | P0       |
+| `@happy-path` | Valid reset request triggers email delivery with reset link                                     | AC-05 | P0       |
+| `@happy-path` | Opening a valid reset link shows the Set a new password screen                                  | AC-07 | P0       |
+| `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states) | AC-08 | P0       |
+| `@main-error` | Weak password that does not meet policy is rejected                                             | AC-09 | P0       |
+| `@main-error` | Mismatched password confirmation blocks submission                                              | AC-09 | P0       |
+| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)           | AC-10 | P0       |
+| `@happy-path` | Security-sensitive role requires MFA verification before password is committed                  | AC-10 | P1       |
+| `@main-error` | User can log in with new password after successful reset                                        | AC-14 | P0       |
+| `@main-error` | Old password is rejected after successful reset                                                 | AC-14 | P0       |
 
 Active scenario blocks: 10 (3 Outlines + 7 Scenarios)
 
@@ -242,17 +242,17 @@ Feature: Password Reset (US 28.3 — PRD1042-45)
 
 ## Blockers and Gaps Summary
 
-| Severity | Item | AC | Resolution required from |
-|----------|------|----|--------------------------|
-| MAJOR | Forgot Password screen absent from Figma — only "Set a new password" frame provided (step 3 of 5) | AC-01, AC-05 | Designer — provide Figma frame for the email-input step (step 1 of the flow) |
-| MAJOR | Email confirmation ("check your inbox") screen absent from Figma | AC-05 | Designer — add link-sent / email-confirmation screen |
-| MAJOR | Invalid/expired token error screen absent from Figma | AC-08 | Designer — add token error state screen; needed for copy assertions |
-| MAJOR | Confirm Password field absent from the "Set a new password" design frame | AC-09 | Designer — add Confirm Password input to the dialog before POM generation |
-| MAJOR | Password checklist has no met/unmet visual states — all 5 items show the same icon | AC-09 | Designer — add two checklist item states: unmet (grey/red) and met (green) |
-| MAJOR | Password updated success screen absent from Figma | AC-10, AC-14 | Designer — add success/completion screen |
-| MAJOR | MFA verification step absent from Figma | AC-10 | Designer + Auth provider decision (R1) |
-| MAJOR | Hardcoded policy rules in UI checklist contradict AC-09 configurability requirement | AC-09 | Architecture review — checklist rules must be driven by API/config endpoint, not hardcoded in the component |
-| BLOCKER (D17) | TEST_JWT_SECRET / test-forge endpoint | AC-02, AC-06 | Dev team — provide test token forge mechanism |
-| BLOCKER (R1) | Auth provider unconfirmed — MFA gate scenarios cannot be implemented until provider is selected | AC-10 | Dev team / PO — confirm auth provider selection |
-| INFO | Password checklist behaviour not specified — real-time inline validation vs. static reminder list | AC-09 | BA / Designer — confirm whether checklist updates as user types or only on submit |
-| INFO | Reset page routing not confirmed — dedicated route (/reset-password?token=xxx) vs. modal overlay | AC-07 | BA / Dev — confirm routing decision; impacts POM locator strategy |
+| Severity      | Item                                                                                              | AC           | Resolution required from                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| MAJOR         | Forgot Password screen absent from Figma — only "Set a new password" frame provided (step 3 of 5) | AC-01, AC-05 | Designer — provide Figma frame for the email-input step (step 1 of the flow)                                |
+| MAJOR         | Email confirmation ("check your inbox") screen absent from Figma                                  | AC-05        | Designer — add link-sent / email-confirmation screen                                                        |
+| MAJOR         | Invalid/expired token error screen absent from Figma                                              | AC-08        | Designer — add token error state screen; needed for copy assertions                                         |
+| MAJOR         | Confirm Password field absent from the "Set a new password" design frame                          | AC-09        | Designer — add Confirm Password input to the dialog before POM generation                                   |
+| MAJOR         | Password checklist has no met/unmet visual states — all 5 items show the same icon                | AC-09        | Designer — add two checklist item states: unmet (grey/red) and met (green)                                  |
+| MAJOR         | Password updated success screen absent from Figma                                                 | AC-10, AC-14 | Designer — add success/completion screen                                                                    |
+| MAJOR         | MFA verification step absent from Figma                                                           | AC-10        | Designer + Auth provider decision (R1)                                                                      |
+| MAJOR         | Hardcoded policy rules in UI checklist contradict AC-09 configurability requirement               | AC-09        | Architecture review — checklist rules must be driven by API/config endpoint, not hardcoded in the component |
+| BLOCKER (D17) | TEST_JWT_SECRET / test-forge endpoint                                                             | AC-02, AC-06 | Dev team — provide test token forge mechanism                                                               |
+| BLOCKER (R1)  | Auth provider unconfirmed — MFA gate scenarios cannot be implemented until provider is selected   | AC-10        | Dev team / PO — confirm auth provider selection                                                             |
+| INFO          | Password checklist behaviour not specified — real-time inline validation vs. static reminder list | AC-09        | BA / Designer — confirm whether checklist updates as user types or only on submit                           |
+| INFO          | Reset page routing not confirmed — dedicated route (/reset-password?token=xxx) vs. modal overlay  | AC-07        | BA / Dev — confirm routing decision; impacts POM locator strategy                                           |

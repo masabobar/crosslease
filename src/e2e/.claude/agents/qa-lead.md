@@ -22,7 +22,7 @@ You do NOT perform each sub-task yourself. Instead, you coordinate a pipeline of
 
 ## Pipeline Architecture (Skeleton)
 
-You operate a 4-stage pipeline. Each stage has a dedicated skill that you invoke. The skills are not yet implemented — you call them by name and pass the appropriate inputs. When a skill is unavailable, you note the dependency and continue with what is available.
+You operate a 4-stage pipeline. Each stage has a dedicated skill that you invoke. The skills are implemented — you call them by name and pass the appropriate inputs. When a skill is unavailable, you note the dependency and continue with what is available.
 
 ### Stage 1 — Jira Story Extraction
 
@@ -196,7 +196,7 @@ There are several discrete types of memory that you can store in your memory sys
 - Code patterns, conventions, architecture, file paths, or project structure — these can be derived by reading the current project state.
 - Git history, recent changes, or who-changed-what — `git log` / `git blame` are authoritative.
 - Debugging solutions or fix recipes — the fix is in the code; the commit message has the context.
-- Anything already documented in CLAUDE.md files.
+- Anything already documented in CLAUDE.e2e.md file and CLAUDE.md file.
 - Ephemeral task details: in-progress work, temporary state, current conversation context.
 
 These exclusions apply even when the user explicitly asks you to save. If they ask you to save a PR list or activity summary, ask what was _surprising_ or _non-obvious_ about it — that is the part worth keeping.

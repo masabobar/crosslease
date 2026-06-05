@@ -1,13 +1,13 @@
 ---
 name: playwright-architect
-description: "Convert Gherkin BDD test suites from src/e2e/tests/ into executable Playwright spec files and Page Object Model classes. Invoke after manual-test-suite-generator has produced a .md file for a story. Reads each Given-When-Then scenario and generates a matching .spec.ts in src/e2e/specs/ and a POM class in src/e2e/pages/. Enforces the fixture import rule, getByRole/getByTestId locator strategy, and marks blocked scenarios with test.fixme. Never writes to src/e2e/tests/ — that directory is read-only input."
+description: "Convert Gherkin BDD test suites from src/e2e/tests/ into executable Playwright spec files and Page Object Model classes. Reads Given-When-Then scenario and generates a matching .spec.ts in src/e2e/specs/ and a POM class in src/e2e/pages/. Enforces the fixture import rule, getByRole/getByTestId locator strategy, and marks blocked scenarios with test.fixme. Never writes to src/e2e/tests/ — that directory is read-only input."
 allowed-tools: Read, Write, Bash, TaskCreate, TaskUpdate
 model: sonnet
 ---
 
 # playwright-architect
 
-Convert Gherkin BDD scenarios into executable Playwright TypeScript specs and POM classes. This is Stage 5 of the qa-lead pipeline.
+Convert Gherkin BDD scenarios into executable Playwright TypeScript specs and POM classes.
 
 ## Invocation
 
@@ -42,8 +42,6 @@ The `.md` files in `src/e2e/tests/` follow this structure:
 - Locators are `readonly` class properties defined in the constructor using this priority order:
   1. `page.getByRole(role, { name })` — preferred for buttons, inputs, links, headings
   2. `page.getByTestId('descriptor')` — when a `data-testid` is known or specified
-  3. `page.getByLabel('label text')` — for labeled form fields. As an example. It will not be used on the project.
-  4. `page.getByPlaceholder('text')` — for placeholder-only inputs. As an example. It will not be used on the project.
   - Never use CSS class selectors or Tailwind utility classes as locators
 - Methods encapsulate multi-step interactions; specs call methods, not raw locators
 - No assertions inside POM methods — assertions belong in the spec
@@ -211,16 +209,42 @@ test.describe("PRD1042-43 — User Login", () => {
 
   // AC-03 / AC-04 / AC-06 / AC-07 — happy path
   const roles = [
-    { role: "system_admin",         email: process.env.TEST_ADMIN_EMAIL ?? "",   landing: "/dashboard" },
-    { role: "front_office",         email: process.env.TEST_FO_EMAIL ?? "",      landing: "/dashboard" },
-    { role: "back_office_risk",     email: process.env.TEST_BO_EMAIL ?? "",      landing: "/dashboard" },
-    { role: "support_user",         email: process.env.TEST_SUPPORT_EMAIL ?? "", landing: "/dashboard" },
-    { role: "auditor",              email: process.env.TEST_AUDITOR_EMAIL ?? "", landing: "/dashboard" },
-    { role: "leasing_company_user", email: process.env.TEST_LC_USER_EMAIL ?? "", landing: "/workspace" },
+    {
+      role: "system_admin",
+      email: process.env.TEST_ADMIN_EMAIL ?? "",
+      landing: "/dashboard",
+    },
+    {
+      role: "front_office",
+      email: process.env.TEST_FO_EMAIL ?? "",
+      landing: "/dashboard",
+    },
+    {
+      role: "back_office_risk",
+      email: process.env.TEST_BO_EMAIL ?? "",
+      landing: "/dashboard",
+    },
+    {
+      role: "support_user",
+      email: process.env.TEST_SUPPORT_EMAIL ?? "",
+      landing: "/dashboard",
+    },
+    {
+      role: "auditor",
+      email: process.env.TEST_AUDITOR_EMAIL ?? "",
+      landing: "/dashboard",
+    },
+    {
+      role: "leasing_company_user",
+      email: process.env.TEST_LC_USER_EMAIL ?? "",
+      landing: "/workspace",
+    },
   ]
 
   for (const { role, email, landing } of roles) {
-    test(`valid credentials redirect ${role} to ${landing} (AC-03, AC-04, AC-06, AC-07)`, async ({ page }) => {
+    test(`valid credentials redirect ${role} to ${landing} (AC-03, AC-04, AC-06, AC-07)`, async ({
+      page,
+    }) => {
       await loginPage.login(email, process.env.TEST_VALID_PASSWORD ?? "")
       await expect(page).toHaveURL(landing)
     })
@@ -228,7 +252,10 @@ test.describe("PRD1042-43 — User Login", () => {
 
   // AC-08 — invalid credentials
   test("wrong password shows generic error without revealing account existence (AC-08)", async () => {
-    await loginPage.login(process.env.TEST_FO_EMAIL ?? "", process.env.TEST_INVALID_PASSWORD ?? "")
+    await loginPage.login(
+      process.env.TEST_FO_EMAIL ?? "",
+      process.env.TEST_INVALID_PASSWORD ?? ""
+    )
     await expect(loginPage.errorMessage).toBeVisible()
     await expect(loginPage.errorMessage).not.toContainText("password")
   })
@@ -281,6 +308,33 @@ await page.waitForTimeout(2000) // ❌
 
 ---
 
+## Code style enforcement
+
+All generated POM classes and spec files must conform to the project's ESLint and Prettier configuration before being considered complete.
+
+### Rules to follow when generating code
+
+- **Indentation:** 2 spaces — no tabs
+- **Quotes:** double quotes for strings (Prettier enforced)
+- **Trailing commas:** ES5 style — trailing comma after the last item in multi-line arrays, objects, and parameter lists
+- **Semicolons:** always present
+- **Import order:** type imports (`import type`) before value imports; grouped by external → internal (`@/` alias) → relative
+- **No unused variables or imports** — remove any import that is not referenced in the file
+- **No `any`** — use `unknown` + narrowing, or a proper Playwright/TypeScript type
+
+### Post-generation verification
+
+After writing each file, run the following commands from the repo root and fix any reported issues before returning:
+
+```bash
+pnpm lint          # ESLint — must exit with 0 warnings and 0 errors
+pnpm type-check    # TypeScript — must pass with no errors
+```
+
+If either command fails, fix the violations in the generated file and re-run before marking the task complete. Do not suppress lint errors with `// eslint-disable` comments.
+
+---
+
 ## Pre-flight checklist before writing files
 
 1. `src/e2e/fixtures/test.ts` exists — if it only contains `// code here`, do not write specs yet; flag this as a blocker
@@ -289,3 +343,4 @@ await page.waitForTimeout(2000) // ❌
 4. Every blocked AC from the `.md` header has a corresponding `test.fixme()` in the spec
 5. No `import { test, expect } from '@playwright/test'` — only from `../../fixtures/test`
 6. No `any` in any generated file
+7. After writing all files: `pnpm lint` and `pnpm type-check` pass with zero errors

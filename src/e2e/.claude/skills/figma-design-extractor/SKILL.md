@@ -7,7 +7,7 @@ model: sonnet
 
 ## Invocation
 
-Use `mcp__plugin_figma_figma__get_design_context` as the primary extraction method. Use `mcp__plugin_figma_figma__get_screenshot` only as supplementary.
+Use Figma REST API approach as the primary extraction method. Use `mcp__plugin_figma_figma__get_screenshot` only as supplementary.
 
 ## Extraction steps
 

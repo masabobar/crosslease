@@ -15,3 +15,6 @@
 - [Project — PRD1042-46 Story Processed](project-prd1042-46.md) — US 28.9 Account Lockout, 13 ACs, DoR PASS, no Figma (backend security story), Stage 3 WARNINGS, 5 scenario blocks, 3 MAJOR design gaps
 - [Project — PRD1042-47 Story Processed](project-prd1042-47.md) — US 28.10 Session Management, 13 ACs, DoR PASS, no Figma (backend security story), Stage 3 WARNINGS, 5 scenario blocks, 2 MAJOR design gaps
 - [Project — PRD1042-69 Story Processed](project-prd1042-69.md) — US 28.25 Secure Logout, 9 ACs, DoR PASS, no Figma (backend security story), Stage 3 WARNINGS, 5 scenario blocks, AC-08 blocked by R1/PRD1042-76
+- [Project — PRD1042-61 Story Processed](project-prd1042-61.md) — US 28.17 User Suspension, 15 ACs, DoR PASS, no Figma, Stage 3 SKIPPED, 7 scenario blocks, Four-Eyes privilege-tier rules, last-admin guard
+- [Project — PRD1042-62 Story Processed](project-prd1042-62.md) — US 28.18 User Restore Access, 12 ACs, DoR PASS, Figma PARTIAL (MCP rate-limited, node 424:3848), Stage 3 WARNINGS, 7 scenario blocks, Four-Eyes tier rules, AC-06 numbering error
+- [Project — PRD1042-63 Story Processed](project-prd1042-63.md) — US 28.19 User Deactivation, 13 ACs, DoR PASS, Figma PARTIAL (MCP rate-limited, node 424:7183), Stage 3 WARNINGS, 6 scenario blocks, Four-Eyes tier rules, AC-12 lifecycle closure, Effective From semantics ambiguous

@@ -1,7 +1,7 @@
 ---
 name: manual-test-suite-generator
-description: "Convert Jira user story acceptance criteria into executable BDD test cases using Gherkin syntax. Invoke when the qa-lead pipeline reaches Stage 4, after jira-story-extractor (dor_status PASS) and requirements-design-comparator (comparison_status CLEAN or WARNINGS) have completed for the same story. Saves one .md file per story in src/e2e/tests/ named after the story ID and title subject (e.g. PRD1042-43 User Login.md). The generated Gherkin contains ONLY happy-path and main-error scenarios — edge-case and separate-feature ACs are listed in the scope filter table but produce NO Gherkin block. Flags uncovered ACs."
-allowed-tools: Read, Write, TaskCreate, TaskUpdate
+description: "Convert Jira user story acceptance criteria into executable BDD test cases using Gherkin syntax. Invoke when the qa-lead pipeline reaches Stage 4, after jira-story-extractor (dor_status PASS) and requirements-design-comparator (comparison_status CLEAN or WARNINGS) have completed for the same story. Saves one .md file per story under src/e2e/tests/<Epic ID> <Epic Name>/ (e.g. src/e2e/tests/PRD1042-39 User Management/PRD1042-43 User Login.md). Creates the epic folder first if it does not already exist. The generated Gherkin contains ONLY happy-path and main-error scenarios — edge-case and separate-feature ACs are listed in the scope filter table but produce NO Gherkin block. Flags uncovered ACs."
+allowed-tools: Read, Write, Bash, TaskCreate, TaskUpdate
 model: sonnet
 ---
 
@@ -14,18 +14,35 @@ Generate BDD test scenarios from a story, its design data, and the comparison re
 Called by the qa-lead agent with all three Stage 1–3 outputs sharing the same `story_id`.
 
 **Preconditions — skip if either fails:**
+
 - `dor_status: "PASS"` on the story object
 - `comparison_status: "CLEAN"` or `"WARNINGS"` on the comparison report
 
 On skip:
+
 ```
 [SKIP] Story <ID> — <reason>. Resolve before generating tests.
 ```
 
 ## File output
 
-- **Location:** `src/e2e/tests/`
-- **One file per story:** `<story-id> <Title Subject>.md` (e.g. `PRD1042-43 User Login.md`)
+### Epic folder resolution (run before writing the file)
+
+1. Retrieve the parent epic from the story object returned by `jira-story-extractor` (`epic_id` + `epic_name` fields).
+2. Construct the folder name: `<epic_id> <epic_name>` — title-case the epic name, strip special characters.
+   - Example: epic ID `PRD1042-39`, epic name `User Management` → folder `PRD1042-39 User Management`
+3. Check whether `src/e2e/tests/<folder>/` already exists:
+   ```bash
+   ls "src/e2e/tests/<folder>" 2>/dev/null || mkdir -p "src/e2e/tests/<folder>"
+   ```
+4. Write the story file inside that folder.
+
+If the story object does not carry `epic_id` or `epic_name`, call `mcp__jira__get_issue` with the story ID and read the `Epic Link` or `Parent` field to resolve the epic before proceeding.
+
+### File path and naming
+
+- **Full path:** `src/e2e/tests/<Epic ID> <Epic Name>/<story-id> <Title Subject>.md`
+  - Example: `src/e2e/tests/PRD1042-39 User Management/PRD1042-43 User Login.md`
 - **Title Subject** — the shortest noun phrase that identifies the story's subject (2-4 words, title case, no special characters)
 - **Format:** Single structured Markdown document with one unified Feature file block — never split into per-AC code blocks (see Output format section)
 - Write the file using the `Write` tool; overwrite if it already exists
@@ -55,19 +72,20 @@ User stories contain acceptance criteria (ACs) that must be testable and executa
 
 For every AC in the story, assign one of five classifications:
 
-| Classification | Meaning | Action |
-|---|---|---|
-| `happy-path` | Core success flow — user completes the primary action | INCLUDE — 1 Scenario Outline covering all roles |
-| `main-error` | Directly blocks the user from completing the core workflow | INCLUDE — 1–2 scenarios max per error type |
-| `Blocked` | Would have a Gherkin scenario but a specific named dependency (D-ID or R-ID) makes it untestable at E2E layer right now | SKIP — list in Blocked ACs table AND in scope filter with `Blocked` classification; no Gherkin, no pending stub |
-| `edge-case` | Boundary condition, implementation detail, rare state, or validation rule | SKIP — appear in scope filter table only, no Gherkin |
-| `separate-feature` | Has its own user story, own ticket, or own test file | SKIP — appear in scope filter table only, no Gherkin |
+| Classification     | Meaning                                                                                                                 | Action                                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `happy-path`       | Core success flow — user completes the primary action                                                                   | INCLUDE — 1 Scenario Outline covering all roles                                                                 |
+| `main-error`       | Directly blocks the user from completing the core workflow                                                              | INCLUDE — 1–2 scenarios max per error type                                                                      |
+| `Blocked`          | Would have a Gherkin scenario but a specific named dependency (D-ID or R-ID) makes it untestable at E2E layer right now | SKIP — list in Blocked ACs table AND in scope filter with `Blocked` classification; no Gherkin, no pending stub |
+| `edge-case`        | Boundary condition, implementation detail, rare state, or validation rule                                               | SKIP — appear in scope filter table only, no Gherkin                                                            |
+| `separate-feature` | Has its own user story, own ticket, or own test file                                                                    | SKIP — appear in scope filter table only, no Gherkin                                                            |
 
 > **Hard rule:** The `.md` file contains Gherkin blocks **only** for `happy-path` and `main-error` ACs. All other classifications are listed in the scope filter table with their rationale but produce **no Gherkin** — not conditional, not commented-out, not marked "fixme". Omit them entirely from the Gherkin output.
 
 **Classification rules:**
+
 - If the AC requires a specific named infrastructure dependency (D16, D17, D18, D19, D20, D21, etc.) to be testable → `Blocked`; record the dependency ID in the Blocked ACs table
-- If the AC describes timing behaviour (timeouts, clock skew, token TTL) → `separate-feature`
+- If the AC describes timing behaviour (timeouts, clock skew, token TTL) → `edge-case`
 - If the AC describes internal implementation (JWT flags, key management, audit log format) → `edge-case`
 - If the AC is about lockout after N attempts → `separate-feature`
 - If the AC is about email/password format validation → `edge-case`
@@ -92,6 +110,7 @@ US 28.1: User Login
 ```
 
 **Identify scope — Happy Path + Main Errors:**
+
 - ✅ Happy path: Valid credentials → authenticated & redirected
 - ✅ Main error #1: Wrong password → generic error (no account exposure)
 - ✅ Main error #2: Suspended/deactivated user → login blocked
@@ -99,11 +118,11 @@ US 28.1: User Login
 
 ### 2. Build Role-AC Matrix (Minimal)
 
-| Role | Happy Path | Error #1 | Error #2 |
-|------|-----------|----------|----------|
-| Bank Admin | ✓ Login → /admin | ✓ Wrong password → error | ✓ Suspended → blocked |
-| Front Office | ✓ Login → /fo | — | — |
-| All other roles | ✓ (Scenario Outline) | — | — |
+| Role            | Happy Path           | Error #1                 | Error #2              |
+| --------------- | -------------------- | ------------------------ | --------------------- |
+| Bank Admin      | ✓ Login → /admin     | ✓ Wrong password → error | ✓ Suspended → blocked |
+| Front Office    | ✓ Login → /fo        | —                        | —                     |
+| All other roles | ✓ (Scenario Outline) | —                        | —                     |
 
 **Rule:** Test 1 role in detail with all error scenarios. Use Scenario Outline for happy path across all roles. Avoid role × error combinations (test explosion).
 
@@ -193,14 +212,14 @@ Scenario Outline: Blocked users cannot log in (AC-07)
 
 In addition to AC-driven scenarios, always generate these scenarios when the story triggers the condition:
 
-| Trigger | Auto-generated scenario |
-|---|---|
-| Any AC involving role access | Negative: wrong role cannot perform the action (403) |
-| Four-Eyes (submit + approve) | Negative: same user cannot submit and approve |
-| Tenant isolation | Negative: cross-tenant request returns 404, not 403 |
-| Async op (cashflow / score) | Verify stale indicator appears; result updates after completion |
-| State transition | Valid transition succeeds; invalid transition is blocked |
-| Regulatory (MaRisk / BAIT / GDPR) | Compliance scenario tagged `@compliance` |
+| Trigger                           | Auto-generated scenario                                         |
+| --------------------------------- | --------------------------------------------------------------- |
+| Any AC involving role access      | Negative: wrong role cannot perform the action (403)            |
+| Four-Eyes (submit + approve)      | Negative: same user cannot submit and approve                   |
+| Tenant isolation                  | Negative: cross-tenant request returns 404, not 403             |
+| Async op (cashflow / score)       | Verify stale indicator appears; result updates after completion |
+| State transition                  | Valid transition succeeds; invalid transition is blocked        |
+| Regulatory (MaRisk / BAIT / GDPR) | Compliance scenario tagged `@compliance`                        |
 
 ---
 
@@ -254,6 +273,7 @@ Feature: User Login (US 28.1 — PRD1042-43)
 **Coverage:** 1 happy path Outline (5 roles) + 2 error scenarios = **7 total**. Fast. Focused. Maintainable.
 
 **Not included (edge cases):**
+
 - ❌ Non-existent email (same error as wrong password, redundant)
 - ❌ Account lockout after 5 attempts (separate feature: US 28.9)
 - ❌ Session timeout after 15min (separate feature: US 28.10)
@@ -302,12 +322,14 @@ Feature: Role-Based Access Control (US 28.12)
 ## Main error states vs edge cases
 
 **Main Error States** (INCLUDE):
+
 - Blocks user from completing core workflow
 - Directly related to AC in user story
 - Affects primary user roles
 - Examples: Wrong password, suspended user, unauthorized role, missing required field
 
 **Edge Cases** (SKIP):
+
 - Optimization or enhancement scenarios
 - Extreme boundary conditions
 - Implementation details (timing, token formats)
@@ -316,22 +338,23 @@ Feature: Role-Based Access Control (US 28.12)
 
 ### Decision table
 
-| Scenario | Type | Include? | Why |
-|----------|------|----------|-----|
-| User enters wrong password | Main error | ✅ | Blocks login |
-| User enters email without @ | Edge case | ❌ | Validation rule, separate feature |
-| Suspended user tries to log in | Main error | ✅ | Blocks login |
-| Deactivated user tries to log in | Main error | ✅ | Blocks login |
-| Account locked after 5 attempts | Edge case | ❌ | Separate feature (US 28.9) |
-| Session timeout after 15min | Edge case | ❌ | Separate feature (US 28.10) |
-| Unauthorized role tries API action | Main error | ✅ | Blocks action |
-| User without specific permission | Edge case | ❌ | RBAC policy detail |
+| Scenario                           | Type       | Include? | Why                               |
+| ---------------------------------- | ---------- | -------- | --------------------------------- |
+| User enters wrong password         | Main error | ✅       | Blocks login                      |
+| User enters email without @        | Edge case  | ❌       | Validation rule, separate feature |
+| Suspended user tries to log in     | Main error | ✅       | Blocks login                      |
+| Deactivated user tries to log in   | Main error | ✅       | Blocks login                      |
+| Account locked after 5 attempts    | Edge case  | ❌       | Separate feature (US 28.9)        |
+| Session timeout after 15min        | Edge case  | ❌       | Separate feature (US 28.10)       |
+| Unauthorized role tries API action | Main error | ✅       | Blocks action                     |
+| User without specific permission   | Edge case  | ❌       | RBAC policy detail                |
 
 ---
 
 ## AC coverage check
 
 After generating scenarios, run a coverage check and print the result to terminal output only — do not write it to the `.md` file:
+
 - Every `happy-path` and `main-error` AC must have ≥ 1 scenario tracing to it
 - Print gaps as `[UNCOVERED AC: AC-X]` in terminal output
 - Every scenario must cite its AC via `@ac-XX` tag and title suffix `(AC-XX)`
@@ -377,6 +400,7 @@ Scenario: Unauthorized API action rejected
 ```
 
 **Tag format:**
+
 - `@us-X.X` — User Story ID (e.g., `@us-28.1`)
 - `@ac-XX` — Acceptance Criterion (e.g., `@ac-03`)
 - `@p0` / `@p1` / `@p2` / `@p3` — Priority (P0 = blocker, P3 = nice-to-have)
@@ -389,7 +413,7 @@ Scenario: Unauthorized API action rejected
 
 The `.md` file is a **single structured document** with six mandatory sections in this exact order. Do not include Stage 3 comparison reports, traceability notes, or pipeline metadata. All Gherkin scenarios go into one unified Feature file block — never split into per-AC code blocks.
 
-```markdown
+````markdown
 # <Story ID> — <US Number> | <Epic Area> | <Story Title>
 
 Generated: <YYYY-MM-DD>
@@ -403,20 +427,20 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 
 ## Blocked ACs (no scenarios generated)
 
-| AC | Reason | Blocking dependency |
-|----|--------|---------------------|
+| AC    | Reason                             | Blocking dependency             |
+| ----- | ---------------------------------- | ------------------------------- |
 | AC-XX | <why this AC cannot be tested E2E> | <dependency ID> — <short label> |
 
 ---
 
 ## AC Scope Filter
 
-| AC | Description | Classification | Rationale |
-|----|-------------|----------------|-----------|
-| AC-01 | <AC description> | `happy-path` | <why included and how tested> |
-| AC-02 | <AC description> | `Blocked` | <dependency and why it blocks E2E testing> |
-| AC-03 | <AC description> | `separate-feature` | <which other story/spec covers it> |
-| AC-04 | <AC description> | `edge-case` | <why it is not an E2E concern> |
+| AC    | Description      | Classification     | Rationale                                  |
+| ----- | ---------------- | ------------------ | ------------------------------------------ |
+| AC-01 | <AC description> | `happy-path`       | <why included and how tested>              |
+| AC-02 | <AC description> | `Blocked`          | <dependency and why it blocks E2E testing> |
+| AC-03 | <AC description> | `separate-feature` | <which other story/spec covers it>         |
+| AC-04 | <AC description> | `edge-case`        | <why it is not an E2E concern>             |
 
 **Gherkin generated for:** AC-01, AC-05, AC-07, ...
 **Blocked (pending stubs only):** AC-02, AC-06, ...
@@ -428,10 +452,10 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 
 **Order: happy-path rows first, main-error rows second.** Never interleave.
 
-| Tag | Scenario | AC | Priority |
-|-----|----------|----|----------|
-| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0 |
-| `@main-error` | <Scenario title> | AC-XX | P0 |
+| Tag           | Scenario                                             | AC    | Priority |
+| ------------- | ---------------------------------------------------- | ----- | -------- |
+| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       |
+| `@main-error` | <Scenario title>                                     | AC-XX | P0       |
 
 Active scenario blocks: <N> (<N> Outlines + <N> Scenarios)
 
@@ -473,16 +497,18 @@ Feature: <Story Title> (US X.X — <story-id>)
   @<tag> @ac-YY @p0
   Scenario: ...
 ```
+````
 
 ---
 
 ## Blockers and Gaps Summary
 
-| Severity | Item | AC | Resolution required from |
-|----------|------|----|--------------------------|
-| MAJOR | <design gap or ambiguity> | AC-XX | <Designer / BA / Dev team / PO> — <action required> |
-| BLOCKER (<ID>) | <dependency label> | AC-XX | <Dev team> — <what to provide> |
-| INFO | <open question that does not block test generation> | AC-XX | <who answers it> |
+| Severity       | Item                                                | AC    | Resolution required from                            |
+| -------------- | --------------------------------------------------- | ----- | --------------------------------------------------- |
+| MAJOR          | <design gap or ambiguity>                           | AC-XX | <Designer / BA / Dev team / PO> — <action required> |
+| BLOCKER (<ID>) | <dependency label>                                  | AC-XX | <Dev team> — <what to provide>                      |
+| INFO           | <open question that does not block test generation> | AC-XX | <who answers it>                                    |
+
 ```
 
 ### Format rules (enforced — do not deviate)
@@ -496,3 +522,4 @@ Feature: <Story Title> (US X.X — <story-id>)
 7. **Blockers and Gaps Summary** — always the last section; `Severity` values are `CRITICAL`, `MAJOR`, `MINOR`, `BLOCKER (<ID>)`, or `INFO`; `BLOCKER` entries use the dependency ID in parentheses
 
 **Framework:** Cucumber + Playwright | **Language:** Gherkin
+```

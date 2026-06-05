@@ -11,22 +11,22 @@ Figma design: Node 2162:6928, file j5hq5cQgHWdOtzLvSX0jvj — Screen "Design" (S
 
 ## AC Scope Filter
 
-| AC | Description | Classification | Rationale |
-|----|-------------|----------------|-----------|
-| AC-01 | Display only users within authorized visibility scope | `happy-path` | Core success flow — 1 Scenario Outline covering Power User/Admin, Support, Auditor roles showing scoped user records |
-| AC-02 | Tenant isolation — cross-tenant records hidden; server-side enforced | `main-error` | Security invariant — cross-tenant API request must return 404 not 403 (tenant isolation domain rule) |
-| AC-03 | LC User denied — nav hidden, route blocked, no placeholder exposed | `main-error` | Entire role blocked from module; 2 scenarios: nav entry absent + route access blocked |
-| AC-04 | Correct current status displayed per user lifecycle state | `happy-path` | Core list rendering — status column assertion included in AC-01 Outline examples |
-| AC-05 | Role visible per permissions; FO + BO/Risk mutually exclusive | `edge-case` | Role column rendering implicitly verified in AC-01; exclusivity enforcement tested in User Create/Edit story |
-| AC-06 | Sorting by name, role, status, tenant, last login | `happy-path` | Core interactive feature of the list — 1 scenario for sort trigger + result order validation |
-| AC-07 | Pagination — max 50 server-side; tamper-resistant tokens; oversized requests rejected | `happy-path` | Core navigation feature — 1 scenario for pagination interaction and server-cap enforcement |
-| AC-08 | Direct API enumeration blocked; backend scope enforced | `edge-case` | Backend/API-layer enforcement only; not verifiable at E2E UI layer; belongs in API integration test suite |
-| AC-09 | Auditor access revoked immediately on engagement expiry | `separate-feature` | Requires AUDITOR_VALIDITY_MINUTES env override (D21); belongs in auditor-access.spec.ts |
-| AC-10 | Support/Auditor cannot modify; modification actions unavailable | `main-error` | Directly blocks unauthorized modification; 1 scenario verifying action suppression |
-| AC-11 | Access to User List View audit-logged (actor, timestamp, tenant, scope, type) | `edge-case` | Backend audit trail; not verifiable at E2E UI layer; belongs in backend integration test suite |
-| AC-12 | Role exclusivity enforcement — FO + BO/Risk mutually exclusive; server-side | `separate-feature` | Assignment enforcement belongs to User Create/Edit story; not triggered from list view |
-| AC-13 | Governance lineage preserved — immutable point-in-time role/scope/tenant/approval | `edge-case` | Audit reconstruction; belongs in User Detail View (PRD1042-73) and audit trail features |
-| AC-14 | Export limited to authorized scope; cross-tenant blocked; server-validated; audit-logged | `happy-path` | Export button present in design; happy-path export trigger (1 scenario) + cross-tenant block as main-error (1 scenario) |
+| AC    | Description                                                                              | Classification     | Rationale                                                                                                               |
+| ----- | ---------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Display only users within authorized visibility scope                                    | `happy-path`       | Core success flow — 1 Scenario Outline covering Power User/Admin, Support, Auditor roles showing scoped user records    |
+| AC-02 | Tenant isolation — cross-tenant records hidden; server-side enforced                     | `main-error`       | Security invariant — cross-tenant API request must return 404 not 403 (tenant isolation domain rule)                    |
+| AC-03 | LC User denied — nav hidden, route blocked, no placeholder exposed                       | `main-error`       | Entire role blocked from module; 2 scenarios: nav entry absent + route access blocked                                   |
+| AC-04 | Correct current status displayed per user lifecycle state                                | `happy-path`       | Core list rendering — status column assertion included in AC-01 Outline examples                                        |
+| AC-05 | Role visible per permissions; FO + BO/Risk mutually exclusive                            | `edge-case`        | Role column rendering implicitly verified in AC-01; exclusivity enforcement tested in User Create/Edit story            |
+| AC-06 | Sorting by name, role, status, tenant, last login                                        | `happy-path`       | Core interactive feature of the list — 1 scenario for sort trigger + result order validation                            |
+| AC-07 | Pagination — max 50 server-side; tamper-resistant tokens; oversized requests rejected    | `happy-path`       | Core navigation feature — 1 scenario for pagination interaction and server-cap enforcement                              |
+| AC-08 | Direct API enumeration blocked; backend scope enforced                                   | `edge-case`        | Backend/API-layer enforcement only; not verifiable at E2E UI layer; belongs in API integration test suite               |
+| AC-09 | Auditor access revoked immediately on engagement expiry                                  | `separate-feature` | Requires AUDITOR_VALIDITY_MINUTES env override (D21); belongs in auditor-access.spec.ts                                 |
+| AC-10 | Support/Auditor cannot modify; modification actions unavailable                          | `main-error`       | Directly blocks unauthorized modification; 1 scenario verifying action suppression                                      |
+| AC-11 | Access to User List View audit-logged (actor, timestamp, tenant, scope, type)            | `edge-case`        | Backend audit trail; not verifiable at E2E UI layer; belongs in backend integration test suite                          |
+| AC-12 | Role exclusivity enforcement — FO + BO/Risk mutually exclusive; server-side              | `separate-feature` | Assignment enforcement belongs to User Create/Edit story; not triggered from list view                                  |
+| AC-13 | Governance lineage preserved — immutable point-in-time role/scope/tenant/approval        | `edge-case`        | Audit reconstruction; belongs in User Detail View (PRD1042-73) and audit trail features                                 |
+| AC-14 | Export limited to authorized scope; cross-tenant blocked; server-validated; audit-logged | `happy-path`       | Export button present in design; happy-path export trigger (1 scenario) + cross-tenant block as main-error (1 scenario) |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-06, AC-07, AC-10, AC-14
 **Blocked (pending stubs only):** none
@@ -36,17 +36,17 @@ Figma design: Node 2162:6928, file j5hq5cQgHWdOtzLvSX0jvj — Screen "Design" (S
 
 ## Scenarios summary
 
-| Tag | Scenario | AC | Priority |
-|-----|----------|----|----------|
-| `@happy-path` | Authorized users see only their scoped user records (Scenario Outline — 3 roles) | AC-01, AC-04 | P0 |
-| `@happy-path` | Sorting by column produces ordered results (AC-06) | AC-06 | P0 |
-| `@happy-path` | Paginating through large user lists (AC-07) | AC-07 | P0 |
-| `@happy-path` | Export trigger downloads records within authorized scope (AC-14) | AC-14 | P1 |
-| `@main-error` | Cross-tenant request returns 404 not 403 (AC-02) | AC-02 | P0 |
-| `@main-error` | User Management nav entry absent for Leasing Company User (AC-03) | AC-03 | P0 |
-| `@main-error` | Direct route access blocked for Leasing Company User (AC-03) | AC-03 | P0 |
-| `@main-error` | Support and Auditor see no modification actions in user rows (AC-10) | AC-10 | P0 |
-| `@main-error` | Cross-tenant export attempt blocked server-side (AC-14) | AC-14 | P0 |
+| Tag           | Scenario                                                                         | AC           | Priority |
+| ------------- | -------------------------------------------------------------------------------- | ------------ | -------- |
+| `@happy-path` | Authorized users see only their scoped user records (Scenario Outline — 3 roles) | AC-01, AC-04 | P0       |
+| `@happy-path` | Sorting by column produces ordered results (AC-06)                               | AC-06        | P0       |
+| `@happy-path` | Paginating through large user lists (AC-07)                                      | AC-07        | P0       |
+| `@happy-path` | Export trigger downloads records within authorized scope (AC-14)                 | AC-14        | P1       |
+| `@main-error` | Cross-tenant request returns 404 not 403 (AC-02)                                 | AC-02        | P0       |
+| `@main-error` | User Management nav entry absent for Leasing Company User (AC-03)                | AC-03        | P0       |
+| `@main-error` | Direct route access blocked for Leasing Company User (AC-03)                     | AC-03        | P0       |
+| `@main-error` | Support and Auditor see no modification actions in user rows (AC-10)             | AC-10        | P0       |
+| `@main-error` | Cross-tenant export attempt blocked server-side (AC-14)                          | AC-14        | P0       |
 
 Active scenario blocks: 9 (1 Outline + 8 Scenarios)
 
@@ -217,12 +217,12 @@ Feature: User List View (US 28.4 — PRD1042-71)
 
 ## Blockers and Gaps Summary
 
-| Severity | Item | AC | Resolution required from |
-|----------|------|----|--------------------------|
-| MAJOR | No LC User sidebar nav variant designed — nav suppression tested against requirements only | AC-03 | Designer — add LC User sidebar variant showing User Management absent; add redirect/404 behavior frame |
-| MAJOR | Status badge variants for Expired, Locked, Archived not confirmed in Figma structural data — color differentiation unverifiable without design variant frames | AC-04 | Designer — add all 8 status badge variants (Invited, Pending Activation, Active, Suspended, Deactivated, Expired, Locked, Archived) as visible component states |
-| MAJOR | No read-only row variant for Support/Auditor — actions column suppression tested against requirements only | AC-10 | Designer — add role-variant table row showing actions column hidden for Support and Auditor |
-| MAJOR | No expired-engagement UI state for Auditor — AC-09 excluded as separate-feature; confirm whether UI redirect is in scope for this story | AC-09 | BA — confirm: does expired auditor engagement produce a UI state on the User List View, or is it purely a session invalidation (redirect to login)? |
-| INFO | AMB-02: LC User direct URL access behavior unspecified — does the system return 404 silently or redirect to dashboard? Test asserts "redirected away or 404" to accommodate both | AC-03 | BA — confirm exact behavior for LC User direct URL navigation to /users |
-| INFO | AMB-03: Export button present in design but no format selector or dropdown visible — test asserts download initiated without asserting format | AC-14 | Designer/BA — confirm export format (CSV/XLSX/both) and whether a format dialog appears |
-| INFO | Column 7 (32px) intent unclear — could be checkbox (bulk actions) or row-level action icon; bulk action scope not confirmed in this story | AC-01 | BA — confirm: are bulk actions in scope for US 28.4? If yes, which roles can trigger them? |
+| Severity | Item                                                                                                                                                                             | AC    | Resolution required from                                                                                                                                        |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MAJOR    | No LC User sidebar nav variant designed — nav suppression tested against requirements only                                                                                       | AC-03 | Designer — add LC User sidebar variant showing User Management absent; add redirect/404 behavior frame                                                          |
+| MAJOR    | Status badge variants for Expired, Locked, Archived not confirmed in Figma structural data — color differentiation unverifiable without design variant frames                    | AC-04 | Designer — add all 8 status badge variants (Invited, Pending Activation, Active, Suspended, Deactivated, Expired, Locked, Archived) as visible component states |
+| MAJOR    | No read-only row variant for Support/Auditor — actions column suppression tested against requirements only                                                                       | AC-10 | Designer — add role-variant table row showing actions column hidden for Support and Auditor                                                                     |
+| MAJOR    | No expired-engagement UI state for Auditor — AC-09 excluded as separate-feature; confirm whether UI redirect is in scope for this story                                          | AC-09 | BA — confirm: does expired auditor engagement produce a UI state on the User List View, or is it purely a session invalidation (redirect to login)?             |
+| INFO     | AMB-02: LC User direct URL access behavior unspecified — does the system return 404 silently or redirect to dashboard? Test asserts "redirected away or 404" to accommodate both | AC-03 | BA — confirm exact behavior for LC User direct URL navigation to /users                                                                                         |
+| INFO     | AMB-03: Export button present in design but no format selector or dropdown visible — test asserts download initiated without asserting format                                    | AC-14 | Designer/BA — confirm export format (CSV/XLSX/both) and whether a format dialog appears                                                                         |
+| INFO     | Column 7 (32px) intent unclear — could be checkbox (bulk actions) or row-level action icon; bulk action scope not confirmed in this story                                        | AC-01 | BA — confirm: are bulk actions in scope for US 28.4? If yes, which roles can trigger them?                                                                      |
