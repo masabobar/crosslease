@@ -19,7 +19,7 @@ const VALID_SORT_KEYS: readonly string[] = [
 
 const VALID_STATUSES: readonly string[] = USER_STATUSES
 
-export const PAGE_SIZES = [10, 20, 50, 100] as const
+export const PAGE_SIZES = [10, 25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 
 type ParamUpdate = Record<string, string | readonly string[] | null>

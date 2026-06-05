@@ -193,6 +193,8 @@ const validUserDetail = {
   status: "active",
   tenant_id: null,
   tenant_name: null,
+  phone_number: null,
+  pending_email: null,
   access_valid_until: null,
   invited_by_user_id: null,
   invited_at: null,
@@ -201,7 +203,10 @@ const validUserDetail = {
   created_at: "2026-01-01T00:00:00Z",
 }
 
-import { UserDetailResponseSchema } from "@/features/users/api/schema"
+import {
+  UserDetailResponseSchema,
+  UpdateAccessPeriodRequestSchema,
+} from "@/features/users/api/schema"
 
 describe("UserDetailResponseSchema", () => {
   it("accepts a valid minimal payload (all optional fields absent)", () => {
@@ -288,6 +293,65 @@ describe("UserDetailResponseSchema", () => {
       )
     )
     expect(() => UserDetailResponseSchema.parse(item)).not.toThrow()
+  })
+})
+
+describe("UpdateAccessPeriodRequestSchema", () => {
+  const valid = {
+    new_access_valid_until: "2027-05-23T00:00:00.000Z",
+    reason: "regulatory_audit",
+  }
+
+  it("accepts a valid payload", () => {
+    expect(() => UpdateAccessPeriodRequestSchema.parse(valid)).not.toThrow()
+  })
+
+  it("accepts all valid reason values", () => {
+    const reasons = [
+      "regulatory_audit",
+      "internal_audit",
+      "compliance_review",
+      "investigation",
+      "temporary_review_access",
+      "other",
+    ]
+    for (const reason of reasons) {
+      expect(() =>
+        UpdateAccessPeriodRequestSchema.parse({ ...valid, reason })
+      ).not.toThrow()
+    }
+  })
+
+  it("rejects an unknown reason", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({
+        ...valid,
+        reason: "unknown_reason",
+      })
+    ).toThrow()
+  })
+
+  it("rejects empty new_access_valid_until", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({
+        ...valid,
+        new_access_valid_until: "",
+      })
+    ).toThrow()
+  })
+
+  it("rejects missing new_access_valid_until", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({ reason: valid.reason })
+    ).toThrow()
+  })
+
+  it("rejects missing reason", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({
+        new_access_valid_until: valid.new_access_valid_until,
+      })
+    ).toThrow()
   })
 })
 

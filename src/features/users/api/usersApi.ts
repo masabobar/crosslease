@@ -23,7 +23,14 @@ import type {
   DeactivateUserInput,
   ResendInvitationInput,
   UserDetail,
+  EditUserInput,
+  ChangeEmailInput,
+  ChangeRoleInput,
+  UpdateAccessPeriodInput,
+  UpdateSelfInput,
 } from "./schema"
+import { GovernedActionSchema } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governed-actions/api/schema"
 
 export const USERS_QUERY_KEYS = {
   lists: () => ["users", "list"] as const,
@@ -129,4 +136,56 @@ export async function downloadExportFile(jobId: string): Promise<Blob> {
   return api.get(`/users/export/download/${jobId}`, {
     responseType: "blob",
   }) as Promise<Blob>
+}
+
+export async function editUser(
+  id: string,
+  input: EditUserInput
+): Promise<UserDetail> {
+  const data = await api.patch(`/users/${id}`, input)
+  return UserDetailResponseSchema.parse(data)
+}
+
+export async function changeUserEmail(
+  id: string,
+  input: ChangeEmailInput
+): Promise<GovernedAction> {
+  const data = await api.post(`/users/${id}/change-email`, input)
+  return GovernedActionSchema.parse(data)
+}
+
+export async function changeUserRole(
+  id: string,
+  input: ChangeRoleInput
+): Promise<GovernedAction> {
+  const data = await api.post(`/users/${id}/change-role`, input)
+  return GovernedActionSchema.parse(data)
+}
+
+export async function updateUserAccessPeriod(
+  id: string,
+  input: UpdateAccessPeriodInput
+): Promise<GovernedAction> {
+  const data = await api.post(`/users/${id}/update-access-period`, input)
+  return GovernedActionSchema.parse(data)
+}
+
+export async function updateSelf(
+  input: UpdateSelfInput
+): Promise<UserResponse> {
+  const data = await api.patch("/users/me", input)
+  return UserResponseSchema.parse(data)
+}
+
+export async function uploadSelfPicture(file: File): Promise<UserResponse> {
+  const form = new FormData()
+  form.append("file", file)
+  const data = await api.post("/users/me/picture", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+  return UserResponseSchema.parse(data)
+}
+
+export async function deleteSelfPicture(): Promise<void> {
+  await api.delete("/users/me/picture")
 }

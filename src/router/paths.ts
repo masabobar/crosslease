@@ -13,6 +13,7 @@ export const PATHS = {
   LC_DOCUMENTS: "/lc/documents",
   LC_PROPOSALS: "/lc/proposals",
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
+  SETTINGS_PROFILE: "/settings/profile",
 } as const
 
 export function adminUserDetail(id: string): string {

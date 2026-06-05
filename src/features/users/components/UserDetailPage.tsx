@@ -1,5 +1,9 @@
-import { useState, type ReactNode } from "react"
+import { useState, useRef, type ReactNode } from "react"
+import { ApiError } from "@/lib/api"
 import { useParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import {
   Mail,
   Clock,
@@ -9,8 +13,25 @@ import {
   Ban,
   UserRoundCheck,
   UserCheck,
+  ShieldAlert,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useTranslation } from "react-i18next"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { UserStatusBanner } from "@/features/users/components/UserStatusBanner"
@@ -29,7 +50,10 @@ import {
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
-import type { UserDetail } from "@/features/users/api/schema"
+import type {
+  UserDetail,
+  AuditorPeriodUpdateReason,
+} from "@/features/users/api/schema"
 import {
   AUDITOR_DATE_RANGE_ROLES,
   PLATFORM_USER_ROLES,
@@ -38,6 +62,15 @@ import {
   type UserRole,
   type UserModalActionType,
 } from "@/features/users/types"
+import { useEditUser } from "@/features/users/hooks/useEditUser"
+import { useChangeEmail } from "@/features/users/hooks/useChangeEmail"
+import { useChangeRole } from "@/features/users/hooks/useChangeRole"
+import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPeriod"
+import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
+import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
+import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
+import { EditRoleScopeDialog } from "@/features/users/components/EditRoleScopeDialog"
+import { EditAuditorPeriodDialog } from "@/features/users/components/EditAuditorPeriodDialog"
 
 function getRoleClassificationKey(
   role: UserRole
@@ -68,6 +101,7 @@ type SectionCardProps = {
   title: string
   children: ReactNode
   onEdit?: () => void
+  headerActions?: ReactNode
   "data-testid"?: string
 }
 
@@ -75,6 +109,7 @@ function SectionCard({
   title,
   children,
   onEdit,
+  headerActions,
   "data-testid": editTestId,
 }: SectionCardProps) {
   const { t } = useTranslation("users")
@@ -84,17 +119,18 @@ function SectionCard({
         <span className="text-xs font-semibold text-foreground tracking-wide">
           {title}
         </span>
-        {onEdit && (
-          <button
-            type="button"
-            data-testid={editTestId}
-            onClick={onEdit}
-            className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
-          >
-            <SquarePen size={14} />
-            {t("detail.page.actions.edit")}
-          </button>
-        )}
+        {headerActions ??
+          (onEdit ? (
+            <button
+              type="button"
+              data-testid={editTestId}
+              onClick={onEdit}
+              className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
+            >
+              <SquarePen size={14} />
+              {t("detail.page.actions.edit")}
+            </button>
+          ) : null)}
       </div>
       <div className="bg-card border border-border rounded-b-[10px] p-3 flex flex-col gap-3 flex-1">
         {children}
@@ -197,6 +233,99 @@ function AuditGovernanceTab() {
   )
 }
 
+const IdentityFormSchema = z.object({
+  first_name: z.string().min(1).max(100),
+  last_name: z.string().min(1).max(100),
+  email: z.string().email(),
+  phone_number: z
+    .string()
+    .regex(/^\+?[0-9\s\-()\s]{7,30}$/, "Invalid phone number format")
+    .or(z.literal(""))
+    .optional(),
+})
+type IdentityFormValues = z.infer<typeof IdentityFormSchema>
+
+function EmailChangeConfirmDialog({
+  open,
+  currentEmail,
+  newEmail,
+  isPending,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean
+  currentEmail: string
+  newEmail: string
+  isPending: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const { t } = useTranslation("users")
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o) onCancel()
+      }}
+    >
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-[480px] gap-0 p-0 overflow-hidden"
+      >
+        <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
+          <DialogTitle>
+            {t("detail.page.editIdentity.confirm.title")}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="px-4 py-4 flex flex-col gap-6">
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {t("detail.page.editIdentity.confirm.currentEmail")}
+              </span>
+              <span className="text-foreground">{currentEmail}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                {t("detail.page.editIdentity.confirm.newEmail")}
+              </span>
+              <span className="text-foreground font-semibold">{newEmail}</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-[10px] border border-amber-600 bg-amber-500/10 px-[10px] py-2">
+            <ShieldAlert size={16} className="text-amber-600 mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-amber-600">
+                {t("detail.page.editIdentity.confirm.warning.title")}
+              </span>
+              <span className="text-sm text-amber-600/80">
+                {t("detail.page.editIdentity.confirm.warning.description")}
+              </span>
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="mx-0 mb-0">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+            data-testid="email-change-cancel"
+          >
+            {t("detail.page.editIdentity.confirm.cancel")}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isPending}
+            data-testid="email-change-confirm"
+          >
+            {t("detail.page.editIdentity.confirm.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function UserDetailContent({ user }: { user: UserDetail }) {
   const { t } = useTranslation("users")
   const { data: currentUser } = useCurrentUser()
@@ -207,7 +336,26 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   )
   const [activeTab, setActiveTab] = useState<TabKey>("lifecycle")
   const { handleApprove, isPending: isApproving } = useApproveWithToast()
+  const [isEditingIdentity, setIsEditingIdentity] = useState(false)
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false)
+  const [pendingNewEmail, setPendingNewEmail] = useState("")
 
+  const editUserMutation = useEditUser()
+  const changeEmailMutation = useChangeEmail()
+  const changeRoleMutation = useChangeRole()
+  const updateAccessPeriodMutation = useUpdateAccessPeriod()
+  const updateSelfMutation = useUpdateSelf(user.id)
+  const uploadPictureMutation = useUploadSelfPicture(user.id)
+  const deletePictureMutation = useDeleteSelfPicture(user.id)
+  const [isEditingRole, setIsEditingRole] = useState(false)
+  const [isEditingAuditorPeriod, setIsEditingAuditorPeriod] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const identityForm = useForm<IdentityFormValues>({
+    resolver: zodResolver(IdentityFormSchema),
+  })
+
+  const isOwnProfile = currentUser?.id === user.id
   const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
   const isReadOnlyViewer =
     currentUser?.role !== null &&
@@ -237,6 +385,200 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     })
   }
 
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    void uploadPictureMutation
+      .mutateAsync(file)
+      .then(() => {
+        showToast({
+          variant: "success",
+          title: t("detail.page.selfProfile.pictureUpdated.title"),
+          message: t("detail.page.selfProfile.pictureUpdated.message"),
+        })
+      })
+      .catch((err: unknown) => {
+        showToast({
+          variant: "warning",
+          title: t("errors.generic"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
+        })
+      })
+  }
+
+  function handleRemovePicture() {
+    void deletePictureMutation
+      .mutateAsync()
+      .then(() => {
+        showToast({
+          variant: "success",
+          title: t("detail.page.selfProfile.pictureRemoved.title"),
+          message: t("detail.page.selfProfile.pictureRemoved.message"),
+        })
+      })
+      .catch((err: unknown) => {
+        showToast({
+          variant: "warning",
+          title: t("errors.generic"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
+        })
+      })
+  }
+
+  function startEditingIdentity() {
+    identityForm.reset({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      phone_number: user.phone_number ?? "",
+    })
+    setIsEditingIdentity(true)
+  }
+
+  function cancelEditingIdentity() {
+    identityForm.reset()
+    setIsEditingIdentity(false)
+  }
+
+  function handleSaveIdentity(values: IdentityFormValues) {
+    const emailChanged = values.email !== user.email
+    if (emailChanged) {
+      setPendingNewEmail(values.email)
+      setShowEmailConfirm(true)
+      return
+    }
+    submitIdentityChanges(values, null)
+  }
+
+  function submitIdentityChanges(
+    values: IdentityFormValues,
+    newEmail: string | null
+  ) {
+    const hasNameChanges =
+      values.first_name !== user.first_name ||
+      values.last_name !== user.last_name
+
+    const namePromise = hasNameChanges
+      ? editUserMutation.mutateAsync({
+          userId: user.id,
+          input: {
+            first_name: values.first_name,
+            last_name: values.last_name,
+          },
+        })
+      : Promise.resolve(null)
+
+    const emailPromise = newEmail
+      ? changeEmailMutation.mutateAsync({
+          userId: user.id,
+          input: { new_email: newEmail },
+        })
+      : Promise.resolve(null)
+
+    const hasPhoneChange =
+      isOwnProfile && (values.phone_number ?? "") !== (user.phone_number ?? "")
+    const phonePromise = hasPhoneChange
+      ? updateSelfMutation.mutateAsync({
+          phone_number:
+            values.phone_number === "" ? null : (values.phone_number ?? null),
+        })
+      : Promise.resolve(null)
+
+    void Promise.all([namePromise, emailPromise, phonePromise]).then(() => {
+      setIsEditingIdentity(false)
+      setShowEmailConfirm(false)
+      if (newEmail) {
+        showToast({
+          variant: "success",
+          title: t("detail.page.editIdentity.emailChangeSuccess.title"),
+          message: t("detail.page.editIdentity.emailChangeSuccess.message", {
+            newEmail,
+            oldEmail: user.email,
+          }),
+        })
+      } else {
+        showToast({
+          variant: "success",
+          title: t("detail.page.editIdentity.success.title"),
+          message: t("detail.page.editIdentity.success.message"),
+        })
+      }
+    })
+  }
+
+  const isSaving =
+    editUserMutation.isPending ||
+    changeEmailMutation.isPending ||
+    updateSelfMutation.isPending
+
+  function handleRoleSubmit(values: { new_role: UserRole; reason: string }) {
+    void changeRoleMutation
+      .mutateAsync({
+        userId: user.id,
+        input: { new_role: values.new_role, reason: values.reason },
+      })
+      .then(() => {
+        setIsEditingRole(false)
+        showToast({
+          variant: "success",
+          title: t("detail.page.editRole.success.title"),
+          message: t("detail.page.editRole.success.message"),
+        })
+      })
+      .catch((err: unknown) => {
+        showToast({
+          variant: "warning",
+          title: t("detail.page.editRole.error.title"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
+        })
+      })
+  }
+
+  function handleAuditorPeriodSubmit(values: {
+    new_access_valid_until: string
+    reason: string
+  }) {
+    const isoDate = new Date(
+      values.new_access_valid_until + "T00:00:00.000Z"
+    ).toISOString()
+    void updateAccessPeriodMutation
+      .mutateAsync({
+        userId: user.id,
+        input: {
+          new_access_valid_until: isoDate,
+          reason: values.reason as AuditorPeriodUpdateReason,
+        },
+      })
+      .then(() => {
+        setIsEditingAuditorPeriod(false)
+        showToast({
+          variant: "success",
+          title: t("detail.page.editRole.accessPeriodSuccess.title"),
+          message: t("detail.page.editRole.accessPeriodSuccess.message"),
+        })
+      })
+      .catch((err: unknown) => {
+        showToast({
+          variant: "warning",
+          title: t("detail.page.editRole.error.title"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
+        })
+      })
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <UserStatusBanner status={user.status} />
@@ -245,11 +587,70 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         {/* Top row: avatar + name + actions */}
         <div className="bg-card flex items-center justify-between px-3 py-4 rounded-t-[10px]">
           <div className="flex items-center gap-3">
-            <div className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center">
-              <span className="text-xl font-normal text-muted-foreground">
-                {initials}
-              </span>
-            </div>
+            {isOwnProfile ? (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleFileSelected}
+                  data-testid="avatar-file-input"
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    data-testid="avatar-dropdown-trigger"
+                    disabled={
+                      uploadPictureMutation.isPending ||
+                      deletePictureMutation.isPending
+                    }
+                    className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {user.profile_picture_url ? (
+                      <img
+                        src={user.profile_picture_url}
+                        alt={name}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xl font-normal text-muted-foreground">
+                        {initials}
+                      </span>
+                    )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem
+                      data-testid="avatar-replace-photo"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {t("detail.page.selfProfile.avatar.replacePhoto")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      data-testid="avatar-remove-photo"
+                      disabled={!user.profile_picture_url}
+                      onClick={handleRemovePicture}
+                    >
+                      {t("detail.page.selfProfile.avatar.removePhoto")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <div className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden">
+                {user.profile_picture_url ? (
+                  <img
+                    src={user.profile_picture_url}
+                    alt={name}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xl font-normal text-muted-foreground">
+                    {initials}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex flex-col gap-3">
               <p className="text-2xl font-semibold text-foreground">{name}</p>
               <div className="flex items-center gap-2">
@@ -349,34 +750,142 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
       {/* Identity + Role cards */}
       <div className="flex gap-6">
-        <SectionCard title={t("detail.page.sections.identity")}>
-          <DetailRow label={t("detail.page.fields.userId")}>
-            {user.user_id}
-          </DetailRow>
-          <DetailRow label={t("detail.page.fields.firstName")}>
-            {user.first_name}
-          </DetailRow>
-          <DetailRow label={t("detail.page.fields.lastName")}>
-            {user.last_name}
-          </DetailRow>
-          <DetailRow label={t("detail.page.fields.email")}>
-            {user.email}
-          </DetailRow>
-          {!isReadOnlyViewer && (
-            <DetailRow label={t("detail.page.fields.serviceAccountFlag")}>
-              {user.is_service_account !== null &&
-              user.is_service_account !== undefined
-                ? t(
-                    user.is_service_account
-                      ? "detail.page.values.enabled"
-                      : "detail.page.values.off"
-                  )
-                : "—"}
+        <form
+          className="flex flex-col flex-1"
+          onSubmit={identityForm.handleSubmit(handleSaveIdentity)}
+        >
+          <SectionCard
+            title={t("detail.page.sections.identity")}
+            headerActions={
+              isAdmin || isOwnProfile ? (
+                isEditingIdentity ? (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={cancelEditingIdentity}
+                      disabled={isSaving}
+                      data-testid="identity-cancel-button"
+                    >
+                      {t("detail.page.actions.cancel")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isSaving}
+                      data-testid="identity-save-button"
+                    >
+                      {t("detail.page.actions.saveChanges")}
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid="identity-edit-button"
+                    onClick={startEditingIdentity}
+                    className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
+                  >
+                    <SquarePen size={14} />
+                    {t("detail.page.actions.edit")}
+                  </button>
+                )
+              ) : null
+            }
+          >
+            <DetailRow label={t("detail.page.fields.userId")}>
+              {user.user_id}
             </DetailRow>
-          )}
-        </SectionCard>
+            <DetailRow label={t("detail.page.fields.firstName")}>
+              {isEditingIdentity ? (
+                <Input
+                  {...identityForm.register("first_name")}
+                  data-testid="identity-first-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.first_name}
+                />
+              ) : (
+                user.first_name
+              )}
+            </DetailRow>
+            <DetailRow label={t("detail.page.fields.lastName")}>
+              {isEditingIdentity ? (
+                <Input
+                  {...identityForm.register("last_name")}
+                  data-testid="identity-last-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.last_name}
+                />
+              ) : (
+                user.last_name
+              )}
+            </DetailRow>
+            <DetailRow label={t("detail.page.fields.email")}>
+              {isEditingIdentity ? (
+                <Input
+                  {...identityForm.register("email")}
+                  type="email"
+                  data-testid="identity-email-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.email}
+                />
+              ) : user.pending_email ? (
+                <div className="flex items-end gap-[10px] min-w-0">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span>{user.email}</span>
+                    <span>{user.pending_email}</span>
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-amber-600">
+                    {t("detail.page.editIdentity.pendingVerification")}
+                  </span>
+                </div>
+              ) : (
+                user.email
+              )}
+            </DetailRow>
+            <DetailRow label={t("detail.page.fields.phoneNumber")}>
+              {isOwnProfile && isEditingIdentity ? (
+                <Input
+                  {...identityForm.register("phone_number")}
+                  data-testid="phone-number-input"
+                  placeholder="+1 234 567 8900"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.phone_number}
+                />
+              ) : (
+                (user.phone_number ?? "—")
+              )}
+            </DetailRow>
+            {!isReadOnlyViewer && (
+              <DetailRow label={t("detail.page.fields.serviceAccountFlag")}>
+                {user.is_service_account !== null &&
+                user.is_service_account !== undefined
+                  ? t(
+                      user.is_service_account
+                        ? "detail.page.values.enabled"
+                        : "detail.page.values.off"
+                    )
+                  : "—"}
+              </DetailRow>
+            )}
+          </SectionCard>
+        </form>
 
-        <SectionCard title={t("detail.page.sections.roleScope")}>
+        <SectionCard
+          title={t("detail.page.sections.roleScope")}
+          onEdit={
+            isAdmin
+              ? () => {
+                  if (user.role === "auditor") {
+                    setIsEditingAuditorPeriod(true)
+                  } else {
+                    setIsEditingRole(true)
+                  }
+                }
+              : undefined
+          }
+          data-testid="role-scope-edit-button"
+        >
           <DetailRow label={t("detail.page.fields.role")}>
             <RoleBadge role={user.role} />
           </DetailRow>
@@ -399,6 +908,34 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           </DetailRow>
         </SectionCard>
       </div>
+
+      <EmailChangeConfirmDialog
+        open={showEmailConfirm}
+        currentEmail={user.email}
+        newEmail={pendingNewEmail}
+        isPending={isSaving}
+        onCancel={() => setShowEmailConfirm(false)}
+        onConfirm={() =>
+          submitIdentityChanges(identityForm.getValues(), pendingNewEmail)
+        }
+      />
+
+      <EditRoleScopeDialog
+        open={isEditingRole}
+        currentRole={user.role}
+        isPending={changeRoleMutation.isPending}
+        onClose={() => setIsEditingRole(false)}
+        onSubmit={handleRoleSubmit}
+      />
+
+      <EditAuditorPeriodDialog
+        open={isEditingAuditorPeriod}
+        currentAccessValidUntil={user.access_valid_until}
+        activatedAt={user.activated_at}
+        isPending={updateAccessPeriodMutation.isPending}
+        onClose={() => setIsEditingAuditorPeriod(false)}
+        onSubmit={handleAuditorPeriodSubmit}
+      />
 
       {/* Tabbed card */}
       <div className="bg-muted border border-border rounded-[10px] flex flex-col">

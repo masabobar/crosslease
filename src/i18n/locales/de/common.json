@@ -28,13 +28,15 @@
     "lcStatus": "Statusübersicht",
     "lcDocuments": "Bankdokumente",
     "lcProposals": "Vorschläge",
-    "pendingApprovals": "Ausstehende Genehmigungen"
+    "pendingApprovals": "Ausstehende Genehmigungen",
+    "myProfile": "Mein Profil"
   },
   "breadcrumb": {
     "home": "Startseite",
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
-    "pendingApprovals": "Ausstehende Genehmigungen"
+    "pendingApprovals": "Ausstehende Genehmigungen",
+    "myProfile": "Mein Profil"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

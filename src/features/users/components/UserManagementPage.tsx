@@ -1,12 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  UserPlus,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  X,
-} from "lucide-react"
+import { UserPlus, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
@@ -439,7 +434,7 @@ export default function UserManagementPage() {
 
       {/* Pagination — always visible when data is present */}
       {data && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-end gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-foreground">
               {t("page.pagination.rowsPerPage")}
@@ -472,12 +467,7 @@ export default function UserManagementPage() {
 
             {pageNumbers.map((item, idx) =>
               item === "..." ? (
-                <span
-                  key={`ellipsis-${idx}`}
-                  className="size-8 flex items-center justify-center text-muted-foreground"
-                >
-                  <MoreHorizontal size={16} />
-                </span>
+                <PaginationEllipsis key={`ellipsis-${idx}`} />
               ) : (
                 <button
                   key={item}
@@ -486,8 +476,8 @@ export default function UserManagementPage() {
                   onClick={() => setPage(item)}
                   className={
                     item === page
-                      ? "bg-white border border-border rounded-xl size-8 text-sm font-medium flex items-center justify-center"
-                      : "rounded-xl size-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center"
+                      ? "border border-border rounded-xl w-8 h-8 text-sm font-medium flex items-center justify-center"
+                      : "rounded-xl w-8 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center"
                   }
                 >
                   {item}
