@@ -97,6 +97,10 @@
     "reInitiated": {
       "title": "Neu eingereicht",
       "message": "{{action}}-Anfrage wurde erneut zur Genehmigung eingereicht."
+    },
+    "error": {
+      "title": "Aktion fehlgeschlagen",
+      "message": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
     }
   },
   "empty": {

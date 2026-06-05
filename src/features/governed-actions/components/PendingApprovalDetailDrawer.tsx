@@ -322,6 +322,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
           </SheetTitle>
           <SheetClose
             render={
+              // NOTE: raw <button> — passed as BaseUI SheetClose's render prop; BaseUI injects close behaviour into the raw element and cannot accept a shadcn Button
               <button
                 type="button"
                 className="flex items-center justify-center size-6 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
@@ -394,6 +395,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
               title={t("drawer.approverJustification")}
               showBody={justificationExpanded}
               headerAction={
+                // NOTE: raw <button> — minimal icon-only chevron toggle passed as InfoCard headerAction; shadcn Button adds height/padding that misaligns the header row
                 <button
                   type="button"
                   className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
@@ -423,6 +425,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
             title={t("drawer.requestChain")}
             showBody={chainExpanded}
             headerAction={
+              // NOTE: raw <button> — text + chevron inline toggle inside InfoCard headerAction; shadcn Button adds padding that breaks the flex row alignment
               <button
                 type="button"
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"

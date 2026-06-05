@@ -384,6 +384,7 @@ function UserActionModal({
             <Label htmlFor="comment" className="mb-1.5">
               {t("actions.fields.comment")}
             </Label>
+            {/* NOTE: raw <textarea> — custom rounded-lg (vs shadcn's rounded-xl) and focus-visible ring override; className props alone would not reliably override shadcn Textarea's base styles */}
             <textarea
               id="comment"
               data-testid="action-comment-input"

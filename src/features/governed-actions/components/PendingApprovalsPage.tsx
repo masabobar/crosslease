@@ -10,6 +10,7 @@ import { ReviewRequestModal } from "@/features/governed-actions/components/Revie
 import { PendingApprovalDetailDrawer } from "@/features/governed-actions/components/PendingApprovalDetailDrawer"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import type {
   GovernedAction,
   GovernedActionStatus,
@@ -47,7 +48,7 @@ export default function PendingApprovalsPage() {
   const withdrawAction = useWithdrawAction()
   const reInitiateAction = useReInitiateAction()
 
-  const canReview = currentUser?.role === "system_admin"
+  const canReview = currentUser?.role === SYSTEM_ADMIN_ROLE
 
   const actions = data?.actions ?? []
 
@@ -89,6 +90,13 @@ export default function PendingApprovalsPage() {
             }),
           })
         },
+        onError: () => {
+          showToast({
+            variant: "warning",
+            title: t("toast.error.title"),
+            message: t("toast.error.message"),
+          })
+        },
       }
     )
   }
@@ -104,6 +112,13 @@ export default function PendingApprovalsPage() {
             message: t("toast.reInitiated.message", {
               action: t(`actionTypes.${action.action_type}`),
             }),
+          })
+        },
+        onError: () => {
+          showToast({
+            variant: "warning",
+            title: t("toast.error.title"),
+            message: t("toast.error.message"),
           })
         },
       }
@@ -155,6 +170,7 @@ export default function PendingApprovalsPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Search */}
         <div className="relative w-[288px]">
+          {/* NOTE: raw <input> — custom h-8 search field with an absolutely-positioned icon overlay; shadcn Input's min-height and padding would require additional overrides */}
           <input
             type="text"
             placeholder={t("search.placeholder")}
@@ -174,6 +190,7 @@ export default function PendingApprovalsPage() {
           <span className="text-sm text-muted-foreground">
             {t("view", { defaultValue: "View" })}
           </span>
+          {/* NOTE: raw <button> items — position-aware rounded corners (first/last) require index logic not composable with shadcn Tabs */}
           <div className="flex items-center border border-border rounded-[10px] overflow-hidden h-9">
             {TABS.map((tab, i) => (
               <button

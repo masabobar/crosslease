@@ -268,6 +268,7 @@ export default function UserManagementPage() {
               {t("page.filters.rolePill", {
                 value: t(`roles.${role}` as `roles.${UserRole}`),
               })}
+              {/* NOTE: raw <button> — inline X icon inside a badge <span>; shadcn Button renders block-level which breaks the inline badge layout */}
               <button
                 type="button"
                 data-testid={`filter-pill-remove-role-${role}`}
@@ -288,6 +289,7 @@ export default function UserManagementPage() {
                     ten => ten.id === appliedFilters.tenant_id
                   )?.name ?? appliedFilters.tenant_id,
               })}
+              {/* NOTE: raw <button> — same inline badge reason as role pill */}
               <button
                 type="button"
                 data-testid="filter-pill-remove-tenant"
@@ -311,6 +313,7 @@ export default function UserManagementPage() {
                     | "filter.mfa.disabled"
                 ),
               })}
+              {/* NOTE: raw <button> — same inline badge reason as role pill */}
               <button
                 type="button"
                 data-testid="filter-pill-remove-mfa"
@@ -333,6 +336,7 @@ export default function UserManagementPage() {
               {t("page.filters.statusPill", {
                 value: t(`statuses.${status}` as `statuses.${UserStatus}`),
               })}
+              {/* NOTE: raw <button> — same inline badge reason as role pill */}
               <button
                 type="button"
                 data-testid={`filter-pill-remove-status-${status}`}
@@ -365,6 +369,7 @@ export default function UserManagementPage() {
                     .filter(Boolean)
                     .join(" "),
                 })}
+                {/* NOTE: raw <button> — same inline badge reason as role pill */}
                 <button
                   type="button"
                   data-testid="filter-pill-remove-last-login"
@@ -383,6 +388,7 @@ export default function UserManagementPage() {
               </span>
             )}
 
+          {/* NOTE: raw <button> — xs destructive text link; shadcn Button variant="link" uses base font-size and different line-height */}
           <button
             type="button"
             data-testid="filters-clear-all"
@@ -414,6 +420,7 @@ export default function UserManagementPage() {
             <span className="text-sm text-muted-foreground">
               {t("page.pagination.rowsPerPage")}
             </span>
+            {/* NOTE: raw <select> — native dropdown with <option> children; shadcn Select uses a custom portal-based dropdown incompatible with simple numeric option lists */}
             <select
               value={perPage}
               onChange={e => setPerPage(Number(e.target.value) as PageSize)}
