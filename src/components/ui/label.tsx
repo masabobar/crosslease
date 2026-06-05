@@ -1,17 +1,20 @@
+"use client"
+
 import * as React from "react"
+
 import { cn } from "@/lib/utils"
 
-type LabelProps = React.ComponentProps<"label"> & {
-  error?: boolean
-}
-
-function Label({ className, error, ...props }: LabelProps) {
+function Label({
+  className,
+  error,
+  ...props
+}: React.ComponentProps<"label"> & { error?: boolean }) {
   return (
     <label
       data-slot="label"
       className={cn(
-        "block text-sm leading-5 font-medium select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
-        error ? "text-destructive" : "text-foreground",
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        error && "text-destructive",
         className
       )}
       {...props}
