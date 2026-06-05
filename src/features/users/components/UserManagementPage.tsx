@@ -10,7 +10,11 @@ import { UserTable } from "@/features/users/components/UserTable"
 import { UserFilterPanel } from "@/features/users/components/UserFilterPanel"
 import { UserQuickFilters } from "@/features/users/components/UserQuickFilters"
 import { useUsers } from "@/features/users/hooks/useUsers"
-import { useUserListParams } from "@/features/users/hooks/useUserListParams"
+import {
+  useUserListParams,
+  PAGE_SIZES,
+} from "@/features/users/hooks/useUserListParams"
+import type { PageSize } from "@/features/users/hooks/useUserListParams"
 import type {
   UserStatus,
   UserListItem,
@@ -37,7 +41,6 @@ import {
 } from "@/features/users/utils"
 import { adminUserDetail } from "@/router/paths"
 
-const USERS_PAGE_SIZE = 10
 const MAX_VISIBLE_PAGE_NUMBERS = 5
 
 function buildPageNumbers(
@@ -77,11 +80,13 @@ export default function UserManagementPage() {
   } | null>(null)
   const {
     page,
+    perPage,
     search,
     appliedFilters,
     sortKey,
     sortOrder,
     setPage,
+    setPerPage,
     setSearch,
     setAppliedFilters,
     setSort,
@@ -94,7 +99,7 @@ export default function UserManagementPage() {
 
   const { data, isLoading } = useUsers({
     page,
-    per_page: USERS_PAGE_SIZE,
+    per_page: perPage,
     search: search || undefined,
     role: appliedFilters.role.length > 0 ? appliedFilters.role : undefined,
     status:
@@ -403,53 +408,73 @@ export default function UserManagementPage() {
 
       {/* Pagination — always visible when data is present */}
       {data && (
-        <div className="mt-4 flex justify-end items-center gap-1">
-          <button
-            type="button"
-            data-testid="pagination-prev-button"
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft size={14} />
-            {t("page.pagination.previous")}
-          </button>
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {t("page.pagination.rowsPerPage")}
+            </span>
+            <select
+              value={perPage}
+              onChange={e => setPerPage(Number(e.target.value) as PageSize)}
+              data-testid="pagination-page-size-select"
+              className="rounded-xl px-2 h-8 text-sm font-medium text-foreground bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
+            >
+              {PAGE_SIZES.map(size => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          {pageNumbers.map((item, idx) =>
-            item === "..." ? (
-              <span
-                key={`ellipsis-${idx}`}
-                className="w-8 h-8 flex items-center justify-center text-sm text-muted-foreground"
-              >
-                ...
-              </span>
-            ) : (
-              <button
-                key={item}
-                type="button"
-                data-testid={`pagination-page-${item}`}
-                onClick={() => setPage(item)}
-                className={
-                  item === page
-                    ? "border border-border rounded-xl w-8 h-8 text-sm font-medium"
-                    : "rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-                }
-              >
-                {item}
-              </button>
-            )
-          )}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              data-testid="pagination-prev-button"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft size={14} />
+              {t("page.pagination.previous")}
+            </button>
 
-          <button
-            type="button"
-            data-testid="pagination-next-button"
-            onClick={() => setPage(Math.min(data.total_pages, page + 1))}
-            disabled={page === data.total_pages}
-            className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {t("page.pagination.next")}
-            <ChevronRight size={14} />
-          </button>
+            {pageNumbers.map((item, idx) =>
+              item === "..." ? (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="w-8 h-8 flex items-center justify-center text-sm text-muted-foreground"
+                >
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  data-testid={`pagination-page-${item}`}
+                  onClick={() => setPage(item)}
+                  className={
+                    item === page
+                      ? "border border-border rounded-xl w-8 h-8 text-sm font-medium"
+                      : "rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+                  }
+                >
+                  {item}
+                </button>
+              )
+            )}
+
+            <button
+              type="button"
+              data-testid="pagination-next-button"
+              onClick={() => setPage(Math.min(data.total_pages, page + 1))}
+              disabled={page === data.total_pages}
+              className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t("page.pagination.next")}
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       )}
 

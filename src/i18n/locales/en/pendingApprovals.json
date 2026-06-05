@@ -1,0 +1,146 @@
+{
+  "page": {
+    "title": "Pending approvals",
+    "subtitle": "Review and act on requests submitted by other administrators under the four-eyes policy.",
+    "breadcrumb": {
+      "home": "Home",
+      "pendingApprovals": "Pending approvals"
+    }
+  },
+  "tabs": {
+    "all": "All",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "expired": "Expired"
+  },
+  "search": {
+    "placeholder": "Search"
+  },
+  "actionTypes": {
+    "user_role_change": "Role change",
+    "user_platform_invite": "Platform invite",
+    "user_email_change": "Email change",
+    "user_auditor_period_update": "Access period update",
+    "tenant_create": "Tenant create"
+  },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "expired": "Expired"
+  },
+  "row": {
+    "user": "User",
+    "by": "By",
+    "submitted": "Submitted",
+    "resolved": "Resolved",
+    "expires": "Expires in",
+    "reviewRequest": "Review request",
+    "youSubmitted": "You submitted this request",
+    "withdraw": "Withdraw",
+    "reInitiate": "Re-initiate",
+    "approvedBy": "Approved by",
+    "rejectedBy": "Rejected by"
+  },
+  "modal": {
+    "action": "ACTION",
+    "actionType": "Action type",
+    "affectedUser": "Affected user",
+    "tenant": "Tenant",
+    "change": "CHANGE",
+    "current": "CURRENT",
+    "proposed": "PROPOSED",
+    "submittedBy": "SUBMITTED BY",
+    "submittedByLabel": "Submitted by",
+    "roleAtTime": "Role at time",
+    "tenantAtTime": "Tenant at time",
+    "submittedAt": "Submitted at",
+    "submission": "SUBMISSION",
+    "reasonFromSubmitter": "REASON FROM SUBMITTER",
+    "requestChain": "REQUEST CHAIN",
+    "request": "request",
+    "chainCurrentRequest": "Current request",
+    "mfaRequired": "Approval requires step-up MFA verification",
+    "justificationLabel": "Your justification",
+    "justificationHint": "Required · stored in audit log",
+    "justification": "YOUR JUSTIFICATION",
+    "justificationPlaceholder": "Add a comment (optional for approval, required for rejection)",
+    "justificationRequired": "Required",
+    "justificationTooShort": "Must be at least {{min}} characters",
+    "cancel": "Cancel",
+    "reject": "Reject",
+    "approve": "Approve",
+    "email": "Email",
+    "errors": {
+      "GOVERNED_ACTION_FORBIDDEN": "You cannot approve your own request.",
+      "ACTION_NOT_PENDING": "This action is no longer pending.",
+      "ACTION_EXPIRED": "This request has expired. Please re-initiate.",
+      "default": "An error occurred. Please try again."
+    }
+  },
+  "toast": {
+    "approved": {
+      "title": "Approved request",
+      "message": "Request was approved. {{name}}'s {{action}} is now in effect."
+    },
+    "rejected": {
+      "title": "Rejected request",
+      "message": "Request was rejected. {{name}}'s {{action}} will not take effect."
+    },
+    "withdrawn": {
+      "title": "Request withdrawn",
+      "message": "{{action}} request has been withdrawn."
+    },
+    "reInitiated": {
+      "title": "Re-initiated",
+      "message": "{{action}} request has been re-submitted for approval."
+    }
+  },
+  "empty": {
+    "allCaughtUp": {
+      "title": "All caught up",
+      "subtitle": "No pending approvals require your review. New requests from other admins will show up here in real time."
+    },
+    "filtered": {
+      "title": "No requests found",
+      "subtitle": "Switch to All to see the full history."
+    },
+    "viewAuditLog": "View audit log"
+  },
+  "drawer": {
+    "action": "ACTION",
+    "actionType": "Action type",
+    "affectedUser": "Affected user",
+    "tenant": "Tenant",
+    "change": "CHANGE",
+    "previous": "PREVIOUS",
+    "current": "CURRENT",
+    "submission": "SUBMISSION",
+    "name": "Name",
+    "roleAtTime": "Role at time",
+    "tenantAtTime": "Tenant at time",
+    "submittedAt": "Submitted at",
+    "resolvedAt": "Resolved at",
+    "reasonFromSubmitter": "REASON FROM SUBMITTER",
+    "approver": "APPROVER",
+    "approverJustification": "APPROVER JUSTIFICATION",
+    "requestChain": "REQUEST CHAIN",
+    "request": "request",
+    "chainCurrentRequest": "Current request",
+    "correlationId": "Correlation ID",
+    "email": "Email",
+    "role": "Role"
+  },
+  "view": "View",
+  "roles": {
+    "system_admin": "Admin",
+    "support_user": "Support",
+    "auditor": "Auditor",
+    "front_office": "Front Office",
+    "back_office": "Back Office",
+    "leasing_company_user": "Leasing Co. User"
+  }
+}

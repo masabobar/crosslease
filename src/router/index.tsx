@@ -36,6 +36,9 @@ const UserDetailPage = lazy(
 const LeasingCompanyWorkspacePage = lazy(
   () => import("@/features/lc/components/LeasingCompanyWorkspacePage")
 )
+const PendingApprovalsPage = lazy(
+  () => import("@/features/governed-actions/components/PendingApprovalsPage")
+)
 
 export const router = createBrowserRouter([
   {
@@ -101,6 +104,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={USER_MANAGEMENT_ALLOWED_ROLES}>
               <UserDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PENDING_APPROVALS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={USER_MANAGEMENT_ALLOWED_ROLES}>
+              <PendingApprovalsPage />
             </RoleGuard>
           </Suspense>
         ),
