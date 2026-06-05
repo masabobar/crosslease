@@ -91,6 +91,8 @@ type Props = {
   action: GovernedAction
   currentUserId: string
   canReview: boolean
+  isHighlighted?: boolean
+  ref?: React.Ref<HTMLDivElement>
   onReview: (action: GovernedAction) => void
   onWithdraw: (action: GovernedAction) => void
   onReInitiate: (action: GovernedAction) => void
@@ -101,6 +103,8 @@ export function ActionRow({
   action,
   currentUserId,
   canReview,
+  isHighlighted = false,
+  ref,
   onReview,
   onWithdraw,
   onReInitiate,
@@ -195,12 +199,18 @@ export function ActionRow({
 
   return (
     <div
+      ref={ref}
       role="button"
       tabIndex={0}
       className={cn(
         "flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors",
         BORDER_COLOR[action.status]
       )}
+      style={
+        isHighlighted
+          ? { animation: "row-highlight-fade 2s ease-out forwards" }
+          : undefined
+      }
       data-testid={`approval-row-${action.id}`}
       onClick={() => onViewDetails(action)}
       onKeyDown={e => {

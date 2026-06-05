@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
+  ExportFormatSchema,
+  ExportJobSchema,
+  ExportJobStatusSchema,
   UserListItemSchema,
   PaginatedUsersResponseSchema,
   UserStatusSchema,
@@ -387,5 +390,81 @@ describe("UserStatusSchema", () => {
 
   it("rejects empty string", () => {
     expect(() => UserStatusSchema.parse("")).toThrow()
+  })
+})
+
+describe("ExportFormatSchema", () => {
+  it("accepts csv", () => {
+    expect(ExportFormatSchema.parse("csv")).toBe("csv")
+  })
+
+  it("accepts xlsx", () => {
+    expect(ExportFormatSchema.parse("xlsx")).toBe("xlsx")
+  })
+
+  it("rejects unknown format", () => {
+    expect(() => ExportFormatSchema.parse("pdf")).toThrow()
+  })
+})
+
+describe("ExportJobSchema", () => {
+  it("accepts a valid initiate response", () => {
+    const job = {
+      job_id: "abc123",
+      status: "processing",
+      poll_url: "/api/v1/users/export/status/abc123",
+      download_url: "/api/v1/users/export/download/abc123",
+    }
+    expect(() => ExportJobSchema.parse(job)).not.toThrow()
+  })
+
+  it("accepts response without optional urls", () => {
+    expect(() =>
+      ExportJobSchema.parse({ job_id: "x", status: "processing" })
+    ).not.toThrow()
+  })
+
+  it("rejects missing job_id", () => {
+    expect(() => ExportJobSchema.parse({ status: "processing" })).toThrow()
+  })
+})
+
+describe("ExportJobStatusSchema", () => {
+  it("accepts processing status", () => {
+    const result = ExportJobStatusSchema.parse({
+      job_id: "x",
+      status: "processing",
+    })
+    expect(result.status).toBe("processing")
+  })
+
+  it("accepts ready status", () => {
+    const result = ExportJobStatusSchema.parse({ job_id: "x", status: "ready" })
+    expect(result.status).toBe("ready")
+  })
+
+  it("accepts failed status with optional fields", () => {
+    const result = ExportJobStatusSchema.parse({
+      job_id: "x",
+      status: "failed",
+      error_code: "FILE_GENERATION_FAILED",
+    })
+    expect(result.status).toBe("failed")
+    expect(result.error_code).toBe("FILE_GENERATION_FAILED")
+  })
+
+  it("accepts ready status with row_count", () => {
+    const result = ExportJobStatusSchema.parse({
+      job_id: "x",
+      status: "ready",
+      row_count: 42,
+    })
+    expect(result.row_count).toBe(42)
+  })
+
+  it("rejects unknown status", () => {
+    expect(() =>
+      ExportJobStatusSchema.parse({ job_id: "x", status: "completed" })
+    ).toThrow()
   })
 })

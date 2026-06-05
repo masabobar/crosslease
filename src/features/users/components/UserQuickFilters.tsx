@@ -1,5 +1,12 @@
 import { parseISO } from "date-fns"
-import { Calendar, Check, FileDown, Filter, Search } from "lucide-react"
+import {
+  Calendar,
+  Check,
+  FileDown,
+  Filter,
+  Loader2,
+  Search,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import {
@@ -7,11 +14,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
 import { USER_STATUSES } from "@/features/users/api/schema"
-import type { UserStatus } from "@/features/users/api/schema"
+import type { ExportFormat, UserStatus } from "@/features/users/api/schema"
 import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
@@ -61,7 +74,8 @@ type UserQuickFiltersProps = {
   filterVisibility: UserFilterVisibility
   onFilterChange: (update: Partial<UserFilterState>) => void
   onOpenAdvanced: () => void
-  onExport?: () => void
+  onExport?: (format: ExportFormat) => void
+  isExporting?: boolean
   className?: string
 }
 
@@ -73,6 +87,7 @@ export function UserQuickFilters({
   onFilterChange,
   onOpenAdvanced,
   onExport,
+  isExporting = false,
   className,
 }: UserQuickFiltersProps) {
   const { t } = useTranslation("users")
@@ -330,15 +345,39 @@ export function UserQuickFilters({
         </div>
       </div>
 
-      <button
-        type="button"
-        data-testid="export-button"
-        onClick={onExport}
-        className="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted transition-colors"
-      >
-        <FileDown size={16} className="shrink-0 text-muted-foreground" />
-        {t("quickFilters.export")}
-      </button>
+      {onExport && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            data-testid="export-button"
+            disabled={isExporting}
+            className="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExporting ? (
+              <Loader2
+                size={16}
+                className="shrink-0 text-muted-foreground animate-spin"
+              />
+            ) : (
+              <FileDown size={16} className="shrink-0 text-muted-foreground" />
+            )}
+            {t("quickFilters.export")}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              data-testid="export-csv-option"
+              onClick={() => onExport("csv")}
+            >
+              {t("quickFilters.exportCsv")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="export-xlsx-option"
+              onClick={() => onExport("xlsx")}
+            >
+              {t("quickFilters.exportXlsx")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   )
 }

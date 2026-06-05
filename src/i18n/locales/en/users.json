@@ -417,13 +417,24 @@
     "generic": "Something went wrong. Please try again.",
     "EMAIL_ALREADY_EXISTS": "This email address is already in use.",
     "DUPLICATE_PENDING_ACTION": "A pending action of this type already exists for this user.",
-    "USER_NOT_ACTIVE": "Operation requires an active user account."
+    "USER_NOT_ACTIVE": "Operation requires an active user account.",
+    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
+  },
+  "export": {
+    "successTitle": "Export ready",
+    "successMessage": "Your file has been downloaded.",
+    "errorTitle": "Export failed",
+    "errorMessage": "Something went wrong. Please try again.",
+    "expiredTitle": "Export expired",
+    "expiredMessage": "The export expired before it could be downloaded. Please try again."
   },
   "quickFilters": {
     "searchPlaceholder": "Search",
     "noTenantsAvailable": "No tenants available",
     "advancedFilters": "Advanced filters",
     "export": "Export",
+    "exportCsv": "Export as CSV",
+    "exportXlsx": "Export as XLSX",
     "buttons": {
       "role": "Role",
       "tenant": "Tenant",
@@ -438,5 +449,17 @@
     "hoursAgo": "{{count}}h ago",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}}d ago"
+  },
+  "export": {
+    "successTitle": "Export ready",
+    "successMessage": "Your file has been downloaded.",
+    "errorTitle": "Export failed",
+    "errorMessage": "Something went wrong. Please try again.",
+    "expiredTitle": "Export expired",
+    "expiredMessage": "The export expired before it could be downloaded. Please try again."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
   }
 }
