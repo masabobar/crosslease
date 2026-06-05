@@ -35,6 +35,8 @@ export const USER_MANAGEMENT_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "support_user",
   "auditor",
+  "front_office",
+  "back_office",
 ]
 
 export const LC_ONLY_ROLES: readonly UserRole[] = ["leasing_company_user"]
