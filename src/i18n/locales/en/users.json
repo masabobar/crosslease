@@ -338,6 +338,8 @@
     "noTenantsAvailable": "No tenants available",
     "advancedFilters": "Advanced filters",
     "export": "Export",
+    "exportCsv": "Export as CSV",
+    "exportXlsx": "Export as XLSX",
     "buttons": {
       "role": "Role",
       "tenant": "Tenant",
@@ -352,5 +354,17 @@
     "hoursAgo": "{{count}}h ago",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}}d ago"
+  },
+  "export": {
+    "successTitle": "Export ready",
+    "successMessage": "Your file has been downloaded.",
+    "errorTitle": "Export failed",
+    "errorMessage": "Something went wrong. Please try again.",
+    "expiredTitle": "Export expired",
+    "expiredMessage": "The export expired before it could be downloaded. Please try again."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
   }
 }

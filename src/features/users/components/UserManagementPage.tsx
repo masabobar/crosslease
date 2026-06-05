@@ -33,6 +33,7 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useExportUsers } from "@/features/users/hooks/useExportUsers"
 import { EMPTY_FILTER_STATE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import {
   getUserFilterVisibility,
@@ -96,6 +97,9 @@ export default function UserManagementPage() {
   const { handleApprove } = useApproveWithToast()
   const { data: currentUser } = useCurrentUser()
   const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
+  const canExport =
+    currentUser?.role === SYSTEM_ADMIN_ROLE || currentUser?.role === "auditor"
+  const { startExport, isExporting } = useExportUsers()
 
   const { data, isLoading } = useUsers({
     page,
@@ -250,6 +254,27 @@ export default function UserManagementPage() {
           setAppliedFilters({ ...appliedFilters, ...update })
         }
         onOpenAdvanced={() => setIsFilterOpen(true)}
+        onExport={
+          canExport
+            ? format =>
+                void startExport({
+                  format,
+                  search: search || undefined,
+                  role:
+                    appliedFilters.role.length > 0
+                      ? appliedFilters.role
+                      : undefined,
+                  status:
+                    appliedFilters.status.length > 0
+                      ? appliedFilters.status
+                      : undefined,
+                  tenant_id: appliedFilters.tenant_id ?? undefined,
+                  last_login_from: appliedFilters.last_login_from,
+                  last_login_to: appliedFilters.last_login_to,
+                })
+            : undefined
+        }
+        isExporting={isExporting}
       />
 
       {/* Active filter pills */}

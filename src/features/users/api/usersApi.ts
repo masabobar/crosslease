@@ -1,5 +1,7 @@
 import { api } from "@/lib/api"
 import {
+  ExportJobSchema,
+  ExportJobStatusSchema,
   InviteUserResponseSchema,
   UserActionResponseSchema,
   UserResponseSchema,
@@ -7,6 +9,9 @@ import {
   UserDetailResponseSchema,
 } from "./schema"
 import type {
+  ExportJob,
+  ExportJobStatus,
+  ExportParams,
   InviteUserInput,
   InviteUserResponse,
   UserActionResponse,
@@ -98,4 +103,30 @@ export async function resendInvitation(
 export async function fetchUserById(id: string): Promise<UserDetail> {
   const data = await api.get(`/users/${id}`)
   return UserDetailResponseSchema.parse(data)
+}
+
+export async function initiateExport(params: ExportParams): Promise<ExportJob> {
+  const qs = new URLSearchParams()
+  qs.set("format", params.format)
+  if (params.search) qs.set("search", params.search)
+  params.role?.forEach(r => qs.append("role", r))
+  params.status?.forEach(s => qs.append("status", s))
+  if (params.tenant_id) qs.set("tenant_id", params.tenant_id)
+  if (params.last_login_from) qs.set("last_login_from", params.last_login_from)
+  if (params.last_login_to) qs.set("last_login_to", params.last_login_to)
+  const data = await api.get(`/users/export?${qs.toString()}`)
+  return ExportJobSchema.parse(data)
+}
+
+export async function getExportJobStatus(
+  jobId: string
+): Promise<ExportJobStatus> {
+  const data = await api.get(`/users/export/status/${jobId}`)
+  return ExportJobStatusSchema.parse(data)
+}
+
+export async function downloadExportFile(jobId: string): Promise<Blob> {
+  return api.get(`/users/export/download/${jobId}`, {
+    responseType: "blob",
+  }) as Promise<Blob>
 }

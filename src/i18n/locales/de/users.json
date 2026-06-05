@@ -338,6 +338,8 @@
     "noTenantsAvailable": "Keine Mandanten verfügbar",
     "advancedFilters": "Erweiterte Filter",
     "export": "Exportieren",
+    "exportCsv": "Als CSV exportieren",
+    "exportXlsx": "Als XLSX exportieren",
     "buttons": {
       "role": "Rolle",
       "tenant": "Mandant",
@@ -352,5 +354,17 @@
     "hoursAgo": "Vor {{count}} Std.",
     "yesterday": "Gestern",
     "daysAgo": "Vor {{count}} Tagen"
+  },
+  "export": {
+    "successTitle": "Export bereit",
+    "successMessage": "Ihre Datei wurde heruntergeladen.",
+    "errorTitle": "Export fehlgeschlagen",
+    "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "expiredTitle": "Export abgelaufen",
+    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist."
   }
 }
