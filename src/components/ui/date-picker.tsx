@@ -76,7 +76,6 @@ function DatePicker({
             }
           }}
           disabled={disabledDays.length > 0 ? disabledDays : undefined}
-          initialFocus
         />
       </PopoverContent>
     </Popover>
