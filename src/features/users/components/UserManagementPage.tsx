@@ -1,6 +1,12 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { UserPlus, ChevronLeft, ChevronRight, X } from "lucide-react"
+import {
+  UserPlus,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  X,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
@@ -435,14 +441,14 @@ export default function UserManagementPage() {
       {data && (
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm font-medium text-foreground">
               {t("page.pagination.rowsPerPage")}
             </span>
             <select
               value={perPage}
               onChange={e => setPerPage(Number(e.target.value) as PageSize)}
               data-testid="pagination-page-size-select"
-              className="rounded-xl px-2 h-8 text-sm font-medium text-foreground bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
+              className="rounded-xl px-2 h-8 text-xs text-foreground bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
             >
               {PAGE_SIZES.map(size => (
                 <option key={size} value={size}>
@@ -452,15 +458,15 @@ export default function UserManagementPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               data-testid="pagination-prev-button"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl pl-1.5 pr-2.5 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronLeft size={14} />
+              <ChevronLeft size={16} />
               {t("page.pagination.previous")}
             </button>
 
@@ -468,9 +474,9 @@ export default function UserManagementPage() {
               item === "..." ? (
                 <span
                   key={`ellipsis-${idx}`}
-                  className="w-8 h-8 flex items-center justify-center text-sm text-muted-foreground"
+                  className="size-8 flex items-center justify-center text-muted-foreground"
                 >
-                  ...
+                  <MoreHorizontal size={16} />
                 </span>
               ) : (
                 <button
@@ -480,8 +486,8 @@ export default function UserManagementPage() {
                   onClick={() => setPage(item)}
                   className={
                     item === page
-                      ? "border border-border rounded-xl w-8 h-8 text-sm font-medium"
-                      : "rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+                      ? "bg-white border border-border rounded-xl size-8 text-sm font-medium flex items-center justify-center"
+                      : "rounded-xl size-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center"
                   }
                 >
                   {item}
@@ -494,10 +500,10 @@ export default function UserManagementPage() {
               data-testid="pagination-next-button"
               onClick={() => setPage(Math.min(data.total_pages, page + 1))}
               disabled={page === data.total_pages}
-              className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl pl-2.5 pr-1.5 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t("page.pagination.next")}
-              <ChevronRight size={14} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
