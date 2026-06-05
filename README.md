@@ -73,10 +73,10 @@ docker compose --profile prod up
 
 ### Environments
 
-| Environment | URL | Branch |
-|---|---|---|
-| Develop | https://refinext-dev.projects.holycode.com | `develop` |
-| Staging | https://refinext-st.projects.holycode.com | `release/*`, `hotfix/*` |
+| Environment | URL                                        | Branch                  |
+| ----------- | ------------------------------------------ | ----------------------- |
+| Develop     | https://refinext-dev.projects.holycode.com | `develop`               |
+| Staging     | https://refinext-st.projects.holycode.com  | `release/*`, `hotfix/*` |
 
 ### Dev flow
 
@@ -91,8 +91,8 @@ docker compose --profile prod up
 
 ### GitLab CI variables required
 
-| Variable | Scope | Description |
-|---|---|---|
-| `SSH_PRIVATE_KEY` | All | Deploy key authorized on both servers |
-| `VITE_API_URL` | Develop | Backend URL for the dev environment |
-| `VITE_API_URL` | Staging | Backend URL for the staging environment |
+| Variable          | Scope   | Description                             |
+| ----------------- | ------- | --------------------------------------- |
+| `SSH_PRIVATE_KEY` | All     | Deploy key authorized on both servers   |
+| `VITE_API_URL`    | Develop | Backend URL for the dev environment     |
+| `VITE_API_URL`    | Staging | Backend URL for the staging environment |

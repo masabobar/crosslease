@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test'
+import { test as base, expect } from "@playwright/test"
 
 type CustomFixtures = Record<string, never>
 
