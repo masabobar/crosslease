@@ -604,8 +604,8 @@
     "/api/v1/users/export": {
       "get": {
         "tags": ["Users"],
-        "summary": "Initiate async user list export",
-        "description": "Initiate an async user list export. Requires `user:export` permission.\n\nReturns immediately with a job_id. Poll `/export/status/{job_id}` for status,\nthen download via `/export/download/{job_id}` when ready.\n\nMax 3 concurrent active jobs per user — returns 429 if exceeded.\n\n# TODO: PRD1042-37 — add audit event USER_LIST_EXPORTED when AuditService is available",
+        "summary": "Initiate user list export",
+        "description": "Initiate user list export. Requires `user:export` permission.\n\nAlways async — returns `202 { job_id, status, poll_url }` immediately.\nPoll `/export/status/{job_id}`, download via `/export/download/{job_id}` when ready.\nMax 3 concurrent jobs per user → `429` if exceeded.\n\n# TODO: PRD1042-37 — add audit event USER_LIST_EXPORTED when AuditService is available",
         "operationId": "initiate_export_api_v1_users_export_get",
         "parameters": [
           {
@@ -742,7 +742,7 @@
       "get": {
         "tags": ["Users"],
         "summary": "Download completed export file",
-        "description": "Download a completed export file. Non-disclosing 404 for non-existent or not-owned jobs.\nReturns 409 if still processing, 422 if failed.",
+        "description": "Download a completed export file. Non-disclosing 404 for non-existent or not-owned jobs.\nReturns 409 if still processing, 422 if failed.\nIf the file has expired (job TTL passed), automatically re-generates with the same filters\nand returns 202 with a new job_id.",
         "operationId": "export_download_api_v1_users_export_download__job_id__get",
         "parameters": [
           {
