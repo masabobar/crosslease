@@ -291,3 +291,8 @@
   color: var(--muted-foreground) !important;
   opacity: 0.8;
 }
+
+@keyframes row-highlight-fade {
+  0% { background-color: oklch(97% 0.05 85); }
+  100% { background-color: transparent; }
+}

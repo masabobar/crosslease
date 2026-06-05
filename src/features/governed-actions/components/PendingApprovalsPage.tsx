@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, Check, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -30,9 +31,14 @@ export default function PendingApprovalsPage() {
   const { t } = useTranslation("pendingApprovals")
   const { showToast } = useToastStore()
   const { data: currentUser } = useCurrentUser()
+  const location = useLocation()
+  const highlightUserId = (
+    location.state as { highlightUserId?: string } | null
+  )?.highlightUserId
 
   const [activeTab, setActiveTab] = useState<Tab>("all")
   const [search, setSearch] = useState("")
+  const highlightRowRef = useRef<HTMLDivElement | null>(null)
   const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailsAction, setDetailsAction] = useState<GovernedAction | null>(
@@ -50,6 +56,10 @@ export default function PendingApprovalsPage() {
   const canReview = currentUser?.role === "system_admin"
 
   const actions = data?.actions ?? []
+
+  const highlightedActionId = highlightUserId
+    ? (actions.find(a => a.subject_id === highlightUserId)?.id ?? null)
+    : null
 
   const filtered = search.trim()
     ? actions.filter(a => {
@@ -251,6 +261,18 @@ export default function PendingApprovalsPage() {
               action={action}
               currentUserId={currentUser?.id ?? ""}
               canReview={canReview}
+              isHighlighted={action.id === highlightedActionId}
+              ref={
+                action.id === highlightedActionId
+                  ? (el: HTMLDivElement | null) => {
+                      highlightRowRef.current = el
+                      el?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      })
+                    }
+                  : undefined
+              }
               onReview={handleReview}
               onWithdraw={handleWithdraw}
               onReInitiate={handleReInitiate}

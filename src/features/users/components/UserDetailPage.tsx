@@ -1,6 +1,6 @@
 import { useState, useRef, type ReactNode } from "react"
 import { ApiError } from "@/lib/api"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -38,7 +38,7 @@ import { UserStatusBanner } from "@/features/users/components/UserStatusBanner"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
+import { PATHS } from "@/router/paths"
 import {
   formatLastLogin,
   formatDate,
@@ -335,7 +335,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     null
   )
   const [activeTab, setActiveTab] = useState<TabKey>("lifecycle")
-  const { handleApprove, isPending: isApproving } = useApproveWithToast()
+  const navigate = useNavigate()
   const [isEditingIdentity, setIsEditingIdentity] = useState(false)
   const [showEmailConfirm, setShowEmailConfirm] = useState(false)
   const [pendingNewEmail, setPendingNewEmail] = useState("")
@@ -698,9 +698,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                 <button
                   type="button"
                   data-testid="detail-approve-button"
-                  disabled={isApproving}
-                  onClick={() => void handleApprove(user.id)}
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() =>
+                    navigate(PATHS.PENDING_APPROVALS, {
+                      state: { highlightUserId: user.id },
+                    })
+                  }
+                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
                 >
                   <UserCheck size={16} />
                   {t("table.actions.approve")}

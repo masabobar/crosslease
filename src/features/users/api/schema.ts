@@ -191,35 +191,6 @@ export const ResendInvitationInputSchema = z.object({
 })
 export type ResendInvitationInput = z.infer<typeof ResendInvitationInputSchema>
 
-export const ExportFormatSchema = z.enum(["csv", "xlsx"])
-export type ExportFormat = z.infer<typeof ExportFormatSchema>
-
-export const ExportJobSchema = z.object({
-  job_id: z.string(),
-  status: z.string(),
-  poll_url: z.string().optional(),
-  download_url: z.string().optional(),
-})
-export type ExportJob = z.infer<typeof ExportJobSchema>
-
-export const ExportJobStatusSchema = z.object({
-  job_id: z.string(),
-  status: z.enum(["processing", "ready", "failed"]),
-  row_count: z.number().optional(),
-  error_code: z.string().optional(),
-})
-export type ExportJobStatus = z.infer<typeof ExportJobStatusSchema>
-
-export type ExportParams = {
-  format: ExportFormat
-  search?: string
-  role?: UserRole[]
-  status?: UserStatus[]
-  tenant_id?: string
-  last_login_from?: string | null
-  last_login_to?: string | null
-}
-
 export const UserDetailResponseSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string(),
@@ -291,3 +262,32 @@ export const UpdateAccessPeriodRequestSchema = z.object({
 export type UpdateAccessPeriodInput = z.infer<
   typeof UpdateAccessPeriodRequestSchema
 >
+
+export const ExportFormatSchema = z.enum(["csv", "xlsx"])
+export type ExportFormat = z.infer<typeof ExportFormatSchema>
+
+export const ExportJobSchema = z.object({
+  job_id: z.string(),
+  status: z.string(),
+  poll_url: z.string().optional(),
+  download_url: z.string().optional(),
+})
+export type ExportJob = z.infer<typeof ExportJobSchema>
+
+export const ExportJobStatusSchema = z.object({
+  job_id: z.string(),
+  status: z.enum(["processing", "ready", "failed"]),
+  row_count: z.number().optional(),
+  error_code: z.string().optional(),
+})
+export type ExportJobStatus = z.infer<typeof ExportJobStatusSchema>
+
+export type ExportParams = {
+  format: ExportFormat
+  search?: string
+  role?: UserRole[]
+  status?: UserStatus[]
+  tenant_id?: string
+  last_login_from?: string | null
+  last_login_to?: string | null
+}

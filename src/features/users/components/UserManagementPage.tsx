@@ -32,7 +32,6 @@ import { UserStatusSchema } from "@/features/users/api/schema"
 import type { InviteSuccessResult } from "@/features/users/components/InviteUserModal"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
-import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useExportUsers } from "@/features/users/hooks/useExportUsers"
 import { EMPTY_FILTER_STATE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
@@ -41,7 +40,7 @@ import {
   formatDate,
   buildActionToastPayload,
 } from "@/features/users/utils"
-import { adminUserDetail } from "@/router/paths"
+import { adminUserDetail, PATHS } from "@/router/paths"
 
 const MAX_VISIBLE_PAGE_NUMBERS = 5
 
@@ -95,7 +94,6 @@ export default function UserManagementPage() {
   } = useUserListParams()
   const showToast = useToastStore(s => s.showToast)
   const { data: tenantsData } = useTenants()
-  const { handleApprove } = useApproveWithToast()
   const { data: currentUser } = useCurrentUser()
   const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
   const canExport =
@@ -142,9 +140,9 @@ export default function UserManagementPage() {
     })
   }
 
-  async function handleAction(type: UserActionType, user: UserListItem) {
+  function handleAction(type: UserActionType, user: UserListItem) {
     if (type === "approve") {
-      await handleApprove(user.id)
+      navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
       return
     }
     setActiveAction({
@@ -157,10 +155,10 @@ export default function UserManagementPage() {
     })
   }
 
-  async function handleDrawerAction(type: UserActionType, user: UserDetail) {
+  function handleDrawerAction(type: UserActionType, user: UserDetail) {
     setSelectedUserId(null)
     if (type === "approve") {
-      await handleApprove(user.id)
+      navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
       return
     }
     setActiveAction({
