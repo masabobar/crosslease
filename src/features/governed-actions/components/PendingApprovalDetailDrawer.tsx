@@ -413,7 +413,12 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
             </InfoCard>
           )}
 
-          {/* REQUEST CHAIN — collapsible */}
+          {/* REQUEST CHAIN — collapsible
+              TODO (Q-002 backend gap): currently shows only the current action.
+              When GET /governed-actions?correlation_id= is available:
+              1. Fetch all actions sharing action.correlation_id
+              2. Sort by created_at ascending
+              3. Render each as <ChainEntry> and replace the hardcoded "1 request" count */}
           <InfoCard
             title={t("drawer.requestChain")}
             showBody={chainExpanded}

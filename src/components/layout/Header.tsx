@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Settings,
   LogOut,
+  User,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
@@ -26,6 +27,10 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
   [PATHS.PENDING_APPROVALS]: [
     { labelKey: "breadcrumb.home" },
     { labelKey: "breadcrumb.pendingApprovals" },
+  ],
+  [PATHS.SETTINGS_PROFILE]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.myProfile" },
   ],
 }
 
@@ -144,7 +149,17 @@ export function Header() {
                 className="fixed inset-0 z-10"
                 onClick={() => setProfileOpen(false)}
               />
-              <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-border rounded-xl shadow-lg min-w-[140px] py-1">
+              <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-border rounded-xl shadow-lg min-w-[160px] py-1">
+                <Link
+                  to={PATHS.SETTINGS_PROFILE}
+                  onClick={() => setProfileOpen(false)}
+                  data-testid="header-my-profile-link"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <User size={14} />
+                  {t("nav.myProfile")}
+                </Link>
+                <div className="mx-3 my-1 h-px bg-border" />
                 <button
                   data-testid="header-logout-button"
                   onClick={() => {
