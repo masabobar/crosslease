@@ -1,0 +1,19 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { editUser, USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
+import type { EditUserInput } from "@/features/users/api/schema"
+
+export function useEditUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, input }: { userId: string; input: EditUserInput }) =>
+      editUser(userId, input),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEYS.lists(),
+      })
+    },
+  })
+}
