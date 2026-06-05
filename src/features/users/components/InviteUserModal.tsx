@@ -72,6 +72,17 @@ const formSchema = z
           path: ["accessValidUntil"],
         })
       }
+      if (
+        data.accessValidFrom &&
+        data.accessValidUntil &&
+        data.accessValidUntil <= data.accessValidFrom
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "mustBeAfterFrom",
+          path: ["accessValidUntil"],
+        })
+      }
     }
   })
 
@@ -83,8 +94,12 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { mutateAsync: invite } = useInviteUser()
   const { data: tenantsData, isLoading: isTenantsLoading } = useTenants()
 
-  const resolveMsg = (msg: string | undefined) =>
-    msg === "required" ? tCommon("validation.required") : msg
+  const resolveMsg = (msg: string | undefined) => {
+    if (msg === "required") return tCommon("validation.required")
+    if (msg === "mustBeAfterFrom")
+      return tCommon("validation.dateMustBeAfterFrom")
+    return msg
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -106,6 +121,14 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
     .map(t => ({ value: t.id, label: t.name }))
 
   const selectedRole = useWatch({ control: form.control, name: "role" })
+  const accessValidFromValue = useWatch({
+    control: form.control,
+    name: "accessValidFrom",
+  })
+  const accessValidUntilValue = useWatch({
+    control: form.control,
+    name: "accessValidUntil",
+  })
 
   const isTenantScoped =
     !!selectedRole && TENANT_SCOPED_ROLES.includes(selectedRole)
@@ -385,6 +408,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                       value={field.value}
                       onChange={field.onChange}
                       error={!!errors.accessValidFrom}
+                      maxDate={
+                        accessValidUntilValue
+                          ? new Date(accessValidUntilValue + "T00:00:00")
+                          : undefined
+                      }
                     />
                   )}
                 />
@@ -413,6 +441,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                       value={field.value}
                       onChange={field.onChange}
                       error={!!errors.accessValidUntil}
+                      minDate={
+                        accessValidFromValue
+                          ? new Date(accessValidFromValue + "T00:00:00")
+                          : undefined
+                      }
                     />
                   )}
                 />

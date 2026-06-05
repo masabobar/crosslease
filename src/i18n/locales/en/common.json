@@ -4,7 +4,8 @@
   },
   "loading": "Loading...",
   "validation": {
-    "required": "This field is required."
+    "required": "This field is required.",
+    "dateMustBeAfterFrom": "The 'To' date must be after the 'From' date."
   },
   "nav": {
     "leasingPlatform": "Leasing Platform",
