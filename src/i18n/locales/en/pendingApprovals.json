@@ -97,6 +97,10 @@
     "reInitiated": {
       "title": "Re-initiated",
       "message": "{{action}} request has been re-submitted for approval."
+    },
+    "error": {
+      "title": "Action failed",
+      "message": "Something went wrong. Please try again."
     }
   },
   "empty": {

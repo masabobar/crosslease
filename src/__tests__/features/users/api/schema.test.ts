@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
+  ExportFormatSchema,
+  ExportJobSchema,
+  ExportJobStatusSchema,
   UserListItemSchema,
   PaginatedUsersResponseSchema,
   UserStatusSchema,
@@ -190,6 +193,8 @@ const validUserDetail = {
   status: "active",
   tenant_id: null,
   tenant_name: null,
+  phone_number: null,
+  pending_email: null,
   access_valid_until: null,
   invited_by_user_id: null,
   invited_at: null,
@@ -198,7 +203,10 @@ const validUserDetail = {
   created_at: "2026-01-01T00:00:00Z",
 }
 
-import { UserDetailResponseSchema } from "@/features/users/api/schema"
+import {
+  UserDetailResponseSchema,
+  UpdateAccessPeriodRequestSchema,
+} from "@/features/users/api/schema"
 
 describe("UserDetailResponseSchema", () => {
   it("accepts a valid minimal payload (all optional fields absent)", () => {
@@ -288,6 +296,65 @@ describe("UserDetailResponseSchema", () => {
   })
 })
 
+describe("UpdateAccessPeriodRequestSchema", () => {
+  const valid = {
+    new_access_valid_until: "2027-05-23T00:00:00.000Z",
+    reason: "regulatory_audit",
+  }
+
+  it("accepts a valid payload", () => {
+    expect(() => UpdateAccessPeriodRequestSchema.parse(valid)).not.toThrow()
+  })
+
+  it("accepts all valid reason values", () => {
+    const reasons = [
+      "regulatory_audit",
+      "internal_audit",
+      "compliance_review",
+      "investigation",
+      "temporary_review_access",
+      "other",
+    ]
+    for (const reason of reasons) {
+      expect(() =>
+        UpdateAccessPeriodRequestSchema.parse({ ...valid, reason })
+      ).not.toThrow()
+    }
+  })
+
+  it("rejects an unknown reason", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({
+        ...valid,
+        reason: "unknown_reason",
+      })
+    ).toThrow()
+  })
+
+  it("rejects empty new_access_valid_until", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({
+        ...valid,
+        new_access_valid_until: "",
+      })
+    ).toThrow()
+  })
+
+  it("rejects missing new_access_valid_until", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({ reason: valid.reason })
+    ).toThrow()
+  })
+
+  it("rejects missing reason", () => {
+    expect(() =>
+      UpdateAccessPeriodRequestSchema.parse({
+        new_access_valid_until: valid.new_access_valid_until,
+      })
+    ).toThrow()
+  })
+})
+
 describe("UserStatusSchema", () => {
   it("accepts pending_approval", () => {
     expect(() => UserStatusSchema.parse("pending_approval")).not.toThrow()
@@ -323,5 +390,81 @@ describe("UserStatusSchema", () => {
 
   it("rejects empty string", () => {
     expect(() => UserStatusSchema.parse("")).toThrow()
+  })
+})
+
+describe("ExportFormatSchema", () => {
+  it("accepts csv", () => {
+    expect(ExportFormatSchema.parse("csv")).toBe("csv")
+  })
+
+  it("accepts xlsx", () => {
+    expect(ExportFormatSchema.parse("xlsx")).toBe("xlsx")
+  })
+
+  it("rejects unknown format", () => {
+    expect(() => ExportFormatSchema.parse("pdf")).toThrow()
+  })
+})
+
+describe("ExportJobSchema", () => {
+  it("accepts a valid initiate response", () => {
+    const job = {
+      job_id: "abc123",
+      status: "processing",
+      poll_url: "/api/v1/users/export/status/abc123",
+      download_url: "/api/v1/users/export/download/abc123",
+    }
+    expect(() => ExportJobSchema.parse(job)).not.toThrow()
+  })
+
+  it("accepts response without optional urls", () => {
+    expect(() =>
+      ExportJobSchema.parse({ job_id: "x", status: "processing" })
+    ).not.toThrow()
+  })
+
+  it("rejects missing job_id", () => {
+    expect(() => ExportJobSchema.parse({ status: "processing" })).toThrow()
+  })
+})
+
+describe("ExportJobStatusSchema", () => {
+  it("accepts processing status", () => {
+    const result = ExportJobStatusSchema.parse({
+      job_id: "x",
+      status: "processing",
+    })
+    expect(result.status).toBe("processing")
+  })
+
+  it("accepts ready status", () => {
+    const result = ExportJobStatusSchema.parse({ job_id: "x", status: "ready" })
+    expect(result.status).toBe("ready")
+  })
+
+  it("accepts failed status with optional fields", () => {
+    const result = ExportJobStatusSchema.parse({
+      job_id: "x",
+      status: "failed",
+      error_code: "FILE_GENERATION_FAILED",
+    })
+    expect(result.status).toBe("failed")
+    expect(result.error_code).toBe("FILE_GENERATION_FAILED")
+  })
+
+  it("accepts ready status with row_count", () => {
+    const result = ExportJobStatusSchema.parse({
+      job_id: "x",
+      status: "ready",
+      row_count: 42,
+    })
+    expect(result.row_count).toBe(42)
+  })
+
+  it("rejects unknown status", () => {
+    expect(() =>
+      ExportJobStatusSchema.parse({ job_id: "x", status: "completed" })
+    ).toThrow()
   })
 })

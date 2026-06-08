@@ -1,5 +1,7 @@
 import { api } from "@/lib/api"
 import {
+  ExportJobSchema,
+  ExportJobStatusSchema,
   InviteUserResponseSchema,
   UserActionResponseSchema,
   UserResponseSchema,
@@ -7,6 +9,9 @@ import {
   UserDetailResponseSchema,
 } from "./schema"
 import type {
+  ExportJob,
+  ExportJobStatus,
+  ExportParams,
   InviteUserInput,
   InviteUserResponse,
   UserActionResponse,
@@ -18,7 +23,14 @@ import type {
   DeactivateUserInput,
   ResendInvitationInput,
   UserDetail,
+  EditUserInput,
+  ChangeEmailInput,
+  ChangeRoleInput,
+  UpdateAccessPeriodInput,
+  UpdateSelfInput,
 } from "./schema"
+import { GovernedActionSchema } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governed-actions/api/schema"
 
 export const USERS_QUERY_KEYS = {
   lists: () => ["users", "list"] as const,
@@ -98,4 +110,82 @@ export async function resendInvitation(
 export async function fetchUserById(id: string): Promise<UserDetail> {
   const data = await api.get(`/users/${id}`)
   return UserDetailResponseSchema.parse(data)
+}
+
+export async function initiateExport(params: ExportParams): Promise<ExportJob> {
+  const qs = new URLSearchParams()
+  qs.set("format", params.format)
+  if (params.search) qs.set("search", params.search)
+  params.role?.forEach(r => qs.append("role", r))
+  params.status?.forEach(s => qs.append("status", s))
+  if (params.tenant_id) qs.set("tenant_id", params.tenant_id)
+  if (params.last_login_from) qs.set("last_login_from", params.last_login_from)
+  if (params.last_login_to) qs.set("last_login_to", params.last_login_to)
+  const data = await api.get(`/users/export?${qs.toString()}`)
+  return ExportJobSchema.parse(data)
+}
+
+export async function getExportJobStatus(
+  jobId: string
+): Promise<ExportJobStatus> {
+  const data = await api.get(`/users/export/status/${jobId}`)
+  return ExportJobStatusSchema.parse(data)
+}
+
+export async function downloadExportFile(jobId: string): Promise<Blob> {
+  return api.get(`/users/export/download/${jobId}`, {
+    responseType: "blob",
+  }) as Promise<Blob>
+}
+
+export async function editUser(
+  id: string,
+  input: EditUserInput
+): Promise<UserDetail> {
+  const data = await api.patch(`/users/${id}`, input)
+  return UserDetailResponseSchema.parse(data)
+}
+
+export async function changeUserEmail(
+  id: string,
+  input: ChangeEmailInput
+): Promise<GovernedAction> {
+  const data = await api.post(`/users/${id}/change-email`, input)
+  return GovernedActionSchema.parse(data)
+}
+
+export async function changeUserRole(
+  id: string,
+  input: ChangeRoleInput
+): Promise<GovernedAction> {
+  const data = await api.post(`/users/${id}/change-role`, input)
+  return GovernedActionSchema.parse(data)
+}
+
+export async function updateUserAccessPeriod(
+  id: string,
+  input: UpdateAccessPeriodInput
+): Promise<GovernedAction> {
+  const data = await api.post(`/users/${id}/update-access-period`, input)
+  return GovernedActionSchema.parse(data)
+}
+
+export async function updateSelf(
+  input: UpdateSelfInput
+): Promise<UserResponse> {
+  const data = await api.patch("/users/me", input)
+  return UserResponseSchema.parse(data)
+}
+
+export async function uploadSelfPicture(file: File): Promise<UserResponse> {
+  const form = new FormData()
+  form.append("file", file)
+  const data = await api.post("/users/me/picture", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+  return UserResponseSchema.parse(data)
+}
+
+export async function deleteSelfPicture(): Promise<void> {
+  await api.delete("/users/me/picture")
 }

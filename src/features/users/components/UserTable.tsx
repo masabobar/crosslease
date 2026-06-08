@@ -57,6 +57,7 @@ function SortableHeader({
   children,
 }: SortableHeaderProps) {
   return (
+    // NOTE: raw <button> — shadcn Button's fixed height (h-9) and padding break compact table header alignment
     <button
       type="button"
       data-testid={`sort-${columnKey}`}
@@ -99,6 +100,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
 
   if (!hasActions) {
     return (
+      // NOTE: raw <button> — minimal disabled placeholder; no shadcn Button variant provides cursor-default without altering size/opacity defaults
       <button
         type="button"
         className="text-muted-foreground/30 cursor-default"
@@ -116,6 +118,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
 
   return (
     <div className="relative">
+      {/* NOTE: raw <button> — opens a custom absolutely-positioned menu; shadcn DropdownMenu restructures the DOM tree and cannot share the relative container */}
       <button
         type="button"
         data-testid={`user-row-menu-${user.id}`}
@@ -128,6 +131,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          {/* NOTE: raw <button> items — list items inside a custom dropdown; shadcn DropdownMenuItem requires a DropdownMenu root and restructures the portal/focus behaviour */}
           <div className="absolute right-0 top-6 z-20 w-48 rounded-xl border border-border bg-card shadow-md py-1">
             {approveVisible && (
               <button

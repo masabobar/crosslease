@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, Check, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,6 +11,7 @@ import { ReviewRequestModal } from "@/features/governed-actions/components/Revie
 import { PendingApprovalDetailDrawer } from "@/features/governed-actions/components/PendingApprovalDetailDrawer"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import type {
   GovernedAction,
   GovernedActionStatus,
@@ -30,9 +32,14 @@ export default function PendingApprovalsPage() {
   const { t } = useTranslation("pendingApprovals")
   const { showToast } = useToastStore()
   const { data: currentUser } = useCurrentUser()
+  const location = useLocation()
+  const highlightUserId = (
+    location.state as { highlightUserId?: string } | null
+  )?.highlightUserId
 
   const [activeTab, setActiveTab] = useState<Tab>("all")
   const [search, setSearch] = useState("")
+  const highlightRowRef = useRef<HTMLDivElement | null>(null)
   const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailsAction, setDetailsAction] = useState<GovernedAction | null>(
@@ -47,9 +54,13 @@ export default function PendingApprovalsPage() {
   const withdrawAction = useWithdrawAction()
   const reInitiateAction = useReInitiateAction()
 
-  const canReview = currentUser?.role === "system_admin"
+  const canReview = currentUser?.role === SYSTEM_ADMIN_ROLE
 
   const actions = data?.actions ?? []
+
+  const highlightedActionId = highlightUserId
+    ? (actions.find(a => a.subject_id === highlightUserId)?.id ?? null)
+    : null
 
   const filtered = search.trim()
     ? actions.filter(a => {
@@ -89,6 +100,13 @@ export default function PendingApprovalsPage() {
             }),
           })
         },
+        onError: () => {
+          showToast({
+            variant: "warning",
+            title: t("toast.error.title"),
+            message: t("toast.error.message"),
+          })
+        },
       }
     )
   }
@@ -104,6 +122,13 @@ export default function PendingApprovalsPage() {
             message: t("toast.reInitiated.message", {
               action: t(`actionTypes.${action.action_type}`),
             }),
+          })
+        },
+        onError: () => {
+          showToast({
+            variant: "warning",
+            title: t("toast.error.title"),
+            message: t("toast.error.message"),
           })
         },
       }
@@ -155,6 +180,7 @@ export default function PendingApprovalsPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Search */}
         <div className="relative w-[288px]">
+          {/* NOTE: raw <input> — custom h-8 search field with an absolutely-positioned icon overlay; shadcn Input's min-height and padding would require additional overrides */}
           <input
             type="text"
             placeholder={t("search.placeholder")}
@@ -174,6 +200,7 @@ export default function PendingApprovalsPage() {
           <span className="text-sm text-muted-foreground">
             {t("view", { defaultValue: "View" })}
           </span>
+          {/* NOTE: raw <button> items — position-aware rounded corners (first/last) require index logic not composable with shadcn Tabs */}
           <div className="flex items-center border border-border rounded-[10px] overflow-hidden h-9">
             {TABS.map((tab, i) => (
               <button
@@ -251,6 +278,18 @@ export default function PendingApprovalsPage() {
               action={action}
               currentUserId={currentUser?.id ?? ""}
               canReview={canReview}
+              isHighlighted={action.id === highlightedActionId}
+              ref={
+                action.id === highlightedActionId
+                  ? (el: HTMLDivElement | null) => {
+                      highlightRowRef.current = el
+                      el?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      })
+                    }
+                  : undefined
+              }
               onReview={handleReview}
               onWithdraw={handleWithdraw}
               onReInitiate={handleReInitiate}

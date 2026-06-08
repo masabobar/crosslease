@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { UserPlus, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
@@ -31,15 +32,15 @@ import { UserStatusSchema } from "@/features/users/api/schema"
 import type { InviteSuccessResult } from "@/features/users/components/InviteUserModal"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
-import { useApproveWithToast } from "@/features/users/hooks/useApproveWithToast"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useExportUsers } from "@/features/users/hooks/useExportUsers"
 import { EMPTY_FILTER_STATE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import {
   getUserFilterVisibility,
   formatDate,
   buildActionToastPayload,
 } from "@/features/users/utils"
-import { adminUserDetail } from "@/router/paths"
+import { adminUserDetail, PATHS } from "@/router/paths"
 
 const MAX_VISIBLE_PAGE_NUMBERS = 5
 
@@ -93,9 +94,11 @@ export default function UserManagementPage() {
   } = useUserListParams()
   const showToast = useToastStore(s => s.showToast)
   const { data: tenantsData } = useTenants()
-  const { handleApprove } = useApproveWithToast()
   const { data: currentUser } = useCurrentUser()
   const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
+  const canExport =
+    currentUser?.role === SYSTEM_ADMIN_ROLE || currentUser?.role === "auditor"
+  const { startExport, isExporting } = useExportUsers()
 
   const { data, isLoading } = useUsers({
     page,
@@ -137,9 +140,9 @@ export default function UserManagementPage() {
     })
   }
 
-  async function handleAction(type: UserActionType, user: UserListItem) {
+  function handleAction(type: UserActionType, user: UserListItem) {
     if (type === "approve") {
-      await handleApprove(user.id)
+      navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
       return
     }
     setActiveAction({
@@ -152,10 +155,10 @@ export default function UserManagementPage() {
     })
   }
 
-  async function handleDrawerAction(type: UserActionType, user: UserDetail) {
+  function handleDrawerAction(type: UserActionType, user: UserDetail) {
     setSelectedUserId(null)
     if (type === "approve") {
-      await handleApprove(user.id)
+      navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
       return
     }
     setActiveAction({
@@ -250,6 +253,27 @@ export default function UserManagementPage() {
           setAppliedFilters({ ...appliedFilters, ...update })
         }
         onOpenAdvanced={() => setIsFilterOpen(true)}
+        onExport={
+          canExport
+            ? format =>
+                void startExport({
+                  format,
+                  search: search || undefined,
+                  role:
+                    appliedFilters.role.length > 0
+                      ? appliedFilters.role
+                      : undefined,
+                  status:
+                    appliedFilters.status.length > 0
+                      ? appliedFilters.status
+                      : undefined,
+                  tenant_id: appliedFilters.tenant_id ?? undefined,
+                  last_login_from: appliedFilters.last_login_from,
+                  last_login_to: appliedFilters.last_login_to,
+                })
+            : undefined
+        }
+        isExporting={isExporting}
       />
 
       {/* Active filter pills */}
@@ -267,6 +291,7 @@ export default function UserManagementPage() {
               {t("page.filters.rolePill", {
                 value: t(`roles.${role}` as `roles.${UserRole}`),
               })}
+              {/* NOTE: raw <button> — inline X icon inside a badge <span>; shadcn Button renders block-level which breaks the inline badge layout */}
               <button
                 type="button"
                 data-testid={`filter-pill-remove-role-${role}`}
@@ -287,6 +312,7 @@ export default function UserManagementPage() {
                     ten => ten.id === appliedFilters.tenant_id
                   )?.name ?? appliedFilters.tenant_id,
               })}
+              {/* NOTE: raw <button> — same inline badge reason as role pill */}
               <button
                 type="button"
                 data-testid="filter-pill-remove-tenant"
@@ -310,6 +336,7 @@ export default function UserManagementPage() {
                     | "filter.mfa.disabled"
                 ),
               })}
+              {/* NOTE: raw <button> — same inline badge reason as role pill */}
               <button
                 type="button"
                 data-testid="filter-pill-remove-mfa"
@@ -332,6 +359,7 @@ export default function UserManagementPage() {
               {t("page.filters.statusPill", {
                 value: t(`statuses.${status}` as `statuses.${UserStatus}`),
               })}
+              {/* NOTE: raw <button> — same inline badge reason as role pill */}
               <button
                 type="button"
                 data-testid={`filter-pill-remove-status-${status}`}
@@ -364,6 +392,7 @@ export default function UserManagementPage() {
                     .filter(Boolean)
                     .join(" "),
                 })}
+                {/* NOTE: raw <button> — same inline badge reason as role pill */}
                 <button
                   type="button"
                   data-testid="filter-pill-remove-last-login"
@@ -382,6 +411,7 @@ export default function UserManagementPage() {
               </span>
             )}
 
+          {/* NOTE: raw <button> — xs destructive text link; shadcn Button variant="link" uses base font-size and different line-height */}
           <button
             type="button"
             data-testid="filters-clear-all"
@@ -408,16 +438,17 @@ export default function UserManagementPage() {
 
       {/* Pagination — always visible when data is present */}
       {data && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-end gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm font-medium text-foreground">
               {t("page.pagination.rowsPerPage")}
             </span>
+            {/* NOTE: raw <select> — native dropdown with <option> children; shadcn Select uses a custom portal-based dropdown incompatible with simple numeric option lists */}
             <select
               value={perPage}
               onChange={e => setPerPage(Number(e.target.value) as PageSize)}
               data-testid="pagination-page-size-select"
-              className="rounded-xl px-2 h-8 text-sm font-medium text-foreground bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
+              className="rounded-xl px-2 h-8 text-xs text-foreground bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
             >
               {PAGE_SIZES.map(size => (
                 <option key={size} value={size}>
@@ -427,26 +458,21 @@ export default function UserManagementPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               data-testid="pagination-prev-button"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl pl-1.5 pr-2.5 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronLeft size={14} />
+              <ChevronLeft size={16} />
               {t("page.pagination.previous")}
             </button>
 
             {pageNumbers.map((item, idx) =>
               item === "..." ? (
-                <span
-                  key={`ellipsis-${idx}`}
-                  className="w-8 h-8 flex items-center justify-center text-sm text-muted-foreground"
-                >
-                  ...
-                </span>
+                <PaginationEllipsis key={`ellipsis-${idx}`} />
               ) : (
                 <button
                   key={item}
@@ -455,8 +481,8 @@ export default function UserManagementPage() {
                   onClick={() => setPage(item)}
                   className={
                     item === page
-                      ? "border border-border rounded-xl w-8 h-8 text-sm font-medium"
-                      : "rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+                      ? "border border-border rounded-xl w-8 h-8 text-sm font-medium flex items-center justify-center"
+                      : "rounded-xl w-8 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center"
                   }
                 >
                   {item}
@@ -469,10 +495,10 @@ export default function UserManagementPage() {
               data-testid="pagination-next-button"
               onClick={() => setPage(Math.min(data.total_pages, page + 1))}
               disabled={page === data.total_pages}
-              className="rounded-xl px-3 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl pl-2.5 pr-1.5 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t("page.pagination.next")}
-              <ChevronRight size={14} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>

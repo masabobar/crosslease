@@ -127,6 +127,7 @@ function MultiSelectDropdown<T extends string>({
         sideOffset={4}
         className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
       >
+        {/* NOTE: raw <button> items — custom inline-checkbox list inside Popover; no shadcn Command/DropdownMenuItem pattern fits this checkbox-with-label layout */}
         {options.map(option => {
           const checked = value.includes(option)
           return (
@@ -171,6 +172,7 @@ function TextToggle({
     <div
       className={cn("flex gap-2", disabled && "opacity-40 pointer-events-none")}
     >
+      {/* NOTE: raw <button> items — pill-style radio toggle; no shadcn RadioGroup equivalent for this borderless-pill visual pattern */}
       {options.map(opt => (
         <button
           key={opt.value}
@@ -239,6 +241,7 @@ function SingleSelectDropdown({
         sideOffset={4}
         className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
       >
+        {/* NOTE: raw <button> items — single-select list inside Popover; same reason as multi-select: no shadcn primitive fits this custom option pattern */}
         {options.map(option => (
           <button
             key={option.value}
@@ -529,6 +532,7 @@ function UserFilterPanel({
 
         {/* Footer */}
         <div className="border-t border-border px-4 py-3 flex gap-3 shrink-0">
+          {/* NOTE: raw <button> — flex-1 full-width layout with rounded-lg (not shadcn's rounded-xl); className alone would not cleanly override shadcn Button's defaults */}
           <button
             type="button"
             data-testid="filter-cancel-button"

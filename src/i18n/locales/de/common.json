@@ -4,7 +4,8 @@
   },
   "loading": "Laden...",
   "validation": {
-    "required": "Dieses Feld ist erforderlich."
+    "required": "Dieses Feld ist erforderlich.",
+    "dateMustBeAfterFrom": "Das 'Bis'-Datum muss nach dem 'Von'-Datum liegen."
   },
   "nav": {
     "leasingPlatform": "Leasing Platform",
@@ -28,13 +29,15 @@
     "lcStatus": "Statusübersicht",
     "lcDocuments": "Bankdokumente",
     "lcProposals": "Vorschläge",
-    "pendingApprovals": "Ausstehende Genehmigungen"
+    "pendingApprovals": "Ausstehende Genehmigungen",
+    "myProfile": "Mein Profil"
   },
   "breadcrumb": {
     "home": "Startseite",
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
-    "pendingApprovals": "Ausstehende Genehmigungen"
+    "pendingApprovals": "Ausstehende Genehmigungen",
+    "myProfile": "Mein Profil"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

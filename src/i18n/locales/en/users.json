@@ -229,6 +229,7 @@
         "firstName": "First name",
         "lastName": "Last name",
         "email": "Email",
+        "phoneNumber": "Phone number",
         "serviceAccountFlag": "Service account flag",
         "role": "Role",
         "roleClassification": "Role classification",
@@ -268,8 +269,91 @@
       },
       "actions": {
         "edit": "Edit",
+        "cancel": "Cancel",
+        "saveChanges": "Save changes",
+        "resendEmailVerification": "Resend email verification",
         "suspendUser": "Suspend user",
         "deactivateUser": "Deactivate user"
+      },
+      "editRole": {
+        "title": "Edit role & scope",
+        "currentRole": "Current role",
+        "newRole": "New role",
+        "reasonLabel": "Reason for change",
+        "reasonPlaceholder": "Describe the reason for this role change...",
+        "reasonMandatory": "Reason is mandatory for role change",
+        "fourEyes": {
+          "title": "Four-Eyes approval required",
+          "description": "This role change requires a second authorized admin to approve before taking effect."
+        },
+        "submit": "Submit for approval",
+        "success": {
+          "title": "Role change submitted",
+          "message": "The role change request has been submitted for approval."
+        },
+        "error": {
+          "title": "Role change failed"
+        },
+        "selectReason": "Select reason",
+        "accessValidPeriod": "Access valid period",
+        "accessValidUntil": "Access valid until",
+        "selectDate": "Select date",
+        "reasons": {
+          "regulatory_audit": "Regulatory audit",
+          "internal_audit": "Internal audit",
+          "compliance_review": "Compliance review",
+          "investigation": "Investigation",
+          "temporary_review_access": "Temporary review access",
+          "other": "Other"
+        },
+        "accessPeriodSuccess": {
+          "title": "Access period update submitted",
+          "message": "The access period update request has been submitted for approval."
+        }
+      },
+      "selfProfile": {
+        "avatar": {
+          "replacePhoto": "Replace photo",
+          "removePhoto": "Remove photo"
+        },
+        "pictureUpdated": {
+          "title": "Profile updated",
+          "message": "Your profile picture has been updated."
+        },
+        "pictureRemoved": {
+          "title": "Profile picture removed",
+          "message": "Your profile picture has been removed."
+        },
+        "phoneSuccess": {
+          "title": "Phone number updated",
+          "message": "Your phone number has been saved."
+        }
+      },
+      "editIdentity": {
+        "pendingVerification": "Pending Verification",
+        "confirm": {
+          "title": "Confirm email change",
+          "currentEmail": "Current email",
+          "newEmail": "New email",
+          "warning": {
+            "title": "Verification required",
+            "description": "A verification link will be sent to the new address. The email will not update until the user confirms. Active sessions will be invalidated after verification."
+          },
+          "cancel": "Cancel",
+          "confirm": "Send verification"
+        },
+        "success": {
+          "title": "Changes saved",
+          "message": "User identity has been updated."
+        },
+        "emailChangeSuccess": {
+          "title": "Verification email sent",
+          "message": "Verification email sent to {{newEmail}}. Email will not update until the user clicks the verification link. Previous address {{oldEmail}} remains active as recovery anchor until verification completes."
+        },
+        "emailResendSuccess": {
+          "title": "Verification email resent",
+          "message": "Verification email resent to {{newEmail}}. Email will not update until the user clicks the verification link. Previous address {{oldEmail}} remains active as recovery anchor until verification completes."
+        }
       },
       "values": {
         "on": "On",
@@ -331,13 +415,26 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
-    "EMAIL_ALREADY_EXISTS": "This email address is already in use."
+    "EMAIL_ALREADY_EXISTS": "This email address is already in use.",
+    "DUPLICATE_PENDING_ACTION": "A pending action of this type already exists for this user.",
+    "USER_NOT_ACTIVE": "Operation requires an active user account.",
+    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
+  },
+  "export": {
+    "successTitle": "Export ready",
+    "successMessage": "Your file has been downloaded.",
+    "errorTitle": "Export failed",
+    "errorMessage": "Something went wrong. Please try again.",
+    "expiredTitle": "Export expired",
+    "expiredMessage": "The export expired before it could be downloaded. Please try again."
   },
   "quickFilters": {
     "searchPlaceholder": "Search",
     "noTenantsAvailable": "No tenants available",
     "advancedFilters": "Advanced filters",
     "export": "Export",
+    "exportCsv": "Export as CSV",
+    "exportXlsx": "Export as XLSX",
     "buttons": {
       "role": "Role",
       "tenant": "Tenant",
@@ -352,5 +449,17 @@
     "hoursAgo": "{{count}}h ago",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}}d ago"
+  },
+  "export": {
+    "successTitle": "Export ready",
+    "successMessage": "Your file has been downloaded.",
+    "errorTitle": "Export failed",
+    "errorMessage": "Something went wrong. Please try again.",
+    "expiredTitle": "Export expired",
+    "expiredMessage": "The export expired before it could be downloaded. Please try again."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
   }
 }

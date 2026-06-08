@@ -229,6 +229,7 @@
         "firstName": "Vorname",
         "lastName": "Nachname",
         "email": "E-Mail",
+        "phoneNumber": "Telefonnummer",
         "serviceAccountFlag": "Dienstkonto-Flag",
         "role": "Rolle",
         "roleClassification": "Rollenklassifizierung",
@@ -268,8 +269,91 @@
       },
       "actions": {
         "edit": "Bearbeiten",
+        "cancel": "Abbrechen",
+        "saveChanges": "Änderungen speichern",
+        "resendEmailVerification": "E-Mail-Verifizierung erneut senden",
         "suspendUser": "Benutzer sperren",
         "deactivateUser": "Benutzer deaktivieren"
+      },
+      "editRole": {
+        "title": "Rolle & Umfang bearbeiten",
+        "currentRole": "Aktuelle Rolle",
+        "newRole": "Neue Rolle",
+        "reasonLabel": "Grund für die Änderung",
+        "reasonPlaceholder": "Beschreiben Sie den Grund für diese Rollenänderung...",
+        "reasonMandatory": "Grund ist für eine Rollenänderung erforderlich",
+        "fourEyes": {
+          "title": "Vier-Augen-Genehmigung erforderlich",
+          "description": "Diese Rollenänderung erfordert die Genehmigung eines zweiten autorisierten Administrators, bevor sie wirksam wird."
+        },
+        "submit": "Zur Genehmigung einreichen",
+        "success": {
+          "title": "Rollenänderung eingereicht",
+          "message": "Der Antrag auf Rollenänderung wurde zur Genehmigung eingereicht."
+        },
+        "error": {
+          "title": "Rollenänderung fehlgeschlagen"
+        },
+        "selectReason": "Grund auswählen",
+        "accessValidPeriod": "Zugangsgültigkeitszeitraum",
+        "accessValidUntil": "Zugang gültig bis",
+        "selectDate": "Datum auswählen",
+        "reasons": {
+          "regulatory_audit": "Regulierungsprüfung",
+          "internal_audit": "Interne Prüfung",
+          "compliance_review": "Compliance-Überprüfung",
+          "investigation": "Untersuchung",
+          "temporary_review_access": "Temporärer Überprüfungszugang",
+          "other": "Sonstiges"
+        },
+        "accessPeriodSuccess": {
+          "title": "Aktualisierung des Zugangszeitraums eingereicht",
+          "message": "Der Antrag zur Aktualisierung des Zugangszeitraums wurde zur Genehmigung eingereicht."
+        }
+      },
+      "selfProfile": {
+        "avatar": {
+          "replacePhoto": "Foto ersetzen",
+          "removePhoto": "Foto entfernen"
+        },
+        "pictureUpdated": {
+          "title": "Profil aktualisiert",
+          "message": "Ihr Profilbild wurde aktualisiert."
+        },
+        "pictureRemoved": {
+          "title": "Profilbild entfernt",
+          "message": "Ihr Profilbild wurde entfernt."
+        },
+        "phoneSuccess": {
+          "title": "Telefonnummer aktualisiert",
+          "message": "Ihre Telefonnummer wurde gespeichert."
+        }
+      },
+      "editIdentity": {
+        "pendingVerification": "Verifizierung ausstehend",
+        "confirm": {
+          "title": "E-Mail-Änderung bestätigen",
+          "currentEmail": "Aktuelle E-Mail",
+          "newEmail": "Neue E-Mail",
+          "warning": {
+            "title": "Verifizierung erforderlich",
+            "description": "Ein Verifizierungslink wird an die neue Adresse gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer bestätigt. Aktive Sitzungen werden nach der Verifizierung ungültig."
+          },
+          "cancel": "Abbrechen",
+          "confirm": "Verifizierung senden"
+        },
+        "success": {
+          "title": "Änderungen gespeichert",
+          "message": "Benutzeridentität wurde aktualisiert."
+        },
+        "emailChangeSuccess": {
+          "title": "Verifizierungs-E-Mail gesendet",
+          "message": "Verifizierungs-E-Mail an {{newEmail}} gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer auf den Verifizierungslink klickt. Die vorherige Adresse {{oldEmail}} bleibt bis zur Verifizierung als Wiederherstellungsanker aktiv."
+        },
+        "emailResendSuccess": {
+          "title": "Verifizierungs-E-Mail erneut gesendet",
+          "message": "Verifizierungs-E-Mail erneut an {{newEmail}} gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer auf den Verifizierungslink klickt. Die vorherige Adresse {{oldEmail}} bleibt bis zur Verifizierung als Wiederherstellungsanker aktiv."
+        }
       },
       "values": {
         "on": "Ein",
@@ -331,13 +415,26 @@
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-    "EMAIL_ALREADY_EXISTS": "Diese E-Mail-Adresse wird bereits verwendet."
+    "EMAIL_ALREADY_EXISTS": "Diese E-Mail-Adresse wird bereits verwendet.",
+    "DUPLICATE_PENDING_ACTION": "Für diesen Benutzer existiert bereits eine ausstehende Aktion dieses Typs.",
+    "USER_NOT_ACTIVE": "Für diese Operation ist ein aktives Benutzerkonto erforderlich.",
+    "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist."
+  },
+  "export": {
+    "successTitle": "Export bereit",
+    "successMessage": "Ihre Datei wurde heruntergeladen.",
+    "errorTitle": "Export fehlgeschlagen",
+    "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "expiredTitle": "Export abgelaufen",
+    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
   },
   "quickFilters": {
     "searchPlaceholder": "Suchen",
     "noTenantsAvailable": "Keine Mandanten verfügbar",
     "advancedFilters": "Erweiterte Filter",
     "export": "Exportieren",
+    "exportCsv": "Als CSV exportieren",
+    "exportXlsx": "Als XLSX exportieren",
     "buttons": {
       "role": "Rolle",
       "tenant": "Mandant",
@@ -352,5 +449,17 @@
     "hoursAgo": "Vor {{count}} Std.",
     "yesterday": "Gestern",
     "daysAgo": "Vor {{count}} Tagen"
+  },
+  "export": {
+    "successTitle": "Export bereit",
+    "successMessage": "Ihre Datei wurde heruntergeladen.",
+    "errorTitle": "Export fehlgeschlagen",
+    "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "expiredTitle": "Export abgelaufen",
+    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist."
   }
 }

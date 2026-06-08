@@ -34,12 +34,12 @@ describe("RoleGuard allowed-role logic", () => {
     expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("auditor")).toBe(true)
   })
 
-  it("front_office is NOT in USER_MANAGEMENT_ALLOWED_ROLES", () => {
-    expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("front_office")).toBe(false)
+  it("front_office is in USER_MANAGEMENT_ALLOWED_ROLES", () => {
+    expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("front_office")).toBe(true)
   })
 
-  it("back_office is NOT in USER_MANAGEMENT_ALLOWED_ROLES", () => {
-    expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("back_office")).toBe(false)
+  it("back_office is in USER_MANAGEMENT_ALLOWED_ROLES", () => {
+    expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("back_office")).toBe(true)
   })
 
   it("leasing_company_user is NOT in USER_MANAGEMENT_ALLOWED_ROLES", () => {

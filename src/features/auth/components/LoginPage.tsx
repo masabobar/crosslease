@@ -22,7 +22,11 @@ import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { InputOTP } from "@/components/ui/input-otp"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 import { AppLogo } from "./AppLogo"
 
 const SUCCESS_REDIRECT_DELAY_MS = 800
@@ -185,12 +189,22 @@ export default function LoginPage() {
 
                 <div className="flex flex-col gap-2">
                   <InputOTP
+                    maxLength={6}
                     value={otpValue}
                     onChange={setOtpValue}
                     hasError={otpHelper.type === "error"}
                     disabled={isOtpSubmitting || isSuccess}
                     autoFocus
-                  />
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
 
                   {otpHelper.type !== "none" && (
                     <div

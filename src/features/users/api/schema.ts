@@ -25,6 +25,8 @@ export const UserResponseSchema = z.object({
   permissions: z.array(z.string()).default([]),
   tenant_id: z.string().nullable(),
   status: UserStatusSchema,
+  phone_number: z.string().nullable().optional(),
+  profile_picture_url: z.string().nullable().optional(),
   access_valid_until: z.string().nullable(),
   invited_by: z.string().uuid().nullable(),
   invited_at: z.string().nullable(),
@@ -199,6 +201,9 @@ export const UserDetailResponseSchema = z.object({
   status: UserStatusSchema,
   tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
+  phone_number: z.string().nullable(),
+  profile_picture_url: z.string().nullable().optional(),
+  pending_email: z.string().nullable(),
   access_valid_until: z.string().nullable(),
   invited_by_user_id: z.string().nullable(),
   invited_at: z.string().nullable(),
@@ -212,3 +217,77 @@ export const UserDetailResponseSchema = z.object({
 })
 
 export type UserDetail = z.infer<typeof UserDetailResponseSchema>
+
+export const EditUserRequestSchema = z.object({
+  first_name: z.string().min(1).max(100).nullable().optional(),
+  last_name: z.string().min(1).max(100).nullable().optional(),
+})
+export type EditUserInput = z.infer<typeof EditUserRequestSchema>
+
+export const UpdateSelfInputSchema = z.object({
+  phone_number: z
+    .string()
+    .regex(/^\+?[0-9\s\-() ]{7,30}$/, "Invalid phone number")
+    .nullable()
+    .optional(),
+})
+export type UpdateSelfInput = z.infer<typeof UpdateSelfInputSchema>
+
+export const ChangeEmailRequestSchema = z.object({
+  new_email: z.string().email(),
+})
+export type ChangeEmailInput = z.infer<typeof ChangeEmailRequestSchema>
+
+export const ChangeRoleRequestSchema = z.object({
+  new_role: z.enum(USER_ROLES),
+  reason: z.string().min(10).nullable().optional(),
+})
+export type ChangeRoleInput = z.infer<typeof ChangeRoleRequestSchema>
+
+export const AUDITOR_PERIOD_UPDATE_REASONS = [
+  "regulatory_audit",
+  "internal_audit",
+  "compliance_review",
+  "investigation",
+  "temporary_review_access",
+  "other",
+] as const
+export type AuditorPeriodUpdateReason =
+  (typeof AUDITOR_PERIOD_UPDATE_REASONS)[number]
+
+export const UpdateAccessPeriodRequestSchema = z.object({
+  new_access_valid_until: z.string().min(1),
+  reason: z.enum(AUDITOR_PERIOD_UPDATE_REASONS),
+})
+export type UpdateAccessPeriodInput = z.infer<
+  typeof UpdateAccessPeriodRequestSchema
+>
+
+export const ExportFormatSchema = z.enum(["csv", "xlsx"])
+export type ExportFormat = z.infer<typeof ExportFormatSchema>
+
+export const ExportJobSchema = z.object({
+  job_id: z.string(),
+  status: z.string(),
+  poll_url: z.string().optional(),
+  download_url: z.string().optional(),
+})
+export type ExportJob = z.infer<typeof ExportJobSchema>
+
+export const ExportJobStatusSchema = z.object({
+  job_id: z.string(),
+  status: z.enum(["processing", "ready", "failed"]),
+  row_count: z.number().optional(),
+  error_code: z.string().optional(),
+})
+export type ExportJobStatus = z.infer<typeof ExportJobStatusSchema>
+
+export type ExportParams = {
+  format: ExportFormat
+  search?: string
+  role?: UserRole[]
+  status?: UserStatus[]
+  tenant_id?: string
+  last_login_from?: string | null
+  last_login_to?: string | null
+}
