@@ -15,7 +15,7 @@ dist-ssr
 package-lock.json
 
 # E2E environment files
-.env.e2e.example
+.env.e2e*
 .auth/*
 # /src/e2e/.claude/*
 
