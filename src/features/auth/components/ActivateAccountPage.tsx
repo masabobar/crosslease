@@ -169,17 +169,17 @@ export default function ActivateAccountPage() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               data-testid="activate-account-request-invitation-button"
-              className="w-full flex items-center gap-2 px-4 py-2 h-9 bg-background border border-border rounded-[12px] text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
             >
               <Mail size={16} className="shrink-0" />
               <span className="flex-1 text-left">
                 {t("activateAccount.blockedLink.requestInvitation")}
               </span>
-              <ArrowRight size={16} className="shrink-0" />
-            </button>
+              <ArrowRight size={16} className="shrink-0 ml-auto" />
+            </Button>
             <p className="text-xs text-slate-500 text-center">
               {t("activateAccount.blockedLink.goToSite")}
             </p>
@@ -217,17 +217,17 @@ export default function ActivateAccountPage() {
               {blockedReason}
             </div>
           )}
-          <button
-            type="button"
+          <Button
+            variant="outline"
             data-testid="activate-account-contact-admin-button"
-            className="w-full flex items-center gap-2 px-4 py-2 h-9 bg-background border border-border rounded-[12px] text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
           >
             <Mail size={16} className="shrink-0" />
             <span className="flex-1 text-left">
               {t("activateAccount.blockedAccount.contactAdmin")}
             </span>
-            <ArrowRight size={16} className="shrink-0" />
-          </button>
+            <ArrowRight size={16} className="shrink-0 ml-auto" />
+          </Button>
         </div>
       </AuthPageLayout>
     )
@@ -340,19 +340,21 @@ export default function ActivateAccountPage() {
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       data-testid="activate-toggle-visibility"
                       onClick={() => setShowPassword(v => !v)}
-                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      className="text-muted-foreground hover:text-foreground hover:bg-transparent [&_svg]:size-4"
                       aria-label={
                         showPassword
                           ? t("activateAccount.hidePassword")
                           : t("activateAccount.showPassword")
                       }
                     >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </Button>
                   }
                   {...form.register("password")}
                 />
@@ -374,23 +376,21 @@ export default function ActivateAccountPage() {
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       data-testid="activate-toggle-confirm-visibility"
                       onClick={() => setShowPasswordConfirm(v => !v)}
-                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      className="text-muted-foreground hover:text-foreground hover:bg-transparent [&_svg]:size-4"
                       aria-label={
                         showPasswordConfirm
                           ? t("activateAccount.hidePassword")
                           : t("activateAccount.showPassword")
                       }
                     >
-                      {showPasswordConfirm ? (
-                        <EyeOff size={16} />
-                      ) : (
-                        <Eye size={16} />
-                      )}
-                    </button>
+                      {showPasswordConfirm ? <EyeOff /> : <Eye />}
+                    </Button>
                   }
                   {...form.register("passwordConfirm")}
                 />

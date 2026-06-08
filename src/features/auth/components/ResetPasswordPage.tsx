@@ -208,19 +208,21 @@ export default function ResetPasswordPage() {
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       data-testid="reset-password-toggle-visibility"
                       onClick={() => setShowPassword(v => !v)}
-                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      className="text-muted-foreground hover:text-foreground hover:bg-transparent [&_svg]:size-4"
                       aria-label={
                         showPassword
                           ? t("resetPassword.setPassword.hidePassword")
                           : t("resetPassword.setPassword.showPassword")
                       }
                     >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </Button>
                   }
                   {...form.register("password")}
                 />
@@ -243,19 +245,21 @@ export default function ResetPasswordPage() {
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       data-testid="reset-password-confirm-toggle-visibility"
                       onClick={() => setShowConfirm(v => !v)}
-                      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      className="text-muted-foreground hover:text-foreground hover:bg-transparent [&_svg]:size-4"
                       aria-label={
                         showConfirm
                           ? t("resetPassword.setPassword.hidePassword")
                           : t("resetPassword.setPassword.showPassword")
                       }
                     >
-                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                      {showConfirm ? <EyeOff /> : <Eye />}
+                    </Button>
                   }
                   {...form.register("password_confirm")}
                 />

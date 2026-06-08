@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Popover,
@@ -111,9 +112,9 @@ export function UserQuickFilters({
         return USER_ROLES.map((role: UserRole) => {
           const checked = appliedFilters.role.includes(role)
           return (
-            <button
+            <Button
               key={role}
-              type="button"
+              variant="ghost"
               data-testid={`filter-option-role-${role}`}
               onClick={() =>
                 onFilterChange({
@@ -122,7 +123,7 @@ export function UserQuickFilters({
                     : [...appliedFilters.role, role],
                 })
               }
-              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
               <span
                 className={cn(
@@ -133,7 +134,7 @@ export function UserQuickFilters({
                 {checked && <Check size={10} className="text-white" />}
               </span>
               <RoleBadge role={role} />
-            </button>
+            </Button>
           )
         })
 
@@ -151,14 +152,14 @@ export function UserQuickFilters({
         return tenants.map(tenant => {
           const selected = appliedFilters.tenant_id === tenant.id
           return (
-            <button
+            <Button
               key={tenant.id}
-              type="button"
+              variant="ghost"
               data-testid={`filter-option-tenant-${tenant.id}`}
               onClick={() =>
                 onFilterChange({ tenant_id: selected ? null : tenant.id })
               }
-              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
               <span
                 className={cn(
@@ -171,7 +172,7 @@ export function UserQuickFilters({
               <span className="text-sm text-foreground truncate">
                 {tenant.name}
               </span>
-            </button>
+            </Button>
           )
         })
       }
@@ -180,14 +181,14 @@ export function UserQuickFilters({
         return MFA_OPTIONS.map(opt => {
           const checked = appliedFilters.mfa_enabled === opt.value
           return (
-            <button
+            <Button
               key={opt.value}
-              type="button"
+              variant="ghost"
               data-testid={`filter-option-mfa-${opt.value}`}
               onClick={() =>
                 onFilterChange({ mfa_enabled: checked ? null : opt.value })
               }
-              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
               <span
                 className={cn(
@@ -200,7 +201,7 @@ export function UserQuickFilters({
               <span className="text-sm text-foreground">
                 {t(`filter.mfa.${opt.value}` as `filter.mfa.${MfaOptionValue}`)}
               </span>
-            </button>
+            </Button>
           )
         })
 
@@ -208,9 +209,9 @@ export function UserQuickFilters({
         return USER_STATUSES.map((status: UserStatus) => {
           const checked = appliedFilters.status.includes(status)
           return (
-            <button
+            <Button
               key={status}
-              type="button"
+              variant="ghost"
               data-testid={`filter-option-status-${status}`}
               onClick={() =>
                 onFilterChange({
@@ -219,7 +220,7 @@ export function UserQuickFilters({
                     : [...appliedFilters.status, status],
                 })
               }
-              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
               <span
                 className={cn(
@@ -230,7 +231,7 @@ export function UserQuickFilters({
                 {checked && <Check size={10} className="text-white" />}
               </span>
               <UserStatusBadge status={status} />
-            </button>
+            </Button>
           )
         })
 
@@ -334,14 +335,14 @@ export function UserQuickFilters({
             )
           })}
 
-          <button
-            type="button"
+          <Button
+            variant="outline"
             data-testid="advanced-filters-button"
             onClick={onOpenAdvanced}
-            className="inline-flex items-center h-8 px-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted transition-colors whitespace-nowrap"
+            className="h-8 rounded-xl px-2.5 text-sm"
           >
             {t("quickFilters.advancedFilters")}
-          </button>
+          </Button>
         </div>
       </div>
 

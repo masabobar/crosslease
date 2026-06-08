@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { DialogModal, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useApproveAction } from "@/features/governed-actions/hooks/useApproveAction"
 import { useRejectAction } from "@/features/governed-actions/hooks/useRejectAction"
@@ -367,11 +368,11 @@ export function ReviewRequestModal({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <SectionLabel>{t("modal.requestChain")}</SectionLabel>
-            {/* NOTE: raw <button> — inline text + chevron toggle in a flex row; shadcn Button adds padding that misaligns the justify-between layout */}
-            <button
+            <Button
               type="button"
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              variant="ghost"
               onClick={() => setChainExpanded(v => !v)}
+              className="h-auto p-0 gap-1 text-sm font-normal text-muted-foreground hover:text-foreground hover:bg-transparent"
             >
               <span>1 {t("modal.request")}</span>
               {chainExpanded ? (
@@ -379,7 +380,7 @@ export function ReviewRequestModal({
               ) : (
                 <ChevronDownIcon className="size-4" />
               )}
-            </button>
+            </Button>
           </div>
           {chainExpanded && (
             <ChainEntry
@@ -398,9 +399,8 @@ export function ReviewRequestModal({
             {t("modal.justificationLabel")}
           </label>
           <div className="border border-border rounded-xl bg-white px-2.5 py-1">
-            {/* NOTE: raw <textarea> — renders borderless inside a custom styled container; shadcn Textarea's own border/bg would create a double-border */}
-            <textarea
-              className="w-full h-16 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none resize-none"
+            <Textarea
+              className="h-16 border-0 p-0 rounded-none resize-none text-sm focus-visible:ring-0 focus-visible:border-0"
               value={comment}
               onChange={e => {
                 setComment(e.target.value)

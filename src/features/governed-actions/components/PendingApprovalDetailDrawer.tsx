@@ -13,6 +13,7 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type {
   ActorSnapshot,
@@ -322,10 +323,11 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
           </SheetTitle>
           <SheetClose
             render={
-              // NOTE: raw <button> — passed as BaseUI SheetClose's render prop; BaseUI injects close behaviour into the raw element and cannot accept a shadcn Button
-              <button
+              <Button
                 type="button"
-                className="flex items-center justify-center size-6 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-foreground"
                 data-testid="details-drawer-close"
               />
             }
@@ -395,18 +397,19 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
               title={t("drawer.approverJustification")}
               showBody={justificationExpanded}
               headerAction={
-                // NOTE: raw <button> — minimal icon-only chevron toggle passed as InfoCard headerAction; shadcn Button adds height/padding that misaligns the header row
-                <button
+                <Button
                   type="button"
-                  className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => setJustificationExpanded(v => !v)}
+                  className="text-muted-foreground hover:text-foreground hover:bg-transparent"
                 >
                   {justificationExpanded ? (
                     <ChevronUpIcon className="size-4" />
                   ) : (
                     <ChevronDownIcon className="size-4" />
                   )}
-                </button>
+                </Button>
               }
             >
               <p className="text-sm text-foreground/80">
@@ -425,11 +428,11 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
             title={t("drawer.requestChain")}
             showBody={chainExpanded}
             headerAction={
-              // NOTE: raw <button> — text + chevron inline toggle inside InfoCard headerAction; shadcn Button adds padding that breaks the flex row alignment
-              <button
+              <Button
                 type="button"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                variant="ghost"
                 onClick={() => setChainExpanded(v => !v)}
+                className="h-auto p-0 gap-1 text-sm font-normal text-muted-foreground hover:text-foreground hover:bg-transparent"
               >
                 <span>1 {t("drawer.request")}</span>
                 {chainExpanded ? (
@@ -437,7 +440,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
                 ) : (
                   <ChevronDownIcon className="size-4" />
                 )}
-              </button>
+              </Button>
             }
           >
             <ChainEntry

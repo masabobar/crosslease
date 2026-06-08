@@ -186,15 +186,16 @@ export default function ForgotPasswordPage() {
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               {t("forgotPassword.checkEmail.notReceived")}{" "}
-              <button
+              <Button
                 type="button"
+                variant="link"
                 onClick={handleResend}
                 disabled={isResending}
                 data-testid="check-email-resend-button"
-                className="text-primary hover:text-primary/80 underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="h-auto p-0 underline underline-offset-2 hover:text-primary/80 font-normal"
               >
                 {t("forgotPassword.checkEmail.resendLink")}
-              </button>
+              </Button>
             </p>
           </AuthCardHeader>
 

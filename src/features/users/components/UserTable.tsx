@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import {
   MoreHorizontal,
   UserCheck,
@@ -16,6 +16,13 @@ import type {
   UserSortKey,
   UserSortOrder,
 } from "@/features/users/api/schema"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import type { UserRole, UserActionType } from "@/features/users/types"
@@ -57,12 +64,11 @@ function SortableHeader({
   children,
 }: SortableHeaderProps) {
   return (
-    // NOTE: raw <button> — shadcn Button's fixed height (h-9) and padding break compact table header alignment
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       data-testid={`sort-${columnKey}`}
       onClick={() => onSort(columnKey)}
-      className="flex items-center gap-0.5 text-sm font-medium text-foreground hover:text-foreground/70 transition-colors"
+      className="h-auto gap-0.5 px-0 py-0 text-foreground hover:bg-transparent hover:text-foreground/70"
     >
       {children}
       {sort.key !== columnKey ? (
@@ -75,7 +81,7 @@ function SortableHeader({
       ) : (
         <ChevronDown size={12} className="shrink-0" />
       )}
-    </button>
+    </Button>
   )
 }
 
@@ -87,7 +93,6 @@ type KebabMenuProps = {
 
 function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
   const { t } = useTranslation("users")
-  const [open, setOpen] = useState(false)
 
   const {
     canApprove: approveVisible,
@@ -100,98 +105,75 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
 
   if (!hasActions) {
     return (
-      // NOTE: raw <button> — minimal disabled placeholder; no shadcn Button variant provides cursor-default without altering size/opacity defaults
-      <button
-        type="button"
-        className="text-muted-foreground/30 cursor-default"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         disabled
+        className="text-muted-foreground/30 disabled:opacity-100"
       >
         <MoreHorizontal size={16} />
-      </button>
+      </Button>
     )
   }
 
-  function handleAction(type: UserActionType) {
-    setOpen(false)
-    onAction?.(type)
-  }
-
   return (
-    <div className="relative">
-      {/* NOTE: raw <button> — opens a custom absolutely-positioned menu; shadcn DropdownMenu restructures the DOM tree and cannot share the relative container */}
-      <button
-        type="button"
+    <DropdownMenu>
+      <DropdownMenuTrigger
         data-testid={`user-row-menu-${user.id}`}
-        onClick={() => setOpen(v => !v)}
-        className="text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Actions"
+        className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         <MoreHorizontal size={16} />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          {/* NOTE: raw <button> items — list items inside a custom dropdown; shadcn DropdownMenuItem requires a DropdownMenu root and restructures the portal/focus behaviour */}
-          <div className="absolute right-0 top-6 z-20 w-48 rounded-xl border border-border bg-card shadow-md py-1">
-            {approveVisible && (
-              <button
-                type="button"
-                data-testid="user-action-approve"
-                onClick={() => handleAction("approve")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <UserCheck size={14} className="text-muted-foreground" />
-                {t("table.actions.approve")}
-              </button>
-            )}
-            {resendVisible && (
-              <button
-                type="button"
-                data-testid="user-action-resend-invitation"
-                onClick={() => handleAction("resend-invitation")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <Mail size={14} className="text-muted-foreground" />
-                {t("actions.resend-invitation.label")}
-              </button>
-            )}
-            {suspendVisible && (
-              <button
-                type="button"
-                data-testid="user-action-suspend"
-                onClick={() => handleAction("suspend")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <Ban size={14} className="text-muted-foreground" />
-                {t("actions.suspend.label")}
-              </button>
-            )}
-            {reactivateVisible && (
-              <button
-                type="button"
-                data-testid="user-action-reactivate"
-                onClick={() => handleAction("reactivate")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <RotateCcw size={14} className="text-muted-foreground" />
-                {t("actions.reactivate.label")}
-              </button>
-            )}
-            {deactivateVisible && (
-              <button
-                type="button"
-                data-testid="user-action-deactivate"
-                onClick={() => handleAction("deactivate")}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
-              >
-                <UserX size={14} className="text-destructive" />
-                {t("actions.deactivate.label")}
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        {approveVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-approve"
+            onClick={() => onAction?.("approve")}
+          >
+            <UserCheck size={14} className="text-muted-foreground" />
+            {t("table.actions.approve")}
+          </DropdownMenuItem>
+        )}
+        {resendVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-resend-invitation"
+            onClick={() => onAction?.("resend-invitation")}
+          >
+            <Mail size={14} className="text-muted-foreground" />
+            {t("actions.resend-invitation.label")}
+          </DropdownMenuItem>
+        )}
+        {suspendVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-suspend"
+            onClick={() => onAction?.("suspend")}
+          >
+            <Ban size={14} className="text-muted-foreground" />
+            {t("actions.suspend.label")}
+          </DropdownMenuItem>
+        )}
+        {reactivateVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-reactivate"
+            onClick={() => onAction?.("reactivate")}
+          >
+            <RotateCcw size={14} className="text-muted-foreground" />
+            {t("actions.reactivate.label")}
+          </DropdownMenuItem>
+        )}
+        {deactivateVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-deactivate"
+            onClick={() => onAction?.("deactivate")}
+            variant="destructive"
+          >
+            <UserX size={14} />
+            {t("actions.deactivate.label")}
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

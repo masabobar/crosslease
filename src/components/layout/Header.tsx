@@ -9,6 +9,7 @@ import {
   LogOut,
   User,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -126,9 +127,10 @@ export function Header() {
 
         {/* Profile */}
         <div className="relative">
-          <button
+          <Button
+            variant="ghost"
             data-testid="header-profile-button"
-            className="flex items-center gap-2 rounded-xl hover:bg-muted px-2 py-1 transition-colors"
+            className="h-auto items-center gap-2 rounded-xl px-2 py-1"
             onClick={() => setProfileOpen(v => !v)}
           >
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-muted border border-border shrink-0">
@@ -141,7 +143,7 @@ export function Header() {
                 {fullName}
               </span>
             )}
-          </button>
+          </Button>
 
           {profileOpen && (
             <>
@@ -160,18 +162,19 @@ export function Header() {
                   {t("nav.myProfile")}
                 </Link>
                 <div className="mx-3 my-1 h-px bg-border" />
-                <button
+                <Button
+                  variant="ghost"
                   data-testid="header-logout-button"
                   onClick={() => {
                     setProfileOpen(false)
                     doLogout()
                   }}
                   disabled={isLoggingOut}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors disabled:opacity-50"
+                  className="h-auto w-full justify-start gap-2 rounded-none px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
                 >
                   <LogOut size={14} />
                   {t("nav.logout")}
-                </button>
+                </Button>
               </div>
             </>
           )}

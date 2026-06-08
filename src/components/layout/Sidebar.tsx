@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Send,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -54,11 +55,12 @@ export function Sidebar() {
     >
       {/* ── Brand header ── */}
       <div className="flex items-center gap-2 p-2 shrink-0">
-        <button
+        <Button
+          size="icon"
           onClick={isCollapsed ? () => setIsCollapsed(false) : undefined}
           className={cn(
-            "flex items-center justify-center w-8 h-8 rounded-[10px] bg-[#2d62ef] shrink-0",
-            isCollapsed && "cursor-pointer hover:opacity-90 transition-opacity"
+            "rounded-[10px] shrink-0",
+            !isCollapsed && "pointer-events-none"
           )}
         >
           <svg
@@ -75,18 +77,20 @@ export function Sidebar() {
               strokeLinejoin="round"
             />
           </svg>
-        </button>
+        </Button>
         {!isCollapsed && (
           <>
             <span className="flex-1 text-sm font-medium text-foreground truncate">
               {t("nav.leasingPlatform")}
             </span>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsCollapsed(true)}
-              className="flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              className="size-6 shrink-0 rounded-md text-muted-foreground"
             >
               <ChevronsLeft size={14} />
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -161,29 +165,26 @@ export function Sidebar() {
           <>
             {/* ── Main group (expandable) ── */}
             <div className="flex flex-col gap-2">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setIsMainExpanded(prev => !prev)}
                 className={cn(
-                  "flex items-center gap-2 w-full px-2 py-2 rounded-[10px]",
-                  isMainActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
+                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
+                  isMainActive &&
+                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                 )}
               >
                 <Home
                   size={16}
                   className={cn(
                     "shrink-0",
-                    isMainActive ? "text-[#1d41a8]" : "text-muted-foreground"
+                    !isMainActive && "text-muted-foreground"
                   )}
                 />
                 {!isCollapsed && (
                   <>
-                    <span
-                      className={cn(
-                        "flex-1 text-left text-sm min-w-0 truncate",
-                        isMainActive ? "text-[#1d41a8]" : "text-foreground"
-                      )}
-                    >
+                    <span className="flex-1 text-left text-sm min-w-0 truncate">
                       {t("nav.main")}
                     </span>
                     {isMainExpanded ? (
@@ -191,9 +192,7 @@ export function Sidebar() {
                         size={16}
                         className={cn(
                           "shrink-0",
-                          isMainActive
-                            ? "text-[#1d41a8]"
-                            : "text-muted-foreground"
+                          !isMainActive && "text-muted-foreground"
                         )}
                       />
                     ) : (
@@ -201,15 +200,13 @@ export function Sidebar() {
                         size={16}
                         className={cn(
                           "shrink-0",
-                          isMainActive
-                            ? "text-[#1d41a8]"
-                            : "text-muted-foreground"
+                          !isMainActive && "text-muted-foreground"
                         )}
                       />
                     )}
                   </>
                 )}
-              </button>
+              </Button>
               {!isCollapsed && isMainExpanded && (
                 <div className="flex flex-col gap-3 pl-8 pr-2">
                   {[
@@ -262,33 +259,26 @@ export function Sidebar() {
 
             {/* ── Platform administration group (expandable) ── */}
             <div className="flex flex-col gap-2">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setIsPlatformAdminExpanded(prev => !prev)}
                 className={cn(
-                  "flex items-center gap-2 w-full px-2 py-2 rounded-[10px]",
-                  isPlatformAdminActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
+                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
+                  isPlatformAdminActive &&
+                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                 )}
               >
                 <Shield
                   size={16}
                   className={cn(
                     "shrink-0",
-                    isPlatformAdminActive
-                      ? "text-[#1d41a8]"
-                      : "text-muted-foreground"
+                    !isPlatformAdminActive && "text-muted-foreground"
                   )}
                 />
                 {!isCollapsed && (
                   <>
-                    <span
-                      className={cn(
-                        "flex-1 text-left text-sm min-w-0 truncate",
-                        isPlatformAdminActive
-                          ? "text-[#1d41a8]"
-                          : "text-foreground"
-                      )}
-                    >
+                    <span className="flex-1 text-left text-sm min-w-0 truncate">
                       {t("nav.platformAdministration")}
                     </span>
                     {isPlatformAdminExpanded ? (
@@ -296,9 +286,7 @@ export function Sidebar() {
                         size={16}
                         className={cn(
                           "shrink-0",
-                          isPlatformAdminActive
-                            ? "text-[#1d41a8]"
-                            : "text-muted-foreground"
+                          !isPlatformAdminActive && "text-muted-foreground"
                         )}
                       />
                     ) : (
@@ -306,15 +294,13 @@ export function Sidebar() {
                         size={16}
                         className={cn(
                           "shrink-0",
-                          isPlatformAdminActive
-                            ? "text-[#1d41a8]"
-                            : "text-muted-foreground"
+                          !isPlatformAdminActive && "text-muted-foreground"
                         )}
                       />
                     )}
                   </>
                 )}
-              </button>
+              </Button>
               {!isCollapsed && isPlatformAdminExpanded && (
                 <div className="flex flex-col gap-3 pl-8 pr-2">
                   {canAccessUserManagement && (

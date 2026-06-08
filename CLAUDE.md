@@ -471,6 +471,17 @@ Components in `src/components/ui/` are built with:
 
 `src/components/ui/` is excluded from ESLint's react-refresh rule by design.
 
+### shadcn/ui — MANDATORY
+
+**Always use shadcn/ui components from `src/components/ui/`. Never use raw HTML elements or third-party UI components when a shadcn equivalent exists.**
+
+- Use `<Button>` not `<button>`, `<Input>` not `<input>`, `<Select>` not `<select>`, etc.
+- If the needed component does not exist yet, install it first: `npx shadcn@latest add <component>`
+- **When encountering existing code that uses raw HTML or third-party components instead of shadcn equivalents — convert them to the shadcn version as part of the change.** Do not leave non-shadcn UI code in place.
+- When a raw element is genuinely necessary (no shadcn equivalent, or a specific accessibility constraint), add an inline comment: `{/* NOTE: raw <element> — reason */}`
+
+See `.claude/rules/code-review.md` §12 for the full shadcn-first checklist.
+
 ---
 
 ## Docker (local dev)
