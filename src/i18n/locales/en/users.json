@@ -121,6 +121,7 @@
       "reason": "Reason",
       "reasonPlaceholder": "Select a reason",
       "comment": "Comment (optional)",
+      "commentRequired": "Comment",
       "commentPlaceholder": "Add a comment...",
       "effective_from": "Effective from",
       "effective_until": "Effective until (optional)"
@@ -353,7 +354,11 @@
         "emailResendSuccess": {
           "title": "Verification email resent",
           "message": "Verification email resent to {{newEmail}}. Email will not update until the user clicks the verification link. Previous address {{oldEmail}} remains active as recovery anchor until verification completes."
-        }
+        },
+        "error": {
+          "title": "Could not save changes"
+        },
+        "emailDisabledPending": "Email cannot be changed while the account is pending activation."
       },
       "values": {
         "on": "On",
@@ -416,6 +421,8 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "EMAIL_ALREADY_EXISTS": "This email address is already in use.",
+    "EMAIL_CHANGE_ALREADY_IN_PROGRESS": "An email change is already pending. Withdraw it first or wait for the verification link to expire.",
+    "USER_EMAIL_CHANGE_NOT_ALLOWED": "Email change is not allowed for users in this status.",
     "DUPLICATE_PENDING_ACTION": "A pending action of this type already exists for this user.",
     "USER_NOT_ACTIVE": "Operation requires an active user account.",
     "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."

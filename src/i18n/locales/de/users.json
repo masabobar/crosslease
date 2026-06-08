@@ -121,6 +121,7 @@
       "reason": "Grund",
       "reasonPlaceholder": "Grund auswählen",
       "comment": "Kommentar (optional)",
+      "commentRequired": "Kommentar",
       "commentPlaceholder": "Kommentar hinzufügen...",
       "effective_from": "Wirksam ab",
       "effective_until": "Wirksam bis (optional)"
@@ -353,7 +354,11 @@
         "emailResendSuccess": {
           "title": "Verifizierungs-E-Mail erneut gesendet",
           "message": "Verifizierungs-E-Mail erneut an {{newEmail}} gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer auf den Verifizierungslink klickt. Die vorherige Adresse {{oldEmail}} bleibt bis zur Verifizierung als Wiederherstellungsanker aktiv."
-        }
+        },
+        "error": {
+          "title": "Änderungen konnten nicht gespeichert werden"
+        },
+        "emailDisabledPending": "Die E-Mail-Adresse kann nicht geändert werden, solange das Konto auf Aktivierung wartet."
       },
       "values": {
         "on": "Ein",
@@ -416,6 +421,8 @@
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "EMAIL_ALREADY_EXISTS": "Diese E-Mail-Adresse wird bereits verwendet.",
+    "EMAIL_CHANGE_ALREADY_IN_PROGRESS": "Eine E-Mail-Änderung ist bereits ausstehend. Bitte widerrufen Sie diese zuerst oder warten Sie, bis der Verifizierungslink abläuft.",
+    "USER_EMAIL_CHANGE_NOT_ALLOWED": "Eine E-Mail-Änderung ist für Benutzer in diesem Status nicht erlaubt.",
     "DUPLICATE_PENDING_ACTION": "Für diesen Benutzer existiert bereits eine ausstehende Aktion dieses Typs.",
     "USER_NOT_ACTIVE": "Für diese Operation ist ein aktives Benutzerkonto erforderlich.",
     "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist."

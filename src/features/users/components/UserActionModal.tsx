@@ -1,4 +1,4 @@
-import { useForm, Controller } from "react-hook-form"
+import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
@@ -96,6 +96,12 @@ const DEACTIVATE_SCHEMA = DeactivateUserInputSchema.extend({
       message: "required",
       path: ["effective_from"],
     })
+  if (data.reason === "other" && !data.comment?.trim())
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "required",
+      path: ["comment"],
+    })
 })
 
 const RESEND_SCHEMA = ResendInvitationInputSchema.extend({
@@ -159,6 +165,7 @@ function UserActionModal({
   })
 
   const { errors, isSubmitting } = form.formState
+  const watchedReason = useWatch({ control: form.control, name: "reason" })
   const name = `${user.first_name} ${user.last_name}`
 
   function getReasonOptions(): SelectOption[] {
@@ -348,6 +355,7 @@ function UserActionModal({
                     value={field.value}
                     onChange={field.onChange}
                     error={!!errors.effective_from}
+                    minDate={new Date()}
                   />
                 )}
               />
@@ -382,16 +390,28 @@ function UserActionModal({
         {/* Comment */}
         {config.needsComment && (
           <div>
-            <Label htmlFor="comment" className="mb-1.5">
-              {t("actions.fields.comment")}
+            <Label
+              htmlFor="comment"
+              error={!!errors.comment}
+              className="mb-1.5"
+            >
+              {action === "deactivate" && watchedReason === "other"
+                ? t("actions.fields.commentRequired")
+                : t("actions.fields.comment")}
             </Label>
             <Textarea
               id="comment"
               data-testid="action-comment-input"
+              aria-invalid={!!errors.comment}
               className="bg-background px-4 py-2.5 min-h-[80px] resize-none text-sm focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary"
               placeholder={t("actions.fields.commentPlaceholder")}
               {...form.register("comment")}
             />
+            {errors.comment && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMsg(errors.comment.message)}
+              </p>
+            )}
           </div>
         )}
 
