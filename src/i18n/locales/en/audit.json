@@ -1,0 +1,81 @@
+{
+  "page": {
+    "title": "Audit Trail",
+    "subtitle": "View and audit user access and activity events.",
+    "filters": {
+      "label": "Active filters:",
+      "searchPill": "Search: \"{{value}}\"",
+      "eventTypePill": "Event: {{value}}",
+      "datePill": "Date: {{range}}",
+      "userAffectedPill": "User Affected: {{value}}",
+      "performedByPill": "Performed By: {{value}}",
+      "tenantPill": "Tenant: {{value}}",
+      "resultPill": "Result: {{value}}",
+      "clearAll": "Clear all"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "table": {
+    "columns": {
+      "timestamp": "Timestamp",
+      "eventType": "Event Type",
+      "userAffected": "User Affected",
+      "performedBy": "Performed By",
+      "tenant": "Tenant",
+      "result": "Result"
+    },
+    "empty": "No audit events found."
+  },
+  "result": {
+    "success": "Success",
+    "failed": "Failed"
+  },
+  "filterBar": {
+    "searchPlaceholder": "Search",
+    "buttons": {
+      "eventType": "Event Type",
+      "userAffected": "User Affected",
+      "performedBy": "Performed By",
+      "tenant": "Tenant",
+      "dateRange": "Date Range",
+      "result": "Result"
+    }
+  },
+  "filter": {
+    "placeholders": {
+      "eventType": "Search event types...",
+      "uuid": "Enter UUID",
+      "select": "Select...",
+      "from": "From",
+      "to": "To"
+    },
+    "noResults": "No matching event types."
+  },
+  "drawer": {
+    "title": "Event details",
+    "sections": {
+      "summary": "Summary",
+      "technicalReference": "Technical Reference"
+    },
+    "fields": {
+      "timestamp": "Timestamp",
+      "eventType": "Event type",
+      "userAffected": "User affected",
+      "performedBy": "Performed by",
+      "tenant": "Tenant",
+      "result": "Result",
+      "eventDetail": "Event detail",
+      "initiatedBy": "Initiated by",
+      "retention": "Retention",
+      "entityId": "Entity ID",
+      "correlationId": "Correlation ID",
+      "sessionId": "Session ID",
+      "requestTrace": "Request trace"
+    },
+    "loadError": "Failed to load event details."
+  }
+}

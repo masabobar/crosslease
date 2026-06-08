@@ -1,0 +1,81 @@
+{
+  "page": {
+    "title": "Audit Trail",
+    "subtitle": "Benutzerzugriffs- und Aktivitätsereignisse anzeigen und prüfen.",
+    "filters": {
+      "label": "Aktive Filter:",
+      "searchPill": "Suche: \"{{value}}\"",
+      "eventTypePill": "Ereignis: {{value}}",
+      "datePill": "Datum: {{range}}",
+      "userAffectedPill": "Betroffener Benutzer: {{value}}",
+      "performedByPill": "Durchgeführt von: {{value}}",
+      "tenantPill": "Mandant: {{value}}",
+      "resultPill": "Ergebnis: {{value}}",
+      "clearAll": "Alle löschen"
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "table": {
+    "columns": {
+      "timestamp": "Zeitstempel",
+      "eventType": "Ereignistyp",
+      "userAffected": "Betroffener Benutzer",
+      "performedBy": "Durchgeführt von",
+      "tenant": "Mandant",
+      "result": "Ergebnis"
+    },
+    "empty": "Keine Auditereignisse gefunden."
+  },
+  "result": {
+    "success": "Erfolgreich",
+    "failed": "Fehlgeschlagen"
+  },
+  "filterBar": {
+    "searchPlaceholder": "Suchen",
+    "buttons": {
+      "eventType": "Ereignistyp",
+      "userAffected": "Betroffener Benutzer",
+      "performedBy": "Durchgeführt von",
+      "tenant": "Mandant",
+      "dateRange": "Zeitraum",
+      "result": "Ergebnis"
+    }
+  },
+  "filter": {
+    "placeholders": {
+      "eventType": "Ereignistypen suchen...",
+      "uuid": "UUID eingeben",
+      "select": "Auswählen...",
+      "from": "Von",
+      "to": "Bis"
+    },
+    "noResults": "Keine passenden Ereignistypen."
+  },
+  "drawer": {
+    "title": "Ereignisdetails",
+    "sections": {
+      "summary": "Zusammenfassung",
+      "technicalReference": "Technische Referenz"
+    },
+    "fields": {
+      "timestamp": "Zeitstempel",
+      "eventType": "Ereignistyp",
+      "userAffected": "Betroffener Benutzer",
+      "performedBy": "Durchgeführt von",
+      "tenant": "Mandant",
+      "result": "Ergebnis",
+      "eventDetail": "Ereignisdetail",
+      "initiatedBy": "Initiiert von",
+      "retention": "Aufbewahrung",
+      "entityId": "Entitäts-ID",
+      "correlationId": "Korrelations-ID",
+      "sessionId": "Sitzungs-ID",
+      "requestTrace": "Anfrageverfolgung"
+    },
+    "loadError": "Ereignisdetails konnten nicht geladen werden."
+  }
+}

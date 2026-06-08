@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
+  EditUserRequestSchema,
   ExportFormatSchema,
   ExportJobSchema,
   ExportJobStatusSchema,
@@ -466,5 +467,58 @@ describe("ExportJobStatusSchema", () => {
     expect(() =>
       ExportJobStatusSchema.parse({ job_id: "x", status: "completed" })
     ).toThrow()
+  })
+})
+
+describe("EditUserRequestSchema", () => {
+  it("accepts name-only payload", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({
+        first_name: "Anna",
+        last_name: "Müller",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts phone-only payload", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ phone_number: "+49 30 12345678" })
+    ).not.toThrow()
+  })
+
+  it("accepts combined name and phone payload", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({
+        first_name: "Anna",
+        last_name: "Müller",
+        phone_number: "+49 30 12345678",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null phone to clear the field", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ phone_number: null })
+    ).not.toThrow()
+  })
+
+  it("accepts empty payload (all fields optional)", () => {
+    expect(() => EditUserRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("rejects phone with invalid format", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ phone_number: "not-a-phone" })
+    ).toThrow()
+  })
+
+  it("rejects first_name exceeding max length", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ first_name: "A".repeat(101) })
+    ).toThrow()
+  })
+
+  it("rejects empty string first_name", () => {
+    expect(() => EditUserRequestSchema.parse({ first_name: "" })).toThrow()
   })
 })

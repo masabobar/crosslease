@@ -20,7 +20,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
-import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
+import { useEditUser } from "@/features/users/hooks/useEditUser"
 import { useToastStore } from "@/store/toastStore"
 import {
   formatLastLogin,
@@ -84,27 +84,30 @@ function SectionCard({
   )
 }
 
-const PhoneFormSchema = z.object({
+const IdentityFormSchema = z.object({
+  first_name: z.string().min(1).max(100),
+  last_name: z.string().min(1).max(100),
   phone_number: z
     .string()
     .regex(/^\+?[0-9\s\-()\s]{7,30}$/, "Invalid phone number format")
-    .or(z.literal("")),
+    .or(z.literal(""))
+    .optional(),
 })
-type PhoneFormValues = z.infer<typeof PhoneFormSchema>
+type IdentityFormValues = z.infer<typeof IdentityFormSchema>
 
 function SelfProfileContent({ user }: { user: UserDetail }) {
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
-  const [isEditingPhone, setIsEditingPhone] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState<"lifecycle" | "auth">("lifecycle")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const uploadPictureMutation = useUploadSelfPicture(user.id)
   const deletePictureMutation = useDeleteSelfPicture(user.id)
-  const updateSelfMutation = useUpdateSelf(user.id)
+  const editUserMutation = useEditUser()
 
-  const phoneForm = useForm<PhoneFormValues>({
-    resolver: zodResolver(PhoneFormSchema),
+  const identityForm = useForm<IdentityFormValues>({
+    resolver: zodResolver(IdentityFormSchema),
   })
 
   const initials = getInitials(user.first_name, user.last_name)
@@ -159,16 +162,40 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
       })
   }
 
-  function handlePhoneSubmit(values: PhoneFormValues) {
-    const phone = values.phone_number === "" ? null : values.phone_number
-    void updateSelfMutation
-      .mutateAsync({ phone_number: phone })
+  function handleIdentitySubmit(values: IdentityFormValues) {
+    const hasNameChanges =
+      values.first_name !== user.first_name ||
+      values.last_name !== user.last_name
+    const hasPhoneChange =
+      (values.phone_number ?? "") !== (user.phone_number ?? "")
+
+    const editInput: {
+      first_name?: string
+      last_name?: string
+      phone_number?: string | null
+    } = {}
+    if (hasNameChanges) {
+      editInput.first_name = values.first_name
+      editInput.last_name = values.last_name
+    }
+    if (hasPhoneChange) {
+      editInput.phone_number =
+        values.phone_number === "" ? null : (values.phone_number ?? null)
+    }
+
+    if (Object.keys(editInput).length === 0) {
+      setIsEditing(false)
+      return
+    }
+
+    void editUserMutation
+      .mutateAsync({ userId: user.id, input: editInput })
       .then(() => {
-        setIsEditingPhone(false)
+        setIsEditing(false)
         showToast({
           variant: "success",
-          title: t("detail.page.selfProfile.phoneSuccess.title"),
-          message: t("detail.page.selfProfile.phoneSuccess.message"),
+          title: t("detail.page.editIdentity.success.title"),
+          message: t("detail.page.editIdentity.success.message"),
         })
       })
       .catch((err: unknown) => {
@@ -273,29 +300,29 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
       {/* Identity + Role cards */}
       <div className="flex gap-6">
         <form
-          onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)}
+          onSubmit={identityForm.handleSubmit(handleIdentitySubmit)}
           className="flex flex-col flex-1"
         >
           <SectionCard
             title={t("detail.page.sections.identity")}
             headerActions={
-              isEditingPhone ? (
+              isEditing ? (
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditingPhone(false)}
-                    disabled={updateSelfMutation.isPending}
-                    data-testid="phone-cancel-button"
+                    onClick={() => setIsEditing(false)}
+                    disabled={editUserMutation.isPending}
+                    data-testid="identity-cancel-button"
                   >
                     {t("detail.page.actions.cancel")}
                   </Button>
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={updateSelfMutation.isPending}
-                    data-testid="phone-save-button"
+                    disabled={editUserMutation.isPending}
+                    data-testid="identity-save-button"
                   >
                     {t("detail.page.actions.saveChanges")}
                   </Button>
@@ -303,10 +330,14 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
               ) : (
                 <Button
                   variant="outline"
-                  data-testid="phone-edit-button"
+                  data-testid="identity-edit-button"
                   onClick={() => {
-                    phoneForm.reset({ phone_number: user.phone_number ?? "" })
-                    setIsEditingPhone(true)
+                    identityForm.reset({
+                      first_name: user.first_name,
+                      last_name: user.last_name,
+                      phone_number: user.phone_number ?? "",
+                    })
+                    setIsEditing(true)
                   }}
                   className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
                 >
@@ -320,22 +351,40 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
               {user.user_id}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.firstName")}>
-              {user.first_name}
+              {isEditing ? (
+                <Input
+                  {...identityForm.register("first_name")}
+                  data-testid="identity-first-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.first_name}
+                />
+              ) : (
+                user.first_name
+              )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.lastName")}>
-              {user.last_name}
+              {isEditing ? (
+                <Input
+                  {...identityForm.register("last_name")}
+                  data-testid="identity-last-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.last_name}
+                />
+              ) : (
+                user.last_name
+              )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.email")}>
               {user.email}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.phoneNumber")}>
-              {isEditingPhone ? (
+              {isEditing ? (
                 <Input
-                  {...phoneForm.register("phone_number")}
+                  {...identityForm.register("phone_number")}
                   data-testid="phone-number-input"
                   placeholder="+1 234 567 8900"
                   className="h-[28px] py-0 text-sm rounded-[8px]"
-                  error={!!phoneForm.formState.errors.phone_number}
+                  error={!!identityForm.formState.errors.phone_number}
                 />
               ) : (
                 (user.phone_number ?? "—")

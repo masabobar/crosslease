@@ -21,6 +21,7 @@ import {
   USER_MANAGEMENT_ALLOWED_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
+import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
@@ -29,6 +30,8 @@ export function Sidebar() {
   const { data: currentUser } = useCurrentUser()
   const canAccessUserManagement =
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
+  const canAccessAuditTrail =
+    !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -44,6 +47,7 @@ export function Sidebar() {
     location.pathname === PATHS.USER_MANAGEMENT ||
     location.pathname.startsWith(PATHS.USER_MANAGEMENT + "/")
   const isPendingApprovalsActive = location.pathname === PATHS.PENDING_APPROVALS
+  const isAuditTrailActive = location.pathname === PATHS.AUDIT_TRAIL
 
   return (
     <aside
@@ -337,11 +341,27 @@ export function Sidebar() {
                       )}
                     </Link>
                   )}
+                  {canAccessAuditTrail && (
+                    <Link
+                      to={PATHS.AUDIT_TRAIL}
+                      data-testid="nav-audit-trail"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap",
+                        isAuditTrailActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.auditTrail")}
+                      {isAuditTrailActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
                   {[
                     t("nav.partnerManagement"),
                     t("nav.tenantManagement"),
                     t("nav.coreBankingIntegration"),
-                    t("nav.auditTrail"),
                   ].map(label => (
                     <span
                       key={label}

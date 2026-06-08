@@ -267,9 +267,6 @@ function ActorCard({
             <span>—</span>
           )}
         </FieldRow>
-        <FieldRow label={t("drawer.tenantAtTime")}>
-          <span>{snapshot.tenant_id ?? "—"}</span>
-        </FieldRow>
         <FieldRow label={dateLabel}>
           <span>{date ? formatDateTime(date) : "—"}</span>
         </FieldRow>
@@ -282,6 +279,10 @@ function getAffectedUser(action: GovernedAction): string {
   if (action.action_type === "user_platform_invite") {
     const s = action.display_snapshot as unknown as PlatformInviteSnapshot
     return s.full_name ?? "—"
+  }
+  if (action.action_type === "user_email_change") {
+    const s = action.display_snapshot as unknown as EmailChangeSnapshot
+    return s.old_email ?? "—"
   }
   return "—"
 }

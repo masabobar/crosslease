@@ -125,7 +125,6 @@
     "submission": "SUBMISSION",
     "name": "Name",
     "roleAtTime": "Role at time",
-    "tenantAtTime": "Tenant at time",
     "submittedAt": "Submitted at",
     "resolvedAt": "Resolved at",
     "reasonFromSubmitter": "REASON FROM SUBMITTER",
