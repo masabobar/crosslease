@@ -59,7 +59,6 @@ const UserResponse = z
     last_name: z.string(),
     email: z.string().email(),
     role: UserRole,
-    permissions: z.array(z.string()).optional(),
     tenant_id: z.union([z.string(), z.null()]),
     status: UserStatus,
     phone_number: z.union([z.string(), z.null()]),
@@ -90,6 +89,13 @@ const ResetPasswordRequest = z
 const UpdateMeRequest = z
   .object({ phone_number: z.union([z.string(), z.null()]) })
   .partial()
+  .passthrough()
+const UserMePermissionsResponse = z
+  .object({
+    role: z.string(),
+    permissions: z.array(z.string()),
+    active_modules: z.array(z.string()),
+  })
   .passthrough()
 const Body_upload_picture_api_v1_users_me_picture_post = z
   .object({ file: z.string() })
@@ -170,6 +176,7 @@ const GovernedActionType = z.enum([
   "user_role_change",
   "user_auditor_period_update",
   "user_email_change",
+  "module_activate",
 ])
 const GovernedActionStatus = z.enum([
   "pending",
@@ -257,6 +264,8 @@ const DeactivateUserRequest = z
     effective_from: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const TenantType = z.enum(["bank", "bank_entity", "bank_branch_group"])
+const SeedPackage = z.enum(["standard_retail_bank", "minimal_sandbox"])
 const CreateTenantRequest = z
   .object({
     name: z.string().min(2).max(200),
@@ -264,10 +273,14 @@ const CreateTenantRequest = z
       .string()
       .min(2)
       .max(50)
-      .regex(/^[A-Za-z0-9_\-]+$/),
+      .regex(/^[A-Za-z0-9\-]+$/),
     legal_entity_name: z.string().min(2).max(300),
-    country: z.string().min(2).max(100),
-    default_currency: z.string().min(3).max(10).optional().default("EUR"),
+    country: z.string().min(2).max(2),
+    tenant_type: TenantType,
+    description: z.union([z.string(), z.null()]).optional(),
+    modules: z.array(z.string()).optional(),
+    seed_package: SeedPackage.optional(),
+    core_banking_integration_ref: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const TenantStatus = z.enum([
@@ -286,6 +299,7 @@ const TenantListResponse = z
     code: z.string(),
     country: z.string(),
     default_currency: z.string(),
+    tenant_type: TenantType,
     status: TenantStatus,
   })
   .passthrough()
@@ -307,10 +321,57 @@ const TenantResponse = z
     legal_entity_name: z.string(),
     country: z.string(),
     default_currency: z.string(),
+    tenant_type: TenantType,
+    description: z.union([z.string(), z.null()]),
+    seed_package: SeedPackage,
+    core_banking_integration_ref: z.union([z.string(), z.null()]),
     status: TenantStatus,
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
   })
+  .passthrough()
+const PlatformModuleEntry = z
+  .object({
+    key: z.string(),
+    display_name: z.string(),
+    group: z.string(),
+    always_on: z.boolean(),
+    permissions: z.array(z.string()),
+  })
+  .passthrough()
+const PlatformModulesResponse = z
+  .object({ modules: z.array(PlatformModuleEntry) })
+  .passthrough()
+const TenantModuleEntry = z
+  .object({
+    key: z.string(),
+    display_name: z.string(),
+    group: z.string(),
+    always_on: z.boolean(),
+    status: z.string(),
+    activated_at: z.unknown().optional(),
+  })
+  .passthrough()
+const TenantModulesResponse = z
+  .object({ modules: z.array(TenantModuleEntry) })
+  .passthrough()
+const SeedPackageEntry = z
+  .object({
+    key: z.string(),
+    display_name: z.string(),
+    description: z.string(),
+    includes: z.array(z.string()),
+    available: z.boolean(),
+  })
+  .passthrough()
+const SeedPackagesResponse = z
+  .object({ packages: z.array(SeedPackageEntry) })
+  .passthrough()
+const ModuleActionRequest = z
+  .object({ justification: z.string().min(10) })
+  .passthrough()
+const ModuleDeactivateRequest = z
+  .object({ justification: z.string().min(20) })
   .passthrough()
 const InitiateRoleChangeRequest = z
   .object({
@@ -407,6 +468,7 @@ export const schemas = {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   UpdateMeRequest,
+  UserMePermissionsResponse,
   Body_upload_picture_api_v1_users_me_picture_post,
   search,
   UserListItem,
@@ -426,11 +488,21 @@ export const schemas = {
   ReactivateUserRequest,
   DeactivationReason,
   DeactivateUserRequest,
+  TenantType,
+  SeedPackage,
   CreateTenantRequest,
   TenantStatus,
   TenantListResponse,
   PaginatedTenantsResponse,
   TenantResponse,
+  PlatformModuleEntry,
+  PlatformModulesResponse,
+  TenantModuleEntry,
+  TenantModulesResponse,
+  SeedPackageEntry,
+  SeedPackagesResponse,
+  ModuleActionRequest,
+  ModuleDeactivateRequest,
   InitiateRoleChangeRequest,
   AuditorPeriodUpdateReason,
   UpdateAuditorAccessPeriodRequest,
@@ -1081,6 +1153,26 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/platform/modules",
+    alias: "list_platform_modules_api_v1_platform_modules_get",
+    description: `Return the full platform module catalogue.
+Used by the tenant creation wizard (Step 2 — Module Selection).
+Accessible to all authenticated users.`,
+    requestFormat: "json",
+    response: PlatformModulesResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/platform/seed-packages",
+    alias: "list_seed_packages_api_v1_platform_seed_packages_get",
+    description: `Return the full seed package catalogue.
+Used by the tenant creation wizard (Step 3 — Seed package).
+Accessible to all authenticated users.`,
+    requestFormat: "json",
+    response: SeedPackagesResponse,
+  },
+  {
     method: "post",
     path: "/api/v1/tenants",
     alias: "create_tenant_api_v1_tenants_post",
@@ -1166,6 +1258,98 @@ On reject/withdraw/expire the tenant is archived.
         name: "id",
         type: "Path",
         schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/modules",
+    alias: "get_tenant_modules_api_v1_tenants__tenant_id__modules_get",
+    description: `Return all modules for a tenant with their activation status.
+Requires &#x60;system_admin&#x60; role.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: TenantModulesResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/modules/:module_key/activate",
+    alias:
+      "activate_tenant_module_api_v1_tenants__tenant_id__modules__module_key__activate_post",
+    description: `Initiate a Four-Eyes module activation request for an active tenant.
+Returns a GovernedActionResponse with status&#x3D;pending.
+A second System Admin must approve via POST /governed-actions/{id}/approve.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ justification: z.string().min(10) }).passthrough(),
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "module_key",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/modules/:module_key/deactivate",
+    alias:
+      "deactivate_tenant_module_api_v1_tenants__tenant_id__modules__module_key__deactivate_post",
+    description: `Deactivate a module for an active tenant immediately (no approval required).
+Requires &#x60;system_admin&#x60; role.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ justification: z.string().min(20) }).passthrough(),
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "module_key",
+        type: "Path",
+        schema: z.string(),
       },
     ],
     response: z.unknown(),
@@ -1667,7 +1851,7 @@ and returns 202 with a new job_id.`,
 
 **Requirements:** Valid &#x60;access_token&#x60; HTTP-only cookie.
 
-**Returns:** Full &#x60;UserResponse&#x60; for the token owner`,
+**Returns:** Full &#x60;UserResponse&#x60; for the token owner. For permissions and active modules use &#x60;GET /me/permissions&#x60;.`,
     requestFormat: "json",
     response: UserResponse,
   },
@@ -1693,6 +1877,19 @@ Requires valid &#x60;access_token&#x60; cookie.`,
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/users/me/permissions",
+    alias: "get_me_permissions_api_v1_users_me_permissions_get",
+    description: `Return the authorization contract for the current user.
+
+- &#x60;permissions&#x60; — flat list of permission keys derived from the user&#x27;s role
+- &#x60;active_modules&#x60; — platform modules active for the user&#x27;s tenant (always-on + tenant-activated)
+
+Refresh this endpoint independently after role changes without re-fetching the full profile.`,
+    requestFormat: "json",
+    response: UserMePermissionsResponse,
   },
   {
     method: "post",
