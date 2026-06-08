@@ -5,10 +5,11 @@ import {
 } from "@/features/tenants/api/tenantsApi"
 import { FIVE_MINUTES_MS } from "@/lib/constants"
 
-export function useTenants() {
+export function useTenants(enabled = true) {
   return useQuery({
     queryKey: TENANTS_QUERY_KEYS.list(),
     queryFn: fetchTenants,
     staleTime: FIVE_MINUTES_MS,
+    enabled,
   })
 }

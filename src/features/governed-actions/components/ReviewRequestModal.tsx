@@ -172,7 +172,10 @@ function getAffectedUser(action: GovernedAction): string | null {
     const s = action.display_snapshot as unknown as PlatformInviteSnapshot
     return s.full_name ?? null
   }
-  // role_change / email_change: full_name not included in snapshot yet (backend gap)
+  if (action.action_type === "user_email_change") {
+    const s = action.display_snapshot as unknown as EmailChangeSnapshot
+    return s.old_email ?? null
+  }
   return null
 }
 

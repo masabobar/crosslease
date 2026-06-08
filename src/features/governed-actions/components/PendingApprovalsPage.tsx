@@ -1,8 +1,8 @@
 import { useState, useRef } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, Check, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
@@ -14,6 +14,7 @@ import { PendingApprovalDetailDrawer } from "@/features/governed-actions/compone
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { PATHS } from "@/router/paths"
 import type {
   GovernedAction,
   GovernedActionStatus,
@@ -262,13 +263,16 @@ export default function PendingApprovalsPage() {
                 </p>
               </div>
             )}
-            <Button
-              variant="outline"
-              className="h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
+            <Link
+              to={PATHS.AUDIT_TRAIL}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
+              )}
             >
               <Activity size={16} />
               {t("empty.viewAuditLog")}
-            </Button>
+            </Link>
           </div>
         )}
 

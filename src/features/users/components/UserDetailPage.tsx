@@ -67,7 +67,6 @@ import { useEditUser } from "@/features/users/hooks/useEditUser"
 import { useChangeEmail } from "@/features/users/hooks/useChangeEmail"
 import { useChangeRole } from "@/features/users/hooks/useChangeRole"
 import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPeriod"
-import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
 import { EditRoleScopeDialog } from "@/features/users/components/EditRoleScopeDialog"
@@ -345,7 +344,6 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const changeEmailMutation = useChangeEmail()
   const changeRoleMutation = useChangeRole()
   const updateAccessPeriodMutation = useUpdateAccessPeriod()
-  const updateSelfMutation = useUpdateSelf(user.id)
   const uploadPictureMutation = useUploadSelfPicture(user.id)
   const deletePictureMutation = useDeleteSelfPicture(user.id)
   const [isEditingRole, setIsEditingRole] = useState(false)
@@ -465,16 +463,27 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     const hasNameChanges =
       values.first_name !== user.first_name ||
       values.last_name !== user.last_name
+    const hasPhoneChange =
+      (values.phone_number ?? "") !== (user.phone_number ?? "")
 
-    const namePromise = hasNameChanges
-      ? editUserMutation.mutateAsync({
-          userId: user.id,
-          input: {
-            first_name: values.first_name,
-            last_name: values.last_name,
-          },
-        })
-      : Promise.resolve(null)
+    const editInput: {
+      first_name?: string
+      last_name?: string
+      phone_number?: string | null
+    } = {}
+    if (hasNameChanges) {
+      editInput.first_name = values.first_name
+      editInput.last_name = values.last_name
+    }
+    if (hasPhoneChange) {
+      editInput.phone_number =
+        values.phone_number === "" ? null : (values.phone_number ?? null)
+    }
+
+    const editPromise =
+      Object.keys(editInput).length > 0
+        ? editUserMutation.mutateAsync({ userId: user.id, input: editInput })
+        : Promise.resolve(null)
 
     const emailPromise = newEmail
       ? changeEmailMutation.mutateAsync({
@@ -483,41 +492,40 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       : Promise.resolve(null)
 
-    const hasPhoneChange =
-      isOwnProfile && (values.phone_number ?? "") !== (user.phone_number ?? "")
-    const phonePromise = hasPhoneChange
-      ? updateSelfMutation.mutateAsync({
-          phone_number:
-            values.phone_number === "" ? null : (values.phone_number ?? null),
-        })
-      : Promise.resolve(null)
-
-    void Promise.all([namePromise, emailPromise, phonePromise]).then(() => {
-      setIsEditingIdentity(false)
-      setShowEmailConfirm(false)
-      if (newEmail) {
+    void Promise.all([editPromise, emailPromise])
+      .then(() => {
+        setIsEditingIdentity(false)
+        setShowEmailConfirm(false)
+        if (newEmail) {
+          showToast({
+            variant: "success",
+            title: t("detail.page.editIdentity.emailChangeSuccess.title"),
+            message: t("detail.page.editIdentity.emailChangeSuccess.message", {
+              newEmail,
+              oldEmail: user.email,
+            }),
+          })
+        } else {
+          showToast({
+            variant: "success",
+            title: t("detail.page.editIdentity.success.title"),
+            message: t("detail.page.editIdentity.success.message"),
+          })
+        }
+      })
+      .catch((err: unknown) => {
         showToast({
-          variant: "success",
-          title: t("detail.page.editIdentity.emailChangeSuccess.title"),
-          message: t("detail.page.editIdentity.emailChangeSuccess.message", {
-            newEmail,
-            oldEmail: user.email,
-          }),
+          variant: "warning",
+          title: t("detail.page.editIdentity.error.title"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
         })
-      } else {
-        showToast({
-          variant: "success",
-          title: t("detail.page.editIdentity.success.title"),
-          message: t("detail.page.editIdentity.success.message"),
-        })
-      }
-    })
+      })
   }
 
-  const isSaving =
-    editUserMutation.isPending ||
-    changeEmailMutation.isPending ||
-    updateSelfMutation.isPending
+  const isSaving = editUserMutation.isPending || changeEmailMutation.isPending
 
   function handleRoleSubmit(values: { new_role: UserRole; reason: string }) {
     void changeRoleMutation
@@ -833,6 +841,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   data-testid="identity-email-input"
                   className="h-[28px] py-0 text-sm rounded-[8px]"
                   error={!!identityForm.formState.errors.email}
+                  disabled={user.status === "invited"}
+                  title={
+                    user.status === "invited"
+                      ? t("detail.page.editIdentity.emailDisabledPending")
+                      : undefined
+                  }
                 />
               ) : user.pending_email ? (
                 <div className="flex items-end gap-[10px] min-w-0">
@@ -849,7 +863,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.phoneNumber")}>
-              {isOwnProfile && isEditingIdentity ? (
+              {isEditingIdentity ? (
                 <Input
                   {...identityForm.register("phone_number")}
                   data-testid="phone-number-input"

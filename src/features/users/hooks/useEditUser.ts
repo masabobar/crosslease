@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { editUser, USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
-import type { EditUserInput } from "@/features/users/api/schema"
+import type { EditUserInput, UserResponse } from "@/features/users/api/schema"
 
 export function useEditUser() {
   const queryClient = useQueryClient()
@@ -14,6 +14,12 @@ export function useEditUser() {
       void queryClient.invalidateQueries({
         queryKey: USERS_QUERY_KEYS.lists(),
       })
+      const me = queryClient.getQueryData<UserResponse>(USERS_QUERY_KEYS.me())
+      if (me?.id === variables.userId) {
+        void queryClient.invalidateQueries({
+          queryKey: USERS_QUERY_KEYS.me(),
+        })
+      }
     },
   })
 }

@@ -9,6 +9,7 @@ import {
   INTERNAL_BANK_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
+import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -41,6 +42,9 @@ const PendingApprovalsPage = lazy(
 )
 const SelfProfilePage = lazy(
   () => import("@/features/users/components/SelfProfilePage")
+)
+const AuditTrailPage = lazy(
+  () => import("@/features/audit/components/AuditTrailPage")
 )
 
 export const router = createBrowserRouter([
@@ -117,6 +121,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={USER_MANAGEMENT_ALLOWED_ROLES}>
               <PendingApprovalsPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.AUDIT_TRAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={AUDIT_TRAIL_ALLOWED_ROLES}>
+              <AuditTrailPage />
             </RoleGuard>
           </Suspense>
         ),

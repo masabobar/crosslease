@@ -125,7 +125,6 @@
     "submission": "EINREICHUNG",
     "name": "Name",
     "roleAtTime": "Rolle zum Zeitpunkt",
-    "tenantAtTime": "Mandant zum Zeitpunkt",
     "submittedAt": "Eingereicht am",
     "resolvedAt": "Erledigt am",
     "reasonFromSubmitter": "GRUND DES EINREICHERS",

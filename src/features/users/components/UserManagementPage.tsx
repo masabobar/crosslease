@@ -100,8 +100,10 @@ export default function UserManagementPage() {
     setSort,
   } = useUserListParams()
   const showToast = useToastStore(s => s.showToast)
-  const { data: tenantsData } = useTenants()
   const { data: currentUser } = useCurrentUser()
+  const { data: tenantsData } = useTenants(
+    getUserFilterVisibility(currentUser?.role).tenant
+  )
   const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
   const canExport =
     currentUser?.role === SYSTEM_ADMIN_ROLE || currentUser?.role === "auditor"

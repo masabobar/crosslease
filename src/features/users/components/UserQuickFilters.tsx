@@ -92,7 +92,7 @@ export function UserQuickFilters({
   className,
 }: UserQuickFiltersProps) {
   const { t } = useTranslation("users")
-  const { data: tenantsData } = useTenants()
+  const { data: tenantsData } = useTenants(filterVisibility.tenant)
 
   const buttonLabels: Record<QuickFilterKey, string> = {
     role: t("quickFilters.buttons.role"),

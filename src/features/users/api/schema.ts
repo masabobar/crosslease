@@ -221,6 +221,11 @@ export type UserDetail = z.infer<typeof UserDetailResponseSchema>
 export const EditUserRequestSchema = z.object({
   first_name: z.string().min(1).max(100).nullable().optional(),
   last_name: z.string().min(1).max(100).nullable().optional(),
+  phone_number: z
+    .string()
+    .regex(/^\+?[0-9\s\-() ]{7,30}$/, "Invalid phone number")
+    .nullable()
+    .optional(),
 })
 export type EditUserInput = z.infer<typeof EditUserRequestSchema>
 
