@@ -49,7 +49,7 @@ The `.md` files in `src/e2e/tests/` follow this structure:
 ### POM template
 
 ```ts
-import type { Page, Locator } from "@playwright/test"
+import type { Locator, Page } from "../fixtures/test"
 
 export class LoginPage {
   readonly page: Page
@@ -102,13 +102,14 @@ type Fixtures = {
 
 export const test = base.extend<Fixtures>({
   // Instantiate LoginPage for the current page
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page))
+  // "provide" avoids triggering react-hooks/rules-of-hooks on the Playwright fixture callback
+  loginPage: async ({ page }, provide) => {
+    await provide(new LoginPage(page))
   },
 
   // Pre-authenticated session — bank front_office user (default for most specs)
   // Reads credentials from process.env; never hardcodes secrets
-  authenticatedPage: async ({ browser }, use) => {
+  authenticatedPage: async ({ browser }, provide) => {
     const context = await browser.newContext()
     const page = await context.newPage()
     const loginPage = new LoginPage(page)
@@ -118,12 +119,12 @@ export const test = base.extend<Fixtures>({
       process.env.TEST_BANK_USER_PASSWORD ?? ""
     )
     await page.waitForURL("/dashboard")
-    await use(page)
+    await provide(page)
     await context.close()
   },
 
   // Pre-authenticated session — leasing_company_user role
-  lcUserPage: async ({ browser }, use) => {
+  lcUserPage: async ({ browser }, provide) => {
     const context = await browser.newContext()
     const page = await context.newPage()
     const loginPage = new LoginPage(page)
@@ -133,12 +134,12 @@ export const test = base.extend<Fixtures>({
       process.env.TEST_LC_USER_PASSWORD ?? ""
     )
     await page.waitForURL("/workspace")
-    await use(page)
+    await provide(page)
     await context.close()
   },
 
   // Pre-authenticated session — auditor role
-  auditorPage: async ({ browser }, use) => {
+  auditorPage: async ({ browser }, provide) => {
     const context = await browser.newContext()
     const page = await context.newPage()
     const loginPage = new LoginPage(page)
@@ -148,7 +149,7 @@ export const test = base.extend<Fixtures>({
       process.env.TEST_AUDITOR_PASSWORD ?? ""
     )
     await page.waitForURL("/dashboard")
-    await use(page)
+    await provide(page)
     await context.close()
   },
 })
@@ -161,7 +162,8 @@ export { expect }
 
 - Add a new fixture for each role that needs a dedicated pre-auth session
 - Credentials always come from `process.env` — no hardcoded values in fixture bodies
-- Each fixture opens its own `BrowserContext` and closes it after `use()` — never share context between fixtures
+- Name the Playwright fixture callback `provide` (not `use`) — `use` triggers `react-hooks/rules-of-hooks` as a false positive
+- Each fixture opens its own `BrowserContext` and closes it after `provide()` — never share context between fixtures
 - As new POM classes are added, add a corresponding fixture so specs receive them directly rather than constructing inline
 - The `storageState` approach (saving auth to `.auth/`) is commented out in `playwright.config.ts` pending D17 — do not enable it until that dependency is resolved; use the inline login approach above in the interim
 
@@ -175,7 +177,7 @@ export { expect }
 
 ### Spec structure rules
 
-- **Import `test` and `expect` exclusively from `../../fixtures/test`** — never from `@playwright/test` directly (hard lint error)
+- **Import `test` and `expect` exclusively from `../fixtures/test`** — never from `@playwright/test` directly (hard lint error)
 - One `test.describe` block per Feature in the Gherkin file, tagged with the story ID
 - Each `Scenario` becomes one `test()` call; each `Scenario Outline` becomes `test.each()`
 - Gherkin `Background` steps become `test.beforeEach()`
@@ -187,7 +189,7 @@ export { expect }
 
 ```ts
 // correct — always
-import { test, expect } from "../../fixtures/test"
+import { test, expect } from "../fixtures/test"
 
 // will fail lint — never
 import { test, expect } from "@playwright/test"
@@ -196,7 +198,7 @@ import { test, expect } from "@playwright/test"
 ### Spec template
 
 ```ts
-import { test, expect } from "../../fixtures/test"
+import { test, expect } from "../fixtures/test"
 import { LoginPage } from "../pages/LoginPage"
 
 test.describe("PRD1042-43 — User Login", () => {

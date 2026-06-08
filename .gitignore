@@ -14,9 +14,11 @@ dist-ssr
 *.local
 package-lock.json
 
-# E2E environment files
+# E2E environment files and auth state
 .env.e2e*
 .auth/*
+src/e2e/.env
+src/e2e/.auth/
 # /src/e2e/.claude/*
 
 # Playwright output

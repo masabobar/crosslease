@@ -1,4 +1,13 @@
 import { defineConfig, devices } from "@playwright/test"
+import { config } from "dotenv"
+import { dirname, resolve } from "path"
+import { fileURLToPath } from "url"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// Load .env from this directory with override: true so file values always win
+// over any empty shell variables that may shadow them.
+config({ path: resolve(__dirname, ".env"), override: true })
 
 export default defineConfig({
   testDir: "./specs",
@@ -9,22 +18,26 @@ export default defineConfig({
   reporter: process.env.CI ? "list" : "html",
 
   use: {
-    baseURL: process.env.STAGING_BASE_URL ?? "http://localhost:5173",
+    baseURL: process.env.DEV_BASE_URL || "http://localhost:5173",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
 
   projects: [
-    // Auth setup project — uncomment once auth provider is confirmed (D17)
-    // {
-    //   name: 'setup',
-    //   testMatch: /.*\.setup\.ts/,
-    // },
+    // Runs once per session — submits the dev/staging password gate and saves the cookie
+    {
+      name: "setup",
+      testDir: "./setup",
+      testMatch: /.*\.setup\.ts/,
+    },
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-      // Add storageState and dependencies: ['setup'] once auth setup is in place
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: ".auth/gate.json",
+      },
+      dependencies: ["setup"],
     },
   ],
 
