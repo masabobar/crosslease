@@ -122,15 +122,15 @@ function SectionCard({
         </span>
         {headerActions ??
           (onEdit ? (
-            <button
-              type="button"
+            <Button
+              variant="outline"
               data-testid={editTestId}
               onClick={onEdit}
-              className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
+              className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
             >
               <SquarePen size={14} />
               {t("detail.page.actions.edit")}
-            </button>
+            </Button>
           ) : null)}
       </div>
       <div className="bg-card border border-border rounded-b-[10px] p-3 flex flex-col gap-3 flex-1">
@@ -154,18 +154,18 @@ function TabButton({
   "data-testid"?: string
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={onClick}
       data-testid={testId}
-      className={`flex items-center h-[26px] px-1.5 pb-4 pt-0.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
+      className={`h-auto px-1.5 py-1 rounded-none border-none hover:bg-transparent focus-visible:ring-0 focus-visible:border-none ${
         active
-          ? "border-primary text-foreground"
-          : "border-transparent text-foreground/60 hover:text-foreground/80"
+          ? "text-foreground hover:text-foreground"
+          : "text-foreground/60 hover:text-foreground/80"
       }`}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -590,6 +590,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <div className="flex items-center gap-3">
             {isOwnProfile ? (
               <>
+                {/* NOTE: raw <input type="file"> — hidden file input triggered programmatically; no shadcn equivalent */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -663,63 +664,63 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           {isAdmin && (
             <div className="flex items-center gap-[10px]">
               {canSuspend && (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   data-testid="detail-suspend-button"
                   onClick={() => setActiveAction("suspend")}
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                  className="h-auto gap-[6px] rounded-[12px] px-[10px] py-[8px] text-sm"
                 >
                   <UserRoundX size={16} />
                   {t("detail.page.actions.suspendUser")}
-                </button>
+                </Button>
               )}
               {canReactivate && (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   data-testid="detail-reactivate-button"
                   onClick={() => setActiveAction("reactivate")}
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                  className="h-auto gap-[6px] rounded-[12px] px-[10px] py-[8px] text-sm"
                 >
                   <UserRoundCheck size={16} />
                   {t("actions.reactivate.label")}
-                </button>
+                </Button>
               )}
               {canDeactivate && (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   data-testid="detail-deactivate-button"
                   onClick={() => setActiveAction("deactivate")}
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                  className="h-auto gap-[6px] rounded-[12px] px-[10px] py-[8px] text-sm"
                 >
                   <Ban size={16} />
                   {t("detail.page.actions.deactivateUser")}
-                </button>
+                </Button>
               )}
               {canApprove && (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   data-testid="detail-approve-button"
                   onClick={() =>
                     navigate(PATHS.PENDING_APPROVALS, {
                       state: { highlightUserId: user.id },
                     })
                   }
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                  className="h-auto gap-[6px] rounded-[12px] px-[10px] py-[8px] text-sm"
                 >
                   <UserCheck size={16} />
                   {t("table.actions.approve")}
-                </button>
+                </Button>
               )}
               {canResendInvitation && (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   data-testid="detail-resend-invitation-button"
                   onClick={() => setActiveAction("resend-invitation")}
-                  className="flex items-center gap-[6px] px-[10px] py-[8px] text-sm font-medium text-foreground bg-card border border-input rounded-[12px] hover:bg-muted/60 transition-colors"
+                  className="h-auto gap-[6px] rounded-[12px] px-[10px] py-[8px] text-sm"
                 >
                   <Mail size={16} />
                   {t("actions.resend-invitation.label")}
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -784,15 +785,15 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                     </Button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
                     data-testid="identity-edit-button"
                     onClick={startEditingIdentity}
-                    className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
+                    className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
                   >
                     <SquarePen size={14} />
                     {t("detail.page.actions.edit")}
-                  </button>
+                  </Button>
                 )
               ) : null
             }
@@ -943,7 +944,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
       {/* Tabbed card */}
       <div className="bg-muted border border-border rounded-[10px] flex flex-col">
-        <div className="flex items-end h-10 px-3 pt-2 gap-1 border-b border-border">
+        <div className="flex items-center h-10 px-3 gap-1 border-b border-border">
           <TabButton
             active={activeTab === "lifecycle"}
             onClick={() => setActiveTab("lifecycle")}

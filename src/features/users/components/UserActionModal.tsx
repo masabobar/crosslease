@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { DialogModal } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
@@ -384,11 +385,10 @@ function UserActionModal({
             <Label htmlFor="comment" className="mb-1.5">
               {t("actions.fields.comment")}
             </Label>
-            {/* NOTE: raw <textarea> — custom rounded-lg (vs shadcn's rounded-xl) and focus-visible ring override; className props alone would not reliably override shadcn Textarea's base styles */}
-            <textarea
+            <Textarea
               id="comment"
               data-testid="action-comment-input"
-              className="w-full bg-background border border-border text-foreground text-sm rounded-lg outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary px-4 py-2.5 min-h-[80px] resize-none"
+              className="bg-background px-4 py-2.5 min-h-[80px] resize-none text-sm focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary"
               placeholder={t("actions.fields.commentPlaceholder")}
               {...form.register("comment")}
             />

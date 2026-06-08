@@ -189,6 +189,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
       <div className="flex flex-col border border-border rounded-[10px]">
         <div className="bg-card flex items-center px-3 py-4 rounded-t-[10px]">
           <div className="flex items-center gap-3">
+            {/* NOTE: raw <input type="file"> — hidden file input triggered programmatically; no shadcn equivalent */}
             <input
               ref={fileInputRef}
               type="file"
@@ -300,18 +301,18 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
                   </Button>
                 </div>
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   data-testid="phone-edit-button"
                   onClick={() => {
                     phoneForm.reset({ phone_number: user.phone_number ?? "" })
                     setIsEditingPhone(true)
                   }}
-                  className="flex items-center gap-1 px-[10px] py-[4px] text-sm font-medium text-foreground bg-card border border-input rounded-[10px] hover:bg-muted/60 transition-colors"
+                  className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
                 >
                   <SquarePen size={14} />
                   {t("detail.page.actions.edit")}
-                </button>
+                </Button>
               )
             }
           >
@@ -371,23 +372,23 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
 
       {/* Lifecycle / Auth tabs */}
       <div className="bg-muted border border-border rounded-[10px] flex flex-col">
-        <div className="flex items-end h-10 px-3 pt-2 gap-1 border-b border-border">
+        <div className="flex items-center h-10 px-3 gap-1 border-b border-border">
           {(["lifecycle", "auth"] as const).map(tab => (
-            <button
+            <Button
               key={tab}
-              type="button"
+              variant="ghost"
               onClick={() => setActiveTab(tab)}
               data-testid={`tab-${tab}`}
-              className={`flex items-center h-[26px] px-1.5 pb-4 pt-0.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${
+              className={`h-auto px-1.5 py-1 rounded-none border-none hover:bg-transparent focus-visible:ring-0 focus-visible:border-none ${
                 activeTab === tab
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-foreground/60 hover:text-foreground/80"
+                  ? "text-foreground hover:text-foreground"
+                  : "text-foreground/60 hover:text-foreground/80"
               }`}
             >
               {tab === "lifecycle"
                 ? t("detail.page.tabs.lifecycle")
                 : t("detail.page.tabs.authSecurity")}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="bg-card border border-border rounded-b-[10px]">

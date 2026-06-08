@@ -4,6 +4,13 @@ import { UserPlus, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
@@ -291,16 +298,16 @@ export default function UserManagementPage() {
               {t("page.filters.rolePill", {
                 value: t(`roles.${role}` as `roles.${UserRole}`),
               })}
-              {/* NOTE: raw <button> — inline X icon inside a badge <span>; shadcn Button renders block-level which breaks the inline badge layout */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 data-testid={`filter-pill-remove-role-${role}`}
                 onClick={() => removeRoleFilter(role)}
-                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
                 aria-label={`Remove role ${role} filter`}
               >
                 <X size={11} strokeWidth={2.5} />
-              </button>
+              </Button>
             </span>
           ))}
 
@@ -312,18 +319,18 @@ export default function UserManagementPage() {
                     ten => ten.id === appliedFilters.tenant_id
                   )?.name ?? appliedFilters.tenant_id,
               })}
-              {/* NOTE: raw <button> — same inline badge reason as role pill */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 data-testid="filter-pill-remove-tenant"
                 onClick={() =>
                   setAppliedFilters({ ...appliedFilters, tenant_id: null })
                 }
-                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
                 aria-label="Remove tenant filter"
               >
                 <X size={11} strokeWidth={2.5} />
-              </button>
+              </Button>
             </span>
           )}
 
@@ -336,18 +343,18 @@ export default function UserManagementPage() {
                     | "filter.mfa.disabled"
                 ),
               })}
-              {/* NOTE: raw <button> — same inline badge reason as role pill */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 data-testid="filter-pill-remove-mfa"
                 onClick={() =>
                   setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
                 }
-                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
                 aria-label="Remove MFA filter"
               >
                 <X size={11} strokeWidth={2.5} />
-              </button>
+              </Button>
             </span>
           )}
 
@@ -359,16 +366,16 @@ export default function UserManagementPage() {
               {t("page.filters.statusPill", {
                 value: t(`statuses.${status}` as `statuses.${UserStatus}`),
               })}
-              {/* NOTE: raw <button> — same inline badge reason as role pill */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 data-testid={`filter-pill-remove-status-${status}`}
                 onClick={() => removeStatusFilter(status)}
-                className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
                 aria-label={`Remove status ${status} filter`}
               >
                 <X size={11} strokeWidth={2.5} />
-              </button>
+              </Button>
             </span>
           ))}
 
@@ -392,9 +399,9 @@ export default function UserManagementPage() {
                     .filter(Boolean)
                     .join(" "),
                 })}
-                {/* NOTE: raw <button> — same inline badge reason as role pill */}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   data-testid="filter-pill-remove-last-login"
                   onClick={() =>
                     setAppliedFilters({
@@ -403,23 +410,23 @@ export default function UserManagementPage() {
                       last_login_to: null,
                     })
                   }
-                  className="ml-0.5 flex items-center opacity-80 hover:opacity-100 transition-opacity"
+                  className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
                   aria-label="Remove last login filter"
                 >
                   <X size={11} strokeWidth={2.5} />
-                </button>
+                </Button>
               </span>
             )}
 
-          {/* NOTE: raw <button> — xs destructive text link; shadcn Button variant="link" uses base font-size and different line-height */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
             data-testid="filters-clear-all"
             onClick={() => setAppliedFilters(EMPTY_FILTER_STATE)}
-            className="px-2 text-xs font-medium text-destructive hover:opacity-80 transition-opacity"
+            className="h-auto px-2 py-0 text-xs font-normal text-destructive hover:text-destructive hover:bg-transparent hover:opacity-80 transition-opacity"
           >
             {t("page.filters.clearAll")}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -443,63 +450,64 @@ export default function UserManagementPage() {
             <span className="text-sm font-medium text-foreground">
               {t("page.pagination.rowsPerPage")}
             </span>
-            {/* NOTE: raw <select> — native dropdown with <option> children; shadcn Select uses a custom portal-based dropdown incompatible with simple numeric option lists */}
-            <select
-              value={perPage}
-              onChange={e => setPerPage(Number(e.target.value) as PageSize)}
-              data-testid="pagination-page-size-select"
-              className="rounded-xl px-2 h-8 text-xs text-foreground bg-background border border-border hover:bg-muted transition-colors cursor-pointer"
+            <Select
+              value={String(perPage)}
+              onValueChange={v => setPerPage(Number(v) as PageSize)}
             >
-              {PAGE_SIZES.map(size => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                data-testid="pagination-page-size-select"
+                className="h-8 rounded-xl px-2 text-xs w-auto gap-1"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map(size => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-0.5">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               data-testid="pagination-prev-button"
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="rounded-xl pl-1.5 pr-2.5 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8 gap-1.5 rounded-xl pl-1.5 pr-2.5 text-sm"
             >
               <ChevronLeft size={16} />
               {t("page.pagination.previous")}
-            </button>
+            </Button>
 
             {pageNumbers.map((item, idx) =>
               item === "..." ? (
                 <PaginationEllipsis key={`ellipsis-${idx}`} />
               ) : (
-                <button
+                <Button
                   key={item}
-                  type="button"
+                  variant={item === page ? "outline" : "ghost"}
                   data-testid={`pagination-page-${item}`}
                   onClick={() => setPage(item)}
-                  className={
-                    item === page
-                      ? "border border-border rounded-xl w-8 h-8 text-sm font-medium flex items-center justify-center"
-                      : "rounded-xl w-8 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center"
-                  }
+                  className="size-8 rounded-xl p-0 text-sm"
                 >
                   {item}
-                </button>
+                </Button>
               )
             )}
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               data-testid="pagination-next-button"
               onClick={() => setPage(Math.min(data.total_pages, page + 1))}
               disabled={page === data.total_pages}
-              className="rounded-xl pl-2.5 pr-1.5 h-8 text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8 gap-1.5 rounded-xl pl-2.5 pr-1.5 text-sm"
             >
               {t("page.pagination.next")}
               <ChevronRight size={16} />
-            </button>
+            </Button>
           </div>
         </div>
       )}

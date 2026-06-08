@@ -14,6 +14,7 @@ import type { UserRole, UserFilterState } from "@/features/users/types"
 import { USER_STATUSES } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
 import { getUserFilterVisibility } from "@/features/users/utils"
+import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 
 // i18n key casts for dynamic lookups
@@ -127,16 +128,16 @@ function MultiSelectDropdown<T extends string>({
         sideOffset={4}
         className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
       >
-        {/* NOTE: raw <button> items — custom inline-checkbox list inside Popover; no shadcn Command/DropdownMenuItem pattern fits this checkbox-with-label layout */}
         {options.map(option => {
           const checked = value.includes(option)
           return (
-            <button
+            <Button
               key={option}
               type="button"
+              variant="ghost"
               data-testid={`filter-option-${option}`}
               onClick={() => toggle(option)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left"
+              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
               <span
                 className={cn(
@@ -147,7 +148,7 @@ function MultiSelectDropdown<T extends string>({
                 {checked && <Check size={10} className="text-white" />}
               </span>
               {renderOption(option)}
-            </button>
+            </Button>
           )
         })}
       </PopoverContent>
@@ -172,22 +173,22 @@ function TextToggle({
     <div
       className={cn("flex gap-2", disabled && "opacity-40 pointer-events-none")}
     >
-      {/* NOTE: raw <button> items — pill-style radio toggle; no shadcn RadioGroup equivalent for this borderless-pill visual pattern */}
       {options.map(opt => (
-        <button
+        <Button
           key={opt.value}
           type="button"
+          variant="ghost"
           data-testid={`filter-toggle-${opt.value}`}
           onClick={() => onChange(value === opt.value ? null : opt.value)}
           className={cn(
-            "px-3 py-1 text-sm rounded-full border transition-colors",
+            "h-auto px-3 py-1 text-sm rounded-full border font-normal",
             value === opt.value
-              ? "border-primary text-primary bg-primary/5"
-              : "border-border text-foreground hover:border-primary/40"
+              ? "border-primary text-primary bg-primary/5 hover:bg-primary/5 hover:text-primary"
+              : "border-border text-foreground hover:border-primary/40 hover:bg-transparent"
           )}
         >
           {opt.label}
-        </button>
+        </Button>
       ))}
     </div>
   )
@@ -241,18 +242,18 @@ function SingleSelectDropdown({
         sideOffset={4}
         className="w-[var(--anchor-width)] p-0 py-1 max-h-60 overflow-y-auto"
       >
-        {/* NOTE: raw <button> items — single-select list inside Popover; same reason as multi-select: no shadcn primitive fits this custom option pattern */}
         {options.map(option => (
-          <button
+          <Button
             key={option.value}
             type="button"
+            variant="ghost"
             data-testid={`filter-panel-option-${option.value}`}
             onClick={() => toggle(option.value)}
             className={cn(
-              "w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-left text-sm",
+              "w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none text-sm",
               value === option.value
                 ? "text-primary font-medium"
-                : "text-foreground"
+                : "text-foreground font-normal"
             )}
           >
             {value === option.value && (
@@ -260,7 +261,7 @@ function SingleSelectDropdown({
             )}
             {value !== option.value && <span className="size-3 shrink-0" />}
             {option.label}
-          </button>
+          </Button>
         ))}
       </PopoverContent>
     </Popover>
@@ -532,23 +533,23 @@ function UserFilterPanel({
 
         {/* Footer */}
         <div className="border-t border-border px-4 py-3 flex gap-3 shrink-0">
-          {/* NOTE: raw <button> — flex-1 full-width layout with rounded-lg (not shadcn's rounded-xl); className alone would not cleanly override shadcn Button's defaults */}
-          <button
+          <Button
             type="button"
+            variant="outline"
             data-testid="filter-cancel-button"
             onClick={onClose}
-            className="flex-1 h-9 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            className="flex-1"
           >
             {t("filter.actions.cancel")}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             data-testid="filter-apply-button"
             onClick={handleApply}
-            className="flex-1 h-9 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+            className="flex-1"
           >
             {t("filter.actions.apply")}
-          </button>
+          </Button>
         </div>
       </div>
     </>

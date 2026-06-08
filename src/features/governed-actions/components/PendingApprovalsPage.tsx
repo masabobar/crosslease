@@ -2,6 +2,8 @@ import { useState, useRef } from "react"
 import { useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, Check, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
 import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
@@ -180,13 +182,12 @@ export default function PendingApprovalsPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Search */}
         <div className="relative w-[288px]">
-          {/* NOTE: raw <input> — custom h-8 search field with an absolutely-positioned icon overlay; shadcn Input's min-height and padding would require additional overrides */}
-          <input
+          <Input
             type="text"
             placeholder={t("search.placeholder")}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-8 pl-3 pr-8 text-sm border border-border rounded-[12px] bg-white focus:outline-none focus:ring-2 focus:ring-ring"
+            className="pl-3 pr-8 rounded-[12px]"
             data-testid="search-input"
           />
           <Search
@@ -200,17 +201,17 @@ export default function PendingApprovalsPage() {
           <span className="text-sm text-muted-foreground">
             {t("view", { defaultValue: "View" })}
           </span>
-          {/* NOTE: raw <button> items — position-aware rounded corners (first/last) require index logic not composable with shadcn Tabs */}
           <div className="flex items-center border border-border rounded-[10px] overflow-hidden h-9">
             {TABS.map((tab, i) => (
-              <button
+              <Button
                 key={tab}
                 type="button"
+                variant="ghost"
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "h-full px-2.5 text-sm font-medium whitespace-nowrap transition-colors",
+                  "h-full rounded-none px-2.5 text-sm whitespace-nowrap",
                   activeTab === tab
-                    ? "bg-white text-foreground"
+                    ? "bg-white text-foreground hover:bg-white"
                     : "bg-slate-100 text-foreground hover:bg-slate-200",
                   i === 0 && "rounded-l-[10px]",
                   i === TABS.length - 1 && "rounded-r-[10px]"
@@ -218,7 +219,7 @@ export default function PendingApprovalsPage() {
                 data-testid={`tab-${tab}`}
               >
                 {t(`tabs.${tab}`)}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -261,13 +262,13 @@ export default function PendingApprovalsPage() {
                 </p>
               </div>
             )}
-            <button
-              type="button"
-              className="flex items-center gap-1.5 px-2.5 py-2 text-sm font-medium border border-border rounded-[12px] bg-card hover:bg-muted transition-colors"
+            <Button
+              variant="outline"
+              className="h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
             >
               <Activity size={16} />
               {t("empty.viewAuditLog")}
-            </button>
+            </Button>
           </div>
         )}
 

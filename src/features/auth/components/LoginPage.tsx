@@ -237,17 +237,18 @@ export default function LoginPage() {
 
                 <p className="text-base text-muted-foreground leading-6">
                   {t("login.otp.didntReceive")}{" "}
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
                     data-testid="otp-resend-button"
                     disabled={isResending || isSuccess}
                     onClick={handleResend}
-                    className="text-primary underline underline-offset-2 hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-auto p-0 underline underline-offset-2 hover:text-primary/80 font-normal"
                   >
                     {isResending
                       ? t("login.otp.resending")
                       : t("login.otp.resend")}
-                  </button>
+                  </Button>
                 </p>
               </div>
 
@@ -474,14 +475,15 @@ export default function LoginPage() {
                   </p>
                 )}
                 <div className="mt-2 text-right">
-                  <button
+                  <Button
+                    variant="link"
                     type="button"
                     data-testid="login-forgot-password-button"
                     onClick={() => navigate(PATHS.FORGOT_PASSWORD)}
-                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
+                    className="h-auto p-0 text-sm font-medium"
                   >
                     {t("login.forgotPassword")}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
