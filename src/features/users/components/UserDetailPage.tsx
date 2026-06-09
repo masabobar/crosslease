@@ -55,6 +55,10 @@ import type {
   AuditorPeriodUpdateReason,
 } from "@/features/users/api/schema"
 import {
+  UserStatusSchema,
+  phoneNumberSchema,
+} from "@/features/users/api/schema"
+import {
   AUDITOR_DATE_RANGE_ROLES,
   AUDITOR_ROLE,
   PLATFORM_USER_ROLES,
@@ -237,11 +241,7 @@ const IdentityFormSchema = z.object({
   first_name: z.string().min(1).max(100),
   last_name: z.string().min(1).max(100),
   email: z.string().email(),
-  phone_number: z
-    .string()
-    .regex(/^\+?[0-9\s\-()\s]{7,30}$/, "Invalid phone number format")
-    .or(z.literal(""))
-    .optional(),
+  phone_number: phoneNumberSchema.or(z.literal("")).optional(),
 })
 type IdentityFormValues = z.infer<typeof IdentityFormSchema>
 
@@ -841,9 +841,13 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   data-testid="identity-email-input"
                   className="h-[28px] py-0 text-sm rounded-[8px]"
                   error={!!identityForm.formState.errors.email}
-                  disabled={user.status === "invited"}
+                  disabled={
+                    user.status === UserStatusSchema.enum.invited ||
+                    user.status === UserStatusSchema.enum.pending_approval
+                  }
                   title={
-                    user.status === "invited"
+                    user.status === UserStatusSchema.enum.invited ||
+                    user.status === UserStatusSchema.enum.pending_approval
                       ? t("detail.page.editIdentity.emailDisabledPending")
                       : undefined
                   }

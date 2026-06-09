@@ -1,0 +1,134 @@
+import { useEffect, useState } from "react"
+import { useMutation } from "@tanstack/react-query"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import { Check, Link2Off, ArrowRight } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { verifyEmailChange } from "../api/verifyEmailApi"
+import { ApiError } from "@/lib/api"
+import { PATHS } from "@/router/paths"
+import { Button } from "@/components/ui/button"
+import { AuthPageLayout } from "./AuthPageLayout"
+
+const REDIRECT_SECONDS = 5
+
+export default function VerifyEmailPage() {
+  const { t } = useTranslation("auth")
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [countdown, setCountdown] = useState(REDIRECT_SECONDS)
+
+  const token = searchParams.get("token") ?? ""
+
+  const mutation = useMutation({ mutationFn: verifyEmailChange })
+
+  // Trigger the email verification once on mount
+  useEffect(() => {
+    if (token) mutation.mutate(token)
+    // intentional empty deps — fires once on mount, token is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const pageState =
+    !token || mutation.isError
+      ? "error"
+      : mutation.isSuccess
+        ? "success"
+        : "loading"
+
+  const errorCode =
+    mutation.error instanceof ApiError ? mutation.error.code : ""
+
+  useEffect(() => {
+    if (pageState !== "success") return
+    const id = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) navigate(PATHS.LOGIN)
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [pageState, navigate])
+
+  if (pageState === "loading") {
+    return (
+      <AuthPageLayout>
+        <div className="w-full max-w-[480px] flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
+  if (pageState === "success") {
+    return (
+      <AuthPageLayout>
+        <div
+          data-testid="verify-email-success"
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6 items-center"
+        >
+          <div className="flex flex-col items-center gap-3 w-full">
+            <div className="bg-success/10 p-3 rounded-[14px]">
+              <Check size={24} className="text-success" strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col gap-3 text-center w-full">
+              <h1 className="text-xl font-semibold text-foreground">
+                {t("verifyEmail.success.title")}
+              </h1>
+              <p className="text-base text-muted-foreground">
+                {t("verifyEmail.success.body")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-2 w-full">
+            <Button
+              type="button"
+              className="w-full"
+              onClick={() => navigate(PATHS.LOGIN)}
+            >
+              {t("verifyEmail.success.goToLogin")}
+              <ArrowRight size={16} />
+            </Button>
+            <p className="text-xs text-slate-400 text-center">
+              {t("verifyEmail.success.autoRedirect", { seconds: countdown })}
+            </p>
+          </div>
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
+  return (
+    <AuthPageLayout>
+      <div
+        data-testid="verify-email-error"
+        className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6"
+      >
+        <div className="flex flex-col gap-3">
+          <div className="w-12 h-12 bg-amber-100 rounded-[14px] flex items-center justify-center">
+            <Link2Off size={24} className="text-amber-600" />
+          </div>
+          <div className="flex flex-col gap-3">
+            <h1 className="text-xl font-semibold text-foreground">
+              {t("verifyEmail.error.title")}
+            </h1>
+            <p className="text-base text-muted-foreground">
+              {errorCode
+                ? t(`errors.${errorCode}`, {
+                    defaultValue: t("verifyEmail.error.body"),
+                  })
+                : t("verifyEmail.error.body")}
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
+          onClick={() => navigate(PATHS.LOGIN)}
+        >
+          <ArrowRight size={16} className="shrink-0" />
+          <span>{t("verifyEmail.error.goToLogin")}</span>
+        </Button>
+      </div>
+    </AuthPageLayout>
+  )
+}

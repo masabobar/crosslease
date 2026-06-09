@@ -2,6 +2,7 @@
   "page": {
     "title": "Ausstehende Genehmigungen",
     "subtitle": "Überprüfen und bearbeiten Sie Anfragen anderer Administratoren gemäß der Vier-Augen-Richtlinie.",
+    "loadError": "Ausstehende Genehmigungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "breadcrumb": {
       "home": "Startseite",
       "pendingApprovals": "Ausstehende Genehmigungen"
@@ -43,7 +44,13 @@
     "withdraw": "Zurückziehen",
     "reInitiate": "Neu einreichen",
     "approvedBy": "Genehmigt von",
-    "rejectedBy": "Abgelehnt von"
+    "rejectedBy": "Abgelehnt von",
+    "submittedJustNow": "gerade eben ({{absolute}})",
+    "submittedHoursAgo": "vor {{count}} Std. ({{absolute}})",
+    "submittedDaysAgo": "vor {{count}} T. ({{absolute}})",
+    "expiryExpired": "0 Std.",
+    "expiryHours": "{{count}} Std.",
+    "expiryDays": "{{count}} T."
   },
   "modal": {
     "action": "AKTION",

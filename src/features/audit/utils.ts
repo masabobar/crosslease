@@ -15,3 +15,18 @@ export function formatEventType(eventType: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ")
 }
+
+/**
+ * Converts a snake_case action type identifier into a human-readable label.
+ *
+ * Examples:
+ *   "state_transition" → "State Transition"
+ *   "create"           → "Create"
+ *   "update"           → "Update"
+ */
+export function formatActionType(actionType: string): string {
+  return actionType
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}

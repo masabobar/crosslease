@@ -81,3 +81,26 @@ export type ActorSnapshot = {
   role: string
   tenant_id: string | null
 }
+
+// Typed accessors — snapshot fields are open records in the Zod schema because
+// shape varies per action_type. These helpers centralise the cast so call sites
+// don't repeat `as unknown as XxxSnapshot`.
+export function roleChangeSnapshot(action: GovernedAction): RoleChangeSnapshot {
+  return action.display_snapshot as unknown as RoleChangeSnapshot
+}
+export function platformInviteSnapshot(
+  action: GovernedAction
+): PlatformInviteSnapshot {
+  return action.display_snapshot as unknown as PlatformInviteSnapshot
+}
+export function emailChangeSnapshot(
+  action: GovernedAction
+): EmailChangeSnapshot {
+  return action.display_snapshot as unknown as EmailChangeSnapshot
+}
+export function initiatorSnapshot(action: GovernedAction): ActorSnapshot {
+  return action.initiator_snapshot as unknown as ActorSnapshot
+}
+export function approverSnapshot(action: GovernedAction): ActorSnapshot | null {
+  return action.approver_snapshot as unknown as ActorSnapshot | null
+}

@@ -1,18 +1,15 @@
-import { ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { Button } from "@/components/ui/button"
 import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
 import { deriveAuditResult } from "@/features/audit/api/schema"
 import { formatEventType } from "@/features/audit/utils"
 import type { AuditEvent } from "@/features/audit/api/schema"
 import { formatDateTime } from "@/features/users/utils"
 
-// Column widths match the design (1136px total)
-const COL_TIMESTAMP = "w-[170px] shrink-0"
-const COL_EVENT_TYPE = "w-[220px] shrink-0"
-const COL_USER = "w-[197px] shrink-0"
-const COL_ACTOR = "w-[197px] shrink-0"
-const COL_TENANT = "w-[260px] shrink-0"
+const COL_TIMESTAMP = "w-[160px] shrink-0"
+const COL_EVENT_TYPE = "w-[200px] shrink-0"
+const COL_USER = "flex-1 min-w-0"
+const COL_ACTOR = "flex-1 min-w-0"
+const COL_TENANT = "flex-1 min-w-0"
 const COL_RESULT = "w-[120px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
@@ -58,7 +55,6 @@ export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
         >
           {t("table.columns.result")}
         </div>
-        <div className="shrink-0 w-8" />
       </div>
 
       {/* Loading skeleton */}
@@ -87,7 +83,6 @@ export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
               <div className={`${COL_RESULT} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-16" />
               </div>
-              <div className="shrink-0 w-8" />
             </div>
           ))}
         </div>
@@ -113,9 +108,17 @@ export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
           return (
             <div
               key={event.id}
+              role="button"
+              tabIndex={0}
               data-testid={`audit-row-${event.id}`}
-              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted transition-colors cursor-pointer`}
+              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
               onClick={() => onRowClick(event)}
+              onKeyDown={e => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  onRowClick(event)
+                }
+              }}
             >
               <div className={`${COL_TIMESTAMP} p-2`}>
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -152,21 +155,6 @@ export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
 
               <div className={`${COL_RESULT} p-2`}>
                 <AuditResultBadge result={result} />
-              </div>
-
-              <div
-                className="shrink-0 w-8 flex items-center justify-center"
-                onClick={e => e.stopPropagation()}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  data-testid={`audit-row-expand-${event.id}`}
-                  onClick={() => onRowClick(event)}
-                  className="text-muted-foreground"
-                >
-                  <ChevronRight size={16} />
-                </Button>
               </div>
             </div>
           )

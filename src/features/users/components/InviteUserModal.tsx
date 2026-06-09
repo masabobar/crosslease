@@ -21,6 +21,9 @@ import {
 import type { UserRole } from "@/features/users/types"
 import type { UserResponse } from "@/features/users/api/schema"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
+import { useTenants } from "@/features/tenants/hooks/useTenants"
+import { ApiError } from "@/lib/api"
+
 export type InviteSuccessResult =
   | { type: "invited"; user: UserResponse }
   | {
@@ -30,8 +33,6 @@ export type InviteSuccessResult =
       email: string
       subjectId: string | null
     }
-import { useTenants } from "@/features/tenants/hooks/useTenants"
-import { ApiError } from "@/lib/api"
 
 type InviteUserModalProps = {
   open: boolean

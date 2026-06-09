@@ -8,15 +8,18 @@ import {
   Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { HOUR_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
-import type {
-  GovernedAction,
-  ActorSnapshot,
-  PlatformInviteSnapshot,
-  RoleChangeSnapshot,
-  EmailChangeSnapshot,
+import { formatDateTime } from "@/features/users/utils"
+import {
+  roleChangeSnapshot,
+  platformInviteSnapshot,
+  emailChangeSnapshot,
+  initiatorSnapshot,
+  approverSnapshot,
 } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governed-actions/api/schema"
 
 const DOT_COLOR: Record<string, string> = {
   pending: "bg-amber-400",
@@ -34,55 +37,59 @@ const BORDER_COLOR: Record<string, string> = {
   expired: "",
 }
 
-function formatRelativeExpiry(expiresAt: string): string {
+type RowTranslator = (
+  key:
+    | "row.submittedJustNow"
+    | "row.submittedHoursAgo"
+    | "row.submittedDaysAgo"
+    | "row.expiryExpired"
+    | "row.expiryHours"
+    | "row.expiryDays",
+  opts?: Record<string, unknown>
+) => string
+
+function formatRelativeExpiry(expiresAt: string, t: RowTranslator): string {
   const diff = new Date(expiresAt).getTime() - Date.now()
-  if (diff <= 0) return "0h"
-  const hours = Math.ceil(diff / (1000 * 60 * 60))
-  if (hours < 24) return `${hours}h`
+  if (diff <= 0) return t("row.expiryExpired")
+  const hours = Math.ceil(diff / HOUR_MS)
+  if (hours < 24) return t("row.expiryHours", { count: hours })
   const days = Math.floor(hours / 24)
-  return `${days}d`
+  return t("row.expiryDays", { count: days })
 }
 
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-}
-
-function formatRelativeSubmitted(dateStr: string): string {
+function formatRelativeSubmitted(dateStr: string, t: RowTranslator): string {
   const diffMs = Date.now() - new Date(dateStr).getTime()
-  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+  const hours = Math.floor(diffMs / HOUR_MS)
   const days = Math.floor(hours / 24)
   const absolute = formatDateTime(dateStr)
-  if (hours < 1) return `just now (${absolute})`
-  if (hours < 24) return `${hours}h ago (${absolute})`
-  return `${days}d ago (${absolute})`
+  if (hours < 1) return t("row.submittedJustNow", { absolute })
+  if (hours < 24) return t("row.submittedHoursAgo", { count: hours, absolute })
+  return t("row.submittedDaysAgo", { count: days, absolute })
 }
 
 function getSubjectDisplay(action: GovernedAction): string {
-  const snap = action.display_snapshot
   if (action.action_type === "user_platform_invite") {
-    return (snap as unknown as PlatformInviteSnapshot).full_name ?? "—"
+    return platformInviteSnapshot(action).full_name ?? "—"
   }
   if (action.action_type === "user_role_change") {
-    const s = snap as unknown as RoleChangeSnapshot
+    const s = roleChangeSnapshot(action)
     return s.old_role && s.new_role ? `${s.old_role} → ${s.new_role}` : "—"
   }
   if (action.action_type === "user_email_change") {
-    const s = snap as unknown as EmailChangeSnapshot
-    return s.new_email ?? "—"
+    return emailChangeSnapshot(action).new_email ?? "—"
   }
   return "—"
 }
 
 function getInitiatorName(action: GovernedAction): string {
-  const snap = action.initiator_snapshot as unknown as ActorSnapshot
+  const snap = initiatorSnapshot(action)
   if (!snap?.first_name) return "—"
   return `${snap.first_name} ${snap.last_name}`
 }
 
 function getApproverName(action: GovernedAction): string {
   if (!action.approver_snapshot) return "—"
-  const snap = action.approver_snapshot as unknown as ActorSnapshot
+  const snap = approverSnapshot(action)
   if (!snap?.first_name) return "—"
   return `${snap.first_name} ${snap.last_name}`
 }
@@ -92,7 +99,7 @@ type Props = {
   currentUserId: string
   canReview: boolean
   isHighlighted?: boolean
-  ref?: React.Ref<HTMLDivElement>
+  ref?: React.Ref<HTMLButtonElement>
   onReview: (action: GovernedAction) => void
   onWithdraw: (action: GovernedAction) => void
   onReInitiate: (action: GovernedAction) => void
@@ -139,7 +146,7 @@ export function ActionRow({
             <span className="font-medium text-foreground/80">
               {t("row.submitted")}:
             </span>{" "}
-            {formatRelativeSubmitted(action.created_at)}
+            {formatRelativeSubmitted(action.created_at, t)}
           </span>,
         ]
       : []),
@@ -183,7 +190,7 @@ export function ActionRow({
             className="flex items-center gap-1 text-amber-600 font-medium"
           >
             <Clock size={12} />
-            {t("row.expires")} {formatRelativeExpiry(action.expires_at)}
+            {t("row.expires")} {formatRelativeExpiry(action.expires_at, t)}
           </span>,
         ]
       : []),
@@ -198,12 +205,12 @@ export function ActionRow({
   ]
 
   return (
-    <div
+    // NOTE: raw <button> — needs ref for scroll-to-highlight; full-width row layout requires full style control that Button's reset classes would conflict with
+    <button
       ref={ref}
-      role="button"
-      tabIndex={0}
+      type="button"
       className={cn(
-        "flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors",
+        "w-full text-left flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors",
         BORDER_COLOR[action.status]
       )}
       style={
@@ -213,9 +220,6 @@ export function ActionRow({
       }
       data-testid={`approval-row-${action.id}`}
       onClick={() => onViewDetails(action)}
-      onKeyDown={e => {
-        if (e.key === "Enter" || e.key === " ") onViewDetails(action)
-      }}
     >
       {/* Left: info */}
       <div className="flex flex-col gap-2 min-w-0">
@@ -297,6 +301,6 @@ export function ActionRow({
           </Button>
         )}
       </div>
-    </div>
+    </button>
   )
 }

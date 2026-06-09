@@ -21,6 +21,9 @@ const ResetPasswordPage = lazy(
 const ActivateAccountPage = lazy(
   () => import("@/features/auth/components/ActivateAccountPage")
 )
+const VerifyEmailPage = lazy(
+  () => import("@/features/auth/components/VerifyEmailPage")
+)
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
 const NotFoundPage = lazy(
   () => import("@/features/not-found/components/NotFoundPage")
@@ -77,6 +80,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <ActivateAccountPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.VERIFY_EMAIL,
+    element: (
+      <Suspense fallback={null}>
+        <VerifyEmailPage />
       </Suspense>
     ),
   },

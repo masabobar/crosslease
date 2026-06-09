@@ -54,4 +54,4 @@ export async function changeLanguage(lang: string): Promise<void> {
   await i18n.changeLanguage(lang)
 }
 
-export default i18n
+export { i18n }

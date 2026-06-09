@@ -2,6 +2,7 @@
   "page": {
     "title": "Audit Trail",
     "subtitle": "View and audit user access and activity events.",
+    "loadError": "Failed to load audit events. Please try again.",
     "filters": {
       "label": "Active filters:",
       "searchPill": "Search: \"{{value}}\"",
@@ -64,17 +65,22 @@
     "fields": {
       "timestamp": "Timestamp",
       "eventType": "Event type",
+      "actionType": "Action type",
       "userAffected": "User affected",
+      "entityType": "Entity type",
       "performedBy": "Performed by",
       "tenant": "Tenant",
       "result": "Result",
-      "eventDetail": "Event detail",
-      "initiatedBy": "Initiated by",
-      "retention": "Retention",
-      "entityId": "Entity ID",
+      "auditSeq": "Audit seq",
+      "reason": "Reason",
+      "comment": "Comment",
+      "triggerSource": "Trigger source",
+      "changedFields": "Changed fields",
       "correlationId": "Correlation ID",
       "sessionId": "Session ID",
-      "requestTrace": "Request trace"
+      "sensitive": "Sensitive",
+      "sensitiveYes": "Yes",
+      "sensitiveNo": "No"
     },
     "loadError": "Failed to load event details."
   }
