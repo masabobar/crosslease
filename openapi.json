@@ -345,7 +345,7 @@
       "get": {
         "tags": ["Users"],
         "summary": "Get current user profile",
-        "description": "Return the profile of the currently authenticated user.\n\n**Requirements:** Valid `access_token` HTTP-only cookie.\n\n**Returns:** Full `UserResponse` for the token owner",
+        "description": "Return the profile of the currently authenticated user.\n\n**Requirements:** Valid `access_token` HTTP-only cookie.\n\n**Returns:** Full `UserResponse` for the token owner. For permissions and active modules use `GET /me/permissions`.",
         "operationId": "get_me_api_v1_users_me_get",
         "responses": {
           "200": {
@@ -385,6 +385,26 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/permissions": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get current user permissions and active modules",
+        "description": "Return the authorization contract for the current user.\n\n- `permissions` — flat list of permission keys derived from the user's role\n- `active_modules` — platform modules active for the user's tenant (always-on + tenant-activated)\n\nRefresh this endpoint independently after role changes without re-fetching the full profile.",
+        "operationId": "get_me_permissions_api_v1_users_me_permissions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMePermissionsResponse"
+                }
               }
             }
           }
@@ -1176,6 +1196,190 @@
                 "schema": { "$ref": "#/components/schemas/TenantResponse" }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/modules": {
+      "get": {
+        "tags": ["Modules"],
+        "summary": "List Platform Modules",
+        "description": "Return the full platform module catalogue.\nUsed by the tenant creation wizard (Step 2 — Module Selection).\nAccessible to all authenticated users.",
+        "operationId": "list_platform_modules_api_v1_platform_modules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformModulesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/modules": {
+      "get": {
+        "tags": ["Modules"],
+        "summary": "Get Tenant Modules",
+        "description": "Return all modules for a tenant with their activation status.\nRequires `system_admin` role.",
+        "operationId": "get_tenant_modules_api_v1_tenants__tenant_id__modules_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantModulesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/seed-packages": {
+      "get": {
+        "tags": ["Modules"],
+        "summary": "List Seed Packages",
+        "description": "Return the full seed package catalogue.\nUsed by the tenant creation wizard (Step 3 — Seed package).\nAccessible to all authenticated users.",
+        "operationId": "list_seed_packages_api_v1_platform_seed_packages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeedPackagesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/modules/{module_key}/activate": {
+      "post": {
+        "tags": ["Modules"],
+        "summary": "Activate Tenant Module",
+        "description": "Initiate a Four-Eyes module activation request for an active tenant.\nReturns a GovernedActionResponse with status=pending.\nA second System Admin must approve via POST /governed-actions/{id}/approve.",
+        "operationId": "activate_tenant_module_api_v1_tenants__tenant_id__modules__module_key__activate_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "module_key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Module Key" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ModuleActionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/modules/{module_key}/deactivate": {
+      "post": {
+        "tags": ["Modules"],
+        "summary": "Deactivate Tenant Module",
+        "description": "Deactivate a module for an active tenant immediately (no approval required).\nRequires `system_admin` role.",
+        "operationId": "deactivate_tenant_module_api_v1_tenants__tenant_id__modules__module_key__deactivate_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "module_key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Module Key" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleDeactivateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -2096,7 +2300,7 @@
             "type": "string",
             "maxLength": 50,
             "minLength": 2,
-            "pattern": "^[A-Za-z0-9_\\-]+$",
+            "pattern": "^[A-Za-z0-9\\-]+$",
             "title": "Code"
           },
           "legal_entity_name": {
@@ -2107,20 +2311,44 @@
           },
           "country": {
             "type": "string",
-            "maxLength": 100,
+            "maxLength": 2,
             "minLength": 2,
             "title": "Country"
           },
-          "default_currency": {
-            "type": "string",
-            "maxLength": 10,
-            "minLength": 3,
-            "title": "Default Currency",
-            "default": "EUR"
+          "tenant_type": { "$ref": "#/components/schemas/TenantType" },
+          "description": {
+            "anyOf": [
+              { "type": "string", "maxLength": 1000 },
+              { "type": "null" }
+            ],
+            "title": "Description"
+          },
+          "modules": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Modules",
+            "description": "Optional module keys to activate beyond always-on"
+          },
+          "seed_package": {
+            "$ref": "#/components/schemas/SeedPackage",
+            "default": "standard_retail_bank"
+          },
+          "core_banking_integration_ref": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Core Banking Integration Ref"
           }
         },
         "type": "object",
-        "required": ["name", "code", "legal_entity_name", "country"],
+        "required": [
+          "name",
+          "code",
+          "legal_entity_name",
+          "country",
+          "tenant_type"
+        ],
         "title": "CreateTenantRequest"
       },
       "DeactivateUserRequest": {
@@ -2330,7 +2558,8 @@
           "user_platform_invite",
           "user_role_change",
           "user_auditor_period_update",
-          "user_email_change"
+          "user_email_change",
+          "module_activate"
         ],
         "title": "GovernedActionType"
       },
@@ -2447,6 +2676,30 @@
         "required": ["verification_token", "expires_in"],
         "title": "MfaRequiredResponse"
       },
+      "ModuleActionRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "ModuleActionRequest"
+      },
+      "ModuleDeactivateRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "ModuleDeactivateRequest"
+      },
       "OTPResponse": {
         "properties": {
           "code": { "type": "string", "title": "Code" },
@@ -2556,6 +2809,40 @@
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
       },
+      "PlatformModuleEntry": {
+        "properties": {
+          "key": { "type": "string", "title": "Key" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "group": { "type": "string", "title": "Group" },
+          "always_on": { "type": "boolean", "title": "Always On" },
+          "permissions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Permissions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "display_name",
+          "group",
+          "always_on",
+          "permissions"
+        ],
+        "title": "PlatformModuleEntry"
+      },
+      "PlatformModulesResponse": {
+        "properties": {
+          "modules": {
+            "items": { "$ref": "#/components/schemas/PlatformModuleEntry" },
+            "type": "array",
+            "title": "Modules"
+          }
+        },
+        "type": "object",
+        "required": ["modules"],
+        "title": "PlatformModulesResponse"
+      },
       "ReInitiateRequest": {
         "properties": {
           "reason": {
@@ -2650,6 +2937,45 @@
         "required": ["token", "password", "password_confirm"],
         "title": "ResetPasswordRequest"
       },
+      "SeedPackage": {
+        "type": "string",
+        "enum": ["standard_retail_bank", "minimal_sandbox"],
+        "title": "SeedPackage"
+      },
+      "SeedPackageEntry": {
+        "properties": {
+          "key": { "type": "string", "title": "Key" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "description": { "type": "string", "title": "Description" },
+          "includes": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Includes"
+          },
+          "available": { "type": "boolean", "title": "Available" }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "display_name",
+          "description",
+          "includes",
+          "available"
+        ],
+        "title": "SeedPackageEntry"
+      },
+      "SeedPackagesResponse": {
+        "properties": {
+          "packages": {
+            "items": { "$ref": "#/components/schemas/SeedPackageEntry" },
+            "type": "array",
+            "title": "Packages"
+          }
+        },
+        "type": "object",
+        "required": ["packages"],
+        "title": "SeedPackagesResponse"
+      },
       "SetPasswordRequest": {
         "properties": {
           "token": {
@@ -2721,6 +3047,7 @@
           "code": { "type": "string", "title": "Code" },
           "country": { "type": "string", "title": "Country" },
           "default_currency": { "type": "string", "title": "Default Currency" },
+          "tenant_type": { "$ref": "#/components/schemas/TenantType" },
           "status": { "$ref": "#/components/schemas/TenantStatus" }
         },
         "type": "object",
@@ -2731,9 +3058,35 @@
           "code",
           "country",
           "default_currency",
+          "tenant_type",
           "status"
         ],
         "title": "TenantListResponse"
+      },
+      "TenantModuleEntry": {
+        "properties": {
+          "key": { "type": "string", "title": "Key" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "group": { "type": "string", "title": "Group" },
+          "always_on": { "type": "boolean", "title": "Always On" },
+          "status": { "type": "string", "title": "Status" },
+          "activated_at": { "title": "Activated At" }
+        },
+        "type": "object",
+        "required": ["key", "display_name", "group", "always_on", "status"],
+        "title": "TenantModuleEntry"
+      },
+      "TenantModulesResponse": {
+        "properties": {
+          "modules": {
+            "items": { "$ref": "#/components/schemas/TenantModuleEntry" },
+            "type": "array",
+            "title": "Modules"
+          }
+        },
+        "type": "object",
+        "required": ["modules"],
+        "title": "TenantModulesResponse"
       },
       "TenantResponse": {
         "properties": {
@@ -2747,6 +3100,16 @@
           },
           "country": { "type": "string", "title": "Country" },
           "default_currency": { "type": "string", "title": "Default Currency" },
+          "tenant_type": { "$ref": "#/components/schemas/TenantType" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "seed_package": { "$ref": "#/components/schemas/SeedPackage" },
+          "core_banking_integration_ref": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Core Banking Integration Ref"
+          },
           "status": { "$ref": "#/components/schemas/TenantStatus" },
           "created_at": {
             "type": "string",
@@ -2768,6 +3131,10 @@
           "legal_entity_name",
           "country",
           "default_currency",
+          "tenant_type",
+          "description",
+          "seed_package",
+          "core_banking_integration_ref",
           "status",
           "created_at",
           "updated_at"
@@ -2785,6 +3152,11 @@
           "expired"
         ],
         "title": "TenantStatus"
+      },
+      "TenantType": {
+        "type": "string",
+        "enum": ["bank", "bank_entity", "bank_branch_group"],
+        "title": "TenantType"
       },
       "TestSessionRequest": {
         "properties": {
@@ -2979,6 +3351,24 @@
         ],
         "title": "UserListItem"
       },
+      "UserMePermissionsResponse": {
+        "properties": {
+          "role": { "type": "string", "title": "Role" },
+          "permissions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "active_modules": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Active Modules"
+          }
+        },
+        "type": "object",
+        "required": ["role", "permissions", "active_modules"],
+        "title": "UserMePermissionsResponse"
+      },
       "UserResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -2987,11 +3377,6 @@
           "last_name": { "type": "string", "title": "Last Name" },
           "email": { "type": "string", "format": "email", "title": "Email" },
           "role": { "$ref": "#/components/schemas/UserRole" },
-          "permissions": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Permissions"
-          },
           "tenant_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
