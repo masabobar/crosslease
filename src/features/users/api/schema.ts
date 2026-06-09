@@ -230,6 +230,8 @@ export const EditUserRequestSchema = z.object({
 export type EditUserInput = z.infer<typeof EditUserRequestSchema>
 
 export const UpdateSelfInputSchema = z.object({
+  first_name: z.string().min(1).max(100).nullable().optional(),
+  last_name: z.string().min(1).max(100).nullable().optional(),
   phone_number: phoneNumberSchema.nullable().optional(),
 })
 export type UpdateSelfInput = z.infer<typeof UpdateSelfInputSchema>

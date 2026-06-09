@@ -20,7 +20,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
-import { useEditUser } from "@/features/users/hooks/useEditUser"
+import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
 import { useToastStore } from "@/store/toastStore"
 import {
   formatLastLogin,
@@ -101,7 +101,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
 
   const uploadPictureMutation = useUploadSelfPicture(user.id)
   const deletePictureMutation = useDeleteSelfPicture(user.id)
-  const editUserMutation = useEditUser()
+  const updateSelfMutation = useUpdateSelf(user.id)
 
   const identityForm = useForm<IdentityFormValues>({
     resolver: zodResolver(IdentityFormSchema),
@@ -166,27 +166,27 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
     const hasPhoneChange =
       (values.phone_number ?? "") !== (user.phone_number ?? "")
 
-    const editInput: {
+    if (!hasNameChanges && !hasPhoneChange) {
+      setIsEditing(false)
+      return
+    }
+
+    const input: {
       first_name?: string
       last_name?: string
       phone_number?: string | null
     } = {}
     if (hasNameChanges) {
-      editInput.first_name = values.first_name
-      editInput.last_name = values.last_name
+      input.first_name = values.first_name
+      input.last_name = values.last_name
     }
     if (hasPhoneChange) {
-      editInput.phone_number =
+      input.phone_number =
         values.phone_number === "" ? null : (values.phone_number ?? null)
     }
 
-    if (Object.keys(editInput).length === 0) {
-      setIsEditing(false)
-      return
-    }
-
-    void editUserMutation
-      .mutateAsync({ userId: user.id, input: editInput })
+    void updateSelfMutation
+      .mutateAsync(input)
       .then(() => {
         setIsEditing(false)
         showToast({
@@ -310,7 +310,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(false)}
-                    disabled={editUserMutation.isPending}
+                    disabled={updateSelfMutation.isPending}
                     data-testid="identity-cancel-button"
                   >
                     {t("detail.page.actions.cancel")}
@@ -318,7 +318,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={editUserMutation.isPending}
+                    disabled={updateSelfMutation.isPending}
                     data-testid="identity-save-button"
                   >
                     {t("detail.page.actions.saveChanges")}
