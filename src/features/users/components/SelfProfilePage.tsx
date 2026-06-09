@@ -33,6 +33,7 @@ import {
   PLATFORM_USER_ROLES,
 } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
+import { phoneNumberSchema } from "@/features/users/api/schema"
 import type { UserRole } from "@/features/users/types"
 
 function getRoleClassificationKey(
@@ -87,11 +88,7 @@ function SectionCard({
 const IdentityFormSchema = z.object({
   first_name: z.string().min(1).max(100),
   last_name: z.string().min(1).max(100),
-  phone_number: z
-    .string()
-    .regex(/^\+?[0-9\s\-()\s]{7,30}$/, "Invalid phone number format")
-    .or(z.literal(""))
-    .optional(),
+  phone_number: phoneNumberSchema.or(z.literal("")).optional(),
 })
 type IdentityFormValues = z.infer<typeof IdentityFormSchema>
 

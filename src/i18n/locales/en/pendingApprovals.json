@@ -2,6 +2,7 @@
   "page": {
     "title": "Pending approvals",
     "subtitle": "Review and act on requests submitted by other administrators under the four-eyes policy.",
+    "loadError": "Failed to load pending approvals. Please try again.",
     "breadcrumb": {
       "home": "Home",
       "pendingApprovals": "Pending approvals"
@@ -43,7 +44,13 @@
     "withdraw": "Withdraw",
     "reInitiate": "Re-initiate",
     "approvedBy": "Approved by",
-    "rejectedBy": "Rejected by"
+    "rejectedBy": "Rejected by",
+    "submittedJustNow": "just now ({{absolute}})",
+    "submittedHoursAgo": "{{count}}h ago ({{absolute}})",
+    "submittedDaysAgo": "{{count}}d ago ({{absolute}})",
+    "expiryExpired": "0h",
+    "expiryHours": "{{count}}h",
+    "expiryDays": "{{count}}d"
   },
   "modal": {
     "action": "ACTION",

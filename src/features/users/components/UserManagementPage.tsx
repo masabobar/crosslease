@@ -41,7 +41,11 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useToastStore } from "@/store/toastStore"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useExportUsers } from "@/features/users/hooks/useExportUsers"
-import { EMPTY_FILTER_STATE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import {
+  AUDITOR_ROLE,
+  EMPTY_FILTER_STATE,
+  SYSTEM_ADMIN_ROLE,
+} from "@/features/users/types"
 import {
   getUserFilterVisibility,
   formatDate,
@@ -106,10 +110,11 @@ export default function UserManagementPage() {
   )
   const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
   const canExport =
-    currentUser?.role === SYSTEM_ADMIN_ROLE || currentUser?.role === "auditor"
+    currentUser?.role === SYSTEM_ADMIN_ROLE ||
+    currentUser?.role === AUDITOR_ROLE
   const { startExport, isExporting } = useExportUsers()
 
-  const { data, isLoading } = useUsers({
+  const { data, isLoading, isError } = useUsers({
     page,
     per_page: perPage,
     search: search || undefined,
@@ -434,15 +439,25 @@ export default function UserManagementPage() {
 
       {/* Table */}
       <div className="mt-4">
-        <UserTable
-          users={data?.users ?? []}
-          isLoading={isLoading}
-          sort={{ key: sortKey, dir: sortOrder }}
-          onSort={handleSort}
-          onAction={handleAction}
-          onRowClick={user => setSelectedUserId(user.id)}
-          viewerRole={currentUser?.role}
-        />
+        {isError && !isLoading && (
+          <p
+            className="py-12 text-center text-sm text-muted-foreground"
+            data-testid="users-load-error"
+          >
+            {t("page.loadError")}
+          </p>
+        )}
+        {!isError && (
+          <UserTable
+            users={data?.users ?? []}
+            isLoading={isLoading}
+            sort={{ key: sortKey, dir: sortOrder }}
+            onSort={handleSort}
+            onAction={handleAction}
+            onRowClick={user => setSelectedUserId(user.id)}
+            viewerRole={currentUser?.role}
+          />
+        )}
       </div>
 
       {/* Pagination — always visible when data is present */}

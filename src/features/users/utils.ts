@@ -13,6 +13,10 @@ import type { UserStatus } from "@/features/users/api/schema"
 
 const DATE_LOCALE = "en-GB"
 
+const MS_PER_MINUTE = 1000 * 60
+const MS_PER_HOUR = MS_PER_MINUTE * 60
+const MS_PER_DAY = MS_PER_HOUR * 24
+
 export type UserListColumnVisibility = {
   tenant: boolean
   mfa: boolean
@@ -148,10 +152,6 @@ export function formatLastLogin(dateStr: string | null, t: Translator): string {
 
   const date = new Date(dateStr)
   const now = new Date()
-  const MS_PER_MINUTE = 1000 * 60
-  const MS_PER_HOUR = MS_PER_MINUTE * 60
-  const MS_PER_DAY = MS_PER_HOUR * 24
-
   const diffMs = now.getTime() - date.getTime()
   const diffMinutes = Math.floor(diffMs / MS_PER_MINUTE)
   const diffHours = Math.floor(diffMs / MS_PER_HOUR)

@@ -2,6 +2,7 @@
   "page": {
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
+    "loadError": "Benutzer konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "inviteButton": "Invite users",
     "filters": {
       "label": "Filter:",

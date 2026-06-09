@@ -15,25 +15,25 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
+import { formatDateTime } from "@/features/users/utils"
+import {
+  roleChangeSnapshot,
+  platformInviteSnapshot,
+  emailChangeSnapshot,
+  initiatorSnapshot,
+  approverSnapshot,
+} from "@/features/governed-actions/api/schema"
 import type {
   ActorSnapshot,
-  EmailChangeSnapshot,
   GovernedAction,
-  PlatformInviteSnapshot,
-  RoleChangeSnapshot,
+  GovernedActionStatus,
 } from "@/features/governed-actions/api/schema"
 
 type Props = {
   open: boolean
   onClose: () => void
   action: GovernedAction | null
-}
-
-type StatusKey = "pending" | "approved" | "rejected" | "expired" | "withdrawn"
-
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
 }
 
 function InfoCard({
@@ -89,27 +89,6 @@ function RoleBadge({ role, label }: { role: string; label: string }) {
   )
 }
 
-function StatusBadge({ status }: { status: StatusKey }) {
-  const { t } = useTranslation("pendingApprovals")
-  const styles: Record<StatusKey, string> = {
-    pending: "bg-[rgba(227,146,25,0.1)] text-[#d97706]",
-    approved: "bg-green-500/10 text-green-700",
-    rejected: "bg-red-500/10 text-red-600",
-    expired: "bg-zinc-100/60 text-foreground",
-    withdrawn: "bg-zinc-100/60 text-muted-foreground",
-  }
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
-        styles[status]
-      )}
-    >
-      {t(`status.${status}`)}
-    </span>
-  )
-}
-
 function ChainEntry({
   description,
   date,
@@ -118,11 +97,11 @@ function ChainEntry({
 }: {
   description: string
   date: string
-  status: StatusKey
+  status: GovernedActionStatus
   correlationId?: string | null
 }) {
   const { t } = useTranslation("pendingApprovals")
-  const dotColor: Record<StatusKey, string> = {
+  const dotColor: Record<GovernedActionStatus, string> = {
     pending: "bg-[#d97706]",
     approved: "bg-green-500",
     rejected: "bg-red-500",
@@ -142,7 +121,7 @@ function ChainEntry({
             <p className="text-sm text-foreground">{description}</p>
             <p className="text-sm text-muted-foreground">{date}</p>
           </div>
-          <StatusBadge status={status} />
+          <ActionStatusBadge status={status} />
         </div>
       </div>
       {correlationId && (
@@ -163,25 +142,25 @@ function ChangeSection({ action }: { action: GovernedAction }) {
   const { t } = useTranslation("pendingApprovals")
 
   if (action.action_type === "user_role_change") {
-    const s = action.display_snapshot as unknown as RoleChangeSnapshot
+    const s = roleChangeSnapshot(action)
     return (
       <div className="flex items-center gap-2">
-        <div className="bg-[rgba(224,52,52,0.1)] border border-[rgba(224,52,52,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3">
-          <p className="text-xs font-semibold text-[#c10007] uppercase">
+        <div className="bg-red-500/10 border border-red-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3">
+          <p className="text-xs font-semibold text-red-700 uppercase">
             {t("drawer.previous")}
           </p>
-          <p className="text-sm text-[#c10007] mt-1">
+          <p className="text-sm text-red-700 mt-1">
             {s.old_role
               ? t(`roles.${s.old_role}`, { defaultValue: s.old_role })
               : "—"}
           </p>
         </div>
         <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
-        <div className="bg-[rgba(22,163,74,0.1)] border border-[rgba(22,163,74,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3">
-          <p className="text-xs font-semibold text-[#008236] uppercase">
+        <div className="bg-green-500/10 border border-green-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3">
+          <p className="text-xs font-semibold text-green-700 uppercase">
             {t("drawer.current")}
           </p>
-          <p className="text-sm text-[#008236] mt-1">
+          <p className="text-sm text-green-700 mt-1">
             {s.new_role
               ? t(`roles.${s.new_role}`, { defaultValue: s.new_role })
               : "—"}
@@ -192,28 +171,28 @@ function ChangeSection({ action }: { action: GovernedAction }) {
   }
 
   if (action.action_type === "user_email_change") {
-    const s = action.display_snapshot as unknown as EmailChangeSnapshot
+    const s = emailChangeSnapshot(action)
     return (
       <div className="flex items-center gap-2">
-        <div className="bg-[rgba(224,52,52,0.1)] border border-[rgba(224,52,52,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3 break-all">
-          <p className="text-xs font-semibold text-[#c10007] uppercase">
+        <div className="bg-red-500/10 border border-red-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3 break-all">
+          <p className="text-xs font-semibold text-red-700 uppercase">
             {t("drawer.previous")}
           </p>
-          <p className="text-sm text-[#c10007] mt-1">{s.old_email ?? "—"}</p>
+          <p className="text-sm text-red-700 mt-1">{s.old_email ?? "—"}</p>
         </div>
         <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
-        <div className="bg-[rgba(22,163,74,0.1)] border border-[rgba(22,163,74,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3 break-all">
-          <p className="text-xs font-semibold text-[#008236] uppercase">
+        <div className="bg-green-500/10 border border-green-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3 break-all">
+          <p className="text-xs font-semibold text-green-700 uppercase">
             {t("drawer.current")}
           </p>
-          <p className="text-sm text-[#008236] mt-1">{s.new_email ?? "—"}</p>
+          <p className="text-sm text-green-700 mt-1">{s.new_email ?? "—"}</p>
         </div>
       </div>
     )
   }
 
   if (action.action_type === "user_platform_invite") {
-    const s = action.display_snapshot as unknown as PlatformInviteSnapshot
+    const s = platformInviteSnapshot(action)
     return (
       <div className="flex flex-col gap-3">
         <FieldRow label={t("drawer.email")}>
@@ -277,12 +256,10 @@ function ActorCard({
 
 function getAffectedUser(action: GovernedAction): string {
   if (action.action_type === "user_platform_invite") {
-    const s = action.display_snapshot as unknown as PlatformInviteSnapshot
-    return s.full_name ?? "—"
+    return platformInviteSnapshot(action).full_name ?? "—"
   }
   if (action.action_type === "user_email_change") {
-    const s = action.display_snapshot as unknown as EmailChangeSnapshot
-    return s.old_email ?? "—"
+    return emailChangeSnapshot(action).old_email ?? "—"
   }
   return "—"
 }
@@ -300,10 +277,8 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
 
   if (!action) return null
 
-  const initiator = action.initiator_snapshot as unknown as ActorSnapshot
-  const approver = action.approver_snapshot
-    ? (action.approver_snapshot as unknown as ActorSnapshot)
-    : null
+  const initiator = initiatorSnapshot(action)
+  const approver = approverSnapshot(action)
 
   return (
     <Sheet
@@ -447,7 +422,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
             <ChainEntry
               description={t("drawer.chainCurrentRequest")}
               date={action.created_at ? formatDateTime(action.created_at) : "—"}
-              status={action.status as StatusKey}
+              status={action.status}
               correlationId={action.correlation_id}
             />
           </InfoCard>

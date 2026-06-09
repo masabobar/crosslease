@@ -2,6 +2,7 @@
   "page": {
     "title": "Audit Trail",
     "subtitle": "Benutzerzugriffs- und Aktivitätsereignisse anzeigen und prüfen.",
+    "loadError": "Audit-Ereignisse konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "filters": {
       "label": "Aktive Filter:",
       "searchPill": "Suche: \"{{value}}\"",
@@ -64,17 +65,22 @@
     "fields": {
       "timestamp": "Zeitstempel",
       "eventType": "Ereignistyp",
+      "actionType": "Aktionstyp",
       "userAffected": "Betroffener Benutzer",
+      "entityType": "Entitätstyp",
       "performedBy": "Durchgeführt von",
       "tenant": "Mandant",
       "result": "Ergebnis",
-      "eventDetail": "Ereignisdetail",
-      "initiatedBy": "Initiiert von",
-      "retention": "Aufbewahrung",
-      "entityId": "Entitäts-ID",
+      "auditSeq": "Audit-Sequenz",
+      "reason": "Grund",
+      "comment": "Kommentar",
+      "triggerSource": "Auslöserquelle",
+      "changedFields": "Geänderte Felder",
       "correlationId": "Korrelations-ID",
       "sessionId": "Sitzungs-ID",
-      "requestTrace": "Anfrageverfolgung"
+      "sensitive": "Sensibel",
+      "sensitiveYes": "Ja",
+      "sensitiveNo": "Nein"
     },
     "loadError": "Ereignisdetails konnten nicht geladen werden."
   }

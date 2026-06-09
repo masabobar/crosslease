@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
 import { useAuditEventDetail } from "@/features/audit/hooks/useAuditEventDetail"
 import { deriveAuditResult } from "@/features/audit/api/schema"
-import { formatEventType } from "@/features/audit/utils"
+import { formatEventType, formatActionType } from "@/features/audit/utils"
 import type { AuditEvent } from "@/features/audit/api/schema"
 import { formatDateTime } from "@/features/users/utils"
 
@@ -34,21 +34,17 @@ function InfoCard({
           {title}
         </span>
       </div>
-      <div className="bg-background border border-border rounded-[10px] p-2 flex gap-[50px] items-start">
-        <div className="flex flex-col gap-3 w-[100px] shrink-0 text-sm text-muted-foreground">
-          {fields.map(({ label }, i) => (
-            <span key={i} className="leading-5">
+      <div className="bg-background border border-border rounded-[10px] p-2 flex flex-col gap-3">
+        {fields.map(({ label, value }, i) => (
+          <div key={i} className="flex gap-4 items-start">
+            <span className="w-[110px] shrink-0 text-sm text-muted-foreground leading-5">
               {label}
             </span>
-          ))}
-        </div>
-        <div className="flex flex-col gap-3 flex-1 min-w-0 text-sm text-foreground">
-          {fields.map(({ value }, i) => (
-            <div key={i} className="leading-5">
+            <div className="flex-1 min-w-0 text-sm text-foreground leading-5 break-all">
               {value}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -72,10 +68,6 @@ function StackedValue({
 function DrawerContent({ event }: { event: AuditEvent }) {
   const { t } = useTranslation("audit")
   const result = deriveAuditResult(event.event_type)
-  const retention =
-    (event.payload?.retention_category as string | undefined) ?? "—"
-  const requestTrace =
-    (event.payload?.request_trace as string | undefined) ?? "—"
 
   const summaryFields: { label: string; value: ReactNode }[] = [
     {
@@ -87,18 +79,20 @@ function DrawerContent({ event }: { event: AuditEvent }) {
       value: formatEventType(event.event_type),
     },
     {
+      label: t("drawer.fields.actionType"),
+      value: formatActionType(event.action_type),
+    },
+    {
       label: t("drawer.fields.userAffected"),
-      value: (
-        <StackedValue
-          primary={event.entity_display ?? "—"}
-          secondary={event.entity_id ?? undefined}
-        />
-      ),
+      value: event.entity_display ?? "—",
     },
     {
       label: t("drawer.fields.performedBy"),
       value: (
-        <StackedValue primary={event.actor_id} secondary={event.actor_type} />
+        <StackedValue
+          primary={event.actor_id}
+          secondary={formatActionType(event.actor_type)}
+        />
       ),
     },
     {
@@ -113,21 +107,31 @@ function DrawerContent({ event }: { event: AuditEvent }) {
 
   const technicalFields: { label: string; value: ReactNode }[] = [
     {
-      label: t("drawer.fields.eventDetail"),
-      value: event.reason ?? event.comment ?? "—",
+      label: t("drawer.fields.auditSeq"),
+      value: String(event.audit_seq),
     },
     {
-      label: t("drawer.fields.initiatedBy"),
-      value: event.actor_type,
+      label: t("drawer.fields.reason"),
+      value: event.reason ?? "—",
     },
     {
-      label: t("drawer.fields.retention"),
-      value: retention,
+      label: t("drawer.fields.comment"),
+      value: event.comment ?? "—",
     },
     {
-      label: t("drawer.fields.entityId"),
-      value: event.entity_id ?? "—",
+      label: t("drawer.fields.triggerSource"),
+      value: event.trigger_source
+        ? formatActionType(event.trigger_source)
+        : "—",
     },
+    ...(event.changed_fields && event.changed_fields.length > 0
+      ? [
+          {
+            label: t("drawer.fields.changedFields"),
+            value: event.changed_fields.map(formatActionType).join(", "),
+          },
+        ]
+      : []),
     {
       label: t("drawer.fields.correlationId"),
       value: event.correlation_id ?? "—",
@@ -137,8 +141,10 @@ function DrawerContent({ event }: { event: AuditEvent }) {
       value: event.session_id ?? "—",
     },
     {
-      label: t("drawer.fields.requestTrace"),
-      value: requestTrace,
+      label: t("drawer.fields.sensitive"),
+      value: event.sensitive
+        ? t("drawer.fields.sensitiveYes")
+        : t("drawer.fields.sensitiveNo"),
     },
   ]
 

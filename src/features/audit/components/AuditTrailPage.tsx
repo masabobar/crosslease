@@ -165,7 +165,7 @@ export default function AuditTrailPage() {
     setAppliedFilters,
   } = useAuditListParams()
 
-  const { data, isLoading } = useAuditEvents({
+  const { data, isLoading, isError } = useAuditEvents({
     page,
     per_page: perPage,
     search: appliedFilters.search ?? undefined,
@@ -329,11 +329,21 @@ export default function AuditTrailPage() {
 
       {/* Table */}
       <div className="mt-4">
-        <AuditTable
-          events={data?.events ?? []}
-          isLoading={isLoading}
-          onRowClick={handleRowClick}
-        />
+        {isError && !isLoading && (
+          <p
+            className="py-12 text-center text-sm text-muted-foreground"
+            data-testid="audit-load-error"
+          >
+            {t("page.loadError")}
+          </p>
+        )}
+        {!isError && (
+          <AuditTable
+            events={data?.events ?? []}
+            isLoading={isLoading}
+            onRowClick={handleRowClick}
+          />
+        )}
       </div>
 
       {/* Pagination */}
