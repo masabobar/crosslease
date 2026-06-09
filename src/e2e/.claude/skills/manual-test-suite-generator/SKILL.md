@@ -28,21 +28,38 @@ On skip:
 
 ### Epic folder resolution (run before writing the file)
 
+#### Step 0 — Resolve the main repo root (ALWAYS run first)
+
+The `Write` tool must target the **main checkout**, not a worktree. Sessions may run inside `.claude/worktrees/…` — relative paths would silently land there instead of the visible repo.
+
+Run this **before any mkdir or Write call**:
+
+```bash
+REPO_ROOT=$(git worktree list | head -1 | awk '{print $1}')
+echo "$REPO_ROOT"
+```
+
+All subsequent paths use `$REPO_ROOT` as the base. Pass **absolute paths** to every `mkdir` and `Write` call — never relative paths.
+
+#### Steps 1–4
+
 1. Retrieve the parent epic from the story object returned by `jira-story-extractor` (`epic_id` + `epic_name` fields).
 2. Construct the folder name: `<epic_id> <epic_name>` — title-case the epic name, strip special characters.
    - Example: epic ID `PRD1042-39`, epic name `User Management` → folder `PRD1042-39 User Management`
-3. Check whether `src/e2e/tests/<folder>/` already exists:
+3. Check whether the folder already exists and create it if not:
    ```bash
-   ls "src/e2e/tests/<folder>" 2>/dev/null || mkdir -p "src/e2e/tests/<folder>"
+   REPO_ROOT=$(git worktree list | head -1 | awk '{print $1}')
+   mkdir -p "$REPO_ROOT/src/e2e/tests/<folder>"
    ```
-4. Write the story file inside that folder.
+4. Write the story file to the resolved absolute path:
+   - `$REPO_ROOT/src/e2e/tests/<folder>/<story-id> <Title Subject>.md`
 
 If the story object does not carry `epic_id` or `epic_name`, call `mcp__jira__get_issue` with the story ID and read the `Epic Link` or `Parent` field to resolve the epic before proceeding.
 
 ### File path and naming
 
-- **Full path:** `src/e2e/tests/<Epic ID> <Epic Name>/<story-id> <Title Subject>.md`
-  - Example: `src/e2e/tests/PRD1042-39 User Management/PRD1042-43 User Login.md`
+- **Full path:** `$REPO_ROOT/src/e2e/tests/<Epic ID> <Epic Name>/<story-id> <Title Subject>.md`
+  - Example: `$REPO_ROOT/src/e2e/tests/PRD1042-39 User Management/PRD1042-43 User Login.md`
 - **Title Subject** — the shortest noun phrase that identifies the story's subject (2-4 words, title case, no special characters)
 - **Format:** Single structured Markdown document with one unified Feature file block — never split into per-AC code blocks (see Output format section)
 - Write the file using the `Write` tool; overwrite if it already exists
@@ -411,7 +428,7 @@ Scenario: Unauthorized API action rejected
 
 ## Output format (per story)
 
-The `.md` file is a **single structured document** with six mandatory sections in this exact order. Do not include Stage 3 comparison reports, traceability notes, or pipeline metadata. All Gherkin scenarios go into one unified Feature file block — never split into per-AC code blocks.
+The `.md` file is a **single structured document** with five mandatory sections in this exact order. Do not include Stage 3 comparison reports, traceability notes, pipeline metadata, or a Blockers and Gaps Summary. All Gherkin scenarios go into one unified Feature file block — never split into per-AC code blocks.
 
 ````markdown
 # <Story ID> — <US Number> | <Epic Area> | <Story Title>
@@ -499,27 +516,17 @@ Feature: <Story Title> (US X.X — <story-id>)
 ```
 ````
 
----
-
-## Blockers and Gaps Summary
-
-| Severity       | Item                                                | AC    | Resolution required from                            |
-| -------------- | --------------------------------------------------- | ----- | --------------------------------------------------- |
-| MAJOR          | <design gap or ambiguity>                           | AC-XX | <Designer / BA / Dev team / PO> — <action required> |
-| BLOCKER (<ID>) | <dependency label>                                  | AC-XX | <Dev team> — <what to provide>                      |
-| INFO           | <open question that does not block test generation> | AC-XX | <who answers it>                                    |
-
 ```
 
 ### Format rules (enforced — do not deviate)
 
-1. **Header** — six fields exactly as shown; `DoR status` includes AC count, description/stakeholder status, and Jira status in parentheses; `Figma design` includes node ID, file key, screen name, and PARTIAL/COMPLETE note
+1. **Header** — five fields exactly as shown; `DoR status` includes AC count, description/stakeholder status, and Jira status in parentheses; `Figma design` includes node ID, file key, screen name, and PARTIAL/COMPLETE note
 2. **Blocked ACs** — always the first section after the header, before the Scope Filter; omit the section entirely if there are no blocked ACs
 3. **AC Scope Filter** — column names are `AC | Description | Classification | Rationale`; `Classification` values are exactly `happy-path`, `main-error`, `edge-case`, `separate-feature`, or `Blocked` (title-case for Blocked); ends with the three-line `**Gherkin generated for / Blocked / No Gherkin**` summary
 4. **Scenarios summary** — table plus `Active scenario blocks: N (N Outlines + N Scenarios)` line; backtick-wrap tag values (e.g. `` `@happy-path` ``); all `@happy-path` rows must appear before any `@main-error` rows — never interleave
 5. **Feature file** — one single fenced `gherkin` block containing the Feature header, Background, and all scenarios; scenario groups separated by `# ---` comment blocks; never split into per-AC sections
 6. **Comment block format** — exactly 75 dashes, keyword on first line (`# HAPPY PATH`, `# MAIN ERROR`), 1–3 explanation lines, 75 dashes closing; always present before every scenario group
-7. **Blockers and Gaps Summary** — always the last section; `Severity` values are `CRITICAL`, `MAJOR`, `MINOR`, `BLOCKER (<ID>)`, or `INFO`; `BLOCKER` entries use the dependency ID in parentheses
+7. **No Blockers and Gaps Summary** — never include this section in the `.md` file; design gaps, ambiguities, and open questions are logged to terminal output only and never written to the file
 
 **Framework:** Cucumber + Playwright | **Language:** Gherkin
 ```
