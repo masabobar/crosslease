@@ -3111,6 +3111,14 @@
             "title": "Core Banking Integration Ref"
           },
           "status": { "$ref": "#/components/schemas/TenantStatus" },
+          "legal_hold_flag": { "type": "boolean", "title": "Legal Hold Flag" },
+          "activated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Activated At"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3136,6 +3144,8 @@
           "seed_package",
           "core_banking_integration_ref",
           "status",
+          "legal_hold_flag",
+          "activated_at",
           "created_at",
           "updated_at"
         ],
