@@ -359,7 +359,8 @@
         "error": {
           "title": "Änderungen konnten nicht gespeichert werden"
         },
-        "emailDisabledPending": "Die E-Mail-Adresse kann nicht geändert werden, solange das Konto auf Aktivierung wartet."
+        "emailDisabledPending": "Die E-Mail-Adresse kann nicht geändert werden, solange das Konto auf Aktivierung wartet.",
+        "emailDisabledVerificationInProgress": "Eine E-Mail-Änderung ist bereits ausstehend. Warten Sie auf den Ablauf des aktuellen Bestätigungslinks oder brechen Sie ihn zuerst ab."
       },
       "values": {
         "on": "Ein",

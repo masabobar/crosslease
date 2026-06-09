@@ -842,14 +842,19 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   className="h-[28px] py-0 text-sm rounded-[8px]"
                   error={!!identityForm.formState.errors.email}
                   disabled={
+                    !!user.pending_email ||
                     user.status === UserStatusSchema.enum.invited ||
                     user.status === UserStatusSchema.enum.pending_approval
                   }
                   title={
-                    user.status === UserStatusSchema.enum.invited ||
-                    user.status === UserStatusSchema.enum.pending_approval
-                      ? t("detail.page.editIdentity.emailDisabledPending")
-                      : undefined
+                    user.pending_email
+                      ? t(
+                          "detail.page.editIdentity.emailDisabledVerificationInProgress"
+                        )
+                      : user.status === UserStatusSchema.enum.invited ||
+                          user.status === UserStatusSchema.enum.pending_approval
+                        ? t("detail.page.editIdentity.emailDisabledPending")
+                        : undefined
                   }
                 />
               ) : user.pending_email ? (
