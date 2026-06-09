@@ -359,7 +359,8 @@
         "error": {
           "title": "Could not save changes"
         },
-        "emailDisabledPending": "Email cannot be changed while the account is pending activation."
+        "emailDisabledPending": "Email cannot be changed while the account is pending activation.",
+        "emailDisabledVerificationInProgress": "An email change is already in progress. Wait for the current verification link to expire or cancel it first."
       },
       "values": {
         "on": "On",

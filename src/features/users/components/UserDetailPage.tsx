@@ -68,6 +68,7 @@ import {
   type UserModalActionType,
 } from "@/features/users/types"
 import { useEditUser } from "@/features/users/hooks/useEditUser"
+import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
 import { useChangeEmail } from "@/features/users/hooks/useChangeEmail"
 import { useChangeRole } from "@/features/users/hooks/useChangeRole"
 import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPeriod"
@@ -341,6 +342,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const [pendingNewEmail, setPendingNewEmail] = useState("")
 
   const editUserMutation = useEditUser()
+  const updateSelfMutation = useUpdateSelf(user.id)
   const changeEmailMutation = useChangeEmail()
   const changeRoleMutation = useChangeRole()
   const updateAccessPeriodMutation = useUpdateAccessPeriod()
@@ -475,14 +477,20 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       editInput.first_name = values.first_name
       editInput.last_name = values.last_name
     }
-    if (hasPhoneChange) {
-      editInput.phone_number =
-        values.phone_number === "" ? null : (values.phone_number ?? null)
+    const phoneValue =
+      values.phone_number === "" ? null : (values.phone_number ?? null)
+    if (hasPhoneChange && !isOwnProfile) {
+      editInput.phone_number = phoneValue
     }
 
     const editPromise =
       Object.keys(editInput).length > 0
         ? editUserMutation.mutateAsync({ userId: user.id, input: editInput })
+        : Promise.resolve(null)
+
+    const selfPhonePromise =
+      hasPhoneChange && isOwnProfile
+        ? updateSelfMutation.mutateAsync({ phone_number: phoneValue })
         : Promise.resolve(null)
 
     const emailPromise = newEmail
@@ -492,7 +500,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       : Promise.resolve(null)
 
-    void Promise.all([editPromise, emailPromise])
+    void Promise.all([editPromise, selfPhonePromise, emailPromise])
       .then(() => {
         setIsEditingIdentity(false)
         setShowEmailConfirm(false)
@@ -525,7 +533,10 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       })
   }
 
-  const isSaving = editUserMutation.isPending || changeEmailMutation.isPending
+  const isSaving =
+    editUserMutation.isPending ||
+    updateSelfMutation.isPending ||
+    changeEmailMutation.isPending
 
   function handleRoleSubmit(values: { new_role: UserRole; reason: string }) {
     void changeRoleMutation
@@ -842,14 +853,19 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   className="h-[28px] py-0 text-sm rounded-[8px]"
                   error={!!identityForm.formState.errors.email}
                   disabled={
+                    !!user.pending_email ||
                     user.status === UserStatusSchema.enum.invited ||
                     user.status === UserStatusSchema.enum.pending_approval
                   }
                   title={
-                    user.status === UserStatusSchema.enum.invited ||
-                    user.status === UserStatusSchema.enum.pending_approval
-                      ? t("detail.page.editIdentity.emailDisabledPending")
-                      : undefined
+                    user.pending_email
+                      ? t(
+                          "detail.page.editIdentity.emailDisabledVerificationInProgress"
+                        )
+                      : user.status === UserStatusSchema.enum.invited ||
+                          user.status === UserStatusSchema.enum.pending_approval
+                        ? t("detail.page.editIdentity.emailDisabledPending")
+                        : undefined
                   }
                 />
               ) : user.pending_email ? (
