@@ -372,7 +372,18 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
               )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.email")}>
-              {user.email}
+              {isEditing ? (
+                <Input
+                  value={user.email}
+                  type="email"
+                  data-testid="identity-email-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  disabled
+                  readOnly
+                />
+              ) : (
+                user.email
+              )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.phoneNumber")}>
               {isEditing ? (
