@@ -1,6 +1,16 @@
 import { makeApi, Zodios, type ZodiosOptions } from "@zodios/core"
 import { z } from "zod"
 
+const LoginRequest = z
+  .object({ email: z.string().email(), password: z.string() })
+  .passthrough()
+const LoginStepResponse = z
+  .object({
+    next_step: z.enum(["otp", "mfa", "mfa_setup", "session"]),
+    token: z.union([z.string(), z.null()]).optional(),
+    expires_in: z.union([z.number(), z.null()]).optional(),
+  })
+  .passthrough()
 const ValidationError = z
   .object({
     loc: z.array(z.union([z.string(), z.number()])),
@@ -21,18 +31,19 @@ const SetPasswordRequest = z
     password_confirm: z.string(),
   })
   .passthrough()
-const LoginRequest = z
-  .object({ email: z.string().email(), password: z.string() })
-  .passthrough()
-const MfaRequiredResponse = z
+const SetPasswordResponse = z
   .object({
-    status: z.string().optional().default("MFA_REQUIRED"),
-    verification_token: z.string(),
-    expires_in: z.number().int(),
+    mfa_enrollment_required: z.boolean().default(false),
+    mfa_token: z.union([z.string(), z.null()]),
   })
+  .partial()
   .passthrough()
-const VerifyOtpRequest = z
-  .object({ verification_token: z.string(), code: z.string().min(6).max(6) })
+const MfaEnrollRequest = z.object({ mfa_token: z.string() }).passthrough()
+const MfaEnrollResponse = z
+  .object({ qr_code: z.string(), secret: z.string(), mfa_token: z.string() })
+  .passthrough()
+const MfaActivateRequest = z
+  .object({ mfa_token: z.string(), code: z.string().min(6).max(6) })
   .passthrough()
 const UserRole = z.enum([
   "system_admin",
@@ -72,6 +83,21 @@ const UserResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const MfaActivateResponse = z
+  .object({ recovery_codes: z.array(z.string()), user: UserResponse })
+  .passthrough()
+const MfaVerifyRequest = z
+  .object({ mfa_token: z.string(), code: z.string() })
+  .passthrough()
+const MfaVerifyResponse = z
+  .object({
+    user: UserResponse,
+    new_recovery_codes: z.union([z.array(z.string()), z.null()]).optional(),
+  })
+  .passthrough()
+const VerifyOtpRequest = z
+  .object({ verification_token: z.string(), code: z.string().min(6).max(6) })
+  .passthrough()
 const LoginResponse = z.object({ user: UserResponse }).passthrough()
 const ResendOtpRequest = z
   .object({ verification_token: z.string() })
@@ -84,6 +110,22 @@ const ResetPasswordRequest = z
     token: z.string(),
     password: z.string().min(8).max(128),
     password_confirm: z.string(),
+  })
+  .passthrough()
+const ResetPasswordResponse = z
+  .object({
+    mfa_required: z.boolean().default(false),
+    mfa_token: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const ResetPasswordVerifyRequest = z
+  .object({ mfa_token: z.string(), code: z.string() })
+  .passthrough()
+const ResetVerifyResponse = z
+  .object({
+    user: UserResponse,
+    new_recovery_codes: z.union([z.array(z.string()), z.null()]).optional(),
   })
   .passthrough()
 const UpdateMeRequest = z
@@ -328,10 +370,12 @@ const TenantResponse = z
     status: TenantStatus,
     legal_hold_flag: z.boolean(),
     activated_at: z.union([z.string(), z.null()]),
+    mfa_required: z.boolean(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const MfaPolicyRequest = z.object({ mfa_required: z.boolean() }).passthrough()
 const PlatformModuleEntry = z
   .object({
     key: z.string(),
@@ -456,19 +500,29 @@ const OTPResponse = z
   .passthrough()
 
 export const schemas = {
+  LoginRequest,
+  LoginStepResponse,
   ValidationError,
   HTTPValidationError,
   SetPasswordRequest,
-  LoginRequest,
-  MfaRequiredResponse,
-  VerifyOtpRequest,
+  SetPasswordResponse,
+  MfaEnrollRequest,
+  MfaEnrollResponse,
+  MfaActivateRequest,
   UserRole,
   UserStatus,
   UserResponse,
+  MfaActivateResponse,
+  MfaVerifyRequest,
+  MfaVerifyResponse,
+  VerifyOtpRequest,
   LoginResponse,
   ResendOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  ResetPasswordResponse,
+  ResetPasswordVerifyRequest,
+  ResetVerifyResponse,
   UpdateMeRequest,
   UserMePermissionsResponse,
   Body_upload_picture_api_v1_users_me_picture_post,
@@ -497,6 +551,7 @@ export const schemas = {
   TenantListResponse,
   PaginatedTenantsResponse,
   TenantResponse,
+  MfaPolicyRequest,
   PlatformModuleEntry,
   PlatformModulesResponse,
   TenantModuleEntry,
@@ -625,23 +680,52 @@ const endpoints = makeApi([
   },
   {
     method: "post",
-    path: "/api/v1/auth/forgot-password",
-    alias: "forgot_password_api_v1_auth_forgot_password_post",
-    description: `Send a password reset link to the given email address.
+    path: "/api/v1/auth/invite/set-password",
+    alias: "set_password_api_v1_auth_invite_set_password_post",
+    description: `Complete account activation by setting the initial password.
 
-**Security:** Always returns 200 regardless of whether the email exists — prevents user enumeration.
+**Requirements:**
+- Valid, unexpired invitation token
+- Password min 8 chars, at least 1 uppercase letter and 1 number
+- &#x60;password&#x60; and &#x60;password_confirm&#x60; must match
 
-**Rate limiting:** 300s cooldown per email, max 3 requests/hour per email, IP throttle shared with login.
+**Effect:** Sets password hash, changes status to &#x60;active&#x60;, records &#x60;activated_at&#x60;, clears &#x60;invite_token_hash&#x60;.
 
-**Effect (if user exists):** Generates a JWT reset token (1h TTL), stores its SHA-256 hash, sends an email with the reset link.
-
-**Returns:** Generic success regardless of outcome`,
+**Returns:**
+- &#x60;mfa_enrollment_required&#x3D;False&#x60; — user can now log in normally
+- &#x60;mfa_enrollment_required&#x3D;True&#x60; + &#x60;mfa_token&#x60; — FE must redirect to &#x60;/auth/mfa/enroll&#x60; before login`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: z.object({ email: z.string().email() }).passthrough(),
+        schema: SetPasswordRequest,
+      },
+    ],
+    response: SetPasswordResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/auth/invite/validate-token",
+    alias: "validate_activation_token_api_v1_auth_invite_validate_token_get",
+    description: `Pre-validate the invitation token before the user fills in the activation form.
+
+**Checks:** JWT signature, expiry, and SHA-256 hash match against &#x60;invite_token_hash&#x60; in the database.
+
+**Returns:** &#x60;TOKEN_VALID&#x60; success — frontend can safely display the set-password form`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "token",
+        type: "Query",
+        schema: z.string(),
       },
     ],
     response: z.unknown(),
@@ -657,17 +741,16 @@ const endpoints = makeApi([
     method: "post",
     path: "/api/v1/auth/login",
     alias: "login_api_v1_auth_login_post",
-    description: `First step of the two-step login flow.
+    description: `First step of the login flow. Returns &#x60;next_step&#x60; to tell the FE which screen to show.
 
-**Flow:**
-1. Validates email and password
-2. Checks account status (active, not locked, not suspended)
-3. Generates a 6-digit OTP and sends it to the user&#x27;s email
-4. Returns a short-lived &#x60;verification_token&#x60; (5 min) to be used in &#x60;/verify-otp&#x60;
+| &#x60;next_step&#x60; | Meaning | Next call |
+|---|---|---|
+| &#x60;otp&#x60; | Email OTP sent | &#x60;POST /auth/otp/verify&#x60; |
+| &#x60;mfa&#x60; | User has TOTP enrolled | &#x60;POST /auth/mfa/verify&#x60; |
+| &#x60;mfa_setup&#x60; | MFA required but not enrolled yet | &#x60;POST /auth/mfa/enroll&#x60; |
+| &#x60;session&#x60; | MFA freshness bypass — cookies already set, redirect to dashboard | — |
 
-**Rate limiting:** 5 failed IP attempts per 10 min triggers IP throttle; 5 failed user attempts triggers a 15-min account lock.
-
-**Returns:** &#x60;verification_token&#x60; + &#x60;expires_in&#x60; seconds`,
+**Rate limiting:** 5 failed user attempts → 15-min lock; 20 failed IP attempts per 10 min → IP throttle.`,
     requestFormat: "json",
     parameters: [
       {
@@ -676,7 +759,7 @@ const endpoints = makeApi([
         schema: LoginRequest,
       },
     ],
-    response: MfaRequiredResponse,
+    response: LoginStepResponse,
     errors: [
       {
         status: 422,
@@ -715,32 +798,97 @@ const endpoints = makeApi([
   },
   {
     method: "post",
-    path: "/api/v1/auth/refresh-token",
-    alias: "refresh_token_api_v1_auth_refresh_token_post",
-    description: `Exchange a valid refresh token for a new access + refresh token pair.
+    path: "/api/v1/auth/mfa/activate",
+    alias: "activate_api_v1_auth_mfa_activate_post",
+    description: `Step 2 of MFA enrollment — verify first TOTP code and activate MFA.
 
-**Requirements:** Valid &#x60;refresh_token&#x60; HTTP-only cookie.
+On success:
+- Sets &#x60;mfa_enabled &#x3D; True&#x60;
+- Generates 10 single-use recovery codes (shown once — user must save them)
+- Creates session and sets HTTP-only auth cookies
 
-**Validations (in order):**
-1. JWT signature + not expired
-2. Token type must be &#x60;refresh&#x60;
-3. Not blacklisted (&#x60;token:blacklist:{jti}&#x60;)
-4. Not invalidated by &#x60;logout_all&#x60; timestamp
-5. Server-side session exists (Redis Sorted Set)
-6. Absolute session timeout not exceeded (&#x60;session_iat&#x60;, 8h max)
-7. User exists and is active
-
-**Effect:** Old refresh JTI blacklisted, new token pair issued with the same &#x60;session_iat&#x60; (preserves absolute timeout). New tokens delivered via HTTP-only Secure cookies.
-
-**Returns:** Full user object. All failures return 401 &#x60;SESSION_EXPIRED&#x60;.`,
+Conscious decision: no OTP step before enrollment. The &#x60;mfa_token&#x60; (issued after
+password is set) + successful TOTP verify is a stronger proof than email OTP.`,
     requestFormat: "json",
-    response: LoginResponse,
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MfaActivateRequest,
+      },
+    ],
+    response: MfaActivateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
   {
     method: "post",
-    path: "/api/v1/auth/resend-otp",
-    alias: "resend_otp_api_v1_auth_resend_otp_post",
-    description: `Resend the OTP code for an in-progress login.
+    path: "/api/v1/auth/mfa/enroll",
+    alias: "enroll_api_v1_auth_mfa_enroll_post",
+    description: `Step 1 of MFA enrollment — generate TOTP secret and QR code.
+
+Requires &#x60;mfa_token&#x60; with &#x60;purpose&#x3D;setup&#x60;, obtained from:
+- &#x60;POST /auth/set-password&#x60; (activation flow, when MFA is required)
+- &#x60;POST /auth/otp/verify&#x60; (retroactive enforcement, when tenant enables MFA)
+
+Returns a QR code PNG (base64) + manual entry key. Pass the refreshed
+&#x60;mfa_token&#x60; to &#x60;/mfa/activate&#x60; to complete enrollment.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ mfa_token: z.string() }).passthrough(),
+      },
+    ],
+    response: MfaEnrollResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/auth/mfa/verify",
+    alias: "verify_api_v1_auth_mfa_verify_post",
+    description: `MFA verification on login — accepts TOTP code or recovery code.
+
+&#x60;mfa_token&#x60; (purpose&#x3D;verify) is obtained from &#x60;POST /auth/login&#x60; when the
+user has &#x60;mfa_enabled &#x3D; True&#x60;.
+
+On recovery code use: the used code is invalidated and 10 new codes are
+generated immediately. The new codes are returned in &#x60;new_recovery_codes&#x60; in
+the response body — FE must show them to the user immediately.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MfaVerifyRequest,
+      },
+    ],
+    response: MfaVerifyResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/auth/otp/resend",
+    alias: "resend_otp_api_v1_auth_otp_resend_post",
+    description: `Resend the email OTP for an in-progress login.
 
 **Requirements:**
 - &#x60;verification_token&#x60; from &#x60;/login&#x60; must still be valid
@@ -766,24 +914,51 @@ const endpoints = makeApi([
   },
   {
     method: "post",
-    path: "/api/v1/auth/reset-password",
-    alias: "reset_password_api_v1_auth_reset_password_post",
-    description: `Complete the password reset flow by setting a new password.
+    path: "/api/v1/auth/otp/verify",
+    alias: "verify_otp_api_v1_auth_otp_verify_post",
+    description: `Verify the email OTP code (used when &#x60;next_step&#x3D;otp&#x60; from &#x60;/auth/login&#x60;).
 
-**Requirements:**
-- Valid, unexpired reset token (1h TTL)
-- Password min 8 chars, at least 1 uppercase letter and 1 number
-- &#x60;password&#x60; and &#x60;password_confirm&#x60; must match
+1. Validates &#x60;token&#x60; (must not be expired)
+2. Verifies the 6-digit OTP code (max 3 attempts)
+3. Issues &#x60;access_token&#x60; + &#x60;refresh_token&#x60; as HTTP-only cookies
 
-**Effect:** Updates password hash, clears &#x60;password_reset_token_hash&#x60;, invalidates all active sessions (&#x60;logout_all&#x60; timestamp + clears session set).
-
-**Returns:** &#x60;PASSWORD_RESET_SUCCESS&#x60; — user must log in again on all devices`,
+**Returns:** Full user object. Tokens delivered via HTTP-only Secure cookies.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: ResetPasswordRequest,
+        schema: VerifyOtpRequest,
+      },
+    ],
+    response: LoginResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/auth/password/forgot",
+    alias: "forgot_password_api_v1_auth_password_forgot_post",
+    description: `Send a password reset link to the given email address.
+
+**Security:** Always returns 200 regardless of whether the email exists — prevents user enumeration.
+
+**Rate limiting:** 300s cooldown per email, max 3 requests/hour per email, IP throttle shared with login.
+
+**Effect (if user exists):** Generates a JWT reset token (1h TTL), stores its SHA-256 hash, sends an email with the reset link.
+
+**Returns:** Generic success regardless of outcome`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ email: z.string().email() }).passthrough(),
       },
     ],
     response: z.unknown(),
@@ -797,27 +972,66 @@ const endpoints = makeApi([
   },
   {
     method: "post",
-    path: "/api/v1/auth/set-password",
-    alias: "set_password_api_v1_auth_set_password_post",
-    description: `Complete account activation by setting the initial password.
+    path: "/api/v1/auth/password/reset",
+    alias: "reset_password_api_v1_auth_password_reset_post",
+    description: `Complete the password reset flow by setting a new password.
 
 **Requirements:**
-- Valid, unexpired invitation token
+- Valid, unexpired reset token (1h TTL)
 - Password min 8 chars, at least 1 uppercase letter and 1 number
 - &#x60;password&#x60; and &#x60;password_confirm&#x60; must match
 
-**Effect:** Sets password hash, changes status to &#x60;active&#x60;, records &#x60;activated_at&#x60;, clears &#x60;invite_token_hash&#x60;.
+**Non-MFA path:** Password updated immediately. All active sessions invalidated. Returns &#x60;mfa_required&#x3D;false&#x60;.
 
-**Returns:** &#x60;ACCOUNT_ACTIVATED&#x60; success — user can now log in`,
+**MFA path (privileged roles with MFA enabled):** Password staged in &#x60;pending_password_hash&#x60;, sessions NOT yet invalidated.
+Returns &#x60;mfa_required&#x3D;true, mfa_token&#x3D;&lt;5-min JWT&gt;&#x60;. FE must call &#x60;POST /auth/password/reset/verify&#x60;.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: SetPasswordRequest,
+        schema: ResetPasswordRequest,
       },
     ],
-    response: z.unknown(),
+    response: ResetPasswordResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/auth/password/reset/verify",
+    alias: "reset_password_verify_api_v1_auth_password_reset_verify_post",
+    description: `Complete MFA-gated password reset by verifying a TOTP or recovery code.
+
+**Triggered when:** &#x60;POST /auth/password/reset&#x60; returned &#x60;mfa_required&#x3D;true&#x60;.
+
+**Code auto-detection:**
+- 6-digit numeric → TOTP
+- 20-char hex (&#x60;[0-9a-f]{20}&#x60;) → recovery code
+
+**On success:**
+- &#x60;pending_password_hash&#x60; promoted to &#x60;password&#x60;
+- All previous sessions invalidated
+- New session created immediately (no separate login needed)
+- Auth cookies set in response
+
+**Recovery code path:** Used code invalidated, 10 new codes generated and returned in &#x60;new_recovery_codes&#x60;. Show to user once.
+
+**Rate limit on recovery codes:** 3 attempts / 24h per user → 429 &#x60;MFA_RECOVERY_RATE_LIMITED&#x60;.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: ResetPasswordVerifyRequest,
+      },
+    ],
+    response: ResetVerifyResponse,
     errors: [
       {
         status: 422,
@@ -828,8 +1042,8 @@ const endpoints = makeApi([
   },
   {
     method: "get",
-    path: "/api/v1/auth/validate-reset-token",
-    alias: "validate_reset_token_api_v1_auth_validate_reset_token_get",
+    path: "/api/v1/auth/password/validate-token",
+    alias: "validate_reset_token_api_v1_auth_password_validate_token_get",
     description: `Pre-validate the reset token before the user fills in the new password form.
 
 **Checks:** JWT signature, expiry, and SHA-256 hash match against &#x60;password_reset_token_hash&#x60; in the database.
@@ -853,30 +1067,27 @@ const endpoints = makeApi([
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/auth/validate-token",
-    alias: "validate_activation_token_api_v1_auth_validate_token_get",
-    description: `Pre-validate the invitation token before the user fills in the activation form.
+    method: "post",
+    path: "/api/v1/auth/refresh-token",
+    alias: "refresh_token_api_v1_auth_refresh_token_post",
+    description: `Exchange a valid refresh token for a new access + refresh token pair.
 
-**Checks:** JWT signature, expiry, and SHA-256 hash match against &#x60;invite_token_hash&#x60; in the database.
+**Requirements:** Valid &#x60;refresh_token&#x60; HTTP-only cookie.
 
-**Returns:** &#x60;TOKEN_VALID&#x60; success — frontend can safely display the set-password form`,
+**Validations (in order):**
+1. JWT signature + not expired
+2. Token type must be &#x60;refresh&#x60;
+3. Not blacklisted (&#x60;token:blacklist:{jti}&#x60;)
+4. Not invalidated by &#x60;logout_all&#x60; timestamp
+5. Server-side session exists (Redis Sorted Set)
+6. Absolute session timeout not exceeded (&#x60;session_iat&#x60;, 8h max)
+7. User exists and is active
+
+**Effect:** Old refresh JTI blacklisted, new token pair issued with the same &#x60;session_iat&#x60; (preserves absolute timeout). New tokens delivered via HTTP-only Secure cookies.
+
+**Returns:** Full user object. All failures return 401 &#x60;SESSION_EXPIRED&#x60;.`,
     requestFormat: "json",
-    parameters: [
-      {
-        name: "token",
-        type: "Query",
-        schema: z.string(),
-      },
-    ],
-    response: z.unknown(),
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
+    response: LoginResponse,
   },
   {
     method: "post",
@@ -895,36 +1106,6 @@ and invalidates all active sessions.`,
       },
     ],
     response: z.unknown(),
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/auth/verify-otp",
-    alias: "verify_otp_api_v1_auth_verify_otp_post",
-    description: `Second step of the two-step login flow.
-
-**Flow:**
-1. Validates &#x60;verification_token&#x60; (must not be expired)
-2. Verifies the 6-digit OTP code (max 3 attempts)
-3. Evicts oldest session if &#x60;MAX_CONCURRENT_SESSIONS&#x60; (5) is reached
-4. Issues &#x60;access_token&#x60; (15 min) + &#x60;refresh_token&#x60; (7 days) as HTTP-only cookies
-
-**Returns:** Full user object. Tokens are delivered via HTTP-only Secure cookies.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: VerifyOtpRequest,
-      },
-    ],
-    response: LoginResponse,
     errors: [
       {
         status: 422,
@@ -1272,6 +1453,39 @@ On reject/withdraw/expire the tenant is archived.
     ],
   },
   {
+    method: "patch",
+    path: "/api/v1/tenants/:id/mfa-policy",
+    alias: "update_mfa_policy_api_v1_tenants__id__mfa_policy_patch",
+    description: `Update the MFA policy for a tenant. Requires &#x60;system_admin&#x60; role.
+
+When &#x60;mfa_required&#x60; is set to &#x60;true&#x60;, all tenant-level users without MFA will
+be forced to enroll on their next login (Scenario C — retroactive enforcement).
+No existing sessions are invalidated immediately.
+
+**Returns:** Updated tenant object.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ mfa_required: z.boolean() }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/tenants/:tenant_id/modules",
     alias: "get_tenant_modules_api_v1_tenants__tenant_id__modules_get",
@@ -1557,6 +1771,31 @@ After approval: verification email sent for active users; invite resent for invi
         type: "Body",
         schema: DeactivateUserRequest,
       },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/users/:id/mfa/reset",
+    alias: "reset_mfa_api_v1_users__id__mfa_reset_post",
+    description: `Reset MFA for a user. Only system_admin.
+
+Clears mfa_secret, mfa_enabled, mfa_last_verified_at, deletes all recovery
+codes, and invalidates all active sessions. User must re-enroll on next login.`,
+    requestFormat: "json",
+    parameters: [
       {
         name: "id",
         type: "Path",
