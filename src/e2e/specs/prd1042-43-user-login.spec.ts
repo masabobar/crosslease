@@ -22,7 +22,7 @@ test.describe("PRD1042-43 — User Login", () => {
     await loginPage.login(email, password)
 
     await loginPage.otpHeadline.waitFor({ state: "visible" })
-    await loginPage.otpSubmitButton.isVisible()
+    await expect(loginPage.otpSubmitButton).toBeVisible()
   })
 
   // ---------------------------------------------------------------------------

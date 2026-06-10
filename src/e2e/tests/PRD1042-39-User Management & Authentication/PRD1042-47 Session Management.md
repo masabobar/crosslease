@@ -137,17 +137,3 @@ Feature: Session Management (US 28.10 — PRD1042-47)
     And the response must NOT return 403 Forbidden
     And no "Tenant B" resource data must be exposed in the response
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                                                        | AC    | Resolution required from                                                                                                         |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | No "session expired" redirect state designed — no toast notification, banner, or dedicated redirect flow shown on any page for the expired-session scenario                                 | AC-04 | Designer — add expired session redirect/notification state to the application shell or page layouts                              |
-| MAJOR    | Logout button location not confirmed in extracted design frames — navbar profile area shows name/avatar but no explicit logout button or dropdown was captured at depth-8                   | AC-05 | Designer — confirm logout button placement (profile dropdown, sidebar footer, or dedicated menu item) and provide design frame   |
-| MINOR    | Session transport security (AC-12) excluded from E2E scenarios — HTTP cookie attributes (HttpOnly, Secure, SameSite) require response header / browser cookie inspection, not UI assertions | AC-12 | Dev team — verify cookie configuration via integration/security scan (OWASP ZAP or similar); confirm SameSite=Lax is the default |
-| MINOR    | Concurrent session behavior (AC-10) excluded — behavior depends on tenant security policy configuration; no design or policy documentation provided                                         | AC-10 | BA — confirm concurrent session policy defaults and raise dedicated spec if concurrent session enforcement is in scope           |
-| MINOR    | Absolute session timeout (AC-11) excluded — time-based (8-hour default); requires clock-manipulation fixture before E2E automation is feasible                                              | AC-11 | Dev team — provide absolute-timeout override or time-control fixture                                                             |
-| INFO     | Does logout require a confirmation modal ("Are you sure you want to log out?")? Design does not confirm. Affects AC-05 test step wording                                                    | AC-05 | BA / Designer — confirm whether confirmation modal is required before logout completes                                           |
-| INFO     | Expired session redirect target: is it always "/login", or does it append a `?returnUrl=` parameter for post-login redirect? Affects AC-04 test assertion                                   | AC-04 | Dev team — confirm redirect URL behavior on session expiry                                                                       |

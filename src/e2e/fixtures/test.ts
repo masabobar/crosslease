@@ -5,6 +5,9 @@ import { LoginPage } from "../pages/LoginPage"
 type Fixtures = {
   loginPage: LoginPage
   authenticatedPage: Page
+  bankProcessorPage: Page
+  lcUserPage: Page
+  auditorPage: Page
 }
 
 export const test = base.extend<Fixtures>({
@@ -19,6 +22,51 @@ export const test = base.extend<Fixtures>({
       storageState: ".auth/user.json",
     })
     const page = await context.newPage()
+    await provide(page)
+    await context.close()
+  },
+
+  // Pre-authenticated session — bank front_office role
+  bankProcessorPage: async ({ browser }, provide) => {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login(
+      process.env.TEST_BANK_USER_EMAIL ?? "",
+      process.env.TEST_BANK_USER_PASSWORD ?? ""
+    )
+    await page.waitForURL("/dashboard")
+    await provide(page)
+    await context.close()
+  },
+
+  // Pre-authenticated session — leasing_company_user role
+  lcUserPage: async ({ browser }, provide) => {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login(
+      process.env.TEST_LC_USER_EMAIL ?? "",
+      process.env.TEST_LC_USER_PASSWORD ?? ""
+    )
+    await page.waitForURL("/workspace")
+    await provide(page)
+    await context.close()
+  },
+
+  // Pre-authenticated session — auditor role
+  auditorPage: async ({ browser }, provide) => {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login(
+      process.env.TEST_AUDITOR_EMAIL ?? "",
+      process.env.TEST_AUDITOR_PASSWORD ?? ""
+    )
+    await page.waitForURL("/dashboard")
     await provide(page)
     await context.close()
   },

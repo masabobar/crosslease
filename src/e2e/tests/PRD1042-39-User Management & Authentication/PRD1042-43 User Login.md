@@ -165,22 +165,3 @@ Feature: User Login (US 28.1 — PRD1042-43)
       | not_activated | invited@refinext-test.com      |
 
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity      | Item                                                            | AC                  | Resolution required from                                    |
-| ------------- | --------------------------------------------------------------- | ------------------- | ----------------------------------------------------------- |
-| MAJOR         | Email-only field vs Email/Username dual-mode — confirm scope    | Story description   | PO / BA — confirm Sprint 1 login identifier                 |
-| MAJOR         | Error state for invalid credentials not shown in Figma design   | AC-08               | Designer — add error state frame to Sign in screen          |
-| MAJOR         | MFA challenge screen absent from Figma design                   | AC-04               | Designer + Auth provider decision (R1)                      |
-| MAJOR         | Blocked account screen absent from Figma design                 | AC-09               | Designer — add blocked-account state frame                  |
-| MINOR         | "Sign in" button label vs story's "Login button" wording        | AC-01, AC-03        | No action — use "Sign in" per design; POM locator confirmed |
-| MINOR         | "Email address" label exact text not in story spec              | AC-01, AC-02        | No action — use design label; record for POM                |
-| BLOCKER (D17) | TEST_JWT_SECRET / test-forge endpoint                           | AC-15, AC-16        | Dev team — provide test token forge mechanism               |
-| BLOCKER (D16) | TEST_TOKEN_TTL_SECONDS env override                             | AC-17               | Dev team — provide configurable TTL override                |
-| BLOCKER (D18) | Admin API to reset lockout counter                              | AC-10               | Dev team — provide lockout reset endpoint                   |
-| BLOCKER (D19) | Throwaway user creation/deletion API                            | AC-09, AC-11, AC-12 | Dev team — provide seeding API for test users               |
-| INFO          | "Forgot password?" link present — flow is in PRD1042-45         | —                   | No action — scope confirmed as separate story               |
-| INFO          | AC-09 exact blocked-account error message wording not specified | AC-09               | Designer / BA — confirm per-status message text             |

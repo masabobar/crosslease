@@ -237,22 +237,3 @@ Feature: Password Reset (US 28.3 — PRD1042-45)
     And I should see a generic invalid credentials error
 
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity      | Item                                                                                              | AC           | Resolution required from                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
-| MAJOR         | Forgot Password screen absent from Figma — only "Set a new password" frame provided (step 3 of 5) | AC-01, AC-05 | Designer — provide Figma frame for the email-input step (step 1 of the flow)                                |
-| MAJOR         | Email confirmation ("check your inbox") screen absent from Figma                                  | AC-05        | Designer — add link-sent / email-confirmation screen                                                        |
-| MAJOR         | Invalid/expired token error screen absent from Figma                                              | AC-08        | Designer — add token error state screen; needed for copy assertions                                         |
-| MAJOR         | Confirm Password field absent from the "Set a new password" design frame                          | AC-09        | Designer — add Confirm Password input to the dialog before POM generation                                   |
-| MAJOR         | Password checklist has no met/unmet visual states — all 5 items show the same icon                | AC-09        | Designer — add two checklist item states: unmet (grey/red) and met (green)                                  |
-| MAJOR         | Password updated success screen absent from Figma                                                 | AC-10, AC-14 | Designer — add success/completion screen                                                                    |
-| MAJOR         | MFA verification step absent from Figma                                                           | AC-10        | Designer + Auth provider decision (R1)                                                                      |
-| MAJOR         | Hardcoded policy rules in UI checklist contradict AC-09 configurability requirement               | AC-09        | Architecture review — checklist rules must be driven by API/config endpoint, not hardcoded in the component |
-| BLOCKER (D17) | TEST_JWT_SECRET / test-forge endpoint                                                             | AC-02, AC-06 | Dev team — provide test token forge mechanism                                                               |
-| BLOCKER (R1)  | Auth provider unconfirmed — MFA gate scenarios cannot be implemented until provider is selected   | AC-10        | Dev team / PO — confirm auth provider selection                                                             |
-| INFO          | Password checklist behaviour not specified — real-time inline validation vs. static reminder list | AC-09        | BA / Designer — confirm whether checklist updates as user types or only on submit                           |
-| INFO          | Reset page routing not confirmed — dedicated route (/reset-password?token=xxx) vs. modal overlay  | AC-07        | BA / Dev — confirm routing decision; impacts POM locator strategy                                           |

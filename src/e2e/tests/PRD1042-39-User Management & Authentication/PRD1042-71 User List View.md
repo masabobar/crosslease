@@ -212,17 +212,3 @@ Feature: User List View (US 28.4 — PRD1042-71)
     And the exported data should not contain any Tenant B user records
     And the export attempt should be audit-logged
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                                             | AC    | Resolution required from                                                                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | No LC User sidebar nav variant designed — nav suppression tested against requirements only                                                                                       | AC-03 | Designer — add LC User sidebar variant showing User Management absent; add redirect/404 behavior frame                                                          |
-| MAJOR    | Status badge variants for Expired, Locked, Archived not confirmed in Figma structural data — color differentiation unverifiable without design variant frames                    | AC-04 | Designer — add all 8 status badge variants (Invited, Pending Activation, Active, Suspended, Deactivated, Expired, Locked, Archived) as visible component states |
-| MAJOR    | No read-only row variant for Support/Auditor — actions column suppression tested against requirements only                                                                       | AC-10 | Designer — add role-variant table row showing actions column hidden for Support and Auditor                                                                     |
-| MAJOR    | No expired-engagement UI state for Auditor — AC-09 excluded as separate-feature; confirm whether UI redirect is in scope for this story                                          | AC-09 | BA — confirm: does expired auditor engagement produce a UI state on the User List View, or is it purely a session invalidation (redirect to login)?             |
-| INFO     | AMB-02: LC User direct URL access behavior unspecified — does the system return 404 silently or redirect to dashboard? Test asserts "redirected away or 404" to accommodate both | AC-03 | BA — confirm exact behavior for LC User direct URL navigation to /users                                                                                         |
-| INFO     | AMB-03: Export button present in design but no format selector or dropdown visible — test asserts download initiated without asserting format                                    | AC-14 | Designer/BA — confirm export format (CSV/XLSX/both) and whether a format dialog appears                                                                         |
-| INFO     | Column 7 (32px) intent unclear — could be checkbox (bulk actions) or row-level action icon; bulk action scope not confirmed in this story                                        | AC-01 | BA — confirm: are bulk actions in scope for US 28.4? If yes, which roles can trigger them?                                                                      |

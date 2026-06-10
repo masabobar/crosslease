@@ -190,20 +190,3 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
     Then the response status must be 403
     And the user status must remain "Suspended"
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                              | AC           | Resolution required from                                                                                                |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | Restore Access form button copy unverified — "Reactivate User" vs "Restore Access" inconsistency between story description and expected UI label                  | AC-01        | Designer — confirm button label in node 424:3848; update Gherkin locator once confirmed                                 |
-| MAJOR    | Error states for ineligible lifecycle transitions absent from Figma design (non-Suspended user blocked state)                                                     | AC-02        | Designer — add blocked-restore error state frame to node 424:3848                                                       |
-| MAJOR    | Role/scope validation error states absent from Figma design (inactive role, invalid tenant/LC scope)                                                              | AC-03, AC-04 | Designer — add validation error state frames                                                                            |
-| MAJOR    | Four-Eyes WF banner text unverified — banner copy not confirmed from design render                                                                                | AC-06a       | Designer — confirm banner text; verify submitter-identity display in banner                                             |
-| MAJOR    | Success/confirmation state after restore not confirmed from design render                                                                                         | AC-05        | Designer — add post-submit success state or confirm redirect target (user detail page with Active status)               |
-| MAJOR    | Figma MCP rate-limited — full design render not obtained; all form-level assertions use story description as source                                               | All          | QA Lead — re-run Stage 2 extraction when Figma MCP quota resets; update locators and copy assertions                    |
-| MINOR    | Two ACs both labelled AC-06 in story description — numbering error                                                                                                | AC-06        | BA/PO — renumber the second AC-06 (access restoration after login) to AC-13 or next available number                    |
-| INFO     | AC-06b (login after reactivation) ownership — confirm whether post-reactivation login test belongs in US 28.1 (PRD1042-43) or a cross-reference scenario here     | AC-06b       | BA — clarify spec boundary; update PRD1042-43 test file if needed                                                       |
-| INFO     | Auditor validity window value for test environment — needed before AC-10 can be tested even in a separate spec                                                    | AC-10        | Dev team — confirm AUDITOR_VALIDITY_MINUTES override (D21) is available                                                 |
-| INFO     | Four-Eyes Non-Privileged tier (front_office, auditor, leasing_company_user) requires Four-Eyes based on tenant config — config value unknown for test environment | AC-06a       | Dev team / BA — confirm whether Non-Privileged Four-Eyes is enabled in the test tenant; if yes, add a third Outline row |

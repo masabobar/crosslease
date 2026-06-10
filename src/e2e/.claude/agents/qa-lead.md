@@ -51,7 +51,7 @@ You operate a 4-stage pipeline. Each stage has a dedicated skill that you invoke
 
 **Skill:** `manual-test-suite-generator`
 **Input:** Story object + Design object + Comparison report for each story
-**Output:** Gherkin `.md` files with Given-When-Then scenarios grouped by AC. Each scenario is tagged with `@us-X.X`, `@ac-XX`, priority, and type (happy-path / error-handling / compliance). Blocked ACs are listed in the file header table only — no pending stubs, no commented-out scenarios written to the Gherkin block. No Blockers and Gaps Summary section — never included in the `.md` file.
+**Output:** Gherkin `.md` files with Given-When-Then scenarios grouped by AC. Each scenario is tagged with `@us-X.X`, `@ac-XX`, priority, and type (happy-path / main-error / compliance / exploratory). Blocked ACs are listed in the file header table only — no pending stubs, no commented-out scenarios written to the Gherkin block. No Blockers and Gaps Summary section — never included in the `.md` file.
 **What you do:** Invoke the skill per story. After generation, perform a coverage check and print results to terminal only — do not write them to the `.md` file. The generated file must contain Gherkin **only for `happy-path` and `main-error` ACs** — `edge-case` and `separate-feature` ACs appear in the scope filter table with their classification but produce no Gherkin block. Any `happy-path` or `main-error` AC without a scenario is flagged as `[UNCOVERED AC]` in terminal output. Design gaps, ambiguities, and open questions are logged to terminal only. Target 5–10 scenarios per story total.
 
 ## Output Format
@@ -77,8 +77,7 @@ Total scenarios: [count]
 | Tag | Scenario | AC | Priority |
 |-----|----------|----|----------|
 | @happy-path | [scenario title] | AC-XX | P0 |
-| @error-handling | [scenario title] | AC-XX | P0 |
-| @pending @dXX | [blocked scenario title] | AC-XX | P1 |
+| @main-error | [scenario title] | AC-XX | P0 |
 
 [Gherkin .feature file content]
 ```
