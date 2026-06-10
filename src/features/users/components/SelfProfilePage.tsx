@@ -27,7 +27,7 @@ import {
   formatDate,
   formatDateTime,
   getInitials,
-} from "@/features/users/utils"
+} from "@/lib/formatters"
 import {
   AUDITOR_DATE_RANGE_ROLES,
   PLATFORM_USER_ROLES,

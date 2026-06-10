@@ -189,3 +189,10 @@ export async function uploadSelfPicture(file: File): Promise<UserResponse> {
 export async function deleteSelfPicture(): Promise<void> {
   await api.delete("/users/me/picture")
 }
+
+export async function resetUserMfa(
+  userId: string
+): Promise<UserActionResponse> {
+  const data = await api.post(`/users/${userId}/mfa/reset`, {})
+  return UserActionResponseSchema.parse(data)
+}

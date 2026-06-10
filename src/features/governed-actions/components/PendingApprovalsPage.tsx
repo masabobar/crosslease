@@ -5,6 +5,7 @@ import { Activity, Check, Search } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
 import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
 import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
@@ -15,24 +16,25 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { PATHS } from "@/router/paths"
+import {
+  GovernedActionStatusSchema,
+  initiatorSnapshot,
+  platformInviteSnapshot,
+} from "@/features/governed-actions/api/schema"
 import type {
   GovernedAction,
   GovernedActionStatus,
-} from "@/features/governed-actions/api/schema"
-import {
-  initiatorSnapshot,
-  platformInviteSnapshot,
 } from "@/features/governed-actions/api/schema"
 
 type Tab = "all" | GovernedActionStatus
 
 const TABS: Tab[] = [
   "all",
-  "pending",
-  "approved",
-  "rejected",
-  "withdrawn",
-  "expired",
+  GovernedActionStatusSchema.enum.pending,
+  GovernedActionStatusSchema.enum.approved,
+  GovernedActionStatusSchema.enum.rejected,
+  GovernedActionStatusSchema.enum.withdrawn,
+  GovernedActionStatusSchema.enum.expired,
 ]
 
 export default function PendingApprovalsPage() {
@@ -105,11 +107,14 @@ export default function PendingApprovalsPage() {
             }),
           })
         },
-        onError: () => {
+        onError: (err: unknown) => {
+          const code = err instanceof ApiError ? err.code : undefined
           showToast({
             variant: "warning",
             title: t("toast.error.title"),
-            message: t("toast.error.message"),
+            message: code
+              ? t(`errors.${code}`, { defaultValue: t("toast.error.message") })
+              : t("toast.error.message"),
           })
         },
       }
@@ -129,11 +134,14 @@ export default function PendingApprovalsPage() {
             }),
           })
         },
-        onError: () => {
+        onError: (err: unknown) => {
+          const code = err instanceof ApiError ? err.code : undefined
           showToast({
             variant: "warning",
             title: t("toast.error.title"),
-            message: t("toast.error.message"),
+            message: code
+              ? t(`errors.${code}`, { defaultValue: t("toast.error.message") })
+              : t("toast.error.message"),
           })
         },
       }

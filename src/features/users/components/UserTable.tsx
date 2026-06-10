@@ -6,6 +6,7 @@ import {
   Ban,
   RotateCcw,
   UserX,
+  ShieldOff,
   ChevronsUpDown,
   ChevronUp,
   ChevronDown,
@@ -26,10 +27,8 @@ import {
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import type { UserRole, UserActionType } from "@/features/users/types"
+import { formatLastLogin, formatDate, getInitials } from "@/lib/formatters"
 import {
-  formatLastLogin,
-  formatDate,
-  getInitials,
   getUserActionVisibility,
   getUserListColumnVisibility,
 } from "@/features/users/utils"
@@ -100,6 +99,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
     canSuspend: suspendVisible,
     canReactivate: reactivateVisible,
     canDeactivate: deactivateVisible,
+    canResetMfa: resetMfaVisible,
     hasAnyAction: hasActions,
   } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
 
@@ -170,6 +170,15 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
           >
             <UserX size={14} />
             {t("actions.deactivate.label")}
+          </DropdownMenuItem>
+        )}
+        {resetMfaVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-reset-mfa"
+            onClick={() => onAction?.("reset-mfa")}
+          >
+            <ShieldOff size={14} className="text-muted-foreground" />
+            {t("actions.resetMfa.label")}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

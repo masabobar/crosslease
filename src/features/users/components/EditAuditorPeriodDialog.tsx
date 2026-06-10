@@ -19,7 +19,7 @@ import {
   type AuditorPeriodUpdateReason,
 } from "@/features/users/api/schema"
 import { AUDITOR_ROLE } from "@/features/users/types"
-import { formatDate } from "@/features/users/utils"
+import { formatDate } from "@/lib/formatters"
 
 const AuditorPeriodFormSchema = z.object({
   new_access_valid_until: z.string().min(1),

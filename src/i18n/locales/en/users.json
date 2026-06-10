@@ -195,6 +195,16 @@
         "title": "Invitation resent",
         "message": "A new invitation has been sent to {{name}}."
       }
+    },
+    "resetMfa": {
+      "label": "Reset MFA",
+      "title": "Reset MFA for {{name}}",
+      "description": "This will immediately invalidate all active sessions and delete all recovery codes. {{name}} will need to re-enroll MFA on next login.",
+      "confirm": "Reset MFA",
+      "success": {
+        "title": "MFA reset",
+        "message": "MFA has been reset for {{name}}. They will need to re-enroll on next login."
+      }
     }
   },
   "detail": {

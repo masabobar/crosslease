@@ -12,8 +12,8 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSettled: () => {
-      queryClient.clear()
       clearAuth()
+      queryClient.clear()
       navigate(PATHS.LOGIN, { replace: true })
     },
   })

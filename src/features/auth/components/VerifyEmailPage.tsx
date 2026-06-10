@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useMutation } from "@tanstack/react-query"
-import { useSearchParams, useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Check, Link2Off, ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { verifyEmailChange } from "../api/verifyEmailApi"
@@ -8,14 +8,15 @@ import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { AuthPageLayout } from "./AuthPageLayout"
-
-const REDIRECT_SECONDS = 5
+import {
+  useCountdownRedirect,
+  REDIRECT_SECONDS,
+} from "@/features/auth/hooks/useCountdownRedirect"
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation("auth")
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [countdown, setCountdown] = useState(REDIRECT_SECONDS)
 
   const token = searchParams.get("token") ?? ""
 
@@ -38,16 +39,11 @@ export default function VerifyEmailPage() {
   const errorCode =
     mutation.error instanceof ApiError ? mutation.error.code : ""
 
-  useEffect(() => {
-    if (pageState !== "success") return
-    const id = setInterval(() => {
-      setCountdown(c => {
-        if (c <= 1) navigate(PATHS.LOGIN)
-        return c - 1
-      })
-    }, 1000)
-    return () => clearInterval(id)
-  }, [pageState, navigate])
+  const countdown = useCountdownRedirect(
+    pageState === "success",
+    PATHS.LOGIN,
+    REDIRECT_SECONDS
+  )
 
   if (pageState === "loading") {
     return (

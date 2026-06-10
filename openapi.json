@@ -2,76 +2,11 @@
   "openapi": "3.1.0",
   "info": { "title": "Refinext API", "version": "0.1.0" },
   "paths": {
-    "/api/v1/auth/validate-token": {
-      "get": {
-        "tags": ["Auth"],
-        "summary": "Validate invitation token before showing activation form",
-        "description": "Pre-validate the invitation token before the user fills in the activation form.\n\n**Checks:** JWT signature, expiry, and SHA-256 hash match against `invite_token_hash` in the database.\n\n**Returns:** `TOKEN_VALID` success — frontend can safely display the set-password form",
-        "operationId": "validate_activation_token_api_v1_auth_validate_token_get",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "Invitation token from the email link",
-              "title": "Token"
-            },
-            "description": "Invitation token from the email link"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/set-password": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Set password and activate account",
-        "description": "Complete account activation by setting the initial password.\n\n**Requirements:**\n- Valid, unexpired invitation token\n- Password min 8 chars, at least 1 uppercase letter and 1 number\n- `password` and `password_confirm` must match\n\n**Effect:** Sets password hash, changes status to `active`, records `activated_at`, clears `invite_token_hash`.\n\n**Returns:** `ACCOUNT_ACTIVATED` success — user can now log in",
-        "operationId": "set_password_api_v1_auth_set_password_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/SetPasswordRequest" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/auth/login": {
       "post": {
         "tags": ["Auth"],
-        "summary": "Step 1: validate credentials and send OTP",
-        "description": "First step of the two-step login flow.\n\n**Flow:**\n1. Validates email and password\n2. Checks account status (active, not locked, not suspended)\n3. Generates a 6-digit OTP and sends it to the user's email\n4. Returns a short-lived `verification_token` (5 min) to be used in `/verify-otp`\n\n**Rate limiting:** 5 failed IP attempts per 10 min triggers IP throttle; 5 failed user attempts triggers a 15-min account lock.\n\n**Returns:** `verification_token` + `expires_in` seconds",
+        "summary": "Step 1: validate credentials",
+        "description": "First step of the login flow. Returns `next_step` to tell the FE which screen to show.\n\n| `next_step` | Meaning | Next call |\n|---|---|---|\n| `otp` | Email OTP sent | `POST /auth/otp/verify` |\n| `mfa` | User has TOTP enrolled | `POST /auth/mfa/verify` |\n| `mfa_setup` | MFA required but not enrolled yet | `POST /auth/mfa/enroll` |\n| `session` | MFA freshness bypass — cookies already set, redirect to dashboard | — |\n\n**Rate limiting:** 5 failed user attempts → 15-min lock; 20 failed IP attempts per 10 min → IP throttle.",
         "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
           "content": {
@@ -86,73 +21,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/MfaRequiredResponse" }
+                "schema": { "$ref": "#/components/schemas/LoginStepResponse" }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/verify-otp": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Step 2: verify OTP and issue token pair",
-        "description": "Second step of the two-step login flow.\n\n**Flow:**\n1. Validates `verification_token` (must not be expired)\n2. Verifies the 6-digit OTP code (max 3 attempts)\n3. Evicts oldest session if `MAX_CONCURRENT_SESSIONS` (5) is reached\n4. Issues `access_token` (15 min) + `refresh_token` (7 days) as HTTP-only cookies\n\n**Returns:** Full user object. Tokens are delivered via HTTP-only Secure cookies.",
-        "operationId": "verify_otp_api_v1_auth_verify_otp_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/VerifyOtpRequest" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/LoginResponse" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/auth/resend-otp": {
-      "post": {
-        "tags": ["Auth"],
-        "summary": "Resend OTP code",
-        "description": "Resend the OTP code for an in-progress login.\n\n**Requirements:**\n- `verification_token` from `/login` must still be valid\n- 60-second cooldown between resend requests\n\n**Returns:** Generic success — new OTP sent to email",
-        "operationId": "resend_otp_api_v1_auth_resend_otp_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ResendOtpRequest" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -193,12 +64,247 @@
         }
       }
     },
-    "/api/v1/auth/forgot-password": {
+    "/api/v1/auth/invite/validate-token": {
+      "get": {
+        "tags": ["Auth - Invite"],
+        "summary": "Validate invitation token before showing activation form",
+        "description": "Pre-validate the invitation token before the user fills in the activation form.\n\n**Checks:** JWT signature, expiry, and SHA-256 hash match against `invite_token_hash` in the database.\n\n**Returns:** `TOKEN_VALID` success — frontend can safely display the set-password form",
+        "operationId": "validate_activation_token_api_v1_auth_invite_validate_token_get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Invitation token from the email link",
+              "title": "Token"
+            },
+            "description": "Invitation token from the email link"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/invite/set-password": {
       "post": {
-        "tags": ["Auth"],
+        "tags": ["Auth - Invite"],
+        "summary": "Set password and activate account",
+        "description": "Complete account activation by setting the initial password.\n\n**Requirements:**\n- Valid, unexpired invitation token\n- Password min 8 chars, at least 1 uppercase letter and 1 number\n- `password` and `password_confirm` must match\n\n**Effect:** Sets password hash, changes status to `active`, records `activated_at`, clears `invite_token_hash`.\n\n**Returns:**\n- `mfa_enrollment_required=False` — user can now log in normally\n- `mfa_enrollment_required=True` + `mfa_token` — FE must redirect to `/auth/mfa/enroll` before login",
+        "operationId": "set_password_api_v1_auth_invite_set_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetPasswordRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SetPasswordResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/enroll": {
+      "post": {
+        "tags": ["Auth - MFA"],
+        "summary": "Enroll",
+        "description": "Step 1 of MFA enrollment — generate TOTP secret and QR code.\n\nRequires `mfa_token` with `purpose=setup`, obtained from:\n- `POST /auth/set-password` (activation flow, when MFA is required)\n- `POST /auth/otp/verify` (retroactive enforcement, when tenant enables MFA)\n\nReturns a QR code PNG (base64) + manual entry key. Pass the refreshed\n`mfa_token` to `/mfa/activate` to complete enrollment.",
+        "operationId": "enroll_api_v1_auth_mfa_enroll_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MfaEnrollRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MfaEnrollResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/activate": {
+      "post": {
+        "tags": ["Auth - MFA"],
+        "summary": "Activate",
+        "description": "Step 2 of MFA enrollment — verify first TOTP code and activate MFA.\n\nOn success:\n- Sets `mfa_enabled = True`\n- Generates 10 single-use recovery codes (shown once — user must save them)\n- Creates session and sets HTTP-only auth cookies\n\nConscious decision: no OTP step before enrollment. The `mfa_token` (issued after\npassword is set) + successful TOTP verify is a stronger proof than email OTP.",
+        "operationId": "activate_api_v1_auth_mfa_activate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MfaActivateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MfaActivateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/verify": {
+      "post": {
+        "tags": ["Auth - MFA"],
+        "summary": "Verify",
+        "description": "MFA verification on login — accepts TOTP code or recovery code.\n\n`mfa_token` (purpose=verify) is obtained from `POST /auth/login` when the\nuser has `mfa_enabled = True`.\n\nOn recovery code use: the used code is invalidated and 10 new codes are\ngenerated immediately. The new codes are returned in `new_recovery_codes` in\nthe response body — FE must show them to the user immediately.",
+        "operationId": "verify_api_v1_auth_mfa_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MfaVerifyRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MfaVerifyResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/otp/verify": {
+      "post": {
+        "tags": ["Auth - OTP"],
+        "summary": "Verify email OTP and issue session",
+        "description": "Verify the email OTP code (used when `next_step=otp` from `/auth/login`).\n\n1. Validates `token` (must not be expired)\n2. Verifies the 6-digit OTP code (max 3 attempts)\n3. Issues `access_token` + `refresh_token` as HTTP-only cookies\n\n**Returns:** Full user object. Tokens delivered via HTTP-only Secure cookies.",
+        "operationId": "verify_otp_api_v1_auth_otp_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyOtpRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/otp/resend": {
+      "post": {
+        "tags": ["Auth - OTP"],
+        "summary": "Resend OTP code",
+        "description": "Resend the email OTP for an in-progress login.\n\n**Requirements:**\n- `verification_token` from `/login` must still be valid\n- 60-second cooldown between resend requests\n\n**Returns:** Generic success — new OTP sent to email",
+        "operationId": "resend_otp_api_v1_auth_otp_resend_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResendOtpRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/forgot": {
+      "post": {
+        "tags": ["Auth - Password Reset"],
         "summary": "Request password reset email",
         "description": "Send a password reset link to the given email address.\n\n**Security:** Always returns 200 regardless of whether the email exists — prevents user enumeration.\n\n**Rate limiting:** 300s cooldown per email, max 3 requests/hour per email, IP throttle shared with login.\n\n**Effect (if user exists):** Generates a JWT reset token (1h TTL), stores its SHA-256 hash, sends an email with the reset link.\n\n**Returns:** Generic success regardless of outcome",
-        "operationId": "forgot_password_api_v1_auth_forgot_password_post",
+        "operationId": "forgot_password_api_v1_auth_password_forgot_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -223,12 +329,12 @@
         }
       }
     },
-    "/api/v1/auth/validate-reset-token": {
+    "/api/v1/auth/password/validate-token": {
       "get": {
-        "tags": ["Auth"],
+        "tags": ["Auth - Password Reset"],
         "summary": "Validate password reset token before showing form",
         "description": "Pre-validate the reset token before the user fills in the new password form.\n\n**Checks:** JWT signature, expiry, and SHA-256 hash match against `password_reset_token_hash` in the database.\n\n**Returns:** `TOKEN_VALID` success — frontend can safely display the reset-password form",
-        "operationId": "validate_reset_token_api_v1_auth_validate_reset_token_get",
+        "operationId": "validate_reset_token_api_v1_auth_password_validate_token_get",
         "parameters": [
           {
             "name": "token",
@@ -258,12 +364,12 @@
         }
       }
     },
-    "/api/v1/auth/reset-password": {
+    "/api/v1/auth/password/reset": {
       "post": {
-        "tags": ["Auth"],
+        "tags": ["Auth - Password Reset"],
         "summary": "Set new password using reset token",
-        "description": "Complete the password reset flow by setting a new password.\n\n**Requirements:**\n- Valid, unexpired reset token (1h TTL)\n- Password min 8 chars, at least 1 uppercase letter and 1 number\n- `password` and `password_confirm` must match\n\n**Effect:** Updates password hash, clears `password_reset_token_hash`, invalidates all active sessions (`logout_all` timestamp + clears session set).\n\n**Returns:** `PASSWORD_RESET_SUCCESS` — user must log in again on all devices",
-        "operationId": "reset_password_api_v1_auth_reset_password_post",
+        "description": "Complete the password reset flow by setting a new password.\n\n**Requirements:**\n- Valid, unexpired reset token (1h TTL)\n- Password min 8 chars, at least 1 uppercase letter and 1 number\n- `password` and `password_confirm` must match\n\n**Non-MFA path:** Password updated immediately. All active sessions invalidated. Returns `mfa_required=false`.\n\n**MFA path (privileged roles with MFA enabled):** Password staged in `pending_password_hash`, sessions NOT yet invalidated.\nReturns `mfa_required=true, mfa_token=<5-min JWT>`. FE must call `POST /auth/password/reset/verify`.",
+        "operationId": "reset_password_api_v1_auth_password_reset_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -275,7 +381,49 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/reset/verify": {
+      "post": {
+        "tags": ["Auth - Password Reset"],
+        "summary": "Verify MFA to complete password reset",
+        "description": "Complete MFA-gated password reset by verifying a TOTP or recovery code.\n\n**Triggered when:** `POST /auth/password/reset` returned `mfa_required=true`.\n\n**Code auto-detection:**\n- 6-digit numeric → TOTP\n- 20-char hex (`[0-9a-f]{20}`) → recovery code\n\n**On success:**\n- `pending_password_hash` promoted to `password`\n- All previous sessions invalidated\n- New session created immediately (no separate login needed)\n- Auth cookies set in response\n\n**Recovery code path:** Used code invalidated, 10 new codes generated and returned in `new_recovery_codes`. Show to user once.\n\n**Rate limit on recovery codes:** 3 attempts / 24h per user → 429 `MFA_RECOVERY_RATE_LIMITED`.",
+        "operationId": "reset_password_verify_api_v1_auth_password_reset_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ResetVerifyResponse" }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1060,6 +1208,36 @@
         }
       }
     },
+    "/api/v1/users/{id}/mfa/reset": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Reset MFA for a user",
+        "description": "Reset MFA for a user. Only system_admin.\n\nClears mfa_secret, mfa_enabled, mfa_last_verified_at, deletes all recovery\ncodes, and invalidates all active sessions. User must re-enroll on next login.",
+        "operationId": "reset_mfa_api_v1_users__id__mfa_reset_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants": {
       "post": {
         "tags": ["Tenants"],
@@ -1196,6 +1374,44 @@
                 "schema": { "$ref": "#/components/schemas/TenantResponse" }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{id}/mfa-policy": {
+      "patch": {
+        "tags": ["Tenants"],
+        "summary": "Update Mfa Policy",
+        "description": "Update the MFA policy for a tenant. Requires `system_admin` role.\n\nWhen `mfa_required` is set to `true`, all tenant-level users without MFA will\nbe forced to enroll on their next login (Scenario C — retroactive enforcement).\nNo existing sessions are invalidated immediately.\n\n**Returns:** Updated tenant object.",
+        "operationId": "update_mfa_policy_api_v1_tenants__id__mfa_policy_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MfaPolicyRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -2654,27 +2870,140 @@
         "required": ["user"],
         "title": "LoginResponse"
       },
-      "MfaRequiredResponse": {
+      "LoginStepResponse": {
         "properties": {
-          "status": {
+          "next_step": {
             "type": "string",
-            "title": "Status",
-            "default": "MFA_REQUIRED"
+            "enum": ["otp", "mfa", "mfa_setup", "session"],
+            "title": "Next Step",
+            "description": "otp — send OTP code to /auth/otp/verify; mfa — send TOTP code to /auth/mfa/verify; mfa_setup — no MFA yet, enroll at /auth/mfa/enroll; session — auth cookies already set (MFA freshness bypass), redirect to dashboard"
           },
-          "verification_token": {
-            "type": "string",
-            "title": "Verification Token",
-            "description": "Short-lived JWT (5 min) to be passed to /verify-otp"
+          "token": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Token",
+            "description": "Short-lived token (5 min) for the next step. Null when next_step=session."
           },
           "expires_in": {
-            "type": "integer",
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Expires In",
-            "description": "Seconds until verification_token expires"
+            "description": "Seconds until token expires. Null when next_step=session."
           }
         },
         "type": "object",
-        "required": ["verification_token", "expires_in"],
-        "title": "MfaRequiredResponse"
+        "required": ["next_step"],
+        "title": "LoginStepResponse"
+      },
+      "MfaActivateRequest": {
+        "properties": {
+          "mfa_token": {
+            "type": "string",
+            "title": "Mfa Token",
+            "description": "Token received from /mfa/enroll"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "title": "Code",
+            "description": "First TOTP code from authenticator app"
+          }
+        },
+        "type": "object",
+        "required": ["mfa_token", "code"],
+        "title": "MfaActivateRequest"
+      },
+      "MfaActivateResponse": {
+        "properties": {
+          "recovery_codes": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Recovery Codes",
+            "description": "10 single-use recovery codes — show once, save immediately"
+          },
+          "user": { "$ref": "#/components/schemas/UserResponse" }
+        },
+        "type": "object",
+        "required": ["recovery_codes", "user"],
+        "title": "MfaActivateResponse"
+      },
+      "MfaEnrollRequest": {
+        "properties": {
+          "mfa_token": {
+            "type": "string",
+            "title": "Mfa Token",
+            "description": "Token received from /auth/set-password or /auth/otp/verify"
+          }
+        },
+        "type": "object",
+        "required": ["mfa_token"],
+        "title": "MfaEnrollRequest"
+      },
+      "MfaEnrollResponse": {
+        "properties": {
+          "qr_code": {
+            "type": "string",
+            "title": "Qr Code",
+            "description": "Base64-encoded PNG QR code for scanning in authenticator app"
+          },
+          "secret": {
+            "type": "string",
+            "title": "Secret",
+            "description": "Manual entry key (for users who can't scan QR)"
+          },
+          "mfa_token": {
+            "type": "string",
+            "title": "Mfa Token",
+            "description": "Short-lived token to use in /mfa/activate"
+          }
+        },
+        "type": "object",
+        "required": ["qr_code", "secret", "mfa_token"],
+        "title": "MfaEnrollResponse"
+      },
+      "MfaPolicyRequest": {
+        "properties": {
+          "mfa_required": {
+            "type": "boolean",
+            "title": "Mfa Required",
+            "description": "Set to true to require MFA for all tenant-level users"
+          }
+        },
+        "type": "object",
+        "required": ["mfa_required"],
+        "title": "MfaPolicyRequest"
+      },
+      "MfaVerifyRequest": {
+        "properties": {
+          "mfa_token": {
+            "type": "string",
+            "title": "Mfa Token",
+            "description": "Token received from /auth/login"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "6-digit TOTP code or 20-char hex recovery code"
+          }
+        },
+        "type": "object",
+        "required": ["mfa_token", "code"],
+        "title": "MfaVerifyRequest"
+      },
+      "MfaVerifyResponse": {
+        "properties": {
+          "user": { "$ref": "#/components/schemas/UserResponse" },
+          "new_recovery_codes": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "New Recovery Codes",
+            "description": "New recovery codes — present only when a recovery code was used. Show to user immediately."
+          }
+        },
+        "type": "object",
+        "required": ["user"],
+        "title": "MfaVerifyResponse"
       },
       "ModuleActionRequest": {
         "properties": {
@@ -2937,6 +3266,56 @@
         "required": ["token", "password", "password_confirm"],
         "title": "ResetPasswordRequest"
       },
+      "ResetPasswordResponse": {
+        "properties": {
+          "mfa_required": {
+            "type": "boolean",
+            "title": "Mfa Required",
+            "description": "True when user's role requires MFA — FE must call POST /auth/password/reset/verify",
+            "default": false
+          },
+          "mfa_token": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Mfa Token",
+            "description": "Short-lived token (5 min) to pass to /auth/password/reset/verify. Present only when mfa_required=True."
+          }
+        },
+        "type": "object",
+        "title": "ResetPasswordResponse"
+      },
+      "ResetPasswordVerifyRequest": {
+        "properties": {
+          "mfa_token": {
+            "type": "string",
+            "title": "Mfa Token",
+            "description": "Token received from POST /auth/password/reset"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "6-digit TOTP code or 20-char hex recovery code"
+          }
+        },
+        "type": "object",
+        "required": ["mfa_token", "code"],
+        "title": "ResetPasswordVerifyRequest"
+      },
+      "ResetVerifyResponse": {
+        "properties": {
+          "user": { "$ref": "#/components/schemas/UserResponse" },
+          "new_recovery_codes": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "New Recovery Codes",
+            "description": "New recovery codes — present only when a recovery code was used. Show to user immediately."
+          }
+        },
+        "type": "object",
+        "required": ["user"],
+        "title": "ResetVerifyResponse"
+      },
       "SeedPackage": {
         "type": "string",
         "enum": ["standard_retail_bank", "minimal_sandbox"],
@@ -2999,6 +3378,23 @@
         "type": "object",
         "required": ["token", "password", "password_confirm"],
         "title": "SetPasswordRequest"
+      },
+      "SetPasswordResponse": {
+        "properties": {
+          "mfa_enrollment_required": {
+            "type": "boolean",
+            "title": "Mfa Enrollment Required",
+            "description": "True when the user's role/tenant requires MFA — FE must redirect to /auth/mfa/enroll",
+            "default": false
+          },
+          "mfa_token": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Mfa Token",
+            "description": "Short-lived setup token to pass to /auth/mfa/enroll (present only when mfa_enrollment_required=True)"
+          }
+        },
+        "type": "object",
+        "title": "SetPasswordResponse"
       },
       "SuspendUserRequest": {
         "properties": {
@@ -3119,6 +3515,7 @@
             ],
             "title": "Activated At"
           },
+          "mfa_required": { "type": "boolean", "title": "Mfa Required" },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3146,6 +3543,7 @@
           "status",
           "legal_hold_flag",
           "activated_at",
+          "mfa_required",
           "created_at",
           "updated_at"
         ],

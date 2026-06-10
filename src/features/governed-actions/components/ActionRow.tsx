@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils"
 import { HOUR_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
-import { formatDateTime } from "@/features/users/utils"
+import { formatDateTime } from "@/lib/formatters"
 import {
+  GovernedActionStatusSchema,
   roleChangeSnapshot,
   platformInviteSnapshot,
   emailChangeSnapshot,
@@ -119,10 +120,10 @@ export function ActionRow({
 }: Props) {
   const { t } = useTranslation("pendingApprovals")
   const isOwnSubmission = action.initiator_id === currentUserId
-  const isPending = action.status === "pending"
-  const isExpired = action.status === "expired"
-  const isRejected = action.status === "rejected"
-  const isApproved = action.status === "approved"
+  const isPending = action.status === GovernedActionStatusSchema.enum.pending
+  const isExpired = action.status === GovernedActionStatusSchema.enum.expired
+  const isRejected = action.status === GovernedActionStatusSchema.enum.rejected
+  const isApproved = action.status === GovernedActionStatusSchema.enum.approved
 
   const metaItems: React.ReactNode[] = [
     <span key="user" className="flex items-center gap-1">

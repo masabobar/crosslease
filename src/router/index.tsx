@@ -18,6 +18,15 @@ const ForgotPasswordPage = lazy(
 const ResetPasswordPage = lazy(
   () => import("@/features/auth/components/ResetPasswordPage")
 )
+const ResetPasswordVerifyPage = lazy(
+  () => import("@/features/auth/components/ResetPasswordVerifyPage")
+)
+const MfaVerifyPage = lazy(
+  () => import("@/features/auth/components/MfaVerifyPage")
+)
+const MfaEnrollPage = lazy(
+  () => import("@/features/auth/components/MfaEnrollPage")
+)
 const ActivateAccountPage = lazy(
   () => import("@/features/auth/components/ActivateAccountPage")
 )
@@ -72,6 +81,30 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <ResetPasswordPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.RESET_PASSWORD_VERIFY,
+    element: (
+      <Suspense fallback={null}>
+        <ResetPasswordVerifyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.MFA_VERIFY,
+    element: (
+      <Suspense fallback={null}>
+        <MfaVerifyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.MFA_ENROLL,
+    element: (
+      <Suspense fallback={null}>
+        <MfaEnrollPage />
       </Suspense>
     ),
   },

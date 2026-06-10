@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
 import { deriveAuditResult } from "@/features/audit/api/schema"
-import { formatEventType } from "@/features/audit/utils"
+import { formatEventType, formatDateTime } from "@/lib/formatters"
 import type { AuditEvent } from "@/features/audit/api/schema"
-import { formatDateTime } from "@/features/users/utils"
 
 const COL_TIMESTAMP = "w-[160px] shrink-0"
 const COL_EVENT_TYPE = "w-[200px] shrink-0"

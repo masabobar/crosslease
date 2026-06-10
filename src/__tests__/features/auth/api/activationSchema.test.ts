@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   ActivateAccountInputSchema,
+  SetPasswordResponseSchema,
   decodeTokenEmail,
 } from "@/features/auth/api/activationSchema"
 
@@ -80,6 +81,27 @@ describe("ActivateAccountInputSchema", () => {
         passwordConfirm: "Abcdef12",
       })
     ).toThrow()
+  })
+})
+
+describe("SetPasswordResponseSchema", () => {
+  it("accepts mfa_enrollment_required=false", () => {
+    expect(() =>
+      SetPasswordResponseSchema.parse({ mfa_enrollment_required: false })
+    ).not.toThrow()
+  })
+
+  it("accepts mfa_enrollment_required=true with mfa_token", () => {
+    expect(() =>
+      SetPasswordResponseSchema.parse({
+        mfa_enrollment_required: true,
+        mfa_token: "tok",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects missing mfa_enrollment_required", () => {
+    expect(() => SetPasswordResponseSchema.parse({})).toThrow()
   })
 })
 

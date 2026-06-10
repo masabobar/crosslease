@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -32,6 +32,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthPageLayout } from "./AuthPageLayout"
 import {
+  useCountdownRedirect,
+  REDIRECT_SECONDS,
+} from "@/features/auth/hooks/useCountdownRedirect"
+import {
   AuthCard,
   AuthCardHeader,
   AuthCardBody,
@@ -48,7 +52,6 @@ type PageState =
   | "success"
 
 const LINK_BLOCKED_CODES = new Set(["INVALID_TOKEN", "PASSWORD_ALREADY_SET"])
-const REDIRECT_SECONDS = 5
 
 export default function ActivateAccountPage() {
   const { t } = useTranslation("auth")
@@ -59,7 +62,6 @@ export default function ActivateAccountPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isFormBlocked, setIsFormBlocked] = useState(false)
-  const [countdown, setCountdown] = useState(REDIRECT_SECONDS)
 
   const token = searchParams.get("token") ?? ""
   const [email] = useState(() => (token ? (decodeTokenEmail(token) ?? "") : ""))
@@ -108,21 +110,26 @@ export default function ActivateAccountPage() {
     defaultValue: "",
   })
 
-  useEffect(() => {
-    if (!isSuccess) return
-    const id = setInterval(() => {
-      setCountdown(c => {
-        if (c <= 1) navigate(PATHS.LOGIN)
-        return c - 1
-      })
-    }, 1000)
-    return () => clearInterval(id)
-  }, [isSuccess, navigate])
+  const countdown = useCountdownRedirect(
+    isSuccess,
+    PATHS.LOGIN,
+    REDIRECT_SECONDS
+  )
 
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
     try {
-      await activateSetPassword(token, data.password, data.passwordConfirm)
+      const result = await activateSetPassword(
+        token,
+        data.password,
+        data.passwordConfirm
+      )
+      if (result.mfa_enrollment_required) {
+        navigate(PATHS.MFA_ENROLL, {
+          state: { mfa_token: result.mfa_token ?? "" },
+        })
+        return
+      }
       setIsSuccess(true)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""

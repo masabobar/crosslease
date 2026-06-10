@@ -4,7 +4,6 @@ import {
   ArrowRightIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ShieldIcon,
   XIcon,
 } from "lucide-react"
 import {
@@ -16,7 +15,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
-import { formatDateTime } from "@/features/users/utils"
+import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { USER_ROLES } from "@/features/users/types"
+import type { UserRole } from "@/features/users/types"
+import { formatDateTime } from "@/lib/formatters"
 import {
   roleChangeSnapshot,
   platformInviteSnapshot,
@@ -77,18 +79,6 @@ function FieldRow({
   )
 }
 
-function RoleBadge({ role, label }: { role: string; label: string }) {
-  return (
-    <div
-      className="flex items-center gap-1 h-[22px] px-2 border border-[#7008e7] rounded-[6px] shrink-0"
-      title={role}
-    >
-      <ShieldIcon className="size-3 text-[#7008e7]" />
-      <span className="text-xs font-medium text-[#7008e7]">{label}</span>
-    </div>
-  )
-}
-
 function ChainEntry({
   description,
   date,
@@ -102,7 +92,7 @@ function ChainEntry({
 }) {
   const { t } = useTranslation("pendingApprovals")
   const dotColor: Record<GovernedActionStatus, string> = {
-    pending: "bg-[#d97706]",
+    pending: "bg-amber-600",
     approved: "bg-green-500",
     rejected: "bg-red-500",
     expired: "bg-slate-300",
@@ -235,13 +225,10 @@ function ActorCard({
           <span className="font-semibold">{name}</span>
         </FieldRow>
         <FieldRow label={t("drawer.roleAtTime")}>
-          {snapshot.role ? (
-            <RoleBadge
-              role={snapshot.role}
-              label={t(`roles.${snapshot.role}`, {
-                defaultValue: snapshot.role,
-              })}
-            />
+          {snapshot.role && USER_ROLES.includes(snapshot.role as UserRole) ? (
+            <RoleBadge role={snapshot.role as UserRole} />
+          ) : snapshot.role ? (
+            <span className="text-sm">{snapshot.role}</span>
           ) : (
             <span>—</span>
           )}

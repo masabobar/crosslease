@@ -195,6 +195,16 @@
         "title": "Einladung erneut gesendet",
         "message": "Eine neue Einladung wurde an {{name}} gesendet."
       }
+    },
+    "resetMfa": {
+      "label": "MFA zurücksetzen",
+      "title": "MFA zurücksetzen für {{name}}",
+      "description": "Dies invalidiert sofort alle aktiven Sitzungen und löscht alle Wiederherstellungscodes. {{name}} muss sich beim nächsten Login erneut für MFA anmelden.",
+      "confirm": "MFA zurücksetzen",
+      "success": {
+        "title": "MFA zurückgesetzt",
+        "message": "MFA wurde für {{name}} zurückgesetzt. Sie müssen sich beim nächsten Login erneut registrieren."
+      }
     }
   },
   "detail": {

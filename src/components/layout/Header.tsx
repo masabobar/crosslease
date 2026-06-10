@@ -15,7 +15,7 @@ import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
-import { getInitials } from "@/features/users/utils"
+import { getInitials } from "@/lib/formatters"
 
 type Crumb = { labelKey?: string; label?: string; path?: string }
 

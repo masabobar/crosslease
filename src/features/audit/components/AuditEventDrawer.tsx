@@ -11,9 +11,12 @@ import { Button } from "@/components/ui/button"
 import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
 import { useAuditEventDetail } from "@/features/audit/hooks/useAuditEventDetail"
 import { deriveAuditResult } from "@/features/audit/api/schema"
-import { formatEventType, formatActionType } from "@/features/audit/utils"
+import {
+  formatEventType,
+  formatActionType,
+  formatDateTime,
+} from "@/lib/formatters"
 import type { AuditEvent } from "@/features/audit/api/schema"
-import { formatDateTime } from "@/features/users/utils"
 
 type AuditEventDrawerProps = {
   eventId: string | null

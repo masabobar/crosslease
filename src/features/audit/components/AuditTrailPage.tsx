@@ -22,8 +22,7 @@ import {
 } from "@/features/audit/types"
 import type { AuditFilterState } from "@/features/audit/types"
 import type { AuditEvent } from "@/features/audit/api/schema"
-import { formatDate } from "@/features/users/utils"
-import { formatEventType } from "@/features/audit/utils"
+import { formatDate, formatEventType } from "@/lib/formatters"
 
 const PAGE_SIZES = [10, 25, 50, 100] as const
 type PageSize = (typeof PAGE_SIZES)[number]
