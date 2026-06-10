@@ -326,6 +326,8 @@ const TenantResponse = z
     seed_package: SeedPackage,
     core_banking_integration_ref: z.union([z.string(), z.null()]),
     status: TenantStatus,
+    legal_hold_flag: z.boolean(),
+    activated_at: z.union([z.string(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
   })
