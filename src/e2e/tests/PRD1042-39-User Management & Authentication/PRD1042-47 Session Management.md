@@ -28,22 +28,23 @@ Figma design: None — Stage 2 PARTIAL (backend security story; no dedicated ses
 | AC-13 | All session events must be audit logged with full context                                                         | `separate-feature` | Backend audit log — no UI representation; verified by log/API inspection tests                                                                                            |
 
 **Gherkin generated for:** AC-02, AC-04, AC-05, AC-06
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-01, AC-03, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                           | AC    | Priority |
-| ------------- | ---------------------------------------------------------------------------------- | ----- | -------- |
-| `@happy-path` | Expired session redirects user to login page on any navigation attempt             | AC-04 | P0       |
-| `@happy-path` | User clicks logout and session is terminated immediately                           | AC-05 | P0       |
-| `@main-error` | After logout, accessing a protected resource requires re-authentication            | AC-06 | P0       |
-| `@main-error` | After logout, replaying the invalidated session token is rejected                  | AC-06 | P0       |
-| `@main-error` | Session scoped to Tenant A cannot access Tenant B resources — returns 404, not 403 | AC-02 | P0       |
+| Tag           | Scenario                                                                           | AC    | Priority | E2E                             |
+| ------------- | ---------------------------------------------------------------------------------- | ----- | -------- | ------------------------------- |
+| `@happy-path` | Expired session redirects user to login page on any navigation attempt             | AC-04 | P0       | ⚙️ needs session-expiry fixture |
+| `@happy-path` | User clicks logout and session is terminated immediately                           | AC-05 | P0       | ✅                              |
+| `@main-error` | After logout, accessing a protected resource requires re-authentication            | AC-06 | P0       | ✅                              |
+| `@main-error` | After logout, replaying the invalidated session token is rejected                  | AC-06 | P0       | ✅                              |
+| `@main-error` | Session scoped to Tenant A cannot access Tenant B resources — returns 404, not 403 | AC-02 | P0       | ⚙️ needs D20                    |
 
 Active scenario blocks: 5 (0 Outlines + 5 Scenarios)
+E2E automation candidates: 3 of 5 scenarios ✅
 
 ---
 
@@ -85,7 +86,7 @@ Feature: Session Management (US 28.10 — PRD1042-47)
   # (expected in profile/navbar area). Test derives from story AC requirements.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-05 @p0
+  @happy-path @ac-05 @p0 @e2e-ready
   Scenario: User clicks logout and session is terminated immediately (AC-05)
     Given "john.smith@bank.com" is logged in and viewing the dashboard
     When the user triggers the logout action
@@ -100,7 +101,7 @@ Feature: Session Management (US 28.10 — PRD1042-47)
   # direct URL navigation must not restore authenticated state.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-06 @p0
+  @main-error @ac-06 @p0 @e2e-ready
   Scenario: After logout, accessing a protected resource requires re-authentication (AC-06)
     Given "john.smith@bank.com" has logged out and the session is terminated
     When the user navigates directly to "/dashboard"
@@ -114,7 +115,7 @@ Feature: Session Management (US 28.10 — PRD1042-47)
   # hijack scenarios.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-06 @p0
+  @main-error @ac-06 @p0 @e2e-ready
   Scenario: After logout, replaying the invalidated session token is rejected (AC-06)
     Given "john.smith@bank.com" has logged out and the session token has been recorded
     When the invalidated session token is used in a direct request to a protected API endpoint

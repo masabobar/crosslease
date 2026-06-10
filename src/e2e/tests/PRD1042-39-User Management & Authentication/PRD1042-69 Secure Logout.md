@@ -32,22 +32,23 @@ Figma design: None — no Figma URL found on PRD1042-69 or children PRD1042-492/
 | AC-09 | Logout from all devices — available from profile/security settings; invalidates all sessions                         | `happy-path`       | Distinct UI affordance with a separate trigger flow; testable at E2E layer as a second happy-path action                                              |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-09
-**Blocked (no Gherkin, no pending stub):** AC-08
+**Blocked (no Gherkin):** AC-08
 **No Gherkin (edge-case or separate-feature):** AC-05, AC-06, AC-07
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                    | AC           | Priority |
-| ------------- | ------------------------------------------------------------------------------------------- | ------------ | -------- |
-| `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 6 variants)      | AC-01        | P0       |
-| `@happy-path` | Successful logout terminates session and redirects to login (Scenario Outline — 2 variants) | AC-01, AC-04 | P0       |
-| `@main-error` | Access token is rejected after logout                                                       | AC-02, AC-03 | P0       |
-| `@main-error` | Refresh token is rejected after logout                                                      | AC-03        | P0       |
-| `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       |
+| Tag           | Scenario                                                                                    | AC           | Priority | E2E |
+| ------------- | ------------------------------------------------------------------------------------------- | ------------ | -------- | --- |
+| `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 6 variants)      | AC-01        | P0       | ✅  |
+| `@happy-path` | Successful logout terminates session and redirects to login (Scenario Outline — 2 variants) | AC-01, AC-04 | P0       | ✅  |
+| `@main-error` | Access token is rejected after logout                                                       | AC-02, AC-03 | P0       | ✅  |
+| `@main-error` | Refresh token is rejected after logout                                                      | AC-03        | P0       | ✅  |
+| `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       | ✅  |
 
 Active scenario blocks: 5 (3 Outlines + 2 Scenarios)
+E2E automation candidates: 5 of 5 scenarios ✅
 
 ---
 
@@ -72,7 +73,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # confirmed with the FE team before the Playwright selector is written.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario Outline: Logout control is visible and accessible for all roles (AC-01)
     Given I am authenticated as a <role> user
     When I navigate to the authenticated application
@@ -96,7 +97,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # role matrix is in the AC-01 Outline above.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @ac-04 @p0
+  @happy-path @ac-01 @ac-04 @p0 @e2e-ready
   Scenario Outline: Successful logout redirects to login and clears authenticated state (AC-01, AC-04)
     Given I am authenticated as a <role> user
     When I trigger logout
@@ -118,7 +119,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # Note: auth provider (R1) affects how tokens are captured in the test setup.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @ac-03 @p0
+  @main-error @ac-02 @ac-03 @p0 @e2e-ready
   Scenario: Access token is rejected after logout (AC-02, AC-03)
     Given I am authenticated as a "front_office" user
     And I have captured my current access token
@@ -135,7 +136,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # after single-device logout.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-03 @p0
+  @main-error @ac-03 @p0 @e2e-ready
   Scenario: Refresh token is rejected after logout (AC-03)
     Given I am authenticated as a "front_office" user
     And I have captured my current refresh token
@@ -153,7 +154,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # confirmed with FE team once the panel is implemented.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-09 @p1
+  @happy-path @ac-09 @p1 @e2e-ready
   Scenario: Logout from all devices invalidates all active sessions (AC-09)
     Given I am authenticated as a "system_admin" user in session A
     And the same user is also authenticated in session B on a different device or browser context

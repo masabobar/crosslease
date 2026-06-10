@@ -31,22 +31,23 @@ Figma design: Node 2117:11195, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User Mana
 | AC-16 | Export Scope Enforcement — exported data limited to authorized scope; all matching records, not only visible page | `edge-case`        | Export is a secondary workflow; no export panel designed; export scope belongs in dedicated export spec        |
 
 **Gherkin generated for:** AC-01, AC-04, AC-07, AC-08, AC-11
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-02, AC-03, AC-05, AC-06, AC-09, AC-10, AC-12, AC-13, AC-14, AC-15, AC-16
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                           | AC    | Priority |
-| ------------- | ---------------------------------------------------------------------------------- | ----- | -------- |
-| `@happy-path` | Authorized search returns only in-scope users (Scenario Outline — 3 role variants) | AC-01 | P0       |
-| `@happy-path` | Combined filters applied cumulatively yield intersected result set                 | AC-07 | P0       |
-| `@main-error` | Front Office and Back Office/Risk role combination is blocked by governance rule   | AC-04 | P0       |
-| `@main-error` | Tenant-scoped user search never returns users from other tenants                   | AC-08 | P0       |
-| `@main-error` | Zero-results response does not reveal whether unauthorized users exist             | AC-11 | P0       |
+| Tag           | Scenario                                                                           | AC    | Priority | E2E          |
+| ------------- | ---------------------------------------------------------------------------------- | ----- | -------- | ------------ |
+| `@happy-path` | Authorized search returns only in-scope users (Scenario Outline — 3 role variants) | AC-01 | P0       | ✅           |
+| `@happy-path` | Combined filters applied cumulatively yield intersected result set                 | AC-07 | P0       | ✅           |
+| `@main-error` | Front Office and Back Office/Risk role combination is blocked by governance rule   | AC-04 | P0       | ✅           |
+| `@main-error` | Tenant-scoped user search never returns users from other tenants                   | AC-08 | P0       | ⚙️ needs D20 |
+| `@main-error` | Zero-results response does not reveal whether unauthorized users exist             | AC-11 | P0       | ✅           |
 
 Active scenario blocks: 5 (2 Outlines + 3 Scenarios)
+E2E automation candidates: 4 of 5 scenarios ✅
 
 ---
 
@@ -75,7 +76,7 @@ Feature: User Search and Filtering (US 28.5 — PRD1042-72)
   # field names. Design must be updated before these scenarios can be automated.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario Outline: Authorized search returns only in-scope users (AC-01)
     Given I am authenticated as a <role> user
     And at least one user matching "<search_term>" exists within my authorized scope
@@ -100,7 +101,7 @@ Feature: User Search and Filtering (US 28.5 — PRD1042-72)
   # enforced by the user's role scope.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-07 @p0
+  @happy-path @ac-07 @p0 @e2e-ready
   Scenario: Combined filters applied cumulatively yield intersected result set (AC-07)
     Given I am authenticated as a Power User / Admin
     And users with varying roles and MFA statuses exist in the system
@@ -121,7 +122,7 @@ Feature: User Search and Filtering (US 28.5 — PRD1042-72)
   # error message or disabled-state behavior is an open question for BA/Designer.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-04 @p0
+  @main-error @ac-04 @p0 @e2e-ready
   Scenario: Front Office and Back Office/Risk role combination is blocked by governance rule (AC-04)
     Given I am authenticated as a Power User / Admin
     And the Role filter dropdown is open
@@ -159,7 +160,7 @@ Feature: User Search and Filtering (US 28.5 — PRD1042-72)
   # automation. Wildcard enumeration attacks must also be blocked.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-11 @p0
+  @main-error @ac-11 @p0 @e2e-ready
   Scenario: Zero-results response does not reveal whether unauthorized users exist (AC-11)
     Given I am authenticated as a Support User with limited tenant scope
     And a user matching "restricted-admin@platform.com" exists in an unauthorized scope

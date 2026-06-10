@@ -28,22 +28,23 @@ Figma design: None — Stage 2 PARTIAL (backend security story; no dedicated des
 | AC-13 | Admin can manually unlock a locked account; only authorized roles may perform this action | `happy-path`       | Clear E2E admin UI action with observable outcome; RefiNext RBAC rule auto-generates 1 negative scenario (non-admin cannot unlock) — DESIGN GAP: manual unlock UI not yet designed                      |
 
 **Gherkin generated for:** AC-02, AC-03, AC-07, AC-13
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-01, AC-04, AC-05, AC-06, AC-08, AC-09, AC-10, AC-11, AC-12
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                    | AC    | Priority |
-| ------------- | --------------------------------------------------------------------------- | ----- | -------- |
-| `@happy-path` | Account locked after reaching the configured failed login attempt threshold | AC-03 | P0       |
-| `@main-error` | Failed login attempt counter resets on successful authentication            | AC-02 | P0       |
-| `@main-error` | Failed login response is generic and does not reveal credential details     | AC-07 | P0       |
-| `@happy-path` | Admin manually unlocks a locked account — user can log in immediately       | AC-13 | P1       |
-| `@main-error` | Non-admin role cannot perform manual account unlock                         | AC-13 | P0       |
+| Tag           | Scenario                                                                    | AC    | Priority | E2E              |
+| ------------- | --------------------------------------------------------------------------- | ----- | -------- | ---------------- |
+| `@happy-path` | Account locked after reaching the configured failed login attempt threshold | AC-03 | P0       | ⚙️ needs D18     |
+| `@main-error` | Failed login attempt counter resets on successful authentication            | AC-02 | P0       | ⚙️ needs D18     |
+| `@main-error` | Failed login response is generic and does not reveal credential details     | AC-07 | P0       | ✅               |
+| `@happy-path` | Admin manually unlocks a locked account — user can log in immediately       | AC-13 | P1       | ⚙️ needs D18/D19 |
+| `@main-error` | Non-admin role cannot perform manual account unlock                         | AC-13 | P0       | ⚙️ needs D18/D19 |
 
 Active scenario blocks: 5 (0 Outlines + 5 Scenarios)
+E2E automation candidates: 1 of 5 scenarios ✅
 
 ---
 
@@ -101,7 +102,7 @@ Feature: Account Lockout and Failed Login Handling (US 28.9 — PRD1042-46)
   # identical generic message to prevent account enumeration attacks.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-07 @p0
+  @main-error @ac-07 @p0 @e2e-ready
   Scenario: Failed login response is generic and does not reveal credential details (AC-07)
     Given "john.smith@bank.com" exists as an active user
     When I submit a login attempt with the correct email and an incorrect password

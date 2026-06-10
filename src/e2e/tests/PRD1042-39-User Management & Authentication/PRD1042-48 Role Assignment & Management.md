@@ -32,27 +32,28 @@ Design note (WARNINGS): AC-01 (role assignment on user creation) not covered by 
 | AC-16 | Role assignment/change via API violating role, tenant, scope, or permission rules must be rejected; client-side role controls alone must not determine access   | `separate-feature` | Backend/API enforcement — out of E2E UI scope; verified by API integration tests                                                                                                                  |
 
 **Gherkin generated for:** AC-01, AC-04, AC-07, AC-10, AC-13, AC-14, AC-15
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (separate-feature or edge-case):** AC-02 (verified within AC-07), AC-03 (verified within AC-01/AC-07), AC-05, AC-06, AC-08, AC-09, AC-11, AC-12, AC-16
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                  | AC           | Priority |
-| ------------- | --------------------------------------------------------------------------------------------------------- | ------------ | -------- |
-| `@happy-path` | Admin creates a new user with a mandatory role selected before activation                                 | AC-01        | P0       |
-| `@main-error` | Admin attempts to save a new user without selecting a role — blocked                                      | AC-01        | P0       |
-| `@happy-path` | Admin opens Edit role & scope dialog and changes a user's role with reason provided (Four-Eyes flow)      | AC-07, AC-13 | P0       |
-| `@main-error` | Admin submits role change without providing a reason — validation error shown                             | AC-07        | P0       |
-| `@main-error` | Admin assigns a privileged role — Four-Eyes approval alert shown and CTA changes to "Submit for approval" | AC-07        | P0       |
-| `@happy-path` | Admin assigns Auditor role — access validity period becomes mandatory and is shown in ROLE & SCOPE        | AC-15        | P0       |
-| `@main-error` | Admin saves Auditor role assignment without an access validity period — blocked                           | AC-15        | P0       |
-| `@main-error` | Admin attempts to assign a tenant-level role without a tenant — blocked                                   | AC-14        | P0       |
-| `@main-error` | Admin attempts to hold Front Office and Back Office/Risk simultaneously — blocked                         | AC-10        | P0       |
-| `@main-error` | Direct API call attempts to assign multiple roles to a single user — rejected                             | AC-04        | P1       |
+| Tag           | Scenario                                                                                                  | AC           | Priority | E2E |
+| ------------- | --------------------------------------------------------------------------------------------------------- | ------------ | -------- | --- |
+| `@happy-path` | Admin creates a new user with a mandatory role selected before activation                                 | AC-01        | P0       | ✅  |
+| `@main-error` | Admin attempts to save a new user without selecting a role — blocked                                      | AC-01        | P0       | ✅  |
+| `@happy-path` | Admin opens Edit role & scope dialog and changes a user's role with reason provided (Four-Eyes flow)      | AC-07, AC-13 | P0       | ✅  |
+| `@main-error` | Admin submits role change without providing a reason — validation error shown                             | AC-07        | P0       | ✅  |
+| `@main-error` | Admin assigns a privileged role — Four-Eyes approval alert shown and CTA changes to "Submit for approval" | AC-07        | P0       | ✅  |
+| `@happy-path` | Admin assigns Auditor role — access validity period becomes mandatory and is shown in ROLE & SCOPE        | AC-15        | P0       | ✅  |
+| `@main-error` | Admin saves Auditor role assignment without an access validity period — blocked                           | AC-15        | P0       | ✅  |
+| `@main-error` | Admin attempts to assign a tenant-level role without a tenant — blocked                                   | AC-14        | P0       | ✅  |
+| `@main-error` | Admin attempts to hold Front Office and Back Office/Risk simultaneously — blocked                         | AC-10        | P0       | ✅  |
+| `@main-error` | Direct API call attempts to assign multiple roles to a single user — rejected                             | AC-04        | P1       | ✅  |
 
 Active scenario blocks: 10
+E2E automation candidates: 10 of 10 scenarios ✅
 
 ---
 
@@ -80,7 +81,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # 396:18538 — scenario derives directly from story AC requirements.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario: Admin creates a new user with a mandatory role selected before activation (AC-01)
     Given I am logged in as a "Power User"
     When I navigate to the user creation form
@@ -94,7 +95,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
     And the role must be classified as "Tenant-level operational role" in the new user's ROLE & SCOPE section
     And the role assignment must be recorded in the audit trail
 
-  @main-error @ac-01 @p0
+  @main-error @ac-01 @p0 @e2e-ready
   Scenario: Admin attempts to save a new user without selecting a role — blocked (AC-01)
     Given I am logged in as a "Power User"
     When I navigate to the user creation form
@@ -121,7 +122,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # Design evidence: dialog node 396:18538.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-07 @ac-13 @p0
+  @happy-path @ac-07 @ac-13 @p0 @e2e-ready
   Scenario: Admin opens Edit role & scope dialog and changes a user's role with reason provided (AC-07, AC-13)
     Given I am logged in as a "Power User"
     And I have opened the User Detail View for "Anna Kowalski"
@@ -151,7 +152,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # Design evidence: dialog node 396:18538 — Reason for change error label.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-07 @p0
+  @main-error @ac-07 @p0 @e2e-ready
   Scenario: Admin submits role change without providing a reason — validation error shown (AC-07)
     Given I am logged in as a "Power User"
     And I have opened the User Detail View for "Anna Kowalski"
@@ -173,7 +174,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # Design evidence: dialog node 396:18538 — Four-Eyes alert (amber).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-07 @p0
+  @main-error @ac-07 @p0 @e2e-ready
   Scenario: Admin assigns a privileged role — Four-Eyes approval alert shown and CTA changes (AC-07)
     Given I am logged in as a "Power User"
     And I have opened the User Detail View for "Bob Fischer" who currently holds "Support User"
@@ -194,7 +195,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # Design evidence: ROLE & SCOPE section node 396:18538.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-15 @p0
+  @happy-path @ac-15 @p0 @e2e-ready
   Scenario: Admin assigns Auditor role — access validity period becomes mandatory and is shown (AC-15)
     Given I am logged in as a "Power User"
     And I have opened the User Detail View for "Bob Fischer"
@@ -210,7 +211,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
     And an "Audit engagement valid until" date must be displayed matching the end of the validity window
     And the Auditor engagement status must be set to "Active"
 
-  @main-error @ac-15 @p0
+  @main-error @ac-15 @p0 @e2e-ready
   Scenario: Admin saves Auditor role assignment without an access validity period — blocked (AC-15)
     Given I am logged in as a "Power User"
     And I have opened the User Detail View for "Bob Fischer"
@@ -231,7 +232,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # this covers the initial assignment path.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-14 @p0
+  @main-error @ac-14 @p0 @e2e-ready
   Scenario: Admin attempts to assign a tenant-level role without a tenant — blocked (AC-14)
     Given I am logged in as a "Power User"
     When I navigate to the user creation form
@@ -254,7 +255,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # Design gap (MINOR): no FO+BO conflict error state designed.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-10 @p0
+  @main-error @ac-10 @p0 @e2e-ready
   Scenario: Admin attempts to hold Front Office and Back Office/Risk simultaneously — blocked (AC-10)
     Given I am an authenticated "Power User" with a valid API token
     And "Anna Kowalski" currently holds the role "Front Office"
@@ -270,7 +271,7 @@ Feature: Role Assignment & Management (US 28.11 — PRD1042-48)
   # UI has no multi-select; this scenario covers direct API manipulation.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-04 @p1
+  @main-error @ac-04 @p1 @e2e-ready
   Scenario: Direct API call attempts to assign multiple roles to a single user — rejected (AC-04)
     Given I am an authenticated "Power User" with a valid API token
     When I send a direct API request to assign both "Front Office" and "Support User" roles simultaneously to "Bob Fischer"

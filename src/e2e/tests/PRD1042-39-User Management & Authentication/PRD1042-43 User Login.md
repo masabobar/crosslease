@@ -45,21 +45,22 @@ Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (St
 | AC-17 | Session timeout enforcement                          | `Blocked`          | D16 — TEST_TOKEN_TTL_SECONDS env override required                                                 |
 
 **Gherkin generated for:** AC-01, AC-03, AC-06, AC-07, AC-08, AC-09
-**Blocked (pending stubs only):** AC-10, AC-11, AC-12, AC-15, AC-16, AC-17
+**Blocked (no Gherkin):** AC-10, AC-11, AC-12, AC-15, AC-16, AC-17
 **No Gherkin (edge-case or separate-feature):** AC-02, AC-04, AC-05, AC-13, AC-14
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                      | AC                  | Priority |
-| ------------- | ----------------------------------------------------------------------------- | ------------------- | -------- |
-| `@happy-path` | Valid login redirects to role-specific dashboard (Scenario Outline — 6 roles) | AC-03, AC-06, AC-07 | P0       |
-| `@main-error` | Missing required field prevents form submission                               | AC-01               | P0       |
-| `@main-error` | Invalid credentials show generic error message                                | AC-08               | P0       |
-| `@main-error` | Blocked account status prevents login (Scenario Outline — 4 statuses)         | AC-09               | P0       |
+| Tag           | Scenario                                                                      | AC                  | Priority | E2E          |
+| ------------- | ----------------------------------------------------------------------------- | ------------------- | -------- | ------------ |
+| `@happy-path` | Valid login redirects to role-specific dashboard (Scenario Outline — 6 roles) | AC-03, AC-06, AC-07 | P0       | ✅           |
+| `@main-error` | Missing required field prevents form submission                               | AC-01               | P0       | ✅           |
+| `@main-error` | Invalid credentials show generic error message                                | AC-08               | P0       | ✅           |
+| `@main-error` | Blocked account status prevents login (Scenario Outline — 4 statuses)         | AC-09               | P0       | ⚙️ needs D19 |
 
 Active scenario blocks: 4 (2 Outlines + 2 Scenarios)
+E2E automation candidates: 3 of 4 scenarios ✅
 
 ---
 
@@ -83,7 +84,7 @@ Feature: User Login (US 28.1 — PRD1042-43)
   # the landing page content tied to the role — no generic /dashboard redirect.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-03 @ac-06 @ac-07 @p0
+  @happy-path @ac-03 @ac-06 @ac-07 @p0 @e2e-ready
   Scenario Outline: Valid credentials redirect to role-specific landing page (AC-03, AC-06, AC-07)
     Given a "<role>" user with email "<email>" and a valid password exists and is active
     When I enter "<email>" in the "Email address" field
@@ -108,7 +109,7 @@ Feature: User Login (US 28.1 — PRD1042-43)
   # Verifies the Sign in button is disabled / shows errors when fields are empty.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-01 @p0
+  @main-error @ac-01 @p0 @e2e-ready
   Scenario: Empty form submission shows validation errors and does not submit (AC-01)
     Given no credentials have been entered
     When I click the "Sign in" button
@@ -125,7 +126,7 @@ Feature: User Login (US 28.1 — PRD1042-43)
   # string, update this scenario and log a COPY_MISMATCH defect.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-08 @p0
+  @main-error @ac-08 @p0 @e2e-ready
   Scenario: Invalid credentials show generic non-revealing error message (AC-08)
     Given a user with email "valid@refinext-test.com" exists and is active
     When I enter "valid@refinext-test.com" in the "Email address" field

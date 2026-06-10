@@ -31,23 +31,24 @@ Figma design: Node 9:113, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User list & us
 | AC-16 | LC User sees no User Detail View navigation entries, routes, or administration APIs                                                            | `main-error`       | Core business rule: LC Users are completely excluded from User administration — verified via navigation inspection and direct route access attempt                                                                     |
 
 **Gherkin generated for:** AC-01, AC-02, AC-07, AC-16
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, AC-05, AC-06, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                   | AC    | Priority |
-| ------------- | ---------------------------------------------------------------------------------------------------------- | ----- | -------- |
-| `@happy-path` | Authorized role opens User Detail View with role-appropriate sections (Scenario Outline — 3 role variants) | AC-01 | P0       |
-| `@happy-path` | Authenticated user opens their own self-profile                                                            | AC-01 | P0       |
-| `@main-error` | Unauthorized direct URL access to User Detail View is blocked                                              | AC-02 | P0       |
-| `@main-error` | Admin changes a user's email address — re-verification triggered                                           | AC-07 | P1       |
-| `@main-error` | Authenticated user cannot self-service edit their own email address                                        | AC-07 | P1       |
-| `@main-error` | Leasing Company User sees no User Detail View navigation or accessible routes                              | AC-16 | P0       |
+| Tag           | Scenario                                                                                                   | AC    | Priority | E2E                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------- | ----- | -------- | --------------------- |
+| `@happy-path` | Authorized role opens User Detail View with role-appropriate sections (Scenario Outline — 3 role variants) | AC-01 | P0       | ✅                    |
+| `@happy-path` | Authenticated user opens their own self-profile                                                            | AC-01 | P0       | ✅                    |
+| `@main-error` | Unauthorized direct URL access to User Detail View is blocked                                              | AC-02 | P0       | ✅                    |
+| `@main-error` | Admin changes a user's email address — re-verification triggered                                           | AC-07 | P1       | ⚙️ needs email access |
+| `@main-error` | Authenticated user cannot self-service edit their own email address                                        | AC-07 | P1       | ✅                    |
+| `@main-error` | Leasing Company User sees no User Detail View navigation or accessible routes                              | AC-16 | P0       | ✅                    |
 
 Active scenario blocks: 6 (1 Outline + 5 Scenarios)
+E2E automation candidates: 5 of 6 scenarios ✅
 
 ---
 
@@ -74,7 +75,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # Design: ADMIN frame (line 903), SUPPORT frame (line 3276), AUDITOR frame (line 4684).
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario Outline: Authorized role opens User Detail View with role-appropriate sections (AC-01)
     Given I am logged in as a "<role>" user
     When I navigate to the User Detail View for "Anna Kowalski"
@@ -100,7 +101,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # Design: SELF PROFILE - support frame (line 10362) used as reference.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario: Authenticated user opens their own self-profile (AC-01)
     Given I am logged in as a "Support User" with email "support@bank.com"
     When I open my own user profile page
@@ -118,7 +119,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # The system must not reveal whether the target user exists (no enumeration).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @p0
+  @main-error @ac-02 @p0 @e2e-ready
   Scenario: Unauthorized direct URL access to User Detail View is blocked (AC-02)
     Given I am not authenticated
     When I navigate directly to the User Detail View URL for a known user
@@ -153,7 +154,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # DESIGN GAP: email field editability on self-profile not confirmed in design.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-07 @p1
+  @main-error @ac-07 @p1 @e2e-ready
   Scenario: Authenticated user cannot self-service edit their own email address (AC-07)
     Given I am logged in as a "Support User" with email "support@bank.com"
     When I open my own user profile page and attempt to edit my email address field
@@ -169,7 +170,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # self-profile only; no admin User Detail navigation present.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-16 @p0
+  @main-error @ac-16 @p0 @e2e-ready
   Scenario: Leasing Company User sees no User Detail View navigation or accessible routes (AC-16)
     Given I am logged in as a "Leasing Company User"
     When I inspect the application navigation menu

@@ -405,6 +405,44 @@ After generating scenarios, run a coverage check and print the result to termina
 
 ---
 
+## E2E Automation Candidacy
+
+For every `happy-path` and `main-error` scenario, evaluate whether it can be fully automated by Playwright **without any additional test endpoints** beyond what is already provisioned in the project (gate cookie, seeded admin session via `POST /internal/test/session`, standard seeded user accounts).
+
+### Decision rules
+
+**Mark `✅` (automation candidate) when ALL of the following are true:**
+
+1. **Preconditions** — satisfied entirely by seeded test accounts, the existing fixture users, or a standard UI login flow that does not require OTP interception
+2. **Inputs** — all form values, URLs, and selectors are known at test-write time (no dynamic tokens or time-sensitive data required)
+3. **Assertions** — target only observable UI state: visible text, URL, element presence/absence, HTTP status via `page.route()` — nothing that requires reading server-side state directly
+4. **No D-ID dependency** — the scenario does not require any of the following to be resolved first:
+   - D16 — `TEST_TOKEN_TTL_SECONDS` clock/TTL override
+   - D17 — `TEST_JWT_SECRET` or test-forge endpoint for JWT manipulation
+   - D18 — Admin API to reset lockout counter
+   - D19 — Throwaway user creation/deletion API
+   - D20 — Second seeded Bank Tenant B
+   - D21 — `AUDITOR_VALIDITY_MINUTES` override
+5. **No email access** — the scenario does not require reading an inbox, extracting a link from an email, or intercepting an invitation/reset email
+6. **No clock manipulation** — the scenario does not depend on time passing, token expiry, or scheduled state changes
+
+**Mark `⚙️` (needs infra) when ANY of the above is false.** Note the specific blocker (D-ID or reason) in the E2E column cell.
+
+### Common patterns
+
+| Scenario type | Typical verdict | Reason |
+| --- | --- | --- |
+| Login with valid credentials (seeded user) | ✅ | Seeded user exists; UI flow only |
+| Generic error on wrong password | ✅ | No special state; UI assertion only |
+| RBAC: wrong role cannot access page | ✅ | Seeded users exist per role; redirect assertion |
+| Lockout after N failed attempts | ⚙️ | Requires D18 (lockout reset) between test runs |
+| Token expiry blocks access | ⚙️ | Requires D16 or D17 to forge expired state |
+| Invitation activation flow | ⚙️ | Requires D19 (throwaway user with extractable token) |
+| Password reset via emailed link | ⚙️ | Requires email access or D19 |
+| Four-Eyes: same user cannot submit + approve | ✅ | Two seeded users; pure UI/API assertion |
+
+---
+
 ## Tagging convention
 
 ```gherkin
@@ -422,6 +460,7 @@ Scenario: Unauthorized API action rejected
 - `@ac-XX` — Acceptance Criterion (e.g., `@ac-03`)
 - `@p0` / `@p1` / `@p2` / `@p3` — Priority (P0 = blocker, P3 = nice-to-have)
 - `@happy-path` / `@main-error` / `@compliance` / `@exploratory` — Scenario type (use `@main-error`, never `@error-handling`)
+- `@e2e-ready` — Automation candidate: scenario requires no additional test endpoints (see E2E Automation Candidacy section); omit this tag when the scenario needs infra (D16–D21, email, clock)
 - `@pending` — Blocked; no scenario generated, no pending stub written; listed in the Blocked ACs table in the file header only
 
 ---
@@ -460,7 +499,7 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 | AC-04 | <AC description> | `edge-case`        | <why it is not an E2E concern>             |
 
 **Gherkin generated for:** AC-01, AC-05, AC-07, ...
-**Blocked (pending stubs only):** AC-02, AC-06, ...
+**Blocked (no Gherkin):** AC-02, AC-06, ...
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, ...
 
 ---
@@ -469,12 +508,13 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 
 **Order: happy-path rows first, main-error rows second.** Never interleave.
 
-| Tag           | Scenario                                             | AC    | Priority |
-| ------------- | ---------------------------------------------------- | ----- | -------- |
-| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       |
-| `@main-error` | <Scenario title>                                     | AC-XX | P0       |
+| Tag           | Scenario                                             | AC    | Priority | E2E                  |
+| ------------- | ---------------------------------------------------- | ----- | -------- | -------------------- |
+| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       | ✅                   |
+| `@main-error` | <Scenario title>                                     | AC-XX | P0       | ⚙️ needs D19         |
 
 Active scenario blocks: <N> (<N> Outlines + <N> Scenarios)
+E2E automation candidates: <N> of <N> scenarios ✅
 
 ---
 
@@ -497,7 +537,7 @@ Feature: <Story Title> (US X.X — <story-id>)
   # <Note any design gap, copy source, or important constraint.>
   # ---------------------------------------------------------------------------
 
-  @<happy-path|main-error> @ac-XX @p0
+  @<happy-path|main-error> @ac-XX @p0 [@e2e-ready]
   Scenario[Outline]: <Title> (AC-XX)
     Given ...
     When ...
@@ -523,7 +563,7 @@ Feature: <Story Title> (US X.X — <story-id>)
 1. **Header** — five fields exactly as shown; `DoR status` includes AC count, description/stakeholder status, and Jira status in parentheses; `Figma design` includes node ID, file key, screen name, and PARTIAL/COMPLETE note
 2. **Blocked ACs** — always the first section after the header, before the Scope Filter; omit the section entirely if there are no blocked ACs
 3. **AC Scope Filter** — column names are `AC | Description | Classification | Rationale`; `Classification` values are exactly `happy-path`, `main-error`, `edge-case`, `separate-feature`, or `Blocked` (title-case for Blocked); ends with the three-line `**Gherkin generated for / Blocked / No Gherkin**` summary
-4. **Scenarios summary** — table plus `Active scenario blocks: N (N Outlines + N Scenarios)` line; backtick-wrap tag values (e.g. `` `@happy-path` ``); all `@happy-path` rows must appear before any `@main-error` rows — never interleave
+4. **Scenarios summary** — table has columns `Tag | Scenario | AC | Priority | E2E`; the `E2E` column contains `✅` for automation candidates or `⚙️ needs <D-ID or reason>` for scenarios that require additional test endpoints; table ends with `Active scenario blocks` line and `E2E automation candidates: N of N scenarios ✅` line; backtick-wrap tag values (e.g. `` `@happy-path` ``); all `@happy-path` rows must appear before any `@main-error` rows — never interleave
 5. **Feature file** — one single fenced `gherkin` block containing the Feature header, Background, and all scenarios; scenario groups separated by `# ---` comment blocks; never split into per-AC sections
 6. **Comment block format** — exactly 75 dashes, keyword on first line (`# HAPPY PATH`, `# MAIN ERROR`), 1–3 explanation lines, 75 dashes closing; always present before every scenario group
 7. **No Blockers and Gaps Summary** — never include this section in the `.md` file; design gaps, ambiguities, and open questions are logged to terminal output only and never written to the file

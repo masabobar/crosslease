@@ -28,22 +28,23 @@ Figma design: Node 424:3848, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "REACTIVATE"
 | AC-12  | Unauthorized user (wrong role or out-of-scope admin) cannot initiate Restore Access                                                | `main-error`       | RefiNext role-based access domain rule; auto-applied negative scenario                                                                      |
 
 **Gherkin generated for:** AC-01, AC-02, AC-05, AC-06a, AC-12
-**Blocked (no Gherkin, no pending stub):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, AC-06b, AC-07, AC-08, AC-09, AC-10, AC-11
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                           | AC           | Priority |
-| ------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ | -------- |
-| `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles)                          | AC-01, AC-05 | P0       |
-| `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                         | AC-01        | P0       |
-| `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 privilege tiers) | AC-06a       | P0       |
-| `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                | AC-02        | P0       |
-| `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                        | AC-12        | P0       |
+| Tag           | Scenario                                                                                                           | AC           | Priority | E2E          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ | -------- | ------------ |
+| `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles)                          | AC-01, AC-05 | P0       | ⚙️ needs D19 |
+| `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                         | AC-01        | P0       | ⚙️ needs D19 |
+| `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 privilege tiers) | AC-06a       | P0       | ✅           |
+| `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                | AC-02        | P0       | ⚙️ needs D19 |
+| `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                        | AC-12        | P0       | ✅           |
 
 Active scenario blocks: 7 (2 Outlines + 5 Scenarios)
+E2E automation candidates: 3 of 6 scenarios ✅
 
 ---
 
@@ -124,7 +125,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
   # The same user who submitted must NOT be able to approve their own request.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-06a
+  @main-error @ac-06a @e2e-ready
   Scenario Outline: Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (AC-06a)
     Given I am logged in as a "<submitter_role>" user with Four-Eyes required
     And I am on the user detail page for "suspended-user@bank.com"
@@ -143,7 +144,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
       | system_admin   |
       | power_user     |
 
-  @main-error @ac-06a
+  @main-error @ac-06a @e2e-ready
   Scenario: Same user cannot submit and approve their own Restore Access request (AC-06a)
     Given I am logged in as a "system_admin" user
     And I have already submitted a Restore Access request for "suspended-user@bank.com"
@@ -182,7 +183,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
   # Backend/API validation must enforce this — not frontend-only gating.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-12
+  @main-error @ac-12 @e2e-ready
   Scenario: Unauthorized role cannot initiate Restore Access (AC-12)
     Given I am logged in as a "front_office" user
     And the system has a user "suspended-user@bank.com" with status "Suspended"

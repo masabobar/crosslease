@@ -39,27 +39,28 @@ Figma design: Node 167:18629, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Set a new 
 | AC-15 | Audit logging without sensitive data exposure                       | `edge-case`        | Backend/BAIT compliance; not an E2E UI flow                                                         |
 
 **Gherkin generated for:** AC-01, AC-05, AC-07, AC-08, AC-09, AC-10, AC-14
-**Blocked (pending stubs only):** AC-02, AC-06
+**Blocked (no Gherkin):** AC-02, AC-06
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, AC-11, AC-12, AC-13, AC-15
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                        | AC    | Priority |
-| ------------- | ----------------------------------------------------------------------------------------------- | ----- | -------- |
-| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)     | AC-01 | P0       |
-| `@happy-path` | Valid reset request triggers email delivery with reset link                                     | AC-05 | P0       |
-| `@happy-path` | Opening a valid reset link shows the Set a new password screen                                  | AC-07 | P0       |
-| `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states) | AC-08 | P0       |
-| `@main-error` | Weak password that does not meet policy is rejected                                             | AC-09 | P0       |
-| `@main-error` | Mismatched password confirmation blocks submission                                              | AC-09 | P0       |
-| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)           | AC-10 | P0       |
-| `@happy-path` | Security-sensitive role requires MFA verification before password is committed                  | AC-10 | P1       |
-| `@main-error` | User can log in with new password after successful reset                                        | AC-14 | P0       |
-| `@main-error` | Old password is rejected after successful reset                                                 | AC-14 | P0       |
+| Tag           | Scenario                                                                                        | AC    | Priority | E2E                   |
+| ------------- | ----------------------------------------------------------------------------------------------- | ----- | -------- | --------------------- |
+| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)     | AC-01 | P0       | ✅                    |
+| `@happy-path` | Valid reset request triggers email delivery with reset link                                     | AC-05 | P0       | ⚙️ needs email access |
+| `@happy-path` | Opening a valid reset link shows the Set a new password screen                                  | AC-07 | P0       | ⚙️ needs D17/D19      |
+| `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states) | AC-08 | P0       | ⚙️ needs D17          |
+| `@main-error` | Weak password that does not meet policy is rejected                                             | AC-09 | P0       | ⚙️ needs D17/D19      |
+| `@main-error` | Mismatched password confirmation blocks submission                                              | AC-09 | P0       | ⚙️ needs D17/D19      |
+| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)           | AC-10 | P0       | ⚙️ needs D17/D19      |
+| `@happy-path` | Security-sensitive role requires MFA verification before password is committed                  | AC-10 | P1       | ⚙️ needs D17/D19/R1   |
+| `@main-error` | User can log in with new password after successful reset                                        | AC-14 | P0       | ⚙️ needs D17/D19      |
+| `@main-error` | Old password is rejected after successful reset                                                 | AC-14 | P0       | ⚙️ needs D17/D19      |
 
 Active scenario blocks: 10 (3 Outlines + 7 Scenarios)
+E2E automation candidates: 1 of 10 scenarios ✅
 
 ---
 
@@ -83,7 +84,7 @@ Feature: Password Reset (US 28.3 — PRD1042-45)
   # enumeration. The HTTP 200 response must be indistinguishable across cases.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-01 @p0
+  @main-error @ac-01 @p0 @e2e-ready
   Scenario Outline: Forgot Password request returns generic success for any email (AC-01)
     Given I am on the Forgot Password page
     When I submit a password reset request with email "<email>"

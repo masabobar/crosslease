@@ -55,15 +55,16 @@ Figma design: Node 96:71636, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User invita
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                     | AC               | Priority |
-| ------------- | -------------------------------------------------------------------------------------------- | ---------------- | -------- |
-| `@happy-path` | Admin creates invitation for standard platform and tenant roles (Scenario Outline — 3 roles) | AC-01            | P0       |
-| `@happy-path` | Admin invites a privileged role — Four-Eyes approval alert shown, user created as Pending    | AC-01            | P0       |
-| `@main-error` | Missing required Email field prevents invitation form submission                             | AC-01            | P0       |
-| `@happy-path` | Admin resends invitation to a pending user via context menu                                  | AC-14            | P0       |
-| `@main-error` | Leasing Company User cannot access User Management (RBAC domain rule)                        | Visibility rules | P0       |
+| Tag           | Scenario                                                                                     | AC               | Priority | E2E |
+| ------------- | -------------------------------------------------------------------------------------------- | ---------------- | -------- | --- |
+| `@happy-path` | Admin creates invitation for standard platform and tenant roles (Scenario Outline — 3 roles) | AC-01            | P0       | ✅  |
+| `@happy-path` | Admin invites a privileged role — Four-Eyes approval alert shown, user created as Pending    | AC-01            | P0       | ✅  |
+| `@main-error` | Missing required Email field prevents invitation form submission                             | AC-01            | P0       | ✅  |
+| `@happy-path` | Admin resends invitation to a pending user via context menu                                  | AC-14            | P0       | ✅  |
+| `@main-error` | Leasing Company User cannot access User Management (RBAC domain rule)                        | Visibility rules | P0       | ✅  |
 
 Active scenario blocks: 5 (1 Outline + 4 Scenarios)
+E2E automation candidates: 5 of 5 scenarios ✅
 
 ---
 
@@ -92,7 +93,7 @@ Feature: Invitation-based User Onboarding (US 28.8 — PRD1042-44)
   # Design source: "Create & invite user" dialog, ADMIN section of Figma node.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario Outline: Admin creates invitation for standard platform and tenant roles (AC-01)
     When I click the "Invite user" button
     And I fill in the "Email" field with "<email>"
@@ -121,7 +122,7 @@ Feature: Invitation-based User Onboarding (US 28.8 — PRD1042-44)
   # activation. This is the Four-Eyes enforcement visible in the design.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario: Admin invites a privileged role — Four-Eyes approval alert appears and user is Pending (AC-01)
     When I click the "Invite user" button
     And I fill in the "Email" field with "admin2@refinext-test.com"
@@ -140,7 +141,7 @@ Feature: Invitation-based User Onboarding (US 28.8 — PRD1042-44)
   # and a validation error must appear on the Email field.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-01 @p0
+  @main-error @ac-01 @p0 @e2e-ready
   Scenario: Missing Email field prevents invitation form submission (AC-01)
     When I click the "Invite user" button
     And I leave the "Email" field empty
@@ -160,7 +161,7 @@ Feature: Invitation-based User Onboarding (US 28.8 — PRD1042-44)
   # or via a pre-seeded fixture user).
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-14 @p0
+  @happy-path @ac-14 @p0 @e2e-ready
   Scenario: Admin resends invitation to a pending user via context menu (AC-14)
     Given a user with email "pending@refinext-test.com" exists with status "Invited"
     When I open the action menu for the user row with email "pending@refinext-test.com"
@@ -176,7 +177,7 @@ Feature: Invitation-based User Onboarding (US 28.8 — PRD1042-44)
   # User Management route and does not see the invitation controls.
   # ---------------------------------------------------------------------------
 
-  @main-error @p0
+  @main-error @p0 @e2e-ready
   Scenario: Leasing Company User cannot access User Management page (visibility rules)
     Given I am logged in as "leasing_company_user"
     When I navigate to the User Management page
