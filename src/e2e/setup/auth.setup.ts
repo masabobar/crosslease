@@ -16,8 +16,8 @@ setup("authenticate as system_admin", async ({ page }) => {
     )
   }
 
-  await page.goto("/dashboard")
-  await page.waitForURL("/dashboard")
+  await page.goto("/")
+  await page.waitForURL("/")
 
   // POST /internal/test/session bypasses the OTP flow so LoginPage never calls
   // setAuthenticated(true). Write it directly so the Zustand persist layer
