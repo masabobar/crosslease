@@ -25,19 +25,39 @@ export default defineConfig({
   },
 
   projects: [
-    // Runs once per session — submits the dev/staging password gate and saves the cookie
+    // Step 1: submit the HTTP password gate, save cookie to .auth/gate.json
     {
-      name: "setup",
+      name: "gate-setup",
       testDir: "./setup",
-      testMatch: /.*\.setup\.ts/,
+      testMatch: /gate\.setup\.ts/,
     },
+    // Step 2: create app session via POST /internal/test/session, save to .auth/user.json
+    {
+      name: "auth-setup",
+      testDir: "./setup",
+      testMatch: /auth\.setup\.ts/,
+      use: {
+        storageState: ".auth/gate.json",
+      },
+      dependencies: ["gate-setup"],
+    },
+    // Unauthenticated tests (login flow, validation, etc.)
     {
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
         storageState: ".auth/gate.json",
       },
-      dependencies: ["setup"],
+      dependencies: ["gate-setup"],
+    },
+    // Pre-authenticated tests (user management, dashboard, etc.)
+    {
+      name: "chromium-authenticated",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: ".auth/user.json",
+      },
+      dependencies: ["auth-setup"],
     },
   ],
 

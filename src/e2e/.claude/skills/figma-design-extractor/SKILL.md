@@ -22,13 +22,13 @@ Use Figma REST API approach as the primary extraction method. Use `mcp__plugin_f
 ### Step 1 — Get the API key
 
 ```bash
-cat /Users/admin/Desktop/PLAYWRIGHT-FIGMA/.mcp.json | python3 -c "import json,sys; print(json.load(sys.stdin)['mcpServers']['figma']['env']['FIGMA_API_KEY'])"
+TOKEN=$(grep FIGMA_API_KEY /Users/admin/Desktop/HolyCode\ Business\ Process\ Refinext/refinext-app/src/e2e/.env | cut -d= -f2)
 ```
 
 ### Step 2 — Fetch the node tree
 
 ```bash
-TOKEN="<API_KEY_FROM_STEP_1>"
+TOKEN=$(grep FIGMA_API_KEY /Users/admin/Desktop/HolyCode\ Business\ Process\ Refinext/refinext-app/src/e2e/.env | cut -d= -f2)
 curl -s -H "X-Figma-Token: $TOKEN" \
   "https://api.figma.com/v1/files/<fileKey>/nodes?ids=<nodeId>&depth=8" \
   | python3 -c "
