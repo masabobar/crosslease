@@ -1,5 +1,6 @@
 import { AlertTriangle, XCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { UserStatusSchema } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
 
 const AMBER_CLASSES =
@@ -11,7 +12,7 @@ const RED_CLASSES =
 export function UserStatusBanner({ status }: { status: UserStatus }) {
   const { t } = useTranslation("users")
 
-  if (status === "suspended") {
+  if (status === UserStatusSchema.enum.suspended) {
     return (
       <div className={`flex items-center gap-2 ${AMBER_CLASSES}`}>
         <AlertTriangle size={16} className="shrink-0" />
@@ -20,7 +21,7 @@ export function UserStatusBanner({ status }: { status: UserStatus }) {
     )
   }
 
-  if (status === "expired") {
+  if (status === UserStatusSchema.enum.expired) {
     return (
       <div className={`flex items-center gap-2 ${RED_CLASSES}`}>
         <XCircle size={16} className="shrink-0" />
@@ -29,7 +30,7 @@ export function UserStatusBanner({ status }: { status: UserStatus }) {
     )
   }
 
-  if (status === "deactivated") {
+  if (status === UserStatusSchema.enum.deactivated) {
     return (
       <div className={`flex items-center gap-2 ${RED_CLASSES}`}>
         <XCircle size={16} className="shrink-0" />

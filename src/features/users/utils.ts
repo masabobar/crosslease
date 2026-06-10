@@ -9,13 +9,8 @@ import {
   USER_MANAGEMENT_ALLOWED_ROLES,
 } from "@/features/users/types"
 import type { UserRole, UserModalActionType } from "@/features/users/types"
+import { UserStatusSchema } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
-
-const DATE_LOCALE = "en-GB"
-
-const MS_PER_MINUTE = 1000 * 60
-const MS_PER_HOUR = MS_PER_MINUTE * 60
-const MS_PER_DAY = MS_PER_HOUR * 24
 
 export type UserListColumnVisibility = {
   tenant: boolean
@@ -106,6 +101,7 @@ export type UserActionVisibility = {
   canSuspend: boolean
   canReactivate: boolean
   canDeactivate: boolean
+  canResetMfa: boolean
   hasAnyAction: boolean
 }
 
@@ -116,77 +112,36 @@ export function getUserActionVisibility(
 ): UserActionVisibility {
   const isAdmin = viewerRole === SYSTEM_ADMIN_ROLE
   const canApprove =
-    isAdmin && status === "pending_approval" && FOUR_EYES_ROLES.includes(role)
-  const canResendInvitation = isAdmin && status === "invited"
-  const canSuspend = isAdmin && status === "active"
-  const canReactivate = isAdmin && status === "suspended"
+    isAdmin &&
+    status === UserStatusSchema.enum.pending_approval &&
+    FOUR_EYES_ROLES.includes(role)
+  const canResendInvitation =
+    isAdmin && status === UserStatusSchema.enum.invited
+  const canSuspend = isAdmin && status === UserStatusSchema.enum.active
+  const canReactivate = isAdmin && status === UserStatusSchema.enum.suspended
   const canDeactivate =
-    isAdmin && (status === "active" || status === "suspended")
+    isAdmin &&
+    (status === UserStatusSchema.enum.active ||
+      status === UserStatusSchema.enum.suspended)
+  const canResetMfa =
+    isAdmin &&
+    (status === UserStatusSchema.enum.active ||
+      status === UserStatusSchema.enum.suspended)
   return {
     canApprove,
     canResendInvitation,
     canSuspend,
     canReactivate,
     canDeactivate,
+    canResetMfa,
     hasAnyAction:
       canApprove ||
       canResendInvitation ||
       canSuspend ||
       canReactivate ||
-      canDeactivate,
+      canDeactivate ||
+      canResetMfa,
   }
-}
-
-type Translator = (
-  key:
-    | "time.justNow"
-    | "time.minutesAgo"
-    | "time.hoursAgo"
-    | "time.yesterday"
-    | "time.daysAgo",
-  options?: Record<string, unknown>
-) => string
-
-export function formatLastLogin(dateStr: string | null, t: Translator): string {
-  if (!dateStr) return "—"
-
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / MS_PER_MINUTE)
-  const diffHours = Math.floor(diffMs / MS_PER_HOUR)
-  const diffDays = Math.floor(diffMs / MS_PER_DAY)
-
-  if (diffMinutes < 1) return t("time.justNow")
-  if (diffMinutes < 60) return t("time.minutesAgo", { count: diffMinutes })
-  if (diffHours < 24) return t("time.hoursAgo", { count: diffHours })
-  if (diffDays === 1) return t("time.yesterday")
-  if (diffDays < 7) return t("time.daysAgo", { count: diffDays })
-
-  return date.toLocaleDateString(DATE_LOCALE, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-export function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—"
-  return new Date(dateStr).toLocaleDateString(DATE_LOCALE, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-export function formatDateTime(dateStr: string | null): string {
-  if (!dateStr) return "—"
-  const date = new Date(dateStr)
-  return `${date.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString(DATE_LOCALE, { hour: "2-digit", minute: "2-digit" })}`
-}
-
-export function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
 type ActionToastKey =

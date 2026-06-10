@@ -1,4 +1,4 @@
-import type { UserStatus } from "@/features/users/api/schema"
+import type { UserResponse, UserStatus } from "@/features/users/api/schema"
 
 export const USER_ROLES = [
   "system_admin",
@@ -121,7 +121,11 @@ export type UserActionType =
   | "reactivate"
   | "deactivate"
   | "resend-invitation"
-export type UserModalActionType = Exclude<UserActionType, "approve">
+  | "reset-mfa"
+export type UserModalActionType = Exclude<
+  UserActionType,
+  "approve" | "reset-mfa"
+>
 
 export const SYSTEM_ADMIN_ROLE = "system_admin" as const
 export const SUPPORT_USER_ROLE = "support_user" as const
@@ -132,3 +136,13 @@ export const PLATFORM_USER_ROLES: readonly UserRole[] = [
   "support_user",
   "auditor",
 ]
+
+export type InviteSuccessResult =
+  | { type: "invited"; user: UserResponse }
+  | {
+      type: "pending_approval"
+      firstName: string
+      lastName: string
+      email: string
+      subjectId: string | null
+    }

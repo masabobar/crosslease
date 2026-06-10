@@ -10,12 +10,13 @@ import {
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
+import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { getAuditFilterVisibility } from "@/features/audit/types"
 import type { AuditFilterState } from "@/features/audit/types"
 import type { UserRole } from "@/features/users/types"
 import { Button } from "@/components/ui/button"
 import { AUDIT_EVENT_TYPES } from "@/features/audit/api/schema"
-import { formatEventType } from "@/features/audit/utils"
+import { formatEventType } from "@/lib/formatters"
 
 type AuditQuickFiltersProps = {
   appliedFilters: AuditFilterState
@@ -30,7 +31,7 @@ const FILTER_BTN =
 function ActiveBadge({ count }: { count: number }) {
   if (count === 0) return null
   return (
-    <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none">
+    <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-sky-600 text-white text-xs font-medium leading-none">
       {count}
     </span>
   )
@@ -47,7 +48,7 @@ export function AuditQuickFilters({
   const { data: tenantsData } = useTenants(filterVis.tenant)
 
   const tenantOptions = (tenantsData?.tenants ?? [])
-    .filter(ten => ten.status === "active")
+    .filter(ten => ten.status === TenantStatusSchema.enum.active)
     .map(ten => ({ value: ten.id, label: ten.name }))
 
   return (

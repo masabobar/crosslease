@@ -251,13 +251,12 @@ function UserActionModal({
       form.reset()
       onSuccess()
     } catch (err) {
-      if (err instanceof ApiError) {
-        form.setError("root", {
-          message: t(`errors.${err.code}`, {
-            defaultValue: t("errors.generic"),
-          }),
-        })
-      }
+      form.setError("root", {
+        message:
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic"),
+      })
     }
   })
 

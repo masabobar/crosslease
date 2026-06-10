@@ -1,5 +1,12 @@
 import { z } from "zod"
 
+export const ResetPasswordResponseSchema = z.object({
+  mfa_required: z.boolean(),
+  mfa_token: z.string().nullable().optional(),
+})
+
+export type ResetPasswordResponse = z.infer<typeof ResetPasswordResponseSchema>
+
 export const ForgotPasswordInputSchema = z.object({
   email: z.string().min(1).email(),
 })

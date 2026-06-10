@@ -1,19 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  rejectGovernedAction,
-  GOVERNED_ACTIONS_QUERY_KEYS,
-} from "@/features/governed-actions/api/governedActionsApi"
+import { rejectGovernedAction } from "@/features/governed-actions/api/governedActionsApi"
+import { createGovernedActionMutation } from "@/features/governed-actions/hooks/createGovernedActionMutation"
 
-export function useRejectAction() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ id, comment }: { id: string; comment?: string }) =>
-      rejectGovernedAction(id, comment),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: GOVERNED_ACTIONS_QUERY_KEYS.lists(),
-      })
-    },
-  })
-}
+export const useRejectAction = createGovernedActionMutation(
+  ({ id, comment }: { id: string; comment?: string }) =>
+    rejectGovernedAction(id, comment)
+)

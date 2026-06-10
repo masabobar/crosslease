@@ -17,7 +17,7 @@ import { useRejectAction } from "@/features/governed-actions/hooks/useRejectActi
 import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { USER_ROLES } from "@/features/users/types"
-import { formatDateTime } from "@/features/users/utils"
+import { formatDateTime } from "@/lib/formatters"
 import type { UserRole } from "@/features/users/types"
 import {
   roleChangeSnapshot,
@@ -65,6 +65,21 @@ function FieldRow({
   )
 }
 
+const CHANGE_BOX_STYLES = {
+  current: {
+    wrapper:
+      "bg-red-500/10 border border-red-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3",
+    label: "text-xs font-semibold text-red-700 uppercase",
+    value: "text-sm text-red-700 mt-1",
+  },
+  proposed: {
+    wrapper:
+      "bg-green-500/10 border border-green-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3",
+    label: "text-xs font-semibold text-green-700 uppercase",
+    value: "text-sm text-green-700 mt-1",
+  },
+} as const
+
 function ChangeBox({
   variant,
   label,
@@ -74,21 +89,7 @@ function ChangeBox({
   label: string
   children: React.ReactNode
 }) {
-  const styles =
-    variant === "current"
-      ? {
-          wrapper:
-            "bg-[rgba(224,52,52,0.1)] border border-[rgba(224,52,52,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3",
-          label: "text-xs font-semibold text-[#c10007] uppercase",
-          value: "text-sm text-[#c10007] mt-1",
-        }
-      : {
-          wrapper:
-            "bg-[rgba(22,163,74,0.1)] border border-[rgba(22,163,74,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3",
-          label: "text-xs font-semibold text-[#008236] uppercase",
-          value: "text-sm text-[#008236] mt-1",
-        }
-
+  const styles = CHANGE_BOX_STYLES[variant]
   return (
     <div className={styles.wrapper}>
       <p className={styles.label}>{label}</p>
@@ -107,7 +108,7 @@ function ChainEntry({
   status: GovernedActionStatus
 }) {
   const dotColor: Record<GovernedActionStatus, string> = {
-    pending: "bg-[#d97706]",
+    pending: "bg-amber-600",
     approved: "bg-green-500",
     rejected: "bg-red-500",
     expired: "bg-slate-300",

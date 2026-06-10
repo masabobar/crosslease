@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   LoginInputSchema,
   LoginResponseSchema,
-  MfaRequiredResponseSchema,
+  LoginStepResponseSchema,
   VerifyOtpInputSchema,
 } from "@/features/auth/api/schema"
 
@@ -32,24 +32,43 @@ describe("LoginInputSchema", () => {
   })
 })
 
-describe("MfaRequiredResponseSchema", () => {
-  it("accepts a valid MFA response", () => {
+describe("LoginStepResponseSchema", () => {
+  it("accepts an otp step response", () => {
     expect(() =>
-      MfaRequiredResponseSchema.parse({
-        status: "MFA_REQUIRED",
-        verification_token: "tok",
+      LoginStepResponseSchema.parse({
+        next_step: "otp",
+        token: "tok",
         expires_in: 300,
       })
     ).not.toThrow()
   })
 
-  it("rejects wrong status", () => {
+  it("accepts a session step response with null token", () => {
     expect(() =>
-      MfaRequiredResponseSchema.parse({
-        status: "OTHER",
-        verification_token: "tok",
+      LoginStepResponseSchema.parse({ next_step: "session", token: null })
+    ).not.toThrow()
+  })
+
+  it("accepts mfa and mfa_setup steps", () => {
+    expect(() =>
+      LoginStepResponseSchema.parse({
+        next_step: "mfa",
+        token: "tok",
         expires_in: 300,
       })
+    ).not.toThrow()
+    expect(() =>
+      LoginStepResponseSchema.parse({
+        next_step: "mfa_setup",
+        token: "tok",
+        expires_in: 300,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects unknown next_step", () => {
+    expect(() =>
+      LoginStepResponseSchema.parse({ next_step: "unknown", token: "tok" })
     ).toThrow()
   })
 })

@@ -1,19 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  reInitiateGovernedAction,
-  GOVERNED_ACTIONS_QUERY_KEYS,
-} from "@/features/governed-actions/api/governedActionsApi"
+import { reInitiateGovernedAction } from "@/features/governed-actions/api/governedActionsApi"
+import { createGovernedActionMutation } from "@/features/governed-actions/hooks/createGovernedActionMutation"
 
-export function useReInitiateAction() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
-      reInitiateGovernedAction(id, reason),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: GOVERNED_ACTIONS_QUERY_KEYS.lists(),
-      })
-    },
-  })
-}
+export const useReInitiateAction = createGovernedActionMutation(
+  ({ id, reason }: { id: string; reason?: string }) =>
+    reInitiateGovernedAction(id, reason)
+)

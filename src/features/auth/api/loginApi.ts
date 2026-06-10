@@ -1,8 +1,8 @@
 import { api } from "@/lib/api"
-import { MfaRequiredResponseSchema, LoginResponseSchema } from "./schema"
+import { LoginStepResponseSchema, LoginResponseSchema } from "./schema"
 import type {
   LoginInput,
-  MfaRequiredResponse,
+  LoginStepResponse,
   VerifyOtpInput,
   LoginResponse,
   ResendOtpInput,
@@ -10,16 +10,16 @@ import type {
 
 export async function login(
   credentials: LoginInput
-): Promise<MfaRequiredResponse> {
+): Promise<LoginStepResponse> {
   const data = await api.post("/auth/login", credentials)
-  return MfaRequiredResponseSchema.parse(data)
+  return LoginStepResponseSchema.parse(data)
 }
 
 export async function verifyOtp(input: VerifyOtpInput): Promise<LoginResponse> {
-  const data = await api.post("/auth/verify-otp", input)
+  const data = await api.post("/auth/otp/verify", input)
   return LoginResponseSchema.parse(data)
 }
 
 export async function resendOtp(input: ResendOtpInput): Promise<void> {
-  await api.post("/auth/resend-otp", input)
+  await api.post("/auth/otp/resend", input)
 }

@@ -27,7 +27,7 @@ describe("validateActivationToken", () => {
     mockApi.get.mockResolvedValue(undefined)
     await validateActivationToken("abc123")
     expect(mockApi.get).toHaveBeenCalledWith(
-      `/auth/validate-token?token=${encodeURIComponent("abc123")}`
+      `/auth/invite/validate-token?token=${encodeURIComponent("abc123")}`
     )
   })
 
@@ -40,14 +40,25 @@ describe("validateActivationToken", () => {
 })
 
 describe("activateSetPassword", () => {
-  it("calls api.post with token, password, and password_confirm as distinct values", async () => {
-    mockApi.post.mockResolvedValue(undefined)
-    await activateSetPassword("tok", "Abcdef1!", "Abcdef1@")
-    expect(mockApi.post).toHaveBeenCalledWith("/auth/set-password", {
+  it("calls api.post with token, password, and password_confirm and returns parsed response", async () => {
+    mockApi.post.mockResolvedValue({ mfa_enrollment_required: false })
+    const result = await activateSetPassword("tok", "Abcdef1!", "Abcdef1@")
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/invite/set-password", {
       token: "tok",
       password: "Abcdef1!",
       password_confirm: "Abcdef1@",
     })
+    expect(result.mfa_enrollment_required).toBe(false)
+  })
+
+  it("returns mfa_enrollment_required=true with mfa_token when MFA setup is needed", async () => {
+    mockApi.post.mockResolvedValue({
+      mfa_enrollment_required: true,
+      mfa_token: "mfa-tok",
+    })
+    const result = await activateSetPassword("tok", "Abcdef1!", "Abcdef1!")
+    expect(result.mfa_enrollment_required).toBe(true)
+    expect(result.mfa_token).toBe("mfa-tok")
   })
 
   it("propagates errors from the API", async () => {

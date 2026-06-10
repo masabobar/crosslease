@@ -97,9 +97,29 @@ export default function LoginPage() {
     setServerError(null)
     try {
       const result = await login(data)
-      setVerificationToken(result.verification_token)
-      setEmailForOtp(data.email)
-      setStep("otp")
+      if (result.next_step === "session") {
+        setAuthenticated(true)
+        navigate(PATHS.DASHBOARD)
+        return
+      }
+      if (result.next_step === "otp") {
+        setVerificationToken(result.token ?? "")
+        setEmailForOtp(data.email)
+        setStep("otp")
+        return
+      }
+      if (result.next_step === "mfa") {
+        navigate(PATHS.MFA_VERIFY, {
+          state: { mfa_token: result.token ?? "", email: data.email },
+        })
+        return
+      }
+      if (result.next_step === "mfa_setup") {
+        navigate(PATHS.MFA_ENROLL, {
+          state: { mfa_token: result.token ?? "" },
+        })
+        return
+      }
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
       setServerError(errorMessages[code] ?? t("login.errors.default"))
