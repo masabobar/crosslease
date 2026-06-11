@@ -9,8 +9,12 @@ export const AUDIT_TENANT_VISIBLE_ROLES: readonly UserRole[] = ["system_admin"]
 export type AuditFilterState = {
   search: string | null
   event_type: string[]
+  entity_type: string | null
   entity_id: string | null
   actor_id: string | null
+  action_type: string | null
+  trigger_source: string | null
+  sensitive: boolean | null
   from_dt: string | null
   to_dt: string | null
   result: string | null
@@ -21,8 +25,12 @@ export type AuditFilterState = {
 export const EMPTY_AUDIT_FILTER_STATE: AuditFilterState = {
   search: null,
   event_type: [],
+  entity_type: null,
   entity_id: null,
   actor_id: null,
+  action_type: null,
+  trigger_source: null,
+  sensitive: null,
   from_dt: null,
   to_dt: null,
   result: null,

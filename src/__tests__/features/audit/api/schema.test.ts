@@ -14,6 +14,7 @@ const validAuditEvent = {
   action_type: "state_transition",
   event_type: "user.suspended",
   actor_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  actor_display: "Klaus Bauer",
   actor_type: "human_user",
   old_data: null,
   new_data: null,

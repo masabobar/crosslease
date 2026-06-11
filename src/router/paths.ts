@@ -19,8 +19,13 @@ export const PATHS = {
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
   SETTINGS_PROFILE: "/settings/profile",
   AUDIT_TRAIL: "/platform-administration/audit-trail",
+  AUDIT_TRAIL_DETAIL: "/platform-administration/audit-trail/:eventId",
 } as const
 
 export function adminUserDetail(id: string): string {
   return PATHS.USER_DETAIL.replace(":id", id)
+}
+
+export function auditTrailDetail(eventId: string): string {
+  return PATHS.AUDIT_TRAIL_DETAIL.replace(":eventId", eventId)
 }

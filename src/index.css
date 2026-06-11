@@ -169,7 +169,19 @@
   width: 100% !important;
 }
 
-/* Explicit border + background per variant (Sonner CSS vars don't always cascade) */
+/* Base layout — Figma: p-2 (8px), gap-2 (8px) vs Sonner defaults p-4/gap-6px */
+[data-sonner-toast].cn-toast {
+  padding: 8px !important;
+  gap: 8px !important;
+}
+
+/* Content area grows to fill space between icon and buttons */
+[data-sonner-toast].cn-toast [data-content] {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* Explicit border + background per variant */
 [data-sonner-toast].cn-toast[data-type="info"] {
   background: var(--card) !important;
   border-color: var(--info) !important;
@@ -187,7 +199,7 @@
   border-color: var(--destructive) !important;
 }
 
-/* Icon badge — rounded container with tinted background */
+/* Icon badge — rounded container with tinted background, reset Sonner margins */
 [data-sonner-toast].cn-toast .cn-toast-icon {
   display: flex !important;
   align-items: center !important;
@@ -197,6 +209,14 @@
   border-radius: 6px !important;
   padding: 4px !important;
   flex-shrink: 0;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+[data-sonner-toast].cn-toast:not([data-type]) .cn-toast-icon,
+[data-sonner-toast].cn-toast[data-type="default"] .cn-toast-icon {
+  color: var(--foreground);
+  background: var(--accent);
 }
 [data-sonner-toast].cn-toast[data-type="info"] .cn-toast-icon {
   color: var(--info);
@@ -215,7 +235,7 @@
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
 }
 
-/* Action button — outlined with 10px radius (matches Figma rounded-field) */
+/* Action button — outlined with 10px radius, reset Sonner margin-left: auto */
 [data-sonner-toast].cn-toast .cn-toast-action {
   height: auto !important;
   padding: 4px 8px !important;
@@ -225,6 +245,8 @@
   background: transparent !important;
   border-width: 1px !important;
   border-style: solid !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 [data-sonner-toast].cn-toast:not([data-type]) .cn-toast-action,
@@ -249,14 +271,15 @@
   border-color: var(--destructive) !important;
 }
 
-/* Close button — reposition from absolute top-left to inline right */
+/* Close button — inline at end of flex row, transparent, reset absolute positioning */
 [data-sonner-toast].cn-toast .cn-toast-close {
   position: static !important;
   top: auto !important;
   left: auto !important;
+  right: auto !important;
   transform: none !important;
   order: 999;
-  margin-left: auto !important;
+  margin-left: 0 !important;
   width: 20px !important;
   height: 20px !important;
   border: none !important;
@@ -289,7 +312,7 @@
   color: var(--destructive) !important;
 }
 
-/* Title text — text-sm/medium, foreground */
+/* Title — text-sm/medium */
 [data-sonner-toast].cn-toast .cn-toast-title {
   font-size: 0.875rem !important;
   font-weight: 500 !important;
@@ -297,7 +320,7 @@
   color: var(--foreground) !important;
 }
 
-/* Description text — text-sm/regular, muted at 80% opacity (per Figma) */
+/* Description — text-sm/regular, muted at 80% opacity */
 [data-sonner-toast].cn-toast .cn-toast-description {
   font-size: 0.875rem !important;
   font-weight: 400 !important;

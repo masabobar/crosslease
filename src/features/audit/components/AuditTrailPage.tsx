@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
@@ -10,19 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import { AuditTable } from "@/features/audit/components/AuditTable"
-import { AuditEventDrawer } from "@/features/audit/components/AuditEventDrawer"
 import { AuditQuickFilters } from "@/features/audit/components/AuditQuickFilters"
 import { useAuditEvents } from "@/features/audit/hooks/useAuditEvents"
-import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import {
-  EMPTY_AUDIT_FILTER_STATE,
-  getAuditFilterVisibility,
-} from "@/features/audit/types"
+import { EMPTY_AUDIT_FILTER_STATE } from "@/features/audit/types"
 import type { AuditFilterState } from "@/features/audit/types"
 import type { AuditEvent } from "@/features/audit/api/schema"
 import { formatDate, formatEventType } from "@/lib/formatters"
+import { auditTrailDetail } from "@/router/paths"
 
 const PAGE_SIZES = [10, 25, 50, 100] as const
 type PageSize = (typeof PAGE_SIZES)[number]
@@ -83,8 +78,15 @@ function useAuditListParams() {
   const appliedFilters: AuditFilterState = {
     search: params.get("search"),
     event_type: params.getAll("event_type"),
+    entity_type: params.get("entity_type"),
     entity_id: params.get("entity_id"),
     actor_id: params.get("actor_id"),
+    action_type: params.get("action_type"),
+    trigger_source: params.get("trigger_source"),
+    sensitive:
+      params.get("sensitive") !== null
+        ? params.get("sensitive") === "true"
+        : null,
     from_dt: params.get("from_dt"),
     to_dt: params.get("to_dt"),
     tenant_id: params.get("tenant_id"),
@@ -103,8 +105,13 @@ function useAuditListParams() {
     update(
       {
         search: filters.search,
+        entity_type: filters.entity_type,
         entity_id: filters.entity_id,
         actor_id: filters.actor_id,
+        action_type: filters.action_type,
+        trigger_source: filters.trigger_source,
+        sensitive:
+          filters.sensitive !== null ? String(filters.sensitive) : null,
         from_dt: filters.from_dt,
         to_dt: filters.to_dt,
         tenant_id: filters.tenant_id,
@@ -151,10 +158,7 @@ function FilterPill({ label, onRemove, testId }: FilterPillProps) {
 
 export default function AuditTrailPage() {
   const { t } = useTranslation("audit")
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
-  const { data: currentUser } = useCurrentUser()
-  const filterVis = getAuditFilterVisibility(currentUser?.role)
-
+  const navigate = useNavigate()
   const {
     page,
     perPage,
@@ -174,6 +178,7 @@ export default function AuditTrailPage() {
         : undefined,
     entity_id: appliedFilters.entity_id ?? undefined,
     actor_id: appliedFilters.actor_id ?? undefined,
+    sensitive: appliedFilters.sensitive ?? undefined,
     from_dt: appliedFilters.from_dt ?? undefined,
     to_dt: appliedFilters.to_dt ?? undefined,
     result: appliedFilters.result ?? undefined,
@@ -182,16 +187,14 @@ export default function AuditTrailPage() {
 
   const activeFilterCount =
     appliedFilters.event_type.length +
-    (appliedFilters.entity_id ? 1 : 0) +
     (appliedFilters.actor_id ? 1 : 0) +
     (appliedFilters.from_dt || appliedFilters.to_dt ? 1 : 0) +
-    (filterVis.tenant && appliedFilters.tenant_id ? 1 : 0) +
-    (appliedFilters.result ? 1 : 0)
+    (appliedFilters.sensitive ? 1 : 0)
 
   const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
 
   function handleRowClick(event: AuditEvent) {
-    setSelectedEventId(event.id)
+    navigate(auditTrailDetail(event.id))
   }
 
   return (
@@ -214,7 +217,6 @@ export default function AuditTrailPage() {
         onFilterChange={update =>
           setAppliedFilters({ ...appliedFilters, ...update })
         }
-        viewerRole={currentUser?.role}
       />
 
       {/* Active filter pills */}
@@ -266,18 +268,6 @@ export default function AuditTrailPage() {
             />
           )}
 
-          {appliedFilters.entity_id && (
-            <FilterPill
-              label={t("page.filters.userAffectedPill", {
-                value: appliedFilters.entity_id.slice(0, 8) + "…",
-              })}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, entity_id: null })
-              }
-              testId="filter-pill-remove-user-affected"
-            />
-          )}
-
           {appliedFilters.actor_id && (
             <FilterPill
               label={t("page.filters.performedByPill", {
@@ -287,30 +277,6 @@ export default function AuditTrailPage() {
                 setAppliedFilters({ ...appliedFilters, actor_id: null })
               }
               testId="filter-pill-remove-performed-by"
-            />
-          )}
-
-          {filterVis.tenant && appliedFilters.tenant_id && (
-            <FilterPill
-              label={t("page.filters.tenantPill", {
-                value: appliedFilters.tenant_id,
-              })}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, tenant_id: null })
-              }
-              testId="filter-pill-remove-tenant"
-            />
-          )}
-
-          {appliedFilters.result && (
-            <FilterPill
-              label={t("page.filters.resultPill", {
-                value: appliedFilters.result,
-              })}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, result: null })
-              }
-              testId="filter-pill-remove-result"
             />
           )}
 
@@ -413,11 +379,6 @@ export default function AuditTrailPage() {
           </div>
         </div>
       )}
-
-      <AuditEventDrawer
-        eventId={selectedEventId}
-        onClose={() => setSelectedEventId(null)}
-      />
     </div>
   )
 }
