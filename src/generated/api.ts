@@ -220,6 +220,9 @@ const ChangeEmailRequest = z
   .passthrough()
 const GovernedActionType = z.enum([
   "tenant_create",
+  "tenant_suspend",
+  "tenant_reactivate",
+  "tenant_archive",
   "user_platform_invite",
   "user_role_change",
   "user_auditor_period_update",
@@ -349,6 +352,7 @@ const TenantListResponse = z
     default_currency: z.string(),
     tenant_type: TenantType,
     status: TenantStatus,
+    active_module_count: z.number().int(),
   })
   .passthrough()
 const PaginatedTenantsResponse = z
@@ -379,6 +383,28 @@ const TenantResponse = z
     mfa_required: z.boolean(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const UpdateTenantRequest = z
+  .object({
+    name: z.union([z.string(), z.null()]),
+    legal_entity_name: z.union([z.string(), z.null()]),
+    description: z.union([z.string(), z.null()]),
+    legal_hold_flag: z.union([z.boolean(), z.null()]),
+    justification: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const SuspendTenantRequest = z
+  .object({ justification: z.string().min(30) })
+  .passthrough()
+const ReactivateTenantRequest = z
+  .object({ justification: z.string().min(20) })
+  .passthrough()
+const ArchiveTenantRequest = z
+  .object({
+    justification: z.string().min(50),
+    irreversibility_acknowledgement: z.boolean(),
   })
   .passthrough()
 const MfaPolicyRequest = z.object({ mfa_required: z.boolean() }).passthrough()
@@ -474,6 +500,7 @@ const AuditEventResponse = z
     event_type: z.string(),
     actor_id: z.string(),
     actor_type: z.string(),
+    actor_display: z.union([z.string(), z.null()]),
     old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     changed_fields: z.union([z.array(z.string()), z.null()]),
@@ -558,6 +585,10 @@ export const schemas = {
   TenantListResponse,
   PaginatedTenantsResponse,
   TenantResponse,
+  UpdateTenantRequest,
+  SuspendTenantRequest,
+  ReactivateTenantRequest,
+  ArchiveTenantRequest,
   MfaPolicyRequest,
   PlatformModuleEntry,
   PlatformModulesResponse,
@@ -1398,6 +1429,31 @@ On reject/withdraw/expire the tenant is archived.
     requestFormat: "json",
     parameters: [
       {
+        name: "status",
+        type: "Query",
+        schema: z.array(TenantStatus).optional().default([]),
+      },
+      {
+        name: "tenant_type",
+        type: "Query",
+        schema: z.array(TenantType).optional().default([]),
+      },
+      {
+        name: "country",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "from_date",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "to_date",
+        type: "Query",
+        schema: search,
+      },
+      {
         name: "page",
         type: "Query",
         schema: z.number().int().gte(1).optional().default(1),
@@ -1439,6 +1495,32 @@ On reject/withdraw/expire the tenant is archived.
     ],
   },
   {
+    method: "patch",
+    path: "/api/v1/tenants/:id",
+    alias: "update_tenant_api_v1_tenants__id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateTenantRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: TenantResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/tenants/:id/activate",
     alias: "activate_tenant_api_v1_tenants__id__activate_post",
@@ -1451,6 +1533,32 @@ On reject/withdraw/expire the tenant is archived.
       },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:id/archive",
+    alias: "archive_tenant_api_v1_tenants__id__archive_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: ArchiveTenantRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GovernedActionResponse,
     errors: [
       {
         status: 422,
@@ -1484,6 +1592,58 @@ No existing sessions are invalidated immediately.
       },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:id/reactivate",
+    alias: "reactivate_tenant_api_v1_tenants__id__reactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ justification: z.string().min(20) }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:id/suspend",
+    alias: "suspend_tenant_api_v1_tenants__id__suspend_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ justification: z.string().min(30) }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GovernedActionResponse,
     errors: [
       {
         status: 422,

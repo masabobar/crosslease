@@ -1279,6 +1279,74 @@
         "operationId": "list_tenants_api_v1_tenants_get",
         "parameters": [
           {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/TenantStatus" },
+              "description": "Filter by status, repeatable",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by status, repeatable"
+          },
+          {
+            "name": "tenant_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/TenantType" },
+              "description": "Filter by tenant type, repeatable",
+              "default": [],
+              "title": "Tenant Type"
+            },
+            "description": "Filter by tenant type, repeatable"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 2 },
+                { "type": "null" }
+              ],
+              "description": "ISO alpha-2 country code",
+              "title": "Country"
+            },
+            "description": "ISO alpha-2 country code"
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Created on or after (YYYY-MM-DD)",
+              "title": "From Date"
+            },
+            "description": "Created on or after (YYYY-MM-DD)"
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Created on or before (YYYY-MM-DD)",
+              "title": "To Date"
+            },
+            "description": "Created on or before (YYYY-MM-DD)"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -1372,6 +1440,176 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/TenantResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Tenants"],
+        "summary": "Update Tenant",
+        "operationId": "update_tenant_api_v1_tenants__id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateTenantRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TenantResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{id}/suspend": {
+      "post": {
+        "tags": ["Tenants"],
+        "summary": "Suspend Tenant",
+        "operationId": "suspend_tenant_api_v1_tenants__id__suspend_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SuspendTenantRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{id}/reactivate": {
+      "post": {
+        "tags": ["Tenants"],
+        "summary": "Reactivate Tenant",
+        "operationId": "reactivate_tenant_api_v1_tenants__id__reactivate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactivateTenantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{id}/archive": {
+      "post": {
+        "tags": ["Tenants"],
+        "summary": "Archive Tenant",
+        "operationId": "archive_tenant_api_v1_tenants__id__archive_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ArchiveTenantRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
               }
             }
           },
@@ -2360,6 +2598,22 @@
         "type": "object",
         "title": "ApproveRejectRequest"
       },
+      "ArchiveTenantRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "minLength": 50,
+            "title": "Justification"
+          },
+          "irreversibility_acknowledgement": {
+            "type": "boolean",
+            "title": "Irreversibility Acknowledgement"
+          }
+        },
+        "type": "object",
+        "required": ["justification", "irreversibility_acknowledgement"],
+        "title": "ArchiveTenantRequest"
+      },
       "AuditEventResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -2380,6 +2634,10 @@
           "event_type": { "type": "string", "title": "Event Type" },
           "actor_id": { "type": "string", "title": "Actor Id" },
           "actor_type": { "type": "string", "title": "Actor Type" },
+          "actor_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Display"
+          },
           "old_data": {
             "anyOf": [
               { "additionalProperties": true, "type": "object" },
@@ -2453,6 +2711,7 @@
           "event_type",
           "actor_id",
           "actor_type",
+          "actor_display",
           "old_data",
           "new_data",
           "changed_fields",
@@ -2771,6 +3030,9 @@
         "type": "string",
         "enum": [
           "tenant_create",
+          "tenant_suspend",
+          "tenant_reactivate",
+          "tenant_archive",
           "user_platform_invite",
           "user_role_change",
           "user_auditor_period_update",
@@ -3186,6 +3448,18 @@
         "type": "object",
         "title": "ReInitiateRequest"
       },
+      "ReactivateTenantRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "ReactivateTenantRequest"
+      },
       "ReactivateUserRequest": {
         "properties": {
           "reason": { "$ref": "#/components/schemas/ReactivationReason" },
@@ -3396,6 +3670,18 @@
         "type": "object",
         "title": "SetPasswordResponse"
       },
+      "SuspendTenantRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "minLength": 30,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "SuspendTenantRequest"
+      },
       "SuspendUserRequest": {
         "properties": {
           "reason": { "$ref": "#/components/schemas/SuspensionReason" },
@@ -3444,7 +3730,11 @@
           "country": { "type": "string", "title": "Country" },
           "default_currency": { "type": "string", "title": "Default Currency" },
           "tenant_type": { "$ref": "#/components/schemas/TenantType" },
-          "status": { "$ref": "#/components/schemas/TenantStatus" }
+          "status": { "$ref": "#/components/schemas/TenantStatus" },
+          "active_module_count": {
+            "type": "integer",
+            "title": "Active Module Count"
+          }
         },
         "type": "object",
         "required": [
@@ -3455,7 +3745,8 @@
           "country",
           "default_currency",
           "tenant_type",
-          "status"
+          "status",
+          "active_module_count"
         ],
         "title": "TenantListResponse"
       },
@@ -3619,6 +3910,38 @@
         },
         "type": "object",
         "title": "UpdateMeRequest"
+      },
+      "UpdateTenantRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200, "minLength": 2 },
+              { "type": "null" }
+            ],
+            "title": "Name"
+          },
+          "legal_entity_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 300, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Legal Entity Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "legal_hold_flag": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Legal Hold Flag"
+          },
+          "justification": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "title": "UpdateTenantRequest"
       },
       "UserDetailResponse": {
         "properties": {
