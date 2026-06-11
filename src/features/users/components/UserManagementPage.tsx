@@ -455,6 +455,7 @@ export default function UserManagementPage() {
             onAction={handleAction}
             onRowClick={user => setSelectedUserId(user.id)}
             viewerRole={currentUser?.role}
+            currentUserId={currentUser?.id}
           />
         )}
       </div>
@@ -533,6 +534,7 @@ export default function UserManagementPage() {
         onClose={() => setSelectedUserId(null)}
         onAction={(type, user) => void handleDrawerAction(type, user)}
         viewerRole={currentUser?.role}
+        currentUserId={currentUser?.id}
       />
 
       {canInvite && (

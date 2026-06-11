@@ -47,6 +47,7 @@ type UserTableProps = {
   onAction?: (type: UserActionType, user: UserListItem) => void
   onRowClick?: (user: UserListItem) => void
   viewerRole?: UserRole
+  currentUserId?: string
 }
 
 type SortableHeaderProps = {
@@ -88,9 +89,10 @@ type KebabMenuProps = {
   user: UserListItem
   viewerRole: UserRole | undefined
   onAction?: (type: UserActionType) => void
+  isSelf: boolean
 }
 
-function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
+function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
   const { t } = useTranslation("users")
 
   const {
@@ -103,7 +105,7 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
     hasAnyAction: hasActions,
   } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
 
-  if (!hasActions) {
+  if (!hasActions || isSelf) {
     return (
       <Button
         variant="ghost"
@@ -197,6 +199,7 @@ function UserTable({
   onAction,
   onRowClick,
   viewerRole,
+  currentUserId,
 }: UserTableProps) {
   const { t } = useTranslation("users")
   const cols = getUserListColumnVisibility(viewerRole)
@@ -405,6 +408,7 @@ function UserTable({
                 user={user}
                 viewerRole={viewerRole}
                 onAction={type => onAction?.(type, user)}
+                isSelf={user.id === currentUserId}
               />
             </div>
           </div>
