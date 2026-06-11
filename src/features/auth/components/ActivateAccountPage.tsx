@@ -175,20 +175,19 @@ export default function ActivateAccountPage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              data-testid="activate-account-request-invitation-button"
-              className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
-            >
-              <Mail size={16} className="shrink-0" />
-              <span className="flex-1 text-left">
-                {t("activateAccount.blockedLink.requestInvitation")}
-              </span>
-              <ArrowRight size={16} className="shrink-0 ml-auto" />
-            </Button>
-            <p className="text-xs text-slate-500 text-center">
-              {t("activateAccount.blockedLink.goToSite")}
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">
+              {t("activateAccount.blockedLink.resendNotice")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("activateAccount.blockedLink.contactSupportPrompt")}{" "}
+              <a
+                href="mailto:support@crosslease.com"
+                className="text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                {t("activateAccount.blockedLink.contactSupportLink")}
+              </a>
+              .
             </p>
           </div>
         </div>
