@@ -38,6 +38,7 @@ type UserDetailDrawerProps = {
   onClose: () => void
   onAction: (type: UserActionType, user: UserDetail) => void
   viewerRole?: UserRole | null
+  currentUserId?: string
 }
 
 function DrawerSectionCard({
@@ -75,11 +76,13 @@ function DrawerContent({
   onClose,
   onAction,
   viewerRole,
+  currentUserId,
 }: {
   user: UserDetail
   onClose: () => void
   onAction: (type: UserActionType, user: UserDetail) => void
   viewerRole?: UserRole | null
+  currentUserId?: string
 }) {
   const { t } = useTranslation("users")
   const navigate = useNavigate()
@@ -89,6 +92,7 @@ function DrawerContent({
 
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
+  const isSelf = user.id === currentUserId
 
   const {
     canApprove,
@@ -126,7 +130,11 @@ function DrawerContent({
 
   function handleOpenFullProfile() {
     onClose()
-    navigate(PATHS.USER_DETAIL.replace(":id", user.id))
+    navigate(
+      isSelf
+        ? PATHS.SETTINGS_PROFILE
+        : PATHS.USER_DETAIL.replace(":id", user.id)
+    )
   }
 
   return (
@@ -151,9 +159,11 @@ function DrawerContent({
           <Row label={t("detail.drawer.fields.userId")}>{user.user_id}</Row>
           <Row label={t("detail.drawer.fields.email")}>{user.email}</Row>
           <Row label={t("detail.drawer.fields.invitedBy")}>
-            {user.invited_by_user_id ?? "—"}
+            {user.invited_by?.name ?? "—"}
           </Row>
-          <Row label={t("detail.drawer.fields.approvedBy")}>—</Row>
+          <Row label={t("detail.drawer.fields.approvedBy")}>
+            {user.approved_by?.name ?? "—"}
+          </Row>
         </DrawerSectionCard>
 
         {/* ROLE & SCOPE card */}
@@ -188,7 +198,7 @@ function DrawerContent({
           <CircleUserRound size={15} />
           {t("detail.drawer.openFullProfile")}
         </Button>
-        {canApprove && (
+        {!isSelf && canApprove && (
           <Button
             variant="outline"
             data-testid="drawer-approve-button"
@@ -199,7 +209,7 @@ function DrawerContent({
             {t("table.actions.approve")}
           </Button>
         )}
-        {canResendInvitation && (
+        {!isSelf && canResendInvitation && (
           <Button
             variant="outline"
             data-testid="drawer-resend-invitation-button"
@@ -210,42 +220,44 @@ function DrawerContent({
             {t("actions.resend-invitation.label")}
           </Button>
         )}
-        <div className="flex gap-3">
-          {canSuspend && (
-            <Button
-              variant="outline"
-              data-testid="drawer-suspend-button"
-              className="flex-1 gap-1.5 text-sm"
-              onClick={() => onAction("suspend", user)}
-            >
-              <UserRoundX size={14} />
-              {t("detail.page.actions.suspendUser")}
-            </Button>
-          )}
-          {canReactivate && (
-            <Button
-              variant="outline"
-              data-testid="drawer-reactivate-button"
-              className="flex-1 gap-1.5 text-sm"
-              onClick={() => onAction("reactivate", user)}
-            >
-              <RotateCcw size={14} />
-              {t("actions.reactivate.label")}
-            </Button>
-          )}
-          {canDeactivate && (
-            <Button
-              variant="outline"
-              data-testid="drawer-deactivate-button"
-              className="flex-1 gap-1.5 text-sm"
-              onClick={() => onAction("deactivate", user)}
-            >
-              <Ban size={14} />
-              {t("detail.page.actions.deactivateUser")}
-            </Button>
-          )}
-        </div>
-        {canResetMfa && (
+        {!isSelf && (canSuspend || canReactivate || canDeactivate) && (
+          <div className="flex gap-3">
+            {canSuspend && (
+              <Button
+                variant="outline"
+                data-testid="drawer-suspend-button"
+                className="flex-1 gap-1.5 text-sm"
+                onClick={() => onAction("suspend", user)}
+              >
+                <UserRoundX size={14} />
+                {t("detail.page.actions.suspendUser")}
+              </Button>
+            )}
+            {canReactivate && (
+              <Button
+                variant="outline"
+                data-testid="drawer-reactivate-button"
+                className="flex-1 gap-1.5 text-sm"
+                onClick={() => onAction("reactivate", user)}
+              >
+                <RotateCcw size={14} />
+                {t("actions.reactivate.label")}
+              </Button>
+            )}
+            {canDeactivate && (
+              <Button
+                variant="outline"
+                data-testid="drawer-deactivate-button"
+                className="flex-1 gap-1.5 text-sm"
+                onClick={() => onAction("deactivate", user)}
+              >
+                <Ban size={14} />
+                {t("detail.page.actions.deactivateUser")}
+              </Button>
+            )}
+          </div>
+        )}
+        {!isSelf && canResetMfa && (
           <Button
             variant="outline"
             data-testid="drawer-reset-mfa-button"
@@ -311,6 +323,7 @@ function UserDetailDrawer({
   onClose,
   onAction,
   viewerRole,
+  currentUserId,
 }: UserDetailDrawerProps) {
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(userId)
@@ -373,6 +386,7 @@ function UserDetailDrawer({
             onClose={onClose}
             onAction={onAction}
             viewerRole={viewerRole}
+            currentUserId={currentUserId}
           />
         )}
       </SheetContent>

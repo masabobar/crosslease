@@ -1,6 +1,6 @@
 import { useState, useRef, type ReactNode } from "react"
 import { ApiError } from "@/lib/api"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -1104,6 +1104,11 @@ export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(id ?? null)
+  const { data: currentUser } = useCurrentUser()
+
+  if (currentUser && id && currentUser.id === id) {
+    return <Navigate to={PATHS.SETTINGS_PROFILE} replace />
+  }
 
   return (
     <div className="p-8" data-testid="user-detail-page">
