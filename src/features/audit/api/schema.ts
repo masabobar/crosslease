@@ -9,6 +9,7 @@ export const AuditEventSchema = z.object({
   action_type: z.string(),
   event_type: z.string(),
   actor_id: z.string(),
+  actor_display: z.string().nullable(),
   actor_type: z.string(),
   old_data: z.record(z.string(), z.unknown()).nullable(),
   new_data: z.record(z.string(), z.unknown()).nullable(),
@@ -84,8 +85,12 @@ export function deriveAuditResult(eventType: string): AuditResult {
 export type AuditQueryParams = {
   search?: string | null
   event_type?: string[]
+  entity_type?: string | null
   entity_id?: string | null
   actor_id?: string | null
+  action_type?: string | null
+  trigger_source?: string | null
+  sensitive?: boolean | null
   result?: string | null
   tenant_id?: string | null
   from_dt?: string | null

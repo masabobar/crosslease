@@ -47,7 +47,9 @@ export function Sidebar() {
     location.pathname === PATHS.USER_MANAGEMENT ||
     location.pathname.startsWith(PATHS.USER_MANAGEMENT + "/")
   const isPendingApprovalsActive = location.pathname === PATHS.PENDING_APPROVALS
-  const isAuditTrailActive = location.pathname === PATHS.AUDIT_TRAIL
+  const isAuditTrailActive =
+    location.pathname === PATHS.AUDIT_TRAIL ||
+    location.pathname.startsWith(PATHS.AUDIT_TRAIL + "/")
 
   return (
     <aside

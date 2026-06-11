@@ -37,7 +37,9 @@
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
     "pendingApprovals": "Ausstehende Genehmigungen",
-    "myProfile": "Mein Profil"
+    "myProfile": "Mein Profil",
+    "auditTrail": "Audit-Trail",
+    "auditEvent": "Ereignisdetail"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

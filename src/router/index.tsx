@@ -58,6 +58,9 @@ const SelfProfilePage = lazy(
 const AuditTrailPage = lazy(
   () => import("@/features/audit/components/AuditTrailPage")
 )
+const AuditEventDetailPage = lazy(
+  () => import("@/features/audit/components/AuditEventDetailPage")
+)
 
 export const router = createBrowserRouter([
   {
@@ -175,6 +178,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={AUDIT_TRAIL_ALLOWED_ROLES}>
               <AuditTrailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.AUDIT_TRAIL_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={AUDIT_TRAIL_ALLOWED_ROLES}>
+              <AuditEventDetailPage />
             </RoleGuard>
           </Suspense>
         ),

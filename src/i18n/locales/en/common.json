@@ -37,7 +37,9 @@
     "platformAdministration": "Platform administration",
     "userManagement": "User management",
     "pendingApprovals": "Pending approvals",
-    "myProfile": "My profile"
+    "myProfile": "My profile",
+    "auditTrail": "Audit trail",
+    "auditEvent": "Event detail"
   },
   "notFound": {
     "heading": "Page not found",
