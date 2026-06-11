@@ -179,6 +179,7 @@ export default function LoginPage() {
     setOtpValue("")
     setOtpHelper({ type: "none" })
     setServerError(null)
+    credentialsForm.reset()
   }
 
   if (step === "otp") {
