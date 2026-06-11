@@ -58,6 +58,10 @@
     "readOnly": "Read Only",
     "readOnlyDescription": "You are in read-only mode. No changes can be made."
   },
+  "auditorExpiry": {
+    "warningMessage": "Your access to RefiNext expires on {{date}} at {{time}}. Contact your administrator if you need an extension.",
+    "dangerMessage": "Your access expires at {{time}} today. {{countdown}} remaining. Contact your administrator immediately if you need an extension."
+  },
   "time": {
     "justNow": "just now",
     "minutesAgo": "{{count}}m ago",
