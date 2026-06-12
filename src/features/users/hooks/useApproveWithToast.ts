@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { useApproveUser } from "@/features/users/hooks/useApproveUser"
 import { useToastStore } from "@/store/toastStore"
-import { ApiError } from "@/lib/api"
+import { handleApiError } from "@/lib/handleApiError"
 
 export function useApproveWithToast() {
   const { t } = useTranslation("users")
@@ -25,15 +25,8 @@ export function useApproveWithToast() {
       })
       onSuccess?.()
     } catch (err) {
-      showToast({
-        variant: "warning",
-        title: t("approveSuccess.errorTitle"),
-        message:
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, {
-                defaultValue: t("approveSuccess.errorFallback"),
-              })
-            : t("approveSuccess.errorFallback"),
+      handleApiError(err, showToast, t, t("approveSuccess.errorTitle"), {
+        fallbackKey: "approveSuccess.errorFallback",
       })
     }
   }

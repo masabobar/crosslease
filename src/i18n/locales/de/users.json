@@ -477,5 +477,8 @@
     "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "expiredTitle": "Export abgelaufen",
     "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { ApiError } from "@/lib/api"
+import { handleApiError } from "@/lib/handleApiError"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -100,14 +100,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
         })
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("errors.generic"))
       })
   }
 

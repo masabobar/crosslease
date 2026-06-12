@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { useToastStore } from "@/store/toastStore"
+import { handleApiError } from "@/lib/handleApiError"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
 
@@ -24,14 +24,7 @@ export function useProfilePicture(userId: string) {
         })
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("errors.generic"))
       })
   }
 
@@ -46,14 +39,7 @@ export function useProfilePicture(userId: string) {
         })
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("errors.generic"))
       })
   }
 

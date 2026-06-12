@@ -5,7 +5,7 @@ import { Activity, Check, Search } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { ApiError } from "@/lib/api"
+import { handleApiError } from "@/lib/handleApiError"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
 import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
 import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
@@ -108,13 +108,8 @@ export default function PendingApprovalsPage() {
           })
         },
         onError: (err: unknown) => {
-          const code = err instanceof ApiError ? err.code : undefined
-          showToast({
-            variant: "warning",
-            title: t("toast.error.title"),
-            message: code
-              ? t(`errors.${code}`, { defaultValue: t("toast.error.message") })
-              : t("toast.error.message"),
+          handleApiError(err, showToast, t, t("toast.error.title"), {
+            fallbackKey: "toast.error.message",
           })
         },
       }
@@ -135,13 +130,8 @@ export default function PendingApprovalsPage() {
           })
         },
         onError: (err: unknown) => {
-          const code = err instanceof ApiError ? err.code : undefined
-          showToast({
-            variant: "warning",
-            title: t("toast.error.title"),
-            message: code
-              ? t(`errors.${code}`, { defaultValue: t("toast.error.message") })
-              : t("toast.error.message"),
+          handleApiError(err, showToast, t, t("toast.error.title"), {
+            fallbackKey: "toast.error.message",
           })
         },
       }

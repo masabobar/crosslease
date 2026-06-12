@@ -1,5 +1,5 @@
 import { useState, useRef, type ReactNode } from "react"
-import { ApiError } from "@/lib/api"
+import { handleApiError } from "@/lib/handleApiError"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -414,14 +414,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         }
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("detail.page.editIdentity.error.title"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(
+          err,
+          showToast,
+          t,
+          t("detail.page.editIdentity.error.title")
+        )
       })
   }
 
@@ -442,14 +440,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("detail.page.editRole.error.title"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("detail.page.editRole.error.title"))
       })
   }
 
@@ -477,14 +468,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("detail.page.editRole.error.title"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("detail.page.editRole.error.title"))
       })
   }
 
@@ -501,14 +485,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       })
       .catch((err: unknown) => {
         setShowMfaResetConfirm(false)
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("errors.generic"))
       })
   }
 
