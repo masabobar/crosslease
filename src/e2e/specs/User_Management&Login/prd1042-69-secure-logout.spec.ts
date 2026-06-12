@@ -1,6 +1,6 @@
-import { test, expect } from "../fixtures/test"
-import { SecureLogoutPage } from "../pages/SecureLogoutPage"
-import { createTestSession } from "../helpers/helper"
+import { test, expect } from "../../fixtures/test"
+import { SecureLogoutPage } from "../../pages/SecureLogoutPage"
+import { createTestSession } from "../../helpers/helper"
 
 test.describe("PRD1042-69 — Secure Logout", () => {
   // ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { expect, test } from "../fixtures/test"
+import { expect, test } from "../../fixtures/test"
 
 // ---------------------------------------------------------------------------
 // HAPPY PATH — AC-03, AC-06, AC-07
