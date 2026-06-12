@@ -14,17 +14,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
-import {
-  ROLE_TRANSITIONS,
-  USER_ROLES,
-  type UserRole,
-} from "@/features/users/types"
+import { ROLE_TRANSITIONS, type UserRole } from "@/features/users/types"
 
-const EditRoleFormSchema = z.object({
-  new_role: z.enum(USER_ROLES, { error: "required" }),
-  reason: z.string().min(10),
-})
-type EditRoleFormValues = z.infer<typeof EditRoleFormSchema>
+type EditRoleFormValues = { new_role: UserRole; reason: string }
 
 type Props = {
   open: boolean
@@ -43,14 +35,24 @@ export function EditRoleScopeDialog({
 }: Props) {
   const { t } = useTranslation("users")
 
+  const allowedRoles = (ROLE_TRANSITIONS[currentRole] ?? []) as [
+    UserRole,
+    ...UserRole[],
+  ]
+
+  const schema = z.object({
+    new_role: z.enum(allowedRoles, { error: "required" }),
+    reason: z.string().min(10),
+  })
+
   const form = useForm<EditRoleFormValues>({
-    resolver: zodResolver(EditRoleFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: { new_role: undefined, reason: "" },
   })
 
   const selectedRole = useWatch({ control: form.control, name: "new_role" })
 
-  const roleOptions = (ROLE_TRANSITIONS[currentRole] ?? []).map(r => ({
+  const roleOptions = allowedRoles.map(r => ({
     value: r,
     label: t(`roles.${r}`),
   }))
