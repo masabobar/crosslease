@@ -128,9 +128,18 @@ export function EditRoleScopeDialog({
                   className="min-h-16 bg-card border-input rounded-xl text-sm resize-none"
                   aria-invalid={!!form.formState.errors.reason || undefined}
                 />
-                <span className="text-sm text-amber-600/80">
-                  {t("detail.page.editRole.reasonMandatory")}
-                </span>
+                {form.formState.errors.reason ? (
+                  <span
+                    className="text-sm text-destructive"
+                    data-testid="edit-role-reason-error"
+                  >
+                    {t("detail.page.editRole.reasonMinLength")}
+                  </span>
+                ) : (
+                  <span className="text-sm text-amber-600/80">
+                    {t("detail.page.editRole.reasonMandatory")}
+                  </span>
+                )}
               </div>
 
               {/* Four-Eyes approval notice — amber alert box */}
