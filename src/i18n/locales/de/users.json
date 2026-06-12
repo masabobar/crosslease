@@ -294,6 +294,7 @@
         "reasonLabel": "Grund für die Änderung",
         "reasonPlaceholder": "Beschreiben Sie den Grund für diese Rollenänderung...",
         "reasonMandatory": "Grund ist für eine Rollenänderung erforderlich",
+        "reasonMinLength": "Der Grund muss mindestens 10 Zeichen lang sein",
         "fourEyes": {
           "title": "Vier-Augen-Genehmigung erforderlich",
           "description": "Diese Rollenänderung erfordert die Genehmigung eines zweiten autorisierten Administrators, bevor sie wirksam wird."
