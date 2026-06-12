@@ -1850,7 +1850,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Request a role change",
-        "description": "Initiate a Four-Eyes role change request for a user. Requires `user:change_role` permission.\n\nUser must be in `active` status. The request remains pending until a different\nsystem_admin approves it. Only one pending role-change request is allowed per user at a time.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
+        "description": "Initiate a Four-Eyes role change request for a user. Requires `user:change_role` permission.\n\nUser must be in `active` status. The request remains pending until a different\nsystem_admin approves it. Only one pending role-change request is allowed per user at a time.\n\n**Supported transitions:**\n- `system_admin` ↔ `support_user`\n- `front_office` ↔ `back_office`\n\nAll other transitions (including to/from `auditor` and `leasing_company_user`) are rejected with `422 INVALID_ROLE_TRANSITION`.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
         "operationId": "initiate_role_change_api_v1_users__user_id__change_role_post",
         "parameters": [
           {

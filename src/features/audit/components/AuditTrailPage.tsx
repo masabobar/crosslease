@@ -15,7 +15,7 @@ import { AuditQuickFilters } from "@/features/audit/components/AuditQuickFilters
 import { useAuditEvents } from "@/features/audit/hooks/useAuditEvents"
 import { EMPTY_AUDIT_FILTER_STATE } from "@/features/audit/types"
 import type { AuditFilterState } from "@/features/audit/types"
-import type { AuditEvent } from "@/features/audit/api/schema"
+import type { AuditEventListItem } from "@/features/audit/api/schema"
 import { formatDate, formatEventType } from "@/lib/formatters"
 import { auditTrailDetail } from "@/router/paths"
 
@@ -193,7 +193,7 @@ export default function AuditTrailPage() {
 
   const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
 
-  function handleRowClick(event: AuditEvent) {
+  function handleRowClick(event: AuditEventListItem) {
     navigate(auditTrailDetail(event.id))
   }
 

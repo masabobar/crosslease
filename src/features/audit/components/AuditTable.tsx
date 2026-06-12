@@ -6,7 +6,7 @@ import {
   formatActionType,
   formatDateTime,
 } from "@/lib/formatters"
-import type { AuditEvent } from "@/features/audit/api/schema"
+import type { AuditEventListItem } from "@/features/audit/api/schema"
 
 const COL_TIMESTAMP = "w-[160px] shrink-0"
 const COL_ENTITY = "w-[180px] shrink-0"
@@ -56,9 +56,9 @@ function SensitiveBadge() {
 }
 
 type AuditTableProps = {
-  events: AuditEvent[]
+  events: AuditEventListItem[]
   isLoading: boolean
-  onRowClick: (event: AuditEvent) => void
+  onRowClick: (event: AuditEventListItem) => void
 }
 
 export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
