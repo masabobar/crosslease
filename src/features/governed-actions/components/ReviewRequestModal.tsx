@@ -354,7 +354,12 @@ export function ReviewRequestModal({
           <Label className="text-sm font-medium text-foreground">
             {t("modal.justificationLabel")}
           </Label>
-          <div className="border border-border rounded-xl bg-white px-2.5 py-1">
+          <div
+            className={cn(
+              "border rounded-xl bg-white px-2.5 py-1",
+              commentValidationError ? "border-destructive" : "border-border"
+            )}
+          >
             <Textarea
               className="h-16 border-0 p-0 rounded-none resize-none text-sm focus-visible:ring-0 focus-visible:border-0"
               value={comment}

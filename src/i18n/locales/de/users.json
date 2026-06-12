@@ -294,6 +294,7 @@
         "reasonLabel": "Grund für die Änderung",
         "reasonPlaceholder": "Beschreiben Sie den Grund für diese Rollenänderung...",
         "reasonMandatory": "Grund ist für eine Rollenänderung erforderlich",
+        "reasonMinLength": "Der Grund muss mindestens 10 Zeichen lang sein",
         "fourEyes": {
           "title": "Vier-Augen-Genehmigung erforderlich",
           "description": "Diese Rollenänderung erfordert die Genehmigung eines zweiten autorisierten Administrators, bevor sie wirksam wird."
@@ -478,7 +479,6 @@
     "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
   },
   "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-    "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist."
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

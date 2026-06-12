@@ -1,9 +1,12 @@
-import { PLATFORM_USER_ROLES } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
-export const AUDIT_TRAIL_ALLOWED_ROLES = PLATFORM_USER_ROLES
+// Backend grants AUDIT_READ only to system_admin and auditor; support_user is excluded
+export const AUDIT_TRAIL_ALLOWED_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "auditor",
+]
 
-// Only system_admin sees the Tenant filter — auditor and support_user are already scoped by the backend
+// Only system_admin sees the Tenant filter — auditor is scoped to their tenant by the backend
 export const AUDIT_TENANT_VISIBLE_ROLES: readonly UserRole[] = ["system_admin"]
 
 export type AuditFilterState = {

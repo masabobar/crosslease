@@ -6,6 +6,7 @@ import { resetPasswordVerify } from "../api/mfaApi"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
+import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -97,7 +98,7 @@ export default function ResetPasswordVerifyPage() {
     if (!newRecoveryCodes) return
     await navigator.clipboard.writeText(newRecoveryCodes.join("\n"))
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
   }
 
   if (step === "success") {

@@ -14,13 +14,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
-import { USER_ROLES, type UserRole } from "@/features/users/types"
+import { ROLE_TRANSITIONS, type UserRole } from "@/features/users/types"
 
-const EditRoleFormSchema = z.object({
-  new_role: z.enum(USER_ROLES, { error: "required" }),
-  reason: z.string().min(10),
-})
-type EditRoleFormValues = z.infer<typeof EditRoleFormSchema>
+type EditRoleFormValues = { new_role: UserRole; reason: string }
 
 type Props = {
   open: boolean
@@ -39,14 +35,24 @@ export function EditRoleScopeDialog({
 }: Props) {
   const { t } = useTranslation("users")
 
+  const allowedRoles = (ROLE_TRANSITIONS[currentRole] ?? []) as [
+    UserRole,
+    ...UserRole[],
+  ]
+
+  const schema = z.object({
+    new_role: z.enum(allowedRoles, { error: "required" }),
+    reason: z.string().min(10),
+  })
+
   const form = useForm<EditRoleFormValues>({
-    resolver: zodResolver(EditRoleFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: { new_role: undefined, reason: "" },
   })
 
   const selectedRole = useWatch({ control: form.control, name: "new_role" })
 
-  const roleOptions = USER_ROLES.filter(r => r !== currentRole).map(r => ({
+  const roleOptions = allowedRoles.map(r => ({
     value: r,
     label: t(`roles.${r}`),
   }))
@@ -124,9 +130,18 @@ export function EditRoleScopeDialog({
                   className="min-h-16 bg-card border-input rounded-xl text-sm resize-none"
                   aria-invalid={!!form.formState.errors.reason || undefined}
                 />
-                <span className="text-sm text-amber-600/80">
-                  {t("detail.page.editRole.reasonMandatory")}
-                </span>
+                {form.formState.errors.reason ? (
+                  <span
+                    className="text-sm text-destructive"
+                    data-testid="edit-role-reason-error"
+                  >
+                    {t("detail.page.editRole.reasonMinLength")}
+                  </span>
+                ) : (
+                  <span className="text-sm text-amber-600/80">
+                    {t("detail.page.editRole.reasonMandatory")}
+                  </span>
+                )}
               </div>
 
               {/* Four-Eyes approval notice — amber alert box */}

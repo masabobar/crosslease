@@ -3,6 +3,7 @@ import {
   FOUR_EYES_ROLES,
   GOVERNANCE_FILTER_ROLES,
   OPERATIONAL_TENANT_ROLES,
+  PLATFORM_USER_ROLES,
   SENSITIVE_AUTH_RESTRICTED_ROLES,
   SYSTEM_ADMIN_ROLE,
   TENANT_FILTER_VISIBLE_ROLES,
@@ -11,6 +12,16 @@ import {
 import type { UserRole, UserModalActionType } from "@/features/users/types"
 import { UserStatusSchema } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
+
+export function getRoleClassificationKey(
+  role: UserRole
+):
+  | "detail.page.roleClassification.platform"
+  | "detail.page.roleClassification.tenantOperational" {
+  if (PLATFORM_USER_ROLES.includes(role))
+    return "detail.page.roleClassification.platform"
+  return "detail.page.roleClassification.tenantOperational"
+}
 
 export type UserListColumnVisibility = {
   tenant: boolean

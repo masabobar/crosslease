@@ -245,6 +245,9 @@ function getAffectedUser(action: GovernedAction): string {
   if (action.action_type === "user_platform_invite") {
     return platformInviteSnapshot(action).full_name ?? "—"
   }
+  if (action.action_type === "user_role_change") {
+    return roleChangeSnapshot(action).affected_user_email ?? "—"
+  }
   if (action.action_type === "user_email_change") {
     return emailChangeSnapshot(action).old_email ?? "—"
   }

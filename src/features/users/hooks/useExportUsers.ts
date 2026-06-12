@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { useToastStore } from "@/store/toastStore"
+import { handleApiError } from "@/lib/handleApiError"
 import {
   downloadExportFile,
   getExportJobStatus,
@@ -82,13 +82,9 @@ export function useExportUsers() {
         POLL_INTERVAL_MS
       )
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : "EXPORT_FAILED"
-      showToast({
+      handleApiError(err, showToast, t, t("export.errorTitle"), {
+        fallbackKey: "export.errorMessage",
         variant: "error",
-        title: t("export.errorTitle"),
-        message: t(`errors.${code}`, {
-          defaultValue: t("export.errorMessage"),
-        }),
       })
       setState("idle")
     }
@@ -103,13 +99,9 @@ export function useExportUsers() {
       setState("polling")
       void pollAndDownload(job.job_id, params.format)
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : "EXPORT_FAILED"
-      showToast({
+      handleApiError(err, showToast, t, t("export.errorTitle"), {
+        fallbackKey: "export.errorMessage",
         variant: "error",
-        title: t("export.errorTitle"),
-        message: t(`errors.${code}`, {
-          defaultValue: t("export.errorMessage"),
-        }),
       })
       setState("idle")
     }

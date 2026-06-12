@@ -1,5 +1,5 @@
-import { useState, useRef, type ReactNode } from "react"
-import { ApiError } from "@/lib/api"
+import { useState, useRef } from "react"
+import { handleApiError } from "@/lib/handleApiError"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -18,8 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
-import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
-import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
+import { useProfilePicture } from "@/features/users/hooks/useProfilePicture"
 import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
 import { useToastStore } from "@/store/toastStore"
 import {
@@ -28,62 +27,14 @@ import {
   formatDateTime,
   getInitials,
 } from "@/lib/formatters"
-import {
-  AUDITOR_DATE_RANGE_ROLES,
-  PLATFORM_USER_ROLES,
-} from "@/features/users/types"
+import { AUDITOR_DATE_RANGE_ROLES } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
 import { phoneNumberSchema } from "@/features/users/api/schema"
-import type { UserRole } from "@/features/users/types"
-
-function getRoleClassificationKey(
-  role: UserRole
-):
-  | "detail.page.roleClassification.platform"
-  | "detail.page.roleClassification.tenantOperational" {
-  if (PLATFORM_USER_ROLES.includes(role))
-    return "detail.page.roleClassification.platform"
-  return "detail.page.roleClassification.tenantOperational"
-}
-
-function DetailRow({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex items-start gap-2 py-0 text-sm leading-5">
-      <span className="text-muted-foreground w-[180px] shrink-0">{label}</span>
-      <span className="text-foreground min-w-0">{children}</span>
-    </div>
-  )
-}
-
-function SectionCard({
-  title,
-  children,
-  headerActions,
-}: {
-  title: string
-  children: ReactNode
-  headerActions?: ReactNode
-}) {
-  return (
-    <div className="bg-muted border border-border rounded-[10px] flex flex-col flex-1 min-w-0">
-      <div className="flex items-center justify-between h-10 px-3">
-        <span className="text-xs font-semibold text-foreground tracking-wide">
-          {title}
-        </span>
-        {headerActions}
-      </div>
-      <div className="bg-card border border-border rounded-b-[10px] p-3 flex flex-col gap-3 flex-1">
-        {children}
-      </div>
-    </div>
-  )
-}
+import { getRoleClassificationKey } from "@/features/users/utils"
+import {
+  DetailRow,
+  SectionCard,
+} from "@/features/users/components/UserDetailPrimitives"
 
 const IdentityFormSchema = z.object({
   first_name: z.string().min(1).max(100),
@@ -99,8 +50,11 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
   const [activeTab, setActiveTab] = useState<"lifecycle" | "auth">("lifecycle")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const uploadPictureMutation = useUploadSelfPicture(user.id)
-  const deletePictureMutation = useDeleteSelfPicture(user.id)
+  const {
+    isPending: isPicturePending,
+    handleFileSelected,
+    handleRemovePicture,
+  } = useProfilePicture(user.id)
   const updateSelfMutation = useUpdateSelf(user.id)
 
   const identityForm = useForm<IdentityFormValues>({
@@ -109,55 +63,6 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
 
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
-  const isPicturePending =
-    uploadPictureMutation.isPending || deletePictureMutation.isPending
-
-  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ""
-    void uploadPictureMutation
-      .mutateAsync(file)
-      .then(() => {
-        showToast({
-          variant: "success",
-          title: t("detail.page.selfProfile.pictureUpdated.title"),
-          message: t("detail.page.selfProfile.pictureUpdated.message"),
-        })
-      })
-      .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
-      })
-  }
-
-  function handleRemovePicture() {
-    void deletePictureMutation
-      .mutateAsync()
-      .then(() => {
-        showToast({
-          variant: "success",
-          title: t("detail.page.selfProfile.pictureRemoved.title"),
-          message: t("detail.page.selfProfile.pictureRemoved.message"),
-        })
-      })
-      .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
-      })
-  }
 
   function handleIdentitySubmit(values: IdentityFormValues) {
     const hasNameChanges =
@@ -172,13 +77,12 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
     }
 
     const input: {
-      first_name?: string
-      last_name?: string
+      first_name: string
+      last_name: string
       phone_number?: string | null
-    } = {}
-    if (hasNameChanges) {
-      input.first_name = values.first_name
-      input.last_name = values.last_name
+    } = {
+      first_name: values.first_name,
+      last_name: values.last_name,
     }
     if (hasPhoneChange) {
       input.phone_number =
@@ -196,14 +100,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
         })
       })
       .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
+        handleApiError(err, showToast, t, t("errors.generic"))
       })
   }
 

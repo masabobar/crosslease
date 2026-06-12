@@ -294,6 +294,7 @@
         "reasonLabel": "Reason for change",
         "reasonPlaceholder": "Describe the reason for this role change...",
         "reasonMandatory": "Reason is mandatory for role change",
+        "reasonMinLength": "Reason must be at least 10 characters",
         "fourEyes": {
           "title": "Four-Eyes approval required",
           "description": "This role change requires a second authorized admin to approve before taking effect."
@@ -478,7 +479,6 @@
     "expiredMessage": "The export expired before it could be downloaded. Please try again."
   },
   "errors": {
-    "generic": "Something went wrong. Please try again.",
-    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
+    "generic": "Something went wrong. Please try again."
   }
 }

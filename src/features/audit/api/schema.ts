@@ -1,5 +1,23 @@
 import { z } from "zod"
 
+export const AuditEventListItemSchema = z.object({
+  id: z.string().uuid(),
+  audit_seq: z.number().int(),
+  entity_type: z.string(),
+  entity_id: z.string().uuid().nullable(),
+  entity_display: z.string().nullable(),
+  action_type: z.string(),
+  event_type: z.string(),
+  actor_id: z.string(),
+  actor_type: z.string(),
+  actor_display: z.string().nullable(),
+  trigger_source: z.string().nullable(),
+  sensitive: z.boolean(),
+  tenant_id: z.string().uuid().nullable(),
+  recorded_at: z.string(),
+})
+export type AuditEventListItem = z.infer<typeof AuditEventListItemSchema>
+
 export const AuditEventSchema = z.object({
   id: z.string().uuid(),
   audit_seq: z.number().int(),
@@ -27,7 +45,7 @@ export const AuditEventSchema = z.object({
 export type AuditEvent = z.infer<typeof AuditEventSchema>
 
 export const PaginatedAuditEventsSchema = z.object({
-  events: z.array(AuditEventSchema),
+  events: z.array(AuditEventListItemSchema),
   total: z.number().int(),
   page: z.number().int(),
   per_page: z.number().int(),

@@ -214,6 +214,7 @@ type SelectFieldProps = {
   placeholder?: string
   error?: boolean
   disabled?: boolean
+  className?: string
   renderTriggerContent?: (selected: SelectOption | undefined) => React.ReactNode
   renderOption?: (option: SelectOption) => React.ReactNode
 }
@@ -227,6 +228,7 @@ function SelectField({
   placeholder,
   error,
   disabled,
+  className,
   renderTriggerContent,
   renderOption,
 }: SelectFieldProps) {
@@ -242,7 +244,7 @@ function SelectField({
         id={id}
         data-testid={testId}
         aria-invalid={error || undefined}
-        className="w-full px-[10px] py-[4px]"
+        className={cn("w-full px-[10px] py-[4px]", className)}
       >
         <SelectValue
           placeholder={
