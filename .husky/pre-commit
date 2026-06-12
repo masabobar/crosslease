@@ -1,3 +1,4 @@
+export PATH="$(dirname $(which node)):$PATH"
 npx lint-staged
 node scripts/check-forbidden-code.js
-pnpm type-check
+corepack pnpm type-check
