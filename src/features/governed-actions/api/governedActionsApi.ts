@@ -1,4 +1,5 @@
 import { api } from "@/lib/api"
+import { buildQueryString } from "@/lib/queryParams"
 import { GovernedActionSchema, PaginatedGovernedActionsSchema } from "./schema"
 import type {
   GovernedAction,
@@ -22,12 +23,13 @@ export type GovernedActionsQueryParams = {
 export async function fetchGovernedActions(
   params: GovernedActionsQueryParams = {}
 ): Promise<PaginatedGovernedActions> {
-  const qs = new URLSearchParams()
-  params.status?.forEach(s => qs.append("status", s))
-  if (params.page) qs.set("page", String(params.page))
-  if (params.per_page) qs.set("per_page", String(params.per_page))
-  const query = qs.toString()
-  const data = await api.get(`/governed-actions${query ? `?${query}` : ""}`)
+  const data = await api.get(
+    `/governed-actions${buildQueryString({
+      status: params.status,
+      page: params.page,
+      per_page: params.per_page,
+    })}`
+  )
   return PaginatedGovernedActionsSchema.parse(data)
 }
 

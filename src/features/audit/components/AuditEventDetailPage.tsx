@@ -9,6 +9,7 @@ import {
   formatDateTime,
 } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
+import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import type { AuditEvent } from "@/features/audit/api/schema"
 
 type Tab = "overview" | "actor" | "payload"
@@ -30,11 +31,12 @@ function CopyButton({ text }: { text: string }) {
   function handleCopy() {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
     })
   }
 
   return (
+    // NOTE: raw <button> — icon-only copy trigger nested inside a grid cell; shadcn Button adds padding/height that distorts the cell layout
     <button
       type="button"
       onClick={handleCopy}
@@ -431,6 +433,7 @@ function PayloadTab({ event }: { event: AuditEvent }) {
 
   return (
     <div className="rounded-[10px] border border-border bg-slate-100 w-full">
+      {/* NOTE: raw <button> — full-width collapsible header that composes with custom border-radius and bg; shadcn Collapsible trigger does not expose the same layout control */}
       <button
         type="button"
         className="w-full px-2 h-10 flex items-center justify-between hover:bg-slate-200/50 transition-colors rounded-t-[10px]"
@@ -542,6 +545,7 @@ export default function AuditEventDetailPage() {
           </div>
 
           {/* Tab bar */}
+          {/* NOTE: raw <button> — custom underline-tab style uses -mb-px trick that conflicts with shadcn Tabs DOM structure */}
           <div className="mt-6 border-b border-border flex gap-1">
             {TABS.map(tab => (
               <button

@@ -49,7 +49,12 @@ import {
 import {
   getUserActionVisibility,
   buildActionToastPayload,
+  getRoleClassificationKey,
 } from "@/features/users/utils"
+import {
+  DetailRow,
+  SectionCard,
+} from "@/features/users/components/UserDetailPrimitives"
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
@@ -64,7 +69,6 @@ import {
 import {
   AUDITOR_DATE_RANGE_ROLES,
   AUDITOR_ROLE,
-  PLATFORM_USER_ROLES,
   READ_ONLY_VIEWER_ROLES,
   SYSTEM_ADMIN_ROLE,
   type UserRole,
@@ -74,78 +78,10 @@ import { useEditUser } from "@/features/users/hooks/useEditUser"
 import { useChangeEmail } from "@/features/users/hooks/useChangeEmail"
 import { useChangeRole } from "@/features/users/hooks/useChangeRole"
 import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPeriod"
-import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
-import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
+import { useProfilePicture } from "@/features/users/hooks/useProfilePicture"
 import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
 import { EditRoleScopeDialog } from "@/features/users/components/EditRoleScopeDialog"
 import { EditAuditorPeriodDialog } from "@/features/users/components/EditAuditorPeriodDialog"
-
-function getRoleClassificationKey(
-  role: UserRole
-):
-  | "detail.page.roleClassification.platform"
-  | "detail.page.roleClassification.tenantOperational" {
-  if (PLATFORM_USER_ROLES.includes(role))
-    return "detail.page.roleClassification.platform"
-  return "detail.page.roleClassification.tenantOperational"
-}
-
-function DetailRow({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex items-start gap-2 py-0 text-sm leading-5">
-      <span className="text-muted-foreground w-[180px] shrink-0">{label}</span>
-      <span className="text-foreground min-w-0">{children}</span>
-    </div>
-  )
-}
-
-type SectionCardProps = {
-  title: string
-  children: ReactNode
-  onEdit?: () => void
-  headerActions?: ReactNode
-  "data-testid"?: string
-}
-
-function SectionCard({
-  title,
-  children,
-  onEdit,
-  headerActions,
-  "data-testid": editTestId,
-}: SectionCardProps) {
-  const { t } = useTranslation("users")
-  return (
-    <div className="bg-muted border border-border rounded-[10px] flex flex-col flex-1 min-w-0">
-      <div className="flex items-center justify-between h-10 px-3">
-        <span className="text-xs font-semibold text-foreground tracking-wide">
-          {title}
-        </span>
-        {headerActions ??
-          (onEdit ? (
-            <Button
-              variant="outline"
-              data-testid={editTestId}
-              onClick={onEdit}
-              className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
-            >
-              <SquarePen size={14} />
-              {t("detail.page.actions.edit")}
-            </Button>
-          ) : null)}
-      </div>
-      <div className="bg-card border border-border rounded-b-[10px] p-3 flex flex-col gap-3 flex-1">
-        {children}
-      </div>
-    </div>
-  )
-}
 
 type TabKey = "lifecycle" | "auth" | "audit"
 
@@ -348,8 +284,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const changeEmailMutation = useChangeEmail()
   const changeRoleMutation = useChangeRole()
   const updateAccessPeriodMutation = useUpdateAccessPeriod()
-  const uploadPictureMutation = useUploadSelfPicture(user.id)
-  const deletePictureMutation = useDeleteSelfPicture(user.id)
+  const {
+    uploadMutation: uploadPictureMutation,
+    deleteMutation: deletePictureMutation,
+    handleFileSelected,
+    handleRemovePicture,
+  } = useProfilePicture(user.id)
   const resetMfaMutation = useResetUserMfa()
   const [isEditingRole, setIsEditingRole] = useState(false)
   const [isEditingAuditorPeriod, setIsEditingAuditorPeriod] = useState(false)
@@ -391,53 +331,6 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     })
   }
 
-  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ""
-    void uploadPictureMutation
-      .mutateAsync(file)
-      .then(() => {
-        showToast({
-          variant: "success",
-          title: t("detail.page.selfProfile.pictureUpdated.title"),
-          message: t("detail.page.selfProfile.pictureUpdated.message"),
-        })
-      })
-      .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
-      })
-  }
-
-  function handleRemovePicture() {
-    void deletePictureMutation
-      .mutateAsync()
-      .then(() => {
-        showToast({
-          variant: "success",
-          title: t("detail.page.selfProfile.pictureRemoved.title"),
-          message: t("detail.page.selfProfile.pictureRemoved.message"),
-        })
-      })
-      .catch((err: unknown) => {
-        showToast({
-          variant: "warning",
-          title: t("errors.generic"),
-          message:
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic"),
-        })
-      })
-  }
-
   function startEditingIdentity() {
     identityForm.reset({
       first_name: user.first_name,
@@ -474,13 +367,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       (values.phone_number ?? "") !== (user.phone_number ?? "")
 
     const editInput: {
-      first_name?: string
-      last_name?: string
+      first_name: string
+      last_name: string
       phone_number?: string | null
-    } = {}
-    if (hasNameChanges) {
-      editInput.first_name = values.first_name
-      editInput.last_name = values.last_name
+    } = {
+      first_name: values.first_name,
+      last_name: values.last_name,
     }
     if (hasPhoneChange) {
       editInput.phone_number =
@@ -488,7 +380,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     }
 
     const editPromise =
-      Object.keys(editInput).length > 0
+      hasNameChanges || hasPhoneChange
         ? editUserMutation.mutateAsync({ userId: user.id, input: editInput })
         : Promise.resolve(null)
 
