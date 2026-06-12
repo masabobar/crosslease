@@ -2243,6 +2243,25 @@
         }
       }
     },
+    "/api/v1/audit/filters/options": {
+      "get": {
+        "tags": ["audit"],
+        "summary": "Get Audit Filter Options",
+        "operationId": "get_audit_filter_options_api_v1_audit_filters_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditFilterOptionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/events": {
       "get": {
         "tags": ["audit"],
@@ -2614,6 +2633,68 @@
         "required": ["justification", "irreversibility_acknowledgement"],
         "title": "ArchiveTenantRequest"
       },
+      "AuditEventListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "audit_seq": { "type": "integer", "title": "Audit Seq" },
+          "entity_type": { "type": "string", "title": "Entity Type" },
+          "entity_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Entity Id"
+          },
+          "entity_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Entity Display"
+          },
+          "action_type": { "type": "string", "title": "Action Type" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "actor_id": { "type": "string", "title": "Actor Id" },
+          "actor_type": { "type": "string", "title": "Actor Type" },
+          "actor_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Display"
+          },
+          "trigger_source": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Trigger Source"
+          },
+          "sensitive": { "type": "boolean", "title": "Sensitive" },
+          "tenant_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Tenant Id"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "audit_seq",
+          "entity_type",
+          "entity_id",
+          "entity_display",
+          "action_type",
+          "event_type",
+          "actor_id",
+          "actor_type",
+          "actor_display",
+          "trigger_source",
+          "sensitive",
+          "tenant_id",
+          "recorded_at"
+        ],
+        "title": "AuditEventListItem",
+        "description": "Lightweight schema for audit event lists."
+      },
       "AuditEventResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -2725,7 +2806,46 @@
           "sensitive",
           "recorded_at"
         ],
-        "title": "AuditEventResponse"
+        "title": "AuditEventResponse",
+        "description": "Full schema for single audit event detail view."
+      },
+      "AuditFilterOptionsResponse": {
+        "properties": {
+          "entity_types": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Entity Types"
+          },
+          "action_types": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Action Types"
+          },
+          "actor_types": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Actor Types"
+          },
+          "trigger_sources": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Trigger Sources"
+          },
+          "event_types": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Event Types"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_types",
+          "action_types",
+          "actor_types",
+          "trigger_sources",
+          "event_types"
+        ],
+        "title": "AuditFilterOptionsResponse"
       },
       "AuditorPeriodUpdateReason": {
         "type": "string",
@@ -3307,7 +3427,7 @@
       "PaginatedAuditEventsResponse": {
         "properties": {
           "events": {
-            "items": { "$ref": "#/components/schemas/AuditEventResponse" },
+            "items": { "$ref": "#/components/schemas/AuditEventListItem" },
             "type": "array",
             "title": "Events"
           },
@@ -3807,6 +3927,30 @@
             "title": "Activated At"
           },
           "mfa_required": { "type": "boolean", "title": "Mfa Required" },
+          "max_lc_count": { "type": "integer", "title": "Max Lc Count" },
+          "max_bank_user_count": {
+            "type": "integer",
+            "title": "Max Bank User Count"
+          },
+          "max_users_per_lc": {
+            "type": "integer",
+            "title": "Max Users Per Lc"
+          },
+          "lc_utilisation": {
+            "type": "integer",
+            "title": "Lc Utilisation",
+            "default": 0
+          },
+          "bank_user_utilisation": {
+            "type": "integer",
+            "title": "Bank User Utilisation",
+            "default": 0
+          },
+          "lc_user_highest_active": {
+            "type": "integer",
+            "title": "Lc User Highest Active",
+            "default": 0
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -3835,6 +3979,9 @@
           "legal_hold_flag",
           "activated_at",
           "mfa_required",
+          "max_lc_count",
+          "max_bank_user_count",
+          "max_users_per_lc",
           "created_at",
           "updated_at"
         ],
@@ -3934,6 +4081,27 @@
           "legal_hold_flag": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Legal Hold Flag"
+          },
+          "max_lc_count": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1.0 },
+              { "type": "null" }
+            ],
+            "title": "Max Lc Count"
+          },
+          "max_bank_user_count": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1.0 },
+              { "type": "null" }
+            ],
+            "title": "Max Bank User Count"
+          },
+          "max_users_per_lc": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1.0 },
+              { "type": "null" }
+            ],
+            "title": "Max Users Per Lc"
           },
           "justification": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
