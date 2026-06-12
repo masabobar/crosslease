@@ -477,9 +477,5 @@
     "errorMessage": "Something went wrong. Please try again.",
     "expiredTitle": "Export expired",
     "expiredMessage": "The export expired before it could be downloaded. Please try again."
-  },
-  "errors": {
-    "generic": "Something went wrong. Please try again.",
-    "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."
   }
 }
