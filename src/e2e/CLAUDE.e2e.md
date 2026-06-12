@@ -14,7 +14,7 @@ Run from the `refinext-app/` root using pnpm:
 pnpm e2e                                          # All tests, headless
 pnpm e2e:headed                                   # All tests, headed browser
 pnpm e2e:ui                                       # Playwright UI mode (interactive debugger)
-pnpm e2e:report                                   # Open last HTML report
+pnpm e2e:report                                   # Open last HTML report (src/e2e/reports/html/)
 
 # Single spec file
 pnpm e2e -- src/e2e/specs/some-feature.spec.ts
@@ -31,10 +31,11 @@ pnpm e2e -- --headed --grep "test title substring"
 ```
 src/e2e/
 ├── .auth/           # Playwright storageState files (git-ignored) — written at runtime
-│   └── gate.json    # Staging password gate cookie — produced by setup/gate.setup.ts
+│   ├── gate.json    # Staging password gate cookie — produced by setup/gate.setup.ts
+│   └── user.json    # App session cookie — produced by setup/auth.setup.ts
 ├── .claude/
 │   ├── agents/
-│   │   └── qa-lead.md       # qa-lead agent definition (4-stage QA pipeline orchestrator)
+│   │   └── qa-lead.md       # qa-lead agent definition (5-stage QA pipeline orchestrator)
 │   ├── agent-memory/
 │   │   └── qa-lead/         # Persistent memory files for the qa-lead agent (MEMORY.md + per-story files)
 │   └── skills/
@@ -46,26 +47,46 @@ src/e2e/
 ├── fixtures/
 │   └── test.ts      # ✅ Implemented — the ONLY permitted import source for all specs and POMs
 ├── helpers/         # Reusable utilities called within tests: auth helpers, data builders, API clients
-│   └── helper.ts    # Placeholder — empty, populate as specs are written
+│   └── helper.ts    # ✅ Implemented — getTestOtp(), createTestSession() helpers
 ├── pages/           # Page Object Model classes, one file per feature area
-│   ├── LoginPage.ts # ✅ Implemented
-│   └── page.ts      # Placeholder — ignore
+│   ├── LoginPage.ts        # ✅ Implemented
+│   ├── SecureLogoutPage.ts # ✅ Implemented
+│   └── UserListPage.ts     # ✅ Implemented
 ├── setup/           # Playwright setup projects — run once per session, produce shared storageState
-│   └── gate.setup.ts  # ✅ Implemented — submits staging password gate, saves .auth/gate.json
-├── specs/           # Playwright test specifications (.spec.ts), one file per user story
-│   ├── prd1042-43-user-login.spec.ts  # ✅ Implemented — AC-01, AC-08 active; AC-10/11/12/15/16/17 fixme
-│   └── spec.ts      # Placeholder — ignore
+│   ├── gate.setup.ts  # ✅ Implemented — submits staging password gate, saves .auth/gate.json
+│   └── auth.setup.ts  # ✅ Implemented — creates app session via POST /internal/test/session, saves .auth/user.json
+├── specs/           # Playwright test specifications (.spec.ts), grouped by epic subfolder
+│   └── User_Management&Login/
+│       ├── prd1042-43-user-login.spec.ts    # ✅ Implemented — AC-01, AC-03, AC-06, AC-07, AC-08 active
+│       └── prd1042-69-secure-logout.spec.ts  # ✅ Implemented — AC-01, AC-02, AC-03, AC-04 active; AC-09 fixme
 ├── tests/           # Generated BDD test suites (Gherkin .md files) — read-only input, never edit
-│   └── PRD1042-39-User Management & Authentication/
+│   └── PRD1042-39-User Management & Authentication/  # 23 .md files — one per story
 │       ├── PRD1042-43 User Login.md
 │       ├── PRD1042-44 Invitation-based Onboarding.md
 │       ├── PRD1042-45 Reset Password.md
 │       ├── PRD1042-46 Account Lockout.md
 │       ├── PRD1042-47 Session Management.md
+│       ├── PRD1042-48 Role Assignment & Management.md
+│       ├── PRD1042-49 Tenant Scope Assignment.md
+│       ├── PRD1042-51 Leasing Company Access Restrictions.md
+│       ├── PRD1042-59 User Provisioning.md
+│       ├── PRD1042-60 Account Activation.md
+│       ├── PRD1042-61 User Suspension.md
+│       ├── PRD1042-62 User Restore Access.md
+│       ├── PRD1042-63 User Deactivation.md
+│       ├── PRD1042-67 Resend Invitation.md
+│       ├── PRD1042-68 Password Setup on Activation.md
 │       ├── PRD1042-69 Secure Logout.md
 │       ├── PRD1042-71 User List View.md
 │       ├── PRD1042-72 User Search and Filtering.md
-│       └── PRD1042-73 User Detail View.md
+│       ├── PRD1042-73 User Detail View.md
+│       ├── PRD1042-77 Four-Eyes Approval Validation.md
+│       ├── PRD1042-346 Edit or Update User.md
+│       ├── PRD1042-525 MFA Authentication and Enrollment.md
+│       └── PRD1042-602 Export Users.md
+├── reports/         # Git-ignored — all Playwright output lands here
+│   ├── html/        # HTML report — open with: pnpm e2e:report
+│   └── results/     # Test artifacts: screenshots, videos, traces
 ├── CLAUDE.e2e.md    # This file
 └── playwright.config.ts
 ```
@@ -99,25 +120,28 @@ Environment variables live in `src/e2e/.env` (git-ignored). Copy from `src/.env.
 cp src/.env.e2e.example src/e2e/.env
 ```
 
-| Variable                  | Required now | Purpose                                                                                                                                          |
-| ------------------------- | :----------: | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `STAGING_BASE_URL`        |      ✅      | Target app URL (e.g. `https://refinext-dev.projects.holycode.com`)                                                                               |
-| `HTTP_PASSWORD`           |      ✅      | Staging HTML password gate — submitted once by `gate.setup.ts`                                                                                   |
-| `E2E_API_BASE_URL`        |      ✅      | Backend API root without path suffix (e.g. `https://api.refinext-dev.projects.holycode.com`) — used by `getTestOtp` and other direct API helpers |
-| `DEV_USER_EMAIL`          |      ✅      | Admin user email for manual/dev login                                                                                                            |
-| `DEV_USER_PASSWORD`       |      ✅      | Admin user password                                                                                                                              |
-| `TEST_INVALID_EMAIL`      |      ✅      | A non-existent email used in negative credential tests                                                                                           |
-| `TEST_INVALID_PASSWORD`   |      ✅      | An intentionally wrong password for negative test cases                                                                                          |
-| `TEST_BANK_USER_EMAIL`    |    future    | Email for pre-auth `authenticatedPage` fixture (front_office role)                                                                               |
-| `TEST_BANK_USER_PASSWORD` |    future    | Password for above                                                                                                                               |
-| `TEST_LC_USER_EMAIL`      |    future    | Email for pre-auth `lcUserPage` fixture (leasing_company_user role)                                                                              |
-| `TEST_LC_USER_PASSWORD`   |    future    | Password for above                                                                                                                               |
-| `TEST_AUDITOR_EMAIL`      |    future    | Email for pre-auth `auditorPage` fixture (auditor role)                                                                                          |
-| `TEST_ADMIN_EMAIL`        |    future    | Email for system_admin role in login scenario outline                                                                                            |
-| `TEST_FO_EMAIL`           |    future    | Email for front_office role in login scenario outline                                                                                            |
-| `TEST_BO_EMAIL`           |    future    | Email for back_office role in login scenario outline                                                                                             |
-| `TEST_SUPPORT_EMAIL`      |    future    | Email for support_user role in login scenario outline                                                                                            |
-| `TEST_VALID_PASSWORD`     |    future    | Shared valid password used across role-parametrised scenarios                                                                                    |
+| Variable                         | Required now | Purpose                                                                                                                                                         |
+| -------------------------------- | :----------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DEV_BASE_URL`                   |      ✅      | Target app URL (e.g. `https://refinext-dev.projects.holycode.com`) — read by `playwright.config.ts` as `baseURL`                                                |
+| `HTTP_PASSWORD`                  |      ✅      | Staging HTML password gate — submitted once by `gate.setup.ts`                                                                                                  |
+| `E2E_API_BASE_URL`               |      ✅      | Backend API root without path suffix (e.g. `https://api.refinext-dev.projects.holycode.com`) — used by `getTestOtp`, `createTestSession`, direct API assertions |
+| `DEV_USER_EMAIL`                 |      ✅      | system_admin user email — used by `auth.setup.ts` and login specs                                                                                               |
+| `DEV_USER_PASSWORD`              |      ✅      | system_admin user password                                                                                                                                      |
+| `DEV_BACK_OFFICE_USER_EMAIL`     |      ✅      | back_office_risk user email — used by login and logout specs                                                                                                    |
+| `DEV_BACK_OFFICE_USER_PASSWORD`  |      ✅      | back_office_risk user password                                                                                                                                  |
+| `DEV_FRONT_OFFICE_USER_EMAIL`    |      ✅      | front_office user email — used by login and logout specs                                                                                                        |
+| `DEV_FRONT_OFFICE_USER_PASSWORD` |      ✅      | front_office user password                                                                                                                                      |
+| `DEV_SUPPORT_USER_EMAIL`         |      ✅      | support_user email — used by logout spec                                                                                                                        |
+| `DEV_SUPPORT_USER_PASSWORD`      |      ✅      | support_user password                                                                                                                                           |
+| `DEV_AUDIT_USER_EMAIL`           |      ✅      | auditor user email — used by logout spec                                                                                                                        |
+| `DEV_AUDIT_USER_PASSWORD`        |      ✅      | auditor user password                                                                                                                                           |
+| `DEV_LCO_USER_EMAIL`             |      ✅      | leasing_company_user email — used by logout spec (landing `/lc`)                                                                                                |
+| `DEV_LCO_USER_PASSWORD`          |      ✅      | leasing_company_user password                                                                                                                                   |
+| `TEST_INVALID_EMAIL`             |      ✅      | A non-existent email used in negative credential tests                                                                                                          |
+| `TEST_INVALID_PASSWORD`          |      ✅      | An intentionally wrong password for negative test cases                                                                                                         |
+| `FIGMA_API_KEY`                  |      ✅      | Figma personal access token — used by the `qa-lead` agent's `figma-design-extractor` skill                                                                      |
+| `TEST_AUDITOR_EMAIL`             |    future    | Email for `auditorPage` fixture (legacy fixture — currently superseded by `createTestSession` + `DEV_AUDIT_USER_EMAIL`)                                         |
+| `TEST_AUDITOR_PASSWORD`          |    future    | Password for above                                                                                                                                              |
 
 Auth state (cookies saved after gate login) is written to `.auth/gate.json` at runtime by `setup/gate.setup.ts` and loaded automatically by the `chromium` project. Never commit `.auth/`.
 
@@ -140,21 +164,32 @@ import { test, expect } from "@playwright/test"
 import type { Locator, Page } from "../fixtures/test"
 ```
 
-`fixtures/test.ts` is already implemented. It extends Playwright's base `test` with per-role pre-authenticated fixtures (`authenticatedPage`, `lcUserPage`, `auditorPage`). Add a new fixture there whenever a new role or shared POM instance is needed — do not construct auth inline in specs. See `.claude/skills/playwright-architect/SKILL.md` for the canonical fixture template.
+`fixtures/test.ts` is already implemented. It extends Playwright's base `test` with the following fixtures:
+
+| Fixture             | Type | Description                                                                                       |
+| ------------------- | ---- | ------------------------------------------------------------------------------------------------- |
+| `loginPage`         | POM  | `LoginPage` instance bound to the current `page`                                                  |
+| `authenticatedPage` | Page | Pre-authenticated system_admin session loaded from `.auth/user.json` (written by `auth.setup.ts`) |
+| `bankProcessorPage` | Page | front_office session created via live login (uses `TEST_BANK_USER_EMAIL/PASSWORD`)                |
+| `lcUserPage`        | Page | leasing_company_user session via live login — lands at `/workspace`                               |
+| `auditorPage`       | Page | auditor session via live login (uses `TEST_AUDITOR_EMAIL/PASSWORD`)                               |
+
+Add a new fixture there whenever a new role or shared POM instance is needed — do not construct auth inline in specs. Prefer `createTestSession()` from `helpers/helper.ts` for inline isolated sessions (as used in `prd1042-69`). See `.claude/skills/playwright-architect/SKILL.md` for the canonical fixture template.
 
 No explicit `any` is permitted in any E2E file (`@typescript-eslint/no-explicit-any: error`).
 
 ### Spec and POM Naming Conventions
 
-| Artifact   | Pattern                        | Example                         |
-| ---------- | ------------------------------ | ------------------------------- |
-| Spec file  | `<story-id>-<slug>.spec.ts`    | `prd1042-43-user-login.spec.ts` |
-| POM file   | `<FeatureName>Page.ts`         | `LoginPage.ts`                  |
-| POM class  | `<FeatureName>Page`            | `LoginPage`                     |
-| Locator    | `camelCase` noun as `readonly` | `emailInput`, `submitButton`    |
-| POM method | `camelCase` verb phrase        | `login()`, `submitAndWait()`    |
+| Artifact    | Pattern                        | Example                         |
+| ----------- | ------------------------------ | ------------------------------- |
+| Spec folder | `specs/<EpicSlug>/`            | `specs/User_Management&Login/`  |
+| Spec file   | `<story-id>-<slug>.spec.ts`    | `prd1042-43-user-login.spec.ts` |
+| POM file    | `<FeatureName>Page.ts`         | `LoginPage.ts`                  |
+| POM class   | `<FeatureName>Page`            | `LoginPage`                     |
+| Locator     | `camelCase` noun as `readonly` | `emailInput`, `submitButton`    |
+| POM method  | `camelCase` verb phrase        | `login()`, `submitAndWait()`    |
 
-Story ID in the spec filename is always lowercased (`prd1042-43`, not `PRD1042-43`). The slug is the story title subject in kebab-case (e.g. `User Login` → `user-login`).
+Story ID in the spec filename is always lowercased (`prd1042-43`, not `PRD1042-43`). The slug is the story title subject in kebab-case (e.g. `User Login` → `user-login`). Specs are grouped under a subfolder named after the epic (e.g. `User_Management&Login/`) — match the subfolder to the epic being tested; create a new subfolder when starting a new epic.
 
 ### Page Object Model Conventions
 

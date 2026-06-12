@@ -43,9 +43,9 @@ Figma design: None — no Figma URL found on PRD1042-69 or children PRD1042-492/
 | ------------- | ------------------------------------------------------------------------------------------- | ------------ | -------- | --- |
 | `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 6 variants)      | AC-01        | P0       | ✅  |
 | `@happy-path` | Successful logout terminates session and redirects to login (Scenario Outline — 2 variants) | AC-01, AC-04 | P0       | ✅  |
+| `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       | ✅  |
 | `@main-error` | Access token is rejected after logout                                                       | AC-02, AC-03 | P0       | ✅  |
 | `@main-error` | Refresh token is rejected after logout                                                      | AC-03        | P0       | ✅  |
-| `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       | ✅  |
 
 Active scenario blocks: 5 (3 Outlines + 2 Scenarios)
 E2E automation candidates: 5 of 5 scenarios ✅

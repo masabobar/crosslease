@@ -40,10 +40,11 @@ Figma design: Node 424:3848, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "REACTIVATE"
 | `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles)                          | AC-01, AC-05 | P0       | ⚙️ needs D19 |
 | `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                         | AC-01        | P0       | ⚙️ needs D19 |
 | `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 privilege tiers) | AC-06a       | P0       | ✅           |
+| `@main-error` | Same user cannot submit and approve their own Restore Access request                                               | AC-06a       | P0       | ✅           |
 | `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                | AC-02        | P0       | ⚙️ needs D19 |
 | `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                        | AC-12        | P0       | ✅           |
 
-Active scenario blocks: 7 (2 Outlines + 5 Scenarios)
+Active scenario blocks: 6 (3 Outlines + 3 Scenarios)
 E2E automation candidates: 3 of 6 scenarios ✅
 
 ---

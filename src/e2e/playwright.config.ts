@@ -15,7 +15,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? "list" : "html",
+  reporter: process.env.CI
+    ? "list"
+    : [
+        [
+          "html",
+          { outputFolder: resolve(__dirname, "./reports/html"), open: "never" },
+        ],
+      ],
 
   use: {
     baseURL: process.env.DEV_BASE_URL || "http://localhost:5173",
@@ -51,8 +58,10 @@ export default defineConfig({
       dependencies: ["gate-setup"],
     },
     // Pre-authenticated tests (user management, dashboard, etc.)
+    // Excludes login/auth specs that require an unauthenticated page.
     {
       name: "chromium-authenticated",
+      testIgnore: /prd1042-43-user-login\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: ".auth/user.json",
@@ -61,5 +70,5 @@ export default defineConfig({
     },
   ],
 
-  outputDir: "../../playwright-results",
+  outputDir: resolve(__dirname, "./reports/results"),
 })

@@ -2,7 +2,7 @@
 
 Generated: 2026-06-03
 Story: PRD1042-73 — US 28.6 | USER MANAGEMENT | User Detail View
-Epic: PRD1042 — US 28: User Management (inferred from story title structure)
+Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (16 ACs, description present, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 4 of 16 | Blocked: 0 | Excluded: 12 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 9:113, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User list & user DETAILS" (Stage 2 PARTIAL — Authentication & Security section and Governance Lineage section absent from design frames; email change flow not designed)

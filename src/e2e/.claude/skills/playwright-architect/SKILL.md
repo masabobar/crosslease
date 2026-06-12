@@ -460,8 +460,22 @@ await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible()
   // playwright.config.ts
   use: { trace: 'on-first-retry' }
   ```
-- Use Playwright Trace Viewer (`npx playwright show-report`) for CI failures — it includes DOM snapshots, network requests, and a timeline; prefer it over screenshots/videos
+- Use Playwright Trace Viewer for CI failures — it includes DOM snapshots, network requests, and a timeline; prefer it over screenshots/videos
 - Keep Playwright updated: `npm install -D @playwright/test@latest` — new versions track the latest browser engines
+
+### Report and Artifact Locations
+
+All Playwright output is written to `src/e2e/reports/` (git-ignored). Never configure `outputDir` or the HTML reporter `outputFolder` to point outside this directory.
+
+| Output | Path | Config key |
+| ------ | ---- | ---------- |
+| HTML report | `src/e2e/reports/html/` | `reporter: [["html", { outputFolder: resolve(__dirname, "./reports/html") }]]` |
+| Test artifacts (screenshots, videos, traces) | `src/e2e/reports/results/` | `outputDir: resolve(__dirname, "./reports/results")` |
+
+Open the HTML report locally with:
+```bash
+pnpm e2e:report   # runs: playwright show-report src/e2e/reports/html
+```
 
 ---
 

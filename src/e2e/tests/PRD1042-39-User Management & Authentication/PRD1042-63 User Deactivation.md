@@ -41,10 +41,11 @@ Figma design: Node 424:7183, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "DEACTIVATIO
 | `@main-error` | Missing Reason blocks deactivation submission (AC-02)                                                                | AC-02        | P0       | ✅           |
 | `@main-error` | Reason=Other without Comment blocks submission (AC-06)                                                               | AC-06        | P0       | ✅           |
 | `@main-error` | Highly Privileged deactivation enters Four-Eyes pending state (Scenario Outline — 2 tiers)                           | AC-04        | P0       | ✅           |
+| `@main-error` | Same user cannot submit and approve their own deactivation request (AC-04 — Four-Eyes)                               | AC-04        | P0       | ✅           |
 | `@main-error` | Deactivated user cannot be restored via standard Restore Access flow (AC-12)                                         | AC-12        | P0       | ✅           |
-| `@main-error` | Unauthorized role cannot access deactivation form (AC-01 negative)                                                   | AC-01        | P0       | ✅           |
+| `@main-error` | Unauthorized role cannot access deactivation form (Scenario Outline — 3 roles)                                       | AC-01        | P0       | ✅           |
 
-Active scenario blocks: 6 (2 Outlines + 4 Scenarios)
+Active scenario blocks: 7 (3 Outlines + 4 Scenarios)
 E2E automation candidates: 6 of 7 scenarios ✅
 
 ---

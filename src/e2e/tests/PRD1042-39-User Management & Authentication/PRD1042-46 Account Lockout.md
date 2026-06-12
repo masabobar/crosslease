@@ -2,7 +2,7 @@
 
 Generated: 2026-06-03
 Story: PRD1042-46 — US 28.9 | USER MANAGEMENT | Account Lockout & Failed Login Handling
-Epic: PRD1042 — US 28: User Management (inferred from story title structure)
+Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (13 ACs, description present, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 4 of 13 | Blocked: 0 | Excluded: 9 (edge-case or separate-feature — scope filter table only)
 Figma design: None — Stage 2 PARTIAL (backend security story; no dedicated design frames provided or linked in story; lockout message text sourced from story AC-05; manual unlock UI not designed)
@@ -38,9 +38,9 @@ Figma design: None — Stage 2 PARTIAL (backend security story; no dedicated des
 | Tag           | Scenario                                                                    | AC    | Priority | E2E              |
 | ------------- | --------------------------------------------------------------------------- | ----- | -------- | ---------------- |
 | `@happy-path` | Account locked after reaching the configured failed login attempt threshold | AC-03 | P0       | ⚙️ needs D18     |
+| `@happy-path` | Admin manually unlocks a locked account — user can log in immediately       | AC-13 | P1       | ⚙️ needs D18/D19 |
 | `@main-error` | Failed login attempt counter resets on successful authentication            | AC-02 | P0       | ⚙️ needs D18     |
 | `@main-error` | Failed login response is generic and does not reveal credential details     | AC-07 | P0       | ✅               |
-| `@happy-path` | Admin manually unlocks a locked account — user can log in immediately       | AC-13 | P1       | ⚙️ needs D18/D19 |
 | `@main-error` | Non-admin role cannot perform manual account unlock                         | AC-13 | P0       | ⚙️ needs D18/D19 |
 
 Active scenario blocks: 5 (0 Outlines + 5 Scenarios)

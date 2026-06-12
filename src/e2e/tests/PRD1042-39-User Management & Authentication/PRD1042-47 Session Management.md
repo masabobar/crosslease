@@ -2,7 +2,7 @@
 
 Generated: 2026-06-03
 Story: PRD1042-47 — US 28.10 | USER MANAGEMENT | Session Management
-Epic: PRD1042 — US 28: User Management (inferred from story title structure)
+Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (13 ACs, description present, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 4 of 13 | Blocked: 0 | Excluded: 9 (edge-case or separate-feature — scope filter table only)
 Figma design: None — Stage 2 PARTIAL (backend security story; no dedicated session management design frames provided or linked in story; logout button placement and session-expired redirect state not confirmed in design)

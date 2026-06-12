@@ -48,14 +48,14 @@ Figma design: Node 167:18629, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Set a new 
 
 | Tag           | Scenario                                                                                        | AC    | Priority | E2E                   |
 | ------------- | ----------------------------------------------------------------------------------------------- | ----- | -------- | --------------------- |
-| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)     | AC-01 | P0       | ✅                    |
 | `@happy-path` | Valid reset request triggers email delivery with reset link                                     | AC-05 | P0       | ⚙️ needs email access |
 | `@happy-path` | Opening a valid reset link shows the Set a new password screen                                  | AC-07 | P0       | ⚙️ needs D17/D19      |
+| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)           | AC-10 | P0       | ⚙️ needs D17/D19      |
+| `@happy-path` | Security-sensitive role requires MFA verification before password is committed                  | AC-10 | P1       | ⚙️ needs D17/D19/R1   |
+| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)     | AC-01 | P0       | ✅                    |
 | `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states) | AC-08 | P0       | ⚙️ needs D17          |
 | `@main-error` | Weak password that does not meet policy is rejected                                             | AC-09 | P0       | ⚙️ needs D17/D19      |
 | `@main-error` | Mismatched password confirmation blocks submission                                              | AC-09 | P0       | ⚙️ needs D17/D19      |
-| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)           | AC-10 | P0       | ⚙️ needs D17/D19      |
-| `@happy-path` | Security-sensitive role requires MFA verification before password is committed                  | AC-10 | P1       | ⚙️ needs D17/D19/R1   |
 | `@main-error` | User can log in with new password after successful reset                                        | AC-14 | P0       | ⚙️ needs D17/D19      |
 | `@main-error` | Old password is rejected after successful reset                                                 | AC-14 | P0       | ⚙️ needs D17/D19      |
 

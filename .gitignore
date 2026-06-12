@@ -21,9 +21,8 @@ src/e2e/.env
 src/e2e/.auth/
 # /src/e2e/.claude/*
 
-# Playwright output
-playwright-results/
-playwright-report/
+# Playwright output (HTML report + test artifacts)
+src/e2e/reports/
 
 # Project management & Claude config (internal tooling, not for source control)
 .project-management/
