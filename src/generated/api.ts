@@ -381,6 +381,12 @@ const TenantResponse = z
     legal_hold_flag: z.boolean(),
     activated_at: z.union([z.string(), z.null()]),
     mfa_required: z.boolean(),
+    max_lc_count: z.number().int(),
+    max_bank_user_count: z.number().int(),
+    max_users_per_lc: z.number().int(),
+    lc_utilisation: z.number().int().optional().default(0),
+    bank_user_utilisation: z.number().int().optional().default(0),
+    lc_user_highest_active: z.number().int().optional().default(0),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
   })
@@ -391,6 +397,9 @@ const UpdateTenantRequest = z
     legal_entity_name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
     legal_hold_flag: z.union([z.boolean(), z.null()]),
+    max_lc_count: z.union([z.number(), z.null()]),
+    max_bank_user_count: z.union([z.number(), z.null()]),
+    max_users_per_lc: z.union([z.number(), z.null()]),
     justification: z.union([z.string(), z.null()]),
   })
   .partial()
@@ -488,7 +497,43 @@ const ReInitiateRequest = z
   .object({ reason: z.union([z.string(), z.null()]) })
   .partial()
   .passthrough()
+const AuditFilterOptionsResponse = z
+  .object({
+    entity_types: z.array(z.string()),
+    action_types: z.array(z.string()),
+    actor_types: z.array(z.string()),
+    trigger_sources: z.array(z.string()),
+    event_types: z.array(z.string()),
+  })
+  .passthrough()
 const sensitive = z.union([z.boolean(), z.null()]).optional()
+const AuditEventListItem = z
+  .object({
+    id: z.string().uuid(),
+    audit_seq: z.number().int(),
+    entity_type: z.string(),
+    entity_id: z.union([z.string(), z.null()]),
+    entity_display: z.union([z.string(), z.null()]),
+    action_type: z.string(),
+    event_type: z.string(),
+    actor_id: z.string(),
+    actor_type: z.string(),
+    actor_display: z.union([z.string(), z.null()]),
+    trigger_source: z.union([z.string(), z.null()]),
+    sensitive: z.boolean(),
+    tenant_id: z.union([z.string(), z.null()]),
+    recorded_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const PaginatedAuditEventsResponse = z
+  .object({
+    events: z.array(AuditEventListItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
 const AuditEventResponse = z
   .object({
     id: z.string().uuid(),
@@ -513,15 +558,6 @@ const AuditEventResponse = z
     payload: z.union([z.object({}).partial().passthrough(), z.null()]),
     sensitive: z.boolean(),
     recorded_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
-const PaginatedAuditEventsResponse = z
-  .object({
-    events: z.array(AuditEventResponse),
-    total: z.number().int(),
-    page: z.number().int(),
-    per_page: z.number().int(),
-    total_pages: z.number().int(),
   })
   .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
@@ -604,9 +640,11 @@ export const schemas = {
   PaginatedGovernedActionsResponse,
   ApproveRejectRequest,
   ReInitiateRequest,
+  AuditFilterOptionsResponse,
   sensitive,
-  AuditEventResponse,
+  AuditEventListItem,
   PaginatedAuditEventsResponse,
+  AuditEventResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -715,6 +753,13 @@ const endpoints = makeApi([
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/audit/filters/options",
+    alias: "get_audit_filter_options_api_v1_audit_filters_options_get",
+    requestFormat: "json",
+    response: AuditFilterOptionsResponse,
   },
   {
     method: "post",
