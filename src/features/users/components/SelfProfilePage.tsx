@@ -27,12 +27,13 @@ import {
   formatDate,
   formatDateTime,
   getInitials,
-} from "@/features/users/utils"
+} from "@/lib/formatters"
 import {
   AUDITOR_DATE_RANGE_ROLES,
   PLATFORM_USER_ROLES,
 } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
+import { phoneNumberSchema } from "@/features/users/api/schema"
 import type { UserRole } from "@/features/users/types"
 
 function getRoleClassificationKey(
@@ -84,18 +85,17 @@ function SectionCard({
   )
 }
 
-const PhoneFormSchema = z.object({
-  phone_number: z
-    .string()
-    .regex(/^\+?[0-9\s\-()\s]{7,30}$/, "Invalid phone number format")
-    .or(z.literal("")),
+const IdentityFormSchema = z.object({
+  first_name: z.string().min(1).max(100),
+  last_name: z.string().min(1).max(100),
+  phone_number: phoneNumberSchema.or(z.literal("")).optional(),
 })
-type PhoneFormValues = z.infer<typeof PhoneFormSchema>
+type IdentityFormValues = z.infer<typeof IdentityFormSchema>
 
 function SelfProfileContent({ user }: { user: UserDetail }) {
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
-  const [isEditingPhone, setIsEditingPhone] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [activeTab, setActiveTab] = useState<"lifecycle" | "auth">("lifecycle")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -103,8 +103,8 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
   const deletePictureMutation = useDeleteSelfPicture(user.id)
   const updateSelfMutation = useUpdateSelf(user.id)
 
-  const phoneForm = useForm<PhoneFormValues>({
-    resolver: zodResolver(PhoneFormSchema),
+  const identityForm = useForm<IdentityFormValues>({
+    resolver: zodResolver(IdentityFormSchema),
   })
 
   const initials = getInitials(user.first_name, user.last_name)
@@ -159,16 +159,40 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
       })
   }
 
-  function handlePhoneSubmit(values: PhoneFormValues) {
-    const phone = values.phone_number === "" ? null : values.phone_number
+  function handleIdentitySubmit(values: IdentityFormValues) {
+    const hasNameChanges =
+      values.first_name !== user.first_name ||
+      values.last_name !== user.last_name
+    const hasPhoneChange =
+      (values.phone_number ?? "") !== (user.phone_number ?? "")
+
+    if (!hasNameChanges && !hasPhoneChange) {
+      setIsEditing(false)
+      return
+    }
+
+    const input: {
+      first_name?: string
+      last_name?: string
+      phone_number?: string | null
+    } = {}
+    if (hasNameChanges) {
+      input.first_name = values.first_name
+      input.last_name = values.last_name
+    }
+    if (hasPhoneChange) {
+      input.phone_number =
+        values.phone_number === "" ? null : (values.phone_number ?? null)
+    }
+
     void updateSelfMutation
-      .mutateAsync({ phone_number: phone })
+      .mutateAsync(input)
       .then(() => {
-        setIsEditingPhone(false)
+        setIsEditing(false)
         showToast({
           variant: "success",
-          title: t("detail.page.selfProfile.phoneSuccess.title"),
-          message: t("detail.page.selfProfile.phoneSuccess.message"),
+          title: t("detail.page.editIdentity.success.title"),
+          message: t("detail.page.editIdentity.success.message"),
         })
       })
       .catch((err: unknown) => {
@@ -273,21 +297,21 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
       {/* Identity + Role cards */}
       <div className="flex gap-6">
         <form
-          onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)}
+          onSubmit={identityForm.handleSubmit(handleIdentitySubmit)}
           className="flex flex-col flex-1"
         >
           <SectionCard
             title={t("detail.page.sections.identity")}
             headerActions={
-              isEditingPhone ? (
+              isEditing ? (
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditingPhone(false)}
+                    onClick={() => setIsEditing(false)}
                     disabled={updateSelfMutation.isPending}
-                    data-testid="phone-cancel-button"
+                    data-testid="identity-cancel-button"
                   >
                     {t("detail.page.actions.cancel")}
                   </Button>
@@ -295,7 +319,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
                     type="submit"
                     size="sm"
                     disabled={updateSelfMutation.isPending}
-                    data-testid="phone-save-button"
+                    data-testid="identity-save-button"
                   >
                     {t("detail.page.actions.saveChanges")}
                   </Button>
@@ -303,10 +327,14 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
               ) : (
                 <Button
                   variant="outline"
-                  data-testid="phone-edit-button"
+                  data-testid="identity-edit-button"
                   onClick={() => {
-                    phoneForm.reset({ phone_number: user.phone_number ?? "" })
-                    setIsEditingPhone(true)
+                    identityForm.reset({
+                      first_name: user.first_name,
+                      last_name: user.last_name,
+                      phone_number: user.phone_number ?? "",
+                    })
+                    setIsEditing(true)
                   }}
                   className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
                 >
@@ -320,22 +348,51 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
               {user.user_id}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.firstName")}>
-              {user.first_name}
+              {isEditing ? (
+                <Input
+                  {...identityForm.register("first_name")}
+                  data-testid="identity-first-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.first_name}
+                />
+              ) : (
+                user.first_name
+              )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.lastName")}>
-              {user.last_name}
+              {isEditing ? (
+                <Input
+                  {...identityForm.register("last_name")}
+                  data-testid="identity-last-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!identityForm.formState.errors.last_name}
+                />
+              ) : (
+                user.last_name
+              )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.email")}>
-              {user.email}
+              {isEditing ? (
+                <Input
+                  value={user.email}
+                  type="email"
+                  data-testid="identity-email-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  disabled
+                  readOnly
+                />
+              ) : (
+                user.email
+              )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.phoneNumber")}>
-              {isEditingPhone ? (
+              {isEditing ? (
                 <Input
-                  {...phoneForm.register("phone_number")}
+                  {...identityForm.register("phone_number")}
                   data-testid="phone-number-input"
                   placeholder="+1 234 567 8900"
                   className="h-[28px] py-0 text-sm rounded-[8px]"
-                  error={!!phoneForm.formState.errors.phone_number}
+                  error={!!identityForm.formState.errors.phone_number}
                 />
               ) : (
                 (user.phone_number ?? "—")

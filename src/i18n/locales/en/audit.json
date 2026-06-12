@@ -1,0 +1,132 @@
+{
+  "detail": {
+    "back": "Back to Audit Trail"
+  },
+  "page": {
+    "title": "Audit Trail",
+    "subtitle": "Full audit history of user access and permission events across the platform.",
+    "loadError": "Failed to load audit events. Please try again.",
+    "filters": {
+      "label": "Active filters:",
+      "searchPill": "Search: \"{{value}}\"",
+      "eventTypePill": "Event: {{value}}",
+      "datePill": "Date: {{range}}",
+      "userAffectedPill": "User Affected: {{value}}",
+      "performedByPill": "Performed By: {{value}}",
+      "tenantPill": "Tenant: {{value}}",
+      "resultPill": "Result: {{value}}",
+      "clearAll": "Clear all"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "table": {
+    "columns": {
+      "timestamp": "Timestamp",
+      "entity": "Entity",
+      "entityType": "Entity type",
+      "eventType": "Event type",
+      "actor": "Actor",
+      "triggerSource": "Trigger sources",
+      "result": "Result",
+      "flag": "Flag"
+    },
+    "empty": "No audit events found."
+  },
+  "entityType": {
+    "user": "User",
+    "contract": "Contract",
+    "financing": "Financing",
+    "request": "Request",
+    "document": "Document",
+    "partner": "Partner",
+    "system": "System"
+  },
+  "flag": {
+    "sensitive": "Sensitive"
+  },
+  "result": {
+    "success": "Success",
+    "failed": "Failed"
+  },
+  "filterBar": {
+    "searchPlaceholder": "Search",
+    "apply": "Apply",
+    "clear": "Clear",
+    "buttons": {
+      "entityType": "Entity type",
+      "eventType": "Event type",
+      "action": "Action",
+      "actor": "Actor",
+      "triggerSource": "Trigger sources",
+      "dateRange": "Date range",
+      "sensitive": "Sensitive"
+    }
+  },
+  "filter": {
+    "placeholders": {
+      "eventType": "Search event types...",
+      "uuid": "Enter UUID",
+      "select": "Select...",
+      "from": "From",
+      "to": "To"
+    },
+    "noResults": "No matching event types."
+  },
+  "drawer": {
+    "tabs": {
+      "overview": "Overview",
+      "actor": "Actor",
+      "payload": "Payload"
+    },
+    "sections": {
+      "event": "Event",
+      "stateChange": "State Change",
+      "entityAndContext": "Entity and Context",
+      "timing": "Timing",
+      "performedBy": "Performed By",
+      "affectedUser": "Affected User",
+      "rawPayload": "Raw JSON Payload",
+      "rawPayloadSub": "for developers"
+    },
+    "fields": {
+      "auditId": "Audit ID",
+      "auditSeq": "Audit sequence",
+      "eventType": "Event type",
+      "actionType": "Action type",
+      "triggerSource": "Trigger source",
+      "recordedAt": "Recorded at",
+      "sensitive": "Sensitive",
+      "sensitiveYes": "Yes",
+      "sensitiveNo": "No",
+      "changedFields": "Changed fields",
+      "reason": "Reason",
+      "comment": "Comment",
+      "oldState": "Old state",
+      "newState": "New state",
+      "entityType": "Entity type",
+      "entity": "Entity",
+      "tenant": "Tenant",
+      "tenantId": "Tenant ID",
+      "correlationId": "Correlation ID",
+      "sessionId": "Session ID",
+      "result": "Result",
+      "userAffected": "User affected",
+      "effectiveFrom": "Effective from",
+      "effectiveUntil": "Effective until",
+      "name": "Name",
+      "actorType": "Actor type",
+      "roleAtTime": "Role at time",
+      "userId": "User ID",
+      "actorId": "Actor ID",
+      "user": "User",
+      "platformLevel": "Platform level (no tenant)"
+    },
+    "noPayload": "No payload data for this event.",
+    "loadError": "Failed to load event details.",
+    "copied": "Copied"
+  }
+}

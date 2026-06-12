@@ -2,6 +2,7 @@
   "page": {
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
+    "loadError": "Failed to load users. Please try again.",
     "inviteButton": "Invite users",
     "filters": {
       "label": "Filters:",
@@ -121,6 +122,7 @@
       "reason": "Reason",
       "reasonPlaceholder": "Select a reason",
       "comment": "Comment (optional)",
+      "commentRequired": "Comment",
       "commentPlaceholder": "Add a comment...",
       "effective_from": "Effective from",
       "effective_until": "Effective until (optional)"
@@ -192,6 +194,16 @@
       "success": {
         "title": "Invitation resent",
         "message": "A new invitation has been sent to {{name}}."
+      }
+    },
+    "resetMfa": {
+      "label": "Reset MFA",
+      "title": "Reset MFA for {{name}}",
+      "description": "This will immediately invalidate all active sessions and delete all recovery codes. {{name}} will need to re-enroll MFA on next login.",
+      "confirm": "Reset MFA",
+      "success": {
+        "title": "MFA reset",
+        "message": "MFA has been reset for {{name}}. They will need to re-enroll on next login."
       }
     }
   },
@@ -353,7 +365,12 @@
         "emailResendSuccess": {
           "title": "Verification email resent",
           "message": "Verification email resent to {{newEmail}}. Email will not update until the user clicks the verification link. Previous address {{oldEmail}} remains active as recovery anchor until verification completes."
-        }
+        },
+        "error": {
+          "title": "Could not save changes"
+        },
+        "emailDisabledPending": "Email cannot be changed while the account is pending activation.",
+        "emailDisabledVerificationInProgress": "An email change is already in progress. Wait for the current verification link to expire or cancel it first."
       },
       "values": {
         "on": "On",
@@ -416,6 +433,8 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "EMAIL_ALREADY_EXISTS": "This email address is already in use.",
+    "EMAIL_CHANGE_ALREADY_IN_PROGRESS": "An email change is already pending. Withdraw it first or wait for the verification link to expire.",
+    "USER_EMAIL_CHANGE_NOT_ALLOWED": "Email change is not allowed for users in this status.",
     "DUPLICATE_PENDING_ACTION": "A pending action of this type already exists for this user.",
     "USER_NOT_ACTIVE": "Operation requires an active user account.",
     "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish."

@@ -8,13 +8,13 @@ export const LoginInputSchema = z.object({
 
 export type LoginInput = z.infer<typeof LoginInputSchema>
 
-export const MfaRequiredResponseSchema = z.object({
-  status: z.literal("MFA_REQUIRED"),
-  verification_token: z.string(),
-  expires_in: z.number(),
+export const LoginStepResponseSchema = z.object({
+  next_step: z.enum(["otp", "mfa", "mfa_setup", "session"]),
+  token: z.string().nullable().optional(),
+  expires_in: z.number().nullable().optional(),
 })
 
-export type MfaRequiredResponse = z.infer<typeof MfaRequiredResponseSchema>
+export type LoginStepResponse = z.infer<typeof LoginStepResponseSchema>
 
 export const VerifyOtpInputSchema = z.object({
   verification_token: z.string(),

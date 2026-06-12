@@ -2,6 +2,7 @@
   "page": {
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
+    "loadError": "Benutzer konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "inviteButton": "Invite users",
     "filters": {
       "label": "Filter:",
@@ -121,6 +122,7 @@
       "reason": "Grund",
       "reasonPlaceholder": "Grund auswählen",
       "comment": "Kommentar (optional)",
+      "commentRequired": "Kommentar",
       "commentPlaceholder": "Kommentar hinzufügen...",
       "effective_from": "Wirksam ab",
       "effective_until": "Wirksam bis (optional)"
@@ -192,6 +194,16 @@
       "success": {
         "title": "Einladung erneut gesendet",
         "message": "Eine neue Einladung wurde an {{name}} gesendet."
+      }
+    },
+    "resetMfa": {
+      "label": "MFA zurücksetzen",
+      "title": "MFA zurücksetzen für {{name}}",
+      "description": "Dies invalidiert sofort alle aktiven Sitzungen und löscht alle Wiederherstellungscodes. {{name}} muss sich beim nächsten Login erneut für MFA anmelden.",
+      "confirm": "MFA zurücksetzen",
+      "success": {
+        "title": "MFA zurückgesetzt",
+        "message": "MFA wurde für {{name}} zurückgesetzt. Sie müssen sich beim nächsten Login erneut registrieren."
       }
     }
   },
@@ -353,7 +365,12 @@
         "emailResendSuccess": {
           "title": "Verifizierungs-E-Mail erneut gesendet",
           "message": "Verifizierungs-E-Mail erneut an {{newEmail}} gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer auf den Verifizierungslink klickt. Die vorherige Adresse {{oldEmail}} bleibt bis zur Verifizierung als Wiederherstellungsanker aktiv."
-        }
+        },
+        "error": {
+          "title": "Änderungen konnten nicht gespeichert werden"
+        },
+        "emailDisabledPending": "Die E-Mail-Adresse kann nicht geändert werden, solange das Konto auf Aktivierung wartet.",
+        "emailDisabledVerificationInProgress": "Eine E-Mail-Änderung ist bereits ausstehend. Warten Sie auf den Ablauf des aktuellen Bestätigungslinks oder brechen Sie ihn zuerst ab."
       },
       "values": {
         "on": "Ein",
@@ -416,6 +433,8 @@
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "EMAIL_ALREADY_EXISTS": "Diese E-Mail-Adresse wird bereits verwendet.",
+    "EMAIL_CHANGE_ALREADY_IN_PROGRESS": "Eine E-Mail-Änderung ist bereits ausstehend. Bitte widerrufen Sie diese zuerst oder warten Sie, bis der Verifizierungslink abläuft.",
+    "USER_EMAIL_CHANGE_NOT_ALLOWED": "Eine E-Mail-Änderung ist für Benutzer in diesem Status nicht erlaubt.",
     "DUPLICATE_PENDING_ACTION": "Für diesen Benutzer existiert bereits eine ausstehende Aktion dieses Typs.",
     "USER_NOT_ACTIVE": "Für diese Operation ist ein aktives Benutzerkonto erforderlich.",
     "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist."

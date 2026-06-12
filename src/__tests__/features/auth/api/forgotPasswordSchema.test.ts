@@ -2,8 +2,30 @@ import { describe, it, expect } from "vitest"
 import {
   ForgotPasswordInputSchema,
   ResetPasswordInputSchema,
+  ResetPasswordResponseSchema,
   getPasswordRequirements,
 } from "@/features/auth/api/forgotPasswordSchema"
+
+describe("ResetPasswordResponseSchema", () => {
+  it("accepts mfa_required=false", () => {
+    expect(() =>
+      ResetPasswordResponseSchema.parse({ mfa_required: false })
+    ).not.toThrow()
+  })
+
+  it("accepts mfa_required=true with mfa_token", () => {
+    expect(() =>
+      ResetPasswordResponseSchema.parse({
+        mfa_required: true,
+        mfa_token: "tok",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects missing mfa_required", () => {
+    expect(() => ResetPasswordResponseSchema.parse({})).toThrow()
+  })
+})
 
 describe("ForgotPasswordInputSchema", () => {
   it("accepts a valid email", () => {

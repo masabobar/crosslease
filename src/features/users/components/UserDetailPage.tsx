@@ -1,6 +1,6 @@
 import { useState, useRef, type ReactNode } from "react"
 import { ApiError } from "@/lib/api"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -14,6 +14,7 @@ import {
   UserRoundCheck,
   UserCheck,
   ShieldAlert,
+  ShieldOff,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -44,6 +45,8 @@ import {
   formatDate,
   formatDateTime,
   getInitials,
+} from "@/lib/formatters"
+import {
   getUserActionVisibility,
   buildActionToastPayload,
 } from "@/features/users/utils"
@@ -53,6 +56,10 @@ import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
 import type {
   UserDetail,
   AuditorPeriodUpdateReason,
+} from "@/features/users/api/schema"
+import {
+  UserStatusSchema,
+  phoneNumberSchema,
 } from "@/features/users/api/schema"
 import {
   AUDITOR_DATE_RANGE_ROLES,
@@ -67,9 +74,9 @@ import { useEditUser } from "@/features/users/hooks/useEditUser"
 import { useChangeEmail } from "@/features/users/hooks/useChangeEmail"
 import { useChangeRole } from "@/features/users/hooks/useChangeRole"
 import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPeriod"
-import { useUpdateSelf } from "@/features/users/hooks/useUpdateSelf"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
+import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
 import { EditRoleScopeDialog } from "@/features/users/components/EditRoleScopeDialog"
 import { EditAuditorPeriodDialog } from "@/features/users/components/EditAuditorPeriodDialog"
 
@@ -238,11 +245,7 @@ const IdentityFormSchema = z.object({
   first_name: z.string().min(1).max(100),
   last_name: z.string().min(1).max(100),
   email: z.string().email(),
-  phone_number: z
-    .string()
-    .regex(/^\+?[0-9\s\-()\s]{7,30}$/, "Invalid phone number format")
-    .or(z.literal(""))
-    .optional(),
+  phone_number: phoneNumberSchema.or(z.literal("")).optional(),
 })
 type IdentityFormValues = z.infer<typeof IdentityFormSchema>
 
@@ -345,11 +348,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const changeEmailMutation = useChangeEmail()
   const changeRoleMutation = useChangeRole()
   const updateAccessPeriodMutation = useUpdateAccessPeriod()
-  const updateSelfMutation = useUpdateSelf(user.id)
   const uploadPictureMutation = useUploadSelfPicture(user.id)
   const deletePictureMutation = useDeleteSelfPicture(user.id)
+  const resetMfaMutation = useResetUserMfa()
   const [isEditingRole, setIsEditingRole] = useState(false)
   const [isEditingAuditorPeriod, setIsEditingAuditorPeriod] = useState(false)
+  const [showMfaResetConfirm, setShowMfaResetConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const identityForm = useForm<IdentityFormValues>({
@@ -368,6 +372,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     canSuspend,
     canReactivate,
     canDeactivate,
+    canResetMfa,
   } = getUserActionVisibility(user.status, user.role, currentUser?.role)
 
   const initials = getInitials(user.first_name, user.last_name)
@@ -465,16 +470,27 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     const hasNameChanges =
       values.first_name !== user.first_name ||
       values.last_name !== user.last_name
+    const hasPhoneChange =
+      (values.phone_number ?? "") !== (user.phone_number ?? "")
 
-    const namePromise = hasNameChanges
-      ? editUserMutation.mutateAsync({
-          userId: user.id,
-          input: {
-            first_name: values.first_name,
-            last_name: values.last_name,
-          },
-        })
-      : Promise.resolve(null)
+    const editInput: {
+      first_name?: string
+      last_name?: string
+      phone_number?: string | null
+    } = {}
+    if (hasNameChanges) {
+      editInput.first_name = values.first_name
+      editInput.last_name = values.last_name
+    }
+    if (hasPhoneChange) {
+      editInput.phone_number =
+        values.phone_number === "" ? null : (values.phone_number ?? null)
+    }
+
+    const editPromise =
+      Object.keys(editInput).length > 0
+        ? editUserMutation.mutateAsync({ userId: user.id, input: editInput })
+        : Promise.resolve(null)
 
     const emailPromise = newEmail
       ? changeEmailMutation.mutateAsync({
@@ -483,41 +499,40 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       : Promise.resolve(null)
 
-    const hasPhoneChange =
-      isOwnProfile && (values.phone_number ?? "") !== (user.phone_number ?? "")
-    const phonePromise = hasPhoneChange
-      ? updateSelfMutation.mutateAsync({
-          phone_number:
-            values.phone_number === "" ? null : (values.phone_number ?? null),
-        })
-      : Promise.resolve(null)
-
-    void Promise.all([namePromise, emailPromise, phonePromise]).then(() => {
-      setIsEditingIdentity(false)
-      setShowEmailConfirm(false)
-      if (newEmail) {
+    void Promise.all([editPromise, emailPromise])
+      .then(() => {
+        setIsEditingIdentity(false)
+        setShowEmailConfirm(false)
+        if (newEmail) {
+          showToast({
+            variant: "success",
+            title: t("detail.page.editIdentity.emailChangeSuccess.title"),
+            message: t("detail.page.editIdentity.emailChangeSuccess.message", {
+              newEmail,
+              oldEmail: user.email,
+            }),
+          })
+        } else {
+          showToast({
+            variant: "success",
+            title: t("detail.page.editIdentity.success.title"),
+            message: t("detail.page.editIdentity.success.message"),
+          })
+        }
+      })
+      .catch((err: unknown) => {
         showToast({
-          variant: "success",
-          title: t("detail.page.editIdentity.emailChangeSuccess.title"),
-          message: t("detail.page.editIdentity.emailChangeSuccess.message", {
-            newEmail,
-            oldEmail: user.email,
-          }),
+          variant: "warning",
+          title: t("detail.page.editIdentity.error.title"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
         })
-      } else {
-        showToast({
-          variant: "success",
-          title: t("detail.page.editIdentity.success.title"),
-          message: t("detail.page.editIdentity.success.message"),
-        })
-      }
-    })
+      })
   }
 
-  const isSaving =
-    editUserMutation.isPending ||
-    changeEmailMutation.isPending ||
-    updateSelfMutation.isPending
+  const isSaving = editUserMutation.isPending || changeEmailMutation.isPending
 
   function handleRoleSubmit(values: { new_role: UserRole; reason: string }) {
     void changeRoleMutation
@@ -572,6 +587,30 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         showToast({
           variant: "warning",
           title: t("detail.page.editRole.error.title"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
+        })
+      })
+  }
+
+  function handleMfaReset() {
+    void resetMfaMutation
+      .mutateAsync(user.id)
+      .then(() => {
+        setShowMfaResetConfirm(false)
+        showToast({
+          variant: "success",
+          title: t("actions.resetMfa.success.title"),
+          message: t("actions.resetMfa.success.message", { name }),
+        })
+      })
+      .catch((err: unknown) => {
+        setShowMfaResetConfirm(false)
+        showToast({
+          variant: "warning",
+          title: t("errors.generic"),
           message:
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
@@ -722,6 +761,17 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   {t("actions.resend-invitation.label")}
                 </Button>
               )}
+              {canResetMfa && (
+                <Button
+                  variant="outline"
+                  data-testid="detail-reset-mfa-button"
+                  onClick={() => setShowMfaResetConfirm(true)}
+                  className="h-auto gap-[6px] rounded-[12px] px-[10px] py-[8px] text-sm"
+                >
+                  <ShieldOff size={16} />
+                  {t("actions.resetMfa.label")}
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -833,6 +883,21 @@ function UserDetailContent({ user }: { user: UserDetail }) {
                   data-testid="identity-email-input"
                   className="h-[28px] py-0 text-sm rounded-[8px]"
                   error={!!identityForm.formState.errors.email}
+                  disabled={
+                    !!user.pending_email ||
+                    user.status === UserStatusSchema.enum.invited ||
+                    user.status === UserStatusSchema.enum.pending_approval
+                  }
+                  title={
+                    user.pending_email
+                      ? t(
+                          "detail.page.editIdentity.emailDisabledVerificationInProgress"
+                        )
+                      : user.status === UserStatusSchema.enum.invited ||
+                          user.status === UserStatusSchema.enum.pending_approval
+                        ? t("detail.page.editIdentity.emailDisabledPending")
+                        : undefined
+                  }
                 />
               ) : user.pending_email ? (
                 <div className="flex items-end gap-[10px] min-w-0">
@@ -849,7 +914,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.phoneNumber")}>
-              {isOwnProfile && isEditingIdentity ? (
+              {isEditingIdentity ? (
                 <Input
                   {...identityForm.register("phone_number")}
                   data-testid="phone-number-input"
@@ -986,6 +1051,51 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           onSuccess={handleActionSuccess}
         />
       )}
+
+      <Dialog
+        open={showMfaResetConfirm}
+        onOpenChange={o => {
+          if (!o) setShowMfaResetConfirm(false)
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[480px] gap-0 p-0 overflow-hidden"
+        >
+          <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
+            <DialogTitle>{t("actions.resetMfa.title", { name })}</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 py-4">
+            <div className="flex items-start gap-2 rounded-[10px] border border-amber-600 bg-amber-500/10 px-[10px] py-2">
+              <ShieldAlert
+                size={16}
+                className="text-amber-600 mt-0.5 shrink-0"
+              />
+              <span className="text-sm text-amber-600/80">
+                {t("actions.resetMfa.description", { name })}
+              </span>
+            </div>
+          </div>
+          <DialogFooter className="mx-0 mb-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowMfaResetConfirm(false)}
+              disabled={resetMfaMutation.isPending}
+              data-testid="mfa-reset-cancel"
+            >
+              {t("modal.actions.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleMfaReset}
+              disabled={resetMfaMutation.isPending}
+              data-testid="mfa-reset-confirm"
+            >
+              {t("actions.resetMfa.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -994,6 +1104,11 @@ export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(id ?? null)
+  const { data: currentUser } = useCurrentUser()
+
+  if (currentUser && id && currentUser.id === id) {
+    return <Navigate to={PATHS.SETTINGS_PROFILE} replace />
+  }
 
   return (
     <div className="p-8" data-testid="user-detail-page">

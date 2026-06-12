@@ -4,6 +4,7 @@ import {
   reactivateUser,
   deactivateUser,
   resendInvitation,
+  resetUserMfa,
   USERS_QUERY_KEYS,
 } from "@/features/users/api/usersApi"
 import type {
@@ -13,75 +14,45 @@ import type {
   ResendInvitationInput,
 } from "@/features/users/api/schema"
 
-export function useSuspendUser() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({
-      userId,
-      input,
-    }: {
-      userId: string
-      input: SuspendUserInput
-    }) => suspendUser(userId, input),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
-      queryClient.invalidateQueries({
-        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
-      })
-    },
-  })
+function createUserActionMutation<TInput>(
+  mutationFn: (userId: string, input: TInput) => Promise<unknown>,
+  invalidateDetail = true
+) {
+  return function () {
+    const queryClient = useQueryClient()
+    return useMutation({
+      mutationFn: ({ userId, input }: { userId: string; input: TInput }) =>
+        mutationFn(userId, input),
+      onSuccess: (_data, variables) => {
+        queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
+        if (invalidateDetail) {
+          queryClient.invalidateQueries({
+            queryKey: USERS_QUERY_KEYS.detail(variables.userId),
+          })
+        }
+      },
+    })
+  }
 }
 
-export function useReactivateUser() {
+export const useSuspendUser =
+  createUserActionMutation<SuspendUserInput>(suspendUser)
+export const useReactivateUser =
+  createUserActionMutation<ReactivateUserInput>(reactivateUser)
+export const useDeactivateUser =
+  createUserActionMutation<DeactivateUserInput>(deactivateUser)
+export const useResendInvitation =
+  createUserActionMutation<ResendInvitationInput>(resendInvitation, false)
+
+export function useResetUserMfa() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      userId,
-      input,
-    }: {
-      userId: string
-      input: ReactivateUserInput
-    }) => reactivateUser(userId, input),
-    onSuccess: (_data, variables) => {
+    mutationFn: (userId: string) => resetUserMfa(userId),
+    onSuccess: (_data, userId) => {
       queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
       queryClient.invalidateQueries({
-        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
+        queryKey: USERS_QUERY_KEYS.detail(userId),
       })
-    },
-  })
-}
-
-export function useDeactivateUser() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({
-      userId,
-      input,
-    }: {
-      userId: string
-      input: DeactivateUserInput
-    }) => deactivateUser(userId, input),
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
-      queryClient.invalidateQueries({
-        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
-      })
-    },
-  })
-}
-
-export function useResendInvitation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({
-      userId,
-      input,
-    }: {
-      userId: string
-      input: ResendInvitationInput
-    }) => resendInvitation(userId, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
     },
   })
 }

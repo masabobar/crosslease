@@ -3,22 +3,31 @@ import { useTranslation } from "react-i18next"
 import {
   LockIcon,
   ArrowRightIcon,
-  ShieldIcon,
   ChevronUpIcon,
   ChevronDownIcon,
 } from "lucide-react"
 import { DialogModal, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api"
 import { useApproveAction } from "@/features/governed-actions/hooks/useApproveAction"
 import { useRejectAction } from "@/features/governed-actions/hooks/useRejectAction"
+import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
+import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { USER_ROLES } from "@/features/users/types"
+import { formatDateTime } from "@/lib/formatters"
+import type { UserRole } from "@/features/users/types"
+import {
+  roleChangeSnapshot,
+  platformInviteSnapshot,
+  emailChangeSnapshot,
+  initiatorSnapshot,
+} from "@/features/governed-actions/api/schema"
 import type {
   GovernedAction,
-  ActorSnapshot,
-  PlatformInviteSnapshot,
-  RoleChangeSnapshot,
-  EmailChangeSnapshot,
+  GovernedActionStatus,
 } from "@/features/governed-actions/api/schema"
 
 type Props = {
@@ -27,11 +36,6 @@ type Props = {
   action: GovernedAction | null
   onApproveSuccess: (action: GovernedAction) => void
   onRejectSuccess: (action: GovernedAction) => void
-}
-
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
 }
 
 function Divider() {
@@ -61,44 +65,20 @@ function FieldRow({
   )
 }
 
-function RoleBadge({ role, label }: { role: string; label: string }) {
-  return (
-    <div
-      className="flex items-center gap-1 h-[22px] px-2 border border-[#7008e7] rounded-[6px]"
-      title={role}
-    >
-      <ShieldIcon className="size-3 text-[#7008e7]" />
-      <span className="text-xs font-medium text-[#7008e7]">{label}</span>
-    </div>
-  )
-}
-
-type StatusBadgeStatus =
-  | "pending"
-  | "approved"
-  | "rejected"
-  | "expired"
-  | "withdrawn"
-
-function StatusBadge({ status }: { status: StatusBadgeStatus }) {
-  const styles: Record<StatusBadgeStatus, string> = {
-    pending: "bg-[rgba(227,146,25,0.1)] text-[#d97706]",
-    approved: "bg-green-500/10 text-green-700",
-    rejected: "bg-red-500/10 text-red-600",
-    expired: "bg-zinc-100/60 text-foreground",
-    withdrawn: "bg-zinc-100/60 text-muted-foreground",
-  }
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium",
-        styles[status]
-      )}
-    >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
-}
+const CHANGE_BOX_STYLES = {
+  current: {
+    wrapper:
+      "bg-red-500/10 border border-red-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3",
+    label: "text-xs font-semibold text-red-700 uppercase",
+    value: "text-sm text-red-700 mt-1",
+  },
+  proposed: {
+    wrapper:
+      "bg-green-500/10 border border-green-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3",
+    label: "text-xs font-semibold text-green-700 uppercase",
+    value: "text-sm text-green-700 mt-1",
+  },
+} as const
 
 function ChangeBox({
   variant,
@@ -109,21 +89,7 @@ function ChangeBox({
   label: string
   children: React.ReactNode
 }) {
-  const styles =
-    variant === "current"
-      ? {
-          wrapper:
-            "bg-[rgba(224,52,52,0.1)] border border-[rgba(224,52,52,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3",
-          label: "text-xs font-semibold text-[#c10007] uppercase",
-          value: "text-sm text-[#c10007] mt-1",
-        }
-      : {
-          wrapper:
-            "bg-[rgba(22,163,74,0.1)] border border-[rgba(22,163,74,0.5)] rounded-[10px] flex-1 min-w-0 px-4 py-3",
-          label: "text-xs font-semibold text-[#008236] uppercase",
-          value: "text-sm text-[#008236] mt-1",
-        }
-
+  const styles = CHANGE_BOX_STYLES[variant]
   return (
     <div className={styles.wrapper}>
       <p className={styles.label}>{label}</p>
@@ -139,10 +105,10 @@ function ChainEntry({
 }: {
   description: string
   date: string
-  status: StatusBadgeStatus
+  status: GovernedActionStatus
 }) {
-  const dotColor: Record<StatusBadgeStatus, string> = {
-    pending: "bg-[#d97706]",
+  const dotColor: Record<GovernedActionStatus, string> = {
+    pending: "bg-amber-600",
     approved: "bg-green-500",
     rejected: "bg-red-500",
     expired: "bg-slate-300",
@@ -159,7 +125,7 @@ function ChainEntry({
           <p className="text-sm text-foreground">{description}</p>
           <p className="text-sm text-muted-foreground">{date}</p>
         </div>
-        <StatusBadge status={status} />
+        <ActionStatusBadge status={status} />
       </div>
     </div>
   )
@@ -169,10 +135,11 @@ const MIN_COMMENT_LENGTH = 10
 
 function getAffectedUser(action: GovernedAction): string | null {
   if (action.action_type === "user_platform_invite") {
-    const s = action.display_snapshot as unknown as PlatformInviteSnapshot
-    return s.full_name ?? null
+    return platformInviteSnapshot(action).full_name ?? null
   }
-  // role_change / email_change: full_name not included in snapshot yet (backend gap)
+  if (action.action_type === "user_email_change") {
+    return emailChangeSnapshot(action).old_email ?? null
+  }
   return null
 }
 
@@ -222,11 +189,7 @@ export function ReviewRequestModal({
           onApproveSuccess(action)
         },
         onError: (err: unknown) => {
-          const code =
-            err instanceof Error && "code" in err
-              ? (err as { code: string }).code
-              : "default"
-          setErrorCode(code)
+          setErrorCode(err instanceof ApiError ? err.code : "default")
         },
       }
     )
@@ -255,11 +218,7 @@ export function ReviewRequestModal({
           onRejectSuccess(action)
         },
         onError: (err: unknown) => {
-          const code =
-            err instanceof Error && "code" in err
-              ? (err as { code: string }).code
-              : "default"
-          setErrorCode(code)
+          setErrorCode(err instanceof ApiError ? err.code : "default")
         },
       }
     )
@@ -267,12 +226,11 @@ export function ReviewRequestModal({
 
   if (!action) return null
 
-  const initiator = action.initiator_snapshot as unknown as ActorSnapshot
+  const initiator = initiatorSnapshot(action)
   const initiatorName = initiator?.first_name
     ? `${initiator.first_name} ${initiator.last_name}`
     : "—"
   const affectedUser = getAffectedUser(action)
-  const chainStatus = action.status as StatusBadgeStatus
 
   return (
     <DialogModal open={open} onOpenChange={handleClose}>
@@ -326,13 +284,11 @@ export function ReviewRequestModal({
               <span className="font-semibold">{initiatorName}</span>
             </FieldRow>
             <FieldRow label={t("modal.roleAtTime")}>
-              {initiator?.role ? (
-                <RoleBadge
-                  role={initiator.role}
-                  label={t(`roles.${initiator.role}`, {
-                    defaultValue: initiator.role,
-                  })}
-                />
+              {initiator?.role &&
+              USER_ROLES.includes(initiator.role as UserRole) ? (
+                <RoleBadge role={initiator.role as UserRole} />
+              ) : initiator?.role ? (
+                <span>{initiator.role}</span>
               ) : (
                 <span>—</span>
               )}
@@ -386,7 +342,7 @@ export function ReviewRequestModal({
             <ChainEntry
               description={t("modal.chainCurrentRequest")}
               date={action.created_at ? formatDateTime(action.created_at) : "—"}
-              status={chainStatus}
+              status={action.status}
             />
           )}
         </div>
@@ -395,9 +351,9 @@ export function ReviewRequestModal({
 
         {/* YOUR JUSTIFICATION */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-foreground">
+          <Label className="text-sm font-medium text-foreground">
             {t("modal.justificationLabel")}
-          </label>
+          </Label>
           <div className="border border-border rounded-xl bg-white px-2.5 py-1">
             <Textarea
               className="h-16 border-0 p-0 rounded-none resize-none text-sm focus-visible:ring-0 focus-visible:border-0"
@@ -458,10 +414,9 @@ export function ReviewRequestModal({
 
 function ChangeSection({ action }: { action: GovernedAction }) {
   const { t } = useTranslation("pendingApprovals")
-  const snap = action.display_snapshot
 
   if (action.action_type === "user_role_change") {
-    const s = snap as unknown as RoleChangeSnapshot
+    const s = roleChangeSnapshot(action)
     return (
       <div className="flex flex-col gap-4">
         <SectionLabel>{t("modal.change")}</SectionLabel>
@@ -483,7 +438,7 @@ function ChangeSection({ action }: { action: GovernedAction }) {
   }
 
   if (action.action_type === "user_email_change") {
-    const s = snap as unknown as EmailChangeSnapshot
+    const s = emailChangeSnapshot(action)
     return (
       <div className="flex flex-col gap-4">
         <SectionLabel>{t("modal.change")}</SectionLabel>
@@ -501,7 +456,7 @@ function ChangeSection({ action }: { action: GovernedAction }) {
   }
 
   if (action.action_type === "user_platform_invite") {
-    const s = snap as unknown as PlatformInviteSnapshot
+    const s = platformInviteSnapshot(action)
     return (
       <div className="flex flex-col gap-4">
         <SectionLabel>{t("modal.change")}</SectionLabel>

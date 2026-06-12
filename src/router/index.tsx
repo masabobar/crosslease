@@ -9,6 +9,7 @@ import {
   INTERNAL_BANK_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
+import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -17,8 +18,20 @@ const ForgotPasswordPage = lazy(
 const ResetPasswordPage = lazy(
   () => import("@/features/auth/components/ResetPasswordPage")
 )
+const ResetPasswordVerifyPage = lazy(
+  () => import("@/features/auth/components/ResetPasswordVerifyPage")
+)
+const MfaVerifyPage = lazy(
+  () => import("@/features/auth/components/MfaVerifyPage")
+)
+const MfaEnrollPage = lazy(
+  () => import("@/features/auth/components/MfaEnrollPage")
+)
 const ActivateAccountPage = lazy(
   () => import("@/features/auth/components/ActivateAccountPage")
+)
+const VerifyEmailPage = lazy(
+  () => import("@/features/auth/components/VerifyEmailPage")
 )
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
 const NotFoundPage = lazy(
@@ -41,6 +54,12 @@ const PendingApprovalsPage = lazy(
 )
 const SelfProfilePage = lazy(
   () => import("@/features/users/components/SelfProfilePage")
+)
+const AuditTrailPage = lazy(
+  () => import("@/features/audit/components/AuditTrailPage")
+)
+const AuditEventDetailPage = lazy(
+  () => import("@/features/audit/components/AuditEventDetailPage")
 )
 
 export const router = createBrowserRouter([
@@ -69,10 +88,42 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: PATHS.RESET_PASSWORD_VERIFY,
+    element: (
+      <Suspense fallback={null}>
+        <ResetPasswordVerifyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.MFA_VERIFY,
+    element: (
+      <Suspense fallback={null}>
+        <MfaVerifyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.MFA_ENROLL,
+    element: (
+      <Suspense fallback={null}>
+        <MfaEnrollPage />
+      </Suspense>
+    ),
+  },
+  {
     path: PATHS.ACTIVATE_ACCOUNT,
     element: (
       <Suspense fallback={null}>
         <ActivateAccountPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: PATHS.VERIFY_EMAIL,
+    element: (
+      <Suspense fallback={null}>
+        <VerifyEmailPage />
       </Suspense>
     ),
   },
@@ -117,6 +168,26 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={USER_MANAGEMENT_ALLOWED_ROLES}>
               <PendingApprovalsPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.AUDIT_TRAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={AUDIT_TRAIL_ALLOWED_ROLES}>
+              <AuditTrailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.AUDIT_TRAIL_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={AUDIT_TRAIL_ALLOWED_ROLES}>
+              <AuditEventDetailPage />
             </RoleGuard>
           </Suspense>
         ),

@@ -6,6 +6,7 @@ import {
   Ban,
   RotateCcw,
   UserX,
+  ShieldOff,
   ChevronsUpDown,
   ChevronUp,
   ChevronDown,
@@ -26,10 +27,8 @@ import {
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import type { UserRole, UserActionType } from "@/features/users/types"
+import { formatLastLogin, formatDate, getInitials } from "@/lib/formatters"
 import {
-  formatLastLogin,
-  formatDate,
-  getInitials,
   getUserActionVisibility,
   getUserListColumnVisibility,
 } from "@/features/users/utils"
@@ -48,6 +47,7 @@ type UserTableProps = {
   onAction?: (type: UserActionType, user: UserListItem) => void
   onRowClick?: (user: UserListItem) => void
   viewerRole?: UserRole
+  currentUserId?: string
 }
 
 type SortableHeaderProps = {
@@ -89,9 +89,10 @@ type KebabMenuProps = {
   user: UserListItem
   viewerRole: UserRole | undefined
   onAction?: (type: UserActionType) => void
+  isSelf: boolean
 }
 
-function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
+function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
   const { t } = useTranslation("users")
 
   const {
@@ -100,10 +101,11 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
     canSuspend: suspendVisible,
     canReactivate: reactivateVisible,
     canDeactivate: deactivateVisible,
+    canResetMfa: resetMfaVisible,
     hasAnyAction: hasActions,
   } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
 
-  if (!hasActions) {
+  if (!hasActions || isSelf) {
     return (
       <Button
         variant="ghost"
@@ -172,6 +174,15 @@ function KebabMenu({ user, viewerRole, onAction }: KebabMenuProps) {
             {t("actions.deactivate.label")}
           </DropdownMenuItem>
         )}
+        {resetMfaVisible && (
+          <DropdownMenuItem
+            data-testid="user-action-reset-mfa"
+            onClick={() => onAction?.("reset-mfa")}
+          >
+            <ShieldOff size={14} className="text-muted-foreground" />
+            {t("actions.resetMfa.label")}
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -188,6 +199,7 @@ function UserTable({
   onAction,
   onRowClick,
   viewerRole,
+  currentUserId,
 }: UserTableProps) {
   const { t } = useTranslation("users")
   const cols = getUserListColumnVisibility(viewerRole)
@@ -396,6 +408,7 @@ function UserTable({
                 user={user}
                 viewerRole={viewerRole}
                 onAction={type => onAction?.(type, user)}
+                isSelf={user.id === currentUserId}
               />
             </div>
           </div>

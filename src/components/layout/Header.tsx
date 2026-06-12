@@ -15,7 +15,7 @@ import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
-import { getInitials } from "@/features/users/utils"
+import { getInitials } from "@/lib/formatters"
 
 type Crumb = { labelKey?: string; label?: string; path?: string }
 
@@ -33,12 +33,18 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
     { labelKey: "breadcrumb.home" },
     { labelKey: "breadcrumb.myProfile" },
   ],
+  [PATHS.AUDIT_TRAIL]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.auditTrail" },
+  ],
 }
 
 export function Header() {
   const { t } = useTranslation("common")
   const location = useLocation()
   const userDetailMatch = useMatch(PATHS.USER_DETAIL)
+  const auditDetailMatch = useMatch(PATHS.AUDIT_TRAIL_DETAIL)
   const { data: currentUser } = useCurrentUser()
   const { data: detailUser } = useUserDetail(userDetailMatch?.params.id ?? null)
   const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
@@ -55,10 +61,17 @@ export function Header() {
             : "…",
         },
       ]
-    : (BREADCRUMBS[location.pathname] ??
-      Object.entries(BREADCRUMBS)
-        .filter(([path]) => location.pathname.startsWith(path + "/"))
-        .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
+    : auditDetailMatch
+      ? [
+          { labelKey: "breadcrumb.home" },
+          { labelKey: "breadcrumb.platformAdministration" },
+          { labelKey: "breadcrumb.auditTrail", path: PATHS.AUDIT_TRAIL },
+          { labelKey: "breadcrumb.auditEvent" },
+        ]
+      : (BREADCRUMBS[location.pathname] ??
+        Object.entries(BREADCRUMBS)
+          .filter(([path]) => location.pathname.startsWith(path + "/"))
+          .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
 
   const initials = currentUser
     ? getInitials(currentUser.first_name, currentUser.last_name)

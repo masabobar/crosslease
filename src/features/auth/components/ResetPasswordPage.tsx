@@ -71,7 +71,17 @@ export default function ResetPasswordPage() {
   const onSubmit = form.handleSubmit(async data => {
     setServerError(null)
     try {
-      await resetPassword(token, data.password, data.password_confirm)
+      const result = await resetPassword(
+        token,
+        data.password,
+        data.password_confirm
+      )
+      if (result.mfa_required) {
+        navigate(PATHS.RESET_PASSWORD_VERIFY, {
+          state: { mfa_token: result.mfa_token ?? "" },
+        })
+        return
+      }
       setIsSuccess(true)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""

@@ -19,19 +19,11 @@ import {
   AUDITOR_DATE_RANGE_ROLES,
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
-import type { UserResponse } from "@/features/users/api/schema"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
-export type InviteSuccessResult =
-  | { type: "invited"; user: UserResponse }
-  | {
-      type: "pending_approval"
-      firstName: string
-      lastName: string
-      email: string
-      subjectId: string | null
-    }
 import { useTenants } from "@/features/tenants/hooks/useTenants"
+import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
+import type { InviteSuccessResult } from "@/features/users/types"
 
 type InviteUserModalProps = {
   open: boolean
@@ -117,7 +109,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { errors, isSubmitting } = form.formState
 
   const tenantOptions: SelectOption[] = (tenantsData?.tenants ?? [])
-    .filter(t => t.status === "active")
+    .filter(t => t.status === TenantStatusSchema.enum.active)
     .map(t => ({ value: t.id, label: t.name }))
 
   const selectedRole = useWatch({ control: form.control, name: "role" })
@@ -209,6 +201,8 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         } else {
           form.setError("root", { message: errMessage })
         }
+      } else {
+        form.setError("root", { message: t("errors.generic") })
       }
     }
   })

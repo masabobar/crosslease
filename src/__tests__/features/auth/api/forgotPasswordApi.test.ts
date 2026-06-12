@@ -24,10 +24,10 @@ beforeEach(() => {
 })
 
 describe("requestPasswordReset", () => {
-  it("calls POST /auth/forgot-password with the email", async () => {
+  it("calls POST /auth/password/forgot with the email", async () => {
     mockApi.post.mockResolvedValue(undefined)
     await requestPasswordReset("user@example.com")
-    expect(mockApi.post).toHaveBeenCalledWith("/auth/forgot-password", {
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/password/forgot", {
       email: "user@example.com",
     })
   })
@@ -41,10 +41,10 @@ describe("requestPasswordReset", () => {
 })
 
 describe("validateResetToken", () => {
-  it("calls GET /auth/validate-reset-token with the token as a query param", async () => {
+  it("calls GET /auth/password/validate-token with the token as a query param", async () => {
     mockApi.get.mockResolvedValue(undefined)
     await validateResetToken("abc123")
-    expect(mockApi.get).toHaveBeenCalledWith("/auth/validate-reset-token", {
+    expect(mockApi.get).toHaveBeenCalledWith("/auth/password/validate-token", {
       params: { token: "abc123" },
     })
   })
@@ -58,14 +58,22 @@ describe("validateResetToken", () => {
 })
 
 describe("resetPassword", () => {
-  it("calls POST /auth/reset-password with token, password, and password_confirm", async () => {
-    mockApi.post.mockResolvedValue(undefined)
-    await resetPassword("tok", "Abcdef1!", "Abcdef1!")
-    expect(mockApi.post).toHaveBeenCalledWith("/auth/reset-password", {
+  it("calls POST /auth/password/reset and returns parsed response", async () => {
+    mockApi.post.mockResolvedValue({ mfa_required: false })
+    const result = await resetPassword("tok", "Abcdef1!", "Abcdef1!")
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/password/reset", {
       token: "tok",
       password: "Abcdef1!",
       password_confirm: "Abcdef1!",
     })
+    expect(result.mfa_required).toBe(false)
+  })
+
+  it("returns mfa_required=true with mfa_token when MFA verification is needed", async () => {
+    mockApi.post.mockResolvedValue({ mfa_required: true, mfa_token: "mfa-tok" })
+    const result = await resetPassword("tok", "Abcdef1!", "Abcdef1!")
+    expect(result.mfa_required).toBe(true)
+    expect(result.mfa_token).toBe("mfa-tok")
   })
 
   it("propagates errors from the API", async () => {

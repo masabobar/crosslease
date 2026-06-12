@@ -13,6 +13,8 @@ import {
   CircleAlert,
   CircleCheckBig,
   Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { login, verifyOtp, resendOtp } from "../api/loginApi"
@@ -57,6 +59,7 @@ export default function LoginPage() {
   const { setAuthenticated } = useAuthStore()
 
   const [step, setStep] = useState<"credentials" | "otp">("credentials")
+  const [showPassword, setShowPassword] = useState(false)
   const [verificationToken, setVerificationToken] = useState("")
   const [emailForOtp, setEmailForOtp] = useState("")
   const [serverError, setServerError] = useState<string | null>(null)
@@ -97,9 +100,29 @@ export default function LoginPage() {
     setServerError(null)
     try {
       const result = await login(data)
-      setVerificationToken(result.verification_token)
-      setEmailForOtp(data.email)
-      setStep("otp")
+      if (result.next_step === "session") {
+        setAuthenticated(true)
+        navigate(PATHS.DASHBOARD)
+        return
+      }
+      if (result.next_step === "otp") {
+        setVerificationToken(result.token ?? "")
+        setEmailForOtp(data.email)
+        setStep("otp")
+        return
+      }
+      if (result.next_step === "mfa") {
+        navigate(PATHS.MFA_VERIFY, {
+          state: { mfa_token: result.token ?? "", email: data.email },
+        })
+        return
+      }
+      if (result.next_step === "mfa_setup") {
+        navigate(PATHS.MFA_ENROLL, {
+          state: { mfa_token: result.token ?? "" },
+        })
+        return
+      }
     } catch (err) {
       const code = err instanceof ApiError ? err.code : ""
       setServerError(errorMessages[code] ?? t("login.errors.default"))
@@ -159,6 +182,7 @@ export default function LoginPage() {
     setOtpValue("")
     setOtpHelper({ type: "none" })
     setServerError(null)
+    credentialsForm.reset()
   }
 
   if (step === "otp") {
@@ -440,9 +464,11 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   autoComplete="email"
+                  autoFocus
                   placeholder={t("login.emailPlaceholder")}
                   data-testid="login-email-input"
                   startIcon={<User size={16} />}
+                  error={!!credentialsForm.formState.errors.email}
                   className="py-3.5 bg-card rounded-xl"
                   {...credentialsForm.register("email")}
                 />
@@ -459,11 +485,27 @@ export default function LoginPage() {
                 </Label>
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="••••••••"
                   data-testid="login-password-input"
                   startIcon={<Lock size={20} />}
+                  error={!!credentialsForm.formState.errors.password}
+                  endAction={
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      aria-label={
+                        showPassword
+                          ? t("login.hidePassword")
+                          : t("login.showPassword")
+                      }
+                      onClick={() => setShowPassword(v => !v)}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  }
                   className="pl-12 py-3.5 bg-card rounded-xl"
                   {...credentialsForm.register("password")}
                 />

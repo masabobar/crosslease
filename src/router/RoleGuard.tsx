@@ -10,9 +10,9 @@ type RoleGuardProps = {
 }
 
 export function RoleGuard({ allowed, children }: RoleGuardProps) {
-  const { data: currentUser, isLoading } = useCurrentUser()
+  const { data: currentUser, isLoading, isError } = useCurrentUser()
 
-  if (isLoading) return null
+  if (isLoading || isError) return null
 
   if (!currentUser || !allowed.includes(currentUser.role)) {
     return <Navigate to={PATHS.FORBIDDEN} replace />

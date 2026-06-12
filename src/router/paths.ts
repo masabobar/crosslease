@@ -2,7 +2,11 @@ export const PATHS = {
   LOGIN: "/login",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
+  RESET_PASSWORD_VERIFY: "/reset-password/verify",
   ACTIVATE_ACCOUNT: "/activate",
+  VERIFY_EMAIL: "/verify-email",
+  MFA_VERIFY: "/mfa/verify",
+  MFA_ENROLL: "/mfa/enroll",
   DASHBOARD: "/",
   FORBIDDEN: "/403",
   USER_MANAGEMENT: "/platform-administration/user-management",
@@ -14,8 +18,14 @@ export const PATHS = {
   LC_PROPOSALS: "/lc/proposals",
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
   SETTINGS_PROFILE: "/settings/profile",
+  AUDIT_TRAIL: "/platform-administration/audit-trail",
+  AUDIT_TRAIL_DETAIL: "/platform-administration/audit-trail/:eventId",
 } as const
 
 export function adminUserDetail(id: string): string {
   return PATHS.USER_DETAIL.replace(":id", id)
+}
+
+export function auditTrailDetail(eventId: string): string {
+  return PATHS.AUDIT_TRAIL_DETAIL.replace(":eventId", eventId)
 }

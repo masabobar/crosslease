@@ -205,7 +205,8 @@ export const UserDetailResponseSchema = z.object({
   profile_picture_url: z.string().nullable().optional(),
   pending_email: z.string().nullable(),
   access_valid_until: z.string().nullable(),
-  invited_by_user_id: z.string().nullable(),
+  invited_by: z.object({ id: z.string(), name: z.string() }).nullable(),
+  approved_by: z.object({ id: z.string(), name: z.string() }).nullable(),
   invited_at: z.string().nullable(),
   activated_at: z.string().nullable(),
   last_login: z.string().nullable(),
@@ -218,18 +219,21 @@ export const UserDetailResponseSchema = z.object({
 
 export type UserDetail = z.infer<typeof UserDetailResponseSchema>
 
+export const phoneNumberSchema = z
+  .string()
+  .regex(/^\+?[0-9\s\-() ]{7,30}$/, "Invalid phone number")
+
 export const EditUserRequestSchema = z.object({
   first_name: z.string().min(1).max(100).nullable().optional(),
   last_name: z.string().min(1).max(100).nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
 })
 export type EditUserInput = z.infer<typeof EditUserRequestSchema>
 
 export const UpdateSelfInputSchema = z.object({
-  phone_number: z
-    .string()
-    .regex(/^\+?[0-9\s\-() ]{7,30}$/, "Invalid phone number")
-    .nullable()
-    .optional(),
+  first_name: z.string().min(1).max(100).nullable().optional(),
+  last_name: z.string().min(1).max(100).nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
 })
 export type UpdateSelfInput = z.infer<typeof UpdateSelfInputSchema>
 

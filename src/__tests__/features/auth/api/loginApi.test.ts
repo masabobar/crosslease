@@ -25,10 +25,10 @@ beforeEach(() => {
 })
 
 describe("login", () => {
-  it("calls POST /auth/login and returns a parsed MFA response", async () => {
+  it("calls POST /auth/login and returns a parsed step response", async () => {
     mockApi.post.mockResolvedValue({
-      status: "MFA_REQUIRED",
-      verification_token: "tok",
+      next_step: "otp",
+      token: "tok",
       expires_in: 300,
     })
     const result = await login({ email: "user@example.com", password: "pass" })
@@ -36,7 +36,14 @@ describe("login", () => {
       email: "user@example.com",
       password: "pass",
     })
-    expect(result.verification_token).toBe("tok")
+    expect(result.next_step).toBe("otp")
+    expect(result.token).toBe("tok")
+  })
+
+  it("accepts session step with null token", async () => {
+    mockApi.post.mockResolvedValue({ next_step: "session", token: null })
+    const result = await login({ email: "user@example.com", password: "pass" })
+    expect(result.next_step).toBe("session")
   })
 
   it("propagates ACCOUNT_LOCKED error code from the API", async () => {
@@ -63,8 +70,8 @@ describe("login", () => {
     ).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" })
   })
 
-  it("throws when the API response does not match MfaRequiredResponseSchema", async () => {
-    mockApi.post.mockResolvedValue({ status: "UNEXPECTED", foo: "bar" })
+  it("throws when the API response does not match LoginStepResponseSchema", async () => {
+    mockApi.post.mockResolvedValue({ next_step: "UNEXPECTED", foo: "bar" })
     await expect(
       login({ email: "user@example.com", password: "pass" })
     ).rejects.toThrow()
@@ -90,13 +97,13 @@ describe("verifyOtp", () => {
     updated_at: "2026-01-01T00:00:00Z",
   }
 
-  it("calls POST /auth/verify-otp and returns the user object", async () => {
+  it("calls POST /auth/otp/verify and returns the user object", async () => {
     mockApi.post.mockResolvedValue({ user: validUser })
     const result = await verifyOtp({
       verification_token: "tok",
       code: "123456",
     })
-    expect(mockApi.post).toHaveBeenCalledWith("/auth/verify-otp", {
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/otp/verify", {
       verification_token: "tok",
       code: "123456",
     })
@@ -113,10 +120,10 @@ describe("verifyOtp", () => {
 })
 
 describe("resendOtp", () => {
-  it("calls POST /auth/resend-otp with the verification token", async () => {
+  it("calls POST /auth/otp/resend with the verification token", async () => {
     mockApi.post.mockResolvedValue(undefined)
     await resendOtp({ verification_token: "tok" })
-    expect(mockApi.post).toHaveBeenCalledWith("/auth/resend-otp", {
+    expect(mockApi.post).toHaveBeenCalledWith("/auth/otp/resend", {
       verification_token: "tok",
     })
   })

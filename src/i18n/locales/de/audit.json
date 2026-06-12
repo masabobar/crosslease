@@ -1,0 +1,132 @@
+{
+  "detail": {
+    "back": "Zurück zum Audit-Protokoll"
+  },
+  "page": {
+    "title": "Audit Trail",
+    "subtitle": "Benutzerzugriffs- und Aktivitätsereignisse anzeigen und prüfen.",
+    "loadError": "Audit-Ereignisse konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "filters": {
+      "label": "Aktive Filter:",
+      "searchPill": "Suche: \"{{value}}\"",
+      "eventTypePill": "Ereignis: {{value}}",
+      "datePill": "Datum: {{range}}",
+      "userAffectedPill": "Betroffener Benutzer: {{value}}",
+      "performedByPill": "Durchgeführt von: {{value}}",
+      "tenantPill": "Mandant: {{value}}",
+      "resultPill": "Ergebnis: {{value}}",
+      "clearAll": "Alle löschen"
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "table": {
+    "columns": {
+      "timestamp": "Zeitstempel",
+      "entity": "Entität",
+      "entityType": "Entitätstyp",
+      "eventType": "Ereignistyp",
+      "actor": "Akteur",
+      "triggerSource": "Auslöserquelle",
+      "result": "Ergebnis",
+      "flag": "Markierung"
+    },
+    "empty": "Keine Auditereignisse gefunden."
+  },
+  "entityType": {
+    "user": "Benutzer",
+    "contract": "Vertrag",
+    "financing": "Finanzierung",
+    "request": "Anfrage",
+    "document": "Dokument",
+    "partner": "Partner",
+    "system": "System"
+  },
+  "flag": {
+    "sensitive": "Sensibel"
+  },
+  "result": {
+    "success": "Erfolgreich",
+    "failed": "Fehlgeschlagen"
+  },
+  "filterBar": {
+    "searchPlaceholder": "Suchen",
+    "apply": "Anwenden",
+    "clear": "Löschen",
+    "buttons": {
+      "entityType": "Entitätstyp",
+      "eventType": "Ereignistyp",
+      "action": "Aktion",
+      "actor": "Akteur",
+      "triggerSource": "Auslöserquelle",
+      "dateRange": "Zeitraum",
+      "sensitive": "Sensibel"
+    }
+  },
+  "filter": {
+    "placeholders": {
+      "eventType": "Ereignistypen suchen...",
+      "uuid": "UUID eingeben",
+      "select": "Auswählen...",
+      "from": "Von",
+      "to": "Bis"
+    },
+    "noResults": "Keine passenden Ereignistypen."
+  },
+  "drawer": {
+    "tabs": {
+      "overview": "Übersicht",
+      "actor": "Akteur",
+      "payload": "Payload"
+    },
+    "sections": {
+      "event": "Ereignis",
+      "stateChange": "Statusänderung",
+      "entityAndContext": "Entität und Kontext",
+      "timing": "Zeitangaben",
+      "performedBy": "Durchgeführt von",
+      "affectedUser": "Betroffener Benutzer",
+      "rawPayload": "Rohe JSON-Nutzlast",
+      "rawPayloadSub": "für Entwickler"
+    },
+    "fields": {
+      "auditId": "Audit-ID",
+      "auditSeq": "Audit-Sequenz",
+      "eventType": "Ereignistyp",
+      "actionType": "Aktionstyp",
+      "triggerSource": "Auslöserquelle",
+      "recordedAt": "Aufgezeichnet um",
+      "sensitive": "Sensibel",
+      "sensitiveYes": "Ja",
+      "sensitiveNo": "Nein",
+      "changedFields": "Geänderte Felder",
+      "reason": "Grund",
+      "comment": "Kommentar",
+      "oldState": "Alter Zustand",
+      "newState": "Neuer Zustand",
+      "entityType": "Entitätstyp",
+      "entity": "Entität",
+      "tenant": "Mandant",
+      "tenantId": "Mandanten-ID",
+      "correlationId": "Korrelations-ID",
+      "sessionId": "Sitzungs-ID",
+      "result": "Ergebnis",
+      "userAffected": "Betroffener Benutzer",
+      "effectiveFrom": "Gültig ab",
+      "effectiveUntil": "Gültig bis",
+      "name": "Name",
+      "actorType": "Akteurtyp",
+      "roleAtTime": "Rolle zum Zeitpunkt",
+      "userId": "Benutzer-ID",
+      "actorId": "Akteur-ID",
+      "user": "Benutzer",
+      "platformLevel": "Plattformebene (kein Mandant)"
+    },
+    "noPayload": "Keine Payload-Daten für dieses Ereignis.",
+    "loadError": "Ereignisdetails konnten nicht geladen werden.",
+    "copied": "Kopiert"
+  }
+}

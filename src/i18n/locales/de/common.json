@@ -37,7 +37,9 @@
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
     "pendingApprovals": "Ausstehende Genehmigungen",
-    "myProfile": "Mein Profil"
+    "myProfile": "Mein Profil",
+    "auditTrail": "Audit-Trail",
+    "auditEvent": "Ereignisdetail"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",
@@ -55,6 +57,10 @@
     "allTenants": "Alle Mandanten",
     "readOnly": "Nur Lesen",
     "readOnlyDescription": "Sie befinden sich im Nur-Lesen-Modus. Es können keine Änderungen vorgenommen werden."
+  },
+  "auditorExpiry": {
+    "warningMessage": "Ihr Zugang zu RefiNext läuft am {{date}} um {{time}} Uhr ab. Wenden Sie sich an Ihren Administrator, wenn Sie eine Verlängerung benötigen.",
+    "dangerMessage": "Ihr Zugang läuft heute um {{time}} Uhr ab. Noch {{countdown}}. Wenden Sie sich sofort an Ihren Administrator, wenn Sie eine Verlängerung benötigen."
   },
   "time": {
     "justNow": "gerade eben",

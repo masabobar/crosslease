@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
+  EditUserRequestSchema,
   ExportFormatSchema,
   ExportJobSchema,
   ExportJobStatusSchema,
@@ -196,7 +197,8 @@ const validUserDetail = {
   phone_number: null,
   pending_email: null,
   access_valid_until: null,
-  invited_by_user_id: null,
+  invited_by: null,
+  approved_by: null,
   invited_at: null,
   activated_at: null,
   last_login: null,
@@ -219,7 +221,8 @@ describe("UserDetailResponseSchema", () => {
       tenant_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
       tenant_name: "Musterbank AG",
       access_valid_until: "2026-12-31T23:59:59Z",
-      invited_by_user_id: "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+      invited_by: { id: "USR-00042", name: "Test Inviter" },
+      approved_by: { id: "USR-00087", name: "Test Approver" },
       invited_at: "2026-01-01T09:00:00Z",
       activated_at: "2026-01-02T10:00:00Z",
       last_login: "2026-05-20T10:00:00Z",
@@ -466,5 +469,58 @@ describe("ExportJobStatusSchema", () => {
     expect(() =>
       ExportJobStatusSchema.parse({ job_id: "x", status: "completed" })
     ).toThrow()
+  })
+})
+
+describe("EditUserRequestSchema", () => {
+  it("accepts name-only payload", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({
+        first_name: "Anna",
+        last_name: "Müller",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts phone-only payload", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ phone_number: "+49 30 12345678" })
+    ).not.toThrow()
+  })
+
+  it("accepts combined name and phone payload", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({
+        first_name: "Anna",
+        last_name: "Müller",
+        phone_number: "+49 30 12345678",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null phone to clear the field", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ phone_number: null })
+    ).not.toThrow()
+  })
+
+  it("accepts empty payload (all fields optional)", () => {
+    expect(() => EditUserRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("rejects phone with invalid format", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ phone_number: "not-a-phone" })
+    ).toThrow()
+  })
+
+  it("rejects first_name exceeding max length", () => {
+    expect(() =>
+      EditUserRequestSchema.parse({ first_name: "A".repeat(101) })
+    ).toThrow()
+  })
+
+  it("rejects empty string first_name", () => {
+    expect(() => EditUserRequestSchema.parse({ first_name: "" })).toThrow()
   })
 })

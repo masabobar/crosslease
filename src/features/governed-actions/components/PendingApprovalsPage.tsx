@@ -1,10 +1,11 @@
 import { useState, useRef } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, Check, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
 import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
 import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
@@ -14,6 +15,12 @@ import { PendingApprovalDetailDrawer } from "@/features/governed-actions/compone
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { PATHS } from "@/router/paths"
+import {
+  GovernedActionStatusSchema,
+  initiatorSnapshot,
+  platformInviteSnapshot,
+} from "@/features/governed-actions/api/schema"
 import type {
   GovernedAction,
   GovernedActionStatus,
@@ -23,11 +30,11 @@ type Tab = "all" | GovernedActionStatus
 
 const TABS: Tab[] = [
   "all",
-  "pending",
-  "approved",
-  "rejected",
-  "withdrawn",
-  "expired",
+  GovernedActionStatusSchema.enum.pending,
+  GovernedActionStatusSchema.enum.approved,
+  GovernedActionStatusSchema.enum.rejected,
+  GovernedActionStatusSchema.enum.withdrawn,
+  GovernedActionStatusSchema.enum.expired,
 ]
 
 export default function PendingApprovalsPage() {
@@ -41,7 +48,7 @@ export default function PendingApprovalsPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>("all")
   const [search, setSearch] = useState("")
-  const highlightRowRef = useRef<HTMLDivElement | null>(null)
+  const highlightRowRef = useRef<HTMLButtonElement | null>(null)
   const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailsAction, setDetailsAction] = useState<GovernedAction | null>(
@@ -51,7 +58,9 @@ export default function PendingApprovalsPage() {
   const statusFilter =
     activeTab === "all" ? undefined : ([activeTab] as GovernedActionStatus[])
 
-  const { data, isLoading } = useGovernedActions({ status: statusFilter })
+  const { data, isLoading, isError } = useGovernedActions({
+    status: statusFilter,
+  })
 
   const withdrawAction = useWithdrawAction()
   const reInitiateAction = useReInitiateAction()
@@ -68,13 +77,9 @@ export default function PendingApprovalsPage() {
     ? actions.filter(a => {
         const q = search.toLowerCase()
         const typeName = t(`actionTypes.${a.action_type}`).toLowerCase()
-        const snap = a.initiator_snapshot as Record<string, unknown>
-        const firstName =
-          typeof snap.first_name === "string"
-            ? snap.first_name.toLowerCase()
-            : ""
-        const lastName =
-          typeof snap.last_name === "string" ? snap.last_name.toLowerCase() : ""
+        const { first_name, last_name } = initiatorSnapshot(a)
+        const firstName = first_name?.toLowerCase() ?? ""
+        const lastName = last_name?.toLowerCase() ?? ""
         return (
           typeName.includes(q) ||
           firstName.includes(q) ||
@@ -102,11 +107,14 @@ export default function PendingApprovalsPage() {
             }),
           })
         },
-        onError: () => {
+        onError: (err: unknown) => {
+          const code = err instanceof ApiError ? err.code : undefined
           showToast({
             variant: "warning",
             title: t("toast.error.title"),
-            message: t("toast.error.message"),
+            message: code
+              ? t(`errors.${code}`, { defaultValue: t("toast.error.message") })
+              : t("toast.error.message"),
           })
         },
       }
@@ -126,11 +134,14 @@ export default function PendingApprovalsPage() {
             }),
           })
         },
-        onError: () => {
+        onError: (err: unknown) => {
+          const code = err instanceof ApiError ? err.code : undefined
           showToast({
             variant: "warning",
             title: t("toast.error.title"),
-            message: t("toast.error.message"),
+            message: code
+              ? t(`errors.${code}`, { defaultValue: t("toast.error.message") })
+              : t("toast.error.message"),
           })
         },
       }
@@ -138,12 +149,12 @@ export default function PendingApprovalsPage() {
   }
 
   function resolvePersonName(action: GovernedAction): string {
-    const snap = action.display_snapshot as Record<string, unknown>
-    if (typeof snap.full_name === "string") return snap.full_name
-    const initiator = action.initiator_snapshot as Record<string, unknown>
-    return typeof initiator.first_name === "string"
-      ? `${initiator.first_name} ${initiator.last_name}`
-      : "—"
+    if (action.action_type === "user_platform_invite") {
+      const display = platformInviteSnapshot(action)
+      if (display.full_name) return display.full_name
+    }
+    const { first_name, last_name } = initiatorSnapshot(action)
+    return first_name ? `${first_name} ${last_name}` : "—"
   }
 
   function handleApproveSuccess(action: GovernedAction) {
@@ -227,6 +238,15 @@ export default function PendingApprovalsPage() {
 
       {/* List */}
       <div className="flex flex-col gap-2">
+        {isError && !isLoading && (
+          <div
+            className="py-12 text-center text-sm text-muted-foreground"
+            data-testid="actions-load-error"
+          >
+            {t("page.loadError")}
+          </div>
+        )}
+
         {isLoading && (
           <div className="py-12 text-center text-sm text-muted-foreground">
             {t("loading", { defaultValue: "Loading…" })}
@@ -262,13 +282,16 @@ export default function PendingApprovalsPage() {
                 </p>
               </div>
             )}
-            <Button
-              variant="outline"
-              className="h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
+            <Link
+              to={PATHS.AUDIT_TRAIL}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
+              )}
             >
               <Activity size={16} />
               {t("empty.viewAuditLog")}
-            </Button>
+            </Link>
           </div>
         )}
 
@@ -282,7 +305,7 @@ export default function PendingApprovalsPage() {
               isHighlighted={action.id === highlightedActionId}
               ref={
                 action.id === highlightedActionId
-                  ? (el: HTMLDivElement | null) => {
+                  ? (el: HTMLButtonElement | null) => {
                       highlightRowRef.current = el
                       el?.scrollIntoView({
                         behavior: "smooth",

@@ -302,8 +302,8 @@ function UserFilterPanel({
   viewerRole,
 }: UserFilterPanelProps) {
   const { t } = useTranslation("users")
-  const { data: tenantsData } = useTenants()
   const filterVis = getUserFilterVisibility(viewerRole)
+  const { data: tenantsData } = useTenants(filterVis.tenant)
 
   const tenantOptions = (tenantsData?.tenants ?? [])
     .filter(ten => ten.status === "active")

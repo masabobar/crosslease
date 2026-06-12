@@ -1,3 +1,4 @@
+import { useState } from "react"
 import type { ReactNode } from "react"
 import {
   UserRoundX,
@@ -6,19 +7,28 @@ import {
   CircleUserRound,
   UserCheck,
   Mail,
+  ShieldOff,
+  ShieldAlert,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
-import {
-  formatLastLogin,
-  getInitials,
-  getUserActionVisibility,
-} from "@/features/users/utils"
+import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
+import { formatLastLogin, getInitials } from "@/lib/formatters"
+import { getUserActionVisibility } from "@/features/users/utils"
+import { ApiError } from "@/lib/api"
+import { useToastStore } from "@/store/toastStore"
 import { PATHS } from "@/router/paths"
 import type { UserActionType, UserRole } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
@@ -28,6 +38,7 @@ type UserDetailDrawerProps = {
   onClose: () => void
   onAction: (type: UserActionType, user: UserDetail) => void
   viewerRole?: UserRole | null
+  currentUserId?: string
 }
 
 function DrawerSectionCard({
@@ -65,17 +76,23 @@ function DrawerContent({
   onClose,
   onAction,
   viewerRole,
+  currentUserId,
 }: {
   user: UserDetail
   onClose: () => void
   onAction: (type: UserActionType, user: UserDetail) => void
   viewerRole?: UserRole | null
+  currentUserId?: string
 }) {
   const { t } = useTranslation("users")
   const navigate = useNavigate()
+  const showToast = useToastStore(s => s.showToast)
+  const resetMfaMutation = useResetUserMfa()
+  const [showMfaResetConfirm, setShowMfaResetConfirm] = useState(false)
 
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
+  const isSelf = user.id === currentUserId
 
   const {
     canApprove,
@@ -83,11 +100,41 @@ function DrawerContent({
     canSuspend,
     canReactivate,
     canDeactivate,
+    canResetMfa,
   } = getUserActionVisibility(user.status, user.role, viewerRole)
+
+  function handleMfaReset() {
+    void resetMfaMutation
+      .mutateAsync(user.id)
+      .then(() => {
+        setShowMfaResetConfirm(false)
+        onClose()
+        showToast({
+          variant: "success",
+          title: t("actions.resetMfa.success.title"),
+          message: t("actions.resetMfa.success.message", { name }),
+        })
+      })
+      .catch((err: unknown) => {
+        setShowMfaResetConfirm(false)
+        showToast({
+          variant: "warning",
+          title: t("errors.generic"),
+          message:
+            err instanceof ApiError
+              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic"),
+        })
+      })
+  }
 
   function handleOpenFullProfile() {
     onClose()
-    navigate(PATHS.USER_DETAIL.replace(":id", user.id))
+    navigate(
+      isSelf
+        ? PATHS.SETTINGS_PROFILE
+        : PATHS.USER_DETAIL.replace(":id", user.id)
+    )
   }
 
   return (
@@ -112,9 +159,11 @@ function DrawerContent({
           <Row label={t("detail.drawer.fields.userId")}>{user.user_id}</Row>
           <Row label={t("detail.drawer.fields.email")}>{user.email}</Row>
           <Row label={t("detail.drawer.fields.invitedBy")}>
-            {user.invited_by_user_id ?? "—"}
+            {user.invited_by?.name ?? "—"}
           </Row>
-          <Row label={t("detail.drawer.fields.approvedBy")}>—</Row>
+          <Row label={t("detail.drawer.fields.approvedBy")}>
+            {user.approved_by?.name ?? "—"}
+          </Row>
         </DrawerSectionCard>
 
         {/* ROLE & SCOPE card */}
@@ -149,7 +198,7 @@ function DrawerContent({
           <CircleUserRound size={15} />
           {t("detail.drawer.openFullProfile")}
         </Button>
-        {canApprove && (
+        {!isSelf && canApprove && (
           <Button
             variant="outline"
             data-testid="drawer-approve-button"
@@ -160,7 +209,7 @@ function DrawerContent({
             {t("table.actions.approve")}
           </Button>
         )}
-        {canResendInvitation && (
+        {!isSelf && canResendInvitation && (
           <Button
             variant="outline"
             data-testid="drawer-resend-invitation-button"
@@ -171,42 +220,100 @@ function DrawerContent({
             {t("actions.resend-invitation.label")}
           </Button>
         )}
-        <div className="flex gap-3">
-          {canSuspend && (
-            <Button
-              variant="outline"
-              data-testid="drawer-suspend-button"
-              className="flex-1 gap-1.5 text-sm"
-              onClick={() => onAction("suspend", user)}
-            >
-              <UserRoundX size={14} />
-              {t("detail.page.actions.suspendUser")}
-            </Button>
-          )}
-          {canReactivate && (
-            <Button
-              variant="outline"
-              data-testid="drawer-reactivate-button"
-              className="flex-1 gap-1.5 text-sm"
-              onClick={() => onAction("reactivate", user)}
-            >
-              <RotateCcw size={14} />
-              {t("actions.reactivate.label")}
-            </Button>
-          )}
-          {canDeactivate && (
-            <Button
-              variant="outline"
-              data-testid="drawer-deactivate-button"
-              className="flex-1 gap-1.5 text-sm"
-              onClick={() => onAction("deactivate", user)}
-            >
-              <Ban size={14} />
-              {t("detail.page.actions.deactivateUser")}
-            </Button>
-          )}
-        </div>
+        {!isSelf && (canSuspend || canReactivate || canDeactivate) && (
+          <div className="flex gap-3">
+            {canSuspend && (
+              <Button
+                variant="outline"
+                data-testid="drawer-suspend-button"
+                className="flex-1 gap-1.5 text-sm"
+                onClick={() => onAction("suspend", user)}
+              >
+                <UserRoundX size={14} />
+                {t("detail.page.actions.suspendUser")}
+              </Button>
+            )}
+            {canReactivate && (
+              <Button
+                variant="outline"
+                data-testid="drawer-reactivate-button"
+                className="flex-1 gap-1.5 text-sm"
+                onClick={() => onAction("reactivate", user)}
+              >
+                <RotateCcw size={14} />
+                {t("actions.reactivate.label")}
+              </Button>
+            )}
+            {canDeactivate && (
+              <Button
+                variant="outline"
+                data-testid="drawer-deactivate-button"
+                className="flex-1 gap-1.5 text-sm"
+                onClick={() => onAction("deactivate", user)}
+              >
+                <Ban size={14} />
+                {t("detail.page.actions.deactivateUser")}
+              </Button>
+            )}
+          </div>
+        )}
+        {!isSelf && canResetMfa && (
+          <Button
+            variant="outline"
+            data-testid="drawer-reset-mfa-button"
+            className="w-full gap-1.5 text-sm"
+            onClick={() => setShowMfaResetConfirm(true)}
+          >
+            <ShieldOff size={14} />
+            {t("actions.resetMfa.label")}
+          </Button>
+        )}
       </div>
+
+      <Dialog
+        open={showMfaResetConfirm}
+        onOpenChange={o => {
+          if (!o) setShowMfaResetConfirm(false)
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[420px] gap-0 p-0 overflow-hidden"
+        >
+          <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
+            <DialogTitle>{t("actions.resetMfa.title", { name })}</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 py-4">
+            <div className="flex items-start gap-2 rounded-[10px] border border-amber-600 bg-amber-500/10 px-[10px] py-2">
+              <ShieldAlert
+                size={16}
+                className="text-amber-600 mt-0.5 shrink-0"
+              />
+              <span className="text-sm text-amber-600/80">
+                {t("actions.resetMfa.description", { name })}
+              </span>
+            </div>
+          </div>
+          <DialogFooter className="mx-0 mb-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowMfaResetConfirm(false)}
+              disabled={resetMfaMutation.isPending}
+              data-testid="drawer-mfa-reset-cancel"
+            >
+              {t("modal.actions.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleMfaReset}
+              disabled={resetMfaMutation.isPending}
+              data-testid="drawer-mfa-reset-confirm"
+            >
+              {t("actions.resetMfa.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -216,6 +323,7 @@ function UserDetailDrawer({
   onClose,
   onAction,
   viewerRole,
+  currentUserId,
 }: UserDetailDrawerProps) {
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(userId)
@@ -278,6 +386,7 @@ function UserDetailDrawer({
             onClose={onClose}
             onAction={onAction}
             viewerRole={viewerRole}
+            currentUserId={currentUserId}
           />
         )}
       </SheetContent>

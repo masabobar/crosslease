@@ -1,6 +1,11 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { UserPlus, ChevronLeft, ChevronRight, X } from "lucide-react"
+import {
+  UserPlus,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  ShieldAlert,
+} from "lucide-react"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -11,6 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
@@ -23,31 +36,81 @@ import {
   PAGE_SIZES,
 } from "@/features/users/hooks/useUserListParams"
 import type { PageSize } from "@/features/users/hooks/useUserListParams"
-import type {
-  UserStatus,
-  UserListItem,
-  UserDetail,
-} from "@/features/users/api/schema"
-import type {
-  UserRole,
-  UserFilterState,
-  UserActionType,
-  UserModalActionType,
-} from "@/features/users/types"
+import type { UserStatus } from "@/features/users/api/schema"
 import type { UserSortKey } from "@/features/users/api/schema"
-import { UserStatusSchema } from "@/features/users/api/schema"
-import type { InviteSuccessResult } from "@/features/users/components/InviteUserModal"
+import type { UserRole, UserFilterState } from "@/features/users/types"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
-import { useToastStore } from "@/store/toastStore"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useExportUsers } from "@/features/users/hooks/useExportUsers"
-import { EMPTY_FILTER_STATE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import {
-  getUserFilterVisibility,
-  formatDate,
-  buildActionToastPayload,
-} from "@/features/users/utils"
-import { adminUserDetail, PATHS } from "@/router/paths"
+  AUDITOR_ROLE,
+  EMPTY_FILTER_STATE,
+  SYSTEM_ADMIN_ROLE,
+} from "@/features/users/types"
+import { formatDate } from "@/lib/formatters"
+import { getUserFilterVisibility } from "@/features/users/utils"
+import { useUserManagementHandlers } from "@/features/users/hooks/useUserManagementHandlers"
+
+type ResetMfaConfirmDialogProps = {
+  user: { id: string; first_name: string; last_name: string }
+  isPending: boolean
+  onClose: () => void
+  onConfirm: () => void
+}
+
+function ResetMfaConfirmDialog({
+  user,
+  isPending,
+  onClose,
+  onConfirm,
+}: ResetMfaConfirmDialogProps) {
+  const { t } = useTranslation("users")
+  const name = `${user.first_name} ${user.last_name}`
+
+  return (
+    <Dialog
+      open
+      onOpenChange={o => {
+        if (!o) onClose()
+      }}
+    >
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-[420px] gap-0 p-0 overflow-hidden"
+      >
+        <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
+          <DialogTitle>{t("actions.resetMfa.title", { name })}</DialogTitle>
+        </DialogHeader>
+        <div className="px-4 py-4">
+          <div className="flex items-start gap-2 rounded-[10px] border border-amber-600 bg-amber-500/10 px-[10px] py-2">
+            <ShieldAlert size={16} className="text-amber-600 mt-0.5 shrink-0" />
+            <span className="text-sm text-amber-600/80">
+              {t("actions.resetMfa.description", { name })}
+            </span>
+          </div>
+        </div>
+        <DialogFooter className="mx-0 mb-0">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isPending}
+            data-testid="mfa-reset-cancel"
+          >
+            {t("modal.actions.cancel")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isPending}
+            data-testid="mfa-reset-confirm"
+          >
+            {t("actions.resetMfa.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const MAX_VISIBLE_PAGE_NUMBERS = 5
 
@@ -77,15 +140,23 @@ function buildPageNumbers(
 }
 
 export default function UserManagementPage() {
-  const navigate = useNavigate()
   const { t } = useTranslation("users")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-  const [activeAction, setActiveAction] = useState<{
-    type: UserModalActionType
-    user: { id: string; first_name: string; last_name: string }
-  } | null>(null)
+  const {
+    selectedUserId,
+    setSelectedUserId,
+    activeAction,
+    setActiveAction,
+    resetMfaUser,
+    setResetMfaUser,
+    handleAction,
+    handleDrawerAction,
+    handleActionSuccess,
+    handleResetMfaSuccess,
+    handleInviteSuccess,
+  } = useUserManagementHandlers()
+  const resetMfaMutation = useResetUserMfa()
   const {
     page,
     perPage,
@@ -99,15 +170,17 @@ export default function UserManagementPage() {
     setAppliedFilters,
     setSort,
   } = useUserListParams()
-  const showToast = useToastStore(s => s.showToast)
-  const { data: tenantsData } = useTenants()
   const { data: currentUser } = useCurrentUser()
+  const { data: tenantsData } = useTenants(
+    getUserFilterVisibility(currentUser?.role).tenant
+  )
   const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
   const canExport =
-    currentUser?.role === SYSTEM_ADMIN_ROLE || currentUser?.role === "auditor"
+    currentUser?.role === SYSTEM_ADMIN_ROLE ||
+    currentUser?.role === AUDITOR_ROLE
   const { startExport, isExporting } = useExportUsers()
 
-  const { data, isLoading } = useUsers({
+  const { data, isLoading, isError } = useUsers({
     page,
     per_page: perPage,
     search: search || undefined,
@@ -145,73 +218,6 @@ export default function UserManagementPage() {
       ...appliedFilters,
       status: appliedFilters.status.filter((s: string) => s !== status),
     })
-  }
-
-  function handleAction(type: UserActionType, user: UserListItem) {
-    if (type === "approve") {
-      navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
-      return
-    }
-    setActiveAction({
-      type,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
-    })
-  }
-
-  function handleDrawerAction(type: UserActionType, user: UserDetail) {
-    setSelectedUserId(null)
-    if (type === "approve") {
-      navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
-      return
-    }
-    setActiveAction({
-      type,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
-    })
-  }
-
-  function handleActionSuccess() {
-    if (!activeAction) return
-    const name = `${activeAction.user.first_name} ${activeAction.user.last_name}`
-    showToast(buildActionToastPayload(activeAction.type, name, t))
-    setActiveAction(null)
-  }
-
-  function handleInviteSuccess(result: InviteSuccessResult) {
-    if (result.type === UserStatusSchema.enum.pending_approval) {
-      const name = `${result.firstName} ${result.lastName}`
-      showToast({
-        variant: "warning",
-        title: t("inviteBanner.pendingApproval.title"),
-        message: t("inviteBanner.pendingApproval.message", { name }),
-        actionLabel: result.subjectId
-          ? t("inviteBanner.pendingApproval.viewProfile")
-          : undefined,
-        onAction: result.subjectId
-          ? () => navigate(adminUserDetail(result.subjectId!))
-          : undefined,
-      })
-    } else {
-      const name = `${result.user.first_name} ${result.user.last_name}`
-      showToast({
-        variant: "success",
-        title: t("inviteBanner.invited.title"),
-        message: t("inviteBanner.invited.message", {
-          name,
-          email: result.user.email,
-        }),
-        actionLabel: t("inviteBanner.invited.viewProfile"),
-        onAction: () => navigate(adminUserDetail(result.user.id)),
-      })
-    }
   }
 
   const filterVis = getUserFilterVisibility(currentUser?.role)
@@ -432,15 +438,26 @@ export default function UserManagementPage() {
 
       {/* Table */}
       <div className="mt-4">
-        <UserTable
-          users={data?.users ?? []}
-          isLoading={isLoading}
-          sort={{ key: sortKey, dir: sortOrder }}
-          onSort={handleSort}
-          onAction={handleAction}
-          onRowClick={user => setSelectedUserId(user.id)}
-          viewerRole={currentUser?.role}
-        />
+        {isError && !isLoading && (
+          <p
+            className="py-12 text-center text-sm text-muted-foreground"
+            data-testid="users-load-error"
+          >
+            {t("page.loadError")}
+          </p>
+        )}
+        {!isError && (
+          <UserTable
+            users={data?.users ?? []}
+            isLoading={isLoading}
+            sort={{ key: sortKey, dir: sortOrder }}
+            onSort={handleSort}
+            onAction={handleAction}
+            onRowClick={user => setSelectedUserId(user.id)}
+            viewerRole={currentUser?.role}
+            currentUserId={currentUser?.id}
+          />
+        )}
       </div>
 
       {/* Pagination — always visible when data is present */}
@@ -517,6 +534,7 @@ export default function UserManagementPage() {
         onClose={() => setSelectedUserId(null)}
         onAction={(type, user) => void handleDrawerAction(type, user)}
         viewerRole={currentUser?.role}
+        currentUserId={currentUser?.id}
       />
 
       {canInvite && (
@@ -533,6 +551,19 @@ export default function UserManagementPage() {
           user={activeAction.user}
           onClose={() => setActiveAction(null)}
           onSuccess={handleActionSuccess}
+        />
+      )}
+
+      {resetMfaUser && (
+        <ResetMfaConfirmDialog
+          user={resetMfaUser}
+          isPending={resetMfaMutation.isPending}
+          onClose={() => setResetMfaUser(null)}
+          onConfirm={() => {
+            resetMfaMutation.mutate(resetMfaUser.id, {
+              onSuccess: handleResetMfaSuccess,
+            })
+          }}
         />
       )}
 

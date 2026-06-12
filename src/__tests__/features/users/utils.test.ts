@@ -4,6 +4,8 @@ import {
   formatDate,
   formatDateTime,
   getInitials,
+} from "@/lib/formatters"
+import {
   getUserActionVisibility,
   getUserListColumnVisibility,
   getUserFilterVisibility,
@@ -154,6 +156,52 @@ describe("getUserActionVisibility — additional cases", () => {
       "front_office"
     )
     expect(result.hasAnyAction).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getUserActionVisibility — canResetMfa
+// ---------------------------------------------------------------------------
+describe("getUserActionVisibility — canResetMfa", () => {
+  it("returns canResetMfa: true for system_admin viewing active user", () => {
+    expect(
+      getUserActionVisibility("active", "front_office", "system_admin")
+        .canResetMfa
+    ).toBe(true)
+  })
+
+  it("returns canResetMfa: true for system_admin viewing suspended user", () => {
+    expect(
+      getUserActionVisibility("suspended", "front_office", "system_admin")
+        .canResetMfa
+    ).toBe(true)
+  })
+
+  it("returns canResetMfa: false for system_admin viewing deactivated user", () => {
+    expect(
+      getUserActionVisibility("deactivated", "front_office", "system_admin")
+        .canResetMfa
+    ).toBe(false)
+  })
+
+  it("returns canResetMfa: false for system_admin viewing invited user", () => {
+    expect(
+      getUserActionVisibility("invited", "front_office", "system_admin")
+        .canResetMfa
+    ).toBe(false)
+  })
+
+  it("returns canResetMfa: false for non-admin viewer", () => {
+    expect(
+      getUserActionVisibility("active", "front_office", "support_user")
+        .canResetMfa
+    ).toBe(false)
+  })
+
+  it("returns canResetMfa: false when viewerRole is null", () => {
+    expect(
+      getUserActionVisibility("active", "front_office", null).canResetMfa
+    ).toBe(false)
   })
 })
 

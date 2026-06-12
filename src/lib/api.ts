@@ -41,10 +41,16 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
 
+      const { isAuthenticated, clearAuth } = useAuthStore.getState()
+
+      // Skip refresh when the user is already logged out (e.g. in-flight requests
+      // that complete after an explicit logout should not trigger a refresh attempt).
+      if (!isAuthenticated) {
+        throw new ApiError("UNAUTHORIZED", "Not authenticated")
+      }
+
       if (!refreshPromise) {
         refreshPromise = (async () => {
-          const { clearAuth } = useAuthStore.getState()
-
           try {
             await axios.post(
               `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
