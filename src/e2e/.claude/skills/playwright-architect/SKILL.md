@@ -41,8 +41,17 @@ The `.md` files in `src/e2e/tests/` follow this structure:
 - One class per feature area — if a POM for this feature already exists, add new locators and methods to it rather than creating a second file
 - Locators are `readonly` class properties defined in the constructor using this priority order:
   1. `page.getByRole(role, { name })` — preferred for buttons, inputs, links, headings
-  2. `page.getByTestId('descriptor')` — when a `data-testid` is known or specified
-  - Never use CSS class selectors or Tailwind utility classes as locators
+  2. `page.getByLabel('label text')` — for labeled form inputs
+  3. `page.getByText('text')` — for unique visible text
+  4. `page.getByPlaceholder('text')` — for placeholder text
+  5. `page.getByTestId('descriptor')` — when a `data-testid` is known or specified
+  - **Never** use CSS class selectors, Tailwind utility classes, or XPath as locators — DOM structure changes break them
+  - **Never** use `page.locator('button.buttonIcon.episode-actions-later')` style selectors
+- Use **locator chaining and filtering** to narrow scope to a specific section rather than writing overly-broad or overly-specific selectors:
+  ```ts
+  // preferred — filter by text then find the action within that item
+  await page.getByRole('listitem').filter({ hasText: 'Product 2' }).getByRole('button', { name: 'Add to cart' }).click()
+  ```
 - Methods encapsulate multi-step interactions; specs call methods, not raw locators
 - No assertions inside POM methods — assertions belong in the spec
 
@@ -182,6 +191,28 @@ export { expect }
 - Blocked scenarios (no Gherkin block in the `.md`) become `test.fixme()` with the dependency ID in a comment
 - No `any` in any spec or POM file
 - Do not use `waitForTimeout` — await network idle or visible elements instead
+- **Test isolation** — each test must be fully independent: its own local storage, session storage, cookies, and data. Never share mutable state between tests. Use `beforeEach` / `afterEach` hooks for setup/teardown rather than chaining test dependencies
+- **Test user-visible behaviour** — assert what the user sees, not implementation details (CSS classes, data structure internals, function names)
+- **Web-first assertions** — always use Playwright's built-in async assertions; they auto-retry until the condition is met:
+  ```ts
+  // correct — web-first, retries automatically
+  await expect(page.getByText('Welcome')).toBeVisible()
+
+  // wrong — resolves immediately, no retry
+  expect(await page.getByText('Welcome').isVisible()).toBe(true)
+  ```
+- **Soft assertions** — use `expect.soft()` when you want to collect multiple assertion failures in a single test run rather than stopping at the first failure:
+  ```ts
+  await expect.soft(page.getByTestId('status')).toHaveText('Active')
+  await expect.soft(page.getByTestId('role')).toHaveText('Front Office')
+  // test continues even if one fails; all failures reported together
+  ```
+- **Mock third-party and external dependencies** — never let tests depend on live external services. Use `page.route()` to intercept and mock responses:
+  ```ts
+  await page.route('**/api/external-service/**', route =>
+    route.fulfill({ status: 200, body: JSON.stringify({ ok: true }) })
+  )
+  ```
 
 ### Fixture import rule (enforced)
 
@@ -332,6 +363,119 @@ pnpm type-check    # TypeScript — must pass with no errors
 ```
 
 If either command fails, fix the violations in the generated file and re-run before marking the task complete. Do not suppress lint errors with `// eslint-disable` comments.
+
+---
+
+## Playwright Best Practices (source: playwright.dev/docs/best-practices)
+
+Apply all of the following rules when generating any spec or POM file.
+
+### Locators
+
+| Priority | Locator | When to use |
+| -------- | ------- | ----------- |
+| 1 | `getByRole(role, { name })` | Buttons, inputs, links, headings — anything with an ARIA role |
+| 2 | `getByLabel('text')` | Form fields associated with a label |
+| 3 | `getByPlaceholder('text')` | Inputs with placeholder text and no label |
+| 4 | `getByText('text')` | Non-interactive elements with unique visible text |
+| 5 | `getByTestId('id')` | Elements with an explicit `data-testid` attribute |
+| ❌ | CSS / XPath | Never — brittle, breaks on DOM changes, hides intent |
+
+**Chaining and filtering** — narrow to a container first, then find the element:
+```ts
+// good
+await page.getByRole('listitem').filter({ hasText: 'Anna Kowalski' }).getByRole('button', { name: 'Edit' }).click()
+
+// bad — relies on DOM structure
+await page.locator('table > tbody > tr:nth-child(2) > td:last-child > button')
+```
+
+### Assertions
+
+Always use **web-first assertions**. They have built-in auto-retry and wait for the condition to be true:
+
+```ts
+// ✅ web-first — retries up to the configured timeout
+await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+await expect(page).toHaveURL('/dashboard')
+await expect(page.getByTestId('status-badge')).toHaveText('Active')
+
+// ❌ non-retrying — resolves immediately, flaky
+expect(await page.getByRole('heading').isVisible()).toBe(true)
+```
+
+Use **soft assertions** to collect multiple failures without stopping the test:
+```ts
+await expect.soft(page.getByTestId('role')).toHaveText('Front Office')
+await expect.soft(page.getByTestId('tenant')).toHaveText('Tenant A')
+// all soft failures reported together at test end
+```
+
+### Test Isolation
+
+- Every test is fully independent — own browser context, storage, cookies, and data
+- Never share mutable state between tests via module-level variables
+- Use `beforeEach` / `afterEach` for setup and teardown — never chain tests so test B depends on test A passing
+- A small amount of duplication in test setup is acceptable when it keeps tests clearer and independent
+
+### Test User-Visible Behaviour
+
+- Assert what the end user sees and interacts with — visible text, roles, URLs, form values
+- Do not assert on CSS classes, internal state, function call counts, or data structure types
+- If a test only passes because of an implementation detail that the user cannot observe, it is testing the wrong thing
+
+### Avoid Third-Party Dependencies
+
+- Do not make tests depend on live external APIs, CDNs, or services outside the test environment
+- Intercept and mock external calls using `page.route()`:
+  ```ts
+  await page.route('**/api/external/**', route =>
+    route.fulfill({ status: 200, body: JSON.stringify({ data: 'mocked' }) })
+  )
+  ```
+- For backend API calls within the test environment, prefer using the test API/seeding approach over mocking
+
+### No `waitForTimeout`
+
+Never use fixed-duration waits. They make tests slow and still flaky:
+```ts
+// ❌ never
+await page.waitForTimeout(2000)
+
+// ✅ wait for an observable condition
+await page.waitForLoadState('networkidle')
+await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible()
+```
+
+### Parallelism
+
+- Playwright runs test files in parallel by default — never write files that must run sequentially
+- To enable parallelism within a single file: `test.describe.configure({ mode: 'parallel' })`
+- Avoid global setup that serialises the entire suite; use fixtures instead
+
+### CI and Debugging
+
+- Configure traces to record on the **first retry** of a failed test (not on every run):
+  ```ts
+  // playwright.config.ts
+  use: { trace: 'on-first-retry' }
+  ```
+- Use Playwright Trace Viewer for CI failures — it includes DOM snapshots, network requests, and a timeline; prefer it over screenshots/videos
+- Keep Playwright updated: `npm install -D @playwright/test@latest` — new versions track the latest browser engines
+
+### Report and Artifact Locations
+
+All Playwright output is written to `src/e2e/reports/` (git-ignored). Never configure `outputDir` or the HTML reporter `outputFolder` to point outside this directory.
+
+| Output | Path | Config key |
+| ------ | ---- | ---------- |
+| HTML report | `src/e2e/reports/html/` | `reporter: [["html", { outputFolder: resolve(__dirname, "./reports/html") }]]` |
+| Test artifacts (screenshots, videos, traces) | `src/e2e/reports/results/` | `outputDir: resolve(__dirname, "./reports/results")` |
+
+Open the HTML report locally with:
+```bash
+pnpm e2e:report   # runs: playwright show-report src/e2e/reports/html
+```
 
 ---
 

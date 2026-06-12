@@ -28,23 +28,25 @@ Figma design: Node 424:7183, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "DEACTIVATIO
 | AC-13 | Governance & traceability — historical identity refs immutable; audit reconstruction possible       | `edge-case`                                                                | Compliance concern requiring audit API seam; not E2E UI testable                                                                  |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-06 (Comment conditional), AC-12
-**Blocked (pending stubs only):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-05, AC-06 (login prevention part), AC-07, AC-08, AC-09, AC-10, AC-11, AC-13
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                             | AC           | Priority |
-| ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ | -------- |
-| `@happy-path` | Authorized admin opens deactivation form and deactivates user (Scenario Outline — 2 roles: system_admin, power_user) | AC-01, AC-03 | P0       |
-| `@main-error` | Missing Reason blocks deactivation submission (AC-02)                                                                | AC-02        | P0       |
-| `@main-error` | Reason=Other without Comment blocks submission (AC-06)                                                               | AC-06        | P0       |
-| `@main-error` | Highly Privileged deactivation enters Four-Eyes pending state (Scenario Outline — 2 tiers)                           | AC-04        | P0       |
-| `@main-error` | Deactivated user cannot be restored via standard Restore Access flow (AC-12)                                         | AC-12        | P0       |
-| `@main-error` | Unauthorized role cannot access deactivation form (AC-01 negative)                                                   | AC-01        | P0       |
+| Tag           | Scenario                                                                                                             | AC           | Priority | E2E          |
+| ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
+| `@happy-path` | Authorized admin opens deactivation form and deactivates user (Scenario Outline — 2 roles: system_admin, power_user) | AC-01, AC-03 | P0       | ⚙️ needs D19 |
+| `@main-error` | Missing Reason blocks deactivation submission (AC-02)                                                                | AC-02        | P0       | ✅           |
+| `@main-error` | Reason=Other without Comment blocks submission (AC-06)                                                               | AC-06        | P0       | ✅           |
+| `@main-error` | Highly Privileged deactivation enters Four-Eyes pending state (Scenario Outline — 2 tiers)                           | AC-04        | P0       | ✅           |
+| `@main-error` | Same user cannot submit and approve their own deactivation request (AC-04 — Four-Eyes)                               | AC-04        | P0       | ✅           |
+| `@main-error` | Deactivated user cannot be restored via standard Restore Access flow (AC-12)                                         | AC-12        | P0       | ✅           |
+| `@main-error` | Unauthorized role cannot access deactivation form (Scenario Outline — 3 roles)                                       | AC-01        | P0       | ✅           |
 
-Active scenario blocks: 6 (2 Outlines + 4 Scenarios)
+Active scenario blocks: 7 (3 Outlines + 4 Scenarios)
+E2E automation candidates: 6 of 7 scenarios ✅
 
 ---
 
@@ -95,7 +97,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
   # enforce this — backend enforcement is the authoritative gate.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @p0
+  @main-error @ac-02 @p0 @e2e-ready
   Scenario: Missing Reason blocks deactivation submission (AC-02)
     Given I am logged in as a system_admin with authority over the target user's scope
     And the target user has status "Active"
@@ -115,7 +117,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
   # Note: login prevention (AC-06 second concern) belongs in PRD1042-43 spec.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-06 @p0
+  @main-error @ac-06 @p0 @e2e-ready
   Scenario: Reason=Other without Comment blocks submission (AC-06)
     Given I am logged in as a system_admin with authority over the target user's scope
     And the target user has status "Active"
@@ -138,7 +140,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
   # submitter and approver (Four-Eyes enforcement).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-04 @p0
+  @main-error @ac-04 @p0 @e2e-ready
   Scenario Outline: Deactivating a Highly Privileged user triggers Four-Eyes pending approval (AC-04)
     Given I am logged in as a system_admin
     And the target user is a <privilege_tier> user with status "Active"
@@ -155,7 +157,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
       | power_user     |
       | system_admin   |
 
-  @main-error @ac-04 @p0
+  @main-error @ac-04 @p0 @e2e-ready
   Scenario: Same user cannot submit and approve a deactivation request (AC-04 — Four-Eyes)
     Given I am logged in as a system_admin
     And the target user is a power_user with status "Active"
@@ -172,7 +174,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
   # prevents unauthorized reactivation of permanently deactivated accounts.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-12 @p0
+  @main-error @ac-12 @p0 @e2e-ready
   Scenario: Restore Access is blocked for Deactivated users (AC-12)
     Given I am logged in as a system_admin
     And a user exists with status "Deactivated"
@@ -187,7 +189,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
   # not see or trigger deactivation.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-01 @p0
+  @main-error @ac-01 @p0 @e2e-ready
   Scenario Outline: Unauthorized role cannot access deactivation (AC-01)
     Given I am logged in as a <role>
     And a user exists with status "Active"
@@ -201,19 +203,3 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
       | auditor                |
       | leasing_company_user   |
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                                                                                      | AC    | Resolution required from                                                                                   |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
-| MAJOR    | Button copy unverified — "Deactivate User" vs "Deactivate" vs "Confirm Deactivation"                                                                                                                                      | AC-01 | Designer — confirm button label from Figma node 424:7183                                                   |
-| MAJOR    | Validation error state for empty Reason not confirmed in design                                                                                                                                                           | AC-02 | Designer — add error state variant to DEACTIVATION frame                                                   |
-| MAJOR    | Reason=Other → Comment mandatory conditional state not confirmed in design                                                                                                                                                | AC-06 | Designer — add conditional/error state frame showing Comment becoming mandatory                            |
-| MAJOR    | Success/confirmation state after deactivation not confirmed in design                                                                                                                                                     | AC-03 | Designer — add success state frame                                                                         |
-| MAJOR    | Four-Eyes WF Engine banner for pending deactivation not confirmed in design                                                                                                                                               | AC-04 | Designer — add WF banner variant or confirm it reuses the same banner pattern from Suspension (PRD1042-61) |
-| MAJOR    | Figma MCP rate-limited — all form field assertions derived from story description only                                                                                                                                    | all   | QA — re-run Stage 2 extraction when Figma MCP quota resets                                                 |
-| INFO     | "Effective From" semantics — does deactivation take effect immediately or at the specified future date/time? If future-dated, session revocation is deferred — test design for AC-05 may need a separate blocked scenario | AC-05 | BA / Dev team — clarify effective-from semantics before authoring session revocation scenarios             |
-| INFO     | AC-04 WF banner placement — is the pending deactivation banner on the target user's profile page or on the admin's task list? Scenario currently asserts banner on user detail page                                       | AC-04 | BA / Designer — confirm banner placement                                                                   |
-| INFO     | AC-06 contains two distinct concerns (Reason=Other conditional + login prevention). Login prevention is tested in PRD1042-43. Consider splitting AC-06 into two numbered ACs for traceability clarity                     | AC-06 | BA / PO — refactor AC numbering                                                                            |

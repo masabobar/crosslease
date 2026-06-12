@@ -93,6 +93,25 @@ Note: LC users redirect to /workspace, all bank roles to /dashboard. Confirmed f
 
 ---
 
+## Successful login test users (from src/e2e/.env — updated 2026-06-10)
+
+All credentials read from `src/e2e/.env`. Do NOT hardcode values in specs — always reference env vars via `process.env`.
+
+| Role | .env email variable | .env password variable | Expected landing page |
+|------|--------------------|-----------------------|----------------------|
+| system_admin | `DEV_USER_EMAIL` | `DEV_USER_PASSWORD` | /dashboard |
+| front_office | `DEV_FRONT_OFFICE_USER_EMAIL` | `DEV_FRONT_OFFICE_USER_PASSWORD` | /dashboard |
+| back_office_risk | `DEV_BACK_OFFICE_USER_EMAIL` | `DEV_BACK_OFFICE_USER_PASSWORD` | /dashboard |
+| support_user | `DEV_SUPPORT_USER_EMAIL` | `DEV_SUPPORT_USER_PASSWORD` | /dashboard |
+| auditor | `DEV_AUDIT_USER_EMAIL` | `DEV_AUDIT_USER_PASSWORD` | /dashboard |
+| leasing_company_user | `DEV_LCO_USER_EMAIL` | `DEV_LCO_USER_PASSWORD` | /workspace |
+
+**Excluded from happy-path login scenarios:** `TEST_INVALID_EMAIL` / `TEST_INVALID_PASSWORD` — these are negative-test fixtures only (AC-08 invalid credentials scenario).
+
+**Coverage note:** These 6 users map 1:1 to the Scenario Outline rows in the BDD suite (AC-03, AC-06, AC-07). Each row must assert: HTTP 200, JWT issued, correct landing page redirect, and role claim present in token payload.
+
+---
+
 ## E2E blocking dependencies
 
 | Dependency | Blocks | Resolution owner |

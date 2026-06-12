@@ -28,21 +28,38 @@ On skip:
 
 ### Epic folder resolution (run before writing the file)
 
+#### Step 0 — Resolve the main repo root (ALWAYS run first)
+
+The `Write` tool must target the **main checkout**, not a worktree. Sessions may run inside `.claude/worktrees/…` — relative paths would silently land there instead of the visible repo.
+
+Run this **before any mkdir or Write call**:
+
+```bash
+REPO_ROOT=$(git worktree list | head -1 | awk '{print $1}')
+echo "$REPO_ROOT"
+```
+
+All subsequent paths use `$REPO_ROOT` as the base. Pass **absolute paths** to every `mkdir` and `Write` call — never relative paths.
+
+#### Steps 1–4
+
 1. Retrieve the parent epic from the story object returned by `jira-story-extractor` (`epic_id` + `epic_name` fields).
 2. Construct the folder name: `<epic_id> <epic_name>` — title-case the epic name, strip special characters.
    - Example: epic ID `PRD1042-39`, epic name `User Management` → folder `PRD1042-39 User Management`
-3. Check whether `src/e2e/tests/<folder>/` already exists:
+3. Check whether the folder already exists and create it if not:
    ```bash
-   ls "src/e2e/tests/<folder>" 2>/dev/null || mkdir -p "src/e2e/tests/<folder>"
+   REPO_ROOT=$(git worktree list | head -1 | awk '{print $1}')
+   mkdir -p "$REPO_ROOT/src/e2e/tests/<folder>"
    ```
-4. Write the story file inside that folder.
+4. Write the story file to the resolved absolute path:
+   - `$REPO_ROOT/src/e2e/tests/<folder>/<story-id> <Title Subject>.md`
 
 If the story object does not carry `epic_id` or `epic_name`, call `mcp__jira__get_issue` with the story ID and read the `Epic Link` or `Parent` field to resolve the epic before proceeding.
 
 ### File path and naming
 
-- **Full path:** `src/e2e/tests/<Epic ID> <Epic Name>/<story-id> <Title Subject>.md`
-  - Example: `src/e2e/tests/PRD1042-39 User Management/PRD1042-43 User Login.md`
+- **Full path:** `$REPO_ROOT/src/e2e/tests/<Epic ID> <Epic Name>/<story-id> <Title Subject>.md`
+  - Example: `$REPO_ROOT/src/e2e/tests/PRD1042-39 User Management/PRD1042-43 User Login.md`
 - **Title Subject** — the shortest noun phrase that identifies the story's subject (2-4 words, title case, no special characters)
 - **Format:** Single structured Markdown document with one unified Feature file block — never split into per-AC code blocks (see Output format section)
 - Write the file using the `Write` tool; overwrite if it already exists
@@ -388,6 +405,44 @@ After generating scenarios, run a coverage check and print the result to termina
 
 ---
 
+## E2E Automation Candidacy
+
+For every `happy-path` and `main-error` scenario, evaluate whether it can be fully automated by Playwright **without any additional test endpoints** beyond what is already provisioned in the project (gate cookie, seeded admin session via `POST /internal/test/session`, standard seeded user accounts).
+
+### Decision rules
+
+**Mark `✅` (automation candidate) when ALL of the following are true:**
+
+1. **Preconditions** — satisfied entirely by seeded test accounts, the existing fixture users, or a standard UI login flow that does not require OTP interception
+2. **Inputs** — all form values, URLs, and selectors are known at test-write time (no dynamic tokens or time-sensitive data required)
+3. **Assertions** — target only observable UI state: visible text, URL, element presence/absence, HTTP status via `page.route()` — nothing that requires reading server-side state directly
+4. **No D-ID dependency** — the scenario does not require any of the following to be resolved first:
+   - D16 — `TEST_TOKEN_TTL_SECONDS` clock/TTL override
+   - D17 — `TEST_JWT_SECRET` or test-forge endpoint for JWT manipulation
+   - D18 — Admin API to reset lockout counter
+   - D19 — Throwaway user creation/deletion API
+   - D20 — Second seeded Bank Tenant B
+   - D21 — `AUDITOR_VALIDITY_MINUTES` override
+5. **No email access** — the scenario does not require reading an inbox, extracting a link from an email, or intercepting an invitation/reset email
+6. **No clock manipulation** — the scenario does not depend on time passing, token expiry, or scheduled state changes
+
+**Mark `⚙️` (needs infra) when ANY of the above is false.** Note the specific blocker (D-ID or reason) in the E2E column cell.
+
+### Common patterns
+
+| Scenario type | Typical verdict | Reason |
+| --- | --- | --- |
+| Login with valid credentials (seeded user) | ✅ | Seeded user exists; UI flow only |
+| Generic error on wrong password | ✅ | No special state; UI assertion only |
+| RBAC: wrong role cannot access page | ✅ | Seeded users exist per role; redirect assertion |
+| Lockout after N failed attempts | ⚙️ | Requires D18 (lockout reset) between test runs |
+| Token expiry blocks access | ⚙️ | Requires D16 or D17 to forge expired state |
+| Invitation activation flow | ⚙️ | Requires D19 (throwaway user with extractable token) |
+| Password reset via emailed link | ⚙️ | Requires email access or D19 |
+| Four-Eyes: same user cannot submit + approve | ✅ | Two seeded users; pure UI/API assertion |
+
+---
+
 ## Tagging convention
 
 ```gherkin
@@ -405,13 +460,14 @@ Scenario: Unauthorized API action rejected
 - `@ac-XX` — Acceptance Criterion (e.g., `@ac-03`)
 - `@p0` / `@p1` / `@p2` / `@p3` — Priority (P0 = blocker, P3 = nice-to-have)
 - `@happy-path` / `@main-error` / `@compliance` / `@exploratory` — Scenario type (use `@main-error`, never `@error-handling`)
+- `@e2e-ready` — Automation candidate: scenario requires no additional test endpoints (see E2E Automation Candidacy section); omit this tag when the scenario needs infra (D16–D21, email, clock)
 - `@pending` — Blocked; no scenario generated, no pending stub written; listed in the Blocked ACs table in the file header only
 
 ---
 
 ## Output format (per story)
 
-The `.md` file is a **single structured document** with six mandatory sections in this exact order. Do not include Stage 3 comparison reports, traceability notes, or pipeline metadata. All Gherkin scenarios go into one unified Feature file block — never split into per-AC code blocks.
+The `.md` file is a **single structured document** with five mandatory sections in this exact order. Do not include Stage 3 comparison reports, traceability notes, pipeline metadata, or a Blockers and Gaps Summary. All Gherkin scenarios go into one unified Feature file block — never split into per-AC code blocks.
 
 ````markdown
 # <Story ID> — <US Number> | <Epic Area> | <Story Title>
@@ -443,7 +499,7 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 | AC-04 | <AC description> | `edge-case`        | <why it is not an E2E concern>             |
 
 **Gherkin generated for:** AC-01, AC-05, AC-07, ...
-**Blocked (pending stubs only):** AC-02, AC-06, ...
+**Blocked (no Gherkin):** AC-02, AC-06, ...
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, ...
 
 ---
@@ -452,12 +508,13 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 
 **Order: happy-path rows first, main-error rows second.** Never interleave.
 
-| Tag           | Scenario                                             | AC    | Priority |
-| ------------- | ---------------------------------------------------- | ----- | -------- |
-| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       |
-| `@main-error` | <Scenario title>                                     | AC-XX | P0       |
+| Tag           | Scenario                                             | AC    | Priority | E2E                  |
+| ------------- | ---------------------------------------------------- | ----- | -------- | -------------------- |
+| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       | ✅                   |
+| `@main-error` | <Scenario title>                                     | AC-XX | P0       | ⚙️ needs D19         |
 
 Active scenario blocks: <N> (<N> Outlines + <N> Scenarios)
+E2E automation candidates: <N> of <N> scenarios ✅
 
 ---
 
@@ -480,7 +537,7 @@ Feature: <Story Title> (US X.X — <story-id>)
   # <Note any design gap, copy source, or important constraint.>
   # ---------------------------------------------------------------------------
 
-  @<happy-path|main-error> @ac-XX @p0
+  @<happy-path|main-error> @ac-XX @p0 [@e2e-ready]
   Scenario[Outline]: <Title> (AC-XX)
     Given ...
     When ...
@@ -499,27 +556,17 @@ Feature: <Story Title> (US X.X — <story-id>)
 ```
 ````
 
----
-
-## Blockers and Gaps Summary
-
-| Severity       | Item                                                | AC    | Resolution required from                            |
-| -------------- | --------------------------------------------------- | ----- | --------------------------------------------------- |
-| MAJOR          | <design gap or ambiguity>                           | AC-XX | <Designer / BA / Dev team / PO> — <action required> |
-| BLOCKER (<ID>) | <dependency label>                                  | AC-XX | <Dev team> — <what to provide>                      |
-| INFO           | <open question that does not block test generation> | AC-XX | <who answers it>                                    |
-
 ```
 
 ### Format rules (enforced — do not deviate)
 
-1. **Header** — six fields exactly as shown; `DoR status` includes AC count, description/stakeholder status, and Jira status in parentheses; `Figma design` includes node ID, file key, screen name, and PARTIAL/COMPLETE note
+1. **Header** — five fields exactly as shown; `DoR status` includes AC count, description/stakeholder status, and Jira status in parentheses; `Figma design` includes node ID, file key, screen name, and PARTIAL/COMPLETE note
 2. **Blocked ACs** — always the first section after the header, before the Scope Filter; omit the section entirely if there are no blocked ACs
 3. **AC Scope Filter** — column names are `AC | Description | Classification | Rationale`; `Classification` values are exactly `happy-path`, `main-error`, `edge-case`, `separate-feature`, or `Blocked` (title-case for Blocked); ends with the three-line `**Gherkin generated for / Blocked / No Gherkin**` summary
-4. **Scenarios summary** — table plus `Active scenario blocks: N (N Outlines + N Scenarios)` line; backtick-wrap tag values (e.g. `` `@happy-path` ``); all `@happy-path` rows must appear before any `@main-error` rows — never interleave
+4. **Scenarios summary** — table has columns `Tag | Scenario | AC | Priority | E2E`; the `E2E` column contains `✅` for automation candidates or `⚙️ needs <D-ID or reason>` for scenarios that require additional test endpoints; table ends with `Active scenario blocks` line and `E2E automation candidates: N of N scenarios ✅` line; backtick-wrap tag values (e.g. `` `@happy-path` ``); all `@happy-path` rows must appear before any `@main-error` rows — never interleave
 5. **Feature file** — one single fenced `gherkin` block containing the Feature header, Background, and all scenarios; scenario groups separated by `# ---` comment blocks; never split into per-AC sections
 6. **Comment block format** — exactly 75 dashes, keyword on first line (`# HAPPY PATH`, `# MAIN ERROR`), 1–3 explanation lines, 75 dashes closing; always present before every scenario group
-7. **Blockers and Gaps Summary** — always the last section; `Severity` values are `CRITICAL`, `MAJOR`, `MINOR`, `BLOCKER (<ID>)`, or `INFO`; `BLOCKER` entries use the dependency ID in parentheses
+7. **No Blockers and Gaps Summary** — never include this section in the `.md` file; design gaps, ambiguities, and open questions are logged to terminal output only and never written to the file
 
 **Framework:** Cucumber + Playwright | **Language:** Gherkin
 ```

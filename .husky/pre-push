@@ -1,4 +1,5 @@
-pnpm test:run
+export PATH="$(dirname $(which node)):$PATH"
+corepack pnpm test:run
 
 echo ""
 echo "Checking for OpenAPI schema drift..."
@@ -16,8 +17,8 @@ if ! curl -sf --connect-timeout 5 "$OPENAPI_URL" -o "$TEMP_DIR/openapi.json" 2>/
   exit 0
 fi
 
-pnpm exec prettier --write "$TEMP_DIR/openapi.json" 2>/dev/null
-pnpm exec openapi-zod-client "$TEMP_DIR/openapi.json" -o "$TEMP_DIR/api.ts" 2>/dev/null
+corepack pnpm exec prettier --write "$TEMP_DIR/openapi.json" 2>/dev/null
+corepack pnpm exec openapi-zod-client "$TEMP_DIR/openapi.json" -o "$TEMP_DIR/api.ts" 2>/dev/null
 
 DRIFT=0
 diff -q openapi.json "$TEMP_DIR/openapi.json" >/dev/null 2>&1 || DRIFT=1
@@ -25,7 +26,7 @@ diff -q src/generated/api.ts "$TEMP_DIR/api.ts" >/dev/null 2>&1 || DRIFT=1
 
 if [ "$DRIFT" -eq 1 ]; then
   echo "❌ OpenAPI schema drift detected — backend has new or changed endpoints."
-  echo "   Run: pnpm fetch:openapi && pnpm exec prettier --write openapi.json"
+  echo "   Run: pnpm fetch:openapi && corepack pnpm exec prettier --write openapi.json"
   echo "   Then: git add openapi.json src/generated/api.ts && git commit"
   exit 1
 fi

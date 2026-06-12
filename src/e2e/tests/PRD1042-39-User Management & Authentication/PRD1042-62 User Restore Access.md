@@ -28,22 +28,24 @@ Figma design: Node 424:3848, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "REACTIVATE"
 | AC-12  | Unauthorized user (wrong role or out-of-scope admin) cannot initiate Restore Access                                                | `main-error`       | RefiNext role-based access domain rule; auto-applied negative scenario                                                                      |
 
 **Gherkin generated for:** AC-01, AC-02, AC-05, AC-06a, AC-12
-**Blocked (no Gherkin, no pending stub):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, AC-06b, AC-07, AC-08, AC-09, AC-10, AC-11
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                           | AC           | Priority |
-| ------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ | -------- |
-| `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles)                          | AC-01, AC-05 | P0       |
-| `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                         | AC-01        | P0       |
-| `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 privilege tiers) | AC-06a       | P0       |
-| `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                | AC-02        | P0       |
-| `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                        | AC-12        | P0       |
+| Tag           | Scenario                                                                                                           | AC           | Priority | E2E          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ | -------- | ------------ |
+| `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles)                          | AC-01, AC-05 | P0       | ⚙️ needs D19 |
+| `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                         | AC-01        | P0       | ⚙️ needs D19 |
+| `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 privilege tiers) | AC-06a       | P0       | ✅           |
+| `@main-error` | Same user cannot submit and approve their own Restore Access request                                               | AC-06a       | P0       | ✅           |
+| `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                | AC-02        | P0       | ⚙️ needs D19 |
+| `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                        | AC-12        | P0       | ✅           |
 
-Active scenario blocks: 7 (2 Outlines + 5 Scenarios)
+Active scenario blocks: 6 (3 Outlines + 3 Scenarios)
+E2E automation candidates: 3 of 6 scenarios ✅
 
 ---
 
@@ -124,7 +126,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
   # The same user who submitted must NOT be able to approve their own request.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-06a
+  @main-error @ac-06a @e2e-ready
   Scenario Outline: Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (AC-06a)
     Given I am logged in as a "<submitter_role>" user with Four-Eyes required
     And I am on the user detail page for "suspended-user@bank.com"
@@ -143,7 +145,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
       | system_admin   |
       | power_user     |
 
-  @main-error @ac-06a
+  @main-error @ac-06a @e2e-ready
   Scenario: Same user cannot submit and approve their own Restore Access request (AC-06a)
     Given I am logged in as a "system_admin" user
     And I have already submitted a Restore Access request for "suspended-user@bank.com"
@@ -182,7 +184,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
   # Backend/API validation must enforce this — not frontend-only gating.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-12
+  @main-error @ac-12 @e2e-ready
   Scenario: Unauthorized role cannot initiate Restore Access (AC-12)
     Given I am logged in as a "front_office" user
     And the system has a user "suspended-user@bank.com" with status "Suspended"
@@ -190,20 +192,3 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
     Then the response status must be 403
     And the user status must remain "Suspended"
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                              | AC           | Resolution required from                                                                                                |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | Restore Access form button copy unverified — "Reactivate User" vs "Restore Access" inconsistency between story description and expected UI label                  | AC-01        | Designer — confirm button label in node 424:3848; update Gherkin locator once confirmed                                 |
-| MAJOR    | Error states for ineligible lifecycle transitions absent from Figma design (non-Suspended user blocked state)                                                     | AC-02        | Designer — add blocked-restore error state frame to node 424:3848                                                       |
-| MAJOR    | Role/scope validation error states absent from Figma design (inactive role, invalid tenant/LC scope)                                                              | AC-03, AC-04 | Designer — add validation error state frames                                                                            |
-| MAJOR    | Four-Eyes WF banner text unverified — banner copy not confirmed from design render                                                                                | AC-06a       | Designer — confirm banner text; verify submitter-identity display in banner                                             |
-| MAJOR    | Success/confirmation state after restore not confirmed from design render                                                                                         | AC-05        | Designer — add post-submit success state or confirm redirect target (user detail page with Active status)               |
-| MAJOR    | Figma MCP rate-limited — full design render not obtained; all form-level assertions use story description as source                                               | All          | QA Lead — re-run Stage 2 extraction when Figma MCP quota resets; update locators and copy assertions                    |
-| MINOR    | Two ACs both labelled AC-06 in story description — numbering error                                                                                                | AC-06        | BA/PO — renumber the second AC-06 (access restoration after login) to AC-13 or next available number                    |
-| INFO     | AC-06b (login after reactivation) ownership — confirm whether post-reactivation login test belongs in US 28.1 (PRD1042-43) or a cross-reference scenario here     | AC-06b       | BA — clarify spec boundary; update PRD1042-43 test file if needed                                                       |
-| INFO     | Auditor validity window value for test environment — needed before AC-10 can be tested even in a separate spec                                                    | AC-10        | Dev team — confirm AUDITOR_VALIDITY_MINUTES override (D21) is available                                                 |
-| INFO     | Four-Eyes Non-Privileged tier (front_office, auditor, leasing_company_user) requires Four-Eyes based on tenant config — config value unknown for test environment | AC-06a       | Dev team / BA — confirm whether Non-Privileged Four-Eyes is enabled in the test tenant; if yes, add a third Outline row |

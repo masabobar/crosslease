@@ -32,22 +32,23 @@ Figma design: None — no Figma URL found on PRD1042-69 or children PRD1042-492/
 | AC-09 | Logout from all devices — available from profile/security settings; invalidates all sessions                         | `happy-path`       | Distinct UI affordance with a separate trigger flow; testable at E2E layer as a second happy-path action                                              |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-09
-**Blocked (no Gherkin, no pending stub):** AC-08
+**Blocked (no Gherkin):** AC-08
 **No Gherkin (edge-case or separate-feature):** AC-05, AC-06, AC-07
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                    | AC           | Priority |
-| ------------- | ------------------------------------------------------------------------------------------- | ------------ | -------- |
-| `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 6 variants)      | AC-01        | P0       |
-| `@happy-path` | Successful logout terminates session and redirects to login (Scenario Outline — 2 variants) | AC-01, AC-04 | P0       |
-| `@main-error` | Access token is rejected after logout                                                       | AC-02, AC-03 | P0       |
-| `@main-error` | Refresh token is rejected after logout                                                      | AC-03        | P0       |
-| `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       |
+| Tag           | Scenario                                                                                    | AC           | Priority | E2E |
+| ------------- | ------------------------------------------------------------------------------------------- | ------------ | -------- | --- |
+| `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 6 variants)      | AC-01        | P0       | ✅  |
+| `@happy-path` | Successful logout terminates session and redirects to login (Scenario Outline — 2 variants) | AC-01, AC-04 | P0       | ✅  |
+| `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       | ✅  |
+| `@main-error` | Access token is rejected after logout                                                       | AC-02, AC-03 | P0       | ✅  |
+| `@main-error` | Refresh token is rejected after logout                                                      | AC-03        | P0       | ✅  |
 
 Active scenario blocks: 5 (3 Outlines + 2 Scenarios)
+E2E automation candidates: 5 of 5 scenarios ✅
 
 ---
 
@@ -72,7 +73,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # confirmed with the FE team before the Playwright selector is written.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario Outline: Logout control is visible and accessible for all roles (AC-01)
     Given I am authenticated as a <role> user
     When I navigate to the authenticated application
@@ -96,7 +97,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # role matrix is in the AC-01 Outline above.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @ac-04 @p0
+  @happy-path @ac-01 @ac-04 @p0 @e2e-ready
   Scenario Outline: Successful logout redirects to login and clears authenticated state (AC-01, AC-04)
     Given I am authenticated as a <role> user
     When I trigger logout
@@ -118,7 +119,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # Note: auth provider (R1) affects how tokens are captured in the test setup.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @ac-03 @p0
+  @main-error @ac-02 @ac-03 @p0 @e2e-ready
   Scenario: Access token is rejected after logout (AC-02, AC-03)
     Given I am authenticated as a "front_office" user
     And I have captured my current access token
@@ -135,7 +136,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # after single-device logout.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-03 @p0
+  @main-error @ac-03 @p0 @e2e-ready
   Scenario: Refresh token is rejected after logout (AC-03)
     Given I am authenticated as a "front_office" user
     And I have captured my current refresh token
@@ -153,7 +154,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
   # confirmed with FE team once the panel is implemented.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-09 @p1
+  @happy-path @ac-09 @p1 @e2e-ready
   Scenario: Logout from all devices invalidates all active sessions (AC-09)
     Given I am authenticated as a "system_admin" user in session A
     And the same user is also authenticated in session B on a different device or browser context
@@ -163,16 +164,3 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
     And a subsequent authenticated API request from session B should return 401
     And the audit log should record a global logout event distinct from a single-session logout
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity                  | Item                                                                                                                                                                                                                                                                  | AC           | Resolution required from                                                                                                     |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| BLOCKER (R1 / PRD1042-76) | AC-08 Federated SSO logout cannot be tested until the auth provider is selected (R1) and PRD1042-76 (SSO/IdP story) is scoped and implemented; OIDC End Session Endpoint and SAML SLO integration are untestable without a resolved IdP                               | AC-08        | Dev team / PO — resolve auth provider selection (R1) and confirm PRD1042-76 scope before scheduling AC-08 scenarios          |
-| MAJOR                     | No Figma design for the authenticated UI shell showing logout control placement (nav bar vs. profile dropdown vs. sidebar); Playwright selector for the logout button cannot be finalized until FE implements and confirms the control location                       | AC-01, AC-04 | FE team / Designer — confirm logout control location and preferred test selector (data-testid or ARIA role) once implemented |
-| MAJOR                     | No Figma design for the profile / security settings panel showing the "Logout from all devices" affordance; selector and exact control label cannot be confirmed                                                                                                      | AC-09        | FE team / Designer — confirm control placement and label in security settings panel                                          |
-| MAJOR                     | Token capture mechanism for AC-02/AC-03 test setup depends on the auth provider (R1); if tokens are HttpOnly cookies rather than localStorage, the Playwright test setup for capturing and replaying tokens requires a dedicated test endpoint or a test-forge helper | AC-02, AC-03 | Dev team — confirm token storage mechanism and provide test-forge endpoint or `TEST_JWT_SECRET` (D17) if needed              |
-| INFO                      | AC-07 (centralized enforcement) covers credential revocation as a logout trigger; it is unclear whether credential revocation has its own user story and spec. If not, a gap exists in logout pathway coverage                                                        | AC-07        | BA / PO — confirm whether credential revocation has a dedicated story or should be added to this story's scope               |
-| INFO                      | The "logout confirmation" dialog mentioned in the story description as optional has no AC backing it; if the FE team implements a confirmation dialog, a scenario for dismissing/confirming it should be added to this spec                                           | AC-01, AC-04 | BA / PO / FE team — confirm whether a confirmation dialog will be implemented and whether it requires test coverage          |

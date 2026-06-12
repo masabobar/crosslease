@@ -30,24 +30,25 @@ Figma design: None — no Figma URL found in story or child tickets (Stage 2 SKI
 | AC-15 | Self-suspension blocked if would leave tenant with no active Power User; generic error; backend-enforced; audit traceable | `main-error`       | Hard guard returning a distinct validation error; directly observable in the UI response                                           |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-15
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-05, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13, AC-14
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                          | AC           | Priority |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ | -------- |
-| `@happy-path` | Authorized admin opens suspension form for a user within scope (Scenario Outline — 2 roles)                       | AC-01, AC-03 | P0       |
-| `@happy-path` | Valid suspension form submission changes status and audit-logs the event                                          | AC-01, AC-03 | P0       |
-| `@main-error` | Missing suspension reason blocks form submission (UI + backend)                                                   | AC-02        | P0       |
-| `@main-error` | Suspension reason "Other" without comment blocks form submission                                                  | AC-02        | P0       |
-| `@main-error` | Four-Eyes gate — suspension of Highly Privileged user remains pending until approval (Scenario Outline — 2 tiers) | AC-04        | P0       |
-| `@main-error` | Unauthorized role cannot access the Suspend User action                                                           | AC-01        | P0       |
-| `@main-error` | Last active Power User self-suspension is rejected with validation error                                          | AC-15        | P0       |
+| Tag           | Scenario                                                                                                          | AC           | Priority | E2E                                    |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------- |
+| `@happy-path` | Authorized admin opens suspension form for a user within scope (Scenario Outline — 2 roles)                       | AC-01, AC-03 | P0       | ⚙️ needs D19                           |
+| `@happy-path` | Valid suspension form submission changes status and audit-logs the event                                          | AC-01, AC-03 | P0       | ⚙️ needs D19                           |
+| `@main-error` | Missing suspension reason blocks form submission (UI + backend)                                                   | AC-02        | P0       | ✅                                     |
+| `@main-error` | Suspension reason "Other" without comment blocks form submission                                                  | AC-02        | P0       | ✅                                     |
+| `@main-error` | Four-Eyes gate — suspension of Highly Privileged user remains pending until approval (Scenario Outline — 2 tiers) | AC-04        | P0       | ✅                                     |
+| `@main-error` | Unauthorized role cannot access the Suspend User action                                                           | AC-01        | P0       | ✅                                     |
+| `@main-error` | Last active Power User self-suspension is rejected with validation error                                          | AC-15        | P0       | ⚙️ needs controlled single-admin state |
 
 Active scenario blocks: 7 (2 Outlines + 5 Scenarios)
+E2E automation candidates: 4 of 7 scenarios ✅
 
 ---
 
@@ -105,7 +106,7 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
   # UI-visible error and that no status change occurs.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @p0
+  @main-error @ac-02 @p0 @e2e-ready
   Scenario: Submitting suspension form without a reason shows validation error and does not suspend (AC-02)
     Given a "front_office" user with email "fo@refinext-test.com" exists and is active
     When I navigate to the user profile page for "fo@refinext-test.com"
@@ -123,7 +124,7 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
   # This is a distinct conditional validation rule specified in the story.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @p0
+  @main-error @ac-02 @p0 @e2e-ready
   Scenario: Selecting "Other" as suspension reason without a comment blocks submission (AC-02)
     Given a "front_office" user with email "fo@refinext-test.com" exists and is active
     When I navigate to the user profile page for "fo@refinext-test.com"
@@ -147,7 +148,7 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
   # dependent — not tested here as configuration is not established in test env.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-04 @p0
+  @main-error @ac-04 @p0 @e2e-ready
   Scenario Outline: Suspension of a Highly Privileged or Privileged user enters Four-Eyes pending state (AC-04)
     Given a "<target_role>" user with email "<target_email>" exists and is active
     And I am authenticated as a "system_admin" user with suspension authority over "<target_email>"
@@ -176,7 +177,7 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
   # API call is rejected with a 403 response.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-01 @p0
+  @main-error @ac-01 @p0 @e2e-ready
   Scenario: Unauthorized role cannot access the Suspend User action (AC-01)
     Given a "front_office" user with email "fo@refinext-test.com" exists and is active
     And I am authenticated as a "leasing_company_user" user with email "lc@refinext-test.com"
@@ -209,19 +210,3 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
     And my user status should remain "Active"
     And the failed self-suspension attempt should be recorded in the audit log
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                            | AC                         | Resolution required from                                                                                                                       |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | No Figma design linked — suspension form field labels, button text, dropdown option labels, error message copy, and banner copy cannot be verified against spec | AC-01, AC-02, AC-03, AC-04 | Designer — link suspension form frames to PRD1042-61; at minimum: default form, validation error state, pending-approval banner state          |
-| MAJOR    | Four-Eyes tier boundary for Non-Privileged users is tenant-config-dependent — test environment config not established                                           | AC-04                      | Dev team / BA — confirm whether test tenant has Non-Privileged Four-Eyes config enabled; drives whether a Non-Privileged scenario can be added |
-| MAJOR    | Effective From / Effective Until scheduling enforcement requires a time-override seam — no D-series blocker confirmed for this story                            | AC-08                      | Dev team — confirm whether a clock-override env var (D21-equivalent) is available for E2E; if not, AC-08 cannot be tested at E2E layer         |
-| MAJOR    | Workflow reassignment on suspension (AC-14) requires seeded in-flight workflow items — Workflow Engine integration state not confirmed                          | AC-14                      | Dev team — confirm Workflow Engine test seam availability; if confirmed, AC-14 can be promoted from edge-case to a separate spec file          |
-| MINOR    | AC-15 scenario requires staging a single-admin tenant state — D19 (throwaway user API) needed to ensure the "last active admin" precondition reliably           | AC-15                      | Dev team — D19 must be resolved to make AC-15 stable; scenario included but may be flaky without it                                            |
-| MINOR    | Exact error message wording for self-suspension rejection (AC-15) not specified in story                                                                        | AC-15                      | BA / Designer — confirm the generic validation error message text                                                                              |
-| MINOR    | Exact copy for the Four-Eyes pending-approval banner text not specified                                                                                         | AC-04                      | Designer — confirm banner heading, body text, and CTA label                                                                                    |
-| INFO     | Restore Access (AC-13) should have its own user story if not already tracked                                                                                    | AC-13                      | BA / PO — confirm whether a Restore Access story exists in the backlog                                                                         |
-| INFO     | AC-04 confirmation: story says Non-Privileged users MAY require Four-Eyes — clarify whether this is MVP scope or a future config toggle                         | AC-04                      | BA / PO — clarify MVP Four-Eyes scope for Non-Privileged tier                                                                                  |

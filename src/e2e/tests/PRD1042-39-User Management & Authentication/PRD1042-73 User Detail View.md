@@ -2,7 +2,7 @@
 
 Generated: 2026-06-03
 Story: PRD1042-73 — US 28.6 | USER MANAGEMENT | User Detail View
-Epic: PRD1042 — US 28: User Management (inferred from story title structure)
+Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (16 ACs, description present, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 4 of 16 | Blocked: 0 | Excluded: 12 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 9:113, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User list & user DETAILS" (Stage 2 PARTIAL — Authentication & Security section and Governance Lineage section absent from design frames; email change flow not designed)
@@ -31,23 +31,24 @@ Figma design: Node 9:113, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User list & us
 | AC-16 | LC User sees no User Detail View navigation entries, routes, or administration APIs                                                            | `main-error`       | Core business rule: LC Users are completely excluded from User administration — verified via navigation inspection and direct route access attempt                                                                     |
 
 **Gherkin generated for:** AC-01, AC-02, AC-07, AC-16
-**Blocked (no scenarios generated):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-03, AC-04, AC-05, AC-06, AC-08, AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                   | AC    | Priority |
-| ------------- | ---------------------------------------------------------------------------------------------------------- | ----- | -------- |
-| `@happy-path` | Authorized role opens User Detail View with role-appropriate sections (Scenario Outline — 3 role variants) | AC-01 | P0       |
-| `@happy-path` | Authenticated user opens their own self-profile                                                            | AC-01 | P0       |
-| `@main-error` | Unauthorized direct URL access to User Detail View is blocked                                              | AC-02 | P0       |
-| `@main-error` | Admin changes a user's email address — re-verification triggered                                           | AC-07 | P1       |
-| `@main-error` | Authenticated user cannot self-service edit their own email address                                        | AC-07 | P1       |
-| `@main-error` | Leasing Company User sees no User Detail View navigation or accessible routes                              | AC-16 | P0       |
+| Tag           | Scenario                                                                                                   | AC    | Priority | E2E                   |
+| ------------- | ---------------------------------------------------------------------------------------------------------- | ----- | -------- | --------------------- |
+| `@happy-path` | Authorized role opens User Detail View with role-appropriate sections (Scenario Outline — 3 role variants) | AC-01 | P0       | ✅                    |
+| `@happy-path` | Authenticated user opens their own self-profile                                                            | AC-01 | P0       | ✅                    |
+| `@main-error` | Unauthorized direct URL access to User Detail View is blocked                                              | AC-02 | P0       | ✅                    |
+| `@main-error` | Admin changes a user's email address — re-verification triggered                                           | AC-07 | P1       | ⚙️ needs email access |
+| `@main-error` | Authenticated user cannot self-service edit their own email address                                        | AC-07 | P1       | ✅                    |
+| `@main-error` | Leasing Company User sees no User Detail View navigation or accessible routes                              | AC-16 | P0       | ✅                    |
 
 Active scenario blocks: 6 (1 Outline + 5 Scenarios)
+E2E automation candidates: 5 of 6 scenarios ✅
 
 ---
 
@@ -74,7 +75,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # Design: ADMIN frame (line 903), SUPPORT frame (line 3276), AUDITOR frame (line 4684).
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario Outline: Authorized role opens User Detail View with role-appropriate sections (AC-01)
     Given I am logged in as a "<role>" user
     When I navigate to the User Detail View for "Anna Kowalski"
@@ -100,7 +101,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # Design: SELF PROFILE - support frame (line 10362) used as reference.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @p0
+  @happy-path @ac-01 @p0 @e2e-ready
   Scenario: Authenticated user opens their own self-profile (AC-01)
     Given I am logged in as a "Support User" with email "support@bank.com"
     When I open my own user profile page
@@ -118,7 +119,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # The system must not reveal whether the target user exists (no enumeration).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-02 @p0
+  @main-error @ac-02 @p0 @e2e-ready
   Scenario: Unauthorized direct URL access to User Detail View is blocked (AC-02)
     Given I am not authenticated
     When I navigate directly to the User Detail View URL for a known user
@@ -153,7 +154,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # DESIGN GAP: email field editability on self-profile not confirmed in design.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-07 @p1
+  @main-error @ac-07 @p1 @e2e-ready
   Scenario: Authenticated user cannot self-service edit their own email address (AC-07)
     Given I am logged in as a "Support User" with email "support@bank.com"
     When I open my own user profile page and attempt to edit my email address field
@@ -169,7 +170,7 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
   # self-profile only; no admin User Detail navigation present.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-16 @p0
+  @main-error @ac-16 @p0 @e2e-ready
   Scenario: Leasing Company User sees no User Detail View navigation or accessible routes (AC-16)
     Given I am logged in as a "Leasing Company User"
     When I inspect the application navigation menu
@@ -178,19 +179,3 @@ Feature: User Detail View (US 28.6 — PRD1042-73)
     Then the route must be blocked without exposing an access-denied placeholder for the administration module
     And any related user administration API endpoint must return an unauthorized response
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                                                                                                                                                                                     | AC    | Resolution required from                                                                                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | Authentication & Security section (MFA method, failed login attempts, account lockout status, SSO/Identity Provider, Last MFA Reset Timestamp, Authentication Policy Applied, Privileged Access Flag) absent from all User Detail design frames — only a binary MFA On/Off indicator is present in the list table column | AC-07 | Designer — add Authentication & Security section to full User Detail View with role-controlled field visibility                         |
-| MAJOR    | Governance Approval Reference, Approved By, Invited By, Last Role Change Timestamp, and Last Permission Change Timestamp absent from all User Detail design frames — story requires these visible to Admin and Auditor                                                                                                   | AC-15 | Designer — add Audit & Governance section to full User Detail View with visibility restricted to Admin and Auditor roles                |
-| MINOR    | Email change re-verification flow not designed — no modal, inline confirmation, or step-flow visible in design                                                                                                                                                                                                           | AC-07 | Designer — provide email change flow (modal or inline) before AC-07 scenarios can be automated                                          |
-| MINOR    | "Leasing Company" assignment field not found in full User Detail design frames; LC User role badge appears only in the list table column                                                                                                                                                                                 | AC-05 | BA / Designer — confirm whether Leasing Company field should appear in ROLE & SCOPE section for LC-scoped users and add to design if so |
-| MINOR    | Locked and Archived status badge variants absent from design; only Active, Invited, Suspended, and Pending badge variants are present                                                                                                                                                                                    | AC-06 | Designer — add Locked and Archived badge variants to the lifecycle status section                                                       |
-| MINOR    | No role exclusivity error or validation message designed for Front Office + Back Office/Risk conflict in Role edit flow                                                                                                                                                                                                  | AC-14 | Designer — add validation error state for conflicting role selection to Role edit modal/form                                            |
-| MINOR    | Tabbed section in Admin User Detail view shows 4 tabs; Auditor self-profile shows 3 tabs — tab labels not captured at design tree depth-8                                                                                                                                                                                | AC-08 | Designer — confirm tab labels; clarify whether one tab covers role history or audit trail                                               |
-| INFO     | AC-16 ambiguity: design contains a SELF PROFILE frame for Leasing Company Users. Does AC-16's prohibition apply only to viewing other users' profiles, or does it also prohibit LC users from accessing their own self-profile page?                                                                                     | AC-16 | BA / PO — clarify the scope of "User Detail View" prohibition for LC Users before AC-16 scenario is automated                           |
-| INFO     | AC-08 ambiguity: tab labels in Admin User Detail View unconfirmed — is historical role and scope traceability a dedicated tab, or embedded in an existing section?                                                                                                                                                       | AC-08 | Designer — confirm tab structure and labels                                                                                             |

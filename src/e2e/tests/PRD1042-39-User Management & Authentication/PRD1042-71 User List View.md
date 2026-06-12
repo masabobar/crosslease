@@ -29,26 +29,27 @@ Figma design: Node 2162:6928, file j5hq5cQgHWdOtzLvSX0jvj — Screen "Design" (S
 | AC-14 | Export limited to authorized scope; cross-tenant blocked; server-validated; audit-logged | `happy-path`       | Export button present in design; happy-path export trigger (1 scenario) + cross-tenant block as main-error (1 scenario) |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-06, AC-07, AC-10, AC-14
-**Blocked (pending stubs only):** none
+**Blocked (no Gherkin):** none
 **No Gherkin (edge-case or separate-feature):** AC-05, AC-08, AC-09, AC-11, AC-12, AC-13
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                         | AC           | Priority |
-| ------------- | -------------------------------------------------------------------------------- | ------------ | -------- |
-| `@happy-path` | Authorized users see only their scoped user records (Scenario Outline — 3 roles) | AC-01, AC-04 | P0       |
-| `@happy-path` | Sorting by column produces ordered results (AC-06)                               | AC-06        | P0       |
-| `@happy-path` | Paginating through large user lists (AC-07)                                      | AC-07        | P0       |
-| `@happy-path` | Export trigger downloads records within authorized scope (AC-14)                 | AC-14        | P1       |
-| `@main-error` | Cross-tenant request returns 404 not 403 (AC-02)                                 | AC-02        | P0       |
-| `@main-error` | User Management nav entry absent for Leasing Company User (AC-03)                | AC-03        | P0       |
-| `@main-error` | Direct route access blocked for Leasing Company User (AC-03)                     | AC-03        | P0       |
-| `@main-error` | Support and Auditor see no modification actions in user rows (AC-10)             | AC-10        | P0       |
-| `@main-error` | Cross-tenant export attempt blocked server-side (AC-14)                          | AC-14        | P0       |
+| Tag           | Scenario                                                                         | AC           | Priority | E2E          |
+| ------------- | -------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
+| `@happy-path` | Authorized users see only their scoped user records (Scenario Outline — 3 roles) | AC-01, AC-04 | P0       | ✅           |
+| `@happy-path` | Sorting by column produces ordered results (AC-06)                               | AC-06        | P0       | ✅           |
+| `@happy-path` | Paginating through large user lists (AC-07)                                      | AC-07        | P0       | ✅           |
+| `@happy-path` | Export trigger downloads records within authorized scope (AC-14)                 | AC-14        | P1       | ✅           |
+| `@main-error` | Cross-tenant request returns 404 not 403 (AC-02)                                 | AC-02        | P0       | ⚙️ needs D20 |
+| `@main-error` | User Management nav entry absent for Leasing Company User (AC-03)                | AC-03        | P0       | ✅           |
+| `@main-error` | Direct route access blocked for Leasing Company User (AC-03)                     | AC-03        | P0       | ✅           |
+| `@main-error` | Support and Auditor see no modification actions in user rows (AC-10)             | AC-10        | P0       | ✅           |
+| `@main-error` | Cross-tenant export attempt blocked server-side (AC-14)                          | AC-14        | P0       | ⚙️ needs D20 |
 
 Active scenario blocks: 9 (1 Outline + 8 Scenarios)
+E2E automation candidates: 7 of 9 scenarios ✅
 
 ---
 
@@ -73,7 +74,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # confirmed in Figma; test asserts text label only.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @ac-04 @p0
+  @happy-path @ac-01 @ac-04 @p0 @e2e-ready
   Scenario Outline: Authorized users see only their scoped user records (AC-01, AC-04)
     Given I am logged in as <role>
     When I navigate to the User List View
@@ -94,7 +95,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # is implied by the AC but no sort icon visible in extracted design metadata.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-06 @p0
+  @happy-path @ac-06 @p0 @e2e-ready
   Scenario: Sorting by column produces ordered results (AC-06)
     Given I am logged in as a Power User
     And the User List View is displayed with multiple users
@@ -109,7 +110,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # page cap. Server must reject oversized pagination requests.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-07 @p0
+  @happy-path @ac-07 @p0 @e2e-ready
   Scenario: Paginating through large user lists (AC-07)
     Given I am logged in as a Power User
     And more than 50 users exist within my authorized scope
@@ -127,7 +128,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # Export format/dropdown not designed; test asserts download initiated only.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-14 @p1
+  @happy-path @ac-14 @p1 @e2e-ready
   Scenario: Export trigger downloads records within authorized scope (AC-14)
     Given I am logged in as a Power User
     And the User List View is displaying user records within my scope
@@ -157,7 +158,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # sidebar with no LC User variant; test is written against requirements only.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-03 @p0
+  @main-error @ac-03 @p0 @e2e-ready
   Scenario: User Management nav entry absent for Leasing Company User (AC-03)
     Given I am logged in as a Leasing Company User
     When I view the application sidebar navigation
@@ -171,7 +172,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # AMB-02: whether response is 404 or silent redirect — open question to BA.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-03 @p0
+  @main-error @ac-03 @p0 @e2e-ready
   Scenario: Direct route access blocked for Leasing Company User (AC-03)
     Given I am logged in as a Leasing Company User
     When I navigate directly to "/users"
@@ -186,7 +187,7 @@ Feature: User List View (US 28.4 — PRD1042-71)
   # Design gap noted: no read-only row variant designed; test written against AC.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-10 @p0
+  @main-error @ac-10 @p0 @e2e-ready
   Scenario: Support and Auditor see no modification actions in user rows (AC-10)
     Given I am logged in as a <role>
     And the User List View is displayed with user records
@@ -212,17 +213,3 @@ Feature: User List View (US 28.4 — PRD1042-71)
     And the exported data should not contain any Tenant B user records
     And the export attempt should be audit-logged
 ```
-
----
-
-## Blockers and Gaps Summary
-
-| Severity | Item                                                                                                                                                                             | AC    | Resolution required from                                                                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MAJOR    | No LC User sidebar nav variant designed — nav suppression tested against requirements only                                                                                       | AC-03 | Designer — add LC User sidebar variant showing User Management absent; add redirect/404 behavior frame                                                          |
-| MAJOR    | Status badge variants for Expired, Locked, Archived not confirmed in Figma structural data — color differentiation unverifiable without design variant frames                    | AC-04 | Designer — add all 8 status badge variants (Invited, Pending Activation, Active, Suspended, Deactivated, Expired, Locked, Archived) as visible component states |
-| MAJOR    | No read-only row variant for Support/Auditor — actions column suppression tested against requirements only                                                                       | AC-10 | Designer — add role-variant table row showing actions column hidden for Support and Auditor                                                                     |
-| MAJOR    | No expired-engagement UI state for Auditor — AC-09 excluded as separate-feature; confirm whether UI redirect is in scope for this story                                          | AC-09 | BA — confirm: does expired auditor engagement produce a UI state on the User List View, or is it purely a session invalidation (redirect to login)?             |
-| INFO     | AMB-02: LC User direct URL access behavior unspecified — does the system return 404 silently or redirect to dashboard? Test asserts "redirected away or 404" to accommodate both | AC-03 | BA — confirm exact behavior for LC User direct URL navigation to /users                                                                                         |
-| INFO     | AMB-03: Export button present in design but no format selector or dropdown visible — test asserts download initiated without asserting format                                    | AC-14 | Designer/BA — confirm export format (CSV/XLSX/both) and whether a format dialog appears                                                                         |
-| INFO     | Column 7 (32px) intent unclear — could be checkbox (bulk actions) or row-level action icon; bulk action scope not confirmed in this story                                        | AC-01 | BA — confirm: are bulk actions in scope for US 28.4? If yes, which roles can trigger them?                                                                      |
