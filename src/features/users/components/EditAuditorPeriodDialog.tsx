@@ -154,6 +154,7 @@ export function EditAuditorPeriodDialog({
                   options={reasonOptions}
                   placeholder={t("detail.page.editRole.selectReason")}
                   error={!!form.formState.errors.reason}
+                  className="bg-card"
                 />
                 <span className="text-sm text-amber-600/80">
                   {t("detail.page.editRole.reasonMandatory")}

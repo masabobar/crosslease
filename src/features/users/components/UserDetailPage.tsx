@@ -70,6 +70,7 @@ import {
   AUDITOR_DATE_RANGE_ROLES,
   AUDITOR_ROLE,
   READ_ONLY_VIEWER_ROLES,
+  ROLE_TRANSITIONS,
   SYSTEM_ADMIN_ROLE,
   type UserRole,
   type UserModalActionType,
@@ -836,15 +837,13 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         <SectionCard
           title={t("detail.page.sections.roleScope")}
           onEdit={
-            isAdmin
-              ? () => {
-                  if (user.role === AUDITOR_ROLE) {
-                    setIsEditingAuditorPeriod(true)
-                  } else {
-                    setIsEditingRole(true)
-                  }
-                }
-              : undefined
+            !isAdmin
+              ? undefined
+              : user.role === AUDITOR_ROLE
+                ? () => setIsEditingAuditorPeriod(true)
+                : ROLE_TRANSITIONS[user.role] !== undefined
+                  ? () => setIsEditingRole(true)
+                  : undefined
           }
           data-testid="role-scope-edit-button"
         >

@@ -130,6 +130,20 @@ export type UserModalActionType = Exclude<
 export const SYSTEM_ADMIN_ROLE = "system_admin" as const
 export const SUPPORT_USER_ROLE = "support_user" as const
 export const AUDITOR_ROLE = "auditor" as const
+export const FRONT_OFFICE_ROLE = "front_office" as const
+export const BACK_OFFICE_ROLE = "back_office" as const
+export const LEASING_COMPANY_USER_ROLE = "leasing_company_user" as const
+
+// Allowed role transitions when an Admin changes an existing user's role.
+// Only peer-level switches are permitted: Admin↔Support and FO↔BO.
+// Auditor and Leasing Company User roles are locked (not present as keys).
+export const ROLE_TRANSITIONS: Partial<Record<UserRole, readonly UserRole[]>> =
+  {
+    [SYSTEM_ADMIN_ROLE]: [SUPPORT_USER_ROLE],
+    [SUPPORT_USER_ROLE]: [SYSTEM_ADMIN_ROLE],
+    [FRONT_OFFICE_ROLE]: [BACK_OFFICE_ROLE],
+    [BACK_OFFICE_ROLE]: [FRONT_OFFICE_ROLE],
+  }
 
 export const PLATFORM_USER_ROLES: readonly UserRole[] = [
   "system_admin",
