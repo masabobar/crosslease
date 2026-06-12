@@ -1,4 +1,5 @@
 import { api } from "@/lib/api"
+import { buildQueryString } from "@/lib/queryParams"
 import {
   ExportJobSchema,
   ExportJobStatusSchema,
@@ -54,19 +55,20 @@ export async function fetchCurrentUser(): Promise<UserResponse> {
 export async function fetchUsers(
   params: UsersQueryParams = {}
 ): Promise<PaginatedUsersResponse> {
-  const qs = new URLSearchParams()
-  if (params.page) qs.set("page", String(params.page))
-  if (params.per_page) qs.set("per_page", String(params.per_page))
-  if (params.search) qs.set("search", params.search)
-  params.role?.forEach(r => qs.append("role", r))
-  params.status?.forEach(s => qs.append("status", s))
-  if (params.tenant_id) qs.set("tenant_id", params.tenant_id)
-  if (params.sort_by) qs.set("sort_by", params.sort_by)
-  if (params.sort_order) qs.set("sort_order", params.sort_order)
-  if (params.last_login_from) qs.set("last_login_from", params.last_login_from)
-  if (params.last_login_to) qs.set("last_login_to", params.last_login_to)
-  const query = qs.toString()
-  const data = await api.get(`/users${query ? `?${query}` : ""}`)
+  const data = await api.get(
+    `/users${buildQueryString({
+      page: params.page,
+      per_page: params.per_page,
+      search: params.search,
+      role: params.role,
+      status: params.status,
+      tenant_id: params.tenant_id,
+      sort_by: params.sort_by,
+      sort_order: params.sort_order,
+      last_login_from: params.last_login_from,
+      last_login_to: params.last_login_to,
+    })}`
+  )
   return PaginatedUsersResponseSchema.parse(data)
 }
 
@@ -113,15 +115,17 @@ export async function fetchUserById(id: string): Promise<UserDetail> {
 }
 
 export async function initiateExport(params: ExportParams): Promise<ExportJob> {
-  const qs = new URLSearchParams()
-  qs.set("format", params.format)
-  if (params.search) qs.set("search", params.search)
-  params.role?.forEach(r => qs.append("role", r))
-  params.status?.forEach(s => qs.append("status", s))
-  if (params.tenant_id) qs.set("tenant_id", params.tenant_id)
-  if (params.last_login_from) qs.set("last_login_from", params.last_login_from)
-  if (params.last_login_to) qs.set("last_login_to", params.last_login_to)
-  const data = await api.get(`/users/export?${qs.toString()}`)
+  const data = await api.get(
+    `/users/export${buildQueryString({
+      format: params.format,
+      search: params.search,
+      role: params.role,
+      status: params.status,
+      tenant_id: params.tenant_id,
+      last_login_from: params.last_login_from,
+      last_login_to: params.last_login_to,
+    })}`
+  )
   return ExportJobSchema.parse(data)
 }
 

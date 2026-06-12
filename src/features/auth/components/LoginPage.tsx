@@ -492,6 +492,7 @@ export default function LoginPage() {
                   startIcon={<Lock size={20} />}
                   error={!!credentialsForm.formState.errors.password}
                   endAction={
+                    // NOTE: raw <button> — rendered inside the custom Input endAction slot which expects a bare element to avoid double padding
                     <button
                       type="button"
                       tabIndex={-1}

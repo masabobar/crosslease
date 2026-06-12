@@ -346,7 +346,7 @@ export function AuditQuickFilters({
         </PopoverContent>
       </Popover>
 
-      {/* Sensitive toggle */}
+      {/* NOTE: raw <button> — toggle filter chip with custom active/inactive colour swap; shadcn Toggle renders a different DOM shape that breaks the chip row alignment */}
       <button
         type="button"
         data-testid="filter-sensitive-button"

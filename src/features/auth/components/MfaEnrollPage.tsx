@@ -5,9 +5,11 @@ import { Shield, AlertCircle, Copy, Check } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { mfaEnroll, mfaActivate } from "../api/mfaApi"
 import type { MfaEnrollResponse } from "../api/mfaSchema"
+import { AUTH_QUERY_KEYS } from "@/features/auth/api/queryKeys"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
+import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,7 +42,7 @@ export default function MfaEnrollPage() {
   const [copied, setCopied] = useState(false)
 
   const { isLoading: isEnrolling, error: enrollError } = useQuery({
-    queryKey: ["auth", "mfa-enroll", initialToken],
+    queryKey: AUTH_QUERY_KEYS.mfaEnroll(initialToken),
     queryFn: async () => {
       const data = await mfaEnroll(initialToken)
       setEnrollData(data)
@@ -127,7 +129,7 @@ export default function MfaEnrollPage() {
   const handleCopyCodes = async () => {
     await navigator.clipboard.writeText(recoveryCodes.join("\n"))
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
   }
 
   if (step === "recovery") {
