@@ -2130,6 +2130,12 @@ codes, and invalidates all active sessions. User must re-enroll on next login.`,
 User must be in &#x60;active&#x60; status. The request remains pending until a different
 system_admin approves it. Only one pending role-change request is allowed per user at a time.
 
+**Supported transitions:**
+- &#x60;system_admin&#x60; ↔ &#x60;support_user&#x60;
+- &#x60;front_office&#x60; ↔ &#x60;back_office&#x60;
+
+All other transitions (including to/from &#x60;auditor&#x60; and &#x60;leasing_company_user&#x60;) are rejected with &#x60;422 INVALID_ROLE_TRANSITION&#x60;.
+
 **Returns:** &#x60;GovernedActionResponse&#x60; with &#x60;status&#x3D;pending&#x60;`,
     requestFormat: "json",
     parameters: [
