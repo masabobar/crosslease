@@ -73,8 +73,7 @@ function getSubjectDisplay(action: GovernedAction): string {
     return platformInviteSnapshot(action).full_name ?? "—"
   }
   if (action.action_type === "user_role_change") {
-    const s = roleChangeSnapshot(action)
-    return s.old_role && s.new_role ? `${s.old_role} → ${s.new_role}` : "—"
+    return roleChangeSnapshot(action).affected_user_email ?? "—"
   }
   if (action.action_type === "user_email_change") {
     return emailChangeSnapshot(action).new_email ?? "—"

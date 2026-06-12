@@ -59,6 +59,7 @@ export type PaginatedGovernedActions = z.infer<
 
 export type RoleChangeSnapshot = {
   user_id: string
+  affected_user_email: string
   old_role: string
   new_role: string
 }
