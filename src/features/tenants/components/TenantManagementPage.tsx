@@ -24,6 +24,8 @@ import {
 } from "@/features/tenants/api/tenantsApi"
 import type { TenantStatus, TenantType } from "@/features/tenants/api/schema"
 import { PATHS } from "@/router/paths"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
 
 const PAGE_SIZE = 20
 
@@ -41,6 +43,9 @@ const TYPE_OPTIONS: TenantType[] = ["bank", "bank_entity", "bank_branch_group"]
 export default function TenantManagementPage() {
   const { t } = useTranslation("tenants")
   const navigate = useNavigate()
+  const { data: currentUser } = useCurrentUser()
+  const canCreateTenant =
+    !!currentUser && TENANT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
 
   const [page, setPage] = useState(1)
   const [statusFilters, setStatusFilters] = useState<TenantStatus[]>([])
@@ -127,14 +132,16 @@ export default function TenantManagementPage() {
             {t("list.subtitle")}
           </p>
         </div>
-        <Button
-          data-testid="create-tenant-button"
-          onClick={() => navigate(PATHS.TENANT_MANAGEMENT_CREATE)}
-          className="h-9 rounded-xl px-4 gap-1.5"
-        >
-          <Building2Icon size={16} />
-          {t("list.createButton")}
-        </Button>
+        {canCreateTenant && (
+          <Button
+            data-testid="create-tenant-button"
+            onClick={() => navigate(PATHS.TENANT_MANAGEMENT_CREATE)}
+            className="h-9 rounded-xl px-4 gap-1.5"
+          >
+            <Building2Icon size={16} />
+            {t("list.createButton")}
+          </Button>
+        )}
       </div>
 
       {/* Filter bar */}
@@ -364,7 +371,11 @@ export default function TenantManagementPage() {
             tenants={tenants}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
-            onCreateTenant={() => navigate(PATHS.TENANT_MANAGEMENT_CREATE)}
+            onCreateTenant={
+              canCreateTenant
+                ? () => navigate(PATHS.TENANT_MANAGEMENT_CREATE)
+                : undefined
+            }
           />
         )}
       </div>

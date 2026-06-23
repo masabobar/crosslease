@@ -22,7 +22,7 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
-import { TENANT_MANAGEMENT_ALLOWED_ROLES } from "@/features/tenants/types"
+import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
@@ -34,7 +34,7 @@ export function Sidebar() {
   const canAccessAuditTrail =
     !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessTenantManagement =
-    !!currentUser && TENANT_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
+    !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
