@@ -104,6 +104,7 @@ function IdentityStep({ form }: Props) {
         <Input
           id="code"
           data-testid="tenant-code-input"
+          placeholder={t("fields.tenantCodePlaceholder")}
           error={!!errors.code}
           {...register("code")}
         />
@@ -137,6 +138,7 @@ function IdentityStep({ form }: Props) {
                 value={field.value}
                 onValueChange={field.onChange}
                 options={tenantTypeOptions}
+                placeholder={t("fields.tenantTypePlaceholder")}
                 error={!!errors.tenant_type}
               />
             )}

@@ -110,8 +110,10 @@
   "fields": {
     "tenantName": "Tenant name",
     "tenantCode": "Tenant code",
+    "tenantCodePlaceholder": "Select",
     "tenantCodeHint": "Letters, numbers and hyphens only. This code is permanent and cannot be changed after the tenant is created.",
     "tenantType": "Tenant type",
+    "tenantTypePlaceholder": "Select",
     "defaultCurrency": "Tenant default currency",
     "legalEntityName": "Legal entity name",
     "country": "Country / Jurisdiction",
