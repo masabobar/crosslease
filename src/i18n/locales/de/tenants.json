@@ -110,8 +110,10 @@
   "fields": {
     "tenantName": "Mandantenname",
     "tenantCode": "Mandantencode",
+    "tenantCodePlaceholder": "Auswählen",
     "tenantCodeHint": "Nur Buchstaben, Zahlen und Bindestriche. Dieser Code ist dauerhaft und kann nach der Erstellung des Mandanten nicht mehr geändert werden.",
     "tenantType": "Mandantentyp",
+    "tenantTypePlaceholder": "Auswählen",
     "defaultCurrency": "Standardwährung des Mandanten",
     "legalEntityName": "Name der juristischen Person",
     "country": "Land / Gerichtsbarkeit",
