@@ -110,7 +110,7 @@
   "fields": {
     "tenantName": "Tenant name",
     "tenantCode": "Tenant code",
-    "tenantCodeHint": "Alphanumeric characters and hyphens only. Used as a unique identifier.",
+    "tenantCodeHint": "Letters, numbers and hyphens only. This code is permanent and cannot be changed after the tenant is created.",
     "tenantType": "Tenant type",
     "defaultCurrency": "Tenant default currency",
     "legalEntityName": "Legal entity name",
@@ -182,6 +182,16 @@
     "archived": "Archived",
     "rejected": "Rejected",
     "expired": "Expired"
+  },
+  "detail": {
+    "backToList": "Back to tenant list",
+    "activatedAt": "Activated {{date}}",
+    "tabs": {
+      "overview": "Overview",
+      "modules": "Module profile",
+      "governance": "Governance history",
+      "grants": "Support grants"
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

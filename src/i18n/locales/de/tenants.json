@@ -110,7 +110,7 @@
   "fields": {
     "tenantName": "Mandantenname",
     "tenantCode": "Mandantencode",
-    "tenantCodeHint": "Nur alphanumerische Zeichen und Bindestriche. Wird als eindeutiger Bezeichner verwendet.",
+    "tenantCodeHint": "Nur Buchstaben, Zahlen und Bindestriche. Dieser Code ist dauerhaft und kann nach der Erstellung des Mandanten nicht mehr geändert werden.",
     "tenantType": "Mandantentyp",
     "defaultCurrency": "Standardwährung des Mandanten",
     "legalEntityName": "Name der juristischen Person",
@@ -182,6 +182,16 @@
     "archived": "Archiviert",
     "rejected": "Abgelehnt",
     "expired": "Abgelaufen"
+  },
+  "detail": {
+    "backToList": "Zurück zur Mandantenliste",
+    "activatedAt": "Aktiviert am {{date}}",
+    "tabs": {
+      "overview": "Übersicht",
+      "modules": "Modulprofil",
+      "governance": "Governance-Verlauf",
+      "grants": "Support-Zugriff"
+    }
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",

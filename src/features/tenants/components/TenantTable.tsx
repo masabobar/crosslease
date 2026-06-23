@@ -38,6 +38,7 @@ type TenantTableProps = {
   isLoading: boolean
   hasActiveFilters: boolean
   onCreateTenant?: () => void
+  onRowClick?: (tenant: TenantListItem) => void
 }
 
 function TenantTable({
@@ -45,6 +46,7 @@ function TenantTable({
   isLoading,
   hasActiveFilters,
   onCreateTenant,
+  onRowClick,
 }: TenantTableProps) {
   const { t } = useTranslation("tenants")
 
@@ -152,7 +154,8 @@ function TenantTable({
             <div
               key={tenant.id}
               data-testid={`tenant-row-${tenant.id}`}
-              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors`}
+              onClick={() => onRowClick?.(tenant)}
+              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
             >
               <div className={`${COL_TENANT} p-2`}>
                 <p className={`text-sm font-medium truncate ${textClass}`}>
@@ -160,9 +163,9 @@ function TenantTable({
                 </p>
               </div>
 
-              <div className={`${COL_CODE} p-2`}>
+              <div className={`${COL_CODE} p-2 overflow-hidden`}>
                 <span
-                  className={`text-sm font-mono ${muted ? "text-muted-foreground" : "text-foreground"}`}
+                  className={`text-sm font-mono block truncate ${muted ? "text-muted-foreground" : "text-foreground"}`}
                 >
                   {tenant.code}
                 </span>

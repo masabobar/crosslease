@@ -19,6 +19,7 @@ export const PATHS = {
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
   TENANT_MANAGEMENT: "/platform-administration/tenant-management",
   TENANT_MANAGEMENT_CREATE: "/platform-administration/tenant-management/create",
+  TENANT_DETAIL: "/platform-administration/tenant-management/:id",
   SETTINGS_PROFILE: "/settings/profile",
   AUDIT_TRAIL: "/platform-administration/audit-trail",
   AUDIT_TRAIL_DETAIL: "/platform-administration/audit-trail/:eventId",
@@ -26,6 +27,10 @@ export const PATHS = {
 
 export function adminUserDetail(id: string): string {
   return PATHS.USER_DETAIL.replace(":id", id)
+}
+
+export function tenantDetail(id: string): string {
+  return PATHS.TENANT_DETAIL.replace(":id", id)
 }
 
 export function auditTrailDetail(eventId: string): string {

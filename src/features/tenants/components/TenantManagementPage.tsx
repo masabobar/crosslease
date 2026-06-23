@@ -23,7 +23,7 @@ import {
   TENANTS_QUERY_KEYS,
 } from "@/features/tenants/api/tenantsApi"
 import type { TenantStatus, TenantType } from "@/features/tenants/api/schema"
-import { PATHS } from "@/router/paths"
+import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
 
@@ -371,6 +371,7 @@ export default function TenantManagementPage() {
             tenants={tenants}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
+            onRowClick={tenant => navigate(tenantDetail(tenant.id))}
             onCreateTenant={
               canCreateTenant
                 ? () => navigate(PATHS.TENANT_MANAGEMENT_CREATE)

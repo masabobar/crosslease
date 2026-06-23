@@ -13,6 +13,7 @@ import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import {
   TENANT_LIST_ALLOWED_ROLES,
   TENANT_CREATE_ALLOWED_ROLES,
+  TENANT_DETAIL_ALLOWED_ROLES,
 } from "@/features/tenants/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
@@ -70,6 +71,9 @@ const TenantManagementPage = lazy(
 )
 const CreateTenantPage = lazy(
   () => import("@/features/tenants/components/CreateTenantPage")
+)
+const TenantDetailPage = lazy(
+  () => import("@/features/tenants/components/TenantDetailPage")
 )
 
 export const router = createBrowserRouter([
@@ -198,6 +202,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={TENANT_CREATE_ALLOWED_ROLES}>
               <CreateTenantPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.TENANT_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={TENANT_DETAIL_ALLOWED_ROLES}>
+              <TenantDetailPage />
             </RoleGuard>
           </Suspense>
         ),
