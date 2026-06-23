@@ -143,6 +143,39 @@ const UserMePermissionsResponse = z
     active_modules: z.array(z.string()),
   })
   .passthrough()
+const AccessReason = z.enum([
+  "user_access_issue",
+  "workflow_processing_diagnostic",
+  "document_generation_diagnostic",
+  "integration_troubleshooting",
+  "compliance_query_support",
+  "regulatory_assistance",
+  "emergency_incident_response",
+])
+const GrantStatus = z.enum(["active", "expired", "revoked"])
+const SupportGrantResponse = z
+  .object({
+    id: z.string().uuid(),
+    tenant_id: z.string().uuid(),
+    grantee_id: z.string().uuid(),
+    granted_by: z.string().uuid(),
+    access_reason: AccessReason,
+    valid_from: z.string().datetime({ offset: true }),
+    valid_until: z.string().datetime({ offset: true }),
+    status: GrantStatus,
+    additional_context: z.union([z.string(), z.null()]),
+    revocation_reason: z.union([z.string(), z.null()]),
+    revoked_by: z.union([z.string(), z.null()]),
+    revoked_at: z.union([z.string(), z.null()]),
+    is_emergency: z.boolean(),
+    review_required_by: z.union([z.string(), z.null()]),
+    review_completed_at: z.union([z.string(), z.null()]),
+    reviewed_by: z.union([z.string(), z.null()]),
+    review_outcome: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
 const Body_upload_picture_api_v1_users_me_picture_post = z
   .object({ file: z.string() })
   .passthrough()
@@ -389,6 +422,21 @@ const TenantResponse = z
     lc_user_highest_active: z.number().int().optional().default(0),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
+    created_by: z.union([z.string(), z.null()]).optional(),
+    approved_by: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const TenantSupportResponse = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    code: z.string(),
+    tenant_type: TenantType,
+    status: TenantStatus,
+    country: z.string(),
+    default_currency: z.string(),
+    activated_at: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
 const UpdateTenantRequest = z
@@ -417,6 +465,89 @@ const ArchiveTenantRequest = z
   })
   .passthrough()
 const MfaPolicyRequest = z.object({ mfa_required: z.boolean() }).passthrough()
+const GovernanceHistoryEventResponse = z
+  .object({
+    id: z.string().uuid(),
+    event_type: z.string(),
+    actor_display: z.union([z.string(), z.null()]),
+    old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    reason: z.union([z.string(), z.null()]),
+    recorded_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const GovernanceHistoryResponse = z
+  .object({
+    events: z.array(GovernanceHistoryEventResponse),
+    next_cursor: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const AccessPolicyFlagRecord = z
+  .object({
+    enabled: z.boolean(),
+    modified_by: z.union([z.string(), z.null()]),
+    modified_at: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const AccessPolicyResponse = z
+  .object({
+    support_read_only_access: AccessPolicyFlagRecord,
+    auditor_access: AccessPolicyFlagRecord,
+    lc_portal: AccessPolicyFlagRecord,
+  })
+  .passthrough()
+const AccessPolicyRequest = z
+  .object({
+    support_read_only_access_allowed: z
+      .union([z.boolean(), z.null()])
+      .optional(),
+    auditor_access_allowed: z.union([z.boolean(), z.null()]).optional(),
+    lc_portal_enabled: z.union([z.boolean(), z.null()]).optional(),
+    reason: z.string().min(20),
+  })
+  .passthrough()
+const IntegrationBindingResponse = z
+  .object({
+    id: z.union([z.string(), z.null()]),
+    tenant_id: z.union([z.string(), z.null()]),
+    endpoint_url: z.union([z.string(), z.null()]),
+    integration_active: z.union([z.boolean(), z.null()]),
+    credential_scope_identifier: z.union([z.string(), z.null()]),
+    disbursement_execution_boundary_note: z.union([z.string(), z.null()]),
+    created_by: z.union([z.string(), z.null()]),
+    created_at: z.union([z.string(), z.null()]),
+    last_modified_by: z.union([z.string(), z.null()]),
+    updated_at: z.union([z.string(), z.null()]),
+    decommission_timestamp: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const UpsertIntegrationBindingRequest = z
+  .object({
+    endpoint_url: z.string(),
+    integration_active: z.boolean().optional().default(false),
+    credential_scope_identifier: z.string(),
+    disbursement_execution_boundary_note: z
+      .union([z.string(), z.null()])
+      .optional(),
+    justification: z.string().min(20),
+  })
+  .passthrough()
+const CreateGrantRequest = z
+  .object({
+    grantee_id: z.string().uuid(),
+    access_reason: AccessReason,
+    valid_from: z.string().datetime({ offset: true }).optional(),
+    valid_until: z.string().datetime({ offset: true }),
+    additional_context: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const RevokeGrantRequest = z
+  .object({ revocation_reason: z.string().min(10) })
+  .passthrough()
+const CompleteReviewRequest = z
+  .object({ outcome: z.string().min(10).max(500) })
+  .passthrough()
 const PlatformModuleEntry = z
   .object({
     key: z.string(),
@@ -519,6 +650,7 @@ const AuditEventListItem = z
     actor_id: z.string(),
     actor_type: z.string(),
     actor_display: z.union([z.string(), z.null()]),
+    actor_role_at_time: z.union([z.string(), z.null()]),
     trigger_source: z.union([z.string(), z.null()]),
     sensitive: z.boolean(),
     tenant_id: z.union([z.string(), z.null()]),
@@ -546,6 +678,7 @@ const AuditEventResponse = z
     actor_id: z.string(),
     actor_type: z.string(),
     actor_display: z.union([z.string(), z.null()]),
+    actor_role_at_time: z.union([z.string(), z.null()]),
     old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     changed_fields: z.union([z.array(z.string()), z.null()]),
@@ -594,6 +727,9 @@ export const schemas = {
   ResetVerifyResponse,
   UpdateMeRequest,
   UserMePermissionsResponse,
+  AccessReason,
+  GrantStatus,
+  SupportGrantResponse,
   Body_upload_picture_api_v1_users_me_picture_post,
   search,
   UserListItem,
@@ -621,11 +757,22 @@ export const schemas = {
   TenantListResponse,
   PaginatedTenantsResponse,
   TenantResponse,
+  TenantSupportResponse,
   UpdateTenantRequest,
   SuspendTenantRequest,
   ReactivateTenantRequest,
   ArchiveTenantRequest,
   MfaPolicyRequest,
+  GovernanceHistoryEventResponse,
+  GovernanceHistoryResponse,
+  AccessPolicyFlagRecord,
+  AccessPolicyResponse,
+  AccessPolicyRequest,
+  IntegrationBindingResponse,
+  UpsertIntegrationBindingRequest,
+  CreateGrantRequest,
+  RevokeGrantRequest,
+  CompleteReviewRequest,
   PlatformModuleEntry,
   PlatformModulesResponse,
   TenantModuleEntry,
@@ -746,6 +893,83 @@ const endpoints = makeApi([
       },
     ],
     response: AuditEventResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/audit/events/entity/:entity_type/:entity_id",
+    alias:
+      "list_entity_audit_events_api_v1_audit_events_entity__entity_type___entity_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "entity_type",
+        type: "Path",
+        schema: z.string(),
+      },
+      {
+        name: "entity_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "action_type",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "event_type",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "actor_id",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "actor_type",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "trigger_source",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "sensitive",
+        type: "Query",
+        schema: sensitive,
+      },
+      {
+        name: "from_dt",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "to_dt",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+    ],
+    response: PaginatedAuditEventsResponse,
     errors: [
       {
         status: 422,
@@ -1530,7 +1754,7 @@ On reject/withdraw/expire the tenant is archived.
         schema: z.string().uuid(),
       },
     ],
-    response: TenantResponse,
+    response: z.union([TenantResponse, TenantSupportResponse]),
     errors: [
       {
         status: 422,
@@ -1557,6 +1781,53 @@ On reject/withdraw/expire the tenant is archived.
       },
     ],
     response: TenantResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:id/access-policy",
+    alias: "get_access_policy_api_v1_tenants__id__access_policy_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: AccessPolicyResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/tenants/:id/access-policy",
+    alias: "update_access_policy_api_v1_tenants__id__access_policy_patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AccessPolicyRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
     errors: [
       {
         status: 422,
@@ -1604,6 +1875,215 @@ On reject/withdraw/expire the tenant is archived.
       },
     ],
     response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:id/governance-history",
+    alias: "get_governance_history_api_v1_tenants__id__governance_history_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "event_types",
+        type: "Query",
+        schema: z.array(z.string()).optional().default([]),
+      },
+      {
+        name: "from_date",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "to_date",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "cursor",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(50).optional().default(50),
+      },
+    ],
+    response: GovernanceHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:id/grants",
+    alias: "create_grant_api_v1_tenants__id__grants_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateGrantRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: SupportGrantResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:id/grants",
+    alias: "list_grants_api_v1_tenants__id__grants_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(SupportGrantResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/tenants/:id/grants/:grant_id",
+    alias: "revoke_grant_api_v1_tenants__id__grants__grant_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ revocation_reason: z.string().min(10) })
+          .passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "grant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: SupportGrantResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:id/grants/:grant_id/review",
+    alias:
+      "complete_emergency_review_api_v1_tenants__id__grants__grant_id__review_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ outcome: z.string().min(10).max(500) })
+          .passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "grant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: SupportGrantResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:id/integration-binding",
+    alias:
+      "get_integration_binding_api_v1_tenants__id__integration_binding_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: IntegrationBindingResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/tenants/:id/integration-binding",
+    alias:
+      "upsert_integration_binding_api_v1_tenants__id__integration_binding_patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpsertIntegrationBindingRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: IntegrationBindingResponse,
     errors: [
       {
         status: 422,
@@ -2335,6 +2815,13 @@ and returns 202 with a new job_id.`,
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/users/me/grants",
+    alias: "list_own_grants_api_v1_users_me_grants_get",
+    requestFormat: "json",
+    response: z.array(SupportGrantResponse),
   },
   {
     method: "get",
