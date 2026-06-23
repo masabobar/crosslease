@@ -10,7 +10,10 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
-import { TENANT_MANAGEMENT_ALLOWED_ROLES } from "@/features/tenants/types"
+import {
+  TENANT_LIST_ALLOWED_ROLES,
+  TENANT_CREATE_ALLOWED_ROLES,
+} from "@/features/tenants/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -183,7 +186,7 @@ export const router = createBrowserRouter([
         path: PATHS.TENANT_MANAGEMENT,
         element: (
           <Suspense fallback={null}>
-            <RoleGuard allowed={TENANT_MANAGEMENT_ALLOWED_ROLES}>
+            <RoleGuard allowed={TENANT_LIST_ALLOWED_ROLES}>
               <TenantManagementPage />
             </RoleGuard>
           </Suspense>
@@ -193,7 +196,7 @@ export const router = createBrowserRouter([
         path: PATHS.TENANT_MANAGEMENT_CREATE,
         element: (
           <Suspense fallback={null}>
-            <RoleGuard allowed={TENANT_MANAGEMENT_ALLOWED_ROLES}>
+            <RoleGuard allowed={TENANT_CREATE_ALLOWED_ROLES}>
               <CreateTenantPage />
             </RoleGuard>
           </Suspense>
