@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,12 @@ import {
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { AuditTable } from "@/features/audit/components/AuditTable"
 import { AuditQuickFilters } from "@/features/audit/components/AuditQuickFilters"
+import { FilterPill } from "@/components/ui/filter-pill"
 import { useAuditEvents } from "@/features/audit/hooks/useAuditEvents"
 import { EMPTY_AUDIT_FILTER_STATE } from "@/features/audit/types"
 import type { AuditFilterState } from "@/features/audit/types"
 import type { AuditEventListItem } from "@/features/audit/api/schema"
-import { formatDate, formatEventType } from "@/lib/formatters"
+import { formatDate, formatEventType, formatActionType } from "@/lib/formatters"
 import { auditTrailDetail } from "@/router/paths"
 
 const PAGE_SIZES = [10, 25, 50, 100] as const
@@ -132,30 +133,6 @@ function useAuditListParams() {
   }
 }
 
-type FilterPillProps = {
-  label: string
-  onRemove: () => void
-  testId: string
-}
-
-function FilterPill({ label, onRemove, testId }: FilterPillProps) {
-  return (
-    <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
-      {label}
-      <Button
-        type="button"
-        variant="ghost"
-        data-testid={testId}
-        onClick={onRemove}
-        className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
-        aria-label={`Remove ${label} filter`}
-      >
-        <X size={11} strokeWidth={2.5} />
-      </Button>
-    </span>
-  )
-}
-
 export default function AuditTrailPage() {
   const { t } = useTranslation("audit")
   const navigate = useNavigate()
@@ -187,6 +164,9 @@ export default function AuditTrailPage() {
 
   const activeFilterCount =
     appliedFilters.event_type.length +
+    (appliedFilters.entity_type ? 1 : 0) +
+    (appliedFilters.action_type ? 1 : 0) +
+    (appliedFilters.trigger_source ? 1 : 0) +
     (appliedFilters.actor_id ? 1 : 0) +
     (appliedFilters.from_dt || appliedFilters.to_dt ? 1 : 0) +
     (appliedFilters.sensitive ? 1 : 0)
@@ -238,9 +218,47 @@ export default function AuditTrailPage() {
                   event_type: appliedFilters.event_type.filter(e => e !== et),
                 })
               }
-              testId={`filter-pill-remove-event-type-${et}`}
+              data-testid={`filter-pill-remove-event-type-${et}`}
             />
           ))}
+
+          {appliedFilters.entity_type && (
+            <FilterPill
+              label={t("page.filters.entityTypePill", {
+                value: t(`entityType.${appliedFilters.entity_type}`, {
+                  defaultValue: formatActionType(appliedFilters.entity_type),
+                }),
+              })}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, entity_type: null })
+              }
+              data-testid="filter-pill-remove-entity-type"
+            />
+          )}
+
+          {appliedFilters.action_type && (
+            <FilterPill
+              label={t("page.filters.actionTypePill", {
+                value: formatActionType(appliedFilters.action_type),
+              })}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, action_type: null })
+              }
+              data-testid="filter-pill-remove-action-type"
+            />
+          )}
+
+          {appliedFilters.trigger_source && (
+            <FilterPill
+              label={t("page.filters.triggerSourcePill", {
+                value: formatActionType(appliedFilters.trigger_source),
+              })}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, trigger_source: null })
+              }
+              data-testid="filter-pill-remove-trigger-source"
+            />
+          )}
 
           {(appliedFilters.from_dt || appliedFilters.to_dt) && (
             <FilterPill
@@ -264,7 +282,7 @@ export default function AuditTrailPage() {
                   to_dt: null,
                 })
               }
-              testId="filter-pill-remove-date"
+              data-testid="filter-pill-remove-date"
             />
           )}
 
@@ -276,7 +294,7 @@ export default function AuditTrailPage() {
               onRemove={() =>
                 setAppliedFilters({ ...appliedFilters, actor_id: null })
               }
-              testId="filter-pill-remove-performed-by"
+              data-testid="filter-pill-remove-performed-by"
             />
           )}
 
@@ -307,6 +325,16 @@ export default function AuditTrailPage() {
             events={data?.events ?? []}
             isLoading={isLoading}
             onRowClick={handleRowClick}
+            hasActiveFilters={
+              !!appliedFilters.search ||
+              appliedFilters.event_type.length > 0 ||
+              !!appliedFilters.entity_type ||
+              !!appliedFilters.entity_id ||
+              !!appliedFilters.actor_id ||
+              !!appliedFilters.action_type ||
+              !!appliedFilters.trigger_source ||
+              appliedFilters.sensitive !== null
+            }
           />
         )}
       </div>

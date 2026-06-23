@@ -39,7 +39,9 @@
     "pendingApprovals": "Ausstehende Genehmigungen",
     "myProfile": "Mein Profil",
     "auditTrail": "Audit-Trail",
-    "auditEvent": "Ereignisdetail"
+    "auditEvent": "Ereignisdetail",
+    "tenantManagement": "Mandantenverwaltung",
+    "createTenant": "Mandant erstellen"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

@@ -10,6 +10,9 @@
       "label": "Aktive Filter:",
       "searchPill": "Suche: \"{{value}}\"",
       "eventTypePill": "Ereignis: {{value}}",
+      "entityTypePill": "Entität: {{value}}",
+      "actionTypePill": "Aktion: {{value}}",
+      "triggerSourcePill": "Quelle: {{value}}",
       "datePill": "Datum: {{range}}",
       "userAffectedPill": "Betroffener Benutzer: {{value}}",
       "performedByPill": "Durchgeführt von: {{value}}",
@@ -34,7 +37,14 @@
       "result": "Ergebnis",
       "flag": "Markierung"
     },
-    "empty": "Keine Auditereignisse gefunden."
+    "emptyState": {
+      "title": "Keine Einträge gefunden",
+      "description": "Aktivitäten werden hier angezeigt, sobald Änderungen vorgenommen werden."
+    },
+    "emptyFiltered": {
+      "title": "Keine Einträge entsprechen Ihren Filtern",
+      "description": "Versuchen Sie, die Filter anzupassen oder zu löschen."
+    }
   },
   "entityType": {
     "user": "Benutzer",

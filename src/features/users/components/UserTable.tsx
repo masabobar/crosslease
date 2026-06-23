@@ -18,6 +18,7 @@ import type {
   UserSortOrder,
 } from "@/features/users/api/schema"
 import { Button } from "@/components/ui/button"
+import { TableEmptyState } from "@/components/ui/empty"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,7 @@ type UserTableProps = {
   onRowClick?: (user: UserListItem) => void
   viewerRole?: UserRole
   currentUserId?: string
+  hasActiveFilters?: boolean
 }
 
 type SortableHeaderProps = {
@@ -200,12 +202,16 @@ function UserTable({
   onRowClick,
   viewerRole,
   currentUserId,
+  hasActiveFilters = false,
 }: UserTableProps) {
   const { t } = useTranslation("users")
   const cols = getUserListColumnVisibility(viewerRole)
 
   return (
-    <div className="w-full" data-testid="user-table">
+    <div
+      className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
+      data-testid="user-table"
+    >
       {/* Header row */}
       <div className="flex border-b border-border h-10 items-center">
         <div className="flex-1 min-w-0 px-2">
@@ -306,16 +312,19 @@ function UserTable({
       )}
 
       {/* Empty state */}
-      {!isLoading && users.length === 0 && (
-        <div
-          className={`flex justify-center items-center ${ROW_H}`}
-          data-testid="user-table-empty"
-        >
-          <span className="text-sm text-muted-foreground">
-            {t("table.empty")}
-          </span>
-        </div>
-      )}
+      {!isLoading &&
+        users.length === 0 &&
+        (hasActiveFilters ? (
+          <TableEmptyState
+            title={t("table.emptyFiltered.title")}
+            description={t("table.emptyFiltered.description")}
+          />
+        ) : (
+          <TableEmptyState
+            title={t("table.emptyState.title")}
+            description={t("table.emptyState.description")}
+          />
+        ))}
 
       {/* Data rows */}
       {!isLoading &&

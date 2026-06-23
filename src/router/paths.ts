@@ -17,6 +17,8 @@ export const PATHS = {
   LC_DOCUMENTS: "/lc/documents",
   LC_PROPOSALS: "/lc/proposals",
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
+  TENANT_MANAGEMENT: "/platform-administration/tenant-management",
+  TENANT_MANAGEMENT_CREATE: "/platform-administration/tenant-management/create",
   SETTINGS_PROFILE: "/settings/profile",
   AUDIT_TRAIL: "/platform-administration/audit-trail",
   AUDIT_TRAIL_DETAIL: "/platform-administration/audit-trail/:eventId",

@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react"
+import { TableEmptyState } from "@/components/ui/empty"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import {
@@ -59,13 +60,22 @@ type AuditTableProps = {
   events: AuditEventListItem[]
   isLoading: boolean
   onRowClick: (event: AuditEventListItem) => void
+  hasActiveFilters?: boolean
 }
 
-export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
+export function AuditTable({
+  events,
+  isLoading,
+  onRowClick,
+  hasActiveFilters = false,
+}: AuditTableProps) {
   const { t } = useTranslation("audit")
 
   return (
-    <div className="w-full" data-testid="audit-table">
+    <div
+      className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
+      data-testid="audit-table"
+    >
       {/* Header */}
       <div className="flex border-b border-border h-10 items-center">
         <div
@@ -132,16 +142,19 @@ export function AuditTable({ events, isLoading, onRowClick }: AuditTableProps) {
       )}
 
       {/* Empty state */}
-      {!isLoading && events.length === 0 && (
-        <div
-          className={`flex justify-center items-center ${ROW_H}`}
-          data-testid="audit-table-empty"
-        >
-          <span className="text-sm text-muted-foreground">
-            {t("table.empty")}
-          </span>
-        </div>
-      )}
+      {!isLoading &&
+        events.length === 0 &&
+        (hasActiveFilters ? (
+          <TableEmptyState
+            title={t("table.emptyFiltered.title")}
+            description={t("table.emptyFiltered.description")}
+          />
+        ) : (
+          <TableEmptyState
+            title={t("table.emptyState.title")}
+            description={t("table.emptyState.description")}
+          />
+        ))}
 
       {/* Data rows */}
       {!isLoading &&

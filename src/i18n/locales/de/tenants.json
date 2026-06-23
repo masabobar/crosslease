@@ -1,0 +1,192 @@
+{
+  "wizard": {
+    "steps": {
+      "identity": "Identität",
+      "modules": "Module",
+      "seed": "Seed-Paket",
+      "integration": "Integration",
+      "review": "Überprüfung"
+    },
+    "stepDescriptions": {
+      "identity": "Grundlegende Mandanteninformationen",
+      "modules": "Plattformmodule auswählen",
+      "seed": "Startkonfiguration",
+      "integration": "Kernbankverbindung",
+      "review": "Bestätigen und absenden"
+    },
+    "identity": {
+      "title": "Mandantenidentität",
+      "subtitle": "Geben Sie die grundlegenden Informationen für den neuen Mandanten ein."
+    },
+    "modules": {
+      "title": "Modulauswahl",
+      "subtitle": "Wählen Sie aus, welche Plattformmodule für diesen Mandanten aktiviert werden sollen.",
+      "selectedModules": "Ausgewählte Module",
+      "alwaysOn": "Immer aktiv",
+      "noModules": "Keine Module verfügbar.",
+      "descriptions": {
+        "identity_access": "Benutzerkonten, Rollen und Berechtigungen.",
+        "audit_compliance": "Unveränderliches Protokoll jeder Aktion.",
+        "tenant_administration": "Mandanteneinstellungen und Betreiberwerkzeuge.",
+        "security_access_control": "Autorisierungsdurchsetzung über alle Dienste.",
+        "contract_lifecycle_engine": "Zustandsmaschine für alle Geschäftsentitäten.",
+        "workflow_engine": "Laufzeitorchestrierung von Arbeit und Aufgabenrouting.",
+        "refinancing_request": "Aufnahme und Lebenszyklus von Refinanzierungsanträgen.",
+        "contract_management": "Leasingvertragsdaten und Dokumentenverwaltung.",
+        "financing": "Finanzierungsstruktur und Barwertberechnung.",
+        "redemption": "Rückzahlungs- und Ablöseabläufe.",
+        "disbursement": "Verarbeitung und Verfolgung von Zahlungsauszahlungen.",
+        "conditions_management": "Definition und Durchsetzung von Vertragsbedingungen.",
+        "contract_events": "Verfolgung und Verarbeitung von Vertragslebenszyklus-Ereignissen.",
+        "dd_return_escalation": "Lastschriftrückgabebearbeitung und Eskalation.",
+        "reporting": "Betriebsberichte und Datenexporte.",
+        "bank_product_template": "Konfigurierbare Finanzproduktvorlagen.",
+        "framework_agreement": "Rahmenvertragsverwaltung.",
+        "rate_table": "Zinssatztabellen und Preiskonfiguration.",
+        "partner_management": "Partner- und Händlernetzwerkverwaltung.",
+        "notification_center": "Systembenachrichtigungen und Warnmeldungen.",
+        "document_generation": "Automatisierte Dokumenterstellung aus Vorlagen.",
+        "document_management": "Dokumentenspeicherung und Lebenszyklus.",
+        "upload_data_import": "Massenimport und Dateiverarbeitung.",
+        "kyc_aml": "Kundenidentifikations- und Geldwäscheprüfungen.",
+        "workflow_task_catalog": "Konfigurierbare Aufgabendefinitionen für Workflows.",
+        "document_requirement_catalog": "Dokumentenchecklisten und Anforderungsdefinitionen.",
+        "scoring_engine": "Kreditbewertungs- und Risikobeurteilungsmodul.",
+        "validation_gating": "Geschäftsregelvalidierung und Prozesssteuerung.",
+        "limit_management": "Risikoexpositionslimits und Kreditobergrenzen.",
+        "risk_propagation": "Risikoweitergabe über verbundene Entitäten.",
+        "integration_core_banking": "Verbindung zu Kernbanksystemen und APIs."
+      }
+    },
+    "seed": {
+      "title": "Seed-Konfiguration",
+      "subtitle": "Wählen Sie das Startkonfigurationspaket für diesen Mandanten aus."
+    },
+    "integration": {
+      "title": "Kernbankintegration",
+      "subtitle": "Verknüpfen Sie optional eine Kernbankintegration. Dies kann später konfiguriert werden.",
+      "optionalAlert": "Dieser Schritt ist optional. Sie können jetzt eine Kernbankintegration verknüpfen oder sie später in den Mandanteneinstellungen einrichten."
+    },
+    "review": {
+      "title": "Überprüfen und absenden",
+      "subtitle": "Überprüfen Sie alle Details, bevor Sie zur Governance-Genehmigung einreichen.",
+      "governanceAlert": "Dieser Mandant wird erst aktiv, wenn ein zweiter Systemadministrator diesen Antrag genehmigt. Sie werden benachrichtigt, wenn eine Entscheidung getroffen wird.",
+      "governanceAlertTitle": "Governance-Genehmigung erforderlich",
+      "submitButton": "Zur Genehmigung einreichen",
+      "sections": {
+        "identity": "Mandantenidentität",
+        "modules": "Module",
+        "seed": "Seed-Paket",
+        "integration": "Kernbankintegration"
+      },
+      "package": "Paket",
+      "includes": "Beinhaltet",
+      "notSet": "Nicht angegeben"
+    },
+    "success": {
+      "title": "Antrag zur Genehmigung eingereicht",
+      "subtitle": "wurde im Entwurfs-/Bereitstellungsstatus erstellt. Es wartet nun auf die Gegenzeichnung durch einen zweiten Systemadministrator.",
+      "note": "Sie werden benachrichtigt, wenn eine Entscheidung getroffen wurde. Von Ihrer Seite sind keine weiteren Maßnahmen erforderlich.",
+      "backToList": "Zurück zur Mandantenliste"
+    },
+    "actions": {
+      "next": "Weiter",
+      "back": "Zurück",
+      "cancel": "Abbrechen"
+    },
+    "restoreDialog": {
+      "title": "Dort weitermachen, wo Sie aufgehört haben?",
+      "description": "Sie haben eine unfertige Mandantenerstellung. Möchten Sie dort weitermachen, wo Sie aufgehört haben?",
+      "continue": "Weiterfahren",
+      "startFresh": "Neu beginnen"
+    },
+    "leaveDialog": {
+      "title": "Assistenten verlassen?",
+      "description": "Sie haben nicht gespeicherte Eingaben. Wenn Sie jetzt verlassen, gehen alle eingegebenen Daten verloren.",
+      "stay": "Bleiben",
+      "leave": "Trotzdem verlassen"
+    }
+  },
+  "fields": {
+    "tenantName": "Mandantenname",
+    "tenantCode": "Mandantencode",
+    "tenantCodeHint": "Nur alphanumerische Zeichen und Bindestriche. Wird als eindeutiger Bezeichner verwendet.",
+    "tenantType": "Mandantentyp",
+    "defaultCurrency": "Standardwährung des Mandanten",
+    "legalEntityName": "Name der juristischen Person",
+    "country": "Land / Gerichtsbarkeit",
+    "description": "Mandantenbeschreibung",
+    "descriptionOptional": "(optional)",
+    "descriptionHint": "Optional. Kurze Beschreibung des Zwecks dieses Mandanten.",
+    "coreBankingRef": "Kernbank-Integrationsreferenz",
+    "coreBankingRefHint": "Leer lassen, um nach der Mandantenaktivierung über die Integrationseinstellungen zu konfigurieren."
+  },
+  "tenantTypes": {
+    "bank": "Bank",
+    "bank_entity": "Bankeinheit",
+    "bank_branch_group": "Bankfilialgruppe"
+  },
+  "seedPackages": {
+    "standard_retail_bank": "Standard",
+    "minimal_sandbox": "Sandbox"
+  },
+  "list": {
+    "title": "Mandantenverwaltung",
+    "subtitle": "Verwalten Sie Mandanten und ihre betrieblichen Konfigurationen auf der gesamten Plattform.",
+    "createButton": "Mandant erstellen",
+    "emptyState": {
+      "title": "Keine Mandanten gefunden",
+      "description": "Erstellen Sie Ihren ersten Mandanten, um zu beginnen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Mandanten entsprechen Ihren Filtern",
+      "description": "Versuchen Sie, die Filter anzupassen oder zu löschen."
+    },
+    "search": "Suchen",
+    "table": {
+      "columns": {
+        "tenant": "Mandant",
+        "code": "Code",
+        "type": "Typ",
+        "activeModule": "Aktives Modul",
+        "status": "Status",
+        "createdAt": "Erstellt am"
+      },
+      "modules": "{{count}} Module"
+    },
+    "filters": {
+      "status": "Status",
+      "type": "Typ",
+      "country": "Land",
+      "dateCreated": "Erstellungsdatum",
+      "countrySearchPlaceholder": "Land suchen…",
+      "noCountriesFound": "Keine Länder gefunden",
+      "from": "Von",
+      "to": "Bis",
+      "clearAll": "Alle löschen"
+    },
+    "filterPills": {
+      "status": "Status: {{value}}",
+      "type": "Typ: {{value}}",
+      "country": "Land: {{value}}",
+      "dateRange": "Erstellt: {{range}}"
+    },
+    "pagination": {
+      "page": "Seite {{page}} von {{total}}"
+    }
+  },
+  "statuses": {
+    "draft": "Entwurf",
+    "active": "Aktiv",
+    "suspended": "Gesperrt",
+    "archived": "Archiviert",
+    "rejected": "Abgelehnt",
+    "expired": "Abgelaufen"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
+    "TENANT_CODE_ALREADY_EXISTS": "Dieser Mandantencode wird bereits verwendet.",
+    "TENANT_NAME_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet."
+  }
+}

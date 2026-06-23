@@ -13,7 +13,7 @@ export function AppLayout() {
         <Header />
         <SupportContextBanner />
         <AuditorExpiryBanner />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-[#F8FAFC]">
           <Outlet />
         </main>
       </div>

@@ -39,7 +39,9 @@
     "pendingApprovals": "Pending approvals",
     "myProfile": "My profile",
     "auditTrail": "Audit trail",
-    "auditEvent": "Event detail"
+    "auditEvent": "Event detail",
+    "tenantManagement": "Tenant management",
+    "createTenant": "Create tenant"
   },
   "notFound": {
     "heading": "Page not found",

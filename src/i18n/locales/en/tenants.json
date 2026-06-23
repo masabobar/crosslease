@@ -1,0 +1,192 @@
+{
+  "wizard": {
+    "steps": {
+      "identity": "Identity",
+      "modules": "Modules",
+      "seed": "Seed package",
+      "integration": "Integration",
+      "review": "Review"
+    },
+    "stepDescriptions": {
+      "identity": "Basic tenant information",
+      "modules": "Select platform modules",
+      "seed": "Starting configuration",
+      "integration": "Core banking connection",
+      "review": "Confirm and submit"
+    },
+    "identity": {
+      "title": "Tenant identity",
+      "subtitle": "Enter the basic information for the new tenant."
+    },
+    "modules": {
+      "title": "Module selection",
+      "subtitle": "Select which platform modules to activate for this tenant.",
+      "selectedModules": "Selected modules",
+      "alwaysOn": "Always on",
+      "noModules": "No modules available.",
+      "descriptions": {
+        "identity_access": "User accounts, roles and permissions.",
+        "audit_compliance": "Immutable record of every action.",
+        "tenant_administration": "Tenant settings and operator tools.",
+        "security_access_control": "Authorization enforcement across all services.",
+        "contract_lifecycle_engine": "State machine governance for all business entities.",
+        "workflow_engine": "Runtime orchestration of work and task routing.",
+        "refinancing_request": "Refinancing proposal intake and lifecycle.",
+        "contract_management": "Lease contract data and document management.",
+        "financing": "Financing structure and NPV calculation.",
+        "redemption": "Repayment and redemption workflows.",
+        "disbursement": "Payment disbursement processing and tracking.",
+        "conditions_management": "Contract condition definition and enforcement.",
+        "contract_events": "Contract lifecycle event tracking and processing.",
+        "dd_return_escalation": "Direct debit return handling and escalation.",
+        "reporting": "Operational reports and data exports.",
+        "bank_product_template": "Configurable financial product templates.",
+        "framework_agreement": "Master agreement and framework contract management.",
+        "rate_table": "Interest rate tables and pricing configuration.",
+        "partner_management": "Partner and dealer network administration.",
+        "notification_center": "System notifications and alert management.",
+        "document_generation": "Automated document creation from templates.",
+        "document_management": "Document storage and lifecycle management.",
+        "upload_data_import": "Bulk data import and file processing.",
+        "kyc_aml": "Know Your Customer and anti-money laundering checks.",
+        "workflow_task_catalog": "Configurable task definitions for workflows.",
+        "document_requirement_catalog": "Document checklist and requirement definitions.",
+        "scoring_engine": "Credit scoring and risk assessment engine.",
+        "validation_gating": "Business rule validation and process gating.",
+        "limit_management": "Exposure limits and credit ceiling management.",
+        "risk_propagation": "Risk signal propagation across related entities.",
+        "integration_core_banking": "Connection to core banking systems and APIs."
+      }
+    },
+    "seed": {
+      "title": "Seed configuration",
+      "subtitle": "Select the starting configuration package for this tenant."
+    },
+    "integration": {
+      "title": "Core banking integration",
+      "subtitle": "Optionally link a core banking integration. This can be configured later.",
+      "optionalAlert": "This step is optional. You can link a core banking integration now or set it up later from the tenant settings."
+    },
+    "review": {
+      "title": "Review and submit",
+      "subtitle": "Review all details before submitting for governance approval.",
+      "governanceAlert": "This tenant will not be active until a second System Admin approves this request. You will be notified when a decision is made.",
+      "governanceAlertTitle": "Governance approval required",
+      "submitButton": "Submit for approval",
+      "sections": {
+        "identity": "Tenant identity",
+        "modules": "Modules",
+        "seed": "Seed package",
+        "integration": "Core banking integration"
+      },
+      "package": "Package",
+      "includes": "Includes",
+      "notSet": "Not set"
+    },
+    "success": {
+      "title": "Request submitted for approval",
+      "subtitle": "has been created in a Draft / Provisioning state. It is now waiting for a second System Admin to countersign the request.",
+      "note": "You will be notified when a decision is made. No further action is needed from you right now.",
+      "backToList": "Back to tenant list"
+    },
+    "actions": {
+      "next": "Next",
+      "back": "Back",
+      "cancel": "Cancel"
+    },
+    "restoreDialog": {
+      "title": "Continue where you left off?",
+      "description": "You have an unfinished tenant creation. Would you like to pick up from where you left off?",
+      "continue": "Continue",
+      "startFresh": "Start fresh"
+    },
+    "leaveDialog": {
+      "title": "Leave wizard?",
+      "description": "You have unsaved progress. If you leave now, everything you've entered will be lost.",
+      "stay": "Stay",
+      "leave": "Leave anyway"
+    }
+  },
+  "fields": {
+    "tenantName": "Tenant name",
+    "tenantCode": "Tenant code",
+    "tenantCodeHint": "Alphanumeric characters and hyphens only. Used as a unique identifier.",
+    "tenantType": "Tenant type",
+    "defaultCurrency": "Tenant default currency",
+    "legalEntityName": "Legal entity name",
+    "country": "Country / Jurisdiction",
+    "description": "Tenant description",
+    "descriptionOptional": "(optional)",
+    "descriptionHint": "A short note about this tenant for internal reference.",
+    "coreBankingRef": "Core banking integration reference",
+    "coreBankingRefHint": "Leave blank to configure after tenant activation via integration settings."
+  },
+  "tenantTypes": {
+    "bank": "Bank",
+    "bank_entity": "Bank entity",
+    "bank_branch_group": "Bank branch group"
+  },
+  "seedPackages": {
+    "standard_retail_bank": "Default",
+    "minimal_sandbox": "Sandbox"
+  },
+  "list": {
+    "title": "Tenant Management",
+    "subtitle": "Manage tenants and their operational configurations across the platform.",
+    "createButton": "Create tenant",
+    "emptyState": {
+      "title": "No tenants found",
+      "description": "Create your first tenant to get started."
+    },
+    "emptyFiltered": {
+      "title": "No tenants match your filters",
+      "description": "Try adjusting or clearing them."
+    },
+    "search": "Search",
+    "table": {
+      "columns": {
+        "tenant": "Tenant",
+        "code": "Code",
+        "type": "Type",
+        "activeModule": "Active module",
+        "status": "Status",
+        "createdAt": "Created at"
+      },
+      "modules": "{{count}} modules"
+    },
+    "filters": {
+      "status": "Status",
+      "type": "Type",
+      "country": "Country",
+      "dateCreated": "Date created",
+      "countrySearchPlaceholder": "Search country…",
+      "noCountriesFound": "No countries found",
+      "from": "From",
+      "to": "To",
+      "clearAll": "Clear all"
+    },
+    "filterPills": {
+      "status": "Status: {{value}}",
+      "type": "Type: {{value}}",
+      "country": "Country: {{value}}",
+      "dateRange": "Created: {{range}}"
+    },
+    "pagination": {
+      "page": "Page {{page}} of {{total}}"
+    }
+  },
+  "statuses": {
+    "draft": "Draft",
+    "active": "Active",
+    "suspended": "Suspended",
+    "archived": "Archived",
+    "rejected": "Rejected",
+    "expired": "Expired"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
+    "TENANT_CODE_ALREADY_EXISTS": "This tenant code is already in use.",
+    "TENANT_NAME_ALREADY_EXISTS": "This tenant name is already in use."
+  }
+}

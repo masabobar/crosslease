@@ -10,6 +10,9 @@
       "label": "Active filters:",
       "searchPill": "Search: \"{{value}}\"",
       "eventTypePill": "Event: {{value}}",
+      "entityTypePill": "Entity: {{value}}",
+      "actionTypePill": "Action: {{value}}",
+      "triggerSourcePill": "Source: {{value}}",
       "datePill": "Date: {{range}}",
       "userAffectedPill": "User Affected: {{value}}",
       "performedByPill": "Performed By: {{value}}",
@@ -34,7 +37,14 @@
       "result": "Result",
       "flag": "Flag"
     },
-    "empty": "No audit events found."
+    "emptyState": {
+      "title": "No audit entries found",
+      "description": "Activity will appear here as changes are made."
+    },
+    "emptyFiltered": {
+      "title": "No entries match your filters",
+      "description": "Try adjusting or clearing them."
+    }
   },
   "entityType": {
     "user": "User",
