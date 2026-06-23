@@ -174,9 +174,10 @@ describe("CreateTenantFormSchema", () => {
   })
 
   it("accepts payload without optional fields", () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       description: _d,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       core_banking_integration_ref: _c,
       ...required
     } = validCreateTenantPayload
