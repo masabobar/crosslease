@@ -112,7 +112,14 @@
       "userId": "Benutzer-ID",
       "accessExpiry": "Zugang gültig bis"
     },
-    "empty": "Keine Benutzer gefunden.",
+    "emptyState": {
+      "title": "Keine Benutzer gefunden",
+      "description": "Laden Sie jemanden ein, um den ersten Benutzer hinzuzufügen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Benutzer entsprechen Ihren Filtern",
+      "description": "Versuchen Sie, die Filter anzupassen oder zu löschen."
+    },
     "actions": {
       "approve": "Genehmigen"
     }

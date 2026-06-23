@@ -22,6 +22,7 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
+import { TENANT_MANAGEMENT_ALLOWED_ROLES } from "@/features/tenants/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
@@ -32,6 +33,8 @@ export function Sidebar() {
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessAuditTrail =
     !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
+  const canAccessTenantManagement =
+    !!currentUser && TENANT_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -47,6 +50,9 @@ export function Sidebar() {
     location.pathname === PATHS.USER_MANAGEMENT ||
     location.pathname.startsWith(PATHS.USER_MANAGEMENT + "/")
   const isPendingApprovalsActive = location.pathname === PATHS.PENDING_APPROVALS
+  const isTenantManagementActive =
+    location.pathname === PATHS.TENANT_MANAGEMENT ||
+    location.pathname.startsWith(PATHS.TENANT_MANAGEMENT + "/")
   const isAuditTrailActive =
     location.pathname === PATHS.AUDIT_TRAIL ||
     location.pathname.startsWith(PATHS.AUDIT_TRAIL + "/")
@@ -362,7 +368,6 @@ export function Sidebar() {
                   )}
                   {[
                     t("nav.partnerManagement"),
-                    t("nav.tenantManagement"),
                     t("nav.coreBankingIntegration"),
                   ].map(label => (
                     <span
@@ -372,6 +377,23 @@ export function Sidebar() {
                       {label}
                     </span>
                   ))}
+                  {canAccessTenantManagement && (
+                    <Link
+                      to={PATHS.TENANT_MANAGEMENT}
+                      data-testid="nav-tenant-management"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap",
+                        isTenantManagementActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.tenantManagement")}
+                      {isTenantManagementActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

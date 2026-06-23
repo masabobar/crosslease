@@ -1,20 +1,9 @@
 import { parseISO } from "date-fns"
-import {
-  Calendar,
-  Check,
-  FileDown,
-  Filter,
-  Loader2,
-  Search,
-} from "lucide-react"
+import { Check, FileDown, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { SearchInput } from "@/components/ui/search-input"
+import { FilterButton } from "@/components/ui/filter-button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,14 +31,30 @@ type FilterButtonConfig = {
   key: QuickFilterKey
   icon: "filter" | "calendar"
   visibilityKey?: keyof UserFilterVisibility
+  contentClassName: string
 }
 
 const FILTER_BUTTONS: FilterButtonConfig[] = [
-  { key: "role", icon: "filter" },
-  { key: "tenant", icon: "filter", visibilityKey: "tenant" },
-  { key: "mfa", icon: "filter", visibilityKey: "mfa" },
-  { key: "status", icon: "filter" },
-  { key: "lastLogin", icon: "calendar", visibilityKey: "lastLogin" },
+  { key: "role", icon: "filter", contentClassName: "w-48" },
+  {
+    key: "tenant",
+    icon: "filter",
+    visibilityKey: "tenant",
+    contentClassName: "w-48 max-h-60 overflow-y-auto",
+  },
+  {
+    key: "mfa",
+    icon: "filter",
+    visibilityKey: "mfa",
+    contentClassName: "w-48",
+  },
+  { key: "status", icon: "filter", contentClassName: "w-48" },
+  {
+    key: "lastLogin",
+    icon: "calendar",
+    visibilityKey: "lastLogin",
+    contentClassName: "w-72 py-0",
+  },
 ]
 
 function getFilterCount(key: QuickFilterKey, filters: UserFilterState): number {
@@ -277,61 +282,28 @@ export function UserQuickFilters({
   return (
     <div className={cn("flex items-center justify-between", className)}>
       <div className="flex items-center gap-6">
-        <Input
+        <SearchInput
           data-testid="user-search-input"
           placeholder={t("quickFilters.searchPlaceholder")}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
-          className="h-8 w-[288px]"
-          endAction={
-            <Search
-              size={16}
-              className="text-muted-foreground pointer-events-none"
-            />
-          }
+          className="w-[288px]"
         />
 
         <div className="flex items-center gap-2">
-          {visibleButtons.map(({ key, icon }) => {
+          {visibleButtons.map(({ key, icon, contentClassName }) => {
             const count = getFilterCount(key, appliedFilters)
-            const isActive = count > 0
-
             return (
-              <Popover key={key}>
-                <PopoverTrigger
-                  data-testid={`filter-${key}-button`}
-                  className="inline-flex items-center gap-1.5 h-8 px-2.5 text-sm font-medium text-foreground bg-background border border-border rounded-xl hover:bg-muted data-[popup-open]:bg-muted transition-colors whitespace-nowrap"
-                >
-                  {icon === "calendar" ? (
-                    <Calendar
-                      size={16}
-                      className="shrink-0 text-muted-foreground"
-                    />
-                  ) : (
-                    <Filter
-                      size={16}
-                      className="shrink-0 text-muted-foreground"
-                    />
-                  )}
-                  {buttonLabels[key]}
-                  {isActive && (
-                    <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-[#0284c7] text-white text-xs font-medium leading-none">
-                      {count}
-                    </span>
-                  )}
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  className={cn(
-                    "p-0 py-1",
-                    key === "lastLogin" ? "w-72 py-0" : "w-48",
-                    key === "tenant" && "max-h-60 overflow-y-auto"
-                  )}
-                >
-                  {renderPopoverContent(key)}
-                </PopoverContent>
-              </Popover>
+              <FilterButton
+                key={key}
+                data-testid={`filter-${key}-button`}
+                label={buttonLabels[key]}
+                count={count}
+                icon={icon}
+                contentClassName={contentClassName}
+              >
+                {renderPopoverContent(key)}
+              </FilterButton>
             )
           })}
 

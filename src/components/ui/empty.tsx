@@ -94,6 +94,26 @@ function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+type TableEmptyStateProps = {
+  title: string
+  description?: string
+  action?: React.ReactNode
+}
+
+function TableEmptyState({ title, description, action }: TableEmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-lg font-semibold text-foreground">{title}</p>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {action}
+    </div>
+  )
+}
+
 export {
   Empty,
   EmptyHeader,
@@ -101,4 +121,5 @@ export {
   EmptyDescription,
   EmptyContent,
   EmptyMedia,
+  TableEmptyState,
 }

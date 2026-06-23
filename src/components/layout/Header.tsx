@@ -38,6 +38,17 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
     { labelKey: "breadcrumb.platformAdministration" },
     { labelKey: "breadcrumb.auditTrail" },
   ],
+  [PATHS.TENANT_MANAGEMENT]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.tenantManagement" },
+  ],
+  [PATHS.TENANT_MANAGEMENT_CREATE]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.tenantManagement", path: PATHS.TENANT_MANAGEMENT },
+    { labelKey: "breadcrumb.createTenant" },
+  ],
 }
 
 export function Header() {

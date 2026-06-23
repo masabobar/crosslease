@@ -1,11 +1,5 @@
 import { useState } from "react"
-import {
-  UserPlus,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  ShieldAlert,
-} from "lucide-react"
+import { UserPlus, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -51,6 +45,7 @@ import { formatDate } from "@/lib/formatters"
 import { buildPageNumbers } from "@/lib/pagination"
 import { getUserFilterVisibility } from "@/features/users/utils"
 import { useUserManagementHandlers } from "@/features/users/hooks/useUserManagementHandlers"
+import { FilterPill } from "@/components/ui/filter-pill"
 
 type ResetMfaConfirmDialogProps = {
   user: { id: string; first_name: string; last_name: string }
@@ -271,99 +266,63 @@ export default function UserManagementPage() {
           </span>
 
           {appliedFilters.role.map((role: UserRole) => (
-            <span
+            <FilterPill
               key={`role-${role}`}
-              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0"
-            >
-              {t("page.filters.rolePill", {
+              label={t("page.filters.rolePill", {
                 value: t(`roles.${role}` as `roles.${UserRole}`),
               })}
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid={`filter-pill-remove-role-${role}`}
-                onClick={() => removeRoleFilter(role)}
-                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
-                aria-label={`Remove role ${role} filter`}
-              >
-                <X size={11} strokeWidth={2.5} />
-              </Button>
-            </span>
+              onRemove={() => removeRoleFilter(role)}
+              data-testid={`filter-pill-remove-role-${role}`}
+            />
           ))}
 
           {filterVis.tenant && appliedFilters.tenant_id && (
-            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
-              {t("page.filters.tenantPill", {
+            <FilterPill
+              label={t("page.filters.tenantPill", {
                 value:
                   tenantsData?.tenants.find(
                     ten => ten.id === appliedFilters.tenant_id
                   )?.name ?? appliedFilters.tenant_id,
               })}
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid="filter-pill-remove-tenant"
-                onClick={() =>
-                  setAppliedFilters({ ...appliedFilters, tenant_id: null })
-                }
-                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
-                aria-label="Remove tenant filter"
-              >
-                <X size={11} strokeWidth={2.5} />
-              </Button>
-            </span>
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, tenant_id: null })
+              }
+              data-testid="filter-pill-remove-tenant"
+            />
           )}
 
           {filterVis.mfa && appliedFilters.mfa_enabled && (
-            <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
-              {t("page.filters.mfaPill", {
+            <FilterPill
+              label={t("page.filters.mfaPill", {
                 value: t(
                   `filter.mfa.${appliedFilters.mfa_enabled}` as
                     | "filter.mfa.enabled"
                     | "filter.mfa.disabled"
                 ),
               })}
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid="filter-pill-remove-mfa"
-                onClick={() =>
-                  setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
-                }
-                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
-                aria-label="Remove MFA filter"
-              >
-                <X size={11} strokeWidth={2.5} />
-              </Button>
-            </span>
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
+              }
+              data-testid="filter-pill-remove-mfa"
+            />
           )}
 
           {appliedFilters.status.map(status => (
-            <span
+            <FilterPill
               key={`status-${status}`}
-              className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0"
-            >
-              {t("page.filters.statusPill", {
+              label={t("page.filters.statusPill", {
                 value: t(`statuses.${status}` as `statuses.${UserStatus}`),
               })}
-              <Button
-                type="button"
-                variant="ghost"
-                data-testid={`filter-pill-remove-status-${status}`}
-                onClick={() => removeStatusFilter(status)}
-                className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
-                aria-label={`Remove status ${status} filter`}
-              >
-                <X size={11} strokeWidth={2.5} />
-              </Button>
-            </span>
+              onRemove={() => removeStatusFilter(status)}
+              data-testid={`filter-pill-remove-status-${status}`}
+            />
           ))}
 
           {filterVis.lastLogin &&
             (appliedFilters.last_login_from ||
               appliedFilters.last_login_to) && (
-              <span className="inline-flex items-center gap-0.5 h-[18px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium leading-none shrink-0">
-                {t("page.filters.lastLoginRangePill", {
+              <FilterPill
+                label={t("page.filters.lastLoginRangePill", {
                   range: [
                     appliedFilters.last_login_from
                       ? formatDate(appliedFilters.last_login_from)
@@ -379,23 +338,15 @@ export default function UserManagementPage() {
                     .filter(Boolean)
                     .join(" "),
                 })}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  data-testid="filter-pill-remove-last-login"
-                  onClick={() =>
-                    setAppliedFilters({
-                      ...appliedFilters,
-                      last_login_from: null,
-                      last_login_to: null,
-                    })
-                  }
-                  className="h-auto p-0 ml-0.5 opacity-80 hover:opacity-100 hover:bg-transparent transition-opacity"
-                  aria-label="Remove last login filter"
-                >
-                  <X size={11} strokeWidth={2.5} />
-                </Button>
-              </span>
+                onRemove={() =>
+                  setAppliedFilters({
+                    ...appliedFilters,
+                    last_login_from: null,
+                    last_login_to: null,
+                  })
+                }
+                data-testid="filter-pill-remove-last-login"
+              />
             )}
 
           <Button
@@ -430,6 +381,14 @@ export default function UserManagementPage() {
             onRowClick={user => setSelectedUserId(user.id)}
             viewerRole={currentUser?.role}
             currentUserId={currentUser?.id}
+            hasActiveFilters={
+              search.length > 0 ||
+              appliedFilters.role.length > 0 ||
+              appliedFilters.status.length > 0 ||
+              !!appliedFilters.tenant_id ||
+              !!appliedFilters.last_login_from ||
+              !!appliedFilters.last_login_to
+            }
           />
         )}
       </div>

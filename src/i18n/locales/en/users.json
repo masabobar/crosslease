@@ -112,7 +112,14 @@
       "userId": "User ID",
       "accessExpiry": "Access expiry"
     },
-    "empty": "No users found.",
+    "emptyState": {
+      "title": "No users found",
+      "description": "Invite someone to add the first user."
+    },
+    "emptyFiltered": {
+      "title": "No users match your filters",
+      "description": "Try adjusting or clearing them."
+    },
     "actions": {
       "approve": "Approve"
     }

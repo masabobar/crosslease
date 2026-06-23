@@ -1,0 +1,216 @@
+import { Building2, MoreHorizontal } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { TableEmptyState } from "@/components/ui/empty"
+import { Button } from "@/components/ui/button"
+import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type {
+  TenantListItem,
+  TenantStatus,
+} from "@/features/tenants/api/schema"
+
+const COL_TENANT = "flex-1 min-w-[180px]"
+const COL_CODE = "flex-1 min-w-[140px]"
+const COL_TYPE = "flex-1 min-w-[120px]"
+const COL_MODULES = "flex-1 min-w-[120px]"
+const COL_STATUS = "flex-1 min-w-[120px]"
+const COL_CREATED = "flex-1 min-w-[120px]"
+const ROW_H = "h-[52px]"
+const SKELETON_COUNT = 5
+
+const MUTED_STATUSES: TenantStatus[] = [
+  "suspended",
+  "archived",
+  "rejected",
+  "expired",
+]
+
+function isMuted(status: TenantStatus): boolean {
+  return MUTED_STATUSES.includes(status)
+}
+
+type TenantTableProps = {
+  tenants: TenantListItem[]
+  isLoading: boolean
+  hasActiveFilters: boolean
+  onCreateTenant?: () => void
+}
+
+function TenantTable({
+  tenants,
+  isLoading,
+  hasActiveFilters,
+  onCreateTenant,
+}: TenantTableProps) {
+  const { t } = useTranslation("tenants")
+
+  return (
+    <div
+      className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
+      data-testid="tenant-table"
+    >
+      {/* Header */}
+      <div className="flex border-b border-border h-10 items-center">
+        <div
+          className={`${COL_TENANT} text-sm font-medium text-foreground px-2`}
+        >
+          {t("list.table.columns.tenant")}
+        </div>
+        <div className={`${COL_CODE} text-sm font-medium text-foreground px-2`}>
+          {t("list.table.columns.code")}
+        </div>
+        <div className={`${COL_TYPE} text-sm font-medium text-foreground px-2`}>
+          {t("list.table.columns.type")}
+        </div>
+        <div
+          className={`${COL_MODULES} text-sm font-medium text-foreground px-2`}
+        >
+          {t("list.table.columns.activeModule")}
+        </div>
+        <div
+          className={`${COL_STATUS} text-sm font-medium text-foreground px-2`}
+        >
+          {t("list.table.columns.status")}
+        </div>
+        <div
+          className={`${COL_CREATED} text-sm font-medium text-foreground px-2`}
+        >
+          {t("list.table.columns.createdAt")}
+        </div>
+        <div className="shrink-0 w-11" />
+      </div>
+
+      {/* Loading skeleton */}
+      {isLoading && (
+        <div data-testid="tenant-table-loading">
+          {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+            <div
+              key={i}
+              className={`flex border-b border-border ${ROW_H} items-center`}
+            >
+              <div className={`${COL_TENANT} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-40" />
+              </div>
+              <div className={`${COL_CODE} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-28 font-mono" />
+              </div>
+              <div className={`${COL_TYPE} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-24" />
+              </div>
+              <div className={`${COL_MODULES} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-16" />
+              </div>
+              <div className={`${COL_STATUS} p-2`}>
+                <div className="bg-muted rounded-full h-5 animate-pulse w-16" />
+              </div>
+              <div className={`${COL_CREATED} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-20" />
+              </div>
+              <div className="shrink-0 w-11" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading &&
+        tenants.length === 0 &&
+        (hasActiveFilters ? (
+          <TableEmptyState
+            title={t("list.emptyFiltered.title")}
+            description={t("list.emptyFiltered.description")}
+          />
+        ) : (
+          <TableEmptyState
+            title={t("list.emptyState.title")}
+            description={t("list.emptyState.description")}
+            action={
+              onCreateTenant && (
+                <Button
+                  onClick={onCreateTenant}
+                  className="h-9 rounded-xl px-4 gap-1.5"
+                >
+                  <Building2 size={16} />
+                  {t("list.createButton")}
+                </Button>
+              )
+            }
+          />
+        ))}
+
+      {/* Data rows */}
+      {!isLoading &&
+        tenants.map(tenant => {
+          const muted = isMuted(tenant.status)
+          const textClass = muted ? "text-muted-foreground" : "text-foreground"
+
+          return (
+            <div
+              key={tenant.id}
+              data-testid={`tenant-row-${tenant.id}`}
+              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors`}
+            >
+              <div className={`${COL_TENANT} p-2`}>
+                <p className={`text-sm font-medium truncate ${textClass}`}>
+                  {tenant.name}
+                </p>
+              </div>
+
+              <div className={`${COL_CODE} p-2`}>
+                <span
+                  className={`text-sm font-mono ${muted ? "text-muted-foreground" : "text-foreground"}`}
+                >
+                  {tenant.code}
+                </span>
+              </div>
+
+              <div className={`${COL_TYPE} p-2`}>
+                <span className={`text-sm ${textClass}`}>
+                  {t(`tenantTypes.${tenant.tenant_type}`)}
+                </span>
+              </div>
+
+              <div className={`${COL_MODULES} p-2`}>
+                <span className={`text-sm font-semibold ${textClass}`}>
+                  {t("list.table.modules", {
+                    count: tenant.active_module_count,
+                  })}
+                </span>
+              </div>
+
+              <div className={`${COL_STATUS} p-2`}>
+                <TenantStatusBadge status={tenant.status} />
+              </div>
+
+              {/* Created at — not returned by list API, shown as placeholder */}
+              <div className={`${COL_CREATED} p-2`}>
+                <span className="text-sm text-muted-foreground">—</span>
+              </div>
+
+              <div
+                className="shrink-0 p-2 flex items-center justify-center"
+                onClick={e => e.stopPropagation()}
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    data-testid={`tenant-row-menu-${tenant.id}`}
+                    aria-label="Tenant actions"
+                    className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <MoreHorizontal size={16} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48" />
+                </DropdownMenu>
+              </div>
+            </div>
+          )
+        })}
+    </div>
+  )
+}
+
+export { TenantTable }

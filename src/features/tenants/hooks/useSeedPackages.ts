@@ -1,15 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
 import {
-  fetchTenants,
-  TENANTS_QUERY_KEYS,
+  fetchSeedPackages,
+  SEED_PACKAGES_QUERY_KEYS,
 } from "@/features/tenants/api/tenantsApi"
 import { FIVE_MINUTES_MS } from "@/lib/constants"
 
-export function useTenants(enabled = true) {
+export function useSeedPackages() {
   return useQuery({
-    queryKey: TENANTS_QUERY_KEYS.list(),
-    queryFn: () => fetchTenants(),
+    queryKey: SEED_PACKAGES_QUERY_KEYS.all(),
+    queryFn: fetchSeedPackages,
     staleTime: FIVE_MINUTES_MS,
-    enabled,
   })
 }
