@@ -5,4 +5,9 @@ export const TENANT_LIST_ALLOWED_ROLES: readonly UserRole[] = [
   "support_user",
 ]
 
+export const TENANT_DETAIL_ALLOWED_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "support_user",
+]
+
 export const TENANT_CREATE_ALLOWED_ROLES: readonly UserRole[] = ["system_admin"]

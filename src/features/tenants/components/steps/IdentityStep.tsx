@@ -1,5 +1,5 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller } from "react-hook-form"
+import { Controller, useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -56,11 +56,8 @@ type Props = {
 function IdentityStep({ form }: Props) {
   const { t } = useTranslation("tenants")
   const { t: tCommon } = useTranslation("common")
-  const {
-    register,
-    control,
-    formState: { errors },
-  } = form
+  const { register, control } = form
+  const { errors } = useFormState({ control })
 
   const tenantTypeOptions: SelectOption[] = (
     ["bank", "bank_entity", "bank_branch_group"] as const
@@ -83,7 +80,7 @@ function IdentityStep({ form }: Props) {
     >
       {/* Tenant name */}
       <div>
-        <Label htmlFor="name" error={!!errors.name} className="mb-1.5">
+        <Label htmlFor="name" error={!!errors.name} className="mb-2">
           {t("fields.tenantName")}
         </Label>
         <Input
@@ -101,7 +98,7 @@ function IdentityStep({ form }: Props) {
 
       {/* Tenant code */}
       <div>
-        <Label htmlFor="code" error={!!errors.code} className="mb-1.5">
+        <Label htmlFor="code" error={!!errors.code} className="mb-2">
           {t("fields.tenantCode")}
         </Label>
         <Input
@@ -110,7 +107,7 @@ function IdentityStep({ form }: Props) {
           error={!!errors.code}
           {...register("code")}
         />
-        <p className="mt-1 text-sm text-muted-foreground opacity-80">
+        <p className="mt-2 text-sm text-muted-foreground opacity-80">
           {t("fields.tenantCodeHint")}
         </p>
         {errors.code && (
@@ -126,7 +123,7 @@ function IdentityStep({ form }: Props) {
           <Label
             htmlFor="tenant_type"
             error={!!errors.tenant_type}
-            className="mb-1.5"
+            className="mb-2"
           >
             {t("fields.tenantType")}
           </Label>
@@ -155,7 +152,7 @@ function IdentityStep({ form }: Props) {
           <Label
             htmlFor="default_currency"
             error={!!errors.default_currency}
-            className="mb-1.5"
+            className="mb-2"
           >
             {t("fields.defaultCurrency")}
           </Label>
@@ -186,7 +183,7 @@ function IdentityStep({ form }: Props) {
         <Label
           htmlFor="legal_entity_name"
           error={!!errors.legal_entity_name}
-          className="mb-1.5"
+          className="mb-2"
         >
           {t("fields.legalEntityName")}
         </Label>
@@ -205,7 +202,7 @@ function IdentityStep({ form }: Props) {
 
       {/* Country / Jurisdiction */}
       <div>
-        <Label htmlFor="country" error={!!errors.country} className="mb-1.5">
+        <Label htmlFor="country" error={!!errors.country} className="mb-2">
           {t("fields.country")}
         </Label>
         <Controller
@@ -234,7 +231,7 @@ function IdentityStep({ form }: Props) {
         <Label
           htmlFor="description"
           error={!!errors.description}
-          className="mb-1.5"
+          className="mb-2"
         >
           {t("fields.description")}{" "}
           <span className="font-normal text-muted-foreground">
@@ -244,10 +241,11 @@ function IdentityStep({ form }: Props) {
         <Textarea
           id="description"
           data-testid="description-textarea"
-          rows={3}
+          className="min-h-[64px] resize-none"
+          rows={2}
           {...register("description")}
         />
-        <p className="mt-1 text-sm text-muted-foreground opacity-80">
+        <p className="mt-2 text-sm text-muted-foreground opacity-80">
           {t("fields.descriptionHint")}
         </p>
         {errors.description && (
