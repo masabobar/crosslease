@@ -137,12 +137,14 @@ export default function CreateTenantPage() {
           ) {
             form.setError("code", { message: errMessage })
             setStep("identity")
+            toast.error(errMessage)
           } else if (
             err.code === "TENANT_NAME_ALREADY_EXISTS" ||
             (err.errors ?? []).some(e => e.field === "name")
           ) {
             form.setError("name", { message: errMessage })
             setStep("identity")
+            toast.error(errMessage)
           } else {
             toast.error(errMessage)
           }

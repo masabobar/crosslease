@@ -7,6 +7,8 @@ import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBad
 import { OverviewTab } from "@/features/tenants/components/tabs/OverviewTab"
 import { ModulesConfigTab } from "@/features/tenants/components/tabs/ModulesConfigTab"
 import { GovernanceHistoryTab } from "@/features/tenants/components/tabs/GovernanceHistoryTab"
+import { SupportGrantsTab } from "@/features/tenants/components/tabs/SupportGrantsTab"
+import { LicenceLimitsTab } from "@/features/tenants/components/tabs/LicenceLimitsTab"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type { TenantDetail } from "@/features/tenants/api/schema"
@@ -266,22 +268,10 @@ export default function TenantDetailPage() {
               <GovernanceHistoryTab tenantId={id!} />
             )}
             {effectiveTab === "grants" && isAdmin && (
-              <div
-                data-testid="tab-content-grants"
-                className="text-sm text-muted-foreground"
-              >
-                {/* SupportGrantsTab — pending Figma design */}
-                <p>{t("detail.tabs.grants")}</p>
-              </div>
+              <SupportGrantsTab tenantId={id!} isAdmin={isAdmin} />
             )}
             {effectiveTab === "licence_limits" && isAdmin && (
-              <div
-                data-testid="tab-content-licence-limits"
-                className="text-sm text-muted-foreground"
-              >
-                {/* LicenceLimitsTab — pending Figma design */}
-                <p>{t("detail.tabs.licenceLimits")}</p>
-              </div>
+              <LicenceLimitsTab tenant={tenant} />
             )}
           </div>
         </div>
