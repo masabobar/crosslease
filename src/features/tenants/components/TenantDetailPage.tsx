@@ -1,13 +1,114 @@
 import { useState, type ReactNode } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ChevronLeft } from "lucide-react"
+import { SquareCode, Landmark, CirclePause, Archive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
+import { OverviewTab } from "@/features/tenants/components/tabs/OverviewTab"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { isFullTenantResponse } from "@/features/tenants/api/schema"
-import { PATHS } from "@/router/paths"
+import type { TenantDetail } from "@/features/tenants/api/schema"
+
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—"
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+function formatCountry(code: string): string {
+  return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code
+}
+
+function MetaItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="text-muted-foreground shrink-0">{icon}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-foreground">{value}</span>
+    </div>
+  )
+}
+
+function TenantHighlightInfo({
+  tenant,
+  isAdmin,
+}: {
+  tenant: TenantDetail
+  isAdmin: boolean
+}) {
+  const { t } = useTranslation("tenants")
+
+  return (
+    <div className="flex flex-col w-full" data-testid="tenant-highlight-info">
+      <div className="bg-background border border-border rounded-t-[10px] flex items-center justify-between px-3 py-4">
+        <div className="flex items-center gap-3">
+          <h1
+            className="text-2xl font-semibold text-foreground"
+            data-testid="tenant-name"
+          >
+            {tenant.name}
+          </h1>
+          <TenantStatusBadge status={tenant.status} />
+        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
+              data-testid="btn-suspend-tenant"
+            >
+              <CirclePause size={16} />
+              {t("detail.suspendTenant")}
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
+              data-testid="btn-archive-tenant"
+            >
+              <Archive size={16} />
+              {t("detail.archiveTenant")}
+            </Button>
+          </div>
+        )}
+      </div>
+      <div className="bg-slate-100 border-l border-r border-b border-border rounded-b-[10px] flex items-center gap-6 px-3 py-3">
+        <MetaItem
+          icon={<SquareCode size={16} />}
+          label={t("detail.meta.code")}
+          value={tenant.code}
+        />
+        <MetaItem
+          icon={<Landmark size={16} />}
+          label={t("detail.meta.type")}
+          value={t(`tenantTypes.${tenant.tenant_type}` as "tenantTypes.bank")}
+        />
+        <MetaItem
+          icon={<SquareCode size={16} />}
+          label={t("detail.meta.country")}
+          value={formatCountry(tenant.country)}
+        />
+        <MetaItem
+          icon={<SquareCode size={16} />}
+          label={t("detail.meta.provisioned")}
+          value={formatDateTime(tenant.created_at)}
+        />
+      </div>
+    </div>
+  )
+}
 
 type TabKey = "overview" | "modules" | "governance" | "grants"
 
@@ -54,7 +155,6 @@ function TenantDetailSkeleton() {
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation("tenants")
-  const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
   const { data: tenant, isLoading, isError } = useTenantDetail(id ?? null)
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
@@ -90,19 +190,6 @@ export default function TenantDetailPage() {
 
   return (
     <div className="flex flex-col h-full" data-testid="tenant-detail-page">
-      {/* Back navigation */}
-      <div className="px-8 pt-5 pb-2">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(PATHS.TENANT_MANAGEMENT)}
-          className="h-auto p-0 gap-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-transparent"
-          data-testid="back-to-tenants"
-        >
-          <ChevronLeft size={16} />
-          {t("detail.backToList")}
-        </Button>
-      </div>
-
       {isLoading && (
         <div className="px-8 pb-8">
           <TenantDetailSkeleton />
@@ -120,44 +207,9 @@ export default function TenantDetailPage() {
 
       {tenant && !isLoading && (
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Hero header */}
-          <div className="px-8 pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-3">
-                  <h1
-                    className="text-2xl font-semibold text-foreground"
-                    data-testid="tenant-name"
-                  >
-                    {tenant.name}
-                  </h1>
-                  <TenantStatusBadge status={tenant.status} />
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span data-testid="tenant-code" className="font-mono">
-                    {tenant.code}
-                  </span>
-                  <span>·</span>
-                  <span data-testid="tenant-type">
-                    {t(
-                      `tenantTypes.${tenant.tenant_type}` as "tenantTypes.bank"
-                    )}
-                  </span>
-                  {isFullTenantResponse(tenant) && tenant.activated_at && (
-                    <>
-                      <span>·</span>
-                      <span>
-                        {t("detail.activatedAt", {
-                          date: new Date(
-                            tenant.activated_at
-                          ).toLocaleDateString(),
-                        })}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+          {/* Highlight info */}
+          <div className="px-8 pt-5 pb-4">
+            <TenantHighlightInfo tenant={tenant} isAdmin={isAdmin} />
           </div>
 
           {/* Tab bar */}
@@ -179,13 +231,7 @@ export default function TenantDetailPage() {
           {/* Tab content */}
           <div className="flex-1 overflow-auto px-8 py-6">
             {activeTab === "overview" && (
-              <div
-                data-testid="tab-content-overview"
-                className="text-sm text-muted-foreground"
-              >
-                {/* OverviewTab — pending Figma design */}
-                <p>{t("detail.tabs.overview")}</p>
-              </div>
+              <OverviewTab tenant={tenant} tenantId={id!} isAdmin={isAdmin} />
             )}
             {activeTab === "modules" && (
               <div

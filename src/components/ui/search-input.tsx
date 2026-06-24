@@ -1,4 +1,5 @@
 import { Search } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import type { InputProps } from "@/components/ui/input"
 
@@ -7,7 +8,7 @@ type SearchInputProps = Omit<InputProps, "endAction">
 function SearchInput({ className, ...props }: SearchInputProps) {
   return (
     <Input
-      className={className}
+      className={cn("bg-white", className)}
       endAction={
         <Search
           size={16}
