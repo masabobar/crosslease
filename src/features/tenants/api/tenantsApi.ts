@@ -5,6 +5,7 @@ import {
   PlatformModulesResponseSchema,
   SeedPackagesResponseSchema,
   TenantDetailSchema,
+  TenantResponseSchema,
   TenantDetailModulesResponseSchema,
   GovernanceHistoryResponseSchema,
   AccessPolicyResponseSchema,
@@ -17,6 +18,7 @@ import type {
   SeedPackagesResponse,
   CreateTenantForm,
   TenantDetail,
+  TenantResponse,
   TenantDetailModulesResponse,
   GovernanceHistoryResponse,
   AccessPolicyResponse,
@@ -119,6 +121,36 @@ export async function fetchIntegrationBinding(
 export async function fetchSupportGrants(id: string): Promise<SupportGrant[]> {
   const data = await api.get(`/tenants/${id}/grants`)
   return z.array(SupportGrantSchema).parse(data)
+}
+
+export type UpdateTenantPayload = {
+  name?: string
+  legal_entity_name?: string
+  description?: string | null
+  legal_hold_flag?: boolean
+  justification?: string
+}
+
+export async function updateTenant(
+  id: string,
+  payload: UpdateTenantPayload
+): Promise<TenantResponse> {
+  const data = await api.patch(`/tenants/${id}`, payload)
+  return TenantResponseSchema.parse(data)
+}
+
+export type UpdateAccessPolicyPayload = {
+  support_read_only_access_allowed?: boolean | null
+  auditor_access_allowed?: boolean | null
+  lc_portal_enabled?: boolean | null
+  reason: string
+}
+
+export async function updateAccessPolicy(
+  id: string,
+  payload: UpdateAccessPolicyPayload
+): Promise<void> {
+  await api.patch(`/tenants/${id}/access-policy`, payload)
 }
 
 export async function createTenant(
