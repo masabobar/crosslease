@@ -29,7 +29,7 @@ function ReviewSection({
           {title}
         </p>
       </div>
-      <div className="bg-background border border-border rounded-[6px] p-2">
+      <div className="bg-background border border-border rounded-[6px] p-4">
         {children}
       </div>
     </div>
@@ -38,7 +38,7 @@ function ReviewSection({
 
 function ReviewTable({ rows }: { rows: ReviewRow[] }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] gap-y-3 text-sm">
+    <div className="grid grid-cols-[160px_1fr] gap-x-6 gap-y-3 text-sm">
       {rows.map((row, i) => (
         <Fragment key={i} label={row.label} value={row.value} />
       ))}

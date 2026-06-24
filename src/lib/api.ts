@@ -26,6 +26,8 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
+  // FastAPI expects repeated params for arrays: ?a=1&a=2 (not ?a[]=1&a[]=2)
+  paramsSerializer: { indexes: null },
 })
 
 let refreshPromise: Promise<void> | null = null

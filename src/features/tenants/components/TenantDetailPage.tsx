@@ -5,6 +5,8 @@ import { SquareCode, Landmark, CirclePause, Archive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { OverviewTab } from "@/features/tenants/components/tabs/OverviewTab"
+import { ModulesConfigTab } from "@/features/tenants/components/tabs/ModulesConfigTab"
+import { GovernanceHistoryTab } from "@/features/tenants/components/tabs/GovernanceHistoryTab"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type { TenantDetail } from "@/features/tenants/api/schema"
@@ -110,7 +112,12 @@ function TenantHighlightInfo({
   )
 }
 
-type TabKey = "overview" | "modules" | "governance" | "grants"
+type TabKey =
+  | "overview"
+  | "modules"
+  | "governance"
+  | "grants"
+  | "licence_limits"
 
 function TabButton({
   active,
@@ -130,7 +137,7 @@ function TabButton({
       data-testid={testId}
       className={`h-auto px-3 py-2 rounded-none border-none text-sm font-medium hover:bg-transparent focus-visible:ring-0 border-b-2 ${
         active
-          ? "text-foreground border-foreground"
+          ? "text-foreground border-primary"
           : "text-muted-foreground hover:text-foreground border-transparent"
       }`}
     >
@@ -160,13 +167,29 @@ export default function TenantDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
 
   const isAdmin = currentUser?.role === "system_admin"
+  const isSupportUser = currentUser?.role === "support_user"
+  const isAuditor = currentUser?.role === "auditor"
+  const isAuditorEngaged =
+    isAuditor &&
+    !!currentUser?.tenant_id &&
+    currentUser.tenant_id === id &&
+    !!currentUser?.access_valid_until &&
+    new Date(currentUser.access_valid_until) > new Date()
 
-  const tabs: {
-    key: TabKey
-    labelKey: string
-    testId: string
-    adminOnly?: boolean
-  }[] = [
+  function isTabVisible(key: TabKey): boolean {
+    switch (key) {
+      case "overview":
+      case "modules":
+        return isAdmin || isSupportUser
+      case "governance":
+        return isAdmin || isAuditorEngaged
+      case "grants":
+      case "licence_limits":
+        return isAdmin
+    }
+  }
+
+  const tabs: { key: TabKey; labelKey: string; testId: string }[] = [
     {
       key: "overview",
       labelKey: "detail.tabs.overview",
@@ -178,25 +201,28 @@ export default function TenantDetailPage() {
       labelKey: "detail.tabs.governance",
       testId: "tab-governance",
     },
+    { key: "grants", labelKey: "detail.tabs.grants", testId: "tab-grants" },
     {
-      key: "grants",
-      labelKey: "detail.tabs.grants",
-      testId: "tab-grants",
-      adminOnly: true,
+      key: "licence_limits",
+      labelKey: "detail.tabs.licenceLimits",
+      testId: "tab-licence-limits",
     },
   ]
 
-  const visibleTabs = tabs.filter(tab => !tab.adminOnly || isAdmin)
+  const visibleTabs = tabs.filter(tab => isTabVisible(tab.key))
+  const effectiveTab: TabKey = visibleTabs.some(t => t.key === activeTab)
+    ? activeTab
+    : (visibleTabs[0]?.key ?? "overview")
 
   return (
     <div className="flex flex-col h-full" data-testid="tenant-detail-page">
-      {isLoading && (
+      {(isLoading || !currentUser) && (
         <div className="px-8 pb-8">
           <TenantDetailSkeleton />
         </div>
       )}
 
-      {isError && !isLoading && (
+      {isError && !isLoading && currentUser && (
         <div
           data-testid="tenant-detail-error"
           className="flex items-center justify-center flex-1"
@@ -205,7 +231,7 @@ export default function TenantDetailPage() {
         </div>
       )}
 
-      {tenant && !isLoading && (
+      {tenant && !isLoading && currentUser && (
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Highlight info */}
           <div className="px-8 pt-5 pb-4">
@@ -218,7 +244,7 @@ export default function TenantDetailPage() {
               {visibleTabs.map(tab => (
                 <TabButton
                   key={tab.key}
-                  active={activeTab === tab.key}
+                  active={effectiveTab === tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   data-testid={tab.testId}
                 >
@@ -230,34 +256,31 @@ export default function TenantDetailPage() {
 
           {/* Tab content */}
           <div className="flex-1 overflow-auto px-8 py-6">
-            {activeTab === "overview" && (
+            {effectiveTab === "overview" && (
               <OverviewTab tenant={tenant} tenantId={id!} isAdmin={isAdmin} />
             )}
-            {activeTab === "modules" && (
-              <div
-                data-testid="tab-content-modules"
-                className="text-sm text-muted-foreground"
-              >
-                {/* ModuleProfileTab — pending Figma design */}
-                <p>{t("detail.tabs.modules")}</p>
-              </div>
+            {effectiveTab === "modules" && (
+              <ModulesConfigTab tenantId={id!} isAdmin={isAdmin} />
             )}
-            {activeTab === "governance" && (
-              <div
-                data-testid="tab-content-governance"
-                className="text-sm text-muted-foreground"
-              >
-                {/* GovernanceHistoryTab — pending Figma design */}
-                <p>{t("detail.tabs.governance")}</p>
-              </div>
+            {effectiveTab === "governance" && (
+              <GovernanceHistoryTab tenantId={id!} />
             )}
-            {activeTab === "grants" && isAdmin && (
+            {effectiveTab === "grants" && isAdmin && (
               <div
                 data-testid="tab-content-grants"
                 className="text-sm text-muted-foreground"
               >
                 {/* SupportGrantsTab — pending Figma design */}
                 <p>{t("detail.tabs.grants")}</p>
+              </div>
+            )}
+            {effectiveTab === "licence_limits" && isAdmin && (
+              <div
+                data-testid="tab-content-licence-limits"
+                className="text-sm text-muted-foreground"
+              >
+                {/* LicenceLimitsTab — pending Figma design */}
+                <p>{t("detail.tabs.licenceLimits")}</p>
               </div>
             )}
           </div>

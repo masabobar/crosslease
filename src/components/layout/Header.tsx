@@ -57,7 +57,9 @@ export function Header() {
   const location = useLocation()
   const userDetailMatch = useMatch(PATHS.USER_DETAIL)
   const auditDetailMatch = useMatch(PATHS.AUDIT_TRAIL_DETAIL)
-  const tenantDetailMatch = useMatch(PATHS.TENANT_DETAIL)
+  const tenantCreateMatch = useMatch(PATHS.TENANT_MANAGEMENT_CREATE)
+  const tenantDetailMatchRaw = useMatch(PATHS.TENANT_DETAIL)
+  const tenantDetailMatch = tenantCreateMatch ? null : tenantDetailMatchRaw
   const { data: currentUser } = useCurrentUser()
   const { data: detailUser } = useUserDetail(userDetailMatch?.params.id ?? null)
   const { data: detailTenant } = useTenantDetail(

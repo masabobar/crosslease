@@ -38,7 +38,7 @@ function SeedPackageStep({ form, packages, isLoading }: Props) {
                   key={pkg.key}
                   data-testid={`seed-package-${pkg.key}`}
                   className={cn(
-                    "flex gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
+                    "flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
                     isSelected
                       ? "border-[#1d41a8] bg-[#dbe9fc]"
                       : "border-border hover:bg-muted/30",
@@ -66,21 +66,11 @@ function SeedPackageStep({ form, packages, isLoading }: Props) {
                       )}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {pkg.description}
+                      {t(
+                        `seedPackages.descriptions.${pkg.key as "standard_retail_bank" | "minimal_sandbox"}`,
+                        { defaultValue: pkg.description }
+                      )}
                     </p>
-                    {pkg.includes.length > 0 && (
-                      <ul className="mt-2 space-y-0.5">
-                        {pkg.includes.map(item => (
-                          <li
-                            key={item}
-                            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                          >
-                            <span className="size-1 rounded-full bg-muted-foreground/50 shrink-0" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
                   </div>
                 </label>
               )
