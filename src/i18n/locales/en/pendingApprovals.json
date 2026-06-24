@@ -24,7 +24,11 @@
     "user_platform_invite": "Platform invite",
     "user_email_change": "Email change",
     "user_auditor_period_update": "Access period update",
-    "tenant_create": "Tenant create"
+    "tenant_create": "Tenant create",
+    "tenant_suspend": "Tenant suspension",
+    "tenant_reactivate": "Tenant reactivation",
+    "tenant_archive": "Tenant archive",
+    "module_activate": "Module activation"
   },
   "status": {
     "pending": "Pending",

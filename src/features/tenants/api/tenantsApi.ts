@@ -153,6 +153,18 @@ export async function updateAccessPolicy(
   await api.patch(`/tenants/${id}/access-policy`, payload)
 }
 
+export type SuspendTenantPayload = {
+  justification: string
+}
+
+export async function suspendTenant(
+  id: string,
+  payload: SuspendTenantPayload
+): Promise<GovernedAction> {
+  const data = await api.post(`/tenants/${id}/suspend`, payload)
+  return GovernedActionSchema.parse(data)
+}
+
 export async function createTenant(
   payload: CreateTenantForm
 ): Promise<GovernedAction> {

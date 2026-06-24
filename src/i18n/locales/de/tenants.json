@@ -225,6 +225,35 @@
     "activatedAt": "Aktiviert am {{date}}",
     "suspendTenant": "Mandant suspendieren",
     "archiveTenant": "Mandant archivieren",
+    "suspendDialog": {
+      "title": "Mandant suspendieren",
+      "info": {
+        "tenant": "Mandant",
+        "currentStatus": "Aktueller Status"
+      },
+      "fields": {
+        "justification": "Governance-Begründung",
+        "justificationMinChars": "min. 30 Zeichen",
+        "justificationPlaceholder": "Begründung für die Suspendierung eingeben...",
+        "justificationHint": "Pflichtfeld. Wird im Prüfpfad gespeichert."
+      },
+      "alert": {
+        "title": "Four-Eyes-Genehmigung erforderlich",
+        "description": "Diese Aktion erfordert die Genehmigung eines zweiten Systemadministrators, bevor sie wirksam wird. Dieser Mandant bleibt bis zur Genehmigung aktiv."
+      },
+      "submit": "Zur Suspendierung einreichen",
+      "submitting": "Wird eingereicht...",
+      "cancel": "Abbrechen",
+      "successToast": {
+        "title": "Suspendierung zur Genehmigung eingereicht",
+        "description": "Die Suspendierung von {{tenantName}} wurde eingereicht. Ein zweiter Administrator muss genehmigen, bevor sie wirksam wird."
+      },
+      "errors": {
+        "justificationTooShort": "Die Governance-Begründung muss mindestens 30 Zeichen lang sein.",
+        "INVALID_TENANT_STATUS": "Nur aktive Mandanten können suspendiert werden.",
+        "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      }
+    },
     "meta": {
       "code": "Code",
       "type": "Typ",
