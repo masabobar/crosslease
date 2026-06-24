@@ -1,7 +1,13 @@
 import { useState, type ReactNode } from "react"
 import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { SquareCode, Landmark, CirclePause, Archive } from "lucide-react"
+import {
+  SquareCode,
+  Landmark,
+  CirclePause,
+  CirclePlay,
+  Archive,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { OverviewTab } from "@/features/tenants/components/tabs/OverviewTab"
@@ -10,6 +16,7 @@ import { GovernanceHistoryTab } from "@/features/tenants/components/tabs/Governa
 import { SupportGrantsTab } from "@/features/tenants/components/tabs/SupportGrantsTab"
 import { LicenceLimitsTab } from "@/features/tenants/components/tabs/LicenceLimitsTab"
 import { SuspendTenantDialog } from "@/features/tenants/components/SuspendTenantDialog"
+import { ReactivateTenantDialog } from "@/features/tenants/components/ReactivateTenantDialog"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type { TenantDetail } from "@/features/tenants/api/schema"
@@ -51,13 +58,16 @@ function TenantHighlightInfo({
   tenant,
   isAdmin,
   onSuspendClick,
+  onReactivateClick,
 }: {
   tenant: TenantDetail
   isAdmin: boolean
   onSuspendClick: () => void
+  onReactivateClick: () => void
 }) {
   const { t } = useTranslation("tenants")
   const canSuspend = isAdmin && tenant.status === "active"
+  const canReactivate = isAdmin && tenant.status === "suspended"
 
   return (
     <div className="flex flex-col w-full" data-testid="tenant-highlight-info">
@@ -82,6 +92,17 @@ function TenantHighlightInfo({
               >
                 <CirclePause size={16} />
                 {t("detail.suspendTenant")}
+              </Button>
+            )}
+            {canReactivate && (
+              <Button
+                variant="outline"
+                className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
+                onClick={onReactivateClick}
+                data-testid="btn-reactivate-tenant"
+              >
+                <CirclePlay size={16} />
+                {t("detail.reactivateTenant")}
               </Button>
             )}
             <Button
@@ -175,6 +196,7 @@ export default function TenantDetailPage() {
   const { data: tenant, isLoading, isError } = useTenantDetail(id ?? null)
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
   const [suspendOpen, setSuspendOpen] = useState(false)
+  const [reactivateOpen, setReactivateOpen] = useState(false)
 
   const isAdmin = currentUser?.role === "system_admin"
   const isSupportUser = currentUser?.role === "support_user"
@@ -252,6 +274,15 @@ export default function TenantDetailPage() {
               tenantStatus={tenant.status}
             />
           )}
+          {isAdmin && (
+            <ReactivateTenantDialog
+              open={reactivateOpen}
+              onOpenChange={setReactivateOpen}
+              tenantId={id!}
+              tenantName={tenant.name}
+              tenantStatus={tenant.status}
+            />
+          )}
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Highlight info */}
             <div className="px-8 pt-5 pb-4">
@@ -259,6 +290,7 @@ export default function TenantDetailPage() {
                 tenant={tenant}
                 isAdmin={isAdmin}
                 onSuspendClick={() => setSuspendOpen(true)}
+                onReactivateClick={() => setReactivateOpen(true)}
               />
             </div>
 

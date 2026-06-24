@@ -22,7 +22,7 @@
       "title": "Modulauswahl",
       "subtitle": "Wählen Sie aus, welche Plattformmodule für diesen Mandanten aktiviert werden sollen.",
       "selectedModules": "Ausgewählte Module",
-      "alwaysOn": "Immer aktiv",
+      "alwaysOn": "Platform core",
       "noModules": "Keine Module verfügbar.",
       "moduleGroups": {
         "refinancing_request": "Refinanzierung & Vertragsoperationen",
@@ -224,6 +224,7 @@
     "backToList": "Zurück zur Mandantenliste",
     "activatedAt": "Aktiviert am {{date}}",
     "suspendTenant": "Mandant suspendieren",
+    "reactivateTenant": "Mandant reaktivieren",
     "archiveTenant": "Mandant archivieren",
     "suspendDialog": {
       "title": "Mandant suspendieren",
@@ -251,6 +252,35 @@
       "errors": {
         "justificationTooShort": "Die Governance-Begründung muss mindestens 30 Zeichen lang sein.",
         "INVALID_TENANT_STATUS": "Nur aktive Mandanten können suspendiert werden.",
+        "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      }
+    },
+    "reactivateDialog": {
+      "title": "Mandant reaktivieren",
+      "info": {
+        "tenant": "Mandant",
+        "currentStatus": "Aktueller Status"
+      },
+      "fields": {
+        "justification": "Governance-Begründung",
+        "justificationMinChars": "min. 20 Zeichen",
+        "justificationPlaceholder": "Begründung für die Reaktivierung eingeben...",
+        "justificationHint": "Pflichtfeld. Wird im Prüfpfad gespeichert."
+      },
+      "alert": {
+        "title": "Four-Eyes-Genehmigung erforderlich",
+        "description": "Diese Aktion erfordert die Genehmigung eines zweiten Systemadministrators, bevor sie wirksam wird. Dieser Mandant bleibt bis zur Genehmigung gesperrt."
+      },
+      "submit": "Zur Reaktivierung einreichen",
+      "submitting": "Wird eingereicht...",
+      "cancel": "Abbrechen",
+      "successToast": {
+        "title": "Reaktivierung zur Genehmigung eingereicht",
+        "description": "Die Reaktivierung von {{tenantName}} wurde eingereicht. Ein zweiter Administrator muss genehmigen, bevor sie wirksam wird."
+      },
+      "errors": {
+        "justificationTooShort": "Die Governance-Begründung muss mindestens 20 Zeichen lang sein.",
+        "TENANT_NOT_REACTIVATABLE": "Nur gesperrte Mandanten können reaktiviert werden.",
         "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
       }
     },

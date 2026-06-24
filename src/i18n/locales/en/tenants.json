@@ -22,7 +22,7 @@
       "title": "Module selection",
       "subtitle": "Select which platform modules to activate for this tenant.",
       "selectedModules": "Selected modules",
-      "alwaysOn": "Always on",
+      "alwaysOn": "Platform core",
       "noModules": "No modules available.",
       "moduleGroups": {
         "refinancing_request": "Refinancing & contract operations",
@@ -225,6 +225,7 @@
     "backToList": "Back to tenant list",
     "activatedAt": "Activated {{date}}",
     "suspendTenant": "Suspend tenant",
+    "reactivateTenant": "Reactivate tenant",
     "archiveTenant": "Archive tenant",
     "suspendDialog": {
       "title": "Suspend tenant",
@@ -252,6 +253,35 @@
       "errors": {
         "justificationTooShort": "Governance justification must be at least 30 characters.",
         "INVALID_TENANT_STATUS": "Only active tenants can be suspended.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "reactivateDialog": {
+      "title": "Reactivate tenant",
+      "info": {
+        "tenant": "Tenant",
+        "currentStatus": "Current status"
+      },
+      "fields": {
+        "justification": "Governance justification",
+        "justificationMinChars": "min 20 characters",
+        "justificationPlaceholder": "Describe the reason for reactivation...",
+        "justificationHint": "Mandatory. Stored in the audit trail."
+      },
+      "alert": {
+        "title": "Four-Eyes approval required",
+        "description": "This action requires a second System Admin to approve before taking effect. This tenant will remain Suspended until approval is completed."
+      },
+      "submit": "Submit for reactivation",
+      "submitting": "Submitting...",
+      "cancel": "Cancel",
+      "successToast": {
+        "title": "Reactivation submitted for approval",
+        "description": "{{tenantName}}'s reactivation has been submitted. A second admin must approve before it takes effect."
+      },
+      "errors": {
+        "justificationTooShort": "Governance justification must be at least 20 characters.",
+        "TENANT_NOT_REACTIVATABLE": "Only suspended tenants can be reactivated.",
         "generic": "Something went wrong. Please try again."
       }
     },
