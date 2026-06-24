@@ -276,6 +276,52 @@
         "lastModifiedBy": "Zuletzt geändert von"
       }
     },
+    "licenceLimits": {
+      "sectionTitle": "LIZENZBESCHRÄNKUNGEN",
+      "sectionDescription": "Konfigurieren Sie die maximale Anzahl von Leasinggesellschaften, Bankbenutzern und Benutzern pro Leasinggesellschaft für diesen Mandanten. Limits können nicht unter die aktuellen aktiven Werte reduziert werden.",
+      "editLimits": "Limits bearbeiten",
+      "leasingCompanies": {
+        "title": "Leasinggesellschaften",
+        "description": "Maximale Anzahl von Leasinggesellschaften für diesen Mandanten"
+      },
+      "bankUsers": {
+        "title": "Bankbenutzer",
+        "description": "Maximale Anzahl bankseitiger Benutzer für diesen Mandanten"
+      },
+      "usersPerLc": {
+        "title": "Benutzer pro Leasinggesellschaft",
+        "description": "Gilt einheitlich für alle Leasinggesellschaften in diesem Mandanten",
+        "highestActive": "Höchster aktiver Wert:"
+      },
+      "defaultsPrefix": "Standards bei Mandantenerstellung:",
+      "defaultsLc": "Leasinggesellschaften",
+      "defaultsBankUsers": "Bankbenutzer",
+      "defaultsUsersPerLc": "Benutzer pro Leasinggesellschaft"
+    },
+    "grants": {
+      "sectionTitle": "SUPPORT-ZUGRIFFSERTEILUNGEN",
+      "newGrant": "Neue Erteilung",
+      "revoke": "Widerrufen",
+      "noGrants": "Keine Support-Zugriffserteilungen gefunden.",
+      "grantStatuses": {
+        "active": "Aktiv",
+        "expired": "Abgelaufen",
+        "revoked": "Widerrufen"
+      },
+      "emergencyPendingReview": "Notfall: Prüfung ausstehend",
+      "grantedBy": "Erteilt von {{name}}",
+      "expiredAt": "Abgelaufen {{date}}",
+      "revokedAt": "Widerrufen {{date}}",
+      "accessReasons": {
+        "user_access_issue": "Benutzerzugriffsproblem",
+        "workflow_processing_diagnostic": "Workflow-Verarbeitungsdiagnose",
+        "document_generation_diagnostic": "Dokumentgenerierungsdiagnose",
+        "integration_troubleshooting": "Integrations-Fehlerbehebung",
+        "compliance_query_support": "Compliance-Anfragen-Support",
+        "regulatory_assistance": "Regulatorische Unterstützung",
+        "emergency_incident_response": "Notfall-Incident-Reaktion"
+      }
+    },
     "governance": {
       "searchPlaceholder": "Suchen",
       "filterEventType": "Ereignistyp",

@@ -277,6 +277,52 @@
         "lastModifiedBy": "Last modified by"
       }
     },
+    "licenceLimits": {
+      "sectionTitle": "LICENCE LIMITS",
+      "sectionDescription": "Configure the maximum number of leasing companies, bank users, and users per leasing company for this tenant. Limits cannot be reduced below current active counts.",
+      "editLimits": "Edit limits",
+      "leasingCompanies": {
+        "title": "Leasing companies",
+        "description": "Max leasing companies allowed for this tenant"
+      },
+      "bankUsers": {
+        "title": "Bank users",
+        "description": "Max bank-side users allowed for this tenant"
+      },
+      "usersPerLc": {
+        "title": "Users per leasing company",
+        "description": "Applies uniformly to all leasing companies in this tenant",
+        "highestActive": "Highest active:"
+      },
+      "defaultsPrefix": "Defaults at tenant creation:",
+      "defaultsLc": "leasing companies",
+      "defaultsBankUsers": "bank users",
+      "defaultsUsersPerLc": "users per leasing company"
+    },
+    "grants": {
+      "sectionTitle": "SUPPORT ACCESS GRANTS",
+      "newGrant": "New grant",
+      "revoke": "Revoke",
+      "noGrants": "No support access grants found.",
+      "grantStatuses": {
+        "active": "Active",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "emergencyPendingReview": "Emergency: Pending review",
+      "grantedBy": "Granted by {{name}}",
+      "expiredAt": "Expired {{date}}",
+      "revokedAt": "Revoked {{date}}",
+      "accessReasons": {
+        "user_access_issue": "User Access Issue",
+        "workflow_processing_diagnostic": "Workflow Processing Diagnostic",
+        "document_generation_diagnostic": "Document Generation Diagnostic",
+        "integration_troubleshooting": "Integration Troubleshooting",
+        "compliance_query_support": "Compliance Query Support",
+        "regulatory_assistance": "Regulatory Assistance",
+        "emergency_incident_response": "Emergency Incident Response"
+      }
+    },
     "governance": {
       "searchPlaceholder": "Search",
       "filterEventType": "Event type",
