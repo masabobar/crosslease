@@ -243,6 +243,16 @@ export type IntegrationBindingResponse = z.infer<
   typeof IntegrationBindingResponseSchema
 >
 
+export const UpdateAccessPolicyFormSchema = z.object({
+  support_read_only_access_allowed: z.boolean(),
+  auditor_access_allowed: z.boolean(),
+  lc_portal_enabled: z.boolean(),
+  reason: z.string().min(20, "reasonTooShort"),
+})
+export type UpdateAccessPolicyForm = z.infer<
+  typeof UpdateAccessPolicyFormSchema
+>
+
 export const CreateTenantFormSchema = z.object({
   name: z.string().min(2).max(200),
   code: z
@@ -260,3 +270,26 @@ export const CreateTenantFormSchema = z.object({
   core_banking_integration_ref: z.string().max(200).optional(),
 })
 export type CreateTenantForm = z.infer<typeof CreateTenantFormSchema>
+
+export const UpdateTenantFormSchema = z.object({
+  name: z.string().min(2).max(200),
+  legal_entity_name: z.string().min(1).max(300),
+  description: z.string().max(1000).optional(),
+  legal_hold_flag: z.boolean(),
+  justification: z.string().optional(),
+})
+export type UpdateTenantForm = z.infer<typeof UpdateTenantFormSchema>
+
+export function createUpdateTenantFormSchema(originalName: string) {
+  return UpdateTenantFormSchema.superRefine((data, ctx) => {
+    if (data.name.trim() !== originalName.trim()) {
+      if (!data.justification || data.justification.trim().length < 20) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["justification"],
+          message: "justificationRequired",
+        })
+      }
+    }
+  })
+}

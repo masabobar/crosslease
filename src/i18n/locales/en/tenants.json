@@ -333,6 +333,29 @@
     },
     "overview": {
       "edit": "Edit",
+      "cancel": "Cancel",
+      "confirmChange": "Confirm change",
+      "editDialog": {
+        "title": "Edit tenant",
+        "fields": {
+          "tenantName": "Tenant name",
+          "legalEntityName": "Legal entity name",
+          "description": "Tenant description",
+          "descriptionOptional": "(optional)",
+          "legalHold": "Legal hold",
+          "justification": "Governance justification",
+          "justificationHint": "Required when changing the tenant name. Minimum 20 characters."
+        },
+        "legalHoldWarning": "Setting this flag suspends all automated data deletion for this tenant regardless of retention policy.",
+        "save": "Save changes",
+        "cancel": "Cancel",
+        "successToast": "Tenant updated successfully.",
+        "errors": {
+          "justificationRequired": "Governance justification is required when changing the tenant name (minimum 20 characters).",
+          "TENANT_NAME_ALREADY_EXISTS": "This tenant name is already in use.",
+          "generic": "Something went wrong. Please try again."
+        }
+      },
       "tenantIdentity": {
         "title": "Tenant identity",
         "tenantId": "Tenant ID",
@@ -342,7 +365,9 @@
         "legalEntityName": "Legal entity name",
         "country": "Country / Jurisdiction",
         "defaultCurrency": "Default currency",
-        "description": "Description"
+        "description": "Description",
+        "legalHold": "Legal hold",
+        "justification": "Justification for name change"
       },
       "governanceActors": {
         "title": "Governance actors",
@@ -371,7 +396,13 @@
         "lcPortal": "LC portal",
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "modifiedBy": "Modified by {{name}} · {{date}}"
+        "modifiedBy": "Modified by {{name}} · {{date}}",
+        "governanceJustification": "Governance justification",
+        "successToast": "Access policy updated successfully.",
+        "errors": {
+          "reasonRequired": "Governance justification is required (minimum 20 characters).",
+          "generic": "Something went wrong. Please try again."
+        }
       }
     }
   },

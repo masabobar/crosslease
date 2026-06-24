@@ -332,6 +332,29 @@
     },
     "overview": {
       "edit": "Bearbeiten",
+      "cancel": "Abbrechen",
+      "confirmChange": "Änderung bestätigen",
+      "editDialog": {
+        "title": "Mandant bearbeiten",
+        "fields": {
+          "tenantName": "Mandantenname",
+          "legalEntityName": "Name der juristischen Person",
+          "description": "Mandantenbeschreibung",
+          "descriptionOptional": "(optional)",
+          "legalHold": "Rechtliche Sperre",
+          "justification": "Governance-Begründung",
+          "justificationHint": "Erforderlich bei Änderung des Mandantennamens. Mindestens 20 Zeichen."
+        },
+        "legalHoldWarning": "Durch Setzen dieses Flags wird die automatische Datenlöschung für diesen Mandanten unabhängig von der Aufbewahrungsrichtlinie ausgesetzt.",
+        "save": "Änderungen speichern",
+        "cancel": "Abbrechen",
+        "successToast": "Mandant erfolgreich aktualisiert.",
+        "errors": {
+          "justificationRequired": "Bei Änderung des Mandantennamens ist eine Governance-Begründung erforderlich (mindestens 20 Zeichen).",
+          "TENANT_NAME_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet.",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+        }
+      },
       "tenantIdentity": {
         "title": "Mandantenidentität",
         "tenantId": "Mandanten-ID",
@@ -341,7 +364,9 @@
         "legalEntityName": "Name der juristischen Person",
         "country": "Land / Gerichtsbarkeit",
         "defaultCurrency": "Standardwährung",
-        "description": "Beschreibung"
+        "description": "Beschreibung",
+        "legalHold": "Rechtliche Sperre",
+        "justification": "Begründung für Namensänderung"
       },
       "governanceActors": {
         "title": "Governance-Akteure",
@@ -370,7 +395,13 @@
         "lcPortal": "LC-Portal",
         "enabled": "Aktiviert",
         "disabled": "Deaktiviert",
-        "modifiedBy": "Geändert von {{name}} · {{date}}"
+        "modifiedBy": "Geändert von {{name}} · {{date}}",
+        "governanceJustification": "Governance-Begründung",
+        "successToast": "Zugriffsrichtlinie erfolgreich aktualisiert.",
+        "errors": {
+          "reasonRequired": "Governance-Begründung ist erforderlich (mindestens 20 Zeichen).",
+          "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+        }
       }
     }
   },
