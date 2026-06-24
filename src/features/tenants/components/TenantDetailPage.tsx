@@ -9,6 +9,7 @@ import { ModulesConfigTab } from "@/features/tenants/components/tabs/ModulesConf
 import { GovernanceHistoryTab } from "@/features/tenants/components/tabs/GovernanceHistoryTab"
 import { SupportGrantsTab } from "@/features/tenants/components/tabs/SupportGrantsTab"
 import { LicenceLimitsTab } from "@/features/tenants/components/tabs/LicenceLimitsTab"
+import { SuspendTenantDialog } from "@/features/tenants/components/SuspendTenantDialog"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type { TenantDetail } from "@/features/tenants/api/schema"
@@ -49,11 +50,14 @@ function MetaItem({
 function TenantHighlightInfo({
   tenant,
   isAdmin,
+  onSuspendClick,
 }: {
   tenant: TenantDetail
   isAdmin: boolean
+  onSuspendClick: () => void
 }) {
   const { t } = useTranslation("tenants")
+  const canSuspend = isAdmin && tenant.status === "active"
 
   return (
     <div className="flex flex-col w-full" data-testid="tenant-highlight-info">
@@ -69,14 +73,17 @@ function TenantHighlightInfo({
         </div>
         {isAdmin && (
           <div className="flex items-center gap-2.5">
-            <Button
-              variant="outline"
-              className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
-              data-testid="btn-suspend-tenant"
-            >
-              <CirclePause size={16} />
-              {t("detail.suspendTenant")}
-            </Button>
+            {canSuspend && (
+              <Button
+                variant="outline"
+                className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
+                onClick={onSuspendClick}
+                data-testid="btn-suspend-tenant"
+              >
+                <CirclePause size={16} />
+                {t("detail.suspendTenant")}
+              </Button>
+            )}
             <Button
               variant="outline"
               className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
@@ -167,6 +174,7 @@ export default function TenantDetailPage() {
   const { data: currentUser } = useCurrentUser()
   const { data: tenant, isLoading, isError } = useTenantDetail(id ?? null)
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
+  const [suspendOpen, setSuspendOpen] = useState(false)
 
   const isAdmin = currentUser?.role === "system_admin"
   const isSupportUser = currentUser?.role === "support_user"
@@ -234,47 +242,62 @@ export default function TenantDetailPage() {
       )}
 
       {tenant && !isLoading && currentUser && (
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Highlight info */}
-          <div className="px-8 pt-5 pb-4">
-            <TenantHighlightInfo tenant={tenant} isAdmin={isAdmin} />
-          </div>
+        <>
+          {isAdmin && (
+            <SuspendTenantDialog
+              open={suspendOpen}
+              onOpenChange={setSuspendOpen}
+              tenantId={id!}
+              tenantName={tenant.name}
+              tenantStatus={tenant.status}
+            />
+          )}
+          <div className="flex flex-col flex-1 overflow-hidden">
+            {/* Highlight info */}
+            <div className="px-8 pt-5 pb-4">
+              <TenantHighlightInfo
+                tenant={tenant}
+                isAdmin={isAdmin}
+                onSuspendClick={() => setSuspendOpen(true)}
+              />
+            </div>
 
-          {/* Tab bar */}
-          <div className="border-b border-border px-8">
-            <div className="flex items-center gap-1 -mb-px">
-              {visibleTabs.map(tab => (
-                <TabButton
-                  key={tab.key}
-                  active={effectiveTab === tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  data-testid={tab.testId}
-                >
-                  {t(tab.labelKey as "detail.tabs.overview")}
-                </TabButton>
-              ))}
+            {/* Tab bar */}
+            <div className="border-b border-border px-8">
+              <div className="flex items-center gap-1 -mb-px">
+                {visibleTabs.map(tab => (
+                  <TabButton
+                    key={tab.key}
+                    active={effectiveTab === tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    data-testid={tab.testId}
+                  >
+                    {t(tab.labelKey as "detail.tabs.overview")}
+                  </TabButton>
+                ))}
+              </div>
+            </div>
+
+            {/* Tab content */}
+            <div className="flex-1 overflow-auto px-8 py-6">
+              {effectiveTab === "overview" && (
+                <OverviewTab tenant={tenant} tenantId={id!} isAdmin={isAdmin} />
+              )}
+              {effectiveTab === "modules" && (
+                <ModulesConfigTab tenantId={id!} isAdmin={isAdmin} />
+              )}
+              {effectiveTab === "governance" && (
+                <GovernanceHistoryTab tenantId={id!} />
+              )}
+              {effectiveTab === "grants" && isAdmin && (
+                <SupportGrantsTab tenantId={id!} isAdmin={isAdmin} />
+              )}
+              {effectiveTab === "licence_limits" && isAdmin && (
+                <LicenceLimitsTab tenant={tenant} />
+              )}
             </div>
           </div>
-
-          {/* Tab content */}
-          <div className="flex-1 overflow-auto px-8 py-6">
-            {effectiveTab === "overview" && (
-              <OverviewTab tenant={tenant} tenantId={id!} isAdmin={isAdmin} />
-            )}
-            {effectiveTab === "modules" && (
-              <ModulesConfigTab tenantId={id!} isAdmin={isAdmin} />
-            )}
-            {effectiveTab === "governance" && (
-              <GovernanceHistoryTab tenantId={id!} />
-            )}
-            {effectiveTab === "grants" && isAdmin && (
-              <SupportGrantsTab tenantId={id!} isAdmin={isAdmin} />
-            )}
-            {effectiveTab === "licence_limits" && isAdmin && (
-              <LicenceLimitsTab tenant={tenant} />
-            )}
-          </div>
-        </div>
+        </>
       )}
     </div>
   )

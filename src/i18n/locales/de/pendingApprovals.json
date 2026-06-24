@@ -24,7 +24,11 @@
     "user_platform_invite": "Plattform-Einladung",
     "user_email_change": "E-Mail-Änderung",
     "user_auditor_period_update": "Zugangszeitraum-Aktualisierung",
-    "tenant_create": "Mandant erstellen"
+    "tenant_create": "Mandant erstellen",
+    "tenant_suspend": "Mandant suspendieren",
+    "tenant_reactivate": "Mandant reaktivieren",
+    "tenant_archive": "Mandant archivieren",
+    "module_activate": "Modul aktivieren"
   },
   "status": {
     "pending": "Ausstehend",

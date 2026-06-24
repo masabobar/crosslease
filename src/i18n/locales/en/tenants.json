@@ -226,6 +226,35 @@
     "activatedAt": "Activated {{date}}",
     "suspendTenant": "Suspend tenant",
     "archiveTenant": "Archive tenant",
+    "suspendDialog": {
+      "title": "Suspend tenant",
+      "info": {
+        "tenant": "Tenant",
+        "currentStatus": "Current status"
+      },
+      "fields": {
+        "justification": "Governance justification",
+        "justificationMinChars": "min 30 characters",
+        "justificationPlaceholder": "Describe the reason for suspension...",
+        "justificationHint": "Mandatory. Stored in the audit trail."
+      },
+      "alert": {
+        "title": "Four-Eyes approval required",
+        "description": "This action requires a second System Admin to approve before taking effect. This tenant will remain Active until approval is completed."
+      },
+      "submit": "Submit for suspension",
+      "submitting": "Submitting...",
+      "cancel": "Cancel",
+      "successToast": {
+        "title": "Suspension submitted for approval",
+        "description": "{{tenantName}}'s suspension has been submitted. A second admin must approve before it takes effect."
+      },
+      "errors": {
+        "justificationTooShort": "Governance justification must be at least 30 characters.",
+        "INVALID_TENANT_STATUS": "Only active tenants can be suspended.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
     "meta": {
       "code": "Code",
       "type": "Type",

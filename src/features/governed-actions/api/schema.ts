@@ -11,10 +11,14 @@ export type GovernedActionStatus = z.infer<typeof GovernedActionStatusSchema>
 
 export const GovernedActionTypeSchema = z.enum([
   "tenant_create",
+  "tenant_suspend",
+  "tenant_reactivate",
+  "tenant_archive",
   "user_platform_invite",
   "user_role_change",
   "user_auditor_period_update",
   "user_email_change",
+  "module_activate",
 ])
 export type GovernedActionType = z.infer<typeof GovernedActionTypeSchema>
 

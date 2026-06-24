@@ -280,6 +280,11 @@ export const UpdateTenantFormSchema = z.object({
 })
 export type UpdateTenantForm = z.infer<typeof UpdateTenantFormSchema>
 
+export const SuspendTenantFormSchema = z.object({
+  justification: z.string().min(30, "justificationTooShort"),
+})
+export type SuspendTenantForm = z.infer<typeof SuspendTenantFormSchema>
+
 export function createUpdateTenantFormSchema(originalName: string) {
   return UpdateTenantFormSchema.superRefine((data, ctx) => {
     if (data.name.trim() !== originalName.trim()) {
