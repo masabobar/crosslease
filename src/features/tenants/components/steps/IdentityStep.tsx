@@ -6,6 +6,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import type { SelectOption } from "@/components/ui/select"
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxCollection,
+  ComboboxItem,
+  ComboboxEmpty,
+} from "@/components/ui/combobox"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -14,37 +23,37 @@ const CURRENCY_OPTIONS: SelectOption[] = [
 ]
 
 // ISO 3166-1 alpha-2 — common European countries; extend as needed
-const COUNTRY_OPTIONS: SelectOption[] = [
-  { value: "AT", label: "AT — Austria" },
-  { value: "BE", label: "BE — Belgium" },
-  { value: "BG", label: "BG — Bulgaria" },
-  { value: "CH", label: "CH — Switzerland" },
-  { value: "CZ", label: "CZ — Czech Republic" },
-  { value: "DE", label: "DE — Germany" },
-  { value: "DK", label: "DK — Denmark" },
-  { value: "EE", label: "EE — Estonia" },
-  { value: "ES", label: "ES — Spain" },
-  { value: "FI", label: "FI — Finland" },
-  { value: "FR", label: "FR — France" },
-  { value: "GB", label: "GB — United Kingdom" },
-  { value: "GR", label: "GR — Greece" },
-  { value: "HR", label: "HR — Croatia" },
-  { value: "HU", label: "HU — Hungary" },
-  { value: "IE", label: "IE — Ireland" },
-  { value: "IT", label: "IT — Italy" },
-  { value: "LT", label: "LT — Lithuania" },
-  { value: "LU", label: "LU — Luxembourg" },
-  { value: "LV", label: "LV — Latvia" },
-  { value: "MT", label: "MT — Malta" },
-  { value: "NL", label: "NL — Netherlands" },
-  { value: "PL", label: "PL — Poland" },
-  { value: "PT", label: "PT — Portugal" },
-  { value: "RO", label: "RO — Romania" },
-  { value: "RS", label: "RS — Serbia" },
-  { value: "SE", label: "SE — Sweden" },
-  { value: "SI", label: "SI — Slovenia" },
-  { value: "SK", label: "SK — Slovakia" },
-  { value: "US", label: "US — United States" },
+const COUNTRY_OPTIONS = [
+  { value: "AT", label: "Austria" },
+  { value: "BE", label: "Belgium" },
+  { value: "BG", label: "Bulgaria" },
+  { value: "CH", label: "Switzerland" },
+  { value: "CZ", label: "Czech Republic" },
+  { value: "DE", label: "Germany" },
+  { value: "DK", label: "Denmark" },
+  { value: "EE", label: "Estonia" },
+  { value: "ES", label: "Spain" },
+  { value: "FI", label: "Finland" },
+  { value: "FR", label: "France" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "GR", label: "Greece" },
+  { value: "HR", label: "Croatia" },
+  { value: "HU", label: "Hungary" },
+  { value: "IE", label: "Ireland" },
+  { value: "IT", label: "Italy" },
+  { value: "LT", label: "Lithuania" },
+  { value: "LU", label: "Luxembourg" },
+  { value: "LV", label: "Latvia" },
+  { value: "MT", label: "Malta" },
+  { value: "NL", label: "Netherlands" },
+  { value: "PL", label: "Poland" },
+  { value: "PT", label: "Portugal" },
+  { value: "RO", label: "Romania" },
+  { value: "RS", label: "Serbia" },
+  { value: "SE", label: "Sweden" },
+  { value: "SI", label: "Slovenia" },
+  { value: "SK", label: "Slovakia" },
+  { value: "US", label: "United States" },
 ]
 
 type Props = {
@@ -209,14 +218,29 @@ function IdentityStep({ form }: Props) {
           control={control}
           name="country"
           render={({ field }) => (
-            <SelectField
-              id="country"
-              data-testid="country-select"
-              value={field.value}
+            <Combobox
+              items={COUNTRY_OPTIONS}
+              value={field.value ?? ""}
               onValueChange={field.onChange}
-              options={COUNTRY_OPTIONS}
-              error={!!errors.country}
-            />
+            >
+              <ComboboxInput
+                id="country"
+                data-testid="country-combobox"
+                placeholder={t("fields.countrySearchPlaceholder")}
+                showClear
+                aria-invalid={!!errors.country}
+              />
+              <ComboboxContent>
+                <ComboboxList>
+                  <ComboboxEmpty>{t("fields.countryNoResults")}</ComboboxEmpty>
+                  <ComboboxCollection>
+                    {(opt: { value: string; label: string }) => (
+                      <ComboboxItem value={opt.value}>{opt.label}</ComboboxItem>
+                    )}
+                  </ComboboxCollection>
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
           )}
         />
         {errors.country && (

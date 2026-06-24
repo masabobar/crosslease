@@ -1,7 +1,8 @@
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { Pencil } from "lucide-react"
+import { SquarePen } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessPolicy"
 import { isFullTenantResponse } from "@/features/tenants/api/schema"
@@ -45,30 +46,6 @@ function formatCountry(code: string): string {
 
 type InfoRow = { label: string; value: ReactNode }
 
-function InfoCard({
-  title,
-  editButton,
-  children,
-}: {
-  title: string
-  editButton?: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <div className="bg-slate-100 border border-border rounded-[10px]">
-      <div className="flex items-center justify-between px-2 h-10">
-        <span className="text-xs font-semibold uppercase text-foreground">
-          {title}
-        </span>
-        {editButton}
-      </div>
-      <div className="bg-background border border-border rounded-b-[10px] p-2">
-        {children}
-      </div>
-    </div>
-  )
-}
-
 function InfoRows({ rows }: { rows: InfoRow[] }) {
   return (
     <div className="flex gap-16 text-sm">
@@ -103,10 +80,9 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   const editButton = (
     <Button
       variant="outline"
-      size="sm"
-      className="h-7 gap-1 px-2.5 text-sm rounded-[10px]"
+      className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
     >
-      <Pencil size={14} />
+      <SquarePen size={14} />
       {t("detail.overview.edit")}
     </Button>
   )
@@ -239,26 +215,26 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     <div className="flex gap-6" data-testid="tab-content-overview">
       {/* Left column: identity + governance */}
       <div className="flex flex-col gap-6 flex-1 min-w-0">
-        <InfoCard
+        <TenantInfoCard
           title={t("detail.overview.tenantIdentity.title")}
           editButton={isAdmin ? editButton : undefined}
         >
           <InfoRows rows={identityRows} />
-        </InfoCard>
+        </TenantInfoCard>
 
-        <InfoCard title={t("detail.overview.governanceActors.title")}>
+        <TenantInfoCard title={t("detail.overview.governanceActors.title")}>
           <InfoRows rows={governanceRows} />
-        </InfoCard>
+        </TenantInfoCard>
       </div>
 
       {/* Right column: lifecycle + access policy */}
       <div className="flex flex-col gap-6 flex-1 min-w-0">
-        <InfoCard title={t("detail.overview.lifecycleStatus.title")}>
+        <TenantInfoCard title={t("detail.overview.lifecycleStatus.title")}>
           <InfoRows rows={lifecycleRows} />
-        </InfoCard>
+        </TenantInfoCard>
 
         {isAdmin && (
-          <InfoCard
+          <TenantInfoCard
             title={t("detail.overview.accessPolicy.title")}
             editButton={editButton}
           >
@@ -306,7 +282,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                 ))}
               </div>
             </div>
-          </InfoCard>
+          </TenantInfoCard>
         )}
       </div>
     </div>

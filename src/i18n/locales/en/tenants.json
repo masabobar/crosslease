@@ -144,6 +144,8 @@
     "defaultCurrency": "Tenant default currency",
     "legalEntityName": "Legal entity name",
     "country": "Country / Jurisdiction",
+    "countrySearchPlaceholder": "Search country…",
+    "countryNoResults": "No countries found",
     "description": "Tenant description",
     "descriptionOptional": "(optional)",
     "descriptionHint": "A short note about this tenant for internal reference.",
@@ -157,7 +159,11 @@
   },
   "seedPackages": {
     "standard_retail_bank": "Default",
-    "minimal_sandbox": "Sandbox"
+    "minimal_sandbox": "Sandbox",
+    "descriptions": {
+      "standard_retail_bank": "Full platform configuration including all always-on modules and the complete set of activatable modules. Intended for production tenants.",
+      "minimal_sandbox": "Minimal configuration for demo and test environments. Includes always-on modules plus Refinancing Request and Contract Management only."
+    }
   },
   "list": {
     "title": "Tenant Management",
@@ -181,7 +187,8 @@
         "status": "Status",
         "createdAt": "Created at"
       },
-      "modules": "{{count}} modules"
+      "modules": "{{count}} modules",
+      "tenantActions": "Tenant actions"
     },
     "filters": {
       "searchPlaceholder": "Search",
@@ -227,9 +234,56 @@
     },
     "tabs": {
       "overview": "Overview",
-      "modules": "Module profile",
+      "modules": "Modules & configuration",
       "governance": "Governance history",
-      "grants": "Support grants"
+      "grants": "Support access grants",
+      "licenceLimits": "Licence limits"
+    },
+    "modules": {
+      "addModule": "Add module",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "edit": "Edit",
+      "activatedFrom": "From {{date}}",
+      "sections": {
+        "moduleProfile": "MODULE PROFILE",
+        "integrationBinding": "INTEGRATION BINDING",
+        "configurationOverride": "CONFIGURATION OVERRIDE"
+      },
+      "configOverride": {
+        "productTemplate": "Product template",
+        "rateTable": "Rate table",
+        "workflowDefinition": "Workflow definition",
+        "documentPolicySet": "Document policy set",
+        "override": "Override",
+        "default": "Default",
+        "supersededWarning": "Referenced object has been superseded. Update required.",
+        "addOverride": "Add override",
+        "platformDefault": "Platform default"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending_activation": "Pending activation",
+        "pending_enforcement": "Pending enforcement",
+        "pending_deactivation": "Pending deactivation"
+      },
+      "integration": {
+        "integrationActive": "Integration active",
+        "endpointUrl": "Endpoint URL",
+        "credentialScope": "Credential scope",
+        "disbursementNote": "Disbursement note",
+        "createdBy": "Created by",
+        "lastModifiedBy": "Last modified by"
+      }
+    },
+    "governance": {
+      "searchPlaceholder": "Search",
+      "filterEventType": "Event type",
+      "filterDateRange": "Date range",
+      "sectionTitle": "GOVERNANCE HISTORY",
+      "noEvents": "No events found.",
+      "clearAll": "Clear all"
     },
     "overview": {
       "edit": "Edit",

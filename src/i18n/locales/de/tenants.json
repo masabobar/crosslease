@@ -144,6 +144,8 @@
     "defaultCurrency": "Standardwährung des Mandanten",
     "legalEntityName": "Name der juristischen Person",
     "country": "Land / Gerichtsbarkeit",
+    "countrySearchPlaceholder": "Land suchen…",
+    "countryNoResults": "Keine Länder gefunden",
     "description": "Mandantenbeschreibung",
     "descriptionOptional": "(optional)",
     "descriptionHint": "Optional. Kurze Beschreibung des Zwecks dieses Mandanten.",
@@ -157,7 +159,11 @@
   },
   "seedPackages": {
     "standard_retail_bank": "Standard",
-    "minimal_sandbox": "Sandbox"
+    "minimal_sandbox": "Sandbox",
+    "descriptions": {
+      "standard_retail_bank": "Vollständige Plattformkonfiguration mit allen immer aktiven Modulen und dem vollständigen Satz aktivierbarer Module. Für Produktionsmandanten vorgesehen.",
+      "minimal_sandbox": "Minimale Konfiguration für Demo- und Testumgebungen. Enthält immer aktive Module sowie Refinanzierungsantrag und Vertragsverwaltung."
+    }
   },
   "list": {
     "title": "Mandantenverwaltung",
@@ -227,9 +233,56 @@
     },
     "tabs": {
       "overview": "Übersicht",
-      "modules": "Modulprofil",
+      "modules": "Module & Konfiguration",
       "governance": "Governance-Verlauf",
-      "grants": "Support-Zugriff"
+      "grants": "Support-Zugriff",
+      "licenceLimits": "Lizenzbeschränkungen"
+    },
+    "modules": {
+      "addModule": "Modul hinzufügen",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "edit": "Bearbeiten",
+      "activatedFrom": "Ab {{date}}",
+      "sections": {
+        "moduleProfile": "MODULPROFIL",
+        "integrationBinding": "INTEGRATIONSBINDUNG",
+        "configurationOverride": "KONFIGURATIONSÜBERSCHREIBUNG"
+      },
+      "configOverride": {
+        "productTemplate": "Produktvorlage",
+        "rateTable": "Zinstabelle",
+        "workflowDefinition": "Workflow-Definition",
+        "documentPolicySet": "Dokumentrichtlinienset",
+        "override": "Überschrieben",
+        "default": "Standard",
+        "supersededWarning": "Referenziertes Objekt wurde ersetzt. Aktualisierung erforderlich.",
+        "addOverride": "Überschreibung hinzufügen",
+        "platformDefault": "Plattformstandard"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "pending_activation": "Aktivierung ausstehend",
+        "pending_enforcement": "Durchsetzung ausstehend",
+        "pending_deactivation": "Deaktivierung ausstehend"
+      },
+      "integration": {
+        "integrationActive": "Integration aktiv",
+        "endpointUrl": "Endpunkt-URL",
+        "credentialScope": "Berechtigungsbereich",
+        "disbursementNote": "Auszahlungshinweis",
+        "createdBy": "Erstellt von",
+        "lastModifiedBy": "Zuletzt geändert von"
+      }
+    },
+    "governance": {
+      "searchPlaceholder": "Suchen",
+      "filterEventType": "Ereignistyp",
+      "filterDateRange": "Datumsbereich",
+      "sectionTitle": "GOVERNANCE-VERLAUF",
+      "noEvents": "Keine Ereignisse gefunden.",
+      "clearAll": "Alle zurücksetzen"
     },
     "overview": {
       "edit": "Bearbeiten",
