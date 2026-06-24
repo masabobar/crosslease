@@ -24,6 +24,33 @@
       "selectedModules": "Selected modules",
       "alwaysOn": "Always on",
       "noModules": "No modules available.",
+      "moduleGroups": {
+        "refinancing_request": "Refinancing & contract operations",
+        "contract_management": "Refinancing & contract operations",
+        "financing": "Refinancing & contract operations",
+        "redemption": "Refinancing & contract operations",
+        "disbursement": "Refinancing & contract operations",
+        "conditions_management": "Refinancing & contract operations",
+        "contract_events": "Refinancing & contract operations",
+        "kyc_aml": "Risk & compliance",
+        "scoring_engine": "Risk & compliance",
+        "validation_gating": "Risk & compliance",
+        "limit_management": "Risk & compliance",
+        "risk_propagation": "Risk & compliance",
+        "workflow_task_catalog": "Configuration & rules",
+        "document_requirement_catalog": "Configuration & rules",
+        "bank_product_template": "Configuration & rules",
+        "framework_agreement": "Configuration & rules",
+        "document_generation": "Documents & data",
+        "document_management": "Documents & data",
+        "upload_data_import": "Documents & data",
+        "partner_management": "Counterparty",
+        "dd_return_escalation": "Refinancing & contract operations",
+        "rate_table": "Configuration & rules",
+        "reporting": "Reporting & notifications",
+        "notification_center": "Reporting & notifications",
+        "integration_core_banking": "Integration"
+      },
       "descriptions": {
         "identity_access": "User accounts, roles and permissions.",
         "audit_compliance": "Immutable record of every action.",
@@ -35,27 +62,27 @@
         "contract_management": "Lease contract data and document management.",
         "financing": "Financing structure and NPV calculation.",
         "redemption": "Repayment and redemption workflows.",
-        "disbursement": "Payment disbursement processing and tracking.",
-        "conditions_management": "Contract condition definition and enforcement.",
-        "contract_events": "Contract lifecycle event tracking and processing.",
+        "disbursement": "Disbursement execution and confirmation.",
+        "conditions_management": "Conditions precedent tracking and fulfilment.",
+        "contract_events": "Payment events and contract lifecycle triggers.",
         "dd_return_escalation": "Direct debit return handling and escalation.",
-        "reporting": "Operational reports and data exports.",
-        "bank_product_template": "Configurable financial product templates.",
-        "framework_agreement": "Master agreement and framework contract management.",
+        "reporting": "Operational and executive reporting views.",
+        "bank_product_template": "Financing product configuration and versioning.",
+        "framework_agreement": "Leasing company framework and covenant management.",
         "rate_table": "Interest rate tables and pricing configuration.",
-        "partner_management": "Partner and dealer network administration.",
-        "notification_center": "System notifications and alert management.",
-        "document_generation": "Automated document creation from templates.",
-        "document_management": "Document storage and lifecycle management.",
-        "upload_data_import": "Bulk data import and file processing.",
-        "kyc_aml": "Know Your Customer and anti-money laundering checks.",
-        "workflow_task_catalog": "Configurable task definitions for workflows.",
-        "document_requirement_catalog": "Document checklist and requirement definitions.",
-        "scoring_engine": "Credit scoring and risk assessment engine.",
-        "validation_gating": "Business rule validation and process gating.",
-        "limit_management": "Exposure limits and credit ceiling management.",
-        "risk_propagation": "Risk signal propagation across related entities.",
-        "integration_core_banking": "Connection to core banking systems and APIs."
+        "partner_management": "Leasing company and lessee partner records.",
+        "notification_center": "Platform notification delivery and inbox.",
+        "document_generation": "Automated document and approval protocol generation.",
+        "document_management": "Document storage, versioning and access control.",
+        "upload_data_import": "Structured file upload and bulk data import.",
+        "kyc_aml": "Customer due diligence and screening workflows.",
+        "workflow_task_catalog": "Configurable task definitions per process stage.",
+        "document_requirement_catalog": "Document policy and requirement definitions.",
+        "scoring_engine": "Risk score computation and evaluation.",
+        "validation_gating": "Rule-based progression gating and hard blocks.",
+        "limit_management": "Credit limit tracking and utilization.",
+        "risk_propagation": "Automated risk cascade and portfolio-level impact.",
+        "integration_core_banking": "Core banking system connectivity and event routing."
       }
     },
     "seed": {
@@ -157,6 +184,7 @@
       "modules": "{{count}} modules"
     },
     "filters": {
+      "searchPlaceholder": "Search",
       "status": "Status",
       "type": "Type",
       "country": "Country",
@@ -168,6 +196,7 @@
       "clearAll": "Clear all"
     },
     "filterPills": {
+      "search": "Search: {{value}}",
       "status": "Status: {{value}}",
       "type": "Type: {{value}}",
       "country": "Country: {{value}}",
@@ -188,11 +217,62 @@
   "detail": {
     "backToList": "Back to tenant list",
     "activatedAt": "Activated {{date}}",
+    "suspendTenant": "Suspend tenant",
+    "archiveTenant": "Archive tenant",
+    "meta": {
+      "code": "Code",
+      "type": "Type",
+      "country": "Country",
+      "provisioned": "Provisioned"
+    },
     "tabs": {
       "overview": "Overview",
       "modules": "Module profile",
       "governance": "Governance history",
       "grants": "Support grants"
+    },
+    "overview": {
+      "edit": "Edit",
+      "tenantIdentity": {
+        "title": "Tenant identity",
+        "tenantId": "Tenant ID",
+        "tenantName": "Tenant name",
+        "tenantCode": "Tenant code",
+        "tenantType": "Tenant type",
+        "legalEntityName": "Legal entity name",
+        "country": "Country / Jurisdiction",
+        "defaultCurrency": "Default currency",
+        "description": "Description"
+      },
+      "governanceActors": {
+        "title": "Governance actors",
+        "creationRequestedBy": "Creation requested by",
+        "provisionedAt": "Provisioned at",
+        "creationCountersignedBy": "Creation countersigned by",
+        "activatedAt": "Activated at"
+      },
+      "lifecycleStatus": {
+        "title": "Lifecycle status",
+        "status": "Status",
+        "newBusinessAllowed": "New business allowed",
+        "operationalReadiness": "Operational readiness",
+        "legalHold": "Legal hold",
+        "yes": "Yes",
+        "no": "No",
+        "on": "On",
+        "off": "Off",
+        "ready": "Ready",
+        "notReady": "Not ready"
+      },
+      "accessPolicy": {
+        "title": "Access policy",
+        "supportReadOnlyAccess": "Supported read-only access",
+        "auditorAccess": "Auditor access",
+        "lcPortal": "LC portal",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "modifiedBy": "Modified by {{name}} · {{date}}"
+      }
     }
   },
   "errors": {

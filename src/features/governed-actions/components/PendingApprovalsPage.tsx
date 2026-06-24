@@ -1,9 +1,9 @@
 import { useState, useRef } from "react"
 import { useLocation, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Activity, Check, Search } from "lucide-react"
+import { Activity, Check } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/ui/search-input"
 import { cn } from "@/lib/utils"
 import { handleApiError } from "@/lib/handleApiError"
 import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
@@ -182,20 +182,13 @@ export default function PendingApprovalsPage() {
       {/* Search + View toggle */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Search */}
-        <div className="relative w-[288px]">
-          <Input
-            type="text"
-            placeholder={t("search.placeholder")}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-3 pr-8 rounded-[12px]"
-            data-testid="search-input"
-          />
-          <Search
-            size={16}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-          />
-        </div>
+        <SearchInput
+          placeholder={t("search.placeholder")}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-[288px]"
+          data-testid="search-input"
+        />
 
         {/* Status toggle group */}
         <div className="flex items-center gap-2">

@@ -1302,6 +1302,20 @@
         "operationId": "list_tenants_api_v1_tenants_get",
         "parameters": [
           {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 1, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "description": "Search by tenant name or code",
+              "title": "Search"
+            },
+            "description": "Search by tenant name or code"
+          },
+          {
             "name": "status",
             "in": "query",
             "required": false,
@@ -3671,6 +3685,10 @@
             "title": "Modules",
             "description": "Optional module keys to activate beyond always-on"
           },
+          "default_currency": {
+            "$ref": "#/components/schemas/DefaultCurrency",
+            "default": "EUR"
+          },
           "seed_package": {
             "$ref": "#/components/schemas/SeedPackage",
             "default": "standard_retail_bank"
@@ -3723,6 +3741,11 @@
           "other"
         ],
         "title": "DeactivationReason"
+      },
+      "DefaultCurrency": {
+        "type": "string",
+        "enum": ["EUR", "USD"],
+        "title": "DefaultCurrency"
       },
       "EditUserRequest": {
         "properties": {

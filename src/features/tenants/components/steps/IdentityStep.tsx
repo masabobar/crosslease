@@ -11,8 +11,6 @@ import type { CreateTenantForm } from "@/features/tenants/api/schema"
 const CURRENCY_OPTIONS: SelectOption[] = [
   { value: "EUR", label: "Euro · EUR" },
   { value: "USD", label: "US Dollar · USD" },
-  { value: "GBP", label: "British Pound · GBP" },
-  { value: "CHF", label: "Swiss Franc · CHF" },
 ]
 
 // ISO 3166-1 alpha-2 — common European countries; extend as needed

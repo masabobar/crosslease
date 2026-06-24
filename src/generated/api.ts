@@ -349,6 +349,7 @@ const DeactivateUserRequest = z
   })
   .passthrough()
 const TenantType = z.enum(["bank", "bank_entity", "bank_branch_group"])
+const DefaultCurrency = z.enum(["EUR", "USD"])
 const SeedPackage = z.enum(["standard_retail_bank", "minimal_sandbox"])
 const CreateTenantRequest = z
   .object({
@@ -363,6 +364,7 @@ const CreateTenantRequest = z
     tenant_type: TenantType,
     description: z.union([z.string(), z.null()]).optional(),
     modules: z.array(z.string()).optional(),
+    default_currency: DefaultCurrency.optional(),
     seed_package: SeedPackage.optional(),
     core_banking_integration_ref: z.union([z.string(), z.null()]).optional(),
   })
@@ -751,6 +753,7 @@ export const schemas = {
   DeactivationReason,
   DeactivateUserRequest,
   TenantType,
+  DefaultCurrency,
   SeedPackage,
   CreateTenantRequest,
   TenantStatus,
@@ -1697,6 +1700,11 @@ On reject/withdraw/expire the tenant is archived.
     alias: "list_tenants_api_v1_tenants_get",
     requestFormat: "json",
     parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
       {
         name: "status",
         type: "Query",

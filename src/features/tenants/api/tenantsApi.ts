@@ -29,6 +29,7 @@ import { GovernedActionSchema } from "@/features/governed-actions/api/schema"
 export type TenantListParams = {
   page?: number
   per_page?: number
+  search?: string | null
   status?: string[]
   tenant_type?: string[]
   country?: string | null
@@ -129,6 +130,7 @@ export async function createTenant(
     legal_entity_name: payload.legal_entity_name,
     country: payload.country,
     tenant_type: payload.tenant_type,
+    default_currency: payload.default_currency,
     description: payload.description || undefined,
     modules: payload.modules,
     seed_package: payload.seed_package,

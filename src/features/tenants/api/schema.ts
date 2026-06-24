@@ -23,6 +23,9 @@ export const SeedPackageSchema = z.enum([
 ])
 export type SeedPackage = z.infer<typeof SeedPackageSchema>
 
+export const DefaultCurrencySchema = z.enum(["EUR", "USD"])
+export type DefaultCurrency = z.infer<typeof DefaultCurrencySchema>
+
 export const TenantListItemSchema = z.object({
   id: z.string().uuid(),
   tenant_id: z.string(),
@@ -248,7 +251,7 @@ export const CreateTenantFormSchema = z.object({
     .max(50)
     .regex(/^[A-Za-z0-9-]+$/, "codeInvalidChars"),
   tenant_type: TenantTypeSchema,
-  default_currency: z.string().length(3),
+  default_currency: DefaultCurrencySchema,
   legal_entity_name: z.string().min(2).max(300),
   country: z.string().length(2),
   description: z.string().max(1000).optional(),

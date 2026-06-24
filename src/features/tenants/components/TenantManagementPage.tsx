@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/ui/search-input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { FilterButton } from "@/components/ui/filter-button"
 import { FilterPill } from "@/components/ui/filter-pill"
@@ -48,6 +49,7 @@ export default function TenantManagementPage() {
     !!currentUser && TENANT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
 
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState("")
   const [statusFilters, setStatusFilters] = useState<TenantStatus[]>([])
   const [typeFilters, setTypeFilters] = useState<TenantType[]>([])
   const [countryFilter, setCountryFilter] = useState<string | null>(null)
@@ -66,6 +68,7 @@ export default function TenantManagementPage() {
   const params = {
     page,
     per_page: PAGE_SIZE,
+    ...(search.trim() ? { search: search.trim() } : {}),
     ...(statusFilters.length > 0 ? { status: statusFilters } : {}),
     ...(typeFilters.length > 0 ? { tenant_type: typeFilters } : {}),
     ...(countryFilter ? { country: countryFilter } : {}),
@@ -83,6 +86,7 @@ export default function TenantManagementPage() {
   const total = data?.total ?? 0
 
   const hasActiveFilters =
+    !!search.trim() ||
     statusFilters.length > 0 ||
     typeFilters.length > 0 ||
     !!countryFilter ||
@@ -104,6 +108,7 @@ export default function TenantManagementPage() {
   }
 
   function clearAllFilters() {
+    setSearch("")
     setStatusFilters([])
     setTypeFilters([])
     setCountryFilter(null)
@@ -146,6 +151,16 @@ export default function TenantManagementPage() {
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 px-8 pb-4">
+        <SearchInput
+          data-testid="filter-search"
+          placeholder={t("list.filters.searchPlaceholder")}
+          value={search}
+          onChange={e => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
+          className="h-8 text-sm w-52"
+        />
         <FilterButton
           data-testid="filter-status"
           label={t("list.filters.status")}
@@ -303,6 +318,16 @@ export default function TenantManagementPage() {
       {/* Active filter pills */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2 px-8 pb-4">
+          {search.trim() && (
+            <FilterPill
+              label={t("list.filterPills.search", { value: search.trim() })}
+              onRemove={() => {
+                setSearch("")
+                setPage(1)
+              }}
+              data-testid="filter-pill-remove-search"
+            />
+          )}
           {statusFilters.map(s => (
             <FilterPill
               key={`status-${s}`}

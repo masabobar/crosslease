@@ -58,11 +58,13 @@ function ModulesStep({ form, modules, isLoading }: Props) {
     )
   }
 
-  // Group optional modules by their group field
+  // Group optional modules by their translated group label
   const groupedOptional = optionalModules.reduce<
     Record<string, PlatformModule[]>
   >((acc, mod) => {
-    const group = mod.group || "Other"
+    const group = t(`wizard.modules.moduleGroups.${mod.key}` as never, {
+      defaultValue: mod.group,
+    })
     return { ...acc, [group]: [...(acc[group] ?? []), mod] }
   }, {})
 

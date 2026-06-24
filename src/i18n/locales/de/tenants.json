@@ -24,6 +24,33 @@
       "selectedModules": "Ausgewählte Module",
       "alwaysOn": "Immer aktiv",
       "noModules": "Keine Module verfügbar.",
+      "moduleGroups": {
+        "refinancing_request": "Refinanzierung & Vertragsoperationen",
+        "contract_management": "Refinanzierung & Vertragsoperationen",
+        "financing": "Refinanzierung & Vertragsoperationen",
+        "redemption": "Refinanzierung & Vertragsoperationen",
+        "disbursement": "Refinanzierung & Vertragsoperationen",
+        "conditions_management": "Refinanzierung & Vertragsoperationen",
+        "contract_events": "Refinanzierung & Vertragsoperationen",
+        "dd_return_escalation": "Refinanzierung & Vertragsoperationen",
+        "kyc_aml": "Risiko & Compliance",
+        "scoring_engine": "Risiko & Compliance",
+        "validation_gating": "Risiko & Compliance",
+        "limit_management": "Risiko & Compliance",
+        "risk_propagation": "Risiko & Compliance",
+        "workflow_task_catalog": "Konfiguration & Regeln",
+        "document_requirement_catalog": "Konfiguration & Regeln",
+        "bank_product_template": "Konfiguration & Regeln",
+        "framework_agreement": "Konfiguration & Regeln",
+        "rate_table": "Konfiguration & Regeln",
+        "document_generation": "Dokumente & Datenverwaltung",
+        "document_management": "Dokumente & Datenverwaltung",
+        "upload_data_import": "Dokumente & Datenverwaltung",
+        "partner_management": "Gegenpartei",
+        "reporting": "Berichte & Benachrichtigungen",
+        "notification_center": "Berichte & Benachrichtigungen",
+        "integration_core_banking": "Integration"
+      },
       "descriptions": {
         "identity_access": "Benutzerkonten, Rollen und Berechtigungen.",
         "audit_compliance": "Unveränderliches Protokoll jeder Aktion.",
@@ -35,27 +62,27 @@
         "contract_management": "Leasingvertragsdaten und Dokumentenverwaltung.",
         "financing": "Finanzierungsstruktur und Barwertberechnung.",
         "redemption": "Rückzahlungs- und Ablöseabläufe.",
-        "disbursement": "Verarbeitung und Verfolgung von Zahlungsauszahlungen.",
-        "conditions_management": "Definition und Durchsetzung von Vertragsbedingungen.",
-        "contract_events": "Verfolgung und Verarbeitung von Vertragslebenszyklus-Ereignissen.",
+        "disbursement": "Auszahlungsabwicklung und Bestätigung.",
+        "conditions_management": "Verfolgung und Erfüllung aufschiebender Bedingungen.",
+        "contract_events": "Zahlungsereignisse und Vertragslebenszyklus-Auslöser.",
         "dd_return_escalation": "Lastschriftrückgabebearbeitung und Eskalation.",
-        "reporting": "Betriebsberichte und Datenexporte.",
-        "bank_product_template": "Konfigurierbare Finanzproduktvorlagen.",
-        "framework_agreement": "Rahmenvertragsverwaltung.",
+        "reporting": "Operative und strategische Berichtsansichten.",
+        "bank_product_template": "Konfiguration und Versionierung von Finanzierungsprodukten.",
+        "framework_agreement": "Rahmenvertrags- und Covenant-Verwaltung für Leasinggesellschaften.",
         "rate_table": "Zinssatztabellen und Preiskonfiguration.",
-        "partner_management": "Partner- und Händlernetzwerkverwaltung.",
-        "notification_center": "Systembenachrichtigungen und Warnmeldungen.",
-        "document_generation": "Automatisierte Dokumenterstellung aus Vorlagen.",
-        "document_management": "Dokumentenspeicherung und Lebenszyklus.",
-        "upload_data_import": "Massenimport und Dateiverarbeitung.",
-        "kyc_aml": "Kundenidentifikations- und Geldwäscheprüfungen.",
-        "workflow_task_catalog": "Konfigurierbare Aufgabendefinitionen für Workflows.",
-        "document_requirement_catalog": "Dokumentenchecklisten und Anforderungsdefinitionen.",
-        "scoring_engine": "Kreditbewertungs- und Risikobeurteilungsmodul.",
-        "validation_gating": "Geschäftsregelvalidierung und Prozesssteuerung.",
-        "limit_management": "Risikoexpositionslimits und Kreditobergrenzen.",
-        "risk_propagation": "Risikoweitergabe über verbundene Entitäten.",
-        "integration_core_banking": "Verbindung zu Kernbanksystemen und APIs."
+        "partner_management": "Leasinggesellschafts- und Leasingnehmer-Partnerdatensätze.",
+        "notification_center": "Plattformbenachrichtigungen und Posteingang.",
+        "document_generation": "Automatisierte Dokument- und Genehmigungsprotokoll-Erstellung.",
+        "document_management": "Dokumentenspeicherung, Versionierung und Zugriffssteuerung.",
+        "upload_data_import": "Strukturierter Dateiupload und Massen-Datenimport.",
+        "kyc_aml": "Kunden-Due-Diligence und Prüfabläufe.",
+        "workflow_task_catalog": "Konfigurierbare Aufgabendefinitionen pro Prozessphase.",
+        "document_requirement_catalog": "Dokumentenrichtlinien und Anforderungsdefinitionen.",
+        "scoring_engine": "Risikoberechnung und -bewertung.",
+        "validation_gating": "Regelbasierte Prozesssteuerung und Sperren.",
+        "limit_management": "Kreditlimits und Auslastungsverfolgung.",
+        "risk_propagation": "Automatisierte Risikokaskade und portfolioweite Auswirkung.",
+        "integration_core_banking": "Kernbankensystemanbindung und Ereignis-Routing."
       }
     },
     "seed": {
@@ -157,6 +184,7 @@
       "modules": "{{count}} Module"
     },
     "filters": {
+      "searchPlaceholder": "Suchen",
       "status": "Status",
       "type": "Typ",
       "country": "Land",
@@ -168,6 +196,7 @@
       "clearAll": "Alle löschen"
     },
     "filterPills": {
+      "search": "Suche: {{value}}",
       "status": "Status: {{value}}",
       "type": "Typ: {{value}}",
       "country": "Land: {{value}}",
@@ -188,11 +217,62 @@
   "detail": {
     "backToList": "Zurück zur Mandantenliste",
     "activatedAt": "Aktiviert am {{date}}",
+    "suspendTenant": "Mandant suspendieren",
+    "archiveTenant": "Mandant archivieren",
+    "meta": {
+      "code": "Code",
+      "type": "Typ",
+      "country": "Land",
+      "provisioned": "Bereitgestellt"
+    },
     "tabs": {
       "overview": "Übersicht",
       "modules": "Modulprofil",
       "governance": "Governance-Verlauf",
       "grants": "Support-Zugriff"
+    },
+    "overview": {
+      "edit": "Bearbeiten",
+      "tenantIdentity": {
+        "title": "Mandantenidentität",
+        "tenantId": "Mandanten-ID",
+        "tenantName": "Mandantenname",
+        "tenantCode": "Mandantencode",
+        "tenantType": "Mandantentyp",
+        "legalEntityName": "Name der juristischen Person",
+        "country": "Land / Gerichtsbarkeit",
+        "defaultCurrency": "Standardwährung",
+        "description": "Beschreibung"
+      },
+      "governanceActors": {
+        "title": "Governance-Akteure",
+        "creationRequestedBy": "Erstellung angefordert von",
+        "provisionedAt": "Bereitgestellt am",
+        "creationCountersignedBy": "Erstellung gegengezeichnet von",
+        "activatedAt": "Aktiviert am"
+      },
+      "lifecycleStatus": {
+        "title": "Lebenszyklus-Status",
+        "status": "Status",
+        "newBusinessAllowed": "Neues Geschäft erlaubt",
+        "operationalReadiness": "Betriebsbereitschaft",
+        "legalHold": "Rechtliche Sperre",
+        "yes": "Ja",
+        "no": "Nein",
+        "on": "An",
+        "off": "Aus",
+        "ready": "Bereit",
+        "notReady": "Nicht bereit"
+      },
+      "accessPolicy": {
+        "title": "Zugriffsrichtlinie",
+        "supportReadOnlyAccess": "Schreibgeschützter Support-Zugriff",
+        "auditorAccess": "Prüferzugriff",
+        "lcPortal": "LC-Portal",
+        "enabled": "Aktiviert",
+        "disabled": "Deaktiviert",
+        "modifiedBy": "Geändert von {{name}} · {{date}}"
+      }
     }
   },
   "errors": {

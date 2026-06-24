@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
+import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
 import { getInitials } from "@/lib/formatters"
 
@@ -56,8 +57,12 @@ export function Header() {
   const location = useLocation()
   const userDetailMatch = useMatch(PATHS.USER_DETAIL)
   const auditDetailMatch = useMatch(PATHS.AUDIT_TRAIL_DETAIL)
+  const tenantDetailMatch = useMatch(PATHS.TENANT_DETAIL)
   const { data: currentUser } = useCurrentUser()
   const { data: detailUser } = useUserDetail(userDetailMatch?.params.id ?? null)
+  const { data: detailTenant } = useTenantDetail(
+    tenantDetailMatch?.params.id ?? null
+  )
   const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -72,17 +77,27 @@ export function Header() {
             : "…",
         },
       ]
-    : auditDetailMatch
+    : tenantDetailMatch
       ? [
           { labelKey: "breadcrumb.home" },
           { labelKey: "breadcrumb.platformAdministration" },
-          { labelKey: "breadcrumb.auditTrail", path: PATHS.AUDIT_TRAIL },
-          { labelKey: "breadcrumb.auditEvent" },
+          {
+            labelKey: "breadcrumb.tenantManagement",
+            path: PATHS.TENANT_MANAGEMENT,
+          },
+          { label: detailTenant?.name ?? "…" },
         ]
-      : (BREADCRUMBS[location.pathname] ??
-        Object.entries(BREADCRUMBS)
-          .filter(([path]) => location.pathname.startsWith(path + "/"))
-          .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
+      : auditDetailMatch
+        ? [
+            { labelKey: "breadcrumb.home" },
+            { labelKey: "breadcrumb.platformAdministration" },
+            { labelKey: "breadcrumb.auditTrail", path: PATHS.AUDIT_TRAIL },
+            { labelKey: "breadcrumb.auditEvent" },
+          ]
+        : (BREADCRUMBS[location.pathname] ??
+          Object.entries(BREADCRUMBS)
+            .filter(([path]) => location.pathname.startsWith(path + "/"))
+            .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
 
   const initials = currentUser
     ? getInitials(currentUser.first_name, currentUser.last_name)
