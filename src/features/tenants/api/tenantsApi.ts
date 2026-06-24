@@ -165,6 +165,18 @@ export async function suspendTenant(
   return GovernedActionSchema.parse(data)
 }
 
+export type ReactivateTenantPayload = {
+  justification: string
+}
+
+export async function reactivateTenant(
+  id: string,
+  payload: ReactivateTenantPayload
+): Promise<GovernedAction> {
+  const data = await api.post(`/tenants/${id}/reactivate`, payload)
+  return GovernedActionSchema.parse(data)
+}
+
 export async function createTenant(
   payload: CreateTenantForm
 ): Promise<GovernedAction> {
