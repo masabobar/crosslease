@@ -45,11 +45,34 @@
         "document_management": "Documents & data",
         "upload_data_import": "Documents & data",
         "partner_management": "Counterparty",
-        "dd_return_escalation": "Refinancing & contract operations",
-        "rate_table": "Configuration & rules",
         "reporting": "Reporting & notifications",
         "notification_center": "Reporting & notifications",
         "integration_core_banking": "Integration"
+      },
+      "names": {
+        "refinancing_request": "Refinancing Request",
+        "contract_management": "Contract Management",
+        "financing": "Financing & Calculation",
+        "redemption": "Redemption",
+        "disbursement": "Disbursement",
+        "conditions_management": "Conditions Management",
+        "contract_events": "Contract Events",
+        "kyc_aml": "KYC / AML",
+        "scoring_engine": "Scoring Engine",
+        "validation_gating": "Validation & Gating Engine",
+        "limit_management": "Limit Management",
+        "risk_propagation": "Risk Propagation",
+        "workflow_task_catalog": "Workflow Task Catalog",
+        "document_requirement_catalog": "Document Requirement Catalog",
+        "bank_product_template": "Bank Product Template",
+        "framework_agreement": "Framework Agreement",
+        "document_generation": "Document Generation",
+        "document_management": "Document Management",
+        "upload_data_import": "Upload & Data Import",
+        "partner_management": "Partner Management",
+        "reporting": "Reporting",
+        "notification_center": "Notification Center",
+        "integration_core_banking": "Integration – Core Banking"
       },
       "descriptions": {
         "identity_access": "User accounts, roles and permissions.",
@@ -190,6 +213,11 @@
       "modules": "{{count}} modules",
       "tenantActions": "Tenant actions"
     },
+    "actions": {
+      "suspend": "Suspend",
+      "reactivate": "Reactivate",
+      "archive": "Archive"
+    },
     "filters": {
       "searchPlaceholder": "Search",
       "status": "Status",
@@ -285,6 +313,42 @@
         "generic": "Something went wrong. Please try again."
       }
     },
+    "archiveDialog": {
+      "title": "Archive tenant",
+      "info": {
+        "tenant": "Tenant",
+        "currentStatus": "Current status"
+      },
+      "fields": {
+        "justification": "Governance justification",
+        "justificationMinChars": "min 50 characters",
+        "justificationPlaceholder": "Describe the reason for archiving this tenant...",
+        "justificationHint": "Mandatory. Stored in the audit trail.",
+        "irreversibilityAck": {
+          "prefix": "I confirm this action is ",
+          "emphasis": "irreversible",
+          "suffix": " and cannot be undone."
+        },
+        "activeUserAck": "This tenant has {{count}} active user account(s). I confirm they will lose access when archiving takes effect."
+      },
+      "alert": {
+        "destructive": "Archiving decommissions the integration binding, invalidates all credentials, and rejects all future inbound events. All historical data and audit records are preserved.",
+        "title": "Four-Eyes approval required",
+        "description": "This action requires a second System Admin to approve before taking effect. This tenant will remain Suspended until approval is completed."
+      },
+      "submit": "Submit for archiving",
+      "submitting": "Submitting...",
+      "cancel": "Cancel",
+      "successToast": {
+        "title": "Archiving submitted for approval",
+        "description": "{{tenantName}}'s archiving has been submitted. A second admin must approve before it takes effect."
+      },
+      "errors": {
+        "justificationTooShort": "Governance justification must be at least 50 characters.",
+        "INVALID_TENANT_STATUS": "Only suspended tenants can be archived.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
     "meta": {
       "code": "Code",
       "type": "Type",
@@ -299,7 +363,6 @@
       "licenceLimits": "Licence limits"
     },
     "modules": {
-      "addModule": "Add module",
       "activate": "Activate",
       "deactivate": "Deactivate",
       "edit": "Edit",
@@ -334,6 +397,63 @@
         "disbursementNote": "Disbursement note",
         "createdBy": "Created by",
         "lastModifiedBy": "Last modified by"
+      },
+      "deactivateDialog": {
+        "title": "Deactivate module",
+        "info": {
+          "moduleName": "Module name",
+          "currentStatus": "Current status"
+        },
+        "dependencyCheck": {
+          "title": "Dependency check result",
+          "checking": "Checking the result...",
+          "resolved": "No conflicts found"
+        },
+        "fields": {
+          "justification": "Governance justification",
+          "justificationMinChars": "min 20 characters",
+          "justificationHint": "Mandatory. Stored in the audit trail."
+        },
+        "cancel": "Cancel",
+        "submit": "Submit for deactivation",
+        "submitting": "Submitting...",
+        "successToast": {
+          "title": "Module deactivated",
+          "description": "{{moduleName}} has been deactivated."
+        },
+        "errors": {
+          "justificationTooShort": "Justification must be at least 20 characters.",
+          "generic": "Something went wrong. Please try again."
+        }
+      },
+      "activateDialog": {
+        "title": "Activate module",
+        "info": {
+          "moduleName": "Module name",
+          "currentStatus": "Current status"
+        },
+        "fields": {
+          "effectiveFrom": "Effective from",
+          "effectiveFromPlaceholder": "Select date",
+          "justification": "Governance justification",
+          "justificationMinChars": "min 10 characters",
+          "justificationHint": "Mandatory. Stored in the audit trail."
+        },
+        "alert": {
+          "title": "Four-Eyes approval required",
+          "description": "A second System Admin must approve this request before the module becomes active."
+        },
+        "cancel": "Cancel",
+        "submit": "Submit for activation",
+        "submitting": "Submitting...",
+        "successToast": {
+          "title": "Module activation submitted",
+          "description": "{{moduleName}} will remain inactive until enforcement is confirmed."
+        },
+        "errors": {
+          "justificationTooShort": "Justification must be at least 10 characters.",
+          "generic": "Something went wrong. Please try again."
+        }
       }
     },
     "licenceLimits": {
@@ -356,7 +476,22 @@
       "defaultsPrefix": "Defaults at tenant creation:",
       "defaultsLc": "leasing companies",
       "defaultsBankUsers": "bank users",
-      "defaultsUsersPerLc": "users per leasing company"
+      "defaultsUsersPerLc": "users per leasing company",
+      "editDialog": {
+        "title": "Edit licence limits",
+        "currentActive": "{{count}} active",
+        "highestActive": "Highest active: {{count}}",
+        "cancel": "Cancel",
+        "submit": "Save limits",
+        "submitting": "Saving...",
+        "successToast": {
+          "title": "Licence limits updated",
+          "description": "Limits for {{tenantName}} have been updated."
+        },
+        "errors": {
+          "minValue": "Minimum value is 1"
+        }
+      }
     },
     "grants": {
       "sectionTitle": "SUPPORT ACCESS GRANTS",
@@ -380,6 +515,56 @@
         "compliance_query_support": "Compliance Query Support",
         "regulatory_assistance": "Regulatory Assistance",
         "emergency_incident_response": "Emergency Incident Response"
+      },
+      "supportDisabledBanner": "Support access is disabled for this tenant. Enable it in Access policy to create grants.",
+      "revokedReason": "Revoked",
+      "newGrantDialog": {
+        "title": "New access grant",
+        "subtitle": "Read-only access · Max 30 days",
+        "granteePlaceholder": "Select support user",
+        "noSupportUsers": "No support users found.",
+        "submit": "Create grant",
+        "submitting": "Creating...",
+        "emergencyWarning": "After the session ends a second System Admin must review and confirm this grant was legitimate. The review must be completed within 24 hours. All System Admins will be notified now.",
+        "fields": {
+          "grantee": "Grantee",
+          "granteeHint": "Support user",
+          "accessReason": "Access reason",
+          "accessReasonPlaceholder": "Select reason",
+          "validPeriod": "Valid period",
+          "validPeriodHint": "Maximum {{days}} days from valid date",
+          "additionalContext": "Additional context",
+          "optional": "optional"
+        },
+        "successToast": {
+          "title": "Grant created",
+          "description": "{{granteeName}} has access to {{tenantName}} until {{until}}.",
+          "unknownGrantee": "Support user"
+        },
+        "cancel": "Cancel"
+      },
+      "revokeDialog": {
+        "title": "Revoke access grant",
+        "submit": "Revoke grant",
+        "submitting": "Revoking...",
+        "info": {
+          "affectedUser": "Affected user",
+          "accessReason": "Access reason",
+          "activeUntil": "Active until"
+        },
+        "fields": {
+          "revocationReason": "Revocation reason",
+          "revocationReasonMinChars": "min 10 characters",
+          "revocationReasonHint": "Mandatory. Stored in the audit trail."
+        },
+        "errors": {
+          "reasonTooShort": "Revocation reason must be at least 10 characters."
+        },
+        "successToast": {
+          "title": "Grant revoked",
+          "description": "{{granteeName}} no longer has access to {{tenantName}}."
+        },
+        "cancel": "Cancel"
       }
     },
     "governance": {
@@ -462,6 +647,49 @@
           "reasonRequired": "Governance justification is required (minimum 20 characters).",
           "generic": "Something went wrong. Please try again."
         }
+      },
+      "integrationBinding": {
+        "title": "INTEGRATION BINDING",
+        "emptyState": "No integration binding configured. Set up a core banking connection to enable integration event routing for this tenant.",
+        "configureButton": "Configure binding",
+        "editButton": "Edit binding",
+        "dialogTitle": "Configure binding",
+        "editDialogTitle": "Edit binding",
+        "submit": "Configure binding",
+        "submitting": "Configuring…",
+        "cancel": "Cancel",
+        "successToast": {
+          "title": "Integration binding configured",
+          "description": "Integration binding configured for {{tenantName}}"
+        },
+        "fields": {
+          "endpointUrl": "Core banking endpoint URL",
+          "credentialScope": "Credential scope identifier",
+          "integrationActive": "Integration active flag",
+          "disbursementNote": "Disbursement execution boundary note",
+          "optional": "(optional)",
+          "justification": "Governance justification",
+          "justificationMinChars": "min 20 characters",
+          "justificationHint": "Mandatory. Stored in the audit trail."
+        },
+        "view": {
+          "integrationActive": "Integration active",
+          "endpointUrl": "Endpoint URL",
+          "credentialScope": "Credential scope identifier",
+          "disbursementNote": "Disbursement execution boundary note",
+          "createdAt": "Created at",
+          "lastModifiedAt": "Last modified at",
+          "decommissionedAt": "Decommissioned at",
+          "active": "Active",
+          "inactive": "Inactive",
+          "masked": "—"
+        },
+        "errors": {
+          "required": "This field is required.",
+          "invalidUrl": "Please enter a valid URL.",
+          "mustBeHttps": "Endpoint URL must use HTTPS.",
+          "justificationTooShort": "Governance justification must be at least 20 characters."
+        }
       }
     }
   },
@@ -469,6 +697,16 @@
     "generic": "Something went wrong. Please try again.",
     "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
     "TENANT_CODE_ALREADY_EXISTS": "This tenant code is already in use.",
-    "TENANT_NAME_ALREADY_EXISTS": "This tenant name is already in use."
+    "TENANT_NAME_ALREADY_EXISTS": "This tenant name is already in use.",
+    "TENANT_ALREADY_EXISTS": "A tenant with this name already exists.",
+    "DUPLICATE_PENDING_ACTION": "An approval request for this action is already pending.",
+    "INVALID_TENANT_STATUS": "This action is not allowed in the tenant's current status.",
+    "TENANT_NOT_REACTIVATABLE": "This tenant cannot be reactivated.",
+    "GRANT_VALID_FROM_IN_PAST": "The start date cannot be in the past.",
+    "GRANT_VALID_UNTIL_IN_PAST": "The end date cannot be in the past.",
+    "GRANT_DURATION_EXCEEDED": "The grant period cannot exceed 30 days.",
+    "GRANT_NOT_FOUND": "This grant no longer exists.",
+    "GRANT_ALREADY_REVOKED": "This grant has already been revoked.",
+    "TENANT_LICENSE_LIMIT_REDUCTION": "Cannot reduce this limit below the current active count."
   }
 }

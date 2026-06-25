@@ -1,5 +1,6 @@
 import { useState, useRef, type ReactNode } from "react"
-import { handleApiError } from "@/lib/handleApiError"
+import { toast } from "sonner"
+import { ApiError } from "@/lib/api"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -414,11 +415,10 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         }
       })
       .catch((err: unknown) => {
-        handleApiError(
-          err,
-          showToast,
-          t,
-          t("detail.page.editIdentity.error.title")
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
         )
       })
   }
@@ -440,7 +440,11 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       })
       .catch((err: unknown) => {
-        handleApiError(err, showToast, t, t("detail.page.editRole.error.title"))
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       })
   }
 
@@ -468,7 +472,11 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       })
       .catch((err: unknown) => {
-        handleApiError(err, showToast, t, t("detail.page.editRole.error.title"))
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       })
   }
 
@@ -485,7 +493,11 @@ function UserDetailContent({ user }: { user: UserDetail }) {
       })
       .catch((err: unknown) => {
         setShowMfaResetConfirm(false)
-        handleApiError(err, showToast, t, t("errors.generic"))
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       })
   }
 

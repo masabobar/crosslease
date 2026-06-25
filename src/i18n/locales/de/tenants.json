@@ -32,7 +32,6 @@
         "disbursement": "Refinanzierung & Vertragsoperationen",
         "conditions_management": "Refinanzierung & Vertragsoperationen",
         "contract_events": "Refinanzierung & Vertragsoperationen",
-        "dd_return_escalation": "Refinanzierung & Vertragsoperationen",
         "kyc_aml": "Risiko & Compliance",
         "scoring_engine": "Risiko & Compliance",
         "validation_gating": "Risiko & Compliance",
@@ -42,7 +41,6 @@
         "document_requirement_catalog": "Konfiguration & Regeln",
         "bank_product_template": "Konfiguration & Regeln",
         "framework_agreement": "Konfiguration & Regeln",
-        "rate_table": "Konfiguration & Regeln",
         "document_generation": "Dokumente & Datenverwaltung",
         "document_management": "Dokumente & Datenverwaltung",
         "upload_data_import": "Dokumente & Datenverwaltung",
@@ -50,6 +48,31 @@
         "reporting": "Berichte & Benachrichtigungen",
         "notification_center": "Berichte & Benachrichtigungen",
         "integration_core_banking": "Integration"
+      },
+      "names": {
+        "refinancing_request": "Refinancing Request",
+        "contract_management": "Contract Management",
+        "financing": "Financing & Calculation",
+        "redemption": "Redemption",
+        "disbursement": "Disbursement",
+        "conditions_management": "Conditions Management",
+        "contract_events": "Contract Events",
+        "kyc_aml": "KYC / AML",
+        "scoring_engine": "Scoring Engine",
+        "validation_gating": "Validation & Gating Engine",
+        "limit_management": "Limit Management",
+        "risk_propagation": "Risk Propagation",
+        "workflow_task_catalog": "Workflow Task Catalog",
+        "document_requirement_catalog": "Document Requirement Catalog",
+        "bank_product_template": "Bank Product Template",
+        "framework_agreement": "Framework Agreement",
+        "document_generation": "Document Generation",
+        "document_management": "Document Management",
+        "upload_data_import": "Upload & Data Import",
+        "partner_management": "Partner Management",
+        "reporting": "Reporting",
+        "notification_center": "Notification Center",
+        "integration_core_banking": "Integration – Core Banking"
       },
       "descriptions": {
         "identity_access": "Benutzerkonten, Rollen und Berechtigungen.",
@@ -189,6 +212,11 @@
       },
       "modules": "{{count}} Module"
     },
+    "actions": {
+      "suspend": "Sperren",
+      "reactivate": "Reaktivieren",
+      "archive": "Archivieren"
+    },
     "filters": {
       "searchPlaceholder": "Suchen",
       "status": "Status",
@@ -284,6 +312,42 @@
         "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
       }
     },
+    "archiveDialog": {
+      "title": "Mandant archivieren",
+      "info": {
+        "tenant": "Mandant",
+        "currentStatus": "Aktueller Status"
+      },
+      "fields": {
+        "justification": "Governance-Begründung",
+        "justificationMinChars": "min. 50 Zeichen",
+        "justificationPlaceholder": "Begründung für die Archivierung eingeben...",
+        "justificationHint": "Pflichtfeld. Wird im Prüfpfad gespeichert.",
+        "irreversibilityAck": {
+          "prefix": "Ich bestätige, dass diese Aktion ",
+          "emphasis": "unwiderruflich",
+          "suffix": " ist und nicht rückgängig gemacht werden kann."
+        },
+        "activeUserAck": "Dieser Mandant hat {{count}} aktives Benutzerkonto(s). Ich bestätige, dass der Zugang nach der Archivierung entzogen wird."
+      },
+      "alert": {
+        "destructive": "Die Archivierung deaktiviert die Integrationsbindung, macht alle Anmeldedaten ungültig und weist alle zukünftigen eingehenden Ereignisse ab. Alle historischen Daten und Prüfprotokolle werden aufbewahrt.",
+        "title": "Four-Eyes-Genehmigung erforderlich",
+        "description": "Diese Aktion erfordert die Genehmigung eines zweiten Systemadministrators, bevor sie wirksam wird. Dieser Mandant bleibt bis zur Genehmigung gesperrt."
+      },
+      "submit": "Zur Archivierung einreichen",
+      "submitting": "Wird eingereicht...",
+      "cancel": "Abbrechen",
+      "successToast": {
+        "title": "Archivierung zur Genehmigung eingereicht",
+        "description": "Die Archivierung von {{tenantName}} wurde eingereicht. Ein zweiter Administrator muss genehmigen, bevor sie wirksam wird."
+      },
+      "errors": {
+        "justificationTooShort": "Die Governance-Begründung muss mindestens 50 Zeichen lang sein.",
+        "INVALID_TENANT_STATUS": "Nur gesperrte Mandanten können archiviert werden.",
+        "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+      }
+    },
     "meta": {
       "code": "Code",
       "type": "Typ",
@@ -298,7 +362,6 @@
       "licenceLimits": "Lizenzbeschränkungen"
     },
     "modules": {
-      "addModule": "Modul hinzufügen",
       "activate": "Aktivieren",
       "deactivate": "Deaktivieren",
       "edit": "Bearbeiten",
@@ -333,6 +396,63 @@
         "disbursementNote": "Auszahlungshinweis",
         "createdBy": "Erstellt von",
         "lastModifiedBy": "Zuletzt geändert von"
+      },
+      "deactivateDialog": {
+        "title": "Modul deaktivieren",
+        "info": {
+          "moduleName": "Modulname",
+          "currentStatus": "Aktueller Status"
+        },
+        "dependencyCheck": {
+          "title": "Abhängigkeitsprüfung",
+          "checking": "Ergebnis wird geprüft...",
+          "resolved": "Keine Konflikte gefunden"
+        },
+        "fields": {
+          "justification": "Governance-Begründung",
+          "justificationMinChars": "mind. 20 Zeichen",
+          "justificationHint": "Pflichtfeld. Wird im Audit-Protokoll gespeichert."
+        },
+        "cancel": "Abbrechen",
+        "submit": "Zur Deaktivierung einreichen",
+        "submitting": "Wird eingereicht...",
+        "successToast": {
+          "title": "Modul deaktiviert",
+          "description": "{{moduleName}} wurde deaktiviert."
+        },
+        "errors": {
+          "justificationTooShort": "Die Begründung muss mindestens 20 Zeichen lang sein.",
+          "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+        }
+      },
+      "activateDialog": {
+        "title": "Modul aktivieren",
+        "info": {
+          "moduleName": "Modulname",
+          "currentStatus": "Aktueller Status"
+        },
+        "fields": {
+          "effectiveFrom": "Gültig ab",
+          "effectiveFromPlaceholder": "Datum auswählen",
+          "justification": "Governance-Begründung",
+          "justificationMinChars": "mind. 10 Zeichen",
+          "justificationHint": "Pflichtfeld. Wird im Audit-Protokoll gespeichert."
+        },
+        "alert": {
+          "title": "Vier-Augen-Genehmigung erforderlich",
+          "description": "Ein zweiter Systemadministrator muss diese Anfrage genehmigen, bevor das Modul aktiv wird."
+        },
+        "cancel": "Abbrechen",
+        "submit": "Zur Aktivierung einreichen",
+        "submitting": "Wird eingereicht...",
+        "successToast": {
+          "title": "Modulaktivierung eingereicht",
+          "description": "{{moduleName}} bleibt inaktiv, bis die Durchsetzung bestätigt ist."
+        },
+        "errors": {
+          "justificationTooShort": "Die Begründung muss mindestens 10 Zeichen lang sein.",
+          "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+        }
       }
     },
     "licenceLimits": {
@@ -355,7 +475,22 @@
       "defaultsPrefix": "Standards bei Mandantenerstellung:",
       "defaultsLc": "Leasinggesellschaften",
       "defaultsBankUsers": "Bankbenutzer",
-      "defaultsUsersPerLc": "Benutzer pro Leasinggesellschaft"
+      "defaultsUsersPerLc": "Benutzer pro Leasinggesellschaft",
+      "editDialog": {
+        "title": "Lizenzbeschränkungen bearbeiten",
+        "currentActive": "{{count}} aktiv",
+        "highestActive": "Höchster aktiver Wert: {{count}}",
+        "cancel": "Abbrechen",
+        "submit": "Limits speichern",
+        "submitting": "Wird gespeichert...",
+        "successToast": {
+          "title": "Lizenzbeschränkungen aktualisiert",
+          "description": "Die Limits für {{tenantName}} wurden aktualisiert."
+        },
+        "errors": {
+          "minValue": "Mindestwert ist 1"
+        }
+      }
     },
     "grants": {
       "sectionTitle": "SUPPORT-ZUGRIFFSERTEILUNGEN",
@@ -379,6 +514,56 @@
         "compliance_query_support": "Compliance-Anfragen-Support",
         "regulatory_assistance": "Regulatorische Unterstützung",
         "emergency_incident_response": "Notfall-Incident-Reaktion"
+      },
+      "supportDisabledBanner": "Der Support-Zugriff ist für diesen Mandanten deaktiviert. Aktivieren Sie ihn in der Zugriffsrichtlinie, um Berechtigungen zu erstellen.",
+      "revokedReason": "Widerrufen",
+      "newGrantDialog": {
+        "title": "Neue Zugriffsberechtigung",
+        "subtitle": "Nur-Lese-Zugriff · Max. 30 Tage",
+        "granteePlaceholder": "Support-Benutzer auswählen",
+        "noSupportUsers": "Keine Support-Benutzer gefunden.",
+        "submit": "Berechtigung erstellen",
+        "submitting": "Wird erstellt...",
+        "emergencyWarning": "Nach Ende der Sitzung muss ein zweiter Systemadministrator diese Berechtigung überprüfen und bestätigen. Die Überprüfung muss innerhalb von 24 Stunden abgeschlossen sein. Alle Systemadministratoren werden jetzt benachrichtigt.",
+        "fields": {
+          "grantee": "Berechtigter",
+          "granteeHint": "Support-Benutzer",
+          "accessReason": "Zugriffsgrund",
+          "accessReasonPlaceholder": "Grund auswählen",
+          "validPeriod": "Gültigkeitszeitraum",
+          "validPeriodHint": "Maximal {{days}} Tage ab dem Startdatum",
+          "additionalContext": "Zusätzlicher Kontext",
+          "optional": "optional"
+        },
+        "successToast": {
+          "title": "Berechtigung erstellt",
+          "description": "{{granteeName}} hat bis {{until}} Zugriff auf {{tenantName}}.",
+          "unknownGrantee": "Support-Benutzer"
+        },
+        "cancel": "Abbrechen"
+      },
+      "revokeDialog": {
+        "title": "Zugriffsberechtigung widerrufen",
+        "submit": "Berechtigung widerrufen",
+        "submitting": "Wird widerrufen...",
+        "info": {
+          "affectedUser": "Betroffener Benutzer",
+          "accessReason": "Zugriffsgrund",
+          "activeUntil": "Aktiv bis"
+        },
+        "fields": {
+          "revocationReason": "Widerrufsgrund",
+          "revocationReasonMinChars": "min. 10 Zeichen",
+          "revocationReasonHint": "Pflichtfeld. Wird im Prüfpfad gespeichert."
+        },
+        "errors": {
+          "reasonTooShort": "Der Widerrufsgrund muss mindestens 10 Zeichen lang sein."
+        },
+        "successToast": {
+          "title": "Berechtigung widerrufen",
+          "description": "{{granteeName}} hat keinen Zugriff mehr auf {{tenantName}}."
+        },
+        "cancel": "Abbrechen"
       }
     },
     "governance": {
@@ -461,6 +646,49 @@
           "reasonRequired": "Governance-Begründung ist erforderlich (mindestens 20 Zeichen).",
           "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
         }
+      },
+      "integrationBinding": {
+        "title": "INTEGRATIONSBINDUNG",
+        "emptyState": "Keine Integrationsbindung konfiguriert. Richten Sie eine Core-Banking-Verbindung ein, um das Routing von Integrationsereignissen für diesen Mandanten zu aktivieren.",
+        "configureButton": "Bindung konfigurieren",
+        "editButton": "Bindung bearbeiten",
+        "dialogTitle": "Bindung konfigurieren",
+        "editDialogTitle": "Bindung bearbeiten",
+        "submit": "Bindung konfigurieren",
+        "submitting": "Wird konfiguriert…",
+        "cancel": "Abbrechen",
+        "successToast": {
+          "title": "Integrationsbindung konfiguriert",
+          "description": "Integrationsbindung für {{tenantName}} konfiguriert"
+        },
+        "fields": {
+          "endpointUrl": "Core-Banking-Endpunkt-URL",
+          "credentialScope": "Berechtigungsbereichs-Kennung",
+          "integrationActive": "Integrations-Aktiv-Flag",
+          "disbursementNote": "Hinweis zur Auszahlungsausführungsgrenze",
+          "optional": "(optional)",
+          "justification": "Governance-Begründung",
+          "justificationMinChars": "mind. 20 Zeichen",
+          "justificationHint": "Pflichtfeld. Wird im Audit-Protokoll gespeichert."
+        },
+        "view": {
+          "integrationActive": "Integration aktiv",
+          "endpointUrl": "Endpunkt-URL",
+          "credentialScope": "Berechtigungsbereichs-Kennung",
+          "disbursementNote": "Hinweis zur Auszahlungsausführungsgrenze",
+          "createdAt": "Erstellt am",
+          "lastModifiedAt": "Zuletzt geändert am",
+          "decommissionedAt": "Außer Betrieb gesetzt am",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "masked": "—"
+        },
+        "errors": {
+          "required": "Dieses Feld ist erforderlich.",
+          "invalidUrl": "Bitte geben Sie eine gültige URL ein.",
+          "mustBeHttps": "Die Endpunkt-URL muss HTTPS verwenden.",
+          "justificationTooShort": "Die Governance-Begründung muss mindestens 20 Zeichen lang sein."
+        }
       }
     }
   },
@@ -468,6 +696,16 @@
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
     "TENANT_CODE_ALREADY_EXISTS": "Dieser Mandantencode wird bereits verwendet.",
-    "TENANT_NAME_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet."
+    "TENANT_NAME_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet.",
+    "TENANT_ALREADY_EXISTS": "Ein Mandant mit diesem Namen existiert bereits.",
+    "DUPLICATE_PENDING_ACTION": "Eine Genehmigungsanfrage für diese Aktion ist bereits ausstehend.",
+    "INVALID_TENANT_STATUS": "Diese Aktion ist im aktuellen Mandantenstatus nicht erlaubt.",
+    "TENANT_NOT_REACTIVATABLE": "Dieser Mandant kann nicht reaktiviert werden.",
+    "GRANT_VALID_FROM_IN_PAST": "Das Startdatum darf nicht in der Vergangenheit liegen.",
+    "GRANT_VALID_UNTIL_IN_PAST": "Das Enddatum darf nicht in der Vergangenheit liegen.",
+    "GRANT_DURATION_EXCEEDED": "Der Genehmigungszeitraum darf 30 Tage nicht überschreiten.",
+    "GRANT_NOT_FOUND": "Diese Genehmigung existiert nicht mehr.",
+    "GRANT_ALREADY_REVOKED": "Diese Genehmigung wurde bereits widerrufen.",
+    "TENANT_LICENSE_LIMIT_REDUCTION": "Dieses Limit kann nicht unter die aktuelle aktive Anzahl gesenkt werden."
   }
 }

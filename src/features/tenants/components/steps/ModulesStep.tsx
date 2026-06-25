@@ -17,11 +17,6 @@ type Props = {
   isLoading: boolean
 }
 
-function toSentenceCase(str: string): string {
-  if (!str) return str
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-}
-
 function moduleDescription(
   mod: PlatformModule,
   t: ReturnType<typeof useTranslation<"tenants">>["t"]
@@ -133,7 +128,9 @@ function ModulesStep({ form, modules, isLoading }: Props) {
             {alwaysOnModules.map(mod => (
               <div key={mod.key} className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">
-                  {toSentenceCase(mod.display_name)}
+                  {t(`wizard.modules.names.${mod.key}` as never, {
+                    defaultValue: mod.display_name,
+                  })}
                 </span>
                 <LockIcon
                   size={16}
@@ -146,7 +143,11 @@ function ModulesStep({ form, modules, isLoading }: Props) {
               return (
                 <div key={key} className="flex items-start">
                   <span className="text-sm text-foreground">
-                    {mod ? toSentenceCase(mod.display_name) : key}
+                    {mod
+                      ? t(`wizard.modules.names.${mod.key}` as never, {
+                          defaultValue: mod.display_name,
+                        })
+                      : key}
                   </span>
                 </div>
               )
@@ -179,7 +180,9 @@ function LockedModuleCard({ mod, t }: LockedModuleCardProps) {
         />
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium text-foreground leading-5">
-            {toSentenceCase(mod.display_name)}
+            {t(`wizard.modules.names.${mod.key}` as never, {
+              defaultValue: mod.display_name,
+            })}
           </span>
           {description && (
             <span className="text-xs text-muted-foreground leading-[16px]">
@@ -228,7 +231,9 @@ function OptionalModuleCard({
       />
       <div className="flex flex-col gap-1">
         <span className="text-sm font-medium text-foreground leading-5">
-          {toSentenceCase(mod.display_name)}
+          {t(`wizard.modules.names.${mod.key}` as never, {
+            defaultValue: mod.display_name,
+          })}
         </span>
         {description && (
           <span className="text-xs text-muted-foreground leading-[16px]">

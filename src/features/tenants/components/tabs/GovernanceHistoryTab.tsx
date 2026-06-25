@@ -242,6 +242,17 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
 
   const events = data?.events ?? []
 
+  const filteredEvents = search.trim()
+    ? events.filter(event => {
+        const q = search.toLowerCase()
+        return (
+          formatEventTypeLabel(event.event_type).toLowerCase().includes(q) ||
+          (event.actor_display?.toLowerCase().includes(q) ?? false) ||
+          (event.reason?.toLowerCase().includes(q) ?? false)
+        )
+      })
+    : events
+
   function toggleEventType(type: string) {
     setEventTypeFilters(prev =>
       prev.includes(type) ? prev.filter(x => x !== type) : [...prev, type]
@@ -384,19 +395,19 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
           </p>
         )}
 
-        {!isLoading && !isError && events.length === 0 && (
+        {!isLoading && !isError && filteredEvents.length === 0 && (
           <p className="text-sm text-muted-foreground py-4 text-center">
             {t("detail.governance.noEvents")}
           </p>
         )}
 
-        {!isLoading && !isError && events.length > 0 && (
+        {!isLoading && !isError && filteredEvents.length > 0 && (
           <>
-            {events.map((event, i) => (
+            {filteredEvents.map((event, i) => (
               <EventRow
                 key={event.id}
                 event={event}
-                isLast={i === events.length - 1}
+                isLast={i === filteredEvents.length - 1}
               />
             ))}
           </>

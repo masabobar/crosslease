@@ -45,6 +45,7 @@ export default function TenantManagementPage() {
   const { t } = useTranslation("tenants")
   const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
+  const isAdmin = currentUser?.role === "system_admin"
   const canCreateTenant =
     !!currentUser && TENANT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
 
@@ -396,6 +397,7 @@ export default function TenantManagementPage() {
             tenants={tenants}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
+            isAdmin={isAdmin}
             onRowClick={tenant => navigate(tenantDetail(tenant.id))}
             onCreateTenant={
               canCreateTenant

@@ -61,19 +61,11 @@ export function SuspendTenantDialog({
         handleClose()
       },
       onError: err => {
-        if (err instanceof ApiError) {
-          switch (err.code) {
-            case "INVALID_TENANT_STATUS":
-              toast.error(
-                t("detail.suspendDialog.errors.INVALID_TENANT_STATUS")
-              )
-              return
-            default:
-              toast.error(t("detail.suspendDialog.errors.generic"))
-              return
-          }
-        }
-        toast.error(t("detail.suspendDialog.errors.generic"))
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       },
     })
   }
