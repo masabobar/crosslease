@@ -6,55 +6,16 @@ import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
 import { ActivateModuleDialog } from "@/features/tenants/components/ActivateModuleDialog"
 import { DeactivateModuleDialog } from "@/features/tenants/components/DeactivateModuleDialog"
 import { IntegrationBindingSection } from "@/features/tenants/components/IntegrationBindingSection"
+import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useTenantModules } from "@/features/tenants/hooks/useTenantModules"
 import type { TenantModuleEntry } from "@/features/tenants/api/schema"
+import { TenantModuleStatusSchema } from "@/features/tenants/api/schema"
 
 type ModulesConfigTabProps = {
   tenantId: string
   tenantName: string
   isAdmin: boolean
   isArchived?: boolean
-}
-
-type ModuleStatusKey =
-  | "active"
-  | "inactive"
-  | "pending_activation"
-  | "pending_enforcement"
-  | "pending_deactivation"
-
-type StatusConfig = { container: string; dot: string; text: string }
-
-const MODULE_STATUS_CONFIG: Record<ModuleStatusKey, StatusConfig> = {
-  active: {
-    container: "bg-[#d0fae5]",
-    dot: "bg-[#22c55e]",
-    text: "text-[#166534]",
-  },
-  inactive: {
-    container: "bg-[#f1f5f9]",
-    dot: "bg-[#94a3b8]",
-    text: "text-[#374151]",
-  },
-  pending_activation: {
-    container: "bg-[#dbeafe]",
-    dot: "bg-[#3b82f6]",
-    text: "text-[#1d4ed8]",
-  },
-  pending_enforcement: {
-    container: "bg-[#ffedd4]",
-    dot: "bg-[#f97316]",
-    text: "text-[#9a3412]",
-  },
-  pending_deactivation: {
-    container: "bg-[#ffedd4]",
-    dot: "bg-[#f97316]",
-    text: "text-[#9a3412]",
-  },
-}
-
-function isKnownModuleStatus(status: string): status is ModuleStatusKey {
-  return status in MODULE_STATUS_CONFIG
 }
 
 function formatDate(iso: string | null | undefined): string {
@@ -64,24 +25,6 @@ function formatDate(iso: string | null | undefined): string {
     month: "short",
     year: "numeric",
   })
-}
-
-function ModuleStatusBadge({ status }: { status: string }) {
-  const { t } = useTranslation("tenants")
-  const config: StatusConfig = isKnownModuleStatus(status)
-    ? MODULE_STATUS_CONFIG[status]
-    : MODULE_STATUS_CONFIG.inactive
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${config.container} ${config.text}`}
-    >
-      <span className={`size-1.5 rounded-full shrink-0 ${config.dot}`} />
-      {t(`detail.modules.status.${status}` as "detail.modules.status.active", {
-        defaultValue: status,
-      })}
-    </span>
-  )
 }
 
 function ModuleEntry({
@@ -101,14 +44,15 @@ function ModuleEntry({
 }) {
   const { t } = useTranslation("tenants")
 
+  const { enum: MS } = TenantModuleStatusSchema
   const showActivate =
     !module.always_on &&
-    (module.status === "inactive" || module.status === "pending_deactivation")
+    (module.status === MS.inactive || module.status === MS.pending_deactivation)
   const showDeactivate =
     !module.always_on &&
-    (module.status === "active" ||
-      module.status === "pending_activation" ||
-      module.status === "pending_enforcement")
+    (module.status === MS.active ||
+      module.status === MS.pending_activation ||
+      module.status === MS.pending_enforcement)
   const hasButton = isAdmin && (showActivate || showDeactivate)
 
   const description = t(

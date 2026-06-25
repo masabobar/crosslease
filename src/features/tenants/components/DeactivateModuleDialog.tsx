@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useDeactivateTenantModule } from "@/features/tenants/hooks/useDeactivateTenantModule"
 import { ModuleDeactivateFormSchema } from "@/features/tenants/api/schema"
 import type {
@@ -18,28 +19,6 @@ import type {
 import { ApiError } from "@/lib/api"
 
 const DEP_CHECK_DELAY_MS = 1_200
-
-type ModuleStatusBadgeProps = {
-  status: string
-  label: string
-}
-
-function ModuleStatusBadge({ status, label }: ModuleStatusBadgeProps) {
-  const containerClass =
-    status === "active"
-      ? "bg-[#d0fae5] text-[#166534]"
-      : "bg-[#f1f5f9] text-[#374151]"
-  const dotClass = status === "active" ? "bg-[#22c55e]" : "bg-[#94a3b8]"
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${containerClass}`}
-    >
-      <span className={`size-1.5 rounded-full shrink-0 ${dotClass}`} />
-      {label}
-    </span>
-  )
-}
 
 type Props = {
   open: boolean
@@ -108,11 +87,6 @@ export function DeactivateModuleDialog({
     )
   }
 
-  const statusLabel = t(
-    `detail.modules.status.${module.status}` as "detail.modules.status.inactive",
-    { defaultValue: module.status }
-  )
-
   const isChecking = depCheck === "checking"
 
   return (
@@ -145,7 +119,7 @@ export function DeactivateModuleDialog({
               <span className="text-foreground">
                 {t("detail.modules.deactivateDialog.info.currentStatus")}
               </span>
-              <ModuleStatusBadge status={module.status} label={statusLabel} />
+              <ModuleStatusBadge status={module.status} />
             </div>
           </div>
 

@@ -18,6 +18,7 @@ import type {
   TenantListItem,
   TenantStatus,
 } from "@/features/tenants/api/schema"
+import { TenantStatusSchema } from "@/features/tenants/api/schema"
 
 const COL_TENANT = "flex-1 min-w-[180px]"
 const COL_CODE = "flex-1 min-w-[140px]"
@@ -243,32 +244,34 @@ function TenantTable({
                       <MoreHorizontal size={16} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      {isAdmin && tenant.status === "active" && (
-                        <DropdownMenuItem
-                          data-testid={`tenant-row-menu-suspend-${tenant.id}`}
-                          onSelect={() => openSuspend(tenant)}
-                        >
-                          {t("list.actions.suspend")}
-                        </DropdownMenuItem>
-                      )}
-                      {isAdmin && tenant.status === "suspended" && (
-                        <>
+                      {isAdmin &&
+                        tenant.status === TenantStatusSchema.enum.active && (
                           <DropdownMenuItem
-                            data-testid={`tenant-row-menu-reactivate-${tenant.id}`}
-                            onSelect={() => openReactivate(tenant)}
+                            data-testid={`tenant-row-menu-suspend-${tenant.id}`}
+                            onSelect={() => openSuspend(tenant)}
                           >
-                            {t("list.actions.reactivate")}
+                            {t("list.actions.suspend")}
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            data-testid={`tenant-row-menu-archive-${tenant.id}`}
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => openArchive(tenant)}
-                          >
-                            {t("list.actions.archive")}
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                        )}
+                      {isAdmin &&
+                        tenant.status === TenantStatusSchema.enum.suspended && (
+                          <>
+                            <DropdownMenuItem
+                              data-testid={`tenant-row-menu-reactivate-${tenant.id}`}
+                              onSelect={() => openReactivate(tenant)}
+                            >
+                              {t("list.actions.reactivate")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              data-testid={`tenant-row-menu-archive-${tenant.id}`}
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => openArchive(tenant)}
+                            >
+                              {t("list.actions.archive")}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
