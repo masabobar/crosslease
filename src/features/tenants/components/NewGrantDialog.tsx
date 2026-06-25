@@ -41,11 +41,16 @@ const ACCESS_REASONS: AccessReason[] = [
 const MAX_GRANT_DAYS = 30
 
 function toISOFromDate(dateStr: string): string {
-  return `${dateStr}T00:00:00.000Z`
+  const [year, month, day] = dateStr.split("-").map(Number)
+  // Construct local midnight; if it's already past (i.e. user picked today), use now
+  const localMidnight = new Date(year, month - 1, day, 0, 0, 0, 0)
+  const now = new Date()
+  return (localMidnight < now ? now : localMidnight).toISOString()
 }
 
 function toISOUntilDate(dateStr: string): string {
-  return `${dateStr}T23:59:59.999Z`
+  const [year, month, day] = dateStr.split("-").map(Number)
+  return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString()
 }
 
 function userInitials(user: UserListItem): string {
@@ -321,7 +326,7 @@ export function NewGrantDialog({
                       setValidFrom(v)
                     }}
                     placeholder={t("list.filters.from")}
-                    maxDate={new Date()}
+                    minDate={parseISO(today)}
                     error={!!errors.valid_from}
                     data-testid="grant-valid-from"
                   />

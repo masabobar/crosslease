@@ -46,6 +46,8 @@ import { buildPageNumbers } from "@/lib/pagination"
 import { getUserFilterVisibility } from "@/features/users/utils"
 import { useUserManagementHandlers } from "@/features/users/hooks/useUserManagementHandlers"
 import { FilterPill } from "@/components/ui/filter-pill"
+import { ApiError } from "@/lib/api"
+import { toast } from "sonner"
 
 type ResetMfaConfirmDialogProps = {
   user: { id: string; first_name: string; last_name: string }
@@ -495,6 +497,15 @@ export default function UserManagementPage() {
           onConfirm={() => {
             resetMfaMutation.mutate(resetMfaUser.id, {
               onSuccess: handleResetMfaSuccess,
+              onError: (err: unknown) => {
+                toast.error(
+                  err instanceof ApiError
+                    ? t(`errors.${err.code}`, {
+                        defaultValue: t("errors.generic"),
+                      })
+                    : t("errors.generic")
+                )
+              },
             })
           }}
         />
