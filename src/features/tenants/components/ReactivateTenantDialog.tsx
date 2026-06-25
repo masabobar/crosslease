@@ -61,19 +61,11 @@ export function ReactivateTenantDialog({
         handleClose()
       },
       onError: err => {
-        if (err instanceof ApiError) {
-          switch (err.code) {
-            case "TENANT_NOT_REACTIVATABLE":
-              toast.error(
-                t("detail.reactivateDialog.errors.TENANT_NOT_REACTIVATABLE")
-              )
-              return
-            default:
-              toast.error(t("detail.reactivateDialog.errors.generic"))
-              return
-          }
-        }
-        toast.error(t("detail.reactivateDialog.errors.generic"))
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       },
     })
   }

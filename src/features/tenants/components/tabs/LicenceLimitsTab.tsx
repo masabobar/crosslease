@@ -1,8 +1,10 @@
+import { useState } from "react"
 import { SquarePen } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { isFullTenantResponse } from "@/features/tenants/api/schema"
 import type { TenantDetail } from "@/features/tenants/api/schema"
+import { EditLicenceLimitsDialog } from "@/features/tenants/components/EditLicenceLimitsDialog"
 
 function ProgressBar({ used, max }: { used: number; max: number }) {
   const pct = max > 0 ? Math.round((used / max) * 100) : 0
@@ -50,10 +52,13 @@ type LicenceLimitsTabProps = {
 
 export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
   const { t } = useTranslation("tenants")
+  const [editOpen, setEditOpen] = useState(false)
 
   if (!isFullTenantResponse(tenant)) return null
 
   const {
+    id,
+    name,
     max_lc_count,
     lc_utilisation,
     max_bank_user_count,
@@ -63,80 +68,96 @@ export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
   } = tenant
 
   return (
-    <div
-      className="flex flex-col gap-6"
-      data-testid="tab-content-licence-limits"
-    >
-      <div className="bg-slate-100 border border-border rounded-[10px] flex flex-col">
-        {/* Header */}
-        <div className="flex items-start justify-between px-3 py-2.5">
-          <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
-            <span className="text-xs font-semibold text-foreground">
-              {t("detail.licenceLimits.sectionTitle")}
-            </span>
+    <>
+      <div
+        className="flex flex-col gap-6"
+        data-testid="tab-content-licence-limits"
+      >
+        <div className="bg-slate-100 border border-border rounded-[10px] flex flex-col">
+          {/* Header */}
+          <div className="flex items-start justify-between px-3 py-2.5">
+            <div className="flex flex-col gap-1 flex-1 min-w-0 pr-4">
+              <span className="text-xs font-semibold text-foreground">
+                {t("detail.licenceLimits.sectionTitle")}
+              </span>
+              <p className="text-xs text-muted-foreground">
+                {t("detail.licenceLimits.sectionDescription")}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="h-auto gap-1.5 px-2.5 py-1 text-sm rounded-[10px] shrink-0"
+              data-testid="btn-edit-limits"
+              onClick={() => setEditOpen(true)}
+            >
+              <SquarePen size={14} />
+              {t("detail.licenceLimits.editLimits")}
+            </Button>
+          </div>
+
+          {/* Body */}
+          <div className="bg-background border border-border rounded-b-[10px] p-4 flex flex-col gap-4">
+            <div className="flex gap-4">
+              <LimitCard
+                title={t("detail.licenceLimits.leasingCompanies.title")}
+                description={t(
+                  "detail.licenceLimits.leasingCompanies.description"
+                )}
+              >
+                <ProgressBar used={lc_utilisation} max={max_lc_count} />
+              </LimitCard>
+
+              <LimitCard
+                title={t("detail.licenceLimits.bankUsers.title")}
+                description={t("detail.licenceLimits.bankUsers.description")}
+              >
+                <ProgressBar
+                  used={bank_user_utilisation}
+                  max={max_bank_user_count}
+                />
+              </LimitCard>
+
+              <LimitCard
+                title={t("detail.licenceLimits.usersPerLc.title")}
+                description={t("detail.licenceLimits.usersPerLc.description")}
+              >
+                <p className="text-sm">
+                  <span className="text-muted-foreground">
+                    {t("detail.licenceLimits.usersPerLc.highestActive")}
+                  </span>{" "}
+                  <span className="text-foreground">
+                    {lc_user_highest_active}/{max_users_per_lc}
+                  </span>
+                </p>
+              </LimitCard>
+            </div>
+
+            {/* Footer note */}
             <p className="text-xs text-muted-foreground">
-              {t("detail.licenceLimits.sectionDescription")}
+              {t("detail.licenceLimits.defaultsPrefix")}{" "}
+              <span className="text-foreground">{max_lc_count}</span>{" "}
+              {t("detail.licenceLimits.defaultsLc")} ·{" "}
+              <span className="text-foreground">{max_bank_user_count}</span>{" "}
+              {t("detail.licenceLimits.defaultsBankUsers")} ·{" "}
+              <span className="text-foreground">{max_users_per_lc}</span>{" "}
+              {t("detail.licenceLimits.defaultsUsersPerLc")}
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="h-auto gap-1.5 px-2.5 py-1 text-sm rounded-[10px] shrink-0"
-            data-testid="btn-edit-limits"
-          >
-            <SquarePen size={14} />
-            {t("detail.licenceLimits.editLimits")}
-          </Button>
-        </div>
-
-        {/* Body */}
-        <div className="bg-background border border-border rounded-b-[10px] p-4 flex flex-col gap-4">
-          <div className="flex gap-4">
-            <LimitCard
-              title={t("detail.licenceLimits.leasingCompanies.title")}
-              description={t(
-                "detail.licenceLimits.leasingCompanies.description"
-              )}
-            >
-              <ProgressBar used={lc_utilisation} max={max_lc_count} />
-            </LimitCard>
-
-            <LimitCard
-              title={t("detail.licenceLimits.bankUsers.title")}
-              description={t("detail.licenceLimits.bankUsers.description")}
-            >
-              <ProgressBar
-                used={bank_user_utilisation}
-                max={max_bank_user_count}
-              />
-            </LimitCard>
-
-            <LimitCard
-              title={t("detail.licenceLimits.usersPerLc.title")}
-              description={t("detail.licenceLimits.usersPerLc.description")}
-            >
-              <p className="text-sm">
-                <span className="text-muted-foreground">
-                  {t("detail.licenceLimits.usersPerLc.highestActive")}
-                </span>{" "}
-                <span className="text-foreground">
-                  {lc_user_highest_active}/{max_users_per_lc}
-                </span>
-              </p>
-            </LimitCard>
-          </div>
-
-          {/* Footer note */}
-          <p className="text-xs text-muted-foreground">
-            {t("detail.licenceLimits.defaultsPrefix")}{" "}
-            <span className="text-foreground">{max_lc_count}</span>{" "}
-            {t("detail.licenceLimits.defaultsLc")} ·{" "}
-            <span className="text-foreground">{max_bank_user_count}</span>{" "}
-            {t("detail.licenceLimits.defaultsBankUsers")} ·{" "}
-            <span className="text-foreground">{max_users_per_lc}</span>{" "}
-            {t("detail.licenceLimits.defaultsUsersPerLc")}
-          </p>
         </div>
       </div>
-    </div>
+
+      <EditLicenceLimitsDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        tenantId={id}
+        tenantName={name}
+        maxLcCount={max_lc_count}
+        maxBankUserCount={max_bank_user_count}
+        maxUsersPerLc={max_users_per_lc}
+        lcUtilisation={lc_utilisation}
+        bankUserUtilisation={bank_user_utilisation}
+        lcUserHighestActive={lc_user_highest_active}
+      />
+    </>
   )
 }

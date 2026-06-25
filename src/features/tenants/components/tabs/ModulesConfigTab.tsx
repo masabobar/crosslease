@@ -1,15 +1,19 @@
-import type { ReactNode } from "react"
+import { useState } from "react"
 import { Lock, SquarePen, ShieldAlert } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
+import { ActivateModuleDialog } from "@/features/tenants/components/ActivateModuleDialog"
+import { DeactivateModuleDialog } from "@/features/tenants/components/DeactivateModuleDialog"
+import { IntegrationBindingSection } from "@/features/tenants/components/IntegrationBindingSection"
 import { useTenantModules } from "@/features/tenants/hooks/useTenantModules"
-import { useTenantIntegrationBinding } from "@/features/tenants/hooks/useTenantIntegrationBinding"
 import type { TenantModuleEntry } from "@/features/tenants/api/schema"
 
 type ModulesConfigTabProps = {
   tenantId: string
+  tenantName: string
   isAdmin: boolean
+  isArchived?: boolean
 }
 
 type ModuleStatusKey =
@@ -85,11 +89,15 @@ function ModuleEntry({
   isFirst,
   isLast,
   isAdmin,
+  onActivate,
+  onDeactivate,
 }: {
   module: TenantModuleEntry
   isFirst: boolean
   isLast: boolean
   isAdmin: boolean
+  onActivate: (module: TenantModuleEntry) => void
+  onDeactivate: (module: TenantModuleEntry) => void
 }) {
   const { t } = useTranslation("tenants")
 
@@ -151,6 +159,8 @@ function ModuleEntry({
             variant="outline"
             size="sm"
             className="h-auto px-2.5 py-1 text-sm rounded-[10px]"
+            onClick={() => onActivate(module)}
+            data-testid={`activate-module-${module.key}`}
           >
             {t("detail.modules.activate")}
           </Button>
@@ -160,6 +170,8 @@ function ModuleEntry({
             variant="outline"
             size="sm"
             className="h-auto px-2.5 py-1 text-sm rounded-[10px]"
+            onClick={() => onDeactivate(module)}
+            data-testid={`deactivate-module-${module.key}`}
           >
             {t("detail.modules.deactivate")}
           </Button>
@@ -172,9 +184,13 @@ function ModuleEntry({
 function ModuleColumn({
   modules,
   isAdmin,
+  onActivate,
+  onDeactivate,
 }: {
   modules: TenantModuleEntry[]
   isAdmin: boolean
+  onActivate: (module: TenantModuleEntry) => void
+  onDeactivate: (module: TenantModuleEntry) => void
 }) {
   return (
     <div className="flex-1 min-w-0 flex flex-col gap-3">
@@ -185,99 +201,10 @@ function ModuleColumn({
           isFirst={i === 0}
           isLast={i === modules.length - 1}
           isAdmin={isAdmin}
+          onActivate={onActivate}
+          onDeactivate={onDeactivate}
         />
       ))}
-    </div>
-  )
-}
-
-function IntegrationBindingBody({ tenantId }: { tenantId: string }) {
-  const { t } = useTranslation("tenants")
-  const { data: binding, isError } = useTenantIntegrationBinding(tenantId)
-
-  if (isError) {
-    return (
-      <p className="text-sm text-muted-foreground py-2">
-        {t("errors.generic")}
-      </p>
-    )
-  }
-
-  if (!binding) {
-    return <div className="h-8 animate-pulse bg-muted rounded" />
-  }
-
-  const activeConfig =
-    binding.integration_active === true
-      ? {
-          container: "bg-[#d0fae5]",
-          dot: "bg-[#22c55e]",
-          text: "text-[#166534]",
-          label: t("detail.modules.status.active"),
-        }
-      : {
-          container: "bg-[#f1f5f9]",
-          dot: "bg-[#94a3b8]",
-          text: "text-[#374151]",
-          label: t("detail.modules.status.inactive"),
-        }
-
-  const rows: { label: string; value: ReactNode }[] = [
-    {
-      label: t("detail.modules.integration.integrationActive"),
-      value: (
-        <span
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${activeConfig.container} ${activeConfig.text}`}
-        >
-          <span
-            className={`size-1.5 rounded-full shrink-0 ${activeConfig.dot}`}
-          />
-          {activeConfig.label}
-        </span>
-      ),
-    },
-    {
-      label: t("detail.modules.integration.endpointUrl"),
-      value: binding.endpoint_url ?? "—",
-    },
-    {
-      label: t("detail.modules.integration.credentialScope"),
-      value: binding.credential_scope_identifier ?? "—",
-    },
-    {
-      label: t("detail.modules.integration.disbursementNote"),
-      value: binding.disbursement_execution_boundary_note ?? "—",
-    },
-    {
-      label: t("detail.modules.integration.createdBy"),
-      value: binding.created_by
-        ? `${binding.created_by} · ${formatDate(binding.created_at)}`
-        : "—",
-    },
-    {
-      label: t("detail.modules.integration.lastModifiedBy"),
-      value: binding.last_modified_by
-        ? `${binding.last_modified_by} · ${formatDate(binding.updated_at)}`
-        : "—",
-    },
-  ]
-
-  return (
-    <div className="flex gap-16 text-sm">
-      <div className="flex flex-col gap-3 text-muted-foreground shrink-0">
-        {rows.map(row => (
-          <div key={row.label} className="leading-5">
-            {row.label}
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-col gap-3 text-foreground min-w-0">
-        {rows.map(row => (
-          <div key={row.label} className="leading-5">
-            {row.value}
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
@@ -418,43 +345,52 @@ function ConfigOverrideCard({ isAdmin }: { isAdmin: boolean }) {
   )
 }
 
-export function ModulesConfigTab({ tenantId, isAdmin }: ModulesConfigTabProps) {
+export function ModulesConfigTab({
+  tenantId,
+  tenantName,
+  isAdmin,
+  isArchived = false,
+}: ModulesConfigTabProps) {
   const { t } = useTranslation("tenants")
   const { data: modulesData, isLoading, isError } = useTenantModules(tenantId)
+  const [activatingModule, setActivatingModule] =
+    useState<TenantModuleEntry | null>(null)
+  const [deactivatingModule, setDeactivatingModule] =
+    useState<TenantModuleEntry | null>(null)
+  const [bindingDialogOpen, setBindingDialogOpen] = useState(false)
 
+  const canEdit = isAdmin && !isArchived
   const modules = modulesData?.modules ?? []
   const colSize = Math.max(1, Math.ceil(modules.length / 3))
   const col1 = modules.slice(0, colSize)
   const col2 = modules.slice(colSize, colSize * 2)
   const col3 = modules.slice(colSize * 2)
 
-  const addModuleButton = isAdmin ? (
-    <Button
-      variant="outline"
-      size="sm"
-      className="h-auto px-2.5 py-1 text-sm rounded-[10px]"
-    >
-      {t("detail.modules.addModule")}
-    </Button>
-  ) : undefined
-
-  const editIntegrationButton = isAdmin ? (
-    <Button
-      variant="outline"
-      className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
-    >
-      <SquarePen size={14} />
-      {t("detail.modules.edit")}
-    </Button>
-  ) : undefined
-
   return (
     <div className="flex flex-col gap-6" data-testid="tab-content-modules">
+      {activatingModule && (
+        <ActivateModuleDialog
+          open={activatingModule !== null}
+          onOpenChange={open => {
+            if (!open) setActivatingModule(null)
+          }}
+          tenantId={tenantId}
+          module={activatingModule}
+        />
+      )}
+      {deactivatingModule && (
+        <DeactivateModuleDialog
+          open={deactivatingModule !== null}
+          onOpenChange={open => {
+            if (!open) setDeactivatingModule(null)
+          }}
+          tenantId={tenantId}
+          module={deactivatingModule}
+        />
+      )}
+
       {/* MODULE PROFILE */}
-      <TenantInfoCard
-        title={t("detail.modules.sections.moduleProfile")}
-        editButton={addModuleButton}
-      >
+      <TenantInfoCard title={t("detail.modules.sections.moduleProfile")}>
         {isLoading && <div className="h-32 animate-pulse bg-muted rounded" />}
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
@@ -468,17 +404,32 @@ export function ModulesConfigTab({ tenantId, isAdmin }: ModulesConfigTabProps) {
         )}
         {!isLoading && !isError && modules.length > 0 && (
           <div className="flex items-start">
-            <ModuleColumn modules={col1} isAdmin={isAdmin} />
+            <ModuleColumn
+              modules={col1}
+              isAdmin={canEdit}
+              onActivate={setActivatingModule}
+              onDeactivate={setDeactivatingModule}
+            />
             {col2.length > 0 && (
               <>
                 <div className="w-px bg-border shrink-0 mx-3" />
-                <ModuleColumn modules={col2} isAdmin={isAdmin} />
+                <ModuleColumn
+                  modules={col2}
+                  isAdmin={canEdit}
+                  onActivate={setActivatingModule}
+                  onDeactivate={setDeactivatingModule}
+                />
               </>
             )}
             {col3.length > 0 && (
               <>
                 <div className="w-px bg-border shrink-0 mx-3" />
-                <ModuleColumn modules={col3} isAdmin={isAdmin} />
+                <ModuleColumn
+                  modules={col3}
+                  isAdmin={canEdit}
+                  onActivate={setActivatingModule}
+                  onDeactivate={setDeactivatingModule}
+                />
               </>
             )}
           </div>
@@ -487,16 +438,20 @@ export function ModulesConfigTab({ tenantId, isAdmin }: ModulesConfigTabProps) {
 
       {/* CONFIGURATION OVERRIDE + INTEGRATION BINDING */}
       <div className="flex gap-6 items-start">
+        {isAdmin && (
+          <div className="flex-1 min-w-0">
+            <ConfigOverrideCard isAdmin={canEdit} />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
-          <ConfigOverrideCard isAdmin={isAdmin} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <TenantInfoCard
-            title={t("detail.modules.sections.integrationBinding")}
-            editButton={editIntegrationButton}
-          >
-            <IntegrationBindingBody tenantId={tenantId} />
-          </TenantInfoCard>
+          <IntegrationBindingSection
+            tenantId={tenantId}
+            tenantName={tenantName}
+            isAdmin={isAdmin}
+            isArchived={isArchived}
+            dialogOpen={bindingDialogOpen}
+            onDialogOpenChange={setBindingDialogOpen}
+          />
         </div>
       </div>
     </div>

@@ -28,7 +28,8 @@ import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
 import { formatLastLogin, getInitials } from "@/lib/formatters"
 import { getUserActionVisibility } from "@/features/users/utils"
 import { useToastStore } from "@/store/toastStore"
-import { handleApiError } from "@/lib/handleApiError"
+import { toast } from "sonner"
+import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import type { UserActionType, UserRole } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
@@ -117,7 +118,11 @@ function DrawerContent({
       })
       .catch((err: unknown) => {
         setShowMfaResetConfirm(false)
-        handleApiError(err, showToast, t, t("errors.generic"))
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       })
   }
 

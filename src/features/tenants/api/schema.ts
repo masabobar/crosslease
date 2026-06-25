@@ -210,6 +210,20 @@ export const SupportGrantSchema = z.object({
 })
 export type SupportGrant = z.infer<typeof SupportGrantSchema>
 
+export const CreateGrantFormSchema = z.object({
+  grantee_id: z.string().uuid("required"),
+  access_reason: AccessReasonSchema,
+  valid_from: z.string().min(1, "required"),
+  valid_until: z.string().min(1, "required"),
+  additional_context: z.string().max(500).nullable().optional(),
+})
+export type CreateGrantForm = z.infer<typeof CreateGrantFormSchema>
+
+export const RevokeGrantFormSchema = z.object({
+  revocation_reason: z.string().min(10, "tooShort"),
+})
+export type RevokeGrantForm = z.infer<typeof RevokeGrantFormSchema>
+
 export const AccessPolicyFlagRecordSchema = z.object({
   enabled: z.boolean(),
   modified_by: z.string().nullable(),
@@ -241,6 +255,21 @@ export const IntegrationBindingResponseSchema = z.object({
 })
 export type IntegrationBindingResponse = z.infer<
   typeof IntegrationBindingResponseSchema
+>
+
+export const UpsertIntegrationBindingFormSchema = z.object({
+  endpoint_url: z
+    .string()
+    .min(1, "required")
+    .url("invalidUrl")
+    .refine(v => v.startsWith("https://"), "mustBeHttps"),
+  credential_scope_identifier: z.string().min(1, "required"),
+  integration_active: z.boolean(),
+  disbursement_execution_boundary_note: z.string().optional(),
+  justification: z.string().min(20, "justificationTooShort"),
+})
+export type UpsertIntegrationBindingForm = z.infer<
+  typeof UpsertIntegrationBindingFormSchema
 >
 
 export const UpdateAccessPolicyFormSchema = z.object({
@@ -280,15 +309,55 @@ export const UpdateTenantFormSchema = z.object({
 })
 export type UpdateTenantForm = z.infer<typeof UpdateTenantFormSchema>
 
+export const ModuleActivateFormSchema = z.object({
+  justification: z.string().min(10, "justificationTooShort"),
+  effective_from: z.string().optional(),
+})
+export type ModuleActivateForm = z.infer<typeof ModuleActivateFormSchema>
+
+export const ModuleDeactivateFormSchema = z.object({
+  justification: z.string().min(20, "justificationTooShort"),
+})
+export type ModuleDeactivateForm = z.infer<typeof ModuleDeactivateFormSchema>
+
 export const SuspendTenantFormSchema = z.object({
   justification: z.string().min(30, "justificationTooShort"),
 })
 export type SuspendTenantForm = z.infer<typeof SuspendTenantFormSchema>
 
+export const EditLicenceLimitsFormSchema = z.object({
+  max_lc_count: z.number().int().min(1),
+  max_bank_user_count: z.number().int().min(1),
+  max_users_per_lc: z.number().int().min(1),
+})
+export type EditLicenceLimitsForm = z.infer<typeof EditLicenceLimitsFormSchema>
+
 export const ReactivateTenantFormSchema = z.object({
   justification: z.string().min(20, "justificationTooShort"),
 })
 export type ReactivateTenantForm = z.infer<typeof ReactivateTenantFormSchema>
+
+export const ArchiveTenantFormSchema = z.object({
+  justification: z.string().min(50, "justificationTooShort"),
+  irreversibility_acknowledgement: z.boolean().refine(v => v === true, {
+    message: "mustAcknowledge",
+  }),
+  active_user_acknowledgement: z.boolean().optional(),
+})
+export type ArchiveTenantForm = z.infer<typeof ArchiveTenantFormSchema>
+
+export function createArchiveTenantFormSchema(hasActiveUsers: boolean) {
+  if (!hasActiveUsers) return ArchiveTenantFormSchema
+  return ArchiveTenantFormSchema.superRefine((data, ctx) => {
+    if (!data.active_user_acknowledgement) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["active_user_acknowledgement"],
+        message: "mustAcknowledge",
+      })
+    }
+  })
+}
 
 export function createUpdateTenantFormSchema(originalName: string) {
   return UpdateTenantFormSchema.superRefine((data, ctx) => {

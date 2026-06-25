@@ -128,25 +128,19 @@ export default function CreateTenantPage() {
         setStep("success")
       } catch (err) {
         if (err instanceof ApiError) {
-          const errMessage = t(`errors.${err.code}`, {
-            defaultValue: t("errors.generic"),
-          })
           if (
-            err.code === "TENANT_CODE_ALREADY_EXISTS" ||
-            (err.errors ?? []).some(e => e.field === "code")
-          ) {
-            form.setError("code", { message: errMessage })
-            setStep("identity")
-            toast.error(errMessage)
-          } else if (
             err.code === "TENANT_NAME_ALREADY_EXISTS" ||
-            (err.errors ?? []).some(e => e.field === "name")
+            err.code === "TENANT_ALREADY_EXISTS"
           ) {
-            form.setError("name", { message: errMessage })
+            form.setError("name", {
+              type: "server",
+              message: t("errors.TENANT_NAME_ALREADY_EXISTS"),
+            })
             setStep("identity")
-            toast.error(errMessage)
           } else {
-            toast.error(errMessage)
+            toast.error(
+              t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            )
           }
         } else {
           toast.error(t("errors.generic"))

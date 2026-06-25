@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { SquarePen } from "lucide-react"
@@ -90,6 +90,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     isAdmin ? tenantId : null
   )
   const fullTenant = isFullTenantResponse(tenant) ? tenant : null
+  const isArchived = tenant.status === "archived"
   const [isEditingIdentity, setIsEditingIdentity] = useState(false)
 
   const updateTenantMutation = useUpdateTenant(tenant.id)
@@ -100,6 +101,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<UpdateTenantForm>({
     resolver: zodResolver(createUpdateTenantFormSchema(fullTenant?.name ?? "")),
@@ -111,6 +113,10 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       justification: "",
     },
   })
+
+  const watchedName = useWatch({ control, name: "name" })
+  const nameChanged =
+    (watchedName ?? "").trim() !== (fullTenant?.name ?? "").trim()
 
   useEffect(() => {
     if (isEditingIdentity && fullTenant) {
@@ -180,9 +186,12 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       if (err instanceof ApiError) {
         switch (err.code) {
           case "TENANT_NAME_ALREADY_EXISTS":
-            toast.error(
-              t("detail.overview.editDialog.errors.TENANT_NAME_ALREADY_EXISTS")
-            )
+            setError("name", {
+              type: "server",
+              message: t(
+                "detail.overview.editDialog.errors.TENANT_NAME_ALREADY_EXISTS"
+              ),
+            })
             return
           default:
             toast.error(t("detail.overview.editDialog.errors.generic"))
@@ -233,7 +242,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         {t("detail.overview.confirmChange")}
       </Button>
     </div>
-  ) : fullTenant && isAdmin ? (
+  ) : fullTenant && isAdmin && !isArchived ? (
     <Button
       type="button"
       variant="outline"
@@ -392,7 +401,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         {t("detail.overview.confirmChange")}
       </Button>
     </div>
-  ) : (
+  ) : !isArchived ? (
     <Button
       type="button"
       variant="outline"
@@ -403,321 +412,329 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       <SquarePen size={14} />
       {t("detail.overview.edit")}
     </Button>
-  )
+  ) : undefined
 
   return (
-    <div className="flex gap-6" data-testid="tab-content-overview">
-      {/* Left column: identity + governance */}
-      <div className="flex flex-col gap-6 flex-1 min-w-0">
-        <TenantInfoCard
-          title={t("detail.overview.tenantIdentity.title")}
-          editButton={identityCardActions}
-        >
-          {isEditingIdentity && fullTenant ? (
-            <form
-              id="identity-edit-form"
-              onSubmit={handleSubmit(onSubmit)}
-              noValidate
-            >
-              <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-sm">
-                {/* Tenant ID — read-only */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.tenantId")}
-                </span>
-                <Input
-                  disabled
-                  defaultValue={fullTenant.tenant_id}
-                  className="h-8 text-sm"
-                />
-
-                {/* Tenant name — editable */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.tenantName")}
-                </span>
-                <div className="flex flex-col gap-0.5">
-                  <Input
-                    {...register("name")}
-                    className="h-8 text-sm"
-                    data-testid="edit-tenant-name"
-                    aria-invalid={!!errors.name}
-                  />
-                  {errors.name && (
-                    <p className="text-xs text-destructive">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Tenant code — read-only */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.tenantCode")}
-                </span>
-                <Input
-                  disabled
-                  defaultValue={fullTenant.code}
-                  className="h-8 text-sm"
-                />
-
-                {/* Tenant type — read-only */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.tenantType")}
-                </span>
-                <Input
-                  disabled
-                  defaultValue={t(
-                    `tenantTypes.${fullTenant.tenant_type}` as "tenantTypes.bank"
-                  )}
-                  className="h-8 text-sm"
-                />
-
-                {/* Legal entity name — editable */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.legalEntityName")}
-                </span>
-                <div className="flex flex-col gap-0.5">
-                  <Input
-                    {...register("legal_entity_name")}
-                    className="h-8 text-sm"
-                    data-testid="edit-legal-entity-name"
-                    aria-invalid={!!errors.legal_entity_name}
-                  />
-                  {errors.legal_entity_name && (
-                    <p className="text-xs text-destructive">
-                      {errors.legal_entity_name.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Country — read-only */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.country")}
-                </span>
-                <Input
-                  disabled
-                  defaultValue={formatCountry(fullTenant.country)}
-                  className="h-8 text-sm"
-                />
-
-                {/* Default currency — read-only */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.defaultCurrency")}
-                </span>
-                <Input
-                  disabled
-                  defaultValue={formatCurrency(fullTenant.default_currency)}
-                  className="h-8 text-sm"
-                />
-
-                {/* Description — editable textarea */}
-                <span className="flex items-start pt-1.5 text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.description")}
-                </span>
-                <Textarea
-                  {...register("description")}
-                  className="resize-none text-sm"
-                  rows={2}
-                  data-testid="edit-description"
-                />
-
-                {/* Justification for name change — always visible in edit mode */}
-                <span className="flex items-start pt-1.5 text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.justification")}
-                  <span className="text-destructive ml-0.5">*</span>
-                </span>
-                <div className="flex flex-col gap-0.5">
-                  <Textarea
-                    {...register("justification")}
-                    className="resize-none text-sm"
-                    rows={2}
-                    data-testid="edit-justification"
-                    aria-invalid={!!errors.justification}
-                    placeholder={t(
-                      "detail.overview.editDialog.fields.justificationHint"
-                    )}
-                  />
-                  {errors.justification && (
-                    <p className="text-xs text-destructive">
-                      {t(
-                        "detail.overview.editDialog.errors.justificationRequired"
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                {/* Legal hold — switch */}
-                <span className="flex h-8 items-center text-muted-foreground">
-                  {t("detail.overview.tenantIdentity.legalHold")}
-                </span>
-                <div className="flex h-8 items-center">
-                  <Controller
-                    control={control}
-                    name="legal_hold_flag"
-                    render={({ field }) => (
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        aria-label={t(
-                          "detail.overview.tenantIdentity.legalHold"
-                        )}
-                        data-testid="edit-legal-hold-flag"
-                      />
-                    )}
-                  />
-                </div>
-              </div>
-            </form>
-          ) : (
-            <InfoRows rows={identityRows} />
-          )}
-        </TenantInfoCard>
-
-        <TenantInfoCard title={t("detail.overview.governanceActors.title")}>
-          <InfoRows rows={governanceRows} />
-        </TenantInfoCard>
-      </div>
-
-      {/* Right column: lifecycle + access policy */}
-      <div className="flex flex-col gap-6 flex-1 min-w-0">
-        <TenantInfoCard title={t("detail.overview.lifecycleStatus.title")}>
-          <InfoRows rows={lifecycleRows} />
-        </TenantInfoCard>
-
-        {isAdmin && (
+    <div className="flex flex-col gap-6" data-testid="tab-content-overview">
+      <div className="flex gap-6">
+        {/* Left column: identity + governance */}
+        <div className="flex flex-col gap-6 flex-1 min-w-0">
           <TenantInfoCard
-            title={t("detail.overview.accessPolicy.title")}
-            editButton={accessPolicyCardActions}
+            title={t("detail.overview.tenantIdentity.title")}
+            editButton={identityCardActions}
           >
-            {isEditingAccessPolicy ? (
+            {isEditingIdentity && fullTenant ? (
               <form
-                id="access-policy-edit-form"
-                onSubmit={apHandleSubmit(onSubmitAccessPolicy)}
+                id="identity-edit-form"
+                onSubmit={handleSubmit(onSubmit)}
                 noValidate
               >
-                <div className="flex flex-col gap-3 text-sm">
-                  {[
-                    {
-                      key: "support_read_only_access_allowed" as const,
-                      label: t(
-                        "detail.overview.accessPolicy.supportReadOnlyAccess"
-                      ),
-                      flag: accessPolicy?.support_read_only_access,
-                    },
-                    {
-                      key: "auditor_access_allowed" as const,
-                      label: t("detail.overview.accessPolicy.auditorAccess"),
-                      flag: accessPolicy?.auditor_access,
-                    },
-                    {
-                      key: "lc_portal_enabled" as const,
-                      label: t("detail.overview.accessPolicy.lcPortal"),
-                      flag: accessPolicy?.lc_portal,
-                    },
-                  ].map(item => (
-                    <div
-                      key={item.key}
-                      className="flex items-start justify-between gap-4"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-muted-foreground leading-5">
-                          {item.label}
-                        </span>
-                        {(item.flag?.modified_by ?? item.flag?.modified_at) && (
-                          <span className="text-xs text-muted-foreground">
-                            {t("detail.overview.accessPolicy.modifiedBy", {
-                              name: item.flag?.modified_by ?? "",
-                              date: formatDate(item.flag?.modified_at),
-                            })}
-                          </span>
-                        )}
-                      </div>
-                      <Controller
-                        control={apControl}
-                        name={item.key}
-                        render={({ field }) => (
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            aria-label={item.label}
-                          />
-                        )}
-                      />
-                    </div>
-                  ))}
+                <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3 text-sm">
+                  {/* Tenant ID — read-only */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.tenantId")}
+                  </span>
+                  <Input
+                    disabled
+                    defaultValue={fullTenant.tenant_id}
+                    className="h-8 text-sm"
+                  />
 
-                  <div className="flex flex-col gap-1 pt-1">
-                    <span className="text-muted-foreground">
-                      {t(
-                        "detail.overview.accessPolicy.governanceJustification"
-                      )}
+                  {/* Tenant name — editable */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.tenantName")}
+                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    <Input
+                      {...register("name")}
+                      className="h-8 text-sm"
+                      data-testid="edit-tenant-name"
+                      aria-invalid={!!errors.name}
+                    />
+                    {errors.name && (
+                      <p className="text-xs text-destructive">
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Tenant code — read-only */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.tenantCode")}
+                  </span>
+                  <Input
+                    disabled
+                    defaultValue={fullTenant.code}
+                    className="h-8 text-sm"
+                  />
+
+                  {/* Tenant type — read-only */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.tenantType")}
+                  </span>
+                  <Input
+                    disabled
+                    defaultValue={t(
+                      `tenantTypes.${fullTenant.tenant_type}` as "tenantTypes.bank"
+                    )}
+                    className="h-8 text-sm"
+                  />
+
+                  {/* Legal entity name — editable */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.legalEntityName")}
+                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    <Input
+                      {...register("legal_entity_name")}
+                      className="h-8 text-sm"
+                      data-testid="edit-legal-entity-name"
+                      aria-invalid={!!errors.legal_entity_name}
+                    />
+                    {errors.legal_entity_name && (
+                      <p className="text-xs text-destructive">
+                        {errors.legal_entity_name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Country — read-only */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.country")}
+                  </span>
+                  <Input
+                    disabled
+                    defaultValue={formatCountry(fullTenant.country)}
+                    className="h-8 text-sm"
+                  />
+
+                  {/* Default currency — read-only */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.defaultCurrency")}
+                  </span>
+                  <Input
+                    disabled
+                    defaultValue={formatCurrency(fullTenant.default_currency)}
+                    className="h-8 text-sm"
+                  />
+
+                  {/* Description — editable textarea */}
+                  <span className="flex items-start pt-1.5 text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.description")}
+                  </span>
+                  <Textarea
+                    {...register("description")}
+                    className="resize-none text-sm"
+                    rows={2}
+                    data-testid="edit-description"
+                  />
+
+                  {/* Justification for name change — required only when name is changed */}
+                  <span className="flex items-start pt-1.5 text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.justification")}
+                    {nameChanged && (
                       <span className="text-destructive ml-0.5">*</span>
-                    </span>
+                    )}
+                  </span>
+                  <div className="flex flex-col gap-0.5">
                     <Textarea
-                      {...apRegister("reason")}
+                      {...register("justification")}
                       className="resize-none text-sm"
                       rows={2}
-                      data-testid="edit-access-policy-reason"
-                      aria-invalid={!!apErrors.reason}
+                      data-testid="edit-justification"
+                      aria-invalid={!!errors.justification}
+                      placeholder={t(
+                        "detail.overview.editDialog.fields.justificationHint"
+                      )}
                     />
-                    {apErrors.reason && (
+                    {errors.justification && (
                       <p className="text-xs text-destructive">
                         {t(
-                          "detail.overview.accessPolicy.errors.reasonRequired"
+                          "detail.overview.editDialog.errors.justificationRequired"
                         )}
                       </p>
                     )}
                   </div>
+
+                  {/* Legal hold — switch */}
+                  <span className="flex h-8 items-center text-muted-foreground">
+                    {t("detail.overview.tenantIdentity.legalHold")}
+                  </span>
+                  <div className="flex h-8 items-center">
+                    <Controller
+                      control={control}
+                      name="legal_hold_flag"
+                      render={({ field }) => (
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          aria-label={t(
+                            "detail.overview.tenantIdentity.legalHold"
+                          )}
+                          data-testid="edit-legal-hold-flag"
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
               </form>
             ) : (
-              <div className="flex gap-16 text-sm">
-                <div className="flex flex-col gap-3 text-muted-foreground shrink-0">
-                  {policyFlags.map(item => (
-                    <span
-                      key={item.key}
-                      className="min-h-[38px] flex items-start leading-5"
-                    >
-                      {item.label}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-3">
-                  {policyFlags.map(({ key, flag }) => (
-                    <div key={key} className="flex flex-col gap-1 min-h-[38px]">
-                      {flag !== undefined ? (
-                        <>
-                          <span
-                            className={cn(
-                              "self-start inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium h-[18px]",
-                              flag.enabled
-                                ? "bg-green-600/10 text-green-600"
-                                : "bg-slate-200 text-muted-foreground"
-                            )}
-                          >
-                            {flag.enabled
-                              ? t("detail.overview.accessPolicy.enabled")
-                              : t("detail.overview.accessPolicy.disabled")}
+              <InfoRows rows={identityRows} />
+            )}
+          </TenantInfoCard>
+
+          <TenantInfoCard title={t("detail.overview.governanceActors.title")}>
+            <InfoRows rows={governanceRows} />
+          </TenantInfoCard>
+        </div>
+
+        {/* Right column: lifecycle + access policy */}
+        <div className="flex flex-col gap-6 flex-1 min-w-0">
+          <TenantInfoCard title={t("detail.overview.lifecycleStatus.title")}>
+            <InfoRows rows={lifecycleRows} />
+          </TenantInfoCard>
+
+          {isAdmin && (
+            <TenantInfoCard
+              title={t("detail.overview.accessPolicy.title")}
+              editButton={accessPolicyCardActions}
+            >
+              {isEditingAccessPolicy ? (
+                <form
+                  id="access-policy-edit-form"
+                  onSubmit={apHandleSubmit(onSubmitAccessPolicy)}
+                  noValidate
+                >
+                  <div className="flex flex-col gap-3 text-sm">
+                    {[
+                      {
+                        key: "support_read_only_access_allowed" as const,
+                        label: t(
+                          "detail.overview.accessPolicy.supportReadOnlyAccess"
+                        ),
+                        flag: accessPolicy?.support_read_only_access,
+                      },
+                      {
+                        key: "auditor_access_allowed" as const,
+                        label: t("detail.overview.accessPolicy.auditorAccess"),
+                        flag: accessPolicy?.auditor_access,
+                      },
+                      {
+                        key: "lc_portal_enabled" as const,
+                        label: t("detail.overview.accessPolicy.lcPortal"),
+                        flag: accessPolicy?.lc_portal,
+                      },
+                    ].map(item => (
+                      <div
+                        key={item.key}
+                        className="flex items-start justify-between gap-4"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-muted-foreground leading-5">
+                            {item.label}
                           </span>
-                          {(flag.modified_by ?? flag.modified_at) && (
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {(item.flag?.modified_by ??
+                            item.flag?.modified_at) && (
+                            <span className="text-xs text-muted-foreground">
                               {t("detail.overview.accessPolicy.modifiedBy", {
-                                name: flag.modified_by ?? "",
-                                date: formatDate(flag.modified_at),
+                                name: item.flag?.modified_by ?? "",
+                                date: formatDate(item.flag?.modified_at),
                               })}
                             </span>
                           )}
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground leading-5">
-                          —
-                        </span>
+                        </div>
+                        <Controller
+                          control={apControl}
+                          name={item.key}
+                          render={({ field }) => (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              aria-label={item.label}
+                            />
+                          )}
+                        />
+                      </div>
+                    ))}
+
+                    <div className="flex flex-col gap-1 pt-1">
+                      <span className="text-muted-foreground">
+                        {t(
+                          "detail.overview.accessPolicy.governanceJustification"
+                        )}
+                        <span className="text-destructive ml-0.5">*</span>
+                      </span>
+                      <Textarea
+                        {...apRegister("reason")}
+                        className="resize-none text-sm"
+                        rows={2}
+                        data-testid="edit-access-policy-reason"
+                        aria-invalid={!!apErrors.reason}
+                      />
+                      {apErrors.reason && (
+                        <p className="text-xs text-destructive">
+                          {t(
+                            "detail.overview.accessPolicy.errors.reasonRequired"
+                          )}
+                        </p>
                       )}
                     </div>
-                  ))}
+                  </div>
+                </form>
+              ) : (
+                <div className="flex gap-16 text-sm">
+                  <div className="flex flex-col gap-3 text-muted-foreground shrink-0">
+                    {policyFlags.map(item => (
+                      <span
+                        key={item.key}
+                        className="min-h-[38px] flex items-start leading-5"
+                      >
+                        {item.label}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {policyFlags.map(({ key, flag }) => (
+                      <div
+                        key={key}
+                        className="flex flex-col gap-1 min-h-[38px]"
+                      >
+                        {flag !== undefined ? (
+                          <>
+                            <span
+                              className={cn(
+                                "self-start inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium h-[18px]",
+                                flag.enabled
+                                  ? "bg-green-600/10 text-green-600"
+                                  : "bg-slate-200 text-muted-foreground"
+                              )}
+                            >
+                              {flag.enabled
+                                ? t("detail.overview.accessPolicy.enabled")
+                                : t("detail.overview.accessPolicy.disabled")}
+                            </span>
+                            {(flag.modified_by ?? flag.modified_at) && (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                {t("detail.overview.accessPolicy.modifiedBy", {
+                                  name: flag.modified_by ?? "",
+                                  date: formatDate(flag.modified_at),
+                                })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground leading-5">
+                            —
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </TenantInfoCard>
-        )}
+              )}
+            </TenantInfoCard>
+          )}
+        </div>
       </div>
     </div>
   )

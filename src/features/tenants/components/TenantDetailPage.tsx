@@ -17,9 +17,11 @@ import { SupportGrantsTab } from "@/features/tenants/components/tabs/SupportGran
 import { LicenceLimitsTab } from "@/features/tenants/components/tabs/LicenceLimitsTab"
 import { SuspendTenantDialog } from "@/features/tenants/components/SuspendTenantDialog"
 import { ReactivateTenantDialog } from "@/features/tenants/components/ReactivateTenantDialog"
+import { ArchiveTenantDialog } from "@/features/tenants/components/ArchiveTenantDialog"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type { TenantDetail } from "@/features/tenants/api/schema"
+import { isFullTenantResponse } from "@/features/tenants/api/schema"
 
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—"
@@ -59,15 +61,18 @@ function TenantHighlightInfo({
   isAdmin,
   onSuspendClick,
   onReactivateClick,
+  onArchiveClick,
 }: {
   tenant: TenantDetail
   isAdmin: boolean
   onSuspendClick: () => void
   onReactivateClick: () => void
+  onArchiveClick: () => void
 }) {
   const { t } = useTranslation("tenants")
   const canSuspend = isAdmin && tenant.status === "active"
   const canReactivate = isAdmin && tenant.status === "suspended"
+  const canArchive = isAdmin && tenant.status === "suspended"
 
   return (
     <div className="flex flex-col w-full" data-testid="tenant-highlight-info">
@@ -105,14 +110,17 @@ function TenantHighlightInfo({
                 {t("detail.reactivateTenant")}
               </Button>
             )}
-            <Button
-              variant="outline"
-              className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
-              data-testid="btn-archive-tenant"
-            >
-              <Archive size={16} />
-              {t("detail.archiveTenant")}
-            </Button>
+            {canArchive && (
+              <Button
+                variant="outline"
+                className="h-auto gap-1.5 px-2.5 py-2 text-sm rounded-[12px]"
+                onClick={onArchiveClick}
+                data-testid="btn-archive-tenant"
+              >
+                <Archive size={16} />
+                {t("detail.archiveTenant")}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -197,6 +205,7 @@ export default function TenantDetailPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
   const [suspendOpen, setSuspendOpen] = useState(false)
   const [reactivateOpen, setReactivateOpen] = useState(false)
+  const [archiveOpen, setArchiveOpen] = useState(false)
 
   const isAdmin = currentUser?.role === "system_admin"
   const isSupportUser = currentUser?.role === "support_user"
@@ -283,6 +292,18 @@ export default function TenantDetailPage() {
               tenantStatus={tenant.status}
             />
           )}
+          {isAdmin && (
+            <ArchiveTenantDialog
+              open={archiveOpen}
+              onOpenChange={setArchiveOpen}
+              tenantId={id!}
+              tenantName={tenant.name}
+              tenantStatus={tenant.status}
+              activeUserCount={
+                isFullTenantResponse(tenant) ? tenant.bank_user_utilisation : 0
+              }
+            />
+          )}
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Highlight info */}
             <div className="px-8 pt-5 pb-4">
@@ -291,6 +312,7 @@ export default function TenantDetailPage() {
                 isAdmin={isAdmin}
                 onSuspendClick={() => setSuspendOpen(true)}
                 onReactivateClick={() => setReactivateOpen(true)}
+                onArchiveClick={() => setArchiveOpen(true)}
               />
             </div>
 
@@ -316,13 +338,22 @@ export default function TenantDetailPage() {
                 <OverviewTab tenant={tenant} tenantId={id!} isAdmin={isAdmin} />
               )}
               {effectiveTab === "modules" && (
-                <ModulesConfigTab tenantId={id!} isAdmin={isAdmin} />
+                <ModulesConfigTab
+                  tenantId={id!}
+                  tenantName={tenant.name}
+                  isAdmin={isAdmin}
+                  isArchived={tenant.status === "archived"}
+                />
               )}
               {effectiveTab === "governance" && (
                 <GovernanceHistoryTab tenantId={id!} />
               )}
               {effectiveTab === "grants" && isAdmin && (
-                <SupportGrantsTab tenantId={id!} isAdmin={isAdmin} />
+                <SupportGrantsTab
+                  tenantId={id!}
+                  tenantName={tenant.name}
+                  isAdmin={isAdmin}
+                />
               )}
               {effectiveTab === "licence_limits" && isAdmin && (
                 <LicenceLimitsTab tenant={tenant} />

@@ -24,6 +24,7 @@ import type {
   AccessPolicyResponse,
   IntegrationBindingResponse,
   SupportGrant,
+  AccessReason,
 } from "./schema"
 import type { GovernedAction } from "@/features/governed-actions/api/schema"
 import { GovernedActionSchema } from "@/features/governed-actions/api/schema"
@@ -123,12 +124,46 @@ export async function fetchSupportGrants(id: string): Promise<SupportGrant[]> {
   return z.array(SupportGrantSchema).parse(data)
 }
 
+export type CreateGrantPayload = {
+  grantee_id: string
+  access_reason: AccessReason
+  valid_from: string
+  valid_until: string
+  additional_context?: string | null
+}
+
+export async function createGrant(
+  tenantId: string,
+  payload: CreateGrantPayload
+): Promise<SupportGrant> {
+  const data = await api.post(`/tenants/${tenantId}/grants`, payload)
+  return SupportGrantSchema.parse(data)
+}
+
+export type RevokeGrantPayload = {
+  revocation_reason: string
+}
+
+export async function revokeGrant(
+  tenantId: string,
+  grantId: string,
+  payload: RevokeGrantPayload
+): Promise<SupportGrant> {
+  const data = await api.delete(`/tenants/${tenantId}/grants/${grantId}`, {
+    data: payload,
+  })
+  return SupportGrantSchema.parse(data)
+}
+
 export type UpdateTenantPayload = {
   name?: string
   legal_entity_name?: string
   description?: string | null
   legal_hold_flag?: boolean
   justification?: string
+  max_lc_count?: number
+  max_bank_user_count?: number
+  max_users_per_lc?: number
 }
 
 export async function updateTenant(
@@ -144,6 +179,22 @@ export type UpdateAccessPolicyPayload = {
   auditor_access_allowed?: boolean | null
   lc_portal_enabled?: boolean | null
   reason: string
+}
+
+export type UpsertIntegrationBindingPayload = {
+  endpoint_url: string
+  credential_scope_identifier: string
+  integration_active: boolean
+  disbursement_execution_boundary_note?: string | null
+  justification: string
+}
+
+export async function upsertIntegrationBinding(
+  id: string,
+  payload: UpsertIntegrationBindingPayload
+): Promise<IntegrationBindingResponse> {
+  const data = await api.patch(`/tenants/${id}/integration-binding`, payload)
+  return IntegrationBindingResponseSchema.parse(data)
 }
 
 export async function updateAccessPolicy(
@@ -169,11 +220,55 @@ export type ReactivateTenantPayload = {
   justification: string
 }
 
+export type ModuleActivatePayload = {
+  justification: string
+}
+
+export async function activateTenantModule(
+  tenantId: string,
+  moduleKey: string,
+  payload: ModuleActivatePayload
+): Promise<GovernedAction> {
+  const data = await api.post(
+    `/tenants/${tenantId}/modules/${moduleKey}/activate`,
+    payload
+  )
+  return GovernedActionSchema.parse(data)
+}
+
+export type ModuleDeactivatePayload = {
+  justification: string
+}
+
+export async function deactivateTenantModule(
+  tenantId: string,
+  moduleKey: string,
+  payload: ModuleDeactivatePayload
+): Promise<void> {
+  await api.post(
+    `/tenants/${tenantId}/modules/${moduleKey}/deactivate`,
+    payload
+  )
+}
+
 export async function reactivateTenant(
   id: string,
   payload: ReactivateTenantPayload
 ): Promise<GovernedAction> {
   const data = await api.post(`/tenants/${id}/reactivate`, payload)
+  return GovernedActionSchema.parse(data)
+}
+
+export type ArchiveTenantPayload = {
+  justification: string
+  irreversibility_acknowledgement: boolean
+}
+
+export async function archiveTenant(
+  id: string,
+  payload: ArchiveTenantPayload
+): Promise<GovernedAction> {
+  const data = await api.post(`/tenants/${id}/archive`, payload)
   return GovernedActionSchema.parse(data)
 }
 
