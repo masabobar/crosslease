@@ -1265,7 +1265,7 @@
       "post": {
         "tags": ["Tenants"],
         "summary": "Create Tenant",
-        "description": "Initiate a Four-Eyes tenant creation request. Requires `system_admin` role.\n\nTenant is pre-created in `draft` status. The governed action remains pending\nuntil a different system_admin approves it. After approval the tenant stays\nin `draft` — activate separately via `POST /tenants/{id}/activate`.\nOn reject/withdraw/expire the tenant is archived.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
+        "description": "Initiate a Four-Eyes tenant creation request. Requires `system_admin` role.\n\nTenant is pre-created in `draft` status. The governed action remains pending\nuntil a different system_admin approves it. On approval the tenant transitions\nto active.\nOn reject/withdraw/expire the tenant is archived.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
         "operationId": "create_tenant_api_v1_tenants_post",
         "requestBody": {
           "required": true,
@@ -1417,35 +1417,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{id}/activate": {
-      "post": {
-        "tags": ["Tenants"],
-        "summary": "Activate Tenant",
-        "operationId": "activate_tenant_api_v1_tenants__id__activate_post",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",

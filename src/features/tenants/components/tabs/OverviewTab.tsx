@@ -172,24 +172,27 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   }
 
   async function onSubmit(data: UpdateTenantForm) {
+    const isNameChanged = data.name.trim() !== (fullTenant?.name ?? "").trim()
     try {
       await updateTenantMutation.mutateAsync({
-        name: data.name,
+        ...(isNameChanged && { name: data.name }),
         legal_entity_name: data.legal_entity_name,
         description: data.description?.trim() || null,
         legal_hold_flag: data.legal_hold_flag,
-        justification: data.justification?.trim() || undefined,
+        justification: isNameChanged
+          ? data.justification?.trim() || undefined
+          : undefined,
       })
       toast.success(t("detail.overview.editDialog.successToast"))
       setIsEditingIdentity(false)
     } catch (err) {
       if (err instanceof ApiError) {
         switch (err.code) {
-          case "TENANT_NAME_ALREADY_EXISTS":
+          case "TENANT_ALREADY_EXISTS":
             setError("name", {
               type: "server",
               message: t(
-                "detail.overview.editDialog.errors.TENANT_NAME_ALREADY_EXISTS"
+                "detail.overview.editDialog.errors.TENANT_ALREADY_EXISTS"
               ),
             })
             return

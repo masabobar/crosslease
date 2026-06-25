@@ -596,7 +596,7 @@
         "successToast": "Tenant updated successfully.",
         "errors": {
           "justificationRequired": "Governance justification is required when changing the tenant name (minimum 20 characters).",
-          "TENANT_NAME_ALREADY_EXISTS": "This tenant name is already in use.",
+          "TENANT_ALREADY_EXISTS": "This tenant name is already in use.",
           "generic": "Something went wrong. Please try again."
         }
       },

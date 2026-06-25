@@ -1672,8 +1672,8 @@ Accessible to all authenticated users.`,
     description: `Initiate a Four-Eyes tenant creation request. Requires &#x60;system_admin&#x60; role.
 
 Tenant is pre-created in &#x60;draft&#x60; status. The governed action remains pending
-until a different system_admin approves it. After approval the tenant stays
-in &#x60;draft&#x60; — activate separately via &#x60;POST /tenants/{id}/activate&#x60;.
+until a different system_admin approves it. On approval the tenant transitions
+to active.
 On reject/withdraw/expire the tenant is archived.
 
 **Returns:** &#x60;GovernedActionResponse&#x60; with &#x60;status&#x3D;pending&#x60;`,
@@ -1829,27 +1829,6 @@ On reject/withdraw/expire the tenant is archived.
         type: "Body",
         schema: AccessPolicyRequest,
       },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: z.unknown(),
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/tenants/:id/activate",
-    alias: "activate_tenant_api_v1_tenants__id__activate_post",
-    requestFormat: "json",
-    parameters: [
       {
         name: "id",
         type: "Path",

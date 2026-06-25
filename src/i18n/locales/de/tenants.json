@@ -595,7 +595,7 @@
         "successToast": "Mandant erfolgreich aktualisiert.",
         "errors": {
           "justificationRequired": "Bei Änderung des Mandantennamens ist eine Governance-Begründung erforderlich (mindestens 20 Zeichen).",
-          "TENANT_NAME_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet.",
+          "TENANT_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet.",
           "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
         }
       },
