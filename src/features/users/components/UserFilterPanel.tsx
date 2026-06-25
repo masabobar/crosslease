@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover"
 import { useTranslation } from "react-i18next"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
+import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
@@ -306,7 +307,7 @@ function UserFilterPanel({
   const { data: tenantsData } = useTenants(filterVis.tenant)
 
   const tenantOptions = (tenantsData?.tenants ?? [])
-    .filter(ten => ten.status === "active")
+    .filter(ten => ten.status === TenantStatusSchema.enum.active)
     .map(ten => ({ value: ten.id, label: ten.name }))
 
   const [staged, setStaged] = useState<UserFilterState>(appliedFilters)

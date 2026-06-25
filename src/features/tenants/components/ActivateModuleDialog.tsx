@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { DatePicker } from "@/components/ui/date-picker"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useActivateTenantModule } from "@/features/tenants/hooks/useActivateTenantModule"
 import { ModuleActivateFormSchema } from "@/features/tenants/api/schema"
 import type {
@@ -16,28 +17,6 @@ import type {
   TenantModuleEntry,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
-
-type ModuleStatusBadgeProps = {
-  status: string
-  label: string
-}
-
-function ModuleStatusBadge({ status, label }: ModuleStatusBadgeProps) {
-  const containerClass =
-    status === "active"
-      ? "bg-[#d0fae5] text-[#166534]"
-      : "bg-[#f1f5f9] text-[#374151]"
-  const dotClass = status === "active" ? "bg-[#22c55e]" : "bg-[#94a3b8]"
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${containerClass}`}
-    >
-      <span className={`size-1.5 rounded-full shrink-0 ${dotClass}`} />
-      {label}
-    </span>
-  )
-}
 
 type Props = {
   open: boolean
@@ -98,11 +77,6 @@ export function ActivateModuleDialog({
     )
   }
 
-  const statusLabel = t(
-    `detail.modules.status.${module.status}` as "detail.modules.status.inactive",
-    { defaultValue: module.status }
-  )
-
   return (
     <DialogModal open={open} onOpenChange={onOpenChange}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -133,7 +107,7 @@ export function ActivateModuleDialog({
               <span className="text-foreground">
                 {t("detail.modules.activateDialog.info.currentStatus")}
               </span>
-              <ModuleStatusBadge status={module.status} label={statusLabel} />
+              <ModuleStatusBadge status={module.status} />
             </div>
           </div>
 

@@ -18,6 +18,7 @@ import type { ExportFormat, UserStatus } from "@/features/users/api/schema"
 import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
+import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { RoleBadge } from "./RoleBadge"
 import { UserStatusBadge } from "./UserStatusBadge"
 
@@ -145,7 +146,7 @@ export function UserQuickFilters({
 
       case "tenant": {
         const tenants = (tenantsData?.tenants ?? []).filter(
-          t => t.status === "active"
+          t => t.status === TenantStatusSchema.enum.active
         )
         if (tenants.length === 0) {
           return (

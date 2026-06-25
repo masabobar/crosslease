@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
@@ -18,6 +18,7 @@ import {
   isFullTenantResponse,
   createUpdateTenantFormSchema,
   UpdateAccessPolicyFormSchema,
+  TenantStatusSchema,
 } from "@/features/tenants/api/schema"
 import type {
   TenantDetail,
@@ -90,7 +91,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     isAdmin ? tenantId : null
   )
   const fullTenant = isFullTenantResponse(tenant) ? tenant : null
-  const isArchived = tenant.status === "archived"
+  const isArchived = tenant.status === TenantStatusSchema.enum.archived
   const [isEditingIdentity, setIsEditingIdentity] = useState(false)
 
   const updateTenantMutation = useUpdateTenant(tenant.id)
@@ -118,8 +119,8 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   const nameChanged =
     (watchedName ?? "").trim() !== (fullTenant?.name ?? "").trim()
 
-  useEffect(() => {
-    if (isEditingIdentity && fullTenant) {
+  function startIdentityEdit() {
+    if (fullTenant) {
       reset({
         name: fullTenant.name,
         legal_entity_name: fullTenant.legal_entity_name,
@@ -128,7 +129,8 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         justification: "",
       })
     }
-  }, [isEditingIdentity]) // eslint-disable-line react-hooks/exhaustive-deps
+    setIsEditingIdentity(true)
+  }
 
   const [isEditingAccessPolicy, setIsEditingAccessPolicy] = useState(false)
 
@@ -149,8 +151,8 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     },
   })
 
-  useEffect(() => {
-    if (isEditingAccessPolicy && accessPolicy) {
+  function startAccessPolicyEdit() {
+    if (accessPolicy) {
       apReset({
         support_read_only_access_allowed:
           accessPolicy.support_read_only_access.enabled,
@@ -159,7 +161,8 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         reason: "",
       })
     }
-  }, [isEditingAccessPolicy]) // eslint-disable-line react-hooks/exhaustive-deps
+    setIsEditingAccessPolicy(true)
+  }
 
   function cancelEdit() {
     setIsEditingIdentity(false)
@@ -215,13 +218,17 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       })
       toast.success(t("detail.overview.accessPolicy.successToast"))
       setIsEditingAccessPolicy(false)
-    } catch {
-      toast.error(t("detail.overview.accessPolicy.errors.generic"))
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     }
   }
 
-  const newBusinessAllowed = tenant.status === "active"
-  const operationalReady = tenant.status === "active"
+  const newBusinessAllowed = tenant.status === TenantStatusSchema.enum.active
+  const operationalReady = tenant.status === TenantStatusSchema.enum.active
 
   const identityCardActions = isEditingIdentity ? (
     <div className="flex items-center gap-2">
@@ -250,7 +257,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       type="button"
       variant="outline"
       className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
-      onClick={() => setIsEditingIdentity(true)}
+      onClick={startIdentityEdit}
       data-testid="btn-edit-tenant-identity"
     >
       <SquarePen size={14} />
@@ -409,7 +416,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       type="button"
       variant="outline"
       className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
-      onClick={() => setIsEditingAccessPolicy(true)}
+      onClick={startAccessPolicyEdit}
       data-testid="btn-edit-access-policy"
     >
       <SquarePen size={14} />

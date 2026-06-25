@@ -13,6 +13,8 @@ import { formatDate } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 import type { GovernanceHistoryEvent } from "@/features/tenants/api/schema"
 
+const GOVERNANCE_HISTORY_PAGE_SIZE = 50
+
 const GOVERNANCE_EVENT_TYPES = [
   "tenant.creation_requested",
   "tenant.activated",
@@ -234,7 +236,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
   const [toDate, setToDate] = useState<string | null>(null)
 
   const { data, isLoading, isError } = useTenantGovernanceHistory(tenantId, {
-    per_page: 50,
+    per_page: GOVERNANCE_HISTORY_PAGE_SIZE,
     ...(eventTypeFilters.length > 0 ? { event_types: eventTypeFilters } : {}),
     ...(fromDate ? { from_date: fromDate } : {}),
     ...(toDate ? { to_date: toDate } : {}),

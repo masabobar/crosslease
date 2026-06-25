@@ -26,7 +26,10 @@ import {
   AUDITOR_ROLE,
 } from "@/features/users/types"
 import type { TenantDetail } from "@/features/tenants/api/schema"
-import { isFullTenantResponse } from "@/features/tenants/api/schema"
+import {
+  isFullTenantResponse,
+  TenantStatusSchema,
+} from "@/features/tenants/api/schema"
 import { formatDateTime } from "@/lib/formatters"
 
 function formatCountry(code: string): string {
@@ -65,9 +68,11 @@ function TenantHighlightInfo({
   onArchiveClick: () => void
 }) {
   const { t } = useTranslation("tenants")
-  const canSuspend = isAdmin && tenant.status === "active"
-  const canReactivate = isAdmin && tenant.status === "suspended"
-  const canArchive = isAdmin && tenant.status === "suspended"
+  const canSuspend = isAdmin && tenant.status === TenantStatusSchema.enum.active
+  const canReactivate =
+    isAdmin && tenant.status === TenantStatusSchema.enum.suspended
+  const canArchive =
+    isAdmin && tenant.status === TenantStatusSchema.enum.suspended
 
   return (
     <div className="flex flex-col w-full" data-testid="tenant-highlight-info">
@@ -337,7 +342,9 @@ export default function TenantDetailPage() {
                   tenantId={id!}
                   tenantName={tenant.name}
                   isAdmin={isAdmin}
-                  isArchived={tenant.status === "archived"}
+                  isArchived={
+                    tenant.status === TenantStatusSchema.enum.archived
+                  }
                 />
               )}
               {effectiveTab === "governance" && (

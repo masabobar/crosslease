@@ -9,9 +9,12 @@ import { useTenantGrants } from "@/features/tenants/hooks/useTenantGrants"
 import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessPolicy"
 import { useUsers } from "@/features/users/hooks/useUsers"
 import type { SupportGrant } from "@/features/tenants/api/schema"
+import { GrantStatusSchema } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
 import { formatDateTime } from "@/lib/formatters"
+
+const SUPPORT_USERS_DROPDOWN_PAGE_SIZE = 100
 
 type GrantBadgeVariant = "active" | "expired" | "revoked" | "emergency"
 
@@ -84,14 +87,15 @@ function GrantRow({
 
   const isEmergencyPending =
     grant.is_emergency && grant.review_completed_at === null
-  const showRevokeButton = isAdmin && grant.status === "active"
+  const showRevokeButton =
+    isAdmin && grant.status === GrantStatusSchema.enum.active
 
   const metaLine = (() => {
     const grantedPart = t("detail.grants.grantedBy", { name: grantedByName })
-    if (grant.status === "revoked" && grant.revoked_at) {
+    if (grant.status === GrantStatusSchema.enum.revoked && grant.revoked_at) {
       return `${grantedPart} · ${t("detail.grants.revokedAt", { date: formatDateTime(grant.revoked_at) })}`
     }
-    if (grant.status === "expired") {
+    if (grant.status === GrantStatusSchema.enum.expired) {
       return `${grantedPart} · ${t("detail.grants.expiredAt", { date: formatDateTime(grant.valid_until) })}`
     }
     return `${grantedPart} · ${formatDateTime(grant.valid_from)} – ${formatDateTime(grant.valid_until)}`
@@ -123,11 +127,12 @@ function GrantRow({
           {t(`detail.grants.accessReasons.${grant.access_reason}`)}
         </span>
         <span className="text-xs text-muted-foreground">{metaLine}</span>
-        {grant.status === "revoked" && grant.revocation_reason && (
-          <span className="text-xs text-muted-foreground">
-            {t("detail.grants.revokedReason")}: {grant.revocation_reason}
-          </span>
-        )}
+        {grant.status === GrantStatusSchema.enum.revoked &&
+          grant.revocation_reason && (
+            <span className="text-xs text-muted-foreground">
+              {t("detail.grants.revokedReason")}: {grant.revocation_reason}
+            </span>
+          )}
       </div>
 
       {showRevokeButton && (
@@ -163,7 +168,7 @@ export function SupportGrantsTab({
   const { data: accessPolicy } = useTenantAccessPolicy(tenantId)
   const { data: usersData } = useUsers({
     role: [SUPPORT_USER_ROLE],
-    per_page: 100,
+    per_page: SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
   })
 
   const supportAccessEnabled =

@@ -132,7 +132,13 @@ export function isFullTenantResponse(t: TenantDetail): t is TenantResponse {
   return "legal_entity_name" in t
 }
 
-export const TenantModuleStatusSchema = z.string()
+export const TenantModuleStatusSchema = z.enum([
+  "active",
+  "inactive",
+  "pending_activation",
+  "pending_enforcement",
+  "pending_deactivation",
+])
 export type TenantModuleStatus = z.infer<typeof TenantModuleStatusSchema>
 
 export const TenantModuleEntrySchema = z.object({
@@ -140,7 +146,7 @@ export const TenantModuleEntrySchema = z.object({
   display_name: z.string(),
   group: z.string(),
   always_on: z.boolean(),
-  status: z.string(),
+  status: TenantModuleStatusSchema,
   activated_at: z.string().datetime().nullable().optional(),
 })
 export type TenantModuleEntry = z.infer<typeof TenantModuleEntrySchema>

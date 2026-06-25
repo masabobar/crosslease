@@ -1,4 +1,6 @@
 import { useState } from "react"
+
+const SUPPORT_USERS_DROPDOWN_PAGE_SIZE = 100
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
@@ -119,6 +121,7 @@ function GranteePicker({ value, onChange, users, error }: GranteePickerProps) {
             </p>
           )}
           {users.map(user => (
+            // NOTE: raw <button> — user-option rows inside a custom Popover list; shadcn Button adds height/padding constraints that break the list item layout
             <button
               key={user.id}
               type="button"
@@ -170,7 +173,7 @@ export function NewGrantDialog({
 
   const { data: usersData } = useUsers({
     role: [SUPPORT_USER_ROLE],
-    per_page: 100,
+    per_page: SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
   })
   const supportUsers = usersData?.users ?? []
 
