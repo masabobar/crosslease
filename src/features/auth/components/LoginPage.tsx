@@ -30,8 +30,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { AppLogo } from "./AppLogo"
-
-const SUCCESS_REDIRECT_DELAY_MS = 800
+import { SUCCESS_REDIRECT_DELAY_MS } from "@/lib/constants"
 
 const credentialsSchema = z.object({
   email: z.string().min(1, "required").email("required"),

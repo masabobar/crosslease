@@ -14,7 +14,7 @@ export function useArchiveTenant(tenantId: string) {
       queryClient.invalidateQueries({
         queryKey: TENANTS_QUERY_KEYS.detail(tenantId),
       })
-      queryClient.invalidateQueries({ queryKey: ["tenants", "list"] })
+      queryClient.invalidateQueries({ queryKey: TENANTS_QUERY_KEYS.list() })
     },
   })
 }

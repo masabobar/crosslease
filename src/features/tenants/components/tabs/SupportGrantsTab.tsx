@@ -10,16 +10,8 @@ import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessP
 import { useUsers } from "@/features/users/hooks/useUsers"
 import type { SupportGrant } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
+import { SUPPORT_USER_ROLE } from "@/features/users/types"
+import { formatDateTime } from "@/lib/formatters"
 
 type GrantBadgeVariant = "active" | "expired" | "revoked" | "emergency"
 
@@ -170,7 +162,7 @@ export function SupportGrantsTab({
   const { data: grants, isLoading, isError } = useTenantGrants(tenantId)
   const { data: accessPolicy } = useTenantAccessPolicy(tenantId)
   const { data: usersData } = useUsers({
-    role: ["support_user"],
+    role: [SUPPORT_USER_ROLE],
     per_page: 100,
   })
 

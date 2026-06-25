@@ -20,19 +20,14 @@ import { ReactivateTenantDialog } from "@/features/tenants/components/Reactivate
 import { ArchiveTenantDialog } from "@/features/tenants/components/ArchiveTenantDialog"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import {
+  SYSTEM_ADMIN_ROLE,
+  SUPPORT_USER_ROLE,
+  AUDITOR_ROLE,
+} from "@/features/users/types"
 import type { TenantDetail } from "@/features/tenants/api/schema"
 import { isFullTenantResponse } from "@/features/tenants/api/schema"
-
-function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—"
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
+import { formatDateTime } from "@/lib/formatters"
 
 function formatCountry(code: string): string {
   return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code
@@ -207,9 +202,9 @@ export default function TenantDetailPage() {
   const [reactivateOpen, setReactivateOpen] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
 
-  const isAdmin = currentUser?.role === "system_admin"
-  const isSupportUser = currentUser?.role === "support_user"
-  const isAuditor = currentUser?.role === "auditor"
+  const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
+  const isSupportUser = currentUser?.role === SUPPORT_USER_ROLE
+  const isAuditor = currentUser?.role === AUDITOR_ROLE
   const isAuditorEngaged =
     isAuditor &&
     !!currentUser?.tenant_id &&

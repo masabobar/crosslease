@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { GOVERNED_ACTIONS_QUERY_KEYS } from "@/features/governed-actions/api/governedActionsApi"
 
-export function createGovernedActionMutation<TVariables>(
+export function makeGovernedActionMutation<TVariables>(
   mutationFn: (variables: TVariables) => Promise<unknown>
 ) {
   return function () {

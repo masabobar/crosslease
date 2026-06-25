@@ -1,7 +1,7 @@
 import { rejectGovernedAction } from "@/features/governed-actions/api/governedActionsApi"
-import { createGovernedActionMutation } from "@/features/governed-actions/hooks/createGovernedActionMutation"
+import { makeGovernedActionMutation } from "@/features/governed-actions/hooks/createGovernedActionMutation"
 
-export const useRejectAction = createGovernedActionMutation(
+export const useRejectAction = makeGovernedActionMutation(
   ({ id, comment }: { id: string; comment?: string }) =>
     rejectGovernedAction(id, comment)
 )
