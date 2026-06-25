@@ -27,6 +27,7 @@ import type {
 import type { UserListItem } from "@/features/users/api/schema"
 import { ApiError } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { SUPPORT_USER_ROLE } from "@/features/users/types"
 
 const ACCESS_REASONS: AccessReason[] = [
   "user_access_issue",
@@ -168,7 +169,7 @@ export function NewGrantDialog({
   const today = format(new Date(), "yyyy-MM-dd")
 
   const { data: usersData } = useUsers({
-    role: ["support_user"],
+    role: [SUPPORT_USER_ROLE],
     per_page: 100,
   })
   const supportUsers = usersData?.users ?? []

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useBlocker } from "react-router-dom"
@@ -88,10 +88,7 @@ export default function CreateTenantPage() {
   const modules = modulesData?.modules ?? []
   const packages = packagesData?.packages ?? []
 
-  const hasDraft = useMemo(() => {
-    if (!userId) return false
-    return Boolean(loadWizardDraft(userId))
-  }, [userId])
+  const hasDraft = userId ? Boolean(loadWizardDraft(userId)) : false
 
   const restoreOpen = hasDraft && !restoreDismissed
 

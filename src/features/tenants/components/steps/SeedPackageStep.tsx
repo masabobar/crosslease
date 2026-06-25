@@ -45,6 +45,7 @@ function SeedPackageStep({ form, packages, isLoading }: Props) {
                     !pkg.available && "opacity-50 cursor-not-allowed"
                   )}
                 >
+                  {/* NOTE: raw <input type="radio"> — custom card layout wraps label+radio in a styled card; RadioGroup primitive doesn't expose per-item card styling at this level */}
                   <input
                     type="radio"
                     className="mt-1 shrink-0 accent-[#1d41a8]"

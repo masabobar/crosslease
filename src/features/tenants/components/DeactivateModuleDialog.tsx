@@ -17,6 +17,8 @@ import type {
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
 
+const DEP_CHECK_DELAY_MS = 1_200
+
 type ModuleStatusBadgeProps = {
   status: string
   label: string
@@ -57,7 +59,7 @@ export function DeactivateModuleDialog({
   const [depCheck, setDepCheck] = useState<"checking" | "resolved">("checking")
 
   useEffect(() => {
-    const timer = setTimeout(() => setDepCheck("resolved"), 1200)
+    const timer = setTimeout(() => setDepCheck("resolved"), DEP_CHECK_DELAY_MS)
     return () => clearTimeout(timer)
   }, [])
 

@@ -27,6 +27,8 @@ import type { TenantStatus, TenantType } from "@/features/tenants/api/schema"
 import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
 const PAGE_SIZE = 20
 
@@ -45,7 +47,7 @@ export default function TenantManagementPage() {
   const { t } = useTranslation("tenants")
   const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
-  const isAdmin = currentUser?.role === "system_admin"
+  const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
   const canCreateTenant =
     !!currentUser && TENANT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
 
@@ -80,6 +82,7 @@ export default function TenantManagementPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: TENANTS_QUERY_KEYS.list(params),
     queryFn: () => fetchTenants(params),
+    staleTime: THIRTY_SECONDS_MS,
   })
 
   const tenants = data?.tenants ?? []

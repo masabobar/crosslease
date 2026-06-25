@@ -1,9 +1,8 @@
 import { useState } from "react"
-
-const COPIED_RESET_DELAY_MS = 2000
 import { Wand2, CheckCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
+import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { generatePassword } from "../utils/generatePassword"
 
 type GeneratePasswordButtonProps = {
