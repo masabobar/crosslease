@@ -64,6 +64,10 @@
     "warningMessage": "Ihr Zugang zu RefiNext läuft am {{date}} um {{time}} Uhr ab. Wenden Sie sich an Ihren Administrator, wenn Sie eine Verlängerung benötigen.",
     "dangerMessage": "Ihr Zugang läuft heute um {{time}} Uhr ab. Noch {{countdown}}. Wenden Sie sich sofort an Ihren Administrator, wenn Sie eine Verlängerung benötigen."
   },
+  "tenantSuspended": {
+    "title": "Organisationskonto gesperrt",
+    "message": "Das Konto Ihrer Organisation wurde vorübergehend gesperrt. Wenden Sie sich für weitere Informationen an Ihren Administrator."
+  },
   "time": {
     "justNow": "gerade eben",
     "minutesAgo": "vor {{count}} Min.",

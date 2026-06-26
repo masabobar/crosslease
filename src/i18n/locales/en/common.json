@@ -64,6 +64,10 @@
     "warningMessage": "Your access to RefiNext expires on {{date}} at {{time}}. Contact your administrator if you need an extension.",
     "dangerMessage": "Your access expires at {{time}} today. {{countdown}} remaining. Contact your administrator immediately if you need an extension."
   },
+  "tenantSuspended": {
+    "title": "Organization Account Suspended",
+    "message": "Your organization's account has been temporarily suspended. Please contact your administrator for more information."
+  },
   "time": {
     "justNow": "just now",
     "minutesAgo": "{{count}}m ago",
