@@ -23,6 +23,8 @@ import {
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
+import { AUDITOR_ROLE } from "@/features/users/types"
+import { tenantDetail } from "@/router/paths"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
@@ -33,8 +35,15 @@ export function Sidebar() {
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessAuditTrail =
     !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
+  const isAuditor = currentUser?.role === AUDITOR_ROLE
   const canAccessTenantManagement =
-    !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
+    !!currentUser &&
+    (TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role) ||
+      (isAuditor && !!currentUser.tenant_id))
+  const tenantManagementPath =
+    isAuditor && currentUser?.tenant_id
+      ? tenantDetail(currentUser.tenant_id)
+      : PATHS.TENANT_MANAGEMENT
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -379,7 +388,7 @@ export function Sidebar() {
                   ))}
                   {canAccessTenantManagement && (
                     <Link
-                      to={PATHS.TENANT_MANAGEMENT}
+                      to={tenantManagementPath}
                       data-testid="nav-tenant-management"
                       className={cn(
                         "flex items-center justify-between text-sm whitespace-nowrap",
