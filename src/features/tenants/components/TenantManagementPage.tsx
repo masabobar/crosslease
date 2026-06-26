@@ -2,7 +2,6 @@ import { useState } from "react"
 import { parseISO } from "date-fns"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
 import {
   Building2Icon,
   Check,
@@ -19,16 +18,12 @@ import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/formatters"
 import { COUNTRIES, countryName } from "@/lib/countries"
 import { TenantTable } from "@/features/tenants/components/TenantTable"
-import {
-  fetchTenants,
-  TENANTS_QUERY_KEYS,
-} from "@/features/tenants/api/tenantsApi"
+import { useTenantList } from "@/features/tenants/hooks/useTenantList"
 import type { TenantStatus, TenantType } from "@/features/tenants/api/schema"
 import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
-import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
 const PAGE_SIZE = 20
 
@@ -79,11 +74,7 @@ export default function TenantManagementPage() {
     ...(toDate ? { to_date: toDate } : {}),
   }
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: TENANTS_QUERY_KEYS.list(params),
-    queryFn: () => fetchTenants(params),
-    staleTime: THIRTY_SECONDS_MS,
-  })
+  const { data, isLoading, isError } = useTenantList(params)
 
   const tenants = data?.tenants ?? []
   const totalPages = data?.total_pages ?? 1

@@ -25,32 +25,13 @@ import type {
   UpdateTenantForm,
   UpdateAccessPolicyForm,
 } from "@/features/tenants/api/schema"
+import { formatDateTime, formatDate } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 
 type OverviewTabProps = {
   tenant: TenantDetail
   tenantId: string
   isAdmin: boolean
-}
-
-function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—"
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—"
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
 }
 
 function formatCurrency(code: string): string {
@@ -463,7 +444,9 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                     />
                     {errors.name && (
                       <p className="text-xs text-destructive">
-                        {errors.name.message}
+                        {t(
+                          `detail.overview.editDialog.errors.${errors.name.message}` as "detail.overview.editDialog.errors.nameTooShort"
+                        )}
                       </p>
                     )}
                   </div>
@@ -503,7 +486,9 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                     />
                     {errors.legal_entity_name && (
                       <p className="text-xs text-destructive">
-                        {errors.legal_entity_name.message}
+                        {t(
+                          `detail.overview.editDialog.errors.${errors.legal_entity_name.message}` as "detail.overview.editDialog.errors.legalEntityNameRequired"
+                        )}
                       </p>
                     )}
                   </div>
@@ -648,7 +633,9 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                             <span className="text-xs text-muted-foreground">
                               {t("detail.overview.accessPolicy.modifiedBy", {
                                 name: item.flag?.modified_by ?? "",
-                                date: formatDate(item.flag?.modified_at),
+                                date: formatDate(
+                                  item.flag?.modified_at ?? null
+                                ),
                               })}
                             </span>
                           )}

@@ -9,8 +9,9 @@ import { FilterPill } from "@/components/ui/filter-pill"
 import { DatePicker } from "@/components/ui/date-picker"
 import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
 import { useTenantGovernanceHistory } from "@/features/tenants/hooks/useTenantGovernanceHistory"
-import { formatDate } from "@/lib/formatters"
+import { formatDate, formatDateTime } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api"
 import type { GovernanceHistoryEvent } from "@/features/tenants/api/schema"
 
 const GOVERNANCE_HISTORY_PAGE_SIZE = 50
@@ -151,16 +152,6 @@ function formatEventTitle(event: GovernanceHistoryEvent): string {
   return entityName ? `${base}: ${entityName}` : base
 }
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
 function EventRow({
   event,
   isLast,
@@ -235,14 +226,22 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
   const [fromDate, setFromDate] = useState<string | null>(null)
   const [toDate, setToDate] = useState<string | null>(null)
 
-  const { data, isLoading, isError } = useTenantGovernanceHistory(tenantId, {
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTenantGovernanceHistory(tenantId, {
     per_page: GOVERNANCE_HISTORY_PAGE_SIZE,
     ...(eventTypeFilters.length > 0 ? { event_types: eventTypeFilters } : {}),
     ...(fromDate ? { from_date: fromDate } : {}),
     ...(toDate ? { to_date: toDate } : {}),
   })
 
-  const events = data?.events ?? []
+  const events = data?.pages.flatMap(p => p.events) ?? []
 
   const filteredEvents = search.trim()
     ? events.filter(event => {
@@ -393,7 +392,10 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
 
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {t("errors.generic")}
+            {error instanceof ApiError &&
+            error.code === "AUDITOR_ACCESS_EXPIRED"
+              ? t("errors.AUDITOR_ACCESS_EXPIRED")
+              : t("errors.generic")}
           </p>
         )}
 
@@ -409,9 +411,24 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
               <EventRow
                 key={event.id}
                 event={event}
-                isLast={i === filteredEvents.length - 1}
+                isLast={i === filteredEvents.length - 1 && !hasNextPage}
               />
             ))}
+            {hasNextPage && (
+              <div className="pt-3 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  data-testid="governance-load-more"
+                >
+                  {isFetchingNextPage
+                    ? t("detail.governance.loadingMore")
+                    : t("detail.governance.loadMore")}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </TenantInfoCard>

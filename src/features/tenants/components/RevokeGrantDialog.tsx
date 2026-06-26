@@ -14,16 +14,7 @@ import type {
   SupportGrant,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
+import { formatDateTime } from "@/lib/formatters"
 
 type Props = {
   open: boolean

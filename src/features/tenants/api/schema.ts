@@ -307,8 +307,11 @@ export const CreateTenantFormSchema = z.object({
 export type CreateTenantForm = z.infer<typeof CreateTenantFormSchema>
 
 export const UpdateTenantFormSchema = z.object({
-  name: z.string().min(2).max(200),
-  legal_entity_name: z.string().min(1).max(300),
+  name: z.string().min(2, "nameTooShort").max(200, "nameTooLong"),
+  legal_entity_name: z
+    .string()
+    .min(1, "legalEntityNameRequired")
+    .max(300, "legalEntityNameTooLong"),
   description: z.string().max(1000).optional(),
   legal_hold_flag: z.boolean(),
   justification: z.string().optional(),
