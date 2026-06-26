@@ -576,7 +576,9 @@
       "filterDateRange": "Datumsbereich",
       "sectionTitle": "GOVERNANCE-VERLAUF",
       "noEvents": "Keine Ereignisse gefunden.",
-      "clearAll": "Alle zurücksetzen"
+      "clearAll": "Alle zurücksetzen",
+      "loadMore": "Mehr laden",
+      "loadingMore": "Wird geladen..."
     },
     "overview": {
       "edit": "Bearbeiten",
@@ -598,6 +600,10 @@
         "cancel": "Abbrechen",
         "successToast": "Mandant erfolgreich aktualisiert.",
         "errors": {
+          "nameTooShort": "Der Mandantenname muss mindestens 2 Zeichen lang sein.",
+          "nameTooLong": "Der Mandantenname darf maximal 200 Zeichen lang sein.",
+          "legalEntityNameRequired": "Der Name der juristischen Person ist erforderlich.",
+          "legalEntityNameTooLong": "Der Name der juristischen Person darf maximal 300 Zeichen lang sein.",
           "justificationRequired": "Bei Änderung des Mandantennamens ist eine Governance-Begründung erforderlich (mindestens 20 Zeichen).",
           "TENANT_ALREADY_EXISTS": "Dieser Mandantenname wird bereits verwendet.",
           "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
@@ -710,6 +716,7 @@
     "GRANT_DURATION_EXCEEDED": "Der Genehmigungszeitraum darf 30 Tage nicht überschreiten.",
     "GRANT_NOT_FOUND": "Diese Genehmigung existiert nicht mehr.",
     "GRANT_ALREADY_REVOKED": "Diese Genehmigung wurde bereits widerrufen.",
-    "TENANT_LICENSE_LIMIT_REDUCTION": "Dieses Limit kann nicht unter die aktuelle aktive Anzahl gesenkt werden."
+    "TENANT_LICENSE_LIMIT_REDUCTION": "Dieses Limit kann nicht unter die aktuelle aktive Anzahl gesenkt werden.",
+    "AUDITOR_ACCESS_EXPIRED": "Ihr Prüfungsauftrag ist abgelaufen. Sie haben keinen Zugriff mehr auf die Governance-Historie dieses Mandanten."
   }
 }

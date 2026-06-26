@@ -385,7 +385,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
           )}
 
           {/* REQUEST CHAIN — collapsible
-              TODO (Q-002 backend gap): currently shows only the current action.
+              TODO #no-ticket (Q-002 backend gap): currently shows only the current action.
               When GET /governed-actions?correlation_id= is available:
               1. Fetch all actions sharing action.correlation_id
               2. Sort by created_at ascending

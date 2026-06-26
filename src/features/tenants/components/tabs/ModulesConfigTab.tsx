@@ -8,6 +8,7 @@ import { DeactivateModuleDialog } from "@/features/tenants/components/Deactivate
 import { IntegrationBindingSection } from "@/features/tenants/components/IntegrationBindingSection"
 import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useTenantModules } from "@/features/tenants/hooks/useTenantModules"
+import { formatDate } from "@/lib/formatters"
 import type { TenantModuleEntry } from "@/features/tenants/api/schema"
 import { TenantModuleStatusSchema } from "@/features/tenants/api/schema"
 
@@ -16,15 +17,6 @@ type ModulesConfigTabProps = {
   tenantName: string
   isAdmin: boolean
   isArchived?: boolean
-}
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—"
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
 }
 
 function ModuleEntry({

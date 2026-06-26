@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
@@ -20,6 +19,7 @@ import type {
   IntegrationBindingResponse,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
+import { formatDateTime } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 
 type SectionProps = {
@@ -68,8 +68,13 @@ function ConfigureBindingDialog({
     },
   })
 
-  useEffect(() => {
-    if (open) {
+  function handleClose() {
+    onOpenChange(false)
+    reset()
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
       reset({
         endpoint_url: existing?.endpoint_url ?? "",
         credential_scope_identifier:
@@ -80,11 +85,7 @@ function ConfigureBindingDialog({
         justification: "",
       })
     }
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  function handleClose() {
-    onOpenChange(false)
-    reset()
+    onOpenChange(nextOpen)
   }
 
   function onSubmit(values: UpsertIntegrationBindingForm) {
@@ -130,7 +131,7 @@ function ConfigureBindingDialog({
         : "detail.overview.integrationBinding.errors.required"
 
   return (
-    <DialogModal open={open} onOpenChange={onOpenChange}>
+    <DialogModal open={open} onOpenChange={handleOpenChange}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="px-4 py-4">
           <DialogHeader>
@@ -295,17 +296,6 @@ function ConfigureBindingDialog({
       </form>
     </DialogModal>
   )
-}
-
-function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—"
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
 }
 
 export function IntegrationBindingSection({

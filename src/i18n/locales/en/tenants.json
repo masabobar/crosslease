@@ -577,7 +577,9 @@
       "filterDateRange": "Date range",
       "sectionTitle": "GOVERNANCE HISTORY",
       "noEvents": "No events found.",
-      "clearAll": "Clear all"
+      "clearAll": "Clear all",
+      "loadMore": "Load more",
+      "loadingMore": "Loading..."
     },
     "overview": {
       "edit": "Edit",
@@ -599,6 +601,10 @@
         "cancel": "Cancel",
         "successToast": "Tenant updated successfully.",
         "errors": {
+          "nameTooShort": "Tenant name must be at least 2 characters.",
+          "nameTooLong": "Tenant name must not exceed 200 characters.",
+          "legalEntityNameRequired": "Legal entity name is required.",
+          "legalEntityNameTooLong": "Legal entity name must not exceed 300 characters.",
           "justificationRequired": "Governance justification is required when changing the tenant name (minimum 20 characters).",
           "TENANT_ALREADY_EXISTS": "This tenant name is already in use.",
           "generic": "Something went wrong. Please try again."
@@ -711,6 +717,7 @@
     "GRANT_DURATION_EXCEEDED": "The grant period cannot exceed 30 days.",
     "GRANT_NOT_FOUND": "This grant no longer exists.",
     "GRANT_ALREADY_REVOKED": "This grant has already been revoked.",
-    "TENANT_LICENSE_LIMIT_REDUCTION": "Cannot reduce this limit below the current active count."
+    "TENANT_LICENSE_LIMIT_REDUCTION": "Cannot reduce this limit below the current active count.",
+    "AUDITOR_ACCESS_EXPIRED": "Your auditor engagement has expired. You no longer have access to this tenant's governance history."
   }
 }
