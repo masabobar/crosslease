@@ -7,39 +7,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import type { AuditFilterState } from "@/features/audit/types"
 import { Button } from "@/components/ui/button"
-import { AUDIT_EVENT_TYPES } from "@/features/audit/api/schema"
 import { formatEventType, formatActionType } from "@/lib/formatters"
 import {
   FilterButton,
   FILTER_TRIGGER_CLASS,
 } from "@/components/ui/filter-button"
-import { SearchInput } from "@/components/ui/search-input"
-
-const ACTION_TYPES = [
-  "create",
-  "update",
-  "state_transition",
-  "access",
-  "approval",
-  "rejection",
-] as const
-
-const TRIGGER_SOURCES = [
-  "manual",
-  "automatic",
-  "scheduled_job",
-  "lifecycle_engine",
-] as const
-
-const ENTITY_TYPES = [
-  "user",
-  "contract",
-  "financing",
-  "request",
-  "document",
-  "partner",
-  "system",
-] as const
+import { useAuditFilterOptions } from "@/features/audit/hooks/useAuditFilterOptions"
 
 type AuditQuickFiltersProps = {
   appliedFilters: AuditFilterState
@@ -97,17 +70,15 @@ export function AuditQuickFilters({
   const [actorInputValue, setActorInputValue] = useState(
     appliedFilters.actor_id ?? ""
   )
+  const { data: filterOptions } = useAuditFilterOptions()
+
+  const entityTypes = filterOptions?.entity_types ?? []
+  const actionTypes = filterOptions?.action_types ?? []
+  const triggerSources = filterOptions?.trigger_sources ?? []
+  const eventTypes = filterOptions?.event_types ?? []
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <SearchInput
-        data-testid="filter-search-input"
-        placeholder={t("filterBar.searchPlaceholder")}
-        value={appliedFilters.search ?? ""}
-        onChange={e => onFilterChange({ search: e.target.value || null })}
-        className="w-[220px]"
-      />
-
       <FilterButton
         data-testid="filter-entity-type-button"
         label={t("filterBar.buttons.entityType")}
@@ -115,10 +86,8 @@ export function AuditQuickFilters({
         contentClassName="w-48"
       >
         <SingleSelectPopover
-          options={ENTITY_TYPES}
-          selected={
-            appliedFilters.entity_type as (typeof ENTITY_TYPES)[number] | null
-          }
+          options={entityTypes}
+          selected={appliedFilters.entity_type}
           onSelect={v => onFilterChange({ entity_type: v })}
           formatLabel={v =>
             t(`entityType.${v}`, { defaultValue: formatActionType(v) })
@@ -133,7 +102,7 @@ export function AuditQuickFilters({
         count={appliedFilters.event_type.length}
         contentClassName="w-56 max-h-72 overflow-y-auto"
       >
-        {AUDIT_EVENT_TYPES.map(et => {
+        {eventTypes.map(et => {
           const checked = appliedFilters.event_type.includes(et)
           return (
             <Button
@@ -172,10 +141,8 @@ export function AuditQuickFilters({
         contentClassName="w-48"
       >
         <SingleSelectPopover
-          options={ACTION_TYPES}
-          selected={
-            appliedFilters.action_type as (typeof ACTION_TYPES)[number] | null
-          }
+          options={actionTypes}
+          selected={appliedFilters.action_type}
           onSelect={v => onFilterChange({ action_type: v })}
           formatLabel={v => formatActionType(v)}
           testIdPrefix="filter-option-action-type"
@@ -229,12 +196,8 @@ export function AuditQuickFilters({
         contentClassName="w-48"
       >
         <SingleSelectPopover
-          options={TRIGGER_SOURCES}
-          selected={
-            appliedFilters.trigger_source as
-              | (typeof TRIGGER_SOURCES)[number]
-              | null
-          }
+          options={triggerSources}
+          selected={appliedFilters.trigger_source}
           onSelect={v => onFilterChange({ trigger_source: v })}
           formatLabel={v => formatActionType(v)}
           testIdPrefix="filter-option-trigger-source"

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
   AuditEventSchema,
+  AuditFilterOptionsSchema,
   PaginatedAuditEventsSchema,
   deriveAuditResult,
 } from "@/features/audit/api/schema"
@@ -16,6 +17,7 @@ const validAuditEvent = {
   actor_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   actor_display: "Klaus Bauer",
   actor_type: "human_user",
+  actor_role_at_time: "system_admin",
   old_data: null,
   new_data: null,
   changed_fields: null,
@@ -35,11 +37,23 @@ describe("AuditEventSchema", () => {
     expect(() => AuditEventSchema.parse(validAuditEvent)).not.toThrow()
   })
 
+  it("preserves actor_role_at_time in parsed output", () => {
+    const parsed = AuditEventSchema.parse(validAuditEvent)
+    expect(parsed.actor_role_at_time).toBe("system_admin")
+  })
+
+  it("accepts null actor_role_at_time", () => {
+    expect(() =>
+      AuditEventSchema.parse({ ...validAuditEvent, actor_role_at_time: null })
+    ).not.toThrow()
+  })
+
   it("accepts null values for all nullable fields", () => {
     const event = {
       ...validAuditEvent,
       entity_id: null,
       entity_display: null,
+      actor_role_at_time: null,
       old_data: null,
       new_data: null,
       changed_fields: null,
@@ -115,6 +129,43 @@ describe("PaginatedAuditEventsSchema", () => {
       total_pages: 1,
     }
     expect(() => PaginatedAuditEventsSchema.parse(rest)).toThrow()
+  })
+})
+
+describe("AuditFilterOptionsSchema", () => {
+  const validOptions = {
+    entity_types: ["user", "contract", "document"],
+    action_types: ["create", "update", "state_transition"],
+    actor_types: ["human_user", "system"],
+    trigger_sources: ["manual", "scheduled_job"],
+    event_types: ["user.suspended", "auth.login_failed"],
+  }
+
+  it("accepts a valid filter options response", () => {
+    expect(() => AuditFilterOptionsSchema.parse(validOptions)).not.toThrow()
+  })
+
+  it("accepts empty arrays for all list fields", () => {
+    const empty = {
+      entity_types: [],
+      action_types: [],
+      actor_types: [],
+      trigger_sources: [],
+      event_types: [],
+    }
+    expect(() => AuditFilterOptionsSchema.parse(empty)).not.toThrow()
+  })
+
+  it("rejects missing entity_types field", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { entity_types: _omit, ...rest } = validOptions
+    expect(() => AuditFilterOptionsSchema.parse(rest)).toThrow()
+  })
+
+  it("rejects non-array values", () => {
+    expect(() =>
+      AuditFilterOptionsSchema.parse({ ...validOptions, entity_types: "user" })
+    ).toThrow()
   })
 })
 
