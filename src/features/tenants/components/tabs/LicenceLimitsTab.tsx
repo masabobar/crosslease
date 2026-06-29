@@ -2,7 +2,10 @@ import { useState } from "react"
 import { SquarePen } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { isFullTenantResponse } from "@/features/tenants/api/schema"
+import {
+  isFullTenantResponse,
+  TenantStatusSchema,
+} from "@/features/tenants/api/schema"
 import type { TenantDetail } from "@/features/tenants/api/schema"
 import { EditLicenceLimitsDialog } from "@/features/tenants/components/EditLicenceLimitsDialog"
 
@@ -56,6 +59,10 @@ export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
 
   if (!isFullTenantResponse(tenant)) return null
 
+  const canEditLimits =
+    tenant.status !== TenantStatusSchema.enum.draft &&
+    tenant.status !== TenantStatusSchema.enum.archived
+
   const {
     id,
     name,
@@ -84,15 +91,17 @@ export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
                 {t("detail.licenceLimits.sectionDescription")}
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="h-auto gap-1.5 px-2.5 py-1 text-sm rounded-[10px] shrink-0"
-              data-testid="btn-edit-limits"
-              onClick={() => setEditOpen(true)}
-            >
-              <SquarePen size={14} />
-              {t("detail.licenceLimits.editLimits")}
-            </Button>
+            {canEditLimits && (
+              <Button
+                variant="outline"
+                className="h-auto gap-1.5 px-2.5 py-1 text-sm rounded-[10px] shrink-0"
+                data-testid="btn-edit-limits"
+                onClick={() => setEditOpen(true)}
+              >
+                <SquarePen size={14} />
+                {t("detail.licenceLimits.editLimits")}
+              </Button>
+            )}
           </div>
 
           {/* Body */}

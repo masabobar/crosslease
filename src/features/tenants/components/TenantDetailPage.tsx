@@ -342,9 +342,7 @@ export default function TenantDetailPage() {
                   tenantId={id!}
                   tenantName={tenant.name}
                   isAdmin={isAdmin}
-                  isArchived={
-                    tenant.status === TenantStatusSchema.enum.archived
-                  }
+                  tenantStatus={tenant.status}
                 />
               )}
               {effectiveTab === "governance" && (

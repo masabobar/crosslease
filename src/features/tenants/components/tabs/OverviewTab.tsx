@@ -393,7 +393,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         {t("detail.overview.confirmChange")}
       </Button>
     </div>
-  ) : !isArchived ? (
+  ) : !isArchived && !isDraft ? (
     <Button
       type="button"
       variant="outline"

@@ -9,14 +9,20 @@ import { IntegrationBindingSection } from "@/features/tenants/components/Integra
 import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useTenantModules } from "@/features/tenants/hooks/useTenantModules"
 import { formatDate } from "@/lib/formatters"
-import type { TenantModuleEntry } from "@/features/tenants/api/schema"
-import { TenantModuleStatusSchema } from "@/features/tenants/api/schema"
+import type {
+  TenantModuleEntry,
+  TenantStatus,
+} from "@/features/tenants/api/schema"
+import {
+  TenantModuleStatusSchema,
+  TenantStatusSchema,
+} from "@/features/tenants/api/schema"
 
 type ModulesConfigTabProps = {
   tenantId: string
   tenantName: string
   isAdmin: boolean
-  isArchived?: boolean
+  tenantStatus: TenantStatus
 }
 
 function ModuleEntry({
@@ -285,7 +291,7 @@ export function ModulesConfigTab({
   tenantId,
   tenantName,
   isAdmin,
-  isArchived = false,
+  tenantStatus,
 }: ModulesConfigTabProps) {
   const { t } = useTranslation("tenants")
   const { data: modulesData, isLoading, isError } = useTenantModules(tenantId)
@@ -295,7 +301,8 @@ export function ModulesConfigTab({
     useState<TenantModuleEntry | null>(null)
   const [bindingDialogOpen, setBindingDialogOpen] = useState(false)
 
-  const canEdit = isAdmin && !isArchived
+  const canEdit = isAdmin && tenantStatus === TenantStatusSchema.enum.active
+  const isArchived = tenantStatus === TenantStatusSchema.enum.archived
   const modules = modulesData?.modules ?? []
   const colSize = Math.max(1, Math.ceil(modules.length / 3))
   const col1 = modules.slice(0, colSize)
