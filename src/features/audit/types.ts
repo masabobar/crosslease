@@ -20,7 +20,6 @@ export type AuditFilterState = {
   sensitive: boolean | null
   from_dt: string | null
   to_dt: string | null
-  result: string | null
   // UI ready — no tenant_id param in the audit API; system_admin only
   tenant_id: string | null
 }
@@ -36,7 +35,6 @@ export const EMPTY_AUDIT_FILTER_STATE: AuditFilterState = {
   sensitive: null,
   from_dt: null,
   to_dt: null,
-  result: null,
   tenant_id: null,
 }
 

@@ -73,6 +73,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   )
   const fullTenant = isFullTenantResponse(tenant) ? tenant : null
   const isArchived = tenant.status === TenantStatusSchema.enum.archived
+  const isDraft = tenant.status === TenantStatusSchema.enum.draft
   const [isEditingIdentity, setIsEditingIdentity] = useState(false)
 
   const updateTenantMutation = useUpdateTenant(tenant.id)
@@ -233,7 +234,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         {t("detail.overview.confirmChange")}
       </Button>
     </div>
-  ) : fullTenant && isAdmin && !isArchived ? (
+  ) : fullTenant && isAdmin && !isArchived && !isDraft ? (
     <Button
       type="button"
       variant="outline"

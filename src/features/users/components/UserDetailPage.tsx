@@ -84,6 +84,7 @@ import { useProfilePicture } from "@/features/users/hooks/useProfilePicture"
 import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
 import { EditRoleScopeDialog } from "@/features/users/components/EditRoleScopeDialog"
 import { EditAuditorPeriodDialog } from "@/features/users/components/EditAuditorPeriodDialog"
+import { EntityAuditHistoryTab } from "@/features/audit/components/EntityAuditHistoryTab"
 
 type TabKey = "lifecycle" | "auth" | "audit"
 
@@ -167,14 +168,6 @@ function AuthSecurityTab() {
         <span>—</span>
         <span>—</span>
       </div>
-    </div>
-  )
-}
-
-function AuditGovernanceTab() {
-  return (
-    <div className="p-3 flex items-center justify-center min-h-[80px]">
-      <p className="text-sm text-muted-foreground">—</p>
     </div>
   )
 }
@@ -915,7 +908,9 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         <div className="bg-card border border-border rounded-b-[10px]">
           {activeTab === "lifecycle" && <LifecycleTab user={user} />}
           {activeTab === "auth" && <AuthSecurityTab />}
-          {activeTab === "audit" && <AuditGovernanceTab />}
+          {activeTab === "audit" && (
+            <EntityAuditHistoryTab entityType="user" entityId={user.id} />
+          )}
         </div>
       </div>
 

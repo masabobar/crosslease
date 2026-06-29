@@ -341,6 +341,12 @@ function ActorTab({ event }: { event: AuditEvent }) {
       value: formatActionType(event.actor_type) as React.ReactNode,
     },
     {
+      label: t("drawer.fields.roleAtTime"),
+      value: (event.actor_role_at_time
+        ? formatActionType(event.actor_role_at_time)
+        : "—") as React.ReactNode,
+    },
+    {
       label: t("drawer.fields.actorId"),
       value: (
         <div className="flex items-center gap-2">

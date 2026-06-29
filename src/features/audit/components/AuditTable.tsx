@@ -7,14 +7,18 @@ import {
   formatActionType,
   formatDateTime,
 } from "@/lib/formatters"
-import type { AuditEventListItem } from "@/features/audit/api/schema"
+import {
+  deriveAuditResult,
+  type AuditEventListItem,
+} from "@/features/audit/api/schema"
 
-const COL_TIMESTAMP = "w-[160px] shrink-0"
-const COL_ENTITY = "w-[180px] shrink-0"
-const COL_ENTITY_TYPE = "w-[120px] shrink-0"
-const COL_EVENT = "w-[220px] shrink-0"
-const COL_ACTOR = "flex-1 min-w-0"
-const COL_FLAG = "w-[100px] shrink-0"
+const COL_TIMESTAMP = "w-[150px] shrink-0"
+const COL_ENTITY = "flex-1 min-w-[140px]"
+const COL_ENTITY_TYPE = "w-[110px] shrink-0"
+const COL_EVENT = "w-[210px] shrink-0"
+const COL_ACTOR = "w-[230px] shrink-0"
+const COL_RESULT = "w-[90px] shrink-0"
+const COL_FLAG = "w-[90px] shrink-0"
 const COL_CHEVRON = "w-[32px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
@@ -43,6 +47,24 @@ function EntityTypeBadge({ entityType }: { entityType: string }) {
       {t(`entityType.${entityType}`, {
         defaultValue: formatActionType(entityType),
       })}
+    </span>
+  )
+}
+
+function ResultBadge({ eventType }: { eventType: string }) {
+  const { t } = useTranslation("audit")
+  const result = deriveAuditResult(eventType)
+  const isFailed = result === "Failed"
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center rounded-full border px-1.5 py-0.5 text-xs font-medium leading-4 whitespace-nowrap",
+        isFailed
+          ? "border-destructive/50 bg-destructive/10 text-destructive"
+          : "border-emerald-500/50 bg-emerald-500/10 text-emerald-700"
+      )}
+    >
+      {isFailed ? t("result.failed") : t("result.success")}
     </span>
   )
 }
@@ -103,6 +125,11 @@ export function AuditTable({
         >
           {t("table.columns.actor")}
         </div>
+        <div
+          className={`${COL_RESULT} px-2 text-sm font-medium text-foreground`}
+        >
+          {t("table.columns.result")}
+        </div>
         <div className={`${COL_FLAG} px-2 text-sm font-medium text-foreground`}>
           {t("table.columns.flag")}
         </div>
@@ -131,6 +158,9 @@ export function AuditTable({
               </div>
               <div className={`${COL_ACTOR} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-24" />
+              </div>
+              <div className={`${COL_RESULT} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-14" />
               </div>
               <div className={`${COL_FLAG} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-12" />
@@ -185,7 +215,7 @@ export function AuditTable({
               </span>
               {event.entity_id && (
                 <span className="text-xs text-muted-foreground font-mono truncate">
-                  {event.entity_id.slice(0, 8)}…
+                  {event.entity_id}
                 </span>
               )}
             </div>
@@ -210,6 +240,10 @@ export function AuditTable({
               <span className="text-xs text-muted-foreground truncate">
                 {formatActionType(event.actor_type)}
               </span>
+            </div>
+
+            <div className={`${COL_RESULT} p-2`}>
+              <ResultBadge eventType={event.event_type} />
             </div>
 
             <div className={`${COL_FLAG} p-2`}>

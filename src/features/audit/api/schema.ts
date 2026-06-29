@@ -11,6 +11,7 @@ export const AuditEventListItemSchema = z.object({
   actor_id: z.string(),
   actor_type: z.string(),
   actor_display: z.string().nullable(),
+  actor_role_at_time: z.string().nullable(),
   trigger_source: z.string().nullable(),
   sensitive: z.boolean(),
   tenant_id: z.string().uuid().nullable(),
@@ -29,6 +30,7 @@ export const AuditEventSchema = z.object({
   actor_id: z.string(),
   actor_display: z.string().nullable(),
   actor_type: z.string(),
+  actor_role_at_time: z.string().nullable(),
   old_data: z.record(z.string(), z.unknown()).nullable(),
   new_data: z.record(z.string(), z.unknown()).nullable(),
   changed_fields: z.array(z.string()).nullable(),
@@ -100,8 +102,16 @@ export function deriveAuditResult(eventType: string): AuditResult {
   return FAILED_SUFFIXES.some(s => lower.includes(s)) ? "Failed" : "Success"
 }
 
+export const AuditFilterOptionsSchema = z.object({
+  entity_types: z.array(z.string()),
+  action_types: z.array(z.string()),
+  actor_types: z.array(z.string()),
+  trigger_sources: z.array(z.string()),
+  event_types: z.array(z.string()),
+})
+export type AuditFilterOptions = z.infer<typeof AuditFilterOptionsSchema>
+
 export type AuditQueryParams = {
-  search?: string | null
   event_type?: string[]
   entity_type?: string | null
   entity_id?: string | null
@@ -109,7 +119,6 @@ export type AuditQueryParams = {
   action_type?: string | null
   trigger_source?: string | null
   sensitive?: boolean | null
-  result?: string | null
   tenant_id?: string | null
   from_dt?: string | null
   to_dt?: string | null

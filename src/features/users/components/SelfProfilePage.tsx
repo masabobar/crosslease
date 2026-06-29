@@ -32,6 +32,7 @@ import { AUDITOR_DATE_RANGE_ROLES } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
 import { phoneNumberSchema } from "@/features/users/api/schema"
 import { getRoleClassificationKey } from "@/features/users/utils"
+import { EntityAuditHistoryTab } from "@/features/audit/components/EntityAuditHistoryTab"
 import {
   DetailRow,
   SectionCard,
@@ -48,7 +49,9 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
   const [isEditing, setIsEditing] = useState(false)
-  const [activeTab, setActiveTab] = useState<"lifecycle" | "auth">("lifecycle")
+  const [activeTab, setActiveTab] = useState<"lifecycle" | "auth" | "audit">(
+    "lifecycle"
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -329,10 +332,10 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
         </SectionCard>
       </div>
 
-      {/* Lifecycle / Auth tabs */}
+      {/* Lifecycle / Auth / Audit tabs */}
       <div className="bg-muted border border-border rounded-[10px] flex flex-col">
         <div className="flex items-center h-10 px-3 gap-1 border-b border-border">
-          {(["lifecycle", "auth"] as const).map(tab => (
+          {(["lifecycle", "auth", "audit"] as const).map(tab => (
             <Button
               key={tab}
               variant="ghost"
@@ -346,11 +349,16 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
             >
               {tab === "lifecycle"
                 ? t("detail.page.tabs.lifecycle")
-                : t("detail.page.tabs.authSecurity")}
+                : tab === "auth"
+                  ? t("detail.page.tabs.authSecurity")
+                  : t("detail.page.tabs.auditGovernance")}
             </Button>
           ))}
         </div>
         <div className="bg-card border border-border rounded-b-[10px]">
+          {activeTab === "audit" && (
+            <EntityAuditHistoryTab entityType="user" entityId={user.id} />
+          )}
           {activeTab === "lifecycle" && (
             <div className="flex flex-col gap-3 p-3">
               <DetailRow label={t("detail.page.fields.accountStatus")}>

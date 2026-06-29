@@ -91,7 +91,6 @@ function useAuditListParams() {
     from_dt: params.get("from_dt"),
     to_dt: params.get("to_dt"),
     tenant_id: params.get("tenant_id"),
-    result: params.get("result"),
   }
 
   function setPage(p: number) {
@@ -116,7 +115,6 @@ function useAuditListParams() {
         from_dt: filters.from_dt,
         to_dt: filters.to_dt,
         tenant_id: filters.tenant_id,
-        result: filters.result,
         page: null,
       },
       { event_type: filters.event_type }
@@ -148,17 +146,18 @@ export default function AuditTrailPage() {
   const { data, isLoading, isError } = useAuditEvents({
     page,
     per_page: perPage,
-    search: appliedFilters.search ?? undefined,
     event_type:
       appliedFilters.event_type.length > 0
         ? appliedFilters.event_type
         : undefined,
+    entity_type: appliedFilters.entity_type ?? undefined,
     entity_id: appliedFilters.entity_id ?? undefined,
     actor_id: appliedFilters.actor_id ?? undefined,
+    action_type: appliedFilters.action_type ?? undefined,
+    trigger_source: appliedFilters.trigger_source ?? undefined,
     sensitive: appliedFilters.sensitive ?? undefined,
     from_dt: appliedFilters.from_dt ?? undefined,
     to_dt: appliedFilters.to_dt ?? undefined,
-    result: appliedFilters.result ?? undefined,
     tenant_id: appliedFilters.tenant_id ?? undefined,
   })
 

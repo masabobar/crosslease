@@ -205,6 +205,12 @@ function ActorTab({ event }: { event: AuditEvent }) {
       value: formatActionType(event.actor_type),
     },
     {
+      label: t("drawer.fields.roleAtTime"),
+      value: event.actor_role_at_time
+        ? formatActionType(event.actor_role_at_time)
+        : "—",
+    },
+    {
       label: t("drawer.fields.triggerSource"),
       value: event.trigger_source
         ? formatActionType(event.trigger_source)
