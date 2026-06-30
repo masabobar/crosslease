@@ -216,7 +216,9 @@ const InviteUserRequest = z
     access_valid_until: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
-const UserRef = z.object({ id: z.string(), name: z.string() }).passthrough()
+const app__modules__users__interfaces__http__schemas__user_schemas__UserRef = z
+  .object({ id: z.string(), name: z.string() })
+  .passthrough()
 const UserDetailResponse = z
   .object({
     id: z.string().uuid(),
@@ -232,8 +234,14 @@ const UserDetailResponse = z
     pending_email: z.union([z.string(), z.null()]),
     profile_picture_url: z.union([z.string(), z.null()]),
     access_valid_until: z.union([z.string(), z.null()]),
-    invited_by: z.union([UserRef, z.null()]),
-    approved_by: z.union([UserRef, z.null()]),
+    invited_by: z.union([
+      app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
+      z.null(),
+    ]),
+    approved_by: z.union([
+      app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
+      z.null(),
+    ]),
     invited_at: z.union([z.string(), z.null()]),
     activated_at: z.union([z.string(), z.null()]),
     last_login: z.union([z.string(), z.null()]),
@@ -261,6 +269,9 @@ const GovernedActionType = z.enum([
   "user_auditor_period_update",
   "user_email_change",
   "module_activate",
+  "partner_archive",
+  "partner_role_assign",
+  "partner_identity_change",
 ])
 const GovernedActionStatus = z.enum([
   "pending",
@@ -695,6 +706,713 @@ const AuditEventResponse = z
     recorded_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const RegisteredAddress = z
+  .object({
+    street: z.union([z.string(), z.null()]),
+    city: z.union([z.string(), z.null()]),
+    postal_code: z.union([z.string(), z.null()]),
+    country: z.union([z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const LegalEntityIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    legal_name: z.string(),
+    legal_form: z.union([z.string(), z.null()]).optional(),
+    country: z.string().min(2).max(2),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    lei: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    foreign_identifier: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const NaturalPersonIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    place_of_birth: z.string(),
+    country: z.string().min(2).max(2),
+    birth_name: z.union([z.string(), z.null()]).optional(),
+    national_id: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+  })
+  .passthrough()
+const SoleProprietorIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    country: z.string().min(2).max(2),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+  })
+  .passthrough()
+const PartnerMatchRequest = z
+  .object({
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      NaturalPersonIdentityInput,
+      SoleProprietorIdentityInput,
+    ]),
+  })
+  .passthrough()
+const PartnerType = z.enum([
+  "legal_entity",
+  "natural_person",
+  "sole_proprietor",
+])
+const CandidateSummary = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    matched_anchors: z.array(z.string()),
+    confidence: z.string(),
+  })
+  .passthrough()
+const PartnerMatchResponse = z
+  .object({
+    classification: z.string(),
+    confidence: z.union([z.string(), z.null()]),
+    matched_partner_id: z.union([z.string(), z.null()]),
+    candidate_summaries: z.array(CandidateSummary),
+    inputs_hash: z.string(),
+  })
+  .passthrough()
+const PartnerRole = z.enum([
+  "lessee",
+  "guarantor",
+  "supplier",
+  "leasing_company",
+  "bank_entity",
+  "ubo_related_person",
+])
+const PartnerSubmitRequest = z
+  .object({
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      NaturalPersonIdentityInput,
+      SoleProprietorIdentityInput,
+    ]),
+    role: PartnerRole,
+  })
+  .passthrough()
+const PartnerSubmitResponse = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    role: PartnerRole,
+    is_new: z.boolean(),
+  })
+  .passthrough()
+const PartnerStatus = z.enum([
+  "draft",
+  "pending_confirmation",
+  "confirmed",
+  "rejected",
+  "merged",
+  "archived",
+  "pending_archive",
+])
+const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
+const PartnerListItem = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    country: z.union([z.string(), z.null()]),
+    ubo_completeness_status: z.string(),
+    roles: z.array(PartnerRole),
+  })
+  .passthrough()
+const PartnerListResponse = z
+  .object({
+    items: z.array(PartnerListItem),
+    total: z.number().int(),
+    limit: z.number().int(),
+    offset: z.number().int(),
+  })
+  .passthrough()
+const LegalEntityIdentityDetail = z
+  .object({
+    partner_type: z.string(),
+    legal_name: z.string(),
+    legal_form: z.union([z.string(), z.null()]),
+    country: z.string(),
+    tax_id_vat: z.union([z.string(), z.null()]),
+    lei: z.union([z.string(), z.null()]),
+    commercial_register_no: z.union([z.string(), z.null()]),
+    registered_address: z.union([RegisteredAddress, z.null()]),
+    foreign_identifier: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const NaturalPersonIdentityDetail = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    place_of_birth: z.string(),
+    country: z.string(),
+    birth_name: z.union([z.string(), z.null()]),
+    national_id: z.union([z.string(), z.null()]),
+    registered_address: z.union([RegisteredAddress, z.null()]),
+  })
+  .passthrough()
+const SoleProprietorIdentityDetail = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    country: z.string(),
+    tax_id_vat: z.union([z.string(), z.null()]),
+    commercial_register_no: z.union([z.string(), z.null()]),
+    registered_address: z.union([RegisteredAddress, z.null()]),
+  })
+  .passthrough()
+const PartnerDetailResponse = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    ubo_completeness_status: z.string(),
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityDetail,
+      NaturalPersonIdentityDetail,
+      SoleProprietorIdentityDetail,
+    ]),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const ResolutionEventSummary = z
+  .object({
+    classification: z.string(),
+    confidence: z.union([z.string(), z.null()]),
+    matched_anchors: z.object({}).partial().passthrough(),
+    candidate_partner_ids: z.array(z.string()),
+    inputs_hash: z.string(),
+    resolved_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const ResolutionCandidatesResponse = z
+  .object({
+    partner_id: z.string(),
+    status: z.string(),
+    resolution: z.union([ResolutionEventSummary, z.null()]),
+    candidates: z.array(CandidateSummary),
+  })
+  .passthrough()
+const ActorSummary = z
+  .object({ user_id: z.string(), display_name: z.string(), email: z.string() })
+  .passthrough()
+const RoleAssignmentSummary = z
+  .object({
+    role_assignment_id: z.string(),
+    role: PartnerRole,
+    status: z.string(),
+    is_risk_sensitive: z.boolean(),
+    assigned_by: ActorSummary,
+    assigned_at: z.string().datetime({ offset: true }),
+    note: z.union([z.string(), z.null()]),
+    governed_action_id: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const RoleHistoryEntry = z
+  .object({
+    role_assignment_id: z.string(),
+    actor: ActorSummary,
+    actor_role: z.string(),
+    description_key: z.string(),
+    description_params: z.object({}).partial().passthrough(),
+    timestamp: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const PartnerRolesResponse = z
+  .object({
+    partner_id: z.string(),
+    roles: z.array(RoleAssignmentSummary),
+    history: z.array(RoleHistoryEntry),
+  })
+  .passthrough()
+const RoleAssignRequest = z
+  .object({
+    roles: z.array(z.enum(["lessee", "guarantor", "supplier"])).min(1),
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const RoleAssignResult = z
+  .object({ role: PartnerRole, status: z.string(), is_new: z.boolean() })
+  .passthrough()
+const RoleAssignResponse = z
+  .object({ results: z.array(RoleAssignResult) })
+  .passthrough()
+const UboOwnershipRequest = z
+  .object({
+    ubo_partner_id: z.string().uuid(),
+    ownership_percentage: z.union([z.number(), z.string()]),
+    ownership_type: z.string().optional().default("direct"),
+    indirect_ownership_notes: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const UboOwnershipRecordResponse = z
+  .object({
+    id: z.string().uuid(),
+    ubo_partner_id: z.string().uuid(),
+    ubo_display_name: z.string(),
+    ownership_percentage: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    ownership_type: z.string(),
+    indirect_ownership_notes: z.union([z.string(), z.null()]),
+    captured_by: ActorSummary,
+    captured_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const PartnerUboResponse = z
+  .object({
+    ubo_completeness_status: z.string(),
+    records: z.array(UboOwnershipRecordResponse),
+  })
+  .passthrough()
+const ConfirmationHistoryEntry = z
+  .object({
+    id: z.string().uuid(),
+    status: z.string(),
+    captured_by: z.string(),
+    captured_on: z.string().datetime({ offset: true }),
+    note: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const ConfirmationHistoryResponse = z
+  .object({
+    items: z.array(ConfirmationHistoryEntry),
+    next_cursor: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const DecisionHistoryEntry = z
+  .object({
+    event_type: z.string(),
+    action_type: z.string(),
+    actor_id: z.union([z.string(), z.null()]),
+    actor_display: z.union([z.string(), z.null()]),
+    actor_type: z.union([z.string(), z.null()]),
+    occurred_at: z.string().datetime({ offset: true }),
+    old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    trigger_source: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const DecisionHistoryResponse = z
+  .object({
+    items: z.array(DecisionHistoryEntry),
+    next_cursor: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const ArchiveEligibilityResponse = z
+  .object({
+    can_archive: z.boolean(),
+    active_references: z.array(z.object({}).partial().passthrough()),
+    requires_counter_confirmation: z.boolean(),
+    risk_sensitive_roles: z.array(z.string()),
+  })
+  .passthrough()
+const PartnerConfirmRequest = z
+  .object({ note: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const PartnerRejectRequest = z
+  .object({ note: z.string().min(10).max(2000) })
+  .passthrough()
+const ArchivePartnerRequest = z
+  .object({ reason: z.string().min(20).max(2000) })
+  .passthrough()
+const ArchivePartnerResponse = z
+  .object({
+    partner_id: z.string().uuid(),
+    status: z.string(),
+    is_immediate: z.boolean(),
+    governed_action_id: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const IdentityChangeProposalRequest = z
+  .object({
+    target_anchors: z.array(z.string()).min(1),
+    proposed_values: z.object({}).partial().passthrough(),
+    change_reason: z.string().min(1).max(2000),
+  })
+  .passthrough()
+const DownstreamImpact = z
+  .object({
+    refinancing_requests: z.number().int().default(0),
+    contracts: z.number().int().default(0),
+    financings: z.number().int().default(0),
+  })
+  .partial()
+  .passthrough()
+const IdentityChangeProposeResponse = z
+  .object({
+    identity_change_id: z.string(),
+    partner_id: z.string(),
+    status: z.string(),
+    is_high_risk: z.boolean(),
+    downstream_impact: DownstreamImpact,
+  })
+  .passthrough()
+const IdentityChangeActorSummary = z
+  .object({ user_id: z.string(), display_name: z.string(), role: z.string() })
+  .passthrough()
+const IdentityHistoryItem = z
+  .object({
+    identity_change_id: z.string(),
+    target_anchors: z.array(z.string()),
+    pre_change_snapshot: z.object({}).partial().passthrough(),
+    proposed_values: z.object({}).partial().passthrough(),
+    change_reason: z.string(),
+    is_high_risk: z.boolean(),
+    status: z.string(),
+    proposed_by: IdentityChangeActorSummary,
+    proposed_at: z.string().datetime({ offset: true }),
+    resolved_at: z.union([z.string(), z.null()]),
+    counter_confirmed_by: z.union([IdentityChangeActorSummary, z.null()]),
+  })
+  .passthrough()
+const IdentityHistoryResponse = z
+  .object({ partner_id: z.string(), items: z.array(IdentityHistoryItem) })
+  .passthrough()
+const IdentityChangeDetailResponse = z
+  .object({
+    identity_change_id: z.string(),
+    partner_id: z.string(),
+    status: z.string(),
+    is_high_risk: z.boolean(),
+    target_anchors: z.array(z.string()),
+    pre_change_snapshot: z.object({}).partial().passthrough(),
+    proposed_values: z.object({}).partial().passthrough(),
+    change_reason: z.string(),
+    proposed_by: IdentityChangeActorSummary,
+    proposed_at: z.string().datetime({ offset: true }),
+    resolved_at: z.union([z.string(), z.null()]),
+    counter_confirmed_by: z.union([IdentityChangeActorSummary, z.null()]),
+    downstream_impact: DownstreamImpact,
+  })
+  .passthrough()
+const FinancingType = z.enum([
+  "full_refinancing",
+  "partial_refinancing",
+  "residual_value_financing",
+  "true_sale_forfaiting",
+  "refinancing_credit_line",
+  "structured_portfolio",
+])
+const financing_type = z.union([FinancingType, z.null()]).optional()
+const SelectableTemplateItem = z
+  .object({
+    template_id: z.string().uuid(),
+    template_code: z.string(),
+    template_name: z.string(),
+    version_id: z.string().uuid(),
+    version_number: z.string(),
+    financing_type: z.string(),
+    legal_structure: z.string(),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_until: z.union([z.string(), z.null()]),
+    allowed_asset_categories: z.union([z.array(z.string()), z.null()]),
+  })
+  .passthrough()
+const SelectableTemplatesResponse = z
+  .object({ items: z.array(SelectableTemplateItem) })
+  .passthrough()
+const IncrementType = z.enum(["major", "minor"])
+const LegalStructure = z.enum(["loan_credit", "true_sale"])
+const PaymentTiming = z.enum(["advance", "arrears"])
+const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
+const RateType = z.enum(["fixed", "floating", "euribor_spread"])
+const CalculationModel = z.enum(["annuity", "bullet", "irregular"])
+const FirstInstallmentRule = z.enum([
+  "submission_month",
+  "following_month",
+  "configurable_offset",
+])
+const DisbursementDerivationRule = z.enum(["npv", "npv_ltv", "rv_only"])
+const AssetCategory = z.enum([
+  "machinery",
+  "vehicles",
+  "it_equipment",
+  "real_estate",
+  "energy_assets",
+  "other",
+])
+const app__modules__product_templates__interfaces__http__schemas__product_template__UserRef =
+  z.object({ id: z.string().uuid(), display_name: z.string() }).passthrough()
+const VersionDetailResponse = z
+  .object({
+    id: z.string().uuid(),
+    template_id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+    increment_type: z.union([IncrementType, z.null()]),
+    referenced: z.boolean(),
+    template_name: z.string(),
+    template_description: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_until: z.union([z.string(), z.null()]),
+    financing_type: FinancingType,
+    legal_structure: LegalStructure,
+    payment_timing: PaymentTiming,
+    rate_basis: RateBasis,
+    rate_type: z.union([RateType, z.null()]),
+    calculation_model: CalculationModel,
+    npv_formula_ref: z.union([z.string(), z.null()]),
+    first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
+    disbursement_derivation_rule: z.union([
+      DisbursementDerivationRule,
+      z.null(),
+    ]),
+    allowed_asset_categories: z.union([z.array(AssetCategory), z.null()]),
+    min_term_months: z.union([z.number(), z.null()]),
+    max_term_months: z.union([z.number(), z.null()]),
+    max_ltv_ratio: z.union([z.string(), z.null()]),
+    min_volume_eur: z.union([z.string(), z.null()]),
+    max_volume_eur: z.union([z.string(), z.null()]),
+    predecessor_version_id: z.union([z.string(), z.null()]),
+    snapshot_source_version_id: z.union([z.string(), z.null()]),
+    published_at: z.union([z.string(), z.null()]),
+    published_by: z
+      .union([
+        app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
+        z.null(),
+      ])
+      .optional(),
+    deprecated_at: z.union([z.string(), z.null()]),
+    deprecated_by: z
+      .union([
+        app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
+        z.null(),
+      ])
+      .optional(),
+    deprecation_justification: z.union([z.string(), z.null()]),
+    bindings_count: z.number().int().optional().default(0),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const UpdateTemplateDraftRequest = z
+  .object({
+    template_name: z.union([z.string(), z.null()]),
+    template_description: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_until: z.union([z.string(), z.null()]),
+    financing_type: z.union([FinancingType, z.null()]),
+    legal_structure: z.union([LegalStructure, z.null()]),
+    payment_timing: z.union([PaymentTiming, z.null()]),
+    rate_basis: z.union([RateBasis, z.null()]),
+    rate_type: z.union([RateType, z.null()]),
+    calculation_model: z.union([CalculationModel, z.null()]),
+    npv_formula_ref: z.union([z.string(), z.null()]),
+    first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
+    disbursement_derivation_rule: z.union([
+      DisbursementDerivationRule,
+      z.null(),
+    ]),
+    allowed_asset_categories: z.union([z.array(AssetCategory), z.null()]),
+    min_term_months: z.union([z.number(), z.null()]),
+    max_term_months: z.union([z.number(), z.null()]),
+    max_ltv_ratio: z.union([z.number(), z.string(), z.null()]),
+    min_volume_eur: z.union([z.number(), z.string(), z.null()]),
+    max_volume_eur: z.union([z.number(), z.string(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const TemplateDraftUpdatedResponse = z
+  .object({ version_id: z.string().uuid(), version_status: z.string() })
+  .passthrough()
+const TemplateDraftDiscardedResponse = z
+  .object({ version_id: z.string().uuid(), version_status: z.string() })
+  .passthrough()
+const UpdateOrchestrationRequest = z
+  .object({
+    required_workflow_tasks: z.array(z.string().uuid()),
+    required_documents: z.array(z.string().uuid()),
+    optional_documents: z.array(z.string().uuid()).optional().default([]),
+    validation_rule_set_id: z.string().uuid(),
+  })
+  .passthrough()
+const OrchestrationLinkageItem = z
+  .object({
+    id: z.string().uuid(),
+    link_type: z.string(),
+    catalog_ref_id: z.string().uuid(),
+    catalog_ref_type: z.string(),
+  })
+  .passthrough()
+const OrchestrationResponse = z
+  .object({ linkages: z.array(OrchestrationLinkageItem) })
+  .passthrough()
+const PublishTemplateDraftRequest = z
+  .object({ justification: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const PublishTemplateDraftResponse = z
+  .object({
+    version_id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+    published_at: z.string().datetime({ offset: true }),
+    published_by: z.string().uuid(),
+  })
+  .passthrough()
+const CreateNewVersionRequest = z
+  .object({ increment_type: IncrementType })
+  .passthrough()
+const NewVersionCreatedResponse = z
+  .object({
+    version_id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+    increment_type: z.union([IncrementType, z.null()]),
+    predecessor_version_id: z.union([z.string(), z.null()]),
+    snapshot_source_version_id: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const TemplateVersionSummary = z
+  .object({
+    id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+    published_at: z.union([z.string(), z.null()]).optional(),
+    deprecated_at: z.union([z.string(), z.null()]).optional(),
+    published_by: z
+      .union([
+        app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
+        z.null(),
+      ])
+      .optional(),
+    deprecated_by: z
+      .union([
+        app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
+        z.null(),
+      ])
+      .optional(),
+    predecessor_version_id: z.union([z.string(), z.null()]).optional(),
+    superseding_version_id: z.union([z.string(), z.null()]).optional(),
+    bindings_count: z.number().int().optional().default(0),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const VersionHistoryResponse = z
+  .object({ versions: z.array(TemplateVersionSummary) })
+  .passthrough()
+const DeprecateVersionRequest = z
+  .object({ justification: z.string().min(10).max(2000) })
+  .passthrough()
+const ImpactSummary = z
+  .object({
+    rr_count: z.number().int().default(0),
+    financing_count: z.number().int().default(0),
+    contract_count: z.number().int().default(0),
+  })
+  .partial()
+  .passthrough()
+const DeprecateVersionResponse = z
+  .object({
+    version_id: z.string().uuid(),
+    version_status: z.string(),
+    deprecated_at: z.string().datetime({ offset: true }),
+    deprecated_by: z.string().uuid(),
+    impact_summary: ImpactSummary.optional(),
+  })
+  .passthrough()
+const TemplateStatus = z.enum([
+  "draft",
+  "awaiting_activation_countersignature",
+  "awaiting_deprecation_countersignature",
+  "published",
+  "deprecated",
+  "discarded",
+])
+const status = z.union([TemplateStatus, z.null()]).optional()
+const TemplateCurrentVersionSummary = z
+  .object({
+    version_id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+    financing_type: FinancingType,
+    legal_structure: LegalStructure,
+    calculation_model: CalculationModel,
+    payment_timing: PaymentTiming,
+    max_ltv_ratio: z.union([z.string(), z.null()]).optional(),
+    min_term_months: z.union([z.number(), z.null()]).optional(),
+    max_term_months: z.union([z.number(), z.null()]).optional(),
+    published_by: z
+      .union([
+        app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
+        z.null(),
+      ])
+      .optional(),
+    published_at: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const TemplateListItem = z
+  .object({
+    id: z.string().uuid(),
+    template_code: z.string(),
+    current_version: z.union([TemplateCurrentVersionSummary, z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const TemplateListResponse = z
+  .object({
+    items: z.array(TemplateListItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const CreateTemplateDraftRequest = z
+  .object({
+    template_code: z.string(),
+    template_name: z.string(),
+    financing_type: FinancingType,
+    legal_structure: LegalStructure,
+    payment_timing: PaymentTiming,
+    rate_basis: RateBasis,
+    calculation_model: CalculationModel,
+    template_description: z.union([z.string(), z.null()]).optional(),
+    valid_from: z.union([z.string(), z.null()]).optional(),
+    valid_until: z.union([z.string(), z.null()]).optional(),
+    rate_type: z.union([RateType, z.null()]).optional(),
+    npv_formula_ref: z.union([z.string(), z.null()]).optional(),
+    first_installment_rule: z
+      .union([FirstInstallmentRule, z.null()])
+      .optional(),
+    disbursement_derivation_rule: z
+      .union([DisbursementDerivationRule, z.null()])
+      .optional(),
+    allowed_asset_categories: z
+      .union([z.array(AssetCategory), z.null()])
+      .optional(),
+    min_term_months: z.union([z.number(), z.null()]).optional(),
+    max_term_months: z.union([z.number(), z.null()]).optional(),
+    max_ltv_ratio: z.union([z.number(), z.string(), z.null()]).optional(),
+    min_volume_eur: z.union([z.number(), z.string(), z.null()]).optional(),
+    max_volume_eur: z.union([z.number(), z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const TemplateDraftCreatedResponse = z
+  .object({
+    id: z.string().uuid(),
+    version_id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+  })
+  .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
   .object({
@@ -737,7 +1455,7 @@ export const schemas = {
   UserListItem,
   PaginatedUsersResponse,
   InviteUserRequest,
-  UserRef,
+  app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
   UserDetailResponse,
   EditUserRequest,
   ChangeEmailRequest,
@@ -795,6 +1513,90 @@ export const schemas = {
   AuditEventListItem,
   PaginatedAuditEventsResponse,
   AuditEventResponse,
+  RegisteredAddress,
+  LegalEntityIdentityInput,
+  NaturalPersonIdentityInput,
+  SoleProprietorIdentityInput,
+  PartnerMatchRequest,
+  PartnerType,
+  CandidateSummary,
+  PartnerMatchResponse,
+  PartnerRole,
+  PartnerSubmitRequest,
+  PartnerSubmitResponse,
+  PartnerStatus,
+  UboCompletenessStatus,
+  PartnerListItem,
+  PartnerListResponse,
+  LegalEntityIdentityDetail,
+  NaturalPersonIdentityDetail,
+  SoleProprietorIdentityDetail,
+  PartnerDetailResponse,
+  ResolutionEventSummary,
+  ResolutionCandidatesResponse,
+  ActorSummary,
+  RoleAssignmentSummary,
+  RoleHistoryEntry,
+  PartnerRolesResponse,
+  RoleAssignRequest,
+  RoleAssignResult,
+  RoleAssignResponse,
+  UboOwnershipRequest,
+  UboOwnershipRecordResponse,
+  PartnerUboResponse,
+  ConfirmationHistoryEntry,
+  ConfirmationHistoryResponse,
+  DecisionHistoryEntry,
+  DecisionHistoryResponse,
+  ArchiveEligibilityResponse,
+  PartnerConfirmRequest,
+  PartnerRejectRequest,
+  ArchivePartnerRequest,
+  ArchivePartnerResponse,
+  IdentityChangeProposalRequest,
+  DownstreamImpact,
+  IdentityChangeProposeResponse,
+  IdentityChangeActorSummary,
+  IdentityHistoryItem,
+  IdentityHistoryResponse,
+  IdentityChangeDetailResponse,
+  FinancingType,
+  financing_type,
+  SelectableTemplateItem,
+  SelectableTemplatesResponse,
+  IncrementType,
+  LegalStructure,
+  PaymentTiming,
+  RateBasis,
+  RateType,
+  CalculationModel,
+  FirstInstallmentRule,
+  DisbursementDerivationRule,
+  AssetCategory,
+  app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
+  VersionDetailResponse,
+  UpdateTemplateDraftRequest,
+  TemplateDraftUpdatedResponse,
+  TemplateDraftDiscardedResponse,
+  UpdateOrchestrationRequest,
+  OrchestrationLinkageItem,
+  OrchestrationResponse,
+  PublishTemplateDraftRequest,
+  PublishTemplateDraftResponse,
+  CreateNewVersionRequest,
+  NewVersionCreatedResponse,
+  TemplateVersionSummary,
+  VersionHistoryResponse,
+  DeprecateVersionRequest,
+  ImpactSummary,
+  DeprecateVersionResponse,
+  TemplateStatus,
+  status,
+  TemplateCurrentVersionSummary,
+  TemplateListItem,
+  TemplateListResponse,
+  CreateTemplateDraftRequest,
+  TemplateDraftCreatedResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -1622,8 +2424,8 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
   },
   {
     method: "get",
-    path: "/api/v1/media/:media_id",
-    alias: "serve_media_api_v1_media__media_id__get",
+    path: "/api/v1/media/:id",
+    alias: "serve_media_api_v1_media__id__get",
     description: `Stream a media file from S3. Requires valid session.
 
 Access is granted if the caller owns the file or is a system_admin.
@@ -1631,12 +2433,502 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
     requestFormat: "json",
     parameters: [
       {
-        name: "media_id",
+        name: "id",
         type: "Path",
         schema: z.string().uuid(),
       },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners",
+    alias: "submit_partner_api_v1_partners_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerSubmitRequest,
+      },
+    ],
+    response: PartnerSubmitResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners",
+    alias: "list_partners_api_v1_partners_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(PartnerStatus).optional().default([]),
+      },
+      {
+        name: "role",
+        type: "Query",
+        schema: z.array(PartnerRole).optional().default([]),
+      },
+      {
+        name: "country",
+        type: "Query",
+        schema: z.array(z.string()).optional().default([]),
+      },
+      {
+        name: "ubo_status",
+        type: "Query",
+        schema: z.array(UboCompletenessStatus).optional().default([]),
+      },
+      {
+        name: "limit",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(20),
+      },
+      {
+        name: "offset",
+        type: "Query",
+        schema: z.number().int().gte(0).optional().default(0),
+      },
+    ],
+    response: PartnerListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id",
+    alias: "get_partner_api_v1_partners__id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/partners/:id",
+    alias: "delete_partner_api_v1_partners__id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/archive",
+    alias: "archive_partner_api_v1_partners__id__archive_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ reason: z.string().min(20).max(2000) })
+          .passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ArchivePartnerResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/archive-eligibility",
+    alias:
+      "get_archive_eligibility_api_v1_partners__id__archive_eligibility_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ArchiveEligibilityResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/confirm",
+    alias: "confirm_partner_api_v1_partners__id__confirm_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerConfirmRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/confirmation-history",
+    alias:
+      "get_confirmation_history_api_v1_partners__id__confirmation_history_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "cursor",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(50).optional().default(50),
+      },
+    ],
+    response: ConfirmationHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/decision-history",
+    alias: "get_decision_history_api_v1_partners__id__decision_history_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "cursor",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(50),
+      },
+    ],
+    response: DecisionHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/identity-changes",
+    alias: "propose_identity_change_api_v1_partners__id__identity_changes_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: IdentityChangeProposalRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: IdentityChangeProposeResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/identity-changes",
+    alias: "get_identity_history_api_v1_partners__id__identity_changes_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: IdentityHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/identity-changes/:change_id",
+    alias:
+      "get_identity_change_detail_api_v1_partners__id__identity_changes__change_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "change_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: IdentityChangeDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/reject",
+    alias: "reject_partner_api_v1_partners__id__reject_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ note: z.string().min(10).max(2000) }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/resolution-candidates",
+    alias:
+      "get_resolution_candidates_api_v1_partners__id__resolution_candidates_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ResolutionCandidatesResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/roles",
+    alias: "get_partner_roles_api_v1_partners__id__roles_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerRolesResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/roles",
+    alias: "assign_partner_role_api_v1_partners__id__roles_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: RoleAssignRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RoleAssignResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/ubo",
+    alias: "capture_ubo_ownership_api_v1_partners__id__ubo_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UboOwnershipRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: UboOwnershipRecordResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/ubo",
+    alias: "get_ubo_ownership_api_v1_partners__id__ubo_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerUboResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/match",
+    alias: "match_partner_api_v1_partners_match_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerMatchRequest,
+      },
+    ],
+    response: PartnerMatchResponse,
     errors: [
       {
         status: 422,
@@ -1664,6 +2956,265 @@ Used by the tenant creation wizard (Step 3 — Seed package).
 Accessible to all authenticated users.`,
     requestFormat: "json",
     response: SeedPackagesResponse,
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/versions",
+    alias:
+      "create_new_version_api_v1_product_templates__template_id__versions_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateNewVersionRequest,
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: NewVersionCreatedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/product-templates/:template_id/versions",
+    alias:
+      "list_template_versions_api_v1_product_templates__template_id__versions_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: VersionHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number",
+    alias:
+      "get_template_version_api_v1_product_templates__template_id__versions__version_number__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: VersionDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number",
+    alias:
+      "update_template_draft_api_v1_product_templates__template_id__versions__version_number__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateTemplateDraftRequest,
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: TemplateDraftUpdatedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/deprecate",
+    alias:
+      "deprecate_template_version_api_v1_product_templates__template_id__versions__version_number__deprecate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ justification: z.string().min(10).max(2000) })
+          .passthrough(),
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: DeprecateVersionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/discard",
+    alias:
+      "discard_template_draft_api_v1_product_templates__template_id__versions__version_number__discard_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: TemplateDraftDiscardedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/orchestration",
+    alias:
+      "update_orchestration_api_v1_product_templates__template_id__versions__version_number__orchestration_patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateOrchestrationRequest,
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: OrchestrationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/publish",
+    alias:
+      "publish_template_draft_api_v1_product_templates__template_id__versions__version_number__publish_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PublishTemplateDraftRequest,
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: PublishTemplateDraftResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/product-templates/selectable",
+    alias: "get_selectable_templates_api_v1_product_templates_selectable_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_type",
+        type: "Query",
+        schema: financing_type,
+      },
+      {
+        name: "framework_agreement_id",
+        type: "Query",
+        schema: search,
+      },
+    ],
+    response: SelectableTemplatesResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
   {
     method: "post",
@@ -2258,6 +3809,74 @@ Requires &#x60;system_admin&#x60; role.`,
   },
   {
     method: "get",
+    path: "/api/v1/tenants/:tenant_id/product-templates",
+    alias: "list_templates_api_v1_tenants__tenant_id__product_templates_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: status,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(20),
+      },
+    ],
+    response: TemplateListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/product-templates",
+    alias:
+      "create_template_draft_api_v1_tenants__tenant_id__product_templates_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateTemplateDraftRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: TemplateDraftCreatedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
     path: "/api/v1/users",
     alias: "list_users_api_v1_users_get",
     description: `Paginated, filterable list of all users. Requires &#x60;user:list&#x60; permission.
@@ -2412,6 +4031,44 @@ After approval: verification email sent for active users; invite resent for invi
         name: "body",
         type: "Body",
         schema: z.object({ new_email: z.string().email() }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/users/:id/change-role",
+    alias: "initiate_role_change_api_v1_users__id__change_role_post",
+    description: `Initiate a Four-Eyes role change request for a user. Requires &#x60;user:change_role&#x60; permission.
+
+User must be in &#x60;active&#x60; status. The request remains pending until a different
+system_admin approves it. Only one pending role-change request is allowed per user at a time.
+
+**Supported transitions:**
+- &#x60;system_admin&#x60; ↔ &#x60;support_user&#x60;
+- &#x60;front_office&#x60; ↔ &#x60;back_office&#x60;
+
+All other transitions (including to/from &#x60;auditor&#x60; and &#x60;leasing_company_user&#x60;) are rejected with &#x60;422 INVALID_ROLE_TRANSITION&#x60;.
+
+**Returns:** &#x60;GovernedActionResponse&#x60; with &#x60;status&#x3D;pending&#x60;`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: InitiateRoleChangeRequest,
       },
       {
         name: "id",
@@ -2590,47 +4247,9 @@ codes, and invalidates all active sessions. User must re-enroll on next login.`,
   },
   {
     method: "post",
-    path: "/api/v1/users/:user_id/change-role",
-    alias: "initiate_role_change_api_v1_users__user_id__change_role_post",
-    description: `Initiate a Four-Eyes role change request for a user. Requires &#x60;user:change_role&#x60; permission.
-
-User must be in &#x60;active&#x60; status. The request remains pending until a different
-system_admin approves it. Only one pending role-change request is allowed per user at a time.
-
-**Supported transitions:**
-- &#x60;system_admin&#x60; ↔ &#x60;support_user&#x60;
-- &#x60;front_office&#x60; ↔ &#x60;back_office&#x60;
-
-All other transitions (including to/from &#x60;auditor&#x60; and &#x60;leasing_company_user&#x60;) are rejected with &#x60;422 INVALID_ROLE_TRANSITION&#x60;.
-
-**Returns:** &#x60;GovernedActionResponse&#x60; with &#x60;status&#x3D;pending&#x60;`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: InitiateRoleChangeRequest,
-      },
-      {
-        name: "user_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: GovernedActionResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/users/:user_id/update-access-period",
+    path: "/api/v1/users/:id/update-access-period",
     alias:
-      "initiate_auditor_period_update_api_v1_users__user_id__update_access_period_post",
+      "initiate_auditor_period_update_api_v1_users__id__update_access_period_post",
     description: `Initiate a Four-Eyes access period update for an auditor user. Requires &#x60;user:update_access_period&#x60; permission.
 
 User must be an active auditor. New period must be in the future.
@@ -2646,7 +4265,7 @@ Only one pending period-update request is allowed per user at a time.
         schema: UpdateAuditorAccessPeriodRequest,
       },
       {
-        name: "user_id",
+        name: "id",
         type: "Path",
         schema: z.string().uuid(),
       },
