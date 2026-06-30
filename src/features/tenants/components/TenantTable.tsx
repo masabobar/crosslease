@@ -248,7 +248,7 @@ function TenantTable({
                         tenant.status === TenantStatusSchema.enum.active && (
                           <DropdownMenuItem
                             data-testid={`tenant-row-menu-suspend-${tenant.id}`}
-                            onSelect={() => openSuspend(tenant)}
+                            onClick={() => openSuspend(tenant)}
                           >
                             {t("list.actions.suspend")}
                           </DropdownMenuItem>
@@ -258,7 +258,7 @@ function TenantTable({
                           <>
                             <DropdownMenuItem
                               data-testid={`tenant-row-menu-reactivate-${tenant.id}`}
-                              onSelect={() => openReactivate(tenant)}
+                              onClick={() => openReactivate(tenant)}
                             >
                               {t("list.actions.reactivate")}
                             </DropdownMenuItem>
@@ -266,7 +266,7 @@ function TenantTable({
                             <DropdownMenuItem
                               data-testid={`tenant-row-menu-archive-${tenant.id}`}
                               className="text-destructive focus:text-destructive"
-                              onSelect={() => openArchive(tenant)}
+                              onClick={() => openArchive(tenant)}
                             >
                               {t("list.actions.archive")}
                             </DropdownMenuItem>
