@@ -436,8 +436,6 @@
           "currentStatus": "Aktueller Status"
         },
         "fields": {
-          "effectiveFrom": "Gültig ab",
-          "effectiveFromPlaceholder": "Datum auswählen",
           "justification": "Governance-Begründung",
           "justificationMinChars": "mind. 10 Zeichen",
           "justificationHint": "Pflichtfeld. Wird im Audit-Protokoll gespeichert."

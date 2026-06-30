@@ -1,4 +1,4 @@
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { ShieldAlert } from "lucide-react"
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { DatePicker } from "@/components/ui/date-picker"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useActivateTenantModule } from "@/features/tenants/hooks/useActivateTenantModule"
@@ -38,11 +37,10 @@ export function ActivateModuleDialog({
     register,
     handleSubmit,
     reset,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<ModuleActivateForm>({
     resolver: zodResolver(ModuleActivateFormSchema),
-    defaultValues: { justification: "", effective_from: undefined },
+    defaultValues: { justification: "" },
   })
 
   function handleClose() {
@@ -112,31 +110,6 @@ export function ActivateModuleDialog({
           </div>
 
           <Separator />
-
-          {/* Effective from */}
-          <div className="flex flex-col gap-2">
-            <Label
-              htmlFor="activate-effective-from"
-              className="text-sm font-medium"
-            >
-              {t("detail.modules.activateDialog.fields.effectiveFrom")}
-            </Label>
-            <Controller
-              name="effective_from"
-              control={control}
-              render={({ field }) => (
-                <DatePicker
-                  id="activate-effective-from"
-                  data-testid="activate-effective-from"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder={t(
-                    "detail.modules.activateDialog.fields.effectiveFromPlaceholder"
-                  )}
-                />
-              )}
-            />
-          </div>
 
           {/* Justification */}
           <div className="flex flex-col gap-2">

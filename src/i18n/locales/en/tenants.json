@@ -437,8 +437,6 @@
           "currentStatus": "Current status"
         },
         "fields": {
-          "effectiveFrom": "Effective from",
-          "effectiveFromPlaceholder": "Select date",
           "justification": "Governance justification",
           "justificationMinChars": "min 10 characters",
           "justificationHint": "Mandatory. Stored in the audit trail."

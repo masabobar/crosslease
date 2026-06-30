@@ -41,7 +41,9 @@
     "auditTrail": "Audit trail",
     "auditEvent": "Event detail",
     "tenantManagement": "Tenant management",
-    "createTenant": "Create tenant"
+    "createTenant": "Create tenant",
+    "partnerManagement": "Partner management",
+    "submitPartner": "Submit partner"
   },
   "notFound": {
     "heading": "Page not found",

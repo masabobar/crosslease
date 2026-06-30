@@ -16,6 +16,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
+import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { getInitials } from "@/lib/formatters"
 
 type Crumb = { labelKey?: string; label?: string; path?: string }
@@ -50,6 +51,17 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
     { labelKey: "breadcrumb.tenantManagement", path: PATHS.TENANT_MANAGEMENT },
     { labelKey: "breadcrumb.createTenant" },
   ],
+  [PATHS.PARTNER_REGISTRY]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.partnerManagement" },
+  ],
+  [PATHS.PARTNER_SUBMIT]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.partnerManagement", path: PATHS.PARTNER_REGISTRY },
+    { labelKey: "breadcrumb.submitPartner" },
+  ],
 }
 
 export function Header() {
@@ -60,10 +72,14 @@ export function Header() {
   const tenantCreateMatch = useMatch(PATHS.TENANT_MANAGEMENT_CREATE)
   const tenantDetailMatchRaw = useMatch(PATHS.TENANT_DETAIL)
   const tenantDetailMatch = tenantCreateMatch ? null : tenantDetailMatchRaw
+  const partnerDetailMatch = useMatch(PATHS.PARTNER_DETAIL)
   const { data: currentUser } = useCurrentUser()
   const { data: detailUser } = useUserDetail(userDetailMatch?.params.id ?? null)
   const { data: detailTenant } = useTenantDetail(
     tenantDetailMatch?.params.id ?? null
+  )
+  const { data: detailPartner } = usePartnerDetail(
+    partnerDetailMatch?.params.id ?? null
   )
   const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
   const [profileOpen, setProfileOpen] = useState(false)
@@ -96,10 +112,20 @@ export function Header() {
             { labelKey: "breadcrumb.auditTrail", path: PATHS.AUDIT_TRAIL },
             { labelKey: "breadcrumb.auditEvent" },
           ]
-        : (BREADCRUMBS[location.pathname] ??
-          Object.entries(BREADCRUMBS)
-            .filter(([path]) => location.pathname.startsWith(path + "/"))
-            .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
+        : partnerDetailMatch
+          ? [
+              { labelKey: "breadcrumb.home" },
+              { labelKey: "breadcrumb.platformAdministration" },
+              {
+                labelKey: "breadcrumb.partnerManagement",
+                path: PATHS.PARTNER_REGISTRY,
+              },
+              { label: detailPartner?.display_name ?? "…" },
+            ]
+          : (BREADCRUMBS[location.pathname] ??
+            Object.entries(BREADCRUMBS)
+              .filter(([path]) => location.pathname.startsWith(path + "/"))
+              .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
 
   const initials = currentUser
     ? getInitials(currentUser.first_name, currentUser.last_name)

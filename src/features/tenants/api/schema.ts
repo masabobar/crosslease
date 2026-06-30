@@ -320,7 +320,6 @@ export type UpdateTenantForm = z.infer<typeof UpdateTenantFormSchema>
 
 export const ModuleActivateFormSchema = z.object({
   justification: z.string().min(10, "justificationTooShort"),
-  effective_from: z.string().optional(),
 })
 export type ModuleActivateForm = z.infer<typeof ModuleActivateFormSchema>
 

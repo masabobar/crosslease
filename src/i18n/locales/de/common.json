@@ -41,7 +41,9 @@
     "auditTrail": "Audit-Trail",
     "auditEvent": "Ereignisdetail",
     "tenantManagement": "Mandantenverwaltung",
-    "createTenant": "Mandant erstellen"
+    "createTenant": "Mandant erstellen",
+    "partnerManagement": "Partnerverwaltung",
+    "submitPartner": "Partner einreichen"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

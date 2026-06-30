@@ -23,6 +23,9 @@ export const PATHS = {
   SETTINGS_PROFILE: "/settings/profile",
   AUDIT_TRAIL: "/platform-administration/audit-trail",
   AUDIT_TRAIL_DETAIL: "/platform-administration/audit-trail/:eventId",
+  PARTNER_REGISTRY: "/partners",
+  PARTNER_SUBMIT: "/partners/new",
+  PARTNER_DETAIL: "/partners/:id",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -35,4 +38,8 @@ export function tenantDetail(id: string): string {
 
 export function auditTrailDetail(eventId: string): string {
   return PATHS.AUDIT_TRAIL_DETAIL.replace(":eventId", eventId)
+}
+
+export function partnerDetail(id: string): string {
+  return PATHS.PARTNER_DETAIL.replace(":id", id)
 }
