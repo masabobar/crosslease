@@ -8,8 +8,11 @@ import { RevokeGrantDialog } from "@/features/tenants/components/RevokeGrantDial
 import { useTenantGrants } from "@/features/tenants/hooks/useTenantGrants"
 import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessPolicy"
 import { useUsers } from "@/features/users/hooks/useUsers"
-import type { SupportGrant } from "@/features/tenants/api/schema"
-import { GrantStatusSchema } from "@/features/tenants/api/schema"
+import type { SupportGrant, TenantStatus } from "@/features/tenants/api/schema"
+import {
+  GrantStatusSchema,
+  TenantStatusSchema,
+} from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
 import { formatDateTime } from "@/lib/formatters"
@@ -72,6 +75,7 @@ type GrantRowProps = {
   grantedByName: string
   isLast: boolean
   isAdmin: boolean
+  tenantStatus: TenantStatus
   onRevoke: (grant: SupportGrant) => void
 }
 
@@ -81,6 +85,7 @@ function GrantRow({
   grantedByName,
   isLast,
   isAdmin,
+  tenantStatus,
   onRevoke,
 }: GrantRowProps) {
   const { t } = useTranslation("tenants")
@@ -88,7 +93,9 @@ function GrantRow({
   const isEmergencyPending =
     grant.is_emergency && grant.review_completed_at === null
   const showRevokeButton =
-    isAdmin && grant.status === GrantStatusSchema.enum.active
+    isAdmin &&
+    grant.status === GrantStatusSchema.enum.active &&
+    tenantStatus !== TenantStatusSchema.enum.archived
 
   const metaLine = (() => {
     const grantedPart = t("detail.grants.grantedBy", { name: grantedByName })
@@ -152,12 +159,14 @@ function GrantRow({
 type SupportGrantsTabProps = {
   tenantId: string
   tenantName: string
+  tenantStatus: TenantStatus
   isAdmin: boolean
 }
 
 export function SupportGrantsTab({
   tenantId,
   tenantName,
+  tenantStatus,
   isAdmin,
 }: SupportGrantsTabProps) {
   const { t } = useTranslation("tenants")
@@ -179,7 +188,9 @@ export function SupportGrantsTab({
   )
 
   const newGrantButton =
-    isAdmin && supportAccessEnabled ? (
+    isAdmin &&
+    supportAccessEnabled &&
+    tenantStatus !== TenantStatusSchema.enum.archived ? (
       <Button
         className="h-auto px-2.5 py-1 text-sm rounded-[10px]"
         onClick={() => setNewGrantOpen(true)}
@@ -235,6 +246,7 @@ export function SupportGrantsTab({
                 )}
                 isLast={i === grants.length - 1}
                 isAdmin={isAdmin}
+                tenantStatus={tenantStatus}
                 onRevoke={setGrantToRevoke}
               />
             ))}
