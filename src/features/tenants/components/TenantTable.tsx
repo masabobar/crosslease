@@ -1,5 +1,11 @@
 import { useState } from "react"
-import { Building2, MoreHorizontal } from "lucide-react"
+import {
+  Archive,
+  Building2,
+  CirclePause,
+  CirclePlay,
+  MoreHorizontal,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
@@ -186,13 +192,18 @@ function TenantTable({
             const textClass = muted
               ? "text-muted-foreground"
               : "text-foreground"
+            const canSuspend =
+              isAdmin && tenant.status === TenantStatusSchema.enum.active
+            const canReactivateOrArchive =
+              isAdmin && tenant.status === TenantStatusSchema.enum.suspended
+            const hasActions = canSuspend || canReactivateOrArchive
 
             return (
               <div
                 key={tenant.id}
                 data-testid={`tenant-row-${tenant.id}`}
                 onClick={() => onRowClick?.(tenant)}
-                className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+                className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
               >
                 <div className={`${COL_TENANT} p-2`}>
                   <p className={`text-sm font-medium truncate ${textClass}`}>
@@ -235,45 +246,65 @@ function TenantTable({
                   className="shrink-0 p-2 flex items-center justify-center"
                   onClick={e => e.stopPropagation()}
                 >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      data-testid={`tenant-row-menu-${tenant.id}`}
-                      aria-label="Tenant actions"
-                      className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      <MoreHorizontal size={16} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      {isAdmin &&
-                        tenant.status === TenantStatusSchema.enum.active && (
+                  {hasActions ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        data-testid={`tenant-row-menu-${tenant.id}`}
+                        aria-label="Tenant actions"
+                        className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <MoreHorizontal size={16} />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {canSuspend && (
                           <DropdownMenuItem
                             data-testid={`tenant-row-menu-suspend-${tenant.id}`}
                             onClick={() => openSuspend(tenant)}
                           >
+                            <CirclePause
+                              size={14}
+                              className="text-muted-foreground"
+                            />
                             {t("list.actions.suspend")}
                           </DropdownMenuItem>
                         )}
-                      {isAdmin &&
-                        tenant.status === TenantStatusSchema.enum.suspended && (
+                        {canReactivateOrArchive && (
                           <>
                             <DropdownMenuItem
                               data-testid={`tenant-row-menu-reactivate-${tenant.id}`}
                               onClick={() => openReactivate(tenant)}
                             >
+                              <CirclePlay
+                                size={14}
+                                className="text-muted-foreground"
+                              />
                               {t("list.actions.reactivate")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               data-testid={`tenant-row-menu-archive-${tenant.id}`}
-                              className="text-destructive focus:text-destructive"
+                              variant="destructive"
                               onClick={() => openArchive(tenant)}
                             >
+                              <Archive size={14} />
                               {t("list.actions.archive")}
                             </DropdownMenuItem>
                           </>
                         )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Button
+                      data-testid={`tenant-row-menu-${tenant.id}`}
+                      aria-label="Tenant actions"
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled
+                      className="text-muted-foreground/30 disabled:opacity-100"
+                    >
+                      <MoreHorizontal size={16} />
+                    </Button>
+                  )}
                 </div>
               </div>
             )
