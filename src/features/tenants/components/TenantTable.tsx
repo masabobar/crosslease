@@ -3,6 +3,7 @@ import { Building2, MoreHorizontal } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
+import { formatDateTime } from "@/lib/formatters"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { SuspendTenantDialog } from "@/features/tenants/components/SuspendTenantDialog"
 import { ReactivateTenantDialog } from "@/features/tenants/components/ReactivateTenantDialog"
@@ -226,9 +227,14 @@ function TenantTable({
                   <TenantStatusBadge status={tenant.status} />
                 </div>
 
-                {/* Created at — not returned by list API, shown as placeholder */}
                 <div className={`${COL_CREATED} p-2`}>
-                  <span className="text-sm text-muted-foreground">—</span>
+                  {/* NOTE: PRD1042-1101 — list endpoint doesn't return created_at yet;
+                      shows "—" until the backend adds it (detail endpoint already has it) */}
+                  <span className={`text-sm ${textClass}`}>
+                    {tenant.created_at
+                      ? formatDateTime(tenant.created_at)
+                      : "—"}
+                  </span>
                 </div>
 
                 <div

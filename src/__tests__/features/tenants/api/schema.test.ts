@@ -97,6 +97,19 @@ describe("TenantListItemSchema", () => {
     expect(() => TenantListItemSchema.parse(rest)).toThrow()
   })
 
+  it("accepts a list item without created_at", () => {
+    expect(() => TenantListItemSchema.parse(validTenantListItem)).not.toThrow()
+  })
+
+  it("accepts a list item with created_at", () => {
+    expect(() =>
+      TenantListItemSchema.parse({
+        ...validTenantListItem,
+        created_at: "2026-01-01T00:00:00Z",
+      })
+    ).not.toThrow()
+  })
+
   it("rejects invalid uuid for id", () => {
     expect(() =>
       TenantListItemSchema.parse({ ...validTenantListItem, id: "not-a-uuid" })
