@@ -23,6 +23,7 @@ import {
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
+import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
@@ -35,6 +36,8 @@ export function Sidebar() {
     !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessTenantManagement =
     !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
+  const canAccessPartnerRegistry =
+    !!currentUser && PARTNER_VIEW_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -56,6 +59,9 @@ export function Sidebar() {
   const isAuditTrailActive =
     location.pathname === PATHS.AUDIT_TRAIL ||
     location.pathname.startsWith(PATHS.AUDIT_TRAIL + "/")
+  const isPartnerRegistryActive =
+    location.pathname === PATHS.PARTNER_REGISTRY ||
+    location.pathname.startsWith(PATHS.PARTNER_REGISTRY + "/")
 
   return (
     <aside
@@ -366,17 +372,26 @@ export function Sidebar() {
                       )}
                     </Link>
                   )}
-                  {[
-                    t("nav.partnerManagement"),
-                    t("nav.coreBankingIntegration"),
-                  ].map(label => (
-                    <span
-                      key={label}
-                      className="text-sm text-foreground whitespace-nowrap cursor-default"
+                  {canAccessPartnerRegistry && (
+                    <Link
+                      to={PATHS.PARTNER_REGISTRY}
+                      data-testid="nav-partner-registry"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap",
+                        isPartnerRegistryActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
                     >
-                      {label}
-                    </span>
-                  ))}
+                      {t("nav.partnerManagement")}
+                      {isPartnerRegistryActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
+                  <span className="text-sm text-foreground whitespace-nowrap cursor-default">
+                    {t("nav.coreBankingIntegration")}
+                  </span>
                   {canAccessTenantManagement && (
                     <Link
                       to={PATHS.TENANT_MANAGEMENT}

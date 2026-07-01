@@ -1,0 +1,303 @@
+{
+  "status": {
+    "draft": "Draft",
+    "pending_confirmation": "Pending confirmation",
+    "confirmed": "Confirmed",
+    "rejected": "Rejected",
+    "merged": "Merged",
+    "archived": "Archived",
+    "pending_archive": "Pending archive"
+  },
+  "type": {
+    "legal_entity": "Legal entity",
+    "natural_person": "Natural person",
+    "sole_proprietor": "Sole proprietor"
+  },
+  "role": {
+    "lessee": "Lessee",
+    "guarantor": "Guarantor",
+    "supplier": "Supplier",
+    "leasing_company": "Leasing company",
+    "bank_entity": "Bank entity",
+    "ubo_related_person": "UBO / Related person"
+  },
+  "roleStatus": {
+    "active": "Active",
+    "pending_four_eyes": "Pending approval",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn"
+  },
+  "uboStatus": {
+    "missing": "Missing",
+    "partial": "Partial",
+    "complete": "Complete"
+  },
+  "identityChangeStatus": {
+    "pending_four_eyes": "Pending approval",
+    "committed": "Committed",
+    "rejected": "Rejected"
+  },
+  "list": {
+    "title": "Partnerverwaltung",
+    "subtitle": "Gegenparteien-Identitäten im Mandanten suchen und verwalten.",
+    "addButton": "Partner hinzufügen",
+    "importButton": "Partner importieren",
+    "table": {
+      "columns": {
+        "name": "Partner",
+        "role": "Rolle",
+        "country": "Land",
+        "status": "Status",
+        "uboStatus": "UBO-Status"
+      },
+      "actions": {
+        "confirm": "Bestätigen",
+        "reject": "Ablehnen",
+        "archive": "Archivieren"
+      }
+    },
+    "emptyState": {
+      "title": "No partners yet",
+      "description": "Submit your first partner to get started."
+    },
+    "emptyFiltered": {
+      "title": "No partners match your filters",
+      "description": "Try adjusting your search or removing some filters."
+    },
+    "filters": {
+      "searchPlaceholder": "Search by name…",
+      "status": "Status",
+      "role": "Role",
+      "country": "Country",
+      "uboStatus": "UBO status",
+      "kycOutcome": "KYC-Ergebnis",
+      "countrySearchPlaceholder": "Search countries…",
+      "noCountriesFound": "No countries found.",
+      "clearAll": "Clear all"
+    },
+    "filterPills": {
+      "search": "Search: {{value}}",
+      "status": "Status: {{value}}",
+      "role": "Role: {{value}}",
+      "country": "Country: {{value}}",
+      "uboStatus": "UBO: {{value}}",
+      "kycOutcome": "KYC: {{value}}"
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "submit": {
+    "title": "Submit Partner",
+    "steps": {
+      "type": "Partner type",
+      "identity": "Identity",
+      "match": "Review & submit"
+    },
+    "typeStep": {
+      "title": "Select partner type",
+      "subtitle": "Choose the legal form of the counterparty you are registering."
+    },
+    "identityStep": {
+      "title": "Identity details",
+      "subtitle": "Enter the identifying information for this counterparty.",
+      "fields": {
+        "legalName": "Legal name",
+        "legalForm": "Legal form",
+        "country": "Country",
+        "taxIdVat": "Tax ID / VAT number",
+        "lei": "LEI",
+        "commercialRegisterNo": "Commercial register no.",
+        "foreignIdentifier": "Foreign identifier",
+        "fullName": "Full name",
+        "dateOfBirth": "Date of birth",
+        "placeOfBirth": "Place of birth",
+        "birthName": "Birth name",
+        "nationalId": "National ID",
+        "street": "Street",
+        "city": "City",
+        "postalCode": "Postal code"
+      }
+    },
+    "matchStep": {
+      "title": "Review match result",
+      "subtitle": "Select a role and submit the partner.",
+      "classification": {
+        "NEW": "New partner — will be created",
+        "EXACT_MATCH": "Exact match — will be linked to existing partner",
+        "AMBIGUOUS": "Ambiguous — requires manual confirmation after submission",
+        "POTENTIAL_DUPLICATE": "Potential duplicate detected"
+      },
+      "confidence": "Confidence",
+      "candidates": "Candidates",
+      "candidateItem": "{{name}} ({{type}})",
+      "matchedAnchors": "Matched on",
+      "roleLabel": "Assign role",
+      "rolePlaceholder": "Select role…",
+      "riskSensitiveNote": "Risk-sensitive roles require back-office counter-confirmation.",
+      "submitButton": "Submit partner"
+    },
+    "errors": {
+      "matchFailed": "Failed to check for duplicates. Please try again.",
+      "submitFailed": "Failed to submit partner. Please try again."
+    }
+  },
+  "detail": {
+    "tabs": {
+      "overview": "Overview",
+      "resolutionCandidates": "Resolution Candidates",
+      "roles": "Roles",
+      "ubo": "UBO",
+      "identityChanges": "Identity Changes",
+      "confirmationHistory": "Confirmation History"
+    },
+    "overview": {
+      "identitySectionTitle": "Identity",
+      "fields": {
+        "legalName": "Legal name",
+        "legalForm": "Legal form",
+        "country": "Country",
+        "taxIdVat": "Tax ID / VAT",
+        "lei": "LEI",
+        "commercialRegisterNo": "Commercial register no.",
+        "foreignIdentifier": "Foreign identifier",
+        "fullName": "Full name",
+        "dateOfBirth": "Date of birth",
+        "placeOfBirth": "Place of birth",
+        "birthName": "Birth name",
+        "nationalId": "National ID",
+        "address": "Registered address",
+        "createdAt": "Created",
+        "updatedAt": "Last updated"
+      },
+      "uboCompleteness": "UBO completeness",
+      "noAddress": "No address on file"
+    },
+    "resolutionCandidates": {
+      "title": "Resolution Candidates",
+      "description": "This partner matched multiple existing records. Review the candidates below.",
+      "classification": "Match classification",
+      "confidence": "Confidence",
+      "matchedAnchors": "Matched on",
+      "empty": "No resolution candidates found."
+    },
+    "roles": {
+      "activeTitle": "Active roles",
+      "historyTitle": "Role history",
+      "assignButton": "Assign role",
+      "emptyActive": "No roles assigned.",
+      "emptyHistory": "No role history yet.",
+      "assignedBy": "Assigned by",
+      "assignedAt": "Assigned",
+      "note": "Note",
+      "pendingApprovalNote": "Awaiting back-office counter-confirmation."
+    },
+    "ubo": {
+      "title": "UBO Ownership",
+      "captureButton": "Capture UBO",
+      "empty": "No UBO records captured yet.",
+      "fields": {
+        "uboPartner": "UBO partner",
+        "ownershipPercentage": "Ownership %",
+        "ownershipType": "Type",
+        "capturedBy": "Captured by",
+        "capturedAt": "Captured"
+      }
+    },
+    "identityChanges": {
+      "title": "Identity Changes",
+      "proposeButton": "Propose change",
+      "empty": "No identity changes recorded.",
+      "fields": {
+        "proposedBy": "Proposed by",
+        "proposedAt": "Proposed",
+        "resolvedAt": "Resolved",
+        "changeReason": "Reason",
+        "highRisk": "High-risk change",
+        "targetAnchors": "Changed fields"
+      }
+    },
+    "confirmationHistory": {
+      "title": "Confirmation History",
+      "empty": "No confirmation events recorded.",
+      "fields": {
+        "status": "Decision",
+        "capturedBy": "By",
+        "capturedOn": "Date",
+        "note": "Note"
+      }
+    }
+  },
+  "confirmDialog": {
+    "title": "Confirm partner",
+    "description": "Are you sure you want to confirm this partner?",
+    "fields": {
+      "note": "Note (optional)"
+    },
+    "cancel": "Cancel",
+    "submit": "Confirm",
+    "submitting": "Confirming…",
+    "success": "Partner confirmed successfully."
+  },
+  "rejectDialog": {
+    "title": "Reject partner",
+    "description": "Provide a reason for rejection.",
+    "fields": {
+      "note": "Reason",
+      "noteMinChars": "Min. 10 characters"
+    },
+    "errors": {
+      "noteTooShort": "Reason must be at least 10 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Reject",
+    "submitting": "Rejecting…",
+    "success": "Partner rejected."
+  },
+  "archiveDialog": {
+    "title": "Archive partner",
+    "description": "Archiving a partner is irreversible.",
+    "fields": {
+      "reason": "Reason",
+      "reasonMinChars": "Min. 20 characters",
+      "reasonPlaceholder": "Describe why this partner is being archived…",
+      "irreversibilityAck": {
+        "prefix": "I understand that archiving is ",
+        "emphasis": "irreversible",
+        "suffix": " and cannot be undone."
+      }
+    },
+    "errors": {
+      "reasonTooShort": "Reason must be at least 20 characters."
+    },
+    "fourEyesNote": "This partner has risk-sensitive roles. Archiving will require back-office counter-confirmation.",
+    "cancel": "Cancel",
+    "submit": "Archive",
+    "submitting": "Archiving…",
+    "successImmediate": "Partner archived.",
+    "successPendingApproval": "Archive request sent for approval."
+  },
+  "assignRoleDialog": {
+    "title": "Assign role",
+    "fields": {
+      "role": "Role",
+      "rolePlaceholder": "Select role…",
+      "note": "Note (optional)"
+    },
+    "cancel": "Cancel",
+    "submit": "Assign",
+    "submitting": "Assigning…",
+    "success": "Role assigned successfully."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "NOT_FOUND": "Partner not found.",
+    "FORBIDDEN": "You do not have permission to perform this action.",
+    "BUSINESS_PARTNER_ALREADY_CONFIRMED": "This partner is already confirmed.",
+    "BUSINESS_ROLE_ALREADY_ACTIVE": "This role is already active for this partner.",
+    "BUSINESS_RISK_SENSITIVE_ROLE_REQUIRES_SUBMIT": "Risk-sensitive roles can only be assigned at submission time.",
+    "BUSINESS_PARTNER_NOT_ARCHIVABLE": "This partner cannot be archived because it has active references."
+  }
+}

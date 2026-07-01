@@ -164,9 +164,13 @@ function StateChangeCard({ event }: { event: AuditEvent }) {
                 <p className="text-xs font-semibold text-destructive uppercase tracking-wide">
                   {t("drawer.fields.oldState")}
                 </p>
-                <p className="text-sm text-destructive mt-1">
-                  {oldValue ?? JSON.stringify(event.old_data)}
-                </p>
+                {oldValue ? (
+                  <p className="text-sm text-destructive mt-1">{oldValue}</p>
+                ) : (
+                  <pre className="text-xs font-mono text-destructive mt-1 overflow-auto max-h-[300px] whitespace-pre-wrap break-all">
+                    {JSON.stringify(event.old_data, null, 2)}
+                  </pre>
+                )}
               </div>
             )}
             {event.old_data && event.new_data && (
@@ -179,9 +183,13 @@ function StateChangeCard({ event }: { event: AuditEvent }) {
                 <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
                   {t("drawer.fields.newState")}
                 </p>
-                <p className="text-sm text-green-700 mt-1">
-                  {newValue ?? JSON.stringify(event.new_data)}
-                </p>
+                {newValue ? (
+                  <p className="text-sm text-green-700 mt-1">{newValue}</p>
+                ) : (
+                  <pre className="text-xs font-mono text-green-700 mt-1 overflow-auto max-h-[300px] whitespace-pre-wrap break-all">
+                    {JSON.stringify(event.new_data, null, 2)}
+                  </pre>
+                )}
               </div>
             )}
           </div>

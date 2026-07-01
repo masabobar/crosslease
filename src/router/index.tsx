@@ -15,6 +15,10 @@ import {
   TENANT_CREATE_ALLOWED_ROLES,
   TENANT_DETAIL_ALLOWED_ROLES,
 } from "@/features/tenants/types"
+import {
+  PARTNER_VIEW_ALLOWED_ROLES,
+  PARTNER_SUBMIT_ALLOWED_ROLES,
+} from "@/features/partners/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -74,6 +78,15 @@ const CreateTenantPage = lazy(
 )
 const TenantDetailPage = lazy(
   () => import("@/features/tenants/components/TenantDetailPage")
+)
+const PartnerRegistryPage = lazy(
+  () => import("@/features/partners/components/PartnerRegistryPage")
+)
+const SubmitPartnerPage = lazy(
+  () => import("@/features/partners/components/SubmitPartnerPage")
+)
+const PartnerDetailPage = lazy(
+  () => import("@/features/partners/components/PartnerDetailPage")
 )
 
 export const router = createBrowserRouter([
@@ -212,6 +225,36 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={TENANT_DETAIL_ALLOWED_ROLES}>
               <TenantDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PARTNER_REGISTRY,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PARTNER_VIEW_ALLOWED_ROLES}>
+              <PartnerRegistryPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PARTNER_SUBMIT,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PARTNER_SUBMIT_ALLOWED_ROLES}>
+              <SubmitPartnerPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PARTNER_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PARTNER_VIEW_ALLOWED_ROLES}>
+              <PartnerDetailPage />
             </RoleGuard>
           </Suspense>
         ),
