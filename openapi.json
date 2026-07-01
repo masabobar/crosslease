@@ -1384,6 +1384,28 @@
             "description": "Created on or before (YYYY-MM-DD)"
           },
           {
+            "name": "module_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by platform module key",
+              "title": "Module Key"
+            },
+            "description": "Filter by platform module key"
+          },
+          {
+            "name": "module_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "True = module active, False = module inactive (requires module_key)",
+              "title": "Module Active"
+            },
+            "description": "True = module active, False = module inactive (requires module_key)"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -2293,18 +2315,18 @@
         }
       }
     },
-    "/api/v1/users/{user_id}/change-role": {
+    "/api/v1/users/{id}/change-role": {
       "post": {
         "tags": ["Users"],
         "summary": "Request a role change",
         "description": "Initiate a Four-Eyes role change request for a user. Requires `user:change_role` permission.\n\nUser must be in `active` status. The request remains pending until a different\nsystem_admin approves it. Only one pending role-change request is allowed per user at a time.\n\n**Supported transitions:**\n- `system_admin` ↔ `support_user`\n- `front_office` ↔ `back_office`\n\nAll other transitions (including to/from `auditor` and `leasing_company_user`) are rejected with `422 INVALID_ROLE_TRANSITION`.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
-        "operationId": "initiate_role_change_api_v1_users__user_id__change_role_post",
+        "operationId": "initiate_role_change_api_v1_users__id__change_role_post",
         "parameters": [
           {
-            "name": "user_id",
+            "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "requestBody": {
@@ -2339,18 +2361,18 @@
         }
       }
     },
-    "/api/v1/users/{user_id}/update-access-period": {
+    "/api/v1/users/{id}/update-access-period": {
       "post": {
         "tags": ["Users"],
         "summary": "Request an auditor access period update",
         "description": "Initiate a Four-Eyes access period update for an auditor user. Requires `user:update_access_period` permission.\n\nUser must be an active auditor. New period must be in the future.\nThe request remains pending until a different system_admin approves it.\nOnly one pending period-update request is allowed per user at a time.\n\n**Returns:** `GovernedActionResponse` with `status=pending`",
-        "operationId": "initiate_auditor_period_update_api_v1_users__user_id__update_access_period_post",
+        "operationId": "initiate_auditor_period_update_api_v1_users__id__update_access_period_post",
         "parameters": [
           {
-            "name": "user_id",
+            "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "requestBody": {
@@ -3087,28 +3109,1423 @@
         }
       }
     },
-    "/api/v1/media/{media_id}": {
+    "/api/v1/media/{id}": {
       "get": {
         "tags": ["Media"],
         "summary": "Stream a media file (authenticated)",
         "description": "Stream a media file from S3. Requires valid session.\n\nAccess is granted if the caller owns the file or is a system_admin.\nReturns 404 for non-existent or unauthorized files (non-disclosing).",
-        "operationId": "serve_media_api_v1_media__media_id__get",
+        "operationId": "serve_media_api_v1_media__id__get",
         "parameters": [
           {
-            "name": "media_id",
+            "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Media Id"
-            }
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/match": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Match Partner",
+        "operationId": "match_partner_api_v1_partners_match_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerMatchRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerMatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Submit Partner",
+        "operationId": "submit_partner_api_v1_partners_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerSubmitRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSubmitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Partners",
+        "operationId": "list_partners_api_v1_partners_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Search by partner name (min 1 char)",
+              "title": "Search"
+            },
+            "description": "Search by partner name (min 1 char)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/PartnerStatus" },
+              "description": "Filter by status, repeatable",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by status, repeatable"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/PartnerRole" },
+              "description": "Filter by role, repeatable",
+              "default": [],
+              "title": "Role"
+            },
+            "description": "Filter by role, repeatable"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "ISO alpha-2 country code, repeatable",
+              "default": [],
+              "title": "Country"
+            },
+            "description": "ISO alpha-2 country code, repeatable"
+          },
+          {
+            "name": "ubo_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/UboCompletenessStatus" },
+              "description": "Filter by UBO completeness, repeatable",
+              "default": [],
+              "title": "Ubo Status"
+            },
+            "description": "Filter by UBO completeness, repeatable"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PartnerListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Partner",
+        "operationId": "get_partner_api_v1_partners__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Partners"],
+        "summary": "Delete Partner",
+        "operationId": "delete_partner_api_v1_partners__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/resolution-candidates": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Resolution Candidates",
+        "operationId": "get_resolution_candidates_api_v1_partners__id__resolution_candidates_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolutionCandidatesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/roles": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Partner Roles",
+        "operationId": "get_partner_roles_api_v1_partners__id__roles_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerRolesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Assign Partner Role",
+        "operationId": "assign_partner_role_api_v1_partners__id__roles_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RoleAssignRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RoleAssignResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/ubo": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Capture Ubo Ownership",
+        "operationId": "capture_ubo_ownership_api_v1_partners__id__ubo_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UboOwnershipRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UboOwnershipRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Ubo Ownership",
+        "operationId": "get_ubo_ownership_api_v1_partners__id__ubo_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PartnerUboResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/confirmation-history": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Confirmation History",
+        "operationId": "get_confirmation_history_api_v1_partners__id__confirmation_history_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmationHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/decision-history": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Decision History",
+        "operationId": "get_decision_history_api_v1_partners__id__decision_history_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/archive-eligibility": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Archive Eligibility",
+        "operationId": "get_archive_eligibility_api_v1_partners__id__archive_eligibility_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchiveEligibilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/confirm": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Confirm Partner",
+        "operationId": "confirm_partner_api_v1_partners__id__confirm_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerConfirmRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/reject": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Reject Partner",
+        "operationId": "reject_partner_api_v1_partners__id__reject_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerRejectRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/archive": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Archive Partner",
+        "operationId": "archive_partner_api_v1_partners__id__archive_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ArchivePartnerRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchivePartnerResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/identity-changes": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Propose Identity Change",
+        "operationId": "propose_identity_change_api_v1_partners__id__identity_changes_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityChangeProposalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeProposeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Identity History",
+        "operationId": "get_identity_history_api_v1_partners__id__identity_changes_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/identity-changes/{change_id}": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Identity Change Detail",
+        "operationId": "get_identity_change_detail_api_v1_partners__id__identity_changes__change_id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "change_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Change Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityChangeDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/selectable": {
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "Get Selectable Templates",
+        "operationId": "get_selectable_templates_api_v1_product_templates_selectable_get",
+        "parameters": [
+          {
+            "name": "financing_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/FinancingType" },
+                { "type": "null" }
+              ],
+              "title": "Financing Type"
+            }
+          },
+          {
+            "name": "framework_agreement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "title": "Framework Agreement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectableTemplatesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}": {
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "Get Template Version",
+        "operationId": "get_template_version_api_v1_product_templates__template_id__versions__version_number__get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Product Templates"],
+        "summary": "Update Template Draft",
+        "operationId": "update_template_draft_api_v1_product_templates__template_id__versions__version_number__patch",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDraftUpdatedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/discard": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Discard Template Draft",
+        "operationId": "discard_template_draft_api_v1_product_templates__template_id__versions__version_number__discard_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDraftDiscardedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/orchestration": {
+      "patch": {
+        "tags": ["Product Templates"],
+        "summary": "Update Orchestration",
+        "operationId": "update_orchestration_api_v1_product_templates__template_id__versions__version_number__orchestration_patch",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrchestrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrchestrationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/publish": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Publish Template Draft",
+        "operationId": "publish_template_draft_api_v1_product_templates__template_id__versions__version_number__publish_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishTemplateDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishTemplateDraftResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Create New Version",
+        "operationId": "create_new_version_api_v1_product_templates__template_id__versions_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNewVersionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewVersionCreatedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "List Template Versions",
+        "operationId": "list_template_versions_api_v1_product_templates__template_id__versions_get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/deprecate": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Deprecate Template Version",
+        "operationId": "deprecate_template_version_api_v1_product_templates__template_id__versions__version_number__deprecate_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecateVersionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeprecateVersionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/product-templates": {
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "List Templates",
+        "operationId": "list_templates_api_v1_tenants__tenant_id__product_templates_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/TemplateStatus" },
+                { "type": "null" }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Create Template Draft",
+        "operationId": "create_template_draft_api_v1_tenants__tenant_id__product_templates_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDraftCreatedResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -3282,6 +4699,16 @@
         ],
         "title": "AccessReason"
       },
+      "ActorSummary": {
+        "properties": {
+          "user_id": { "type": "string", "title": "User Id" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "email": { "type": "string", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["user_id", "display_name", "email"],
+        "title": "ActorSummary"
+      },
       "ApproveRejectRequest": {
         "properties": {
           "comment": {
@@ -3295,6 +4722,67 @@
         },
         "type": "object",
         "title": "ApproveRejectRequest"
+      },
+      "ArchiveEligibilityResponse": {
+        "properties": {
+          "can_archive": { "type": "boolean", "title": "Can Archive" },
+          "active_references": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Active References"
+          },
+          "requires_counter_confirmation": {
+            "type": "boolean",
+            "title": "Requires Counter Confirmation"
+          },
+          "risk_sensitive_roles": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Risk Sensitive Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "can_archive",
+          "active_references",
+          "requires_counter_confirmation",
+          "risk_sensitive_roles"
+        ],
+        "title": "ArchiveEligibilityResponse"
+      },
+      "ArchivePartnerRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 20,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": ["reason"],
+        "title": "ArchivePartnerRequest"
+      },
+      "ArchivePartnerResponse": {
+        "properties": {
+          "partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Partner Id"
+          },
+          "status": { "type": "string", "title": "Status" },
+          "is_immediate": { "type": "boolean", "title": "Is Immediate" },
+          "governed_action_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Governed Action Id"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "status", "is_immediate"],
+        "title": "ArchivePartnerResponse"
       },
       "ArchiveTenantRequest": {
         "properties": {
@@ -3311,6 +4799,18 @@
         "type": "object",
         "required": ["justification", "irreversibility_acknowledgement"],
         "title": "ArchiveTenantRequest"
+      },
+      "AssetCategory": {
+        "type": "string",
+        "enum": [
+          "machinery",
+          "vehicles",
+          "it_equipment",
+          "real_estate",
+          "energy_assets",
+          "other"
+        ],
+        "title": "AssetCategory"
       },
       "AuditEventListItem": {
         "properties": {
@@ -3560,6 +5060,35 @@
         "required": ["file"],
         "title": "Body_upload_picture_api_v1_users_me_picture_post"
       },
+      "CalculationModel": {
+        "type": "string",
+        "enum": ["annuity", "bullet", "irregular"],
+        "title": "CalculationModel"
+      },
+      "CandidateSummary": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "partner_type": { "$ref": "#/components/schemas/PartnerType" },
+          "status": { "type": "string", "title": "Status" },
+          "matched_anchors": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Matched Anchors"
+          },
+          "confidence": { "type": "string", "title": "Confidence" }
+        },
+        "type": "object",
+        "required": [
+          "partner_id",
+          "display_name",
+          "partner_type",
+          "status",
+          "matched_anchors",
+          "confidence"
+        ],
+        "title": "CandidateSummary"
+      },
       "ChangeEmailRequest": {
         "properties": {
           "new_email": {
@@ -3584,6 +5113,43 @@
         "type": "object",
         "required": ["outcome"],
         "title": "CompleteReviewRequest"
+      },
+      "ConfirmationHistoryEntry": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "status": { "type": "string", "title": "Status" },
+          "captured_by": { "type": "string", "title": "Captured By" },
+          "captured_on": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Captured On"
+          },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["id", "status", "captured_by", "captured_on", "note"],
+        "title": "ConfirmationHistoryEntry"
+      },
+      "ConfirmationHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConfirmationHistoryEntry"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": ["items", "next_cursor"],
+        "title": "ConfirmationHistoryResponse"
       },
       "CreateGrantRequest": {
         "properties": {
@@ -3614,6 +5180,129 @@
         "type": "object",
         "required": ["grantee_id", "access_reason", "valid_until"],
         "title": "CreateGrantRequest"
+      },
+      "CreateNewVersionRequest": {
+        "properties": {
+          "increment_type": { "$ref": "#/components/schemas/IncrementType" }
+        },
+        "type": "object",
+        "required": ["increment_type"],
+        "title": "CreateNewVersionRequest"
+      },
+      "CreateTemplateDraftRequest": {
+        "properties": {
+          "template_code": { "type": "string", "title": "Template Code" },
+          "template_name": { "type": "string", "title": "Template Name" },
+          "financing_type": { "$ref": "#/components/schemas/FinancingType" },
+          "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
+          "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
+          "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
+          "calculation_model": {
+            "$ref": "#/components/schemas/CalculationModel"
+          },
+          "template_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Description"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "rate_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RateType" },
+              { "type": "null" }
+            ]
+          },
+          "npv_formula_ref": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Npv Formula Ref"
+          },
+          "first_installment_rule": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FirstInstallmentRule" },
+              { "type": "null" }
+            ]
+          },
+          "disbursement_derivation_rule": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DisbursementDerivationRule" },
+              { "type": "null" }
+            ]
+          },
+          "allowed_asset_categories": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/AssetCategory" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Allowed Asset Categories"
+          },
+          "min_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Min Term Months"
+          },
+          "max_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Term Months"
+          },
+          "max_ltv_ratio": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Ltv Ratio"
+          },
+          "min_volume_eur": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Min Volume Eur"
+          },
+          "max_volume_eur": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Volume Eur"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_code",
+          "template_name",
+          "financing_type",
+          "legal_structure",
+          "payment_timing",
+          "rate_basis",
+          "calculation_model"
+        ],
+        "title": "CreateTemplateDraftRequest"
       },
       "CreateTenantRequest": {
         "properties": {
@@ -3713,10 +5402,155 @@
         ],
         "title": "DeactivationReason"
       },
+      "DecisionHistoryEntry": {
+        "properties": {
+          "event_type": { "type": "string", "title": "Event Type" },
+          "action_type": { "type": "string", "title": "Action Type" },
+          "actor_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Id"
+          },
+          "actor_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Display"
+          },
+          "actor_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Type"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "old_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Old Data"
+          },
+          "new_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "New Data"
+          },
+          "trigger_source": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Trigger Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "action_type",
+          "actor_id",
+          "actor_display",
+          "actor_type",
+          "occurred_at",
+          "old_data",
+          "new_data",
+          "trigger_source"
+        ],
+        "title": "DecisionHistoryEntry"
+      },
+      "DecisionHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/DecisionHistoryEntry" },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": ["items", "next_cursor"],
+        "title": "DecisionHistoryResponse"
+      },
       "DefaultCurrency": {
         "type": "string",
         "enum": ["EUR", "USD"],
         "title": "DefaultCurrency"
+      },
+      "DeprecateVersionRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "DeprecateVersionRequest"
+      },
+      "DeprecateVersionResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "deprecated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Deprecated At"
+          },
+          "deprecated_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Deprecated By"
+          },
+          "impact_summary": {
+            "$ref": "#/components/schemas/ImpactSummary",
+            "default": {
+              "rr_count": 0,
+              "financing_count": 0,
+              "contract_count": 0
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "version_status",
+          "deprecated_at",
+          "deprecated_by"
+        ],
+        "title": "DeprecateVersionResponse"
+      },
+      "DisbursementDerivationRule": {
+        "type": "string",
+        "enum": ["npv", "npv_ltv", "rv_only"],
+        "title": "DisbursementDerivationRule"
+      },
+      "DownstreamImpact": {
+        "properties": {
+          "refinancing_requests": {
+            "type": "integer",
+            "title": "Refinancing Requests",
+            "default": 0
+          },
+          "contracts": {
+            "type": "integer",
+            "title": "Contracts",
+            "default": 0
+          },
+          "financings": {
+            "type": "integer",
+            "title": "Financings",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "DownstreamImpact"
       },
       "EditUserRequest": {
         "properties": {
@@ -3750,6 +5584,23 @@
         },
         "type": "object",
         "title": "EditUserRequest"
+      },
+      "FinancingType": {
+        "type": "string",
+        "enum": [
+          "full_refinancing",
+          "partial_refinancing",
+          "residual_value_financing",
+          "true_sale_forfaiting",
+          "refinancing_credit_line",
+          "structured_portfolio"
+        ],
+        "title": "FinancingType"
+      },
+      "FirstInstallmentRule": {
+        "type": "string",
+        "enum": ["submission_month", "following_month", "configurable_offset"],
+        "title": "FirstInstallmentRule"
       },
       "ForgotPasswordRequest": {
         "properties": {
@@ -3960,7 +5811,12 @@
           "user_role_change",
           "user_auditor_period_update",
           "user_email_change",
-          "module_activate"
+          "module_activate",
+          "partner_archive",
+          "partner_role_assign",
+          "partner_identity_change",
+          "product_template_activate",
+          "product_template_deprecate"
         ],
         "title": "GovernedActionType"
       },
@@ -3979,6 +5835,229 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "IdentityChangeActorSummary": {
+        "properties": {
+          "user_id": { "type": "string", "title": "User Id" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "role": { "type": "string", "title": "Role" }
+        },
+        "type": "object",
+        "required": ["user_id", "display_name", "role"],
+        "title": "IdentityChangeActorSummary"
+      },
+      "IdentityChangeDetailResponse": {
+        "properties": {
+          "identity_change_id": {
+            "type": "string",
+            "title": "Identity Change Id"
+          },
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "status": { "type": "string", "title": "Status" },
+          "is_high_risk": { "type": "boolean", "title": "Is High Risk" },
+          "target_anchors": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Target Anchors"
+          },
+          "pre_change_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Pre Change Snapshot"
+          },
+          "proposed_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Proposed Values"
+          },
+          "change_reason": { "type": "string", "title": "Change Reason" },
+          "proposed_by": {
+            "$ref": "#/components/schemas/IdentityChangeActorSummary"
+          },
+          "proposed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Proposed At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Resolved At"
+          },
+          "counter_confirmed_by": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/IdentityChangeActorSummary" },
+              { "type": "null" }
+            ]
+          },
+          "downstream_impact": {
+            "$ref": "#/components/schemas/DownstreamImpact"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity_change_id",
+          "partner_id",
+          "status",
+          "is_high_risk",
+          "target_anchors",
+          "pre_change_snapshot",
+          "proposed_values",
+          "change_reason",
+          "proposed_by",
+          "proposed_at",
+          "resolved_at",
+          "counter_confirmed_by",
+          "downstream_impact"
+        ],
+        "title": "IdentityChangeDetailResponse"
+      },
+      "IdentityChangeProposalRequest": {
+        "properties": {
+          "target_anchors": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Target Anchors"
+          },
+          "proposed_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "minProperties": 1,
+            "title": "Proposed Values"
+          },
+          "change_reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Change Reason"
+          }
+        },
+        "type": "object",
+        "required": ["target_anchors", "proposed_values", "change_reason"],
+        "title": "IdentityChangeProposalRequest"
+      },
+      "IdentityChangeProposeResponse": {
+        "properties": {
+          "identity_change_id": {
+            "type": "string",
+            "title": "Identity Change Id"
+          },
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "status": { "type": "string", "title": "Status" },
+          "is_high_risk": { "type": "boolean", "title": "Is High Risk" },
+          "downstream_impact": {
+            "$ref": "#/components/schemas/DownstreamImpact"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity_change_id",
+          "partner_id",
+          "status",
+          "is_high_risk",
+          "downstream_impact"
+        ],
+        "title": "IdentityChangeProposeResponse"
+      },
+      "IdentityHistoryItem": {
+        "properties": {
+          "identity_change_id": {
+            "type": "string",
+            "title": "Identity Change Id"
+          },
+          "target_anchors": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Target Anchors"
+          },
+          "pre_change_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Pre Change Snapshot"
+          },
+          "proposed_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Proposed Values"
+          },
+          "change_reason": { "type": "string", "title": "Change Reason" },
+          "is_high_risk": { "type": "boolean", "title": "Is High Risk" },
+          "status": { "type": "string", "title": "Status" },
+          "proposed_by": {
+            "$ref": "#/components/schemas/IdentityChangeActorSummary"
+          },
+          "proposed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Proposed At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Resolved At"
+          },
+          "counter_confirmed_by": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/IdentityChangeActorSummary" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity_change_id",
+          "target_anchors",
+          "pre_change_snapshot",
+          "proposed_values",
+          "change_reason",
+          "is_high_risk",
+          "status",
+          "proposed_by",
+          "proposed_at",
+          "resolved_at",
+          "counter_confirmed_by"
+        ],
+        "title": "IdentityHistoryItem"
+      },
+      "IdentityHistoryResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/IdentityHistoryItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "IdentityHistoryResponse"
+      },
+      "ImpactSummary": {
+        "properties": {
+          "rr_count": { "type": "integer", "title": "Rr Count", "default": 0 },
+          "financing_count": {
+            "type": "integer",
+            "title": "Financing Count",
+            "default": 0
+          },
+          "contract_count": {
+            "type": "integer",
+            "title": "Contract Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ImpactSummary"
+      },
+      "IncrementType": {
+        "type": "string",
+        "enum": ["major", "minor"],
+        "title": "IncrementType"
       },
       "InitiateRoleChangeRequest": {
         "properties": {
@@ -4113,6 +6192,106 @@
         "type": "object",
         "required": ["first_name", "last_name", "email", "role"],
         "title": "InviteUserRequest"
+      },
+      "LegalEntityIdentityDetail": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "const": "legal_entity",
+            "title": "Partner Type"
+          },
+          "legal_name": { "type": "string", "title": "Legal Name" },
+          "legal_form": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Legal Form"
+          },
+          "country": { "type": "string", "title": "Country" },
+          "tax_id_vat": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tax Id Vat"
+          },
+          "lei": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lei"
+          },
+          "commercial_register_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Commercial Register No"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          },
+          "foreign_identifier": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Foreign Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_type",
+          "legal_name",
+          "legal_form",
+          "country",
+          "tax_id_vat",
+          "lei",
+          "commercial_register_no",
+          "registered_address",
+          "foreign_identifier"
+        ],
+        "title": "LegalEntityIdentityDetail"
+      },
+      "LegalEntityIdentityInput": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "const": "legal_entity",
+            "title": "Partner Type"
+          },
+          "legal_name": { "type": "string", "title": "Legal Name" },
+          "legal_form": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Legal Form"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "tax_id_vat": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tax Id Vat"
+          },
+          "lei": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lei"
+          },
+          "commercial_register_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Commercial Register No"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          },
+          "foreign_identifier": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Foreign Identifier"
+          }
+        },
+        "type": "object",
+        "required": ["partner_type", "legal_name", "country"],
+        "title": "LegalEntityIdentityInput"
+      },
+      "LegalStructure": {
+        "type": "string",
+        "enum": ["loan_credit", "true_sale"],
+        "title": "LegalStructure"
       },
       "LoginRequest": {
         "properties": {
@@ -4290,6 +6469,135 @@
         "required": ["justification"],
         "title": "ModuleDeactivateRequest"
       },
+      "NaturalPersonIdentityDetail": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "const": "natural_person",
+            "title": "Partner Type"
+          },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "place_of_birth": { "type": "string", "title": "Place Of Birth" },
+          "country": { "type": "string", "title": "Country" },
+          "birth_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Birth Name"
+          },
+          "national_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "National Id"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_type",
+          "full_name",
+          "date_of_birth",
+          "place_of_birth",
+          "country",
+          "birth_name",
+          "national_id",
+          "registered_address"
+        ],
+        "title": "NaturalPersonIdentityDetail"
+      },
+      "NaturalPersonIdentityInput": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "const": "natural_person",
+            "title": "Partner Type"
+          },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "place_of_birth": { "type": "string", "title": "Place Of Birth" },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "birth_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Birth Name"
+          },
+          "national_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "National Id"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_type",
+          "full_name",
+          "date_of_birth",
+          "place_of_birth",
+          "country"
+        ],
+        "title": "NaturalPersonIdentityInput"
+      },
+      "NewVersionCreatedResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "increment_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/IncrementType" },
+              { "type": "null" }
+            ]
+          },
+          "predecessor_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Predecessor Version Id"
+          },
+          "snapshot_source_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Snapshot Source Version Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "version_number",
+          "version_status",
+          "increment_type",
+          "predecessor_version_id",
+          "snapshot_source_version_id"
+        ],
+        "title": "NewVersionCreatedResponse"
+      },
       "OTPResponse": {
         "properties": {
           "code": { "type": "string", "title": "Code" },
@@ -4302,6 +6610,35 @@
         "type": "object",
         "required": ["code", "expires_at"],
         "title": "OTPResponse"
+      },
+      "OrchestrationLinkageItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "link_type": { "type": "string", "title": "Link Type" },
+          "catalog_ref_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Ref Id"
+          },
+          "catalog_ref_type": { "type": "string", "title": "Catalog Ref Type" }
+        },
+        "type": "object",
+        "required": ["id", "link_type", "catalog_ref_id", "catalog_ref_type"],
+        "title": "OrchestrationLinkageItem"
+      },
+      "OrchestrationResponse": {
+        "properties": {
+          "linkages": {
+            "items": {
+              "$ref": "#/components/schemas/OrchestrationLinkageItem"
+            },
+            "type": "array",
+            "title": "Linkages"
+          }
+        },
+        "type": "object",
+        "required": ["linkages"],
+        "title": "OrchestrationResponse"
       },
       "PaginatedAuditEventsResponse": {
         "properties": {
@@ -4399,6 +6736,295 @@
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
       },
+      "PartnerConfirmRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "PartnerConfirmRequest"
+      },
+      "PartnerDetailResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "partner_type": { "$ref": "#/components/schemas/PartnerType" },
+          "status": { "type": "string", "title": "Status" },
+          "ubo_completeness_status": {
+            "type": "string",
+            "title": "Ubo Completeness Status"
+          },
+          "identity": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/LegalEntityIdentityDetail" },
+              { "$ref": "#/components/schemas/NaturalPersonIdentityDetail" },
+              { "$ref": "#/components/schemas/SoleProprietorIdentityDetail" }
+            ],
+            "title": "Identity",
+            "discriminator": {
+              "propertyName": "partner_type",
+              "mapping": {
+                "legal_entity": "#/components/schemas/LegalEntityIdentityDetail",
+                "natural_person": "#/components/schemas/NaturalPersonIdentityDetail",
+                "sole_proprietor": "#/components/schemas/SoleProprietorIdentityDetail"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_id",
+          "display_name",
+          "partner_type",
+          "status",
+          "ubo_completeness_status",
+          "identity",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PartnerDetailResponse"
+      },
+      "PartnerListItem": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "partner_type": { "$ref": "#/components/schemas/PartnerType" },
+          "status": { "type": "string", "title": "Status" },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country"
+          },
+          "ubo_completeness_status": {
+            "type": "string",
+            "title": "Ubo Completeness Status"
+          },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_id",
+          "display_name",
+          "partner_type",
+          "status",
+          "country",
+          "ubo_completeness_status",
+          "roles"
+        ],
+        "title": "PartnerListItem"
+      },
+      "PartnerListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/PartnerListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "limit": { "type": "integer", "title": "Limit" },
+          "offset": { "type": "integer", "title": "Offset" }
+        },
+        "type": "object",
+        "required": ["items", "total", "limit", "offset"],
+        "title": "PartnerListResponse"
+      },
+      "PartnerMatchRequest": {
+        "properties": {
+          "identity": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
+              { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
+              { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+            ],
+            "title": "Identity",
+            "discriminator": {
+              "propertyName": "partner_type",
+              "mapping": {
+                "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
+                "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
+                "sole_proprietor": "#/components/schemas/SoleProprietorIdentityInput"
+              }
+            }
+          }
+        },
+        "type": "object",
+        "required": ["identity"],
+        "title": "PartnerMatchRequest"
+      },
+      "PartnerMatchResponse": {
+        "properties": {
+          "classification": { "type": "string", "title": "Classification" },
+          "confidence": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Confidence"
+          },
+          "matched_partner_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Matched Partner Id"
+          },
+          "candidate_summaries": {
+            "items": { "$ref": "#/components/schemas/CandidateSummary" },
+            "type": "array",
+            "title": "Candidate Summaries"
+          },
+          "inputs_hash": { "type": "string", "title": "Inputs Hash" }
+        },
+        "type": "object",
+        "required": [
+          "classification",
+          "confidence",
+          "matched_partner_id",
+          "candidate_summaries",
+          "inputs_hash"
+        ],
+        "title": "PartnerMatchResponse"
+      },
+      "PartnerRejectRequest": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["note"],
+        "title": "PartnerRejectRequest"
+      },
+      "PartnerRole": {
+        "type": "string",
+        "enum": [
+          "lessee",
+          "guarantor",
+          "supplier",
+          "leasing_company",
+          "bank_entity",
+          "ubo_related_person"
+        ],
+        "title": "PartnerRole"
+      },
+      "PartnerRolesResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/RoleAssignmentSummary" },
+            "type": "array",
+            "title": "Roles"
+          },
+          "history": {
+            "items": { "$ref": "#/components/schemas/RoleHistoryEntry" },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "roles", "history"],
+        "title": "PartnerRolesResponse"
+      },
+      "PartnerStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "pending_confirmation",
+          "confirmed",
+          "rejected",
+          "merged",
+          "archived",
+          "pending_archive"
+        ],
+        "title": "PartnerStatus"
+      },
+      "PartnerSubmitRequest": {
+        "properties": {
+          "identity": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
+              { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
+              { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+            ],
+            "title": "Identity",
+            "discriminator": {
+              "propertyName": "partner_type",
+              "mapping": {
+                "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
+                "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
+                "sole_proprietor": "#/components/schemas/SoleProprietorIdentityInput"
+              }
+            }
+          },
+          "role": { "$ref": "#/components/schemas/PartnerRole" }
+        },
+        "type": "object",
+        "required": ["identity", "role"],
+        "title": "PartnerSubmitRequest"
+      },
+      "PartnerSubmitResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "display_name": { "type": "string", "title": "Display Name" },
+          "partner_type": { "$ref": "#/components/schemas/PartnerType" },
+          "status": { "type": "string", "title": "Status" },
+          "role": { "$ref": "#/components/schemas/PartnerRole" },
+          "is_new": { "type": "boolean", "title": "Is New" }
+        },
+        "type": "object",
+        "required": [
+          "partner_id",
+          "display_name",
+          "partner_type",
+          "status",
+          "role",
+          "is_new"
+        ],
+        "title": "PartnerSubmitResponse"
+      },
+      "PartnerType": {
+        "type": "string",
+        "enum": ["legal_entity", "natural_person", "sole_proprietor"],
+        "title": "PartnerType"
+      },
+      "PartnerUboResponse": {
+        "properties": {
+          "ubo_completeness_status": {
+            "type": "string",
+            "title": "Ubo Completeness Status"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/UboOwnershipRecordResponse"
+            },
+            "type": "array",
+            "title": "Records"
+          }
+        },
+        "type": "object",
+        "required": ["ubo_completeness_status", "records"],
+        "title": "PartnerUboResponse"
+      },
+      "PaymentTiming": {
+        "type": "string",
+        "enum": ["advance", "arrears"],
+        "title": "PaymentTiming"
+      },
       "PlatformModuleEntry": {
         "properties": {
           "key": { "type": "string", "title": "Key" },
@@ -4432,6 +7058,56 @@
         "type": "object",
         "required": ["modules"],
         "title": "PlatformModulesResponse"
+      },
+      "PublishTemplateDraftRequest": {
+        "properties": {
+          "justification": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "title": "PublishTemplateDraftRequest"
+      },
+      "PublishTemplateDraftResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Published At"
+          },
+          "published_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Published By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "version_number",
+          "version_status",
+          "published_at",
+          "published_by"
+        ],
+        "title": "PublishTemplateDraftResponse"
+      },
+      "RateBasis": {
+        "type": "string",
+        "enum": ["30_360", "act_360", "act_365", "act_act"],
+        "title": "RateBasis"
+      },
+      "RateType": {
+        "type": "string",
+        "enum": ["fixed", "floating", "euribor_spread"],
+        "title": "RateType"
       },
       "ReInitiateRequest": {
         "properties": {
@@ -4483,6 +7159,28 @@
           "suspension_expired"
         ],
         "title": "ReactivationReason"
+      },
+      "RegisteredAddress": {
+        "properties": {
+          "street": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Street"
+          },
+          "city": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "City"
+          },
+          "postal_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Postal Code"
+          },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country"
+          }
+        },
+        "type": "object",
+        "title": "RegisteredAddress"
       },
       "ResendInvitationRequest": {
         "properties": {
@@ -4589,6 +7287,61 @@
         "required": ["user"],
         "title": "ResetVerifyResponse"
       },
+      "ResolutionCandidatesResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "status": { "type": "string", "title": "Status" },
+          "resolution": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ResolutionEventSummary" },
+              { "type": "null" }
+            ]
+          },
+          "candidates": {
+            "items": { "$ref": "#/components/schemas/CandidateSummary" },
+            "type": "array",
+            "title": "Candidates"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "status", "resolution", "candidates"],
+        "title": "ResolutionCandidatesResponse"
+      },
+      "ResolutionEventSummary": {
+        "properties": {
+          "classification": { "type": "string", "title": "Classification" },
+          "confidence": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Confidence"
+          },
+          "matched_anchors": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Matched Anchors"
+          },
+          "candidate_partner_ids": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Candidate Partner Ids"
+          },
+          "inputs_hash": { "type": "string", "title": "Inputs Hash" },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Resolved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "classification",
+          "confidence",
+          "matched_anchors",
+          "candidate_partner_ids",
+          "inputs_hash",
+          "resolved_at"
+        ],
+        "title": "ResolutionEventSummary"
+      },
       "RevokeGrantRequest": {
         "properties": {
           "revocation_reason": {
@@ -4600,6 +7353,121 @@
         "type": "object",
         "required": ["revocation_reason"],
         "title": "RevokeGrantRequest"
+      },
+      "RoleAssignRequest": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string",
+              "enum": ["lessee", "guarantor", "supplier"]
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Roles"
+          },
+          "note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["roles"],
+        "title": "RoleAssignRequest"
+      },
+      "RoleAssignResponse": {
+        "properties": {
+          "results": {
+            "items": { "$ref": "#/components/schemas/RoleAssignResult" },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": ["results"],
+        "title": "RoleAssignResponse"
+      },
+      "RoleAssignResult": {
+        "properties": {
+          "role": { "$ref": "#/components/schemas/PartnerRole" },
+          "status": { "type": "string", "title": "Status" },
+          "is_new": { "type": "boolean", "title": "Is New" }
+        },
+        "type": "object",
+        "required": ["role", "status", "is_new"],
+        "title": "RoleAssignResult"
+      },
+      "RoleAssignmentSummary": {
+        "properties": {
+          "role_assignment_id": {
+            "type": "string",
+            "title": "Role Assignment Id"
+          },
+          "role": { "$ref": "#/components/schemas/PartnerRole" },
+          "status": { "type": "string", "title": "Status" },
+          "is_risk_sensitive": {
+            "type": "boolean",
+            "title": "Is Risk Sensitive"
+          },
+          "assigned_by": { "$ref": "#/components/schemas/ActorSummary" },
+          "assigned_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assigned At"
+          },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          },
+          "governed_action_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Governed Action Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_assignment_id",
+          "role",
+          "status",
+          "is_risk_sensitive",
+          "assigned_by",
+          "assigned_at",
+          "note"
+        ],
+        "title": "RoleAssignmentSummary"
+      },
+      "RoleHistoryEntry": {
+        "properties": {
+          "role_assignment_id": {
+            "type": "string",
+            "title": "Role Assignment Id"
+          },
+          "actor": { "$ref": "#/components/schemas/ActorSummary" },
+          "actor_role": { "type": "string", "title": "Actor Role" },
+          "description_key": { "type": "string", "title": "Description Key" },
+          "description_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Description Params"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_assignment_id",
+          "actor",
+          "actor_role",
+          "description_key",
+          "description_params",
+          "timestamp"
+        ],
+        "title": "RoleHistoryEntry"
       },
       "SeedPackage": {
         "type": "string",
@@ -4639,6 +7507,72 @@
         "type": "object",
         "required": ["packages"],
         "title": "SeedPackagesResponse"
+      },
+      "SelectableTemplateItem": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "template_code": { "type": "string", "title": "Template Code" },
+          "template_name": { "type": "string", "title": "Template Name" },
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "financing_type": { "type": "string", "title": "Financing Type" },
+          "legal_structure": { "type": "string", "title": "Legal Structure" },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "allowed_asset_categories": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Allowed Asset Categories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id",
+          "template_code",
+          "template_name",
+          "version_id",
+          "version_number",
+          "financing_type",
+          "legal_structure",
+          "valid_from",
+          "valid_until",
+          "allowed_asset_categories"
+        ],
+        "title": "SelectableTemplateItem"
+      },
+      "SelectableTemplatesResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/SelectableTemplateItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "SelectableTemplatesResponse"
       },
       "SetPasswordRequest": {
         "properties": {
@@ -4680,6 +7614,85 @@
         },
         "type": "object",
         "title": "SetPasswordResponse"
+      },
+      "SoleProprietorIdentityDetail": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "const": "sole_proprietor",
+            "title": "Partner Type"
+          },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "country": { "type": "string", "title": "Country" },
+          "tax_id_vat": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tax Id Vat"
+          },
+          "commercial_register_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Commercial Register No"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_type",
+          "full_name",
+          "date_of_birth",
+          "country",
+          "tax_id_vat",
+          "commercial_register_no",
+          "registered_address"
+        ],
+        "title": "SoleProprietorIdentityDetail"
+      },
+      "SoleProprietorIdentityInput": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "const": "sole_proprietor",
+            "title": "Partner Type"
+          },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "tax_id_vat": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tax Id Vat"
+          },
+          "commercial_register_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Commercial Register No"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["partner_type", "full_name", "date_of_birth", "country"],
+        "title": "SoleProprietorIdentityInput"
       },
       "SupportGrantResponse": {
         "properties": {
@@ -4844,6 +7857,220 @@
           "other"
         ],
         "title": "SuspensionReason"
+      },
+      "TemplateCurrentVersionSummary": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "financing_type": { "$ref": "#/components/schemas/FinancingType" },
+          "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
+          "calculation_model": {
+            "$ref": "#/components/schemas/CalculationModel"
+          },
+          "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
+          "max_ltv_ratio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Ltv Ratio"
+          },
+          "min_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Min Term Months"
+          },
+          "max_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Term Months"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
+              },
+              { "type": "null" }
+            ]
+          },
+          "published_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Published At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "version_number",
+          "version_status",
+          "financing_type",
+          "legal_structure",
+          "calculation_model",
+          "payment_timing"
+        ],
+        "title": "TemplateCurrentVersionSummary"
+      },
+      "TemplateDraftCreatedResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" }
+        },
+        "type": "object",
+        "required": ["id", "version_id", "version_number", "version_status"],
+        "title": "TemplateDraftCreatedResponse"
+      },
+      "TemplateDraftDiscardedResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_status": { "type": "string", "title": "Version Status" }
+        },
+        "type": "object",
+        "required": ["version_id", "version_status"],
+        "title": "TemplateDraftDiscardedResponse"
+      },
+      "TemplateDraftUpdatedResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_status": { "type": "string", "title": "Version Status" }
+        },
+        "type": "object",
+        "required": ["version_id", "version_status"],
+        "title": "TemplateDraftUpdatedResponse"
+      },
+      "TemplateListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "template_code": { "type": "string", "title": "Template Code" },
+          "current_version": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TemplateCurrentVersionSummary" },
+              { "type": "null" }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "template_code", "current_version", "created_at"],
+        "title": "TemplateListItem"
+      },
+      "TemplateListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/TemplateListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "TemplateListResponse"
+      },
+      "TemplateStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "awaiting_activation_countersignature",
+          "awaiting_deprecation_countersignature",
+          "published",
+          "deprecated",
+          "discarded"
+        ],
+        "title": "TemplateStatus"
+      },
+      "TemplateVersionSummary": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "published_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Published At"
+          },
+          "deprecated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Deprecated At"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
+              },
+              { "type": "null" }
+            ]
+          },
+          "deprecated_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
+              },
+              { "type": "null" }
+            ]
+          },
+          "predecessor_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Predecessor Version Id"
+          },
+          "superseding_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Superseding Version Id"
+          },
+          "bindings_count": {
+            "type": "integer",
+            "title": "Bindings Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "version_number", "version_status", "created_at"],
+        "title": "TemplateVersionSummary"
       },
       "TenantListResponse": {
         "properties": {
@@ -5061,6 +8288,85 @@
         "required": ["email"],
         "title": "TestSessionRequest"
       },
+      "UboCompletenessStatus": {
+        "type": "string",
+        "enum": ["missing", "partial", "complete"],
+        "title": "UboCompletenessStatus"
+      },
+      "UboOwnershipRecordResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "ubo_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ubo Partner Id"
+          },
+          "ubo_display_name": { "type": "string", "title": "Ubo Display Name" },
+          "ownership_percentage": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Ownership Percentage"
+          },
+          "ownership_type": { "type": "string", "title": "Ownership Type" },
+          "indirect_ownership_notes": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Indirect Ownership Notes"
+          },
+          "captured_by": { "$ref": "#/components/schemas/ActorSummary" },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Captured At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ubo_partner_id",
+          "ubo_display_name",
+          "ownership_percentage",
+          "ownership_type",
+          "indirect_ownership_notes",
+          "captured_by",
+          "captured_at"
+        ],
+        "title": "UboOwnershipRecordResponse"
+      },
+      "UboOwnershipRequest": {
+        "properties": {
+          "ubo_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Ubo Partner Id"
+          },
+          "ownership_percentage": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "exclusiveMinimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$"
+              }
+            ],
+            "title": "Ownership Percentage"
+          },
+          "ownership_type": {
+            "type": "string",
+            "const": "direct",
+            "title": "Ownership Type",
+            "default": "direct"
+          },
+          "indirect_ownership_notes": {
+            "anyOf": [
+              { "type": "string", "maxLength": 5000 },
+              { "type": "null" }
+            ],
+            "title": "Indirect Ownership Notes"
+          }
+        },
+        "type": "object",
+        "required": ["ubo_partner_id", "ownership_percentage"],
+        "title": "UboOwnershipRequest"
+      },
       "UpdateAuditorAccessPeriodRequest": {
         "properties": {
           "new_access_valid_until": {
@@ -5106,6 +8412,169 @@
         },
         "type": "object",
         "title": "UpdateMeRequest"
+      },
+      "UpdateOrchestrationRequest": {
+        "properties": {
+          "required_workflow_tasks": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Required Workflow Tasks"
+          },
+          "required_documents": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Required Documents"
+          },
+          "optional_documents": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Optional Documents",
+            "default": []
+          },
+          "validation_rule_set_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Validation Rule Set Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "required_workflow_tasks",
+          "required_documents",
+          "validation_rule_set_id"
+        ],
+        "title": "UpdateOrchestrationRequest"
+      },
+      "UpdateTemplateDraftRequest": {
+        "properties": {
+          "template_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Name"
+          },
+          "template_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Description"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "financing_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingType" },
+              { "type": "null" }
+            ]
+          },
+          "legal_structure": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/LegalStructure" },
+              { "type": "null" }
+            ]
+          },
+          "payment_timing": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/PaymentTiming" },
+              { "type": "null" }
+            ]
+          },
+          "rate_basis": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RateBasis" },
+              { "type": "null" }
+            ]
+          },
+          "rate_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RateType" },
+              { "type": "null" }
+            ]
+          },
+          "calculation_model": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CalculationModel" },
+              { "type": "null" }
+            ]
+          },
+          "npv_formula_ref": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Npv Formula Ref"
+          },
+          "first_installment_rule": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FirstInstallmentRule" },
+              { "type": "null" }
+            ]
+          },
+          "disbursement_derivation_rule": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DisbursementDerivationRule" },
+              { "type": "null" }
+            ]
+          },
+          "allowed_asset_categories": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/AssetCategory" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Allowed Asset Categories"
+          },
+          "min_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Min Term Months"
+          },
+          "max_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Term Months"
+          },
+          "max_ltv_ratio": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Ltv Ratio"
+          },
+          "min_volume_eur": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Min Volume Eur"
+          },
+          "max_volume_eur": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Volume Eur"
+          }
+        },
+        "type": "object",
+        "title": "UpdateTemplateDraftRequest"
       },
       "UpdateTenantRequest": {
         "properties": {
@@ -5231,13 +8700,17 @@
           },
           "invited_by": {
             "anyOf": [
-              { "$ref": "#/components/schemas/UserRef" },
+              {
+                "$ref": "#/components/schemas/app__modules__users__interfaces__http__schemas__user_schemas__UserRef"
+              },
               { "type": "null" }
             ]
           },
           "approved_by": {
             "anyOf": [
-              { "$ref": "#/components/schemas/UserRef" },
+              {
+                "$ref": "#/components/schemas/app__modules__users__interfaces__http__schemas__user_schemas__UserRef"
+              },
               { "type": "null" }
             ]
           },
@@ -5369,15 +8842,6 @@
         "type": "object",
         "required": ["role", "permissions", "active_modules"],
         "title": "UserMePermissionsResponse"
-      },
-      "UserRef": {
-        "properties": {
-          "id": { "type": "string", "title": "Id" },
-          "name": { "type": "string", "title": "Name" }
-        },
-        "type": "object",
-        "required": ["id", "name"],
-        "title": "UserRef"
       },
       "UserResponse": {
         "properties": {
@@ -5529,6 +8993,244 @@
         "type": "object",
         "required": ["verification_token", "code"],
         "title": "VerifyOtpRequest"
+      },
+      "VersionDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "increment_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/IncrementType" },
+              { "type": "null" }
+            ]
+          },
+          "referenced": { "type": "boolean", "title": "Referenced" },
+          "template_name": { "type": "string", "title": "Template Name" },
+          "template_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Description"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "financing_type": { "$ref": "#/components/schemas/FinancingType" },
+          "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
+          "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
+          "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
+          "rate_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RateType" },
+              { "type": "null" }
+            ]
+          },
+          "calculation_model": {
+            "$ref": "#/components/schemas/CalculationModel"
+          },
+          "npv_formula_ref": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Npv Formula Ref"
+          },
+          "first_installment_rule": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FirstInstallmentRule" },
+              { "type": "null" }
+            ]
+          },
+          "disbursement_derivation_rule": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DisbursementDerivationRule" },
+              { "type": "null" }
+            ]
+          },
+          "allowed_asset_categories": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/AssetCategory" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Allowed Asset Categories"
+          },
+          "min_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Min Term Months"
+          },
+          "max_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Term Months"
+          },
+          "max_ltv_ratio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Ltv Ratio"
+          },
+          "min_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Min Volume Eur"
+          },
+          "max_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Volume Eur"
+          },
+          "predecessor_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Predecessor Version Id"
+          },
+          "snapshot_source_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Snapshot Source Version Id"
+          },
+          "published_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Published At"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
+              },
+              { "type": "null" }
+            ]
+          },
+          "deprecated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Deprecated At"
+          },
+          "deprecated_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
+              },
+              { "type": "null" }
+            ]
+          },
+          "deprecation_justification": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Deprecation Justification"
+          },
+          "bindings_count": {
+            "type": "integer",
+            "title": "Bindings Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "template_id",
+          "version_number",
+          "version_status",
+          "increment_type",
+          "referenced",
+          "template_name",
+          "template_description",
+          "valid_from",
+          "valid_until",
+          "financing_type",
+          "legal_structure",
+          "payment_timing",
+          "rate_basis",
+          "rate_type",
+          "calculation_model",
+          "npv_formula_ref",
+          "first_installment_rule",
+          "disbursement_derivation_rule",
+          "allowed_asset_categories",
+          "min_term_months",
+          "max_term_months",
+          "max_ltv_ratio",
+          "min_volume_eur",
+          "max_volume_eur",
+          "predecessor_version_id",
+          "snapshot_source_version_id",
+          "published_at",
+          "deprecated_at",
+          "deprecation_justification",
+          "created_at"
+        ],
+        "title": "VersionDetailResponse"
+      },
+      "VersionHistoryResponse": {
+        "properties": {
+          "versions": {
+            "items": { "$ref": "#/components/schemas/TemplateVersionSummary" },
+            "type": "array",
+            "title": "Versions"
+          }
+        },
+        "type": "object",
+        "required": ["versions"],
+        "title": "VersionHistoryResponse"
+      },
+      "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "display_name": { "type": "string", "title": "Display Name" }
+        },
+        "type": "object",
+        "required": ["id", "display_name"],
+        "title": "UserRef"
+      },
+      "app__modules__users__interfaces__http__schemas__user_schemas__UserRef": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "name": { "type": "string", "title": "Name" }
+        },
+        "type": "object",
+        "required": ["id", "name"],
+        "title": "UserRef"
       }
     }
   }
