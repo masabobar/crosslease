@@ -1,0 +1,3 @@
+- project_scope_expansion.md — Backlog expanded from 4 phases (84 pts) to 6 phases (134 pts); use 134 pts as denominator for all progress % calculations
+- feedback_code_review_before_commit.md — Always run /code-review on diff before committing or pushing; use /review-codebase for full audits
+- feedback_git_branch_workflow.md — Before any work: pull develop in refinext-app, branch from it with proper name, pull develop in refinext-api

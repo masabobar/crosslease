@@ -24,9 +24,11 @@ src/e2e/.auth/
 # Playwright output (HTML report + test artifacts)
 src/e2e/reports/
 
-# Project management & Claude config (internal tooling, not for source control)
+# Project management (internal tooling, not for source control)
 .project-management/
-.claude/
+
+# Claude config — shared rules/commands/hooks/memory are tracked; local overrides are not
+.claude/settings.local.json
 
 # Editor directories and files
 .vscode/*

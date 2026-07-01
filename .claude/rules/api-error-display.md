@@ -1,0 +1,118 @@
+# API Error Display — Exhaustive BE Error Handling
+
+**Version:** 1.0
+**Last Updated:** 2026-06-05
+**Status:** Active
+
+**MANDATORY: Every API mutation and every user-visible query error MUST be caught and surfaced to the user. Silent API failures are bugs. When reviewing or modifying code, FIX missing error handling immediately — do not flag for later.**
+
+Complements `.claude/rules/code-review.md` §5 (API Integration checklist) and `.claude/rules/error-handling-and-logging.md` (BE error taxonomy and codes).
+
+---
+
+## 1. The Rule
+
+No API call may fail silently. Every path through an async operation that results in a 4xx, 5xx, network error, or timeout MUST produce visible feedback to the user.
+
+**Trigger:** any file in `features/<name>/` or `components/` that calls `useMutation`, `useQuery`, `api.*`, or any React Query hook.
+
+**Fix-on-encounter:** when reviewing code with `/code-review` or `/review-codebase`, or when modifying a file that contains API calls — if an API call is missing the required error handling, **apply the fix in that same pass.** Do not leave it as a comment or flag for later. The fix is additive only and cannot break existing behavior.
+
+---
+
+## 2. Mutations — Required Pattern
+
+Every `useMutation` call site MUST handle errors. Use `onError` on the `mutate()` call or on the `useMutation` hook itself.
+
+```ts
+// ✅ CORRECT — all paths produce user feedback
+const mutation = useMutation({ mutationFn: createUser })
+
+mutation.mutate(payload, {
+  onError: err => {
+    if (err instanceof ApiError) {
+      switch (err.code) {
+        case "CONFLICT_EMAIL_EXISTS":
+          return toast.error(t("errors.CONFLICT_EMAIL_EXISTS"))
+        case "RATE_LIMIT_EXCEEDED":
+          return toast.error(t("errors.RATE_LIMIT_EXCEEDED"))
+        default:
+          return toast.error(t("errors.GENERIC"))
+      }
+    }
+    toast.error(t("errors.GENERIC"))
+  },
+})
+
+// ❌ MISSING onError — silent failure, user sees nothing
+mutation.mutate(payload)
+
+// ❌ MISSING switch — code-specific messages lost
+mutation.mutate(payload, {
+  onError: () => toast.error(t("errors.GENERIC")),
+})
+```
+
+**What error codes to handle:**
+
+- Check `openapi.json` (or `../refinext-api/`) for every code the endpoint documents.
+- Handle each code that the UI should distinguish with a specific message or action.
+- Fall back to `t('errors.GENERIC')` for any unrecognized code and for non-`ApiError` throws (network down, timeout).
+
+---
+
+## 3. Queries — Required Pattern
+
+Query errors appear in the component that renders the data. Use the `error` + `isError` fields from `useQuery` and render a visible error state.
+
+```ts
+// ✅ CORRECT
+const { data, error, isError } = useQuery({ queryKey: KEYS.user(id), queryFn: fetchUser })
+
+if (isError) {
+  const code = error instanceof ApiError ? error.code : 'GENERIC'
+  return <ErrorState message={t(`errors.${code}`)} />
+}
+
+// ❌ MISSING error handling — blank or stale content on failure
+const { data } = useQuery({ queryKey: KEYS.user(id), queryFn: fetchUser })
+return <UserProfile user={data} />
+```
+
+For background refetches (not initial load), the global React Query `onError` callback in `queryClient` covers those — individual query `isError` handling is for render-blocking foreground fetches.
+
+---
+
+## 4. Fix-on-Encounter Procedure
+
+When `/code-review` or `/review-codebase` finds an API call missing error handling:
+
+1. Identify the mutation/query call site.
+2. Look up the endpoint's error codes in `openapi.json` (grep by path) or `../refinext-api/`.
+3. Apply the fix using §2 (mutation) or §3 (query) pattern.
+4. Add i18n keys for any new error codes to both `en/<feature>.json` and `de/<feature>.json`.
+5. Do not leave a TODO — complete the fix inline.
+
+---
+
+## 5. Anti-Patterns
+
+| ❌                                           | Why it breaks                         | ✅                                       |
+| -------------------------------------------- | ------------------------------------- | ---------------------------------------- |
+| `mutation.mutate(payload)` with no `onError` | User sees nothing on failure          | Add `onError` with `ApiError` switch     |
+| `catch (e) { console.error(e) }`             | Logged server-side, invisible to user | `toast.error(t('errors.GENERIC'))`       |
+| `onError: () => toast.error('Failed')`       | Hardcoded string, no code handling    | `t(\`errors.${err.code ?? 'GENERIC'}\`)` |
+| Matching on `err.message`                    | Messages are not stable contracts     | Always check `err.code`                  |
+| No `isError` branch in query render          | Blank or broken UI on query failure   | Render `<ErrorState>` when `isError`     |
+
+---
+
+## Related
+
+- `.claude/rules/code-review.md` §5 — API Integration checklist (this rule drives fix-on-encounter enforcement)
+- `.claude/rules/error-handling-and-logging.md` — BE error taxonomy and `ApiError` class
+- `CLAUDE.md` — error envelope shape (`detail.code`) and known error codes reference
+
+---
+
+**Status:** ✅ Active
