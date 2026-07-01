@@ -1,0 +1,70 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Bash(pnpm install)",
+      "Bash(pnpm *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(npx prisma *)",
+      "Bash(prisma *)",
+      "Read(**)",
+      "Edit(**)",
+      "Write(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "SlashCommand(*)",
+      "Skill(*)",
+      "TodoWrite",
+      "AskUserQuestion",
+      "WebFetch(*)",
+      "WebSearch(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)"
+    ],
+    "ask": []
+  },
+  "defaultMode": "acceptEdits",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-code-review.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-write-validations.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/stop-changelog-check.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "_comment": "⚠️ IMPORTANT: Copy this to settings.json. Claude should NEVER modify settings.json automatically. See .claude/rules/permissions.md for details. Hooks require jq + git; see .claude/hooks/*.sh for what they enforce (documentation.md §2.1 file-size limits + CHANGELOG reminder)."
+}
