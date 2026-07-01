@@ -687,7 +687,8 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <SectionCard
             title={t("detail.page.sections.identity")}
             headerActions={
-              isAdmin || isOwnProfile ? (
+              (isAdmin || isOwnProfile) &&
+              user.status !== UserStatusSchema.enum.deactivated ? (
                 isEditingIdentity ? (
                   <div className="flex items-center gap-2">
                     <Button
@@ -819,7 +820,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         <SectionCard
           title={t("detail.page.sections.roleScope")}
           onEdit={
-            !isAdmin
+            !isAdmin || user.status === UserStatusSchema.enum.deactivated
               ? undefined
               : user.role === AUDITOR_ROLE
                 ? () => setIsEditingAuditorPeriod(true)

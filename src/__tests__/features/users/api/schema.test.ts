@@ -56,6 +56,23 @@ describe("UserListItemSchema", () => {
     expect(() => UserListItemSchema.parse(item)).not.toThrow()
   })
 
+  it("accepts optional profile_picture_url as undefined", () => {
+    expect(() => UserListItemSchema.parse(validUserListItem)).not.toThrow()
+  })
+
+  it("accepts profile_picture_url as null", () => {
+    const item = { ...validUserListItem, profile_picture_url: null }
+    expect(() => UserListItemSchema.parse(item)).not.toThrow()
+  })
+
+  it("accepts profile_picture_url as a url string", () => {
+    const item = {
+      ...validUserListItem,
+      profile_picture_url: "https://cdn.example.com/avatar.png",
+    }
+    expect(() => UserListItemSchema.parse(item)).not.toThrow()
+  })
+
   it("rejects missing required id field", () => {
     const item = Object.fromEntries(
       Object.entries(validUserListItem).filter(([k]) => k !== "id")

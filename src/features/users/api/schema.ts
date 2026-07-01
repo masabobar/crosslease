@@ -78,6 +78,7 @@ export const UserListItemSchema = z.object({
   role: z.enum(USER_ROLES),
   tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
+  profile_picture_url: z.string().nullable().optional(),
   mfa_enabled: z.boolean().nullable().optional(),
   status: UserStatusSchema,
   last_login: z.string().nullable(),

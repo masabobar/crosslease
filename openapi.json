@@ -1384,6 +1384,28 @@
             "description": "Created on or before (YYYY-MM-DD)"
           },
           {
+            "name": "module_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by platform module key",
+              "title": "Module Key"
+            },
+            "description": "Filter by platform module key"
+          },
+          {
+            "name": "module_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "True = module active, False = module inactive (requires module_key)",
+              "title": "Module Active"
+            },
+            "description": "True = module active, False = module inactive (requires module_key)"
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -5792,7 +5814,9 @@
           "module_activate",
           "partner_archive",
           "partner_role_assign",
-          "partner_identity_change"
+          "partner_identity_change",
+          "product_template_activate",
+          "product_template_deprecate"
         ],
         "title": "GovernedActionType"
       },

@@ -352,6 +352,7 @@ export default function TenantDetailPage() {
                 <SupportGrantsTab
                   tenantId={id!}
                   tenantName={tenant.name}
+                  tenantStatus={tenant.status}
                   isAdmin={isAdmin}
                 />
               )}

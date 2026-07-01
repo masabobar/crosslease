@@ -36,6 +36,7 @@ export const TenantListItemSchema = z.object({
   tenant_type: TenantTypeSchema,
   status: TenantStatusSchema,
   active_module_count: z.number().int(),
+  created_at: z.string().optional(),
 })
 export type TenantListItem = z.infer<typeof TenantListItemSchema>
 

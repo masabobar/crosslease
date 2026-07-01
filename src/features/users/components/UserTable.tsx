@@ -338,9 +338,17 @@ function UserTable({
             {/* User cell */}
             <div className="flex-1 min-w-0 p-2 flex items-center gap-2">
               <div className="size-8 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden">
-                <span className="text-sm text-muted-foreground text-center leading-none">
-                  {getInitials(user.first_name, user.last_name)}
-                </span>
+                {user.profile_picture_url ? (
+                  <img
+                    src={user.profile_picture_url}
+                    alt={`${user.first_name} ${user.last_name}`}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm text-muted-foreground text-center leading-none">
+                    {getInitials(user.first_name, user.last_name)}
+                  </span>
+                )}
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate leading-5">
