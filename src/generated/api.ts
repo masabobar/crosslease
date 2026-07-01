@@ -402,6 +402,7 @@ const TenantListResponse = z
     tenant_type: TenantType,
     status: TenantStatus,
     active_module_count: z.number().int(),
+    created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
 const PaginatedTenantsResponse = z
@@ -1330,6 +1331,12 @@ const DeprecateVersionResponse = z
     impact_summary: ImpactSummary.optional(),
   })
   .passthrough()
+const SubmitForActivationRequest = z
+  .object({ justification: z.string().min(20).max(2000) })
+  .passthrough()
+const SubmitDeprecationRequest = z
+  .object({ justification: z.string().min(10).max(2000) })
+  .passthrough()
 const TemplateStatus = z.enum([
   "draft",
   "awaiting_activation_countersignature",
@@ -1592,6 +1599,8 @@ export const schemas = {
   DeprecateVersionRequest,
   ImpactSummary,
   DeprecateVersionResponse,
+  SubmitForActivationRequest,
+  SubmitDeprecationRequest,
   TemplateStatus,
   status,
   TemplateCurrentVersionSummary,
@@ -3184,6 +3193,74 @@ Accessible to all authenticated users.`,
       },
     ],
     response: PublishTemplateDraftResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/submit-deprecation",
+    alias:
+      "submit_deprecation_api_v1_product_templates__template_id__versions__version_number__submit_deprecation_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ justification: z.string().min(10).max(2000) })
+          .passthrough(),
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/submit-for-activation",
+    alias:
+      "submit_for_activation_api_v1_product_templates__template_id__versions__version_number__submit_for_activation_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ justification: z.string().min(20).max(2000) })
+          .passthrough(),
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: GovernedActionResponse,
     errors: [
       {
         status: 422,

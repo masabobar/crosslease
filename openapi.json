@@ -4408,6 +4408,116 @@
         }
       }
     },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/submit-for-activation": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Submit For Activation",
+        "operationId": "submit_for_activation_api_v1_product_templates__template_id__versions__version_number__submit_for_activation_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitForActivationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/submit-deprecation": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Submit Deprecation",
+        "operationId": "submit_deprecation_api_v1_product_templates__template_id__versions__version_number__submit_deprecation_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitDeprecationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernedActionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenant_id}/product-templates": {
       "get": {
         "tags": ["Product Templates"],
@@ -7694,6 +7804,32 @@
         "required": ["partner_type", "full_name", "date_of_birth", "country"],
         "title": "SoleProprietorIdentityInput"
       },
+      "SubmitDeprecationRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "SubmitDeprecationRequest"
+      },
+      "SubmitForActivationRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "SubmitForActivationRequest"
+      },
       "SupportGrantResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -8085,6 +8221,11 @@
           "active_module_count": {
             "type": "integer",
             "title": "Active Module Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
@@ -8097,7 +8238,8 @@
           "default_currency",
           "tenant_type",
           "status",
-          "active_module_count"
+          "active_module_count",
+          "created_at"
         ],
         "title": "TenantListResponse"
       },
