@@ -272,6 +272,8 @@ const GovernedActionType = z.enum([
   "partner_archive",
   "partner_role_assign",
   "partner_identity_change",
+  "product_template_activate",
+  "product_template_deprecate",
 ])
 const GovernedActionStatus = z.enum([
   "pending",
@@ -388,6 +390,7 @@ const TenantStatus = z.enum([
   "rejected",
   "expired",
 ])
+const module_active = z.union([z.boolean(), z.null()]).optional()
 const TenantListResponse = z
   .object({
     id: z.string().uuid(),
@@ -650,7 +653,6 @@ const AuditFilterOptionsResponse = z
     event_types: z.array(z.string()),
   })
   .passthrough()
-const sensitive = z.union([z.boolean(), z.null()]).optional()
 const AuditEventListItem = z
   .object({
     id: z.string().uuid(),
@@ -1475,6 +1477,7 @@ export const schemas = {
   SeedPackage,
   CreateTenantRequest,
   TenantStatus,
+  module_active,
   TenantListResponse,
   PaginatedTenantsResponse,
   TenantResponse,
@@ -1509,7 +1512,6 @@ export const schemas = {
   ApproveRejectRequest,
   ReInitiateRequest,
   AuditFilterOptionsResponse,
-  sensitive,
   AuditEventListItem,
   PaginatedAuditEventsResponse,
   AuditEventResponse,
@@ -1653,7 +1655,7 @@ const endpoints = makeApi([
       {
         name: "sensitive",
         type: "Query",
-        schema: sensitive,
+        schema: module_active,
       },
       {
         name: "from_dt",
@@ -1751,7 +1753,7 @@ const endpoints = makeApi([
       {
         name: "sensitive",
         type: "Query",
-        schema: sensitive,
+        schema: module_active,
       },
       {
         name: "from_dt",
@@ -3280,6 +3282,16 @@ On reject/withdraw/expire the tenant is archived.
         name: "to_date",
         type: "Query",
         schema: search,
+      },
+      {
+        name: "module_key",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "module_active",
+        type: "Query",
+        schema: module_active,
       },
       {
         name: "page",
