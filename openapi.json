@@ -2441,6 +2441,23 @@
             "description": "Filter by action type, e.g. ?action_type=USER_ROLE_CHANGE"
           },
           {
+            "name": "subject_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SubjectType" }
+                },
+                { "type": "null" }
+              ],
+              "description": "Filter by subject type, e.g. ?subject_type=PRODUCT_TEMPLATE_VERSION",
+              "title": "Subject Type"
+            },
+            "description": "Filter by subject type, e.g. ?subject_type=PRODUCT_TEMPLATE_VERSION"
+          },
+          {
             "name": "initiator_id",
             "in": "query",
             "required": false,
@@ -3139,18 +3156,28 @@
         }
       }
     },
-    "/api/v1/partners/match": {
+    "/api/v1/partners/duplicates/{id}/resolve": {
       "post": {
         "tags": ["Partners"],
-        "summary": "Match Partner",
-        "operationId": "match_partner_api_v1_partners_match_post",
+        "summary": "Resolve duplicate candidate pair",
+        "operationId": "resolve_duplicate_api_v1_partners_duplicates__id__resolve_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PartnerMatchRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ResolveDuplicatePairRequest"
+              }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -3158,7 +3185,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PartnerMatchResponse"
+                  "$ref": "#/components/schemas/ResolveDuplicatePairResponse"
                 }
               }
             }
@@ -3174,18 +3201,18 @@
         }
       }
     },
-    "/api/v1/partners": {
+    "/api/v1/partners/merge": {
       "post": {
         "tags": ["Partners"],
-        "summary": "Submit Partner",
-        "operationId": "submit_partner_api_v1_partners_post",
+        "summary": "Initiate Merge",
+        "operationId": "initiate_merge_api_v1_partners_merge_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/PartnerSubmitRequest" }
+              "schema": { "$ref": "#/components/schemas/MergeInitiateRequest" }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "201": {
@@ -3193,119 +3220,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PartnerSubmitResponse"
+                  "$ref": "#/components/schemas/MergeInitiateResponse"
                 }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": ["Partners"],
-        "summary": "List Partners",
-        "operationId": "list_partners_api_v1_partners_get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Search by partner name (min 1 char)",
-              "title": "Search"
-            },
-            "description": "Search by partner name (min 1 char)"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": { "$ref": "#/components/schemas/PartnerStatus" },
-              "description": "Filter by status, repeatable",
-              "default": [],
-              "title": "Status"
-            },
-            "description": "Filter by status, repeatable"
-          },
-          {
-            "name": "role",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": { "$ref": "#/components/schemas/PartnerRole" },
-              "description": "Filter by role, repeatable",
-              "default": [],
-              "title": "Role"
-            },
-            "description": "Filter by role, repeatable"
-          },
-          {
-            "name": "country",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": { "type": "string" },
-              "description": "ISO alpha-2 country code, repeatable",
-              "default": [],
-              "title": "Country"
-            },
-            "description": "ISO alpha-2 country code, repeatable"
-          },
-          {
-            "name": "ubo_status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": { "$ref": "#/components/schemas/UboCompletenessStatus" },
-              "description": "Filter by UBO completeness, repeatable",
-              "default": [],
-              "title": "Ubo Status"
-            },
-            "description": "Filter by UBO completeness, repeatable"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 100,
-              "minimum": 1,
-              "default": 20,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/PartnerListResponse" }
               }
             }
           },
@@ -3946,6 +3862,295 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IdentityChangeDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/merge-history": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Get Merge History",
+        "operationId": "get_merge_history_api_v1_partners__id__merge_history_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergeHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/partners/match": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Match Partner",
+        "operationId": "match_partner_api_v1_tenants__tenant_id__partners_match_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerMatchRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerMatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/partners": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Submit Partner",
+        "operationId": "submit_partner_api_v1_tenants__tenant_id__partners_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerSubmitRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSubmitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Partners",
+        "operationId": "list_partners_api_v1_tenants__tenant_id__partners_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Search by partner name (min 1 char)",
+              "title": "Search"
+            },
+            "description": "Search by partner name (min 1 char)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/PartnerStatus" },
+              "description": "Filter by status, repeatable",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by status, repeatable"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/PartnerRole" },
+              "description": "Filter by role, repeatable",
+              "default": [],
+              "title": "Role"
+            },
+            "description": "Filter by role, repeatable"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "ISO alpha-2 country code, repeatable",
+              "default": [],
+              "title": "Country"
+            },
+            "description": "ISO alpha-2 country code, repeatable"
+          },
+          {
+            "name": "ubo_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/UboCompletenessStatus" },
+              "description": "Filter by UBO completeness, repeatable",
+              "default": [],
+              "title": "Ubo Status"
+            },
+            "description": "Filter by UBO completeness, repeatable"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PartnerListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/partners/duplicates": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List duplicate candidate pairs",
+        "operationId": "list_duplicates_api_v1_tenants__tenant_id__partners_duplicates_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicatePairListResponse"
                 }
               }
             }
@@ -4828,6 +5033,13 @@
             ],
             "title": "Comment",
             "examples": ["string"]
+          },
+          "extra_params": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Extra Params"
           }
         },
         "type": "object",
@@ -5662,6 +5874,90 @@
         "type": "object",
         "title": "DownstreamImpact"
       },
+      "DuplicateCandidatePairResponse": {
+        "properties": {
+          "pair_id": { "type": "string", "title": "Pair Id" },
+          "tenant_id": { "type": "string", "title": "Tenant Id" },
+          "partner_a_id": { "type": "string", "title": "Partner A Id" },
+          "partner_b_id": { "type": "string", "title": "Partner B Id" },
+          "confidence": { "type": "string", "title": "Confidence" },
+          "matching_evidence": {
+            "items": { "$ref": "#/components/schemas/MatchingEvidenceItem" },
+            "type": "array",
+            "title": "Matching Evidence"
+          },
+          "status": { "type": "string", "title": "Status" },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Detected At"
+          },
+          "resolved_by": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Resolved By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Resolved At"
+          },
+          "reason_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Reason Code"
+          },
+          "resolution_note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Resolution Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pair_id",
+          "tenant_id",
+          "partner_a_id",
+          "partner_b_id",
+          "confidence",
+          "matching_evidence",
+          "status",
+          "detected_at",
+          "resolved_by",
+          "resolved_at",
+          "reason_code",
+          "resolution_note"
+        ],
+        "title": "DuplicateCandidatePairResponse"
+      },
+      "DuplicatePairListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DuplicateCandidatePairResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": ["items", "total"],
+        "title": "DuplicatePairListResponse"
+      },
+      "DuplicateResolutionReasonCode": {
+        "type": "string",
+        "enum": [
+          "identical_registry_identifiers",
+          "same_legal_entity_different_name",
+          "data_entry_error",
+          "system_import_error",
+          "legal_restructuring",
+          "confirmed_different_entities",
+          "subsidiary_not_duplicate",
+          "insufficient_evidence"
+        ],
+        "title": "DuplicateResolutionReasonCode"
+      },
       "EditUserRequest": {
         "properties": {
           "first_name": {
@@ -5925,6 +6221,7 @@
           "partner_archive",
           "partner_role_assign",
           "partner_identity_change",
+          "partner_merge",
           "product_template_activate",
           "product_template_deprecate"
         ],
@@ -6442,6 +6739,137 @@
         "type": "object",
         "required": ["next_step"],
         "title": "LoginStepResponse"
+      },
+      "MatchingEvidenceItem": {
+        "properties": {
+          "anchor": { "type": "string", "title": "Anchor" },
+          "a_value": { "title": "A Value" },
+          "b_value": { "title": "B Value" },
+          "match": { "type": "boolean", "title": "Match" }
+        },
+        "type": "object",
+        "required": ["anchor", "a_value", "b_value", "match"],
+        "title": "MatchingEvidenceItem"
+      },
+      "MergeHistoryResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MergeLineageRecordResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "MergeHistoryResponse"
+      },
+      "MergeInitiateRequest": {
+        "properties": {
+          "pair_id": { "type": "string", "format": "uuid", "title": "Pair Id" },
+          "survivor_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Survivor Partner Id"
+          },
+          "merge_reason_code": {
+            "$ref": "#/components/schemas/MergeReasonCode"
+          },
+          "note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["pair_id", "survivor_partner_id", "merge_reason_code"],
+        "title": "MergeInitiateRequest"
+      },
+      "MergeInitiateResponse": {
+        "properties": {
+          "governed_action_id": {
+            "type": "string",
+            "title": "Governed Action Id"
+          },
+          "source_partner_id": {
+            "type": "string",
+            "title": "Source Partner Id"
+          },
+          "target_partner_id": {
+            "type": "string",
+            "title": "Target Partner Id"
+          },
+          "pair_id": { "type": "string", "title": "Pair Id" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": [
+          "governed_action_id",
+          "source_partner_id",
+          "target_partner_id",
+          "pair_id",
+          "status"
+        ],
+        "title": "MergeInitiateResponse"
+      },
+      "MergeLineageRecordResponse": {
+        "properties": {
+          "record_id": { "type": "string", "title": "Record Id" },
+          "source_partner_id": {
+            "type": "string",
+            "title": "Source Partner Id"
+          },
+          "target_partner_id": {
+            "type": "string",
+            "title": "Target Partner Id"
+          },
+          "governed_action_id": {
+            "type": "string",
+            "title": "Governed Action Id"
+          },
+          "executed_by": { "type": "string", "title": "Executed By" },
+          "executed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Executed At"
+          },
+          "merge_reason_code": {
+            "type": "string",
+            "title": "Merge Reason Code"
+          },
+          "reference_manifest": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Reference Manifest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "record_id",
+          "source_partner_id",
+          "target_partner_id",
+          "governed_action_id",
+          "executed_by",
+          "executed_at",
+          "merge_reason_code",
+          "reference_manifest"
+        ],
+        "title": "MergeLineageRecordResponse"
+      },
+      "MergeReasonCode": {
+        "type": "string",
+        "enum": [
+          "same_legal_entity_different_name",
+          "identical_registry_identifiers",
+          "data_entry_error",
+          "system_import_error",
+          "legal_restructuring"
+        ],
+        "title": "MergeReasonCode"
       },
       "MfaActivateRequest": {
         "properties": {
@@ -7094,7 +7522,19 @@
           "partner_type": { "$ref": "#/components/schemas/PartnerType" },
           "status": { "type": "string", "title": "Status" },
           "role": { "$ref": "#/components/schemas/PartnerRole" },
-          "is_new": { "type": "boolean", "title": "Is New" }
+          "is_new": { "type": "boolean", "title": "Is New" },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country"
+          },
+          "tax_id_vat": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tax Id Vat"
+          },
+          "commercial_register_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Commercial Register No"
+          }
         },
         "type": "object",
         "required": [
@@ -7452,6 +7892,37 @@
         ],
         "title": "ResolutionEventSummary"
       },
+      "ResolveDuplicatePairRequest": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": ["confirmed_duplicate", "confirmed_distinct", "deferred"],
+            "title": "Decision"
+          },
+          "reason_code": {
+            "$ref": "#/components/schemas/DuplicateResolutionReasonCode"
+          },
+          "note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["decision", "reason_code"],
+        "title": "ResolveDuplicatePairRequest"
+      },
+      "ResolveDuplicatePairResponse": {
+        "properties": {
+          "pair_id": { "type": "string", "title": "Pair Id" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": ["pair_id", "status"],
+        "title": "ResolveDuplicatePairResponse"
+      },
       "RevokeGrantRequest": {
         "properties": {
           "revocation_reason": {
@@ -7803,6 +8274,11 @@
         "type": "object",
         "required": ["partner_type", "full_name", "date_of_birth", "country"],
         "title": "SoleProprietorIdentityInput"
+      },
+      "SubjectType": {
+        "type": "string",
+        "enum": ["USER", "TENANT", "PARTNER", "PRODUCT_TEMPLATE_VERSION"],
+        "title": "SubjectType"
       },
       "SubmitDeprecationRequest": {
         "properties": {

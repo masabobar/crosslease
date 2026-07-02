@@ -272,6 +272,7 @@ const GovernedActionType = z.enum([
   "partner_archive",
   "partner_role_assign",
   "partner_identity_change",
+  "partner_merge",
   "product_template_activate",
   "product_template_deprecate",
 ])
@@ -628,6 +629,13 @@ const UpdateAuditorAccessPeriodRequest = z
     reason: AuditorPeriodUpdateReason,
   })
   .passthrough()
+const SubjectType = z.enum([
+  "USER",
+  "TENANT",
+  "PARTNER",
+  "PRODUCT_TEMPLATE_VERSION",
+])
+const subject_type = z.union([z.array(SubjectType), z.null()]).optional()
 const PaginatedGovernedActionsResponse = z
   .object({
     actions: z.array(GovernedActionResponse),
@@ -638,7 +646,10 @@ const PaginatedGovernedActionsResponse = z
   })
   .passthrough()
 const ApproveRejectRequest = z
-  .object({ comment: z.union([z.string(), z.null()]) })
+  .object({
+    comment: z.union([z.string(), z.null()]),
+    extra_params: z.union([z.object({}).partial().passthrough(), z.null()]),
+  })
   .partial()
   .passthrough()
 const ReInitiateRequest = z
@@ -709,6 +720,55 @@ const AuditEventResponse = z
     recorded_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const DuplicateResolutionReasonCode = z.enum([
+  "identical_registry_identifiers",
+  "same_legal_entity_different_name",
+  "data_entry_error",
+  "system_import_error",
+  "legal_restructuring",
+  "confirmed_different_entities",
+  "subsidiary_not_duplicate",
+  "insufficient_evidence",
+])
+const ResolveDuplicatePairRequest = z
+  .object({
+    decision: z.enum(["confirmed_duplicate", "confirmed_distinct", "deferred"]),
+    reason_code: DuplicateResolutionReasonCode,
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const ResolveDuplicatePairResponse = z
+  .object({ pair_id: z.string(), status: z.string() })
+  .passthrough()
+const MergeReasonCode = z.enum([
+  "same_legal_entity_different_name",
+  "identical_registry_identifiers",
+  "data_entry_error",
+  "system_import_error",
+  "legal_restructuring",
+])
+const MergeInitiateRequest = z
+  .object({
+    pair_id: z.string().uuid(),
+    survivor_partner_id: z.string().uuid(),
+    merge_reason_code: MergeReasonCode,
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const MergeInitiateResponse = z
+  .object({
+    governed_action_id: z.string(),
+    source_partner_id: z.string(),
+    target_partner_id: z.string(),
+    pair_id: z.string(),
+    status: z.string(),
+  })
+  .passthrough()
+const PartnerType = z.enum([
+  "legal_entity",
+  "natural_person",
+  "sole_proprietor",
+])
 const RegisteredAddress = z
   .object({
     street: z.union([z.string(), z.null()]),
@@ -717,132 +777,6 @@ const RegisteredAddress = z
     country: z.union([z.string(), z.null()]),
   })
   .partial()
-  .passthrough()
-const LegalEntityIdentityInput = z
-  .object({
-    partner_type: z.string(),
-    legal_name: z.string(),
-    legal_form: z.union([z.string(), z.null()]).optional(),
-    country: z.string().min(2).max(2),
-    tax_id_vat: z.union([z.string(), z.null()]).optional(),
-    lei: z.union([z.string(), z.null()]).optional(),
-    commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
-    foreign_identifier: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const NaturalPersonIdentityInput = z
-  .object({
-    partner_type: z.string(),
-    full_name: z.string(),
-    date_of_birth: z.string(),
-    place_of_birth: z.string(),
-    country: z.string().min(2).max(2),
-    birth_name: z.union([z.string(), z.null()]).optional(),
-    national_id: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
-  })
-  .passthrough()
-const SoleProprietorIdentityInput = z
-  .object({
-    partner_type: z.string(),
-    full_name: z.string(),
-    date_of_birth: z.string(),
-    country: z.string().min(2).max(2),
-    tax_id_vat: z.union([z.string(), z.null()]).optional(),
-    commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
-  })
-  .passthrough()
-const PartnerMatchRequest = z
-  .object({
-    identity: z.discriminatedUnion("partner_type", [
-      LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
-    ]),
-  })
-  .passthrough()
-const PartnerType = z.enum([
-  "legal_entity",
-  "natural_person",
-  "sole_proprietor",
-])
-const CandidateSummary = z
-  .object({
-    partner_id: z.string(),
-    display_name: z.string(),
-    partner_type: PartnerType,
-    status: z.string(),
-    matched_anchors: z.array(z.string()),
-    confidence: z.string(),
-  })
-  .passthrough()
-const PartnerMatchResponse = z
-  .object({
-    classification: z.string(),
-    confidence: z.union([z.string(), z.null()]),
-    matched_partner_id: z.union([z.string(), z.null()]),
-    candidate_summaries: z.array(CandidateSummary),
-    inputs_hash: z.string(),
-  })
-  .passthrough()
-const PartnerRole = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-])
-const PartnerSubmitRequest = z
-  .object({
-    identity: z.discriminatedUnion("partner_type", [
-      LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
-    ]),
-    role: PartnerRole,
-  })
-  .passthrough()
-const PartnerSubmitResponse = z
-  .object({
-    partner_id: z.string(),
-    display_name: z.string(),
-    partner_type: PartnerType,
-    status: z.string(),
-    role: PartnerRole,
-    is_new: z.boolean(),
-  })
-  .passthrough()
-const PartnerStatus = z.enum([
-  "draft",
-  "pending_confirmation",
-  "confirmed",
-  "rejected",
-  "merged",
-  "archived",
-  "pending_archive",
-])
-const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
-const PartnerListItem = z
-  .object({
-    partner_id: z.string(),
-    display_name: z.string(),
-    partner_type: PartnerType,
-    status: z.string(),
-    country: z.union([z.string(), z.null()]),
-    ubo_completeness_status: z.string(),
-    roles: z.array(PartnerRole),
-  })
-  .passthrough()
-const PartnerListResponse = z
-  .object({
-    items: z.array(PartnerListItem),
-    total: z.number().int(),
-    limit: z.number().int(),
-    offset: z.number().int(),
-  })
   .passthrough()
 const LegalEntityIdentityDetail = z
   .object({
@@ -906,6 +840,16 @@ const ResolutionEventSummary = z
     resolved_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const CandidateSummary = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    matched_anchors: z.array(z.string()),
+    confidence: z.string(),
+  })
+  .passthrough()
 const ResolutionCandidatesResponse = z
   .object({
     partner_id: z.string(),
@@ -914,6 +858,14 @@ const ResolutionCandidatesResponse = z
     candidates: z.array(CandidateSummary),
   })
   .passthrough()
+const PartnerRole = z.enum([
+  "lessee",
+  "guarantor",
+  "supplier",
+  "leasing_company",
+  "bank_entity",
+  "ubo_related_person",
+])
 const ActorSummary = z
   .object({ user_id: z.string(), display_name: z.string(), email: z.string() })
   .passthrough()
@@ -1104,6 +1056,160 @@ const IdentityChangeDetailResponse = z
     resolved_at: z.union([z.string(), z.null()]),
     counter_confirmed_by: z.union([IdentityChangeActorSummary, z.null()]),
     downstream_impact: DownstreamImpact,
+  })
+  .passthrough()
+const MergeLineageRecordResponse = z
+  .object({
+    record_id: z.string(),
+    source_partner_id: z.string(),
+    target_partner_id: z.string(),
+    governed_action_id: z.string(),
+    executed_by: z.string(),
+    executed_at: z.string().datetime({ offset: true }),
+    merge_reason_code: z.string(),
+    reference_manifest: z.object({}).partial().passthrough(),
+  })
+  .passthrough()
+const MergeHistoryResponse = z
+  .object({
+    partner_id: z.string(),
+    items: z.array(MergeLineageRecordResponse),
+  })
+  .passthrough()
+const LegalEntityIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    legal_name: z.string(),
+    legal_form: z.union([z.string(), z.null()]).optional(),
+    country: z.string().min(2).max(2),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    lei: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    foreign_identifier: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const NaturalPersonIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    place_of_birth: z.string(),
+    country: z.string().min(2).max(2),
+    birth_name: z.union([z.string(), z.null()]).optional(),
+    national_id: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+  })
+  .passthrough()
+const SoleProprietorIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    country: z.string().min(2).max(2),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+  })
+  .passthrough()
+const PartnerMatchRequest = z
+  .object({
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      NaturalPersonIdentityInput,
+      SoleProprietorIdentityInput,
+    ]),
+  })
+  .passthrough()
+const PartnerMatchResponse = z
+  .object({
+    classification: z.string(),
+    confidence: z.union([z.string(), z.null()]),
+    matched_partner_id: z.union([z.string(), z.null()]),
+    candidate_summaries: z.array(CandidateSummary),
+    inputs_hash: z.string(),
+  })
+  .passthrough()
+const PartnerSubmitRequest = z
+  .object({
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      NaturalPersonIdentityInput,
+      SoleProprietorIdentityInput,
+    ]),
+    role: PartnerRole,
+  })
+  .passthrough()
+const PartnerSubmitResponse = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    role: PartnerRole,
+    is_new: z.boolean(),
+    country: z.union([z.string(), z.null()]).optional(),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const PartnerStatus = z.enum([
+  "draft",
+  "pending_confirmation",
+  "confirmed",
+  "rejected",
+  "merged",
+  "archived",
+  "pending_archive",
+])
+const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
+const PartnerListItem = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    country: z.union([z.string(), z.null()]),
+    ubo_completeness_status: z.string(),
+    roles: z.array(PartnerRole),
+  })
+  .passthrough()
+const PartnerListResponse = z
+  .object({
+    items: z.array(PartnerListItem),
+    total: z.number().int(),
+    limit: z.number().int(),
+    offset: z.number().int(),
+  })
+  .passthrough()
+const MatchingEvidenceItem = z
+  .object({
+    anchor: z.string(),
+    a_value: z.unknown(),
+    b_value: z.unknown(),
+    match: z.boolean(),
+  })
+  .passthrough()
+const DuplicateCandidatePairResponse = z
+  .object({
+    pair_id: z.string(),
+    tenant_id: z.string(),
+    partner_a_id: z.string(),
+    partner_b_id: z.string(),
+    confidence: z.string(),
+    matching_evidence: z.array(MatchingEvidenceItem),
+    status: z.string(),
+    detected_at: z.string().datetime({ offset: true }),
+    resolved_by: z.union([z.string(), z.null()]),
+    resolved_at: z.union([z.string(), z.null()]),
+    reason_code: z.union([z.string(), z.null()]),
+    resolution_note: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const DuplicatePairListResponse = z
+  .object({
+    items: z.array(DuplicateCandidatePairResponse),
+    total: z.number().int(),
   })
   .passthrough()
 const FinancingType = z.enum([
@@ -1515,6 +1621,8 @@ export const schemas = {
   InitiateRoleChangeRequest,
   AuditorPeriodUpdateReason,
   UpdateAuditorAccessPeriodRequest,
+  SubjectType,
+  subject_type,
   PaginatedGovernedActionsResponse,
   ApproveRejectRequest,
   ReInitiateRequest,
@@ -1522,27 +1630,22 @@ export const schemas = {
   AuditEventListItem,
   PaginatedAuditEventsResponse,
   AuditEventResponse,
-  RegisteredAddress,
-  LegalEntityIdentityInput,
-  NaturalPersonIdentityInput,
-  SoleProprietorIdentityInput,
-  PartnerMatchRequest,
+  DuplicateResolutionReasonCode,
+  ResolveDuplicatePairRequest,
+  ResolveDuplicatePairResponse,
+  MergeReasonCode,
+  MergeInitiateRequest,
+  MergeInitiateResponse,
   PartnerType,
-  CandidateSummary,
-  PartnerMatchResponse,
-  PartnerRole,
-  PartnerSubmitRequest,
-  PartnerSubmitResponse,
-  PartnerStatus,
-  UboCompletenessStatus,
-  PartnerListItem,
-  PartnerListResponse,
+  RegisteredAddress,
   LegalEntityIdentityDetail,
   NaturalPersonIdentityDetail,
   SoleProprietorIdentityDetail,
   PartnerDetailResponse,
   ResolutionEventSummary,
+  CandidateSummary,
   ResolutionCandidatesResponse,
+  PartnerRole,
   ActorSummary,
   RoleAssignmentSummary,
   RoleHistoryEntry,
@@ -1569,6 +1672,22 @@ export const schemas = {
   IdentityHistoryItem,
   IdentityHistoryResponse,
   IdentityChangeDetailResponse,
+  MergeLineageRecordResponse,
+  MergeHistoryResponse,
+  LegalEntityIdentityInput,
+  NaturalPersonIdentityInput,
+  SoleProprietorIdentityInput,
+  PartnerMatchRequest,
+  PartnerMatchResponse,
+  PartnerSubmitRequest,
+  PartnerSubmitResponse,
+  PartnerStatus,
+  UboCompletenessStatus,
+  PartnerListItem,
+  PartnerListResponse,
+  MatchingEvidenceItem,
+  DuplicateCandidatePairResponse,
+  DuplicatePairListResponse,
   FinancingType,
   financing_type,
   SelectableTemplateItem,
@@ -2257,6 +2376,11 @@ Auditors see only actions scoped to their tenant.`,
         schema: z.array(GovernedActionType).optional().default([]),
       },
       {
+        name: "subject_type",
+        type: "Query",
+        schema: subject_type,
+      },
+      {
         name: "initiator_id",
         type: "Query",
         schema: search,
@@ -2450,78 +2574,6 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
       },
     ],
     response: z.unknown(),
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/partners",
-    alias: "submit_partner_api_v1_partners_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: PartnerSubmitRequest,
-      },
-    ],
-    response: PartnerSubmitResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/partners",
-    alias: "list_partners_api_v1_partners_get",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "search",
-        type: "Query",
-        schema: search,
-      },
-      {
-        name: "status",
-        type: "Query",
-        schema: z.array(PartnerStatus).optional().default([]),
-      },
-      {
-        name: "role",
-        type: "Query",
-        schema: z.array(PartnerRole).optional().default([]),
-      },
-      {
-        name: "country",
-        type: "Query",
-        schema: z.array(z.string()).optional().default([]),
-      },
-      {
-        name: "ubo_status",
-        type: "Query",
-        schema: z.array(UboCompletenessStatus).optional().default([]),
-      },
-      {
-        name: "limit",
-        type: "Query",
-        schema: z.number().int().gte(1).lte(100).optional().default(20),
-      },
-      {
-        name: "offset",
-        type: "Query",
-        schema: z.number().int().gte(0).optional().default(0),
-      },
-    ],
-    response: PartnerListResponse,
     errors: [
       {
         status: 422,
@@ -2786,6 +2838,27 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/partners/:id/merge-history",
+    alias: "get_merge_history_api_v1_partners__id__merge_history_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MergeHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/partners/:id/reject",
     alias: "reject_partner_api_v1_partners__id__reject_post",
@@ -2929,17 +3002,43 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
   },
   {
     method: "post",
-    path: "/api/v1/partners/match",
-    alias: "match_partner_api_v1_partners_match_post",
+    path: "/api/v1/partners/duplicates/:id/resolve",
+    alias: "resolve_duplicate_api_v1_partners_duplicates__id__resolve_post",
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: PartnerMatchRequest,
+        schema: ResolveDuplicatePairRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
       },
     ],
-    response: PartnerMatchResponse,
+    response: ResolveDuplicatePairResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/merge",
+    alias: "initiate_merge_api_v1_partners_merge_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MergeInitiateRequest,
+      },
+    ],
+    response: MergeInitiateResponse,
     errors: [
       {
         status: 422,
@@ -3888,6 +3987,135 @@ Requires &#x60;system_admin&#x60; role.`,
       },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/partners",
+    alias: "submit_partner_api_v1_tenants__tenant_id__partners_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerSubmitRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerSubmitResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/partners",
+    alias: "list_partners_api_v1_tenants__tenant_id__partners_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(PartnerStatus).optional().default([]),
+      },
+      {
+        name: "role",
+        type: "Query",
+        schema: z.array(PartnerRole).optional().default([]),
+      },
+      {
+        name: "country",
+        type: "Query",
+        schema: z.array(z.string()).optional().default([]),
+      },
+      {
+        name: "ubo_status",
+        type: "Query",
+        schema: z.array(UboCompletenessStatus).optional().default([]),
+      },
+      {
+        name: "limit",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(20),
+      },
+      {
+        name: "offset",
+        type: "Query",
+        schema: z.number().int().gte(0).optional().default(0),
+      },
+    ],
+    response: PartnerListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/partners/duplicates",
+    alias: "list_duplicates_api_v1_tenants__tenant_id__partners_duplicates_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DuplicatePairListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/partners/match",
+    alias: "match_partner_api_v1_tenants__tenant_id__partners_match_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerMatchRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerMatchResponse,
     errors: [
       {
         status: 422,
