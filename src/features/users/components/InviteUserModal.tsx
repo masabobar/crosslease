@@ -185,6 +185,8 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         })
         if (err.code === "EMAIL_ALREADY_EXISTS") {
           form.setError("email", { message: errMessage })
+        } else if (err.code === "AUDITOR_PROVISIONING_NOT_ALLOWED") {
+          form.setError("role", { message: errMessage })
         } else if (err.errors?.length) {
           const fieldMap: Record<string, keyof typeof data> = {
             first_name: "firstName",
