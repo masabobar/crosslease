@@ -26,8 +26,14 @@ The `.md` files in `src/e2e/tests/` follow this structure:
 
 - Header block: story ID, epic, DoR status, ACs covered, blocked ACs
 - Scope filter table: each AC labelled `happy-path`, `main-error`, `edge-case`, `separate-feature`, or `Blocked`
+- **Scenarios summary table** — the `E2E` column is the authoritative gate:
+  - `✅` → generate a full `test()` or `test.each()` block
+  - `⚙️ needs D??` → scenario has a Gherkin block but is blocked by a dependency; **skip it entirely — do not generate any test, not even `test.fixme()`**
+  - Any other value → skip
 - Gherkin blocks: one `Feature` / `Scenario` / `Scenario Outline` per AC group
-- Blocked ACs are listed in the header only — no Gherkin block exists for them
+- Blocked ACs are listed in the header only — no Gherkin block exists for them; **do not generate any test for these**
+
+**Read the Scenarios summary table first.** Only process a Gherkin block if its corresponding row has `✅` in the `E2E` column. Ignore all other Gherkin blocks entirely. Generate no test — not even `test.fixme()` — for any scenario not marked `✅`.
 
 ---
 
@@ -50,7 +56,11 @@ The `.md` files in `src/e2e/tests/` follow this structure:
 - Use **locator chaining and filtering** to narrow scope to a specific section rather than writing overly-broad or overly-specific selectors:
   ```ts
   // preferred — filter by text then find the action within that item
-  await page.getByRole('listitem').filter({ hasText: 'Product 2' }).getByRole('button', { name: 'Add to cart' }).click()
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: "Product 2" })
+    .getByRole("button", { name: "Add to cart" })
+    .click()
   ```
 - Methods encapsulate multi-step interactions; specs call methods, not raw locators
 - No assertions inside POM methods — assertions belong in the spec
@@ -58,7 +68,7 @@ The `.md` files in `src/e2e/tests/` follow this structure:
 ### POM template
 
 ```ts
-import type { Page, Locator } from "@playwright/test"
+import type { Page, Locator } from "../fixtures/test"
 
 export class LoginPage {
   readonly page: Page
@@ -186,35 +196,41 @@ export { expect }
 
 - **Import `test` and `expect` exclusively from `../../fixtures/test`** — never from `@playwright/test` directly (hard lint error)
 - One `test.describe` block per Feature in the Gherkin file, tagged with the story ID
-- Each `Scenario` becomes one `test()` call; each `Scenario Outline` becomes `test.each()`
+- Each `Scenario` becomes one `test()` call; each `Scenario Outline` becomes `test.each()` — **only for rows marked `✅` in the Scenarios summary `E2E` column**
 - Gherkin `Background` steps become `test.beforeEach()`
-- Blocked scenarios (no Gherkin block in the `.md`) become `test.fixme()` with the dependency ID in a comment
+- Blocked ACs (header list, no Gherkin block) and dependency-blocked scenarios (`⚙️` in E2E column) are **skipped entirely — no `test()`, no `test.fixme()`**
 - No `any` in any spec or POM file
 - Do not use `waitForTimeout` — await network idle or visible elements instead
 - **Test isolation** — each test must be fully independent: its own local storage, session storage, cookies, and data. Never share mutable state between tests. Use `beforeEach` / `afterEach` hooks for setup/teardown rather than chaining test dependencies
 - **Test user-visible behaviour** — assert what the user sees, not implementation details (CSS classes, data structure internals, function names)
 - **Web-first assertions** — always use Playwright's built-in async assertions; they auto-retry until the condition is met:
+
   ```ts
   // correct — web-first, retries automatically
-  await expect(page.getByText('Welcome')).toBeVisible()
+  await expect(page.getByText("Welcome")).toBeVisible()
 
   // wrong — resolves immediately, no retry
-  expect(await page.getByText('Welcome').isVisible()).toBe(true)
+  expect(await page.getByText("Welcome").isVisible()).toBe(true)
   ```
+
 - **Soft assertions** — use `expect.soft()` when you want to collect multiple assertion failures in a single test run rather than stopping at the first failure:
   ```ts
-  await expect.soft(page.getByTestId('status')).toHaveText('Active')
-  await expect.soft(page.getByTestId('role')).toHaveText('Front Office')
+  await expect.soft(page.getByTestId("status")).toHaveText("Active")
+  await expect.soft(page.getByTestId("role")).toHaveText("Front Office")
   // test continues even if one fails; all failures reported together
   ```
 - **Mock third-party and external dependencies** — never let tests depend on live external services. Use `page.route()` to intercept and mock responses:
   ```ts
-  await page.route('**/api/external-service/**', route =>
+  await page.route("**/api/external-service/**", route =>
     route.fulfill({ status: 200, body: JSON.stringify({ ok: true }) })
   )
   ```
 
-### Fixture import rule (enforced)
+### Fixture import rule (enforced by ESLint `no-restricted-syntax`)
+
+The project's ESLint config bans `import … from "@playwright/test"` in every `src/e2e/**/*.ts` file **except** `fixtures/test.ts` and `playwright.config.ts`. Those two files are the only ones allowed to import from `@playwright/test` directly.
+
+**Spec files** (`src/e2e/specs/**/*.ts`) — two levels above the fixture:
 
 ```ts
 // correct — always
@@ -223,6 +239,18 @@ import { test, expect } from "../../fixtures/test"
 // will fail lint — never
 import { test, expect } from "@playwright/test"
 ```
+
+**POM files** (`src/e2e/pages/*.ts`) — one level above the fixture:
+
+```ts
+// correct — always
+import type { Page, Locator } from "../fixtures/test"
+
+// will fail lint — never
+import type { Page, Locator } from "@playwright/test"
+```
+
+`fixtures/test.ts` itself re-exports `Page`, `Locator`, `expect`, and the extended `test` from `@playwright/test`, so downstream files get the same types without importing the package directly.
 
 ### Spec template
 
@@ -297,16 +325,12 @@ test.describe("PRD1042-43 — User Login", () => {
 
 ## Blocked scenario handling
 
-For every AC listed in the header as blocked (no Gherkin block generated), add a `test.fixme()` entry:
+Do not generate any test — not even `test.fixme()` — for:
 
-```ts
-// Dependency ID from the blocking-dependencies table in CLAUDE.e2e.md
-test.fixme("session expires after inactivity timeout (AC-17)", async () => {
-  // D16: TEST_TOKEN_TTL_SECONDS env override not yet available
-})
-```
+- Blocked ACs listed in the header (no Gherkin block exists)
+- Scenarios with `⚙️ needs D??` in the `E2E` column of the Scenarios summary table
 
-Use the dependency ID (D16–D21) from `CLAUDE.e2e.md` — not a free-form note.
+Only rows with `✅` in the `E2E` column produce runnable test blocks.
 
 ---
 
@@ -372,22 +396,27 @@ Apply all of the following rules when generating any spec or POM file.
 
 ### Locators
 
-| Priority | Locator | When to use |
-| -------- | ------- | ----------- |
-| 1 | `getByRole(role, { name })` | Buttons, inputs, links, headings — anything with an ARIA role |
-| 2 | `getByLabel('text')` | Form fields associated with a label |
-| 3 | `getByPlaceholder('text')` | Inputs with placeholder text and no label |
-| 4 | `getByText('text')` | Non-interactive elements with unique visible text |
-| 5 | `getByTestId('id')` | Elements with an explicit `data-testid` attribute |
-| ❌ | CSS / XPath | Never — brittle, breaks on DOM changes, hides intent |
+| Priority | Locator                     | When to use                                                   |
+| -------- | --------------------------- | ------------------------------------------------------------- |
+| 1        | `getByRole(role, { name })` | Buttons, inputs, links, headings — anything with an ARIA role |
+| 2        | `getByLabel('text')`        | Form fields associated with a label                           |
+| 3        | `getByPlaceholder('text')`  | Inputs with placeholder text and no label                     |
+| 4        | `getByText('text')`         | Non-interactive elements with unique visible text             |
+| 5        | `getByTestId('id')`         | Elements with an explicit `data-testid` attribute             |
+| ❌       | CSS / XPath                 | Never — brittle, breaks on DOM changes, hides intent          |
 
 **Chaining and filtering** — narrow to a container first, then find the element:
+
 ```ts
 // good
-await page.getByRole('listitem').filter({ hasText: 'Anna Kowalski' }).getByRole('button', { name: 'Edit' }).click()
+await page
+  .getByRole("listitem")
+  .filter({ hasText: "Anna Kowalski" })
+  .getByRole("button", { name: "Edit" })
+  .click()
 
 // bad — relies on DOM structure
-await page.locator('table > tbody > tr:nth-child(2) > td:last-child > button')
+await page.locator("table > tbody > tr:nth-child(2) > td:last-child > button")
 ```
 
 ### Assertions
@@ -396,18 +425,19 @@ Always use **web-first assertions**. They have built-in auto-retry and wait for 
 
 ```ts
 // ✅ web-first — retries up to the configured timeout
-await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-await expect(page).toHaveURL('/dashboard')
-await expect(page.getByTestId('status-badge')).toHaveText('Active')
+await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible()
+await expect(page).toHaveURL("/dashboard")
+await expect(page.getByTestId("status-badge")).toHaveText("Active")
 
 // ❌ non-retrying — resolves immediately, flaky
-expect(await page.getByRole('heading').isVisible()).toBe(true)
+expect(await page.getByRole("heading").isVisible()).toBe(true)
 ```
 
 Use **soft assertions** to collect multiple failures without stopping the test:
+
 ```ts
-await expect.soft(page.getByTestId('role')).toHaveText('Front Office')
-await expect.soft(page.getByTestId('tenant')).toHaveText('Tenant A')
+await expect.soft(page.getByTestId("role")).toHaveText("Front Office")
+await expect.soft(page.getByTestId("tenant")).toHaveText("Tenant A")
 // all soft failures reported together at test end
 ```
 
@@ -429,8 +459,8 @@ await expect.soft(page.getByTestId('tenant')).toHaveText('Tenant A')
 - Do not make tests depend on live external APIs, CDNs, or services outside the test environment
 - Intercept and mock external calls using `page.route()`:
   ```ts
-  await page.route('**/api/external/**', route =>
-    route.fulfill({ status: 200, body: JSON.stringify({ data: 'mocked' }) })
+  await page.route("**/api/external/**", route =>
+    route.fulfill({ status: 200, body: JSON.stringify({ data: "mocked" }) })
   )
   ```
 - For backend API calls within the test environment, prefer using the test API/seeding approach over mocking
@@ -438,13 +468,14 @@ await expect.soft(page.getByTestId('tenant')).toHaveText('Tenant A')
 ### No `waitForTimeout`
 
 Never use fixed-duration waits. They make tests slow and still flaky:
+
 ```ts
 // ❌ never
 await page.waitForTimeout(2000)
 
 // ✅ wait for an observable condition
-await page.waitForLoadState('networkidle')
-await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible()
+await page.waitForLoadState("networkidle")
+await expect(page.getByRole("heading", { name: "Done" })).toBeVisible()
 ```
 
 ### Parallelism
@@ -458,7 +489,9 @@ await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible()
 - Configure traces to record on the **first retry** of a failed test (not on every run):
   ```ts
   // playwright.config.ts
-  use: { trace: 'on-first-retry' }
+  use: {
+    trace: "on-first-retry"
+  }
   ```
 - Use Playwright Trace Viewer for CI failures — it includes DOM snapshots, network requests, and a timeline; prefer it over screenshots/videos
 - Keep Playwright updated: `npm install -D @playwright/test@latest` — new versions track the latest browser engines
@@ -467,12 +500,13 @@ await expect(page.getByRole('heading', { name: 'Done' })).toBeVisible()
 
 All Playwright output is written to `src/e2e/reports/` (git-ignored). Never configure `outputDir` or the HTML reporter `outputFolder` to point outside this directory.
 
-| Output | Path | Config key |
-| ------ | ---- | ---------- |
-| HTML report | `src/e2e/reports/html/` | `reporter: [["html", { outputFolder: resolve(__dirname, "./reports/html") }]]` |
-| Test artifacts (screenshots, videos, traces) | `src/e2e/reports/results/` | `outputDir: resolve(__dirname, "./reports/results")` |
+| Output                                       | Path                       | Config key                                                                     |
+| -------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| HTML report                                  | `src/e2e/reports/html/`    | `reporter: [["html", { outputFolder: resolve(__dirname, "./reports/html") }]]` |
+| Test artifacts (screenshots, videos, traces) | `src/e2e/reports/results/` | `outputDir: resolve(__dirname, "./reports/results")`                           |
 
 Open the HTML report locally with:
+
 ```bash
 pnpm e2e:report   # runs: playwright show-report src/e2e/reports/html
 ```
@@ -484,7 +518,9 @@ pnpm e2e:report   # runs: playwright show-report src/e2e/reports/html
 1. `src/e2e/fixtures/test.ts` exists — if it only contains `// code here`, do not write specs yet; flag this as a blocker
 2. Check if a POM for this feature already exists in `src/e2e/pages/` — merge, don't duplicate
 3. Check if a spec for this story already exists in `src/e2e/specs/` — merge new tests in
-4. Every blocked AC from the `.md` header has a corresponding `test.fixme()` in the spec
-5. No `import { test, expect } from '@playwright/test'` — only from `../../fixtures/test`
+4. Only scenarios with `✅` in the `E2E` column of the Scenarios summary table have generated tests — all others are skipped with no entry in the spec
+5. No `import … from '@playwright/test'` anywhere except `fixtures/test.ts` and `playwright.config.ts` (enforced ESLint rule):
+   - Spec files (`src/e2e/specs/**`): `import { test, expect } from "../../fixtures/test"`
+   - POM files (`src/e2e/pages/**`): `import type { Page, Locator } from "../fixtures/test"`
 6. No `any` in any generated file
 7. After writing all files: `pnpm lint` and `pnpm type-check` pass with zero errors

@@ -13,7 +13,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
     authenticatedPage,
   }) => {
     const logoutPage = new SecureLogoutPage(authenticatedPage)
-    await authenticatedPage.goto("platform-administration/user-management")
+    await authenticatedPage.goto("/platform-administration/user-management")
     await expect(logoutPage.profileButton).toBeVisible()
     await logoutPage.openProfileMenu()
     await expect(logoutPage.logoutButton).toBeVisible()
@@ -26,7 +26,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_FRONT_OFFICE_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_FRONT_OFFICE_USER_EMAIL ?? "")
     const logoutPage = new SecureLogoutPage(page)
     await expect(logoutPage.profileButton).toBeVisible()
     await logoutPage.openProfileMenu()
@@ -41,7 +41,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_BACK_OFFICE_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_BACK_OFFICE_USER_EMAIL ?? "")
     const logoutPage = new SecureLogoutPage(page)
     await expect(logoutPage.profileButton).toBeVisible()
     await logoutPage.openProfileMenu()
@@ -56,7 +56,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_SUPPORT_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_SUPPORT_USER_EMAIL ?? "")
     const logoutPage = new SecureLogoutPage(page)
     await expect(logoutPage.profileButton).toBeVisible()
     await logoutPage.openProfileMenu()
@@ -69,7 +69,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_AUDIT_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_AUDIT_USER_EMAIL ?? "")
     const logoutPage = new SecureLogoutPage(page)
     await expect(logoutPage.profileButton).toBeVisible()
     await logoutPage.openProfileMenu()
@@ -84,7 +84,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_LCO_USER_EMAIL ?? "", "/lc")
+    await createTestSession(page, process.env.E2E_LCO_USER_EMAIL ?? "", "/lc")
     const logoutPage = new SecureLogoutPage(page)
     await expect(logoutPage.profileButton).toBeVisible()
     await logoutPage.openProfileMenu()
@@ -109,7 +109,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_SYSTEM_ADMIN_EMAIL ?? "")
 
     const logoutPage = new SecureLogoutPage(page)
     await page.goto("/platform-administration/user-management")
@@ -144,7 +144,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_SYSTEM_ADMIN_EMAIL ?? "")
 
     await page.goto("/platform-administration/user-management")
     await page.waitForURL("/platform-administration/user-management")
@@ -185,7 +185,7 @@ test.describe("PRD1042-69 — Secure Logout", () => {
       storageState: ".auth/gate.json",
     })
     const page = await context.newPage()
-    await createTestSession(page, process.env.DEV_USER_EMAIL ?? "")
+    await createTestSession(page, process.env.E2E_SYSTEM_ADMIN_EMAIL ?? "")
 
     await page.goto("/platform-administration/user-management")
     await page.waitForURL("/platform-administration/user-management")
@@ -206,17 +206,5 @@ test.describe("PRD1042-69 — Secure Logout", () => {
 
     await staleContext.close()
     await context.close()
-  })
-
-  // ---------------------------------------------------------------------------
-  // AC-09: Logout from all devices — pending UI implementation
-  // Backend: POST /api/v1/auth/logout-all is ready.
-  // Pending: "Logout from all devices" UI not yet implemented in Header / profile settings.
-  // ---------------------------------------------------------------------------
-
-  test("logout from all devices invalidates all active sessions (AC-09)", async () => {
-    // Backend POST /api/v1/auth/logout-all is implemented.
-    // UI trigger in profile/security settings panel not yet built in Header.tsx.
-    test.fixme()
   })
 })

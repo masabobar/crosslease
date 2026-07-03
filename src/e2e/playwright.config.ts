@@ -9,6 +9,69 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 // over any empty shell variables that may shadow them.
 config({ path: resolve(__dirname, ".env"), override: true })
 
+// Resolve environment-specific vars into normalized E2E_* names used throughout
+// the test suite. Locally (no CI flag) → DEV, in CI pipeline → STAGING.
+// Role-specific staging credentials fall back to DEV values if unset in CI.
+const isCI = !!process.env.CI
+const pick = (stg: string | undefined, dev: string | undefined) =>
+  isCI ? stg || dev || "" : dev || ""
+
+process.env.E2E_BASE_URL = isCI
+  ? (process.env.STG_BASE_URL ?? "")
+  : (process.env.DEV_BASE_URL ?? "http://localhost:5173")
+process.env.E2E_API_BASE_URL = pick(
+  process.env.E2E_STG_API_BASE_URL,
+  process.env.E2E_DEV_API_BASE_URL
+)
+process.env.E2E_BACK_OFFICE_USER_EMAIL = pick(
+  process.env.STG_BACK_OFFICE_USER_EMAIL,
+  process.env.DEV_BACK_OFFICE_USER_EMAIL
+)
+process.env.E2E_BACK_OFFICE_USER_PASSWORD = pick(
+  process.env.STG_BACK_OFFICE_USER_PASSWORD,
+  process.env.DEV_BACK_OFFICE_USER_PASSWORD
+)
+process.env.E2E_FRONT_OFFICE_USER_EMAIL = pick(
+  process.env.STG_FRONT_OFFICE_USER_EMAIL,
+  process.env.DEV_FRONT_OFFICE_USER_EMAIL
+)
+process.env.E2E_FRONT_OFFICE_USER_PASSWORD = pick(
+  process.env.STG_FRONT_OFFICE_USER_PASSWORD,
+  process.env.DEV_FRONT_OFFICE_USER_PASSWORD
+)
+process.env.E2E_SUPPORT_USER_EMAIL = pick(
+  process.env.STG_SUPPORT_USER_EMAIL,
+  process.env.DEV_SUPPORT_USER_EMAIL
+)
+process.env.E2E_SUPPORT_USER_PASSWORD = pick(
+  process.env.STG_SUPPORT_USER_PASSWORD,
+  process.env.DEV_SUPPORT_USER_PASSWORD
+)
+process.env.E2E_AUDIT_USER_EMAIL = pick(
+  process.env.STG_AUDIT_USER_EMAIL,
+  process.env.DEV_AUDIT_USER_EMAIL
+)
+process.env.E2E_AUDIT_USER_PASSWORD = pick(
+  process.env.STG_AUDIT_USER_PASSWORD,
+  process.env.DEV_AUDIT_USER_PASSWORD
+)
+process.env.E2E_LCO_USER_EMAIL = pick(
+  process.env.STG_LCO_USER_EMAIL,
+  process.env.DEV_LCO_USER_EMAIL
+)
+process.env.E2E_LCO_USER_PASSWORD = pick(
+  process.env.STG_LCO_USER_PASSWORD,
+  process.env.DEV_LCO_USER_PASSWORD
+)
+process.env.E2E_SYSTEM_ADMIN_EMAIL = pick(
+  process.env.STG_SYSTEM_ADMIN_EMAIL,
+  process.env.DEV_SYSTEM_ADMIN_EMAIL
+)
+process.env.E2E_SYSTEM_ADMIN_PASSWORD = pick(
+  process.env.STG_SYSTEM_ADMIN_PASSWORD,
+  process.env.DEV_SYSTEM_ADMIN_PASSWORD
+)
+
 export default defineConfig({
   testDir: "./specs",
   fullyParallel: true,
@@ -25,7 +88,7 @@ export default defineConfig({
       ],
 
   use: {
-    baseURL: process.env.DEV_BASE_URL || "http://localhost:5173",
+    baseURL: process.env.E2E_BASE_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
