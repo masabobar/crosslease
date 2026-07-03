@@ -3,7 +3,7 @@ import { test as setup } from "../fixtures/test"
 const AUTH_STATE = ".auth/user.json"
 
 setup("authenticate as system_admin", async ({ page }) => {
-  const email = process.env.DEV_USER_EMAIL ?? ""
+  const email = process.env.E2E_SYSTEM_ADMIN_EMAIL ?? ""
   const apiBase = process.env.E2E_API_BASE_URL ?? ""
 
   const response = await page.request.post(`${apiBase}/internal/test/session`, {
