@@ -65,7 +65,6 @@ Timestamp footer: `_Auto-updated by /execute-work story US-006 at 2026-04-20 14:
 Before → After:
 
 ```markdown
-| Test Coverage | 84% | 80% | 🟢 | → | Test Coverage | 87% | 80% | 🟢 |
 | Passing Tests | 142/145 | 145 | 🟡 | → | Passing Tests | 151/151 | 151 | 🟢 |
 ```
 

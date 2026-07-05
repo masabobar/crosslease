@@ -84,34 +84,15 @@ Validation:
 
 ---
 
-### 4. Coverage Run
+### 4. Required-Tests Check
 
-**Command:** `pnpm test:run --coverage`
+No coverage tooling is installed — per `.claude/rules/testing.md` the gate is behavior-based, checked against the diff:
 
-Runs all unit tests and emits a coverage report.
-
-```bash
-pnpm test:run --coverage                   # run + report
-open coverage/index.html                   # view HTML report
-```
+- [ ] Every new Zod schema has rejection tests (wrong types, missing fields, bad enum values)
+- [ ] Every new store action has a state-transition test
+- [ ] Every new `src/lib/` utility has unit tests
 
 > **Note:** E2E (Playwright) is owned by QA and lives in `src/e2e/`. Do not add or run Playwright specs.
-
-Quality gates:
-
-- [ ] Overall coverage ≥ 80%
-- [ ] Branch coverage ≥ 75%
-- [ ] Function coverage ≥ 85%
-
-Sample output:
-
-```
-Coverage Summary:
-  Statements : 87.5%  (350/400)
-  Branches   : 82.3%  (140/170)
-  Functions  : 91.2%  (104/114)
-  Lines      : 87.5%  (350/400)
-```
 
 ---
 
@@ -180,22 +161,22 @@ Example:
   at test/api/users.test.ts:15:20
 ```
 
-### Coverage below threshold
+### Required tests missing
 
-1. Identify uncovered files.
-2. Show uncovered lines.
-3. Suggest where to add tests (prioritize by impact — auth, payments, checkout over utilities).
+1. Diff the change: list every new Zod schema, store action, and `src/lib/` utility.
+2. Flag each one without a corresponding test file in `src/__tests__/`.
+3. Suggest where to add tests (prioritize auth and API-contract schemas over utilities).
 
 Example:
 
 ```
-Coverage below threshold:
-- src/services/payment.service.ts: 45% (missing: lines 23-45, 67-89)
-- src/utils/validators.ts:         72% (missing: lines 15-18)
+Required tests missing:
+- src/features/partners/api/schema.ts       → no schema.test.ts (rejection cases untested)
+- src/lib/formatIban.ts                     → no formatIban.test.ts
 
 Recommendation:
-1. Payment error handling  (lines 23-45)
-2. Validation edge cases   (lines 15-18)
+1. PartnerSchema rejection tests (bad enum, missing required fields)
+2. formatIban edge cases (empty string, invalid country prefix)
 ```
 
 ---
@@ -205,7 +186,7 @@ Recommendation:
 Before reporting success:
 
 - [ ] All unit tests executed without errors (`pnpm test:run`)
-- [ ] Coverage meets threshold (80%+)
+- [ ] New schemas / store actions / utilities each have tests (per `.claude/rules/testing.md`)
 - [ ] Type check clean (`pnpm type-check`)
 - [ ] Lint clean (`pnpm lint`)
 - [ ] No skipped tests (unless intentional + documented)

@@ -45,7 +45,7 @@ Emitted by STEP 3 of `/project-status`.
 - Overall Completion: {{XX}}%
 - Phase {{N}} Progress: {{YY}}%
 - Velocity: {{Z}} points/week
-- Test Coverage: {{CC}}%
+- Tests: {{passing}}/{{test_count}} passing
 - Quality: {{🟢🟡🔴}} {{bug_count}} bugs
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -113,8 +113,8 @@ Progress: [████████████░░░░░░░░] {{perce
 
 **Testing:**
 - Total Tests: {{test_count}} ({{passing}} passing / {{failing}} failing)
-- Coverage: {{coverage}}% (target 80%+)
-- API Status Codes: {{✅ all / ⚠️ missing}}
+- Required Tests: {{✅ new schemas/stores/utils covered / ⚠️ gaps}}
+- Error-Code Keys: {{✅ complete / ⚠️ missing}}
 
 **Code Quality:**
 - SOLID & DRY: {{✅ compliant / ⚠️ issues}}
@@ -213,7 +213,7 @@ Overall Status: 🟢 On Track
 - Overall Completion: 45%
 - Phase 2 Progress:   60%
 - Velocity:           25 pts/week
-- Test Coverage:      87%
+- Tests:              156/156 passing
 - Quality:            🟢 3 bugs
 
 [... detailed sections ...]

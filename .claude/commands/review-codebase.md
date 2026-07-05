@@ -139,6 +139,6 @@ Ask the user before applying **Medium** and **Low** findings.
 
 - `.claude/rules/code-review.md` — the review checklist (11 sections)
 - `.claude/rules/code-quality.md` — SOLID & DRY depth
-- `.claude/rules/testing.md` — coverage + test matrix
+- `.claude/rules/testing.md` — required-tests gate (schemas / stores / utils)
 - `.claude/rules/security-and-auth.md` — RBAC wire values, role guards
 - `.claude/hooks/pre-commit-code-review.sh` — hook that prompts review on staged files before commit

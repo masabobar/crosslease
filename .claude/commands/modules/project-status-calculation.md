@@ -23,7 +23,7 @@
      * Points completed / total
      * Velocity (points per week)
      * Active blockers count
-     * Test coverage %
+     * Test pass rate
    - Use these metrics directly
    - Only recalculate if data is stale (> 24 hours old)
 
@@ -156,13 +156,6 @@ Avg Fix Time = Sum(Fix Date - Created Date for all fixed bugs) / Total Fixed Bug
 
 ## Quality Metrics
 
-### Test Coverage
-
-```
-Coverage % = (Lines Covered / Total Lines) × 100
-Target: ≥ 80%
-```
-
 ### Test Pass Rate
 
 ```
@@ -174,7 +167,7 @@ Target: 100%
 
 ```
 Score based on:
-- Test coverage (40%)
+- Test pass rate + required tests present (40%)
 - Code complexity (30%)
 - Code duplication (20%)
 - Documentation (10%)
@@ -215,7 +208,7 @@ if Timeline Status = "on track": Low risk
 
 **Based on metrics:**
 
-- Coverage < 80% → "Increase test coverage"
+- Required tests missing → "Add tests for new schemas / stores / utilities"
 - Velocity decreasing → "Review workload and blockers"
 - Critical bugs > 0 → "Address critical bugs immediately"
 - Timeline at risk → "Reduce scope or extend timeline"

@@ -40,14 +40,7 @@ This includes:
 
 ### 1.2 Rationale
 
-**Why English only:**
-
-- **International collaboration:** English is the universal language for software development
-- **AI/tooling compatibility:** Most AI tools (Claude, Copilot, etc.) work best with English
-- **Open source readiness:** Enables broader contribution and usage
-- **Professional standard:** Industry best practice
-- **Searchability:** Easier to find information using standard English terms
-- **Consistency:** Reduces confusion, improves code reviews
+English-only keeps the project collaboration-ready, AI/tooling-compatible, searchable, and consistent across reviews.
 
 ---
 
@@ -193,14 +186,6 @@ After:
 4. ✅ **Professional tone** — active voice, present tense
 5. ✅ **Code examples** always syntax-highlighted
 6. ✅ **Consistent formatting** across all docs
-
-**Benefits:**
-
-- 🌍 International collaboration enabled
-- 🤖 Better AI/tooling compatibility
-- 📖 Improved readability and maintainability
-- 🔍 Enhanced searchability
-- ⚡ Faster processing (token efficiency)
 
 ---
 

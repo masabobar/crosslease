@@ -13,7 +13,7 @@ Updates **only** `.project-management/output/phases/phase-N.md`:
 1. Find the story's section in the phase file.
 2. Update status → `Completed`.
 3. Add completion timestamp.
-4. Add test metrics (count, coverage).
+4. Add test metrics (count, all passing).
 5. Add commit hash.
 6. Update phase-level progress metrics (completed/total points, % done).
 
@@ -24,7 +24,6 @@ Updates **only** `.project-management/output/phases/phase-N.md`:
 
 - Phase N: {{completed_points}}/{{total_points}} points ({{percentage}}%)
 - Tests:   {{total_tests}} passing
-- Coverage: {{coverage}}%
 
 ℹ️  For complete tracking later: re-run in Complete mode or edit progress files directly.
 ```
@@ -51,7 +50,6 @@ Updates **all** progress files (except `blockers.md` — manual only).
 - ✅ US-XXX: {{story_title}} ({{points}} points)
   - Completed: {{DATE}}
   - Tests: {{test_count}} passing
-  - Coverage: {{coverage}}%
   - Commit: {{commit_hash}}
 ```
 
@@ -62,7 +60,7 @@ Updates **all** progress files (except `blockers.md` — manual only).
 - Overall completion %: `(completed_points / total_points) * 100`
 - Per-phase progress
 - Velocity: `completed_points / weeks_elapsed`
-- Test coverage metrics
+- Test metrics (count, pass rate)
 - Timeline status (on-track / at-risk / delayed)
 
 ### 2.4 Blockers
@@ -84,7 +82,6 @@ Updates **all** progress files (except `blockers.md` — manual only).
 - Overall Completion: {{old}}% → {{new}}% (+{{delta}}%)
 - Velocity:           {{velocity}} points/week
 - Tests:              {{total_tests}} passing
-- Coverage:           {{coverage}}%
 
 ℹ️  Note: Blockers not updated (edit blockers.md directly when needed).
 ```

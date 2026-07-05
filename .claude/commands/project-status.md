@@ -25,7 +25,7 @@ No arguments. Detects project structure automatically and reads only what it nee
 
 **🔧 REFERENCE** — quality metrics calculated per:
 
-- `.claude/rules/testing.md` — coverage targets, API status-code requirements
+- `.claude/rules/testing.md` — required-tests gate (schemas / stores / utils), test organization
 - `.claude/rules/code-quality.md` — SOLID & DRY compliance
 
 ---
@@ -44,7 +44,7 @@ else if exists(".project-management/input/backlog.md"):
 ```
 
 **1B. Prefer DASHBOARD.md when available (fast path):**
-If `output/progress/DASHBOARD.md` exists, it has pre-calculated metrics (overall %, phase %, velocity, blockers, coverage, timeline). Read it first and only fall through to raw files for details it doesn't cover (e.g. recent commit hashes, detailed bug breakdown). ~60-70% token savings.
+If `output/progress/DASHBOARD.md` exists, it has pre-calculated metrics (overall %, phase %, velocity, blockers, test pass rate, timeline). Read it first and only fall through to raw files for details it doesn't cover (e.g. recent commit hashes, detailed bug breakdown). ~60-70% token savings.
 
 **1C. Additional reads (as needed):**
 
@@ -69,7 +69,7 @@ If DASHBOARD.md exists, extract; otherwise compute:
 - **Bug counts** by severity (from `bug-roadmap.md`)
 - **Fixed bugs** last 7 / 30 days (from `bug-archive.md`)
 - **Bug rate** = `bugs / total_stories`
-- **Coverage**, **lint**, **tech debt** — from quality sources
+- **Test pass rate**, **lint**, **tech debt** — from quality sources
 
 ---
 

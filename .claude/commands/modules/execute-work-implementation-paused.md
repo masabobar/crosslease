@@ -244,7 +244,6 @@ Mark todo completed.
 Story:    {{story title}}
 Points:   {{points}}
 Tests:    {{tests_passed}}/{{tests_total}} passed
-Coverage: {{coverage}}%
 Commit:   {{commit_hash}}
 Duration: {{duration}}
 ```

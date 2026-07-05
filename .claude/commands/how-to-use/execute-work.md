@@ -15,7 +15,7 @@ Fully automated implementation workflow:
 
 1. **Plan Mode** - Creates detailed plan, waits for approval
 2. **Implementation** - Writes code following SOLID & DRY
-3. **Testing** - Writes and runs tests (80%+ coverage required)
+3. **Testing** - Writes and runs tests (new schemas/stores/utils must be covered)
 4. **Quality Gates** - Validates all requirements met
 5. **Git Commit** - Auto-commits (NO AI credits)
 6. **Progress Tracking** - Updates phase files and metrics
@@ -71,7 +71,7 @@ Execution Mode:
 
 **Recommendation:** Use Continuous for any phase/epic with 3+ stories.
 
-**Why Continuous now uses sub-agents:** Each story runs in a fresh sub-agent with a clean context. The orchestrator only keeps a structured summary per completed story — no context drift, no leftover state from US-001 contaminating US-002. The sub-agent must still pass every quality gate (tests, coverage ≥80%, API docs, i18n, git commit) before returning `completed`.
+**Why Continuous now uses sub-agents:** Each story runs in a fresh sub-agent with a clean context. The orchestrator only keeps a structured summary per completed story — no context drift, no leftover state from US-001 contaminating US-002. The sub-agent must still pass every quality gate (tests, required tests present, error codes surfaced, i18n, git commit) before returning `completed`.
 
 **When to prefer Paused:** Short runs (1–2 stories), exploratory bug fixes, or anything where you want to step in mid-work. Sub-agents cannot ask you questions — every decision is autonomous.
 
@@ -136,8 +136,8 @@ If you passed only one of the two, Claude asks only for the missing one.
 1. **TodoWrite Breakdown** - Creates task list for story
 2. **Read Story Context** - Gets details from technical spec
 3. **Implement** - Writes code following SOLID & DRY principles
-4. **Write Tests** - Unit, integration, E2E tests
-5. **Run Tests** - Must pass, coverage ≥ 80%
+4. **Write Tests** - Unit tests for schemas, stores, utilities
+5. **Run Tests** - Must pass (`pnpm test:run` + type-check + lint)
 6. **Verify i18n** - If I18N-RULES.md exists
 7. **Git Commit** - Auto-commit (NO AI attribution)
 8. **Update Progress** - Phase file or all progress files
@@ -148,10 +148,9 @@ If you passed only one of the two, Claude asks only for the missing one.
 **Story marked complete ONLY when:**
 
 - ✅ All tasks implemented
-- ✅ All tests written (unit, integration, E2E)
+- ✅ Unit tests written for new schemas, stores, utilities
 - ✅ All tests passing
-- ✅ Coverage ≥ 80%
-- ✅ All API status codes tested (200/400/401/403/404/500)
+- ✅ Every consumed BE error code surfaced with i18n keys
 - ✅ i18n translations added (if required)
 - ✅ SOLID & DRY principles followed
 - ✅ Git commit created (no AI credits)
@@ -216,7 +215,7 @@ Claude: [STEP 0: Plan Mode]
         [... detailed plan for all 18 stories]
 
         Risks: None identified
-        Success Criteria: All tests pass, 80%+ coverage
+        Success Criteria: All tests pass, required tests present
 
         Proceed? [Yes/No/Revise]
 
@@ -280,7 +279,7 @@ Claude: 🚀 Starting implementation...
 | --------------------------- | -------------------------------------------------- | -------------------------- |
 | Tests fail during execution | Claude auto-fixes and retries                      | Quality gates module       |
 | Dependency missing          | Marked as "Blocked", continues with other stories  | Full docs "Error Handling" |
-| Coverage below 80%          | Claude adds more tests until threshold met         | `.claude/rules/testing.md` |
+| Required tests missing      | Claude adds tests for new schemas/stores/utils     | `.claude/rules/testing.md` |
 | User cancels mid-execution  | Marks current story as "In Progress", resume later | Full docs "Error Handling" |
 
 ---

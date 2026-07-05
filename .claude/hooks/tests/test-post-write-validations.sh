@@ -64,6 +64,22 @@ printf 'line\n%.0s' {1..400} > "$guide"
 out=$(stdin_write "$guide" | bash "$HOOK" 2>/dev/null)
 assert_empty "how-to-use not flagged by command size rule" "$out"
 
+# --- fixture: oversized rule file (> 200 lines) ---
+mkdir -p "$SCRATCH/.claude/rules"
+big_rule="$SCRATCH/.claude/rules/big-rule.md"
+printf 'line\n%.0s' {1..250} > "$big_rule"
+
+out=$(stdin_write "$big_rule" | bash "$HOOK" 2>/dev/null)
+assert_contains "rule > 200 lines warns" "$out" "250 lines"
+assert_contains "rule-file budget mentioned" "$out" "rule-file budget: 200"
+
+# --- fixture: small rule file (under 200 lines, silent) ---
+small_rule="$SCRATCH/.claude/rules/small-rule.md"
+printf 'line\n%.0s' {1..100} > "$small_rule"
+
+out=$(stdin_write "$small_rule" | bash "$HOOK" 2>/dev/null)
+assert_empty "small rule file → silent" "$out"
+
 # --- fixture: nonexistent file (hook must exit silently) ---
 out=$(stdin_write "$SCRATCH/does-not-exist.md" | bash "$HOOK" 2>/dev/null)
 assert_empty "missing file → silent exit" "$out"

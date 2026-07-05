@@ -1,191 +1,101 @@
 # Enums & Constants — Cross-Layer Naming Convention
 
-**Version:** 1.0
-**Last Updated:** 2026-05-11
+**Version:** 2.0
+**Last Updated:** 2026-07-05
 **Status:** Active
 
-**MANDATORY: All enum-like values that cross layer boundaries (database ↔ backend ↔ frontend ↔ mobile) MUST use `SCREAMING_SNAKE_CASE` as their wire format. Each layer's symbol style follows its idiom, but the wire VALUE is shared.**
+**MANDATORY: An enum-like value that crosses a layer boundary (API ↔ frontend) has exactly one wire format, defined by the backend — the frontend matches it exactly, references it through one source of truth, and never renders it directly to the user.**
 
-Prevents the most common cross-layer bug: DB stores `"active"`, backend serializes `"ACTIVE"`, mobile sends `"Active"`, frontend strict-equals against one of them → silent breakage at runtime.
+Prevents the most common cross-layer bug: BE sends `"active"`, FE strict-equals against `"ACTIVE"` → silent breakage at runtime.
 
 ---
 
 ## 1. Scope
 
-**Covers:** status / state enums (`OrderStatus`, `UserRole`), event-type discriminators, API error codes, string-keyed feature flags — anything that exists in code AND on the wire AND in the DB.
+**Covers:** status / state enums (`UserStatus`, `UserRole`), event-type discriminators, API error codes, string-keyed feature flags — anything that exists in code AND on the wire.
 
-**Does NOT cover:** pure internal constants (`MAX_RETRIES = 3`) — follow language idiom; UI display labels — those are i18n keys (see §6); JSON property names — those follow API style (typically `camelCase` for JS/TS stacks).
+**Does NOT cover:** pure internal constants (`MAX_RETRIES = 3`) — follow language idiom (§7); UI display labels — those are i18n keys (§5); JSON property names — those follow API style.
 
----
+## 2. The Wire Format Is BE-Defined — Match It Exactly
 
-## 2. The Wire Format Rule
+The backend (`../refinext-api/`) owns every wire value; this repo consumes them. In this project:
 
-**Canonical wire value: `SCREAMING_SNAKE_CASE`.**
+- **Error codes** are `SCREAMING_SNAKE_CASE`: `INVALID_CREDENTIALS`, `RATE_LIMIT_EXCEEDED`
+- **Roles / statuses / types** are lowercase snake: `system_admin`, `leasing_company_user`, `active`, `bank_tenant`
 
-Examples: `ACTIVE`, `PENDING_REVIEW`, `PAYMENT_FAILED`, `ORDER_CREATED`.
+Never "normalize" a wire value to a different casing on the FE side. Verify the exact strings in `openapi.json` (or `src/generated/api.ts`); adding or removing values happens in the BE repo via its migration workflow, never here.
 
-This is the exact string that appears in JSON payloads, Postgres ENUM members, queue messages, webhooks, and URL query params.
+**Enum _type_ names** in code are always `PascalCase`: `UserRole`, `UserStatus`.
 
-**Value guidance:**
+## 3. Frontend Source of Truth
 
-- Full words, not abbreviations (`PENDING_REVIEW`, not `PEND_REV`)
-- Past tense for events (`ORDER_CREATED`), present-state for statuses (`ACTIVE`)
-- One enum per domain — don't reuse a generic `status` enum across unrelated models
-- Max ~40 chars; if longer, the enum is doing too much — split
+Every wire enum has **exactly one** definition in this repo — the Zod schema in the owning feature's `api/schema.ts` — and everything else derives from it:
 
-**Enum _type_ name** is always `PascalCase` in code: `OrderStatus`, `UserRole`, `WebhookEventType`.
+```ts
+// features/users/api/schema.ts — single source of truth
+export const UserRoleSchema = z.enum([
+  "system_admin", "support_user", "auditor",
+  "front_office", "back_office", "leasing_company_user",
+])
+export type UserRole = z.infer<typeof UserRoleSchema>
 
----
-
-## 3. Database Layer (Prisma + PostgreSQL — default stack)
-
-Define enums in `schema.prisma` with `SCREAMING_SNAKE_CASE` members. Prisma generates a matching TypeScript enum AND creates the Postgres ENUM type storing those exact strings:
-
-```prisma
-enum OrderStatus {
-  ACTIVE
-  PENDING_REVIEW
-  PAYMENT_FAILED
-  COMPLETED
-  CANCELLED
-}
-
-model Order {
-  id     String      @id @default(cuid())
-  status OrderStatus @default(ACTIVE)
-}
+// elsewhere — reference, never retype
+if (user.role === UserRoleSchema.enum.system_admin) { ... }
 ```
 
-Migration produces `CREATE TYPE "OrderStatus" AS ENUM ('ACTIVE', 'PENDING_REVIEW', ...)`. The stored values are exactly these strings.
+- Unknown wire values fail `parse()` at the query layer — bad data never reaches the UI (per CLAUDE.md §API data).
+- Never copy-paste the value list into a second file — a misspelled duplicate is invisible to typecheck. Compose with `.extend()` / `.pick()` or import the schema.
 
-**String columns** (when not using Postgres ENUM): same convention — enforce allowed set via Zod at the application boundary (§5).
+**UI-only enums** (filter modes, client feature flags) that never touch the wire — define as a `const` object + derived type; prefer this over TS `enum` (better tree-shaking, no runtime quirks):
 
-**Adding / removing values:** handled in `../refinext-api/` via its migration workflow. Never edit Postgres ENUM types manually. Deprecate before removing — old queue/log payloads may still contain the value.
-
----
-
-## 4. Backend / Frontend (TypeScript)
-
-In the default stack (React Router 7), backend and frontend share one codebase. The Prisma-generated enum is the canonical TS type — import and use directly:
-
-```typescript
-import { OrderStatus } from "@prisma/client"
-// OrderStatus.ACTIVE === 'ACTIVE' (identifier matches wire value)
-
-if (order.status === OrderStatus.ACTIVE) {
-  /* ... */
-}
-```
-
-**Non-DB enums** (UI-only filter, client feature flag) — define as `const` object + derived type. Prefer this over TS `enum` (better tree-shaking, no runtime quirks):
-
-```typescript
+```ts
 export const FilterMode = {
   ALL: "ALL",
   ACTIVE_ONLY: "ACTIVE_ONLY",
-  ARCHIVED_ONLY: "ARCHIVED_ONLY",
 } as const
-
 export type FilterMode = (typeof FilterMode)[keyof typeof FilterMode]
 ```
 
-**Forbidden:** mixed casing, inline string literals in business logic (`if (status === 'active')` is a refactor hazard — compare to `OrderStatus.ACTIVE`), wire value that differs from the identifier.
+## 4. No Inline Literals
 
----
+Inline string comparisons are a refactor hazard — a typo bypasses typecheck:
 
-## 5. Validation Layer (Zod)
-
-Build the schema directly from the Prisma enum or const object — never duplicate values:
-
-```typescript
-import { OrderStatus } from "@prisma/client"
-import { z } from "zod"
-
-const orderStatusSchema = z.nativeEnum(OrderStatus)
-// Or for non-Prisma:
-const filterModeSchema = z.enum(["ALL", "ACTIVE_ONLY", "ARCHIVED_ONLY"])
+```ts
+// ❌ if (user.role === "system_admin")
+// ✅ if (user.role === UserRoleSchema.enum.system_admin)
 ```
 
-Unknown wire values produce a 400 — matching the API testing matrix in `.claude/rules/testing.md`.
+If a string is compared against and no constant covers it yet, extract one before moving on (per `.claude/rules/code-review.md` §10).
 
----
+## 5. Separation from UI Display Text
 
-## 6. Separation from UI Display Text
+**Enum values are NEVER user-facing.** They are machine identifiers; labels come from i18next, keyed by the value:
 
-**Enum values are NEVER user-facing.** They are machine identifiers. UI labels come from i18next, keyed by the enum value:
-
-```typescript
-// ❌ BAD
-<span>{order.status}</span>  // shows "PENDING_REVIEW"
-
-// ✅ GOOD
-<span>{t(`order.status.${order.status}`)}</span>
-// en: "Pending review" / sr: "Na pregledu"
+```tsx
+// ❌ <span>{user.status}</span>          — shows "pending_approval"
+// ✅ <span>{t(`users.status.${user.status}`)}</span>
 ```
 
-Translation key structure: `<domain>.<enumName>.<VALUE>` — greppable, aligned with the wire value. **Never store localized strings in the DB as enum values** — wire format stays machine-identifier; label is computed per request based on user locale.
+Translation key structure: `<domain>.<enumName>.<value>` — greppable, aligned with the wire value.
 
----
+## 6. Anti-Patterns (Quick Reference)
 
-## 7. Mobile Layer
+| ❌                                                     | Why it breaks                             | ✅                                        |
+| ------------------------------------------------------ | ----------------------------------------- | ----------------------------------------- |
+| FE re-casing a wire value (`"ACTIVE"` for `"active"`)  | Strict equality fails silently            | Match `openapi.json` exactly              |
+| Inline literals (`role === "system_admin"`)            | Typo bypasses typecheck                   | Reference the Zod schema enum             |
+| Retyping the value list in a second file               | Duplicate drift invisible to typecheck    | One schema, import everywhere             |
+| Rendering the wire value in UI                         | Untranslated machine identifier on screen | i18n key per §5                           |
+| Plain TS union for API enum (`type Role = "a" \| "b"`) | No runtime rejection of unknown values    | `z.enum()` + `parse()` at the query layer |
+| Boolean for a 3+ state concept                         | Forces rework when a third state appears  | Model as an enum from the start           |
 
-Wire value is identical across all mobile stacks; only the per-language symbol style differs.
+## 7. Pure Internal Constants (out of scope)
 
-- **React Native (TypeScript)** — identical to web (§4). Share types via a shared package, or duplicate the literal-union if the mobile app isn't in the monorepo.
-- **Kotlin (Android)** — entries are conventionally `SCREAMING_SNAKE_CASE`, so the wire value matches the entry name with **zero mapping**: `enum class OrderStatus { ACTIVE, PENDING_REVIEW, PAYMENT_FAILED }` — no `@SerialName` needed for kotlinx.serialization / Moshi.
-- **Swift (iOS)** — cases are `camelCase`; map to the wire value via `String` raw values:
+Constants that never cross a boundary follow language idiom — this rule does not mandate casing for them:
 
-```swift
-enum OrderStatus: String, Codable {
-    case active = "ACTIVE"
-    case pendingReview = "PENDING_REVIEW"
-    case paymentFailed = "PAYMENT_FAILED"
-}
-// In code: .pendingReview ; on the wire: "PENDING_REVIEW"
-```
-
----
-
-## 8. Source of Truth (One Place per Enum)
-
-Every cross-layer enum has **exactly one** source of truth. Never copy-paste values into multiple files — a single misspelled letter in a duplicate is invisible to typecheck.
-
-| Stack                             | Source of truth                                                                                                        |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Default (RR7 + Prisma)            | `schema.prisma` → `@prisma/client` enum imported everywhere                                                            |
-| Separate backend + mobile clients | Shared package (e.g. `packages/shared/enums.ts`), OR contracts file (`openapi.yaml`) that generates per-language types |
-| Backend-only / frontend-only      | Single `enums.ts` (or per-domain: `app/lib/enums/order.ts`) — exported and imported                                    |
-
----
-
-## 9. Anti-Patterns (Quick Reference)
-
-| ❌                                                                                | Why it breaks                                        | ✅                                       |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------- |
-| Mixing `"ACTIVE"` and `"active"` for same concept                                 | Strict equality fails silently                       | Pick one casing per §2, enforce with Zod |
-| Storing display text in DB (`"Active"`)                                           | Locale + label changes need migrations               | Store wire value; i18n the label         |
-| Numeric codes for human states (`status = 1`)                                     | Unreadable in logs, queries, dashboards              | `SCREAMING_SNAKE_CASE` strings           |
-| Inline string literals (`status === 'active'`)                                    | Typo bypasses typecheck; refactor-hostile            | `status === OrderStatus.ACTIVE`          |
-| Boolean for 3+ state enum (`isActive: bool` when really `ACTIVE/PAUSED/ARCHIVED`) | Forces data migration later                          | Model as enum from the start             |
-| One enum reused across unrelated domains                                          | Adding value for one accidentally enables for others | One enum per domain                      |
-
----
-
-## 10. Pure Internal Constants (out of scope)
-
-Constants that never cross a boundary follow each language's idiom — this rule does NOT mandate casing for them.
-
-```typescript
-const MAX_RETRIES = 3 // TS idiom
+```ts
+const MAX_RETRIES = 3
 const DEFAULT_TIMEOUT_MS = 5_000
-```
-
-```kotlin
-const val MAX_RETRIES = 3                 // Kotlin idiom
-```
-
-```swift
-let maxRetries = 3                        // Swift idiom (lowerCamel)
 ```
 
 The cross-layer rule applies only when the value becomes a string identifier that travels.
@@ -194,10 +104,10 @@ The cross-layer rule applies only when the value becomes a string identifier tha
 
 ## Related
 
-- `../refinext-api/` — migration workflow for enum changes (BE repo)
-- `.claude/rules/stack-specific.md` — env-var handling, data-fetching patterns
-- `.claude/rules/testing.md` — Zod rejection of unknown enum value → 400 (testing matrix)
-- `.claude/rules/api-documentation.md` — endpoint docs MUST list allowed enum values in request/response schemas
+- `../refinext-api/` — owns wire values and their migrations
+- `.claude/rules/api-versioning.md` — when the BE changes an enum, refresh `openapi.json` + schemas + tests together
+- `.claude/rules/code-review.md` §10 — hardcoded-value review gate
+- `.claude/rules/error-handling-and-logging.md` — error codes are enums too (`errors.<CODE>` i18n keys)
 
 ---
 

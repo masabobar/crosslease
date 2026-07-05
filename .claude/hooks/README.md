@@ -8,6 +8,11 @@ Shell scripts invoked by Claude Code lifecycle events. Wired up in `.claude/sett
 
 ## Scripts
 
+### `pre-commit-code-review.sh`
+
+**Event:** PreToolUse (Bash)
+**Purpose:** When the command is `git commit` with staged `.ts`/`.tsx` files, inject the `.claude/rules/code-review.md` checklist as a reminder before the commit is created. Non-blocking.
+
 ### `post-write-validations.sh`
 
 **Event:** PostToolUse (Write | Edit)
@@ -15,40 +20,30 @@ Shell scripts invoked by Claude Code lifecycle events. Wired up in `.claude/sett
 
 Emits warnings (never blocks) when:
 
-| Condition                                                   | Severity       | Rule                                |
-| ----------------------------------------------------------- | -------------- | ----------------------------------- |
-| `.project-management/input/backlog/*.md` > 200 lines        | ⚠️ warning     | documentation.md §2.1               |
-| `.claude/commands/modules/*.md` > 600 lines                 | 🔴 hard max    | documentation.md §2.1               |
-| `.claude/commands/modules/*.md` > 300 lines                 | 🟡 ideal       | documentation.md §2.1               |
-| `.claude/commands/*.md` (top level) > 300 lines             | 🟡 soft target | documentation.md §2.1               |
-| Edit touches `.project-management/input/backlog/phase-*.md` | ℹ️ reminder    | Verify README.md totals still match |
+| Condition                                                   | Severity       | Rule                                 |
+| ----------------------------------------------------------- | -------------- | ------------------------------------ |
+| `.project-management/input/backlog/*.md` > 200 lines        | ⚠️ warning     | documentation.md §2.1                |
+| `.claude/rules/*.md` > 200 lines                            | 🟡 budget      | rules/README.md file-size discipline |
+| `.claude/commands/modules/*.md` > 600 lines                 | 🔴 hard max    | documentation.md §2.1                |
+| `.claude/commands/modules/*.md` > 300 lines                 | 🟡 ideal       | documentation.md §2.1                |
+| `.claude/commands/*.md` (top level) > 300 lines             | 🟡 soft target | documentation.md §2.1                |
+| Edit touches `.project-management/input/backlog/phase-*.md` | ℹ️ reminder    | Verify README.md totals still match  |
 
-### `stop-changelog-check.sh`
-
-**Event:** Stop
-**Purpose:** Remind about CHANGELOG at session end.
-
-Warns when the branch has commits ahead of its upstream (or `main` / `master`) but none of them modified `CHANGELOG.md`.
+> The former `stop-changelog-check.sh` (Stop-event CHANGELOG reminder) was removed 2026-07-05 — no `CHANGELOG.md` exists in this repo; conventional commits + GitLab MRs are the change history.
 
 ---
 
 ## Activating the Hooks
 
-Hooks live in `.claude/settings.example.json` (tracked in git so framework copies inherit them). Claude Code loads `.claude/settings.json`, which is **gitignored** — so to activate hooks for a given checkout:
+Hooks are wired in `.claude/settings.json` (tracked in git — active for every checkout). `.claude/settings.example.json` mirrors it as the template; only `.claude/settings.local.json` (personal overrides) is gitignored.
 
-```bash
-cp .claude/settings.example.json .claude/settings.json
-```
-
-Then restart your Claude Code session (or open `/hooks` once) so the config watcher picks up the new settings file.
-
-If `.claude/settings.json` already exists, merge the `hooks` block from `settings.example.json` into it — don't overwrite the whole file (see `.claude/rules/permissions.md`).
+After changing hook config, restart your Claude Code session (or open `/hooks` once) so the config watcher picks it up. Per `.claude/rules/permissions.md`, Claude never modifies `settings.json` without explicit approval.
 
 ---
 
 ## Customizing or Disabling
 
-- **Disable one hook:** edit `settings.json`, remove the corresponding entry from `hooks.PostToolUse` or `hooks.Stop`, or set its command to `true` (no-op).
+- **Disable one hook:** edit `settings.json`, remove the corresponding entry from `hooks.PreToolUse` or `hooks.PostToolUse`, or set its command to `true` (no-op).
 - **Change thresholds:** edit the relevant script directly (`post-write-validations.sh`). Thresholds are plain numbers, easy to tweak.
 - **Disable all hooks globally:** add `"disableAllHooks": true` at the top level of `settings.json`.
 
@@ -77,13 +72,11 @@ bash .claude/hooks/tests/run-tests.sh
 ```bash
 bash .claude/hooks/tests/run-tests.sh post-write
 bash .claude/hooks/tests/run-tests.sh audit-pm
-bash .claude/hooks/tests/run-tests.sh stop-changelog
 ```
 
-Coverage (v3.2):
+Coverage (v3.3):
 
-- `test-post-write-validations.sh` — 15 assertions: small file / oversize backlog (200-cap) / module ideal-vs-hardmax thresholds / command soft target / how-to-use exclusion / missing file / missing `file_path`.
-- `test-stop-changelog-check.sh` — 7 assertions: outside-git silence, no upstream, commits ahead with/without CHANGELOG, multi-commit, SIGPIPE regression guard.
+- `test-post-write-validations.sh` — 18 assertions: small file / oversize backlog (200-cap) / rule-file budget (200) / module ideal-vs-hardmax thresholds / command soft target / how-to-use exclusion / missing file / missing `file_path`.
 - `test-audit-pm.sh` — 13 assertions: clean repo, version mismatch, missing rule, broken link, code-fence exemption, oversize backlog, legacy command (active vs historical context).
 
 **Run before every change to `.claude/hooks/*.sh`** — each assertion is there because it caught a real bug (SIGPIPE, false-positive false-negatives, etc.).

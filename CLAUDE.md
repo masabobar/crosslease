@@ -481,7 +481,7 @@ Components in `src/components/ui/` are built with:
 - **When encountering existing code that uses raw HTML or third-party components instead of shadcn equivalents — convert them to the shadcn version as part of the change.** Do not leave non-shadcn UI code in place.
 - When a raw element is genuinely necessary (no shadcn equivalent, or a specific accessibility constraint), add an inline comment: `{/* NOTE: raw <element> — reason */}`
 
-See `.claude/rules/code-review.md` §12 for the full shadcn-first checklist.
+See `.claude/rules/code-review-ui.md` for the full shadcn-first checklist.
 
 ---
 
