@@ -166,19 +166,20 @@ Mark "Run all tests" todo as `in_progress`. Display: `🧪 Running Tests for US-
 
 Execute:
 
-1. Vitest (unit + integration): `npm test`
-2. Playwright (E2E): `npm run test:e2e`
-3. Coverage: `npm run test:coverage` (must be ≥ 80%)
+1. Vitest (unit): `pnpm test:run`
+2. TypeScript: `pnpm type-check`
+3. ESLint: `pnpm lint`
+
+(E2E is QA-owned Playwright under `src/e2e/` — not run as part of story completion.)
 
 Results block:
 
 ```
 📊 Test Results:
 ✅ Unit Tests:         [X]/[X] passed
-✅ Integration Tests:  [Y]/[Y] passed
-✅ E2E Tests:          [Z]/[Z] passed
-✅ Coverage:           [XX]% (target 80%+)
-✅ API Status Codes:   all tested (200/400/401/403/404/500)
+✅ Type Check:         clean
+✅ Lint:               clean
+✅ Required Tests:     new schemas / stores / utils covered
 {{✅ i18n: all translations present}}
 ```
 

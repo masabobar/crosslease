@@ -62,15 +62,13 @@ STEP 1 — Read context (do not skip any applicable file):
   - .claude/rules/documentation-templates.md
   - CLAUDE.md
 
-  If unit touches an HTTP endpoint (handler / service / route file):
-  - .claude/rules/api-documentation.md
-  - .claude/rules/api-versioning.md             (versioning + change-propagation gate: docs + schemas + ALL related tests + consumer code in same PR)
-  - .claude/rules/error-handling-and-logging.md (typed errors, canonical envelope, structured logs, no PII/secrets)
-  - .claude/rules/security-and-auth.md          (default-deny middleware, resource-level/IDOR, cookie session config, security headers, audit log)
+  If unit consumes a new/changed API contract (openapi.json refreshed, BE endpoint changed):
+  - .claude/rules/api-versioning.md             (FE consequence: refresh openapi.json + update feature Zod schemas + their tests together)
+  - .claude/rules/error-handling-and-logging.md (canonical envelope detail.code, ApiError.code handling, never-swallow)
+  - .claude/rules/security-and-auth.md          (token handling via auth store + interceptor, RBAC wire values, VITE_ env safety)
 
-  If unit touches a data model / migration / enum:
-  - .claude/rules/database.md
-  - .claude/rules/enums-and-constants.md        (SCREAMING_SNAKE_CASE wire format across all layers)
+  If unit touches an enum-like wire value:
+  - .claude/rules/enums-and-constants.md        (one source of truth per enum; values change in ../refinext-api/)
 
   If frontend story (Type: Frontend per .claude/rules/screen-driven-backlog.md):
   - .claude/rules/api-first.md                  (Phase A contract verification before any frontend code)
@@ -95,8 +93,8 @@ STEP 2 — Plan with TodoWrite (mirror the in-line §3.1 list — implement, tes
 STEP 3 — Implement all tasks of {{UNIT_ID}} per .claude/rules/code-quality.md (SOLID & DRY).
 
 STEP 4 — Write tests per .claude/rules/testing.md:
-  - Unit + integration + E2E
-  - All API status codes 200/400/401/403/404/500 (if endpoint touched)
+  - Unit tests for every new Zod schema (rejection cases), store action, and src/lib utility
+  - No Playwright specs (E2E is QA-owned) and no component tests
   - For bugs: include a regression test that fails without the fix and passes with it.
 
 STEP 5 — Verify i18n (only if I18N-RULES.md exists).
@@ -109,8 +107,8 @@ STEP 7 — Run tests using project-detected commands per
   (auto-detect package manager from lockfile: pnpm-lock.yaml → pnpm,
   yarn.lock → yarn, bun.lockb → bun, otherwise npm).
   Required gates:
-    - All test suites pass (unit + integration + E2E if applicable)
-    - Coverage ≥ 80% (inclusive — exactly 80.0% passes)
+    - All unit tests pass (pnpm test:run) + type-check clean
+    - New Zod schemas / store actions / utilities each have tests (behavior-based per .claude/rules/testing.md)
     - Linter clean (no errors)
   If anything fails: fix → re-run. Loop until all gates pass OR you hit a true blocker.
 
@@ -156,14 +154,14 @@ On success:
   "status":              "completed",
   "title":               "{{UNIT_TITLE}}",
   "points":              N,                              # n/a for bugs
-  "tests":               { "passed": N, "total": N, "suites": ["unit","integration","e2e"] },
-  "coverage":            "XX.X%",                        # numeric, e.g. "84.2%"
-  "api_codes_tested":    ["200","400","401","403","404","500"],   # or [] if no endpoint
+  "tests":               { "passed": N, "total": N, "suites": ["unit"] },
+  "required_tests":      "complete | missing",           # new Zod schemas / store actions / utilities all have tests
+  "error_codes_surfaced": true | false | "not_applicable",   # every BE error code handled per api-error-display.md
   "i18n":                "complete | not_required",
   "api_docs":            "clean | not_required",
   "frontend_contract":   "verified | not_applicable",    # api-first.md Phase A status
   "linter":              "clean | warnings | not_run",
-  "quality_gates_passed": ["tests","coverage","linter","api_docs","i18n","frontend_contract"],
+  "quality_gates_passed": ["tests","required_tests","linter","error_codes","i18n","frontend_contract"],
                          # MUST list every gate that was actually checked.
                          # Missing any required gate → status MUST be "blocked".
   "commit_hash":         "abc1234",
@@ -208,9 +206,9 @@ After the sub-agent returns, the orchestrator MUST:
 2. **Validate gate evidence on `status: "completed"`.** Reject the success claim and re-classify as `blocked` if ANY of:
    - `quality_gates_passed` is missing or empty.
    - For frontend stories: `frontend_contract` ≠ `"verified"`.
-   - For units that touched an endpoint: `api_docs` ≠ `"clean"` OR `api_codes_tested` does not include all of `200/400/401/403/404/500`.
+   - For units that consumed a new/changed API contract: `error_codes_surfaced` == `false`.
    - `linter` == `"not_run"` (linter must be either `clean` or `warnings`; `not_run` is treated as gate failure).
-   - `coverage` parses to a number below 80.0.
+   - `required_tests` ≠ `"complete"`.
    - `commit_hash` is missing or empty.
 
 3. **`status: "completed"` (validated)** → display the standard unit-completion block (see `execute-work-implementation-paused.md` §3.9 template, adapted for stories vs bugs), log the summary, proceed to dispatch the next unit.

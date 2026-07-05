@@ -41,7 +41,7 @@ Per .claude/rules/code-review.md, verify the following before this commit is cre
   • Forms: RHF + Zod resolver, server errors via setError, submit gated on isSubmitting
   • i18n: all strings via t(), both en/ and de/ locales updated, namespace registered
   • Security: correct role wire values, no console.*, no sensitive data in component state
-  • Tests: Zod schemas tested, coverage ≥ 80%, data-testid on all new interactive elements
+  • Tests: Zod schemas / stores / utils tested (behavior-based), data-testid on all new interactive elements
 
 If the staged diff has already been reviewed and is clean → proceed with the commit.
 Otherwise run /code-review on the diff first."

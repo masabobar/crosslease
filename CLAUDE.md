@@ -35,7 +35,8 @@
 
 4. **Project Rules** (`.project-management/rules/project-rules.md`) — ALWAYS read
 
-**Conflicts:** Project rules > Specialized rules > Core standards
+**Conflicts:** Project rules > Core standards (this file) > Specialized rules.
+Where a specialized rule contradicts this file's Code standards, **this file wins** — flag the drift instead of following the rule file.
 
 ---
 
@@ -155,7 +156,7 @@ Never start coding without plan approval.
 0. PLAN MODE → analyze, create plan, get approval
 1. IMPLEMENT → code changes following standards below
 2. TEST → pnpm test:run + pnpm type-check + pnpm lint
-3. VALIDATE → coverage > 80%, i18n keys added, Zod schemas present
+3. VALIDATE → new schemas/stores/utils tested, i18n keys added, Zod schemas present
 4. ASK FOR JIRA TICKET → then commit (no AI credits)
 5. UPDATE → DASHBOARD.md auto-updates
 ```
@@ -175,7 +176,7 @@ Never start coding without plan approval.
 **Testing:**
 
 - [ ] All unit tests passing (`pnpm test:run`)
-- [ ] Coverage ≥ 80%
+- [ ] New Zod schemas, store logic, and utilities have tests (behavior-based — see Testing section; no numeric coverage threshold)
 
 **i18n:**
 
@@ -728,7 +729,7 @@ The app uses `react-i18next`. English is bundled at startup; German is lazy-load
 
 Stage only the changed files explicitly — no `git add -A` or `git add .`.
 
-Commit message: single line, conventional commit format — `type: short description #TICKET`. No body, no newlines, **no AI attribution** (`Co-Authored-By: Claude` or similar lines are forbidden).
+Commit message: conventional commit format — header `type: short description #TICKET` (single line, max 150 chars). A body is optional and only used to explain WHY or cite user-story references per `.claude/rules/git.md` (canonical commit rules). **No AI attribution** (`Co-Authored-By: Claude` or similar lines are forbidden).
 
 Every commit must end with either a Jira ticket (`#PRD1006-42`) or `#no-ticket` when there is no associated ticket.
 

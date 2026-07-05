@@ -40,16 +40,16 @@ Analyzing: [Phase N / Epic X / Story US-XXX]
    - Code standards
 
 5. `.claude/rules/testing.md`
-   - Test coverage requirements (80%+)
-   - API status code matrix (200/400/401/403/404/500)
+   - Unit tests for Zod schemas / stores / utilities (behavior-based, no numeric coverage target)
+   - What we deliberately skip (component tests, E2E — QA-owned)
    - Test organization
 
 6. `.claude/rules/git.md`
    - Commit message format
    - **CRITICAL:** NO AI credits in commits
 
-7. `.claude/rules/database.md`
-   - Migration requirements (if database work)
+7. `.claude/rules/enums-and-constants.md`
+   - Wire-format rules (if enum-like values in scope; values change in `../refinext-api/`)
 
 8. `.claude/rules/stack-specific.md`
    - Framework-specific guidelines
@@ -155,9 +155,9 @@ US-XXX: [Title] (P0, 5 points)
 
 ✅ SUCCESS CRITERIA:
 
-- All tests passing (unit, integration, E2E)
-- Coverage ≥ 80%
-- All API status codes tested (200/400/401/403/404/500)
+- All unit tests passing (`pnpm test:run`), type-check + lint clean
+- New Zod schemas / store logic / utilities tested (per `.claude/rules/testing.md`)
+- Every BE error code surfaced with i18n keys (per `.claude/rules/api-error-display.md`)
   {{- i18n translations added (if I18N-RULES.md exists)}}
 - SOLID & DRY principles followed
 - Documentation updated

@@ -173,7 +173,7 @@ mutation.mutate(payload)
 - [ ] Zod schemas tested: valid input parses; invalid input (wrong type, missing field, bad enum) throws
 - [ ] Zustand store actions tested in isolation via `getState()` / direct action calls
 - [ ] Pure utility functions in `src/lib/` have unit tests
-- [ ] Coverage ≥ 80% per `.claude/rules/testing.md`
+- [ ] New Zod schemas, store actions, and `src/lib/` utilities have tests per `.claude/rules/testing.md` (behavior-based — no numeric coverage threshold)
 - [ ] No `.only` focused tests (pre-commit blocks these)
 - [ ] `data-testid` present on all new interactive elements
 
@@ -214,7 +214,7 @@ mutation.mutate(payload)
 - [ ] API: Zod `parse()` in `queryFn`, `ApiError.code` for error handling, no raw fetch, **every BE error code surfaced via toast / error state — no silent failures** (fix any missing `onError` or `isError` branch inline per `.claude/rules/api-error-display.md`)
 - [ ] i18n: all strings via `t()`, both locales updated, namespace registered
 - [ ] Security: role gates use correct wire values, no `console.*`, no unnecessary PII in state
-- [ ] Tests: Zod schemas tested, store actions tested, coverage ≥ 80%, `data-testid` present
+- [ ] Tests: Zod schemas tested, store actions tested, utilities tested, `data-testid` present
 - [ ] Style: naming conventions, no magic strings/numbers, enum values referenced from their source (never inline), no barrel files, no default exports (except pages), no cross-file duplicate logic/schemas/hooks/JSX
 - [ ] UI components: shadcn/ui primitive used wherever one exists; third-party or raw HTML in its place carries a `NOTE:` inline comment with the reason; missing shadcn components installed via `npx shadcn@latest add` before falling back
 - [ ] Pre-commit clean: no `console.*`, no `debugger`, no focused tests

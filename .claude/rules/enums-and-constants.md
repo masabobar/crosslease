@@ -60,7 +60,7 @@ Migration produces `CREATE TYPE "OrderStatus" AS ENUM ('ACTIVE', 'PENDING_REVIEW
 
 **String columns** (when not using Postgres ENUM): same convention — enforce allowed set via Zod at the application boundary (§5).
 
-**Adding / removing values:** use Prisma migrations per `.claude/rules/database.md`. Never edit Postgres ENUM types manually. Deprecate before removing — old queue/log payloads may still contain the value.
+**Adding / removing values:** handled in `../refinext-api/` via its migration workflow. Never edit Postgres ENUM types manually. Deprecate before removing — old queue/log payloads may still contain the value.
 
 ---
 
@@ -194,8 +194,8 @@ The cross-layer rule applies only when the value becomes a string identifier tha
 
 ## Related
 
-- `.claude/rules/database.md` — migration workflow for enum changes
-- `.claude/rules/stack-specific.md` — Zod env-var schema pattern
+- `../refinext-api/` — migration workflow for enum changes (BE repo)
+- `.claude/rules/stack-specific.md` — env-var handling, data-fetching patterns
 - `.claude/rules/testing.md` — Zod rejection of unknown enum value → 400 (testing matrix)
 - `.claude/rules/api-documentation.md` — endpoint docs MUST list allowed enum values in request/response schemas
 
