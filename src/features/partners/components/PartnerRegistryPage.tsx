@@ -71,6 +71,7 @@ export default function PartnerRegistryPage() {
   const { data: currentUser } = useCurrentUser()
   const canSubmit =
     !!currentUser && PARTNER_SUBMIT_ALLOWED_ROLES.includes(currentUser.role)
+  const tenantId = currentUser?.tenant_id ?? null
 
   const [countrySearch, setCountrySearch] = useState("")
   const [activeDialog, setActiveDialog] = useState<PartnerActionType | null>(
@@ -115,7 +116,7 @@ export default function PartnerRegistryPage() {
       )
     : COUNTRIES
 
-  const { data, isLoading, isError } = usePartnerList({
+  const { data, isLoading, isError } = usePartnerList(tenantId, {
     limit: perPage,
     offset: (page - 1) * perPage,
     ...(search.trim() ? { search: search.trim() } : {}),
@@ -158,6 +159,20 @@ export default function PartnerRegistryPage() {
       uboFilters.includes(u)
         ? uboFilters.filter(x => x !== u)
         : [...uboFilters, u]
+    )
+  }
+
+  // NOTE: the registry list endpoint is tenant-scoped (GET /tenants/{tenant_id}/partners).
+  // System Admin has no single tenant_id, so cross-tenant browsing isn't possible yet —
+  // pending a team decision on how System Admin should select a tenant. Block the screen
+  // rather than guess at a selector.
+  if (currentUser && !tenantId) {
+    return (
+      <div className="p-8">
+        <p className="text-sm text-muted-foreground">
+          {t("list.tenantRequired")}
+        </p>
+      </div>
     )
   }
 

@@ -6,7 +6,10 @@ import {
 import type { PartnerListParams } from "@/features/partners/api/partnersApi"
 import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
-export function usePartnerList(params: PartnerListParams) {
+export function usePartnerList(
+  tenantId: string | null,
+  params: PartnerListParams
+) {
   const normalizedParams: PartnerListParams = {
     ...params,
     search:
@@ -14,8 +17,9 @@ export function usePartnerList(params: PartnerListParams) {
   }
 
   return useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.list(normalizedParams),
-    queryFn: () => fetchPartners(normalizedParams),
+    queryKey: PARTNERS_QUERY_KEYS.list(tenantId, normalizedParams),
+    queryFn: () => fetchPartners(tenantId as string, normalizedParams),
+    enabled: !!tenantId,
     staleTime: THIRTY_SECONDS_MS,
     placeholderData: prev => prev,
   })

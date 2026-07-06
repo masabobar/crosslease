@@ -62,10 +62,10 @@ export type IdentityChangeStatus = z.infer<typeof IdentityChangeStatusSchema>
 // ── Shared sub-schemas ────────────────────────────────────────────────────────
 
 export const RegisteredAddressSchema = z.object({
-  street: z.string().nullable(),
-  city: z.string().nullable(),
-  postal_code: z.string().nullable(),
-  country: z.string().nullable(),
+  street: z.string().min(1),
+  city: z.string().min(1),
+  postal_code: z.string().min(1),
+  country: z.string().min(1),
 })
 export type RegisteredAddress = z.infer<typeof RegisteredAddressSchema>
 
@@ -149,7 +149,7 @@ export const PartnerSubmitResponseSchema = z.object({
   display_name: z.string(),
   partner_type: PartnerTypeSchema,
   status: PartnerStatusSchema,
-  role: PartnerRoleSchema,
+  roles: z.array(PartnerRoleSchema),
   is_new: z.boolean(),
 })
 export type PartnerSubmitResponse = z.infer<typeof PartnerSubmitResponseSchema>

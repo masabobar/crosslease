@@ -124,7 +124,7 @@ describe("IdentityChangeStatusSchema", () => {
 // ── RegisteredAddressSchema ───────────────────────────────────────────────────
 
 describe("RegisteredAddressSchema", () => {
-  it("accepts all-null address", () => {
+  it("rejects an all-null address", () => {
     expect(() =>
       RegisteredAddressSchema.parse({
         street: null,
@@ -132,7 +132,7 @@ describe("RegisteredAddressSchema", () => {
         postal_code: null,
         country: null,
       })
-    ).not.toThrow()
+    ).toThrow()
   })
 
   it("accepts fully populated address", () => {
@@ -148,6 +148,17 @@ describe("RegisteredAddressSchema", () => {
 
   it("rejects missing required fields", () => {
     expect(() => RegisteredAddressSchema.parse({ city: "Berlin" })).toThrow()
+  })
+
+  it("rejects empty-string fields", () => {
+    expect(() =>
+      RegisteredAddressSchema.parse({
+        street: "",
+        city: "Berlin",
+        postal_code: "10115",
+        country: "DE",
+      })
+    ).toThrow()
   })
 })
 
@@ -454,7 +465,20 @@ describe("PartnerSubmitResponseSchema", () => {
         display_name: "Acme GmbH",
         partner_type: "legal_entity",
         status: "pending_confirmation",
-        role: "lessee",
+        roles: ["lessee"],
+        is_new: true,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts multiple roles", () => {
+    expect(() =>
+      PartnerSubmitResponseSchema.parse({
+        partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        display_name: "Acme GmbH",
+        partner_type: "legal_entity",
+        status: "pending_confirmation",
+        roles: ["lessee", "leasing_company"],
         is_new: true,
       })
     ).not.toThrow()
@@ -467,7 +491,7 @@ describe("PartnerSubmitResponseSchema", () => {
         display_name: "Acme GmbH",
         partner_type: "legal_entity",
         status: "pending_confirmation",
-        role: "borrower",
+        roles: ["borrower"],
         is_new: true,
       })
     ).toThrow()
