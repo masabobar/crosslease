@@ -25,11 +25,18 @@ import {
   emailChangeSnapshot,
   initiatorSnapshot,
   approverSnapshot,
+  displaySnapshot,
 } from "@/features/governed-actions/api/schema"
 import type {
   ActorSnapshot,
   GovernedAction,
   GovernedActionStatus,
+  PartnerArchiveSnapshot,
+  PartnerRoleAssignSnapshot,
+  PartnerIdentityChangeSnapshot,
+  PartnerMergeSnapshot,
+  ProductTemplateActivateSnapshot,
+  ProductTemplateDeprecateSnapshot,
 } from "@/features/governed-actions/api/schema"
 
 type Props = {
@@ -199,6 +206,83 @@ function ChangeSection({ action }: { action: GovernedAction }) {
     )
   }
 
+  if (action.action_type === "partner_archive") {
+    const s = displaySnapshot<PartnerArchiveSnapshot>(action)
+    return (
+      <FieldRow label={t("drawer.archiveReason")}>
+        <span>{s.reason ?? "—"}</span>
+      </FieldRow>
+    )
+  }
+
+  if (action.action_type === "partner_role_assign") {
+    const s = displaySnapshot<PartnerRoleAssignSnapshot>(action)
+    return (
+      <FieldRow label={t("drawer.roleToAssign")}>
+        <span>{t(`roles.${s.role}`, { defaultValue: s.role })}</span>
+      </FieldRow>
+    )
+  }
+
+  if (action.action_type === "partner_identity_change") {
+    const s = displaySnapshot<PartnerIdentityChangeSnapshot>(action)
+    return (
+      <div className="flex flex-col gap-3">
+        <FieldRow label={t("drawer.targetAnchors")}>
+          <span>{s.target_anchors?.join(", ") || "—"}</span>
+        </FieldRow>
+        <FieldRow label={t("drawer.changeReason")}>
+          <span>{s.change_reason ?? "—"}</span>
+        </FieldRow>
+        <FieldRow label={t("drawer.highRisk")}>
+          <span>{s.is_high_risk ? t("drawer.yes") : t("drawer.no")}</span>
+        </FieldRow>
+      </div>
+    )
+  }
+
+  if (action.action_type === "partner_merge") {
+    const s = displaySnapshot<PartnerMergeSnapshot>(action)
+    return (
+      <div className="flex flex-col gap-3">
+        <FieldRow label={t("drawer.mergeSource")}>
+          <span>{s.source_partner_id}</span>
+        </FieldRow>
+        <FieldRow label={t("drawer.mergeTarget")}>
+          <span>{s.target_partner_id}</span>
+        </FieldRow>
+        <FieldRow label={t("drawer.mergeReasonCode")}>
+          <span>{s.merge_reason_code}</span>
+        </FieldRow>
+      </div>
+    )
+  }
+
+  if (
+    action.action_type === "product_template_activate" ||
+    action.action_type === "product_template_deprecate"
+  ) {
+    const s = displaySnapshot<
+      ProductTemplateActivateSnapshot &
+        Partial<ProductTemplateDeprecateSnapshot>
+    >(action)
+    return (
+      <div className="flex flex-col gap-3">
+        <FieldRow label={t("drawer.templateName")}>
+          <span>{s.template_name ?? "—"}</span>
+        </FieldRow>
+        <FieldRow label={t("drawer.versionNumber")}>
+          <span>{s.version_number ?? "—"}</span>
+        </FieldRow>
+        {action.action_type === "product_template_deprecate" && (
+          <FieldRow label={t("drawer.justification")}>
+            <span>{s.justification ?? "—"}</span>
+          </FieldRow>
+        )}
+      </div>
+    )
+  }
+
   return null
 }
 
@@ -241,23 +325,66 @@ function ActorCard({
   )
 }
 
-function getAffectedUser(action: GovernedAction): string {
+type AffectedEntityLabelKey =
+  | "drawer.affectedUser"
+  | "drawer.affectedPartner"
+  | "drawer.affectedTemplate"
+
+function getAffectedEntity(action: GovernedAction): {
+  labelKey: AffectedEntityLabelKey
+  value: string
+} {
   if (action.action_type === "user_platform_invite") {
-    return platformInviteSnapshot(action).full_name ?? "—"
+    return {
+      labelKey: "drawer.affectedUser",
+      value: platformInviteSnapshot(action).full_name ?? "—",
+    }
   }
   if (action.action_type === "user_role_change") {
-    return roleChangeSnapshot(action).affected_user_email ?? "—"
+    return {
+      labelKey: "drawer.affectedUser",
+      value: roleChangeSnapshot(action).affected_user_email ?? "—",
+    }
   }
   if (action.action_type === "user_email_change") {
-    return emailChangeSnapshot(action).old_email ?? "—"
+    return {
+      labelKey: "drawer.affectedUser",
+      value: emailChangeSnapshot(action).old_email ?? "—",
+    }
   }
-  return "—"
+  if (action.action_type === "partner_merge") {
+    return {
+      labelKey: "drawer.affectedPartner",
+      value:
+        displaySnapshot<PartnerMergeSnapshot>(action).source_partner_id ?? "—",
+    }
+  }
+  if (action.action_type.startsWith("partner_")) {
+    return {
+      labelKey: "drawer.affectedPartner",
+      value: displaySnapshot<{ partner_id: string }>(action).partner_id ?? "—",
+    }
+  }
+  if (action.action_type.startsWith("product_template_")) {
+    return {
+      labelKey: "drawer.affectedTemplate",
+      value:
+        displaySnapshot<{ template_name: string }>(action).template_name ?? "—",
+    }
+  }
+  return { labelKey: "drawer.affectedUser", value: "—" }
 }
 
 const HAS_CHANGE_SECTION = new Set([
   "user_role_change",
   "user_email_change",
   "user_platform_invite",
+  "partner_archive",
+  "partner_role_assign",
+  "partner_identity_change",
+  "partner_merge",
+  "product_template_activate",
+  "product_template_deprecate",
 ])
 
 export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
@@ -269,6 +396,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
 
   const initiator = initiatorSnapshot(action)
   const approver = approverSnapshot(action)
+  const affectedEntity = getAffectedEntity(action)
 
   return (
     <Sheet
@@ -310,8 +438,8 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
               <FieldRow label={t("drawer.actionType")}>
                 <span>{t(`actionTypes.${action.action_type}`)}</span>
               </FieldRow>
-              <FieldRow label={t("drawer.affectedUser")}>
-                <span className="font-semibold">{getAffectedUser(action)}</span>
+              <FieldRow label={t(affectedEntity.labelKey)}>
+                <span className="font-semibold">{affectedEntity.value}</span>
               </FieldRow>
               {action.tenant_id && (
                 <FieldRow label={t("drawer.tenant")}>

@@ -24,10 +24,17 @@ import {
   platformInviteSnapshot,
   emailChangeSnapshot,
   initiatorSnapshot,
+  displaySnapshot,
 } from "@/features/governed-actions/api/schema"
 import type {
   GovernedAction,
   GovernedActionStatus,
+  PartnerArchiveSnapshot,
+  PartnerRoleAssignSnapshot,
+  PartnerIdentityChangeSnapshot,
+  PartnerMergeSnapshot,
+  ProductTemplateActivateSnapshot,
+  ProductTemplateDeprecateSnapshot,
 } from "@/features/governed-actions/api/schema"
 
 type Props = {
@@ -133,14 +140,49 @@ function ChainEntry({
 
 const MIN_COMMENT_LENGTH = 10
 
-function getAffectedUser(action: GovernedAction): string | null {
+type AffectedEntityLabelKey =
+  | "modal.affectedUser"
+  | "modal.affectedPartner"
+  | "modal.affectedTemplate"
+
+function getAffectedEntity(action: GovernedAction): {
+  labelKey: AffectedEntityLabelKey
+  value: string | null
+} {
   if (action.action_type === "user_platform_invite") {
-    return platformInviteSnapshot(action).full_name ?? null
+    return {
+      labelKey: "modal.affectedUser",
+      value: platformInviteSnapshot(action).full_name ?? null,
+    }
   }
   if (action.action_type === "user_email_change") {
-    return emailChangeSnapshot(action).old_email ?? null
+    return {
+      labelKey: "modal.affectedUser",
+      value: emailChangeSnapshot(action).old_email ?? null,
+    }
   }
-  return null
+  if (action.action_type === "partner_merge") {
+    return {
+      labelKey: "modal.affectedPartner",
+      value:
+        displaySnapshot<PartnerMergeSnapshot>(action).source_partner_id ?? null,
+    }
+  }
+  if (action.action_type.startsWith("partner_")) {
+    return {
+      labelKey: "modal.affectedPartner",
+      value: displaySnapshot<{ partner_id: string }>(action).partner_id ?? null,
+    }
+  }
+  if (action.action_type.startsWith("product_template_")) {
+    return {
+      labelKey: "modal.affectedTemplate",
+      value:
+        displaySnapshot<{ template_name: string }>(action).template_name ??
+        null,
+    }
+  }
+  return { labelKey: "modal.affectedUser", value: null }
 }
 
 export function ReviewRequestModal({
@@ -230,7 +272,7 @@ export function ReviewRequestModal({
   const initiatorName = initiator?.first_name
     ? `${initiator.first_name} ${initiator.last_name}`
     : "—"
-  const affectedUser = getAffectedUser(action)
+  const affectedEntity = getAffectedEntity(action)
 
   return (
     <DialogModal open={open} onOpenChange={handleClose}>
@@ -258,8 +300,10 @@ export function ReviewRequestModal({
             <FieldRow label={t("modal.actionType")}>
               <span>{t(`actionTypes.${action.action_type}`)}</span>
             </FieldRow>
-            <FieldRow label={t("modal.affectedUser")}>
-              <span className="font-semibold">{affectedUser ?? "—"}</span>
+            <FieldRow label={t(affectedEntity.labelKey)}>
+              <span className="font-semibold">
+                {affectedEntity.value ?? "—"}
+              </span>
             </FieldRow>
             {action.tenant_id && (
               <FieldRow label={t("modal.tenant")}>
@@ -476,6 +520,98 @@ function ChangeSection({ action }: { action: GovernedAction }) {
                 : "—"}
             </span>
           </FieldRow>
+        </div>
+      </div>
+    )
+  }
+
+  if (action.action_type === "partner_archive") {
+    const s = displaySnapshot<PartnerArchiveSnapshot>(action)
+    return (
+      <div className="flex flex-col gap-4">
+        <SectionLabel>{t("modal.change")}</SectionLabel>
+        <FieldRow label={t("modal.archiveReason")}>
+          <span>{s.reason ?? "—"}</span>
+        </FieldRow>
+      </div>
+    )
+  }
+
+  if (action.action_type === "partner_role_assign") {
+    const s = displaySnapshot<PartnerRoleAssignSnapshot>(action)
+    return (
+      <div className="flex flex-col gap-4">
+        <SectionLabel>{t("modal.change")}</SectionLabel>
+        <FieldRow label={t("modal.roleToAssign")}>
+          <span>{t(`roles.${s.role}`, { defaultValue: s.role })}</span>
+        </FieldRow>
+      </div>
+    )
+  }
+
+  if (action.action_type === "partner_identity_change") {
+    const s = displaySnapshot<PartnerIdentityChangeSnapshot>(action)
+    return (
+      <div className="flex flex-col gap-4">
+        <SectionLabel>{t("modal.change")}</SectionLabel>
+        <div className="flex flex-col gap-3">
+          <FieldRow label={t("modal.targetAnchors")}>
+            <span>{s.target_anchors?.join(", ") || "—"}</span>
+          </FieldRow>
+          <FieldRow label={t("modal.changeReason")}>
+            <span>{s.change_reason ?? "—"}</span>
+          </FieldRow>
+          <FieldRow label={t("modal.highRisk")}>
+            <span>{s.is_high_risk ? t("modal.yes") : t("modal.no")}</span>
+          </FieldRow>
+        </div>
+      </div>
+    )
+  }
+
+  if (action.action_type === "partner_merge") {
+    const s = displaySnapshot<PartnerMergeSnapshot>(action)
+    return (
+      <div className="flex flex-col gap-4">
+        <SectionLabel>{t("modal.change")}</SectionLabel>
+        <div className="flex flex-col gap-3">
+          <FieldRow label={t("modal.mergeSource")}>
+            <span>{s.source_partner_id}</span>
+          </FieldRow>
+          <FieldRow label={t("modal.mergeTarget")}>
+            <span>{s.target_partner_id}</span>
+          </FieldRow>
+          <FieldRow label={t("modal.mergeReasonCode")}>
+            <span>{s.merge_reason_code}</span>
+          </FieldRow>
+        </div>
+      </div>
+    )
+  }
+
+  if (
+    action.action_type === "product_template_activate" ||
+    action.action_type === "product_template_deprecate"
+  ) {
+    const s = displaySnapshot<
+      ProductTemplateActivateSnapshot &
+        Partial<ProductTemplateDeprecateSnapshot>
+    >(action)
+    return (
+      <div className="flex flex-col gap-4">
+        <SectionLabel>{t("modal.change")}</SectionLabel>
+        <div className="flex flex-col gap-3">
+          <FieldRow label={t("modal.templateName")}>
+            <span>{s.template_name ?? "—"}</span>
+          </FieldRow>
+          <FieldRow label={t("modal.versionNumber")}>
+            <span>{s.version_number ?? "—"}</span>
+          </FieldRow>
+          {action.action_type === "product_template_deprecate" && (
+            <FieldRow label={t("modal.justification")}>
+              <span>{s.justification ?? "—"}</span>
+            </FieldRow>
+          )}
         </div>
       </div>
     )

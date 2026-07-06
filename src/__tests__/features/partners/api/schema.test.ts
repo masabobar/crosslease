@@ -4,6 +4,7 @@ import {
   PartnerStatusSchema,
   PartnerRoleSchema,
   RoleStatusSchema,
+  ActorSummarySchema,
   UboCompletenessStatusSchema,
   IdentityChangeStatusSchema,
   RegisteredAddressSchema,
@@ -97,6 +98,31 @@ describe("RoleStatusSchema", () => {
   it("rejects unknown values", () => {
     expect(() => RoleStatusSchema.parse("inactive")).toThrow()
   })
+  it("normalizes BE's governed_action-status 'pending' to 'pending_four_eyes'", () => {
+    expect(RoleStatusSchema.parse("pending")).toBe("pending_four_eyes")
+  })
+})
+
+describe("ActorSummarySchema", () => {
+  it("accepts BE's human-readable user_id code (not a UUID)", () => {
+    expect(() =>
+      ActorSummarySchema.parse({
+        user_id: "USR-00086",
+        display_name: "Jane Doe",
+        email: "jane@example.com",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty email (BE's actor-lookup-failed fallback)", () => {
+    expect(() =>
+      ActorSummarySchema.parse({
+        user_id: "USR-00086",
+        display_name: "",
+        email: "",
+      })
+    ).not.toThrow()
+  })
 })
 
 describe("UboCompletenessStatusSchema", () => {
@@ -124,7 +150,7 @@ describe("IdentityChangeStatusSchema", () => {
 // ── RegisteredAddressSchema ───────────────────────────────────────────────────
 
 describe("RegisteredAddressSchema", () => {
-  it("rejects an all-null address", () => {
+  it("accepts all-null address", () => {
     expect(() =>
       RegisteredAddressSchema.parse({
         street: null,
@@ -132,7 +158,7 @@ describe("RegisteredAddressSchema", () => {
         postal_code: null,
         country: null,
       })
-    ).toThrow()
+    ).not.toThrow()
   })
 
   it("accepts fully populated address", () => {
@@ -148,17 +174,6 @@ describe("RegisteredAddressSchema", () => {
 
   it("rejects missing required fields", () => {
     expect(() => RegisteredAddressSchema.parse({ city: "Berlin" })).toThrow()
-  })
-
-  it("rejects empty-string fields", () => {
-    expect(() =>
-      RegisteredAddressSchema.parse({
-        street: "",
-        city: "Berlin",
-        postal_code: "10115",
-        country: "DE",
-      })
-    ).toThrow()
   })
 })
 

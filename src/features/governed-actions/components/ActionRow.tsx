@@ -19,6 +19,7 @@ import {
   emailChangeSnapshot,
   initiatorSnapshot,
   approverSnapshot,
+  displaySnapshot,
 } from "@/features/governed-actions/api/schema"
 import type { GovernedAction } from "@/features/governed-actions/api/schema"
 
@@ -68,17 +69,52 @@ function formatRelativeSubmitted(dateStr: string, t: RowTranslator): string {
   return t("row.submittedDaysAgo", { count: days, absolute })
 }
 
-function getSubjectDisplay(action: GovernedAction): string {
+type SubjectLabelKey = "row.user" | "row.partner" | "row.template"
+
+function getSubjectInfo(action: GovernedAction): {
+  labelKey: SubjectLabelKey
+  value: string
+} {
   if (action.action_type === "user_platform_invite") {
-    return platformInviteSnapshot(action).full_name ?? "—"
+    return {
+      labelKey: "row.user",
+      value: platformInviteSnapshot(action).full_name ?? "—",
+    }
   }
   if (action.action_type === "user_role_change") {
-    return roleChangeSnapshot(action).affected_user_email ?? "—"
+    return {
+      labelKey: "row.user",
+      value: roleChangeSnapshot(action).affected_user_email ?? "—",
+    }
   }
   if (action.action_type === "user_email_change") {
-    return emailChangeSnapshot(action).new_email ?? "—"
+    return {
+      labelKey: "row.user",
+      value: emailChangeSnapshot(action).new_email ?? "—",
+    }
   }
-  return "—"
+  if (action.action_type === "partner_merge") {
+    return {
+      labelKey: "row.partner",
+      value:
+        displaySnapshot<{ source_partner_id: string }>(action)
+          .source_partner_id ?? "—",
+    }
+  }
+  if (action.action_type.startsWith("partner_")) {
+    return {
+      labelKey: "row.partner",
+      value: displaySnapshot<{ partner_id: string }>(action).partner_id ?? "—",
+    }
+  }
+  if (action.action_type.startsWith("product_template_")) {
+    return {
+      labelKey: "row.template",
+      value:
+        displaySnapshot<{ template_name: string }>(action).template_name ?? "—",
+    }
+  }
+  return { labelKey: "row.user", value: "—" }
 }
 
 function getInitiatorName(action: GovernedAction): string {
@@ -123,14 +159,15 @@ export function ActionRow({
   const isExpired = action.status === GovernedActionStatusSchema.enum.expired
   const isRejected = action.status === GovernedActionStatusSchema.enum.rejected
   const isApproved = action.status === GovernedActionStatusSchema.enum.approved
+  const subject = getSubjectInfo(action)
 
   const metaItems: React.ReactNode[] = [
-    <span key="user" className="flex items-center gap-1">
+    <span key="subject" className="flex items-center gap-1">
       <UserRound size={12} />
       <span className="font-medium text-foreground/80">
-        {t("row.user")}:
+        {t(subject.labelKey)}:
       </span>{" "}
-      {getSubjectDisplay(action)}
+      {subject.value}
     </span>,
     <span key="by" className="flex items-center gap-1">
       <CircleArrowUp size={12} />

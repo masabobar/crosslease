@@ -19,6 +19,13 @@ export const GovernedActionTypeSchema = z.enum([
   "user_auditor_period_update",
   "user_email_change",
   "module_activate",
+  "partner_archive",
+  "partner_confirm",
+  "partner_role_assign",
+  "partner_identity_change",
+  "partner_merge",
+  "product_template_activate",
+  "product_template_deprecate",
 ])
 export type GovernedActionType = z.infer<typeof GovernedActionTypeSchema>
 
@@ -29,11 +36,11 @@ export const GovernedActionSchema = z.object({
   id: z.string().uuid(),
   action_type: GovernedActionTypeSchema,
   subject_type: z.string(),
-  subject_id: z.string().uuid().nullable(),
-  tenant_id: z.string().uuid().nullable(),
+  subject_id: z.string().nullable(),
+  tenant_id: z.string().nullable(),
   status: GovernedActionStatusSchema,
   initiator_id: z.string().uuid(),
-  approver_id: z.string().uuid().nullable(),
+  approver_id: z.string().nullable(),
   display_snapshot: z.record(z.string(), z.unknown()),
   initiator_snapshot: ActorSnapshotSchema,
   approver_snapshot: ActorSnapshotSchema.nullable(),
@@ -42,7 +49,7 @@ export const GovernedActionSchema = z.object({
   approver_comment: z.string().nullable(),
   expires_at: z.string().nullable(),
   resolved_at: z.string().nullable(),
-  correlation_id: z.string().uuid().nullable(),
+  correlation_id: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 })
@@ -79,6 +86,47 @@ export type EmailChangeSnapshot = {
   new_email: string
 }
 
+export type PartnerConfirmSnapshot = {
+  partner_id: string
+}
+
+export type PartnerArchiveSnapshot = {
+  partner_id: string
+  reason: string | null
+}
+
+export type PartnerRoleAssignSnapshot = {
+  partner_id: string
+  role: string
+}
+
+export type PartnerIdentityChangeSnapshot = {
+  partner_id: string
+  target_anchors: string[]
+  change_reason: string
+  is_high_risk: boolean
+}
+
+export type PartnerMergeSnapshot = {
+  source_partner_id: string
+  target_partner_id: string
+  merge_reason_code: string
+  note: string | null
+}
+
+export type ProductTemplateActivateSnapshot = {
+  version_id: string
+  template_name: string
+  version_number: string
+}
+
+export type ProductTemplateDeprecateSnapshot = {
+  version_id: string
+  template_name: string
+  version_number: string
+  justification: string
+}
+
 export type ActorSnapshot = {
   user_id: string
   first_name: string
@@ -102,6 +150,11 @@ export function emailChangeSnapshot(
   action: GovernedAction
 ): EmailChangeSnapshot {
   return action.display_snapshot as unknown as EmailChangeSnapshot
+}
+// Generic cast for the partner_*/product_template_* snapshot shapes above —
+// one cast helper instead of a dedicated function per action type.
+export function displaySnapshot<T>(action: GovernedAction): T {
+  return action.display_snapshot as unknown as T
 }
 export function initiatorSnapshot(action: GovernedAction): ActorSnapshot {
   return action.initiator_snapshot as unknown as ActorSnapshot

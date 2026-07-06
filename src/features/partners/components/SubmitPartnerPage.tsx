@@ -23,6 +23,9 @@ import type {
 import { partnerDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 type View = "form" | "matching"
 
@@ -32,7 +35,10 @@ export default function SubmitPartnerPage() {
   const { t } = useTranslation("partners")
   const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
-  const tenantId = currentUser?.tenant_id ?? null
+  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
+  const tenantId =
+    currentUser?.tenant_id ??
+    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
 
   const [view, setView] = useState<View>("form")
   const [pending, setPending] = useState<{
@@ -96,10 +102,19 @@ export default function SubmitPartnerPage() {
   }
 
   // NOTE: submit/match are tenant-scoped (POST /tenants/{tenant_id}/partners...).
-  // System Admin has no single tenant_id, so submission isn't possible yet — pending a
-  // team decision on how System Admin should select a tenant. Block the screen rather
-  // than guess at a selector.
+  // System Admin has no single tenant_id, so a quick session-only tenant select lets them
+  // pick which tenant to submit for (see TenantQuickSelect / tenantSelectionStore).
   if (currentUser && !tenantId) {
+    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
+      return (
+        <div className="p-8 max-w-sm space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t("submit.selectTenantPrompt")}
+          </p>
+          <TenantQuickSelect />
+        </div>
+      )
+    }
     return (
       <div className="p-8">
         <p className="text-sm text-muted-foreground">
@@ -111,21 +126,18 @@ export default function SubmitPartnerPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-8 py-5">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-xl font-semibold text-foreground">
-            {t("submit.title")}
-          </h1>
-          {view === "form" && (
-            <p className="text-sm text-muted-foreground">
-              {t("submit.subtitle")}
-            </p>
-          )}
-        </div>
-      </div>
-
       {view === "form" ? (
         <>
+          <div className="px-8 py-5">
+            <div className="max-w-2xl mx-auto">
+              <h1 className="text-xl font-semibold text-foreground">
+                {t("submit.title")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t("submit.subtitle")}
+              </p>
+            </div>
+          </div>
           <div className="flex-1 overflow-auto px-8 py-6">
             <div className="max-w-2xl mx-auto">
               <PartnerSubmitForm

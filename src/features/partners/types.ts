@@ -14,4 +14,4 @@ export const PARTNER_SUBMIT_ALLOWED_ROLES: readonly UserRole[] = [
   "front_office",
 ]
 
-export type PartnerActionType = "confirm" | "reject" | "archive"
+export type PartnerActionType = "archive"
