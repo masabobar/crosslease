@@ -6,6 +6,8 @@
 
 **MANDATORY: Public HTTP APIs are versioned via URL path (`/api/v{N}/...`). Any backend change that modifies an endpoint's contract (request schema, response shape, status codes, semantics) MUST propagate atomically — in the same PR — to documentation, Zod schemas, ALL related tests, and the API consumer code (frontend / mobile).**
 
+> **FE-only repo note:** endpoints live in `../refinext-api/` — the versioning and change-propagation gates below are executed there. In this repo, the operative consequences are: (1) when the BE bumps an endpoint version, update `openapi.json` (`pnpm fetch:openapi`), the feature's Zod schemas, and their tests together; (2) `api-first.md` Phase A re-verifies before any FE change ships.
+
 This rule complements `.claude/rules/api-documentation.md` (which governs _what an endpoint doc looks like_) and `.claude/rules/testing.md` (which defines the status-code test matrix). This file defines _when a version bump is required_ and _what MUST update together when a contract changes_.
 
 ---
@@ -130,7 +132,7 @@ This is the hardest gate to enforce and the most often skipped. The rule:
    In either case: re-evaluate whether this needs a version bump. Do not "fix" the test by mirroring the new shape until §5.1 + §5.2 + §5.4 are also updated.
 
 4. **Contract / schema tests:** if the project has tests that round-trip example payloads through the Zod schemas, those MUST pass after schema updates.
-5. **Coverage threshold** (≥ 80% per `.claude/rules/testing.md`) is verified on the changed endpoint after the update.
+5. **Test coverage** on the changed endpoint is verified per the BE repo's testing standards after the update.
 
 ### 5.4 Consumer Code (Frontend / Mobile)
 
@@ -175,7 +177,7 @@ For any PR that touches an HTTP handler:
 - [ ] **All tests** for the changed endpoint run locally — pass
 - [ ] Status-code matrix still fully covered (200/400/401/403/404/500)
 - [ ] No test was "fixed" by mirroring the new shape without checking whether the change is actually breaking
-- [ ] Coverage ≥ 80% on the changed endpoint
+- [ ] Endpoint test coverage verified per the BE repo's testing standards
 - [ ] Consumer code (frontend / mobile in-repo) updated
 - [ ] Drift check clean: schema ↔ response type ↔ docs ↔ tests align (per `.claude/rules/api-documentation.md` §2.4)
 
@@ -187,7 +189,6 @@ For any PR that touches an HTTP handler:
 - `.claude/rules/documentation-templates.md` §2.1 — the endpoint doc template
 - `.claude/rules/testing.md` — the 200/400/401/403/404/500 test matrix
 - `.claude/rules/enums-and-constants.md` — wire format and required listing of allowed enum values in docs
-- `.claude/rules/database.md` — schema migrations (often correlated with endpoint contract changes)
 - `.claude/commands/modules/execute-work-quality-gates.md` — where this gate is enforced during `/execute-work`
 
 ---

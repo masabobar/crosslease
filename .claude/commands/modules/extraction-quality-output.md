@@ -137,7 +137,7 @@
 
 - **Unit Tests:** [Vitest/Jest/etc]
 - **E2E Tests:** [Playwright/Cypress/etc]
-- **Coverage Goal:** 80%+
+- **Testing approach:** [coverage goal / behavior-based — per project testing rules]
 
 ## Third-Party Services
 

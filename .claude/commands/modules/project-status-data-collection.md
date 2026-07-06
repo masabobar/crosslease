@@ -22,7 +22,7 @@
   - Currently working on (active stories)
   - Velocity metrics (points per week)
   - Timeline projections
-  - Quality metrics (test coverage, passing tests)
+  - Quality metrics (passing tests, lint status)
   - Phase breakdown (all phases with progress %)
 
 **Benefits:**

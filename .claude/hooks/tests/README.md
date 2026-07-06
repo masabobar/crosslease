@@ -18,8 +18,7 @@ tests/
 ├── README.md                          # this file
 ├── run-tests.sh                       # orchestrator
 ├── lib.sh                             # assert helpers + fixture utilities
-├── test-post-write-validations.sh     # 15 assertions
-├── test-stop-changelog-check.sh       # 7 assertions
+├── test-post-write-validations.sh     # 18 assertions
 └── test-audit-pm.sh                   # 13 assertions
 ```
 
@@ -34,7 +33,7 @@ Each `test-*.sh`:
 
 ## Why These Tests Exist
 
-- **SIGPIPE bug** in stop-changelog-check was caught only by piped-testing with `set -o pipefail` — covered now by the "hook exits 0 on success" assertion.
+- **SIGPIPE bug** (in the since-removed stop-changelog hook) was caught only by piped-testing with `set -o pipefail` — capture-then-grep instead of `cmd | grep -q` remains the house pattern for hooks under `pipefail`.
 - **Code-fence false positives** in audit-pm sent 24 false "broken link" findings before the filter was added — the "fenced broken link is ignored" assertion locks the fix.
 - **Historical-vs-active legacy refs** in audit-pm have a context filter with a ±2-line window; "historical /plan-sprint not flagged" guards against regressions on that logic.
 

@@ -52,61 +52,9 @@ class Logger {
 }
 ```
 
-### O - Open/Closed
+### O / D — see the table above
 
-```typescript
-// ❌ BAD: Modify for new types
-class Validator {
-  validate(type, value) {
-    if (type === "email") {
-      /* ... */
-    }
-    if (type === "phone") {
-      /* ... */
-    }
-    // Must modify for new types!
-  }
-}
-
-// ✅ GOOD: Extend without modifying
-interface Validator {
-  validate(value: string): boolean
-}
-class EmailValidator implements Validator {
-  validate(value) {
-    /* ... */
-  }
-}
-class PhoneValidator implements Validator {
-  validate(value) {
-    /* ... */
-  }
-}
-// Add new without touching existing code
-```
-
-### D - Dependency Inversion
-
-```typescript
-// ❌ BAD: Hardcoded dependency
-class UserService {
-  createUser(data) {
-    const db = new PostgresDatabase() // Hardcoded!
-    db.insert("users", data)
-  }
-}
-
-// ✅ GOOD: Injected dependency
-class UserService {
-  constructor(private db: Database) {} // Injected!
-  createUser(data) {
-    this.db.insert("users", data)
-  }
-}
-
-// Can swap: Postgres, Mongo, Mock
-const service = new UserService(new PostgresDatabase())
-```
+Open/Closed: add a new validator/variant as a new implementation — never grow an `if (type === ...)` chain inside an existing one. Dependency Inversion: pass dependencies in (parameters, props, injected clients) instead of constructing them inside the consumer — that's what makes the code swappable and testable.
 
 ---
 

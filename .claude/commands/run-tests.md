@@ -1,6 +1,6 @@
 ---
 name: run-tests
-description: Run tests with detailed reporting and coverage analysis (Vitest + type-check + lint)
+description: Run tests with detailed reporting (Vitest + type-check + lint)
 ---
 
 # Run Tests Command
@@ -16,7 +16,6 @@ Execute testing with comprehensive reporting and analysis.
 /run-tests unit             # Vitest unit tests only
 /run-tests type-check       # TypeScript type-check only
 /run-tests lint             # ESLint only
-/run-tests coverage         # Unit tests with coverage report
 /run-tests story US-XXX     # Tests related to specific story
 /run-tests file <path>      # Tests for specific file
 ```
@@ -35,7 +34,6 @@ Execute testing with comprehensive reporting and analysis.
 - `unit` → Vitest unit tests only (`pnpm test:run`)
 - `type-check` → TypeScript check only (`pnpm type-check`)
 - `lint` → ESLint only (`pnpm lint`)
-- `coverage` → Unit tests with coverage (`pnpm test:run --coverage`)
 - `story US-XXX` → Unit tests tagged/related to story US-XXX
 - `file <path>` → Tests for specific file
 
@@ -64,11 +62,7 @@ Execute testing with comprehensive reporting and analysis.
 - ESLint check across the codebase
 - Catches code quality and style issues
 
-**Coverage (`pnpm test:run --coverage`):**
-
-- Run all unit tests with coverage
-- Generate HTML report
-- Check coverage threshold (80%+)
+> No coverage mode — no coverage tooling is installed, and per `.claude/rules/testing.md` we test behavior, not line percentages. The check is: do all new Zod schemas, store actions, and utilities have tests?
 
 ---
 
@@ -81,7 +75,6 @@ Execute testing with comprehensive reporting and analysis.
 - Total tests run
 - Passed / Failed counts
 - Execution time
-- Coverage percentage (if applicable)
 - Type errors or lint errors
 
 **Display results:**
@@ -96,7 +89,6 @@ Execute testing with comprehensive reporting and analysis.
 ✅ Type Check: no errors
 ✅ Lint: no errors
 ⏱️  Duration: {{duration}}
-📈 Coverage: {{coverage}}% {{(Target: 80%+)}}
 
 {{If all passed:}}
 ✅ ALL CHECKS PASSED
@@ -112,11 +104,11 @@ Execute testing with comprehensive reporting and analysis.
 
 **Verify quality gates:**
 
-**Code Coverage:**
+**Required Tests (per `.claude/rules/testing.md`):**
 
-- [ ] Overall coverage ≥ 80%
-- [ ] Branch coverage ≥ 75%
-- [ ] Function coverage ≥ 85%
+- [ ] Every new Zod schema has rejection tests (wrong types, missing fields, bad enum values)
+- [ ] Every new store action has a state-transition test
+- [ ] Every new `src/lib/` utility has unit tests
 
 **TypeScript:**
 
@@ -152,10 +144,10 @@ Execute testing with comprehensive reporting and analysis.
 - List type errors with file:line references
 - Identify whether the issue is in a Zod schema, component prop, or store
 
-**If coverage < 80%:**
+**If required tests are missing:**
 
-- Identify uncovered files/functions
-- Suggest where to add tests
+- Diff the change: list new schemas / store actions / utilities without tests
+- Suggest where to add them
 
 ---
 
@@ -216,12 +208,11 @@ Tests must pass before:
 ✅ Type Check: no errors
 ✅ Lint: no errors
 ⏱️  Duration: 4.2s
-📈 Coverage: 84% (Target: 80%+)
 
 ✅ ALL CHECKS PASSED
 
 ✅ QUALITY GATES:
-- Coverage: ✅ 84% (Target: 80%+)
+- Required Tests: ✅ new schemas / stores / utils covered
 - Type Check: ✅ clean
 - Lint: ✅ clean
 - i18n: ✅ all new strings translated (en + de)

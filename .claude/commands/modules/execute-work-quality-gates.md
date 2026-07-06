@@ -12,7 +12,7 @@
 
 ### Validation Checks
 
-**IF ANY check failed — unit tests, type-check, lint, coverage < 80%, i18n missing, Zod schema missing, or data-testid missing on new interactive elements:**
+**IF ANY check failed — unit tests, type-check, lint, required tests missing (new schema / store / utility without tests), i18n missing, Zod schema missing, or data-testid missing on new interactive elements:**
 
 **Display:**
 
@@ -21,7 +21,7 @@
 
 Issues:
 - [List failed unit tests]
-- [Coverage: XX% (need 80%+)]
+- [Missing tests: new Zod schema / store action / utility without unit tests]
 - [Type check errors: ...]
 - [Lint errors: ...]
 - [Missing i18n translations: en/<feature>.json or de/<feature>.json]
@@ -47,10 +47,9 @@ Issues:
    - Follow SOLID & DRY principles
    - Test locally
 
-3. **Add missing tests for coverage**
-   - Write additional unit tests
-   - Cover edge cases
-   - Test error scenarios
+3. **Add missing required tests**
+   - Every new Zod schema, store action, and `src/lib/` utility gets unit tests
+   - Cover edge cases and error scenarios (behavior-based per `.claude/rules/testing.md`)
 
 4. **Add missing i18n translations** (I18N-RULES.md is always active for this project)
    - Find hardcoded text
@@ -68,9 +67,8 @@ Issues:
    - `pnpm test:run` — unit tests
    - `pnpm type-check` — TypeScript
    - `pnpm lint` — ESLint
-   - Check coverage report
 
-8. **REPEAT** until ALL checks pass AND coverage ≥ 80% AND i18n complete AND Zod schemas present AND data-testid added
+8. **REPEAT** until ALL checks pass AND required tests present AND i18n complete AND Zod schemas present AND data-testid added
 
 ---
 
@@ -81,7 +79,7 @@ Issues:
 - ✅ All unit tests passing (`pnpm test:run`)
 - ✅ Type check clean (`pnpm type-check`)
 - ✅ Lint clean (`pnpm lint`)
-- ✅ Coverage ≥ 80%
+- ✅ New Zod schemas, store logic, and utilities have tests
 - ✅ i18n translations present in both `en/<feature>.json` and `de/<feature>.json`
 - ✅ All API data consumed through Zod schemas (`features/<name>/api/schema.ts`)
 - ✅ New interactive elements have `data-testid` attributes
@@ -91,7 +89,7 @@ Issues:
 
 ### Validation Passed
 
-**IF ALL checks pass AND coverage OK AND i18n OK AND Zod schemas present:**
+**IF ALL checks pass AND required tests present AND i18n OK AND Zod schemas present:**
 
 **Display:**
 
@@ -102,7 +100,7 @@ All checks completed:
 ✅ Unit Tests: {{X}}/{{X}} passed
 ✅ Type Check: clean
 ✅ Lint: clean
-✅ Coverage: {{XX}}% (Target: 80%+)
+✅ Required Tests: new schemas / stores / utils covered
 ✅ i18n: en + de translations present
 ✅ Zod schemas: API data validated at query layer
 ✅ data-testid: interactive elements annotated
@@ -132,7 +130,7 @@ All checks completed:
 - [ ] All unit tests passing (`pnpm test:run`)
 - [ ] Type check clean (`pnpm type-check`)
 - [ ] Lint clean (`pnpm lint`)
-- [ ] Coverage ≥ 80%
+- [ ] New Zod schemas, store actions, and utilities tested
 - [ ] Edge cases covered
 - [ ] Error scenarios tested (API error codes from `detail.code`, 401 redirect, empty states)
 
@@ -198,22 +196,21 @@ Refs: `.claude/rules/api-first.md`, `.claude/rules/screen-driven-backlog.md`
 
 ---
 
-### Coverage < 80%
+### Missing Required Tests
 
 **Common issues:**
 
-- Missing branch coverage (if/else not both tested)
+- New Zod schema without rejection tests (wrong types, missing fields, bad enum values)
+- New store action without a state-transition test
+- New `src/lib/` utility without unit tests
 - Missing edge cases (null, undefined, empty arrays)
-- Missing error handling tests
-- Untested utility functions
 
 **Resolution:**
 
-1. Run `npm run test:coverage` for detailed report
-2. Check uncovered lines in HTML report
-3. Write tests for uncovered code
-4. Focus on critical paths first
-5. Re-run coverage check
+1. Diff the change: list every new schema / store action / utility
+2. Write behavior-based tests for each per `.claude/rules/testing.md`
+3. Focus on critical paths and error scenarios first
+4. Re-run `pnpm test:run`
 
 ---
 

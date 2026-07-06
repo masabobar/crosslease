@@ -3,7 +3,7 @@
 **Use when:** You want to run tests manually (outside `/execute-work`).
 **Command:** `/run-tests [scope]`
 **Time:** varies by scope (seconds → several minutes)
-**Output:** Pass/fail summary, coverage, failure details.
+**Output:** Pass/fail summary, failure details, required-tests check.
 
 **All documentation is in English only.**
 
@@ -11,21 +11,22 @@
 
 ## 🎯 What It Does
 
-Runs the project's test suite with optional filtering. `/execute-work` already runs tests automatically before every commit; this command is for manual runs, debugging, and coverage checks outside of that flow.
+Runs the project's checks with optional filtering. `/execute-work` already runs tests automatically before every commit; this command is for manual runs and debugging outside of that flow.
 
 ---
 
 ## 📋 Command Formats
 
 ```bash
-/run-tests all            # All tests (unit + integration + e2e)
-/run-tests unit           # Unit tests only
-/run-tests integration    # Integration tests only
-/run-tests e2e            # End-to-end tests only
-/run-tests coverage       # All tests + coverage report
+/run-tests all            # Unit tests + type-check + lint
+/run-tests unit           # Vitest unit tests only
+/run-tests type-check     # TypeScript check only
+/run-tests lint           # ESLint only
 /run-tests story US-XXX   # Tests tied to a specific user story
 /run-tests file <path>    # Tests for a specific source file
 ```
+
+> E2E (Playwright) is QA-owned — not run through this command.
 
 ---
 
@@ -35,8 +36,8 @@ The command reports:
 
 - Tests passed / failed / skipped
 - Total runtime
-- Per-failure stack traces + snapshot diffs
-- Coverage (when requested): overall %, per-file %, missed lines
+- Per-failure stack traces
+- Required-tests check: new Zod schemas / store actions / utilities without tests
 - Flaky/slow tests (when detected)
 
 ---
@@ -47,10 +48,8 @@ The command reports:
 | ----------------------------------------- | -------------- |
 | Fast feedback during implementation       | `unit`         |
 | Before raising a PR                       | `all`          |
-| Coverage audit before phase completion    | `coverage`     |
 | Reproducing a specific story's regression | `story US-XXX` |
 | Narrow debugging of one file              | `file <path>`  |
-| Full release gate                         | `all` + `e2e`  |
 
 ---
 
@@ -66,9 +65,9 @@ The command reports:
 
 ## 🎓 Tips
 
-- Coverage target is **80% minimum** (see `.claude/rules/testing.md`).
-- API routes must cover **200/400/401/403/404/500** status codes (per testing.md).
-- i18n projects also gate on translation coverage when enabled.
+- The test gate is **behavior-based** — every new Zod schema, store action, and utility needs tests; no numeric coverage target (see `.claude/rules/testing.md`).
+- Every consumed BE error code needs an `errors.<CODE>` i18n key (per `.claude/rules/api-error-display.md`).
+- i18n projects also gate on translation completeness when enabled.
 - `/execute-work` refuses to commit if tests fail — use this command to unblock fast.
 
 ---

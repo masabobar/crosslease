@@ -59,7 +59,7 @@ New approach:
 | **Current Phase**     | {{PHASE_PCT}}%                   | 100%             | {{PHASE_STATUS}}   |
 | **Stories Completed** | {{COMPLETED}}/{{TOTAL}}          | {{TOTAL}}        | {{STORY_STATUS}}   |
 | **Story Points Done** | {{POINTS_DONE}}/{{POINTS_TOTAL}} | {{POINTS_TOTAL}} | {{POINTS_STATUS}}  |
-| **Test Coverage**     | {{COVERAGE}}%                    | 80%              | {{TEST_STATUS}}    |
+| **Passing Tests**     | {{PASSING}}/{{TOTAL_TESTS}}      | {{TOTAL_TESTS}}  | {{TEST_STATUS}}    |
 
 **Legend:** 🟢 On Track | 🟡 At Risk | 🔴 Off Track
 
@@ -131,7 +131,6 @@ New approach:
 
 | Metric         | Current                     | Target          | Status          |
 | -------------- | --------------------------- | --------------- | --------------- |
-| Test Coverage  | {{COVERAGE}}%               | 80%             | {{COV_STATUS}}  |
 | Passing Tests  | {{PASSING}}/{{TOTAL_TESTS}} | {{TOTAL_TESTS}} | {{TEST_STATUS}} |
 | Linting Errors | {{LINT_ERRORS}}             | 0               | {{LINT_STATUS}} |
 | Open Bugs      | {{BUGS_OPEN}}               | < 5             | {{BUG_STATUS}}  |

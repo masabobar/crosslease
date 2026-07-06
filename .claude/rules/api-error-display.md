@@ -25,39 +25,43 @@ No API call may fail silently. Every path through an async operation that result
 Every `useMutation` call site MUST handle errors. Use `onError` on the `mutate()` call or on the `useMutation` hook itself.
 
 ```ts
-// ✅ CORRECT — all paths produce user feedback
+// ✅ CORRECT — dynamic lookup: every BE code translates via errors.<CODE>,
+// generic fallback covers unknown codes and non-ApiError throws.
 const mutation = useMutation({ mutationFn: createUser })
 
 mutation.mutate(payload, {
   onError: err => {
-    if (err instanceof ApiError) {
-      switch (err.code) {
-        case "CONFLICT_EMAIL_EXISTS":
-          return toast.error(t("errors.CONFLICT_EMAIL_EXISTS"))
-        case "RATE_LIMIT_EXCEEDED":
-          return toast.error(t("errors.RATE_LIMIT_EXCEEDED"))
-        default:
-          return toast.error(t("errors.GENERIC"))
-      }
-    }
-    toast.error(t("errors.GENERIC"))
+    toast.error(
+      err instanceof ApiError
+        ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+        : t("errors.generic")
+    )
   },
 })
 
 // ❌ MISSING onError — silent failure, user sees nothing
 mutation.mutate(payload)
 
-// ❌ MISSING switch — code-specific messages lost
+// ❌ switch per error code — drifts and breaks every time the BE adds a code
 mutation.mutate(payload, {
-  onError: () => toast.error(t("errors.GENERIC")),
+  onError: err => {
+    if (err instanceof ApiError) {
+      switch (err.code) {
+        case "CONFLICT_EMAIL_EXISTS":
+          return toast.error(t("errors.CONFLICT_EMAIL_EXISTS"))
+        default:
+          return toast.error(t("errors.generic"))
+      }
+    }
+  },
 })
 ```
 
 **What error codes to handle:**
 
-- Check `openapi.json` (or `../refinext-api/`) for every code the endpoint documents.
-- Handle each code that the UI should distinguish with a specific message or action.
-- Fall back to `t('errors.GENERIC')` for any unrecognized code and for non-`ApiError` throws (network down, timeout).
+- Check `openapi.json` (or `../refinext-api/`) for every code the endpoint documents, and add an `errors.<CODE>` i18n key for each — the dynamic lookup then handles display with no code change.
+- Unknown codes and non-`ApiError` throws (network down, timeout) fall back to `errors.generic`.
+- **No side effects from `onError`** — no `form.setError` or step navigation driven by error codes; the UI shows what went wrong, nothing more.
 
 ---
 
@@ -70,8 +74,10 @@ Query errors appear in the component that renders the data. Use the `error` + `i
 const { data, error, isError } = useQuery({ queryKey: KEYS.user(id), queryFn: fetchUser })
 
 if (isError) {
-  const code = error instanceof ApiError ? error.code : 'GENERIC'
-  return <ErrorState message={t(`errors.${code}`)} />
+  const message = error instanceof ApiError
+    ? t(`errors.${error.code}`, { defaultValue: t('errors.generic') })
+    : t('errors.generic')
+  return <ErrorState message={message} />
 }
 
 // ❌ MISSING error handling — blank or stale content on failure
@@ -97,13 +103,14 @@ When `/code-review` or `/review-codebase` finds an API call missing error handli
 
 ## 5. Anti-Patterns
 
-| ❌                                           | Why it breaks                         | ✅                                       |
-| -------------------------------------------- | ------------------------------------- | ---------------------------------------- |
-| `mutation.mutate(payload)` with no `onError` | User sees nothing on failure          | Add `onError` with `ApiError` switch     |
-| `catch (e) { console.error(e) }`             | Logged server-side, invisible to user | `toast.error(t('errors.GENERIC'))`       |
-| `onError: () => toast.error('Failed')`       | Hardcoded string, no code handling    | `t(\`errors.${err.code ?? 'GENERIC'}\`)` |
-| Matching on `err.message`                    | Messages are not stable contracts     | Always check `err.code`                  |
-| No `isError` branch in query render          | Blank or broken UI on query failure   | Render `<ErrorState>` when `isError`     |
+| ❌                                            | Why it breaks                       | ✅                                            |
+| --------------------------------------------- | ----------------------------------- | --------------------------------------------- |
+| `mutation.mutate(payload)` with no `onError`  | User sees nothing on failure        | Add `onError` with dynamic lookup (§2)        |
+| `switch (err.code) { case ... }` in `onError` | Breaks on every new BE code         | Dynamic `errors.<CODE>` lookup + fallback     |
+| `catch (e) { console.error(e) }`              | Logged only, invisible to user      | `toast.error(t('errors.generic'))`            |
+| `onError: () => toast.error('Failed')`        | Hardcoded string, no code handling  | `t(\`errors.${err.code}\`, { defaultValue })` |
+| Matching on `err.message`                     | Messages are not stable contracts   | Always check `err.code`                       |
+| No `isError` branch in query render           | Blank or broken UI on query failure | Render `<ErrorState>` when `isError`          |
 
 ---
 
