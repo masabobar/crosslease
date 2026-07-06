@@ -74,17 +74,17 @@ function TenantTable({
 
   function openSuspend(tenant: TenantListItem) {
     setSelectedTenant(tenant)
-    setSuspendOpen(true)
+    setTimeout(() => setSuspendOpen(true), 0)
   }
 
   function openReactivate(tenant: TenantListItem) {
     setSelectedTenant(tenant)
-    setReactivateOpen(true)
+    setTimeout(() => setReactivateOpen(true), 0)
   }
 
   function openArchive(tenant: TenantListItem) {
     setSelectedTenant(tenant)
-    setArchiveOpen(true)
+    setTimeout(() => setArchiveOpen(true), 0)
   }
 
   return (

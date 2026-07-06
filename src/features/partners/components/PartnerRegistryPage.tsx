@@ -80,7 +80,7 @@ export default function PartnerRegistryPage() {
 
   function handleAction(type: PartnerActionType, partner: PartnerListItem) {
     setSelectedPartner(partner)
-    setActiveDialog(type)
+    setTimeout(() => setActiveDialog(type), 0)
   }
 
   function handleDialogClose() {
