@@ -3156,6 +3156,28 @@
         }
       }
     },
+    "/api/v1/notification-config": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get Notification Config",
+        "description": "Return the registered notification event catalogue.\n\nNon-functional in November — used by the admin configuration stub (US 31.5)\nto populate placeholder channel-activation and template-assignment lists.\nPost-November: this endpoint will reflect live channel configuration.",
+        "operationId": "get_notification_config_api_v1_notification_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Notification Config Api V1 Notification Config Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/duplicates/{id}/resolve": {
       "post": {
         "tags": ["Partners"],
@@ -3610,92 +3632,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ArchiveEligibilityResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/partners/{id}/confirm": {
-      "post": {
-        "tags": ["Partners"],
-        "summary": "Confirm Partner",
-        "operationId": "confirm_partner_api_v1_partners__id__confirm_post",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/PartnerConfirmRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerDetailResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/partners/{id}/reject": {
-      "post": {
-        "tags": ["Partners"],
-        "summary": "Reject Partner",
-        "operationId": "reject_partner_api_v1_partners__id__reject_post",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/PartnerRejectRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PartnerDetailResponse"
                 }
               }
             }
@@ -6219,6 +6155,7 @@
           "user_email_change",
           "module_activate",
           "partner_archive",
+          "partner_confirm",
           "partner_role_assign",
           "partner_identity_change",
           "partner_merge",
@@ -7274,19 +7211,6 @@
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
       },
-      "PartnerConfirmRequest": {
-        "properties": {
-          "note": {
-            "anyOf": [
-              { "type": "string", "maxLength": 2000 },
-              { "type": "null" }
-            ],
-            "title": "Note"
-          }
-        },
-        "type": "object",
-        "title": "PartnerConfirmRequest"
-      },
       "PartnerDetailResponse": {
         "properties": {
           "partner_id": { "type": "string", "title": "Partner Id" },
@@ -7435,19 +7359,6 @@
         ],
         "title": "PartnerMatchResponse"
       },
-      "PartnerRejectRequest": {
-        "properties": {
-          "note": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 10,
-            "title": "Note"
-          }
-        },
-        "type": "object",
-        "required": ["note"],
-        "title": "PartnerRejectRequest"
-      },
       "PartnerRole": {
         "type": "string",
         "enum": [
@@ -7523,6 +7434,13 @@
           "status": { "type": "string", "title": "Status" },
           "role": { "$ref": "#/components/schemas/PartnerRole" },
           "is_new": { "type": "boolean", "title": "Is New" },
+          "governed_action_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Governed Action Id"
+          },
           "country": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Country"
@@ -9558,6 +9476,7 @@
           "system_admin",
           "support_user",
           "auditor",
+          "bank_power_user",
           "front_office",
           "back_office",
           "leasing_company_user"

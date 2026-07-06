@@ -49,6 +49,7 @@ const UserRole = z.enum([
   "system_admin",
   "support_user",
   "auditor",
+  "bank_power_user",
   "front_office",
   "back_office",
   "leasing_company_user",
@@ -270,6 +271,7 @@ const GovernedActionType = z.enum([
   "user_email_change",
   "module_activate",
   "partner_archive",
+  "partner_confirm",
   "partner_role_assign",
   "partner_identity_change",
   "partner_merge",
@@ -978,13 +980,6 @@ const ArchiveEligibilityResponse = z
     risk_sensitive_roles: z.array(z.string()),
   })
   .passthrough()
-const PartnerConfirmRequest = z
-  .object({ note: z.union([z.string(), z.null()]) })
-  .partial()
-  .passthrough()
-const PartnerRejectRequest = z
-  .object({ note: z.string().min(10).max(2000) })
-  .passthrough()
 const ArchivePartnerRequest = z
   .object({ reason: z.string().min(20).max(2000) })
   .passthrough()
@@ -1148,6 +1143,7 @@ const PartnerSubmitResponse = z
     status: z.string(),
     role: PartnerRole,
     is_new: z.boolean(),
+    governed_action_id: z.union([z.string(), z.null()]).optional(),
     country: z.union([z.string(), z.null()]).optional(),
     tax_id_vat: z.union([z.string(), z.null()]).optional(),
     commercial_register_no: z.union([z.string(), z.null()]).optional(),
@@ -1661,8 +1657,6 @@ export const schemas = {
   DecisionHistoryEntry,
   DecisionHistoryResponse,
   ArchiveEligibilityResponse,
-  PartnerConfirmRequest,
-  PartnerRejectRequest,
   ArchivePartnerRequest,
   ArchivePartnerResponse,
   IdentityChangeProposalRequest,
@@ -2584,6 +2578,18 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
   },
   {
     method: "get",
+    path: "/api/v1/notification-config",
+    alias: "get_notification_config_api_v1_notification_config_get",
+    description: `Return the registered notification event catalogue.
+
+Non-functional in November — used by the admin configuration stub (US 31.5)
+to populate placeholder channel-activation and template-assignment lists.
+Post-November: this endpoint will reflect live channel configuration.`,
+    requestFormat: "json",
+    response: z.object({}).partial().passthrough(),
+  },
+  {
+    method: "get",
     path: "/api/v1/partners/:id",
     alias: "get_partner_api_v1_partners__id__get",
     requestFormat: "json",
@@ -2666,32 +2672,6 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
       },
     ],
     response: ArchiveEligibilityResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/partners/:id/confirm",
-    alias: "confirm_partner_api_v1_partners__id__confirm_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: PartnerConfirmRequest,
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: PartnerDetailResponse,
     errors: [
       {
         status: 422,
@@ -2850,32 +2830,6 @@ Returns 404 for non-existent or unauthorized files (non-disclosing).`,
       },
     ],
     response: MergeHistoryResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/partners/:id/reject",
-    alias: "reject_partner_api_v1_partners__id__reject_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z.object({ note: z.string().min(10).max(2000) }).passthrough(),
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: PartnerDetailResponse,
     errors: [
       {
         status: 422,

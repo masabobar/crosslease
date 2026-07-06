@@ -99,14 +99,16 @@ function MatchingReview({
 
           {matchResult === null && (
             <div className="rounded-xl border border-border p-4 flex flex-col gap-2">
-              <p className="text-sm font-medium text-foreground">
-                {t("submit.matchStep.matchedCandidates")}
-              </p>
-              <div className="h-21 rounded-xl bg-muted flex items-center justify-center">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">
+                  {t("submit.matchStep.matchedCandidates")}
+                </p>
                 <LoaderCircle
                   size={16}
-                  className="animate-spin text-muted-foreground mr-2"
+                  className="animate-spin text-muted-foreground"
                 />
+              </div>
+              <div className="h-21 rounded-xl bg-muted flex items-center justify-center">
                 <p className="text-sm text-muted-foreground opacity-80">
                   {t("submit.matchStep.checkingResult")}
                 </p>
@@ -122,32 +124,29 @@ function MatchingReview({
                   {t("submit.matchStep.exactMatchAlert")}
                 </p>
               </div>
-              <div className="rounded-xl border border-border p-4">
-                <p className="text-sm font-medium text-foreground mb-2">
+              <div className="rounded-xl border border-border p-4 flex flex-col gap-2">
+                <p className="text-sm font-medium text-foreground">
                   {t("submit.matchStep.matchedCandidates")}
                 </p>
                 {matchResult.candidate_summaries.map(c => (
-                  <div
-                    key={c.partner_id}
-                    className="flex items-center justify-between rounded-xl bg-muted px-4 py-3 border-l-3 border-success"
-                  >
-                    <div>
+                  <div key={c.partner_id}>
+                    <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3 border-l-3 border-success">
                       <p className="text-sm font-medium text-foreground">
                         {c.display_name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("submit.matchStep.matchedAnchors")}:{" "}
-                        <span className="font-semibold">
-                          {c.matched_anchors.join(", ")}
-                        </span>
-                      </p>
+                      <Link
+                        to={partnerDetail(c.partner_id)}
+                        className="text-sm font-medium text-primary"
+                      >
+                        {t("submit.matchStep.viewPartner")}
+                      </Link>
                     </div>
-                    <Link
-                      to={partnerDetail(c.partner_id)}
-                      className="text-sm font-medium text-primary"
-                    >
-                      {t("submit.matchStep.viewPartner")}
-                    </Link>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("submit.matchStep.matchedAnchors")}:{" "}
+                      <span className="font-semibold">
+                        {c.matched_anchors.join(", ")}
+                      </span>
+                    </p>
                   </div>
                 ))}
               </div>
@@ -249,6 +248,11 @@ function MatchingReview({
             >
               {t("submit.matchStep.cancel")}
             </Button>
+            {matchResult === null && (
+              <Button disabled data-testid="matching-loading-submit">
+                {t("submit.form.submitButton")}
+              </Button>
+            )}
             {matchResult?.classification === "ambiguous" && (
               <Button
                 onClick={onConfirmCreate}

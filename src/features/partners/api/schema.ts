@@ -37,12 +37,14 @@ export const NonRiskPartnerRoleSchema = z.enum([
 ])
 export type NonRiskPartnerRole = z.infer<typeof NonRiskPartnerRoleSchema>
 
-export const RoleStatusSchema = z.enum([
-  "active",
-  "pending_four_eyes",
-  "rejected",
-  "withdrawn",
-])
+// BE's governed-action-backed role entries currently send the generic
+// governed_action status "pending" instead of the role-specific
+// "pending_four_eyes" (see .project-management/input/open-questions.md Q-008).
+// Normalize at the schema boundary so the rest of the app only ever sees
+// the canonical value.
+export const RoleStatusSchema = z
+  .enum(["active", "pending", "pending_four_eyes", "rejected", "withdrawn"])
+  .transform(status => (status === "pending" ? "pending_four_eyes" : status))
 export type RoleStatus = z.infer<typeof RoleStatusSchema>
 
 export const UboCompletenessStatusSchema = z.enum([
@@ -62,10 +64,10 @@ export type IdentityChangeStatus = z.infer<typeof IdentityChangeStatusSchema>
 // ── Shared sub-schemas ────────────────────────────────────────────────────────
 
 export const RegisteredAddressSchema = z.object({
-  street: z.string().min(1),
-  city: z.string().min(1),
-  postal_code: z.string().min(1),
-  country: z.string().min(1),
+  street: z.string().nullable(),
+  city: z.string().nullable(),
+  postal_code: z.string().nullable(),
+  country: z.string().nullable(),
 })
 export type RegisteredAddress = z.infer<typeof RegisteredAddressSchema>
 
@@ -215,10 +217,15 @@ export type ResolutionCandidatesResponse = z.infer<
 
 // ── Roles ─────────────────────────────────────────────────────────────────────
 
+// BE sends the human-readable user code (e.g. "USR-00086") here, not a UUID,
+// and can send an empty string for email when actor lookup fails — loosened
+// to match actual wire values since neither field is used for anything beyond
+// display in the FE (see Q-008 in open-questions.md for the related status.
+// pending fix and the broader BE contract-drift context).
 export const ActorSummarySchema = z.object({
-  user_id: z.string().uuid(),
+  user_id: z.string(),
   display_name: z.string(),
-  email: z.string().email(),
+  email: z.string(),
 })
 export type ActorSummary = z.infer<typeof ActorSummarySchema>
 

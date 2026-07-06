@@ -1,4 +1,15 @@
 {
+  "partner": {
+    "role": {
+      "assigned": "Assigned role {{role}}",
+      "submitted": "Assigned role {{role}} (pending counter-confirmation)",
+      "counter_confirmed": "Counter-confirmed role {{role}}",
+      "counter_rejected": "Rejected role assignment {{role}}",
+      "withdrawn": "Withdrew role assignment {{role}}",
+      "expired": "Role assignment request expired {{role}}",
+      "decision": "Role assignment decision: {{role}}"
+    }
+  },
   "status": {
     "draft": "Draft",
     "pending_confirmation": "Pending confirmation",
@@ -37,12 +48,15 @@
     "committed": "Committed",
     "rejected": "Rejected"
   },
+  "tenantQuickSelect": {
+    "placeholder": "Mandant auswählen…"
+  },
   "list": {
     "title": "Partnerverwaltung",
     "subtitle": "Gegenparteien-Identitäten im Mandanten suchen und verwalten.",
     "tenantRequired": "Dieses Konto ist keinem einzelnen Mandanten zugeordnet, daher kann das Partnerregister noch nicht angezeigt werden. Die Mandantenauswahl für Systemadministratoren wird noch finalisiert.",
+    "selectTenantPrompt": "Mandant auswählen, um dessen Partnerregister anzuzeigen.",
     "addButton": "Partner hinzufügen",
-    "importButton": "Partner importieren",
     "table": {
       "columns": {
         "name": "Partner",
@@ -52,8 +66,6 @@
         "uboStatus": "UBO-Status"
       },
       "actions": {
-        "confirm": "Bestätigen",
-        "reject": "Ablehnen",
         "archive": "Archivieren"
       }
     },
@@ -94,6 +106,7 @@
     "title": "Add new partner",
     "subtitle": "Submit a new counterparty into the partner registry",
     "tenantRequired": "Dieses Konto ist keinem einzelnen Mandanten zugeordnet, daher ist die Partnererfassung noch nicht verfügbar. Die Mandantenauswahl für Systemadministratoren wird noch finalisiert.",
+    "selectTenantPrompt": "Mandant auswählen, für den ein Partner erfasst werden soll.",
     "identityStep": {
       "fields": {
         "legalName": "Legal name",
@@ -171,17 +184,26 @@
     }
   },
   "detail": {
+    "header": {
+      "id": "ID",
+      "roles": "Role(s)"
+    },
     "tabs": {
       "overview": "Overview",
       "resolutionCandidates": "Resolution Candidates",
       "roles": "Roles",
-      "ubo": "UBO",
-      "identityChanges": "Identity Changes",
-      "confirmationHistory": "Confirmation History"
+      "ubo": "UBO ownership",
+      "identityChanges": "Identity changes",
+      "confirmationHistory": "Confirmation history"
     },
     "overview": {
       "identitySectionTitle": "Identity",
+      "classificationSectionTitle": "Classification",
+      "complianceSectionTitle": "Compliance status",
       "fields": {
+        "entityType": "Entity type",
+        "partnerId": "Partner ID",
+        "roles": "Role(s)",
         "legalName": "Legal name",
         "legalForm": "Legal form",
         "country": "Country",
@@ -210,11 +232,17 @@
       "empty": "No resolution candidates found."
     },
     "roles": {
-      "activeTitle": "Active roles",
+      "activeTitle": "Assigned roles",
+      "subtitle": "Role flags determine how this partner is used across contracts, financings, and requests.",
       "historyTitle": "Role history",
       "assignButton": "Assign role",
       "emptyActive": "No roles assigned.",
       "emptyHistory": "No role history yet.",
+      "columns": {
+        "role": "Role",
+        "status": "Status",
+        "assignedOn": "Assigned on"
+      },
       "assignedBy": "Assigned by",
       "assignedAt": "Assigned",
       "note": "Note",
@@ -256,32 +284,6 @@
       }
     }
   },
-  "confirmDialog": {
-    "title": "Confirm partner",
-    "description": "Are you sure you want to confirm this partner?",
-    "fields": {
-      "note": "Note (optional)"
-    },
-    "cancel": "Cancel",
-    "submit": "Confirm",
-    "submitting": "Confirming…",
-    "success": "Partner confirmed successfully."
-  },
-  "rejectDialog": {
-    "title": "Reject partner",
-    "description": "Provide a reason for rejection.",
-    "fields": {
-      "note": "Reason",
-      "noteMinChars": "Min. 10 characters"
-    },
-    "errors": {
-      "noteTooShort": "Reason must be at least 10 characters."
-    },
-    "cancel": "Cancel",
-    "submit": "Reject",
-    "submitting": "Rejecting…",
-    "success": "Partner rejected."
-  },
   "archiveDialog": {
     "title": "Archive partner",
     "description": "Archiving a partner is irreversible.",
@@ -305,6 +307,20 @@
     "successImmediate": "Partner archived.",
     "successPendingApproval": "Archive request sent for approval."
   },
+  "proposeIdentityChangeDialog": {
+    "triggerButton": "Propose identity change",
+    "title": "Propose identity change",
+    "fields": {
+      "targetAnchors": "Fields to change",
+      "reason": "Reason for change"
+    },
+    "riskNote": "High-risk changes may require back-office counter-confirmation before taking effect.",
+    "cancel": "Cancel",
+    "submit": "Submit proposal",
+    "submitting": "Submitting…",
+    "successCommitted": "Identity change committed.",
+    "successPendingApproval": "Identity change submitted for back-office review."
+  },
   "assignRoleDialog": {
     "title": "Assign role",
     "fields": {
@@ -324,6 +340,7 @@
     "BUSINESS_PARTNER_ALREADY_CONFIRMED": "This partner is already confirmed.",
     "BUSINESS_ROLE_ALREADY_ACTIVE": "This role is already active for this partner.",
     "BUSINESS_RISK_SENSITIVE_ROLE_REQUIRES_SUBMIT": "Risk-sensitive roles can only be assigned at submission time.",
-    "BUSINESS_PARTNER_NOT_ARCHIVABLE": "This partner cannot be archived because it has active references."
+    "BUSINESS_PARTNER_NOT_ARCHIVABLE": "This partner cannot be archived because it has active references.",
+    "PARTNER_NOT_REFERENCEABLE": "This action isn't available until the partner is confirmed."
   }
 }

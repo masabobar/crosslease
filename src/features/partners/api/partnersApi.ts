@@ -75,10 +75,10 @@ export const PARTNERS_QUERY_KEYS = {
 // ── Identity input types (for forms) ─────────────────────────────────────────
 
 export type RegisteredAddressInput = {
-  street: string
-  city: string
-  postal_code: string
-  country: string
+  street?: string | null
+  city?: string | null
+  postal_code?: string | null
+  country?: string | null
 }
 
 export type LegalEntityIdentityInput = {
@@ -89,7 +89,7 @@ export type LegalEntityIdentityInput = {
   tax_id_vat?: string | null
   lei?: string | null
   commercial_register_no?: string | null
-  registered_address: RegisteredAddressInput
+  registered_address?: RegisteredAddressInput | null
   foreign_identifier?: string | null
 }
 
@@ -101,7 +101,7 @@ export type NaturalPersonIdentityInput = {
   country: string
   birth_name?: string | null
   national_id?: string | null
-  registered_address: RegisteredAddressInput
+  registered_address?: RegisteredAddressInput | null
 }
 
 export type SoleProprietorIdentityInput = {
@@ -111,7 +111,7 @@ export type SoleProprietorIdentityInput = {
   country: string
   tax_id_vat?: string | null
   commercial_register_no?: string | null
-  registered_address: RegisteredAddressInput
+  registered_address?: RegisteredAddressInput | null
 }
 
 export type PartnerIdentityInput =
@@ -126,14 +126,6 @@ export type MatchPartnerBody = {
 export type SubmitPartnerBody = {
   identity: PartnerIdentityInput
   roles: PartnerRole[]
-}
-
-export type ConfirmPartnerBody = {
-  note?: string | null
-}
-
-export type RejectPartnerBody = {
-  note: string
 }
 
 export type AssignRolesBody = {
@@ -187,22 +179,6 @@ export async function submitPartner(
 ): Promise<PartnerSubmitResponse> {
   const data = await api.post(`/tenants/${tenantId}/partners`, body)
   return PartnerSubmitResponseSchema.parse(data)
-}
-
-export async function confirmPartner(
-  id: string,
-  body: ConfirmPartnerBody
-): Promise<PartnerDetailResponse> {
-  const data = await api.post(`/partners/${id}/confirm`, body)
-  return PartnerDetailResponseSchema.parse(data)
-}
-
-export async function rejectPartner(
-  id: string,
-  body: RejectPartnerBody
-): Promise<PartnerDetailResponse> {
-  const data = await api.post(`/partners/${id}/reject`, body)
-  return PartnerDetailResponseSchema.parse(data)
 }
 
 export async function fetchResolutionCandidates(

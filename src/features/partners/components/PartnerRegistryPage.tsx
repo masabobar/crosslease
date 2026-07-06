@@ -1,15 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Handshake,
-  Upload,
-} from "lucide-react"
-import { ConfirmPartnerDialog } from "@/features/partners/components/ConfirmPartnerDialog"
-import { RejectPartnerDialog } from "@/features/partners/components/RejectPartnerDialog"
+import { Check, ChevronLeft, ChevronRight, Handshake } from "lucide-react"
 import { ArchivePartnerDialog } from "@/features/partners/components/ArchivePartnerDialog"
 import type { PartnerListItem } from "@/features/partners/api/schema"
 import type { PartnerActionType } from "@/features/partners/types"
@@ -43,7 +35,10 @@ import type {
 } from "@/features/partners/api/schema"
 import { PATHS, partnerDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { PARTNER_SUBMIT_ALLOWED_ROLES } from "@/features/partners/types"
+import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 const STATUS_OPTIONS: PartnerStatus[] = [
   "draft",
@@ -71,7 +66,10 @@ export default function PartnerRegistryPage() {
   const { data: currentUser } = useCurrentUser()
   const canSubmit =
     !!currentUser && PARTNER_SUBMIT_ALLOWED_ROLES.includes(currentUser.role)
-  const tenantId = currentUser?.tenant_id ?? null
+  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
+  const tenantId =
+    currentUser?.tenant_id ??
+    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
 
   const [countrySearch, setCountrySearch] = useState("")
   const [activeDialog, setActiveDialog] = useState<PartnerActionType | null>(
@@ -163,10 +161,19 @@ export default function PartnerRegistryPage() {
   }
 
   // NOTE: the registry list endpoint is tenant-scoped (GET /tenants/{tenant_id}/partners).
-  // System Admin has no single tenant_id, so cross-tenant browsing isn't possible yet —
-  // pending a team decision on how System Admin should select a tenant. Block the screen
-  // rather than guess at a selector.
+  // System Admin has no single tenant_id, so a quick session-only tenant select lets them
+  // pick which tenant's registry to view (see TenantQuickSelect / tenantSelectionStore).
   if (currentUser && !tenantId) {
+    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
+      return (
+        <div className="p-8 max-w-sm space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t("list.selectTenantPrompt")}
+          </p>
+          <TenantQuickSelect />
+        </div>
+      )
+    }
     return (
       <div className="p-8">
         <p className="text-sm text-muted-foreground">
@@ -190,14 +197,6 @@ export default function PartnerRegistryPage() {
         </div>
         {canSubmit && (
           <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              data-testid="import-partners-button"
-              className="h-9 rounded-xl px-2.5 gap-1.5"
-            >
-              <Upload size={16} />
-              {t("list.importButton")}
-            </Button>
             <Button
               data-testid="submit-partner-button"
               onClick={() => navigate(PATHS.PARTNER_SUBMIT)}
@@ -528,20 +527,6 @@ export default function PartnerRegistryPage() {
 
       {selectedPartner && (
         <>
-          <ConfirmPartnerDialog
-            open={activeDialog === "confirm"}
-            onOpenChange={open => !open && handleDialogClose()}
-            partnerId={selectedPartner.partner_id}
-            partnerName={selectedPartner.display_name}
-            partnerStatus={selectedPartner.status}
-          />
-          <RejectPartnerDialog
-            open={activeDialog === "reject"}
-            onOpenChange={open => !open && handleDialogClose()}
-            partnerId={selectedPartner.partner_id}
-            partnerName={selectedPartner.display_name}
-            partnerStatus={selectedPartner.status}
-          />
           <ArchivePartnerDialog
             open={activeDialog === "archive"}
             onOpenChange={open => !open && handleDialogClose()}
