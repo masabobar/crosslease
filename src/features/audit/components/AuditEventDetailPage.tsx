@@ -8,8 +8,8 @@ import {
   formatActionType,
   formatDateTime,
 } from "@/lib/formatters"
-import { cn } from "@/lib/utils"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import type { AuditEvent } from "@/features/audit/api/schema"
 
 type Tab = "overview" | "actor" | "payload"
@@ -526,10 +526,22 @@ export default function AuditEventDetailPage() {
     isError,
   } = useAuditEventDetail(eventId ?? null)
 
-  const TABS: { key: Tab; label: string }[] = [
-    { key: "overview", label: t("drawer.tabs.overview") },
-    { key: "actor", label: t("drawer.tabs.actor") },
-    { key: "payload", label: t("drawer.tabs.payload") },
+  const TABS: { key: Tab; label: string; testId: string }[] = [
+    {
+      key: "overview",
+      label: t("drawer.tabs.overview"),
+      testId: "audit-detail-tab-overview",
+    },
+    {
+      key: "actor",
+      label: t("drawer.tabs.actor"),
+      testId: "audit-detail-tab-actor",
+    },
+    {
+      key: "payload",
+      label: t("drawer.tabs.payload"),
+      testId: "audit-detail-tab-payload",
+    },
   ]
 
   return (
@@ -559,25 +571,12 @@ export default function AuditEventDetailPage() {
           </div>
 
           {/* Tab bar */}
-          {/* NOTE: raw <button> — custom underline-tab style uses -mb-px trick that conflicts with shadcn Tabs DOM structure */}
-          <div className="mt-6 border-b border-border flex gap-1">
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                type="button"
-                data-testid={`audit-detail-tab-${tab.key}`}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  "pb-3 pt-0.5 px-1.5 text-sm font-medium leading-5 whitespace-nowrap transition-colors",
-                  activeTab === tab.key
-                    ? "border-b-2 border-primary text-foreground -mb-px"
-                    : "text-foreground/60 hover:text-foreground"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <UnderlineTabBar
+            tabs={TABS}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            className="mt-6"
+          />
 
           {/* Tab content */}
           <div className="mt-6">
