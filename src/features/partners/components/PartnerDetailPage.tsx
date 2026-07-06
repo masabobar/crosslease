@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 import { Archive, SquarePen, SquareCode, Landmark, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { PartnerTypeBadge } from "@/features/partners/components/PartnerTypeBadge"
 import {
@@ -158,72 +158,76 @@ export default function PartnerDetailPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs
-        value={activeTab}
-        onValueChange={value => setActiveTab(value as TabKey)}
-        className="bg-muted border border-border rounded-[10px] flex flex-col gap-0"
-      >
-        <TabsList
-          variant="line"
-          className="h-10 w-full justify-start rounded-none px-3 border-b border-border"
-        >
-          <TabsTrigger value="overview" data-testid="tab-overview">
-            {t("detail.tabs.overview")}
-          </TabsTrigger>
-          {showResolutionTab && (
-            <TabsTrigger value="resolution" data-testid="tab-resolution">
-              {t("detail.tabs.resolutionCandidates")}
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="roles" data-testid="tab-roles">
-            {t("detail.tabs.roles")}
-          </TabsTrigger>
-          <TabsTrigger value="ubo" data-testid="tab-ubo">
-            {t("detail.tabs.ubo")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="confirmation-history"
-            data-testid="tab-confirmation-history"
-          >
-            {t("detail.tabs.confirmationHistory")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="identity-changes"
-            data-testid="tab-identity-changes"
-          >
-            {t("detail.tabs.identityChanges")}
-          </TabsTrigger>
-        </TabsList>
-        <div className="bg-card border border-border rounded-b-[10px] px-3">
-          <TabsContent value="overview">
+      <div className="bg-muted border border-border rounded-[10px] flex flex-col">
+        <UnderlineTabBar
+          tabs={[
+            {
+              key: "overview" as const,
+              label: t("detail.tabs.overview"),
+              testId: "tab-overview",
+            },
+            ...(showResolutionTab
+              ? [
+                  {
+                    key: "resolution" as const,
+                    label: t("detail.tabs.resolutionCandidates"),
+                    testId: "tab-resolution",
+                  },
+                ]
+              : []),
+            {
+              key: "roles" as const,
+              label: t("detail.tabs.roles"),
+              testId: "tab-roles",
+            },
+            {
+              key: "ubo" as const,
+              label: t("detail.tabs.ubo"),
+              testId: "tab-ubo",
+            },
+            {
+              key: "confirmation-history" as const,
+              label: t("detail.tabs.confirmationHistory"),
+              testId: "tab-confirmation-history",
+            },
+            {
+              key: "identity-changes" as const,
+              label: t("detail.tabs.identityChanges"),
+              testId: "tab-identity-changes",
+            },
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          className="px-3"
+        />
+        <div className="bg-card border border-border rounded-b-[10px] px-3 pt-3">
+          {activeTab === "overview" && (
             <OverviewTab partner={partner} roles={rolesData?.roles ?? []} />
-          </TabsContent>
-          {showResolutionTab && (
-            <TabsContent value="resolution">
-              <ResolutionCandidatesTab partnerId={partner.partner_id} />
-            </TabsContent>
           )}
-          <TabsContent value="roles">
+          {activeTab === "resolution" && showResolutionTab && (
+            <ResolutionCandidatesTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "roles" && (
             <RolesTab
               partnerId={partner.partner_id}
               partnerStatus={partner.status}
               canAssignRole={canAssignRole}
             />
-          </TabsContent>
-          <TabsContent value="ubo">
+          )}
+          {activeTab === "ubo" && (
             <UboTab
               partnerId={partner.partner_id}
               partnerType={partner.partner_type}
             />
-          </TabsContent>
-          <TabsContent value="identity-changes">
+          )}
+          {activeTab === "identity-changes" && (
             <IdentityChangesTab partnerId={partner.partner_id} />
-          </TabsContent>
-          <TabsContent value="confirmation-history">
+          )}
+          {activeTab === "confirmation-history" && (
             <ConfirmationHistoryTab partnerId={partner.partner_id} />
-          </TabsContent>
+          )}
         </div>
-      </Tabs>
+      </div>
 
       {/* Dialogs */}
       <ArchivePartnerDialog

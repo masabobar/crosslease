@@ -9,6 +9,7 @@ import {
   Archive,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { OverviewTab } from "@/features/tenants/components/tabs/OverviewTab"
 import { ModulesConfigTab } from "@/features/tenants/components/tabs/ModulesConfigTab"
@@ -157,33 +158,6 @@ type TabKey =
   | "grants"
   | "licence_limits"
 
-function TabButton({
-  active,
-  onClick,
-  children,
-  "data-testid": testId,
-}: {
-  active: boolean
-  onClick: () => void
-  children: ReactNode
-  "data-testid"?: string
-}) {
-  return (
-    <Button
-      variant="ghost"
-      onClick={onClick}
-      data-testid={testId}
-      className={`h-auto px-3 py-2 rounded-none border-none text-sm font-medium hover:bg-transparent focus-visible:ring-0 border-b-2 ${
-        active
-          ? "text-foreground border-primary"
-          : "text-muted-foreground hover:text-foreground border-transparent"
-      }`}
-    >
-      {children}
-    </Button>
-  )
-}
-
 function TenantDetailSkeleton() {
   return (
     <div className="space-y-6" data-testid="tenant-detail-loading">
@@ -317,20 +291,16 @@ export default function TenantDetailPage() {
             </div>
 
             {/* Tab bar */}
-            <div className="border-b border-border px-8">
-              <div className="flex items-center gap-1 -mb-px">
-                {visibleTabs.map(tab => (
-                  <TabButton
-                    key={tab.key}
-                    active={effectiveTab === tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    data-testid={tab.testId}
-                  >
-                    {t(tab.labelKey as "detail.tabs.overview")}
-                  </TabButton>
-                ))}
-              </div>
-            </div>
+            <UnderlineTabBar
+              tabs={visibleTabs.map(tab => ({
+                key: tab.key,
+                label: t(tab.labelKey as "detail.tabs.overview"),
+                testId: tab.testId,
+              }))}
+              activeTab={effectiveTab}
+              onChange={setActiveTab}
+              className="px-8"
+            />
 
             {/* Tab content */}
             <div className="flex-1 overflow-auto px-8 py-6">
