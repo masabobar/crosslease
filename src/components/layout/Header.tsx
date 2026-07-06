@@ -72,7 +72,9 @@ export function Header() {
   const tenantCreateMatch = useMatch(PATHS.TENANT_MANAGEMENT_CREATE)
   const tenantDetailMatchRaw = useMatch(PATHS.TENANT_DETAIL)
   const tenantDetailMatch = tenantCreateMatch ? null : tenantDetailMatchRaw
-  const partnerDetailMatch = useMatch(PATHS.PARTNER_DETAIL)
+  const partnerSubmitMatch = useMatch(PATHS.PARTNER_SUBMIT)
+  const partnerDetailMatchRaw = useMatch(PATHS.PARTNER_DETAIL)
+  const partnerDetailMatch = partnerSubmitMatch ? null : partnerDetailMatchRaw
   const { data: currentUser } = useCurrentUser()
   const { data: detailUser } = useUserDetail(userDetailMatch?.params.id ?? null)
   const { data: detailTenant } = useTenantDetail(

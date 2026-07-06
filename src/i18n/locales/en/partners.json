@@ -40,6 +40,7 @@
   "list": {
     "title": "Partner management",
     "subtitle": "Search and manage counterparty identities across the tenant.",
+    "tenantRequired": "This account isn't scoped to a single tenant, so the partner registry can't be shown yet. Tenant selection for System Admin is being finalized.",
     "addButton": "Add new partner",
     "importButton": "Import partners",
     "table": {
@@ -90,54 +91,79 @@
     }
   },
   "submit": {
-    "title": "Submit Partner",
-    "steps": {
-      "type": "Partner type",
-      "identity": "Identity",
-      "match": "Review & submit"
-    },
-    "typeStep": {
-      "title": "Select partner type",
-      "subtitle": "Choose the legal form of the counterparty you are registering."
-    },
+    "title": "Add new partner",
+    "subtitle": "Submit a new counterparty into the partner registry",
+    "tenantRequired": "This account isn't scoped to a single tenant, so partner submission isn't available yet. Tenant selection for System Admin is being finalized.",
     "identityStep": {
-      "title": "Identity details",
-      "subtitle": "Enter the identifying information for this counterparty.",
       "fields": {
         "legalName": "Legal name",
         "legalForm": "Legal form",
         "country": "Country",
-        "taxIdVat": "Tax ID / VAT number",
+        "taxIdVat": "Tax ID / VAT",
         "lei": "LEI",
-        "commercialRegisterNo": "Commercial register no.",
+        "commercialRegisterNo": "Commercial register no. (HRB)",
         "foreignIdentifier": "Foreign identifier",
         "fullName": "Full name",
         "dateOfBirth": "Date of birth",
         "placeOfBirth": "Place of birth",
         "birthName": "Birth name",
         "nationalId": "National ID",
-        "street": "Street",
+        "street": "Registered address",
         "city": "City",
         "postalCode": "Postal code"
       }
     },
-    "matchStep": {
-      "title": "Review match result",
-      "subtitle": "Select a role and submit the partner.",
-      "classification": {
-        "NEW": "New partner — will be created",
-        "EXACT_MATCH": "Exact match — will be linked to existing partner",
-        "AMBIGUOUS": "Ambiguous — requires manual confirmation after submission",
-        "POTENTIAL_DUPLICATE": "Potential duplicate detected"
+    "form": {
+      "optional": "optional",
+      "cancel": "Cancel",
+      "submitButton": "Submit for matching",
+      "submitting": "Submitting…",
+      "fourEyesBadge": "Four-eyes",
+      "classificationHint": "Select all roles that apply. At least one is required.",
+      "sections": {
+        "basicIdentity": "BASIC IDENTITY",
+        "registryIdentifiers": "REGISTRY IDENTIFIERS",
+        "address": "ADDRESS",
+        "classification": "CLASSIFICATION"
       },
-      "confidence": "Confidence",
-      "candidates": "Candidates",
-      "candidateItem": "{{name}} ({{type}})",
+      "fields": {
+        "entityType": "Entity type"
+      },
+      "hints": {
+        "hrbMandatoryDe": "Mandatory for DE registered entities",
+        "taxIdMatching": "Used for deterministic matching where provided",
+        "leiFormat": "ISO 17442 format"
+      },
+      "roleDescriptions": {
+        "lessee": "The entity leasing the asset",
+        "guarantor": "Provides guarantee on financing",
+        "supplier": "Sold the asset being financed",
+        "leasing_company": "Requires counter-confirmation",
+        "bank_entity": "Requires counter-confirmation",
+        "ubo_related_person": "Requires counter-confirmation"
+      },
+      "errors": {
+        "roleRequired": "Select at least one role."
+      }
+    },
+    "matchStep": {
+      "title": "Matching review",
+      "matchedCandidates": "Matched candidates",
+      "checkingResult": "Checking the result...",
+      "exactMatchAlert": "This counterparty already exists in the registry. No new record has been created.",
+      "ambiguousAlert": "Multiple existing partners match the submitted identity anchors. The submitted partner has been saved as Pending confirmation. Review the candidates and confirm the correct identity to proceed.",
+      "noMatchAlert": "No existing partner matched. A new Draft record will be created and submitted for confirmation.",
+      "newPartnerSummary": "New partner summary",
+      "summaryFields": {
+        "hrb": "HRB",
+        "roles": "Role(s)"
+      },
       "matchedAnchors": "Matched on",
-      "roleLabel": "Assign role",
-      "rolePlaceholder": "Select role…",
-      "riskSensitiveNote": "Risk-sensitive roles require back-office counter-confirmation.",
-      "submitButton": "Submit partner"
+      "viewPartner": "View partner",
+      "backToList": "Back to partner list",
+      "cancel": "Cancel",
+      "goToPendingConfirmation": "Go to pending confirmation",
+      "confirmAndCreate": "Confirm and create"
     },
     "errors": {
       "matchFailed": "Failed to check for duplicates. Please try again.",
