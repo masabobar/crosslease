@@ -430,16 +430,16 @@ For every `happy-path` and `main-error` scenario, evaluate whether it can be ful
 
 ### Common patterns
 
-| Scenario type | Typical verdict | Reason |
-| --- | --- | --- |
-| Login with valid credentials (seeded user) | ✅ | Seeded user exists; UI flow only |
-| Generic error on wrong password | ✅ | No special state; UI assertion only |
-| RBAC: wrong role cannot access page | ✅ | Seeded users exist per role; redirect assertion |
-| Lockout after N failed attempts | ⚙️ | Requires D18 (lockout reset) between test runs |
-| Token expiry blocks access | ⚙️ | Requires D16 or D17 to forge expired state |
-| Invitation activation flow | ⚙️ | Requires D19 (throwaway user with extractable token) |
-| Password reset via emailed link | ⚙️ | Requires email access or D19 |
-| Four-Eyes: same user cannot submit + approve | ✅ | Two seeded users; pure UI/API assertion |
+| Scenario type                                | Typical verdict | Reason                                               |
+| -------------------------------------------- | --------------- | ---------------------------------------------------- |
+| Login with valid credentials (seeded user)   | ✅              | Seeded user exists; UI flow only                     |
+| Generic error on wrong password              | ✅              | No special state; UI assertion only                  |
+| RBAC: wrong role cannot access page          | ✅              | Seeded users exist per role; redirect assertion      |
+| Lockout after N failed attempts              | ⚙️              | Requires D18 (lockout reset) between test runs       |
+| Token expiry blocks access                   | ⚙️              | Requires D16 or D17 to forge expired state           |
+| Invitation activation flow                   | ⚙️              | Requires D19 (throwaway user with extractable token) |
+| Password reset via emailed link              | ⚙️              | Requires email access or D19                         |
+| Four-Eyes: same user cannot submit + approve | ✅              | Two seeded users; pure UI/API assertion              |
 
 ---
 
@@ -508,10 +508,10 @@ Figma design: Node <node-id>, file <file-key> — Screen "<Screen Name>" (Stage 
 
 **Order: happy-path rows first, main-error rows second.** Never interleave.
 
-| Tag           | Scenario                                             | AC    | Priority | E2E                  |
-| ------------- | ---------------------------------------------------- | ----- | -------- | -------------------- |
-| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       | ✅                   |
-| `@main-error` | <Scenario title>                                     | AC-XX | P0       | ⚙️ needs D19         |
+| Tag           | Scenario                                             | AC    | Priority | E2E          |
+| ------------- | ---------------------------------------------------- | ----- | -------- | ------------ |
+| `@happy-path` | <Scenario title> (Scenario Outline — <N> <variants>) | AC-XX | P0       | ✅           |
+| `@main-error` | <Scenario title>                                     | AC-XX | P0       | ⚙️ needs D19 |
 
 Active scenario blocks: <N> (<N> Outlines + <N> Scenarios)
 E2E automation candidates: <N> of <N> scenarios ✅

@@ -62,7 +62,7 @@ metadata:
 - RATE_LIMITING (AC-03): Per-email and per-IP limits, distributed enforcement
 - TOKEN_LIFECYCLE (AC-04, AC-06, AC-07, AC-08, AC-13): Cryptographic generation, expiry, single-use, reuse prevention
 - TENANT_ISOLATION (AC-03, AC-04, AC-05): Token scoped to originating tenant; cross-tenant token reuse must fail
-- MFA_GATE_IN_FLOW (AC-10, AC-14): MFA required _before_ password commit for security-sensitive roles (NOT only post-reset at login)
+- MFA*GATE_IN_FLOW (AC-10, AC-14): MFA required \_before* password commit for security-sensitive roles (NOT only post-reset at login)
 - MFA_FRESHNESS_WINDOW (AC-10, AC-14): ≤5 min freshness; no second MFA prompt within window; standard MFA after window
 - ROLE_BIFURCATION (AC-10): Two distinct reset flows by role — MFA-gated path vs. token-only path
 - SESSION_INVALIDATION (AC-11, AC-12): Old tokens, MFA state, cross-device sessions, downstream services — all must be invalidated
