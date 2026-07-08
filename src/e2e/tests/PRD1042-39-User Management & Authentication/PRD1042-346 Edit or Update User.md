@@ -1,9 +1,11 @@
 # PRD1042-346 — US 28.29 | USER MANAGEMENT | Edit or Update User
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is now the only role that can edit bank tenant user attributes; scope is limited to the admin's own tenant. Bank Admin cannot be reached via role reassignment — it is assigned at creation only. System Admin no longer edits bank tenant user attributes (platform-level role).
+
 Generated: 2026-06-12
 Story: PRD1042-346 — US 28.29 | USER MANAGEMENT | Edit or Update User
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
-DoR status: PASS (5 ACs, description present, stakeholder-reviewed, Ready for Staging)
+DoR status: PASS (5 ACs, description present, stakeholder-reviewed, UAT ready)
 ACs with Gherkin scenarios: 3 of 5 | Blocked: 2 (AC-02 verification link path, AC-04 — D16/PRD1042-77) | Excluded: 0
 Figma design: None linked (Stage 2 SKIPPED — no Figma URL provided or linked in Jira; story is governance/backend-policy focused)
 
@@ -22,13 +24,13 @@ Figma design: None linked (Stage 2 SKIPPED — no Figma URL provided or linked i
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                                                   | Classification           | Rationale                                                                                                                                                            |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Governed Profile Management — admin updates with role/scope validation, audit logging, backend authoritative                                  | `happy-path`             | Core admin profile-update flow; covers System Admin editing both self-editable fields and admin-only fields; primary user journey for the story                      |
-| AC-02 | Email Address Change Governance — re-verification of new email, previous email as recovery anchor, session invalidation by default            | `main-error` + `Blocked` | Self-edit rejection IS testable (covered as main-error). Full admin verification-link round-trip is Blocked (needs email infra + D19)                                |
-| AC-03 | Unauthorized Update Prevention — backend rejects modification when actor lacks permission; privilege escalation blocked; audit traceable      | `main-error`             | Direct rejection path. Three concrete negatives: (a) non-admin tries to edit another user; (b) admin tries to assign role above own privilege; (c) cross-tenant edit |
-| AC-04 | Sensitive Change Session Governance — session invalidation, re-auth, MFA revalidation defaults for privileged role/identity-sensitive changes | `Blocked`                | Validating session invalidation defaults end-to-end requires D16 (TTL override) and PRD1042-77 tenant policy fixture; not stably testable today                      |
-| AC-05 | Four-Eyes Approval Enforcement — governance-sensitive profile modifications require Four-Eyes; cannot be disabled by tenant policy            | `main-error`             | Self-approval rejection is directly testable (same user cannot submit+approve role change). Pending-approval inbox UX is covered separately by US 28.7 (PRD1042-77)  |
+| AC    | Description                                                                                                                                   | Classification           | Rationale                                                                                                                                                                 |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Governed Profile Management — admin updates with role/scope validation, audit logging, backend authoritative                                  | `happy-path`             | Core admin profile-update flow; covers Bank Admin editing both self-editable fields and admin-only fields within own tenant; primary user journey for the story           |
+| AC-02 | Email Address Change Governance — re-verification of new email, previous email as recovery anchor, session invalidation by default            | `main-error` + `Blocked` | Self-edit rejection IS testable (covered as main-error). Full admin verification-link round-trip is Blocked (needs email infra + D19)                                     |
+| AC-03 | Unauthorized Update Prevention — backend rejects modification when actor lacks permission; privilege escalation blocked; audit traceable      | `main-error`             | Direct rejection path. Concrete negatives: (a) non-admin tries to edit another user; (b) admin tries to assign role above own privilege; (c) cross-tenant edit            |
+| AC-04 | Sensitive Change Session Governance — session invalidation, re-auth, MFA revalidation defaults for privileged role/identity-sensitive changes | `Blocked`                | Validating session invalidation defaults end-to-end requires D16 (TTL override) and PRD1042-77 tenant policy fixture; not stably testable today                           |
+| AC-05 | Four-Eyes Approval Enforcement — governance-sensitive profile modifications require Four-Eyes; cannot be disabled by tenant policy            | `main-error`             | Self-approval rejection is directly testable (same Bank Admin cannot submit+approve role change). Pending-approval inbox UX is covered separately by US 28.7 (PRD1042-77) |
 
 **Gherkin generated for:** AC-01, AC-02 (self-edit rejection only), AC-03, AC-05
 **Blocked (no Gherkin):** AC-02 (verification-link round-trip), AC-04
@@ -40,15 +42,16 @@ Figma design: None linked (Stage 2 SKIPPED — no Figma URL provided or linked i
 
 | Tag           | Scenario                                                                                | AC           | Priority | E2E          |
 | ------------- | --------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
-| `@happy-path` | System Admin updates self-editable fields on another user (Scenario Outline — 4 fields) | AC-01        | P0       | ✅           |
+| `@happy-path` | Bank Admin updates self-editable fields on another user (Scenario Outline — 4 fields)   | AC-01        | P0       | ✅           |
 | `@happy-path` | User updates own self-editable fields                                                   | AC-01        | P0       | ✅           |
 | `@main-error` | Self-edit blocked for governance-sensitive fields (Scenario Outline — 3 fields)         | AC-02, AC-03 | P0       | ✅           |
-| `@main-error` | Non-admin role cannot edit another user (Scenario Outline — 4 non-admin roles)          | AC-03        | P0       | ✅           |
-| `@main-error` | Cross-tenant edit attempt returns 404                                                   | AC-03        | P0       | ⚙️ needs D20 |
-| `@main-error` | Same admin cannot submit and approve a privileged role change (Four-Eyes)               | AC-05        | P0       | ✅           |
+| `@main-error` | Non-admin role cannot edit another user (Scenario Outline — 5 non-admin roles)          | AC-03        | P0       | ✅           |
+| `@main-error` | Bank Admin cannot assign `bank_admin` role via edit (Scenario Outline — 2 target roles) | AC-03        | P0       | ✅           |
+| `@main-error` | Cross-tenant edit attempt returns 404 for Bank Admin                                    | AC-03        | P0       | ⚙️ needs D20 |
+| `@main-error` | Same Bank Admin cannot submit and approve a privileged role change (Four-Eyes)          | AC-05        | P0       | ✅           |
 
-Active scenario blocks: 6 (4 Outlines + 2 Scenarios)
-E2E automation candidates: 5 of 6 scenarios ✅
+Active scenario blocks: 7 (5 Outlines + 2 Scenarios)
+E2E automation candidates: 6 of 7 scenarios ✅
 
 ---
 
@@ -57,30 +60,33 @@ E2E automation candidates: 5 of 6 scenarios ✅
 ```gherkin
 @user-management @us-28.29 @p0
 Feature: Edit or Update User (US 28.29 — PRD1042-346)
-  As a Power User or authorized administrative user
+  As a Bank Admin (authorized administrative user)
   I want to manage existing user profiles in a governed and audit-traceable manner
   So that user information remains accurate while preserving security governance, tenant isolation, and regulatory compliance
 
   Background:
     Given the application is accessible at the configured base URL
-    And the seeded System Admin "admin@bank.com" exists
-    And the seeded Front Office user "fo@bank.com" exists
-    And the seeded Back Office user "bo@bank.com" exists
+    And the seeded Bank Admin "bankadmin@bank.com" exists in Bank Tenant A
+    And the seeded System Admin "admin@platform.com" exists (platform-level)
+    And the seeded Front Office user "fo@bank.com" exists in Bank Tenant A
+    And the seeded Back Office user "bo@bank.com" exists in Bank Tenant A
     And the seeded Support User "support@bank.com" exists
     And the seeded Auditor "auditor@bank.com" exists
     And the seeded Leasing Company user "lc@lender.com" exists
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-01
-  # System Admin successfully edits another user's self-editable, non-governance
-  # fields. Covers Vesna's June 7 decision frame: phone_number, avatar,
-  # first_name, last_name are editable by System Admin without Four-Eyes; all
-  # changes are persisted, audit-logged, and reflected in the UI on reload.
+  # Bank Admin successfully edits another user's self-editable, non-governance
+  # fields within its own tenant. Per PRD1042-48 (Ivan Mladenovic decision
+  # 2026-07-06), Bank Admin (bank_admin, user_type=bank_tenant) is the only
+  # role that can edit bank tenant user attributes. phone_number, avatar,
+  # first_name, last_name are editable without Four-Eyes; all changes are
+  # persisted, audit-logged, and reflected in the UI on reload.
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-01 @p0 @e2e-ready
-  Scenario Outline: System Admin updates self-editable field on another user (AC-01)
-    Given I am logged in as System Admin
+  Scenario Outline: Bank Admin updates self-editable field on another user (AC-01)
+    Given I am logged in as Bank Admin "bankadmin@bank.com" in Bank Tenant A
     And I navigate to the user detail page for "fo@bank.com"
     When I open the edit dialog
     And I update field "<field>" to "<new_value>"
@@ -134,15 +140,17 @@ Feature: Edit or Update User (US 28.29 — PRD1042-346)
     Examples:
       | field        | new_value          |
       | email        | newemail@bank.com  |
-      | role         | system_admin       |
+      | role         | bank_admin         |
       | tenant_scope | tenant-b           |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-03
-  # Per Vesna's decision frame (June 7), only System Admin can edit other
-  # users' profiles in MVP. Support User and Auditor are read-only; Front
-  # Office, Back Office, and LC User have no user-management capability. The
-  # backend must reject any cross-user edit attempt from these roles.
+  # Per PRD1042-48 (Ivan Mladenovic decision 2026-07-06), only Bank Admin can
+  # edit bank tenant user profiles. System Admin is a platform-level role and
+  # no longer edits bank tenant user attributes. Support User and Auditor are
+  # read-only; Front Office, Back Office, and LC User have no user-management
+  # capability. The backend must reject any cross-user edit attempt from these
+  # roles.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-03 @p0 @e2e-ready
@@ -155,21 +163,50 @@ Feature: Edit or Update User (US 28.29 — PRD1042-346)
 
     Examples:
       | role           | email                |
+      | System Admin   | admin@platform.com   |
       | Front Office   | fo@bank.com          |
       | Back Office    | bo@bank.com          |
       | Support User   | support@bank.com     |
       | Auditor        | auditor@bank.com     |
 
   # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-03 (role reassignment guard)
+  # Per PRD1042-48 (Ivan Mladenovic decision 2026-07-06), Bank Admin
+  # (`bank_admin`) is assigned at creation only and MUST NOT be reachable via
+  # role reassignment. The role dropdown in the edit dialog must not offer
+  # `bank_admin` as a target role. Any API request that attempts to assign
+  # `bank_admin` via the edit endpoint — even by another Bank Admin — must be
+  # rejected server-side. The same protection applies to `system_admin`
+  # (platform-level, not a bank tenant role).
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-03 @p0 @e2e-ready
+  Scenario Outline: Bank Admin cannot assign privileged role via edit (AC-03)
+    Given I am logged in as Bank Admin "bankadmin@bank.com" in Bank Tenant A
+    And user "fo@bank.com" exists with role "front_office"
+    When I attempt to update the role of "fo@bank.com" to "<target_role>" via the API
+    Then the response status should be 403
+    And the user "fo@bank.com" role should remain "front_office"
+    And the role dropdown in the UI must not include "<target_role>" as a selectable option
+    And a security audit log entry should be created for the rejected attempt
+
+    Examples:
+      | target_role  |
+      | bank_admin   |
+      | system_admin |
+
+  # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-03 (tenant isolation)
   # Tenant isolation rule (architecture constraint #5): cross-tenant access
-  # returns 404, not 403, to prevent enumeration. Requires a second seeded
-  # Bank Tenant B with one test user — currently D20.
+  # returns 404, not 403, to prevent enumeration. Bank Admin is scoped to its
+  # own tenant only — an attempt to edit a user in a different tenant must
+  # return 404 even for Bank Admin. Requires a second seeded Bank Tenant B
+  # with one test user — currently D20.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-03 @p0
-  Scenario: Cross-tenant edit attempt returns 404 (AC-03)
-    Given I am logged in as System Admin of Bank Tenant A
+  Scenario: Cross-tenant edit attempt returns 404 for Bank Admin (AC-03)
+    Given I am logged in as Bank Admin "bankadmin@bank.com" of Bank Tenant A
     And a user "userb@tenant-b.com" exists in Bank Tenant B
     When I attempt to update phone number of "userb@tenant-b.com" via the API
     Then the response status should be 404
@@ -179,20 +216,20 @@ Feature: Edit or Update User (US 28.29 — PRD1042-346)
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-05 (Four-Eyes)
   # Governance-sensitive profile modifications (role change, tenant scope
-  # change) must require Four-Eyes approval. The same administrator cannot
+  # change) must require Four-Eyes approval. The same Bank Admin cannot
   # both submit and approve the change. Tenant policy must not be able to
   # disable this guard. The pending-approval inbox flow itself is covered by
   # US 28.7 (PRD1042-77).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-05 @p0 @e2e-ready
-  Scenario: Same admin cannot submit and approve a privileged role change (AC-05)
-    Given I am logged in as System Admin "admin@bank.com"
+  Scenario: Same Bank Admin cannot submit and approve a privileged role change (AC-05)
+    Given I am logged in as Bank Admin "bankadmin@bank.com" in Bank Tenant A
     And user "fo@bank.com" exists with role "front_office"
     When I submit a role change request for "fo@bank.com" from "front_office" to "back_office"
     Then the change should be created in status "pending_four_eyes_approval"
     And the user "fo@bank.com" role should remain "front_office"
-    When I attempt to approve my own pending role change as "admin@bank.com"
+    When I attempt to approve my own pending role change as "bankadmin@bank.com"
     Then the response status should be 403
     And the user "fo@bank.com" role should remain "front_office"
     And a security audit log entry should be created for the rejected self-approval

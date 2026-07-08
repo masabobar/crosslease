@@ -1,5 +1,7 @@
 # PRD1042-588 — US 29.7 | Tenant Management | Tenant Suspension Flow
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot suspend tenants (platform-only).
+
 Generated: 2026-07-07
 Story: PRD1042-588 — US 29.7 | Tenant Management | Tenant Suspension Flow
 Epic: PRD1042-40 — Epic 29: Tenant Management
@@ -49,13 +51,13 @@ Figma design: Node 81:2893 (SUSPEND) + 84:5372 (ERROR), file 7pygkopuqyeEhUTMVp9
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                 | AC           | Priority | E2E                                    |
-| ------------- | -------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------- |
-| `@happy-path` | System Admin initiates suspension on Active tenant from detail view                                      | AC-01, AC-03 | P0       | ⚙️ needs PRD1042-1102 fix + PRD1042-77 |
-| `@main-error` | Governance Justification validation (Outline — empty, whitespace-only, below-min length)                 | AC-08        | P0       | ⚙️ needs API test harness              |
-| `@main-error` | Non-Active tenant returns 422 Invalid transition (Outline — Draft, Provisioning, Suspended, Archived)    | AC-10        | P0       | ⚙️ needs multi-state fixtures          |
-| `@main-error` | Non-System-Admin roles receive HTTP 404 (Outline — Front Office, Back Office, LC User, Support, Auditor) | AC-14        | P0       | ✅                                     |
-| `@main-error` | Suspension initiator cannot countersign own request (self-countersign blocked)                           | AC-11        | P0       | ⚙️ needs PRD1042-77 wiring             |
+| Tag           | Scenario                                                                                                             | AC           | Priority | E2E                                    |
+| ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------- |
+| `@happy-path` | System Admin initiates suspension on Active tenant from detail view                                                  | AC-01, AC-03 | P0       | ⚙️ needs PRD1042-1102 fix + PRD1042-77 |
+| `@main-error` | Governance Justification validation (Outline — empty, whitespace-only, below-min length)                             | AC-08        | P0       | ⚙️ needs API test harness              |
+| `@main-error` | Non-Active tenant returns 422 Invalid transition (Outline — Draft, Provisioning, Suspended, Archived)                | AC-10        | P0       | ⚙️ needs multi-state fixtures          |
+| `@main-error` | Non-System-Admin roles receive HTTP 404 (Outline — Bank Admin, Front Office, Back Office, LC User, Support, Auditor) | AC-14        | P0       | ✅                                     |
+| `@main-error` | Suspension initiator cannot countersign own request (self-countersign blocked)                                       | AC-11        | P0       | ⚙️ needs PRD1042-77 wiring             |
 
 Active scenario blocks: 5 (3 Outlines + 2 Scenarios)
 E2E automation candidates: 1 of 5 scenarios ✅
@@ -157,10 +159,14 @@ Feature: Tenant Suspension Flow (US 29.7 — PRD1042-588)
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-14
   # Only System Admin (platform-level Crosslease role per Philipp Maute
-  # 2026-07-01, NOT bank-internal Power User) may access the suspension flow.
-  # All other roles receive HTTP 404 (RefiNext 404-not-403 pattern to prevent
-  # enumeration of tenant-scoped endpoints). Fully automatable — uses seeded
-  # fixture users only.
+  # 2026-07-01) may access the suspension flow. All other roles — including
+  # the bank-tenant Bank Admin (`bank_admin`, User Type: `bank_tenant`) per
+  # PRD1042-48 (Ivan Mladenovic 2026-07-06) — receive HTTP 404. Tenant
+  # suspension is a platform-only action; Bank Admin has no authority over
+  # tenant lifecycle even for their own tenant (self-destructive; also
+  # platform-scoped per governance model). RefiNext 404-not-403 pattern
+  # prevents enumeration of tenant-scoped endpoints. Fully automatable —
+  # uses seeded fixture users only.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-14 @p0 @e2e-ready
@@ -173,6 +179,7 @@ Feature: Tenant Suspension Flow (US 29.7 — PRD1042-588)
 
     Examples:
       | role                 |
+      | Bank Admin           |
       | Front Office         |
       | Back Office          |
       | Leasing Company User |

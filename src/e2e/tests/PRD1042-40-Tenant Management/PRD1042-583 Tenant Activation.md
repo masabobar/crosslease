@@ -1,5 +1,7 @@
 # PRD1042-583 — US 29.2 | Tenant Management | Tenant Activation
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot activate tenants (platform-only action).
+
 Generated: 2026-07-06
 Story: PRD1042-583 — US 29.2 | Tenant Management | Tenant Activation
 Epic: PRD1042-40 — Epic 29: Tenant Management
@@ -23,25 +25,25 @@ Figma design: Node 84:5406, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant Activ
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                 | Classification     | Rationale                                                                                                                                                                   |
-| ----- | ----------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Second, independent System Admin countersigns pending tenant creation (requester ≠ countersignatory)        | `happy-path`       | Core success flow — design confirms via "Approve" primary button + post-approval message "Request was approved. New Group Trade has been activated and is now operational." |
-| AC-02 | On countersignature: tenant → Active, NewBusinessAllowed=true, tenant.activated event published             | `happy-path`       | Covered by AC-01 happy-path — same transaction, observable via design post-approval copy                                                                                    |
-| AC-03 | On rejection: tenant stays in Draft/Provisioning, TENANT_CREATION_REJECTED audit event, requester notified  | `main-error`       | Design copy verbatim: "Request was rejected. New Group Trade will remain in Draft until the request is resubmitted." — validates Vesna comment 36741                        |
-| AC-04 | Approval window expiry — request → Expired, tenant stays in Draft/Provisioning, requester notified          | `Blocked`          | Requires clock manipulation / D16 override to force expiry at test time                                                                                                     |
-| AC-05 | Governance Justification: long text, mandatory on countersignature and rejection, min 10 chars              | `main-error`       | Design confirms field "Your justification" with helper text "Required · stored in audit log"                                                                                |
-| AC-06 | Rejection Reason: conditional mandatory when action=Reject, min 10 chars                                    | `main-error`       | Rejection path validation — blocks rejection when invalid; design shows reject flow but not min-length error                                                                |
-| AC-07 | Actor independence enforced by PRD1042-77 — self-approval returns actor-independence error                  | `main-error`       | Design confirms via self-submission indicator "You submitted this request" (gray #64748b) with no "Review request" CTA on own rows                                          |
-| AC-08 | Governance request must be in Pending state and not expired before countersignature is accepted             | `edge-case`        | State guard; expired path covered by AC-04 (Blocked), already-rejected path is second-order edge                                                                            |
-| AC-09 | Approval window default 48 hours, configurable at platform level by System Admin                            | `separate-feature` | Platform configuration UI is its own module (Platform Config); default value is business config, not E2E flow                                                               |
-| AC-10 | Expired window transitions request to Expired, must be resubmitted from scratch                             | `Blocked`          | Same clock-manipulation blocker as AC-04; design shows request chain node "Re-initiated after expiry"                                                                       |
-| AC-11 | Audit event TENANT_ACTIVATED with tenant ID, requester, countersignatory, justification, UTC timestamp      | `Blocked`          | Audit log inspection needs admin API; not surfaced in tenant UI                                                                                                             |
-| AC-12 | Actor independence enforced server-side by PRD1042-77 — UI enforcement alone is not sufficient              | `main-error`       | API-level negative test bypassing UI; covered under AC-07 auto-applied Four-Eyes negative                                                                                   |
-| AC-13 | Concurrent countersignature attempts — optimistic locking, only one succeeds, second returns 409            | `Blocked`          | Race requires parallel-request harness; not deterministic in single-browser E2E                                                                                             |
-| AC-14 | Same admin attempts countersignature → actor-independence error, request remains Pending                    | `main-error`       | Same as AC-07 — merged                                                                                                                                                      |
-| AC-15 | Two admins countersign concurrently — optimistic locking; first succeeds, second receives 409               | `edge-case`        | Duplicate of AC-13 concurrent race case — Blocked classification takes precedence there                                                                                     |
-| AC-16 | Downstream service fails to consume tenant.activated event → retry queue handles propagation                | `Blocked`          | Event bus infrastructure verification is outside E2E scope                                                                                                                  |
-| AC-17 | Permission Matrix — only System Admin can view pending governance / countersign / reject; all others cannot | `main-error`       | RBAC negative — auto-applied RefiNext 404-not-403 domain rule                                                                                                               |
+| AC    | Description                                                                                                                    | Classification     | Rationale                                                                                                                                                                   |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Second, independent System Admin countersigns pending tenant creation (requester ≠ countersignatory)                           | `happy-path`       | Core success flow — design confirms via "Approve" primary button + post-approval message "Request was approved. New Group Trade has been activated and is now operational." |
+| AC-02 | On countersignature: tenant → Active, NewBusinessAllowed=true, tenant.activated event published                                | `happy-path`       | Covered by AC-01 happy-path — same transaction, observable via design post-approval copy                                                                                    |
+| AC-03 | On rejection: tenant stays in Draft/Provisioning, TENANT_CREATION_REJECTED audit event, requester notified                     | `main-error`       | Design copy verbatim: "Request was rejected. New Group Trade will remain in Draft until the request is resubmitted." — validates Vesna comment 36741                        |
+| AC-04 | Approval window expiry — request → Expired, tenant stays in Draft/Provisioning, requester notified                             | `Blocked`          | Requires clock manipulation / D16 override to force expiry at test time                                                                                                     |
+| AC-05 | Governance Justification: long text, mandatory on countersignature and rejection, min 10 chars                                 | `main-error`       | Design confirms field "Your justification" with helper text "Required · stored in audit log"                                                                                |
+| AC-06 | Rejection Reason: conditional mandatory when action=Reject, min 10 chars                                                       | `main-error`       | Rejection path validation — blocks rejection when invalid; design shows reject flow but not min-length error                                                                |
+| AC-07 | Actor independence enforced by PRD1042-77 — self-approval returns actor-independence error                                     | `main-error`       | Design confirms via self-submission indicator "You submitted this request" (gray #64748b) with no "Review request" CTA on own rows                                          |
+| AC-08 | Governance request must be in Pending state and not expired before countersignature is accepted                                | `edge-case`        | State guard; expired path covered by AC-04 (Blocked), already-rejected path is second-order edge                                                                            |
+| AC-09 | Approval window default 48 hours, configurable at platform level by System Admin                                               | `separate-feature` | Platform configuration UI is its own module (Platform Config); default value is business config, not E2E flow                                                               |
+| AC-10 | Expired window transitions request to Expired, must be resubmitted from scratch                                                | `Blocked`          | Same clock-manipulation blocker as AC-04; design shows request chain node "Re-initiated after expiry"                                                                       |
+| AC-11 | Audit event TENANT_ACTIVATED with tenant ID, requester, countersignatory, justification, UTC timestamp                         | `Blocked`          | Audit log inspection needs admin API; not surfaced in tenant UI                                                                                                             |
+| AC-12 | Actor independence enforced server-side by PRD1042-77 — UI enforcement alone is not sufficient                                 | `main-error`       | API-level negative test bypassing UI; covered under AC-07 auto-applied Four-Eyes negative                                                                                   |
+| AC-13 | Concurrent countersignature attempts — optimistic locking, only one succeeds, second returns 409                               | `Blocked`          | Race requires parallel-request harness; not deterministic in single-browser E2E                                                                                             |
+| AC-14 | Same admin attempts countersignature → actor-independence error, request remains Pending                                       | `main-error`       | Same as AC-07 — merged                                                                                                                                                      |
+| AC-15 | Two admins countersign concurrently — optimistic locking; first succeeds, second receives 409                                  | `edge-case`        | Duplicate of AC-13 concurrent race case — Blocked classification takes precedence there                                                                                     |
+| AC-16 | Downstream service fails to consume tenant.activated event → retry queue handles propagation                                   | `Blocked`          | Event bus infrastructure verification is outside E2E scope                                                                                                                  |
+| AC-17 | Permission Matrix — only System Admin can view pending governance / countersign / reject; all others (incl. Bank Admin) cannot | `main-error`       | RBAC negative — auto-applied RefiNext 404-not-403 domain rule; Bank Admin (`bank_admin`) added 2026-07-08 per PRD1042-48 (tenant activation is a platform-only action)      |
 
 **Gherkin generated for:** AC-01 (with AC-02), AC-03, AC-05, AC-06, AC-07 (with AC-12, AC-14), AC-17
 **Blocked (no Gherkin):** AC-04, AC-10, AC-11, AC-13, AC-16
@@ -244,7 +246,12 @@ Feature: Tenant Activation — Four-Eyes Countersignature (US 29.2 — PRD1042-5
   # MAIN ERROR — AC-17 (Permission Matrix / RBAC)
   # Per the permission matrix in the story: only System Admin can view pending
   # governance requests, countersign, or reject. Front Office, Back Office/Risk,
-  # LC User, Support, and Auditor cannot see or act on these requests.
+  # LC User, Support, Auditor, and Bank Admin (bank_admin) cannot see or act on
+  # these requests. Bank Admin was added 2026-07-08 per PRD1042-48 (Ivan
+  # Mladenovic decision 2026-07-06): Bank Admin is a bank-tenant-scoped role
+  # (user_type = bank_tenant) that manages bank-tenant users only; tenant
+  # activation is a platform-level action reserved for System Admin, so
+  # Bank Admin gets the same 404 as other non-privileged roles.
   # Applies RefiNext 404-not-403 pattern for cross-role access to prevent
   # enumeration of governance requests by non-privileged roles.
   # ---------------------------------------------------------------------------
@@ -265,4 +272,5 @@ Feature: Tenant Activation — Four-Eyes Countersignature (US 29.2 — PRD1042-5
       | Support User      |
       | Auditor           |
       | LC User           |
+      | Bank Admin        |
 ```

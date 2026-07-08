@@ -1,5 +1,7 @@
 # PRD1042-596 — US 29.15 | TENANT MANAGEMENT | Tenant Edit (Non-Lifecycle Fields)
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot edit tenant identity fields (platform-managed); bank-side configuration is covered by PRD1042-591.
+
 Generated: 2026-07-06
 Story: PRD1042-596 — US 29.15 | TENANT MANAGEMENT | Tenant Edit (Non-Lifecycle Fields)
 Epic: PRD1042-40 — Epic 29: Tenant Management
@@ -19,22 +21,22 @@ Figma design: Node 52:1806, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant detai
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                                                    | Classification     | Rationale                                                                                                                                          |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Editable fields (Tenant Name, Legal Entity Name, Tenant Description, Legal Hold Flag) updatable by System Admin on Active or Suspended tenants | `happy-path`       | Core success flow — Scenario Outline covers Legal Entity Name edits across Active, Suspended, and Rejected states (AC-14 merged as variant row)    |
-| AC-02 | Governance Justification mandatory (min 20 chars) only when Tenant Name is changed — confirmed by PRD1042-1096                                 | `happy-path`       | Positive path (name change with justification succeeds) is a critical product rule; pairs with a main-error negative for the no-justification case |
-| AC-03 | Immutable fields (Tenant ID, Tenant Code, Tenant Type, timestamps, governance actor fields) are read-only with lock icon, no edit affordance   | `main-error`       | ADMIN view design confirms read-only rendering for Code, Type, Country, Provisioned fields; UI-level assertion is @e2e-ready                       |
-| AC-04 | Tenant Code modification via API returns 422 Immutable field error                                                                             | `main-error`       | Backend must reject immutable-field mutations regardless of source; direct API test                                                                |
-| AC-05 | Tenant Name uniqueness validated across all states including Archived — PRD1042-1095 requests descriptive error message                        | `main-error`       | Duplicate name blocks the save action; Scenario Outline covers three existing-tenant states                                                        |
-| AC-06 | Edit not permitted on Archived tenants — returns 422                                                                                           | `main-error`       | Terminal lifecycle state blocks the core edit workflow                                                                                             |
-| AC-07 | Edit endpoint returns HTTP 404 to non-System Admin roles                                                                                       | `main-error`       | RefiNext 404-not-403 domain rule auto-applied; Scenario Outline covers 5 non-admin roles                                                           |
-| AC-08 | Legal Hold Flag warning shown on set with specific copy                                                                                        | `edge-case`        | Copy-only assertion; warning dialog copy unverified against Figma (Stage 3 MAJOR gap); belongs in design QA and component test, not E2E            |
-| AC-09 | Legal Hold set/clear each produce a separate TENANT_MODIFIED audit event                                                                       | `separate-feature` | Backend audit behavior; verified by BE unit tests and audit log spec, not E2E UI                                                                   |
-| AC-10 | TENANT_MODIFIED audit event schema (tenant ID, actor, changed fields old/new, justification, timestamp UTC)                                    | `separate-feature` | Backend contract — out of E2E UI scope; covered by BE story PRD1042-692                                                                            |
-| AC-11 | Field length validation: Tenant Name max 200, Legal Entity Name max 300, Tenant Description max 1000                                           | `edge-case`        | Boundary validation — component/unit test scope; character counter design state not confirmed                                                      |
-| AC-12 | Governance Justification min 20 chars validation                                                                                               | `edge-case`        | Boundary validation — component test scope; min-length error state not confirmed in design                                                         |
-| AC-13 | Legal Hold cleared while retention schedule triggered → retention re-evaluates from cleared state                                              | `separate-feature` | Retention pipeline behavior — covered by retention policy spec, not tenant edit E2E                                                                |
-| AC-14 | Rejected tenant is editable — confirmed by PRD1042-1097 (Done)                                                                                 | `happy-path`       | Folded into AC-01 Outline as a Rejected-state Examples row; not a separate scenario block                                                          |
+| AC    | Description                                                                                                                                    | Classification     | Rationale                                                                                                                                                                       |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Editable fields (Tenant Name, Legal Entity Name, Tenant Description, Legal Hold Flag) updatable by System Admin on Active or Suspended tenants | `happy-path`       | Core success flow — Scenario Outline covers Legal Entity Name edits across Active, Suspended, and Rejected states (AC-14 merged as variant row)                                 |
+| AC-02 | Governance Justification mandatory (min 20 chars) only when Tenant Name is changed — confirmed by PRD1042-1096                                 | `happy-path`       | Positive path (name change with justification succeeds) is a critical product rule; pairs with a main-error negative for the no-justification case                              |
+| AC-03 | Immutable fields (Tenant ID, Tenant Code, Tenant Type, timestamps, governance actor fields) are read-only with lock icon, no edit affordance   | `main-error`       | ADMIN view design confirms read-only rendering for Code, Type, Country, Provisioned fields; UI-level assertion is @e2e-ready                                                    |
+| AC-04 | Tenant Code modification via API returns 422 Immutable field error                                                                             | `main-error`       | Backend must reject immutable-field mutations regardless of source; direct API test                                                                                             |
+| AC-05 | Tenant Name uniqueness validated across all states including Archived — PRD1042-1095 requests descriptive error message                        | `main-error`       | Duplicate name blocks the save action; Scenario Outline covers three existing-tenant states                                                                                     |
+| AC-06 | Edit not permitted on Archived tenants — returns 422                                                                                           | `main-error`       | Terminal lifecycle state blocks the core edit workflow                                                                                                                          |
+| AC-07 | Edit endpoint returns HTTP 404 to non-System Admin roles                                                                                       | `main-error`       | RefiNext 404-not-403 domain rule auto-applied; Scenario Outline covers 6 non-admin roles including `bank_admin` (bank tenant identity is platform-managed by System Admin only) |
+| AC-08 | Legal Hold Flag warning shown on set with specific copy                                                                                        | `edge-case`        | Copy-only assertion; warning dialog copy unverified against Figma (Stage 3 MAJOR gap); belongs in design QA and component test, not E2E                                         |
+| AC-09 | Legal Hold set/clear each produce a separate TENANT_MODIFIED audit event                                                                       | `separate-feature` | Backend audit behavior; verified by BE unit tests and audit log spec, not E2E UI                                                                                                |
+| AC-10 | TENANT_MODIFIED audit event schema (tenant ID, actor, changed fields old/new, justification, timestamp UTC)                                    | `separate-feature` | Backend contract — out of E2E UI scope; covered by BE story PRD1042-692                                                                                                         |
+| AC-11 | Field length validation: Tenant Name max 200, Legal Entity Name max 300, Tenant Description max 1000                                           | `edge-case`        | Boundary validation — component/unit test scope; character counter design state not confirmed                                                                                   |
+| AC-12 | Governance Justification min 20 chars validation                                                                                               | `edge-case`        | Boundary validation — component test scope; min-length error state not confirmed in design                                                                                      |
+| AC-13 | Legal Hold cleared while retention schedule triggered → retention re-evaluates from cleared state                                              | `separate-feature` | Retention pipeline behavior — covered by retention policy spec, not tenant edit E2E                                                                                             |
+| AC-14 | Rejected tenant is editable — confirmed by PRD1042-1097 (Done)                                                                                 | `happy-path`       | Folded into AC-01 Outline as a Rejected-state Examples row; not a separate scenario block                                                                                       |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-14
 **Blocked (no Gherkin):** AC-15
@@ -53,7 +55,7 @@ Figma design: Node 52:1806, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant detai
 | `@main-error` | Tenant Code modification via API returns 422 Immutable field error                                           | AC-04        | P0       | ✅                                      |
 | `@main-error` | Duplicate Tenant Name across all lifecycle states returns 422 (Scenario Outline — 3 existing-state variants) | AC-05        | P0       | ⚙️ needs seeded Archived tenant fixture |
 | `@main-error` | Edit attempt on Archived tenant returns 422                                                                  | AC-06        | P0       | ⚙️ needs seeded Archived tenant fixture |
-| `@main-error` | Non-System Admin roles receive 404 on tenant edit endpoint (Scenario Outline — 5 role variants)              | AC-07        | P0       | ✅                                      |
+| `@main-error` | Non-System Admin roles receive 404 on tenant edit endpoint (Scenario Outline — 6 role variants)              | AC-07        | P0       | ✅                                      |
 
 Active scenario blocks: 8 (3 Outlines + 5 Scenarios)
 E2E automation candidates: 6 of 8 scenarios ✅
@@ -230,6 +232,11 @@ Feature: Tenant Edit — Non-Lifecycle Fields (US 29.15 — PRD1042-596)
   # prevent tenant enumeration by unprivileged roles. All non-System Admin roles
   # must receive 404 on the tenant edit endpoint regardless of tenant existence.
   # Design confirms SUPPORT and AUDITOR read-only views as distinct role frames.
+  # Bank Admin (`bank_admin`, User Type `bank_tenant`) is included per PRD1042-48
+  # (Ivan Mladenovic 2026-07-06): Bank Admin manages bank-side configuration
+  # (covered by PRD1042-591 Config Overrides) but tenant identity fields
+  # (Tenant Name, Legal Entity Name, Description, Legal Hold Flag) are
+  # platform-managed by System Admin only — Bank Admin must receive 404 here.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-07 @p0 @e2e-ready @rbac
@@ -243,6 +250,7 @@ Feature: Tenant Edit — Non-Lifecycle Fields (US 29.15 — PRD1042-596)
 
     Examples:
       | role         |
+      | Bank Admin   |
       | Front Office |
       | Back Office  |
       | LC User      |

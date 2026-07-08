@@ -1,9 +1,11 @@
 # PRD1042-589 — US 29.8 | Tenant Management | Tenant Reactivation Flow
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot reactivate tenants (platform-only).
+
 Generated: 2026-07-07
 Story: PRD1042-589 — US 29.8 | Tenant Management | Tenant Reactivation Flow
 Epic: PRD1042-40 — Epic 29: Tenant Management
-DoR status: PASS (12 ACs synthesized from Functional Requirements + Field Spec + Validation Rules + Security + Architectural Notes, description present, stakeholder-reviewed, Jira status "QA in progress")
+DoR status: PASS (12 ACs synthesized from Functional Requirements + Field Spec + Validation Rules + Security + Architectural Notes, description present, stakeholder-reviewed, Jira status "UAT ready")
 ACs with Gherkin scenarios: 7 of 12 | Blocked: 2 (TM-05, D-Enforcement) | Excluded: 3 (edge-case — scope filter table only)
 Figma design: Node 84:5369 (REACTIVATE section), file 7pygkopuqyeEhUTMVp9lrP, canvas 78:7403 — Screen "Tenant Suspend, Reactivate, Archive" (Stage 2 SUCCESS — design-verified re-run, supersedes design-blind v1)
 
@@ -216,6 +218,11 @@ Feature: Tenant Reactivation Flow (US 29.8 — PRD1042-589)
   # Reactivate action is System Admin only per Permission Matrix. All other
   # roles must be blocked. Per RefiNext domain rule, unauthorized access to
   # the endpoint returns 404 (not 403) to prevent tenant enumeration.
+  #
+  # Bank Admin (bank_admin, bank_tenant user_type) is explicitly unauthorized:
+  # tenant reactivation is a PLATFORM-level operation (System Admin only) and
+  # Bank Admin's scope is limited to bank tenant user management. Confirmed by
+  # PRD1042-48 (Ivan Mladenovic decision 2026-07-06).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-11 @p0 @e2e-ready
@@ -228,6 +235,7 @@ Feature: Tenant Reactivation Flow (US 29.8 — PRD1042-589)
 
     Examples:
       | role                  |
+      | Bank Admin            |
       | Front Office          |
       | Back Office           |
       | Support User          |

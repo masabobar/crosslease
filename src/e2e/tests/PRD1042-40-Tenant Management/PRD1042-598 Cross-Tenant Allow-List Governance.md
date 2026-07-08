@@ -7,6 +7,8 @@ DoR status: PASS (16 ACs derived from Functional/Security/Edge sections, permiss
 ACs with Gherkin scenarios: 6 of 16 | Blocked: 2 (TM-04 Governance History UI) | Excluded: 8 (edge-case or separate-feature — scope filter table only)
 Figma design: No Figma URL on story or FE subtask PRD1042-699 (Stage 2 FAILED — backend governance/enforcement story; Governance History UI belongs to TM-04)
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot perform cross-tenant operations (bound to one tenant); allow-list is platform-only.
+
 ---
 
 ## Blocked ACs (no scenarios generated)
@@ -145,6 +147,10 @@ Feature: Cross-Tenant Allow-List Governance & Audit (US 29.17 — PRD1042-598)
   # gateway (defense-in-depth). Every blocked attempt returns HTTP 404 (not
   # 403) to prevent tenant-existence inference, and emits a
   # CROSS_TENANT_ACCESS_BLOCKED event tagged as a security event.
+  # Bank Admin (`bank_admin`) is bound to exactly one tenant (bank_tenant user
+  # type) — cross-tenant write on Bank-B from a Bank-A-bound Bank Admin is
+  # blocked with the same 404 pattern (per PRD1042-48, Ivan Mladenovic
+  # 2026-07-06).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-02 @ac-03 @p0
@@ -165,6 +171,7 @@ Feature: Cross-Tenant Allow-List Governance & Audit (US 29.17 — PRD1042-598)
     Examples:
       | role          | write_operation             |
       | System Admin  | POST /api/tenants/Bank-B/... |
+      | Bank Admin    | POST /api/tenants/Bank-B/... |
       | Front Office  | POST /api/tenants/Bank-B/... |
       | Back Office   | POST /api/tenants/Bank-B/... |
       | LC User       | POST /api/tenants/Bank-B/... |

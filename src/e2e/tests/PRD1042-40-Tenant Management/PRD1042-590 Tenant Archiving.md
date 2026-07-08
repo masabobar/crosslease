@@ -7,6 +7,8 @@ DoR status: PASS (18 ACs, description present, stakeholder-reviewed, Jira status
 ACs with Gherkin scenarios: 6 of 18 | Blocked: 6 (PRD1042-77, PRD1042-1105, TM-11, D-Integration, D-Audit, D-EventBus) | Excluded: 6 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 84:5370 (ARCHIVE section) on canvas 78:7403, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant Suspend, Reactivate, Archive" (Stage 2 FAILED — Figma plan quota exhausted; ARCHIVE section (84:5370) not extractable. REACTIVATE sibling section (84:5369) from PRD1042-589 available as closest design reference — see design gap notes.)
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot archive tenants (platform-only).
+
 ---
 
 ## Blocked ACs (no scenarios generated)
@@ -24,26 +26,26 @@ Figma design: Node 84:5370 (ARCHIVE section) on canvas 78:7403, file 7pygkopuqye
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                                             | Classification     | Rationale                                                                                                                                                                   |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Only Suspended tenants can be archived; Active/Draft/Provisioning → 422                                                                 | `happy-path`       | Precondition for archive workflow: Archive action available on Suspended tenant, opens "Archive tenant" modal (design UNVERIFIED, inferred from REACTIVATE sibling 84:5369) |
-| AC-02 | Two-Actor Approval via PRD1042-77 with governance justification + irreversibility acknowledgement                                       | `Blocked`          | Countersignature step requires PRD1042-77 wiring; happy-path Outline sets up the flow but full end-to-end countersign is Blocked                                            |
-| AC-03 | On countersign: tenant → Archived/Decommissioned, NewBusinessAllowed=false                                                              | `happy-path`       | Terminal assertion of happy-path Outline once countersign completes (status = Archived, NBA = false)                                                                        |
-| AC-04 | Integration binding decommissioned — active=false, credentials invalidated, timestamp recorded                                          | `Blocked`          | Integration layer teardown not E2E observable at UI; requires TM-11 backend implementation                                                                                  |
-| AC-05 | Inbound integration events for archived tenant rejected at integration layer (HTTP 4xx + operational alert)                             | `Blocked`          | Requires inbound-event injection fixture (D-Integration) to synthesize post-archive traffic                                                                                 |
-| AC-06 | Tenant enters read-only mode; no operational actions permitted by any role                                                              | `Blocked`          | Open bug PRD1042-1105 — edit actions remain enabled for archived tenants; AC un-testable at UI level until bug is fixed                                                     |
-| AC-07 | Archiving is terminal — no further lifecycle transitions                                                                                | `separate-feature` | Terminal-state guarantee verified via absence of any state-transition action from Archived elsewhere (US 29.x lifecycle stories)                                            |
-| AC-08 | Historical business objects, audit records, governance logs preserved                                                                   | `separate-feature` | Data preservation is a BE data-integrity / audit test, not E2E UI                                                                                                           |
-| AC-09 | Physical data deletion NOT triggered by archive; separate governed operation subject to retention + Legal Hold                          | `separate-feature` | Deletion pathway is a separate feature (retention/GDPR engine, POST-NOVEMBER deferred)                                                                                      |
-| AC-10 | Governance Justification: long text, mandatory, min 50 chars                                                                            | `main-error`       | Blocks initiation when validation fails — Submit disabled or error shown. Note: Justification field UI copy UNVERIFIED (design gap)                                         |
-| AC-11 | Irreversibility Acknowledgement checkbox — mandatory, "I confirm this action is irreversible", Submit disabled until checked            | `happy-path`       | Gating control for Submit — happy-path must set the checkbox; separate scenario asserts Submit is disabled until checkbox is checked                                        |
-| AC-12 | Active User Account Acknowledgement checkbox — conditional (when tenant has active/suspended users), mandatory when shown, non-blocking | `edge-case`        | Conditional rendering — requires reliable tenant-with-users fixture; UI presence-only, does not block archive                                                               |
-| AC-13 | Actor independence enforced by PRD1042-77 (initiator ≠ countersignatory)                                                                | `Blocked`          | Server-side rejection requires Four-Eyes wiring (PRD1042-77)                                                                                                                |
-| AC-14 | Read access to archived data — Admin + Auditor confirmed; Support role ambiguous                                                        | `edge-case`        | Support-role read access pending product decision (Vesna Plakalovic 2026-06-10 comment 36743) — `@pending` scenario                                                         |
-| AC-15 | Archive action only for System Admin; HTTP 404 to all other roles (enumeration prevention)                                              | `main-error`       | RBAC + 404-not-403 domain rule; @e2e-ready with seeded per-role users                                                                                                       |
-| AC-16 | Legal Hold Flag=true suspends automated retention-driven deletion regardless of schedule                                                | `separate-feature` | Retention/Legal Hold behavior is a separate feature (GDPR retention engine, POST-NOVEMBER deferred)                                                                         |
-| AC-17 | Audit events TENANT_ARCHIVED + INTEGRATION_BINDING_DECOMMISSIONED emitted                                                               | `Blocked`          | Audit log inspection requires D-Audit fixture                                                                                                                               |
-| AC-18 | Emits `tenant.archived` event to Integration routing layer + User Management                                                            | `Blocked`          | Event bus emission requires D-EventBus fixture                                                                                                                              |
+| AC    | Description                                                                                                                             | Classification     | Rationale                                                                                                                                                                                                                                     |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Only Suspended tenants can be archived; Active/Draft/Provisioning → 422                                                                 | `happy-path`       | Precondition for archive workflow: Archive action available on Suspended tenant, opens "Archive tenant" modal (design UNVERIFIED, inferred from REACTIVATE sibling 84:5369)                                                                   |
+| AC-02 | Two-Actor Approval via PRD1042-77 with governance justification + irreversibility acknowledgement                                       | `Blocked`          | Countersignature step requires PRD1042-77 wiring; happy-path Outline sets up the flow but full end-to-end countersign is Blocked                                                                                                              |
+| AC-03 | On countersign: tenant → Archived/Decommissioned, NewBusinessAllowed=false                                                              | `happy-path`       | Terminal assertion of happy-path Outline once countersign completes (status = Archived, NBA = false)                                                                                                                                          |
+| AC-04 | Integration binding decommissioned — active=false, credentials invalidated, timestamp recorded                                          | `Blocked`          | Integration layer teardown not E2E observable at UI; requires TM-11 backend implementation                                                                                                                                                    |
+| AC-05 | Inbound integration events for archived tenant rejected at integration layer (HTTP 4xx + operational alert)                             | `Blocked`          | Requires inbound-event injection fixture (D-Integration) to synthesize post-archive traffic                                                                                                                                                   |
+| AC-06 | Tenant enters read-only mode; no operational actions permitted by any role                                                              | `Blocked`          | Open bug PRD1042-1105 — edit actions remain enabled for archived tenants; AC un-testable at UI level until bug is fixed                                                                                                                       |
+| AC-07 | Archiving is terminal — no further lifecycle transitions                                                                                | `separate-feature` | Terminal-state guarantee verified via absence of any state-transition action from Archived elsewhere (US 29.x lifecycle stories)                                                                                                              |
+| AC-08 | Historical business objects, audit records, governance logs preserved                                                                   | `separate-feature` | Data preservation is a BE data-integrity / audit test, not E2E UI                                                                                                                                                                             |
+| AC-09 | Physical data deletion NOT triggered by archive; separate governed operation subject to retention + Legal Hold                          | `separate-feature` | Deletion pathway is a separate feature (retention/GDPR engine, POST-NOVEMBER deferred)                                                                                                                                                        |
+| AC-10 | Governance Justification: long text, mandatory, min 50 chars                                                                            | `main-error`       | Blocks initiation when validation fails — Submit disabled or error shown. Note: Justification field UI copy UNVERIFIED (design gap)                                                                                                           |
+| AC-11 | Irreversibility Acknowledgement checkbox — mandatory, "I confirm this action is irreversible", Submit disabled until checked            | `happy-path`       | Gating control for Submit — happy-path must set the checkbox; separate scenario asserts Submit is disabled until checkbox is checked                                                                                                          |
+| AC-12 | Active User Account Acknowledgement checkbox — conditional (when tenant has active/suspended users), mandatory when shown, non-blocking | `edge-case`        | Conditional rendering — requires reliable tenant-with-users fixture; UI presence-only, does not block archive                                                                                                                                 |
+| AC-13 | Actor independence enforced by PRD1042-77 (initiator ≠ countersignatory)                                                                | `Blocked`          | Server-side rejection requires Four-Eyes wiring (PRD1042-77)                                                                                                                                                                                  |
+| AC-14 | Read access to archived data — Admin + Auditor confirmed; Support role ambiguous; Bank Admin own-tenant read ambiguous                  | `edge-case`        | Support-role read access pending product decision (Vesna Plakalovic 2026-06-10 comment 36743) — `@pending` scenario. Bank Admin own-tenant archived read parallel ambiguity per PRD1042-48 (Ivan Mladenovic 2026-07-06) — `@pending` scenario |
+| AC-15 | Archive action only for System Admin; HTTP 404 to all other roles (enumeration prevention) — including Bank Admin (platform-only)       | `main-error`       | RBAC + 404-not-403 domain rule; @e2e-ready with seeded per-role users. Bank Admin (`bank_admin`) added 2026-07-08 per PRD1042-48 — tenant archiving is platform-only, Bank Admin cannot initiate                                              |
+| AC-16 | Legal Hold Flag=true suspends automated retention-driven deletion regardless of schedule                                                | `separate-feature` | Retention/Legal Hold behavior is a separate feature (GDPR retention engine, POST-NOVEMBER deferred)                                                                                                                                           |
+| AC-17 | Audit events TENANT_ARCHIVED + INTEGRATION_BINDING_DECOMMISSIONED emitted                                                               | `Blocked`          | Audit log inspection requires D-Audit fixture                                                                                                                                                                                                 |
+| AC-18 | Emits `tenant.archived` event to Integration routing layer + User Management                                                            | `Blocked`          | Event bus emission requires D-EventBus fixture                                                                                                                                                                                                |
 
 **Gherkin generated for:** AC-01, AC-03, AC-10, AC-11, AC-15
 **Blocked (no Gherkin):** AC-02, AC-04, AC-05, AC-06, AC-13, AC-17, AC-18
@@ -53,17 +55,18 @@ Figma design: Node 84:5370 (ARCHIVE section) on canvas 78:7403, file 7pygkopuqye
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                              | AC                  | Priority | E2E                                                                             |
-| ------------- | ----------------------------------------------------------------------------------------------------- | ------------------- | -------- | ------------------------------------------------------------------------------- |
-| `@happy-path` | System Admin archives Suspended tenant with valid justification and irreversibility acknowledgement   | AC-01, AC-03, AC-11 | P0       | ⚙️ needs PRD1042-77 countersign fixture + PRD1042-1105 bug fix (read-only mode) |
-| `@happy-path` | Submit button is disabled until Irreversibility Acknowledgement checkbox is checked                   | AC-11               | P0       | ⚙️ needs ARCHIVE modal design verification (Figma quota)                        |
-| `@main-error` | Governance justification below 50 characters is rejected                                              | AC-10               | P0       | ✅                                                                              |
-| `@main-error` | Governance justification empty is rejected                                                            | AC-10               | P0       | ✅                                                                              |
-| `@main-error` | Archive attempted on non-Suspended tenant returns 422 Invalid transition                              | AC-01               | P0       | ✅                                                                              |
-| `@main-error` | Non-System-Admin roles receive HTTP 404 on archive endpoint (enumeration prevention)                  | AC-15               | P0       | ✅ `@e2e-ready`                                                                 |
-| `@pending`    | Support-role read access to archived tenant — awaiting product decision (Vesna Plakalovic 2026-06-10) | AC-14               | P1       | ⚙️ pending product decision                                                     |
+| Tag           | Scenario                                                                                                                  | AC                  | Priority | E2E                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------- | ------------------------------------------------------------------------------- |
+| `@happy-path` | System Admin archives Suspended tenant with valid justification and irreversibility acknowledgement                       | AC-01, AC-03, AC-11 | P0       | ⚙️ needs PRD1042-77 countersign fixture + PRD1042-1105 bug fix (read-only mode) |
+| `@happy-path` | Submit button is disabled until Irreversibility Acknowledgement checkbox is checked                                       | AC-11               | P0       | ⚙️ needs ARCHIVE modal design verification (Figma quota)                        |
+| `@main-error` | Governance justification below 50 characters is rejected                                                                  | AC-10               | P0       | ✅                                                                              |
+| `@main-error` | Governance justification empty is rejected                                                                                | AC-10               | P0       | ✅                                                                              |
+| `@main-error` | Archive attempted on non-Suspended tenant returns 422 Invalid transition                                                  | AC-01               | P0       | ✅                                                                              |
+| `@main-error` | Non-System-Admin roles (incl. Bank Admin) receive HTTP 404 on archive endpoint (enumeration prevention)                   | AC-15               | P0       | ✅ `@e2e-ready`                                                                 |
+| `@pending`    | Support-role read access to archived tenant — awaiting product decision (Vesna Plakalovic 2026-06-10)                     | AC-14               | P1       | ⚙️ pending product decision                                                     |
+| `@pending`    | Bank Admin read access to own tenant's archived data — awaiting product decision (PRD1042-48, Ivan Mladenovic 2026-07-06) | AC-14               | P1       | ⚙️ pending product decision                                                     |
 
-Active scenario blocks: 7 (2 Scenarios + 5 Scenario Outlines/Scenarios)
+Active scenario blocks: 8 (2 Scenarios + 6 Scenario Outlines/Scenarios, incl. 2 @pending)
 E2E automation candidates: 3 of 6 active scenarios ✅
 
 ---
@@ -190,6 +193,10 @@ Feature: Tenant Archiving / Decommissioning (US 29.9 — PRD1042-590)
   # receive HTTP 404 (not 403) — per RefiNext domain rule for enumeration
   # prevention. Fully E2E-ready with seeded per-role users; requires no
   # additional test endpoints beyond the standard fixture set.
+  # Bank Admin (`bank_admin`) added 2026-07-08 per PRD1042-48 (Ivan Mladenovic
+  # 2026-07-06): tenant archiving is a platform-level operation. Bank Admin is
+  # tenant-scoped (`bank_tenant`) and cannot archive any tenant — its own or
+  # any other. Same 404 enumeration-prevention rule applies.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-15 @p0 @e2e-ready
@@ -202,6 +209,7 @@ Feature: Tenant Archiving / Decommissioning (US 29.9 — PRD1042-590)
 
     Examples:
       | role                 |
+      | Bank Admin           |
       | Front Office         |
       | Back Office          |
       | Leasing Company User |
@@ -222,4 +230,23 @@ Feature: Tenant Archiving / Decommissioning (US 29.9 — PRD1042-590)
     And I am logged in as Support User
     When I open the tenant "acme-corp" detail page
     Then the outcome is determined by product decision (allow read-only OR deny with 404)
+
+  # ---------------------------------------------------------------------------
+  # PENDING — AC-14 (Bank Admin read access to own archived tenant)
+  # Parallel ambiguity to Support-role read access: AC-14 names only System Admin
+  # and Auditor as guaranteed read access to archived data. Bank Admin
+  # (`bank_admin`) is tenant-scoped (`bank_tenant`) — the question is whether a
+  # Bank Admin retains read access to its own tenant's archived data after the
+  # tenant is decommissioned. The spec does not explicitly exclude own-tenant
+  # read for Bank Admin, but it also does not include Bank Admin in AC-14's
+  # allow-list. Same ambiguity pattern as Support (Vesna Plakalovic 2026-06-10
+  # comment 36743). Added 2026-07-08 per PRD1042-48 (Ivan Mladenovic 2026-07-06).
+  # ---------------------------------------------------------------------------
+
+  @pending @ac-14 @p1
+  Scenario: Bank Admin read access to own tenant's archived data — awaiting product decision (AC-14)
+    Given a tenant "bank-a" exists with status "Archived"
+    And I am logged in as Bank Admin of tenant "bank-a"
+    When I open the tenant "bank-a" detail page
+    Then the outcome is determined by product decision (allow read-only own-tenant view OR deny with 404)
 ```

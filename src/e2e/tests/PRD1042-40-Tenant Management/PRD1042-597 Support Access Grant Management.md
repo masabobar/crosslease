@@ -1,5 +1,7 @@
 # PRD1042-597 — US 29.16 | Tenant Management | Support Access Grant Management
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot manage Support Access Grants (platform-level authority).
+
 Generated: 2026-07-07
 Story: PRD1042-597 — US 29.16 | Tenant Management | Support Access Grant Management
 Epic: PRD1042-40 — Epic 29: Tenant Management
@@ -192,6 +194,7 @@ Feature: Support Access Grant Management (US 29.16 — PRD1042-597)
 
     Examples:
       | role                 |
+      | Bank Admin           |
       | Front Office         |
       | Back Office          |
       | Leasing Company User |

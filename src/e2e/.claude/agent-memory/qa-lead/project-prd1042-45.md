@@ -13,6 +13,7 @@ metadata:
 **Figma extraction_status:** PARTIAL — only the "Set a new password" dialog (node 167:18629) is present. Missing: Forgot Password screen, email confirmation screen, invalid token error screen, MFA verification step, success/completion screen.
 
 **AC Summary (15 total):**
+
 - AC-01: Reset request returns generic success regardless of email existence (account enumeration prevention)
 - AC-02: HTTP response status + body identical regardless of email existence; token never in response body; timing-attack mitigation noted
 - AC-03: Rate limiting — max 3 requests/email/hour, IP-based throttle, distributed enforcement, rate-limited responses still generic success
@@ -35,7 +36,7 @@ metadata:
 
 2. **Rate limiting anchored after that same incident** (Philipp, 2026-05-07): Without rate limit the endpoint is an authentication discovery API and notification-spam vector. AC-03 specifics (3/email/hour + IP-based cap) are not arbitrary — they were the negotiated remediation boundary. Test against both the per-email limit and the IP-based limit separately.
 
-3. **MFA gate inside the reset flow** (Philipp, 2026-05-11 + Vesna orange edits confirmed): The *standard* concern (MFA enforced post-reset at login) was already covered by AC-11/AC-14. Philipp identified the gap: email-account-takeover (SIM-swap, compromised mailbox) can bypass MFA entirely if only the reset token is required. AC-10 adds MFA verification as a gate *before* the new password is committed, scoped to security-sensitive roles (Power User, Auditor, Back Office/Risk). Lower-risk roles (Front Office, Leasing Company User) use the standard token-only flow. This is a per-role bifurcation in the reset flow — test both paths explicitly.
+3. **MFA gate inside the reset flow** (Philipp, 2026-05-11 + Vesna orange edits confirmed): The _standard_ concern (MFA enforced post-reset at login) was already covered by AC-11/AC-14. Philipp identified the gap: email-account-takeover (SIM-swap, compromised mailbox) can bypass MFA entirely if only the reset token is required. AC-10 adds MFA verification as a gate _before_ the new password is committed, scoped to security-sensitive roles (Power User, Auditor, Back Office/Risk). Lower-risk roles (Front Office, Leasing Company User) use the standard token-only flow. This is a per-role bifurcation in the reset flow — test both paths explicitly.
 
 4. **MFA freshness window** (Philipp, 2026-05-22 — Katarina's double-MFA concern): MFA completed during reset counts as freshly verified for the immediately following session (≤5 min freshness window). No second MFA prompt at login within that window. After 5 min, standard Login + MFA applies. AC-10 and AC-14 both reference this. Test: within the window, post-reset login should not re-prompt for MFA; after the window, it should.
 
@@ -48,6 +49,7 @@ metadata:
 8. **MFA for lost-device recovery** (AC-10): Recovery flow for lost MFA devices is explicitly out of scope — requires separate authorized admin process. Do not write tests for this against PRD1042-45.
 
 **Figma design observations (from 2026-05-25 extraction):**
+
 - Only frame present: "Set a new password" dialog (node 167:18629) — 480px centered modal
 - Components: single password input with eye icon, 5-item policy checklist (all same check-circle icon — no met/unmet state), "Update password" button (blue #2d62ef)
 - Missing from design: Confirm Password field (required by AC-09), error states on input, disabled/loading button states, MFA step, all other flow screens
@@ -55,11 +57,12 @@ metadata:
 - Password policy checklist items hardcoded (MAJOR gap vs AC-09 configurability): min 8 chars, lowercase, uppercase, number, symbol
 
 **Domain flags triggered (for test generation):**
+
 - SECURITY_NEGATIVE (AC-02, AC-04): Token must not appear in response body — mandatory negative assertion
 - RATE_LIMITING (AC-03): Per-email and per-IP limits, distributed enforcement
 - TOKEN_LIFECYCLE (AC-04, AC-06, AC-07, AC-08, AC-13): Cryptographic generation, expiry, single-use, reuse prevention
 - TENANT_ISOLATION (AC-03, AC-04, AC-05): Token scoped to originating tenant; cross-tenant token reuse must fail
-- MFA_GATE_IN_FLOW (AC-10, AC-14): MFA required *before* password commit for security-sensitive roles (NOT only post-reset at login)
+- MFA_GATE_IN_FLOW (AC-10, AC-14): MFA required _before_ password commit for security-sensitive roles (NOT only post-reset at login)
 - MFA_FRESHNESS_WINDOW (AC-10, AC-14): ≤5 min freshness; no second MFA prompt within window; standard MFA after window
 - ROLE_BIFURCATION (AC-10): Two distinct reset flows by role — MFA-gated path vs. token-only path
 - SESSION_INVALIDATION (AC-11, AC-12): Old tokens, MFA state, cross-device sessions, downstream services — all must be invalidated
@@ -67,12 +70,14 @@ metadata:
 - ASYNC_SESSION_PROPAGATION (AC-12): Session invalidation must propagate across all services/auth layers
 
 **E2E blockers:**
+
 - D17 (TEST_JWT_SECRET / test-forge endpoint): Needed for AC-08 expired/tampered token test cases — same as PRD1042-43 AC-14/AC-16
 - D19 (Throwaway user API): Needed for reset-flow E2E tests (create test user, trigger reset, validate new auth)
 - D21 (AUDITOR_VALIDITY_MINUTES): MFA-gated path for Auditor role needs time-manipulation; impacts AC-10 Auditor variant
 - R1 (auth provider unconfirmed): MFA-gate tests (AC-10) require auth provider to be known — mark as test.fixme
 
 **Open alignment items:**
+
 - MFA for security-sensitive roles during reset (AC-10): auth provider (R1) must be resolved before MFA-gate can be implemented or tested in E2E
 - MFA lost-device recovery: deferred to separate admin recovery story (not in scope here)
 - Timing-attack mitigation (AC-02 "should"): implementation-dependent, cannot be tested at E2E layer without backend instrumentation
@@ -89,4 +94,14 @@ metadata:
 **Stage 4 excluded (separate-feature):** AC-02 (D17 blocked), AC-03 (rate limiting), AC-06 (token expiry), AC-12 (session invalidation)
 **Stage 4 excluded (edge-case):** AC-04, AC-11, AC-13, AC-15 — recommended as backend integration tests
 
-Related memories: [[project-prd1042-39]], [[project-prd1042-43]], [[project-refinext-overview]], [[reference-jira]], [[feedback-figma-design-convention]]
+**2026-07-08 Bank Admin update (per PRD1042-48 Ivan Mladenovic decision 2026-07-06):**
+
+- Bank Admin role added — wire value `bank_admin`, user type `bank_tenant`
+- Classification: security-sensitive role under AC-10 (falls under "Power User, Auditor, Back Office / Risk, and other security-sensitive roles defined by tenant security policy")
+- Reset flow behavior for Bank Admin is IDENTICAL to Auditor: MFA-gated path (MFA verification required before password commit); MFA freshness window ≤5 min applies
+- Change applied: AC-10 MFA scenario converted from single-role Scenario (Auditor only) to Scenario Outline with 2 rows (Auditor auditor@bank.com, Bank Admin bank.admin@bank.com)
+- All other ACs remain role-agnostic — no other change needed
+- File updated in place; header note preserves change provenance
+- Scenario count unchanged (10 blocks); active examples count within outlines increased by 1 (2 privileged roles vs. 1 previously)
+
+Related memories: [[project-prd1042-39]], [[project-prd1042-43]], [[project-prd1042-48]], [[project-refinext-overview]], [[reference-jira]], [[feedback-figma-design-convention]]

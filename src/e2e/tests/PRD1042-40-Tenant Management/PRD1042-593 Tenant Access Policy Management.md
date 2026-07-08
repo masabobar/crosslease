@@ -1,9 +1,11 @@
 # PRD1042-593 — US 29.12 | TENANT MANAGEMENT | Tenant Access Policy Management
 
 Generated: 2026-07-07
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is NOT an authorized actor for Access Policy management (Permission Matrix: Power User/Bank Admin = ✗ for both view and modify). Bank Admin is added to the AC-08 404 Outline as a non-System Admin role. System Admin retains sole platform-level authority for tenant access policy configuration.
+
 Story: PRD1042-593 — US 29.12 | Tenant Management | Tenant Access Policy Management
 Epic: PRD1042-40 — Epic 29: Tenant Management
-DoR status: PASS (8 ACs, description present, stakeholder-reviewed, QA ready)
+DoR status: PASS (8 ACs, description present, stakeholder-reviewed, UAT ready)
 ACs with Gherkin scenarios: 7 of 8 | Blocked: 0 | Excluded: 1 (edge-case — scope filter table only)
 Figma design: No Figma URL linked to story or child tickets (BE/FE/QA subtasks empty). FE PRD1042-684 is Done — design not bubbled to parent (recurring bubble-up gap). Stage 2 FAILED — design-blind mode; Tenant Detail canvas 52:1806 used as closest cached sibling pattern reference. Design unverified.
 
@@ -37,7 +39,7 @@ Figma design: No Figma URL linked to story or child tickets (BE/FE/QA subtasks e
 | `@happy-path` | GET /access-policy returns current flags for System Admin (AC-01)                          | AC-01        | P0       | ✅                                               |
 | `@main-error` | Justification shorter than 20 characters is rejected (AC-05)                               | AC-05        | P0       | ✅                                               |
 | `@main-error` | Flag modification on Archived tenant returns 422 (AC-06)                                   | AC-06        | P0       | ⚙️ needs PRD1042-1100 Archived fixture           |
-| `@main-error` | Non-System Admin roles receive 404 on Access Policy endpoint (AC-08)                       | AC-08        | P0       | ✅                                               |
+| `@main-error` | Non-System Admin roles (incl. Bank Admin) receive 404 on GET+PUT Access Policy (AC-08)     | AC-08        | P0       | ✅                                               |
 | `@main-error` | Support Read-Only flag = false blocks new Support Access Grant creation (AC-02)            | AC-02        | P0       | ⚙️ needs TM-16 grant-creation endpoint           |
 | `@main-error` | Auditor flag = false blocks Auditor provisioning at User Management (AC-03)                | AC-03        | P0       | ⚙️ needs D19 (throwaway user) + provisioning API |
 | `@main-error` | LC Portal Enabled = false blocks LC User portal access with 404 (AC-04)                    | AC-04        | P0       | ⚙️ needs LC Portal fixture (D-LCPortal)          |
@@ -148,7 +150,12 @@ Feature: Tenant Access Policy Management (US 29.12 — PRD1042-593)
   # MAIN ERROR — AC-08
   # Role-gating uses 404-not-403 to prevent endpoint enumeration by unprivileged
   # roles (canonical RefiNext tenant-management pattern; matches PRD1042-582,
-  # PRD1042-583, PRD1042-585).
+  # PRD1042-583, PRD1042-585). Bank Admin (`bank_admin`) is included in the
+  # unprivileged set per PRD1042-48 (Ivan Mladenovic 2026-07-06): the Permission
+  # Matrix in this story explicitly denies Bank Admin (Power User) both view
+  # and modify on Access Policy — this is a platform-level, System-Admin-only
+  # configuration. Both GET (view) and PUT (modify) must return 404 for every
+  # non-System-Admin role, including Bank Admin acting against its own tenant.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-08 @p0 @e2e-ready
@@ -156,9 +163,12 @@ Feature: Tenant Access Policy Management (US 29.12 — PRD1042-593)
     Given a <role> user is authenticated
     When I GET "/api/tenants/acme-bank/access-policy"
     Then the response status should be 404
+    When I PUT to "/api/tenants/acme-bank/access-policy" with any valid body
+    Then the response status should be 404
 
     Examples:
       | role          |
+      | Bank Admin    |
       | Front Office  |
       | Back Office   |
       | LC User       |

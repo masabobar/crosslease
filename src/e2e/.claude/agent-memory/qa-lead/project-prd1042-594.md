@@ -1,11 +1,13 @@
 ---
 name: project-prd1042-594
-description: US 29.13 Tenant Governance History View, 14 ACs, DoR PASS, no Figma URL linked, Stage 2 FAILED (design-blind), Stage 3 WARNINGS, 7 scenario blocks, 2 need D21 (AUDITOR_VALIDITY_MINUTES + engagement scope), 404-not-403 confirmed, System Admin + Auditor only viewers
+description: US 29.13 Tenant Governance History View, 14 ACs, DoR PASS, no Figma URL linked, Stage 2 FAILED (design-blind), Stage 3 WARNINGS, 8 scenario blocks (was 7) after 2026-07-08 Bank Admin retrofit, 2 need D21 + 1 needs D20, 404-not-403 confirmed, System Admin + Auditor + Bank Admin (own tenant) viewers
 metadata:
   type: project
 ---
 
 Story PRD1042-594 — US 29.13 | Tenant Management | Tenant Governance History View. Read-only tab inside Tenant Detail view (canvas 52:1806, sibling to [[project-prd1042-585]] US 29.4). Processed 2026-07-07.
+
+**2026-07-08 update:** Retrofitted for Bank Admin role (`bank_admin`, `bank_tenant`) per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin can view OWN tenant's governance history (read-only); cross-tenant → 404. Changes: (1) AC-05 rationale + AC-11 rationale extended in scope filter; (2) happy-path Outline expanded from 2 → 3 role variants (added `Bank Admin whose tenant scope is "CL-DE001"`); (3) new @main-error scenario "Bank Admin cross-tenant governance history view returns 404" added after AC-11 unauthorized-roles Outline (needs D20 second Bank Tenant B fixture). Total scenario blocks 7 → 8; E2E candidates 5 of 8 (was 5 of 7). Note: Jira ticket permission matrix still lists Power User (Bank Admin) as ✗ for View Governance History — user authoritative directive supersedes the ticket text.
 
 **Why:** Governance/audit-trail viewer for System Admin and Auditor roles. Read-only, immutable, append-only event log. Depends on PRD1042-37 (Audit Trail Service — read source) and PRD1042-37 (audit-write for AUDITOR_GOVERNANCE_ACCESS event).
 

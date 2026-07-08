@@ -1,5 +1,7 @@
 # PRD1042-586 — US 29.5 | Tenant Management | Module Activation per Tenant
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot activate modules (platform-only).
+
 Generated: 2026-07-07
 Story: PRD1042-586 — US 29.5 | Tenant Management | Module Activation per Tenant
 Epic: PRD1042-40 — Epic 29: Tenant Management
@@ -74,7 +76,7 @@ Note: AC-04, AC-05, AC-16, AC-22 remain infrastructure-blocked at the state-mach
 | `@main-error` | Module not in Inactive state cannot be activated (Scenario Outline — 3 non-Inactive states)                                   | AC-10        | P0       | ⚙️ needs seeded modules in Pending Approval / Pending Enforcement / Active states   |
 | `@main-error` | Tenant not in Active lifecycle state blocks activation (Scenario Outline — 4 non-Active tenant states)                        | AC-11        | P0       | ⚙️ needs seeded tenants in Draft / Pending Activation / Suspended / Rejected states |
 | `@main-error` | Duplicate activation on Pending Approval or Pending Enforcement module returns conflict error (Scenario Outline — 2 variants) | AC-12, AC-24 | P0       | ⚙️ needs seeded module in Pending Approval / Pending Enforcement states             |
-| `@main-error` | Non-System Admin roles receive 404 on activation endpoint (Scenario Outline — 4 role variants)                                | AC-19        | P0       | ✅                                                                                  |
+| `@main-error` | Non-System Admin roles receive 404 on activation endpoint (Scenario Outline — 5 role variants)                                | AC-19        | P0       | ✅                                                                                  |
 
 Active scenario blocks: 9 (5 Outlines + 4 Scenarios)
 E2E automation candidates: 1 of 9 scenarios ✅
@@ -299,6 +301,7 @@ Feature: Module Activation per Tenant (US 29.5 — PRD1042-586)
 
     Examples:
       | role                 |
+      | bank_admin           |
       | support_user         |
       | auditor              |
       | front_office         |

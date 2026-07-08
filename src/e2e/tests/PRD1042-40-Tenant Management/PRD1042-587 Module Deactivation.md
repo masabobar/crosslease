@@ -1,6 +1,7 @@
 # PRD1042-587 — US 29.6 | TENANT MANAGEMENT | Module Deactivation per Tenant
 
 Generated: 2026-07-07
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot deactivate modules (platform-only).
 Story: PRD1042-587 — US 29.6 | TENANT MANAGEMENT | Module Deactivation per Tenant
 Epic: PRD1042-40 — Epic 29: Tenant Management
 DoR status: PASS (16 ACs, description present, stakeholder-reviewed, QA in progress)
@@ -39,7 +40,7 @@ Figma design: Nodes 93:20741 (MODULE DEACTIVATION) + 93:20742 (DEPENDENCY CONFLI
 | AC-13 | Re-check at confirmation time catches race-condition new conflicts             | `edge-case`        | Not deterministically triggerable without a test hook to inject conflict mid-flow                                                           |
 | AC-14 | Enforcement removal async with retry; module stays Inactive if removal fails   | `Blocked`          | D-Enforcement: async retry behaviour not observable at UI layer                                                                             |
 | AC-15 | Audit events: MODULE_DEACTIVATION_REQUESTED, MODULE_DEACTIVATED                | `separate-feature` | Audit event assertions belong in BE/audit integration suite (PRD1042-37)                                                                    |
-| AC-16 | Non-System Admin roles receive HTTP 404                                        | `main-error`       | RBAC 404-not-403 rule; Outline covering 4 non-admin role variants; @e2e-ready                                                               |
+| AC-16 | Non-System Admin roles receive HTTP 404                                        | `main-error`       | RBAC 404-not-403 rule; Outline covering 5 non-admin role variants (incl. `bank_admin` per PRD1042-48 2026-07-06); @e2e-ready                |
 
 **Gherkin generated for:** AC-01, AC-02, AC-06, AC-07, AC-08, AC-09, AC-10, AC-11, AC-16
 **Blocked (no Gherkin):** AC-03, AC-04, AC-12, AC-14
@@ -55,7 +56,7 @@ Figma design: Nodes 93:20741 (MODULE DEACTIVATION) + 93:20742 (DEPENDENCY CONFLI
 | `@main-error` | Justification below minimum length blocks submission (AC-07)                   | AC-07                      | P0       | ⚙️ needs module in Active state precondition + Justification field visible in UI (design gap) |
 | `@main-error` | Active workflow dependency blocks deactivation and disables Confirm (AC-02)    | AC-02, AC-10, AC-11        | P0       | ⚙️ needs module with active dependent workflow seeded                                         |
 | `@main-error` | Deactivation of non-Active module is rejected (AC-09)                          | AC-09                      | P0       | ⚙️ needs module in non-Active state seeded                                                    |
-| `@main-error` | Non-System Admin roles receive 404 on deactivation API (Outline — 4 variants)  | AC-16                      | P0       | ✅                                                                                            |
+| `@main-error` | Non-System Admin roles receive 404 on deactivation API (Outline — 5 variants)  | AC-16                      | P0       | ✅                                                                                            |
 
 Active scenario blocks: 5 (2 Outlines + 3 Scenarios)
 E2E automation candidates: 1 of 5 scenarios ✅
@@ -197,6 +198,11 @@ Feature: Module Deactivation per Tenant (US 29.6 — PRD1042-587)
   # the module deactivation API. This follows the 404-not-403 tenant isolation
   # pattern established across Epic 29 — 404 prevents role enumeration.
   # Seeded role users are available in the test environment; no D-ID required.
+  # Bank Admin (bank_admin, bank_tenant) is included per PRD1042-48
+  # (Ivan Mladenovic decision 2026-07-06): module deactivation is a
+  # platform-only action; Bank Admin manages bank tenant users only and
+  # MUST NOT be able to deactivate modules — receives 404 same as other
+  # non-System Admin roles.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-16 @p0 @e2e-ready
@@ -209,6 +215,7 @@ Feature: Module Deactivation per Tenant (US 29.6 — PRD1042-587)
 
     Examples:
       | role          |
+      | Bank Admin    |
       | Front Office  |
       | Back Office   |
       | Support User  |

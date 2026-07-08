@@ -3,7 +3,10 @@
 Generated: 2026-07-07
 Story: PRD1042-594 — US 29.13 | Tenant Management | Tenant Governance History View
 Epic: PRD1042-40 — Epic 29: Tenant Management
-DoR status: PASS (14 ACs, description present, stakeholder-reviewed by Iva Marković, Jira status "QA ready")
+
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin can view own tenant's governance history (read-only); cross-tenant → 404.
+
+DoR status: PASS (14 ACs, description present, stakeholder-reviewed by Iva Marković, Jira status "UAT ready")
 ACs with Gherkin scenarios: 8 of 14 | Blocked: 0 | Excluded: 6 (edge-case or separate-feature — scope filter table only)
 Figma design: No Figma URL linked to the story. Stage 2 FAILED (design-blind); closest sibling analog is Tenant Detail canvas 52:1806 from PRD1042-585 (US 29.4) — Governance History tab lives inside that canvas but no cached section is available. Design evidence unverified; copy citations noted as "design unverified" where applicable.
 
@@ -17,13 +20,13 @@ Figma design: No Figma URL linked to the story. Stage 2 FAILED (design-blind); c
 | AC-02 | Events shown in reverse-chronological order by default                                                                                     | `happy-path`       | Default sort verified in same load scenario as AC-01                                                             |
 | AC-03 | No edit, delete, or modify controls presented for any role                                                                                 | `main-error`       | Read-only enforcement — negative assertion that write controls are absent for every role that can view           |
 | AC-04 | System Admin views full governance history for any tenant                                                                                  | `happy-path`       | Covered by AC-01 happy-path Outline (System Admin role variant)                                                  |
-| AC-05 | Auditor: view Governance History tab for their assigned tenant only, within active engagement window                                       | `happy-path`       | Auditor with active engagement sees tab — covered in AC-01 role Outline                                          |
+| AC-05 | Auditor: view Governance History tab for their assigned tenant only, within active engagement window; Bank Admin: view own tenant only     | `happy-path`       | Auditor with active engagement and Bank Admin scoped to own tenant see tab — covered in AC-01 role Outline       |
 | AC-06 | Events for Archived tenants remain accessible and immutable                                                                                | `happy-path`       | Read-only history survives lifecycle transitions — scenario proves Archived tenant still returns events          |
 | AC-07 | Event Log columns: Event Type, Actor, Countersignatory (C), Previous State (C), New State (C), Governance Justification (C), Timestamp (M) | `happy-path`       | Column presence + UTC timestamp format verified in AC-01 happy-path scenario                                     |
 | AC-08 | Filter controls: Event Type multi-select, Date Range, Actor text search (all optional)                                                     | `happy-path`       | Filter behavior — apply filter, verify subset returned; combined with server pagination                          |
 | AC-09 | Pagination: max 50 events per page, server cursor tokens                                                                                   | `edge-case`        | Boundary/implementation — page-size cap is a backend contract, not an E2E user journey concern                   |
 | AC-10 | Auditor access writes AUDITOR_GOVERNANCE_ACCESS audit event                                                                                | `separate-feature` | Audit-log write is a backend side effect verified in Audit Trail Service story (PRD1042-37), not E2E             |
-| AC-11 | Governance History endpoint returns HTTP 404 (not 403) to Support, FO, BO, LC Users                                                        | `main-error`       | RefiNext domain rule (404-not-403) — Scenario Outline across four denied roles                                   |
+| AC-11 | Governance History endpoint returns HTTP 404 (not 403) to Support, FO, BO, LC Users; Bank Admin cross-tenant → 404                         | `main-error`       | RefiNext domain rule (404-not-403) — Scenario Outline across four denied roles + Bank Admin cross-tenant guard   |
 | AC-12 | Sensitive fields (Countersignatory identity, Governance Justification) excluded from Auditor view where not relevant to their engagement   | `main-error`       | Role-conditional column visibility — Auditor sees redacted columns for out-of-scope events                       |
 | AC-13 | Auditor engagement expires mid-session → next API call returns 403; access to tab revoked                                                  | `main-error`       | Engagement-window enforcement — testable if Auditor validity override (D21) available; otherwise clock-dependent |
 | AC-14 | Archived tenant history accessed — all historical events remain accessible, read-only                                                      | `happy-path`       | Same guarantee as AC-06 — covered by the Archived-tenant scenario                                                |
@@ -38,16 +41,17 @@ Figma design: No Figma URL linked to the story. Stage 2 FAILED (design-blind); c
 
 | Tag           | Scenario                                                                                             | AC                                | Priority | E2E                                     |
 | ------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------- | -------- | --------------------------------------- |
-| `@happy-path` | Authorized role opens Governance History tab and sees event log (Scenario Outline — 2 role variants) | AC-01, AC-02, AC-04, AC-05, AC-07 | P0       | ✅                                      |
+| `@happy-path` | Authorized role opens Governance History tab and sees event log (Scenario Outline — 3 role variants) | AC-01, AC-02, AC-04, AC-05, AC-07 | P0       | ✅                                      |
 | `@happy-path` | Filters narrow the event list (Scenario Outline — 3 filter variants)                                 | AC-08                             | P0       | ✅                                      |
 | `@happy-path` | Archived tenant governance history remains accessible                                                | AC-06, AC-14                      | P0       | ✅                                      |
 | `@main-error` | Governance History endpoint returns 404 for unauthorized roles (Scenario Outline — 4 role variants)  | AC-11                             | P0       | ✅                                      |
+| `@main-error` | Bank Admin cross-tenant governance history view returns 404                                          | AC-11                             | P0       | ⚙️ needs D20 (second Bank Tenant B)     |
 | `@main-error` | No edit, delete, or modify controls appear for any role                                              | AC-03                             | P0       | ✅                                      |
 | `@main-error` | Auditor view redacts Countersignatory and Justification for events outside engagement scope          | AC-12                             | P0       | ⚙️ needs D21 (engagement-scope fixture) |
 | `@main-error` | Auditor engagement expires mid-session — next API call returns 403 and tab access is revoked         | AC-13                             | P0       | ⚙️ needs D21                            |
 
-Active scenario blocks: 7 (4 Outlines + 3 Scenarios)
-E2E automation candidates: 5 of 7 scenarios ✅
+Active scenario blocks: 8 (4 Outlines + 4 Scenarios)
+E2E automation candidates: 5 of 8 scenarios ✅
 
 ---
 
@@ -67,10 +71,11 @@ Feature: Tenant Governance History View (US 29.13 — PRD1042-594)
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-01, AC-02, AC-04, AC-05, AC-07
-  # System Admin and Auditor are the only roles authorized to see this tab.
-  # Verifies the tab loads, presents required columns, and defaults to reverse-
-  # chronological order. Design unverified (Stage 2 failed) — column labels are
-  # anchored to the AC field spec, not Figma copy.
+  # System Admin (platform-wide), Auditor (assigned tenant during active
+  # engagement), and Bank Admin (own tenant only) are the roles authorized to
+  # see this tab. Verifies the tab loads, presents required columns, and
+  # defaults to reverse-chronological order. Design unverified (Stage 2
+  # failed) — column labels are anchored to the AC field spec, not Figma copy.
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-01 @ac-02 @ac-04 @ac-05 @ac-07 @e2e-ready
@@ -85,9 +90,10 @@ Feature: Tenant Governance History View (US 29.13 — PRD1042-594)
     And no "Edit", "Delete", or "Modify" control appears on any row
 
     Examples:
-      | role                                                     |
-      | System Admin                                             |
+      | role                                                       |
+      | System Admin                                               |
       | Auditor with active engagement scoped to tenant "CL-DE001" |
+      | Bank Admin whose tenant scope is "CL-DE001"                |
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-08
@@ -148,6 +154,25 @@ Feature: Tenant Governance History View (US 29.13 — PRD1042-594)
       | Front Office  |
       | Back Office   |
       | LC User       |
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-11 (Bank Admin tenant-scope enforcement)
+  # Bank Admin (bank_admin, bank_tenant) can view governance history of ONLY
+  # their own tenant. Cross-tenant access must return HTTP 404 (not 403) to
+  # prevent tenant-existence enumeration — same RefiNext 404-not-403 rule that
+  # covers the four denied roles above. Requires a second seeded Bank Tenant
+  # (D20) with its own governance events so the cross-tenant guard can be
+  # exercised end-to-end.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-11
+  Scenario: Bank Admin cross-tenant governance history view returns 404 (AC-11)
+    Given tenant "Corporate Leasing DE" (id "CL-DE001") exists with governance events
+    And tenant "Peer Leasing AT" (id "PL-AT002") exists with governance events
+    And I am logged in as a Bank Admin whose tenant scope is "CL-DE001"
+    When I request "GET /api/tenants/PL-AT002/governance-history"
+    Then the response status is 404
+    And the response body does not reveal whether tenant "PL-AT002" exists
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-03

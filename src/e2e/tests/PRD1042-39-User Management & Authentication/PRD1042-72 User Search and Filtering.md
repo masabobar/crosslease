@@ -3,32 +3,34 @@
 Generated: 2026-06-02
 Story: PRD1042-72 — US 28.5 | USER MANAGEMENT | User Search & Filtering
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
-DoR status: PASS (16 ACs, description present, stakeholder-reviewed, Dev in progress)
+DoR status: PASS (16 ACs, description present, stakeholder-reviewed, UAT ready)
 ACs with Gherkin scenarios: 5 of 16 | Blocked: 0 | Excluded: 11 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 2117:11195, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User Management (Default + Active Filters)" (Stage 2 PARTIAL — filter dropdown panels absent, page size selector absent, empty state absent, Quick Filter row in design does not match authoritative story spec)
+
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is the wire value for Power User (Bank Admin) — user_type `bank_tenant`, tenant-scoped single-tenant administrator. Role filter dropdown now enumerates 7 values (Support User, System Admin, Bank Admin, Auditor, Front Office, Back Office/Risk, Leasing Company User) per story description AC-04 ("System Admin and Power User (Bank Admin) must be selectable as distinct role filters"). Happy-path Outline expanded to include Bank Admin as a distinct searcher role; tenant-isolation scenario (AC-08) explicitly anchors on Bank Admin's own-tenant-only scope.
 
 ---
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                       | Classification     | Rationale                                                                                                      |
-| ----- | ----------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Global Search — return matching users within authorized scope, server-side enforced                               | `happy-path`       | Core success path: user enters search term, results scoped to authorized records                               |
-| AC-02 | Partial Matching — partial text returns partial matches without exposing unauthorized user existence              | `edge-case`        | Search algorithm implementation detail; no separate UI state to verify E2E                                     |
-| AC-03 | Case Insensitivity — matching remains case-insensitive                                                            | `edge-case`        | Search algorithm implementation detail; no separate UI state to verify E2E                                     |
-| AC-04 | Role Filtering — multi-select roles; Front Office + Back Office/Risk combination blocked                          | `main-error`       | Governance combination-block directly prevents an invalid filter action from completing                        |
-| AC-05 | Status Filtering — multi-select lifecycle statuses                                                                | `edge-case`        | Filter variant; covered by combined filtering in AC-07; no dropdown panel designed (DG-02)                     |
-| AC-06 | Tenant Filtering — platform roles only, server-side enforced                                                      | `edge-case`        | Server-side scoping rule; no dropdown designed; tenant context covered in AC-08 isolation test                 |
-| AC-07 | Combined Filtering — multiple filters applied cumulatively without bypassing visibility restrictions              | `happy-path`       | Primary filter workflow; Screen 2 provides visual evidence of multi-filter chip state                          |
-| AC-08 | Tenant Isolation — unauthorized tenant users never appear in results; cross-tenant returns 404                    | `main-error`       | RefiNext domain rule: cross-tenant isolation enforced server-side; 404 pattern (not 403) applies               |
-| AC-09 | Auditor Expiry Enforcement — expired engagement revokes search access                                             | `separate-feature` | Access lifecycle management belongs in auditor access/engagement spec, not search spec                         |
-| AC-10 | API Enforcement — unauthorized filters or scopes rejected or sanitized server-side                                | `edge-case`        | Backend-only; no E2E UI scenario; covered by unit/integration tests                                            |
-| AC-11 | No Enumeration Leakage — system must not reveal whether unauthorized users exist                                  | `main-error`       | Security main error: zero-results wording is security-sensitive; must not disclose unauthorized user existence |
-| AC-12 | Pagination Compatibility — page size 10/20/50/100 configurable; sorting + filtering together                      | `edge-case`        | Pagination UX enhancement; page size selector not designed (DG-03)                                             |
-| AC-13 | Filter Persistence — filters may remain preserved during session navigation                                       | `edge-case`        | Session UX enhancement; permissive AC wording ("may remain")                                                   |
-| AC-14 | Audit Logging — actor, timestamp, applied filters, tenant context, email search term logged                       | `edge-case`        | Server-side logging; no UI to verify E2E; email audit logging is compliance-tracked via backend                |
-| AC-15 | Governance Search Scope Preservation — historical visibility scope immutable, audit-reconstructible               | `separate-feature` | Audit/governance reconstruction belongs in audit trail / compliance test suite                                 |
-| AC-16 | Export Scope Enforcement — exported data limited to authorized scope; all matching records, not only visible page | `edge-case`        | Export is a secondary workflow; no export panel designed; export scope belongs in dedicated export spec        |
+| AC    | Description                                                                                                                                                   | Classification     | Rationale                                                                                                                                                       |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Global Search — return matching users within authorized scope, server-side enforced                                                                           | `happy-path`       | Core success path: user enters search term, results scoped to authorized records                                                                                |
+| AC-02 | Partial Matching — partial text returns partial matches without exposing unauthorized user existence                                                          | `edge-case`        | Search algorithm implementation detail; no separate UI state to verify E2E                                                                                      |
+| AC-03 | Case Insensitivity — matching remains case-insensitive                                                                                                        | `edge-case`        | Search algorithm implementation detail; no separate UI state to verify E2E                                                                                      |
+| AC-04 | Role Filtering — multi-select roles (7 values); Front Office + Back Office/Risk combination blocked; Bank Admin selectable as distinct role from System Admin | `main-error`       | Governance combination-block directly prevents an invalid filter action from completing; Bank Admin vs System Admin split verified as distinct filterable roles |
+| AC-05 | Status Filtering — multi-select lifecycle statuses                                                                                                            | `edge-case`        | Filter variant; covered by combined filtering in AC-07; no dropdown panel designed (DG-02)                                                                      |
+| AC-06 | Tenant Filtering — platform roles only, server-side enforced                                                                                                  | `edge-case`        | Server-side scoping rule; no dropdown designed; tenant context covered in AC-08 isolation test                                                                  |
+| AC-07 | Combined Filtering — multiple filters applied cumulatively without bypassing visibility restrictions                                                          | `happy-path`       | Primary filter workflow; Screen 2 provides visual evidence of multi-filter chip state                                                                           |
+| AC-08 | Tenant Isolation — unauthorized tenant users never appear in results; cross-tenant returns 404                                                                | `main-error`       | RefiNext domain rule: cross-tenant isolation enforced server-side; 404 pattern (not 403) applies                                                                |
+| AC-09 | Auditor Expiry Enforcement — expired engagement revokes search access                                                                                         | `separate-feature` | Access lifecycle management belongs in auditor access/engagement spec, not search spec                                                                          |
+| AC-10 | API Enforcement — unauthorized filters or scopes rejected or sanitized server-side                                                                            | `edge-case`        | Backend-only; no E2E UI scenario; covered by unit/integration tests                                                                                             |
+| AC-11 | No Enumeration Leakage — system must not reveal whether unauthorized users exist                                                                              | `main-error`       | Security main error: zero-results wording is security-sensitive; must not disclose unauthorized user existence                                                  |
+| AC-12 | Pagination Compatibility — page size 10/20/50/100 configurable; sorting + filtering together                                                                  | `edge-case`        | Pagination UX enhancement; page size selector not designed (DG-03)                                                                                              |
+| AC-13 | Filter Persistence — filters may remain preserved during session navigation                                                                                   | `edge-case`        | Session UX enhancement; permissive AC wording ("may remain")                                                                                                    |
+| AC-14 | Audit Logging — actor, timestamp, applied filters, tenant context, email search term logged                                                                   | `edge-case`        | Server-side logging; no UI to verify E2E; email audit logging is compliance-tracked via backend                                                                 |
+| AC-15 | Governance Search Scope Preservation — historical visibility scope immutable, audit-reconstructible                                                           | `separate-feature` | Audit/governance reconstruction belongs in audit trail / compliance test suite                                                                                  |
+| AC-16 | Export Scope Enforcement — exported data limited to authorized scope; all matching records, not only visible page                                             | `edge-case`        | Export is a secondary workflow; no export panel designed; export scope belongs in dedicated export spec                                                         |
 
 **Gherkin generated for:** AC-01, AC-04, AC-07, AC-08, AC-11
 **Blocked (no Gherkin):** none
@@ -38,13 +40,13 @@ Figma design: Node 2117:11195, file j5hq5cQgHWdOtzLvSX0jvj — Screen "User Mana
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                           | AC    | Priority | E2E          |
-| ------------- | ---------------------------------------------------------------------------------- | ----- | -------- | ------------ |
-| `@happy-path` | Authorized search returns only in-scope users (Scenario Outline — 3 role variants) | AC-01 | P0       | ✅           |
-| `@happy-path` | Combined filters applied cumulatively yield intersected result set                 | AC-07 | P0       | ✅           |
-| `@main-error` | Front Office and Back Office/Risk role combination is blocked by governance rule   | AC-04 | P0       | ✅           |
-| `@main-error` | Tenant-scoped user search never returns users from other tenants                   | AC-08 | P0       | ⚙️ needs D20 |
-| `@main-error` | Zero-results response does not reveal whether unauthorized users exist             | AC-11 | P0       | ✅           |
+| Tag           | Scenario                                                                                            | AC    | Priority | E2E          |
+| ------------- | --------------------------------------------------------------------------------------------------- | ----- | -------- | ------------ |
+| `@happy-path` | Authorized search returns only in-scope users (Scenario Outline — 4 role variants incl. Bank Admin) | AC-01 | P0       | ✅           |
+| `@happy-path` | Combined filters applied cumulatively yield intersected result set                                  | AC-07 | P0       | ✅           |
+| `@main-error` | Front Office and Back Office/Risk role combination is blocked by governance rule                    | AC-04 | P0       | ✅           |
+| `@main-error` | Tenant-scoped Bank Admin search never returns users from other tenants                              | AC-08 | P0       | ⚙️ needs D20 |
+| `@main-error` | Zero-results response does not reveal whether unauthorized users exist                              | AC-11 | P0       | ✅           |
 
 Active scenario blocks: 5 (2 Outlines + 3 Scenarios)
 E2E automation candidates: 4 of 5 scenarios ✅
@@ -56,7 +58,7 @@ E2E automation candidates: 4 of 5 scenarios ✅
 ```gherkin
 @user-management @us-28.5 @p0
 Feature: User Search and Filtering (US 28.5 — PRD1042-72)
-  As a Power User / System Admin, Support User, or Auditor
+  As a System Admin, Bank Admin (Power User), Support User, or Auditor
   I want to search and filter users based on specific criteria
   So that I can efficiently locate users, investigate access issues,
   and review role or tenant assignments within my authorized scope
@@ -87,10 +89,11 @@ Feature: User Search and Filtering (US 28.5 — PRD1042-72)
     And no user outside my authorized scope should appear in the results
 
     Examples:
-      | role               | search_term     |
-      | Power User / Admin | john.doe        |
-      | Support User       | anna.mueller    |
-      | Auditor            | tenant-user-001 |
+      | role         | search_term     |
+      | System Admin | john.doe        |
+      | Bank Admin   | anna.mueller    |
+      | Support User | jane.smith      |
+      | Auditor      | tenant-user-001 |
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-07
@@ -103,51 +106,60 @@ Feature: User Search and Filtering (US 28.5 — PRD1042-72)
 
   @happy-path @ac-07 @p0 @e2e-ready
   Scenario: Combined filters applied cumulatively yield intersected result set (AC-07)
-    Given I am authenticated as a Power User / Admin
+    Given I am authenticated as a Bank Admin
+    And the Role filter dropdown enumerates exactly 7 values: "Support User", "System Admin", "Bank Admin", "Auditor", "Front Office", "Back Office / Risk", "Leasing Company User"
     And users with varying roles and MFA statuses exist in the system
-    When I select "Support" from the Role filter
+    When I select "Support User" from the Role filter
     And I select "Enabled" from the MFA Status filter
-    Then the results table should display only users who are both "Support" role AND have MFA "Enabled"
-    And the filter chips strip should show "Role: Support" and "MFA: Enabled" as active chips
+    Then the results table should display only users who are both "Support User" role AND have MFA "Enabled"
+    And the filter chips strip should show "Role: Support User" and "MFA: Enabled" as active chips
     And the Role filter button should display a badge showing the count of selected role values
     And the MFA filter button should display a badge showing the count of selected MFA values
-    And the displayed results should remain within my authorized scope
+    And the displayed results should remain within my Bank Admin tenant scope
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-04
   # The governance rule prohibits selecting Front Office and Back Office/Risk
   # simultaneously in the Role filter. This combination is mutually exclusive
   # and must be enforced at the filter level to prevent invalid result requests.
-  # No design evidence exists for the UI treatment of this block — the exact
+  # The Role filter dropdown enumerates 7 values, with System Admin and
+  # Bank Admin (Power User) as distinct selectable roles per AC-04. No design
+  # evidence exists for the UI treatment of the FO+BO/Risk block — the exact
   # error message or disabled-state behavior is an open question for BA/Designer.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-04 @p0 @e2e-ready
   Scenario: Front Office and Back Office/Risk role combination is blocked by governance rule (AC-04)
-    Given I am authenticated as a Power User / Admin
+    Given I am authenticated as a Bank Admin
     And the Role filter dropdown is open
+    And the dropdown enumerates exactly 7 values: "Support User", "System Admin", "Bank Admin", "Auditor", "Front Office", "Back Office / Risk", "Leasing Company User"
     When I select "Front Office" from the Role multi-select
     And I attempt to also select "Back Office / Risk" from the Role multi-select
     Then the system should prevent the "Front Office" and "Back Office / Risk" combination from being applied simultaneously
     And the filter results or UI state should indicate that this role combination is not permitted
+    And "System Admin" and "Bank Admin" should remain selectable as distinct role filter values
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-08
   # RefiNext domain rule: cross-tenant isolation is enforced server-side.
-  # A tenant-scoped user performing a search must never see users from other
-  # tenants in results. The expected server response for a cross-tenant
-  # request is 404 (not 403) per RefiNext tenant isolation pattern — this
-  # prevents confirming the existence of users in unauthorized tenants.
+  # Bank Admin (Power User) is tenant-scoped (user_type bank_tenant, single
+  # tenant). AC-08 states explicitly: "a Power User (Bank Admin) may search
+  # only within its own tenant". A Bank Admin performing a search must never
+  # see users from other tenants in results. The expected server response for
+  # a cross-tenant request is 404 (not 403) per RefiNext tenant isolation
+  # pattern — this prevents confirming the existence of users in unauthorized
+  # tenants.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-08 @p0
-  Scenario: Tenant-scoped user search never returns users from other tenants (AC-08)
-    Given I am authenticated as a user scoped to tenant "Tenant-A"
+  Scenario: Tenant-scoped Bank Admin search never returns users from other tenants (AC-08)
+    Given I am authenticated as a Bank Admin scoped to tenant "Tenant-A"
     And users exist in both "Tenant-A" and "Tenant-B"
     When I search for a user who exists only in "Tenant-B"
     Then the results table should display no results for that user
     And the response must not confirm or deny the existence of the "Tenant-B" user
     And no "Tenant-B" user should appear in the results at any page or sort order
+    And the Bank Admin must not be able to select "Tenant-B" from the Tenant filter (Tenant filter is Platform-only per Filter Visibility Matrix)
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-11

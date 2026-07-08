@@ -1,6 +1,6 @@
 ---
 name: project-prd1042-592
-description: PRD1042-592 US 29.11 Tenant Integration Binding Management — no Figma (backend/integration story), 13 derived ACs, 7 scenario blocks, AC-03 Blocked on TM-09, tenant-isolation 404-not-403 confirmed
+description: PRD1042-592 US 29.11 Tenant Integration Binding Management — no Figma (backend/integration story), 13 derived ACs, 7 scenario blocks, AC-03 Blocked on TM-09, tenant-isolation 404-not-403 confirmed, 2026-07-08 Bank Admin retrofit
 metadata:
   type: project
 ---
@@ -10,7 +10,17 @@ metadata:
 **Epic:** PRD1042-40 (Epic 29 Tenant Management)
 **Status:** QA ready · DoR PASS · 13 derived ACs
 **Sub-stories:** PRD1042-680 (BE, Done), PRD1042-681 (FE, Done), PRD1042-682 (QA in progress)
-**Processed:** 2026-07-07
+**Processed:** 2026-07-07 · **Bank Admin update:** 2026-07-08
+
+## 2026-07-08 Bank Admin Retrofit (PRD1042-48)
+
+Per PRD1042-48 (Ivan Mladenovic decision 2026-07-06), `bank_admin` role added to RBAC test coverage. Jira permission matrix (Power User row) authoritative: **View ✗ / Create/modify ✗** — Bank Admin has NO access to integration binding (platform-level infrastructure, System Admin only). Bank Admin governs bank tenant users, not tenant integration configuration.
+
+- **AC-09 Outline expanded:** 5 roles → 6 roles. `Bank Admin` added at top of Examples table with status `404` (no view grant → tenant enumeration mask).
+- **AC-09 group comment expanded** — documents Bank Admin exclusion rationale + PRD1042-48 anchor.
+- **AC-09 Scope Filter description** updated to explicitly mention Bank Admin exclusion per Jira Power User row.
+- **AC-11 (cross-tenant isolation) NOT modified** — existing "System Admin scoped to Tenant B" test remains canonical isolation vector; Bank Admin cross-tenant vector implicit in AC-09 role gate (Bank Admin from any tenant → 404 anywhere).
+- **Open question:** User directive stated "may have view access to own tenant's binding status" (uncertain — "might") but Jira permission matrix says NO view access. Followed Jira matrix (authoritative). If Bank Admin view is later confirmed, add a positive view scenario in AC-10 Outline (currently only System Admin + Support User).
 
 ## Pipeline Result
 

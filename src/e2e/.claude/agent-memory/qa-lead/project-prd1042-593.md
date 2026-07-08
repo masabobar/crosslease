@@ -8,7 +8,8 @@ metadata:
 **Story:** PRD1042-593 — US 29.12 Tenant Access Policy Management
 **Epic:** PRD1042-40 (Epic 29: Tenant Management)
 **Processed:** 2026-07-07
-**Status:** QA ready (Jira); FE PRD1042-684 Done, BE PRD1042-683 Done, QA PRD1042-685 QA in progress
+**Updated:** 2026-07-08 — Bank Admin role (`bank_admin`) added to AC-08 404 Outline per PRD1042-48 (Ivan Mladenovic 2026-07-06). Bank Admin is NOT an authorized actor for Access Policy (Permission Matrix explicitly denies Power User/Bank Admin both view + modify). Story remains System-Admin-only. AC-08 Outline now covers Bank Admin, Front Office, Back Office, LC User, Support User, Auditor (6 roles) with both GET and PUT returning 404.
+**Status:** UAT ready (Jira, 2026-07-08); FE PRD1042-684 Done, BE PRD1042-683 Done, QA PRD1042-685 QA in progress
 
 **Pipeline outcome:**
 

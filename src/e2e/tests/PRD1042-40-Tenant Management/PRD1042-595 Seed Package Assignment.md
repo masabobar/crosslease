@@ -1,9 +1,11 @@
 # PRD1042-595 — US 29.14 | TENANT MANAGEMENT | Seed Configuration Package Assignment
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot assign seed packages (platform-only, part of tenant creation).
+
 Generated: 2026-07-06
 Story: PRD1042-595 — US 29.14 | TENANT MANAGEMENT | Seed Configuration Package Assignment
 Epic: PRD1042-40 — Epic 29: Tenant Management
-DoR status: PASS (15 ACs derived from functional requirements, description present, stakeholder-reviewed by Iva Marković 2026-06-01, Jira status "QA in progress")
+DoR status: PASS (15 ACs derived from functional requirements, description present, stakeholder-reviewed by Iva Marković 2026-06-01, Jira status "UAT ready")
 ACs with Gherkin scenarios: 9 of 15 | Blocked: 0 | Excluded: 6 (edge-case — scope filter table only)
 Figma design: Node 9:6160, file 7pygkopuqyeEhUTMVp9lrP — Screen "E29 Tenant Management — Seed Package selection (Step 3)" (Stage 2 FAILED — Figma MCP rate-limited on View seat, same session tooling blocker previously seen on PRD1042-77, PRD1042-48, PRD1042-582; design signals derived from story description only; wizard step name "SEED PACKAGES" verified via prior PRD1042-582 processing on same file)
 
@@ -37,13 +39,13 @@ Figma design: Node 9:6160, file 7pygkopuqyeEhUTMVp9lrP — Screen "E29 Tenant Ma
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                           | AC                         | Priority | E2E                                         |
-| ------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------- | -------- | ------------------------------------------- |
-| `@happy-path` | System Admin selects a valid seed package on Step 3, sees description + version, and completes wizard submission   | AC-01, AC-05, AC-06, AC-07 | P0       | ⚙️ needs D19 + tenant cleanup               |
-| `@main-error` | Seed package deprecated between Step 3 selection and Step 5 submission returns 422; no tenant record created       | AC-10                      | P0       | ⚙️ needs deprecated-seed mid-flight fixture |
-| `@main-error` | Submitting the wizard without selecting a seed package is blocked with inline validation error                     | AC-05                      | P0       | ⚙️ needs D19 + tenant cleanup               |
-| `@main-error` | Seed package assignment is immutable — API PATCH to change seed_package_ref on an existing tenant is rejected      | AC-08, AC-11, AC-15        | P0       | ⚙️ needs seeded tenant + admin session      |
-| `@main-error` | Non-System-Admin roles cannot list seed packages — GET /api/seed-packages returns 404 (Scenario Outline — 5 roles) | AC-14                      | P0       | ✅                                          |
+| Tag           | Scenario                                                                                                                                  | AC                         | Priority | E2E                                         |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | -------- | ------------------------------------------- |
+| `@happy-path` | System Admin selects a valid seed package on Step 3, sees description + version, and completes wizard submission                          | AC-01, AC-05, AC-06, AC-07 | P0       | ⚙️ needs D19 + tenant cleanup               |
+| `@main-error` | Seed package deprecated between Step 3 selection and Step 5 submission returns 422; no tenant record created                              | AC-10                      | P0       | ⚙️ needs deprecated-seed mid-flight fixture |
+| `@main-error` | Submitting the wizard without selecting a seed package is blocked with inline validation error                                            | AC-05                      | P0       | ⚙️ needs D19 + tenant cleanup               |
+| `@main-error` | Seed package assignment is immutable — API PATCH to change seed_package_ref on an existing tenant is rejected                             | AC-08, AC-11, AC-15        | P0       | ⚙️ needs seeded tenant + admin session      |
+| `@main-error` | Non-System-Admin roles cannot list seed packages — GET /api/seed-packages returns 404 (Scenario Outline — 6 roles including `bank_admin`) | AC-14                      | P0       | ✅                                          |
 
 Active scenario blocks: 5 (1 Outline + 4 Scenarios)
 E2E automation candidates: 1 of 5 scenarios ✅
@@ -167,7 +169,12 @@ Feature: Seed Configuration Package Assignment (US 29.14 — PRD1042-595)
   # Role-based access. The GET /api/seed-packages endpoint returns HTTP 404
   # to any non-System-Admin caller (RefiNext 404-not-403 enumeration-prevention
   # pattern, architecture constraint #5). This is an auto-applied RBAC
-  # negative scenario covering all five non-admin roles.
+  # negative scenario covering all six non-System-Admin roles, including
+  # `bank_admin` (tenant-level administrator per PRD1042-48, Ivan Mladenovic
+  # 2026-07-06) — Bank Admin cannot assign seed packages because seed package
+  # binding is platform-only and occurs only as Step 3 of the tenant creation
+  # wizard (System Admin action). Bank Admin has no visibility into the
+  # platform seed package catalog.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-14 @p0 @e2e-ready
@@ -178,10 +185,11 @@ Feature: Seed Configuration Package Assignment (US 29.14 — PRD1042-595)
     And the response body should NOT reveal that seed packages exist
 
     Examples:
-      | role                 | email                                       |
-      | front_office         | dejan.nikolic+automationfo@holycode.com     |
-      | back_office          | dejan.nikolic+automationbo@holycode.com     |
+      | role                 | email                                        |
+      | bank_admin           | dejan.nikolic+automationbankadmin@holycode.com |
+      | front_office         | dejan.nikolic+automationfo@holycode.com      |
+      | back_office          | dejan.nikolic+automationbo@holycode.com      |
       | support_user         | dejan.nikolic+automationsupport@holycode.com |
       | auditor              | dejan.nikolic+automationauditor@holycode.com |
-      | leasing_company_user | dejan.nikolic+automationlco@holycode.com    |
+      | leasing_company_user | dejan.nikolic+automationlco@holycode.com     |
 ```

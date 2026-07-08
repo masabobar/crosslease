@@ -1,6 +1,7 @@
 # PRD1042-592 — US 29.11 | Tenant Management | Tenant Integration Binding Management
 
 Generated: 2026-07-07
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot manage integration bindings (platform-only); may have view access to own tenant's binding status.
 Story: PRD1042-592 — US 29.11 | Tenant Management | Tenant Integration Binding Management
 Epic: PRD1042-40 — Epic 29: Tenant Management
 DoR status: PASS (13 derived ACs, description present with permission matrix + field spec + validation rules + audit spec + security block + edge cases, QA ready)
@@ -19,21 +20,21 @@ Figma design: No Figma URL linked to story; backend/integration story with no de
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                        | Classification     | Rationale                                                                                                        |
-| ----- | ------------------------------------------------------------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| AC-01 | One integration binding per tenant (V1); multiple bindings not supported                                           | `main-error`       | Covered via AC-04 (409 on second binding attempt) — same rule expressed as validation                            |
-| AC-02 | Suspended tenant: inbound event processing continues; outbound triggers blocked                                    | `separate-feature` | Event routing behavior owned by Integration / Disbursement epic; requires event-bus fixture harness (D-EventBus) |
-| AC-03 | Archived tenant: binding decommissioned, credentials invalidated, inbound rejected                                 | `Blocked`          | Decommission is a TM-09 side effect requiring archiving trigger + credential-invalidation observability          |
-| AC-04 | Only one binding per tenant → 409 on second creation attempt                                                       | `main-error`       | Direct uniqueness constraint; blocks core workflow                                                               |
-| AC-05 | Binding creation/modification only permitted on Active tenants (Draft/Suspended/Archived rejected)                 | `main-error`       | State-guard validation; blocks core workflow                                                                     |
-| AC-06 | Archived tenant binding is read-only; modification returns 422                                                     | `main-error`       | Immutability guard; blocks modification attempts                                                                 |
-| AC-07 | Endpoint URL must be valid HTTPS URL                                                                               | `edge-case`        | Client-side format validation; standard URL parser test — not core workflow                                      |
-| AC-08 | Governance Justification required on create/modify, min 20 chars                                                   | `edge-case`        | Standard field-validation rule; short-input rejection well-covered by other governance-justification stories     |
-| AC-09 | Only System Admin can create/modify binding; other roles rejected                                                  | `main-error`       | RBAC enforcement; 404-not-403 pattern for tenant-scoped resource                                                 |
-| AC-10 | System Admin + Support can view binding; Support view masks Endpoint URL + Credential Scope                        | `happy-path`       | Core view flow with role-conditional response shaping (positive assertion for both roles + masked-field check)   |
-| AC-11 | Cross-tenant access denied — Tenant B admin cannot view/modify Tenant A binding (tenant isolation)                 | `main-error`       | RefiNext tenant-isolation rule: 404-not-403 on out-of-tenant read                                                |
-| AC-12 | Audit events INTEGRATION_BINDING_CREATED / MODIFIED / DECOMMISSIONED emitted with actor, changed fields, timestamp | `separate-feature` | Audit-log delivery + schema owned by Audit epic; requires D-Audit fixture harness                                |
-| AC-13 | Inbound event for Archived tenant → HTTP 4xx + operational alert raised                                            | `separate-feature` | Event routing + alerting owned by Integration/Disbursement epic + observability stack                            |
+| AC    | Description                                                                                                        | Classification     | Rationale                                                                                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | One integration binding per tenant (V1); multiple bindings not supported                                           | `main-error`       | Covered via AC-04 (409 on second binding attempt) — same rule expressed as validation                                                                                               |
+| AC-02 | Suspended tenant: inbound event processing continues; outbound triggers blocked                                    | `separate-feature` | Event routing behavior owned by Integration / Disbursement epic; requires event-bus fixture harness (D-EventBus)                                                                    |
+| AC-03 | Archived tenant: binding decommissioned, credentials invalidated, inbound rejected                                 | `Blocked`          | Decommission is a TM-09 side effect requiring archiving trigger + credential-invalidation observability                                                                             |
+| AC-04 | Only one binding per tenant → 409 on second creation attempt                                                       | `main-error`       | Direct uniqueness constraint; blocks core workflow                                                                                                                                  |
+| AC-05 | Binding creation/modification only permitted on Active tenants (Draft/Suspended/Archived rejected)                 | `main-error`       | State-guard validation; blocks core workflow                                                                                                                                        |
+| AC-06 | Archived tenant binding is read-only; modification returns 422                                                     | `main-error`       | Immutability guard; blocks modification attempts                                                                                                                                    |
+| AC-07 | Endpoint URL must be valid HTTPS URL                                                                               | `edge-case`        | Client-side format validation; standard URL parser test — not core workflow                                                                                                         |
+| AC-08 | Governance Justification required on create/modify, min 20 chars                                                   | `edge-case`        | Standard field-validation rule; short-input rejection well-covered by other governance-justification stories                                                                        |
+| AC-09 | Only System Admin can create/modify binding; other roles rejected (including Bank Admin — platform-level resource) | `main-error`       | RBAC enforcement; 404-not-403 pattern for tenant-scoped resource; Bank Admin (`bank_admin`) explicitly excluded per Jira permission matrix (Power User row: View ✗ Create/modify ✗) |
+| AC-10 | System Admin + Support can view binding; Support view masks Endpoint URL + Credential Scope                        | `happy-path`       | Core view flow with role-conditional response shaping (positive assertion for both roles + masked-field check)                                                                      |
+| AC-11 | Cross-tenant access denied — Tenant B admin cannot view/modify Tenant A binding (tenant isolation)                 | `main-error`       | RefiNext tenant-isolation rule: 404-not-403 on out-of-tenant read                                                                                                                   |
+| AC-12 | Audit events INTEGRATION_BINDING_CREATED / MODIFIED / DECOMMISSIONED emitted with actor, changed fields, timestamp | `separate-feature` | Audit-log delivery + schema owned by Audit epic; requires D-Audit fixture harness                                                                                                   |
+| AC-13 | Inbound event for Archived tenant → HTTP 4xx + operational alert raised                                            | `separate-feature` | Event routing + alerting owned by Integration/Disbursement epic + observability stack                                                                                               |
 
 **Gherkin generated for:** AC-04, AC-05, AC-06, AC-09, AC-10, AC-11
 **Blocked (no Gherkin):** AC-03
@@ -52,7 +53,7 @@ Figma design: No Figma URL linked to story; backend/integration story with no de
 | `@main-error` | Second binding creation attempt on same tenant returns 409                                  | AC-04, AC-01 | P0       | ⚙️ needs binding fixture                      |
 | `@main-error` | Binding creation rejected on non-Active tenants (Outline — Draft, Suspended, Archived)      | AC-05        | P0       | ⚙️ needs tenant-state fixtures                |
 | `@main-error` | Modification on Archived tenant returns 422                                                 | AC-06        | P0       | ⚙️ needs Archived tenant with binding fixture |
-| `@main-error` | Non-System-Admin roles cannot create/modify binding (Outline — 5 roles)                     | AC-09        | P0       | ✅                                            |
+| `@main-error` | Non-System-Admin roles cannot create/modify binding (Outline — 6 roles incl. Bank Admin)    | AC-09        | P0       | ✅                                            |
 | `@main-error` | Cross-tenant access returns 404 not 403 (tenant isolation)                                  | AC-11        | P0       | ⚙️ needs [[D20]] Tenant B                     |
 
 Active scenario blocks: 7 (5 Outlines + 2 Scenarios)
@@ -180,10 +181,15 @@ Feature: Tenant Integration Binding Management (US 29.11 — PRD1042-592)
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-09
   # Only System Admin may create/modify a binding. All other roles (including
-  # Support who can VIEW) are rejected on write attempts. RefiNext RBAC rule:
-  # tenant-scoped resource — expect 404-not-403 for non-Support write roles
-  # that cannot see the binding at all.
+  # Support who can VIEW, and Bank Admin who is tenant-level but has NO grant
+  # over the platform-level integration binding resource) are rejected on
+  # write attempts. RefiNext RBAC rule: tenant-scoped resource — expect
+  # 404-not-403 for non-Support write roles that cannot see the binding at all.
   # Support role attempting write returns 403 (has view grant, lacks write).
+  # Bank Admin returns 404 per Jira permission matrix (Power User row):
+  # View ✗ / Create/modify ✗ — integration binding is platform infrastructure
+  # owned by System Admin; Bank Admin governs only bank tenant users, not
+  # tenant integration configuration (per PRD1042-48 role split, 2026-07-06).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-09 @p0 @e2e-ready
@@ -198,6 +204,7 @@ Feature: Tenant Integration Binding Management (US 29.11 — PRD1042-592)
 
     Examples:
       | role                | status |
+      | Bank Admin          | 404    |
       | Front Office        | 404    |
       | Back Office         | 404    |
       | Leasing Company User| 404    |

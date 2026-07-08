@@ -1,11 +1,13 @@
 # PRD1042-585 — US 29.4 | Tenant Management | Tenant Detail View
 
 Generated: 2026-07-07
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin views own tenant detail (subset of tabs: Identity & Status limited + Module Profile + Integration Active Flag); lifecycle buttons NOT visible; cross-tenant → 404.
+
 Story: PRD1042-585 — US 29.4 | Tenant Management | Tenant Detail View
 Epic: PRD1042-40 — Epic 29: Tenant Management
 DoR status: PASS (14 ACs, description present, stakeholder-reviewed, QA in progress)
 ACs with Gherkin scenarios: 7 of 14 | Blocked: 1 (PRD1042-1099) | Excluded: 6 (edge-case or separate-feature — scope filter table only)
-Figma design: Node 52:1806, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant details page + edit" (Stage 2 PARTIAL — MCP rate-limited; section names ADMIN/SUPPORT/AUDITOR/EDIT frames confirmed from prior extraction; field-level content unverified)
+Figma design: Node 52:1806, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant details page + edit" (Stage 2 PARTIAL — MCP rate-limited; section names ADMIN/SUPPORT/AUDITOR/EDIT frames confirmed from prior extraction; field-level content unverified; no Bank Admin variant frame observed — assumed similar to Support-restricted view with own-tenant scoping)
 
 ---
 
@@ -44,19 +46,21 @@ Figma design: Node 52:1806, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant detai
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                          | AC           | Priority | E2E                                                |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------------------- |
-| `@happy-path` | System Admin views all 7 tabs on Tenant Detail View (Scenario Outline — 1 variant)                                | AC-01        | P0       | ✅                                                 |
-| `@happy-path` | Support User with active grant sees limited tabs (Identity & Status, Module Profile)                              | AC-02        | P0       | ⚙️ needs D20 (seeded Support grant)                |
-| `@happy-path` | Lifecycle action buttons visible to System Admin, absent for all other roles (Scenario Outline — 4 role variants) | AC-04        | P0       | ✅                                                 |
-| `@happy-path` | System Admin views Identity & Status tab with correct field display                                               | AC-07        | P0       | ✅                                                 |
-| `@main-error` | Immutable fields show no edit affordance on Tenant Detail View                                                    | AC-07, AC-08 | P0       | ✅                                                 |
-| `@main-error` | Governance History tab shows no edit or delete controls for any role                                              | AC-09        | P0       | ✅                                                 |
-| `@main-error` | Non-authorized role receives 404 on tenant detail endpoint                                                        | AC-12        | P0       | ✅                                                 |
-| `@main-error` | Support User without active grant receives 404 on tenant detail endpoint                                          | AC-14        | P0       | ⚙️ needs D20 (seeded tenant without Support grant) |
+| Tag           | Scenario                                                                                                                      | AC           | Priority | E2E                                                |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------------------- |
+| `@happy-path` | System Admin views all 7 tabs on Tenant Detail View (Scenario Outline — 1 variant)                                            | AC-01        | P0       | ✅                                                 |
+| `@happy-path` | Support User with active grant sees limited tabs (Identity & Status, Module Profile)                                          | AC-02        | P0       | ⚙️ needs D20 (seeded Support grant)                |
+| `@happy-path` | Bank Admin views own tenant detail — limited tab subset visible                                                               | AC-01, AC-02 | P0       | ✅                                                 |
+| `@happy-path` | Lifecycle action buttons visible to System Admin, absent for all other roles (Scenario Outline — 5 role variants)             | AC-04        | P0       | ✅                                                 |
+| `@happy-path` | System Admin views Identity & Status tab with correct field display                                                           | AC-07        | P0       | ✅                                                 |
+| `@main-error` | Immutable fields show no edit affordance on Tenant Detail View                                                                | AC-07, AC-08 | P0       | ✅                                                 |
+| `@main-error` | Governance History tab shows no edit or delete controls for any role                                                          | AC-09        | P0       | ✅                                                 |
+| `@main-error` | Non-authorized role receives 404 on tenant detail endpoint (Scenario Outline — 4 role variants incl. Bank Admin cross-tenant) | AC-12        | P0       | ✅                                                 |
+| `@main-error` | Bank Admin attempts to view another tenant's detail — 404 returned                                                            | AC-12        | P0       | ⚙️ needs D20 (second seeded tenant)                |
+| `@main-error` | Support User without active grant receives 404 on tenant detail endpoint                                                      | AC-14        | P0       | ⚙️ needs D20 (seeded tenant without Support grant) |
 
-Active scenario blocks: 8 (3 Outlines + 5 Scenarios)
-E2E automation candidates: 6 of 8 scenarios ✅
+Active scenario blocks: 10 (3 Outlines + 7 Scenarios)
+E2E automation candidates: 7 of 10 scenarios ✅
 
 ---
 
@@ -119,8 +123,11 @@ Feature: Tenant Detail View (US 29.4 — PRD1042-585)
   # HAPPY PATH — AC-04
   # Lifecycle action buttons (Suspend, Archive, Reactivate) are visible only
   # to System Admin and only when the lifecycle transition is valid.
-  # All other roles must NOT see these buttons — design ADMIN section confirms
-  # action buttons in the tenant detail header area.
+  # All other roles — including Bank Admin — must NOT see these buttons.
+  # Bank Admin is a tenant-scoped bank tenant role introduced 2026-07-06 per
+  # PRD1042-48 (Ivan Mladenovic); tenant lifecycle actions remain platform-
+  # level System Admin actions and are NEVER exposed to Bank Admin, even on
+  # own tenant.
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-04 @p0 @e2e-ready
@@ -130,11 +137,46 @@ Feature: Tenant Detail View (US 29.4 — PRD1042-585)
     Then lifecycle action buttons should <visibility> on the page
 
     Examples:
-      | role           | visibility    |
-      | System Admin   | be visible    |
+      | role           | visibility     |
+      | System Admin   | be visible     |
+      | Bank Admin     | not be visible |
       | Front Office   | not be visible |
       | Back Office    | not be visible |
       | Support User   | not be visible |
+
+  # ---------------------------------------------------------------------------
+  # HAPPY PATH — AC-01, AC-02 (Bank Admin variant)
+  # Bank Admin (`bank_admin`, User Type `bank_tenant`) is bound to exactly one
+  # tenant and needs visibility into own tenant configuration to manage bank-
+  # tenant assets (Bank Product Templates, Framework Agreements, Workflow Task
+  # Catalog, Document Requirement Catalog — per PRD1042-48).
+  #
+  # Per Jira permission matrix on PRD1042-585:
+  #   - View Identity & Status + Module Profile: R (own tenant)
+  #   - View Integration Active Flag: R (own tenant)
+  #   - View Governance History: ✗
+  #   - View Support Access Grants: ✗
+  #   - View Integration Binding (full): ✗
+  #   - Configuration Overrides / Access Policy tabs: ✗ (System Admin only)
+  #   - Lifecycle action buttons: ✗
+  #
+  # OPEN QUESTION: Whether Module Profile tab exposes Integration Active Flag
+  # inline or in a separate tab is not stated. Assumed inline for E2E scope;
+  # confirm with design/BE before test run.
+  # ---------------------------------------------------------------------------
+
+  @happy-path @ac-01 @ac-02 @p0 @e2e-ready
+  Scenario: Bank Admin views own tenant detail — limited tab subset visible (AC-01, AC-02)
+    Given I am logged in as a Bank Admin bound to tenant "TENANT-001"
+    When I navigate to the tenant detail page for tenant "TENANT-001"
+    Then I should see the tab "Identity & Status"
+    And I should see the tab "Module Profile"
+    And I should NOT see the tab "Configuration Overrides"
+    And I should NOT see the tab "Integration Binding"
+    And I should NOT see the tab "Governance History"
+    And I should NOT see the tab "Access Policy"
+    And I should NOT see the tab "Support Access Grants"
+    And lifecycle action buttons should not be visible on the page
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-07
@@ -203,7 +245,9 @@ Feature: Tenant Detail View (US 29.4 — PRD1042-585)
   # HTTP 404 returned to non-authorized roles on any tenant detail endpoint.
   # RefiNext domain rule: 404-not-403 to prevent enumeration attacks.
   # Story: "HTTP 404 returned to non-authorized roles on any tenant detail endpoint."
-  # Tests: Front Office, Back Office, LC User — none should see tenant data.
+  # Tests: Front Office, Back Office, LC User, Auditor (unassigned) — none
+  # should see tenant data. Bank Admin has a dedicated cross-tenant scenario
+  # below because tenant IDs matter (own-tenant works, other-tenant 404s).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-12 @p0 @e2e-ready
@@ -217,6 +261,23 @@ Feature: Tenant Detail View (US 29.4 — PRD1042-585)
       | Front Office   |
       | Back Office    |
       | LC User        |
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-12 (Bank Admin cross-tenant)
+  # Bank Admin is tenant-scoped: bound to exactly one bank tenant. Attempting
+  # to read another tenant's detail MUST return 404, never 403 — matches the
+  # RefiNext tenant-isolation domain rule and prevents cross-tenant enumeration.
+  # Bank Admin bound to TENANT-001 attempts to read TENANT-002 → 404.
+  # Requires a second seeded tenant (D20).
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-12 @p0
+  Scenario: Bank Admin attempts to view another tenant's detail — 404 returned (AC-12)
+    Given I am logged in as a Bank Admin bound to tenant "TENANT-001"
+    And a separate tenant "TENANT-002" exists in the system
+    When I make a GET request to "/api/tenants/TENANT-002"
+    Then the response status should be 404
+    And no tenant data should be exposed in the response body
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-14

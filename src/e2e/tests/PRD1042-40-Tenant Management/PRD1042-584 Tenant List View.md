@@ -1,6 +1,7 @@
 # PRD1042-584 — US 29.3 | TENANT MANAGEMENT | Tenant List View & Search
 
 Generated: 2026-07-06
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin has no cross-tenant visibility — the platform tenant list is System Admin + grant-scoped Support only.
 Story: PRD1042-584 — US 29.3 | TENANT MANAGEMENT | Tenant List View & Search
 Epic: PRD1042-40 — Epic 29: Tenant Management
 DoR status: PASS (17 ACs, description present, stakeholder-reviewed, QA in progress)
@@ -37,7 +38,7 @@ Figma design: Node 9:6160, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant List V
 | AC-13 | Support User with no active grants receives empty list, not an error                                         | `main-error`   | Blocks Support User from seeing any data; empty state vs error page is a critical distinction  |
 | AC-14 | Support User list access writes SUPPORT_LIST_ACCESS audit event                                              | `edge-case`    | Backend audit log; not assertable at UI layer without privileged API access                    |
 | AC-15 | Suspended and Archived tenants have muted/differentiated visual styling                                      | `edge-case`    | Visual styling detail; design not confirmed (Stage 2 FAILED); not a workflow blocker           |
-| AC-16 | Tenant list endpoint returns HTTP 404 to non-authorized roles (FO, BO, LC User)                              | `main-error`   | RefiNext 404-not-403 domain rule; unauthorized access must be hard-blocked and non-enumerable  |
+| AC-16 | Tenant list endpoint returns HTTP 404 to non-authorized roles (FO, BO, LC User, Bank Admin, Auditor)         | `main-error`   | RefiNext 404-not-403 domain rule; unauthorized access must be hard-blocked and non-enumerable  |
 | AC-17 | Sequential identifier enumeration prevented by server-authoritative scope filtering                          | `edge-case`    | Security implementation detail; requires crafting enumeration attacks — not standard E2E       |
 
 **Gherkin generated for:** AC-01, AC-02, AC-04, AC-05, AC-13, AC-16
@@ -54,7 +55,7 @@ Figma design: Node 9:6160, file 7pygkopuqyeEhUTMVp9lrP — Screen "Tenant List V
 | `@happy-path` | Support User views scoped tenant list matching active grant                            | AC-02, AC-04 | P0       | ⚙️ needs seeded Support Grant |
 | `@happy-path` | System Admin filters list by Lifecycle Status                                          | AC-05        | P0       | ✅                            |
 | `@main-error` | Support User with no active grants sees empty list not error                           | AC-13        | P0       | ⚙️ needs seeded Support Grant |
-| `@main-error` | Unauthorized roles receive 404 on tenant list endpoint (Scenario Outline — 3 roles)    | AC-16        | P0       | ✅                            |
+| `@main-error` | Unauthorized roles receive 404 on tenant list endpoint (Scenario Outline — 5 roles)    | AC-16        | P0       | ✅                            |
 
 Active scenario blocks: 5 (2 Outlines + 3 Scenarios)
 E2E automation candidates: 3 of 5 scenarios ✅
@@ -154,7 +155,10 @@ Feature: Tenant List View & Search (US 29.3 — PRD1042-584)
   # MAIN ERROR — AC-16
   # RefiNext 404-not-403 domain rule: non-authorized roles must receive HTTP 404
   # on the tenant list endpoint — not 403 — to prevent tenant enumeration.
-  # Tests Front Office, Back Office, and LC User in one Outline.
+  # Tests Front Office, Back Office, LC User, Bank Admin, and Auditor in one Outline.
+  # Bank Admin (bank_admin, bank_tenant) is a tenant-level role with no cross-tenant
+  # visibility — the platform tenant list is System Admin + grant-scoped Support only
+  # (per PRD1042-48, Ivan Mladenovic 2026-07-06). Auditor also excluded per permission matrix.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-16 @p0 @e2e-ready
@@ -169,4 +173,6 @@ Feature: Tenant List View & Search (US 29.3 — PRD1042-584)
       | Front Office  |
       | Back Office   |
       | LC User       |
+      | Bank Admin    |
+      | Auditor       |
 ```

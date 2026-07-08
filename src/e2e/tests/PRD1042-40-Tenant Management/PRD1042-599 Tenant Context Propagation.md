@@ -1,6 +1,8 @@
 # PRD1042-599 — US 29.18 | TENANT MANAGEMENT | Tenant Context Propagation
 
 Generated: 2026-07-07
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin bound to one tenant; cross-tenant context injection blocked at DAL + query + RLS layers (same as other tenant-scoped roles).
+
 Story: PRD1042-599 — US 29.18 | TENANT MANAGEMENT | Tenant Context Propagation
 Epic: PRD1042-40 — Epic 29: Tenant Management
 DoR status: PASS (21 ACs, description present, stakeholder-reviewed by Iva Marković + Philipp Maute 404-alignment pass 2026-06-02, QA ready)
@@ -55,15 +57,15 @@ Figma design: N/A — backend/security enforcement story, no UI surface (Stage 2
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                      | AC           | Priority | E2E                                                |
-| ------------- | ------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------------------- |
-| `@happy-path` | Authenticated user request returns own-tenant resources without explicit tenant selection (Outline — 3 roles) | AC-01, AC-03 | P0       | `⚙️` needs D20 for cross-tenant assertion baseline |
-| `@main-error` | Client-injected X-Tenant-Id header is ignored; server enforces session-bound tenant                           | AC-10        | P0       | `✅`                                               |
-| `@main-error` | Cross-tenant resource access returns 404, not 403 (Outline — Tenant A → Tenant B resources, 3 resource types) | AC-16, AC-19 | P0       | `⚙️` needs D20                                     |
-| `@main-error` | Cross-tenant list scope isolation — Tenant A user sees only Tenant A records                                  | AC-16, AC-01 | P0       | `⚙️` needs D20                                     |
-| `@main-error` | Direct URL manipulation to cross-tenant resource ID returns 404 (existence not disclosed)                     | AC-16, AC-19 | P0       | `⚙️` needs D20                                     |
+| Tag           | Scenario                                                                                                                      | AC           | Priority | E2E                                                |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------------------- |
+| `@happy-path` | Authenticated user request returns own-tenant resources without explicit tenant selection (Outline — 4 roles inc. Bank Admin) | AC-01, AC-03 | P0       | `⚙️` needs D20 for cross-tenant assertion baseline |
+| `@main-error` | Client-injected X-Tenant-Id header is ignored; server enforces session-bound tenant (Outline — 2 roles inc. Bank Admin)       | AC-10        | P0       | `✅`                                               |
+| `@main-error` | Cross-tenant resource access returns 404, not 403 (Outline — Tenant A → Tenant B resources, 3 resource types)                 | AC-16, AC-19 | P0       | `⚙️` needs D20                                     |
+| `@main-error` | Cross-tenant list scope isolation — Tenant A user sees only Tenant A records                                                  | AC-16, AC-01 | P0       | `⚙️` needs D20                                     |
+| `@main-error` | Direct URL manipulation to cross-tenant resource ID returns 404 (existence not disclosed)                                     | AC-16, AC-19 | P0       | `⚙️` needs D20                                     |
 
-Active scenario blocks: 5 (2 Outlines + 3 Scenarios)
+Active scenario blocks: 5 (3 Outlines + 2 Scenarios)
 E2E automation candidates: 1 of 5 scenarios `✅` (4 need D20 second seeded tenant)
 
 ---
@@ -102,10 +104,11 @@ Feature: Tenant Context Propagation (US 29.18 — PRD1042-599)
     And no UI element prompted the user to select a tenant
 
     Examples:
-      | role           | email             | endpoint      |
-      | System Admin   | admin@acme-bank   | /api/users    |
-      | Front Office   | fo@acme-bank      | /api/users    |
-      | Back Office    | bo@acme-bank      | /api/users    |
+      | role           | email                 | endpoint      |
+      | System Admin   | admin@acme-bank       | /api/users    |
+      | Bank Admin     | bank-admin@acme-bank  | /api/users    |
+      | Front Office   | fo@acme-bank          | /api/users    |
+      | Back Office    | bo@acme-bank          | /api/users    |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-10
@@ -113,17 +116,26 @@ Feature: Tenant Context Propagation (US 29.18 — PRD1042-599)
   # to upgrade or switch tenant scope by sending X-Tenant-Id in the request
   # header, the server IGNORES it — the session-bound tenant is authoritative.
   # This is the frontend-boundary contract: no way to escalate via headers.
+  # Bank Admin is a tenant-scoped role (bank_tenant) bound to one tenant — the
+  # header-injection defence must hold for them identically. Bank Admin CANNOT
+  # use X-Tenant-Id to reach another tenant's data (they have no cross-tenant
+  # authorization claim at all, unlike System Admin).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-10 @p0 @e2e-ready
-  Scenario: Client-injected X-Tenant-Id header is ignored; server enforces session-bound tenant (AC-10)
-    Given a System Admin user "admin@acme-bank" belongs to Tenant A "acme-bank"
+  Scenario Outline: Client-injected X-Tenant-Id header is ignored; server enforces session-bound tenant (AC-10)
+    Given a <role> user "<email>" belongs to Tenant A "acme-bank"
     And the user is logged in
     When the client sends a request to "/api/users" with header "X-Tenant-Id: <Tenant B id>"
     Then the response status should be 200
     And the response payload should contain only records where tenant_id equals Tenant A's id
     And no record belonging to Tenant B should appear in the payload
     And the request should be handled as if no X-Tenant-Id header were present
+
+    Examples:
+      | role         | email                |
+      | System Admin | admin@acme-bank      |
+      | Bank Admin   | bank-admin@acme-bank |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-16, AC-19

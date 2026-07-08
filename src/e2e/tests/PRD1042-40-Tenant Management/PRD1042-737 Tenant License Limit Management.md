@@ -7,6 +7,10 @@ DoR status: PASS (24 ACs, description present, stakeholder-reviewed by Philipp M
 ACs with Gherkin scenarios: 10 of 24 | Blocked: 3 (D-Audit, D-Concurrency, D-EnvOverride) | Excluded: 11 (edge-case or separate-feature — scope filter table only)
 Figma design: No Figma URL linked to parent story or subtasks — Stage 2 FAILED (design-blind; UI touchpoints assumed to extend Tenant Detail View PRD1042-585 node 52:1806 pattern — copy unverified)
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin cannot modify license limits (platform-only); may have view access to own tenant. Bank Admin (`bank_admin`, User Type `bank_tenant`) is a tenant-level role — license limits are a platform-level commercial configuration reserved to System Admin. Bank Admin therefore joins the 404-not-403 write-attempt Outline (AC-11/AC-16/AC-18) and is added as a candidate viewer for own-tenant read (AC-05) — see OQ-BA-01 below since the Jira permission matrix on PRD1042-737 does not yet list Bank Admin as an authorized viewer.
+
+**OQ-BA-01 (Bank Admin view access):** The Permission Matrix on PRD1042-737 lists System Admin (write + view), Support (view), and Auditor (view) — Bank Admin is not listed. User-provided context on 2026-07-08 states Bank Admin "may have view access to own tenant." The AC-05 Outline below includes Bank Admin conditionally; if PO confirms Bank Admin is NOT a viewer, drop the Bank Admin row from AC-05 and instead add Bank Admin to the 404-on-read scope in AC-16.
+
 ---
 
 ## Blocked ACs (no scenarios generated)
@@ -58,16 +62,16 @@ Figma design: No Figma URL linked to parent story or subtasks — Stage 2 FAILED
 
 **Order: happy-path rows first, main-error rows second.** Never interleave.
 
-| Tag           | Scenario                                                                          | AC                | Priority | E2E          |
-| ------------- | --------------------------------------------------------------------------------- | ----------------- | -------- | ------------ |
-| `@happy-path` | System Admin configures license limits for a tenant (Outline — 3 fields)          | AC-01             | P0       | ✅           |
-| `@happy-path` | System Admin and Support view current limits and utilisation (Outline — 2 roles)  | AC-05             | P0       | ✅           |
-| `@main-error` | Creation blocked with user-facing message at limit (Outline — 3 entity types)     | AC-03,AC-04       | P0       | ⚙️ needs D19 |
-| `@main-error` | Reduction below current active count rejected with 422 (Outline — 2 fields)       | AC-09             | P0       | ⚙️ needs D19 |
-| `@main-error` | max_users_per_lc reduction below LC's active user count rejected with 422         | AC-10             | P0       | ⚙️ needs D19 |
-| `@main-error` | Non-System-Admin roles hit 404-not-403 on license-limit write (Outline — 5 roles) | AC-11,AC-16,AC-18 | P0       | ✅           |
-| `@main-error` | Limit set to exactly current count allowed; subsequent create rejected            | AC-19             | P0       | ⚙️ needs D19 |
-| `@main-error` | Limit set to 0 rejected with validation error (Outline — 3 fields)                | AC-24             | P0       | ✅           |
+| Tag           | Scenario                                                                                                                          | AC                | Priority | E2E          |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------- | -------- | ------------ |
+| `@happy-path` | System Admin configures license limits for a tenant (Outline — 3 fields)                                                          | AC-01             | P0       | ✅           |
+| `@happy-path` | System Admin / Support / Bank Admin view current limits and utilisation (Outline — 3 roles)                                       | AC-05             | P0       | ✅           |
+| `@main-error` | Creation blocked with user-facing message at limit (Outline — 3 entity types)                                                     | AC-03,AC-04       | P0       | ⚙️ needs D19 |
+| `@main-error` | Reduction below current active count rejected with 422 (Outline — 2 fields)                                                       | AC-09             | P0       | ⚙️ needs D19 |
+| `@main-error` | max_users_per_lc reduction below LC's active user count rejected with 422                                                         | AC-10             | P0       | ⚙️ needs D19 |
+| `@main-error` | Non-System-Admin roles hit 404-not-403 on license-limit write (Outline — 7 rows: 5 platform-role + 2 Bank Admin own/cross tenant) | AC-11,AC-16,AC-18 | P0       | ✅           |
+| `@main-error` | Limit set to exactly current count allowed; subsequent create rejected                                                            | AC-19             | P0       | ⚙️ needs D19 |
+| `@main-error` | Limit set to 0 rejected with validation error (Outline — 3 fields)                                                                | AC-24             | P0       | ✅           |
 
 Active scenario blocks: 8 (6 Outlines + 2 Scenarios)
 E2E automation candidates: 3 of 8 scenarios ✅
@@ -123,7 +127,7 @@ Feature: Tenant License Limit Management (US 29.19 — PRD1042-737)
   Scenario Outline: <role> views tenant license limits and utilisation (AC-05)
     Given tenant "acme-bank" has max_lc_count=25, max_bank_user_count=10, max_users_per_lc=2
     And tenant "acme-bank" currently has 12 active leasing companies, 6 active bank users
-    And I am authenticated as <role>
+    And I am authenticated as <role> with tenant scope "<tenant_scope>"
     When I GET "/api/tenants/acme-bank"
     Then the response status should be 200
     And the response should include max_lc_count of 25
@@ -133,10 +137,15 @@ Feature: Tenant License Limit Management (US 29.19 — PRD1042-737)
     And the response should include bank_user_utilisation of 6
     And the response should include lc_user_utilisation per leasing company
 
+    # Bank Admin row is conditional on OQ-BA-01 resolution. Bank Admin can only
+    # ever view its OWN tenant — cross-tenant read returns 404 (see AC-16 rule).
+    # If PO confirms Bank Admin is NOT a viewer, delete the bank_admin row and
+    # add it to the 404-on-read case below.
     Examples:
-      | role         |
-      | System Admin |
-      | Support      |
+      | role         | tenant_scope |
+      | System Admin | platform     |
+      | Support      | platform     |
+      | Bank Admin   | acme-bank    |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-03, AC-04
@@ -209,23 +218,33 @@ Feature: Tenant License Limit Management (US 29.19 — PRD1042-737)
   # (not 403) on all non-System-Admin roles. This prevents role enumeration and
   # tenant-level operational users must never be able to modify limits through
   # any API path.
+  #
+  # Bank Admin (bank_admin, User Type bank_tenant) is added per PRD1042-48 —
+  # license limits are platform-level commercial configuration; Bank Admin is
+  # explicitly a tenant-level role and CANNOT modify limits on its own tenant
+  # OR any other tenant. Both cases collapse to the same 404 pattern under the
+  # AC-18 rule ("must never be able to modify license limits through any API
+  # path"). Two Bank Admin rows exercise both surfaces: own tenant + cross
+  # tenant.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-11 @ac-16 @ac-18 @p0 @e2e-ready
   Scenario Outline: Non-System-Admin roles hit 404-not-403 on license-limit write (AC-11, AC-16, AC-18)
-    Given I am authenticated as <role>
-    When I PATCH "/api/tenants/acme-bank/license-limits" with max_lc_count set to 30
+    Given I am authenticated as <role> with tenant scope "<tenant_scope>"
+    When I PATCH "/api/tenants/<target_tenant>/license-limits" with max_lc_count set to 30
     Then the response status should be 404
     And the response status should NOT be 403
     And the tenant max_lc_count should remain unchanged
 
     Examples:
-      | role         |
-      | Front Office |
-      | Back Office  |
-      | LC User      |
-      | Support      |
-      | Auditor      |
+      | role         | tenant_scope | target_tenant |
+      | Front Office | platform     | acme-bank     |
+      | Back Office  | platform     | acme-bank     |
+      | LC User      | platform     | acme-bank     |
+      | Support      | platform     | acme-bank     |
+      | Auditor      | platform     | acme-bank     |
+      | Bank Admin   | acme-bank    | acme-bank     |
+      | Bank Admin   | other-bank   | acme-bank     |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-19

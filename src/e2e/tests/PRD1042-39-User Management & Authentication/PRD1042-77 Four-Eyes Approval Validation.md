@@ -1,9 +1,12 @@
 # PRD1042-77 — US 28.7 | USER MANAGEMENT | Four-Eyes Approval Validation
 
-Generated: 2026-06-12 | Design updated: 2026-06-12
+Generated: 2026-06-12 | Design updated: 2026-06-12 | Last updated: 2026-07-08
+
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Jira description of PRD1042-77 explicitly splits the former combined "Power User / System Admin" into System Admin (platform administration) and Power User (Bank Admin) (tenant-level governance approvals within its own bank tenant only). Bank Admin now acts as BOTH initiator AND countersignatory for bank user role changes within its own tenant. Non-overridable Four-Eyes is required for granting Power User (Bank Admin) / Admin / Auditor / Back Office / Risk roles (per Philipp comment 34353 + Vesna orange update). Two new scenarios added (Bank Admin ↔ Bank Admin countersign, non-overridable Four-Eyes for privileged bank roles); one scenario added asserting Bank Admin cannot self-countersign (actor independence); happy-path Outline extended with a Bank Admin initiator/approver pair; scope filter and scenarios summary refreshed.
+
 Story: PRD1042-77 — US 28.7 | USER MANAGEMENT | Four-Eyes Approval Validation
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
-DoR status: PASS (15 ACs, description present, stakeholder-reviewed by Philipp Maute & Vesna Plakalovic 2026-05-12, Ready for Staging)
+DoR status: PASS (15 ACs, description present, stakeholder-reviewed by Philipp Maute & Vesna Plakalovic 2026-05-12, Bank Admin split confirmed by Ivan Mladenovic 2026-07-06, UAT ready)
 ACs with Gherkin scenarios: 11 of 15 | Blocked: 3 (AC-04, AC-09, AC-13) | Excluded: 1 (AC-08 edge-case) | Excluded (timing): 2 (AC-12, AC-15)
 Figma design: Node 574:49518, file 18XTZEeaxrGDhi4DzZ2QnJ — extraction SUCCESS (2026-06-12, after MCP re-auth with @holycode.com account)
 Sections extracted: VIEW DETAILS, PENDING APPROVALS - Approval flow (node 576:50334), REJECTION FLOW (node 576:51875), SUBMITTER NOTIFICATIONS (node 576:53060), EMPTY STATE (node 576:53511)
@@ -65,48 +68,51 @@ Stage 3 comparison status: WARNINGS — 2 MINOR design typos found (see Design G
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                                                                                        | Classification | Rationale                                                                                                                                                                                  |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| AC-01 | Independent Actor Validation — initiator and approver must be different users; server-side enforced; audit traceable                                                               | `happy-path`   | Core Four-Eyes rule and the primary success outcome — covered by happy-path Outline where two distinct users complete an approval                                                          |
-| AC-02 | Role Validation — approver must possess required role, permissions and authorized scope; tenant + workflow scoped                                                                  | `main-error`   | Wrong-role approver must be rejected at API; RefiNext role-access domain rule directly observable in the response code                                                                     |
-| AC-03 | Workflow Validation — approval must be rejected when business object is in an invalid workflow state                                                                               | `main-error`   | Invalid workflow state must block countersignature; directly observable via API response and audit log                                                                                     |
-| AC-04 | Session Validation — expired or invalid approver session must reject the approval                                                                                                  | `Blocked`      | Requires D16 (`TEST_TOKEN_TTL_SECONDS`) to force a deterministically expired session at countersignature time — no override available in current environment                               |
-| AC-05 | Tenant Scope Validation — cross-tenant approval authority must be rejected; tenant scope validation dynamically enforced                                                           | `main-error`   | RefiNext tenant-isolation domain rule (architecture constraint #5) — cross-tenant attempts must return 404 not 403 to prevent enumeration                                                  |
-| AC-06 | Self-Approval Prevention — initiating user must not also countersign, regardless of session, sub-account or impersonation                                                          | `main-error`   | Direct expression of the Four-Eyes separation rule; identity-based, not session-based; must be testable end-to-end via API                                                                 |
-| AC-07 | API Enforcement — Four-Eyes validation server-authoritative; direct API manipulation must not bypass approval governance                                                           | `main-error`   | Tests that bypass paths (direct POST as same user) are rejected with the same 4xx contract as the UI; complements AC-06 with an explicit API-call scenario                                 |
-| AC-08 | Approval Lineage Preservation — initiator, approver, delegation chain, lineage records remain immutable and historically reconstructible                                           | `edge-case`    | Implementation invariant on the audit/approval store; covered indirectly by AC-01/AC-12 audit assertions and at backend integration test layer; no discrete UI E2E gesture                 |
-| AC-09 | MFA Enforcement — privileged approvals require recent MFA (≤5 min); stale state requires step-up; backend/API enforced                                                             | `Blocked`      | Per Jira comment 36265 — MFA step-up explicitly not implemented in current build; FE screens deferred until PRD1042-75 lands                                                               |
-| AC-10 | Invalid Approval Blocking — failed validation must block lifecycle transition; no partial execution; audit traceable                                                               | `happy-path`   | Composite assertion satisfied by happy-path Outline (lifecycle transitions only when validation passes) plus the AC-01/AC-06 negatives (failed validation produces no state change)        |
-| AC-11 | Auditor Visibility — Auditor can review approval lineage read-only; cannot participate in approval execution                                                                       | `main-error`   | RefiNext role-access domain rule for the Auditor role; auditor must see lineage but POST to approval endpoint must be rejected with 403                                                    |
-| AC-12 | Audit Logging — every approval event logged with initiator, approver, roles, tenant, action, outcome, failure reason, timestamp, MFA state                                         | `edge-case`    | Audit log schema invariant; verified at backend integration test level — E2E asserts only the existence of the event, not the full schema                                                  |
-| AC-13 | Delegated Approval Validation — delegated approvers in the initiator's authority chain treated as the initiating actor                                                             | `Blocked`      | Delegation framework not in Sprint 1 scope per Katarina comment 34592; cannot be exercised without backend delegation model and admin UI                                                   |
-| AC-14 | Self-Elevation Prevention — initiator cannot approve a change affecting their own role/scope/permissions, regardless of session, delegated authority, sub-account or impersonation | `main-error`   | Distinct from AC-06: AC-06 blocks the same identity from approving any object they initiated; AC-14 specifically blocks self-elevation patterns where the change targets the same identity |
-| AC-15 | Approval Validity Window — expired approval requests become invalid and require re-initiation; expiration audit-traceable                                                          | `edge-case`    | Timing-based (configurable per workflow type); requires clock manipulation seam (D16-equivalent) to fast-forward expiry deterministically; not assertable in standard E2E run              |
+| AC    | Description                                                                                                                                                                        | Classification | Rationale                                                                                                                                                                                                                                                                                                                  |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Independent Actor Validation — initiator and approver must be different users; server-side enforced; audit traceable                                                               | `happy-path`   | Core Four-Eyes rule and the primary success outcome — covered by happy-path Outline where two distinct users complete an approval. Outline now includes Bank Admin ↔ Bank Admin pair for tenant-level bank user role changes (per Ivan Mladenovic 2026-07-06); System Admin pair remains for platform-level administration |
+| AC-02 | Role Validation — approver must possess required role, permissions and authorized scope; tenant + workflow scoped                                                                  | `main-error`   | Wrong-role approver must be rejected at API; RefiNext role-access domain rule directly observable in the response code. Role-scope split: Bank Admin countersigns tenant-level bank user role changes only; System Admin countersigns platform-level actions only — cross-scope countersignature must be rejected          |
+| AC-03 | Workflow Validation — approval must be rejected when business object is in an invalid workflow state                                                                               | `main-error`   | Invalid workflow state must block countersignature; directly observable via API response and audit log                                                                                                                                                                                                                     |
+| AC-04 | Session Validation — expired or invalid approver session must reject the approval                                                                                                  | `Blocked`      | Requires D16 (`TEST_TOKEN_TTL_SECONDS`) to force a deterministically expired session at countersignature time — no override available in current environment                                                                                                                                                               |
+| AC-05 | Tenant Scope Validation — cross-tenant approval authority must be rejected; tenant scope validation dynamically enforced                                                           | `main-error`   | RefiNext tenant-isolation domain rule (architecture constraint #5) — cross-tenant attempts must return 404 not 403 to prevent enumeration                                                                                                                                                                                  |
+| AC-06 | Self-Approval Prevention — initiating user must not also countersign, regardless of session, sub-account or impersonation                                                          | `main-error`   | Direct expression of the Four-Eyes separation rule; identity-based, not session-based; must be testable end-to-end via API                                                                                                                                                                                                 |
+| AC-07 | API Enforcement — Four-Eyes validation server-authoritative; direct API manipulation must not bypass approval governance                                                           | `main-error`   | Tests that bypass paths (direct POST as same user) are rejected with the same 4xx contract as the UI; complements AC-06 with an explicit API-call scenario                                                                                                                                                                 |
+| AC-08 | Approval Lineage Preservation — initiator, approver, delegation chain, lineage records remain immutable and historically reconstructible                                           | `edge-case`    | Implementation invariant on the audit/approval store; covered indirectly by AC-01/AC-12 audit assertions and at backend integration test layer; no discrete UI E2E gesture                                                                                                                                                 |
+| AC-09 | MFA Enforcement — privileged approvals require recent MFA (≤5 min); stale state requires step-up; backend/API enforced                                                             | `Blocked`      | Per Jira comment 36265 — MFA step-up explicitly not implemented in current build; FE screens deferred until PRD1042-75 lands                                                                                                                                                                                               |
+| AC-10 | Invalid Approval Blocking — failed validation must block lifecycle transition; no partial execution; audit traceable                                                               | `happy-path`   | Composite assertion satisfied by happy-path Outline (lifecycle transitions only when validation passes) plus the AC-01/AC-06 negatives (failed validation produces no state change)                                                                                                                                        |
+| AC-11 | Auditor Visibility — Auditor can review approval lineage read-only; cannot participate in approval execution                                                                       | `main-error`   | RefiNext role-access domain rule for the Auditor role; auditor must see lineage but POST to approval endpoint must be rejected with 403                                                                                                                                                                                    |
+| AC-12 | Audit Logging — every approval event logged with initiator, approver, roles, tenant, action, outcome, failure reason, timestamp, MFA state                                         | `edge-case`    | Audit log schema invariant; verified at backend integration test level — E2E asserts only the existence of the event, not the full schema                                                                                                                                                                                  |
+| AC-13 | Delegated Approval Validation — delegated approvers in the initiator's authority chain treated as the initiating actor                                                             | `Blocked`      | Delegation framework not in Sprint 1 scope per Katarina comment 34592; cannot be exercised without backend delegation model and admin UI                                                                                                                                                                                   |
+| AC-14 | Self-Elevation Prevention — initiator cannot approve a change affecting their own role/scope/permissions, regardless of session, delegated authority, sub-account or impersonation | `main-error`   | Distinct from AC-06: AC-06 blocks the same identity from approving any object they initiated; AC-14 specifically blocks self-elevation patterns where the change targets the same identity                                                                                                                                 |
+| AC-15 | Approval Validity Window — expired approval requests become invalid and require re-initiation; expiration audit-traceable                                                          | `edge-case`    | Timing-based (configurable per workflow type); requires clock manipulation seam (D16-equivalent) to fast-forward expiry deterministically; not assertable in standard E2E run                                                                                                                                              |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-05, AC-06, AC-07, AC-08 (UI assertion), AC-09 (@fixme), AC-10, AC-11, AC-14, AC-15 (expiry countdown assertion in task list scenario)
 **Blocked (no Gherkin):** AC-04, AC-13
 **No Gherkin (edge-case or schema invariant):** AC-12
+**Bank Admin coverage (added 2026-07-08):** happy-path Outline row for Bank Admin ↔ Bank Admin (AC-01); Bank Admin self-countersign prevention (AC-06); non-overridable Four-Eyes for granting privileged bank roles — Power User (Bank Admin) / Admin / Auditor / Back Office / Risk (AC-01 + AC-02 + AC-10)
 
 ---
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                             | AC           | Priority | E2E                                      |
-| ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ---------------------------------------- |
-| `@happy-path` | Two distinct users complete a Four-Eyes approval and the workflow transitions (Scenario Outline — 2 admin tiers)     | AC-01, AC-10 | P0       | ⚙️ needs D19 (throwaway users)           |
-| `@main-error` | Self-approval by the initiating user is rejected (UI + API) (AC-06 + AC-07)                                          | AC-06, AC-07 | P0       | ✅                                       |
-| `@main-error` | Approver lacking the required role is rejected with 403                                                              | AC-02        | P0       | ✅                                       |
-| `@main-error` | Cross-tenant approval is rejected and returns 404 (tenant-isolation enumeration guard)                               | AC-05        | P0       | ⚙️ needs D20 (second Bank Tenant)        |
-| `@main-error` | Approval on an invalid workflow state is rejected                                                                    | AC-03        | P0       | ⚙️ needs D19 (workflow staging)          |
-| `@main-error` | Auditor cannot perform approval — read-only lineage visibility only                                                  | AC-11        | P0       | ✅                                       |
-| `@main-error` | Self-elevation — initiator cannot approve a change to their own role or scope                                        | AC-14        | P0       | ⚙️ needs D19 (privileged user lifecycle) |
-| `@ui`         | Pending approval task list shows correct metadata — user, submitter, expiry timer, own-item label                    | AC-01, AC-15 | P1       | ✅                                       |
-| `@ui`         | Approval detail dialog shows ACTION, CHANGE comparison, SUBMISSION details, REQUEST CHAIN and requires justification | AC-01, AC-08 | P1       | ⚙️ needs D19                             |
-| `@ui @fixme`  | Step-up OTP dialog appears after clicking Approve/Reject in the detail dialog (AC-09 — deferred, design ready)       | AC-09        | P1       | 🚫 blocked by PRD1042-75 MFA             |
-| `@ui`         | Rejection flow detail dialog mirrors approval dialog structure with Confirm rejection CTA                            | AC-01        | P1       | ⚙️ needs D19                             |
+| Tag           | Scenario                                                                                                                                                                                           | AC                  | Priority | E2E                                      |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------- | ---------------------------------------- |
+| `@happy-path` | Two distinct users complete a Four-Eyes approval and the workflow transitions (Scenario Outline — 3 admin pairings: System Admin ↔ Power User, Power User ↔ System Admin, Bank Admin ↔ Bank Admin) | AC-01, AC-10        | P0       | ⚙️ needs D19 (throwaway users)           |
+| `@main-error` | Self-approval by the initiating user is rejected (UI + API) (AC-06 + AC-07)                                                                                                                        | AC-06, AC-07        | P0       | ✅                                       |
+| `@main-error` | Bank Admin cannot self-countersign a bank user role change they initiated (actor independence, tenant-scoped)                                                                                      | AC-06, AC-07        | P0       | ⚙️ needs D19                             |
+| `@main-error` | Approver lacking the required role is rejected with 403                                                                                                                                            | AC-02               | P0       | ✅                                       |
+| `@main-error` | Non-overridable Four-Eyes — granting Power User (Bank Admin) / Admin / Auditor / Back Office / Risk requires two independent Bank Admins; single-actor commit is blocked                           | AC-01, AC-02, AC-10 | P0       | ⚙️ needs D19                             |
+| `@main-error` | Cross-tenant approval is rejected and returns 404 (tenant-isolation enumeration guard)                                                                                                             | AC-05               | P0       | ⚙️ needs D20 (second Bank Tenant)        |
+| `@main-error` | Approval on an invalid workflow state is rejected                                                                                                                                                  | AC-03               | P0       | ⚙️ needs D19 (workflow staging)          |
+| `@main-error` | Auditor cannot perform approval — read-only lineage visibility only                                                                                                                                | AC-11               | P0       | ✅                                       |
+| `@main-error` | Self-elevation — initiator cannot approve a change to their own role or scope                                                                                                                      | AC-14               | P0       | ⚙️ needs D19 (privileged user lifecycle) |
+| `@ui`         | Pending approval task list shows correct metadata — user, submitter, expiry timer, own-item label                                                                                                  | AC-01, AC-15        | P1       | ✅                                       |
+| `@ui`         | Approval detail dialog shows ACTION, CHANGE comparison, SUBMISSION details, REQUEST CHAIN and requires justification                                                                               | AC-01, AC-08        | P1       | ⚙️ needs D19                             |
+| `@ui @fixme`  | Step-up OTP dialog appears after clicking Approve/Reject in the detail dialog (AC-09 — deferred, design ready)                                                                                     | AC-09               | P1       | 🚫 blocked by PRD1042-75 MFA             |
+| `@ui`         | Rejection flow detail dialog mirrors approval dialog structure with Confirm rejection CTA                                                                                                          | AC-01               | P1       | ⚙️ needs D19                             |
 
-Active scenario blocks: 11 (1 Outline + 10 Scenarios; 1 tagged `@fixme`)
-E2E automation candidates: 4 of 11 scenarios ✅ | 5 need D19/D20 | 1 blocked by PRD1042-75 | 1 fixme
+Active scenario blocks: 13 (1 Outline + 12 Scenarios; 1 tagged `@fixme`; +2 Bank Admin scenarios + 1 extra Outline row added 2026-07-08)
+E2E automation candidates: 4 of 13 scenarios ✅ | 7 need D19/D20 | 1 blocked by PRD1042-75 | 1 fixme
 
 ---
 
@@ -128,12 +134,22 @@ Feature: Four-Eyes Approval Validation (US 28.7 — PRD1042-77)
   # HAPPY PATH — AC-01, AC-10
   # Two DIFFERENT authorized users complete the Four-Eyes approval cycle:
   # initiator submits the action, approver countersigns, and the lifecycle
-  # transition only happens after countersignature succeeds. The Outline covers
-  # the two admin tiers with countersignature authority within User Management
-  # Sprint 1 scope (system_admin and power_user). Note: per Jira comment 36265
-  # the FE Approve/Reject screens are intentionally not implemented until MFA
-  # work lands — happy-path scenario is API-first, UI assertions limited to
-  # observable workflow state on the user detail page.
+  # transition only happens after countersignature succeeds.
+  #
+  # Role-scope split (confirmed by Ivan Mladenovic 2026-07-06, per PRD1042-48
+  # and per Jira description update on PRD1042-77):
+  #   - system_admin       → platform administration actions only
+  #   - power_user         → tenant-level administration (legacy Power User)
+  #   - bank_admin         → BOTH initiator AND countersignatory for bank user
+  #                          role changes within its OWN tenant only
+  # Bank Admin acts as both initiator and countersignatory within its own
+  # tenant — two DIFFERENT Bank Admin identities are still required to satisfy
+  # actor independence (AC-01 / AC-06). The Outline covers the three admin
+  # tier pairings with countersignature authority within User Management
+  # Sprint 1 scope. Note: per Jira comment 36265 the FE Approve/Reject screens
+  # are intentionally not implemented until MFA work lands — happy-path is
+  # API-first, UI assertions limited to observable workflow state on the
+  # user detail page.
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-01 @ac-10 @p0
@@ -156,6 +172,7 @@ Feature: Four-Eyes Approval Validation (US 28.7 — PRD1042-77)
       | initiator_role | initiator_email             | approver_role | approver_email              |
       | system_admin   | admin1@refinext-test.com    | power_user    | power1@refinext-test.com    |
       | power_user     | power2@refinext-test.com    | system_admin  | admin2@refinext-test.com    |
+      | bank_admin     | bankadmin1@refinext-test.com | bank_admin   | bankadmin2@refinext-test.com |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-06, AC-07
@@ -182,6 +199,34 @@ Feature: Four-Eyes Approval Validation (US 28.7 — PRD1042-77)
     And the failed self-approval attempt should be recorded in the audit log with reason "Same actor"
 
   # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-06, AC-07 (Bank Admin actor independence, added 2026-07-08)
+  # Bank Admin acts as BOTH initiator AND countersignatory for bank user role
+  # changes within its own tenant. Because a single Bank Admin identity plays
+  # both roles, actor independence (initiator != approver) MUST still be
+  # enforced — a Bank Admin cannot self-countersign a role change they
+  # initiated, even though the role name is the same on both sides of the
+  # workflow. The rule is identity-based, not role-based (same guarantee
+  # already tested for System Admin above). Confirmed by Ivan Mladenovic
+  # 2026-07-06 per PRD1042-48.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-06 @ac-07 @p0
+  Scenario: Bank Admin cannot self-countersign a bank user role change they initiated (AC-06, AC-07)
+    Given a target "front_office" user with email "fo@refinext-test.com" exists in tenant "tenant-a"
+    And I am authenticated as a "bank_admin" user with email "bankadmin1@refinext-test.com" in tenant "tenant-a"
+    When I submit a bank user role change (Front Office → Back Office) requiring Four-Eyes approval against "fo@refinext-test.com"
+    Then a Four-Eyes approval request should be created with status "PENDING" and initiator "bankadmin1@refinext-test.com"
+    When I open the pending Four-Eyes approval request as "bankadmin1@refinext-test.com"
+    Then the countersign action should not be available to the initiating Bank Admin
+    When I POST to the approval endpoint as "bankadmin1@refinext-test.com" with action "APPROVE"
+    Then the response status should be 4xx
+    And the response should indicate a separation-of-duties violation
+    And the approval request status should remain "PENDING"
+    And the role of "fo@refinext-test.com" should not change
+    And the failed self-countersign attempt should be recorded in the audit log with reason "Same actor"
+    And the tenant context on the audit event should be "tenant-a"
+
+  # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-02
   # The countersignatory must possess the required role and approval authority.
   # A user without the approver role attempting to countersign via direct API
@@ -199,6 +244,49 @@ Feature: Four-Eyes Approval Validation (US 28.7 — PRD1042-77)
     Then the response status should be 403
     And the approval request status should remain "PENDING"
     And the unauthorized countersignature attempt should be recorded in the audit log with reason "Invalid role"
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-01, AC-02, AC-10 (Non-overridable Four-Eyes for privileged
+  # bank roles, added 2026-07-08)
+  # Granting any of the following bank roles MUST require Four-Eyes approval
+  # by two independent Bank Admins — the requirement is non-overridable and
+  # cannot be bypassed even by a System Admin or by an emergency-access flow:
+  #   - Power User (Bank Admin)
+  #   - Admin
+  #   - Auditor
+  #   - Back Office
+  #   - Risk
+  # Confirmed by Philipp Maute (comment 34353) and Vesna Plakalovic (orange
+  # update). Enforced at the API layer: a single Bank Admin cannot commit the
+  # role grant even when acting alone; the workflow MUST create a PENDING
+  # approval request and require a second, distinct Bank Admin to countersign.
+  # Scenario Outline covers all five privileged bank roles in one block.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-01 @ac-02 @ac-10 @p0
+  Scenario Outline: Non-overridable Four-Eyes for granting privileged bank roles — single-actor commit is blocked, two independent Bank Admins succeed (AC-01, AC-02, AC-10)
+    Given a target user with email "target@refinext-test.com" exists in tenant "tenant-a" with role "front_office"
+    And I am authenticated as a "bank_admin" user with email "bankadmin1@refinext-test.com" in tenant "tenant-a"
+    When I POST to grant role "<privileged_role>" to "target@refinext-test.com" with a single-actor commit hint
+    Then the response should NOT commit the role change
+    And a Four-Eyes approval request should be created with status "PENDING" and initiator "bankadmin1@refinext-test.com"
+    And the role of "target@refinext-test.com" should remain "front_office"
+    When I POST to the approval endpoint as "bankadmin1@refinext-test.com" with action "APPROVE"
+    Then the response status should be 4xx
+    And the response should indicate a separation-of-duties violation
+    When I authenticate as a "bank_admin" user with email "bankadmin2@refinext-test.com" in tenant "tenant-a"
+    And I POST to the approval endpoint for the pending request with action "APPROVE"
+    Then the approval request status should change to "APPROVED"
+    And the role of "target@refinext-test.com" should be "<privileged_role>"
+    And an audit event should be recorded with initiator "bankadmin1@refinext-test.com", approver "bankadmin2@refinext-test.com", action "APPROVE", granted_role "<privileged_role>", and tenant "tenant-a"
+
+    Examples:
+      | privileged_role |
+      | bank_admin      |
+      | admin           |
+      | auditor         |
+      | back_office     |
+      | risk            |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-05

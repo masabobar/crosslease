@@ -1,11 +1,22 @@
 ---
 name: project-prd1042-73
-description: PRD1042-73 US 28.6 User Detail View — 16 ACs, DoR PASS, Figma PARTIAL (Authentication & Security + Governance sections absent), Stage 3 WARNINGS, 6 scenario blocks
+description: PRD1042-73 US 28.6 User Detail View — 16 ACs, DoR PASS, Figma PARTIAL (Authentication & Security + Governance sections absent), Stage 3 WARNINGS, 8 scenario blocks (updated 2026-07-08 with Bank Admin role split)
 metadata:
   type: project
 ---
 
 US 28.6 User Detail View processed via full QA pipeline on 2026-06-03. Figma node 9:113, file j5hq5cQgHWdOtzLvSX0jvj, canvas "User list & user DETAILS".
+
+**Updated 2026-07-08 — Bank Admin role addition (PRD1042-48, Ivan Mladenovic decision 2026-07-06):**
+
+- Jira story description updated 2026-07-06 to formally split "Power User / System Admin" into two distinct roles: `system_admin` (platform, cross-tenant) and `bank_admin` (`user_type=bank_tenant`, tenant-scoped bank administrator).
+- Test file updated to reflect 7 displayed role values in ROLE & SCOPE (system_admin, bank_admin, support_user, auditor, front_office, back_office, leasing_company_user) and 5 viewer roles authorized to open User Detail View (system_admin all tenants, bank_admin own tenant only, support_user diagnostic, auditor read-only during engagement, plus self-profile any authenticated role).
+- Two new Scenario Outlines added:
+  1. "Change role" action visibility (3 variants): System Admin sees it ONLY for platform users; Bank Admin sees it for tenant users within its scope.
+  2. Role badge + classification for all 7 role values (system_admin = Platform-level, other 6 = Tenant-level operational role).
+- AC-01 primary Outline expanded from 3 to 4 viewer role variants (system_admin, bank_admin, support_user, auditor).
+- AC-03 and AC-13 reclassified from `edge-case` to `happy-path`; AC coverage 4 of 16 → 6 of 16; scenario blocks 6 → 8.
+- Jira status advanced from "Dev in progress" to "UAT ready".
 
 **Why:** Complex governance/security story with 16 ACs covering 6 role-based views.
 
@@ -42,6 +53,7 @@ US 28.6 User Detail View processed via full QA pipeline on 2026-06-03. Figma nod
 ## Recurring User Management pattern confirmed
 
 User Management stories consistently show:
+
 - Role-based section variants in Figma (ADMIN / SUPPORT / AUDITOR / FRONT OFFICE / BACK OFFICE sections per canvas)
 - MAJOR design gaps in authentication/security and governance audit sections
 - LC User always excluded from admin modules; self-profile separate from admin User Detail View

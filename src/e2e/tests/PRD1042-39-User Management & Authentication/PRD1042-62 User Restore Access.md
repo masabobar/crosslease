@@ -1,6 +1,9 @@
 # PRD1042-62 — US 28.18 | User Management | User Restore Access
 
 Generated: 2026-06-05
+
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin (User Type: `bank_tenant`) is the tenant-scoped actor that restores access for suspended bank tenant users, replacing the previous Power User (Bank Admin) framing at the wire level. System Admin retains platform-level restore authority; Bank Admin is scope-limited to its own bank tenant.
+
 Story: PRD1042-62 — US 28.18 | User Management | User Restore Access
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (12 ACs, description present, stakeholder-reviewed by Vesna Plakalovic + Philipp Maute, UAT ready)
@@ -11,21 +14,21 @@ Figma design: Node 424:3848, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "REACTIVATE"
 
 ## AC Scope Filter
 
-| AC     | Description                                                                                                                        | Classification     | Rationale                                                                                                                                   |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01  | Authorized admin opens Restore Access form; form displayed with correct fields; Reason=Other makes Comment mandatory               | `happy-path`       | Core success entry point; conditional Comment mandatory logic is part of the same form interaction                                          |
-| AC-02  | Non-Suspended users (Deactivated, Expired, Active, Invited) blocked from restore                                                   | `main-error`       | Directly blocks the restore workflow for ineligible lifecycle states                                                                        |
-| AC-03  | Missing or inactive role blocks restore                                                                                            | `edge-case`        | Backend invariant triggered before submission; not the primary user-facing error path; surfaced only in tampered or stale-config scenarios  |
-| AC-04  | Invalid tenant or Leasing Company scope blocks restore                                                                             | `edge-case`        | Backend invariant; same reasoning as AC-03; not a distinct UI-level interaction                                                             |
-| AC-05  | All validations pass → status transitions to Active; timestamp recorded; audit logged                                              | `happy-path`       | Core success completion; collapses into the AC-01 Scenario Outline (same flow)                                                              |
-| AC-06a | Four-Eyes gate: first authorized submitter → status stays Suspended; WF banner shown on user detail; no temporary lifecycle status | `main-error`       | Four-Eyes is a mandatory workflow gate for Highly Privileged and Privileged tiers; status invariant during approval is a hard business rule |
-| AC-06b | Login allowed after reactivation; new sessions generated; revoked sessions remain invalid                                          | `separate-feature` | Post-reactivation authentication belongs in US 28.1 (PRD1042-43); not this spec's scope                                                     |
-| AC-07  | Previously assigned role and scope remain unchanged after restore                                                                  | `edge-case`        | Backend invariant; no distinct UI interaction; verified by checking user profile post-restore in the AC-01 happy-path                       |
-| AC-08  | Audit logging: actor, reason, timestamp, scope, status transition recorded and immutable                                           | `edge-case`        | Audit trail verification requires test-seam access to audit log API; not E2E UI scope                                                       |
-| AC-09  | Backend/API enforcement: server rejects manipulated requests; frontend restrictions not sufficient                                 | `edge-case`        | API-level enforcement tested at integration test layer; not E2E UI                                                                          |
-| AC-10  | Auditor role with expired validity window → restore blocked                                                                        | `separate-feature` | Auditor validity window is a cross-cutting concern; belongs with Auditor access spec (US 28.x)                                              |
-| AC-11  | Session and token revalidation after restore; revoked sessions stay invalid                                                        | `separate-feature` | Cross-cutting session management; covered in US 28.10 (PRD1042-47)                                                                          |
-| AC-12  | Unauthorized user (wrong role or out-of-scope admin) cannot initiate Restore Access                                                | `main-error`       | RefiNext role-based access domain rule; auto-applied negative scenario                                                                      |
+| AC     | Description                                                                                                                                                                     | Classification     | Rationale                                                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01  | Authorized admin (System Admin platform-wide; Bank Admin within own tenant) opens Restore Access form; form displayed with correct fields; Reason=Other makes Comment mandatory | `happy-path`       | Core success entry point; conditional Comment mandatory logic is part of the same form interaction                                          |
+| AC-02  | Non-Suspended users (Deactivated, Expired, Active, Invited) blocked from restore                                                                                                | `main-error`       | Directly blocks the restore workflow for ineligible lifecycle states                                                                        |
+| AC-03  | Missing or inactive role blocks restore                                                                                                                                         | `edge-case`        | Backend invariant triggered before submission; not the primary user-facing error path; surfaced only in tampered or stale-config scenarios  |
+| AC-04  | Invalid tenant or Leasing Company scope blocks restore                                                                                                                          | `edge-case`        | Backend invariant; same reasoning as AC-03; not a distinct UI-level interaction                                                             |
+| AC-05  | All validations pass → status transitions to Active; timestamp recorded; audit logged                                                                                           | `happy-path`       | Core success completion; collapses into the AC-01 Scenario Outline (same flow)                                                              |
+| AC-06a | Four-Eyes gate: first authorized submitter → status stays Suspended; WF banner shown on user detail; no temporary lifecycle status                                              | `main-error`       | Four-Eyes is a mandatory workflow gate for Highly Privileged and Privileged tiers; status invariant during approval is a hard business rule |
+| AC-06b | Login allowed after reactivation; new sessions generated; revoked sessions remain invalid                                                                                       | `separate-feature` | Post-reactivation authentication belongs in US 28.1 (PRD1042-43); not this spec's scope                                                     |
+| AC-07  | Previously assigned role and scope remain unchanged after restore                                                                                                               | `edge-case`        | Backend invariant; no distinct UI interaction; verified by checking user profile post-restore in the AC-01 happy-path                       |
+| AC-08  | Audit logging: actor, reason, timestamp, scope, status transition recorded and immutable                                                                                        | `edge-case`        | Audit trail verification requires test-seam access to audit log API; not E2E UI scope                                                       |
+| AC-09  | Backend/API enforcement: server rejects manipulated requests; frontend restrictions not sufficient                                                                              | `edge-case`        | API-level enforcement tested at integration test layer; not E2E UI                                                                          |
+| AC-10  | Auditor role with expired validity window → restore blocked                                                                                                                     | `separate-feature` | Auditor validity window is a cross-cutting concern; belongs with Auditor access spec (US 28.x)                                              |
+| AC-11  | Session and token revalidation after restore; revoked sessions stay invalid                                                                                                     | `separate-feature` | Cross-cutting session management; covered in US 28.10 (PRD1042-47)                                                                          |
+| AC-12  | Unauthorized user (wrong role or out-of-scope admin) cannot initiate Restore Access                                                                                             | `main-error`       | RefiNext role-based access domain rule; auto-applied negative scenario                                                                      |
 
 **Gherkin generated for:** AC-01, AC-02, AC-05, AC-06a, AC-12
 **Blocked (no Gherkin):** none
@@ -35,14 +38,14 @@ Figma design: Node 424:3848, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "REACTIVATE"
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                           | AC           | Priority | E2E          |
-| ------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ | -------- | ------------ |
-| `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles)                          | AC-01, AC-05 | P0       | ⚙️ needs D19 |
-| `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                         | AC-01        | P0       | ⚙️ needs D19 |
-| `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 privilege tiers) | AC-06a       | P0       | ✅           |
-| `@main-error` | Same user cannot submit and approve their own Restore Access request                                               | AC-06a       | P0       | ✅           |
-| `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                | AC-02        | P0       | ⚙️ needs D19 |
-| `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                        | AC-12        | P0       | ✅           |
+| Tag           | Scenario                                                                                                                                              | AC           | Priority | E2E          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
+| `@happy-path` | Authorized admin opens Restore Access form and submits (Scenario Outline — 2 admin roles: system_admin, bank_admin)                                   | AC-01, AC-05 | P0       | ⚙️ needs D19 |
+| `@happy-path` | Restore Access Reason "Other" makes Comment field mandatory (Scenario — conditional field)                                                            | AC-01        | P0       | ⚙️ needs D19 |
+| `@main-error` | Four-Eyes gate: first submitter keeps user Suspended and WF banner is shown (Scenario Outline — 2 Highly Privileged actors: system_admin, bank_admin) | AC-06a       | P0       | ✅           |
+| `@main-error` | Same user cannot submit and approve their own Restore Access request                                                                                  | AC-06a       | P0       | ✅           |
+| `@main-error` | Non-suspended user cannot be reactivated (Scenario Outline — 4 ineligible statuses)                                                                   | AC-02        | P0       | ⚙️ needs D19 |
+| `@main-error` | Unauthorized role cannot initiate Restore Access (Scenario)                                                                                           | AC-12        | P0       | ✅           |
 
 Active scenario blocks: 6 (3 Outlines + 3 Scenarios)
 E2E automation candidates: 3 of 6 scenarios ✅
@@ -54,7 +57,7 @@ E2E automation candidates: 3 of 6 scenarios ✅
 ```gherkin
 @user-management @us-28.18 @p0
 Feature: User Restore Access (US 28.18 — PRD1042-62)
-  As a Power User or System Admin
+  As a System Admin (platform-wide) or Bank Admin (within own bank tenant)
   I want to restore access for a suspended user
   So that temporarily restricted users can regain platform access with their previously assigned role and scope
 
@@ -65,9 +68,12 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-01, AC-05
-  # Authorized admin (system_admin or power_user) opens the Restore Access form
-  # on a Suspended user, fills in mandatory fields, submits, and the user status
-  # transitions to Active. Both admin roles are tested in a single Outline.
+  # Authorized admin (system_admin platform-wide, or bank_admin within own
+  # bank tenant) opens the Restore Access form on a Suspended user, fills in
+  # mandatory fields, submits, and the user status transitions to Active.
+  # Both admin roles are tested in a single Outline. bank_admin (User Type:
+  # bank_tenant) is the tenant-scoped restorer per PRD1042-48 realignment;
+  # its target must live within the same bank tenant.
   # Note: exact button label ("Reactivate User" vs "Restore Access") is
   # unverified from design render — test uses accessible role + text pattern.
   # ---------------------------------------------------------------------------
@@ -90,9 +96,9 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
     And the Restore Access action must be audit logged
 
     Examples:
-      | admin_role   | reason                     |
-      | system_admin | Suspension Period Ended     |
-      | power_user   | Administrative Decision     |
+      | admin_role   | reason                  |
+      | system_admin | Suspension Period Ended |
+      | bank_admin   | Administrative Decision |
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-01
@@ -118,12 +124,15 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-06a
-  # For Highly Privileged (system_admin, power_user) and Privileged (support_user,
+  # For Highly Privileged (system_admin, bank_admin) and Privileged (support_user,
   # back_office) tier users, Four-Eyes approval is MANDATORY.
   # When the first authorized admin submits, the status must remain "Suspended"
   # (never change to any temporary state), and a Workflow Engine approval banner
   # must be visible on the user detail page.
   # The same user who submitted must NOT be able to approve their own request.
+  # bank_admin (User Type: bank_tenant) triggers Four-Eyes for restores within
+  # its own tenant scope; a second bank_admin (or system_admin) from the same
+  # tenant must approve.
   # ---------------------------------------------------------------------------
 
   @main-error @ac-06a @e2e-ready
@@ -143,7 +152,7 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
     Examples:
       | submitter_role |
       | system_admin   |
-      | power_user     |
+      | bank_admin     |
 
   @main-error @ac-06a @e2e-ready
   Scenario: Same user cannot submit and approve their own Restore Access request (AC-06a)
@@ -179,9 +188,12 @@ Feature: User Restore Access (US 28.18 — PRD1042-62)
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-12
-  # RefiNext role-based access: only Power User and System Admin may initiate
-  # Restore Access. All other roles must receive a 403 rejection.
-  # Backend/API validation must enforce this — not frontend-only gating.
+  # RefiNext role-based access: only System Admin (platform-wide) and Bank Admin
+  # (within own bank tenant) may initiate Restore Access. All other roles
+  # (front_office, back_office, support_user, auditor, leasing_company_user)
+  # must receive a 403 rejection. Backend/API validation must enforce this —
+  # not frontend-only gating. A bank_admin acting cross-tenant must also be
+  # rejected (covered separately by tenant-isolation spec, not here).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-12 @e2e-ready
