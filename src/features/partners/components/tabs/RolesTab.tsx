@@ -2,17 +2,54 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { Plus, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PartnerRoleBadge } from "@/features/partners/components/PartnerRoleBadge"
+import { SectionCard } from "@/features/partners/components/PartnerDetailPrimitives"
+import { RoleBadge } from "@/features/users/components/RoleBadge"
+import type { UserRole } from "@/features/users/types"
 import {
   fetchPartnerRoles,
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
 import { formatDateTime } from "@/lib/formatters"
 import { ApiError } from "@/lib/api"
-import type { PartnerStatus } from "@/features/partners/api/schema"
+import type { PartnerStatus, RoleStatus } from "@/features/partners/api/schema"
 import { AssignRoleDialog } from "@/features/partners/components/AssignRoleDialog"
+
+const COL_ROLE = "flex-1 min-w-[160px]"
+const COL_STATUS = "w-[140px] shrink-0"
+const COL_ASSIGNED_BY = "flex-1 min-w-[220px]"
+const COL_ASSIGNED_ON = "w-[160px] shrink-0"
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return `${parts[0]?.charAt(0) ?? ""}${
+    parts[parts.length - 1]?.charAt(0) ?? ""
+  }`.toUpperCase()
+}
+
+function RoleStatusCell({ status }: { status: RoleStatus }) {
+  const { t } = useTranslation("partners")
+  if (status === "active") {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-success/10 text-success">
+        {t(`roleStatus.${status}`)}
+      </span>
+    )
+  }
+  const COLOR: Record<RoleStatus, string> = {
+    active: "text-success",
+    pending_four_eyes: "text-warning",
+    rejected: "text-destructive",
+    withdrawn: "text-muted-foreground",
+  }
+  return (
+    <span className={`text-xs font-medium ${COLOR[status]}`}>
+      {t(`roleStatus.${status}`)}
+    </span>
+  )
+}
 
 type RolesTabProps = {
   partnerId: string
@@ -59,12 +96,17 @@ function RolesTab({
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      {/* Active roles */}
+      {/* Assigned roles */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-foreground">
-            {t("detail.roles.activeTitle")}
-          </p>
+          <div>
+            <p className="text-base font-semibold text-foreground">
+              {t("detail.roles.activeTitle")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("detail.roles.subtitle")}
+            </p>
+          </div>
           {canAssignRole && (
             <Button
               size="sm"
@@ -84,38 +126,65 @@ function RolesTab({
             {t("detail.roles.emptyActive")}
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="w-full border border-border rounded-[10px] overflow-hidden bg-background">
+            <div className="flex border-b border-border h-10 items-center">
+              <div
+                className={`${COL_ROLE} text-sm font-medium text-foreground px-2`}
+              >
+                {t("detail.roles.columns.role")}
+              </div>
+              <div
+                className={`${COL_STATUS} text-sm font-medium text-foreground px-2`}
+              >
+                {t("detail.roles.columns.status")}
+              </div>
+              <div
+                className={`${COL_ASSIGNED_BY} text-sm font-medium text-foreground px-2`}
+              >
+                {t("detail.roles.assignedBy")}
+              </div>
+              <div
+                className={`${COL_ASSIGNED_ON} text-sm font-medium text-foreground px-2`}
+              >
+                {t("detail.roles.columns.assignedOn")}
+              </div>
+            </div>
             {roles.map(ra => (
               <div
                 key={ra.role_assignment_id}
-                className="rounded-xl border border-border px-4 py-3"
+                className="flex border-b border-border last:border-0 h-16 items-center"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <PartnerRoleBadge role={ra.role} />
-                    {ra.status === "pending_four_eyes" && (
-                      <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                        {t("roleStatus.pending_four_eyes")}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDateTime(ra.assigned_at)}
-                  </span>
+                <div className={`${COL_ROLE} px-2 flex items-center gap-1.5`}>
+                  <PartnerRoleBadge role={ra.role} />
+                  {ra.is_risk_sensitive && (
+                    <ShieldCheck size={14} className="text-warning" />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("detail.roles.assignedBy")}: {ra.assigned_by.display_name}
-                </p>
-                {ra.note && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("detail.roles.note")}: {ra.note}
-                  </p>
-                )}
-                {ra.status === "pending_four_eyes" && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    {t("detail.roles.pendingApprovalNote")}
-                  </p>
-                )}
+                <div className={`${COL_STATUS} px-2`}>
+                  <RoleStatusCell status={ra.status} />
+                </div>
+                <div
+                  className={`${COL_ASSIGNED_BY} px-2 flex items-center gap-2`}
+                >
+                  <div className="size-8 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {initialsFromName(ra.assigned_by.display_name)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-foreground truncate">
+                      {ra.assigned_by.display_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {ra.assigned_by.email}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className={`${COL_ASSIGNED_ON} px-2 text-sm text-muted-foreground`}
+                >
+                  {formatDateTime(ra.assigned_at)}
+                </div>
               </div>
             ))}
           </div>
@@ -123,35 +192,47 @@ function RolesTab({
       </div>
 
       {/* Role history */}
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold text-foreground">
-          {t("detail.roles.historyTitle")}
-        </p>
+      <SectionCard title={t("detail.roles.historyTitle")}>
         {history.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("detail.roles.emptyHistory")}
           </p>
         ) : (
-          <div className="flex flex-col gap-1">
-            {history.map(entry => (
+          <div className="flex flex-col">
+            {history.map((entry, i) => (
               <div
                 key={`${entry.role_assignment_id}-${entry.timestamp}`}
-                className="flex items-start gap-3 py-2 border-b border-border last:border-0"
+                className="flex items-start gap-3 py-3"
               >
-                <div className="flex-1">
-                  <p className="text-sm text-foreground">
-                    {entry.description_key}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.actor.display_name} ·{" "}
-                    {formatDateTime(entry.timestamp)}
+                <div className="flex flex-col items-center self-stretch pt-1.5">
+                  <span className="size-2 rounded-full bg-border shrink-0" />
+                  {i < history.length - 1 && (
+                    <span className="w-px flex-1 bg-border mt-1" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">
+                      {entry.actor.display_name}
+                    </span>
+                    <RoleBadge role={entry.actor_role as UserRole} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t(entry.description_key as "partner.role.assigned", {
+                      role: t(
+                        `role.${String(entry.description_params.role)}` as "role.lessee"
+                      ),
+                    })}
                   </p>
                 </div>
+                <span className="text-sm text-muted-foreground shrink-0">
+                  {formatDateTime(entry.timestamp)}
+                </span>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </SectionCard>
 
       {canAssignRole && (
         <AssignRoleDialog

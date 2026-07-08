@@ -17,7 +17,7 @@ Companion to `execute-work.md`. Holds the long-tail material (modes, templates, 
 
 - ✅ Clean context per story — agent never mixes patterns/state from US-001 into US-002
 - ✅ Lower orchestrator token usage (only summaries retained)
-- ✅ Same quality gates enforced — sub-agent must pass tests, coverage ≥80%, API docs, i18n before returning `completed`
+- ✅ Same quality gates enforced — sub-agent must pass tests, required tests present, error codes surfaced, i18n before returning `completed`
 - ❌ Sub-agent cannot ask the user mid-work — every decision is autonomous
 - ❌ Small per-story overhead — each sub-agent re-reads rule files (acceptable cost for the reset)
 - ⚠️ If a sub-agent returns `status: "blocked"`, orchestrator surfaces the blocker and asks user `[Continue / Skip / Abort]`
@@ -52,7 +52,6 @@ Stories Completed:     {{completed_stories}} / {{total_stories}}
 Story Points:          {{completed_points}} / {{total_points}} ({{percentage}}%)
 Tests Written:         {{tests_written}}
 Tests Passing:         {{tests_passing}} / {{tests_total}}
-Code Coverage:         {{coverage}}%
 Git Commits:           {{commit_count}}
 Duration:              {{duration}}
 Average Velocity:      {{velocity}} points/day
@@ -61,8 +60,8 @@ Progress Tracking:     {{Phase Only / Complete}}
 ✅ QUALITY METRICS
 
 - SOLID & DRY compliance  ✅
-- Test coverage           ✅ {{coverage}}% (target 80%+)
-- API status codes        ✅ all tested
+- Required tests          ✅ new schemas / stores / utils covered
+- Error codes surfaced    ✅ errors.<CODE> keys present (en + de)
 {{- i18n translations     ✅ complete}}
 - Linting                 ✅ no errors
 - Git conventions         ✅ (NO AI credits)
@@ -90,10 +89,9 @@ Phase {{N}}: {{completed_points}}/{{total_points}} points ({{percentage}}%)
 A story moves to Completed only when:
 
 - [ ] All tasks implemented
-- [ ] All tests written (unit + integration + E2E)
+- [ ] Unit tests written for new Zod schemas, store actions, and utilities (per `.claude/rules/testing.md`)
 - [ ] All tests passing
-- [ ] Coverage ≥ 80%
-- [ ] All API status codes covered: 200/400/401/403/404/500
+- [ ] Every consumed BE error code surfaced with `errors.<CODE>` i18n keys (per `.claude/rules/api-error-display.md`)
 - [ ] i18n translations added (if required)
 - [ ] API documentation gate clean if endpoints touched (`.claude/rules/api-documentation.md`): schema validation, typed response, doc block per `documentation-templates.md` §2.1, no drift between code/docs/tests
 - [ ] **Frontend stories only:** API contract verified per `.claude/rules/api-first.md` Phase A (or story was Blocked and resumed only after backend gap closed)
@@ -116,7 +114,7 @@ Implementation detail: `modules/execute-work-quality-gates.md`.
 | DASHBOARD.md write failure                                                        | Log error, continue implementation — user can edit DASHBOARD manually later. Never block the story over an observability write.                                                                                                                                                                                                                                                                                     |
 | **Sub-agent returns malformed JSON** _(Continuous mode)_                          | Treat as `blocked` with reason `"sub-agent returned malformed JSON"`. Display the raw output as fallback, run DASHBOARD reconciliation per `execute-work-implementation-continuous.md` §2 step 5, ask user how to proceed.                                                                                                                                                                                          |
 | **Sub-agent crashed mid-execution / Agent tool error** _(Continuous mode)_        | No JSON exists. Treat as `blocked` with reason `"sub-agent dispatch failed: <error>"`. Roll back DASHBOARD "Currently Working On". On the **first** failure of a run, fall back to in-line execution (`execute-work-implementation-paused.md`) for that unit only. On the **second consecutive** failure, fall back to in-line for the rest of the run. See `modules/execute-work-implementation-continuous.md` §3. |
-| **Sub-agent claims `completed` but gate evidence is missing** _(Continuous mode)_ | Orchestrator re-classifies as `blocked` per `execute-work-implementation-continuous.md` §2 step 2. Reasons: `quality_gates_passed` empty/missing, `frontend_contract` ≠ `verified` for frontend stories, `linter` == `not_run`, `coverage` < 80%, `commit_hash` missing. The sub-agent's claimed "success" is not trusted without evidence.                                                                         |
+| **Sub-agent claims `completed` but gate evidence is missing** _(Continuous mode)_ | Orchestrator re-classifies as `blocked` per `execute-work-implementation-continuous.md` §2 step 2. Reasons: `quality_gates_passed` empty/missing, `frontend_contract` ≠ `verified` for frontend stories, `linter` == `not_run`, `required_tests` ≠ `complete`, `commit_hash` missing. The sub-agent's claimed "success" is not trusted without evidence.                                                            |
 
 ---
 
@@ -169,11 +167,11 @@ Claude: 🚀 [EXITING PLAN MODE — ENTERING IMPLEMENTATION MODE]
         [orchestrator delegates via Agent tool; sub-agent reads rules,
          implements, tests, commits — all in its own context]
         [sub-agent returns JSON summary]
-        ✅ US-001 COMPLETED — tests 24/24, coverage 87%, commit abc1234
+        ✅ US-001 COMPLETED — tests 24/24, required tests complete, commit abc1234
 
         🚀 Dispatching US-002 in fresh sub-agent (clean context)...
         [no leftover context from US-001 — that's the auto-reset]
-        ✅ US-002 COMPLETED — tests 18/18, coverage 84%, commit def5678
+        ✅ US-002 COMPLETED — tests 18/18, required tests complete, commit def5678
 
         🎉 Phase 1 — COMPLETED
         [completion report based on collected JSON summaries]

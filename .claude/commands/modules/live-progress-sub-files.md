@@ -187,7 +187,6 @@ Entry format:
 
 - **Completed:** {{DATE}} {{TIME}}
 - **Tests:** {{test_count}} passing
-- **Coverage:** {{coverage}}%
 - **Commit:** {{commit_hash}}
 ```
 

@@ -50,6 +50,15 @@ case "$f" in
     ;;
 esac
 
+# Rule 5: rule files > 200 lines (documentation.md §2.1 / rules/README.md file-size discipline)
+case "$f" in
+  */.claude/rules/*.md)
+    if [ "$lines" -gt 200 ]; then
+      warnings+=("🟡 $(basename "$f") is $lines lines (rule-file budget: 200 per rules/README.md). Consider splitting into companion files.")
+    fi
+    ;;
+esac
+
 # Rule 3: top-level commands (not modules/, not how-to-use/) > 300 lines
 case "$f" in
   */.claude/commands/modules/*|*/.claude/commands/how-to-use/*)

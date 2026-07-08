@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
-import { Archive, Check, Handshake, MoreHorizontal, X } from "lucide-react"
+import { Archive, Handshake, MoreHorizontal } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
-import type {
-  PartnerListItem,
-  UboCompletenessStatus,
-} from "@/features/partners/api/schema"
+import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
+import type { PartnerListItem } from "@/features/partners/api/schema"
 import type { PartnerActionType } from "@/features/partners/types"
 
 const COL_NAME = "flex-1 min-w-[200px]"
@@ -23,12 +21,6 @@ const COL_UBO = "w-[130px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
-const UBO_DOT_COLORS: Record<UboCompletenessStatus, string> = {
-  complete: "bg-green-500",
-  partial: "bg-orange-400",
-  missing: "",
-}
-
 type KebabMenuProps = {
   partner: PartnerListItem
   canAction: boolean
@@ -38,12 +30,9 @@ type KebabMenuProps = {
 function KebabMenu({ partner, canAction, onAction }: KebabMenuProps) {
   const { t } = useTranslation("partners")
 
-  const canConfirmReject =
-    canAction && partner.status === "pending_confirmation"
   const canArchive = canAction && partner.status === "confirmed"
-  const hasActions = canConfirmReject || canArchive
 
-  if (!hasActions) {
+  if (!canArchive) {
     return (
       <Button
         variant="ghost"
@@ -66,34 +55,13 @@ function KebabMenu({ partner, canAction, onAction }: KebabMenuProps) {
         <MoreHorizontal size={16} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {canConfirmReject && (
-          <>
-            <DropdownMenuItem
-              data-testid="partner-action-confirm"
-              onClick={() => onAction?.("confirm")}
-            >
-              <Check size={14} className="text-muted-foreground" />
-              {t("list.table.actions.confirm")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              data-testid="partner-action-reject"
-              onClick={() => onAction?.("reject")}
-              variant="destructive"
-            >
-              <X size={14} />
-              {t("list.table.actions.reject")}
-            </DropdownMenuItem>
-          </>
-        )}
-        {canArchive && (
-          <DropdownMenuItem
-            data-testid="partner-action-archive"
-            onClick={() => onAction?.("archive")}
-          >
-            <Archive size={14} className="text-muted-foreground" />
-            {t("list.table.actions.archive")}
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          data-testid="partner-action-archive"
+          onClick={() => onAction?.("archive")}
+        >
+          <Archive size={14} className="text-muted-foreground" />
+          {t("list.table.actions.archive")}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -249,7 +217,7 @@ function PartnerTable({
               ) : (
                 <span className="flex items-center gap-1.5 text-sm text-foreground">
                   <span
-                    className={`size-2 rounded-full shrink-0 ${UBO_DOT_COLORS[partner.ubo_completeness_status]}`}
+                    className={`size-2 rounded-full shrink-0 ${UBO_STATUS_DOT_COLOR[partner.ubo_completeness_status]}`}
                   />
                   {t(
                     `uboStatus.${partner.ubo_completeness_status}` as "uboStatus.complete"

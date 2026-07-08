@@ -25,10 +25,9 @@ vi.mock("@tanstack/react-query", () => ({
 }))
 
 vi.mock("@/features/partners/api/partnersApi", () => ({
-  confirmPartner: vi.fn(),
-  rejectPartner: vi.fn(),
   archivePartner: vi.fn(),
   assignPartnerRoles: vi.fn(),
+  proposeIdentityChange: vi.fn(),
   PARTNERS_QUERY_KEYS: {
     list: (params?: unknown) => ["partners", "list", params],
     detail: (id: string) => ["partners", "detail", id],
@@ -57,67 +56,19 @@ vi.mock("@/features/partners/api/partnersApi", () => ({
 }))
 
 import {
-  confirmPartner,
-  rejectPartner,
   archivePartner,
   assignPartnerRoles,
+  proposeIdentityChange,
 } from "@/features/partners/api/partnersApi"
 
-import { useConfirmPartner } from "@/features/partners/hooks/useConfirmPartner"
-import { useRejectPartner } from "@/features/partners/hooks/useRejectPartner"
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
 import { useAssignPartnerRoles } from "@/features/partners/hooks/useAssignPartnerRoles"
+import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
 
 const PARTNER_ID = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
 
 beforeEach(() => {
   vi.clearAllMocks()
-})
-
-describe("useConfirmPartner", () => {
-  it("calls confirmPartner with the correct arguments", async () => {
-    vi.mocked(confirmPartner).mockResolvedValue({} as never)
-    const mutation = useConfirmPartner(PARTNER_ID)
-    await mutation.mutate({ note: "Looks good" })
-    expect(confirmPartner).toHaveBeenCalledWith(PARTNER_ID, {
-      note: "Looks good",
-    })
-  })
-
-  it("invalidates detail and list queries on success", async () => {
-    vi.mocked(confirmPartner).mockResolvedValue({} as never)
-    const mutation = useConfirmPartner(PARTNER_ID)
-    await mutation.mutate({ note: null })
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["partners", "detail", PARTNER_ID],
-    })
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["partners", "list"],
-    })
-  })
-})
-
-describe("useRejectPartner", () => {
-  it("calls rejectPartner with the correct arguments", async () => {
-    vi.mocked(rejectPartner).mockResolvedValue({} as never)
-    const mutation = useRejectPartner(PARTNER_ID)
-    await mutation.mutate({ note: "Identity mismatch" })
-    expect(rejectPartner).toHaveBeenCalledWith(PARTNER_ID, {
-      note: "Identity mismatch",
-    })
-  })
-
-  it("invalidates detail and list queries on success", async () => {
-    vi.mocked(rejectPartner).mockResolvedValue({} as never)
-    const mutation = useRejectPartner(PARTNER_ID)
-    await mutation.mutate({ note: "Identity mismatch" })
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["partners", "detail", PARTNER_ID],
-    })
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["partners", "list"],
-    })
-  })
 })
 
 describe("useArchivePartner", () => {
@@ -160,6 +111,39 @@ describe("useAssignPartnerRoles", () => {
     await mutation.mutate({ roles: ["supplier"] })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["partners", "roles", PARTNER_ID],
+    })
+  })
+})
+
+describe("useProposeIdentityChange", () => {
+  it("calls proposeIdentityChange with the correct arguments", async () => {
+    vi.mocked(proposeIdentityChange).mockResolvedValue({} as never)
+    const mutation = useProposeIdentityChange(PARTNER_ID)
+    await mutation.mutate({
+      target_anchors: ["legal_name"],
+      proposed_values: { legal_name: "New Name GmbH" },
+      change_reason: "Legal rename",
+    })
+    expect(proposeIdentityChange).toHaveBeenCalledWith(PARTNER_ID, {
+      target_anchors: ["legal_name"],
+      proposed_values: { legal_name: "New Name GmbH" },
+      change_reason: "Legal rename",
+    })
+  })
+
+  it("invalidates identity history and detail queries on success", async () => {
+    vi.mocked(proposeIdentityChange).mockResolvedValue({} as never)
+    const mutation = useProposeIdentityChange(PARTNER_ID)
+    await mutation.mutate({
+      target_anchors: ["legal_name"],
+      proposed_values: { legal_name: "New Name GmbH" },
+      change_reason: "Legal rename",
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "identity-history", PARTNER_ID],
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "detail", PARTNER_ID],
     })
   })
 })

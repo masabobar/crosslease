@@ -20,8 +20,7 @@ This folder contains Claude Code configuration files for the project management 
 │   ├── code-quality.md   # SOLID & DRY principles (MANDATORY)
 │   ├── testing.md        # Testing requirements
 │   ├── git.md           # Git workflow and commit conventions
-│   ├── database.md      # Database migration rules
-│   └── stack-specific.md # Framework-specific guidelines
+│   └── stack-specific.md # React 19 + Vite SPA guidelines (see rules/README.md for full index)
 │
 ├── settings.local.json   # Your local permissions (gitignored)
 └── settings.example.json # Template for settings (tracked in git)

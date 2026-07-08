@@ -64,6 +64,13 @@ describe("GovernedActionTypeSchema", () => {
       "user_role_change",
       "user_auditor_period_update",
       "user_email_change",
+      "partner_archive",
+      "partner_confirm",
+      "partner_role_assign",
+      "partner_identity_change",
+      "partner_merge",
+      "product_template_activate",
+      "product_template_deprecate",
     ] as const) {
       expect(GovernedActionTypeSchema.parse(t)).toBe(t)
     }
@@ -111,6 +118,16 @@ describe("GovernedActionSchema", () => {
     expect(result.approver_id).toBeNull()
     expect(result.tenant_id).toBeNull()
     expect(result.approver_snapshot).toBeNull()
+  })
+
+  it("accepts a non-UUID subject_id (e.g. module code for module_activate)", () => {
+    const result = GovernedActionSchema.parse({
+      ...VALID_ACTION,
+      action_type: "module_activate",
+      subject_type: "module",
+      subject_id: "financing",
+    })
+    expect(result.subject_id).toBe("financing")
   })
 })
 

@@ -73,7 +73,6 @@ Estimated Completion: 2026-06-20 (based on current velocity)
 
 ```
 📈 QUALITY:
-- Test Coverage: 87%
 - Tests Passing: 156/156
 - Linting Errors: 0
 - SOLID & DRY: Compliant
@@ -138,7 +137,6 @@ Claude: Reading project data...
         - US-014: Notifications (8 pts) ✅
 
         📈 QUALITY METRICS:
-        - Coverage: 87% (target: 80%+) ✅
         - Tests: 156/156 passing ✅
         - Linting: No errors ✅
         - Standards: SOLID & DRY ✅

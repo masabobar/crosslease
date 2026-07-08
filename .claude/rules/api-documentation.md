@@ -2,6 +2,8 @@
 
 **MANDATORY: Every API endpoint MUST have request/response schema validation in code AND matching documentation before the story is marked complete.**
 
+> **FE-only repo note:** endpoint handlers live in `../refinext-api/` — this gate is executed there, with `openapi.json` as the contract artifact this repo consumes. When reading this rule from the FE side, its practical output is the doc/spec completeness that `api-first.md` Phase A verifies against.
+
 This rule fires whenever a story adds, modifies, removes, or renames an HTTP endpoint (REST, RPC, or webhook handler). It works alongside `.claude/rules/testing.md` (status-code matrix), `.claude/rules/documentation-templates.md` §2 (endpoint doc template), and `.claude/rules/api-versioning.md` (version bumps + change-propagation gate) — those define the _what_; this file defines _when it blocks completion_ and _how to verify it_.
 
 ---

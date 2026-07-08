@@ -15,8 +15,8 @@ import { ReviewRequestModal } from "@/features/governed-actions/components/Revie
 import { PendingApprovalDetailDrawer } from "@/features/governed-actions/components/PendingApprovalDetailDrawer"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
-import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { PATHS } from "@/router/paths"
+import { canReviewGovernedAction } from "@/features/governed-actions/constants"
 import {
   GovernedActionStatusSchema,
   initiatorSnapshot,
@@ -65,8 +65,6 @@ export default function PendingApprovalsPage() {
 
   const withdrawAction = useWithdrawAction()
   const reInitiateAction = useReInitiateAction()
-
-  const canReview = currentUser?.role === SYSTEM_ADMIN_ROLE
 
   const actions = data?.actions ?? []
 
@@ -245,7 +243,7 @@ export default function PendingApprovalsPage() {
           </div>
         )}
 
-        {!isLoading && filtered.length === 0 && (
+        {!isLoading && !isError && filtered.length === 0 && (
           <div
             className="flex flex-col items-center gap-4 py-12 border border-border rounded-[10px] bg-card"
             data-testid="empty-state"
@@ -293,7 +291,10 @@ export default function PendingApprovalsPage() {
               key={action.id}
               action={action}
               currentUserId={currentUser?.id ?? ""}
-              canReview={canReview}
+              canReview={canReviewGovernedAction(
+                action.action_type,
+                currentUser?.role
+              )}
               isHighlighted={action.id === highlightedActionId}
               ref={
                 action.id === highlightedActionId

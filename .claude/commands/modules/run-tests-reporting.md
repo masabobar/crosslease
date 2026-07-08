@@ -24,7 +24,6 @@ Capture from test execution:
 - Total tests run
 - Passed / failed / skipped counts
 - Execution time
-- Coverage percentages (statements / branches / functions / lines)
 - Failed test details — name, file, line, error message
 
 ### Framework-Specific Markers
@@ -64,40 +63,30 @@ Running 6 tests using 3 workers
 
 Depending on what the run reveals, emit one or more of these blocks (full templates in `run-tests-reporting-formats.md`):
 
-| Situation                      | Emit                                                               |
-| ------------------------------ | ------------------------------------------------------------------ |
-| All tests pass, coverage ≥ 80% | Success report → "Ready to commit"                                 |
-| Some tests fail                | Failure report with per-test diagnostics + recommendations         |
-| Coverage < 80%                 | Coverage report flagging threshold miss + critical uncovered files |
-| Coverage ≥ 80% (informational) | Coverage report with breakdown + top-3 uncovered files             |
-| API status-code gaps           | Missing-code report with example test stub + hard-stop message     |
-| Multiple runs in one session   | Trend report (coverage delta, velocity)                            |
+| Situation                              | Emit                                                           |
+| -------------------------------------- | -------------------------------------------------------------- |
+| All tests pass, required tests present | Success report → "Ready to commit"                             |
+| Some tests fail                        | Failure report with per-test diagnostics + recommendations     |
+| Required tests missing                 | Missing-tests report listing untested new schemas/stores/utils |
+| Error-code i18n keys missing           | Missing-keys report with the key names to add (en + de)        |
+| Multiple runs in one session           | Trend report (test-count delta, velocity)                      |
 
 Always finish with the **Quality-Gate Summary** block — ready-to-commit or not-ready.
 
 ---
 
-## API Status-Code Validation
+## Error-Code Surfacing Validation
 
-Required per `.claude/rules/testing.md`:
-
-| Code      | Meaning      |
-| --------- | ------------ |
-| 200 / 201 | Success      |
-| 400       | Bad request  |
-| 401       | Unauthorized |
-| 403       | Forbidden    |
-| 404       | Not found    |
-| 500       | Server error |
+Required per `.claude/rules/api-error-display.md` (the BE status-code matrix lives in `../refinext-api/`):
 
 Process:
 
-1. Parse integration test results.
-2. Identify API endpoints.
-3. Check which status codes are tested per endpoint.
-4. Flag missing tests; emit the Missing-Codes block with an example test stub.
+1. Identify the endpoints the change consumes (grep `openapi.json` by path).
+2. List every error code those endpoints document.
+3. Check each has an `errors.<CODE>` i18n key in both `en/<feature>.json` and `de/<feature>.json`.
+4. Flag missing keys; emit the Missing-Keys block with the exact key names to add.
 
-A story **cannot** be marked complete if any endpoint is missing a code.
+A story **cannot** be marked complete if a consumed error code has no i18n key.
 
 ---
 
@@ -107,9 +96,9 @@ If multiple runs happen in the same session, include a brief trend delta:
 
 ```
 📈 TEST TRENDS
-Current run:  87% coverage, 45 tests
-Previous:     82%, 42 tests
-Change:       +5%, +3 tests → improving ✅
+Current run:  45 tests, 0 failures
+Previous:     42 tests, 2 failures
+Change:       +3 tests, failures resolved → improving ✅
 ```
 
 ---
@@ -122,17 +111,16 @@ Change:       +5%, +3 tests → improving ✅
 - Suggest likely root cause (based on error message).
 - Provide a fix direction (not a full patch).
 
-**If coverage is low:**
+**If required tests are missing:**
 
-- Identify highest-impact uncovered files.
+- List each new schema / store action / utility without a test.
 - Rank by impact (HIGH / MEDIUM / LOW) based on criticality of the code path.
-- Prioritize payment/auth/checkout over utilities.
+- Prioritize auth and API-contract schemas over utilities.
 
-**If API codes missing:**
+**If error-code i18n keys are missing:**
 
-- List missing codes per endpoint.
-- Provide a ready-to-paste test template (example in formats companion).
-- Link back to `.claude/rules/testing.md`.
+- List the missing `errors.<CODE>` keys per feature namespace (en + de).
+- Link back to `.claude/rules/api-error-display.md`.
 
 Avoid generic advice — every recommendation should point at a specific file + line.
 
@@ -142,7 +130,7 @@ Avoid generic advice — every recommendation should point at a specific file + 
 
 Always include at the end. Full template: `run-tests-reporting-formats.md` → Quality-Gate Summary.
 
-- **Ready to commit** — all tests pass, coverage ≥ 80%, API codes covered, critical-path E2E green.
+- **Ready to commit** — all tests pass, required tests present, error-code i18n keys complete, type-check + lint clean.
 - **Not ready** — any of the above failing; list specifics with ❌ / ⚠️ markers.
 
 ---

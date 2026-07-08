@@ -47,13 +47,12 @@ Execute implementation of a phase, epic, or individual story with full automatio
 
 - `.claude/rules/api-documentation.md` — Schema validation in code + matching docs (STRICT public, SOFT `@internal`)
 - `.claude/rules/api-versioning.md` — `/api/v{N}/` versioning + mandatory change-propagation (docs, schemas, ALL related tests, consumer code in same PR)
-- `.claude/rules/error-handling-and-logging.md` — Typed errors at single boundary, canonical envelope, `SCREAMING_SNAKE_CASE` codes, structured logging, NO PII / secrets in logs
-- `.claude/rules/security-and-auth.md` — Default-deny middleware (requireAuth/requireRole), resource-level (IDOR), bcrypt, cookie session config, security headers, audit log
+- `.claude/rules/error-handling-and-logging.md` — Canonical envelope (`detail.code`), `ApiError.code` handling, never-swallow, no `console.*` / PII / tokens
+- `.claude/rules/security-and-auth.md` — Token handling via auth store + `@/lib/api` interceptor only, RBAC wire values, XSS hygiene, `VITE_` env safety
 
-**For data model / DB change:**
+**For enum / wire-format change:**
 
-- `.claude/rules/database.md` — Migration-based workflow (Prisma `migrate`, never `db push` in prod)
-- `.claude/rules/enums-and-constants.md` — `SCREAMING_SNAKE_CASE` wire format across DB / backend / frontend / mobile; one source of truth per enum
+- `.claude/rules/enums-and-constants.md` — wire format across layers; one source of truth per enum (values themselves change in `../refinext-api/`)
 
 **For frontend (web/mobile) stories:**
 
@@ -208,9 +207,9 @@ For each unit (story or bug) in scope:
      - Bugs → `.project-management/output/bugs/bug-roadmap.md`
    - Tracking mode (Phase Only / Complete)
    - Execution context (modular vs monolithic backlog)
-4. **Sub-agent executes the full per-unit workflow in its own clean context** — reads rules, implements, writes tests, runs tests (≥80% coverage, all API codes), verifies i18n + API docs + frontend contract, updates progress files, creates git commit. Returns a structured JSON summary.
+4. **Sub-agent executes the full per-unit workflow in its own clean context** — reads rules, implements, writes tests, runs tests (new schemas / stores / utils covered per `.claude/rules/testing.md`), verifies i18n + API docs + frontend contract, updates progress files, creates git commit. Returns a structured JSON summary.
 5. **Orchestrator processes the response** per `modules/execute-work-implementation-continuous.md` §2:
-   - Validate gate-evidence fields (`quality_gates_passed`, `frontend_contract`, `linter`, `coverage`, `commit_hash`). Re-classify as `blocked` if validation fails.
+   - Validate gate-evidence fields (`quality_gates_passed`, `frontend_contract`, `linter`, `required_tests`, `commit_hash`). Re-classify as `blocked` if validation fails.
    - On validated `status: "completed"` → display unit summary block, log, proceed to next unit.
    - On `status: "blocked"` (whether sub-agent returned it or orchestrator re-classified) → reconcile DASHBOARD per `execute-work-implementation-continuous.md` §2 step 5, display blocker reason and `recommended_next`, ask user `[Continue with next unit / Skip to next epic / Abort run]`. If `recommended_next` proposes filing backend work, the **orchestrator** does it via `/add-scope` or by appending to the bug roadmap, after user confirmation — the sub-agent never files anything itself.
 6. **Dispatch failure handling** — if the `Agent` tool itself errors (unknown subagent_type, tool refused, sub-agent crashed without producing JSON): fall back to STEP 3-B (in-line) for this unit, per `modules/execute-work-implementation-continuous.md` §3. After two consecutive dispatch failures, fall back for the remainder of the run.
@@ -239,14 +238,14 @@ Workflow per story (detailed in `modules/execute-work-implementation-paused.md`)
 2. Auto-update `DASHBOARD.md` → "Currently Working On" _(modular only)_.
 3. Read context (story from phase backlog / bug from bug-roadmap). Load all applicable rules per the CRITICAL RULES list above — `modules/execute-work-implementation-continuous.md` §1 STEP 1 enumerates the conditional reading list.
 4. **For frontend (web/mobile) stories:** before implementation, re-confirm Phase A from `.claude/rules/api-first.md` is still ✅ — endpoints exist, docs match, schema covers UI inputs/outputs, error states distinguishable. If any contract gap is detected now (backend changed, doc drifted), STOP, file backend gap, mark story Blocked. Do not stub the frontend.
-5. Implement following `.claude/rules/code-quality.md` (SOLID & DRY). For data-model / enum work also apply `.claude/rules/enums-and-constants.md` (SCREAMING_SNAKE_CASE wire format across DB / backend / frontend / mobile) and `.claude/rules/database.md` (migration-based workflow). For artifacts that may carry input-document content apply `.claude/rules/anonymization.md` (replace names with role labels).
-6. Write tests following `.claude/rules/testing.md` (unit + integration + E2E + all API status codes 200/400/401/403/404/500).
+5. Implement following `.claude/rules/code-quality.md` (SOLID & DRY). For enum / wire-format work also apply `.claude/rules/enums-and-constants.md` (one source of truth per enum; wire values match `../refinext-api/`). For artifacts that may carry input-document content apply `.claude/rules/anonymization.md` (replace names with role labels).
+6. Write tests following `.claude/rules/testing.md` (unit tests for new Zod schemas, store logic, and utilities; for bugs, a regression test that fails without the fix).
 7. Verify i18n (if `.project-management/rules/I18N-RULES.md` exists).
 8. **If the story added/changed any HTTP endpoint:** run the complete API quality gate stack from `modules/execute-work-quality-gates.md`:
    - `.claude/rules/api-documentation.md` — schema validation in code, typed response, doc block per `documentation-templates.md` §2.1, drift check (STRICT for public endpoints, SOFT for `@internal`)
    - `.claude/rules/api-versioning.md` — `/api/v{N}/` path correct; if change is breaking, new major version + deprecation headers on old version; ALL tests touching this endpoint re-run and pass; Zod request + response schemas updated in same commit; consumer code (FE / mobile) updated
-   - `.claude/rules/error-handling-and-logging.md` — typed errors only, canonical envelope, SCREAMING_SNAKE_CASE codes, structured logger used, redaction config covers any new sensitive keys, request_id propagated
-   - `.claude/rules/security-and-auth.md` — default-deny middleware applied, resource-level/IDOR check present, no plaintext password/token in logs or fixtures, cookie config (httpOnly/secure/sameSite/secrets) correct, security headers (CSP/HSTS/…) set, audit events emitted, npm audit clean
+   - `.claude/rules/error-handling-and-logging.md` — every new/changed error code surfaced in the UI with `errors.<CODE>` i18n keys (en + de) per `api-error-display.md`
+   - `.claude/rules/security-and-auth.md` — RBAC gates match BE enforcement, no tokens/PII in logs or fixtures (BE-side gates run in `../refinext-api/`)
 9. **Second-to-last step:** run tests (see `modules/execute-work-quality-gates.md`); auto-update DASHBOARD "Quality Metrics".
 10. **Final step:** git commit per `.claude/rules/git.md` (NO AI credits). Bug commits reference `BUG-XXX`.
 11. Update progress tracking (phase file + DASHBOARD auto-update + completed.md / daily-summary.md per Complete mode). **For frontend stories (Type: Frontend) with an existing `input/screens/screen-map.md`:** invoke `/screen-map` to refresh the derived API columns + Status; drift items surface in the completion summary but do not block (per `modules/execute-work-implementation-paused.md` §3.8 and `modules/execute-work-dashboard-events.md` §3.8).
@@ -254,7 +253,7 @@ Workflow per story (detailed in `modules/execute-work-implementation-paused.md`)
 
 #### Common quality gate (both modes)
 
-Tests pass, coverage ≥ 80%, all API codes tested, i18n complete, API docs match implementation (when endpoints touched). The same gate applies whether the work is done by orchestrator (Paused) or sub-agent (Continuous).
+Tests pass (new schemas / stores / utils covered per `.claude/rules/testing.md`), type-check + lint clean, i18n complete, frontend contract verified (`api-first.md`). The same gate applies whether the work is done by orchestrator (Paused) or sub-agent (Continuous).
 
 **Auto-update triggers (modular only):** story started → Currently Working On; tests run → Quality Metrics; story completed → Today's Progress + Recently Completed + progress %; phase completed → Phase Breakdown.
 
@@ -292,7 +291,7 @@ Template and full field list: `execute-work-reference.md` → Completion Report 
 
 ## Mandatory Requirements (summary)
 
-1. Plan mode mandatory — no implementation without approval. 2. Tests mandatory — story is not done until tests pass. 3. Coverage ≥ 80%. 4. All API status codes tested (200/400/401/403/404/500). 5. i18n if `I18N-RULES.md` exists. 6. Git conventions — NO AI credits, conventional commits. 7. SOLID & DRY per `.claude/rules/code-quality.md`. 8. TodoWrite for task breakdown.
+1. Plan mode mandatory — no implementation without approval. 2. Tests mandatory — story is not done until tests pass. 3. New Zod schemas / store logic / utilities tested per `.claude/rules/testing.md`. 4. Every BE error code surfaced per `.claude/rules/api-error-display.md`. 5. i18n if `I18N-RULES.md` exists. 6. Git conventions — NO AI credits, conventional commits. 7. SOLID & DRY per `.claude/rules/code-quality.md`. 8. TodoWrite for task breakdown.
 
 Full quality-gate checklist + error handling: `execute-work-reference.md`. Auto-detects modular vs monolithic backlog (no user action) — see `execute-work-reference.md` → Backward Compatibility for trade-offs.
 

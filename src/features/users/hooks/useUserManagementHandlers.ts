@@ -41,14 +41,19 @@ export function useUserManagementHandlers() {
       })
       return
     }
-    setActiveAction({
-      type,
-      user: {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-      },
-    })
+    // Defer dialog open so Base UI Menu finishes its close/focus-restore cycle
+    // before the Dialog mounts. Without this, the menu's cleanup races with
+    // the dialog and the dialog never appears (see mui/base-ui#3149).
+    setTimeout(() => {
+      setActiveAction({
+        type,
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+        },
+      })
+    }, 0)
   }
 
   function handleDrawerAction(type: UserActionType, user: UserDetail) {

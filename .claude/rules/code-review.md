@@ -173,7 +173,7 @@ mutation.mutate(payload)
 - [ ] Zod schemas tested: valid input parses; invalid input (wrong type, missing field, bad enum) throws
 - [ ] Zustand store actions tested in isolation via `getState()` / direct action calls
 - [ ] Pure utility functions in `src/lib/` have unit tests
-- [ ] Coverage ≥ 80% per `.claude/rules/testing.md`
+- [ ] New Zod schemas, store actions, and `src/lib/` utilities have tests per `.claude/rules/testing.md` (behavior-based — no numeric coverage threshold)
 - [ ] No `.only` focused tests (pre-commit blocks these)
 - [ ] `data-testid` present on all new interactive elements
 
@@ -214,7 +214,7 @@ mutation.mutate(payload)
 - [ ] API: Zod `parse()` in `queryFn`, `ApiError.code` for error handling, no raw fetch, **every BE error code surfaced via toast / error state — no silent failures** (fix any missing `onError` or `isError` branch inline per `.claude/rules/api-error-display.md`)
 - [ ] i18n: all strings via `t()`, both locales updated, namespace registered
 - [ ] Security: role gates use correct wire values, no `console.*`, no unnecessary PII in state
-- [ ] Tests: Zod schemas tested, store actions tested, coverage ≥ 80%, `data-testid` present
+- [ ] Tests: Zod schemas tested, store actions tested, utilities tested, `data-testid` present
 - [ ] Style: naming conventions, no magic strings/numbers, enum values referenced from their source (never inline), no barrel files, no default exports (except pages), no cross-file duplicate logic/schemas/hooks/JSX
 - [ ] UI components: shadcn/ui primitive used wherever one exists; third-party or raw HTML in its place carries a `NOTE:` inline comment with the reason; missing shadcn components installed via `npx shadcn@latest add` before falling back
 - [ ] Pre-commit clean: no `console.*`, no `debugger`, no focused tests
@@ -226,32 +226,17 @@ mutation.mutate(payload)
 
 **Principle: shadcn/ui is the default choice for every UI element. Any deviation requires an explicit inline note.**
 
-- [ ] **Use a shadcn/ui component whenever one exists** — never reach for a raw HTML element when a `src/components/ui/` primitive is available. Mandatory preference list:
-      `<Button>` over `<button>`, `<Input>` over `<input>`, `<Select>` over `<select>`, `<Textarea>` over `<textarea>`, `<Checkbox>`, `<Switch>`, `<RadioGroup>`, `<Label>`, `<Dialog>`, `<AlertDialog>`, `<Sheet>`, `<Drawer>`, `<DropdownMenu>`, `<ContextMenu>`, `<Menubar>`, `<NavigationMenu>`, `<Popover>`, `<Tooltip>`, `<HoverCard>`, `<Accordion>`, `<Collapsible>`, `<Tabs>`, `<Badge>`, `<Card>`, `<Separator>`, `<Avatar>`, `<Table>` / `<TableHeader>` / `<TableBody>` / `<TableRow>` / `<TableCell>`, `<Skeleton>`, `<Progress>`, `<Slider>`, `<ScrollArea>`, `<Calendar>`, `<DatePicker>`, `<Command>`, `<Combobox>`, `<Toast>`, `<Alert>`, `<Form>` / `<FormField>` / `<FormItem>` / `<FormLabel>` / `<FormMessage>`, etc.
-- [ ] **When a shadcn component does NOT exist yet** for a needed element: install it via `npx shadcn@latest add <component>` before falling back to a raw element or third-party lib. Do not skip this step.
-- [ ] **When a raw HTML element is used instead** of a shadcn primitive — add a mandatory inline comment explaining why:
-  ```tsx
-  {
-    /* NOTE: raw <button> — shadcn Button does not support X because Y */
-  }
-  ```
-  Acceptable reasons: the shadcn component cannot be composed into a parent component's DOM structure (e.g. it renders its own trigger), or a very specific accessibility pattern requires a bare element. "I didn't know shadcn had one" is not a valid reason.
-- [ ] **When a third-party UI library component is used** instead of a shadcn equivalent — add a note:
-  ```tsx
-  {
-    /* NOTE: using <ThirdPartyX> — no shadcn equivalent; shadcn/ui does not cover Z pattern */
-  }
-  ```
-- [ ] **When a shadcn component is partially customized** (e.g. via `className` variants) — prefer extending via `cva()` inside the existing `src/components/ui/` file over wrapping it in a new component.
-- [ ] Same `<Table>/<tr>/<td>` → `<Table>/<TableRow>/<TableCell>` rule applies; same `<select>` → `<Select>` rule, etc.
-- [ ] New interactive elements not yet in shadcn's catalogue are fine as raw HTML — but always leave a comment: `{/* NOTE: no shadcn component for <element type> — consider adding one if reused */}`
+Quick check during review: shadcn primitive used wherever one exists (`<Button>` not `<button>`, `<Select>` not `<select>`, `<Table>`/`<TableRow>`/`<TableCell>` not raw table tags); missing components installed via `npx shadcn@latest add <component>` before any fallback; every raw HTML element or third-party component in a shadcn slot carries an inline `{/* NOTE: ... */}` comment with the reason.
+
+**Full checklist + component catalogue:** `.claude/rules/code-review-ui.md` (companion).
 
 ---
 
 ## Related
 
+- `.claude/rules/code-review-ui.md` — full shadcn-first checklist + component catalogue (companion to §12)
 - `.claude/rules/code-quality.md` — SOLID & DRY principles
-- `.claude/rules/testing.md` — test types, coverage target, API status-code matrix
+- `.claude/rules/testing.md` — required-tests gate (schemas / stores / utilities)
 - `.claude/rules/security-and-auth.md` — role wire values, RBAC guards, audit logging
 - `.claude/rules/error-handling-and-logging.md` — error taxonomy, `ApiError.code` usage
 - `.claude/rules/api-error-display.md` — exhaustive BE error handling rule + fix-on-encounter procedure (§5 enforcement)

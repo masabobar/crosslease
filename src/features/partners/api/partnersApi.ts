@@ -53,7 +53,8 @@ export type PartnerListParams = {
 }
 
 export const PARTNERS_QUERY_KEYS = {
-  list: (params?: PartnerListParams) => ["partners", "list", params] as const,
+  list: (tenantId: string | null, params?: PartnerListParams) =>
+    ["partners", "list", tenantId, params] as const,
   detail: (id: string) => ["partners", "detail", id] as const,
   resolutionCandidates: (id: string) =>
     ["partners", "resolution-candidates", id] as const,
@@ -124,15 +125,7 @@ export type MatchPartnerBody = {
 
 export type SubmitPartnerBody = {
   identity: PartnerIdentityInput
-  role: PartnerRole
-}
-
-export type ConfirmPartnerBody = {
-  note?: string | null
-}
-
-export type RejectPartnerBody = {
-  note: string
+  roles: PartnerRole[]
 }
 
 export type AssignRolesBody = {
@@ -160,9 +153,10 @@ export type ProposeIdentityChangeBody = {
 // ── API functions ─────────────────────────────────────────────────────────────
 
 export async function fetchPartners(
+  tenantId: string,
   params?: PartnerListParams
 ): Promise<PartnerListResponse> {
-  const data = await api.get("/partners", { params })
+  const data = await api.get(`/tenants/${tenantId}/partners`, { params })
   return PartnerListResponseSchema.parse(data)
 }
 
@@ -172,33 +166,19 @@ export async function fetchPartner(id: string): Promise<PartnerDetailResponse> {
 }
 
 export async function matchPartner(
+  tenantId: string,
   body: MatchPartnerBody
 ): Promise<PartnerMatchResponse> {
-  const data = await api.post("/partners/match", body)
+  const data = await api.post(`/tenants/${tenantId}/partners/match`, body)
   return PartnerMatchResponseSchema.parse(data)
 }
 
 export async function submitPartner(
+  tenantId: string,
   body: SubmitPartnerBody
 ): Promise<PartnerSubmitResponse> {
-  const data = await api.post("/partners", body)
+  const data = await api.post(`/tenants/${tenantId}/partners`, body)
   return PartnerSubmitResponseSchema.parse(data)
-}
-
-export async function confirmPartner(
-  id: string,
-  body: ConfirmPartnerBody
-): Promise<PartnerDetailResponse> {
-  const data = await api.post(`/partners/${id}/confirm`, body)
-  return PartnerDetailResponseSchema.parse(data)
-}
-
-export async function rejectPartner(
-  id: string,
-  body: RejectPartnerBody
-): Promise<PartnerDetailResponse> {
-  const data = await api.post(`/partners/${id}/reject`, body)
-  return PartnerDetailResponseSchema.parse(data)
 }
 
 export async function fetchResolutionCandidates(

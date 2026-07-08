@@ -2,12 +2,6 @@
   "permissions": {
     "allow": [
       "Bash(*)",
-      "Bash(pnpm install)",
-      "Bash(pnpm *)",
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(npx prisma *)",
-      "Bash(prisma *)",
       "Read(**)",
       "Edit(**)",
       "Write(**)",
@@ -24,6 +18,7 @@
       "Bash(rm -rf /)",
       "Bash(rm -rf *)",
       "Bash(git push --force *)",
+      "Bash(git push -f *)",
       "Bash(git reset --hard *)"
     ],
     "ask": []
@@ -53,18 +48,7 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/stop-changelog-check.sh",
-            "timeout": 10
-          }
-        ]
-      }
     ]
   },
-  "_comment": "⚠️ IMPORTANT: Copy this to settings.json. Claude should NEVER modify settings.json automatically. See .claude/rules/permissions.md for details. Hooks require jq + git; see .claude/hooks/*.sh for what they enforce (documentation.md §2.1 file-size limits + CHANGELOG reminder)."
+  "_comment": "⚠️ IMPORTANT: Copy this to settings.json. Claude should NEVER modify settings.json automatically. See .claude/rules/permissions.md for details. Bash(*) already covers all shell commands — do not add narrower Bash entries alongside it; they are dead weight. The deny list is a guard against the most common destructive commands, not a sandbox: with Bash(*) allowed, real safety comes from review, not the list. Hooks require jq + git; see .claude/hooks/*.sh for what they enforce (code-review gate on git commit, documentation.md §2.1 file-size limits)."
 }

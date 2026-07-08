@@ -46,8 +46,8 @@ Execution proceeds in one of two modes, selected per run:
 
 Every story (either mode) must pass these gates before completion:
 
-- All test suites pass (unit + integration + E2E if applicable)
-- Coverage ≥ 80%
+- All unit tests pass (`pnpm test:run`); type-check clean
+- New Zod schemas, store actions, and utilities have tests (per `.claude/rules/testing.md`)
 - Linter clean
 - All API status codes 200/400/401/403/404/500 tested (if endpoint touched)
 - i18n complete (if `I18N-RULES.md` exists)

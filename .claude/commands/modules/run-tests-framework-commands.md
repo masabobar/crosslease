@@ -11,19 +11,13 @@ Companion to `run-tests-execution.md`. Verbatim invocation reference for the too
 ```bash
 pnpm test                            # watch mode (development)
 pnpm test:run                        # run once (CI / pre-commit)
-pnpm test:run --coverage             # run once + coverage report
 pnpm test:run path/to/file.test.ts   # specific file
 pnpm test:run -t "description"       # filter by test name pattern
 pnpm test:run --reporter=verbose     # verbose output
 pnpm test:run --bail 1               # stop on first failure
 ```
 
-**Coverage report:**
-
-```bash
-pnpm test:run --coverage             # generates coverage/index.html
-open coverage/index.html             # view in browser
-```
+> No coverage tooling is installed (`--coverage` would error on missing `@vitest/coverage-v8`) — deliberate, per `.claude/rules/testing.md`: we test behavior, not line percentages.
 
 **Test file location:** `src/__tests__/`, mirroring source tree.
 **Import style:** use `@/` aliases, never relative `./` paths into `src/`.
@@ -86,7 +80,6 @@ Config: `src/e2e/playwright.config.ts`
 | -------------------------- | ----------------------------------------------- |
 | Unit tests (watch)         | `pnpm test`                                     |
 | Unit tests (one-shot)      | `pnpm test:run`                                 |
-| Unit tests + coverage      | `pnpm test:run --coverage`                      |
 | Specific file              | `pnpm test:run <path>`                          |
 | Filter by name             | `pnpm test:run -t "pattern"`                    |
 | TypeScript check           | `pnpm type-check`                               |

@@ -4,6 +4,7 @@ import {
   PartnerStatusSchema,
   PartnerRoleSchema,
   RoleStatusSchema,
+  ActorSummarySchema,
   UboCompletenessStatusSchema,
   IdentityChangeStatusSchema,
   RegisteredAddressSchema,
@@ -96,6 +97,31 @@ describe("RoleStatusSchema", () => {
   })
   it("rejects unknown values", () => {
     expect(() => RoleStatusSchema.parse("inactive")).toThrow()
+  })
+  it("normalizes BE's governed_action-status 'pending' to 'pending_four_eyes'", () => {
+    expect(RoleStatusSchema.parse("pending")).toBe("pending_four_eyes")
+  })
+})
+
+describe("ActorSummarySchema", () => {
+  it("accepts BE's human-readable user_id code (not a UUID)", () => {
+    expect(() =>
+      ActorSummarySchema.parse({
+        user_id: "USR-00086",
+        display_name: "Jane Doe",
+        email: "jane@example.com",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty email (BE's actor-lookup-failed fallback)", () => {
+    expect(() =>
+      ActorSummarySchema.parse({
+        user_id: "USR-00086",
+        display_name: "",
+        email: "",
+      })
+    ).not.toThrow()
   })
 })
 
@@ -454,7 +480,20 @@ describe("PartnerSubmitResponseSchema", () => {
         display_name: "Acme GmbH",
         partner_type: "legal_entity",
         status: "pending_confirmation",
-        role: "lessee",
+        roles: ["lessee"],
+        is_new: true,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts multiple roles", () => {
+    expect(() =>
+      PartnerSubmitResponseSchema.parse({
+        partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        display_name: "Acme GmbH",
+        partner_type: "legal_entity",
+        status: "pending_confirmation",
+        roles: ["lessee", "leasing_company"],
         is_new: true,
       })
     ).not.toThrow()
@@ -467,7 +506,7 @@ describe("PartnerSubmitResponseSchema", () => {
         display_name: "Acme GmbH",
         partner_type: "legal_entity",
         status: "pending_confirmation",
-        role: "borrower",
+        roles: ["borrower"],
         is_new: true,
       })
     ).toThrow()

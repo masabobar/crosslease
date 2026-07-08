@@ -29,6 +29,8 @@ src/e2e/reports/
 
 # Claude config — shared rules/commands/hooks/memory are tracked; local overrides are not
 .claude/settings.local.json
+# Team memory lives in .claude/memory/ — a stray root-level memory/ is never intentional
+/memory/
 
 # Editor directories and files
 .vscode/*
