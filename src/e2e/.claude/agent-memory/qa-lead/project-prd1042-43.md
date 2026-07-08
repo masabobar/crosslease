@@ -1,12 +1,12 @@
 ---
 name: project-prd1042-43
-description: PRD1042-43 US 28.1 User Login — DoR PASS, 17 ACs, full pipeline Stages 1–4 complete with Figma design data, Stage 3 WARNINGS, 10 active scenarios + 4 pending stubs
+description: PRD1042-43 US 28.1 User Login — DoR PASS, 17 ACs, full pipeline Stages 1–4 complete with Figma design data, Stage 3 WARNINGS, 10 active scenarios (7-role Outline after Bank Admin added 2026-07-08) + 4 pending stubs
 metadata:
   type: project
 ---
 
 **Story:** PRD1042-43 — "US 28.1 | USER MANAGEMENT | User Login"
-**Status:** Dev in progress (2026-05-24)
+**Status:** UAT ready (2026-07-08)
 **Epic:** PRD1042-39 (Epic 28: User Management & Authentication)
 **DoR:** PASS — title present, 17 ACs found, stakeholder-reviewed
 **Figma design:** Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" — Stage 2 COMPLETE (2026-05-25)
@@ -33,12 +33,12 @@ metadata:
 
 ## Pipeline completion status
 
-| Stage | Status | Notes |
-|-------|--------|-------|
-| Stage 1 — Jira extraction | COMPLETE | 17 ACs, DoR PASS |
-| Stage 2 — Figma extraction | COMPLETE (2026-05-25) | Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ; happy-path frame only |
+| Stage                            | Status                | Notes                                                              |
+| -------------------------------- | --------------------- | ------------------------------------------------------------------ |
+| Stage 1 — Jira extraction        | COMPLETE              | 17 ACs, DoR PASS                                                   |
+| Stage 2 — Figma extraction       | COMPLETE (2026-05-25) | Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ; happy-path frame only   |
 | Stage 3 — Requirements vs Design | COMPLETE (2026-05-25) | Status: WARNINGS — 4 MAJOR, 3 MINOR findings; no CRITICAL blockers |
-| Stage 4 — BDD test suite | COMPLETE (2026-05-25) | 10 active scenarios + 4 pending stubs |
+| Stage 4 — BDD test suite         | COMPLETE (2026-05-25) | 10 active scenarios + 4 pending stubs                              |
 
 Test suite file: `src/e2e/tests/PRD1042-43 User Login.md`
 
@@ -47,12 +47,14 @@ Test suite file: `src/e2e/tests/PRD1042-43 User Login.md`
 ## Stage 3 comparison summary (WARNINGS — not BLOCKED)
 
 **MAJOR findings:**
+
 - Email-only field in design vs "Email/Username" dual-mode in story description — PO confirmation required
 - No error state frame for AC-08 (invalid credentials) — designer must add
 - No MFA challenge frame for AC-04 — designer + auth provider decision (R1)
 - No blocked-account state frame for AC-09 — designer must add
 
 **MINOR findings:**
+
 - Button label: design uses "Sign in", story uses "Login button" — use design label in POM
 - Email field label: "Email address" not specified in story — use design label in POM
 - Button subtitle "Secure access to your institution" is decorative, no AC coverage
@@ -65,31 +67,41 @@ Test suite file: `src/e2e/tests/PRD1042-43 User Login.md`
 
 ## Stage 4 scope filter outcome (2026-05-25 run)
 
-| Classification | ACs |
-|---------------|-----|
-| happy-path | AC-03, AC-06, AC-07 (collapsed into 1 Scenario Outline, 6 roles) |
-| main-error | AC-01 (empty form), AC-08 (invalid credentials), AC-09 (blocked accounts — Outline, 4 statuses) |
-| edge-case (active) | AC-04 (MFA conditional), AC-05 (unauthenticated redirect), AC-11 (no-role block), AC-12 (invalid scope block) |
-| Blocked | AC-10 (D18), AC-15 (D17), AC-16 (D17), AC-17 (D16) |
-| separate-feature | AC-13 (permission enforcement — auth-guard specs), AC-14 (audit logging — backend integration) |
-| edge-case (no scenario) | AC-02 (email format — unit test) |
+| Classification          | ACs                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| happy-path              | AC-03, AC-06, AC-07 (collapsed into 1 Scenario Outline, 6 roles)                                              |
+| main-error              | AC-01 (empty form), AC-08 (invalid credentials), AC-09 (blocked accounts — Outline, 4 statuses)               |
+| edge-case (active)      | AC-04 (MFA conditional), AC-05 (unauthenticated redirect), AC-11 (no-role block), AC-12 (invalid scope block) |
+| Blocked                 | AC-10 (D18), AC-15 (D17), AC-16 (D17), AC-17 (D16)                                                            |
+| separate-feature        | AC-13 (permission enforcement — auth-guard specs), AC-14 (audit logging — backend integration)                |
+| edge-case (no scenario) | AC-02 (email format — unit test)                                                                              |
 
 **Total:** 10 active scenarios (1 Outline × 6 roles + 1 Outline × 4 statuses + 5 standalone) + 4 pending stubs.
 
 ---
 
-## Role-to-landing-page mapping (confirmed 2026-05-25)
+## Role-to-landing-page mapping (updated 2026-07-08)
 
-| Role | Landing page |
-|------|-------------|
-| system_admin | /dashboard |
-| front_office | /dashboard |
-| back_office_risk | /dashboard |
-| support_user | /dashboard |
-| auditor | /dashboard |
-| leasing_company_user | /workspace |
+| Role                 | Landing page     | Status                                                                                                             |
+| -------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
+| system_admin         | /dashboard       | Confirmed — but now PLATFORM-ONLY per PRD1042-48 (2026-07-06); no longer manages bank users                        |
+| bank_admin           | /dashboard/admin | **UNVERIFIED** — placeholder; design has not confirmed the route; only role that can assign/change bank user roles |
+| front_office         | /dashboard       | Confirmed                                                                                                          |
+| back_office_risk     | /dashboard       | Confirmed                                                                                                          |
+| support_user         | /dashboard       | Confirmed                                                                                                          |
+| auditor              | /dashboard       | Confirmed                                                                                                          |
+| leasing_company_user | /workspace       | Confirmed                                                                                                          |
 
-Note: LC users redirect to /workspace, all bank roles to /dashboard. Confirmed from story description.
+Note: LC users redirect to /workspace, all bank roles to /dashboard, bank_admin landing is TBD.
+
+**Bank Admin context (2026-07-08 update, Ivan Mladenovic decision 2026-07-06):**
+
+- Wire value: `bank_admin`
+- user_type: `bank_tenant`
+- Scope: Tenant-level, single tenant only
+- **Only role that can assign/change bank user roles** (per PRD1042-48 update)
+- `system_admin` is now platform-only and NO LONGER manages bank users
+- Landing page is NOT specified in Jira ticket or Figma design as of 2026-07-08 — used `/dashboard/admin` as best-inference placeholder
 
 ---
 
@@ -97,14 +109,14 @@ Note: LC users redirect to /workspace, all bank roles to /dashboard. Confirmed f
 
 All credentials read from `src/e2e/.env`. Do NOT hardcode values in specs — always reference env vars via `process.env`.
 
-| Role | .env email variable | .env password variable | Expected landing page |
-|------|--------------------|-----------------------|----------------------|
-| system_admin | `DEV_USER_EMAIL` | `DEV_USER_PASSWORD` | /dashboard |
-| front_office | `DEV_FRONT_OFFICE_USER_EMAIL` | `DEV_FRONT_OFFICE_USER_PASSWORD` | /dashboard |
-| back_office_risk | `DEV_BACK_OFFICE_USER_EMAIL` | `DEV_BACK_OFFICE_USER_PASSWORD` | /dashboard |
-| support_user | `DEV_SUPPORT_USER_EMAIL` | `DEV_SUPPORT_USER_PASSWORD` | /dashboard |
-| auditor | `DEV_AUDIT_USER_EMAIL` | `DEV_AUDIT_USER_PASSWORD` | /dashboard |
-| leasing_company_user | `DEV_LCO_USER_EMAIL` | `DEV_LCO_USER_PASSWORD` | /workspace |
+| Role                 | .env email variable           | .env password variable           | Expected landing page |
+| -------------------- | ----------------------------- | -------------------------------- | --------------------- |
+| system_admin         | `DEV_USER_EMAIL`              | `DEV_USER_PASSWORD`              | /dashboard            |
+| front_office         | `DEV_FRONT_OFFICE_USER_EMAIL` | `DEV_FRONT_OFFICE_USER_PASSWORD` | /dashboard            |
+| back_office_risk     | `DEV_BACK_OFFICE_USER_EMAIL`  | `DEV_BACK_OFFICE_USER_PASSWORD`  | /dashboard            |
+| support_user         | `DEV_SUPPORT_USER_EMAIL`      | `DEV_SUPPORT_USER_PASSWORD`      | /dashboard            |
+| auditor              | `DEV_AUDIT_USER_EMAIL`        | `DEV_AUDIT_USER_PASSWORD`        | /dashboard            |
+| leasing_company_user | `DEV_LCO_USER_EMAIL`          | `DEV_LCO_USER_PASSWORD`          | /workspace            |
 
 **Excluded from happy-path login scenarios:** `TEST_INVALID_EMAIL` / `TEST_INVALID_PASSWORD` — these are negative-test fixtures only (AC-08 invalid credentials scenario).
 
@@ -114,12 +126,12 @@ All credentials read from `src/e2e/.env`. Do NOT hardcode values in specs — al
 
 ## E2E blocking dependencies
 
-| Dependency | Blocks | Resolution owner |
-|------------|--------|-----------------|
-| D16 — TEST_TOKEN_TTL_SECONDS env override | AC-17 (session timeout) | Dev team |
-| D17 — TEST_JWT_SECRET or test-forge endpoint | AC-15 (JWT validation), AC-16 (token tampering) | Dev team |
-| D18 — Admin API to reset lockout counter | AC-10 (account lockout) | Dev team |
-| D19 — Throwaway user creation/deletion API | AC-09 seeded accounts, AC-11 no-role user, AC-12 no-scope user | Dev team |
+| Dependency                                   | Blocks                                                         | Resolution owner |
+| -------------------------------------------- | -------------------------------------------------------------- | ---------------- |
+| D16 — TEST_TOKEN_TTL_SECONDS env override    | AC-17 (session timeout)                                        | Dev team         |
+| D17 — TEST_JWT_SECRET or test-forge endpoint | AC-15 (JWT validation), AC-16 (token tampering)                | Dev team         |
+| D18 — Admin API to reset lockout counter     | AC-10 (account lockout)                                        | Dev team         |
+| D19 — Throwaway user creation/deletion API   | AC-09 seeded accounts, AC-11 no-role user, AC-12 no-scope user | Dev team         |
 
 All 10 active scenarios are unblocked. Only the 4 pending stubs require D-series resolution.
 

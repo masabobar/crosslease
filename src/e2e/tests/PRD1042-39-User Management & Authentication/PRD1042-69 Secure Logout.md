@@ -7,6 +7,8 @@ DoR status: PASS (9 ACs, description present, stakeholder-reviewed, QA Ready)
 ACs with Gherkin scenarios: 5 of 9 | Blocked: 1 (D-R1/PRD1042-76) | Excluded: 3 (edge-case or separate-feature — scope filter table only)
 Figma design: None — no Figma URL found on PRD1042-69 or children PRD1042-492/493/494 (Stage 2 FAILED — backend security story, consistent with PRD1042-46 and PRD1042-47 pattern)
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06).
+
 ---
 
 ## Blocked ACs (no scenarios generated)
@@ -41,7 +43,7 @@ Figma design: None — no Figma URL found on PRD1042-69 or children PRD1042-492/
 
 | Tag           | Scenario                                                                                    | AC           | Priority | E2E |
 | ------------- | ------------------------------------------------------------------------------------------- | ------------ | -------- | --- |
-| `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 6 variants)      | AC-01        | P0       | ✅  |
+| `@happy-path` | Logout control is visible and accessible for all roles (Scenario Outline — 7 variants)      | AC-01        | P0       | ✅  |
 | `@happy-path` | Successful logout terminates session and redirects to login (Scenario Outline — 2 variants) | AC-01, AC-04 | P0       | ✅  |
 | `@happy-path` | Logout from all devices invalidates all active sessions                                     | AC-09        | P1       | ✅  |
 | `@main-error` | Access token is rejected after logout                                                       | AC-02, AC-03 | P0       | ✅  |
@@ -83,6 +85,7 @@ Feature: Secure Logout (US 28.25 — PRD1042-69)
     Examples:
       | role                |
       | system_admin        |
+      | bank_admin          |
       | front_office        |
       | back_office_risk    |
       | support_user        |

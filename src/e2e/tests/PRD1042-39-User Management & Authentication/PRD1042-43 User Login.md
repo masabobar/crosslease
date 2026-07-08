@@ -3,9 +3,11 @@
 Generated: 2026-05-25
 Story: PRD1042-43 — US 28.1 | USER MANAGEMENT | User Login
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
-DoR status: PASS (17 ACs, description present, stakeholder-reviewed, Dev in progress)
+DoR status: PASS (17 ACs, description present, stakeholder-reviewed, UAT ready)
 ACs with Gherkin scenarios: 6 of 17 | Blocked: 6 (D16/D17/D18/D19) | Excluded: 5 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (Stage 2 COMPLETE)
+
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is a tenant-level role (`user_type: bank_tenant`) and is now the ONLY role that can assign/change bank user roles — `system_admin` is now platform-only and NO LONGER manages bank users. Landing page for `bank_admin` is not yet specified in the Jira ticket or Figma design — used `/dashboard/admin` as best-inference placeholder pending design verification. See Open Questions below.
 
 ---
 
@@ -54,7 +56,7 @@ Figma design: Node 319:163, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Sign in" (St
 
 | Tag           | Scenario                                                                      | AC                  | Priority | E2E          |
 | ------------- | ----------------------------------------------------------------------------- | ------------------- | -------- | ------------ |
-| `@happy-path` | Valid login redirects to role-specific dashboard (Scenario Outline — 6 roles) | AC-03, AC-06, AC-07 | P0       | ✅           |
+| `@happy-path` | Valid login redirects to role-specific dashboard (Scenario Outline — 7 roles) | AC-03, AC-06, AC-07 | P0       | ✅           |
 | `@main-error` | Missing required field prevents form submission                               | AC-01               | P0       | ✅           |
 | `@main-error` | Invalid credentials show generic error message                                | AC-08               | P0       | ✅           |
 | `@main-error` | Blocked account status prevents login (Scenario Outline — 4 statuses)         | AC-09               | P0       | ⚙️ needs D19 |
@@ -94,14 +96,20 @@ Feature: User Login (US 28.1 — PRD1042-43)
     And a session should be active with role "<role>"
     And the user's role context should be loaded from the server
 
+    # NOTE (2026-07-08): `bank_admin` landing page is a best-inference placeholder
+    # (`/dashboard/admin`) — design has NOT confirmed the actual route. Update
+    # once the Bank Admin landing screen is added to Figma or specified in Jira.
+    # `system_admin` is now platform-only per PRD1042-48 (2026-07-06) — retained
+    # here because platform admins still log in to the same login screen.
     Examples:
-      | role                  | email                      | landing_page |
-      | system_admin          | admin@refinext-test.com    | /dashboard   |
-      | front_office          | fo@refinext-test.com       | /dashboard   |
-      | back_office_risk      | bo@refinext-test.com       | /dashboard   |
-      | support_user          | support@refinext-test.com  | /dashboard   |
-      | auditor               | auditor@refinext-test.com  | /dashboard   |
-      | leasing_company_user  | lc@refinext-test.com       | /workspace   |
+      | role                  | email                      | landing_page     |
+      | system_admin          | admin@refinext-test.com    | /dashboard       |
+      | bank_admin            | bankadmin@refinext-test.com| /dashboard/admin |
+      | front_office          | fo@refinext-test.com       | /dashboard       |
+      | back_office_risk      | bo@refinext-test.com       | /dashboard       |
+      | support_user          | support@refinext-test.com  | /dashboard       |
+      | auditor               | auditor@refinext-test.com  | /dashboard       |
+      | leasing_company_user  | lc@refinext-test.com       | /workspace       |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-01

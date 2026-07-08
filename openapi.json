@@ -7420,10 +7420,15 @@
               }
             }
           },
-          "role": { "$ref": "#/components/schemas/PartnerRole" }
+          "roles": {
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Roles"
+          }
         },
         "type": "object",
-        "required": ["identity", "role"],
+        "required": ["identity", "roles"],
         "title": "PartnerSubmitRequest"
       },
       "PartnerSubmitResponse": {
@@ -7432,7 +7437,11 @@
           "display_name": { "type": "string", "title": "Display Name" },
           "partner_type": { "$ref": "#/components/schemas/PartnerType" },
           "status": { "type": "string", "title": "Status" },
-          "role": { "$ref": "#/components/schemas/PartnerRole" },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
+            "type": "array",
+            "title": "Roles"
+          },
           "is_new": { "type": "boolean", "title": "Is New" },
           "governed_action_id": {
             "anyOf": [
@@ -7460,7 +7469,7 @@
           "display_name",
           "partner_type",
           "status",
-          "role",
+          "roles",
           "is_new"
         ],
         "title": "PartnerSubmitResponse"

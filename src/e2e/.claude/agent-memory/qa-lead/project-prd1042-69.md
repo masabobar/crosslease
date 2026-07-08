@@ -14,6 +14,7 @@ PRD1042-69 — US 28.25 Secure Logout was processed through the full QA pipeline
 **Stage 3 status:** WARNINGS (no design data; all ACs lack design evidence; no CRITICAL blockers).
 
 **Scope filter result:**
+
 - `happy-path`: AC-01 (logout control visible), AC-04 (redirect + back nav blocked), AC-09 (logout from all devices)
 - `main-error`: AC-02 (session termination — token rejected), AC-03 (server-side token invalidation — access + refresh tokens)
 - `Blocked`: AC-08 (federated SSO logout — blocked by R1 auth provider + PRD1042-76)
@@ -22,7 +23,10 @@ PRD1042-69 — US 28.25 Secure Logout was processed through the full QA pipeline
 
 **Scenarios generated:** 5 blocks (3 Outlines + 2 Scenarios), 10 total Example rows.
 
+**Updated 2026-07-08:** Added `bank_admin` role variant to AC-01 Scenario Outline (now 7 role variants) per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Logout is role-agnostic per AC-01 — Bank Admin included alongside all other authenticated roles.
+
 **Key design gaps (no Figma):**
+
 - Logout control placement in authenticated UI shell unknown — Playwright selector unresolvable until FE confirms
 - "Logout from all devices" control in security settings panel has no design
 - Token capture mechanism (HttpOnly cookie vs localStorage) affects AC-02/AC-03 test setup; D17 (TEST_JWT_SECRET) may be required

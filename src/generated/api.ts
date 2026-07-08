@@ -1132,7 +1132,7 @@ const PartnerSubmitRequest = z
       NaturalPersonIdentityInput,
       SoleProprietorIdentityInput,
     ]),
-    role: PartnerRole,
+    roles: z.array(PartnerRole).min(1),
   })
   .passthrough()
 const PartnerSubmitResponse = z
@@ -1141,7 +1141,7 @@ const PartnerSubmitResponse = z
     display_name: z.string(),
     partner_type: PartnerType,
     status: z.string(),
-    role: PartnerRole,
+    roles: z.array(PartnerRole),
     is_new: z.boolean(),
     governed_action_id: z.union([z.string(), z.null()]).optional(),
     country: z.union([z.string(), z.null()]).optional(),

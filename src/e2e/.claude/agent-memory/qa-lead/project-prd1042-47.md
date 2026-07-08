@@ -35,6 +35,7 @@ US 28.10 Session Management processed via full QA pipeline on 2026-06-03. No Fig
 ## Pattern: Backend security story cluster (US 28.x)
 
 PRD1042-46, PRD1042-47, PRD1042-43 are all backend-heavy. Consistent approach:
+
 - Use story AC text as authoritative source for any message copy
 - Apply tenant isolation auto-negative (404 not 403) where AC references tenant scope
 - Time-based ACs → always separate-feature; their HANDLING ACs → happy-path with fixture

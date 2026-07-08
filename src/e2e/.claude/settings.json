@@ -4,7 +4,24 @@
       "Bash(curl:*)",
       "Bash(python3:*)",
       "Bash(cat:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(curl -s *)",
+      "Bash(curl -s -H *)",
+      "mcp__jira__get_issue",
+      "mcp__jira__search_issues",
+      "mcp__jira__get_epic_children",
+      "mcp__jira__get_projects",
+      "mcp__jira__get_transitions",
+      "mcp__jira__get_server_info",
+      "mcp__jira__get_create_meta",
+      "mcp__jira__get_field_options",
+      "mcp__jira__get_users",
+      "mcp__jira__get_test_case",
+      "mcp__jira__get_test_run",
+      "mcp__jira__search_test_cases",
+      "mcp__jira__search_test_runs",
+      "mcp__jira__get_attachment",
+      "mcp__jira__get_current_mcp_version"
     ]
   }
 }

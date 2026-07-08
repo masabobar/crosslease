@@ -1,6 +1,7 @@
 # PRD1042-63 — US 28.19 | User Management | User Deactivation
 
 Generated: 2026-06-05
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin (wire value `bank_admin`, user_type `bank_tenant`) deactivates users within its own bank tenant only. The "Power User (Bank Admin)" role referenced in the Jira story description is implemented as `bank_admin`. A last-admin guard prevents deactivating the final active Bank Admin within a tenant.
 Story: PRD1042-63 — US 28.19 | User Management | User Deactivation
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (13 ACs, description present, stakeholder-reviewed by Vesna Plakalovic + Philipp Maute, QA ready)
@@ -11,21 +12,21 @@ Figma design: Node 424:7183, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "DEACTIVATIO
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                         | Classification                                                             | Rationale                                                                                                                         |
-| ----- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Authorized admin opens deactivation form; admin-only; server-side scope enforcement                 | `happy-path`                                                               | Core entry point for the deactivation flow; tested as Scenario Outline across system_admin and power_user roles                   |
-| AC-02 | Mandatory Reason validation — UI and backend; failed attempts traceable                             | `main-error`                                                               | Empty Reason directly blocks form submission — primary error gate                                                                 |
-| AC-03 | Successful deactivation — status→Deactivated; sessions revoked; audit logged                        | `happy-path`                                                               | Merged into AC-01 Outline as the completion assertion of the same happy-path flow                                                 |
-| AC-04 | Four-Eyes pending approval for Highly/Privileged users; WF Engine banner; no temporary status       | `main-error`                                                               | Directly affects whether a Highly Privileged user's deactivation completes or enters pending state — primary workflow gate        |
-| AC-05 | Session revocation — UI + API; audit traceable                                                      | `edge-case`                                                                | Backend invariant with no distinct UI assertion at E2E layer; covered by AC-03 session revocation assertion in happy path         |
-| AC-06 | Login prevention (deactivated user blocked) + Reason=Other→Comment mandatory                        | `main-error` (Comment conditional) / `separate-feature` (login prevention) | Reason=Other→Comment conditional is a direct form validation error tested here; login prevention belongs in PRD1042-43 login spec |
-| AC-07 | Historical preservation — workflow ownership, role-at-time, scope-at-time                           | `edge-case`                                                                | Backend/data integrity invariant; not directly assertable via UI E2E without audit API seam                                       |
-| AC-08 | No hard delete — user identity remains stored                                                       | `edge-case`                                                                | Backend invariant; assertable via admin user list visibility — no dedicated UI state to assert                                    |
-| AC-09 | Audit logging — actor, reason, timestamp, scope, outcome; immutable                                 | `edge-case`                                                                | Requires audit API test seam; not E2E UI testable                                                                                 |
-| AC-10 | Backend/API enforcement — server-authoritative; partial deactivation never occurs                   | `edge-case`                                                                | Integration test layer concern; not E2E UI testable                                                                               |
-| AC-11 | Permanent access removal — UI routes, APIs, documents, exports, workflows blocked                   | `separate-feature`                                                         | Cross-cutting access control; belongs in access control / role-based access spec                                                  |
-| AC-12 | Restore Access restriction — Deactivated users must not re-enter Active lifecycle via standard flow | `main-error`                                                               | Directly testable: Restore Access button/action must be absent or blocked for a Deactivated user; closes the lifecycle loop       |
-| AC-13 | Governance & traceability — historical identity refs immutable; audit reconstruction possible       | `edge-case`                                                                | Compliance concern requiring audit API seam; not E2E UI testable                                                                  |
+| AC    | Description                                                                                         | Classification                                                             | Rationale                                                                                                                                                        |
+| ----- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Authorized admin opens deactivation form; admin-only; server-side scope enforcement                 | `happy-path`                                                               | Core entry point for the deactivation flow; tested as Scenario Outline across system_admin and bank_admin roles (bank_admin scoped to own tenant per PRD1042-48) |
+| AC-02 | Mandatory Reason validation — UI and backend; failed attempts traceable                             | `main-error`                                                               | Empty Reason directly blocks form submission — primary error gate                                                                                                |
+| AC-03 | Successful deactivation — status→Deactivated; sessions revoked; audit logged                        | `happy-path`                                                               | Merged into AC-01 Outline as the completion assertion of the same happy-path flow                                                                                |
+| AC-04 | Four-Eyes pending approval for Highly/Privileged users; WF Engine banner; no temporary status       | `main-error`                                                               | Directly affects whether a Highly Privileged user's deactivation completes or enters pending state — primary workflow gate                                       |
+| AC-05 | Session revocation — UI + API; audit traceable                                                      | `edge-case`                                                                | Backend invariant with no distinct UI assertion at E2E layer; covered by AC-03 session revocation assertion in happy path                                        |
+| AC-06 | Login prevention (deactivated user blocked) + Reason=Other→Comment mandatory                        | `main-error` (Comment conditional) / `separate-feature` (login prevention) | Reason=Other→Comment conditional is a direct form validation error tested here; login prevention belongs in PRD1042-43 login spec                                |
+| AC-07 | Historical preservation — workflow ownership, role-at-time, scope-at-time                           | `edge-case`                                                                | Backend/data integrity invariant; not directly assertable via UI E2E without audit API seam                                                                      |
+| AC-08 | No hard delete — user identity remains stored                                                       | `edge-case`                                                                | Backend invariant; assertable via admin user list visibility — no dedicated UI state to assert                                                                   |
+| AC-09 | Audit logging — actor, reason, timestamp, scope, outcome; immutable                                 | `edge-case`                                                                | Requires audit API test seam; not E2E UI testable                                                                                                                |
+| AC-10 | Backend/API enforcement — server-authoritative; partial deactivation never occurs                   | `edge-case`                                                                | Integration test layer concern; not E2E UI testable                                                                                                              |
+| AC-11 | Permanent access removal — UI routes, APIs, documents, exports, workflows blocked                   | `separate-feature`                                                         | Cross-cutting access control; belongs in access control / role-based access spec                                                                                 |
+| AC-12 | Restore Access restriction — Deactivated users must not re-enter Active lifecycle via standard flow | `main-error`                                                               | Directly testable: Restore Access button/action must be absent or blocked for a Deactivated user; closes the lifecycle loop                                      |
+| AC-13 | Governance & traceability — historical identity refs immutable; audit reconstruction possible       | `edge-case`                                                                | Compliance concern requiring audit API seam; not E2E UI testable                                                                                                 |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-06 (Comment conditional), AC-12
 **Blocked (no Gherkin):** none
@@ -37,16 +38,18 @@ Figma design: Node 424:7183, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "DEACTIVATIO
 
 | Tag           | Scenario                                                                                                             | AC           | Priority | E2E          |
 | ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------------ |
-| `@happy-path` | Authorized admin opens deactivation form and deactivates user (Scenario Outline — 2 roles: system_admin, power_user) | AC-01, AC-03 | P0       | ⚙️ needs D19 |
+| `@happy-path` | Authorized admin opens deactivation form and deactivates user (Scenario Outline — 2 roles: system_admin, bank_admin) | AC-01, AC-03 | P0       | ⚙️ needs D19 |
 | `@main-error` | Missing Reason blocks deactivation submission (AC-02)                                                                | AC-02        | P0       | ✅           |
 | `@main-error` | Reason=Other without Comment blocks submission (AC-06)                                                               | AC-06        | P0       | ✅           |
 | `@main-error` | Highly Privileged deactivation enters Four-Eyes pending state (Scenario Outline — 2 tiers)                           | AC-04        | P0       | ✅           |
 | `@main-error` | Same user cannot submit and approve their own deactivation request (AC-04 — Four-Eyes)                               | AC-04        | P0       | ✅           |
 | `@main-error` | Deactivated user cannot be restored via standard Restore Access flow (AC-12)                                         | AC-12        | P0       | ✅           |
+| `@main-error` | Bank Admin cannot deactivate users outside own tenant (AC-01 — cross-tenant scope enforcement)                       | AC-01        | P0       | ⚙️ needs D20 |
+| `@main-error` | Cannot deactivate the last active Bank Admin in a tenant (last-admin guard)                                          | AC-01, AC-10 | P0       | ⚙️ needs D19 |
 | `@main-error` | Unauthorized role cannot access deactivation form (Scenario Outline — 3 roles)                                       | AC-01        | P0       | ✅           |
 
-Active scenario blocks: 7 (3 Outlines + 4 Scenarios)
-E2E automation candidates: 6 of 7 scenarios ✅
+Active scenario blocks: 9 (3 Outlines + 6 Scenarios)
+E2E automation candidates: 6 of 9 scenarios ✅
 
 ---
 
@@ -69,6 +72,8 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
   # submits. The user status changes to Deactivated and a success confirmation
   # is shown. Session revocation and audit logging are asserted implicitly via
   # the status change outcome — button copy TBC with designer.
+  # system_admin deactivates platform-level users; bank_admin deactivates users
+  # within its own bank tenant only (per PRD1042-48, Ivan Mladenovic 2026-07-06).
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-01 @ac-03 @p0
@@ -88,7 +93,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
     Examples:
       | role         | reason                  |
       | system_admin | Offboarding             |
-      | power_user   | Administrative Decision |
+      | bank_admin   | Administrative Decision |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-02
@@ -133,7 +138,7 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-04
-  # Deactivating a Highly Privileged user (system_admin, power_user) must
+  # Deactivating a Highly Privileged user (system_admin, bank_admin) must
   # trigger the Four-Eyes approval gate. The target user's status must NOT
   # change to any temporary state — it remains in its current state. A WF
   # Engine approval task must be created. The same user cannot be both
@@ -154,13 +159,13 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
 
     Examples:
       | privilege_tier |
-      | power_user     |
+      | bank_admin     |
       | system_admin   |
 
   @main-error @ac-04 @p0 @e2e-ready
   Scenario: Same user cannot submit and approve a deactivation request (AC-04 — Four-Eyes)
     Given I am logged in as a system_admin
-    And the target user is a power_user with status "Active"
+    And the target user is a bank_admin with status "Active"
     When I submit a deactivation request for the target user
     And I attempt to approve the same deactivation request as the same user
     Then the system must reject the self-approval attempt
@@ -181,6 +186,42 @@ Feature: User Deactivation (US 28.19 — PRD1042-63)
     When I open that user's detail page
     Then the Restore Access action must not be available for a Deactivated user
     And any attempt to restore access via API must be rejected
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-01 (Bank Admin cross-tenant scope enforcement)
+  # Per PRD1042-48 (Ivan Mladenovic 2026-07-06), a Bank Admin may deactivate
+  # users only within its own bank tenant. Attempting to deactivate a user
+  # belonging to a different tenant must be rejected, and the cross-tenant
+  # request must return 404 (RefiNext tenant isolation rule — 404, not 403).
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-01 @p0
+  Scenario: Bank Admin cannot deactivate users outside own tenant (AC-01 — tenant scope)
+    Given I am logged in as a bank_admin of tenant "Bank Tenant A"
+    And a target user exists with status "Active" in tenant "Bank Tenant B"
+    When I attempt to open the deactivation form for the cross-tenant user
+    Then the deactivation action must not be available
+    And any direct API call to deactivate the cross-tenant user must be rejected with 404
+    And the target user status must NOT change to "Deactivated"
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-01, AC-10 (last-admin guard)
+  # A tenant must retain at least one active Bank Admin at all times.
+  # Attempting to deactivate the last remaining active Bank Admin within a
+  # tenant must be blocked at the backend (server-authoritative per AC-10).
+  # This guard prevents administrative lockout of the tenant.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-01 @ac-10 @p0
+  Scenario: Cannot deactivate the last active Bank Admin in a tenant (last-admin guard)
+    Given I am logged in as a system_admin
+    And tenant "Bank Tenant A" has exactly one active bank_admin remaining
+    When I attempt to deactivate that last remaining bank_admin
+    And I complete the deactivation form with a valid reason and Effective From
+    And I submit the deactivation form
+    Then the system must reject the deactivation with a last-admin guard error
+    And the target bank_admin status must NOT change to "Deactivated"
+    And the tenant must retain at least one active bank_admin
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-01 (role-based access negative)
