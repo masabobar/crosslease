@@ -75,6 +75,7 @@ const UserResponse = z
     status: UserStatus,
     phone_number: z.union([z.string(), z.null()]),
     profile_picture_url: z.union([z.string(), z.null()]).optional(),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
     access_valid_until: z.union([z.string(), z.null()]),
     invited_by: z.union([z.string(), z.null()]),
     invited_at: z.union([z.string(), z.null()]),
@@ -215,6 +216,7 @@ const InviteUserRequest = z
     role: UserRole,
     tenant_id: z.union([z.string(), z.null()]).optional(),
     access_valid_until: z.union([z.string(), z.null()]).optional(),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const app__modules__users__interfaces__http__schemas__user_schemas__UserRef = z
@@ -231,6 +233,7 @@ const UserDetailResponse = z
     status: UserStatus,
     tenant_id: z.union([z.string(), z.null()]),
     tenant_name: z.union([z.string(), z.null()]),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
     phone_number: z.union([z.string(), z.null()]),
     pending_email: z.union([z.string(), z.null()]),
     profile_picture_url: z.union([z.string(), z.null()]),
@@ -4217,7 +4220,9 @@ Requires &#x60;system_admin&#x60; role.`,
   A second admin must approve before the user is created.
 - Tenant roles (&#x60;front_office&#x60;, &#x60;back_office&#x60;, &#x60;leasing_company_user&#x60;) — &#x60;tenant_id&#x60; required, tenant must be active.
   Immediate execution; returns &#x60;UserResponse&#x60; with status &#x60;invited&#x60;.
-- &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.`,
+- &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.
+- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same tenant.
+  All other roles must omit &#x60;lc_partner_id&#x60; (or send &#x60;null&#x60;).`,
     requestFormat: "json",
     parameters: [
       {
