@@ -54,7 +54,9 @@ test.describe("PRD1042-44 — Invitation-based Onboarding", () => {
     firstNameBase,
     lastNameBase,
   } of STANDARD_ROLE_INVITES) {
-    test(`Admin creates invitation for ${role} (AC-01, AC-11)`, async ({
+    // Disabled 2026-07-09 — actually submits invitation and creates a user in
+    // the test DB. Re-enable once a throwaway-user cleanup fixture (D19) exists.
+    test.skip(`Admin creates invitation for ${role} (AC-01, AC-11)`, async ({
       authenticatedPage,
     }) => {
       // Unique suffix per run prevents collision with previously registered emails
@@ -85,7 +87,9 @@ test.describe("PRD1042-44 — Invitation-based Onboarding", () => {
   // Pending state rather than Invited.
   // Design reference: node 96:71636 (Create & invite user dialog).
   // ---------------------------------------------------------------------------
-  test("Privileged Admin invitation shows Four-Eyes alert and creates Pending user (AC-11)", async ({
+  // Disabled 2026-07-09 — actually submits invitation and creates a Pending user
+  // in the test DB. Re-enable once a throwaway-user cleanup fixture (D19) exists.
+  test.skip("Privileged Admin invitation shows Four-Eyes alert and creates Pending user (AC-11)", async ({
     authenticatedPage,
   }) => {
     const idSuffix = String(Date.now()).slice(-6)

@@ -83,7 +83,9 @@ test.describe("PRD1042-48 — Role Assignment & Management", () => {
   // ---------------------------------------------------------------------------
 
   for (const { role, emailPrefix, firstName, lastName } of ROLE_INVITES) {
-    test(`Admin assigns "${role}" role to a new user — role saved successfully (AC-01, AC-03)`, async ({
+    // Disabled 2026-07-09 — actually submits invitation and creates a user in
+    // the test DB. Re-enable once a throwaway-user cleanup fixture (D19) exists.
+    test.skip(`Admin assigns "${role}" role to a new user — role saved successfully (AC-01, AC-03)`, async ({
       authenticatedPage,
     }) => {
       const idSuffix = String(Date.now()).slice(-6)

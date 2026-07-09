@@ -145,7 +145,10 @@ test.describe("PRD1042-61 — User Suspension", () => {
   // a fresh active user for each outline row without leaving stale test data.
   // ---------------------------------------------------------------------------
 
-  test("system_admin suspends front_office user — status changes to Suspended (AC-01, AC-03)", async ({
+  // Disabled 2026-07-09 — actually changes the persistent front_office user's
+  // status to Suspended. Re-enable once a throwaway-user fixture (D19) allows
+  // per-test provisioning without mutating a shared seeded account.
+  test.skip("system_admin suspends front_office user — status changes to Suspended (AC-01, AC-03)", async ({
     authenticatedPage,
   }) => {
     // Uses the persistent DEV_FRONT_OFFICE_USER_EMAIL test user instead of a D19
