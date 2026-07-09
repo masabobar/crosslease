@@ -766,7 +766,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Invite a new user",
-        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.",
+        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.\n- `leasing_company_user` — `lc_partner_id` required; must be a confirmed partner within the same tenant.\n  All other roles must omit `lc_partner_id` (or send `null`).",
         "operationId": "invite_user_api_v1_users_post",
         "requestBody": {
           "required": true,
@@ -6531,6 +6531,14 @@
             ],
             "title": "Access Valid Until",
             "description": "Auditor only — end of access window"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id",
+            "description": "Required for leasing_company_user; must be null for all other roles"
           }
         },
         "type": "object",
@@ -7661,7 +7669,8 @@
           }
         },
         "type": "object",
-        "title": "RegisteredAddress"
+        "title": "RegisteredAddress",
+        "description": "Address as returned in responses. Lenient — legacy rows may be incomplete."
       },
       "RegisteredAddressInput": {
         "properties": {
@@ -9248,6 +9257,13 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Tenant Name"
           },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
+          },
           "phone_number": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Phone Number"
@@ -9435,6 +9451,13 @@
           "profile_picture_url": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Profile Picture Url"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
           },
           "access_valid_until": {
             "anyOf": [
