@@ -64,18 +64,15 @@ function blankToUndefined(
   return result
 }
 
-// NOTE: Figma design also shows a "State / Region (optional)" field in the
-// ADDRESS section, but RegisteredAddress in refinext-api has no such field
-// (street/city/postal_code/country only). Omitted here rather than building
-// a UI field with nowhere to send its value — see design-first.md §4.
-//
 // registered_address.country is not collected as a separate field — the form
 // reuses the top-level `country` value at submit time (see onValid) rather
-// than asking for the same country twice.
+// than asking for the same country twice. Per the design, street/city/
+// postal_code are mandatory; state_region is optional.
 const addressSchema = z.object({
-  street: z.string().optional(),
-  city: z.string().optional(),
-  postal_code: z.string().optional(),
+  street: z.string().min(1, "Required"),
+  city: z.string().min(1, "Required"),
+  postal_code: z.string().min(1, "Required"),
+  state_region: z.string().optional(),
 })
 
 const legalEntitySchema = z.object({
@@ -91,7 +88,7 @@ const legalEntitySchema = z.object({
       message: "LEI must be exactly 20 alphanumeric characters (ISO 17442)",
     }),
   commercial_register_no: z.string().optional(),
-  registered_address: addressSchema.optional(),
+  registered_address: addressSchema,
   roles: z.array(PartnerRoleSchema).min(1, "Required"),
 })
 
@@ -103,7 +100,7 @@ const naturalPersonSchema = z.object({
   country: z.string().min(1, "Required"),
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
-  registered_address: addressSchema.optional(),
+  registered_address: addressSchema,
   roles: z.array(PartnerRoleSchema).min(1, "Required"),
 })
 
@@ -114,7 +111,7 @@ const soleProprietorSchema = z.object({
   country: z.string().min(1, "Required"),
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
-  registered_address: addressSchema.optional(),
+  registered_address: addressSchema,
   roles: z.array(PartnerRoleSchema).min(1, "Required"),
 })
 
@@ -492,10 +489,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="street">
-                {t("submit.identityStep.fields.street")}{" "}
-                <span className="text-muted-foreground">
-                  ({t("submit.form.optional")})
-                </span>
+                {t("submit.identityStep.fields.street")}
               </Label>
               <Input
                 id="street"
@@ -511,10 +505,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="city">
-                {t("submit.identityStep.fields.city")}{" "}
-                <span className="text-muted-foreground">
-                  ({t("submit.form.optional")})
-                </span>
+                {t("submit.identityStep.fields.city")}
               </Label>
               <Input
                 id="city"
@@ -529,26 +520,40 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 )}
             </div>
           </div>
-          <div className="flex flex-col gap-1.5 w-1/2 pr-2">
-            <Label htmlFor="postal_code">
-              {t("submit.identityStep.fields.postalCode")}{" "}
-              <span className="text-muted-foreground">
-                ({t("submit.form.optional")})
-              </span>
-            </Label>
-            <Input
-              id="postal_code"
-              data-testid="field-postal_code"
-              {...register(
-                "registered_address.postal_code" as keyof IdentityForm
-              )}
-            />
-            {"registered_address" in errors &&
-              errors.registered_address?.postal_code && (
-                <p className="text-xs text-destructive">
-                  {errors.registered_address.postal_code.message}
-                </p>
-              )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="postal_code">
+                {t("submit.identityStep.fields.postalCode")}
+              </Label>
+              <Input
+                id="postal_code"
+                data-testid="field-postal_code"
+                {...register(
+                  "registered_address.postal_code" as keyof IdentityForm
+                )}
+              />
+              {"registered_address" in errors &&
+                errors.registered_address?.postal_code && (
+                  <p className="text-xs text-destructive">
+                    {errors.registered_address.postal_code.message}
+                  </p>
+                )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="state_region">
+                {t("submit.identityStep.fields.stateRegion")}{" "}
+                <span className="text-muted-foreground">
+                  ({t("submit.form.optional")})
+                </span>
+              </Label>
+              <Input
+                id="state_region"
+                data-testid="field-state_region"
+                {...register(
+                  "registered_address.state_region" as keyof IdentityForm
+                )}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

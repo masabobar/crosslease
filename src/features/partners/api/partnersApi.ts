@@ -79,6 +79,7 @@ export type RegisteredAddressInput = {
   city?: string | null
   postal_code?: string | null
   country?: string | null
+  state_region?: string | null
 }
 
 export type LegalEntityIdentityInput = {

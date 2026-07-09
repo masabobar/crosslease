@@ -157,6 +157,7 @@ describe("RegisteredAddressSchema", () => {
         city: null,
         postal_code: null,
         country: null,
+        state_region: null,
       })
     ).not.toThrow()
   })
@@ -168,6 +169,19 @@ describe("RegisteredAddressSchema", () => {
         city: "Berlin",
         postal_code: "10115",
         country: "DE",
+        state_region: "Bavaria",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null state_region", () => {
+    expect(() =>
+      RegisteredAddressSchema.parse({
+        street: "Hauptstraße 1",
+        city: "Berlin",
+        postal_code: "10115",
+        country: "DE",
+        state_region: null,
       })
     ).not.toThrow()
   })
@@ -184,6 +198,7 @@ const validAddress = {
   city: "Berlin",
   postal_code: "10115",
   country: "DE",
+  state_region: null,
 }
 
 describe("LegalEntityIdentityDetailSchema", () => {

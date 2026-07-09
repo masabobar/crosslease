@@ -6619,7 +6619,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           },
@@ -7017,7 +7017,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           }
@@ -7654,10 +7654,34 @@
           "country": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Country"
+          },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
           }
         },
         "type": "object",
         "title": "RegisteredAddress"
+      },
+      "RegisteredAddressInput": {
+        "properties": {
+          "street": { "type": "string", "minLength": 1, "title": "Street" },
+          "city": { "type": "string", "minLength": 1, "title": "City" },
+          "postal_code": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Postal Code"
+          },
+          "country": { "type": "string", "minLength": 1, "title": "Country" },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
+          }
+        },
+        "type": "object",
+        "required": ["street", "city", "postal_code", "country"],
+        "title": "RegisteredAddressInput",
+        "description": "Address as submitted by a client. All fields mandatory except state_region."
       },
       "ResendInvitationRequest": {
         "properties": {
@@ -8193,7 +8217,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           }
