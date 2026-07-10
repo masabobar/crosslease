@@ -232,14 +232,21 @@
       "noCountriesFound": "No countries found",
       "from": "From",
       "to": "To",
-      "clearAll": "Clear all"
+      "clearAll": "Clear all",
+      "activeModule": "Active module",
+      "moduleStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      }
     },
     "filterPills": {
       "search": "Search: {{value}}",
       "status": "Status: {{value}}",
       "type": "Type: {{value}}",
       "country": "Country: {{value}}",
-      "dateRange": "Created: {{range}}"
+      "dateRange": "Created: {{range}}",
+      "module": "Module: {{value}}",
+      "moduleStatus": "Module status: {{value}}"
     },
     "pagination": {
       "page": "Page {{page}} of {{total}}"

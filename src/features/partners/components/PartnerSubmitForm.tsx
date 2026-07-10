@@ -34,6 +34,18 @@ const RISK_SENSITIVE_ROLES: PartnerRole[] = [
 
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
 const PARTNER_TYPE_OPTIONS = PartnerTypeSchema.options
+const VALID_COUNTRY_CODES = new Set(COUNTRY_OPTIONS.map(o => o.value))
+
+// The Country field is a free-typeable Combobox — browser address autofill can
+// inject a full country name (or other stray text) into it instead of a valid
+// selection. Reject anything that isn't one of the known codes here so bad
+// input never reaches the match/submit API as a request that fails downstream.
+const countryCodeSchema = z
+  .string()
+  .min(1, "Required")
+  .refine(v => VALID_COUNTRY_CODES.has(v), {
+    message: "Select a country from the list",
+  })
 
 // Mirrors LegalEntityIdentityInput.validate_lei in refinext-api's partner_schemas.py —
 // ISO 17442 mod-97: move first 4 chars to end, convert letters to digits, check mod 97 == 1.
@@ -78,8 +90,8 @@ const addressSchema = z.object({
 const legalEntitySchema = z.object({
   partner_type: z.literal("legal_entity"),
   legal_name: z.string().min(1, "Required"),
-  legal_form: z.string().optional(),
-  country: z.string().min(1, "Required"),
+  legal_form: z.string().min(1, "Required"),
+  country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   lei: z
     .string()
@@ -97,7 +109,7 @@ const naturalPersonSchema = z.object({
   full_name: z.string().min(1, "Required"),
   date_of_birth: z.string().min(1, "Required"),
   place_of_birth: z.string().min(1, "Required"),
-  country: z.string().min(1, "Required"),
+  country: countryCodeSchema,
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
   registered_address: addressSchema,
@@ -108,7 +120,7 @@ const soleProprietorSchema = z.object({
   partner_type: z.literal("sole_proprietor"),
   full_name: z.string().min(1, "Required"),
   date_of_birth: z.string().min(1, "Required"),
-  country: z.string().min(1, "Required"),
+  country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
@@ -154,13 +166,20 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
     control,
     name: "country" as keyof IdentityForm,
   }) as string | undefined
-  const isDe = (country ?? "").toUpperCase() === "DE"
+  // Autofill (or any non-selection input) can put a non-string or malformed
+  // value into the free-typeable Country combobox before it's committed —
+  // guard the type here rather than assume useWatch always returns a string.
+  const isDe = typeof country === "string" && country.toUpperCase() === "DE"
 
   function handleTypeChange(type: PartnerType) {
     setPartnerType(type)
+    // Preserve fields shared across entity types (country, registered_address,
+    // roles, and any type-specific fields that happen to overlap by name) —
+    // schemaForType(type) strips whatever doesn't belong to the new type at
+    // validation time, so carrying the full previous values forward is safe.
     reset({
+      ...getValues(),
       partner_type: type,
-      roles: getValues("roles" as keyof IdentityForm),
     } as IdentityForm)
   }
 
@@ -301,6 +320,11 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                   data-testid="field-legal_form"
                   {...register("legal_form" as keyof IdentityForm)}
                 />
+                {"legal_form" in errors && errors.legal_form && (
+                  <p className="text-xs text-destructive">
+                    {errors.legal_form.message}
+                  </p>
+                )}
               </div>
             ) : (
               partnerType === "sole_proprietor" && dateOfBirthField
