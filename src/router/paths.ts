@@ -28,6 +28,7 @@ export const PATHS = {
   PARTNER_DETAIL: "/partners/:id",
   PARTNER_DUPLICATES: "/partners/duplicates",
   PARTNER_DUPLICATE_DETAIL: "/partners/duplicates/:pairId",
+  PRODUCT_TEMPLATE_CREATE: "/business-configuration/product-templates/new",
 } as const
 
 export function adminUserDetail(id: string): string {

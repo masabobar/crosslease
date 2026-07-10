@@ -9,10 +9,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
 import { ApiError } from "@/lib/api"
+import { COUNTRIES } from "@/lib/countries"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
+
+const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
 
 type Props = {
   open: boolean
@@ -110,17 +122,51 @@ function ProposeIdentityChangeDialog({
                 </span>
               </Label>
               {anchor.key in values && (
-                <Input
-                  data-testid={`propose-value-${anchor.key}`}
-                  value={values[anchor.key]}
-                  onChange={e =>
-                    setValues(prev => ({
-                      ...prev,
-                      [anchor.key]: e.target.value,
-                    }))
-                  }
-                  className="ml-6"
-                />
+                <div className="ml-6">
+                  {anchor.key === "country" ? (
+                    <Combobox
+                      items={COUNTRY_OPTIONS}
+                      value={values[anchor.key]}
+                      onValueChange={value =>
+                        setValues(prev => ({
+                          ...prev,
+                          [anchor.key]: (value as string) ?? "",
+                        }))
+                      }
+                    >
+                      <ComboboxInput
+                        data-testid={`propose-value-${anchor.key}`}
+                        placeholder={t("list.filters.countrySearchPlaceholder")}
+                        showClear
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          <ComboboxEmpty>
+                            {t("list.filters.noCountriesFound")}
+                          </ComboboxEmpty>
+                          <ComboboxCollection>
+                            {(opt: { value: string; label: string }) => (
+                              <ComboboxItem value={opt.value}>
+                                {opt.label}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxCollection>
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  ) : (
+                    <Input
+                      data-testid={`propose-value-${anchor.key}`}
+                      value={values[anchor.key]}
+                      onChange={e =>
+                        setValues(prev => ({
+                          ...prev,
+                          [anchor.key]: e.target.value,
+                        }))
+                      }
+                    />
+                  )}
+                </div>
               )}
             </div>
           ))}

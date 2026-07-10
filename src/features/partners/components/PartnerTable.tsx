@@ -13,7 +13,7 @@ import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
 import type { PartnerListItem } from "@/features/partners/api/schema"
 import type { PartnerActionType } from "@/features/partners/types"
 
-const COL_NAME = "flex-1 min-w-[200px]"
+const COL_NAME = "flex-1 min-w-[200px] max-w-[320px]"
 const COL_ROLES = "w-[200px] shrink-0"
 const COL_COUNTRY = "w-[90px] shrink-0"
 const COL_STATUS = "w-[160px] shrink-0"
