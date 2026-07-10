@@ -29,6 +29,8 @@ export const PATHS = {
   PARTNER_DUPLICATES: "/partners/duplicates",
   PARTNER_DUPLICATE_DETAIL: "/partners/duplicates/:pairId",
   PRODUCT_TEMPLATE_CREATE: "/business-configuration/product-templates/new",
+  PRODUCT_TEMPLATE_VERSION_HISTORY:
+    "/business-configuration/product-templates/:templateId/version-history",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -49,4 +51,11 @@ export function partnerDetail(id: string): string {
 
 export function partnerDuplicateDetail(pairId: string): string {
   return PATHS.PARTNER_DUPLICATE_DETAIL.replace(":pairId", pairId)
+}
+
+export function productTemplateVersionHistory(templateId: string): string {
+  return PATHS.PRODUCT_TEMPLATE_VERSION_HISTORY.replace(
+    ":templateId",
+    templateId
+  )
 }

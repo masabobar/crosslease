@@ -5,6 +5,15 @@ export const PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES: readonly UserRole[] = [
   "bank_power_user",
 ]
 
+export const PRODUCT_TEMPLATE_READ_ALLOWED_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "bank_power_user",
+  "front_office",
+  "back_office",
+  "support_user",
+  "auditor",
+]
+
 export type ProductTemplateWizardStep =
   | "identity"
   | "behavioral"
