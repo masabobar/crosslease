@@ -230,6 +230,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             value={field.value as string}
             onChange={field.onChange}
             maxDate={new Date()}
+            captionLayout="dropdown"
             error={"date_of_birth" in errors && !!errors.date_of_birth}
           />
         )}
