@@ -38,6 +38,8 @@ export type TenantListParams = {
   country?: string | null
   from_date?: string | null
   to_date?: string | null
+  module_key?: string | null
+  module_active?: boolean | null
 }
 
 export const TENANTS_QUERY_KEYS = {
