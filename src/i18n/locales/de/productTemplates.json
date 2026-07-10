@@ -1,0 +1,135 @@
+{
+  "wizard": {
+    "steps": {
+      "identity": "Identität",
+      "behavioral": "Verhaltenseinstellungen",
+      "eligibility": "Berechtigung",
+      "orchestration": "Orchestrierungsverknüpfung",
+      "review": "Prüfen & veröffentlichen"
+    },
+    "identity": {
+      "title": "Neue Produktvorlage erstellen",
+      "subtitle": "Geben Sie der Vorlage einen eindeutigen Code und einen aussagekräftigen Namen."
+    },
+    "behavioral": {
+      "title": "Verhaltenseinstellungen",
+      "subtitle": "Definieren Sie die Berechnungslogik und das Zahlungsverhalten."
+    },
+    "eligibility": {
+      "title": "Berechtigung",
+      "subtitle": "Legen Sie den Vermögensumfang, die Laufzeit- und Volumengrenzen sowie das Gültigkeitsfenster fest."
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "saveDraft": "Als Entwurf speichern"
+    },
+    "draftSaved": "Entwurf gespeichert.",
+    "orchestrationComingSoon": "Orchestrierungsverknüpfung ist noch nicht verfügbar.",
+    "discardDialog": {
+      "title": "Diesen Entwurf verwerfen?",
+      "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Entwurf verwerfen"
+    }
+  },
+  "sections": {
+    "settings": "Einstellungen",
+    "npvFormulaReference": "NPV-Formelreferenz",
+    "allowedAssetCategories": "Zulässige Vermögenskategorien",
+    "details": "Details"
+  },
+  "fields": {
+    "templateName": "Vorlagenname",
+    "templateCode": "Vorlagencode",
+    "templateCodeHint": "Eindeutig innerhalb des Mandanten.",
+    "templateDescription": "Beschreibung",
+    "templateDescriptionHint": "Max. 1000 Zeichen.",
+    "optional": "(optional)",
+    "selectPlaceholder": "Auswählen",
+    "financingType": "Finanzierungsart",
+    "legalStructure": "Rechtsstruktur",
+    "paymentTiming": "Zahlungszeitpunkt",
+    "rateBasis": "Zinsbasis",
+    "calculationModel": "Berechnungsmodell",
+    "rateType": "Zinstyp",
+    "firstInstallmentRule": "Regel für erste Rate",
+    "disbursementDerivationRule": "Auszahlungsableitungsregel",
+    "npvFormulaReferenceHint": "Wählen Sie die NPV-Berechnungsformel für dieses Produkt.",
+    "allowedAssetCategoriesHint": "Wählen Sie mindestens eine aus.",
+    "minTermMonths": "Min. Laufzeit (Monate)",
+    "maxTermMonths": "Max. Laufzeit (Monate)",
+    "maxLtvRatio": "Max. LTV-Verhältnis (%)",
+    "minVolumeEur": "Min. Volumen (EUR)",
+    "maxVolumeEur": "Max. Volumen (EUR)",
+    "validFrom": "Gültig ab",
+    "validUntil": "Gültig bis",
+    "validUntilHint": "Leer lassen für unbefristet."
+  },
+  "financingTypes": {
+    "full_refinancing": "Vollrefinanzierung",
+    "partial_refinancing": "Teilrefinanzierung",
+    "residual_value_financing": "Restwertfinanzierung",
+    "true_sale_forfaiting": "True Sale / Forfaitierung",
+    "refinancing_credit_line": "Refinanzierungskreditlinie",
+    "structured_portfolio": "Strukturiertes Portfolio"
+  },
+  "legalStructures": {
+    "loan_credit": "Darlehen / Kredit",
+    "true_sale": "True Sale (Forfaitierung)"
+  },
+  "paymentTimings": {
+    "advance": "Vorschüssig",
+    "arrears": "Nachschüssig"
+  },
+  "rateBases": {
+    "30_360": "30/360",
+    "act_360": "Act/360",
+    "act_365": "Act/365",
+    "act_act": "Act/Act"
+  },
+  "calculationModels": {
+    "annuity": "Annuität",
+    "bullet": "Bullet",
+    "irregular": "Unregelmäßig"
+  },
+  "rateTypes": {
+    "fixed": "Fest",
+    "floating": "Variabel",
+    "euribor_spread": "EURIBOR + Spread"
+  },
+  "firstInstallmentRules": {
+    "submission_month": "Einreichungsmonat",
+    "following_month": "Folgemonat",
+    "configurable_offset": "Konfigurierbarer Versatz"
+  },
+  "disbursementDerivationRules": {
+    "npv": "NPV",
+    "npv_ltv": "NPV × LTV%",
+    "rv_only": "Nur RV"
+  },
+  "npvFormulas": {
+    "standardAnnuity": "Standard-Annuitäts-NPV",
+    "bullet": "Bullet-NPV",
+    "residualValue": "Restwert-NPV"
+  },
+  "assetCategories": {
+    "machinery": "Maschinen",
+    "vehicles": "Fahrzeuge",
+    "it_equipment": "IT-Ausrüstung",
+    "real_estate": "Immobilien",
+    "energy_assets": "Energieanlagen",
+    "other": "Sonstiges"
+  },
+  "errors": {
+    "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
+    "atLeastOneAssetCategory": "Wählen Sie mindestens eine Vermögenskategorie aus.",
+    "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
+    "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
+    "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
+    "PRODUCT_TEMPLATE_CODE_CONFLICT": "Dieser Vorlagencode wird bereits innerhalb Ihres Mandanten verwendet.",
+    "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

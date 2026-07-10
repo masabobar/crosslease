@@ -6,6 +6,7 @@ import type enPendingApprovals from "./locales/en/pendingApprovals.json"
 import type enAudit from "./locales/en/audit.json"
 import type enTenants from "./locales/en/tenants.json"
 import type enPartners from "./locales/en/partners.json"
+import type enProductTemplates from "./locales/en/productTemplates.json"
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -19,6 +20,7 @@ declare module "i18next" {
       audit: typeof enAudit
       tenants: typeof enTenants
       partners: typeof enPartners
+      productTemplates: typeof enProductTemplates
     }
   }
 }

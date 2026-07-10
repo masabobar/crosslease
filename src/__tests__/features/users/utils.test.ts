@@ -385,14 +385,15 @@ describe("USER_ROLES — filter dropdown source of truth", () => {
     expect(USER_ROLES).toContain("leasing_company_user")
   })
 
-  it("contains all 6 expected roles", () => {
+  it("contains all 7 expected roles", () => {
     expect(USER_ROLES).toContain("system_admin")
     expect(USER_ROLES).toContain("support_user")
     expect(USER_ROLES).toContain("auditor")
+    expect(USER_ROLES).toContain("bank_power_user")
     expect(USER_ROLES).toContain("front_office")
     expect(USER_ROLES).toContain("back_office")
     expect(USER_ROLES).toContain("leasing_company_user")
-    expect(USER_ROLES.length).toBe(6)
+    expect(USER_ROLES.length).toBe(7)
   })
 })
 
