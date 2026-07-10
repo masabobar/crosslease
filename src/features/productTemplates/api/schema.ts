@@ -186,3 +186,56 @@ export const ProductTemplateWizardFormSchema = z
 export type ProductTemplateWizardForm = z.infer<
   typeof ProductTemplateWizardFormSchema
 >
+
+// Version history — matches VersionHistoryResponse / TemplateVersionSummary in
+// refinext-api interfaces/http/schemas/product_template.py. TemplateStatus mirrors
+// domain/enums.py TemplateStatus exactly (6 values, including the Four-Eyes awaiting states
+// which the FE badge must still render even though the Four-Eyes flow itself isn't built yet).
+export const TemplateStatusSchema = z.enum([
+  "draft",
+  "awaiting_activation_countersignature",
+  "awaiting_deprecation_countersignature",
+  "published",
+  "deprecated",
+  "discarded",
+])
+export type TemplateStatus = z.infer<typeof TemplateStatusSchema>
+
+export const UserRefSchema = z.object({
+  id: z.string().uuid(),
+  display_name: z.string(),
+})
+export type UserRef = z.infer<typeof UserRefSchema>
+
+export const TemplateVersionSummarySchema = z.object({
+  id: z.string().uuid(),
+  version_number: z.string(),
+  version_status: TemplateStatusSchema,
+  published_at: z.string().nullable().optional(),
+  deprecated_at: z.string().nullable().optional(),
+  published_by: UserRefSchema.nullable().optional(),
+  deprecated_by: UserRefSchema.nullable().optional(),
+  predecessor_version_id: z.string().uuid().nullable().optional(),
+  superseding_version_id: z.string().uuid().nullable().optional(),
+  bindings_count: z.number().int(),
+  created_at: z.string(),
+})
+export type TemplateVersionSummary = z.infer<
+  typeof TemplateVersionSummarySchema
+>
+
+export const VersionHistoryResponseSchema = z.object({
+  versions: z.array(TemplateVersionSummarySchema),
+})
+export type VersionHistoryResponse = z.infer<
+  typeof VersionHistoryResponseSchema
+>
+
+// Subset of VersionDetailResponse — only the fields this feature needs for the
+// Version History page header (template_name isn't on the list-summary response).
+export const TemplateVersionHeaderSchema = z.object({
+  version_number: z.string(),
+  version_status: TemplateStatusSchema,
+  template_name: z.string(),
+})
+export type TemplateVersionHeader = z.infer<typeof TemplateVersionHeaderSchema>

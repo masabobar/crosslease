@@ -5,7 +5,10 @@ import {
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
+  TemplateVersionHeaderSchema,
+  TemplateVersionSummarySchema,
   UpdateProductTemplateDraftRequestSchema,
+  VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 
 const validCreateRequest = {
@@ -238,5 +241,136 @@ describe("ProductTemplateWizardFormSchema", () => {
         valid_until: undefined,
       })
     ).not.toThrow()
+  })
+})
+
+const validVersionSummary = {
+  id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  version_number: "1.0",
+  version_status: "published",
+  bindings_count: 3,
+  created_at: "2026-05-22T14:30:00Z",
+}
+
+describe("TemplateVersionSummarySchema", () => {
+  it("accepts a minimal draft version", () => {
+    expect(() =>
+      TemplateVersionSummarySchema.parse({
+        ...validVersionSummary,
+        version_status: "draft",
+        bindings_count: 0,
+      })
+    ).not.toThrow()
+  })
+
+  it.each([
+    "draft",
+    "awaiting_activation_countersignature",
+    "awaiting_deprecation_countersignature",
+    "published",
+    "deprecated",
+    "discarded",
+  ])("accepts version_status %s", status => {
+    expect(() =>
+      TemplateVersionSummarySchema.parse({
+        ...validVersionSummary,
+        version_status: status,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts a published version with published_by", () => {
+    expect(() =>
+      TemplateVersionSummarySchema.parse({
+        ...validVersionSummary,
+        published_at: "2026-05-22T14:30:00Z",
+        published_by: {
+          id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+          display_name: "Anna Kowalski",
+        },
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts a deprecated version with published_by and deprecated_by", () => {
+    expect(() =>
+      TemplateVersionSummarySchema.parse({
+        ...validVersionSummary,
+        version_status: "deprecated",
+        published_by: {
+          id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+          display_name: "Anna Kowalski",
+        },
+        deprecated_by: {
+          id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+          display_name: "Bruce Wayne",
+        },
+        deprecated_at: "2026-07-14T11:23:00Z",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown version_status", () => {
+    expect(() =>
+      TemplateVersionSummarySchema.parse({
+        ...validVersionSummary,
+        version_status: "archived",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a missing version_number", () => {
+    const rest = { ...validVersionSummary } as Record<string, unknown>
+    delete rest.version_number
+    expect(() => TemplateVersionSummarySchema.parse(rest)).toThrow()
+  })
+
+  it("rejects a non-UUID id", () => {
+    expect(() =>
+      TemplateVersionSummarySchema.parse({ ...validVersionSummary, id: "bad" })
+    ).toThrow()
+  })
+})
+
+describe("VersionHistoryResponseSchema", () => {
+  it("accepts a list of versions", () => {
+    expect(() =>
+      VersionHistoryResponseSchema.parse({
+        versions: [validVersionSummary],
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty list", () => {
+    expect(() =>
+      VersionHistoryResponseSchema.parse({ versions: [] })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-array versions field", () => {
+    expect(() =>
+      VersionHistoryResponseSchema.parse({ versions: validVersionSummary })
+    ).toThrow()
+  })
+})
+
+describe("TemplateVersionHeaderSchema", () => {
+  it("accepts a valid header payload", () => {
+    expect(() =>
+      TemplateVersionHeaderSchema.parse({
+        version_number: "1.0",
+        version_status: "published",
+        template_name: "Full refinancing standard",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing template_name", () => {
+    expect(() =>
+      TemplateVersionHeaderSchema.parse({
+        version_number: "1.0",
+        version_status: "published",
+      })
+    ).toThrow()
   })
 })

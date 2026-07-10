@@ -122,6 +122,28 @@
     "energy_assets": "Energy assets",
     "other": "Other"
   },
+  "versionStatuses": {
+    "draft": "Draft",
+    "published": "Published",
+    "deprecated": "Deprecated",
+    "discarded": "Discarded",
+    "awaiting_activation_countersignature": "Awaiting activation",
+    "awaiting_deprecation_countersignature": "Awaiting deprecation"
+  },
+  "versionHistory": {
+    "title": "Version history",
+    "publishedBy": "Published by {{name}} · {{date}}",
+    "deprecatedBy": "Deprecated by {{name}} · {{date}}",
+    "bindingsCount": "{{count}} bindings",
+    "viewAuditTrail": "View audit trail",
+    "discard": "Discard",
+    "discardDialog": {
+      "title": "Discard this draft?",
+      "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
+      "keep": "Keep editing",
+      "confirm": "Discard draft"
+    }
+  },
   "errors": {
     "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
     "atLeastOneAssetCategory": "Select at least one asset category.",

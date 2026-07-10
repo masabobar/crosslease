@@ -19,7 +19,10 @@ import {
   PARTNER_VIEW_ALLOWED_ROLES,
   PARTNER_SUBMIT_ALLOWED_ROLES,
 } from "@/features/partners/types"
-import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
+import {
+  PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES,
+  PRODUCT_TEMPLATE_READ_ALLOWED_ROLES,
+} from "@/features/productTemplates/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -98,6 +101,9 @@ const DuplicatePairDetailPage = lazy(
 const CreateProductTemplateWizardPage = lazy(
   () =>
     import("@/features/productTemplates/components/CreateProductTemplateWizardPage")
+)
+const VersionHistoryPage = lazy(
+  () => import("@/features/productTemplates/components/VersionHistoryPage")
 )
 
 export const router = createBrowserRouter([
@@ -334,6 +340,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES}>
               <CreateProductTemplateWizardPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PRODUCT_TEMPLATE_VERSION_HISTORY,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PRODUCT_TEMPLATE_READ_ALLOWED_ROLES}>
+              <VersionHistoryPage />
             </RoleGuard>
           </Suspense>
         ),
