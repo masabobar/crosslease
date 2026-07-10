@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useState } from "react"
 import { format, parseISO } from "date-fns"
 import { CalendarIcon } from "lucide-react"
@@ -21,6 +22,7 @@ type DatePickerProps = {
   id?: string
   "data-testid"?: string
   className?: string
+  captionLayout?: React.ComponentProps<typeof Calendar>["captionLayout"]
 }
 
 function DatePicker({
@@ -34,6 +36,7 @@ function DatePicker({
   id,
   "data-testid": testId,
   className,
+  captionLayout = "label",
 }: DatePickerProps) {
   const [open, setOpen] = useState(false)
 
@@ -68,6 +71,7 @@ function DatePicker({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
+          captionLayout={captionLayout}
           selected={selected}
           onSelect={date => {
             if (date) {
