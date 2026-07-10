@@ -128,27 +128,32 @@ function MatchingReview({
                 <p className="text-sm font-medium text-foreground">
                   {t("submit.matchStep.matchedCandidates")}
                 </p>
-                {matchResult.candidate_summaries.map(c => (
-                  <div key={c.partner_id}>
-                    <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3 border-l-3 border-success">
-                      <p className="text-sm font-medium text-foreground">
-                        {c.display_name}
-                      </p>
+                <div className="rounded-xl bg-muted border-l-3 border-success px-4 py-3 flex flex-col gap-4">
+                  {matchResult.candidate_summaries.map(c => (
+                    <div
+                      key={c.partner_id}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {c.display_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("submit.matchStep.matchedAnchors")}:{" "}
+                          <span className="font-semibold">
+                            {c.matched_anchors.join(", ")}
+                          </span>
+                        </p>
+                      </div>
                       <Link
                         to={partnerDetail(c.partner_id)}
-                        className="text-sm font-medium text-primary"
+                        className="text-sm font-medium text-primary shrink-0"
                       >
                         {t("submit.matchStep.viewPartner")}
                       </Link>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t("submit.matchStep.matchedAnchors")}:{" "}
-                      <span className="font-semibold">
-                        {c.matched_anchors.join(", ")}
-                      </span>
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -164,34 +169,36 @@ function MatchingReview({
                   {t("submit.matchStep.ambiguousAlert")}
                 </p>
               </div>
-              <div className="rounded-xl border border-border p-4 flex flex-col gap-3">
+              <div className="rounded-xl border border-border p-4 flex flex-col gap-2">
                 <p className="text-sm font-medium text-foreground">
                   {t("submit.matchStep.matchedCandidates")}
                 </p>
-                {matchResult.candidate_summaries.map(c => (
-                  <div
-                    key={c.partner_id}
-                    className="flex items-center justify-between rounded-xl bg-muted px-4 py-3 border-l-3 border-warning"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {c.display_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("submit.matchStep.matchedAnchors")}:{" "}
-                        <span className="font-semibold">
-                          {c.matched_anchors.join(", ")}
-                        </span>
-                      </p>
-                    </div>
-                    <Link
-                      to={partnerDetail(c.partner_id)}
-                      className="text-sm font-medium text-primary"
+                <div className="rounded-xl bg-muted border-l-3 border-warning px-4 py-3 flex flex-col gap-4">
+                  {matchResult.candidate_summaries.map(c => (
+                    <div
+                      key={c.partner_id}
+                      className="flex items-center justify-between"
                     >
-                      {t("submit.matchStep.viewPartner")}
-                    </Link>
-                  </div>
-                ))}
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {c.display_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("submit.matchStep.matchedAnchors")}:{" "}
+                          <span className="font-semibold">
+                            {c.matched_anchors.join(", ")}
+                          </span>
+                        </p>
+                      </div>
+                      <Link
+                        to={partnerDetail(c.partner_id)}
+                        className="text-sm font-medium text-primary shrink-0"
+                      >
+                        {t("submit.matchStep.viewPartner")}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
