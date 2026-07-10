@@ -123,7 +123,8 @@
         "nationalId": "National ID",
         "street": "Registered address",
         "city": "City",
-        "postalCode": "Postal code"
+        "postalCode": "Postal code",
+        "stateRegion": "State / Region"
       }
     },
     "form": {

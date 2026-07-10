@@ -68,6 +68,7 @@ export const RegisteredAddressSchema = z.object({
   city: z.string().nullable(),
   postal_code: z.string().nullable(),
   country: z.string().nullable(),
+  state_region: z.string().nullable(),
 })
 export type RegisteredAddress = z.infer<typeof RegisteredAddressSchema>
 
