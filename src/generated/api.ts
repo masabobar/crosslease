@@ -780,6 +780,7 @@ const RegisteredAddress = z
     city: z.union([z.string(), z.null()]),
     postal_code: z.union([z.string(), z.null()]),
     country: z.union([z.string(), z.null()]),
+    state_region: z.union([z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -1074,6 +1075,15 @@ const MergeHistoryResponse = z
     items: z.array(MergeLineageRecordResponse),
   })
   .passthrough()
+const RegisteredAddressInput = z
+  .object({
+    street: z.string().min(1),
+    city: z.string().min(1),
+    postal_code: z.string().min(1),
+    country: z.string().min(1),
+    state_region: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const LegalEntityIdentityInput = z
   .object({
     partner_type: z.string(),
@@ -1083,7 +1093,7 @@ const LegalEntityIdentityInput = z
     tax_id_vat: z.union([z.string(), z.null()]).optional(),
     lei: z.union([z.string(), z.null()]).optional(),
     commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
     foreign_identifier: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
@@ -1096,7 +1106,7 @@ const NaturalPersonIdentityInput = z
     country: z.string().min(2).max(2),
     birth_name: z.union([z.string(), z.null()]).optional(),
     national_id: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
   })
   .passthrough()
 const SoleProprietorIdentityInput = z
@@ -1107,7 +1117,7 @@ const SoleProprietorIdentityInput = z
     country: z.string().min(2).max(2),
     tax_id_vat: z.union([z.string(), z.null()]).optional(),
     commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
   })
   .passthrough()
 const PartnerMatchRequest = z
@@ -1671,6 +1681,7 @@ export const schemas = {
   IdentityChangeDetailResponse,
   MergeLineageRecordResponse,
   MergeHistoryResponse,
+  RegisteredAddressInput,
   LegalEntityIdentityInput,
   NaturalPersonIdentityInput,
   SoleProprietorIdentityInput,
