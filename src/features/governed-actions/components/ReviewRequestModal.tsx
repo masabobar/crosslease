@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { DialogModal, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -199,6 +200,7 @@ export function ReviewRequestModal({
   >(null)
   const [errorCode, setErrorCode] = useState<string | null>(null)
   const [chainExpanded, setChainExpanded] = useState(true)
+  const [conflictAcknowledged, setConflictAcknowledged] = useState(false)
 
   const approveAction = useApproveAction()
   const rejectAction = useRejectAction()
@@ -209,6 +211,7 @@ export function ReviewRequestModal({
     setComment("")
     setCommentValidationError(null)
     setErrorCode(null)
+    setConflictAcknowledged(false)
     onOpenChange(false)
   }
 
@@ -223,8 +226,15 @@ export function ReviewRequestModal({
     }
     setCommentValidationError(null)
     setErrorCode(null)
+    const isMergeConflictGate = action.action_type === "partner_merge"
     approveAction.mutate(
-      { id: action.id, comment: trimmed || undefined },
+      {
+        id: action.id,
+        comment: trimmed || undefined,
+        extraParams: isMergeConflictGate
+          ? { conflict_acknowledged: true }
+          : undefined,
+      },
       {
         onSuccess: () => {
           handleClose()
@@ -273,6 +283,8 @@ export function ReviewRequestModal({
     ? `${initiator.first_name} ${initiator.last_name}`
     : "—"
   const affectedEntity = getAffectedEntity(action)
+  const isMergeConflictGate = action.action_type === "partner_merge"
+  const canApprove = !isMergeConflictGate || conflictAcknowledged
 
   return (
     <DialogModal open={open} onOpenChange={handleClose}>
@@ -317,6 +329,25 @@ export function ReviewRequestModal({
 
         {/* CHANGE */}
         <ChangeSection action={action} />
+
+        {isMergeConflictGate && (
+          <>
+            <Divider />
+            <div className="flex flex-col gap-3">
+              <SectionLabel>{t("modal.mergeConflictTitle")}</SectionLabel>
+              <Label className="flex items-start gap-2 cursor-pointer font-normal">
+                <Checkbox
+                  checked={conflictAcknowledged}
+                  onCheckedChange={c => setConflictAcknowledged(!!c)}
+                  data-testid="review-merge-conflict-checkbox"
+                />
+                <span className="text-sm text-foreground">
+                  {t("modal.mergeConflictAcknowledge")}
+                </span>
+              </Label>
+            </div>
+          </>
+        )}
 
         <Divider />
 
@@ -451,7 +482,7 @@ export function ReviewRequestModal({
         </Button>
         <Button
           onClick={handleApprove}
-          disabled={isPending}
+          disabled={isPending || !canApprove}
           data-testid="review-approve-btn"
         >
           {t("modal.approve")}

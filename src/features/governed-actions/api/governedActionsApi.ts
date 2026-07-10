@@ -40,10 +40,12 @@ export async function fetchGovernedAction(id: string): Promise<GovernedAction> {
 
 export async function approveGovernedAction(
   id: string,
-  comment?: string
+  comment?: string,
+  extraParams?: Record<string, unknown>
 ): Promise<GovernedAction> {
   const data = await api.post(`/governed-actions/${id}/approve`, {
     comment: comment ?? null,
+    extra_params: extraParams ?? null,
   })
   return GovernedActionSchema.parse(data)
 }

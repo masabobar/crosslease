@@ -205,12 +205,12 @@ describe("fetchGovernedAction", () => {
 })
 
 describe("approveGovernedAction", () => {
-  it("calls POST /governed-actions/:id/approve with null comment by default", async () => {
+  it("calls POST /governed-actions/:id/approve with null comment and extra_params by default", async () => {
     mockApi.post.mockResolvedValue(VALID_ACTION)
     await approveGovernedAction("action-123")
     expect(mockApi.post).toHaveBeenCalledWith(
       "/governed-actions/action-123/approve",
-      { comment: null }
+      { comment: null, extra_params: null }
     )
   })
 
@@ -219,7 +219,18 @@ describe("approveGovernedAction", () => {
     await approveGovernedAction("action-123", "Looks good")
     expect(mockApi.post).toHaveBeenCalledWith(
       "/governed-actions/action-123/approve",
-      { comment: "Looks good" }
+      { comment: "Looks good", extra_params: null }
+    )
+  })
+
+  it("calls POST with provided extra_params", async () => {
+    mockApi.post.mockResolvedValue(VALID_ACTION)
+    await approveGovernedAction("action-123", undefined, {
+      conflict_acknowledged: true,
+    })
+    expect(mockApi.post).toHaveBeenCalledWith(
+      "/governed-actions/action-123/approve",
+      { comment: null, extra_params: { conflict_acknowledged: true } }
     )
   })
 
