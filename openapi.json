@@ -766,7 +766,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Invite a new user",
-        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.",
+        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.\n- `leasing_company_user` — `lc_partner_id` required; must be a confirmed partner within the same tenant.\n  All other roles must omit `lc_partner_id` (or send `null`).",
         "operationId": "invite_user_api_v1_users_post",
         "requestBody": {
           "required": true,
@@ -6531,6 +6531,14 @@
             ],
             "title": "Access Valid Until",
             "description": "Auditor only — end of access window"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id",
+            "description": "Required for leasing_company_user; must be null for all other roles"
           }
         },
         "type": "object",
@@ -6619,7 +6627,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           },
@@ -7017,7 +7025,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           }
@@ -7420,10 +7428,15 @@
               }
             }
           },
-          "role": { "$ref": "#/components/schemas/PartnerRole" }
+          "roles": {
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Roles"
+          }
         },
         "type": "object",
-        "required": ["identity", "role"],
+        "required": ["identity", "roles"],
         "title": "PartnerSubmitRequest"
       },
       "PartnerSubmitResponse": {
@@ -7432,7 +7445,11 @@
           "display_name": { "type": "string", "title": "Display Name" },
           "partner_type": { "$ref": "#/components/schemas/PartnerType" },
           "status": { "type": "string", "title": "Status" },
-          "role": { "$ref": "#/components/schemas/PartnerRole" },
+          "roles": {
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
+            "type": "array",
+            "title": "Roles"
+          },
           "is_new": { "type": "boolean", "title": "Is New" },
           "governed_action_id": {
             "anyOf": [
@@ -7460,7 +7477,7 @@
           "display_name",
           "partner_type",
           "status",
-          "role",
+          "roles",
           "is_new"
         ],
         "title": "PartnerSubmitResponse"
@@ -7645,10 +7662,35 @@
           "country": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Country"
+          },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
           }
         },
         "type": "object",
-        "title": "RegisteredAddress"
+        "title": "RegisteredAddress",
+        "description": "Address as returned in responses. Lenient — legacy rows may be incomplete."
+      },
+      "RegisteredAddressInput": {
+        "properties": {
+          "street": { "type": "string", "minLength": 1, "title": "Street" },
+          "city": { "type": "string", "minLength": 1, "title": "City" },
+          "postal_code": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Postal Code"
+          },
+          "country": { "type": "string", "minLength": 1, "title": "Country" },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
+          }
+        },
+        "type": "object",
+        "required": ["street", "city", "postal_code", "country"],
+        "title": "RegisteredAddressInput",
+        "description": "Address as submitted by a client. All fields mandatory except state_region."
       },
       "ResendInvitationRequest": {
         "properties": {
@@ -8184,7 +8226,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           }
@@ -9215,6 +9257,13 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Tenant Name"
           },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
+          },
           "phone_number": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Phone Number"
@@ -9402,6 +9451,13 @@
           "profile_picture_url": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Profile Picture Url"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
           },
           "access_valid_until": {
             "anyOf": [
