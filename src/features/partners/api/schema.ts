@@ -428,3 +428,120 @@ export const IdentityChangeDetailResponseSchema = z.object({
 export type IdentityChangeDetailResponse = z.infer<
   typeof IdentityChangeDetailResponseSchema
 >
+
+// ── Duplicate candidates & merge ─────────────────────────────────────────────
+
+export const DuplicateConfidenceSchema = z.enum([
+  "definite",
+  "probable",
+  "possible",
+])
+export type DuplicateConfidence = z.infer<typeof DuplicateConfidenceSchema>
+
+export const DuplicateCandidatePairStatusSchema = z.enum([
+  "pending",
+  "confirmed_duplicate",
+  "confirmed_distinct",
+  "deferred",
+  "merge_in_progress",
+  "merged",
+])
+export type DuplicateCandidatePairStatus = z.infer<
+  typeof DuplicateCandidatePairStatusSchema
+>
+
+export const DuplicateResolutionReasonCodeSchema = z.enum([
+  "identical_registry_identifiers",
+  "same_legal_entity_different_name",
+  "data_entry_error",
+  "system_import_error",
+  "legal_restructuring",
+  "confirmed_different_entities",
+  "subsidiary_not_duplicate",
+  "insufficient_evidence",
+])
+export type DuplicateResolutionReasonCode = z.infer<
+  typeof DuplicateResolutionReasonCodeSchema
+>
+
+export const MergeReasonCodeSchema = z.enum([
+  "same_legal_entity_different_name",
+  "identical_registry_identifiers",
+  "data_entry_error",
+  "system_import_error",
+  "legal_restructuring",
+])
+export type MergeReasonCode = z.infer<typeof MergeReasonCodeSchema>
+
+export const MatchingEvidenceItemSchema = z.object({
+  anchor: z.string(),
+  a_value: z.unknown(),
+  b_value: z.unknown(),
+  match: z.boolean(),
+})
+export type MatchingEvidenceItem = z.infer<typeof MatchingEvidenceItemSchema>
+
+export const DuplicateCandidatePairResponseSchema = z.object({
+  pair_id: z.string().uuid(),
+  tenant_id: z.string().uuid(),
+  partner_a_id: z.string().uuid(),
+  partner_b_id: z.string().uuid(),
+  confidence: DuplicateConfidenceSchema,
+  matching_evidence: z.array(MatchingEvidenceItemSchema),
+  status: DuplicateCandidatePairStatusSchema,
+  detected_at: z.string().datetime(),
+  resolved_by: z.string().nullable(),
+  resolved_at: z.string().datetime().nullable(),
+  reason_code: z.string().nullable(),
+  resolution_note: z.string().nullable(),
+})
+export type DuplicateCandidatePairResponse = z.infer<
+  typeof DuplicateCandidatePairResponseSchema
+>
+
+export const DuplicatePairListResponseSchema = z.object({
+  items: z.array(DuplicateCandidatePairResponseSchema),
+  total: z.number().int(),
+})
+export type DuplicatePairListResponse = z.infer<
+  typeof DuplicatePairListResponseSchema
+>
+
+export const ResolveDuplicatePairResponseSchema = z.object({
+  pair_id: z.string().uuid(),
+  status: DuplicateCandidatePairStatusSchema,
+})
+export type ResolveDuplicatePairResponse = z.infer<
+  typeof ResolveDuplicatePairResponseSchema
+>
+
+export const MergeInitiateResponseSchema = z.object({
+  governed_action_id: z.string().uuid(),
+  source_partner_id: z.string().uuid(),
+  target_partner_id: z.string().uuid(),
+  pair_id: z.string().uuid(),
+  status: z.string(),
+})
+export type MergeInitiateResponse = z.infer<typeof MergeInitiateResponseSchema>
+
+// ── Merge history ─────────────────────────────────────────────────────────────
+
+export const MergeLineageRecordResponseSchema = z.object({
+  record_id: z.string().uuid(),
+  source_partner_id: z.string().uuid(),
+  target_partner_id: z.string().uuid(),
+  governed_action_id: z.string().uuid(),
+  executed_by: z.string().uuid(),
+  executed_at: z.string().datetime(),
+  merge_reason_code: z.string(),
+  reference_manifest: z.record(z.string(), z.unknown()),
+})
+export type MergeLineageRecordResponse = z.infer<
+  typeof MergeLineageRecordResponseSchema
+>
+
+export const MergeHistoryResponseSchema = z.object({
+  partner_id: z.string(),
+  items: z.array(MergeLineageRecordResponseSchema),
+})
+export type MergeHistoryResponse = z.infer<typeof MergeHistoryResponseSchema>

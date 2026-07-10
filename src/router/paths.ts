@@ -26,6 +26,8 @@ export const PATHS = {
   PARTNER_REGISTRY: "/partners",
   PARTNER_SUBMIT: "/partners/new",
   PARTNER_DETAIL: "/partners/:id",
+  PARTNER_DUPLICATES: "/partners/duplicates",
+  PARTNER_DUPLICATE_DETAIL: "/partners/duplicates/:pairId",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -42,4 +44,8 @@ export function auditTrailDetail(eventId: string): string {
 
 export function partnerDetail(id: string): string {
   return PATHS.PARTNER_DETAIL.replace(":id", id)
+}
+
+export function partnerDuplicateDetail(pairId: string): string {
+  return PATHS.PARTNER_DUPLICATE_DETAIL.replace(":pairId", pairId)
 }

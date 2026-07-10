@@ -16,18 +16,12 @@ import { formatDateTime } from "@/lib/formatters"
 import { ApiError } from "@/lib/api"
 import type { PartnerStatus, RoleStatus } from "@/features/partners/api/schema"
 import { AssignRoleDialog } from "@/features/partners/components/AssignRoleDialog"
+import { initialsFromName } from "@/features/partners/utils"
 
 const COL_ROLE = "flex-1 min-w-[160px]"
 const COL_STATUS = "w-[140px] shrink-0"
 const COL_ASSIGNED_BY = "flex-1 min-w-[220px]"
 const COL_ASSIGNED_ON = "w-[160px] shrink-0"
-
-function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/)
-  return `${parts[0]?.charAt(0) ?? ""}${
-    parts[parts.length - 1]?.charAt(0) ?? ""
-  }`.toUpperCase()
-}
 
 function RoleStatusCell({ status }: { status: RoleStatus }) {
   const { t } = useTranslation("partners")

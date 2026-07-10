@@ -61,7 +61,11 @@ export function Sidebar() {
     location.pathname.startsWith(PATHS.AUDIT_TRAIL + "/")
   const isPartnerRegistryActive =
     location.pathname === PATHS.PARTNER_REGISTRY ||
-    location.pathname.startsWith(PATHS.PARTNER_REGISTRY + "/")
+    (location.pathname.startsWith(PATHS.PARTNER_REGISTRY + "/") &&
+      !location.pathname.startsWith(PATHS.PARTNER_DUPLICATES))
+  const isPartnerDuplicatesActive = location.pathname.startsWith(
+    PATHS.PARTNER_DUPLICATES
+  )
 
   return (
     <aside
@@ -385,6 +389,23 @@ export function Sidebar() {
                     >
                       {t("nav.partnerManagement")}
                       {isPartnerRegistryActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
+                  {canAccessPartnerRegistry && (
+                    <Link
+                      to={PATHS.PARTNER_DUPLICATES}
+                      data-testid="nav-partner-duplicates"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap pl-3",
+                        isPartnerDuplicatesActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.partnerDuplicates")}
+                      {isPartnerDuplicatesActive && (
                         <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
                       )}
                     </Link>

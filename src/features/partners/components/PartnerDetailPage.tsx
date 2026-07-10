@@ -16,6 +16,8 @@ import { RolesTab } from "@/features/partners/components/tabs/RolesTab"
 import { UboTab } from "@/features/partners/components/tabs/UboTab"
 import { IdentityChangesTab } from "@/features/partners/components/tabs/IdentityChangesTab"
 import { ConfirmationHistoryTab } from "@/features/partners/components/tabs/ConfirmationHistoryTab"
+import { MergeHistoryTab } from "@/features/partners/components/tabs/MergeHistoryTab"
+import { DecisionHistoryTab } from "@/features/partners/components/tabs/DecisionHistoryTab"
 import { ArchivePartnerDialog } from "@/features/partners/components/ArchivePartnerDialog"
 import { ProposeIdentityChangeDialog } from "@/features/partners/components/ProposeIdentityChangeDialog"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
@@ -24,9 +26,16 @@ import {
   fetchPartnerRoles,
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
-import { PartnerStatusSchema } from "@/features/partners/api/schema"
+import {
+  PartnerStatusSchema,
+  PartnerTypeSchema,
+} from "@/features/partners/api/schema"
 import { PARTNER_SUBMIT_ALLOWED_ROLES } from "@/features/partners/types"
-import { FRONT_OFFICE_ROLE } from "@/features/users/types"
+import {
+  AUDITOR_ROLE,
+  FRONT_OFFICE_ROLE,
+  SYSTEM_ADMIN_ROLE,
+} from "@/features/users/types"
 
 type TabKey =
   | "overview"
@@ -35,6 +44,8 @@ type TabKey =
   | "ubo"
   | "identity-changes"
   | "confirmation-history"
+  | "merge-history"
+  | "decision-history"
 
 export default function PartnerDetailPage() {
   const { t } = useTranslation("partners")
@@ -61,9 +72,16 @@ export default function PartnerDetailPage() {
   const canProposeIdentityChange =
     currentUser?.role === FRONT_OFFICE_ROLE &&
     partner?.status === PartnerStatusSchema.enum.confirmed
+  const canCaptureUbo =
+    currentUser?.role === FRONT_OFFICE_ROLE &&
+    partner?.status === PartnerStatusSchema.enum.confirmed &&
+    partner?.partner_type === PartnerTypeSchema.enum.legal_entity
 
   const showResolutionTab =
     partner?.status === PartnerStatusSchema.enum.pending_confirmation
+  const showAuditReconstructTabs =
+    currentUser?.role === AUDITOR_ROLE ||
+    currentUser?.role === SYSTEM_ADMIN_ROLE
 
   if (isLoading) {
     return (
@@ -160,6 +178,7 @@ export default function PartnerDetailPage() {
       {/* Tabs */}
       <div className="bg-muted border border-border rounded-[10px] flex flex-col">
         <UnderlineTabBar
+          tabClassName="pb-1"
           tabs={[
             {
               key: "overview" as const,
@@ -195,6 +214,20 @@ export default function PartnerDetailPage() {
               label: t("detail.tabs.identityChanges"),
               testId: "tab-identity-changes",
             },
+            ...(showAuditReconstructTabs
+              ? [
+                  {
+                    key: "merge-history" as const,
+                    label: t("detail.tabs.mergeHistory"),
+                    testId: "tab-merge-history",
+                  },
+                  {
+                    key: "decision-history" as const,
+                    label: t("detail.tabs.decisionHistory"),
+                    testId: "tab-decision-history",
+                  },
+                ]
+              : []),
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -218,13 +251,23 @@ export default function PartnerDetailPage() {
             <UboTab
               partnerId={partner.partner_id}
               partnerType={partner.partner_type}
+              canCaptureUbo={canCaptureUbo}
             />
           )}
           {activeTab === "identity-changes" && (
-            <IdentityChangesTab partnerId={partner.partner_id} />
+            <IdentityChangesTab
+              partnerId={partner.partner_id}
+              partnerType={partner.partner_type}
+            />
           )}
           {activeTab === "confirmation-history" && (
             <ConfirmationHistoryTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "merge-history" && showAuditReconstructTabs && (
+            <MergeHistoryTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "decision-history" && showAuditReconstructTabs && (
+            <DecisionHistoryTab partnerId={partner.partner_id} />
           )}
         </div>
       </div>
