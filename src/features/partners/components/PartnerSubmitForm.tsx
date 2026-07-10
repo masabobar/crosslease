@@ -328,33 +328,26 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 )}
               </div>
             ) : (
-              partnerType === "sole_proprietor" && dateOfBirthField
+              dateOfBirthField
             )}
-            {isLegalEntity || partnerType === "sole_proprietor" ? (
-              entityTypeField
-            ) : (
-              <div className="col-span-2">{entityTypeField}</div>
-            )}
+            {entityTypeField}
           </div>
 
           {partnerType === "natural_person" && (
-            <div className="grid grid-cols-2 gap-4">
-              {dateOfBirthField}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="place_of_birth">
-                  {t("submit.identityStep.fields.placeOfBirth")}
-                </Label>
-                <Input
-                  id="place_of_birth"
-                  data-testid="field-place_of_birth"
-                  {...register("place_of_birth" as keyof IdentityForm)}
-                />
-                {"place_of_birth" in errors && errors.place_of_birth && (
-                  <p className="text-xs text-destructive">
-                    {errors.place_of_birth.message}
-                  </p>
-                )}
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="place_of_birth">
+                {t("submit.identityStep.fields.placeOfBirth")}
+              </Label>
+              <Input
+                id="place_of_birth"
+                data-testid="field-place_of_birth"
+                {...register("place_of_birth" as keyof IdentityForm)}
+              />
+              {"place_of_birth" in errors && errors.place_of_birth && (
+                <p className="text-xs text-destructive">
+                  {errors.place_of_birth.message}
+                </p>
+              )}
             </div>
           )}
         </CardContent>
