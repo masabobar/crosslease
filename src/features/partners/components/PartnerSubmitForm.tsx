@@ -159,8 +159,8 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
   function handleTypeChange(type: PartnerType) {
     setPartnerType(type)
     reset({
+      ...getValues(),
       partner_type: type,
-      roles: getValues("roles" as keyof IdentityForm),
     } as IdentityForm)
   }
 
