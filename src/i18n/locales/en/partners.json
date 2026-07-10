@@ -48,6 +48,13 @@
     "committed": "Committed",
     "rejected": "Rejected"
   },
+  "mergeReasonCode": {
+    "same_legal_entity_different_name": "Same legal entity, different name",
+    "identical_registry_identifiers": "Identical registry identifiers",
+    "data_entry_error": "Data entry error",
+    "system_import_error": "System import error",
+    "legal_restructuring": "Legal restructuring"
+  },
   "tenantQuickSelect": {
     "placeholder": "Select a tenant…"
   },
@@ -195,7 +202,9 @@
       "roles": "Roles",
       "ubo": "UBO ownership",
       "identityChanges": "Identity changes",
-      "confirmationHistory": "Confirmation history"
+      "confirmationHistory": "Confirmation history",
+      "mergeHistory": "Merge history",
+      "decisionHistory": "Decision history"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -250,39 +259,70 @@
       "pendingApprovalNote": "Awaiting back-office counter-confirmation."
     },
     "ubo": {
-      "title": "UBO Ownership",
-      "captureButton": "Capture UBO",
+      "title": "Beneficial ownership",
+      "subtitle": "Direct UBO ownership records. Recursive ownership traversal is not computed automatically.",
+      "captureButton": "Add UBO",
       "empty": "No UBO records captured yet.",
+      "helperText": "Indirect ownership may be captured as structured notes. Automated completeness is based on direct ownership records only.",
       "fields": {
         "uboPartner": "UBO partner",
-        "ownershipPercentage": "Ownership %",
-        "ownershipType": "Type",
+        "ownershipPercentage": "Ownership",
+        "ownershipType": "Ownership type",
         "capturedBy": "Captured by",
-        "capturedAt": "Captured"
+        "capturedAt": "Captured on"
       }
     },
     "identityChanges": {
-      "title": "Identity Changes",
+      "title": "Identity changes",
+      "subtitle": "Governed append-only record of all identity anchor changes.",
       "proposeButton": "Propose change",
       "empty": "No identity changes recorded.",
       "fields": {
+        "changedField": "Changed field",
+        "status": "Status",
+        "previousValue": "Previous value",
+        "newValue": "New value",
         "proposedBy": "Proposed by",
-        "proposedAt": "Proposed",
+        "counterConfirmedBy": "Counter-confirmed by",
+        "proposedAt": "Timestamp",
         "resolvedAt": "Resolved",
         "changeReason": "Reason",
-        "highRisk": "High-risk change",
-        "targetAnchors": "Changed fields"
+        "highRisk": "High-risk change"
       }
     },
     "confirmationHistory": {
-      "title": "Confirmation History",
+      "title": "Confirmation history",
+      "subtitle": "Append-only record of all confirmation events on this partner.",
       "empty": "No confirmation events recorded.",
+      "loadMore": "Load more",
+      "loadingMore": "Loading…",
       "fields": {
-        "status": "Decision",
-        "capturedBy": "By",
-        "capturedOn": "Date",
+        "status": "Status",
+        "capturedBy": "Captured by",
+        "capturedOn": "Captured on",
         "note": "Note"
       }
+    },
+    "mergeHistory": {
+      "title": "Merge history",
+      "subtitle": "Governed append-only record of all merge events for this partner.",
+      "empty": "No merge events recorded.",
+      "referenceManifestUnavailable": "Reference re-pointing details are not yet available.",
+      "fields": {
+        "mergeId": "Merge ID",
+        "mergedSource": "Merged source",
+        "survivingPartner": "Surviving partner",
+        "reasonCode": "Merge reason code",
+        "counterConfirmedBy": "Counter-confirmed by"
+      }
+    },
+    "decisionHistory": {
+      "title": "Decision history",
+      "subtitle": "Full append-only record of all creation, confirmation, role, identity, merge, and archival decisions for this partner.",
+      "empty": "No decision history recorded.",
+      "systemActor": "System",
+      "loadMore": "Load more",
+      "loadingMore": "Loading…"
     }
   },
   "archiveDialog": {
@@ -322,6 +362,23 @@
     "successCommitted": "Identity change committed.",
     "successPendingApproval": "Identity change submitted for back-office review."
   },
+  "captureUboDialog": {
+    "title": "Add UBO",
+    "fields": {
+      "uboPartnerPlaceholder": "Search confirmed natural persons…",
+      "uboPartnerNoResults": "No matching partners found.",
+      "indirectOwnershipNotes": "Indirect ownership notes (optional)",
+      "indirectOwnershipNotesPlaceholder": "Describe any indirect ownership structure relevant to this UBO…"
+    },
+    "errors": {
+      "uboPartnerRequired": "Select a UBO partner.",
+      "percentageInvalid": "Enter a percentage between 0 and 100."
+    },
+    "cancel": "Cancel",
+    "submit": "Add UBO",
+    "submitting": "Adding…",
+    "success": "UBO ownership recorded."
+  },
   "assignRoleDialog": {
     "title": "Assign role",
     "fields": {
@@ -334,6 +391,146 @@
     "submitting": "Assigning…",
     "success": "Role assigned successfully."
   },
+  "duplicates": {
+    "list": {
+      "title": "Duplication & merge queue",
+      "subtitle": "Review duplicate candidate pairs and manage merge decisions for partner records.",
+      "filters": {
+        "searchPlaceholder": "Search",
+        "status": "Status",
+        "confidence": "Confidence",
+        "clearAll": "Clear all"
+      },
+      "filterPills": {
+        "search": "Search: {{value}}",
+        "status": "Status: {{value}}",
+        "confidence": "Confidence: {{value}}"
+      },
+      "table": {
+        "columns": {
+          "partnerA": "Partner A",
+          "partnerB": "Partner B",
+          "confidence": "Confidence",
+          "detectedOn": "Detected on",
+          "status": "Status"
+        },
+        "actions": {
+          "resolve": "Resolve",
+          "initiateMerge": "Initiate merge",
+          "reviewMerge": "Review merge"
+        }
+      },
+      "emptyState": {
+        "title": "No duplicate candidates",
+        "description": "No duplicate candidate pairs have been detected yet."
+      },
+      "emptyFiltered": {
+        "title": "No pairs match your filters",
+        "description": "Try adjusting your search or removing some filters."
+      }
+    },
+    "confidence": {
+      "definite": "Definite",
+      "probable": "Probable",
+      "possible": "Possible"
+    },
+    "pairStatus": {
+      "pending": "Pending resolution",
+      "confirmed_duplicate": "Confirmed duplicate",
+      "confirmed_distinct": "Confirmed distinct",
+      "deferred": "Deferred",
+      "merge_in_progress": "Merge in progress",
+      "merged": "Merged"
+    },
+    "resolutionReasonCode": {
+      "identical_registry_identifiers": "Identical registry identifiers",
+      "same_legal_entity_different_name": "Same legal entity, different name",
+      "data_entry_error": "Data entry error",
+      "system_import_error": "System import error",
+      "legal_restructuring": "Legal restructuring",
+      "confirmed_different_entities": "Confirmed different entities",
+      "subsidiary_not_duplicate": "Subsidiary, not a duplicate",
+      "insufficient_evidence": "Insufficient evidence"
+    },
+    "resolveDialog": {
+      "title": "Resolution",
+      "subtitle": "Record a governed decision for this candidate pair. Your decision and reason code are written to the audit trail.",
+      "fields": {
+        "decision": "Decision",
+        "decisionPlaceholder": "Select a decision…",
+        "reasonCode": "Reason code",
+        "reasonCodePlaceholder": "Select a reason…",
+        "note": "Note (optional)"
+      },
+      "errors": {
+        "decisionRequired": "Select a decision.",
+        "reasonCodeRequired": "Select a reason code."
+      },
+      "cancel": "Cancel",
+      "submit": "Resolve",
+      "submitting": "Resolving…",
+      "success": {
+        "confirmedDuplicate": "This pair has been resolved as a confirmed duplicate. It has been routed to the merge queue. A Front Office user will initiate the merge.",
+        "confirmedDistinct": "This pair has been resolved as confirmed distinct. These partners are different entities. The pair has been suppressed and will not reappear unless their identity anchors change.",
+        "deferred": "This pair remains in the queue for later review."
+      }
+    },
+    "initiateMergeDialog": {
+      "title": "Initiate merge",
+      "subtitle": "Review before submitting for counter-confirmation.",
+      "summary": {
+        "survivor": "Surviving partner",
+        "mergedSource": "Merged source"
+      },
+      "fields": {
+        "reasonCode": "Merge reason code",
+        "reasonCodePlaceholder": "Select a reason…",
+        "reasonCodeHelper": "Recorded against the merge event in the audit trail.",
+        "note": "Note (optional)"
+      },
+      "errors": {
+        "reasonCodeRequired": "Select a merge reason code."
+      },
+      "cancel": "Cancel",
+      "submit": "Submit for counter-confirmation",
+      "submitting": "Submitting…",
+      "success": "Merge submitted. Back Office will review and counter-confirm before the merge takes effect."
+    },
+    "detail": {
+      "notFound": "Duplicate candidate pair not found.",
+      "partnerA": "Partner A",
+      "partnerB": "Partner B",
+      "viewPartner": "View partner",
+      "resolveButton": "Resolve",
+      "initiateMergeButton": "Initiate merge",
+      "reviewMergeButton": "Review merge",
+      "fields": {
+        "confidence": "Confidence",
+        "detectedOn": "Detected on",
+        "id": "ID",
+        "status": "Status"
+      },
+      "confirmedDuplicate": {
+        "title": "Confirmed duplicate",
+        "subtitle": "Select the surviving partner before submitting for counter-confirmation.",
+        "identity": "Identity",
+        "selectSurvivorPrompt": "Select a surviving partner to review its identity details."
+      },
+      "resolutionSummary": {
+        "title": "Resolution"
+      },
+      "matchingEvidence": {
+        "title": "Matching evidence",
+        "subtitle": "Identity anchors compared across both partner records.",
+        "columns": {
+          "anchor": "Anchor",
+          "partnerA": "Partner A values",
+          "partnerB": "Partner B values",
+          "match": "Match"
+        }
+      }
+    }
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "NOT_FOUND": "Partner not found.",
@@ -342,6 +539,19 @@
     "BUSINESS_ROLE_ALREADY_ACTIVE": "This role is already active for this partner.",
     "BUSINESS_RISK_SENSITIVE_ROLE_REQUIRES_SUBMIT": "Risk-sensitive roles can only be assigned at submission time.",
     "BUSINESS_PARTNER_NOT_ARCHIVABLE": "This partner cannot be archived because it has active references.",
-    "PARTNER_NOT_REFERENCEABLE": "This action isn't available until the partner is confirmed."
+    "PARTNER_NOT_REFERENCEABLE": "This action isn't available until the partner is confirmed.",
+    "PARTNER_NOT_LEGAL_ENTITY": "UBO ownership can only be captured for legal entity partners.",
+    "PARTNER_UBO_TARGET_NOT_NATURAL_PERSON": "The selected UBO partner must be a natural person.",
+    "PARTNER_UBO_TARGET_NOT_CONFIRMED": "The selected UBO partner must be confirmed.",
+    "PARTNER_UBO_SELF_REFERENCE": "A partner cannot be its own UBO.",
+    "PARTNER_UBO_OWNERSHIP_EXCEEDS_MAX": "Total UBO ownership cannot exceed 100%.",
+    "PARTNER_NOT_CONFIRMED": "Identity changes can only be proposed for confirmed partners.",
+    "IDENTITY_CHANGE_FIELD_MISMATCH": "The proposed values don't match the selected fields. Please review your selection.",
+    "DUPLICATE_PENDING_ACTION": "A pending request of this type already exists for this partner.",
+    "DUPLICATE_CANDIDATE_PAIR_NOT_FOUND": "This duplicate candidate pair no longer exists.",
+    "DUPLICATE_PAIR_ALREADY_RESOLVED": "This pair has already been resolved by another reviewer.",
+    "PARTNER_NOT_MERGEABLE": "One of the selected partners cannot be merged in its current state.",
+    "PAIR_NOT_FLAGGED_FOR_MERGE": "This pair must be confirmed as a duplicate before a merge can be initiated.",
+    "MERGE_PARTNER_NOT_IN_PAIR": "The selected surviving partner must be one of the two partners in this pair."
   }
 }

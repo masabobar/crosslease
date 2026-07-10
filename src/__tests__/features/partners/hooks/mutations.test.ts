@@ -7,15 +7,27 @@ vi.mock("@tanstack/react-query", () => ({
     ({
       mutationFn,
       onSuccess,
+      onSettled,
     }: {
       mutationFn: (vars: unknown) => Promise<unknown>
-      onSuccess: () => void
+      onSuccess?: () => void
+      onSettled?: () => void
     }) => ({
-      mutate: (vars: unknown, callbacks?: { onSuccess?: () => void }) =>
-        mutationFn(vars).then(() => {
-          onSuccess()
-          callbacks?.onSuccess?.()
-        }),
+      mutate: (
+        vars: unknown,
+        callbacks?: { onSuccess?: () => void; onError?: (err: unknown) => void }
+      ) =>
+        mutationFn(vars).then(
+          () => {
+            onSuccess?.()
+            callbacks?.onSuccess?.()
+            onSettled?.()
+          },
+          (err: unknown) => {
+            callbacks?.onError?.(err)
+            onSettled?.()
+          }
+        ),
       isPending: false,
     })
   ),
@@ -28,6 +40,9 @@ vi.mock("@/features/partners/api/partnersApi", () => ({
   archivePartner: vi.fn(),
   assignPartnerRoles: vi.fn(),
   proposeIdentityChange: vi.fn(),
+  captureUboOwnership: vi.fn(),
+  resolveDuplicatePair: vi.fn(),
+  initiateMerge: vi.fn(),
   PARTNERS_QUERY_KEYS: {
     list: (params?: unknown) => ["partners", "list", params],
     detail: (id: string) => ["partners", "detail", id],
@@ -52,6 +67,11 @@ vi.mock("@/features/partners/api/partnersApi", () => ({
       id,
       changeId,
     ],
+    duplicatePairs: (tenantId: string | null) => [
+      "partners",
+      "duplicate-pairs",
+      tenantId,
+    ],
   },
 }))
 
@@ -59,13 +79,21 @@ import {
   archivePartner,
   assignPartnerRoles,
   proposeIdentityChange,
+  captureUboOwnership,
+  resolveDuplicatePair,
+  initiateMerge,
 } from "@/features/partners/api/partnersApi"
 
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
 import { useAssignPartnerRoles } from "@/features/partners/hooks/useAssignPartnerRoles"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
+import { useCaptureUboOwnership } from "@/features/partners/hooks/useCaptureUboOwnership"
+import { useResolveDuplicatePair } from "@/features/partners/hooks/useResolveDuplicatePair"
+import { useInitiateMerge } from "@/features/partners/hooks/useInitiateMerge"
 
 const PARTNER_ID = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"
+const TENANT_ID = "f6a7b8c9-d0e1-4f2a-8b3c-4d5e6f708192"
+const PAIR_ID = "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8091"
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -144,6 +172,134 @@ describe("useProposeIdentityChange", () => {
     })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["partners", "detail", PARTNER_ID],
+    })
+  })
+})
+
+describe("useCaptureUboOwnership", () => {
+  it("calls captureUboOwnership with the correct arguments", async () => {
+    vi.mocked(captureUboOwnership).mockResolvedValue({} as never)
+    const mutation = useCaptureUboOwnership(PARTNER_ID)
+    await mutation.mutate({
+      ubo_partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      ownership_percentage: 38,
+      ownership_type: "direct",
+    })
+    expect(captureUboOwnership).toHaveBeenCalledWith(PARTNER_ID, {
+      ubo_partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      ownership_percentage: 38,
+      ownership_type: "direct",
+    })
+  })
+
+  it("invalidates ubo and detail queries on success", async () => {
+    vi.mocked(captureUboOwnership).mockResolvedValue({} as never)
+    const mutation = useCaptureUboOwnership(PARTNER_ID)
+    await mutation.mutate({
+      ubo_partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      ownership_percentage: 38,
+      ownership_type: "direct",
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "ubo", PARTNER_ID],
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "detail", PARTNER_ID],
+    })
+  })
+})
+
+describe("useResolveDuplicatePair", () => {
+  it("calls resolveDuplicatePair with the correct arguments", async () => {
+    vi.mocked(resolveDuplicatePair).mockResolvedValue({} as never)
+    const mutation = useResolveDuplicatePair(TENANT_ID)
+    await mutation.mutate({
+      pairId: PAIR_ID,
+      body: {
+        decision: "confirmed_duplicate",
+        reason_code: "identical_registry_identifiers",
+        note: null,
+      },
+    })
+    expect(resolveDuplicatePair).toHaveBeenCalledWith(PAIR_ID, {
+      decision: "confirmed_duplicate",
+      reason_code: "identical_registry_identifiers",
+      note: null,
+    })
+  })
+
+  it("invalidates the duplicate pairs query on success", async () => {
+    vi.mocked(resolveDuplicatePair).mockResolvedValue({} as never)
+    const mutation = useResolveDuplicatePair(TENANT_ID)
+    await mutation.mutate({
+      pairId: PAIR_ID,
+      body: {
+        decision: "deferred",
+        reason_code: "insufficient_evidence",
+      },
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "duplicate-pairs", TENANT_ID],
+    })
+  })
+
+  it("invalidates the duplicate pairs query on error too (e.g. DUPLICATE_PAIR_ALREADY_RESOLVED race)", async () => {
+    vi.mocked(resolveDuplicatePair).mockRejectedValue(new Error("conflict"))
+    const mutation = useResolveDuplicatePair(TENANT_ID)
+    await mutation.mutate({
+      pairId: PAIR_ID,
+      body: {
+        decision: "confirmed_distinct",
+        reason_code: "confirmed_different_entities",
+      },
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "duplicate-pairs", TENANT_ID],
+    })
+  })
+})
+
+describe("useInitiateMerge", () => {
+  it("calls initiateMerge with the correct arguments", async () => {
+    vi.mocked(initiateMerge).mockResolvedValue({} as never)
+    const mutation = useInitiateMerge(TENANT_ID)
+    await mutation.mutate({
+      pair_id: PAIR_ID,
+      survivor_partner_id: PARTNER_ID,
+      merge_reason_code: "same_legal_entity_different_name",
+      note: null,
+    })
+    expect(initiateMerge).toHaveBeenCalledWith({
+      pair_id: PAIR_ID,
+      survivor_partner_id: PARTNER_ID,
+      merge_reason_code: "same_legal_entity_different_name",
+      note: null,
+    })
+  })
+
+  it("invalidates the duplicate pairs query on success", async () => {
+    vi.mocked(initiateMerge).mockResolvedValue({} as never)
+    const mutation = useInitiateMerge(TENANT_ID)
+    await mutation.mutate({
+      pair_id: PAIR_ID,
+      survivor_partner_id: PARTNER_ID,
+      merge_reason_code: "same_legal_entity_different_name",
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "duplicate-pairs", TENANT_ID],
+    })
+  })
+
+  it("invalidates the duplicate pairs query on error too (e.g. PAIR_NOT_FLAGGED_FOR_MERGE race)", async () => {
+    vi.mocked(initiateMerge).mockRejectedValue(new Error("conflict"))
+    const mutation = useInitiateMerge(TENANT_ID)
+    await mutation.mutate({
+      pair_id: PAIR_ID,
+      survivor_partner_id: PARTNER_ID,
+      merge_reason_code: "same_legal_entity_different_name",
+    })
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["partners", "duplicate-pairs", TENANT_ID],
     })
   })
 })

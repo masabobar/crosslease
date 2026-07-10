@@ -20,6 +20,7 @@
     "platformAdministration": "Platform administration",
     "userManagement": "User management",
     "partnerManagement": "Partner Management",
+    "partnerDuplicates": "Duplication & merge",
     "tenantManagement": "Tenant Management",
     "coreBankingIntegration": "Core Banking integration",
     "auditTrail": "Audit trail",
@@ -43,7 +44,8 @@
     "tenantManagement": "Tenant management",
     "createTenant": "Create tenant",
     "partnerManagement": "Partner management",
-    "submitPartner": "Submit partner"
+    "submitPartner": "Submit partner",
+    "duplicateQueue": "Duplication queue"
   },
   "notFound": {
     "heading": "Page not found",

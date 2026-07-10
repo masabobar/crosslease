@@ -1,24 +1,93 @@
 import { useTranslation } from "react-i18next"
+import type { TFunction } from "i18next"
 import { useQuery } from "@tanstack/react-query"
 import { AlertTriangle } from "lucide-react"
 import {
   fetchIdentityHistory,
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
+import { ANCHOR_FIELDS } from "@/features/partners/constants"
+import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { formatDateTime } from "@/lib/formatters"
-import type { IdentityChangeStatus } from "@/features/partners/api/schema"
+import type {
+  IdentityChangeStatus,
+  PartnerType,
+} from "@/features/partners/api/schema"
+import type { UserRole } from "@/features/users/types"
 
-const STATUS_COLORS: Record<IdentityChangeStatus, string> = {
-  pending_four_eyes: "text-amber-600",
-  committed: "text-green-600",
-  rejected: "text-destructive",
+const COL_FIELD = "w-[150px] shrink-0"
+const COL_STATUS = "w-[130px] shrink-0"
+const COL_PREV = "flex-1 min-w-[160px]"
+const COL_NEW = "flex-1 min-w-[160px]"
+const COL_PROPOSED_BY = "w-[160px] shrink-0"
+const COL_COUNTER_BY = "w-[160px] shrink-0"
+const COL_TIMESTAMP = "w-[140px] shrink-0"
+const COL_REASON = "flex-1 min-w-[200px]"
+
+const STATUS_BADGE: Record<IdentityChangeStatus, string> = {
+  pending_four_eyes: "bg-warning/10 text-warning",
+  committed: "bg-success/10 text-success",
+  rejected: "bg-destructive/10 text-destructive",
+}
+
+function IdentityChangeStatusBadge({
+  status,
+}: {
+  status: IdentityChangeStatus
+}) {
+  const { t } = useTranslation("partners")
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${STATUS_BADGE[status]}`}
+    >
+      {t(`identityChangeStatus.${status}`)}
+    </span>
+  )
+}
+
+function anchorLabel(
+  t: TFunction<"partners">,
+  partnerType: PartnerType,
+  anchorKey: string
+): string {
+  const field = ANCHOR_FIELDS[partnerType].find(a => a.key === anchorKey)
+  if (!field) return anchorKey.replace(/_/g, " ")
+  return t(field.labelKey as "submit.identityStep.fields.legalName")
+}
+
+function formatAddressAnchorValue(value: unknown): string {
+  if (!value || typeof value !== "object") return "—"
+  const addr = value as {
+    street?: string | null
+    city?: string | null
+    postal_code?: string | null
+  }
+  const cityLine = [addr.postal_code, addr.city].filter(Boolean).join(" ")
+  return [addr.street, cityLine].filter(Boolean).join(", ") || "—"
+}
+
+function formatAnchorValue(anchorKey: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—"
+  if (anchorKey === "registered_address") return formatAddressAnchorValue(value)
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return String(value)
+  }
+  return JSON.stringify(value)
 }
 
 type IdentityChangesTabProps = {
   partnerId: string
+  partnerType: PartnerType
 }
 
-function IdentityChangesTab({ partnerId }: IdentityChangesTabProps) {
+function IdentityChangesTab({
+  partnerId,
+  partnerType,
+}: IdentityChangesTabProps) {
   const { t } = useTranslation("partners")
   const { data, isLoading, isError } = useQuery({
     queryKey: PARTNERS_QUERY_KEYS.identityHistory(partnerId),
@@ -50,57 +119,134 @@ function IdentityChangesTab({ partnerId }: IdentityChangesTabProps) {
 
   return (
     <div className="flex flex-col gap-4 py-4">
-      <p className="text-sm font-semibold text-foreground">
-        {t("detail.identityChanges.title")}
-      </p>
+      <div>
+        <p className="text-base font-semibold text-foreground">
+          {t("detail.identityChanges.title")}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {t("detail.identityChanges.subtitle")}
+        </p>
+      </div>
 
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {t("detail.identityChanges.empty")}
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="w-full border border-border rounded-[10px] overflow-hidden bg-background">
+          <div className="flex border-b border-border h-10 items-center">
+            <div
+              className={`${COL_FIELD} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.changedField")}
+            </div>
+            <div
+              className={`${COL_STATUS} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.status")}
+            </div>
+            <div
+              className={`${COL_PREV} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.previousValue")}
+            </div>
+            <div
+              className={`${COL_NEW} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.newValue")}
+            </div>
+            <div
+              className={`${COL_PROPOSED_BY} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.proposedBy")}
+            </div>
+            <div
+              className={`${COL_COUNTER_BY} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.counterConfirmedBy")}
+            </div>
+            <div
+              className={`${COL_TIMESTAMP} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.proposedAt")}
+            </div>
+            <div
+              className={`${COL_REASON} text-sm font-medium text-foreground px-2`}
+            >
+              {t("detail.identityChanges.fields.changeReason")}
+            </div>
+          </div>
           {items.map(item => (
             <div
               key={item.identity_change_id}
-              className="rounded-xl border border-border px-4 py-3"
+              className="flex border-b border-border last:border-0 py-3 items-start"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {item.is_high_risk && (
-                    <AlertTriangle size={14} className="text-amber-600" />
-                  )}
+              <div className={`${COL_FIELD} px-2 flex flex-col gap-1`}>
+                {item.target_anchors.map(anchor => (
                   <span
-                    className={`text-xs font-medium ${STATUS_COLORS[item.status]}`}
+                    key={anchor}
+                    className="text-sm font-medium text-foreground"
                   >
-                    {t(
-                      `identityChangeStatus.${item.status}` as `identityChangeStatus.committed`
+                    {anchorLabel(t, partnerType, anchor)}
+                  </span>
+                ))}
+              </div>
+              <div className={`${COL_STATUS} px-2 flex flex-col gap-1`}>
+                <IdentityChangeStatusBadge status={item.status} />
+                {item.is_high_risk && (
+                  <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                    <AlertTriangle size={12} />
+                    {t("detail.identityChanges.fields.highRisk")}
+                  </span>
+                )}
+              </div>
+              <div className={`${COL_PREV} px-2 flex flex-col gap-1`}>
+                {item.target_anchors.map(anchor => (
+                  <span key={anchor} className="text-sm text-muted-foreground">
+                    {formatAnchorValue(
+                      anchor,
+                      item.pre_change_snapshot[anchor]
                     )}
                   </span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {formatDateTime(item.proposed_at)}
-                </span>
+                ))}
               </div>
-              <p className="text-sm text-foreground mt-1">
-                {item.change_reason}
-              </p>
-              <div className="flex items-center gap-4 mt-1">
-                <p className="text-xs text-muted-foreground">
-                  {t("detail.identityChanges.fields.proposedBy")}:{" "}
+              <div className={`${COL_NEW} px-2 flex flex-col gap-1`}>
+                {item.target_anchors.map(anchor => (
+                  <span key={anchor} className="text-sm text-foreground">
+                    {formatAnchorValue(anchor, item.proposed_values[anchor])}
+                  </span>
+                ))}
+              </div>
+              <div className={`${COL_PROPOSED_BY} px-2 flex flex-col gap-1`}>
+                <span className="text-sm text-foreground truncate">
                   {item.proposed_by.display_name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("detail.identityChanges.fields.targetAnchors")}:{" "}
-                  {item.target_anchors.join(", ")}
-                </p>
+                </span>
+                <RoleBadge role={item.proposed_by.role as UserRole} />
               </div>
-              {item.resolved_at && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("detail.identityChanges.fields.resolvedAt")}:{" "}
-                  {formatDateTime(item.resolved_at)}
-                </p>
-              )}
+              <div className={`${COL_COUNTER_BY} px-2 flex flex-col gap-1`}>
+                {item.counter_confirmed_by ? (
+                  <>
+                    <span className="text-sm text-foreground truncate">
+                      {item.counter_confirmed_by.display_name}
+                    </span>
+                    <RoleBadge
+                      role={item.counter_confirmed_by.role as UserRole}
+                    />
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+              <div
+                className={`${COL_TIMESTAMP} px-2 text-sm text-muted-foreground`}
+              >
+                {formatDateTime(item.proposed_at)}
+              </div>
+              <div
+                className={`${COL_REASON} px-2 text-sm text-muted-foreground`}
+              >
+                {item.change_reason}
+              </div>
             </div>
           ))}
         </div>

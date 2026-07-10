@@ -17,6 +17,9 @@ import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
+import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import { getInitials } from "@/lib/formatters"
 
 type Crumb = { labelKey?: string; label?: string; path?: string }
@@ -62,6 +65,11 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
     { labelKey: "breadcrumb.partnerManagement", path: PATHS.PARTNER_REGISTRY },
     { labelKey: "breadcrumb.submitPartner" },
   ],
+  [PATHS.PARTNER_DUPLICATES]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.duplicateQueue" },
+  ],
 }
 
 export function Header() {
@@ -73,6 +81,7 @@ export function Header() {
   const tenantDetailMatchRaw = useMatch(PATHS.TENANT_DETAIL)
   const tenantDetailMatch = tenantCreateMatch ? null : tenantDetailMatchRaw
   const partnerSubmitMatch = useMatch(PATHS.PARTNER_SUBMIT)
+  const partnerDuplicateDetailMatch = useMatch(PATHS.PARTNER_DUPLICATE_DETAIL)
   const partnerDetailMatchRaw = useMatch(PATHS.PARTNER_DETAIL)
   const partnerDetailMatch = partnerSubmitMatch ? null : partnerDetailMatchRaw
   const { data: currentUser } = useCurrentUser()
@@ -82,6 +91,22 @@ export function Header() {
   )
   const { data: detailPartner } = usePartnerDetail(
     partnerDetailMatch?.params.id ?? null
+  )
+  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
+  const duplicatesTenantId =
+    currentUser?.tenant_id ??
+    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const { data: duplicatePairs } = useDuplicatePairs(
+    partnerDuplicateDetailMatch ? duplicatesTenantId : null
+  )
+  const duplicatePair = duplicatePairs?.items.find(
+    p => p.pair_id === partnerDuplicateDetailMatch?.params.pairId
+  )
+  const { data: duplicatePartnerA } = usePartnerDetail(
+    duplicatePair?.partner_a_id ?? null
+  )
+  const { data: duplicatePartnerB } = usePartnerDetail(
+    duplicatePair?.partner_b_id ?? null
   )
   const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
   const [profileOpen, setProfileOpen] = useState(false)
@@ -114,20 +139,35 @@ export function Header() {
             { labelKey: "breadcrumb.auditTrail", path: PATHS.AUDIT_TRAIL },
             { labelKey: "breadcrumb.auditEvent" },
           ]
-        : partnerDetailMatch
+        : partnerDuplicateDetailMatch
           ? [
               { labelKey: "breadcrumb.home" },
               { labelKey: "breadcrumb.platformAdministration" },
               {
-                labelKey: "breadcrumb.partnerManagement",
-                path: PATHS.PARTNER_REGISTRY,
+                labelKey: "breadcrumb.duplicateQueue",
+                path: PATHS.PARTNER_DUPLICATES,
               },
-              { label: detailPartner?.display_name ?? "…" },
+              {
+                label:
+                  duplicatePartnerA && duplicatePartnerB
+                    ? `${duplicatePartnerA.display_name} vs ${duplicatePartnerB.display_name}`
+                    : "…",
+              },
             ]
-          : (BREADCRUMBS[location.pathname] ??
-            Object.entries(BREADCRUMBS)
-              .filter(([path]) => location.pathname.startsWith(path + "/"))
-              .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
+          : partnerDetailMatch
+            ? [
+                { labelKey: "breadcrumb.home" },
+                { labelKey: "breadcrumb.platformAdministration" },
+                {
+                  labelKey: "breadcrumb.partnerManagement",
+                  path: PATHS.PARTNER_REGISTRY,
+                },
+                { label: detailPartner?.display_name ?? "…" },
+              ]
+            : (BREADCRUMBS[location.pathname] ??
+              Object.entries(BREADCRUMBS)
+                .filter(([path]) => location.pathname.startsWith(path + "/"))
+                .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
 
   const initials = currentUser
     ? getInitials(currentUser.first_name, currentUser.last_name)

@@ -14,4 +14,18 @@ export const PARTNER_SUBMIT_ALLOWED_ROLES: readonly UserRole[] = [
   "front_office",
 ]
 
+// Per PARTNER_DUPLICATE_RESOLVE permission (refinext-api permissions/matrix.py):
+// Sys Admin and Back Office only.
+export const PARTNER_DUPLICATE_RESOLVE_ALLOWED_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "back_office",
+]
+
+// Per PARTNER_MERGE_INITIATE permission (refinext-api permissions/matrix.py):
+// Sys Admin and Front Office only.
+export const PARTNER_MERGE_INITIATE_ALLOWED_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "front_office",
+]
+
 export type PartnerActionType = "archive"

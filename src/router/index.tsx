@@ -88,6 +88,12 @@ const SubmitPartnerPage = lazy(
 const PartnerDetailPage = lazy(
   () => import("@/features/partners/components/PartnerDetailPage")
 )
+const DuplicateQueuePage = lazy(
+  () => import("@/features/partners/components/DuplicateQueuePage")
+)
+const DuplicatePairDetailPage = lazy(
+  () => import("@/features/partners/components/DuplicatePairDetailPage")
+)
 
 export const router = createBrowserRouter([
   {
@@ -255,6 +261,26 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={PARTNER_VIEW_ALLOWED_ROLES}>
               <PartnerDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PARTNER_DUPLICATES,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PARTNER_VIEW_ALLOWED_ROLES}>
+              <DuplicateQueuePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PARTNER_DUPLICATE_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PARTNER_VIEW_ALLOWED_ROLES}>
+              <DuplicatePairDetailPage />
             </RoleGuard>
           </Suspense>
         ),
