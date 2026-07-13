@@ -51,9 +51,15 @@ function EntityTypeBadge({ entityType }: { entityType: string }) {
   )
 }
 
-function ResultBadge({ eventType }: { eventType: string }) {
+function ResultBadge({
+  eventType,
+  actionType,
+}: {
+  eventType: string
+  actionType: string
+}) {
   const { t } = useTranslation("audit")
-  const result = deriveAuditResult(eventType)
+  const result = deriveAuditResult(eventType, actionType)
   const isFailed = result === "Failed"
   return (
     <span
@@ -243,7 +249,10 @@ export function AuditTable({
             </div>
 
             <div className={`${COL_RESULT} p-2`}>
-              <ResultBadge eventType={event.event_type} />
+              <ResultBadge
+                eventType={event.event_type}
+                actionType={event.action_type}
+              />
             </div>
 
             <div className={`${COL_FLAG} p-2`}>
