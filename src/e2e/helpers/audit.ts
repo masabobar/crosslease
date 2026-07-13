@@ -53,6 +53,21 @@ export async function waitForAuditEvent(
   return null
 }
 
+// Resolve the current user's principal_id via GET /api/v1/users/me. Used to
+// scope post-action audit-event assertions by actor. Returns null on any
+// failure so the audit assertion can be conditionally skipped rather than
+// crashing the whole test. The BE envelope has been observed in two shapes:
+// { data: { id } } (documented) and { id } (some paths) — support both.
+export async function getPrincipalId(page: Page): Promise<string | null> {
+  const apiBase = process.env.E2E_API_BASE_URL ?? ""
+  const resp = await page.request.get(`${apiBase}/api/v1/users/me`, {
+    failOnStatusCode: false,
+  })
+  if (!resp.ok()) return null
+  const body = (await resp.json()) as { data?: { id?: string }; id?: string }
+  return body.data?.id ?? body.id ?? null
+}
+
 // Convenience wrapper that asserts an event WAS recorded — used by
 // User Management specs that append an audit check after a governed action.
 // Includes the filter values in the failure message so the diagnostic points

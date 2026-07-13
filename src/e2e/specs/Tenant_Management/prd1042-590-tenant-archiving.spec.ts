@@ -1,5 +1,6 @@
 import { test, expect } from "../../fixtures/test"
 import { createTestSession } from "../../helpers/helper"
+import { expectAuditEvent, getPrincipalId } from "../../helpers/audit"
 
 // ---------------------------------------------------------------------------
 // PRD1042-590 — US 29.9 | Tenant Archiving / Decommissioning
@@ -111,26 +112,45 @@ test.describe("PRD1042-590 — Tenant Archiving / Decommissioning", () => {
   ]
 
   for (const { role, email } of unauthorizedRoles) {
-    test(`${role} tenant archive endpoint returns 404 (AC-15)`, async ({
+    test(`${role} tenant archive endpoint returns 404 and denial is audit-traced (AC-15)`, async ({
       browser,
+      auditorPage,
     }) => {
       const context = await browser.newContext({
         storageState: ".auth/gate.json",
       })
-      const page = await context.newPage()
-      await createTestSession(page, email)
-      const response = await page.request.post(
-        `${apiBase}/api/v1/tenants/${SUSPENDED_TENANT_ID}/archive`,
-        {
-          data: {
-            justification: longJustification(),
-            irreversibility_acknowledged: true,
-          },
+      try {
+        const page = await context.newPage()
+        await createTestSession(page, email)
+
+        const actorId = await getPrincipalId(page)
+        const t0 = new Date()
+
+        const response = await page.request.post(
+          `${apiBase}/api/v1/tenants/${SUSPENDED_TENANT_ID}/archive`,
+          {
+            data: {
+              justification: longJustification(),
+              irreversibility_acknowledged: true,
+            },
+          }
+        )
+        expect(response.status()).toBeGreaterThanOrEqual(400)
+        expect(response.status()).toBeLessThan(500)
+
+        // Archive is irreversible per PRD1042-795 AC-06 — a denied attempt on
+        // this endpoint is especially audit-worthy because the intent (to
+        // permanently decommission a tenant) is high-impact even when denied.
+        if (actorId) {
+          await expectAuditEvent(
+            auditorPage,
+            { actor_id: actorId, from_dt: t0.toISOString() },
+            { timeoutMs: 15_000 }
+          )
         }
-      )
-      expect(response.status()).toBeGreaterThanOrEqual(400)
-      expect(response.status()).toBeLessThan(500)
-      await context.close()
+      } finally {
+        await context.close()
+      }
     })
   }
 })

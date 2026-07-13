@@ -7,10 +7,24 @@ import { createTestSession } from "../../helpers/helper"
 // Gherkin source: src/e2e/tests/PRD1042-39-User Management & Authentication/
 //                 PRD1042-48 Role Assignment & Management.md
 //
-// Covered:  AC-01/AC-03 (5-role invite outline + Auditor Four-Eyes alert), AC-15, AC-16
+// Gherkin updated 2026-07-08 (Ivan Mladenovic decision 2026-07-06): role model
+// is now 7 canonical roles (added Power User (Bank Admin) — `bank_admin` wire
+// value). Bank user role administration moved from System Admin to Bank Admin.
+// See .claude/agent-memory/qa-lead/project-prd1042-48-bank-admin-update.md.
+//
+// Covered:  AC-01/AC-03 (5-role invite outline + Auditor Four-Eyes alert +
+//                        7-role selector count), AC-15, AC-16
 // Blocked:  AC-11 (D19)
 // Gated:    AC-07/AC-04/AC-10/AC-12/AC-14 (pre-seeded active users or D20)
 // Excluded: AC-02, AC-05, AC-06, AC-08, AC-09, AC-13 (edge-case or separate-feature)
+//
+// Pending automation — 4 new @e2e-ready Gherkin scenarios awaiting seeded
+// `bank_admin` credentials (E2E_BANK_ADMIN_EMAIL / _PASSWORD) and, for the
+// per-tenant privileged flows, a throwaway-user fixture (D19):
+//   1. System Admin cannot change bank tenant user roles (AC-05, AC-07)
+//   2. Bank Admin cannot be reached via role reassignment (AC-07, Outline × 6)
+//   3. Bank Admin cannot change own tenant scope (AC-14)
+//   4. Non-Bank-Admin roles cannot assign/change user roles (AC-05, AC-16, Outline × 5)
 //
 // Known open bugs:
 //   PRD1042-826: Tenant→System promotions retain tenant-level visibility (AC-07/AC-08)
@@ -58,12 +72,13 @@ const ROLE_INVITES = [
 test.describe("PRD1042-48 — Role Assignment & Management", () => {
   // ---------------------------------------------------------------------------
   // HAPPY PATH — AC-03
-  // The role selector must offer exactly the 6 predefined system roles and no
+  // The role selector must offer exactly the 7 predefined system roles and no
   // custom or ad-hoc roles. Verified by counting the dropdown options before
-  // any role is selected.
+  // any role is selected. Post 2026-07-06 realignment: 6 → 7 (added Power User
+  // (Bank Admin) — wire value `bank_admin`).
   // ---------------------------------------------------------------------------
 
-  test("Role selector offers exactly 6 predefined system roles (AC-03)", async ({
+  test("Role selector offers exactly 7 predefined system roles (AC-03)", async ({
     authenticatedPage,
   }) => {
     const userListPage = new UserListPage(authenticatedPage)
@@ -71,7 +86,7 @@ test.describe("PRD1042-48 — Role Assignment & Management", () => {
     await userListPage.openCreateInviteDialog()
 
     const roleCount = await userListPage.countRoleOptions()
-    expect(roleCount).toBe(6)
+    expect(roleCount).toBe(7)
   })
 
   // ---------------------------------------------------------------------------
@@ -159,6 +174,13 @@ test.describe("PRD1042-48 — Role Assignment & Management", () => {
   // the role transition rules must be rejected with 422 regardless of what the
   // client sends. Test uses an invalid transition (system_admin → auditor) which
   // is not in the supported set: system_admin ↔ support_user, front_office ↔ back_office.
+  //
+  // NOTE: Gherkin AC-16 was updated 2026-07-08 to specify "valid Bank Admin
+  // session" as the actor. This test still uses a System Admin session because
+  // bank_admin credentials are not yet seeded. The server-side rejection is
+  // actor-independent — the 422 fires on the invalid transition regardless of
+  // who calls it — so the invariant still holds. Switch to bank_admin once
+  // E2E_BANK_ADMIN_EMAIL/PASSWORD are provisioned.
   // ---------------------------------------------------------------------------
 
   test("Direct API role change violating transition rules is rejected with 422 (AC-16)", async ({

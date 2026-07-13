@@ -1,5 +1,6 @@
 import { test, expect } from "../../fixtures/test"
 import { createTestSession } from "../../helpers/helper"
+import { expectAuditEvent, getPrincipalId } from "../../helpers/audit"
 
 // ---------------------------------------------------------------------------
 // PRD1042-588 — US 29.7 | Tenant Suspension Flow
@@ -44,21 +45,41 @@ test.describe("PRD1042-588 — Tenant Suspension Flow", () => {
   ]
 
   for (const { role, email } of unauthorizedRoles) {
-    test(`${role} tenant suspension endpoint returns 404 (AC-14)`, async ({
+    test(`${role} tenant suspension endpoint returns 404 and denial is audit-traced (AC-14)`, async ({
       browser,
+      auditorPage,
     }) => {
       const context = await browser.newContext({
         storageState: ".auth/gate.json",
       })
-      const page = await context.newPage()
-      await createTestSession(page, email)
-      const response = await page.request.post(
-        `${apiBase}/api/v1/tenants/${TENANT_ID}/suspend`,
-        { data: MINIMAL_SUSPENSION_PAYLOAD }
-      )
-      expect(response.status()).toBeGreaterThanOrEqual(400)
-      expect(response.status()).toBeLessThan(500)
-      await context.close()
+      try {
+        const page = await context.newPage()
+        await createTestSession(page, email)
+
+        const actorId = await getPrincipalId(page)
+        const t0 = new Date()
+
+        const response = await page.request.post(
+          `${apiBase}/api/v1/tenants/${TENANT_ID}/suspend`,
+          { data: MINIMAL_SUSPENSION_PAYLOAD }
+        )
+        expect(response.status()).toBeGreaterThanOrEqual(400)
+        expect(response.status()).toBeLessThan(500)
+
+        // RBAC denial on a governed lifecycle endpoint MUST be audit-traceable
+        // per PRD1042-795 (Security Event Audit Coverage). Suspension is a
+        // status-transition action; even the denied attempt is an event a
+        // reviewer must be able to reconstruct.
+        if (actorId) {
+          await expectAuditEvent(
+            auditorPage,
+            { actor_id: actorId, from_dt: t0.toISOString() },
+            { timeoutMs: 15_000 }
+          )
+        }
+      } finally {
+        await context.close()
+      }
     })
   }
 })
