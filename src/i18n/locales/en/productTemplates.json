@@ -142,6 +142,15 @@
       "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
       "keep": "Keep editing",
       "confirm": "Discard draft"
+    },
+    "publish": "Publish",
+    "publishDialog": {
+      "title": "Publish this version?",
+      "description": "Publishing activates this version immediately and replaces the currently published version, which becomes deprecated. This can't be undone from here.",
+      "justificationLabel": "Justification (optional)",
+      "justificationPlaceholder": "Add a note about this activation…",
+      "keep": "Keep editing",
+      "confirm": "Publish version"
     }
   },
   "errors": {
@@ -152,6 +161,10 @@
     "validUntilBeforeFrom": "Valid until must be on or after valid from.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "This template code is already in use within your tenant.",
     "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
+    "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",
+    "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "This template version could not be found.",
+    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version is no longer a draft and can't be published again.",
+    "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
     "generic": "Something went wrong. Please try again."
   }
 }

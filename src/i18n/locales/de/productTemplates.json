@@ -142,6 +142,15 @@
       "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
       "keep": "Weiter bearbeiten",
       "confirm": "Entwurf verwerfen"
+    },
+    "publish": "Veröffentlichen",
+    "publishDialog": {
+      "title": "Diese Version veröffentlichen?",
+      "description": "Die Veröffentlichung aktiviert diese Version sofort und ersetzt die aktuell veröffentlichte Version, die dadurch veraltet wird. Dies kann von hier aus nicht rückgängig gemacht werden.",
+      "justificationLabel": "Begründung (optional)",
+      "justificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Aktivierung hinzu…",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Version veröffentlichen"
     }
   },
   "errors": {
@@ -152,6 +161,10 @@
     "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "Dieser Vorlagencode wird bereits innerhalb Ihres Mandanten verwendet.",
     "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
+    "PRODUCT_TEMPLATE_NOT_FOUND": "Diese Produktvorlage konnte nicht gefunden werden.",
+    "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "Diese Vorlagenversion konnte nicht gefunden werden.",
+    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Diese Version ist kein Entwurf mehr und kann nicht erneut veröffentlicht werden.",
+    "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

@@ -1,5 +1,6 @@
 import { api } from "@/lib/api"
 import {
+  PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
@@ -8,6 +9,8 @@ import {
 } from "@/features/productTemplates/api/schema"
 import type {
   CreateProductTemplateDraftRequest,
+  PublishTemplateDraftRequest,
+  PublishTemplateDraftResponse,
   TemplateDraftCreatedResponse,
   TemplateDraftDiscardedResponse,
   TemplateDraftUpdatedResponse,
@@ -55,6 +58,18 @@ export async function discardProductTemplateDraft(
     `/product-templates/${templateId}/versions/${versionNumber}/discard`
   )
   return TemplateDraftDiscardedResponseSchema.parse(data)
+}
+
+export async function publishProductTemplate(
+  templateId: string,
+  versionNumber: string,
+  body: PublishTemplateDraftRequest
+): Promise<PublishTemplateDraftResponse> {
+  const data = await api.post(
+    `/product-templates/${templateId}/versions/${versionNumber}/publish`,
+    body
+  )
+  return PublishTemplateDraftResponseSchema.parse(data)
 }
 
 export async function fetchTemplateVersions(

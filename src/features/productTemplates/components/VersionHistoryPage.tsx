@@ -5,6 +5,8 @@ import { ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +21,7 @@ import { TemplateVersionStatusBadge } from "@/features/productTemplates/componen
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
 import { useTemplateVersionHeader } from "@/features/productTemplates/hooks/useTemplateVersionHeader"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
+import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type {
@@ -52,9 +55,12 @@ export default function VersionHistoryPage() {
 
   const [discardTarget, setDiscardTarget] =
     useState<TemplateVersionSummary | null>(null)
+  const [publishTarget, setPublishTarget] =
+    useState<TemplateVersionSummary | null>(null)
+  const [justification, setJustification] = useState("")
 
   const { data: currentUser } = useCurrentUser()
-  const canDiscard = Boolean(
+  const canManageDraft = Boolean(
     currentUser?.role &&
     PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES.includes(currentUser.role)
   )
@@ -73,6 +79,8 @@ export default function VersionHistoryPage() {
 
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
+  const { mutateAsync: publishDraft, isPending: isPublishing } =
+    usePublishProductTemplate()
 
   async function handleConfirmDiscard() {
     if (!discardTarget || !templateId) return
@@ -82,6 +90,29 @@ export default function VersionHistoryPage() {
         versionNumber: discardTarget.version_number,
       })
       setDiscardTarget(null)
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}` as "errors.generic", {
+              defaultValue: t("errors.generic"),
+            })
+          : t("errors.generic")
+      )
+    }
+  }
+
+  async function handleConfirmPublish() {
+    if (!publishTarget || !templateId) return
+    try {
+      await publishDraft({
+        templateId,
+        versionNumber: publishTarget.version_number,
+        body: {
+          justification: justification.trim() === "" ? null : justification,
+        },
+      })
+      setPublishTarget(null)
+      setJustification("")
     } catch (err) {
       toast.error(
         err instanceof ApiError
@@ -185,16 +216,26 @@ export default function VersionHistoryPage() {
                         })}
                       </span>
                       {isDraft ? (
-                        canDiscard && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            data-testid={`discard-version-${version.version_number}`}
-                            onClick={() => setDiscardTarget(version)}
-                          >
-                            {t("versionHistory.discard")}
-                          </Button>
+                        canManageDraft && (
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              data-testid={`discard-version-${version.version_number}`}
+                              onClick={() => setDiscardTarget(version)}
+                            >
+                              {t("versionHistory.discard")}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              data-testid={`publish-version-${version.version_number}`}
+                              onClick={() => setPublishTarget(version)}
+                            >
+                              {t("versionHistory.publish")}
+                            </Button>
+                          </div>
                         )
                       ) : (
                         <Link
@@ -237,6 +278,54 @@ export default function VersionHistoryPage() {
               disabled={isDiscarding}
             >
               {t("versionHistory.discardDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={publishTarget !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setPublishTarget(null)
+            setJustification("")
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.publishDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.publishDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 px-1">
+            <Label htmlFor="publish-justification">
+              {t("versionHistory.publishDialog.justificationLabel")}
+            </Label>
+            <Textarea
+              id="publish-justification"
+              data-testid="publish-justification-input"
+              placeholder={t(
+                "versionHistory.publishDialog.justificationPlaceholder"
+              )}
+              rows={3}
+              value={justification}
+              onChange={e => setJustification(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-publish-dialog-keep">
+              {t("versionHistory.publishDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-publish-dialog-confirm"
+              onClick={handleConfirmPublish}
+              disabled={isPublishing}
+            >
+              {t("versionHistory.publishDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
