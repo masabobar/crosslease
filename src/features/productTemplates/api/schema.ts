@@ -122,6 +122,24 @@ export type TemplateDraftDiscardedResponse = z.infer<
   typeof TemplateDraftDiscardedResponseSchema
 >
 
+export const PublishTemplateDraftRequestSchema = z.object({
+  justification: z.string().nullable().optional(),
+})
+export type PublishTemplateDraftRequest = z.infer<
+  typeof PublishTemplateDraftRequestSchema
+>
+
+export const PublishTemplateDraftResponseSchema = z.object({
+  version_id: z.string().uuid(),
+  version_number: z.string(),
+  version_status: z.string(),
+  published_at: z.string(),
+  published_by: z.string().uuid(),
+})
+export type PublishTemplateDraftResponse = z.infer<
+  typeof PublishTemplateDraftResponseSchema
+>
+
 // RHF-facing form schema — stricter than the wire schema, mirroring the PRD's Field Specification
 // table (every Mandatory field required) for inline per-field validation. The actual POST/PATCH
 // payload sent to the API is the looser wire schema above.

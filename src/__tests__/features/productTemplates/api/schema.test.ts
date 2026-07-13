@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest"
 import {
   CreateProductTemplateDraftRequestSchema,
   ProductTemplateWizardFormSchema,
+  PublishTemplateDraftRequestSchema,
+  PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
@@ -150,6 +152,69 @@ describe("TemplateDraftUpdatedResponseSchema / TemplateDraftDiscardedResponseSch
         version_status: "discarded",
       })
     ).not.toThrow()
+  })
+})
+
+describe("PublishTemplateDraftRequestSchema", () => {
+  it("accepts an empty object (justification omitted)", () => {
+    expect(() => PublishTemplateDraftRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("accepts a null justification", () => {
+    expect(() =>
+      PublishTemplateDraftRequestSchema.parse({ justification: null })
+    ).not.toThrow()
+  })
+
+  it("accepts a populated justification string", () => {
+    expect(() =>
+      PublishTemplateDraftRequestSchema.parse({
+        justification: "Activating for Q3 rollout",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-string justification", () => {
+    expect(() =>
+      PublishTemplateDraftRequestSchema.parse({ justification: 123 })
+    ).toThrow()
+  })
+})
+
+describe("PublishTemplateDraftResponseSchema", () => {
+  const validPublishResponse = {
+    version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    version_number: "1.0",
+    version_status: "published",
+    published_at: "2026-07-13T09:00:00Z",
+    published_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  }
+
+  it("accepts a valid publish response", () => {
+    expect(() =>
+      PublishTemplateDraftResponseSchema.parse(validPublishResponse)
+    ).not.toThrow()
+  })
+
+  it.each([
+    "version_id",
+    "version_number",
+    "version_status",
+    "published_at",
+    "published_by",
+  ])("rejects a payload missing required field %s", field => {
+    const rest = { ...validPublishResponse } as Record<string, unknown>
+    delete rest[field]
+    expect(() => PublishTemplateDraftResponseSchema.parse(rest)).toThrow()
+  })
+
+  it("rejects a non-UUID published_by", () => {
+    expect(() =>
+      PublishTemplateDraftResponseSchema.parse({
+        ...validPublishResponse,
+        published_by: "not-a-uuid",
+      })
+    ).toThrow()
   })
 })
 
