@@ -97,8 +97,22 @@ export type AuditResult = "Success" | "Failed"
 
 const FAILED_SUFFIXES = ["_failed", "_denied", "_rejected", "_violation"]
 
-export function deriveAuditResult(eventType: string): AuditResult {
+/**
+ * A governed action's own rejection outcome (e.g. Four-Eyes reject/compensate)
+ * is a completed state transition, not a failed operation — "_rejected"/"_violation"
+ * event types with this action_type read as Success, not Failed.
+ */
+const GOVERNED_OUTCOME_ACTION_TYPE = "state_transition"
+
+export function deriveAuditResult(
+  eventType: string,
+  actionType?: string
+): AuditResult {
   const lower = eventType.toLowerCase()
+  const isGovernedOutcome =
+    actionType === GOVERNED_OUTCOME_ACTION_TYPE &&
+    (lower.includes("_rejected") || lower.includes("_violation"))
+  if (isGovernedOutcome) return "Success"
   return FAILED_SUFFIXES.some(s => lower.includes(s)) ? "Failed" : "Success"
 }
 

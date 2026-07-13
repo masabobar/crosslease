@@ -270,7 +270,7 @@ function PayloadTab({ event }: { event: AuditEvent }) {
 
 function DrawerContent({ event }: { event: AuditEvent }) {
   const { t } = useTranslation("audit")
-  const result = deriveAuditResult(event.event_type)
+  const result = deriveAuditResult(event.event_type, event.action_type)
   const [tab, setTab] = useState<DrawerTab>("overview")
 
   return (
