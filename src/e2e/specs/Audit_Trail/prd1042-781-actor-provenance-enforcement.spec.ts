@@ -1,9 +1,6 @@
 import { test, expect } from "../../fixtures/test"
 import { createTestSession } from "../../helpers/helper"
-import {
-  AuditReceptionPage,
-  type AuditEventListItem,
-} from "../../pages/AuditReceptionPage"
+import { waitForAuditEvent } from "../../helpers/audit"
 
 // ---------------------------------------------------------------------------
 // PRD1042-781 — US 26.4 | Audit Trail | Actor Provenance Enforcement &
@@ -37,30 +34,6 @@ import {
 // ---------------------------------------------------------------------------
 
 const apiBase = process.env.E2E_API_BASE_URL ?? ""
-
-// Poll the audit list endpoint for a recent event since `since` matching the
-// provided actor_id. Returns the first matching item or null on timeout.
-async function waitForActorEvent(
-  audit: AuditReceptionPage,
-  actorId: string,
-  since: Date,
-  timeoutMs: number = 15_000
-): Promise<AuditEventListItem | null> {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    const response = await audit.listEvents({
-      actor_id: actorId,
-      from_dt: since.toISOString(),
-      per_page: 50,
-    })
-    if (response.ok()) {
-      const body = (await response.json()) as { items: AuditEventListItem[] }
-      if (body.items.length > 0) return body.items[0]
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-  return null
-}
 
 test.describe("PRD1042-781 — Actor Provenance Enforcement", () => {
   // -------------------------------------------------------------------------
@@ -141,8 +114,11 @@ test.describe("PRD1042-781 — Actor Provenance Enforcement", () => {
     // Read the audit trail using the seeded auditor session. The record for
     // this Front Office actor MUST carry a human actor_type (per the closed
     // enumeration), not the client-supplied system value.
-    const audit = new AuditReceptionPage(auditorPage)
-    const record = await waitForActorEvent(audit, ownId, t0, 20_000)
+    const record = await waitForAuditEvent(
+      auditorPage,
+      { actor_id: ownId, from_dt: t0.toISOString() },
+      20_000
+    )
 
     expect(
       record,

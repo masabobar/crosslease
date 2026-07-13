@@ -1,5 +1,6 @@
 import { expect, test } from "../../fixtures/test"
 import { createTestSession } from "../../helpers/helper"
+import { waitForAuditEvent } from "../../helpers/audit"
 import type { Page } from "../../fixtures/test"
 import {
   AuditReceptionPage,
@@ -60,32 +61,6 @@ const receptionUnauthorizedRoles = [
   { role: "lc_user", email: process.env.E2E_LCO_USER_EMAIL ?? "" },
 ]
 
-// Poll the audit list endpoint on `page` for a recent event of the given
-// event_type filter. Retries on Playwright's request layer until deadline.
-async function waitForRecentEvent(
-  audit: AuditReceptionPage,
-  filter: { event_type?: string; actor_type?: string },
-  since: Date,
-  timeoutMs: number = 15_000
-): Promise<AuditEventListItem | null> {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    const response = await audit.listEvents({
-      ...filter,
-      from_dt: since.toISOString(),
-      per_page: 50,
-    })
-    if (response.ok()) {
-      const body = (await response.json()) as {
-        items: AuditEventListItem[]
-      }
-      if (body.items.length > 0) return body.items[0]
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-  return null
-}
-
 test.describe("PRD1042-779 — Audit Event Reception & Validation", () => {
   // -------------------------------------------------------------------------
   // HAPPY PATH — AC-FR-01, AC-FR-02
@@ -118,11 +93,9 @@ test.describe("PRD1042-779 — Audit Event Reception & Validation", () => {
       }
 
       // Read the audit trail as the seeded auditor (has cross-cockpit read).
-      const audit = new AuditReceptionPage(auditorPage)
-      const record = await waitForRecentEvent(
-        audit,
-        { actor_type: "human_user" },
-        t0,
+      const record = await waitForAuditEvent(
+        auditorPage,
+        { actor_type: "human_user", from_dt: t0.toISOString() },
         20_000
       )
 
@@ -182,11 +155,9 @@ test.describe("PRD1042-779 — Audit Event Reception & Validation", () => {
       await actorContext.close()
     }
 
-    const audit = new AuditReceptionPage(auditorPage)
-    const record = await waitForRecentEvent(
-      audit,
-      { actor_type: "human_user" },
-      t0,
+    const record = await waitForAuditEvent(
+      auditorPage,
+      { actor_type: "human_user", from_dt: t0.toISOString() },
       20_000
     )
 
@@ -283,10 +254,11 @@ test.describe("PRD1042-779 — Audit Event Reception & Validation", () => {
           })
           if (searchResponse.ok()) {
             const body = (await searchResponse.json()) as {
-              items: Array<{ event_type: string }>
+              events?: Array<{ event_type: string }>
             }
+            const events = Array.isArray(body?.events) ? body.events : []
             expect(
-              body.items.filter(item => item.event_type === "test.probe")
+              events.filter(item => item.event_type === "test.probe")
             ).toHaveLength(0)
           }
         }

@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/test"
+import { expectAuditEvent } from "../../helpers/audit"
 
 // ---------------------------------------------------------------------------
 // HAPPY PATH — AC-03, AC-06, AC-07
@@ -104,5 +105,73 @@ test.describe("PRD1042-43 — User Login", () => {
       "Sign in failed. Please try again."
     )
     await expect(page).toHaveURL("/login")
+  })
+
+  // ---------------------------------------------------------------------------
+  // Merged from PRD1042-69 (Secure Logout) — exercise the logout API and
+  // verify the governed action produces an audit event visible to the auditor
+  // on the investigation surface.
+  //
+  // Rationale for placing this here rather than in prd1042-69: the current
+  // logout spec only asserts the logout control is visible (no click, no
+  // state change). The logout-emits-audit assertion belongs with the
+  // login/session lifecycle rather than a visibility-only spec.
+  //
+  // Auth path: uses the `authenticatedPage` fixture (system_admin session via
+  // /internal/test/session — real JWT). The logout call hits the real
+  // POST /api/v1/auth/logout endpoint, so the audit-emit is exercised against
+  // production code even though the session was created via the test bypass.
+  // Real end-to-end /auth/login is currently untestable because MFA-enrolled
+  // roles require a TOTP code that /internal/test/otp does not provide
+  // (returns 404 as of 2026-07-13).
+  //
+  // Known failure mode (as of 2026-07-13, intentionally left as a gap signal):
+  // The Audit Trail UI shows a "logout successful" entry when this test runs,
+  // but a diagnostic sweep of /api/v1/audit/events found zero logout events
+  // across every filter axis (event_type: session.logout / auth.logout /
+  // session.logout_success / user.logout / session.ended / session.terminated,
+  // action_type=logout, entity_type=session|auth, actor_id=<sysadmin>). The UI
+  // is likely reading session-history data that /api/v1/audit/events does not
+  // expose. That inconsistency is what this test is designed to surface —
+  // reconcile the two sources on the BE side, then this test flips to green.
+  // ---------------------------------------------------------------------------
+  test("system_admin logout hits /auth/logout and the logout is audit-traced (PRD1042-69 — merged)", async ({
+    authenticatedPage,
+    auditorPage,
+  }) => {
+    const apiBase = process.env.E2E_API_BASE_URL ?? ""
+
+    // Resolve the actor's principal_id so the post-logout audit assertion can
+    // scope by actor. Skip the audit check if the endpoint fails rather than
+    // failing the whole logout-flow assertion.
+    const meResp = await authenticatedPage.request.get(
+      `${apiBase}/api/v1/users/me`,
+      { failOnStatusCode: false }
+    )
+    const meBody = meResp.ok()
+      ? ((await meResp.json()) as { data?: { id?: string }; id?: string })
+      : null
+    const actorId = meBody?.data?.id ?? meBody?.id ?? null
+
+    const t0 = new Date()
+
+    // Governed action — POST /auth/logout on the real endpoint. Accept any
+    // 2xx as success; the endpoint may return 200 or 204.
+    const logoutResp = await authenticatedPage.request.post(
+      `${apiBase}/api/v1/auth/logout`,
+      { failOnStatusCode: false }
+    )
+    expect(logoutResp.status()).toBeGreaterThanOrEqual(200)
+    expect(logoutResp.status()).toBeLessThan(300)
+
+    // Logout must be audit-traced. The auditor session (separate context) is
+    // used to read the audit surface — it has the audit_read permission.
+    if (actorId) {
+      await expectAuditEvent(
+        auditorPage,
+        { actor_id: actorId, from_dt: t0.toISOString() },
+        { timeoutMs: 15_000 }
+      )
+    }
   })
 })

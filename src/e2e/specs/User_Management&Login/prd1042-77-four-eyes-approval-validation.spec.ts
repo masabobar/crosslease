@@ -1,6 +1,20 @@
 import { expect, test } from "../../fixtures/test"
 import { PendingApprovalsPage } from "../../pages/PendingApprovalsPage"
 import type { Page } from "../../fixtures/test"
+import { expectAuditEvent } from "../../helpers/audit"
+
+// Helper to resolve the current user's principal_id via GET /users/me.
+// Used to scope audit-event assertions by actor. Returns null on any failure
+// so the audit assertion can be skipped rather than crashing the test.
+async function getOwnPrincipalId(page: Page): Promise<string | null> {
+  const apiBase = process.env.E2E_API_BASE_URL ?? ""
+  const resp = await page.request.get(`${apiBase}/api/v1/users/me`, {
+    failOnStatusCode: false,
+  })
+  if (!resp.ok()) return null
+  const body = (await resp.json()) as { data?: { id?: string }; id?: string }
+  return body.data?.id ?? body.id ?? null
+}
 
 // ---------------------------------------------------------------------------
 // PRD1042-77 — US 28.7 | User Management | Four-Eyes Approval Validation
@@ -107,7 +121,7 @@ test("Auditor can access Pending Approvals page and list governed actions (AC-11
 // Skips if no pending actions are visible to this user in the dev env.
 // ---------------------------------------------------------------------------
 
-test("Auditor cannot countersign a pending governed action — API returns 403 (AC-11)", async ({
+test("Auditor cannot countersign a pending governed action — API returns 403 and denial is audit-traced (AC-11)", async ({
   auditorPage,
 }) => {
   const approvalsPage = new PendingApprovalsPage(auditorPage)
@@ -116,6 +130,11 @@ test("Auditor cannot countersign a pending governed action — API returns 403 (
     test.skip()
     return
   }
+
+  // Resolve actor principal_id before the governed action so the audit
+  // assertion can scope by actor_id. t0 captures the pre-action moment.
+  const actorId = await getOwnPrincipalId(auditorPage)
+  const t0 = new Date()
 
   const apiBase = process.env.E2E_API_BASE_URL ?? ""
   const approveResp = await auditorPage.request.post(
@@ -127,6 +146,17 @@ test("Auditor cannot countersign a pending governed action — API returns 403 (
     }
   )
   expect(approveResp.status()).toBe(403)
+
+  // The denial MUST be recorded — SoD requires every governed-action
+  // authorization decision (approve or reject) to be audit-traceable so a
+  // later investigation can reconstruct who attempted what.
+  if (actorId) {
+    await expectAuditEvent(
+      auditorPage,
+      { actor_id: actorId, from_dt: t0.toISOString() },
+      { timeoutMs: 15_000 }
+    )
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -135,8 +165,9 @@ test("Auditor cannot countersign a pending governed action — API returns 403 (
 // governed_action:approve permission — same enforcement as front_office.
 // ---------------------------------------------------------------------------
 
-test("Support user (non-approver role) cannot countersign a pending action — API returns 403 (AC-02)", async ({
+test("Support user (non-approver role) cannot countersign a pending action — API returns 403 and denial is audit-traced (AC-02)", async ({
   supportPage,
+  auditorPage,
 }) => {
   const approvalsPage = new PendingApprovalsPage(supportPage)
   const actionId = await getFirstPendingRowId(supportPage, approvalsPage)
@@ -144,6 +175,9 @@ test("Support user (non-approver role) cannot countersign a pending action — A
     test.skip()
     return
   }
+
+  const actorId = await getOwnPrincipalId(supportPage)
+  const t0 = new Date()
 
   const apiBase = process.env.E2E_API_BASE_URL ?? ""
   const approveResp = await supportPage.request.post(
@@ -155,6 +189,16 @@ test("Support user (non-approver role) cannot countersign a pending action — A
     }
   )
   expect(approveResp.status()).toBe(403)
+
+  // The support user's denied attempt must be visible on the auditor's
+  // investigation surface — SoD trail requirement.
+  if (actorId) {
+    await expectAuditEvent(
+      auditorPage,
+      { actor_id: actorId, from_dt: t0.toISOString() },
+      { timeoutMs: 15_000 }
+    )
+  }
 })
 
 // ---------------------------------------------------------------------------
@@ -166,8 +210,9 @@ test("Support user (non-approver role) cannot countersign a pending action — A
 // Skips if the current user has no pending self-initiated actions.
 // ---------------------------------------------------------------------------
 
-test("Initiating user cannot countersign their own pending action — UI hides review button and API returns 4xx (AC-06, AC-07)", async ({
+test("Initiating user cannot countersign their own pending action — UI hides review button, API returns 4xx, denial is audit-traced (AC-06, AC-07)", async ({
   authenticatedPage,
+  auditorPage,
 }) => {
   const approvalsPage = new PendingApprovalsPage(authenticatedPage)
   await approvalsPage.goto()
@@ -187,6 +232,9 @@ test("Initiating user cannot countersign their own pending action — UI hides r
   await expect(approvalsPage.withdrawButton(actionId)).toBeVisible()
   await expect(row).toContainText("You submitted this request")
 
+  const actorId = await getOwnPrincipalId(authenticatedPage)
+  const t0 = new Date()
+
   // API assertion: POST approve as initiator must be rejected
   const apiBase = process.env.E2E_API_BASE_URL ?? ""
   const approveResp = await authenticatedPage.request.post(
@@ -194,6 +242,16 @@ test("Initiating user cannot countersign their own pending action — UI hides r
     { data: { comment: "E2E test — self-approval attempt, must be rejected" } }
   )
   expect([400, 403, 422]).toContain(approveResp.status())
+
+  // Self-approval block is a governance decision — must be audit-traced so
+  // a reviewer can see who attempted to short-circuit the four-eyes control.
+  if (actorId) {
+    await expectAuditEvent(
+      auditorPage,
+      { actor_id: actorId, from_dt: t0.toISOString() },
+      { timeoutMs: 15_000 }
+    )
+  }
 })
 
 // ---------------------------------------------------------------------------

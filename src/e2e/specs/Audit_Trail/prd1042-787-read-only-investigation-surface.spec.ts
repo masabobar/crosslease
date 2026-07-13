@@ -42,21 +42,33 @@ test.describe("PRD1042-787 — Read-Only Investigation Surface", () => {
   // and see a paginated results grid. Tenant-scoping is enforced server-side.
   // -------------------------------------------------------------------------
 
-  const authorizedRoles = [
-    { role: "System Admin", fixture: "authenticatedPage" as const },
-    { role: "Auditor", fixture: "auditorPage" as const },
-    { role: "Support", fixture: "supportPage" as const },
-  ]
+  // Playwright fixture parameter names must be static identifiers, so the
+  // three authorized-role scenarios are unrolled rather than looped over a
+  // computed key.
 
-  for (const { role, fixture } of authorizedRoles) {
-    test(`${role} accesses the investigation surface with paginated results (AC-01, AC-08)`, async ({
-      [fixture]: page,
-    }) => {
-      const investigationPage = new AuditInvestigationPage(page)
-      await investigationPage.goto()
-      await expect(page).toHaveURL(new RegExp(INVESTIGATION_URL))
-    })
-  }
+  test("System Admin accesses the investigation surface with paginated results (AC-01, AC-08)", async ({
+    authenticatedPage,
+  }) => {
+    const investigationPage = new AuditInvestigationPage(authenticatedPage)
+    await investigationPage.goto()
+    await expect(authenticatedPage).toHaveURL(new RegExp(INVESTIGATION_URL))
+  })
+
+  test("Auditor accesses the investigation surface with paginated results (AC-01, AC-08)", async ({
+    auditorPage,
+  }) => {
+    const investigationPage = new AuditInvestigationPage(auditorPage)
+    await investigationPage.goto()
+    await expect(auditorPage).toHaveURL(new RegExp(INVESTIGATION_URL))
+  })
+
+  test("Support accesses the investigation surface with paginated results (AC-01, AC-08)", async ({
+    supportPage,
+  }) => {
+    const investigationPage = new AuditInvestigationPage(supportPage)
+    await investigationPage.goto()
+    await expect(supportPage).toHaveURL(new RegExp(INVESTIGATION_URL))
+  })
 
   // -------------------------------------------------------------------------
   // HAPPY PATH — AC-02
