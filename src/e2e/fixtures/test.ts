@@ -1,5 +1,10 @@
 import { test as base, expect } from "@playwright/test"
-import type { APIRequestContext, Locator, Page } from "@playwright/test"
+import type {
+  APIRequestContext,
+  APIResponse,
+  Locator,
+  Page,
+} from "@playwright/test"
 import { LoginPage } from "../pages/LoginPage"
 
 type Fixtures = {
@@ -161,4 +166,4 @@ export const test = base.extend<Fixtures>({
 })
 
 export { expect }
-export type { APIRequestContext, Locator, Page }
+export type { APIRequestContext, APIResponse, Locator, Page }
