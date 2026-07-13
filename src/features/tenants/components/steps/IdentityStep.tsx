@@ -15,6 +15,7 @@ import {
   ComboboxItem,
   ComboboxEmpty,
 } from "@/components/ui/combobox"
+import { selectOnFocus } from "@/lib/utils"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -229,13 +230,16 @@ function IdentityStep({ form }: Props) {
                 placeholder={t("fields.countrySearchPlaceholder")}
                 showClear
                 aria-invalid={!!errors.country}
+                onFocus={selectOnFocus}
               />
               <ComboboxContent>
                 <ComboboxList>
                   <ComboboxEmpty>{t("fields.countryNoResults")}</ComboboxEmpty>
                   <ComboboxCollection>
                     {(opt: { value: string; label: string }) => (
-                      <ComboboxItem value={opt.value}>{opt.label}</ComboboxItem>
+                      <ComboboxItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </ComboboxItem>
                     )}
                   </ComboboxCollection>
                 </ComboboxList>

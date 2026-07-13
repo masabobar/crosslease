@@ -22,6 +22,7 @@ import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeId
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
 import { ApiError } from "@/lib/api"
 import { COUNTRIES } from "@/lib/countries"
+import { selectOnFocus } from "@/lib/utils"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
 
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
@@ -138,6 +139,7 @@ function ProposeIdentityChangeDialog({
                         data-testid={`propose-value-${anchor.key}`}
                         placeholder={t("list.filters.countrySearchPlaceholder")}
                         showClear
+                        onFocus={selectOnFocus}
                       />
                       <ComboboxContent>
                         <ComboboxList>
@@ -146,7 +148,7 @@ function ProposeIdentityChangeDialog({
                           </ComboboxEmpty>
                           <ComboboxCollection>
                             {(opt: { value: string; label: string }) => (
-                              <ComboboxItem value={opt.value}>
+                              <ComboboxItem key={opt.value} value={opt.value}>
                                 {opt.label}
                               </ComboboxItem>
                             )}
