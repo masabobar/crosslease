@@ -5,11 +5,58 @@ import { LoaderCircle, CircleAlert, CheckCheck, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { partnerDetail, PATHS } from "@/router/paths"
 import { countryName } from "@/lib/countries"
+import { cn } from "@/lib/utils"
 import type {
   PartnerMatchResponse,
   PartnerRole,
 } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
+
+type MatchedCandidatesCardProps = {
+  candidates: PartnerMatchResponse["candidate_summaries"]
+  accentClassName: string
+}
+
+function MatchedCandidatesCard({
+  candidates,
+  accentClassName,
+}: MatchedCandidatesCardProps) {
+  const { t } = useTranslation("partners")
+
+  return (
+    <div className="rounded-xl border border-border p-4 flex flex-col gap-2">
+      <p className="text-sm font-medium text-foreground">
+        {t("submit.matchStep.matchedCandidates")}
+      </p>
+      {candidates.map(c => (
+        <div key={c.partner_id} className="flex flex-col gap-1">
+          <div
+            className={cn(
+              "rounded-xl bg-muted border-l-3 px-4 py-3 flex items-center justify-between gap-4",
+              accentClassName
+            )}
+          >
+            <p className="text-sm font-medium text-foreground">
+              {c.display_name}
+            </p>
+            <Link
+              to={partnerDetail(c.partner_id)}
+              className="text-sm font-medium text-primary shrink-0"
+            >
+              {t("submit.matchStep.viewPartner")}
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("submit.matchStep.matchedAnchors")}:{" "}
+            <span className="font-semibold">
+              {c.matched_anchors.join(", ")}
+            </span>
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 type MatchingReviewProps = {
   matchResult: PartnerMatchResponse | null
@@ -124,37 +171,10 @@ function MatchingReview({
                   {t("submit.matchStep.exactMatchAlert")}
                 </p>
               </div>
-              <div className="rounded-xl border border-border p-4 flex flex-col gap-2">
-                <p className="text-sm font-medium text-foreground">
-                  {t("submit.matchStep.matchedCandidates")}
-                </p>
-                <div className="rounded-xl bg-muted border-l-3 border-success px-4 py-3 flex flex-col gap-4">
-                  {matchResult.candidate_summaries.map(c => (
-                    <div
-                      key={c.partner_id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {c.display_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("submit.matchStep.matchedAnchors")}:{" "}
-                          <span className="font-semibold">
-                            {c.matched_anchors.join(", ")}
-                          </span>
-                        </p>
-                      </div>
-                      <Link
-                        to={partnerDetail(c.partner_id)}
-                        className="text-sm font-medium text-primary shrink-0"
-                      >
-                        {t("submit.matchStep.viewPartner")}
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <MatchedCandidatesCard
+                candidates={matchResult.candidate_summaries}
+                accentClassName="border-success"
+              />
             </>
           )}
 
@@ -169,37 +189,10 @@ function MatchingReview({
                   {t("submit.matchStep.ambiguousAlert")}
                 </p>
               </div>
-              <div className="rounded-xl border border-border p-4 flex flex-col gap-2">
-                <p className="text-sm font-medium text-foreground">
-                  {t("submit.matchStep.matchedCandidates")}
-                </p>
-                <div className="rounded-xl bg-muted border-l-3 border-warning px-4 py-3 flex flex-col gap-4">
-                  {matchResult.candidate_summaries.map(c => (
-                    <div
-                      key={c.partner_id}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {c.display_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("submit.matchStep.matchedAnchors")}:{" "}
-                          <span className="font-semibold">
-                            {c.matched_anchors.join(", ")}
-                          </span>
-                        </p>
-                      </div>
-                      <Link
-                        to={partnerDetail(c.partner_id)}
-                        className="text-sm font-medium text-primary shrink-0"
-                      >
-                        {t("submit.matchStep.viewPartner")}
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <MatchedCandidatesCard
+                candidates={matchResult.candidate_summaries}
+                accentClassName="border-warning"
+              />
             </>
           )}
 
