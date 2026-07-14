@@ -29,6 +29,8 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
+import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
+import NotFoundPage from "@/features/not-found/components/NotFoundPage"
 
 const ALL_STATUSES_VALUE = "all"
 
@@ -52,7 +54,7 @@ export default function ProductTemplateListPage() {
     setStatusFilter,
   } = useProductTemplateListParams()
 
-  const { data, isLoading, isError } = useProductTemplateList(tenantId, {
+  const { data, isLoading, isError, error } = useProductTemplateList(tenantId, {
     page,
     per_page: perPage,
     ...(search.trim() ? { search: search.trim() } : {}),
@@ -71,6 +73,10 @@ export default function ProductTemplateListPage() {
 
   function handleCreateTemplate() {
     navigate(PATHS.PRODUCT_TEMPLATE_CREATE)
+  }
+
+  if (isProductTemplateNotFoundError(error)) {
+    return <NotFoundPage />
   }
 
   if (currentUser && !tenantId) {

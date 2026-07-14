@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useCurrentUserPermissions } from "@/features/users/hooks/useCurrentUserPermissions"
 import {
   USER_MANAGEMENT_ALLOWED_ROLES,
   LC_ONLY_ROLES,
@@ -25,12 +26,14 @@ import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
 import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates/types"
+import { BANK_PRODUCT_TEMPLATE_MODULE_KEY } from "@/features/productTemplates/constants"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
   const { t } = useTranslation("common")
   const location = useLocation()
   const { data: currentUser } = useCurrentUser()
+  const { data: permissions } = useCurrentUserPermissions()
   const canAccessUserManagement =
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessAuditTrail =
@@ -39,9 +42,15 @@ export function Sidebar() {
     !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessPartnerRegistry =
     !!currentUser && PARTNER_VIEW_ALLOWED_ROLES.includes(currentUser.role)
+  // Users without a home tenant (system_admin, support_user) aren't gated on module
+  // activation here — /me/permissions only reflects always-on modules for them, since
+  // module activation is per-tenant and they operate across tenants. Enforcement for
+  // a specific tenant still happens at the API layer once one is selected.
   const canAccessProductTemplates =
     !!currentUser &&
-    PRODUCT_TEMPLATE_READ_ALLOWED_ROLES.includes(currentUser.role)
+    PRODUCT_TEMPLATE_READ_ALLOWED_ROLES.includes(currentUser.role) &&
+    (!currentUser.tenant_id ||
+      !!permissions?.active_modules.includes(BANK_PRODUCT_TEMPLATE_MODULE_KEY))
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)

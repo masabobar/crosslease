@@ -71,6 +71,7 @@
     },
     "draftSaved": "Entwurf gespeichert.",
     "loadingDraft": "Entwurf wird geladen…",
+    "backToVersionHistory": "Zurück zur Versionshistorie",
     "discardDialog": {
       "title": "Diesen Entwurf verwerfen?",
       "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
@@ -255,7 +256,7 @@
     "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
     "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "Dieser Vorlagencode wird bereits innerhalb Ihres Mandanten verwendet.",
-    "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
+    "BPT_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "Diese Produktvorlage konnte nicht gefunden werden.",
     "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "Diese Vorlagenversion konnte nicht gefunden werden.",
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",

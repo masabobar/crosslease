@@ -71,6 +71,7 @@
     },
     "draftSaved": "Draft saved.",
     "loadingDraft": "Loading draft…",
+    "backToVersionHistory": "Back to version history",
     "discardDialog": {
       "title": "Discard this draft?",
       "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
@@ -255,7 +256,7 @@
     "minVolumeExceedsMax": "Min volume must not exceed max volume.",
     "validUntilBeforeFrom": "Valid until must be on or after valid from.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "This template code is already in use within your tenant.",
-    "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
+    "BPT_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",
     "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "This template version could not be found.",
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",

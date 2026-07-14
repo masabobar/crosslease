@@ -5,6 +5,7 @@ import {
   ExportJobSchema,
   ExportJobStatusSchema,
   UserListItemSchema,
+  UserMePermissionsResponseSchema,
   PaginatedUsersResponseSchema,
   UserStatusSchema,
 } from "@/features/users/api/schema"
@@ -539,5 +540,56 @@ describe("EditUserRequestSchema", () => {
 
   it("rejects empty string first_name", () => {
     expect(() => EditUserRequestSchema.parse({ first_name: "" })).toThrow()
+  })
+})
+
+describe("UserMePermissionsResponseSchema", () => {
+  it("accepts a valid permissions response", () => {
+    expect(() =>
+      UserMePermissionsResponseSchema.parse({
+        role: "bank_power_user",
+        permissions: ["product_template:read", "product_template:create"],
+        active_modules: ["bank_product_template", "audit_trail"],
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts empty permissions and active_modules arrays", () => {
+    expect(() =>
+      UserMePermissionsResponseSchema.parse({
+        role: "system_admin",
+        permissions: [],
+        active_modules: [],
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown role value", () => {
+    expect(() =>
+      UserMePermissionsResponseSchema.parse({
+        role: "banana",
+        permissions: [],
+        active_modules: [],
+      })
+    ).toThrow()
+  })
+
+  it("rejects a missing active_modules field", () => {
+    expect(() =>
+      UserMePermissionsResponseSchema.parse({
+        role: "system_admin",
+        permissions: [],
+      })
+    ).toThrow()
+  })
+
+  it("rejects non-string entries in active_modules", () => {
+    expect(() =>
+      UserMePermissionsResponseSchema.parse({
+        role: "system_admin",
+        permissions: [],
+        active_modules: [123],
+      })
+    ).toThrow()
   })
 })
