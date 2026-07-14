@@ -355,6 +355,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: PATHS.PRODUCT_TEMPLATE_NEW_VERSION,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES}>
+              <CreateProductTemplateWizardPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
         path: PATHS.LC_REQUESTS,
         element: (
           <Suspense fallback={null}>

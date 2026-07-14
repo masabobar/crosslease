@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
 import { toast } from "sonner"
@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,18 +20,23 @@ import {
 } from "@/components/ui/alert-dialog"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
-import { useTemplateVersionHeader } from "@/features/productTemplates/hooks/useTemplateVersionHeader"
+import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
 import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
+import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
+import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import type {
+  IncrementType,
   TemplateStatus,
   TemplateVersionSummary,
 } from "@/features/productTemplates/api/schema"
-import { PATHS } from "@/router/paths"
+import { PATHS, productTemplateNewVersionEdit } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
+
+const DEPRECATION_JUSTIFICATION_MIN_LENGTH = 10
 
 // Timeline-rail dot color per status — the colored dot sits on the left rail
 // connecting rows; the status badge itself (TemplateVersionStatusBadge) is a plain
@@ -52,12 +58,19 @@ export default function VersionHistoryPage() {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
   const { templateId } = useParams<{ templateId: string }>()
+  const navigate = useNavigate()
 
   const [discardTarget, setDiscardTarget] =
     useState<TemplateVersionSummary | null>(null)
   const [publishTarget, setPublishTarget] =
     useState<TemplateVersionSummary | null>(null)
   const [justification, setJustification] = useState("")
+  const [newVersionTarget, setNewVersionTarget] =
+    useState<TemplateVersionSummary | null>(null)
+  const [incrementType, setIncrementType] = useState<IncrementType | null>(null)
+  const [deprecateTarget, setDeprecateTarget] =
+    useState<TemplateVersionSummary | null>(null)
+  const [deprecationJustification, setDeprecationJustification] = useState("")
 
   const { data: currentUser } = useCurrentUser()
   const canManageDraft = Boolean(
@@ -72,7 +85,7 @@ export default function VersionHistoryPage() {
   } = useTemplateVersions(templateId ?? "")
 
   const latestVersionNumber = history?.versions[0]?.version_number ?? null
-  const { data: header } = useTemplateVersionHeader(
+  const { data: header } = useTemplateVersionDetail(
     templateId ?? "",
     latestVersionNumber
   )
@@ -81,6 +94,10 @@ export default function VersionHistoryPage() {
     useDiscardProductTemplateDraft()
   const { mutateAsync: publishDraft, isPending: isPublishing } =
     usePublishProductTemplate()
+  const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
+    useCreateNewProductTemplateVersion()
+  const { mutateAsync: deprecateVersion, isPending: isDeprecating } =
+    useDeprecateProductTemplateVersion()
 
   async function handleConfirmDiscard() {
     if (!discardTarget || !templateId) return
@@ -113,6 +130,48 @@ export default function VersionHistoryPage() {
       })
       setPublishTarget(null)
       setJustification("")
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}` as "errors.generic", {
+              defaultValue: t("errors.generic"),
+            })
+          : t("errors.generic")
+      )
+    }
+  }
+
+  async function handleConfirmAuthorNewVersion() {
+    if (!newVersionTarget || !templateId || !incrementType) return
+    try {
+      const result = await createNewVersion({
+        templateId,
+        body: { increment_type: incrementType },
+      })
+      setNewVersionTarget(null)
+      setIncrementType(null)
+      navigate(productTemplateNewVersionEdit(templateId, result.version_number))
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}` as "errors.generic", {
+              defaultValue: t("errors.generic"),
+            })
+          : t("errors.generic")
+      )
+    }
+  }
+
+  async function handleConfirmDeprecate() {
+    if (!deprecateTarget || !templateId) return
+    try {
+      await deprecateVersion({
+        templateId,
+        versionNumber: deprecateTarget.version_number,
+        body: { justification: deprecationJustification },
+      })
+      setDeprecateTarget(null)
+      setDeprecationJustification("")
     } catch (err) {
       toast.error(
         err instanceof ApiError
@@ -157,6 +216,7 @@ export default function VersionHistoryPage() {
           <div className="border border-border rounded-xl bg-background overflow-hidden">
             {history.versions.map((version, index) => {
               const isDraft = version.version_status === "draft"
+              const isPublished = version.version_status === "published"
               const isLast = index === history.versions.length - 1
 
               return (
@@ -238,13 +298,37 @@ export default function VersionHistoryPage() {
                           </div>
                         )
                       ) : (
-                        <Link
-                          to={auditTrailLink(version.id)}
-                          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                        >
-                          {t("versionHistory.viewAuditTrail")}
-                          <ExternalLink size={16} />
-                        </Link>
+                        <div className="flex flex-col items-end gap-2">
+                          {isPublished && canManageDraft && (
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                data-testid={`deprecate-version-${version.version_number}`}
+                                onClick={() => setDeprecateTarget(version)}
+                              >
+                                {t("versionHistory.deprecate")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                data-testid={`author-new-version-${version.version_number}`}
+                                onClick={() => setNewVersionTarget(version)}
+                              >
+                                {t("versionHistory.authorNewVersion")}
+                              </Button>
+                            </div>
+                          )}
+                          <Link
+                            to={auditTrailLink(version.id)}
+                            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                          >
+                            {t("versionHistory.viewAuditTrail")}
+                            <ExternalLink size={16} />
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -326,6 +410,114 @@ export default function VersionHistoryPage() {
               disabled={isPublishing}
             >
               {t("versionHistory.publishDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={newVersionTarget !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setNewVersionTarget(null)
+            setIncrementType(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.authorNewVersionDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.authorNewVersionDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 px-1">
+            <RadioGroup
+              data-testid="increment-type-radio-group"
+              value={incrementType ?? undefined}
+              onValueChange={value => setIncrementType(value as IncrementType)}
+              className="gap-3"
+            >
+              <label
+                htmlFor="increment-type-major"
+                className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
+              >
+                <RadioGroupItem id="increment-type-major" value="major" />
+                {t("versionHistory.authorNewVersionDialog.majorLabel")}
+              </label>
+              <label
+                htmlFor="increment-type-minor"
+                className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
+              >
+                <RadioGroupItem id="increment-type-minor" value="minor" />
+                {t("versionHistory.authorNewVersionDialog.minorLabel")}
+              </label>
+            </RadioGroup>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-new-dialog-keep">
+              {t("versionHistory.authorNewVersionDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-new-dialog-confirm"
+              onClick={handleConfirmAuthorNewVersion}
+              disabled={isCreatingNewVersion || !incrementType}
+            >
+              {t("versionHistory.authorNewVersionDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deprecateTarget !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setDeprecateTarget(null)
+            setDeprecationJustification("")
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.deprecateDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.deprecateDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 px-1">
+            <Label htmlFor="deprecate-justification">
+              {t("versionHistory.deprecateDialog.justificationLabel")}
+            </Label>
+            <Textarea
+              id="deprecate-justification"
+              data-testid="deprecate-justification-input"
+              rows={3}
+              value={deprecationJustification}
+              onChange={e => setDeprecationJustification(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground opacity-80">
+              {t("versionHistory.deprecateDialog.justificationHint")}
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-deprecate-dialog-keep">
+              {t("versionHistory.deprecateDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-deprecate-dialog-confirm"
+              onClick={handleConfirmDeprecate}
+              disabled={
+                isDeprecating ||
+                deprecationJustification.trim().length <
+                  DEPRECATION_JUSTIFICATION_MIN_LENGTH
+              }
+            >
+              {t("versionHistory.deprecateDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

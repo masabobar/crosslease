@@ -1,20 +1,26 @@
 import { api } from "@/lib/api"
 import {
+  DeprecateTemplateVersionResponseSchema,
+  NewVersionCreatedResponseSchema,
   PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
-  TemplateVersionHeaderSchema,
+  TemplateVersionDetailSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 import type {
+  CreateNewVersionRequest,
   CreateProductTemplateDraftRequest,
+  DeprecateTemplateVersionRequest,
+  DeprecateTemplateVersionResponse,
+  NewVersionCreatedResponse,
   PublishTemplateDraftRequest,
   PublishTemplateDraftResponse,
   TemplateDraftCreatedResponse,
   TemplateDraftDiscardedResponse,
   TemplateDraftUpdatedResponse,
-  TemplateVersionHeader,
+  TemplateVersionDetail,
   UpdateProductTemplateDraftRequest,
   VersionHistoryResponse,
 } from "@/features/productTemplates/api/schema"
@@ -79,12 +85,32 @@ export async function fetchTemplateVersions(
   return VersionHistoryResponseSchema.parse(data)
 }
 
-export async function fetchTemplateVersionHeader(
+export async function fetchTemplateVersionDetail(
   templateId: string,
   versionNumber: string
-): Promise<TemplateVersionHeader> {
+): Promise<TemplateVersionDetail> {
   const data = await api.get(
     `/product-templates/${templateId}/versions/${versionNumber}`
   )
-  return TemplateVersionHeaderSchema.parse(data)
+  return TemplateVersionDetailSchema.parse(data)
+}
+
+export async function createNewProductTemplateVersion(
+  templateId: string,
+  body: CreateNewVersionRequest
+): Promise<NewVersionCreatedResponse> {
+  const data = await api.post(`/product-templates/${templateId}/versions`, body)
+  return NewVersionCreatedResponseSchema.parse(data)
+}
+
+export async function deprecateProductTemplateVersion(
+  templateId: string,
+  versionNumber: string,
+  body: DeprecateTemplateVersionRequest
+): Promise<DeprecateTemplateVersionResponse> {
+  const data = await api.post(
+    `/product-templates/${templateId}/versions/${versionNumber}/deprecate`,
+    body
+  )
+  return DeprecateTemplateVersionResponseSchema.parse(data)
 }

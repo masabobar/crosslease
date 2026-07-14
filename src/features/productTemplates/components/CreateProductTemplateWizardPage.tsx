@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ArrowRight, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
@@ -22,6 +22,7 @@ import { ProductTemplateWizardFormSchema } from "@/features/productTemplates/api
 import type {
   CreateProductTemplateDraftRequest,
   ProductTemplateWizardForm,
+  TemplateVersionDetail,
   UpdateProductTemplateDraftRequest,
 } from "@/features/productTemplates/api/schema"
 import type { ProductTemplateWizardStep } from "@/features/productTemplates/types"
@@ -32,6 +33,7 @@ import { EligibilityStep } from "@/features/productTemplates/components/steps/El
 import { useCreateProductTemplateDraft } from "@/features/productTemplates/hooks/useCreateProductTemplateDraft"
 import { useUpdateProductTemplateDraft } from "@/features/productTemplates/hooks/useUpdateProductTemplateDraft"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
+import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 
 const ORDERED_STEPS: ProductTemplateWizardStep[] = [
   "identity",
@@ -94,12 +96,55 @@ function toUpdatePayload(
 
 type DraftRef = { templateId: string; versionNumber: string }
 
-export default function CreateProductTemplateWizardPage() {
+// Seeded into the (hidden, immutable) template_code field when authoring a new version
+// from a Published template — VersionDetailResponse doesn't return template_code (no
+// reachable single-template lookup exists either, see plan Gap 4), and template_code is
+// stripped from every update payload regardless, so the placeholder itself is inert.
+const NEW_VERSION_TEMPLATE_CODE_PLACEHOLDER = "N/A"
+
+function toNewVersionFormDefaults(
+  detail: TemplateVersionDetail
+): ProductTemplateWizardForm {
+  return {
+    template_code: NEW_VERSION_TEMPLATE_CODE_PLACEHOLDER,
+    template_name: detail.template_name,
+    template_description: detail.template_description ?? "",
+    financing_type: detail.financing_type,
+    legal_structure: detail.legal_structure,
+    payment_timing: detail.payment_timing,
+    rate_basis: detail.rate_basis,
+    calculation_model: detail.calculation_model,
+    rate_type: detail.rate_type ?? "fixed",
+    npv_formula_ref: detail.npv_formula_ref ?? "",
+    first_installment_rule: detail.first_installment_rule ?? "following_month",
+    disbursement_derivation_rule: detail.disbursement_derivation_rule ?? "npv",
+    allowed_asset_categories: detail.allowed_asset_categories ?? [],
+    min_term_months: detail.min_term_months ?? 1,
+    max_term_months: detail.max_term_months ?? 1,
+    max_ltv_ratio: detail.max_ltv_ratio ?? 0,
+    min_volume_eur: detail.min_volume_eur ?? undefined,
+    max_volume_eur: detail.max_volume_eur ?? undefined,
+    valid_from: detail.valid_from ?? "",
+    valid_until: detail.valid_until ?? "",
+  }
+}
+
+type WizardFormProps = {
+  initialDraftRef: DraftRef | null
+  initialFormValues: ProductTemplateWizardForm | undefined
+  hideTemplateCode: boolean
+}
+
+function WizardFormView({
+  initialDraftRef,
+  initialFormValues,
+  hideTemplateCode,
+}: WizardFormProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
 
   const [step, setStep] = useState<ProductTemplateWizardStep>("identity")
-  const [draftRef, setDraftRef] = useState<DraftRef | null>(null)
+  const [draftRef, setDraftRef] = useState<DraftRef | null>(initialDraftRef)
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
 
   const { data: currentUser } = useCurrentUser()
@@ -114,7 +159,7 @@ export default function CreateProductTemplateWizardPage() {
 
   const form = useForm<ProductTemplateWizardForm>({
     resolver: zodResolver(ProductTemplateWizardFormSchema),
-    defaultValues: {
+    defaultValues: initialFormValues ?? {
       template_code: "",
       template_name: "",
       template_description: "",
@@ -253,7 +298,9 @@ export default function CreateProductTemplateWizardPage() {
             </p>
           </div>
 
-          {step === "identity" && <IdentityStep form={form} />}
+          {step === "identity" && (
+            <IdentityStep form={form} hideTemplateCode={hideTemplateCode} />
+          )}
           {step === "behavioral" && <BehavioralSettingsStep form={form} />}
           {step === "eligibility" && <EligibilityStep form={form} />}
         </div>
@@ -342,5 +389,62 @@ export default function CreateProductTemplateWizardPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}
+
+export default function CreateProductTemplateWizardPage() {
+  const { t } = useTranslation("productTemplates")
+  const { templateId, versionNumber } = useParams<{
+    templateId?: string
+    versionNumber?: string
+  }>()
+  const draftRefFromRoute =
+    templateId && versionNumber ? { templateId, versionNumber } : null
+
+  const {
+    data: existingDraft,
+    isLoading,
+    isError,
+  } = useTemplateVersionDetail(
+    draftRefFromRoute?.templateId ?? "",
+    draftRefFromRoute?.versionNumber ?? null
+  )
+
+  if (draftRefFromRoute && isLoading) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center">
+        <p className="text-sm text-muted-foreground">
+          {t("wizard.loadingDraft")}
+        </p>
+      </div>
+    )
+  }
+
+  if (draftRefFromRoute && (isError || !existingDraft)) {
+    return (
+      <div
+        className="flex flex-col h-full items-center justify-center"
+        data-testid="wizard-load-error"
+      >
+        <p className="text-sm text-muted-foreground">{t("errors.generic")}</p>
+      </div>
+    )
+  }
+
+  return (
+    <WizardFormView
+      key={
+        draftRefFromRoute
+          ? `${draftRefFromRoute.templateId}-${draftRefFromRoute.versionNumber}`
+          : "create"
+      }
+      initialDraftRef={draftRefFromRoute}
+      initialFormValues={
+        draftRefFromRoute && existingDraft
+          ? toNewVersionFormDefaults(existingDraft)
+          : undefined
+      }
+      hideTemplateCode={draftRefFromRoute !== null}
+    />
   )
 }

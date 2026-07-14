@@ -31,6 +31,8 @@ export const PATHS = {
   PRODUCT_TEMPLATE_CREATE: "/business-configuration/product-templates/new",
   PRODUCT_TEMPLATE_VERSION_HISTORY:
     "/business-configuration/product-templates/:templateId/version-history",
+  PRODUCT_TEMPLATE_NEW_VERSION:
+    "/business-configuration/product-templates/:templateId/versions/:versionNumber/edit",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -58,4 +60,14 @@ export function productTemplateVersionHistory(templateId: string): string {
     ":templateId",
     templateId
   )
+}
+
+export function productTemplateNewVersionEdit(
+  templateId: string,
+  versionNumber: string
+): string {
+  return PATHS.PRODUCT_TEMPLATE_NEW_VERSION.replace(
+    ":templateId",
+    templateId
+  ).replace(":versionNumber", versionNumber)
 }

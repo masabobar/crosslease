@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
 import {
-  fetchTemplateVersionHeader,
+  fetchTemplateVersionDetail,
   PRODUCT_TEMPLATES_QUERY_KEYS,
 } from "@/features/productTemplates/api/productTemplatesApi"
 import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
-export function useTemplateVersionHeader(
+export function useTemplateVersionDetail(
   templateId: string,
   versionNumber: string | null
 ) {
@@ -14,7 +14,7 @@ export function useTemplateVersionHeader(
       templateId,
       versionNumber ?? ""
     ),
-    queryFn: () => fetchTemplateVersionHeader(templateId, versionNumber ?? ""),
+    queryFn: () => fetchTemplateVersionDetail(templateId, versionNumber ?? ""),
     staleTime: THIRTY_SECONDS_MS,
     enabled: versionNumber !== null,
   })

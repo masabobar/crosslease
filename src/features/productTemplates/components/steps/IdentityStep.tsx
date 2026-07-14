@@ -8,9 +8,10 @@ import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/
 
 type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>
+  hideTemplateCode?: boolean
 }
 
-function IdentityStep({ form }: Props) {
+function IdentityStep({ form, hideTemplateCode = false }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
   const { register, control } = form
@@ -49,29 +50,31 @@ function IdentityStep({ form }: Props) {
         )}
       </div>
 
-      <div>
-        <Label
-          htmlFor="template_code"
-          error={!!errors.template_code}
-          className="mb-2"
-        >
-          {t("fields.templateCode")}
-        </Label>
-        <Input
-          id="template_code"
-          data-testid="template-code-input"
-          error={!!errors.template_code}
-          {...register("template_code")}
-        />
-        <p className="mt-2 text-sm text-muted-foreground opacity-80">
-          {t("fields.templateCodeHint")}
-        </p>
-        {errors.template_code && (
-          <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.template_code.message)}
+      {!hideTemplateCode && (
+        <div>
+          <Label
+            htmlFor="template_code"
+            error={!!errors.template_code}
+            className="mb-2"
+          >
+            {t("fields.templateCode")}
+          </Label>
+          <Input
+            id="template_code"
+            data-testid="template-code-input"
+            error={!!errors.template_code}
+            {...register("template_code")}
+          />
+          <p className="mt-2 text-sm text-muted-foreground opacity-80">
+            {t("fields.templateCodeHint")}
           </p>
-        )}
-      </div>
+          {errors.template_code && (
+            <p className="mt-1 text-sm text-destructive">
+              {resolveMsg(errors.template_code.message)}
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <Label

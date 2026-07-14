@@ -27,6 +27,7 @@
     },
     "draftSaved": "Draft saved.",
     "orchestrationComingSoon": "Orchestration linkage is not available yet.",
+    "loadingDraft": "Loading draft…",
     "discardDialog": {
       "title": "Discard this draft?",
       "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
@@ -151,6 +152,24 @@
       "justificationPlaceholder": "Add a note about this activation…",
       "keep": "Keep editing",
       "confirm": "Publish version"
+    },
+    "authorNewVersion": "Author new version",
+    "authorNewVersionDialog": {
+      "title": "Author a new version?",
+      "description": "A new draft version will be created from this version's current values. Choose whether this change is major or minor before continuing.",
+      "majorLabel": "Major — structural changes (financing type, legal structure, payment timing, NPV formula, calculation model)",
+      "minorLabel": "Minor — parameter refinements",
+      "keep": "Cancel",
+      "confirm": "Create draft"
+    },
+    "deprecate": "Deprecate",
+    "deprecateDialog": {
+      "title": "Deprecate template version",
+      "description": "This version will be removed from all operational selectors immediately. Existing financings and requests bound to this version will continue to operate unaffected.",
+      "justificationLabel": "Deprecation justification",
+      "justificationHint": "Mandatory. Minimum 10 characters.",
+      "keep": "Cancel",
+      "confirm": "Deprecate version"
     }
   },
   "errors": {
@@ -163,8 +182,10 @@
     "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",
     "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "This template version could not be found.",
-    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version is no longer a draft and can't be published again.",
+    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
+    "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
+    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "This change affects core behavioral fields and requires a major version increment.",
     "generic": "Something went wrong. Please try again."
   }
 }
