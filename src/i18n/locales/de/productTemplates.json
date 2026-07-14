@@ -1,0 +1,191 @@
+{
+  "wizard": {
+    "steps": {
+      "identity": "Identität",
+      "behavioral": "Verhaltenseinstellungen",
+      "eligibility": "Berechtigung",
+      "orchestration": "Orchestrierungsverknüpfung",
+      "review": "Prüfen & veröffentlichen"
+    },
+    "identity": {
+      "title": "Neue Produktvorlage erstellen",
+      "subtitle": "Geben Sie der Vorlage einen eindeutigen Code und einen aussagekräftigen Namen."
+    },
+    "behavioral": {
+      "title": "Verhaltenseinstellungen",
+      "subtitle": "Definieren Sie die Berechnungslogik und das Zahlungsverhalten."
+    },
+    "eligibility": {
+      "title": "Berechtigung",
+      "subtitle": "Legen Sie den Vermögensumfang, die Laufzeit- und Volumengrenzen sowie das Gültigkeitsfenster fest."
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "saveDraft": "Als Entwurf speichern"
+    },
+    "draftSaved": "Entwurf gespeichert.",
+    "orchestrationComingSoon": "Orchestrierungsverknüpfung ist noch nicht verfügbar.",
+    "loadingDraft": "Entwurf wird geladen…",
+    "discardDialog": {
+      "title": "Diesen Entwurf verwerfen?",
+      "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Entwurf verwerfen"
+    }
+  },
+  "sections": {
+    "settings": "Einstellungen",
+    "npvFormulaReference": "NPV-Formelreferenz",
+    "allowedAssetCategories": "Zulässige Vermögenskategorien",
+    "details": "Details"
+  },
+  "fields": {
+    "templateName": "Vorlagenname",
+    "templateCode": "Vorlagencode",
+    "templateCodeHint": "Eindeutig innerhalb des Mandanten.",
+    "templateDescription": "Beschreibung",
+    "templateDescriptionHint": "Max. 1000 Zeichen.",
+    "optional": "(optional)",
+    "selectPlaceholder": "Auswählen",
+    "financingType": "Finanzierungsart",
+    "legalStructure": "Rechtsstruktur",
+    "paymentTiming": "Zahlungszeitpunkt",
+    "rateBasis": "Zinsbasis",
+    "calculationModel": "Berechnungsmodell",
+    "rateType": "Zinstyp",
+    "firstInstallmentRule": "Regel für erste Rate",
+    "disbursementDerivationRule": "Auszahlungsableitungsregel",
+    "npvFormulaReferenceHint": "Wählen Sie die NPV-Berechnungsformel für dieses Produkt.",
+    "allowedAssetCategoriesHint": "Wählen Sie mindestens eine aus.",
+    "minTermMonths": "Min. Laufzeit (Monate)",
+    "maxTermMonths": "Max. Laufzeit (Monate)",
+    "maxLtvRatio": "Max. LTV-Verhältnis (%)",
+    "minVolumeEur": "Min. Volumen (EUR)",
+    "maxVolumeEur": "Max. Volumen (EUR)",
+    "validFrom": "Gültig ab",
+    "validUntil": "Gültig bis",
+    "validUntilHint": "Leer lassen für unbefristet."
+  },
+  "financingTypes": {
+    "full_refinancing": "Vollrefinanzierung",
+    "partial_refinancing": "Teilrefinanzierung",
+    "residual_value_financing": "Restwertfinanzierung",
+    "true_sale_forfaiting": "True Sale / Forfaitierung",
+    "refinancing_credit_line": "Refinanzierungskreditlinie",
+    "structured_portfolio": "Strukturiertes Portfolio"
+  },
+  "legalStructures": {
+    "loan_credit": "Darlehen / Kredit",
+    "true_sale": "True Sale (Forfaitierung)"
+  },
+  "paymentTimings": {
+    "advance": "Vorschüssig",
+    "arrears": "Nachschüssig"
+  },
+  "rateBases": {
+    "30_360": "30/360",
+    "act_360": "Act/360",
+    "act_365": "Act/365",
+    "act_act": "Act/Act"
+  },
+  "calculationModels": {
+    "annuity": "Annuität",
+    "bullet": "Bullet",
+    "irregular": "Unregelmäßig"
+  },
+  "rateTypes": {
+    "fixed": "Fest",
+    "floating": "Variabel",
+    "euribor_spread": "EURIBOR + Spread"
+  },
+  "firstInstallmentRules": {
+    "submission_month": "Einreichungsmonat",
+    "following_month": "Folgemonat",
+    "configurable_offset": "Konfigurierbarer Versatz"
+  },
+  "disbursementDerivationRules": {
+    "npv": "NPV",
+    "npv_ltv": "NPV × LTV%",
+    "rv_only": "Nur RV"
+  },
+  "npvFormulas": {
+    "standardAnnuity": "Standard-Annuitäts-NPV",
+    "bullet": "Bullet-NPV",
+    "residualValue": "Restwert-NPV"
+  },
+  "assetCategories": {
+    "machinery": "Maschinen",
+    "vehicles": "Fahrzeuge",
+    "it_equipment": "IT-Ausrüstung",
+    "real_estate": "Immobilien",
+    "energy_assets": "Energieanlagen",
+    "other": "Sonstiges"
+  },
+  "versionStatuses": {
+    "draft": "Entwurf",
+    "published": "Veröffentlicht",
+    "deprecated": "Veraltet",
+    "discarded": "Verworfen",
+    "awaiting_activation_countersignature": "Wartet auf Aktivierung",
+    "awaiting_deprecation_countersignature": "Wartet auf Außerkraftsetzung"
+  },
+  "versionHistory": {
+    "title": "Versionsverlauf",
+    "publishedBy": "Veröffentlicht von {{name}} · {{date}}",
+    "deprecatedBy": "Außer Kraft gesetzt von {{name}} · {{date}}",
+    "bindingsCount": "{{count}} Bindungen",
+    "viewAuditTrail": "Audit-Trail anzeigen",
+    "discard": "Verwerfen",
+    "discardDialog": {
+      "title": "Diesen Entwurf verwerfen?",
+      "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Entwurf verwerfen"
+    },
+    "publish": "Veröffentlichen",
+    "publishDialog": {
+      "title": "Diese Version veröffentlichen?",
+      "description": "Die Veröffentlichung aktiviert diese Version sofort und ersetzt die aktuell veröffentlichte Version, die dadurch veraltet wird. Dies kann von hier aus nicht rückgängig gemacht werden.",
+      "justificationLabel": "Begründung (optional)",
+      "justificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Aktivierung hinzu…",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Version veröffentlichen"
+    },
+    "authorNewVersion": "Neue Version erstellen",
+    "authorNewVersionDialog": {
+      "title": "Neue Version erstellen?",
+      "description": "Es wird ein neuer Entwurf mit den aktuellen Werten dieser Version erstellt. Wählen Sie, ob es sich um eine größere oder kleinere Änderung handelt, bevor Sie fortfahren.",
+      "majorLabel": "Groß — strukturelle Änderungen (Finanzierungsart, Rechtsstruktur, Zahlungszeitpunkt, NPV-Formel, Berechnungsmodell)",
+      "minorLabel": "Klein — Parameteranpassungen",
+      "keep": "Abbrechen",
+      "confirm": "Entwurf erstellen"
+    },
+    "deprecate": "Außer Kraft setzen",
+    "deprecateDialog": {
+      "title": "Vorlagenversion außer Kraft setzen",
+      "description": "Diese Version wird sofort aus allen operativen Auswahllisten entfernt. Bestehende Finanzierungen und Anfragen, die an diese Version gebunden sind, laufen unverändert weiter.",
+      "justificationLabel": "Begründung der Außerkraftsetzung",
+      "justificationHint": "Erforderlich. Mindestens 10 Zeichen.",
+      "keep": "Abbrechen",
+      "confirm": "Version außer Kraft setzen"
+    }
+  },
+  "errors": {
+    "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
+    "atLeastOneAssetCategory": "Wählen Sie mindestens eine Vermögenskategorie aus.",
+    "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
+    "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
+    "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
+    "PRODUCT_TEMPLATE_CODE_CONFLICT": "Dieser Vorlagencode wird bereits innerhalb Ihres Mandanten verwendet.",
+    "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
+    "PRODUCT_TEMPLATE_NOT_FOUND": "Diese Produktvorlage konnte nicht gefunden werden.",
+    "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "Diese Vorlagenversion konnte nicht gefunden werden.",
+    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",
+    "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
+    "PRODUCT_TEMPLATE_DRAFT_EXISTS": "Für diese Vorlage existiert bereits ein Entwurf. Verwerfen oder veröffentlichen Sie ihn, bevor Sie einen neuen erstellen.",
+    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "Diese Änderung betrifft zentrale Verhaltensfelder und erfordert eine große Versionsänderung.",
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

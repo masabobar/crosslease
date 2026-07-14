@@ -4,6 +4,7 @@ export const USER_ROLES = [
   "system_admin",
   "support_user",
   "auditor",
+  "bank_power_user",
   "front_office",
   "back_office",
   "leasing_company_user",

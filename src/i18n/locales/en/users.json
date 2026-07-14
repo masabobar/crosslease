@@ -27,6 +27,7 @@
     "system_admin": "Admin",
     "support_user": "Support",
     "auditor": "Auditor",
+    "bank_power_user": "Bank Admin",
     "front_office": "Front Office",
     "back_office": "Back Office",
     "leasing_company_user": "Leasing Co. User"

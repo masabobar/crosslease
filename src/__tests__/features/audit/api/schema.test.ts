@@ -186,7 +186,7 @@ describe("deriveAuditResult", () => {
     expect(deriveAuditResult("access.request_denied")).toBe("Failed")
   })
 
-  it("returns Failed for events containing _rejected", () => {
+  it("returns Failed for events containing _rejected without an action_type", () => {
     expect(deriveAuditResult("user.invite_rejected")).toBe("Failed")
   })
 
@@ -197,5 +197,36 @@ describe("deriveAuditResult", () => {
   it("is case-insensitive", () => {
     expect(deriveAuditResult("AUTH.LOGIN_FAILED")).toBe("Failed")
     expect(deriveAuditResult("AUTH.LOGIN_SUCCEEDED")).toBe("Success")
+  })
+
+  it("returns Success for a governed-action rejection (state_transition)", () => {
+    expect(
+      deriveAuditResult("tenant.create_rejected", "state_transition")
+    ).toBe("Success")
+    expect(deriveAuditResult("user.invite_rejected", "state_transition")).toBe(
+      "Success"
+    )
+    expect(
+      deriveAuditResult("partner.identity_change_rejected", "state_transition")
+    ).toBe("Success")
+  })
+
+  it("still returns Success for a plain state_transition event without the suffix guard", () => {
+    expect(deriveAuditResult("tenant.suspended", "state_transition")).toBe(
+      "Success"
+    )
+  })
+
+  it("keeps non-governed _rejected/_violation events Failed regardless of action_type", () => {
+    expect(deriveAuditResult("auth.login_failed", "access")).toBe("Failed")
+    expect(deriveAuditResult("security.permission_denied", "access")).toBe(
+      "Failed"
+    )
+    expect(
+      deriveAuditResult(
+        "product_template.immutability_violation_attempted",
+        "update"
+      )
+    ).toBe("Failed")
   })
 })

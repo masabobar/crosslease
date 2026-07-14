@@ -19,6 +19,7 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox"
 import { COUNTRIES } from "@/lib/countries"
+import { selectOnFocus } from "@/lib/utils"
 import {
   PartnerRoleSchema,
   PartnerTypeSchema,
@@ -31,6 +32,17 @@ const RISK_SENSITIVE_ROLES: PartnerRole[] = [
   "bank_entity",
   "ubo_related_person",
 ]
+
+// RHF's reset() only clears top-level fields omitted from the new values —
+// nested paths like registered_address.street are left untouched unless
+// explicitly included, so a switch away from Legal Entity would otherwise
+// leave its address behind on the new (blank-looking) form.
+const BLANK_ADDRESS = {
+  street: "",
+  city: "",
+  postal_code: "",
+  state_region: "",
+}
 
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
 const PARTNER_TYPE_OPTIONS = PartnerTypeSchema.options
@@ -153,7 +165,6 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
     register,
     handleSubmit,
     control,
-    getValues,
     reset,
     formState: { errors },
   } = useForm<IdentityForm>({
@@ -172,15 +183,20 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
   const isDe = typeof country === "string" && country.toUpperCase() === "DE"
 
   function handleTypeChange(type: PartnerType) {
-    setPartnerType(type)
-    // Preserve fields shared across entity types (country, registered_address,
-    // roles, and any type-specific fields that happen to overlap by name) —
-    // schemaForType(type) strips whatever doesn't belong to the new type at
-    // validation time, so carrying the full previous values forward is safe.
-    reset({
-      ...getValues(),
-      partner_type: type,
-    } as IdentityForm)
+    // Deferred so the closing entity-type dropdown finishes its own
+    // close/focus-restore cycle before the form fields underneath it get
+    // swapped out — otherwise the two races and clicks right after switching
+    // land on nothing (same class of issue as mui/base-ui#3149).
+    setTimeout(() => {
+      setPartnerType(type)
+      // Full reset rather than carrying values forward — switching entity
+      // type starts the form over from a clean slate.
+      reset({
+        partner_type: type,
+        registered_address: BLANK_ADDRESS,
+        roles: [],
+      } as unknown as IdentityForm)
+    }, 0)
   }
 
   function onValid(values: IdentityForm) {
@@ -195,6 +211,12 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
       } as PartnerIdentityInput,
       roles,
     })
+    setPartnerType("legal_entity")
+    reset({
+      partner_type: "legal_entity",
+      registered_address: BLANK_ADDRESS,
+      roles: [],
+    } as unknown as IdentityForm)
   }
 
   const isLegalEntity = partnerType === "legal_entity"
@@ -230,6 +252,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             value={field.value as string}
             onChange={field.onChange}
             maxDate={new Date()}
+            captionLayout="dropdown"
             error={"date_of_birth" in errors && !!errors.date_of_birth}
           />
         )}
@@ -327,33 +350,26 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 )}
               </div>
             ) : (
-              partnerType === "sole_proprietor" && dateOfBirthField
+              dateOfBirthField
             )}
-            {isLegalEntity || partnerType === "sole_proprietor" ? (
-              entityTypeField
-            ) : (
-              <div className="col-span-2">{entityTypeField}</div>
-            )}
+            {entityTypeField}
           </div>
 
           {partnerType === "natural_person" && (
-            <div className="grid grid-cols-2 gap-4">
-              {dateOfBirthField}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="place_of_birth">
-                  {t("submit.identityStep.fields.placeOfBirth")}
-                </Label>
-                <Input
-                  id="place_of_birth"
-                  data-testid="field-place_of_birth"
-                  {...register("place_of_birth" as keyof IdentityForm)}
-                />
-                {"place_of_birth" in errors && errors.place_of_birth && (
-                  <p className="text-xs text-destructive">
-                    {errors.place_of_birth.message}
-                  </p>
-                )}
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="place_of_birth">
+                {t("submit.identityStep.fields.placeOfBirth")}
+              </Label>
+              <Input
+                id="place_of_birth"
+                data-testid="field-place_of_birth"
+                {...register("place_of_birth" as keyof IdentityForm)}
+              />
+              {"place_of_birth" in errors && errors.place_of_birth && (
+                <p className="text-xs text-destructive">
+                  {errors.place_of_birth.message}
+                </p>
+              )}
             </div>
           )}
         </CardContent>
@@ -373,6 +389,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 {t("submit.identityStep.fields.country")}
               </Label>
               <Controller
+                key={partnerType}
                 control={control}
                 name={"country" as keyof IdentityForm}
                 render={({ field }) => (
@@ -386,6 +403,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                       data-testid="field-country"
                       placeholder={t("list.filters.countrySearchPlaceholder")}
                       showClear
+                      onFocus={selectOnFocus}
                     />
                     <ComboboxContent>
                       <ComboboxList>
@@ -394,7 +412,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                         </ComboboxEmpty>
                         <ComboboxCollection>
                           {(opt: { value: string; label: string }) => (
-                            <ComboboxItem value={opt.value}>
+                            <ComboboxItem key={opt.value} value={opt.value}>
                               {opt.label}
                             </ComboboxItem>
                           )}
@@ -509,7 +527,10 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             {t("submit.form.sections.address")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-4 flex flex-col gap-6">
+        <CardContent
+          key={partnerType}
+          className="px-4 py-4 flex flex-col gap-6"
+        >
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="street">
@@ -594,6 +615,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
         </CardHeader>
         <CardContent className="px-4 py-4">
           <Controller
+            key={partnerType}
             control={control}
             name={"roles" as keyof IdentityForm}
             render={({ field }) => {
@@ -611,15 +633,22 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                     const isRisky = RISK_SENSITIVE_ROLES.includes(role)
                     const checked = selected.includes(role)
                     return (
-                      <label
+                      // NOTE: plain <div> instead of <label htmlFor>. BaseUI's
+                      // Checkbox always renders a hidden native <input> for form
+                      // semantics; a native <label> wrapping it (with or without
+                      // htmlFor) makes the browser dispatch a second synthetic
+                      // click to that hidden input on every click, which after an
+                      // RHF reset() double-toggles this field back to its
+                      // previous value. onClick here is the single source of
+                      // truth for toggling instead.
+                      <div
                         key={role}
-                        htmlFor={`role-${role}`}
+                        onClick={() => toggle(role)}
                         className="flex items-start gap-2 p-3 rounded-xl border border-border cursor-pointer"
                       >
                         <Checkbox
-                          id={`role-${role}`}
                           checked={checked}
-                          onCheckedChange={() => toggle(role)}
+                          aria-label={t(`role.${role}` as "role.lessee")}
                           className="mt-1"
                         />
                         <div className="flex flex-col gap-1">
@@ -639,7 +668,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                             )}
                           </p>
                         </div>
-                      </label>
+                      </div>
                     )
                   })}
                 </div>

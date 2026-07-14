@@ -1,0 +1,191 @@
+{
+  "wizard": {
+    "steps": {
+      "identity": "Identity",
+      "behavioral": "Behavioral settings",
+      "eligibility": "Eligibility",
+      "orchestration": "Orchestration linkage",
+      "review": "Review & publish"
+    },
+    "identity": {
+      "title": "Create new product template",
+      "subtitle": "Give the template a unique code and a descriptive name."
+    },
+    "behavioral": {
+      "title": "Behavioral settings",
+      "subtitle": "Define the calculation logic and payment behavior."
+    },
+    "eligibility": {
+      "title": "Eligibility",
+      "subtitle": "Set the asset scope, term and volume boundaries, and validity window."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Continue",
+      "saveDraft": "Save as draft"
+    },
+    "draftSaved": "Draft saved.",
+    "orchestrationComingSoon": "Orchestration linkage is not available yet.",
+    "loadingDraft": "Loading draft…",
+    "discardDialog": {
+      "title": "Discard this draft?",
+      "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
+      "keep": "Keep editing",
+      "confirm": "Discard draft"
+    }
+  },
+  "sections": {
+    "settings": "Settings",
+    "npvFormulaReference": "NPV formula reference",
+    "allowedAssetCategories": "Allowed asset categories",
+    "details": "Details"
+  },
+  "fields": {
+    "templateName": "Template name",
+    "templateCode": "Template code",
+    "templateCodeHint": "Unique within tenant.",
+    "templateDescription": "Description",
+    "templateDescriptionHint": "Max 1000 characters.",
+    "optional": "(optional)",
+    "selectPlaceholder": "Select",
+    "financingType": "Financing type",
+    "legalStructure": "Legal structure",
+    "paymentTiming": "Payment timing",
+    "rateBasis": "Rate basis",
+    "calculationModel": "Calculation model",
+    "rateType": "Rate type",
+    "firstInstallmentRule": "First installment rule",
+    "disbursementDerivationRule": "Disbursement derivation rule",
+    "npvFormulaReferenceHint": "Select the NPV calculation formula for this product.",
+    "allowedAssetCategoriesHint": "Select at least one.",
+    "minTermMonths": "Min term (months)",
+    "maxTermMonths": "Max term (months)",
+    "maxLtvRatio": "Max LTV ratio (%)",
+    "minVolumeEur": "Min volume (EUR)",
+    "maxVolumeEur": "Max volume (EUR)",
+    "validFrom": "Valid from",
+    "validUntil": "Valid until",
+    "validUntilHint": "Leave empty for open ended."
+  },
+  "financingTypes": {
+    "full_refinancing": "Full refinancing",
+    "partial_refinancing": "Partial refinancing",
+    "residual_value_financing": "Residual value financing",
+    "true_sale_forfaiting": "True sale / Forfaiting",
+    "refinancing_credit_line": "Refinancing credit line",
+    "structured_portfolio": "Structured portfolio"
+  },
+  "legalStructures": {
+    "loan_credit": "Loan / Credit",
+    "true_sale": "True sale (Forfaiting)"
+  },
+  "paymentTimings": {
+    "advance": "Advance (Vorschüssig)",
+    "arrears": "Arrears (Nachschüssig)"
+  },
+  "rateBases": {
+    "30_360": "30/360",
+    "act_360": "Act/360",
+    "act_365": "Act/365",
+    "act_act": "Act/Act"
+  },
+  "calculationModels": {
+    "annuity": "Annuity",
+    "bullet": "Bullet",
+    "irregular": "Irregular"
+  },
+  "rateTypes": {
+    "fixed": "Fixed",
+    "floating": "Floating",
+    "euribor_spread": "EURIBOR + Spread"
+  },
+  "firstInstallmentRules": {
+    "submission_month": "Submission month",
+    "following_month": "Following month",
+    "configurable_offset": "Configurable offset"
+  },
+  "disbursementDerivationRules": {
+    "npv": "NPV",
+    "npv_ltv": "NPV × LTV%",
+    "rv_only": "RV-only"
+  },
+  "npvFormulas": {
+    "standardAnnuity": "Standard annuity NPV",
+    "bullet": "Bullet NPV",
+    "residualValue": "Residual value NPV"
+  },
+  "assetCategories": {
+    "machinery": "Machinery",
+    "vehicles": "Vehicles",
+    "it_equipment": "IT equipment",
+    "real_estate": "Real estate",
+    "energy_assets": "Energy assets",
+    "other": "Other"
+  },
+  "versionStatuses": {
+    "draft": "Draft",
+    "published": "Published",
+    "deprecated": "Deprecated",
+    "discarded": "Discarded",
+    "awaiting_activation_countersignature": "Awaiting activation",
+    "awaiting_deprecation_countersignature": "Awaiting deprecation"
+  },
+  "versionHistory": {
+    "title": "Version history",
+    "publishedBy": "Published by {{name}} · {{date}}",
+    "deprecatedBy": "Deprecated by {{name}} · {{date}}",
+    "bindingsCount": "{{count}} bindings",
+    "viewAuditTrail": "View audit trail",
+    "discard": "Discard",
+    "discardDialog": {
+      "title": "Discard this draft?",
+      "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
+      "keep": "Keep editing",
+      "confirm": "Discard draft"
+    },
+    "publish": "Publish",
+    "publishDialog": {
+      "title": "Publish this version?",
+      "description": "Publishing activates this version immediately and replaces the currently published version, which becomes deprecated. This can't be undone from here.",
+      "justificationLabel": "Justification (optional)",
+      "justificationPlaceholder": "Add a note about this activation…",
+      "keep": "Keep editing",
+      "confirm": "Publish version"
+    },
+    "authorNewVersion": "Author new version",
+    "authorNewVersionDialog": {
+      "title": "Author a new version?",
+      "description": "A new draft version will be created from this version's current values. Choose whether this change is major or minor before continuing.",
+      "majorLabel": "Major — structural changes (financing type, legal structure, payment timing, NPV formula, calculation model)",
+      "minorLabel": "Minor — parameter refinements",
+      "keep": "Cancel",
+      "confirm": "Create draft"
+    },
+    "deprecate": "Deprecate",
+    "deprecateDialog": {
+      "title": "Deprecate template version",
+      "description": "This version will be removed from all operational selectors immediately. Existing financings and requests bound to this version will continue to operate unaffected.",
+      "justificationLabel": "Deprecation justification",
+      "justificationHint": "Mandatory. Minimum 10 characters.",
+      "keep": "Cancel",
+      "confirm": "Deprecate version"
+    }
+  },
+  "errors": {
+    "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
+    "atLeastOneAssetCategory": "Select at least one asset category.",
+    "minTermExceedsMax": "Min term must not exceed max term.",
+    "minVolumeExceedsMax": "Min volume must not exceed max volume.",
+    "validUntilBeforeFrom": "Valid until must be on or after valid from.",
+    "PRODUCT_TEMPLATE_CODE_CONFLICT": "This template code is already in use within your tenant.",
+    "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
+    "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",
+    "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "This template version could not be found.",
+    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
+    "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
+    "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
+    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "This change affects core behavioral fields and requires a major version increment.",
+    "generic": "Something went wrong. Please try again."
+  }
+}

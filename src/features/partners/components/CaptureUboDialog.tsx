@@ -24,6 +24,7 @@ import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import { ApiError } from "@/lib/api"
+import { selectOnFocus } from "@/lib/utils"
 
 const captureUboSchema = z.object({
   ubo_partner_id: z.string().min(1),
@@ -136,6 +137,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
                     )}
                     showClear
                     aria-invalid={!!errors.ubo_partner_id}
+                    onFocus={selectOnFocus}
                   />
                   <ComboboxContent>
                     <ComboboxList>
@@ -144,7 +146,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
                       </ComboboxEmpty>
                       <ComboboxCollection>
                         {(opt: { value: string; label: string }) => (
-                          <ComboboxItem value={opt.value}>
+                          <ComboboxItem key={opt.value} value={opt.value}>
                             {opt.label}
                           </ComboboxItem>
                         )}
