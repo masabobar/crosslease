@@ -19,6 +19,10 @@
       "title": "Eligibility",
       "subtitle": "Set the asset scope, term and volume boundaries, and validity window."
     },
+    "orchestration": {
+      "title": "Orchestration linkage",
+      "subtitle": "Link the workflow tasks, documents, and validation rules from the tenant catalogs."
+    },
     "actions": {
       "cancel": "Cancel",
       "back": "Back",
@@ -26,7 +30,7 @@
       "saveDraft": "Save as draft"
     },
     "draftSaved": "Draft saved.",
-    "orchestrationComingSoon": "Orchestration linkage is not available yet.",
+    "reviewComingSoon": "Review & publish is not available yet.",
     "loadingDraft": "Loading draft…",
     "discardDialog": {
       "title": "Discard this draft?",
@@ -39,7 +43,11 @@
     "settings": "Settings",
     "npvFormulaReference": "NPV formula reference",
     "allowedAssetCategories": "Allowed asset categories",
-    "details": "Details"
+    "details": "Details",
+    "requiredWorkflowTasks": "Required workflow tasks",
+    "requiredDocuments": "Required documents",
+    "optionalDocuments": "Optional documents",
+    "validationRuleSet": "Validation rule set"
   },
   "fields": {
     "templateName": "Template name",
@@ -66,7 +74,11 @@
     "maxVolumeEur": "Max volume (EUR)",
     "validFrom": "Valid from",
     "validUntil": "Valid until",
-    "validUntilHint": "Leave empty for open ended."
+    "validUntilHint": "Leave empty for open ended.",
+    "requiredWorkflowTasksHint": "Select at least one active entry from the workflow task catalog.",
+    "requiredDocumentsHint": "Select at least one active entry from the document requirement catalog.",
+    "optionalDocumentsHint": "Zero or more entries from the document requirement catalog.",
+    "validationRuleSetHint": "Exactly one active version from the validation and gating engine."
   },
   "financingTypes": {
     "full_refinancing": "Full refinancing",
@@ -123,6 +135,23 @@
     "energy_assets": "Energy assets",
     "other": "Other"
   },
+  "workflowTasks": {
+    "creditAssessment": "Credit assessment",
+    "collateralValuation": "Collateral valuation",
+    "amlScreening": "AML screening",
+    "disbursementApproval": "Disbursement approval"
+  },
+  "documentRequirements": {
+    "assetInvoice": "Asset invoice",
+    "leaseAgreement": "Lease agreement",
+    "financialStatements": "Financial statements",
+    "insuranceCertificate": "Insurance certificate"
+  },
+  "validationRuleSets": {
+    "standardGating": "Standard gating rules",
+    "realEstateGating": "Real estate gating",
+    "portfolioGating": "Portfolio gating"
+  },
   "versionStatuses": {
     "draft": "Draft",
     "published": "Published",
@@ -175,6 +204,8 @@
   "errors": {
     "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
     "atLeastOneAssetCategory": "Select at least one asset category.",
+    "atLeastOneWorkflowTask": "Select at least one workflow task.",
+    "atLeastOneDocument": "Select at least one required document.",
     "minTermExceedsMax": "Min term must not exceed max term.",
     "minVolumeExceedsMax": "Min volume must not exceed max volume.",
     "validUntilBeforeFrom": "Valid until must be on or after valid from.",

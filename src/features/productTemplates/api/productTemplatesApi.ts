@@ -2,6 +2,7 @@ import { api } from "@/lib/api"
 import {
   DeprecateTemplateVersionResponseSchema,
   NewVersionCreatedResponseSchema,
+  OrchestrationResponseSchema,
   PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
@@ -15,12 +16,14 @@ import type {
   DeprecateTemplateVersionRequest,
   DeprecateTemplateVersionResponse,
   NewVersionCreatedResponse,
+  OrchestrationResponse,
   PublishTemplateDraftRequest,
   PublishTemplateDraftResponse,
   TemplateDraftCreatedResponse,
   TemplateDraftDiscardedResponse,
   TemplateDraftUpdatedResponse,
   TemplateVersionDetail,
+  UpdateOrchestrationRequest,
   UpdateProductTemplateDraftRequest,
   VersionHistoryResponse,
 } from "@/features/productTemplates/api/schema"
@@ -54,6 +57,18 @@ export async function updateProductTemplateDraft(
     body
   )
   return TemplateDraftUpdatedResponseSchema.parse(data)
+}
+
+export async function updateProductTemplateOrchestration(
+  templateId: string,
+  versionNumber: string,
+  body: UpdateOrchestrationRequest
+): Promise<OrchestrationResponse> {
+  const data = await api.patch(
+    `/product-templates/${templateId}/versions/${versionNumber}/orchestration`,
+    body
+  )
+  return OrchestrationResponseSchema.parse(data)
 }
 
 export async function discardProductTemplateDraft(

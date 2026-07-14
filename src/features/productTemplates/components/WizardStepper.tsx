@@ -3,8 +3,9 @@ import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import type { ProductTemplateWizardStep } from "@/features/productTemplates/types"
 
-// Steps 4-5 (orchestration, review) are display-only in this story — they belong to
-// US 10.2 / US 10.4 and are never reachable here, so they always render as upcoming.
+// Step 5 (review) is display-only — it belongs to the wizard's Review & Publish step,
+// which isn't built yet (Publish is reachable from VersionHistoryPage instead, see
+// US-10.4-FE's departure note), so it always renders as upcoming.
 const DISPLAY_STEPS = [
   "identity",
   "behavioral",
