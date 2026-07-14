@@ -136,6 +136,7 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
                   <SelectTrigger
                     id="resolve-decision"
                     data-testid="resolve-decision-select"
+                    className="w-full"
                   >
                     <SelectValue
                       placeholder={t(
@@ -177,6 +178,7 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
                   <SelectTrigger
                     id="resolve-reason-code"
                     data-testid="resolve-reason-code-select"
+                    className="w-full"
                   >
                     <SelectValue
                       placeholder={t(
