@@ -34,6 +34,8 @@ import type {
 import { PATHS, productTemplateNewVersionEdit } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
+import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
+import NotFoundPage from "@/features/not-found/components/NotFoundPage"
 
 const DEPRECATION_JUSTIFICATION_MIN_LENGTH = 10
 
@@ -78,6 +80,7 @@ export default function VersionHistoryPage() {
     data: history,
     isLoading: isLoadingVersions,
     isError: isVersionsError,
+    error: versionsError,
   } = useTemplateVersions(templateId ?? "")
 
   const latestVersionNumber = history?.versions[0]?.version_number ?? null
@@ -92,6 +95,10 @@ export default function VersionHistoryPage() {
     useCreateNewProductTemplateVersion()
   const { mutateAsync: deprecateVersion, isPending: isDeprecating } =
     useDeprecateProductTemplateVersion()
+
+  if (isProductTemplateNotFoundError(versionsError)) {
+    return <NotFoundPage />
+  }
 
   async function handleConfirmDiscard() {
     if (!discardTarget || !templateId) return

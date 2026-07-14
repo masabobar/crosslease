@@ -80,6 +80,9 @@ export const DOCUMENT_OPTIONS = [
   },
 ] as const
 
+// Wire value for the platform module key, per `../refinext-api/src/app/core/platform/modules.py`.
+export const BANK_PRODUCT_TEMPLATE_MODULE_KEY = "bank_product_template"
+
 export const VALIDATION_RULE_SET_OPTIONS = [
   {
     id: "d5f3c4a6-ab8c-4e33-9f4d-3c4d5e6f7a01",

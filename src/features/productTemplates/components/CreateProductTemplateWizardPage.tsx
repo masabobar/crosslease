@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ArrowRight, ArrowLeft, Check } from "lucide-react"
 import { toast } from "sonner"
@@ -17,8 +17,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ApiError } from "@/lib/api"
-import { PATHS } from "@/router/paths"
+import { PATHS, productTemplateVersionHistory } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
+import NotFoundPage from "@/features/not-found/components/NotFoundPage"
 import { ProductTemplateWizardFormSchema } from "@/features/productTemplates/api/schema"
 import type {
   CreateProductTemplateDraftRequest,
@@ -527,6 +529,7 @@ export default function CreateProductTemplateWizardPage() {
     data: existingDraft,
     isLoading,
     isError,
+    error,
   } = useTemplateVersionDetail(
     draftRefFromRoute?.templateId ?? "",
     draftRefFromRoute?.versionNumber ?? null
@@ -538,6 +541,33 @@ export default function CreateProductTemplateWizardPage() {
         <p className="text-sm text-muted-foreground">
           {t("wizard.loadingDraft")}
         </p>
+      </div>
+    )
+  }
+
+  if (draftRefFromRoute && isProductTemplateNotFoundError(error)) {
+    return <NotFoundPage />
+  }
+
+  if (
+    draftRefFromRoute &&
+    existingDraft &&
+    existingDraft.version_status !== "draft"
+  ) {
+    return (
+      <div
+        className="flex flex-col h-full items-center justify-center gap-3"
+        data-testid="wizard-immutable-version"
+      >
+        <p className="text-sm text-muted-foreground">
+          {t("errors.PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION")}
+        </p>
+        <Link
+          to={productTemplateVersionHistory(draftRefFromRoute.templateId)}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          {t("wizard.backToVersionHistory")}
+        </Link>
       </div>
     )
   }
