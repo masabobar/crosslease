@@ -1,13 +1,17 @@
 import { describe, it, expect } from "vitest"
 import {
+  CreateNewVersionRequestSchema,
   CreateProductTemplateDraftRequestSchema,
+  DeprecateTemplateVersionRequestSchema,
+  DeprecateTemplateVersionResponseSchema,
+  NewVersionCreatedResponseSchema,
   ProductTemplateWizardFormSchema,
   PublishTemplateDraftRequestSchema,
   PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
-  TemplateVersionHeaderSchema,
+  TemplateVersionDetailSchema,
   TemplateVersionSummarySchema,
   UpdateProductTemplateDraftRequestSchema,
   VersionHistoryResponseSchema,
@@ -419,22 +423,162 @@ describe("VersionHistoryResponseSchema", () => {
   })
 })
 
-describe("TemplateVersionHeaderSchema", () => {
-  it("accepts a valid header payload", () => {
+describe("TemplateVersionDetailSchema", () => {
+  const validDetail = {
+    version_number: "1.0",
+    version_status: "published",
+    template_name: "Full refinancing standard",
+    financing_type: "full_refinancing",
+    legal_structure: "loan_credit",
+    payment_timing: "advance",
+    rate_basis: "30_360",
+    calculation_model: "annuity",
+  }
+
+  it("accepts a minimal header-shaped payload", () => {
+    expect(() => TemplateVersionDetailSchema.parse(validDetail)).not.toThrow()
+  })
+
+  it("accepts a fully populated payload with string-wire decimal fields", () => {
     expect(() =>
-      TemplateVersionHeaderSchema.parse({
-        version_number: "1.0",
-        version_status: "published",
-        template_name: "Full refinancing standard",
+      TemplateVersionDetailSchema.parse({
+        ...validDetail,
+        template_description: "Standard blueprint",
+        rate_type: "fixed",
+        npv_formula_ref: "NPV-FORMULA-STD-v3",
+        first_installment_rule: "following_month",
+        disbursement_derivation_rule: "npv",
+        allowed_asset_categories: ["machinery", "vehicles"],
+        min_term_months: 12,
+        max_term_months: 84,
+        max_ltv_ratio: "85.00",
+        min_volume_eur: "50000.00",
+        max_volume_eur: "5000000.00",
+        valid_from: "2026-06-12",
+        valid_until: "2027-06-12",
       })
     ).not.toThrow()
   })
 
+  it("coerces string decimal fields to numbers", () => {
+    const parsed = TemplateVersionDetailSchema.parse({
+      ...validDetail,
+      max_ltv_ratio: "85.5",
+    })
+    expect(parsed.max_ltv_ratio).toBe(85.5)
+  })
+
   it("rejects a missing template_name", () => {
+    const rest = { ...validDetail } as Record<string, unknown>
+    delete rest.template_name
+    expect(() => TemplateVersionDetailSchema.parse(rest)).toThrow()
+  })
+
+  it("rejects an unknown financing_type", () => {
     expect(() =>
-      TemplateVersionHeaderSchema.parse({
-        version_number: "1.0",
-        version_status: "published",
+      TemplateVersionDetailSchema.parse({
+        ...validDetail,
+        financing_type: "unknown_type",
+      })
+    ).toThrow()
+  })
+})
+
+describe("CreateNewVersionRequestSchema / NewVersionCreatedResponseSchema", () => {
+  it("accepts a valid major increment request", () => {
+    expect(() =>
+      CreateNewVersionRequestSchema.parse({ increment_type: "major" })
+    ).not.toThrow()
+  })
+
+  it("accepts a valid minor increment request", () => {
+    expect(() =>
+      CreateNewVersionRequestSchema.parse({ increment_type: "minor" })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown increment_type", () => {
+    expect(() =>
+      CreateNewVersionRequestSchema.parse({ increment_type: "patch" })
+    ).toThrow()
+  })
+
+  const validNewVersionResponse = {
+    version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    version_number: "2.0",
+    version_status: "draft",
+    increment_type: "major",
+    predecessor_version_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    snapshot_source_version_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  }
+
+  it("accepts a valid new-version response", () => {
+    expect(() =>
+      NewVersionCreatedResponseSchema.parse(validNewVersionResponse)
+    ).not.toThrow()
+  })
+
+  it("accepts null increment_type/predecessor/snapshot fields", () => {
+    expect(() =>
+      NewVersionCreatedResponseSchema.parse({
+        ...validNewVersionResponse,
+        increment_type: null,
+        predecessor_version_id: null,
+        snapshot_source_version_id: null,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing version_id", () => {
+    const rest = { ...validNewVersionResponse } as Record<string, unknown>
+    delete rest.version_id
+    expect(() => NewVersionCreatedResponseSchema.parse(rest)).toThrow()
+  })
+})
+
+describe("DeprecateTemplateVersionRequestSchema / DeprecateTemplateVersionResponseSchema", () => {
+  it("accepts a justification at the minimum length", () => {
+    expect(() =>
+      DeprecateTemplateVersionRequestSchema.parse({
+        justification: "1234567890",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a justification under 10 characters", () => {
+    expect(() =>
+      DeprecateTemplateVersionRequestSchema.parse({
+        justification: "too short",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a justification over 2000 characters", () => {
+    expect(() =>
+      DeprecateTemplateVersionRequestSchema.parse({
+        justification: "a".repeat(2001),
+      })
+    ).toThrow()
+  })
+
+  const validDeprecateResponse = {
+    version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    version_status: "deprecated",
+    deprecated_at: "2026-07-14T11:23:00Z",
+    deprecated_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  }
+
+  it("accepts a valid deprecate response", () => {
+    expect(() =>
+      DeprecateTemplateVersionResponseSchema.parse(validDeprecateResponse)
+    ).not.toThrow()
+  })
+
+  it("rejects a non-UUID deprecated_by", () => {
+    expect(() =>
+      DeprecateTemplateVersionResponseSchema.parse({
+        ...validDeprecateResponse,
+        deprecated_by: "not-a-uuid",
       })
     ).toThrow()
   })

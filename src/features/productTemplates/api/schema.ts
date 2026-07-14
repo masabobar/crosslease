@@ -140,6 +140,51 @@ export type PublishTemplateDraftResponse = z.infer<
   typeof PublishTemplateDraftResponseSchema
 >
 
+// Wire request/response for POST /product-templates/{id}/versions (create_new_version)
+// in refinext-api. Matches CreateNewVersionRequest / NewVersionCreatedResponse.
+export const IncrementTypeSchema = z.enum(["major", "minor"])
+export type IncrementType = z.infer<typeof IncrementTypeSchema>
+
+export const CreateNewVersionRequestSchema = z.object({
+  increment_type: IncrementTypeSchema,
+})
+export type CreateNewVersionRequest = z.infer<
+  typeof CreateNewVersionRequestSchema
+>
+
+export const NewVersionCreatedResponseSchema = z.object({
+  version_id: z.string().uuid(),
+  version_number: z.string(),
+  version_status: z.string(),
+  increment_type: IncrementTypeSchema.nullable(),
+  predecessor_version_id: z.string().uuid().nullable(),
+  snapshot_source_version_id: z.string().uuid().nullable(),
+})
+export type NewVersionCreatedResponse = z.infer<
+  typeof NewVersionCreatedResponseSchema
+>
+
+// Wire request/response for POST .../deprecate (deprecate_version) in refinext-api.
+// impact_summary is intentionally omitted — the BE response schema declares it but
+// deprecate_version never populates real counts (always defaults), so the FE doesn't
+// parse a field it can't trust (see plan Gap 3).
+export const DeprecateTemplateVersionRequestSchema = z.object({
+  justification: z.string().min(10).max(2000),
+})
+export type DeprecateTemplateVersionRequest = z.infer<
+  typeof DeprecateTemplateVersionRequestSchema
+>
+
+export const DeprecateTemplateVersionResponseSchema = z.object({
+  version_id: z.string().uuid(),
+  version_status: z.string(),
+  deprecated_at: z.string(),
+  deprecated_by: z.string().uuid(),
+})
+export type DeprecateTemplateVersionResponse = z.infer<
+  typeof DeprecateTemplateVersionResponseSchema
+>
+
 // RHF-facing form schema — stricter than the wire schema, mirroring the PRD's Field Specification
 // table (every Mandatory field required) for inline per-field validation. The actual POST/PATCH
 // payload sent to the API is the looser wire schema above.
@@ -249,11 +294,33 @@ export type VersionHistoryResponse = z.infer<
   typeof VersionHistoryResponseSchema
 >
 
-// Subset of VersionDetailResponse — only the fields this feature needs for the
-// Version History page header (template_name isn't on the list-summary response).
-export const TemplateVersionHeaderSchema = z.object({
+// VersionDetailResponse in refinext-api — used both for the Version History page
+// header (template_name/version_status) and to prefill the wizard when authoring a
+// new version from a Published template (US-10.5-FE). Deliberately omits template_code:
+// it isn't present on this response, and there's no reachable single-template lookup
+// from a bare templateId to source it from otherwise (see plan Gap 4).
+export const TemplateVersionDetailSchema = z.object({
   version_number: z.string(),
   version_status: TemplateStatusSchema,
   template_name: z.string(),
+  template_description: z.string().nullable().optional(),
+  financing_type: FinancingTypeSchema,
+  legal_structure: LegalStructureSchema,
+  payment_timing: PaymentTimingSchema,
+  rate_basis: RateBasisSchema,
+  calculation_model: CalculationModelSchema,
+  rate_type: RateTypeSchema.nullable().optional(),
+  npv_formula_ref: z.string().nullable().optional(),
+  first_installment_rule: FirstInstallmentRuleSchema.nullable().optional(),
+  disbursement_derivation_rule:
+    DisbursementDerivationRuleSchema.nullable().optional(),
+  allowed_asset_categories: z.array(AssetCategorySchema).nullable().optional(),
+  min_term_months: z.number().int().nullable().optional(),
+  max_term_months: z.number().int().nullable().optional(),
+  max_ltv_ratio: z.coerce.number().nullable().optional(),
+  min_volume_eur: z.coerce.number().nullable().optional(),
+  max_volume_eur: z.coerce.number().nullable().optional(),
+  valid_from: z.string().nullable().optional(),
+  valid_until: z.string().nullable().optional(),
 })
-export type TemplateVersionHeader = z.infer<typeof TemplateVersionHeaderSchema>
+export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
