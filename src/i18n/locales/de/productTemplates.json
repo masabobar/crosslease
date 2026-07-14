@@ -58,20 +58,29 @@
       "title": "Orchestrierungsverknüpfung",
       "subtitle": "Verknüpfen Sie die Workflow-Aufgaben, Dokumente und Validierungsregeln aus den Mandantenkatalogen."
     },
+    "review": {
+      "title": "Prüfen und veröffentlichen",
+      "subtitle": "Bestätigen Sie jedes Feld vor der Veröffentlichung."
+    },
     "actions": {
       "cancel": "Abbrechen",
       "back": "Zurück",
       "next": "Weiter",
-      "saveDraft": "Als Entwurf speichern"
+      "saveDraft": "Als Entwurf speichern",
+      "publish": "Vorlage veröffentlichen"
     },
     "draftSaved": "Entwurf gespeichert.",
-    "reviewComingSoon": "Prüfen & veröffentlichen ist noch nicht verfügbar.",
     "loadingDraft": "Entwurf wird geladen…",
     "discardDialog": {
       "title": "Diesen Entwurf verwerfen?",
       "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
       "keep": "Weiter bearbeiten",
       "confirm": "Entwurf verwerfen"
+    },
+    "templatePublished": {
+      "title": "Vorlage veröffentlicht",
+      "subtitle": "Die Vorlage ist jetzt aktiv und für die Origination innerhalb von RefiNext EU verfügbar.",
+      "backButton": "Zurück zur Vorlagenliste"
     }
   },
   "sections": {
@@ -82,7 +91,12 @@
     "requiredWorkflowTasks": "Erforderliche Workflow-Aufgaben",
     "requiredDocuments": "Erforderliche Dokumente",
     "optionalDocuments": "Optionale Dokumente",
-    "validationRuleSet": "Validierungsregelwerk"
+    "validationRuleSet": "Validierungsregelwerk",
+    "identity": "Identität",
+    "behavioralSettings": "Verhaltenseinstellungen",
+    "eligibility": "Berechtigung",
+    "validity": "Gültigkeit",
+    "orchestrationLinkage": "Orchestrierungsverknüpfung"
   },
   "fields": {
     "templateName": "Vorlagenname",
@@ -113,7 +127,11 @@
     "requiredWorkflowTasksHint": "Wählen Sie mindestens einen aktiven Eintrag aus dem Workflow-Aufgabenkatalog.",
     "requiredDocumentsHint": "Wählen Sie mindestens einen aktiven Eintrag aus dem Dokumentenanforderungskatalog.",
     "optionalDocumentsHint": "Null oder mehr Einträge aus dem Dokumentenanforderungskatalog.",
-    "validationRuleSetHint": "Genau eine aktive Version aus der Validierungs- und Gating-Engine."
+    "validationRuleSetHint": "Genau eine aktive Version aus der Validierungs- und Gating-Engine.",
+    "openEnded": "Unbefristet",
+    "publicationJustification": "Begründung der Veröffentlichung",
+    "publicationJustificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Veröffentlichung hinzu…",
+    "confirmPublication": "Ich bestätige, dass diese Vorlage bereit zur Veröffentlichung ist."
   },
   "financingTypes": {
     "full_refinancing": "Vollrefinanzierung",
@@ -208,15 +226,7 @@
       "keep": "Weiter bearbeiten",
       "confirm": "Entwurf verwerfen"
     },
-    "publish": "Veröffentlichen",
-    "publishDialog": {
-      "title": "Diese Version veröffentlichen?",
-      "description": "Die Veröffentlichung aktiviert diese Version sofort und ersetzt die aktuell veröffentlichte Version, die dadurch veraltet wird. Dies kann von hier aus nicht rückgängig gemacht werden.",
-      "justificationLabel": "Begründung (optional)",
-      "justificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Aktivierung hinzu…",
-      "keep": "Weiter bearbeiten",
-      "confirm": "Version veröffentlichen"
-    },
+    "continueEditing": "Weiter bearbeiten",
     "authorNewVersion": "Neue Version erstellen",
     "authorNewVersionDialog": {
       "title": "Neue Version erstellen?",

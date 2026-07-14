@@ -6,6 +6,7 @@ import { SelectField } from "@/components/ui/select"
 import type { SelectOption } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
+import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import {
   CalculationModelSchema,
   DisbursementDerivationRuleSchema,
@@ -17,30 +18,6 @@ import {
   RateTypeSchema,
 } from "@/features/productTemplates/api/schema"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
-
-// Static options — no NPV formula registry endpoint exists yet for the FE to query
-// (mirrors the orchestration catalogs' StubCatalogAdapter, which always returns ACTIVE
-// on the BE side). Flagged as a follow-up gap in the FE story.
-const NPV_FORMULA_OPTIONS = [
-  {
-    ref: "NPV-FORMULA-STD-v3",
-    code: "NPV-FORMULA-STD",
-    version: "v3",
-    labelKey: "npvFormulas.standardAnnuity",
-  },
-  {
-    ref: "NPV-FORMULA-BULLET-v2",
-    code: "NPV-FORMULA-BULLET",
-    version: "v2",
-    labelKey: "npvFormulas.bullet",
-  },
-  {
-    ref: "NPV-FORMULA-RV-v1",
-    code: "NPV-FORMULA-RV",
-    version: "v1",
-    labelKey: "npvFormulas.residualValue",
-  },
-] as const
 
 type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>

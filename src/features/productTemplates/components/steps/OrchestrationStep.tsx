@@ -4,86 +4,12 @@ import { useTranslation } from "react-i18next"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
+import {
+  DOCUMENT_OPTIONS,
+  VALIDATION_RULE_SET_OPTIONS,
+  WORKFLOW_TASK_OPTIONS,
+} from "@/features/productTemplates/constants"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
-
-// Static options — no Workflow Task Catalog (E15), Document Requirement Catalog (E16), or
-// Validation & Gating Engine (E18) list endpoint exists on the BE at all (only the save
-// endpoint itself exists, and its own reference check is a stub that accepts any UUID).
-// Mirrors the same precedent already used for NPV Formula Reference in BehavioralSettingsStep.
-const WORKFLOW_TASK_OPTIONS = [
-  {
-    id: "b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e01",
-    code: "WT-CREDIT-CHECK",
-    version: "v4",
-    labelKey: "workflowTasks.creditAssessment",
-  },
-  {
-    id: "b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e02",
-    code: "WT-COLLATERAL-VAL",
-    version: "v2",
-    labelKey: "workflowTasks.collateralValuation",
-  },
-  {
-    id: "b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e03",
-    code: "WT-AML-SCREEN",
-    version: "v3",
-    labelKey: "workflowTasks.amlScreening",
-  },
-  {
-    id: "b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e04",
-    code: "WT-DISBURSEMENT-APPR",
-    version: "v1",
-    labelKey: "workflowTasks.disbursementApproval",
-  },
-] as const
-
-const DOCUMENT_OPTIONS = [
-  {
-    id: "c4e2b3f5-9a7b-4d22-8e3c-2b3c4d5e6f01",
-    code: "DOC-ASSET-INVOICE",
-    version: "v2",
-    labelKey: "documentRequirements.assetInvoice",
-  },
-  {
-    id: "c4e2b3f5-9a7b-4d22-8e3c-2b3c4d5e6f02",
-    code: "DOC-LEASE-AGREEMENT",
-    version: "v2",
-    labelKey: "documentRequirements.leaseAgreement",
-  },
-  {
-    id: "c4e2b3f5-9a7b-4d22-8e3c-2b3c4d5e6f03",
-    code: "DOC-FINANCIALS",
-    version: "v1",
-    labelKey: "documentRequirements.financialStatements",
-  },
-  {
-    id: "c4e2b3f5-9a7b-4d22-8e3c-2b3c4d5e6f04",
-    code: "DOC-INSURANCE",
-    version: "v2",
-    labelKey: "documentRequirements.insuranceCertificate",
-  },
-] as const
-
-const VALIDATION_RULE_SET_OPTIONS = [
-  {
-    id: "d5f3c4a6-ab8c-4e33-9f4d-3c4d5e6f7a01",
-    code: "VRS-STANDARD",
-    version: "v5",
-    labelKey: "validationRuleSets.standardGating",
-  },
-  {
-    id: "d5f3c4a6-ab8c-4e33-9f4d-3c4d5e6f7a02",
-    code: "VRS-REAL-ESTATE",
-    version: "v3",
-    labelKey: "validationRuleSets.realEstateGating",
-  },
-  {
-    id: "d5f3c4a6-ab8c-4e33-9f4d-3c4d5e6f7a03",
-    code: "VRS-PORTFOLIO",
-    version: "v3",
-    labelKey: "validationRuleSets.portfolioGating",
-  },
-] as const
 
 type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>

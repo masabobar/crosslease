@@ -58,20 +58,29 @@
       "title": "Orchestration linkage",
       "subtitle": "Link the workflow tasks, documents, and validation rules from the tenant catalogs."
     },
+    "review": {
+      "title": "Review and publish",
+      "subtitle": "Confirm every field before publication."
+    },
     "actions": {
       "cancel": "Cancel",
       "back": "Back",
       "next": "Continue",
-      "saveDraft": "Save as draft"
+      "saveDraft": "Save as draft",
+      "publish": "Publish template"
     },
     "draftSaved": "Draft saved.",
-    "reviewComingSoon": "Review & publish is not available yet.",
     "loadingDraft": "Loading draft…",
     "discardDialog": {
       "title": "Discard this draft?",
       "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
       "keep": "Keep editing",
       "confirm": "Discard draft"
+    },
+    "templatePublished": {
+      "title": "Template published",
+      "subtitle": "The template is now active and available for origination within RefiNext EU.",
+      "backButton": "Back to template list"
     }
   },
   "sections": {
@@ -82,7 +91,12 @@
     "requiredWorkflowTasks": "Required workflow tasks",
     "requiredDocuments": "Required documents",
     "optionalDocuments": "Optional documents",
-    "validationRuleSet": "Validation rule set"
+    "validationRuleSet": "Validation rule set",
+    "identity": "Identity",
+    "behavioralSettings": "Behavioral settings",
+    "eligibility": "Eligibility",
+    "validity": "Validity",
+    "orchestrationLinkage": "Orchestration linkage"
   },
   "fields": {
     "templateName": "Template name",
@@ -113,7 +127,11 @@
     "requiredWorkflowTasksHint": "Select at least one active entry from the workflow task catalog.",
     "requiredDocumentsHint": "Select at least one active entry from the document requirement catalog.",
     "optionalDocumentsHint": "Zero or more entries from the document requirement catalog.",
-    "validationRuleSetHint": "Exactly one active version from the validation and gating engine."
+    "validationRuleSetHint": "Exactly one active version from the validation and gating engine.",
+    "openEnded": "Open ended",
+    "publicationJustification": "Publication justification",
+    "publicationJustificationPlaceholder": "Add a note about this publication…",
+    "confirmPublication": "I confirm this template is ready for publication."
   },
   "financingTypes": {
     "full_refinancing": "Full refinancing",
@@ -208,15 +226,7 @@
       "keep": "Keep editing",
       "confirm": "Discard draft"
     },
-    "publish": "Publish",
-    "publishDialog": {
-      "title": "Publish this version?",
-      "description": "Publishing activates this version immediately and replaces the currently published version, which becomes deprecated. This can't be undone from here.",
-      "justificationLabel": "Justification (optional)",
-      "justificationPlaceholder": "Add a note about this activation…",
-      "keep": "Keep editing",
-      "confirm": "Publish version"
-    },
+    "continueEditing": "Continue editing",
     "authorNewVersion": "Author new version",
     "authorNewVersionDialog": {
       "title": "Author a new version?",
