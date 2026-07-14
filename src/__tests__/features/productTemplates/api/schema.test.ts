@@ -9,9 +9,12 @@ import {
   ProductTemplateWizardFormSchema,
   PublishTemplateDraftRequestSchema,
   PublishTemplateDraftResponseSchema,
+  TemplateCurrentVersionSummarySchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
+  TemplateListItemSchema,
+  TemplateListResponseSchema,
   TemplateVersionDetailSchema,
   TemplateVersionSummarySchema,
   UpdateOrchestrationRequestSchema,
@@ -723,5 +726,105 @@ describe("OrchestrationResponseSchema", () => {
         linkages: [{ ...validLinkage, catalog_ref_type: "unknown_catalog" }],
       })
     ).toThrow()
+  })
+})
+
+describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / TemplateListResponseSchema", () => {
+  const validCurrentVersion = {
+    version_id: "f7a5c6b8-cdae-4f55-af6e-5d6e7f8a9b01",
+    version_number: "1.0",
+    version_status: "published",
+    financing_type: "full_refinancing",
+    legal_structure: "loan_credit",
+    calculation_model: "annuity",
+    payment_timing: "advance",
+  }
+
+  it("accepts a minimal current-version summary", () => {
+    expect(() =>
+      TemplateCurrentVersionSummarySchema.parse(validCurrentVersion)
+    ).not.toThrow()
+  })
+
+  it("accepts a fully populated current-version summary", () => {
+    expect(() =>
+      TemplateCurrentVersionSummarySchema.parse({
+        ...validCurrentVersion,
+        max_ltv_ratio: 85,
+        min_term_months: 12,
+        max_term_months: 84,
+        published_by: {
+          id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+          display_name: "Anna Kowalski",
+        },
+        published_at: "2026-05-22T14:30:00Z",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown version_status", () => {
+    expect(() =>
+      TemplateCurrentVersionSummarySchema.parse({
+        ...validCurrentVersion,
+        version_status: "banana",
+      })
+    ).toThrow()
+  })
+
+  const validListItem = {
+    id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    template_code: "REFI-FULL-STD",
+    current_version: validCurrentVersion,
+    created_at: "2026-05-22T14:30:00Z",
+  }
+
+  it("accepts a list item with a current version", () => {
+    expect(() => TemplateListItemSchema.parse(validListItem)).not.toThrow()
+  })
+
+  it("accepts a list item with a null current version", () => {
+    expect(() =>
+      TemplateListItemSchema.parse({ ...validListItem, current_version: null })
+    ).not.toThrow()
+  })
+
+  it("rejects a list item missing template_code", () => {
+    const rest = { ...validListItem } as Record<string, unknown>
+    delete rest.template_code
+    expect(() => TemplateListItemSchema.parse(rest)).toThrow()
+  })
+
+  it("accepts a valid paginated list response", () => {
+    expect(() =>
+      TemplateListResponseSchema.parse({
+        items: [validListItem],
+        total: 1,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty items array", () => {
+    expect(() =>
+      TemplateListResponseSchema.parse({
+        items: [],
+        total: 0,
+        page: 1,
+        per_page: 20,
+        total_pages: 1,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a response missing total_pages", () => {
+    const rest = {
+      items: [validListItem],
+      total: 1,
+      page: 1,
+      per_page: 20,
+    } as Record<string, unknown>
+    expect(() => TemplateListResponseSchema.parse(rest)).toThrow()
   })
 })

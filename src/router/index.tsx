@@ -98,6 +98,9 @@ const DuplicateQueuePage = lazy(
 const DuplicatePairDetailPage = lazy(
   () => import("@/features/partners/components/DuplicatePairDetailPage")
 )
+const ProductTemplateListPage = lazy(
+  () => import("@/features/productTemplates/components/ProductTemplateListPage")
+)
 const CreateProductTemplateWizardPage = lazy(
   () =>
     import("@/features/productTemplates/components/CreateProductTemplateWizardPage")
@@ -330,6 +333,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={LC_ONLY_ROLES}>
               <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.PRODUCT_TEMPLATE_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PRODUCT_TEMPLATE_READ_ALLOWED_ROLES}>
+              <ProductTemplateListPage />
             </RoleGuard>
           </Suspense>
         ),

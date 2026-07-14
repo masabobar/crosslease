@@ -375,3 +375,44 @@ export const TemplateVersionDetailSchema = z.object({
   valid_until: z.string().nullable().optional(),
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
+
+// Wire response for GET /tenants/{tenant_id}/product-templates (list_templates) in
+// refinext-api. TemplateListItem deliberately has no template_name field on the BE —
+// only template_code — even though the Figma design's "Product" column shows a
+// human-readable name; the join already fetches it but the response schema doesn't map
+// it through. Flagged BE gap: FE renders template_code as the primary label until the BE
+// maps template_name through.
+export const TemplateCurrentVersionSummarySchema = z.object({
+  version_id: z.string().uuid(),
+  version_number: z.string(),
+  version_status: TemplateStatusSchema,
+  financing_type: FinancingTypeSchema,
+  legal_structure: LegalStructureSchema,
+  calculation_model: CalculationModelSchema,
+  payment_timing: PaymentTimingSchema,
+  max_ltv_ratio: z.coerce.number().nullable().optional(),
+  min_term_months: z.number().int().nullable().optional(),
+  max_term_months: z.number().int().nullable().optional(),
+  published_by: UserRefSchema.nullable().optional(),
+  published_at: z.string().nullable().optional(),
+})
+export type TemplateCurrentVersionSummary = z.infer<
+  typeof TemplateCurrentVersionSummarySchema
+>
+
+export const TemplateListItemSchema = z.object({
+  id: z.string().uuid(),
+  template_code: z.string(),
+  current_version: TemplateCurrentVersionSummarySchema.nullable(),
+  created_at: z.string(),
+})
+export type TemplateListItem = z.infer<typeof TemplateListItemSchema>
+
+export const TemplateListResponseSchema = z.object({
+  items: z.array(TemplateListItemSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  per_page: z.number().int(),
+  total_pages: z.number().int(),
+})
+export type TemplateListResponse = z.infer<typeof TemplateListResponseSchema>

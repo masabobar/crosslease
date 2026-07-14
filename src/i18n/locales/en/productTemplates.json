@@ -1,4 +1,39 @@
 {
+  "list": {
+    "title": "Product templates",
+    "subtitle": "Parametric blueprints defining calculation logic, eligibility, and workflow behavior.",
+    "tenantRequired": "This account isn't scoped to a single tenant, so the product template list can't be shown yet. Tenant selection for System Admin is being finalized.",
+    "selectTenantPrompt": "Select a tenant to view its product templates.",
+    "createButton": "Create template",
+    "table": {
+      "columns": {
+        "product": "Product",
+        "financingType": "Financing type",
+        "calculation": "Calculation",
+        "ltvAndTerm": "LTV & term",
+        "status": "Status",
+        "version": "Version"
+      },
+      "maxLtvPrefix": "Max"
+    },
+    "emptyState": {
+      "title": "No product templates yet",
+      "description": "Create your first template to get started."
+    },
+    "emptyFiltered": {
+      "title": "No templates match your filters",
+      "description": "Try adjusting your search or status filter."
+    },
+    "filters": {
+      "searchPlaceholder": "Search by code or name…",
+      "allStatuses": "All statuses"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
   "wizard": {
     "steps": {
       "identity": "Identity",

@@ -1,4 +1,39 @@
 {
+  "list": {
+    "title": "Produktvorlagen",
+    "subtitle": "Parametrische Blaupausen, die Berechnungslogik, Berechtigung und Workflow-Verhalten definieren.",
+    "tenantRequired": "Dieses Konto ist keinem einzelnen Mandanten zugeordnet, daher kann die Produktvorlagenliste noch nicht angezeigt werden. Die Mandantenauswahl für System-Admins wird noch fertiggestellt.",
+    "selectTenantPrompt": "Wählen Sie einen Mandanten aus, um dessen Produktvorlagen anzuzeigen.",
+    "createButton": "Vorlage erstellen",
+    "table": {
+      "columns": {
+        "product": "Produkt",
+        "financingType": "Finanzierungsart",
+        "calculation": "Berechnung",
+        "ltvAndTerm": "LTV & Laufzeit",
+        "status": "Status",
+        "version": "Version"
+      },
+      "maxLtvPrefix": "Max."
+    },
+    "emptyState": {
+      "title": "Noch keine Produktvorlagen",
+      "description": "Erstellen Sie Ihre erste Vorlage, um zu beginnen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Vorlagen entsprechen Ihren Filtern",
+      "description": "Passen Sie Ihre Suche oder den Statusfilter an."
+    },
+    "filters": {
+      "searchPlaceholder": "Nach Code oder Name suchen…",
+      "allStatuses": "Alle Status"
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
   "wizard": {
     "steps": {
       "identity": "Identität",

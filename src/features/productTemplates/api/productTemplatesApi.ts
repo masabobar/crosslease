@@ -7,6 +7,7 @@ import {
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
+  TemplateListResponseSchema,
   TemplateVersionDetailSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
@@ -22,15 +23,24 @@ import type {
   TemplateDraftCreatedResponse,
   TemplateDraftDiscardedResponse,
   TemplateDraftUpdatedResponse,
+  TemplateListResponse,
+  TemplateStatus,
   TemplateVersionDetail,
   UpdateOrchestrationRequest,
   UpdateProductTemplateDraftRequest,
   VersionHistoryResponse,
 } from "@/features/productTemplates/api/schema"
 
+export type ProductTemplateListParams = {
+  search?: string
+  status?: TemplateStatus
+  page?: number
+  per_page?: number
+}
+
 export const PRODUCT_TEMPLATES_QUERY_KEYS = {
-  list: (tenantId: string | null) =>
-    ["product-templates", "list", tenantId] as const,
+  list: (tenantId: string | null, params?: ProductTemplateListParams) =>
+    ["product-templates", "list", tenantId, params] as const,
   detail: (templateId: string) =>
     ["product-templates", "detail", templateId] as const,
   versions: (templateId: string) =>
@@ -38,6 +48,16 @@ export const PRODUCT_TEMPLATES_QUERY_KEYS = {
   versionDetail: (templateId: string, versionNumber: string) =>
     ["product-templates", "version-detail", templateId, versionNumber] as const,
 } as const
+
+export async function fetchProductTemplates(
+  tenantId: string,
+  params?: ProductTemplateListParams
+): Promise<TemplateListResponse> {
+  const data = await api.get(`/tenants/${tenantId}/product-templates`, {
+    params,
+  })
+  return TemplateListResponseSchema.parse(data)
+}
 
 export async function createProductTemplateDraft(
   tenantId: string,
