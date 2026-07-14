@@ -3,8 +3,6 @@ import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import type { ProductTemplateWizardStep } from "@/features/productTemplates/types"
 
-// Steps 4-5 (orchestration, review) are display-only in this story — they belong to
-// US 10.2 / US 10.4 and are never reachable here, so they always render as upcoming.
 const DISPLAY_STEPS = [
   "identity",
   "behavioral",

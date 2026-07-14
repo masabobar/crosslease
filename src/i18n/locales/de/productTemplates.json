@@ -1,4 +1,39 @@
 {
+  "list": {
+    "title": "Produktvorlagen",
+    "subtitle": "Parametrische Blaupausen, die Berechnungslogik, Berechtigung und Workflow-Verhalten definieren.",
+    "tenantRequired": "Dieses Konto ist keinem einzelnen Mandanten zugeordnet, daher kann die Produktvorlagenliste noch nicht angezeigt werden. Die Mandantenauswahl für System-Admins wird noch fertiggestellt.",
+    "selectTenantPrompt": "Wählen Sie einen Mandanten aus, um dessen Produktvorlagen anzuzeigen.",
+    "createButton": "Vorlage erstellen",
+    "table": {
+      "columns": {
+        "product": "Produkt",
+        "financingType": "Finanzierungsart",
+        "calculation": "Berechnung",
+        "ltvAndTerm": "LTV & Laufzeit",
+        "status": "Status",
+        "version": "Version"
+      },
+      "maxLtvPrefix": "Max."
+    },
+    "emptyState": {
+      "title": "Noch keine Produktvorlagen",
+      "description": "Erstellen Sie Ihre erste Vorlage, um zu beginnen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Vorlagen entsprechen Ihren Filtern",
+      "description": "Passen Sie Ihre Suche oder den Statusfilter an."
+    },
+    "filters": {
+      "searchPlaceholder": "Nach Code oder Name suchen…",
+      "allStatuses": "Alle Status"
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
   "wizard": {
     "steps": {
       "identity": "Identität",
@@ -19,27 +54,49 @@
       "title": "Berechtigung",
       "subtitle": "Legen Sie den Vermögensumfang, die Laufzeit- und Volumengrenzen sowie das Gültigkeitsfenster fest."
     },
+    "orchestration": {
+      "title": "Orchestrierungsverknüpfung",
+      "subtitle": "Verknüpfen Sie die Workflow-Aufgaben, Dokumente und Validierungsregeln aus den Mandantenkatalogen."
+    },
+    "review": {
+      "title": "Prüfen und veröffentlichen",
+      "subtitle": "Bestätigen Sie jedes Feld vor der Veröffentlichung."
+    },
     "actions": {
       "cancel": "Abbrechen",
       "back": "Zurück",
       "next": "Weiter",
-      "saveDraft": "Als Entwurf speichern"
+      "saveDraft": "Als Entwurf speichern",
+      "publish": "Vorlage veröffentlichen"
     },
     "draftSaved": "Entwurf gespeichert.",
-    "orchestrationComingSoon": "Orchestrierungsverknüpfung ist noch nicht verfügbar.",
     "loadingDraft": "Entwurf wird geladen…",
     "discardDialog": {
       "title": "Diesen Entwurf verwerfen?",
       "description": "Der Entwurf wird von den operativen Oberflächen entfernt. Dies kann von hier aus nicht rückgängig gemacht werden.",
       "keep": "Weiter bearbeiten",
       "confirm": "Entwurf verwerfen"
+    },
+    "templatePublished": {
+      "title": "Vorlage veröffentlicht",
+      "subtitle": "Die Vorlage ist jetzt aktiv und für die Origination innerhalb von RefiNext EU verfügbar.",
+      "backButton": "Zurück zur Vorlagenliste"
     }
   },
   "sections": {
     "settings": "Einstellungen",
     "npvFormulaReference": "NPV-Formelreferenz",
     "allowedAssetCategories": "Zulässige Vermögenskategorien",
-    "details": "Details"
+    "details": "Details",
+    "requiredWorkflowTasks": "Erforderliche Workflow-Aufgaben",
+    "requiredDocuments": "Erforderliche Dokumente",
+    "optionalDocuments": "Optionale Dokumente",
+    "validationRuleSet": "Validierungsregelwerk",
+    "identity": "Identität",
+    "behavioralSettings": "Verhaltenseinstellungen",
+    "eligibility": "Berechtigung",
+    "validity": "Gültigkeit",
+    "orchestrationLinkage": "Orchestrierungsverknüpfung"
   },
   "fields": {
     "templateName": "Vorlagenname",
@@ -66,7 +123,15 @@
     "maxVolumeEur": "Max. Volumen (EUR)",
     "validFrom": "Gültig ab",
     "validUntil": "Gültig bis",
-    "validUntilHint": "Leer lassen für unbefristet."
+    "validUntilHint": "Leer lassen für unbefristet.",
+    "requiredWorkflowTasksHint": "Wählen Sie mindestens einen aktiven Eintrag aus dem Workflow-Aufgabenkatalog.",
+    "requiredDocumentsHint": "Wählen Sie mindestens einen aktiven Eintrag aus dem Dokumentenanforderungskatalog.",
+    "optionalDocumentsHint": "Null oder mehr Einträge aus dem Dokumentenanforderungskatalog.",
+    "validationRuleSetHint": "Genau eine aktive Version aus der Validierungs- und Gating-Engine.",
+    "openEnded": "Unbefristet",
+    "publicationJustification": "Begründung der Veröffentlichung",
+    "publicationJustificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Veröffentlichung hinzu…",
+    "confirmPublication": "Ich bestätige, dass diese Vorlage bereit zur Veröffentlichung ist."
   },
   "financingTypes": {
     "full_refinancing": "Vollrefinanzierung",
@@ -123,6 +188,23 @@
     "energy_assets": "Energieanlagen",
     "other": "Sonstiges"
   },
+  "workflowTasks": {
+    "creditAssessment": "Bonitätsprüfung",
+    "collateralValuation": "Sicherheitenbewertung",
+    "amlScreening": "Geldwäsche-Prüfung",
+    "disbursementApproval": "Auszahlungsfreigabe"
+  },
+  "documentRequirements": {
+    "assetInvoice": "Anlagenrechnung",
+    "leaseAgreement": "Leasingvertrag",
+    "financialStatements": "Finanzberichte",
+    "insuranceCertificate": "Versicherungsnachweis"
+  },
+  "validationRuleSets": {
+    "standardGating": "Standard-Gating-Regeln",
+    "realEstateGating": "Immobilien-Gating",
+    "portfolioGating": "Portfolio-Gating"
+  },
   "versionStatuses": {
     "draft": "Entwurf",
     "published": "Veröffentlicht",
@@ -144,15 +226,7 @@
       "keep": "Weiter bearbeiten",
       "confirm": "Entwurf verwerfen"
     },
-    "publish": "Veröffentlichen",
-    "publishDialog": {
-      "title": "Diese Version veröffentlichen?",
-      "description": "Die Veröffentlichung aktiviert diese Version sofort und ersetzt die aktuell veröffentlichte Version, die dadurch veraltet wird. Dies kann von hier aus nicht rückgängig gemacht werden.",
-      "justificationLabel": "Begründung (optional)",
-      "justificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Aktivierung hinzu…",
-      "keep": "Weiter bearbeiten",
-      "confirm": "Version veröffentlichen"
-    },
+    "continueEditing": "Weiter bearbeiten",
     "authorNewVersion": "Neue Version erstellen",
     "authorNewVersionDialog": {
       "title": "Neue Version erstellen?",
@@ -175,6 +249,8 @@
   "errors": {
     "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
     "atLeastOneAssetCategory": "Wählen Sie mindestens eine Vermögenskategorie aus.",
+    "atLeastOneWorkflowTask": "Wählen Sie mindestens eine Workflow-Aufgabe aus.",
+    "atLeastOneDocument": "Wählen Sie mindestens ein erforderliches Dokument aus.",
     "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
     "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
     "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",

@@ -22,7 +22,6 @@ import { TemplateVersionStatusBadge } from "@/features/productTemplates/componen
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
-import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
 import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
@@ -62,9 +61,6 @@ export default function VersionHistoryPage() {
 
   const [discardTarget, setDiscardTarget] =
     useState<TemplateVersionSummary | null>(null)
-  const [publishTarget, setPublishTarget] =
-    useState<TemplateVersionSummary | null>(null)
-  const [justification, setJustification] = useState("")
   const [newVersionTarget, setNewVersionTarget] =
     useState<TemplateVersionSummary | null>(null)
   const [incrementType, setIncrementType] = useState<IncrementType | null>(null)
@@ -92,8 +88,6 @@ export default function VersionHistoryPage() {
 
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
-  const { mutateAsync: publishDraft, isPending: isPublishing } =
-    usePublishProductTemplate()
   const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
     useCreateNewProductTemplateVersion()
   const { mutateAsync: deprecateVersion, isPending: isDeprecating } =
@@ -107,29 +101,6 @@ export default function VersionHistoryPage() {
         versionNumber: discardTarget.version_number,
       })
       setDiscardTarget(null)
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
-    }
-  }
-
-  async function handleConfirmPublish() {
-    if (!publishTarget || !templateId) return
-    try {
-      await publishDraft({
-        templateId,
-        versionNumber: publishTarget.version_number,
-        body: {
-          justification: justification.trim() === "" ? null : justification,
-        },
-      })
-      setPublishTarget(null)
-      setJustification("")
     } catch (err) {
       toast.error(
         err instanceof ApiError
@@ -289,11 +260,19 @@ export default function VersionHistoryPage() {
                             </Button>
                             <Button
                               type="button"
+                              variant="outline"
                               size="sm"
-                              data-testid={`publish-version-${version.version_number}`}
-                              onClick={() => setPublishTarget(version)}
+                              data-testid={`continue-editing-${version.version_number}`}
+                              onClick={() =>
+                                navigate(
+                                  productTemplateNewVersionEdit(
+                                    templateId ?? "",
+                                    version.version_number
+                                  )
+                                )
+                              }
                             >
-                              {t("versionHistory.publish")}
+                              {t("versionHistory.continueEditing")}
                             </Button>
                           </div>
                         )
@@ -362,54 +341,6 @@ export default function VersionHistoryPage() {
               disabled={isDiscarding}
             >
               {t("versionHistory.discardDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={publishTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setPublishTarget(null)
-            setJustification("")
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("versionHistory.publishDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("versionHistory.publishDialog.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex flex-col gap-2 px-1">
-            <Label htmlFor="publish-justification">
-              {t("versionHistory.publishDialog.justificationLabel")}
-            </Label>
-            <Textarea
-              id="publish-justification"
-              data-testid="publish-justification-input"
-              placeholder={t(
-                "versionHistory.publishDialog.justificationPlaceholder"
-              )}
-              rows={3}
-              value={justification}
-              onChange={e => setJustification(e.target.value)}
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-publish-dialog-keep">
-              {t("versionHistory.publishDialog.keep")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="version-publish-dialog-confirm"
-              onClick={handleConfirmPublish}
-              disabled={isPublishing}
-            >
-              {t("versionHistory.publishDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

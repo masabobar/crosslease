@@ -28,6 +28,7 @@ export const PATHS = {
   PARTNER_DETAIL: "/partners/:id",
   PARTNER_DUPLICATES: "/partners/duplicates",
   PARTNER_DUPLICATE_DETAIL: "/partners/duplicates/:pairId",
+  PRODUCT_TEMPLATE_LIST: "/business-configuration/product-templates",
   PRODUCT_TEMPLATE_CREATE: "/business-configuration/product-templates/new",
   PRODUCT_TEMPLATE_VERSION_HISTORY:
     "/business-configuration/product-templates/:templateId/version-history",

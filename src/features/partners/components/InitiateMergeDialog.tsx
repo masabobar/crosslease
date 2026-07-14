@@ -146,6 +146,7 @@ function InitiateMergeDialog({
                   <SelectTrigger
                     id="merge-reason-code"
                     data-testid="initiate-merge-reason-code-select"
+                    className="w-full"
                   >
                     <SelectValue
                       placeholder={t(

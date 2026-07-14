@@ -18,3 +18,5 @@ export type ProductTemplateWizardStep =
   | "identity"
   | "behavioral"
   | "eligibility"
+  | "orchestration"
+  | "review"

@@ -3,7 +3,7 @@ import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ArrowRight, ArrowLeft } from "lucide-react"
+import { ArrowRight, ArrowLeft, Check } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ApiError } from "@/lib/api"
+import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { ProductTemplateWizardFormSchema } from "@/features/productTemplates/api/schema"
 import type {
@@ -30,15 +31,21 @@ import { WizardStepper } from "@/features/productTemplates/components/WizardStep
 import { IdentityStep } from "@/features/productTemplates/components/steps/IdentityStep"
 import { BehavioralSettingsStep } from "@/features/productTemplates/components/steps/BehavioralSettingsStep"
 import { EligibilityStep } from "@/features/productTemplates/components/steps/EligibilityStep"
+import { OrchestrationStep } from "@/features/productTemplates/components/steps/OrchestrationStep"
+import { ReviewStep } from "@/features/productTemplates/components/steps/ReviewStep"
 import { useCreateProductTemplateDraft } from "@/features/productTemplates/hooks/useCreateProductTemplateDraft"
 import { useUpdateProductTemplateDraft } from "@/features/productTemplates/hooks/useUpdateProductTemplateDraft"
+import { useUpdateProductTemplateOrchestration } from "@/features/productTemplates/hooks/useUpdateProductTemplateOrchestration"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
+import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 
 const ORDERED_STEPS: ProductTemplateWizardStep[] = [
   "identity",
   "behavioral",
   "eligibility",
+  "orchestration",
+  "review",
 ]
 
 const STEP_FIELDS: Record<
@@ -64,6 +71,12 @@ const STEP_FIELDS: Record<
     "max_ltv_ratio",
     "valid_from",
   ],
+  orchestration: [
+    "required_workflow_tasks",
+    "required_documents",
+    "validation_rule_set_id",
+  ],
+  review: [],
 }
 
 // Builds the update-shaped wire payload from form values (template_code is immutable
@@ -126,6 +139,13 @@ function toNewVersionFormDefaults(
     max_volume_eur: detail.max_volume_eur ?? undefined,
     valid_from: detail.valid_from ?? "",
     valid_until: detail.valid_until ?? "",
+    // No GET endpoint returns a version's saved orchestration linkage (only the PATCH
+    // response ever does), so re-versioning from a Published template can't pre-fill these
+    // — the author has to re-select them (see plan Gap 5).
+    required_workflow_tasks: [],
+    required_documents: [],
+    optional_documents: [],
+    validation_rule_set_id: "",
   }
 }
 
@@ -156,6 +176,14 @@ function WizardFormView({
     useUpdateProductTemplateDraft()
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
+  const { mutateAsync: saveOrchestration, isPending: isSavingOrchestration } =
+    useUpdateProductTemplateOrchestration()
+  const { mutateAsync: publishDraft, isPending: isPublishing } =
+    usePublishProductTemplate()
+
+  const [justification, setJustification] = useState("")
+  const [confirmed, setConfirmed] = useState(false)
+  const [isPublished, setIsPublished] = useState(false)
 
   const form = useForm<ProductTemplateWizardForm>({
     resolver: zodResolver(ProductTemplateWizardFormSchema),
@@ -164,10 +192,15 @@ function WizardFormView({
       template_name: "",
       template_description: "",
       allowed_asset_categories: [],
+      required_workflow_tasks: [],
+      required_documents: [],
+      optional_documents: [],
+      validation_rule_set_id: "",
     },
   })
 
-  const isSaving = isCreating || isUpdating
+  const isSaving =
+    isCreating || isUpdating || isSavingOrchestration || isPublishing
 
   const [
     watchedCode,
@@ -205,7 +238,7 @@ function WizardFormView({
 
   const currentIndex = ORDERED_STEPS.indexOf(step)
   const isFirstStep = currentIndex === 0
-  const isLastBuiltStep = step === "eligibility"
+  const isReviewStep = step === "review"
 
   async function handleNext() {
     const fields = STEP_FIELDS[step]
@@ -219,34 +252,80 @@ function WizardFormView({
     setStep(ORDERED_STEPS[currentIndex - 1])
   }
 
-  async function handleSaveDraft() {
+  // Shared by Save as draft and Publish — creates/updates the draft and its
+  // orchestration linkage, returning the resolved draft ref. Returns null (silently,
+  // matching the pre-existing behavior) only when there's no tenant to create against yet.
+  async function saveDraftAndOrchestration(): Promise<DraftRef | null> {
     const values = form.getValues()
     const updatePayload = toUpdatePayload(values)
 
+    let ref = draftRef
+    if (!ref) {
+      if (!tenantId) return null
+      // canSaveDraft (gating the button that calls this) guarantees the 7 wire-required
+      // fields are present, which TS can't infer from the looser wizard-form type.
+      const result = await createDraft({
+        tenantId,
+        body: {
+          template_code: values.template_code,
+          ...updatePayload,
+        } as CreateProductTemplateDraftRequest,
+      })
+      ref = { templateId: result.id, versionNumber: result.version_number }
+      setDraftRef(ref)
+    } else {
+      await updateDraft({
+        templateId: ref.templateId,
+        versionNumber: ref.versionNumber,
+        body: updatePayload,
+      })
+    }
+
+    // The orchestration PATCH requires validation_rule_set_id unconditionally, with no
+    // partial-save variant (see plan Gap 5) — only call it once the author has actually
+    // reached that point in the step, rather than on every step's Save as draft.
+    if (values.validation_rule_set_id) {
+      await saveOrchestration({
+        templateId: ref.templateId,
+        versionNumber: ref.versionNumber,
+        body: {
+          required_workflow_tasks: values.required_workflow_tasks,
+          required_documents: values.required_documents,
+          optional_documents: values.optional_documents,
+          validation_rule_set_id: values.validation_rule_set_id,
+        },
+      })
+    }
+
+    return ref
+  }
+
+  async function handleSaveDraft() {
     try {
-      if (!draftRef) {
-        if (!tenantId) return
-        // canSaveDraft (gating the button that calls this) guarantees the 7 wire-required
-        // fields are present, which TS can't infer from the looser wizard-form type.
-        const result = await createDraft({
-          tenantId,
-          body: {
-            template_code: values.template_code,
-            ...updatePayload,
-          } as CreateProductTemplateDraftRequest,
-        })
-        setDraftRef({
-          templateId: result.id,
-          versionNumber: result.version_number,
-        })
-      } else {
-        await updateDraft({
-          templateId: draftRef.templateId,
-          versionNumber: draftRef.versionNumber,
-          body: updatePayload,
-        })
-      }
+      const ref = await saveDraftAndOrchestration()
+      if (!ref) return
       toast.success(t("wizard.draftSaved"))
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}` as "errors.generic", {
+              defaultValue: t("errors.generic"),
+            })
+          : t("errors.generic")
+      )
+    }
+  }
+
+  async function handlePublish() {
+    try {
+      const ref = await saveDraftAndOrchestration()
+      if (!ref) return
+      await publishDraft({
+        templateId: ref.templateId,
+        versionNumber: ref.versionNumber,
+        body: { justification: justification.trim() || null },
+      })
+      setIsPublished(true)
     } catch (err) {
       toast.error(
         err instanceof ApiError
@@ -283,6 +362,40 @@ function WizardFormView({
     navigate(-1)
   }
 
+  if (isPublished) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center bg-slate-50">
+        <div
+          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6 items-center"
+          data-testid="template-published-success"
+        >
+          <div className="flex flex-col items-center gap-3 w-full">
+            <div className="bg-success/10 p-3 rounded-[14px]">
+              <Check size={24} className="text-success" strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col gap-3 text-center w-full">
+              <h1 className="text-xl font-semibold text-foreground">
+                {t("wizard.templatePublished.title")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t("wizard.templatePublished.subtitle")}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            className="w-full"
+            data-testid="back-to-template-list-button"
+            onClick={() => navigate(PATHS.PRODUCT_TEMPLATE_LIST)}
+          >
+            <ArrowLeft size={16} />
+            {t("wizard.templatePublished.backButton")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
       <WizardStepper currentStep={step} />
@@ -303,6 +416,16 @@ function WizardFormView({
           )}
           {step === "behavioral" && <BehavioralSettingsStep form={form} />}
           {step === "eligibility" && <EligibilityStep form={form} />}
+          {step === "orchestration" && <OrchestrationStep form={form} />}
+          {step === "review" && (
+            <ReviewStep
+              form={form}
+              justification={justification}
+              onJustificationChange={setJustification}
+              confirmed={confirmed}
+              onConfirmedChange={setConfirmed}
+            />
+          )}
         </div>
       </div>
 
@@ -339,7 +462,7 @@ function WizardFormView({
           >
             {t("wizard.actions.saveDraft")}
           </Button>
-          {!isLastBuiltStep && (
+          {!isReviewStep && (
             <Button
               type="button"
               data-testid="wizard-next-button"
@@ -350,15 +473,14 @@ function WizardFormView({
               <ArrowRight size={16} />
             </Button>
           )}
-          {isLastBuiltStep && (
+          {isReviewStep && (
             <Button
               type="button"
-              data-testid="wizard-next-button"
-              disabled
-              title={t("wizard.orchestrationComingSoon")}
+              data-testid="wizard-publish-button"
+              onClick={handlePublish}
+              disabled={isSaving || !confirmed}
             >
-              {t("wizard.actions.next")}
-              <ArrowRight size={16} />
+              {t("wizard.actions.publish")}
             </Button>
           )}
         </div>
