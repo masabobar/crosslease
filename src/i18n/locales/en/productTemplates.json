@@ -1,4 +1,39 @@
 {
+  "list": {
+    "title": "Product templates",
+    "subtitle": "Parametric blueprints defining calculation logic, eligibility, and workflow behavior.",
+    "tenantRequired": "This account isn't scoped to a single tenant, so the product template list can't be shown yet. Tenant selection for System Admin is being finalized.",
+    "selectTenantPrompt": "Select a tenant to view its product templates.",
+    "createButton": "Create template",
+    "table": {
+      "columns": {
+        "product": "Product",
+        "financingType": "Financing type",
+        "calculation": "Calculation",
+        "ltvAndTerm": "LTV & term",
+        "status": "Status",
+        "version": "Version"
+      },
+      "maxLtvPrefix": "Max"
+    },
+    "emptyState": {
+      "title": "No product templates yet",
+      "description": "Create your first template to get started."
+    },
+    "emptyFiltered": {
+      "title": "No templates match your filters",
+      "description": "Try adjusting your search or status filter."
+    },
+    "filters": {
+      "searchPlaceholder": "Search by code or name…",
+      "allStatuses": "All statuses"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
   "wizard": {
     "steps": {
       "identity": "Identity",
@@ -19,27 +54,50 @@
       "title": "Eligibility",
       "subtitle": "Set the asset scope, term and volume boundaries, and validity window."
     },
+    "orchestration": {
+      "title": "Orchestration linkage",
+      "subtitle": "Link the workflow tasks, documents, and validation rules from the tenant catalogs."
+    },
+    "review": {
+      "title": "Review and publish",
+      "subtitle": "Confirm every field before publication."
+    },
     "actions": {
       "cancel": "Cancel",
       "back": "Back",
       "next": "Continue",
-      "saveDraft": "Save as draft"
+      "saveDraft": "Save as draft",
+      "publish": "Publish template"
     },
     "draftSaved": "Draft saved.",
-    "orchestrationComingSoon": "Orchestration linkage is not available yet.",
     "loadingDraft": "Loading draft…",
+    "backToVersionHistory": "Back to version history",
     "discardDialog": {
       "title": "Discard this draft?",
       "description": "The draft will be removed from operational surfaces. This can't be undone from here.",
       "keep": "Keep editing",
       "confirm": "Discard draft"
+    },
+    "templatePublished": {
+      "title": "Template published",
+      "subtitle": "The template is now active and available for origination within RefiNext EU.",
+      "backButton": "Back to template list"
     }
   },
   "sections": {
     "settings": "Settings",
     "npvFormulaReference": "NPV formula reference",
     "allowedAssetCategories": "Allowed asset categories",
-    "details": "Details"
+    "details": "Details",
+    "requiredWorkflowTasks": "Required workflow tasks",
+    "requiredDocuments": "Required documents",
+    "optionalDocuments": "Optional documents",
+    "validationRuleSet": "Validation rule set",
+    "identity": "Identity",
+    "behavioralSettings": "Behavioral settings",
+    "eligibility": "Eligibility",
+    "validity": "Validity",
+    "orchestrationLinkage": "Orchestration linkage"
   },
   "fields": {
     "templateName": "Template name",
@@ -66,7 +124,15 @@
     "maxVolumeEur": "Max volume (EUR)",
     "validFrom": "Valid from",
     "validUntil": "Valid until",
-    "validUntilHint": "Leave empty for open ended."
+    "validUntilHint": "Leave empty for open ended.",
+    "requiredWorkflowTasksHint": "Select at least one active entry from the workflow task catalog.",
+    "requiredDocumentsHint": "Select at least one active entry from the document requirement catalog.",
+    "optionalDocumentsHint": "Zero or more entries from the document requirement catalog.",
+    "validationRuleSetHint": "Exactly one active version from the validation and gating engine.",
+    "openEnded": "Open ended",
+    "publicationJustification": "Publication justification",
+    "publicationJustificationPlaceholder": "Add a note about this publication…",
+    "confirmPublication": "I confirm this template is ready for publication."
   },
   "financingTypes": {
     "full_refinancing": "Full refinancing",
@@ -123,6 +189,23 @@
     "energy_assets": "Energy assets",
     "other": "Other"
   },
+  "workflowTasks": {
+    "creditAssessment": "Credit assessment",
+    "collateralValuation": "Collateral valuation",
+    "amlScreening": "AML screening",
+    "disbursementApproval": "Disbursement approval"
+  },
+  "documentRequirements": {
+    "assetInvoice": "Asset invoice",
+    "leaseAgreement": "Lease agreement",
+    "financialStatements": "Financial statements",
+    "insuranceCertificate": "Insurance certificate"
+  },
+  "validationRuleSets": {
+    "standardGating": "Standard gating rules",
+    "realEstateGating": "Real estate gating",
+    "portfolioGating": "Portfolio gating"
+  },
   "versionStatuses": {
     "draft": "Draft",
     "published": "Published",
@@ -144,15 +227,7 @@
       "keep": "Keep editing",
       "confirm": "Discard draft"
     },
-    "publish": "Publish",
-    "publishDialog": {
-      "title": "Publish this version?",
-      "description": "Publishing activates this version immediately and replaces the currently published version, which becomes deprecated. This can't be undone from here.",
-      "justificationLabel": "Justification (optional)",
-      "justificationPlaceholder": "Add a note about this activation…",
-      "keep": "Keep editing",
-      "confirm": "Publish version"
-    },
+    "continueEditing": "Continue editing",
     "authorNewVersion": "Author new version",
     "authorNewVersionDialog": {
       "title": "Author a new version?",
@@ -175,11 +250,13 @@
   "errors": {
     "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
     "atLeastOneAssetCategory": "Select at least one asset category.",
+    "atLeastOneWorkflowTask": "Select at least one workflow task.",
+    "atLeastOneDocument": "Select at least one required document.",
     "minTermExceedsMax": "Min term must not exceed max term.",
     "minVolumeExceedsMax": "Min volume must not exceed max volume.",
     "validUntilBeforeFrom": "Valid until must be on or after valid from.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "This template code is already in use within your tenant.",
-    "PRODUCT_TEMPLATE_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
+    "BPT_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",
     "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "This template version could not be found.",
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",

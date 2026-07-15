@@ -185,6 +185,51 @@ export type DeprecateTemplateVersionResponse = z.infer<
   typeof DeprecateTemplateVersionResponseSchema
 >
 
+// Wire request/response for PATCH .../orchestration (update_orchestration) in refinext-api.
+// Matches UpdateOrchestrationRequest / OrchestrationResponse exactly. No GET endpoint exists for
+// this data (only the PATCH response ever returns it), and no catalog list endpoints exist for
+// E15/E16/E18 either — the FE's four reference selectors use a static option list, not a live
+// catalog query (see plan Gap 5 for both).
+export const UpdateOrchestrationRequestSchema = z.object({
+  required_workflow_tasks: z.array(z.string().uuid()),
+  required_documents: z.array(z.string().uuid()),
+  optional_documents: z.array(z.string().uuid()).default([]),
+  validation_rule_set_id: z.string().uuid(),
+})
+export type UpdateOrchestrationRequest = z.infer<
+  typeof UpdateOrchestrationRequestSchema
+>
+
+export const OrchestrationLinkTypeSchema = z.enum([
+  "required_workflow_task",
+  "required_document",
+  "optional_document",
+  "validation_rule_set",
+])
+export type OrchestrationLinkType = z.infer<typeof OrchestrationLinkTypeSchema>
+
+export const CatalogRefTypeSchema = z.enum([
+  "workflow_task",
+  "document_requirement",
+  "validation_rule_set",
+])
+export type CatalogRefType = z.infer<typeof CatalogRefTypeSchema>
+
+export const OrchestrationLinkageItemSchema = z.object({
+  id: z.string().uuid(),
+  link_type: OrchestrationLinkTypeSchema,
+  catalog_ref_id: z.string().uuid(),
+  catalog_ref_type: CatalogRefTypeSchema,
+})
+export type OrchestrationLinkageItem = z.infer<
+  typeof OrchestrationLinkageItemSchema
+>
+
+export const OrchestrationResponseSchema = z.object({
+  linkages: z.array(OrchestrationLinkageItemSchema),
+})
+export type OrchestrationResponse = z.infer<typeof OrchestrationResponseSchema>
+
 // RHF-facing form schema — stricter than the wire schema, mirroring the PRD's Field Specification
 // table (every Mandatory field required) for inline per-field validation. The actual POST/PATCH
 // payload sent to the API is the looser wire schema above.
@@ -214,6 +259,12 @@ export const ProductTemplateWizardFormSchema = z
     max_volume_eur: z.number().min(0).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
+    required_workflow_tasks: z
+      .array(z.string())
+      .min(1, "atLeastOneWorkflowTask"),
+    required_documents: z.array(z.string()).min(1, "atLeastOneDocument"),
+    optional_documents: z.array(z.string()),
+    validation_rule_set_id: z.string().min(1, "required"),
   })
   .superRefine((data, ctx) => {
     if (data.min_term_months > data.max_term_months) {
@@ -324,3 +375,44 @@ export const TemplateVersionDetailSchema = z.object({
   valid_until: z.string().nullable().optional(),
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
+
+// Wire response for GET /tenants/{tenant_id}/product-templates (list_templates) in
+// refinext-api. TemplateListItem deliberately has no template_name field on the BE —
+// only template_code — even though the Figma design's "Product" column shows a
+// human-readable name; the join already fetches it but the response schema doesn't map
+// it through. Flagged BE gap: FE renders template_code as the primary label until the BE
+// maps template_name through.
+export const TemplateCurrentVersionSummarySchema = z.object({
+  version_id: z.string().uuid(),
+  version_number: z.string(),
+  version_status: TemplateStatusSchema,
+  financing_type: FinancingTypeSchema,
+  legal_structure: LegalStructureSchema,
+  calculation_model: CalculationModelSchema,
+  payment_timing: PaymentTimingSchema,
+  max_ltv_ratio: z.coerce.number().nullable().optional(),
+  min_term_months: z.number().int().nullable().optional(),
+  max_term_months: z.number().int().nullable().optional(),
+  published_by: UserRefSchema.nullable().optional(),
+  published_at: z.string().nullable().optional(),
+})
+export type TemplateCurrentVersionSummary = z.infer<
+  typeof TemplateCurrentVersionSummarySchema
+>
+
+export const TemplateListItemSchema = z.object({
+  id: z.string().uuid(),
+  template_code: z.string(),
+  current_version: TemplateCurrentVersionSummarySchema.nullable(),
+  created_at: z.string(),
+})
+export type TemplateListItem = z.infer<typeof TemplateListItemSchema>
+
+export const TemplateListResponseSchema = z.object({
+  items: z.array(TemplateListItemSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  per_page: z.number().int(),
+  total_pages: z.number().int(),
+})
+export type TemplateListResponse = z.infer<typeof TemplateListResponseSchema>

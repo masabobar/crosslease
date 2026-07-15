@@ -6,6 +6,7 @@ import {
   InviteUserResponseSchema,
   UserActionResponseSchema,
   UserResponseSchema,
+  UserMePermissionsResponseSchema,
   PaginatedUsersResponseSchema,
   UserDetailResponseSchema,
 } from "./schema"
@@ -17,6 +18,7 @@ import type {
   InviteUserResponse,
   UserActionResponse,
   UserResponse,
+  UserMePermissionsResponse,
   PaginatedUsersResponse,
   UsersQueryParams,
   SuspendUserInput,
@@ -37,6 +39,7 @@ export const USERS_QUERY_KEYS = {
   lists: () => ["users", "list"] as const,
   list: (params: UsersQueryParams) => ["users", "list", params] as const,
   me: () => ["users", "me"] as const,
+  mePermissions: () => ["users", "me", "permissions"] as const,
   detail: (id: string) => ["users", "detail", id] as const,
 } as const
 
@@ -50,6 +53,11 @@ export async function inviteUser(
 export async function fetchCurrentUser(): Promise<UserResponse> {
   const data = await api.get("/users/me")
   return UserResponseSchema.parse(data)
+}
+
+export async function fetchCurrentUserPermissions(): Promise<UserMePermissionsResponse> {
+  const data = await api.get("/users/me/permissions")
+  return UserMePermissionsResponseSchema.parse(data)
 }
 
 export async function fetchUsers(
