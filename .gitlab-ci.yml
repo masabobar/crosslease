@@ -166,6 +166,34 @@ deploy:develop:
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
 
+e2e-develop:
+  stage: e2e
+  image: mcr.microsoft.com/playwright:v1.60.0-jammy
+  services: []
+  tags:
+    - docker
+  when: manual # Phase 1: manual; Phase 2: change to on_success
+  needs:
+    - deploy:develop
+  environment:
+    name: Develop
+  before_script:
+    - corepack enable && corepack prepare pnpm@11.1.1 --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - until curl -sf "$BASE_URL/health"; do sleep 3; done
+    - npx playwright test --config=src/e2e/playwright.config.ts --reporter=html,junit
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - playwright-results/
+      - playwright-report/
+    reports:
+      junit: playwright-results/junit.xml
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
 # ------------------------- Staging -------------------------
 
 build:staging:
@@ -257,13 +285,11 @@ e2e-staging:
     - deploy:staging
   environment:
     name: Staging
-  variables:
-    STAGING_BASE_URL: $STAGING_BASE_URL
   before_script:
     - corepack enable && corepack prepare pnpm@11.1.1 --activate
     - pnpm install --frozen-lockfile
   script:
-    - until curl -sf "$STAGING_BASE_URL/health"; do sleep 3; done
+    - until curl -sf "$BASE_URL/health"; do sleep 3; done
     - npx playwright test --config=src/e2e/playwright.config.ts --reporter=html,junit
   artifacts:
     when: always
