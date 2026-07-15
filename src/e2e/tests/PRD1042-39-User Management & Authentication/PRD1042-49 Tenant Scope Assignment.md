@@ -1,11 +1,33 @@
 # PRD1042-49 — US 28.11 | USER MANAGEMENT | Tenant & Scope Assignment
 
 Generated: 2026-06-12
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is a tenant-level role (user_type `bank_tenant`) bound to exactly one tenant at creation; tenant scope is immutable after creation and cannot be reached via role transition. System Admin can no longer assign or modify bank user tenant scope — that authority moves to Bank Admin for its own tenant.
 Story: PRD1042-49 — US 28.11 | USER MANAGEMENT | Tenant & Scope Assignment
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (13 ACs, description present, stakeholder-reviewed by Philipp Maute & Vesna Plakalovic, Ready for Staging)
 ACs with Gherkin scenarios: 5 of 13 | Blocked: 2 (AC-07, AC-11) | Excluded: 6 (separate-feature: AC-02, AC-04, AC-05, AC-12; edge-case: AC-08, AC-13)
 Figma design: Node 9:113, file 18XTZEeaxrGDhi4DzZ2QnJ — Stage 2 FAILED (Figma MCP rate-limited; same tooling blocker as PRD1042-44, PRD1042-48, PRD1042-77)
+
+---
+
+## Tenant-Scoped Roles Matrix (Updated 2026-07-08)
+
+| Role (wire value)         | user_type         | Tenant scope required             | Multiplicity                        | Assignment moment     | Mutability after creation                       | Who assigns                               |
+| ------------------------- | ----------------- | --------------------------------- | ----------------------------------- | --------------------- | ----------------------------------------------- | ----------------------------------------- |
+| `bank_admin` (Power User) | `bank_tenant`     | Yes                               | Exactly one tenant                  | At user creation only | **Immutable** — cannot change tenant scope      | System Admin (initial bootstrap) then N/A |
+| `front_office`            | `bank_tenant`     | Yes                               | Exactly one tenant                  | At user creation      | Mutable (Four-Eyes for privileged targets)      | Bank Admin (own tenant)                   |
+| `back_office`             | `bank_tenant`     | Yes                               | Exactly one tenant                  | At user creation      | Mutable (Four-Eyes for privileged targets)      | Bank Admin (own tenant)                   |
+| `leasing_company_user`    | `leasing_company` | Yes + exactly one LC              | Exactly one tenant + exactly one LC | At user creation      | Mutable (reason mandatory per AC-12 PRD1042-48) | Bank Admin (own tenant)                   |
+| `auditor`                 | `platform`        | Yes (time-limited)                | Exactly one tenant                  | At user creation      | Mutable (Four-Eyes for privileged targets)      | System Admin                              |
+| `support_user`            | `platform`        | Optional / cross-tenant read-only | N/A                                 | At user creation      | Mutable                                         | System Admin                              |
+| `system_admin`            | `platform`        | Platform-wide (no tenant)         | N/A                                 | At user creation      | N/A                                             | System Admin                              |
+
+**Bank Admin key constraints:**
+
+- Tenant scope is **assigned once at creation** — no UI or API path exists to change it later
+- **Cannot be reached via role transition** — a user cannot be promoted from `front_office` / `back_office` / `leasing_company_user` into `bank_admin`; Bank Admin is created directly as `bank_admin`
+- Administers configuration and users within its own tenant only — **no cross-tenant scope**
+- System Admin creates the first Bank Admin for a new tenant (bootstrap); after that, Bank Admin manages its own tenant users
 
 ---
 
@@ -36,7 +58,7 @@ Figma design: Node 9:113, file 18XTZEeaxrGDhi4DzZ2QnJ — Stage 2 FAILED (Figma 
 | AC-12 | Backend rejects direct API access outside assigned scope                  | `separate-feature` | Backend enforcement only; covered by PRD1042-50 and PRD1042-51 spec files                             |
 | AC-13 | Audit logging for all scope assignment, change, removal, expiry events    | `edge-case`        | Audit log is backend/database output; no distinct E2E UI assertion; covered by compliance audit       |
 
-**Gherkin generated for:** AC-01, AC-03, AC-06, AC-09, AC-10
+**Gherkin generated for:** AC-01, AC-03, AC-06, AC-09, AC-10 (plus AC-01/AC-10 Bank Admin immutability sub-cases added 2026-07-08)
 **Blocked (no Gherkin):** AC-07 (D21), AC-11 (D16 + D19)
 **No Gherkin (edge-case or separate-feature):** AC-02, AC-04, AC-05, AC-08, AC-12, AC-13
 
@@ -44,17 +66,22 @@ Figma design: Node 9:113, file 18XTZEeaxrGDhi4DzZ2QnJ — Stage 2 FAILED (Figma 
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                               | AC    | Priority | E2E          |
-| ------------- | ------------------------------------------------------------------------------------------------------ | ----- | -------- | ------------ |
-| `@happy-path` | Scope-required roles cannot be saved without tenant assignment (Scenario Outline — 3 roles)            | AC-01 | P0       | ✅           |
-| `@happy-path` | LC User creation requires exactly one Leasing Company assignment                                       | AC-03 | P0       | ⚙️ needs D19 |
-| `@happy-path` | Invalid tenant/LC combination is rejected on LC User creation                                          | AC-03 | P0       | ⚙️ needs D19 |
-| `@happy-path` | Auditor creation requires tenant scope and valid date range (Scenario Outline — 2 missing-field cases) | AC-06 | P0       | ✅           |
-| `@main-error` | User with missing scope cannot log in or access scoped modules                                         | AC-09 | P0       | ⚙️ needs D19 |
-| `@main-error` | Admin scope change applies immediately and previous scope access is revoked                            | AC-10 | P0       | ⚙️ needs D19 |
+**Order: happy-path rows first, main-error rows second.**
 
-Active scenario blocks: 6 (2 Outlines + 4 Scenarios)
-E2E automation candidates: 2 of 6 scenarios ✅
+| Tag           | Scenario                                                                                                     | AC    | Priority | E2E          |
+| ------------- | ------------------------------------------------------------------------------------------------------------ | ----- | -------- | ------------ |
+| `@happy-path` | Scope-required roles cannot be saved without tenant assignment (Scenario Outline — 4 roles incl. Bank Admin) | AC-01 | P0       | ✅           |
+| `@happy-path` | Bank Admin creation is bound to exactly one tenant — multi-tenant scope invalid                              | AC-01 | P0       | ⚙️ needs D19 |
+| `@happy-path` | LC User creation requires exactly one Leasing Company assignment                                             | AC-03 | P0       | ⚙️ needs D19 |
+| `@happy-path` | Invalid tenant/LC combination is rejected on LC User creation                                                | AC-03 | P0       | ⚙️ needs D19 |
+| `@happy-path` | Auditor creation requires tenant scope and valid date range (Scenario Outline — 2 missing-field cases)       | AC-06 | P0       | ✅           |
+| `@main-error` | User with missing scope cannot log in or access scoped modules                                               | AC-09 | P0       | ⚙️ needs D19 |
+| `@main-error` | Admin scope change applies immediately and previous scope access is revoked                                  | AC-10 | P0       | ⚙️ needs D19 |
+| `@main-error` | Bank Admin tenant scope is immutable — change attempt after creation returns error                           | AC-10 | P0       | ⚙️ needs D19 |
+| `@main-error` | Bank Admin cannot be reached via role transition — promoting a tenant user to bank_admin is rejected         | AC-10 | P0       | ⚙️ needs D19 |
+
+Active scenario blocks: 9 (2 Outlines + 7 Scenarios)
+E2E automation candidates: 2 of 9 scenarios ✅
 
 ---
 
@@ -73,10 +100,13 @@ Feature: Tenant & Scope Assignment (US 28.11 — PRD1042-49)
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-01
-  # Scope assignment is role-gated: FO, BO/Risk, and Auditor roles must have
-  # a tenant scope before the form can be saved. The save button must remain
-  # blocked and a validation error must be shown when the required scope field
-  # is left empty for any of these roles.
+  # Scope assignment is role-gated: Bank Admin (Power User), FO, BO/Risk, and
+  # Auditor roles must have a tenant scope before the form can be saved. The
+  # save button must remain blocked and a validation error must be shown when
+  # the required scope field is left empty for any of these roles.
+  # Updated 2026-07-08: Bank Admin (`bank_admin`) added as a tenant-level role
+  # bound to exactly one tenant at creation (per PRD1042-48 decision by Ivan
+  # Mladenovic 2026-07-06).
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-01 @p0 @e2e-ready
@@ -90,10 +120,29 @@ Feature: Tenant & Scope Assignment (US 28.11 — PRD1042-49)
     And the error must indicate that tenant assignment is required for this role
 
     Examples:
-      | role               |
-      | Front Office       |
-      | Back Office / Risk |
-      | Auditor            |
+      | role                     |
+      | Bank Admin (Power User)  |
+      | Front Office             |
+      | Back Office / Risk       |
+      | Auditor                  |
+
+  # ---------------------------------------------------------------------------
+  # HAPPY PATH — AC-01 (Bank Admin single-tenant binding)
+  # Bank Admin (`bank_admin`, user_type `bank_tenant`) MUST be bound to exactly
+  # one tenant at creation. Attempting to save a Bank Admin without a tenant
+  # OR with multiple tenants selected must be rejected. This is the Bank-Admin
+  # equivalent of the LC-User "exactly one LC" rule in AC-03.
+  # Requires D19 (throwaway user API) to create and clean up a Bank Admin user.
+  # ---------------------------------------------------------------------------
+
+  @happy-path @ac-01 @p0
+  Scenario: Bank Admin creation is bound to exactly one tenant — multi-tenant scope invalid (AC-01)
+    Given I open the create user form
+    And I select the role "Bank Admin (Power User)"
+    When I attempt to select more than one tenant in the Tenant / Bank Entity field
+    Then the form must reject the selection
+    And the Tenant / Bank Entity field must accept exactly one tenant value
+    And an inline hint must indicate that Bank Admin is bound to exactly one tenant
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-03
@@ -183,4 +232,47 @@ Feature: Tenant & Scope Assignment (US 28.11 — PRD1042-49)
     And the user's previous Tenant A scope must be immediately revoked
     And the user must now be scoped to Tenant B only
     And the audit log must contain a scope change entry with the previous scope, new scope, admin identity, and timestamp
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-10 (Bank Admin tenant scope immutability)
+  # Bank Admin (`bank_admin`) tenant scope is assigned at creation and is
+  # IMMUTABLE thereafter. Any attempt to modify the tenant scope of an existing
+  # Bank Admin — via UI edit form OR direct API call — must be rejected.
+  # This is a stronger constraint than the standard scope-change rule in AC-10
+  # (which allows changes for FO/BO/LC users with Four-Eyes for privileged).
+  # Requires D19 (throwaway user API) to create a Bank Admin bound to Tenant A
+  # and then attempt reassignment.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-10 @p0
+  Scenario: Bank Admin tenant scope is immutable — change attempt after creation returns error (AC-10)
+    Given a "Bank Admin (Power User)" user "bank-admin@tenant-a.com" is bound to "Tenant A"
+    When I open the user's edit form
+    Then the Tenant / Bank Entity field must be read-only or disabled
+    And an inline hint must indicate that Bank Admin tenant scope cannot be changed after creation
+
+    When I attempt to change the tenant assignment to "Tenant B" via direct API call
+    Then the API must reject the request with a validation error
+    And the error must indicate that Bank Admin tenant scope is immutable
+    And the user's tenant assignment must remain "Tenant A"
+    And no scope change entry must be written to the audit log for this rejected attempt
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-10 (No role transition into Bank Admin)
+  # Bank Admin cannot be reached via role transition — a user cannot be
+  # promoted from `front_office`, `back_office`, or `leasing_company_user`
+  # into `bank_admin`. Bank Admin must be created directly with role
+  # `bank_admin` at user creation time.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-10 @p0
+  Scenario: Bank Admin cannot be reached via role transition — promoting a tenant user to bank_admin is rejected (AC-10)
+    Given a "Front Office" user "fo-user@tenant-a.com" is assigned to "Tenant A"
+    When I open the user's edit form
+    Then the role selector must NOT offer "Bank Admin (Power User)" as a target role for role change
+
+    When I attempt to change the user's role to "bank_admin" via direct API call
+    Then the API must reject the request with a validation error
+    And the error must indicate that Bank Admin cannot be reached via role transition
+    And the user's role must remain "front_office"
 ```

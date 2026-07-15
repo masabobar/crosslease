@@ -4,9 +4,12 @@ import {
   ArchivePartnerResponseSchema,
   ConfirmationHistoryResponseSchema,
   DecisionHistoryResponseSchema,
+  DuplicatePairListResponseSchema,
   IdentityChangeDetailResponseSchema,
   IdentityChangeProposeResponseSchema,
   IdentityHistoryResponseSchema,
+  MergeHistoryResponseSchema,
+  MergeInitiateResponseSchema,
   PartnerDetailResponseSchema,
   PartnerListResponseSchema,
   PartnerMatchResponseSchema,
@@ -14,6 +17,7 @@ import {
   PartnerSubmitResponseSchema,
   PartnerUboResponseSchema,
   ResolutionCandidatesResponseSchema,
+  ResolveDuplicatePairResponseSchema,
   RoleAssignResponseSchema,
   UboOwnershipRecordResponseSchema,
 } from "./schema"
@@ -22,9 +26,14 @@ import type {
   ArchivePartnerResponse,
   ConfirmationHistoryResponse,
   DecisionHistoryResponse,
+  DuplicatePairListResponse,
+  DuplicateResolutionReasonCode,
   IdentityChangeDetailResponse,
   IdentityChangeProposeResponse,
   IdentityHistoryResponse,
+  MergeHistoryResponse,
+  MergeInitiateResponse,
+  MergeReasonCode,
   PartnerDetailResponse,
   PartnerListResponse,
   PartnerMatchResponse,
@@ -35,6 +44,7 @@ import type {
   PartnerType,
   PartnerUboResponse,
   ResolutionCandidatesResponse,
+  ResolveDuplicatePairResponse,
   RoleAssignResponse,
   UboCompletenessStatus,
   UboOwnershipRecordResponse,
@@ -70,6 +80,9 @@ export const PARTNERS_QUERY_KEYS = {
     ["partners", "identity-history", id] as const,
   identityChangeDetail: (id: string, changeId: string) =>
     ["partners", "identity-change", id, changeId] as const,
+  mergeHistory: (id: string) => ["partners", "merge-history", id] as const,
+  duplicatePairs: (tenantId: string | null) =>
+    ["partners", "duplicate-pairs", tenantId] as const,
 } as const
 
 // ── Identity input types (for forms) ─────────────────────────────────────────
@@ -79,6 +92,7 @@ export type RegisteredAddressInput = {
   city?: string | null
   postal_code?: string | null
   country?: string | null
+  state_region?: string | null
 }
 
 export type LegalEntityIdentityInput = {
@@ -148,6 +162,19 @@ export type ProposeIdentityChangeBody = {
   target_anchors: string[]
   proposed_values: Record<string, unknown>
   change_reason: string
+}
+
+export type ResolveDuplicateBody = {
+  decision: "confirmed_duplicate" | "confirmed_distinct" | "deferred"
+  reason_code: DuplicateResolutionReasonCode
+  note?: string | null
+}
+
+export type InitiateMergeBody = {
+  pair_id: string
+  survivor_partner_id: string
+  merge_reason_code: MergeReasonCode
+  note?: string | null
 }
 
 // ── API functions ─────────────────────────────────────────────────────────────
@@ -268,6 +295,35 @@ export async function fetchIdentityChangeDetail(
 ): Promise<IdentityChangeDetailResponse> {
   const data = await api.get(`/partners/${id}/identity-changes/${changeId}`)
   return IdentityChangeDetailResponseSchema.parse(data)
+}
+
+export async function fetchMergeHistory(
+  id: string
+): Promise<MergeHistoryResponse> {
+  const data = await api.get(`/partners/${id}/merge-history`)
+  return MergeHistoryResponseSchema.parse(data)
+}
+
+export async function fetchDuplicatePairs(
+  tenantId: string
+): Promise<DuplicatePairListResponse> {
+  const data = await api.get(`/tenants/${tenantId}/partners/duplicates`)
+  return DuplicatePairListResponseSchema.parse(data)
+}
+
+export async function resolveDuplicatePair(
+  pairId: string,
+  body: ResolveDuplicateBody
+): Promise<ResolveDuplicatePairResponse> {
+  const data = await api.post(`/partners/duplicates/${pairId}/resolve`, body)
+  return ResolveDuplicatePairResponseSchema.parse(data)
+}
+
+export async function initiateMerge(
+  body: InitiateMergeBody
+): Promise<MergeInitiateResponse> {
+  const data = await api.post(`/partners/merge`, body)
+  return MergeInitiateResponseSchema.parse(data)
 }
 
 // ── Type re-exports for convenience ──────────────────────────────────────────

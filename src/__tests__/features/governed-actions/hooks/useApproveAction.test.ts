@@ -8,11 +8,19 @@ vi.mock("@tanstack/react-query", () => ({
       mutationFn,
       onSuccess,
     }: {
-      mutationFn: (vars: { id: string; comment?: string }) => Promise<unknown>
+      mutationFn: (vars: {
+        id: string
+        comment?: string
+        extraParams?: Record<string, unknown>
+      }) => Promise<unknown>
       onSuccess: () => void
     }) => ({
       mutate: (
-        vars: { id: string; comment?: string },
+        vars: {
+          id: string
+          comment?: string
+          extraParams?: Record<string, unknown>
+        },
         callbacks?: { onSuccess?: () => void }
       ) => {
         return mutationFn(vars).then(() => {
@@ -71,13 +79,28 @@ describe("useApproveAction", () => {
   it("calls approveGovernedAction with the correct id and no comment", async () => {
     const { mutate } = useApproveAction()
     await mutate({ id: "action-abc" })
-    expect(mockApprove).toHaveBeenCalledWith("action-abc", undefined)
+    expect(mockApprove).toHaveBeenCalledWith("action-abc", undefined, undefined)
   })
 
   it("calls approveGovernedAction with the correct id and comment when provided", async () => {
     const { mutate } = useApproveAction()
     await mutate({ id: "action-abc", comment: "Policy compliant" })
-    expect(mockApprove).toHaveBeenCalledWith("action-abc", "Policy compliant")
+    expect(mockApprove).toHaveBeenCalledWith(
+      "action-abc",
+      "Policy compliant",
+      undefined
+    )
+  })
+
+  it("calls approveGovernedAction with extraParams when provided (merge conflict gate)", async () => {
+    const { mutate } = useApproveAction()
+    await mutate({
+      id: "action-abc",
+      extraParams: { conflict_acknowledged: true },
+    })
+    expect(mockApprove).toHaveBeenCalledWith("action-abc", undefined, {
+      conflict_acknowledged: true,
+    })
   })
 
   it("invalidates governed-actions list queries on success", async () => {

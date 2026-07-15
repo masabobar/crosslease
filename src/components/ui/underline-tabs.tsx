@@ -14,6 +14,7 @@ type UnderlineTabBarProps<T extends string> = {
   activeTab: T
   onChange: (key: T) => void
   className?: string
+  tabClassName?: string
 }
 
 export function UnderlineTabBar<T extends string>({
@@ -21,6 +22,7 @@ export function UnderlineTabBar<T extends string>({
   activeTab,
   onChange,
   className,
+  tabClassName,
 }: UnderlineTabBarProps<T>) {
   return (
     <div
@@ -39,7 +41,8 @@ export function UnderlineTabBar<T extends string>({
             "pb-3 pt-0.5 px-1.5 text-sm font-medium leading-5 whitespace-nowrap transition-colors",
             activeTab === tab.key
               ? "border-b-2 border-primary text-foreground -mb-px"
-              : "text-foreground/60 hover:text-foreground"
+              : "text-foreground/60 hover:text-foreground",
+            tabClassName
           )}
         >
           {tab.label}

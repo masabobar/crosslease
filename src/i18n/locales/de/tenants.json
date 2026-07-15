@@ -231,14 +231,21 @@
       "noCountriesFound": "Keine Länder gefunden",
       "from": "Von",
       "to": "Bis",
-      "clearAll": "Alle löschen"
+      "clearAll": "Alle löschen",
+      "activeModule": "Aktives Modul",
+      "moduleStatus": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv"
+      }
     },
     "filterPills": {
       "search": "Suche: {{value}}",
       "status": "Status: {{value}}",
       "type": "Typ: {{value}}",
       "country": "Land: {{value}}",
-      "dateRange": "Erstellt: {{range}}"
+      "dateRange": "Erstellt: {{range}}",
+      "module": "Modul: {{value}}",
+      "moduleStatus": "Modulstatus: {{value}}"
     },
     "pagination": {
       "page": "Seite {{page}} von {{total}}"

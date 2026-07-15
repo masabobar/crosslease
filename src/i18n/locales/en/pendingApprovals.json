@@ -85,6 +85,8 @@
     "mergeSource": "Source partner",
     "mergeTarget": "Target partner",
     "mergeReasonCode": "Merge reason",
+    "mergeConflictTitle": "CONFLICT ACKNOWLEDGEMENT",
+    "mergeConflictAcknowledge": "I acknowledge the data conflicts between the source and target partner records and confirm this merge should proceed.",
     "templateName": "Template name",
     "versionNumber": "Version number",
     "justification": "Justification",
@@ -114,6 +116,7 @@
       "ACTION_NOT_PENDING": "This action is no longer pending.",
       "ACTION_EXPIRED": "This request has expired. Please re-initiate.",
       "INSUFFICIENT_ROLE_FOR_APPROVAL": "Your role is not authorized to approve or reject this type of action.",
+      "MERGE_CONFLICT_NOT_ACKNOWLEDGED": "Conflict acknowledgement is required before approving this merge.",
       "default": "An error occurred. Please try again."
     }
   },

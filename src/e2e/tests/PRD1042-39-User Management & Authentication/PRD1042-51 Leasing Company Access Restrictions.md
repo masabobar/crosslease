@@ -1,5 +1,7 @@
 # PRD1042-51 — US 28.13 | User Management | Leasing Company Access Restrictions
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is bank-tenant-scoped and MUST NOT access LC data — a defense-in-depth counterpart scenario has been added under AC-04 (tenant-isolation domain rule).
+
 Generated: 2026-06-10
 Story: PRD1042-51 — US 28.13 | User Management | Leasing Company Access Restrictions
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
@@ -41,10 +43,11 @@ Figma design: none — backend/access-restriction story, no UI frame linked (Sta
 | `@main-error` | LC user cannot reach a restricted module via direct API (AC-02, AC-07)       | AC-02, AC-07 | P0       | ✅           |
 | `@main-error` | LC user data load returns only own Leasing Company records (AC-03)           | AC-03        | P0       | ⚙️ needs D20 |
 | `@main-error` | Cross-LG access returns 404 not 403 — undiscoverable (AC-04)                 | AC-04        | P0       | ⚙️ needs D20 |
+| `@main-error` | Bank Admin (bank-tenant-scoped) cannot access LC data (AC-04, AC-07)         | AC-04, AC-07 | P0       | ⚙️ needs D20 |
 | `@main-error` | LC user direct-URL access to hidden route is rejected (AC-13, AC-07)         | AC-13, AC-07 | P0       | ✅           |
 
-Active scenario blocks: 5 (1 Outline + 4 Scenarios)
-E2E automation candidates: 3 of 5 scenarios ✅
+Active scenario blocks: 6 (1 Outline + 5 Scenarios)
+E2E automation candidates: 3 of 6 scenarios ✅
 
 ---
 
@@ -127,6 +130,28 @@ Feature: Leasing Company Access Restrictions (US 28.13 — PRD1042-51)
     Then the response status should be 404
     And the response status should NOT be 403
     And the response body should NOT reveal that the record exists
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-04, AC-07 (defense-in-depth: Bank Admin ↔ LC data)
+  # Bank Admin (wire value `bank_admin`) is BANK-tenant-scoped, not LC-scoped.
+  # Even with elevated bank-side privileges, a Bank Admin MUST NOT access data
+  # belonging to a Leasing Company: LC data lives in a separate scope. The
+  # response must be 404 (undiscoverable), matching the tenant-isolation domain
+  # rule — same contract as the LC-cross-LG case above, but from the opposite
+  # side of the boundary. Requires a seeded LC and a seeded Bank Admin — D20.
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-04 @ac-07 @p0
+  Scenario: Bank Admin (bank-tenant-scoped) cannot access LC data (AC-04, AC-07)
+    Given a Leasing Company "LC-A" exists with refinancing request "REQ-LCA-001"
+    And a Bank Admin user "admin@bank.com" with role "bank_admin" exists
+    And I am logged in as Bank Admin "admin@bank.com"
+    When I send a GET request to "/api/v1/refinancing-requests/REQ-LCA-001"
+    Then the response status should be 404
+    And the response status should NOT be 403
+    And the response status should NOT be 200
+    And the response body should NOT reveal that the record exists
+    And the response body should NOT contain any Leasing Company data
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-13, AC-07

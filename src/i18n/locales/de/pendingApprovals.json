@@ -85,6 +85,8 @@
     "mergeSource": "Quellpartner",
     "mergeTarget": "Zielpartner",
     "mergeReasonCode": "Zusammenführungsgrund",
+    "mergeConflictTitle": "BESTÄTIGUNG DES KONFLIKTS",
+    "mergeConflictAcknowledge": "Ich bestätige die Datenkonflikte zwischen dem Quell- und dem Zielpartnerdatensatz und bin mit der Zusammenführung einverstanden.",
     "templateName": "Vorlagenname",
     "versionNumber": "Versionsnummer",
     "justification": "Begründung",
@@ -114,6 +116,7 @@
       "ACTION_NOT_PENDING": "Diese Aktion ist nicht mehr ausstehend.",
       "ACTION_EXPIRED": "Diese Anfrage ist abgelaufen. Bitte erneut einreichen.",
       "INSUFFICIENT_ROLE_FOR_APPROVAL": "Ihre Rolle ist nicht berechtigt, diese Art von Aktion zu genehmigen oder abzulehnen.",
+      "MERGE_CONFLICT_NOT_ACKNOWLEDGED": "Die Bestätigung des Konflikts ist erforderlich, bevor diese Zusammenführung genehmigt werden kann.",
       "default": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
     }
   },

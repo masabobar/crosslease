@@ -9,59 +9,23 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
+import { ANCHOR_FIELDS } from "@/features/partners/constants"
 import { ApiError } from "@/lib/api"
-import type {
-  PartnerIdentityDetail,
-  PartnerType,
-} from "@/features/partners/api/schema"
+import { COUNTRIES } from "@/lib/countries"
+import { selectOnFocus } from "@/lib/utils"
+import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
 
-type AnchorField = { key: string; labelKey: string }
-
-const ANCHOR_FIELDS: Record<PartnerType, AnchorField[]> = {
-  legal_entity: [
-    { key: "legal_name", labelKey: "submit.identityStep.fields.legalName" },
-    { key: "legal_form", labelKey: "submit.identityStep.fields.legalForm" },
-    { key: "country", labelKey: "submit.identityStep.fields.country" },
-    { key: "tax_id_vat", labelKey: "submit.identityStep.fields.taxIdVat" },
-    { key: "lei", labelKey: "submit.identityStep.fields.lei" },
-    {
-      key: "commercial_register_no",
-      labelKey: "submit.identityStep.fields.commercialRegisterNo",
-    },
-    {
-      key: "foreign_identifier",
-      labelKey: "submit.identityStep.fields.foreignIdentifier",
-    },
-  ],
-  natural_person: [
-    { key: "full_name", labelKey: "submit.identityStep.fields.fullName" },
-    {
-      key: "date_of_birth",
-      labelKey: "submit.identityStep.fields.dateOfBirth",
-    },
-    {
-      key: "place_of_birth",
-      labelKey: "submit.identityStep.fields.placeOfBirth",
-    },
-    { key: "country", labelKey: "submit.identityStep.fields.country" },
-    { key: "birth_name", labelKey: "submit.identityStep.fields.birthName" },
-    { key: "national_id", labelKey: "submit.identityStep.fields.nationalId" },
-  ],
-  sole_proprietor: [
-    { key: "full_name", labelKey: "submit.identityStep.fields.fullName" },
-    {
-      key: "date_of_birth",
-      labelKey: "submit.identityStep.fields.dateOfBirth",
-    },
-    { key: "country", labelKey: "submit.identityStep.fields.country" },
-    { key: "tax_id_vat", labelKey: "submit.identityStep.fields.taxIdVat" },
-    {
-      key: "commercial_register_no",
-      labelKey: "submit.identityStep.fields.commercialRegisterNo",
-    },
-  ],
-}
+const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
 
 type Props = {
   open: boolean
@@ -159,17 +123,52 @@ function ProposeIdentityChangeDialog({
                 </span>
               </Label>
               {anchor.key in values && (
-                <Input
-                  data-testid={`propose-value-${anchor.key}`}
-                  value={values[anchor.key]}
-                  onChange={e =>
-                    setValues(prev => ({
-                      ...prev,
-                      [anchor.key]: e.target.value,
-                    }))
-                  }
-                  className="ml-6"
-                />
+                <div className="ml-6">
+                  {anchor.key === "country" ? (
+                    <Combobox
+                      items={COUNTRY_OPTIONS}
+                      value={values[anchor.key]}
+                      onValueChange={value =>
+                        setValues(prev => ({
+                          ...prev,
+                          [anchor.key]: (value as string) ?? "",
+                        }))
+                      }
+                    >
+                      <ComboboxInput
+                        data-testid={`propose-value-${anchor.key}`}
+                        placeholder={t("list.filters.countrySearchPlaceholder")}
+                        showClear
+                        onFocus={selectOnFocus}
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          <ComboboxEmpty>
+                            {t("list.filters.noCountriesFound")}
+                          </ComboboxEmpty>
+                          <ComboboxCollection>
+                            {(opt: { value: string; label: string }) => (
+                              <ComboboxItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxCollection>
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  ) : (
+                    <Input
+                      data-testid={`propose-value-${anchor.key}`}
+                      value={values[anchor.key]}
+                      onChange={e =>
+                        setValues(prev => ({
+                          ...prev,
+                          [anchor.key]: e.target.value,
+                        }))
+                      }
+                    />
+                  )}
+                </div>
               )}
             </div>
           ))}

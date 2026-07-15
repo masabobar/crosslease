@@ -48,6 +48,13 @@
     "committed": "Committed",
     "rejected": "Rejected"
   },
+  "mergeReasonCode": {
+    "same_legal_entity_different_name": "Same legal entity, different name",
+    "identical_registry_identifiers": "Identical registry identifiers",
+    "data_entry_error": "Data entry error",
+    "system_import_error": "System import error",
+    "legal_restructuring": "Legal restructuring"
+  },
   "tenantQuickSelect": {
     "placeholder": "Mandant auswählen…"
   },
@@ -123,7 +130,8 @@
         "nationalId": "National ID",
         "street": "Registered address",
         "city": "City",
-        "postalCode": "Postal code"
+        "postalCode": "Postal code",
+        "stateRegion": "State / Region"
       }
     },
     "form": {
@@ -194,7 +202,9 @@
       "roles": "Roles",
       "ubo": "UBO ownership",
       "identityChanges": "Identity changes",
-      "confirmationHistory": "Confirmation history"
+      "confirmationHistory": "Confirmation history",
+      "mergeHistory": "Merge history",
+      "decisionHistory": "Entscheidungshistorie"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -249,39 +259,70 @@
       "pendingApprovalNote": "Awaiting back-office counter-confirmation."
     },
     "ubo": {
-      "title": "UBO Ownership",
-      "captureButton": "Capture UBO",
+      "title": "Beneficial ownership",
+      "subtitle": "Direct UBO ownership records. Recursive ownership traversal is not computed automatically.",
+      "captureButton": "Add UBO",
       "empty": "No UBO records captured yet.",
+      "helperText": "Indirect ownership may be captured as structured notes. Automated completeness is based on direct ownership records only.",
       "fields": {
         "uboPartner": "UBO partner",
-        "ownershipPercentage": "Ownership %",
-        "ownershipType": "Type",
+        "ownershipPercentage": "Ownership",
+        "ownershipType": "Ownership type",
         "capturedBy": "Captured by",
-        "capturedAt": "Captured"
+        "capturedAt": "Captured on"
       }
     },
     "identityChanges": {
-      "title": "Identity Changes",
+      "title": "Identity changes",
+      "subtitle": "Governed append-only record of all identity anchor changes.",
       "proposeButton": "Propose change",
       "empty": "No identity changes recorded.",
       "fields": {
+        "changedField": "Changed field",
+        "status": "Status",
+        "previousValue": "Previous value",
+        "newValue": "New value",
         "proposedBy": "Proposed by",
-        "proposedAt": "Proposed",
+        "counterConfirmedBy": "Counter-confirmed by",
+        "proposedAt": "Timestamp",
         "resolvedAt": "Resolved",
         "changeReason": "Reason",
-        "highRisk": "High-risk change",
-        "targetAnchors": "Changed fields"
+        "highRisk": "High-risk change"
       }
     },
     "confirmationHistory": {
-      "title": "Confirmation History",
+      "title": "Confirmation history",
+      "subtitle": "Append-only record of all confirmation events on this partner.",
       "empty": "No confirmation events recorded.",
+      "loadMore": "Mehr laden",
+      "loadingMore": "Wird geladen…",
       "fields": {
-        "status": "Decision",
-        "capturedBy": "By",
-        "capturedOn": "Date",
+        "status": "Status",
+        "capturedBy": "Captured by",
+        "capturedOn": "Captured on",
         "note": "Note"
       }
+    },
+    "mergeHistory": {
+      "title": "Merge history",
+      "subtitle": "Governed append-only record of all merge events for this partner.",
+      "empty": "No merge events recorded.",
+      "referenceManifestUnavailable": "Reference re-pointing details are not yet available.",
+      "fields": {
+        "mergeId": "Merge ID",
+        "mergedSource": "Merged source",
+        "survivingPartner": "Surviving partner",
+        "reasonCode": "Merge reason code",
+        "counterConfirmedBy": "Counter-confirmed by"
+      }
+    },
+    "decisionHistory": {
+      "title": "Entscheidungshistorie",
+      "subtitle": "Vollständiges, unveränderliches Protokoll aller Erstellungs-, Bestätigungs-, Rollen-, Identitäts-, Zusammenführungs- und Archivierungsentscheidungen für diesen Partner.",
+      "empty": "Keine Entscheidungshistorie erfasst.",
+      "systemActor": "System",
+      "loadMore": "Mehr laden",
+      "loadingMore": "Wird geladen…"
     }
   },
   "archiveDialog": {
@@ -321,6 +362,23 @@
     "successCommitted": "Identity change committed.",
     "successPendingApproval": "Identity change submitted for back-office review."
   },
+  "captureUboDialog": {
+    "title": "Add UBO",
+    "fields": {
+      "uboPartnerPlaceholder": "Search confirmed natural persons…",
+      "uboPartnerNoResults": "No matching partners found.",
+      "indirectOwnershipNotes": "Hinweise zu indirekter Beteiligung (optional)",
+      "indirectOwnershipNotesPlaceholder": "Beschreiben Sie relevante indirekte Beteiligungsstrukturen für diesen wirtschaftlich Berechtigten…"
+    },
+    "errors": {
+      "uboPartnerRequired": "Select a UBO partner.",
+      "percentageInvalid": "Enter a percentage between 0 and 100."
+    },
+    "cancel": "Cancel",
+    "submit": "Add UBO",
+    "submitting": "Adding…",
+    "success": "UBO ownership recorded."
+  },
   "assignRoleDialog": {
     "title": "Assign role",
     "fields": {
@@ -333,6 +391,146 @@
     "submitting": "Assigning…",
     "success": "Role assigned successfully."
   },
+  "duplicates": {
+    "list": {
+      "title": "Duplikate & Zusammenführung",
+      "subtitle": "Prüfen Sie Duplikat-Kandidatenpaare und verwalten Sie Zusammenführungsentscheidungen für Partnerdatensätze.",
+      "filters": {
+        "searchPlaceholder": "Suchen",
+        "status": "Status",
+        "confidence": "Konfidenz",
+        "clearAll": "Alle löschen"
+      },
+      "filterPills": {
+        "search": "Suche: {{value}}",
+        "status": "Status: {{value}}",
+        "confidence": "Konfidenz: {{value}}"
+      },
+      "table": {
+        "columns": {
+          "partnerA": "Partner A",
+          "partnerB": "Partner B",
+          "confidence": "Konfidenz",
+          "detectedOn": "Erkannt am",
+          "status": "Status"
+        },
+        "actions": {
+          "resolve": "Klären",
+          "initiateMerge": "Zusammenführung einleiten",
+          "reviewMerge": "Zusammenführung prüfen"
+        }
+      },
+      "emptyState": {
+        "title": "Keine Duplikat-Kandidaten",
+        "description": "Es wurden noch keine Duplikat-Kandidatenpaare erkannt."
+      },
+      "emptyFiltered": {
+        "title": "Keine Paare entsprechen Ihren Filtern",
+        "description": "Passen Sie Ihre Suche an oder entfernen Sie einige Filter."
+      }
+    },
+    "confidence": {
+      "definite": "Definitiv",
+      "probable": "Wahrscheinlich",
+      "possible": "Möglich"
+    },
+    "pairStatus": {
+      "pending": "Klärung ausstehend",
+      "confirmed_duplicate": "Duplikat bestätigt",
+      "confirmed_distinct": "Als unterschiedlich bestätigt",
+      "deferred": "Zurückgestellt",
+      "merge_in_progress": "Zusammenführung läuft",
+      "merged": "Zusammengeführt"
+    },
+    "resolutionReasonCode": {
+      "identical_registry_identifiers": "Identische Registrierungskennungen",
+      "same_legal_entity_different_name": "Gleiche juristische Person, anderer Name",
+      "data_entry_error": "Dateneingabefehler",
+      "system_import_error": "Systemimportfehler",
+      "legal_restructuring": "Rechtliche Umstrukturierung",
+      "confirmed_different_entities": "Als unterschiedliche Einheiten bestätigt",
+      "subsidiary_not_duplicate": "Tochtergesellschaft, kein Duplikat",
+      "insufficient_evidence": "Unzureichende Nachweise"
+    },
+    "resolveDialog": {
+      "title": "Klärung",
+      "subtitle": "Erfassen Sie eine governance-konforme Entscheidung für dieses Kandidatenpaar. Ihre Entscheidung und der Grund werden im Audit-Trail festgehalten.",
+      "fields": {
+        "decision": "Entscheidung",
+        "decisionPlaceholder": "Entscheidung auswählen…",
+        "reasonCode": "Grund",
+        "reasonCodePlaceholder": "Grund auswählen…",
+        "note": "Notiz (optional)"
+      },
+      "errors": {
+        "decisionRequired": "Wählen Sie eine Entscheidung aus.",
+        "reasonCodeRequired": "Wählen Sie einen Grund aus."
+      },
+      "cancel": "Abbrechen",
+      "submit": "Klären",
+      "submitting": "Wird geklärt…",
+      "success": {
+        "confirmedDuplicate": "Dieses Paar wurde als bestätigtes Duplikat geklärt. Es wurde in die Zusammenführungs-Warteschlange verschoben. Ein Front-Office-Nutzer wird die Zusammenführung einleiten.",
+        "confirmedDistinct": "Dieses Paar wurde als unterschiedlich bestätigt. Diese Partner sind unterschiedliche Einheiten. Das Paar wurde unterdrückt und erscheint nicht erneut, es sei denn, die Identitätsmerkmale ändern sich.",
+        "deferred": "Dieses Paar bleibt zur späteren Überprüfung in der Warteschlange."
+      }
+    },
+    "initiateMergeDialog": {
+      "title": "Zusammenführung einleiten",
+      "subtitle": "Vor der Einreichung zur Gegenbestätigung prüfen.",
+      "summary": {
+        "survivor": "Überlebender Partner",
+        "mergedSource": "Zusammengeführte Quelle"
+      },
+      "fields": {
+        "reasonCode": "Grund der Zusammenführung",
+        "reasonCodePlaceholder": "Grund auswählen…",
+        "reasonCodeHelper": "Wird gegen das Zusammenführungsereignis im Audit-Trail erfasst.",
+        "note": "Notiz (optional)"
+      },
+      "errors": {
+        "reasonCodeRequired": "Wählen Sie einen Grund für die Zusammenführung aus."
+      },
+      "cancel": "Abbrechen",
+      "submit": "Zur Gegenbestätigung einreichen",
+      "submitting": "Wird eingereicht…",
+      "success": "Zusammenführung eingereicht. Das Back Office prüft und bestätigt gegen, bevor die Zusammenführung wirksam wird."
+    },
+    "detail": {
+      "notFound": "Dieses Duplikat-Kandidatenpaar wurde nicht gefunden.",
+      "partnerA": "Partner A",
+      "partnerB": "Partner B",
+      "viewPartner": "Partner anzeigen",
+      "resolveButton": "Klären",
+      "initiateMergeButton": "Zusammenführung einleiten",
+      "reviewMergeButton": "Zusammenführung prüfen",
+      "fields": {
+        "confidence": "Konfidenz",
+        "detectedOn": "Erkannt am",
+        "id": "ID",
+        "status": "Status"
+      },
+      "confirmedDuplicate": {
+        "title": "Duplikat bestätigt",
+        "subtitle": "Wählen Sie den überlebenden Partner aus, bevor Sie zur Gegenbestätigung einreichen.",
+        "identity": "Identität",
+        "selectSurvivorPrompt": "Wählen Sie einen überlebenden Partner aus, um dessen Identitätsdetails zu prüfen."
+      },
+      "resolutionSummary": {
+        "title": "Klärung"
+      },
+      "matchingEvidence": {
+        "title": "Abgleichsnachweise",
+        "subtitle": "Identitätsmerkmale, die zwischen beiden Partnerdatensätzen verglichen wurden.",
+        "columns": {
+          "anchor": "Merkmal",
+          "partnerA": "Werte Partner A",
+          "partnerB": "Werte Partner B",
+          "match": "Übereinstimmung"
+        }
+      }
+    }
+  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "NOT_FOUND": "Partner not found.",
@@ -341,6 +539,19 @@
     "BUSINESS_ROLE_ALREADY_ACTIVE": "This role is already active for this partner.",
     "BUSINESS_RISK_SENSITIVE_ROLE_REQUIRES_SUBMIT": "Risk-sensitive roles can only be assigned at submission time.",
     "BUSINESS_PARTNER_NOT_ARCHIVABLE": "This partner cannot be archived because it has active references.",
-    "PARTNER_NOT_REFERENCEABLE": "This action isn't available until the partner is confirmed."
+    "PARTNER_NOT_REFERENCEABLE": "This action isn't available until the partner is confirmed.",
+    "PARTNER_NOT_LEGAL_ENTITY": "UBO ownership can only be captured for legal entity partners.",
+    "PARTNER_UBO_TARGET_NOT_NATURAL_PERSON": "The selected UBO partner must be a natural person.",
+    "PARTNER_UBO_TARGET_NOT_CONFIRMED": "The selected UBO partner must be confirmed.",
+    "PARTNER_UBO_SELF_REFERENCE": "A partner cannot be its own UBO.",
+    "PARTNER_UBO_OWNERSHIP_EXCEEDS_MAX": "Total UBO ownership cannot exceed 100%.",
+    "PARTNER_NOT_CONFIRMED": "Identitätsänderungen können nur für bestätigte Partner vorgeschlagen werden.",
+    "IDENTITY_CHANGE_FIELD_MISMATCH": "Die vorgeschlagenen Werte stimmen nicht mit den ausgewählten Feldern überein. Bitte überprüfen Sie Ihre Auswahl.",
+    "DUPLICATE_PENDING_ACTION": "Für diesen Partner besteht bereits eine ausstehende Anfrage dieser Art.",
+    "DUPLICATE_CANDIDATE_PAIR_NOT_FOUND": "Dieses Duplikat-Kandidatenpaar existiert nicht mehr.",
+    "DUPLICATE_PAIR_ALREADY_RESOLVED": "Dieses Paar wurde bereits von einem anderen Prüfer geklärt.",
+    "PARTNER_NOT_MERGEABLE": "Einer der ausgewählten Partner kann in seinem aktuellen Status nicht zusammengeführt werden.",
+    "PAIR_NOT_FLAGGED_FOR_MERGE": "Dieses Paar muss als Duplikat bestätigt werden, bevor eine Zusammenführung eingeleitet werden kann.",
+    "MERGE_PARTNER_NOT_IN_PAIR": "Der ausgewählte überlebende Partner muss einer der beiden Partner in diesem Paar sein."
   }
 }

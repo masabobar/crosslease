@@ -16,10 +16,12 @@
     "financing": "Finanzierung",
     "operations": "Betrieb",
     "businessConfigurations": "Geschäftskonfigurationen",
+    "productTemplates": "Produktvorlagen",
     "rulesSetup": "Regelkonfiguration",
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
     "partnerManagement": "Partnerverwaltung",
+    "partnerDuplicates": "Duplikate & Zusammenführung",
     "tenantManagement": "Mandantenverwaltung",
     "coreBankingIntegration": "Core-Banking-Integration",
     "auditTrail": "Audit-Trail",
@@ -43,7 +45,8 @@
     "tenantManagement": "Mandantenverwaltung",
     "createTenant": "Mandant erstellen",
     "partnerManagement": "Partnerverwaltung",
-    "submitPartner": "Partner einreichen"
+    "submitPartner": "Partner einreichen",
+    "duplicateQueue": "Duplikat-Warteschlange"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

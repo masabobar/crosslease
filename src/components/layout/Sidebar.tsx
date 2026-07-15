@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useCurrentUserPermissions } from "@/features/users/hooks/useCurrentUserPermissions"
 import {
   USER_MANAGEMENT_ALLOWED_ROLES,
   LC_ONLY_ROLES,
@@ -24,12 +25,15 @@ import {
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
+import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates/types"
+import { BANK_PRODUCT_TEMPLATE_MODULE_KEY } from "@/features/productTemplates/constants"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
   const { t } = useTranslation("common")
   const location = useLocation()
   const { data: currentUser } = useCurrentUser()
+  const { data: permissions } = useCurrentUserPermissions()
   const canAccessUserManagement =
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessAuditTrail =
@@ -38,11 +42,23 @@ export function Sidebar() {
     !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessPartnerRegistry =
     !!currentUser && PARTNER_VIEW_ALLOWED_ROLES.includes(currentUser.role)
+  // Users without a home tenant (system_admin, support_user) aren't gated on module
+  // activation here — /me/permissions only reflects always-on modules for them, since
+  // module activation is per-tenant and they operate across tenants. Enforcement for
+  // a specific tenant still happens at the API layer once one is selected.
+  const canAccessProductTemplates =
+    !!currentUser &&
+    PRODUCT_TEMPLATE_READ_ALLOWED_ROLES.includes(currentUser.role) &&
+    (!currentUser.tenant_id ||
+      !!permissions?.active_modules.includes(BANK_PRODUCT_TEMPLATE_MODULE_KEY))
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
   const [isPlatformAdminExpanded, setIsPlatformAdminExpanded] = useState(() =>
     location.pathname.startsWith("/platform-administration")
+  )
+  const [isBusinessConfigExpanded, setIsBusinessConfigExpanded] = useState(() =>
+    location.pathname.startsWith("/business-configuration")
   )
 
   const isMainActive = location.pathname === PATHS.DASHBOARD
@@ -61,7 +77,17 @@ export function Sidebar() {
     location.pathname.startsWith(PATHS.AUDIT_TRAIL + "/")
   const isPartnerRegistryActive =
     location.pathname === PATHS.PARTNER_REGISTRY ||
-    location.pathname.startsWith(PATHS.PARTNER_REGISTRY + "/")
+    (location.pathname.startsWith(PATHS.PARTNER_REGISTRY + "/") &&
+      !location.pathname.startsWith(PATHS.PARTNER_DUPLICATES))
+  const isPartnerDuplicatesActive = location.pathname.startsWith(
+    PATHS.PARTNER_DUPLICATES
+  )
+  const isBusinessConfigActive = location.pathname.startsWith(
+    "/business-configuration"
+  )
+  const isProductTemplateListActive = location.pathname.startsWith(
+    "/business-configuration/product-templates"
+  )
 
   return (
     <aside
@@ -247,10 +273,6 @@ export function Sidebar() {
             {/* ── Flat items with right chevron ── */}
             {[
               { key: "operations", label: t("nav.operations") },
-              {
-                key: "businessConfigurations",
-                label: t("nav.businessConfigurations"),
-              },
               { key: "rulesSetup", label: t("nav.rulesSetup") },
             ].map(({ key, label }) => (
               <div
@@ -274,6 +296,73 @@ export function Sidebar() {
                 )}
               </div>
             ))}
+
+            {/* ── Business configuration group (expandable) ── */}
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsBusinessConfigExpanded(prev => !prev)}
+                className={cn(
+                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
+                  isBusinessConfigActive &&
+                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                )}
+              >
+                <SquareTerminal
+                  size={16}
+                  className={cn(
+                    "shrink-0",
+                    !isBusinessConfigActive && "text-muted-foreground"
+                  )}
+                />
+                {!isCollapsed && (
+                  <>
+                    <span className="flex-1 text-left text-sm min-w-0 truncate">
+                      {t("nav.businessConfigurations")}
+                    </span>
+                    {isBusinessConfigExpanded ? (
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0",
+                          !isBusinessConfigActive && "text-muted-foreground"
+                        )}
+                      />
+                    ) : (
+                      <ChevronRight
+                        size={16}
+                        className={cn(
+                          "shrink-0",
+                          !isBusinessConfigActive && "text-muted-foreground"
+                        )}
+                      />
+                    )}
+                  </>
+                )}
+              </Button>
+              {!isCollapsed && isBusinessConfigExpanded && (
+                <div className="flex flex-col gap-3 pl-8 pr-2">
+                  {canAccessProductTemplates && (
+                    <Link
+                      to={PATHS.PRODUCT_TEMPLATE_LIST}
+                      data-testid="nav-product-templates"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap",
+                        isProductTemplateListActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.productTemplates")}
+                      {isProductTemplateListActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* ── Platform administration group (expandable) ── */}
             <div className="flex flex-col gap-2">
@@ -385,6 +474,23 @@ export function Sidebar() {
                     >
                       {t("nav.partnerManagement")}
                       {isPartnerRegistryActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
+                  {canAccessPartnerRegistry && (
+                    <Link
+                      to={PATHS.PARTNER_DUPLICATES}
+                      data-testid="nav-partner-duplicates"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap pl-3",
+                        isPartnerDuplicatesActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.partnerDuplicates")}
+                      {isPartnerDuplicatesActive && (
                         <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
                       )}
                     </Link>

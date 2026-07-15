@@ -19,6 +19,7 @@ import { formatDate } from "@/lib/formatters"
 import { COUNTRIES, countryName } from "@/lib/countries"
 import { TenantTable } from "@/features/tenants/components/TenantTable"
 import { useTenantList } from "@/features/tenants/hooks/useTenantList"
+import { usePlatformModules } from "@/features/tenants/hooks/usePlatformModules"
 import type { TenantStatus, TenantType } from "@/features/tenants/api/schema"
 import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -54,6 +55,13 @@ export default function TenantManagementPage() {
   const [fromDate, setFromDate] = useState<string | null>(null)
   const [toDate, setToDate] = useState<string | null>(null)
   const [countrySearch, setCountrySearch] = useState("")
+  const [moduleKeyFilter, setModuleKeyFilter] = useState<string | null>(null)
+  const [moduleActiveFilter, setModuleActiveFilter] = useState<boolean | null>(
+    null
+  )
+
+  const { data: platformModulesData } = usePlatformModules()
+  const platformModules = platformModulesData?.modules ?? []
 
   const filteredCountries = countrySearch.trim()
     ? COUNTRIES.filter(
@@ -72,6 +80,10 @@ export default function TenantManagementPage() {
     ...(countryFilter ? { country: countryFilter } : {}),
     ...(fromDate ? { from_date: fromDate } : {}),
     ...(toDate ? { to_date: toDate } : {}),
+    ...(moduleKeyFilter ? { module_key: moduleKeyFilter } : {}),
+    ...(moduleActiveFilter !== null
+      ? { module_active: moduleActiveFilter }
+      : {}),
   }
 
   const { data, isLoading, isError } = useTenantList(params)
@@ -86,7 +98,9 @@ export default function TenantManagementPage() {
     typeFilters.length > 0 ||
     !!countryFilter ||
     !!fromDate ||
-    !!toDate
+    !!toDate ||
+    !!moduleKeyFilter ||
+    moduleActiveFilter !== null
 
   function toggleStatus(s: TenantStatus) {
     setStatusFilters(prev =>
@@ -102,6 +116,16 @@ export default function TenantManagementPage() {
     setPage(1)
   }
 
+  function toggleModuleKey(key: string) {
+    setModuleKeyFilter(prev => (prev === key ? null : key))
+    setPage(1)
+  }
+
+  function toggleModuleActive(active: boolean) {
+    setModuleActiveFilter(prev => (prev === active ? null : active))
+    setPage(1)
+  }
+
   function clearAllFilters() {
     setSearch("")
     setStatusFilters([])
@@ -110,6 +134,8 @@ export default function TenantManagementPage() {
     setCountrySearch("")
     setFromDate(null)
     setToDate(null)
+    setModuleKeyFilter(null)
+    setModuleActiveFilter(null)
     setPage(1)
   }
 
@@ -308,6 +334,71 @@ export default function TenantManagementPage() {
             </div>
           </div>
         </FilterButton>
+
+        <FilterButton
+          data-testid="filter-active-module"
+          label={t("list.filters.activeModule")}
+          count={
+            (moduleKeyFilter ? 1 : 0) + (moduleActiveFilter !== null ? 1 : 0)
+          }
+          contentClassName="w-56"
+        >
+          <div className="max-h-52 overflow-y-auto py-1">
+            {platformModules.map(module => {
+              const checked = moduleKeyFilter === module.key
+              return (
+                <Button
+                  key={module.key}
+                  variant="ghost"
+                  data-testid={`filter-module-${module.key}`}
+                  onClick={() => toggleModuleKey(module.key)}
+                  className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
+                >
+                  <span
+                    className={cn(
+                      "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
+                      checked ? "bg-primary border-primary" : "border-border"
+                    )}
+                  >
+                    {checked && <Check size={10} className="text-white" />}
+                  </span>
+                  <span className="text-sm text-foreground">
+                    {module.display_name}
+                  </span>
+                </Button>
+              )
+            })}
+          </div>
+          <div className="border-t border-border py-1">
+            {[
+              { value: true, key: "active" as const },
+              { value: false, key: "inactive" as const },
+            ].map(({ value, key }) => {
+              const checked = moduleActiveFilter === value
+              return (
+                <Button
+                  key={key}
+                  variant="ghost"
+                  data-testid={`filter-module-${key}`}
+                  onClick={() => toggleModuleActive(value)}
+                  className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
+                >
+                  <span
+                    className={cn(
+                      "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
+                      checked ? "bg-primary border-primary" : "border-border"
+                    )}
+                  >
+                    {checked && <Check size={10} className="text-white" />}
+                  </span>
+                  <span className="text-sm text-foreground">
+                    {t(`list.filters.moduleStatus.${key}`)}
+                  </span>
+                </Button>
+              )
+            })}
+          </div>
+        </FilterButton>
       </div>
 
       {/* Active filter pills */}
@@ -366,6 +457,34 @@ export default function TenantManagementPage() {
                 setPage(1)
               }}
               data-testid="filter-pill-remove-date"
+            />
+          )}
+          {moduleKeyFilter && (
+            <FilterPill
+              label={t("list.filterPills.module", {
+                value:
+                  platformModules.find(m => m.key === moduleKeyFilter)
+                    ?.display_name ?? moduleKeyFilter,
+              })}
+              onRemove={() => {
+                setModuleKeyFilter(null)
+                setPage(1)
+              }}
+              data-testid="filter-pill-remove-module"
+            />
+          )}
+          {moduleActiveFilter !== null && (
+            <FilterPill
+              label={t("list.filterPills.moduleStatus", {
+                value: t(
+                  `list.filters.moduleStatus.${moduleActiveFilter ? "active" : "inactive"}`
+                ),
+              })}
+              onRemove={() => {
+                setModuleActiveFilter(null)
+                setPage(1)
+              }}
+              data-testid="filter-pill-remove-module-status"
             />
           )}
           <Button

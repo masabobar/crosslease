@@ -26,6 +26,17 @@ import {
   ArchiveEligibilityResponseSchema,
   ArchivePartnerResponseSchema,
   IdentityHistoryResponseSchema,
+  MergeLineageRecordResponseSchema,
+  MergeHistoryResponseSchema,
+  DuplicateConfidenceSchema,
+  DuplicateCandidatePairStatusSchema,
+  DuplicateResolutionReasonCodeSchema,
+  MergeReasonCodeSchema,
+  MatchingEvidenceItemSchema,
+  DuplicateCandidatePairResponseSchema,
+  DuplicatePairListResponseSchema,
+  ResolveDuplicatePairResponseSchema,
+  MergeInitiateResponseSchema,
 } from "@/features/partners/api/schema"
 
 // ── Enum schemas ──────────────────────────────────────────────────────────────
@@ -157,6 +168,7 @@ describe("RegisteredAddressSchema", () => {
         city: null,
         postal_code: null,
         country: null,
+        state_region: null,
       })
     ).not.toThrow()
   })
@@ -168,6 +180,19 @@ describe("RegisteredAddressSchema", () => {
         city: "Berlin",
         postal_code: "10115",
         country: "DE",
+        state_region: "Bavaria",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null state_region", () => {
+    expect(() =>
+      RegisteredAddressSchema.parse({
+        street: "Hauptstraße 1",
+        city: "Berlin",
+        postal_code: "10115",
+        country: "DE",
+        state_region: null,
       })
     ).not.toThrow()
   })
@@ -184,6 +209,7 @@ const validAddress = {
   city: "Berlin",
   postal_code: "10115",
   country: "DE",
+  state_region: null,
 }
 
 describe("LegalEntityIdentityDetailSchema", () => {
@@ -651,5 +677,252 @@ describe("IdentityHistoryResponseSchema", () => {
         items: [],
       })
     ).not.toThrow()
+  })
+})
+
+// ── Merge history ─────────────────────────────────────────────────────────────
+
+describe("MergeLineageRecordResponseSchema", () => {
+  const valid = {
+    record_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    source_partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    target_partner_id: "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
+    governed_action_id: "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f80",
+    executed_by: "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8091",
+    executed_at: "2026-06-08T15:39:00Z",
+    merge_reason_code: "same_legal_entity_different_name",
+    reference_manifest: {
+      contracts: [],
+      financings: [],
+      note: "module_not_active",
+    },
+  }
+
+  it("accepts a well-formed merge lineage record", () => {
+    expect(() => MergeLineageRecordResponseSchema.parse(valid)).not.toThrow()
+  })
+
+  it("rejects a non-UUID source_partner_id", () => {
+    expect(() =>
+      MergeLineageRecordResponseSchema.parse({
+        ...valid,
+        source_partner_id: "not-a-uuid",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a missing reference_manifest", () => {
+    const withoutManifest: Record<string, unknown> = { ...valid }
+    delete withoutManifest.reference_manifest
+    expect(() =>
+      MergeLineageRecordResponseSchema.parse(withoutManifest)
+    ).toThrow()
+  })
+})
+
+describe("MergeHistoryResponseSchema", () => {
+  it("accepts empty history", () => {
+    expect(() =>
+      MergeHistoryResponseSchema.parse({
+        partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        items: [],
+      })
+    ).not.toThrow()
+  })
+})
+
+describe("DuplicateConfidenceSchema", () => {
+  it("accepts all valid values", () => {
+    for (const v of ["definite", "probable", "possible"] as const) {
+      expect(() => DuplicateConfidenceSchema.parse(v)).not.toThrow()
+    }
+  })
+  it("rejects unknown values", () => {
+    expect(() => DuplicateConfidenceSchema.parse("high")).toThrow()
+  })
+})
+
+describe("DuplicateCandidatePairStatusSchema", () => {
+  const values = [
+    "pending",
+    "confirmed_duplicate",
+    "confirmed_distinct",
+    "deferred",
+    "merge_in_progress",
+    "merged",
+  ] as const
+  it("accepts all valid values", () => {
+    for (const v of values) {
+      expect(() => DuplicateCandidatePairStatusSchema.parse(v)).not.toThrow()
+    }
+  })
+  it("rejects unknown values", () => {
+    expect(() => DuplicateCandidatePairStatusSchema.parse("resolved")).toThrow()
+  })
+})
+
+describe("DuplicateResolutionReasonCodeSchema", () => {
+  const values = [
+    "identical_registry_identifiers",
+    "same_legal_entity_different_name",
+    "data_entry_error",
+    "system_import_error",
+    "legal_restructuring",
+    "confirmed_different_entities",
+    "subsidiary_not_duplicate",
+    "insufficient_evidence",
+  ] as const
+  it("accepts all valid values", () => {
+    for (const v of values) {
+      expect(() => DuplicateResolutionReasonCodeSchema.parse(v)).not.toThrow()
+    }
+  })
+  it("rejects unknown values", () => {
+    expect(() => DuplicateResolutionReasonCodeSchema.parse("other")).toThrow()
+  })
+})
+
+describe("MergeReasonCodeSchema", () => {
+  const values = [
+    "same_legal_entity_different_name",
+    "identical_registry_identifiers",
+    "data_entry_error",
+    "system_import_error",
+    "legal_restructuring",
+  ] as const
+  it("accepts all valid values", () => {
+    for (const v of values) {
+      expect(() => MergeReasonCodeSchema.parse(v)).not.toThrow()
+    }
+  })
+  it("rejects unknown values", () => {
+    expect(() => MergeReasonCodeSchema.parse("other")).toThrow()
+  })
+})
+
+describe("MatchingEvidenceItemSchema", () => {
+  it("accepts a well-formed evidence item", () => {
+    expect(() =>
+      MatchingEvidenceItemSchema.parse({
+        anchor: "legal_name",
+        a_value: "Capital Lease Solutions",
+        b_value: "Capital Lease Solutions GmbH",
+        match: false,
+      })
+    ).not.toThrow()
+  })
+  it("rejects a missing match flag", () => {
+    expect(() =>
+      MatchingEvidenceItemSchema.parse({
+        anchor: "legal_name",
+        a_value: "A",
+        b_value: "B",
+      })
+    ).toThrow()
+  })
+})
+
+describe("DuplicateCandidatePairResponseSchema", () => {
+  const valid = {
+    pair_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    tenant_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    partner_a_id: "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
+    partner_b_id: "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f80",
+    confidence: "probable",
+    matching_evidence: [
+      { anchor: "legal_name", a_value: "A", b_value: "B", match: false },
+    ],
+    status: "pending",
+    detected_at: "2026-06-08T15:39:00Z",
+    resolved_by: null,
+    resolved_at: null,
+    reason_code: null,
+    resolution_note: null,
+  }
+
+  it("accepts a well-formed pending pair", () => {
+    expect(() =>
+      DuplicateCandidatePairResponseSchema.parse(valid)
+    ).not.toThrow()
+  })
+
+  it("accepts a resolved pair", () => {
+    expect(() =>
+      DuplicateCandidatePairResponseSchema.parse({
+        ...valid,
+        status: "confirmed_duplicate",
+        resolved_by: "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8091",
+        resolved_at: "2026-06-09T10:00:00Z",
+        reason_code: "identical_registry_identifiers",
+        resolution_note: "Same VAT number.",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown confidence value", () => {
+    expect(() =>
+      DuplicateCandidatePairResponseSchema.parse({
+        ...valid,
+        confidence: "certain",
+      })
+    ).toThrow()
+  })
+
+  it("rejects an unknown status value", () => {
+    expect(() =>
+      DuplicateCandidatePairResponseSchema.parse({ ...valid, status: "open" })
+    ).toThrow()
+  })
+})
+
+describe("DuplicatePairListResponseSchema", () => {
+  it("accepts an empty list", () => {
+    expect(() =>
+      DuplicatePairListResponseSchema.parse({ items: [], total: 0 })
+    ).not.toThrow()
+  })
+})
+
+describe("ResolveDuplicatePairResponseSchema", () => {
+  it("accepts a well-formed response", () => {
+    expect(() =>
+      ResolveDuplicatePairResponseSchema.parse({
+        pair_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        status: "confirmed_duplicate",
+      })
+    ).not.toThrow()
+  })
+  it("rejects an unknown status value", () => {
+    expect(() =>
+      ResolveDuplicatePairResponseSchema.parse({
+        pair_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        status: "resolved",
+      })
+    ).toThrow()
+  })
+})
+
+describe("MergeInitiateResponseSchema", () => {
+  it("accepts a well-formed response", () => {
+    expect(() =>
+      MergeInitiateResponseSchema.parse({
+        governed_action_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        source_partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        target_partner_id: "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
+        pair_id: "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f80",
+        status: "pending",
+      })
+    ).not.toThrow()
+  })
+  it("rejects a non-UUID pair_id", () => {
+    expect(() =>
+      MergeInitiateResponseSchema.parse({
+        governed_action_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        source_partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        target_partner_id: "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
+        pair_id: "not-a-uuid",
+        status: "pending",
+      })
+    ).toThrow()
   })
 })

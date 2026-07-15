@@ -1,9 +1,10 @@
 # PRD1042-60 — US 28.16 | USER MANAGEMENT | Account Activation
 
 Generated: 2026-06-12
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin activates bank tenant users in own tenant; System Admin no longer activates bank users. `bank_admin` added as an activator role variant in the AC-04 Outline.
 Story: PRD1042-60 — US 28.16 | USER MANAGEMENT | Account Activation
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
-DoR status: PASS (13 ACs, description present, stakeholder-reviewed by Philipp Maute, Ready for Staging)
+DoR status: PASS (13 ACs, description present, stakeholder-reviewed by Philipp Maute, UAT ready)
 ACs with Gherkin scenarios: 8 of 13 | Blocked: 0 | Excluded: 5 (edge-case — scope filter table only)
 Figma design: Node 485:1714, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Account Activation" (Stage 2 FAILED — Figma REST API not reachable via WebFetch auth, MCP rate-limited; copy/state assertions kept generic)
 
@@ -38,7 +39,7 @@ Figma design: Node 485:1714, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Account Act
 | Tag           | Scenario                                                                                           | AC    | Priority | E2E                |
 | ------------- | -------------------------------------------------------------------------------------------------- | ----- | -------- | ------------------ |
 | `@happy-path` | Activation form displayed when valid invitation link opened                                        | AC-01 | P0       | ⚙️ needs D19       |
-| `@happy-path` | Successful activation activates account and redirects to landing page (Outline — 3 roles)          | AC-04 | P0       | ⚙️ needs D19       |
+| `@happy-path` | Successful activation activates account and redirects to landing page (Outline — 4 roles)          | AC-04 | P0       | ⚙️ needs D19       |
 | `@main-error` | Expired invitation token blocks activation                                                         | AC-02 | P0       | ⚙️ needs D19       |
 | `@main-error` | Password and confirm-password mismatch blocks activation                                           | AC-03 | P0       | ⚙️ needs D19       |
 | `@main-error` | Invalid account state blocks activation (Outline — 3 states: deactivated, expired, already-active) | AC-08 | P0       | ⚙️ needs D19       |
@@ -85,10 +86,13 @@ Feature: Account Activation (US 28.16 — PRD1042-60)
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-04
   # Verify that submitting valid activation data activates the account across
-  # all three operational roles (front_office, auditor, lc_user). Role, tenant
-  # scope, LC scope, and access validity are preserved from provisioning data
-  # — none of these are editable during activation. The activated user is
-  # redirected to their role-specific landing page on success.
+  # all four supported roles (bank_admin, front_office, auditor, lc_user).
+  # bank_admin (user_type: bank_tenant) is the tenant-level admin role
+  # provisioned per PRD1042-48 — Bank Admin activates other bank tenant users,
+  # so bank_admin's own account must also be activatable via invitation link.
+  # Role, tenant scope, LC scope, and access validity are preserved from
+  # provisioning data — none of these are editable during activation. The
+  # activated user is redirected to their role-specific landing page on success.
   # ---------------------------------------------------------------------------
 
   @happy-path @ac-04 @p0
@@ -105,10 +109,11 @@ Feature: Account Activation (US 28.16 — PRD1042-60)
     And the tenant scope assigned during provisioning should be preserved
 
     Examples:
-      | role         | landing_page     |
-      | front_office | /dashboard/fo    |
-      | auditor      | /audit/trail     |
-      | lc_user      | /workspace/lc    |
+      | role         | landing_page       |
+      | bank_admin   | /dashboard/admin   |
+      | front_office | /dashboard/fo      |
+      | auditor      | /audit/trail       |
+      | lc_user      | /workspace/lc      |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-02

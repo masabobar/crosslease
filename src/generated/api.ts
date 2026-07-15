@@ -75,6 +75,7 @@ const UserResponse = z
     status: UserStatus,
     phone_number: z.union([z.string(), z.null()]),
     profile_picture_url: z.union([z.string(), z.null()]).optional(),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
     access_valid_until: z.union([z.string(), z.null()]),
     invited_by: z.union([z.string(), z.null()]),
     invited_at: z.union([z.string(), z.null()]),
@@ -215,6 +216,7 @@ const InviteUserRequest = z
     role: UserRole,
     tenant_id: z.union([z.string(), z.null()]).optional(),
     access_valid_until: z.union([z.string(), z.null()]).optional(),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const app__modules__users__interfaces__http__schemas__user_schemas__UserRef = z
@@ -231,6 +233,7 @@ const UserDetailResponse = z
     status: UserStatus,
     tenant_id: z.union([z.string(), z.null()]),
     tenant_name: z.union([z.string(), z.null()]),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
     phone_number: z.union([z.string(), z.null()]),
     pending_email: z.union([z.string(), z.null()]),
     profile_picture_url: z.union([z.string(), z.null()]),
@@ -695,6 +698,13 @@ const PaginatedAuditEventsResponse = z
     total_pages: z.number().int(),
   })
   .passthrough()
+const FieldDiffItem = z
+  .object({
+    field: z.string(),
+    old_value: z.union([z.unknown(), z.null()]),
+    new_value: z.union([z.unknown(), z.null()]),
+  })
+  .passthrough()
 const AuditEventResponse = z
   .object({
     id: z.string().uuid(),
@@ -711,6 +721,7 @@ const AuditEventResponse = z
     old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     changed_fields: z.union([z.array(z.string()), z.null()]),
+    field_diffs: z.union([z.array(FieldDiffItem), z.null()]).optional(),
     trigger_source: z.union([z.string(), z.null()]),
     reason: z.union([z.string(), z.null()]),
     comment: z.union([z.string(), z.null()]),
@@ -777,6 +788,7 @@ const RegisteredAddress = z
     city: z.union([z.string(), z.null()]),
     postal_code: z.union([z.string(), z.null()]),
     country: z.union([z.string(), z.null()]),
+    state_region: z.union([z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -1071,6 +1083,15 @@ const MergeHistoryResponse = z
     items: z.array(MergeLineageRecordResponse),
   })
   .passthrough()
+const RegisteredAddressInput = z
+  .object({
+    street: z.string().min(1),
+    city: z.string().min(1),
+    postal_code: z.string().min(1),
+    country: z.string().min(1),
+    state_region: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const LegalEntityIdentityInput = z
   .object({
     partner_type: z.string(),
@@ -1080,7 +1101,7 @@ const LegalEntityIdentityInput = z
     tax_id_vat: z.union([z.string(), z.null()]).optional(),
     lei: z.union([z.string(), z.null()]).optional(),
     commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
     foreign_identifier: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
@@ -1093,7 +1114,7 @@ const NaturalPersonIdentityInput = z
     country: z.string().min(2).max(2),
     birth_name: z.union([z.string(), z.null()]).optional(),
     national_id: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
   })
   .passthrough()
 const SoleProprietorIdentityInput = z
@@ -1104,7 +1125,7 @@ const SoleProprietorIdentityInput = z
     country: z.string().min(2).max(2),
     tax_id_vat: z.union([z.string(), z.null()]).optional(),
     commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
   })
   .passthrough()
 const PartnerMatchRequest = z
@@ -1238,7 +1259,11 @@ const IncrementType = z.enum(["major", "minor"])
 const LegalStructure = z.enum(["loan_credit", "true_sale"])
 const PaymentTiming = z.enum(["advance", "arrears"])
 const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
-const RateType = z.enum(["fixed", "floating", "euribor_spread"])
+const app__modules__product_templates__domain__enums__RateType = z.enum([
+  "fixed",
+  "floating",
+  "euribor_spread",
+])
 const CalculationModel = z.enum(["annuity", "bullet", "irregular"])
 const FirstInstallmentRule = z.enum([
   "submission_month",
@@ -1272,7 +1297,10 @@ const VersionDetailResponse = z
     legal_structure: LegalStructure,
     payment_timing: PaymentTiming,
     rate_basis: RateBasis,
-    rate_type: z.union([RateType, z.null()]),
+    rate_type: z.union([
+      app__modules__product_templates__domain__enums__RateType,
+      z.null(),
+    ]),
     calculation_model: CalculationModel,
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
@@ -1317,7 +1345,10 @@ const UpdateTemplateDraftRequest = z
     legal_structure: z.union([LegalStructure, z.null()]),
     payment_timing: z.union([PaymentTiming, z.null()]),
     rate_basis: z.union([RateBasis, z.null()]),
-    rate_type: z.union([RateType, z.null()]),
+    rate_type: z.union([
+      app__modules__product_templates__domain__enums__RateType,
+      z.null(),
+    ]),
     calculation_model: z.union([CalculationModel, z.null()]),
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
@@ -1498,7 +1529,12 @@ const CreateTemplateDraftRequest = z
     template_description: z.union([z.string(), z.null()]).optional(),
     valid_from: z.union([z.string(), z.null()]).optional(),
     valid_until: z.union([z.string(), z.null()]).optional(),
-    rate_type: z.union([RateType, z.null()]).optional(),
+    rate_type: z
+      .union([
+        app__modules__product_templates__domain__enums__RateType,
+        z.null(),
+      ])
+      .optional(),
     npv_formula_ref: z.union([z.string(), z.null()]).optional(),
     first_installment_rule: z
       .union([FirstInstallmentRule, z.null()])
@@ -1523,6 +1559,382 @@ const TemplateDraftCreatedResponse = z
     version_number: z.string(),
     version_status: z.string(),
   })
+  .passthrough()
+const BankEntity = z.enum([
+  "sparkasse",
+  "landesbank_1",
+  "landesbank_2",
+  "other",
+])
+const app__modules__framework_agreements__domain__enums__RateType = z.enum([
+  "fixed",
+  "floating",
+  "euribor_plus_spread",
+])
+const CreateFARequest = z
+  .object({
+    agreement_name: z.string().max(200),
+    lc_partner_id: z.string().uuid(),
+    bank_entity: BankEntity,
+    max_volume_eur: z.union([z.number(), z.string()]),
+    base_rate: z.union([z.number(), z.string()]),
+    spread: z.union([z.number(), z.string()]),
+    rate_type: app__modules__framework_agreements__domain__enums__RateType,
+    effective_rate: z.union([z.number(), z.string(), z.null()]).optional(),
+    rate_lock_period_months: z.number().int().gte(1).lte(360),
+    lg_coverage_rate_override: z
+      .union([z.number(), z.string(), z.null()])
+      .optional(),
+    valid_from: z.string(),
+    valid_until: z.union([z.string(), z.null()]).optional(),
+    special_conditions: z.union([z.string(), z.null()]).optional(),
+    product_template_ids: z.array(z.string().uuid()).min(1),
+  })
+  .passthrough()
+const FALifecycleStatus = z.enum(["draft", "active", "suspended", "terminated"])
+const FADraftResponse = z
+  .object({
+    id: z.string().uuid(),
+    agreement_name: z.string(),
+    lc_partner_id: z.string().uuid(),
+    bank_entity: BankEntity,
+    currency: z.string(),
+    status: FALifecycleStatus,
+    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    base_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    spread: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    effective_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    rate_type: app__modules__framework_agreements__domain__enums__RateType,
+    rate_lock_period_months: z.number().int(),
+    lg_coverage_rate_override: z.union([z.string(), z.null()]),
+    valid_from: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
+    special_conditions: z.union([z.string(), z.null()]),
+    product_template_ids: z.array(z.string().uuid()),
+    edit_version_counter: z.number().int(),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const FAListItemResponse = z
+  .object({
+    id: z.string().uuid(),
+    agreement_name: z.string(),
+    lc_partner_id: z.string().uuid(),
+    lc_partner_name: z.union([z.string(), z.null()]),
+    bank_entity: z.union([BankEntity, z.null()]),
+    status: FALifecycleStatus,
+    valid_from: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
+    utilization_pct: z.union([z.string(), z.null()]),
+    limit_breach: z.union([z.boolean(), z.null()]),
+  })
+  .passthrough()
+const FAListResponse = z
+  .object({
+    items: z.array(FAListItemResponse),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const UpdateFARequest = z
+  .object({
+    agreement_name: z.union([z.string(), z.null()]),
+    max_volume_eur: z.union([z.number(), z.string(), z.null()]),
+    base_rate: z.union([z.number(), z.string(), z.null()]),
+    spread: z.union([z.number(), z.string(), z.null()]),
+    rate_type: z.union([
+      app__modules__framework_agreements__domain__enums__RateType,
+      z.null(),
+    ]),
+    effective_rate: z.union([z.number(), z.string(), z.null()]),
+    rate_lock_period_months: z.union([z.number(), z.null()]),
+    lg_coverage_rate_override: z.union([z.number(), z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_until: z.union([z.string(), z.null()]),
+    special_conditions: z.union([z.string(), z.null()]),
+    product_template_ids: z.union([z.array(z.string().uuid()), z.null()]),
+    justification: z.union([z.string(), z.null()]),
+    expected_version: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const FADetailResponse = z
+  .object({
+    id: z.string().uuid(),
+    agreement_name: z.string(),
+    lc_partner_id: z.string().uuid(),
+    lc_partner_name: z.union([z.string(), z.null()]),
+    status: FALifecycleStatus,
+    currency: z.string(),
+    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    valid_from: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
+    edit_version_counter: z.number().int(),
+    product_template_ids: z.array(z.string().uuid()),
+    document_count: z.number().int(),
+    linked_financings_count: z.number().int(),
+    utilization_pct: z.union([z.string(), z.null()]),
+    limit_available: z.union([z.string(), z.null()]),
+    limit_breach: z.union([z.boolean(), z.null()]),
+    bank_entity: z.union([z.string(), z.null()]),
+    base_rate: z.union([z.string(), z.null()]),
+    spread: z.union([z.string(), z.null()]),
+    effective_rate: z.union([z.string(), z.null()]),
+    rate_type: z.union([z.string(), z.null()]),
+    rate_lock_period_months: z.union([z.number(), z.null()]),
+    lg_coverage_rate_override: z.union([z.string(), z.null()]),
+    special_conditions: z.union([z.string(), z.null()]),
+    effective_from: z.union([z.string(), z.null()]),
+    activated_at: z.union([z.string(), z.null()]),
+    activated_by: z.union([z.string(), z.null()]),
+    activated_by_name: z.union([z.string(), z.null()]),
+    suspended_at: z.union([z.string(), z.null()]),
+    suspended_by: z.union([z.string(), z.null()]),
+    terminated_at: z.union([z.string(), z.null()]),
+    terminated_by: z.union([z.string(), z.null()]),
+    created_by: z.union([z.string(), z.null()]),
+    created_by_name: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const ActivateFARequest = z
+  .object({
+    documents_confirmed: z.boolean(),
+    effective_from: z.union([z.string(), z.null()]).optional(),
+    justification: z.string().min(20).max(1000),
+  })
+  .passthrough()
+const SuspensionReadinessResponse = z
+  .object({
+    can_suspend: z.boolean(),
+    blocking_financing_count: z.number().int(),
+    blocking_financings: z.array(z.object({}).partial().passthrough()),
+  })
+  .passthrough()
+const SuspendFARequest = z
+  .object({
+    justification: z.string().min(20).max(1000),
+    effective_from: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const FASuspendedResponse = z
+  .object({
+    id: z.string().uuid(),
+    status: z.string(),
+    suspended_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const ReactivateFARequest = z
+  .object({
+    justification: z.string().min(20).max(1000),
+    re_validation_confirmed: z.boolean(),
+  })
+  .passthrough()
+const FAReactivatedResponse = z
+  .object({
+    id: z.string().uuid(),
+    status: z.string(),
+    reactivated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const TerminationReadinessResponse = z
+  .object({
+    can_terminate: z.boolean(),
+    blocking_financing_count: z.number().int(),
+    blocking_financings: z.array(z.object({}).partial().passthrough()),
+  })
+  .passthrough()
+const TerminateFARequest = z
+  .object({
+    justification: z.string().min(30).max(1000),
+    irreversibility_confirmed: z.boolean(),
+  })
+  .passthrough()
+const FATerminatedResponse = z
+  .object({
+    id: z.string().uuid(),
+    status: z.string(),
+    terminated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const FALCPartnerItem = z
+  .object({ id: z.string().uuid(), legal_name: z.string() })
+  .passthrough()
+const FALCPartnersResponse = z
+  .object({ items: z.array(FALCPartnerItem) })
+  .passthrough()
+const FAUtilizationResponse = z
+  .object({
+    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    disbursed_volume_eur: z.union([z.string(), z.null()]).optional(),
+    redeemed_volume_eur: z.union([z.string(), z.null()]).optional(),
+    net_exposure_eur: z.union([z.string(), z.null()]).optional(),
+    available_volume_eur: z.union([z.string(), z.null()]).optional(),
+    utilization_pct: z.union([z.string(), z.null()]).optional(),
+    limit_available_flag: z.union([z.boolean(), z.null()]).optional(),
+    limit_breach_flag: z.union([z.boolean(), z.null()]).optional(),
+    last_refreshed_at: z.union([z.string(), z.null()]).optional(),
+    source: z.string().optional().default("limit_management"),
+    available: z.boolean().optional().default(false),
+  })
+  .passthrough()
+const FALinkedFinancingsResponse = z
+  .object({ count: z.number().int().default(0), items: z.array(z.unknown()) })
+  .partial()
+  .passthrough()
+const FAPricingSnapshotResponse = z
+  .object({
+    fa_id: z.string().uuid(),
+    agreement_name: z.string(),
+    edit_version_counter: z.number().int(),
+    base_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    spread: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    effective_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    rate_type: z.string(),
+    rate_lock_period_months: z.number().int(),
+    lg_coverage_rate_override: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const FAEventTypeFilter = z.enum([
+  "draft_created",
+  "draft_edited",
+  "draft_deleted",
+  "document_attached",
+  "document_detached",
+  "document_downloaded",
+  "activation_submitted",
+  "activated",
+  "activation_rejected",
+  "activation_expired",
+  "suspended",
+  "suspension_blocked",
+  "reactivated",
+  "terminated",
+  "termination_blocked",
+  "edited",
+  "max_volume_reduced_below_exposure",
+  "list_accessed",
+  "detail_accessed",
+  "pricing_snapshot_accessed",
+  "auditor_audit_access",
+  "audit_export",
+])
+const FAAuditEventResponse = z
+  .object({
+    id: z.string().uuid(),
+    event_type: z.string(),
+    actor_id: z.union([z.string(), z.null()]),
+    actor_first_name: z.union([z.string(), z.null()]).optional(),
+    actor_last_name: z.union([z.string(), z.null()]).optional(),
+    actor_type: z.string(),
+    recorded_at: z.string().datetime({ offset: true }),
+    justification: z.union([z.string(), z.null()]),
+    old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    changed_fields: z.union([z.array(z.string()), z.null()]),
+    field_diffs: z.union([z.array(FieldDiffItem), z.null()]).optional(),
+  })
+  .passthrough()
+const FAAuditHistoryResponse = z
+  .object({
+    items: z.array(FAAuditEventResponse),
+    next_cursor: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const FAReconstructResponse = z
+  .object({
+    fa_id: z.string().uuid(),
+    as_of: z.string().datetime({ offset: true }),
+    events_replayed: z.number().int(),
+    state: z.object({}).partial().passthrough(),
+  })
+  .passthrough()
+const FADocumentType = z.enum([
+  "original_agreement",
+  "addendum",
+  "side_letter",
+  "other",
+])
+const Body_attach_document_api_v1_framework_agreements__id__documents_post = z
+  .object({
+    file: z.string(),
+    document_type: FADocumentType,
+    document_label: z.union([z.string(), z.null()]).optional(),
+    lc_visible: z.boolean().optional().default(true),
+  })
+  .passthrough()
+const AttachDocumentResponse = z
+  .object({
+    id: z.string().uuid(),
+    framework_agreement_id: z.string().uuid(),
+    document_type: FADocumentType,
+    document_label: z.union([z.string(), z.null()]),
+    file_name: z.string(),
+    file_size_bytes: z.number().int(),
+    mime_type: z.string(),
+    lc_visible: z.boolean(),
+    uploaded_by: z.string().uuid(),
+    uploaded_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const DocumentListItemResponse = z
+  .object({
+    id: z.string().uuid(),
+    framework_agreement_id: z.string().uuid(),
+    document_type: FADocumentType,
+    document_label: z.union([z.string(), z.null()]),
+    file_name: z.string(),
+    file_size_bytes: z.number().int(),
+    mime_type: z.string(),
+    lc_visible: z.boolean(),
+    uploaded_by: z.string().uuid(),
+    uploaded_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const DownloadURLResponse = z
+  .object({
+    url: z.string(),
+    expires_in_seconds: z.number().int().optional().default(300),
+  })
+  .passthrough()
+const LCPortalProductTemplateItem = z
+  .object({
+    id: z.string().uuid(),
+    template_name: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const LCPortalDocumentItem = z
+  .object({
+    id: z.string().uuid(),
+    file_name: z.string(),
+    file_size_bytes: z.number().int(),
+    mime_type: z.string(),
+    document_type: z.string(),
+    document_label: z.union([z.string(), z.null()]),
+    uploaded_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const LCPortalFAListItem = z
+  .object({
+    id: z.string().uuid(),
+    agreement_name: z.string(),
+    status: FALifecycleStatus,
+    valid_from: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
+    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    available_volume_eur: z.union([z.string(), z.null()]).optional(),
+    new_financings_available: z.union([z.boolean(), z.null()]).optional(),
+    product_templates: z.array(LCPortalProductTemplateItem),
+    documents: z.array(LCPortalDocumentItem),
+  })
+  .passthrough()
+const LCPortalFAListResponse = z
+  .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
   .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
@@ -1625,6 +2037,7 @@ export const schemas = {
   AuditFilterOptionsResponse,
   AuditEventListItem,
   PaginatedAuditEventsResponse,
+  FieldDiffItem,
   AuditEventResponse,
   DuplicateResolutionReasonCode,
   ResolveDuplicatePairRequest,
@@ -1668,6 +2081,7 @@ export const schemas = {
   IdentityChangeDetailResponse,
   MergeLineageRecordResponse,
   MergeHistoryResponse,
+  RegisteredAddressInput,
   LegalEntityIdentityInput,
   NaturalPersonIdentityInput,
   SoleProprietorIdentityInput,
@@ -1690,7 +2104,7 @@ export const schemas = {
   LegalStructure,
   PaymentTiming,
   RateBasis,
-  RateType,
+  app__modules__product_templates__domain__enums__RateType,
   CalculationModel,
   FirstInstallmentRule,
   DisbursementDerivationRule,
@@ -1721,6 +2135,42 @@ export const schemas = {
   TemplateListResponse,
   CreateTemplateDraftRequest,
   TemplateDraftCreatedResponse,
+  BankEntity,
+  app__modules__framework_agreements__domain__enums__RateType,
+  CreateFARequest,
+  FALifecycleStatus,
+  FADraftResponse,
+  FAListItemResponse,
+  FAListResponse,
+  UpdateFARequest,
+  FADetailResponse,
+  ActivateFARequest,
+  SuspensionReadinessResponse,
+  SuspendFARequest,
+  FASuspendedResponse,
+  ReactivateFARequest,
+  FAReactivatedResponse,
+  TerminationReadinessResponse,
+  TerminateFARequest,
+  FATerminatedResponse,
+  FALCPartnerItem,
+  FALCPartnersResponse,
+  FAUtilizationResponse,
+  FALinkedFinancingsResponse,
+  FAPricingSnapshotResponse,
+  FAEventTypeFilter,
+  FAAuditEventResponse,
+  FAAuditHistoryResponse,
+  FAReconstructResponse,
+  FADocumentType,
+  Body_attach_document_api_v1_framework_agreements__id__documents_post,
+  AttachDocumentResponse,
+  DocumentListItemResponse,
+  DownloadURLResponse,
+  LCPortalProductTemplateItem,
+  LCPortalDocumentItem,
+  LCPortalFAListItem,
+  LCPortalFAListResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -2351,6 +2801,598 @@ and invalidates all active sessions.`,
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/framework-agreements",
+    alias: "create_fa_draft_api_v1_framework_agreements_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateFARequest,
+      },
+    ],
+    response: FADraftResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements",
+    alias: "list_framework_agreements_api_v1_framework_agreements_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(FALifecycleStatus).optional().default([]),
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: z.array(z.string().uuid()).optional().default([]),
+      },
+      {
+        name: "bank_entity",
+        type: "Query",
+        schema: z.array(BankEntity).optional().default([]),
+      },
+      {
+        name: "valid_from",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "valid_until",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(50).optional().default(25),
+      },
+    ],
+    response: FAListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/framework-agreements/:id",
+    alias: "update_fa_api_v1_framework_agreements__id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateFARequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FADraftResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/framework-agreements/:id",
+    alias: "delete_fa_draft_api_v1_framework_agreements__id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id",
+    alias: "get_framework_agreement_api_v1_framework_agreements__id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FADetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/activate",
+    alias: "activate_fa_api_v1_framework_agreements__id__activate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: ActivateFARequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FADraftResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/audit-history",
+    alias:
+      "get_fa_audit_history_api_v1_framework_agreements__id__audit_history_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "type",
+        type: "Query",
+        schema: z.array(FAEventTypeFilter).optional().default([]),
+      },
+      {
+        name: "from",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "to",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(50).optional().default(50),
+      },
+      {
+        name: "cursor",
+        type: "Query",
+        schema: search,
+      },
+    ],
+    response: FAAuditHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/audit-history/export-csv",
+    alias:
+      "export_fa_audit_history_csv_api_v1_framework_agreements__id__audit_history_export_csv_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "reason",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "type",
+        type: "Query",
+        schema: z.array(FAEventTypeFilter).optional().default([]),
+      },
+      {
+        name: "from",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "to",
+        type: "Query",
+        schema: search,
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/documents",
+    alias: "attach_document_api_v1_framework_agreements__id__documents_post",
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema:
+          Body_attach_document_api_v1_framework_agreements__id__documents_post,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: AttachDocumentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/documents",
+    alias: "list_documents_api_v1_framework_agreements__id__documents_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(DocumentListItemResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/framework-agreements/:id/documents/:doc_id",
+    alias:
+      "detach_document_api_v1_framework_agreements__id__documents__doc_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "doc_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/documents/:doc_id/download-url",
+    alias:
+      "get_download_url_api_v1_framework_agreements__id__documents__doc_id__download_url_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "doc_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DownloadURLResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/financings",
+    alias: "get_fa_financings_api_v1_framework_agreements__id__financings_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FALinkedFinancingsResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/pricing-snapshot",
+    alias:
+      "get_fa_pricing_snapshot_api_v1_framework_agreements__id__pricing_snapshot_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FAPricingSnapshotResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/reactivate",
+    alias: "reactivate_fa_api_v1_framework_agreements__id__reactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: ReactivateFARequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FAReactivatedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/reconstruct",
+    alias: "reconstruct_fa_api_v1_framework_agreements__id__reconstruct_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "as_of",
+        type: "Query",
+        schema: z.string().datetime({ offset: true }),
+      },
+    ],
+    response: FAReconstructResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/suspend",
+    alias: "suspend_fa_api_v1_framework_agreements__id__suspend_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SuspendFARequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FASuspendedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/suspension-readiness",
+    alias:
+      "get_suspension_readiness_api_v1_framework_agreements__id__suspension_readiness_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: SuspensionReadinessResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/terminate",
+    alias: "terminate_fa_api_v1_framework_agreements__id__terminate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: TerminateFARequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FATerminatedResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/termination-readiness",
+    alias:
+      "get_termination_readiness_api_v1_framework_agreements__id__termination_readiness_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: TerminationReadinessResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/utilization",
+    alias:
+      "get_fa_utilization_api_v1_framework_agreements__id__utilization_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FAUtilizationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/lc-partners",
+    alias: "list_lc_partners_api_v1_framework_agreements_lc_partners_get",
+    requestFormat: "json",
+    response: FALCPartnersResponse,
+  },
+  {
     method: "get",
     path: "/api/v1/governed-actions",
     alias: "list_governed_actions_api_v1_governed_actions_get",
@@ -2543,6 +3585,45 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
         status: 404,
         description: `Action not found or caller is not the initiator`,
         schema: z.void(),
+      },
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc-portal/framework-agreements",
+    alias: "lc_portal_list_fas_api_v1_lc_portal_framework_agreements_get",
+    requestFormat: "json",
+    response: LCPortalFAListResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc-portal/framework-agreements/:id/documents/:doc_id/download",
+    alias:
+      "lc_portal_download_document_api_v1_lc_portal_framework_agreements__id__documents__doc_id__download_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "doc_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 302,
+        description: `Successful Response`,
+        schema: z.unknown(),
       },
       {
         status: 422,
@@ -4217,7 +5298,9 @@ Requires &#x60;system_admin&#x60; role.`,
   A second admin must approve before the user is created.
 - Tenant roles (&#x60;front_office&#x60;, &#x60;back_office&#x60;, &#x60;leasing_company_user&#x60;) — &#x60;tenant_id&#x60; required, tenant must be active.
   Immediate execution; returns &#x60;UserResponse&#x60; with status &#x60;invited&#x60;.
-- &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.`,
+- &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.
+- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same tenant.
+  All other roles must omit &#x60;lc_partner_id&#x60; (or send &#x60;null&#x60;).`,
     requestFormat: "json",
     parameters: [
       {

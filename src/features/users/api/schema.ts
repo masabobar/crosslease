@@ -38,6 +38,15 @@ export const UserResponseSchema = z.object({
 
 export type UserResponse = z.infer<typeof UserResponseSchema>
 
+export const UserMePermissionsResponseSchema = z.object({
+  role: z.enum(USER_ROLES),
+  permissions: z.array(z.string()),
+  active_modules: z.array(z.string()),
+})
+export type UserMePermissionsResponse = z.infer<
+  typeof UserMePermissionsResponseSchema
+>
+
 // Direct user action response: { user: UserResponse } — approve, suspend, deactivate, etc.
 export const UserActionResponseSchema = z.object({
   user: UserResponseSchema,

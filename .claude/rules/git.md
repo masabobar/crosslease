@@ -30,6 +30,7 @@ When a commit implements or fixes behavior covered by a user story, cite it in t
 - A commit can cite more than one story if the fix spans acceptance criteria from both, as long as each was actually surfaced in the conversation.
 
 Example:
+
 ```
 fix: hide edit actions for deactivated users #PRD1042-1045
 
@@ -106,6 +107,7 @@ git push
 ## What to Commit
 
 **DO commit:**
+
 - ✅ Source code
 - ✅ Configuration files
 - ✅ Database migration files
@@ -113,6 +115,7 @@ git push
 - ✅ Tests
 
 **DO NOT commit:**
+
 - ❌ Secrets or API keys
 - ❌ `.env` files with credentials
 - ❌ `node_modules/`

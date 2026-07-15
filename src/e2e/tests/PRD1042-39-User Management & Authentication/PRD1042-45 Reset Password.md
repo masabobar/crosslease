@@ -1,5 +1,7 @@
 # PRD1042-45 — US 28.3 | USER MANAGEMENT | Password Reset
 
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Bank Admin is classified as a security-sensitive role under AC-10 (alongside Power User, Auditor, Back Office / Risk) and MUST complete MFA verification during the password reset flow before the new password is committed. AC-10 MFA scenario converted from single-role (Auditor) to Scenario Outline covering Auditor and Bank Admin. All other ACs remain role-agnostic — no change.
+
 Generated: 2026-05-25
 Story: PRD1042-45 — US 28.3 | USER MANAGEMENT | Password Reset
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
@@ -46,18 +48,18 @@ Figma design: Node 167:18629, file 18XTZEeaxrGDhi4DzZ2QnJ — Screen "Set a new 
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                        | AC    | Priority | E2E                   |
-| ------------- | ----------------------------------------------------------------------------------------------- | ----- | -------- | --------------------- |
-| `@happy-path` | Valid reset request triggers email delivery with reset link                                     | AC-05 | P0       | ⚙️ needs email access |
-| `@happy-path` | Opening a valid reset link shows the Set a new password screen                                  | AC-07 | P0       | ⚙️ needs D17/D19      |
-| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)           | AC-10 | P0       | ⚙️ needs D17/D19      |
-| `@happy-path` | Security-sensitive role requires MFA verification before password is committed                  | AC-10 | P1       | ⚙️ needs D17/D19/R1   |
-| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)     | AC-01 | P0       | ✅                    |
-| `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states) | AC-08 | P0       | ⚙️ needs D17          |
-| `@main-error` | Weak password that does not meet policy is rejected                                             | AC-09 | P0       | ⚙️ needs D17/D19      |
-| `@main-error` | Mismatched password confirmation blocks submission                                              | AC-09 | P0       | ⚙️ needs D17/D19      |
-| `@main-error` | User can log in with new password after successful reset                                        | AC-14 | P0       | ⚙️ needs D17/D19      |
-| `@main-error` | Old password is rejected after successful reset                                                 | AC-14 | P0       | ⚙️ needs D17/D19      |
+| Tag           | Scenario                                                                                                                | AC    | Priority | E2E                   |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- | ----- | -------- | --------------------- |
+| `@happy-path` | Valid reset request triggers email delivery with reset link                                                             | AC-05 | P0       | ⚙️ needs email access |
+| `@happy-path` | Opening a valid reset link shows the Set a new password screen                                                          | AC-07 | P0       | ⚙️ needs D17/D19      |
+| `@happy-path` | Standard-role user completes password reset successfully (Scenario Outline — 2 roles)                                   | AC-10 | P0       | ⚙️ needs D17/D19      |
+| `@happy-path` | Security-sensitive role requires MFA verification before password is committed (Scenario Outline — Auditor, Bank Admin) | AC-10 | P1       | ⚙️ needs D17/D19/R1   |
+| `@main-error` | Forgot Password request returns generic success for any email (Scenario Outline — 3 emails)                             | AC-01 | P0       | ✅                    |
+| `@main-error` | Accessing reset link with a bad token shows a generic error (Scenario Outline — 3 token states)                         | AC-08 | P0       | ⚙️ needs D17          |
+| `@main-error` | Weak password that does not meet policy is rejected                                                                     | AC-09 | P0       | ⚙️ needs D17/D19      |
+| `@main-error` | Mismatched password confirmation blocks submission                                                                      | AC-09 | P0       | ⚙️ needs D17/D19      |
+| `@main-error` | User can log in with new password after successful reset                                                                | AC-14 | P0       | ⚙️ needs D17/D19      |
+| `@main-error` | Old password is rejected after successful reset                                                                         | AC-14 | P0       | ⚙️ needs D17/D19      |
 
 Active scenario blocks: 10 (3 Outlines + 7 Scenarios)
 E2E automation candidates: 1 of 10 scenarios ✅
@@ -205,8 +207,8 @@ Feature: Password Reset (US 28.3 — PRD1042-45)
       | Leasing Company | lc@leasingco.com |
 
   @happy-path @ac-10 @p1
-  Scenario: Security-sensitive role requires MFA verification before password is committed (AC-10)
-    Given an Auditor user with email "auditor@bank.com" has a valid reset token
+  Scenario Outline: Security-sensitive role requires MFA verification before password is committed (AC-10)
+    Given a <role> user with email <email> has a valid reset token
     When I navigate to the reset link
     And I enter a policy-compliant new password and confirm it
     And I click the "Update password" button
@@ -215,6 +217,11 @@ Feature: Password Reset (US 28.3 — PRD1042-45)
     When I complete MFA verification with a valid code
     Then the password should be updated successfully
     And I should be initialized into an authenticated session within the 5-minute MFA freshness window
+
+    Examples:
+      | role       | email               |
+      | Auditor    | auditor@bank.com    |
+      | Bank Admin | bank.admin@bank.com |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-14

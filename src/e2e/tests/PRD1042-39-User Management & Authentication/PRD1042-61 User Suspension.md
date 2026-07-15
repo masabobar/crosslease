@@ -1,6 +1,8 @@
 # PRD1042-61 — US 28.17 | USER MANAGEMENT | User Suspension
 
 Generated: 2026-06-05
+**Updated 2026-07-08:** Added Bank Admin role (`bank_admin`) support per PRD1042-48 (Ivan Mladenovic decision 2026-07-06). Story description confirms (correction dated 6 July 2026): System Admin suspends platform-level users; Power User (Bank Admin) suspends users within its own bank tenant only. Wire value `power_user` replaced with `bank_admin` across Outlines. AC-15 last-admin guard now explicitly covers both platform (System Admin) and tenant-level (Bank Admin) exhaustion.
+
 Story: PRD1042-61 — US 28.17 | USER MANAGEMENT | User Suspension
 Epic: PRD1042-39 — Epic 28: User Management & Authentication
 DoR status: PASS (15 ACs, description present, stakeholder-reviewed by Philipp Maute 2026-05-13, UAT ready)
@@ -11,23 +13,23 @@ Figma design: None — no Figma URL found in story or child tickets (Stage 2 SKI
 
 ## AC Scope Filter
 
-| AC    | Description                                                                                                               | Classification     | Rationale                                                                                                                          |
-| ----- | ------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| AC-01 | Suspension form accessible only to authorized admins; server-side auth; scope-limited                                     | `happy-path`       | Core entry point for the suspension flow; role access negative is auto-applied as RefiNext domain rule                             |
-| AC-02 | Reason field mandatory; Comment mandatory when Reason = Other; failed attempts traceable                                  | `main-error`       | Directly blocks form submission; the "Other + mandatory comment" branch is a key validation gate                                   |
-| AC-03 | Status changes to Suspended; sessions revoked; audit logged; immediate or per Effective From                              | `happy-path`       | Primary success outcome — collapses with AC-01 into the happy-path Outline                                                         |
-| AC-04 | Four-Eyes required for Highly Privileged & Privileged users; Workflow Engine banner; status unchanged until approval      | `main-error`       | Blocks suspension from taking effect for most admin roles; RefiNext Four-Eyes domain rule; directly observable in UI               |
-| AC-05 | Suspended user blocked from login; no session tokens; API auth blocked; audit logged                                      | `separate-feature` | Covered by US 28.1 (User Login) AC-09; login layer, not suspension form                                                            |
-| AC-06 | Active sessions revoked on suspension; UI + API; audit traceable                                                          | `separate-feature` | Covered by US 28.10 (Session Management); session layer, not suspension form                                                       |
-| AC-07 | Historical audit records, workflow history, role-at-time preserved                                                        | `edge-case`        | Backend invariant; no UI gesture to assert against; covered by backend integration tests                                           |
-| AC-08 | Future-dated Effective From schedules suspension; user stays active until then; server-side                               | `edge-case`        | Timing/scheduling behaviour; requires time-travel seam (D21-equivalent) not confirmed available; boundary condition                |
-| AC-09 | Full audit record fields; immutable; failed attempts traceable                                                            | `edge-case`        | Audit system implementation detail; not assertable through suspension form UI                                                      |
-| AC-10 | All validation server-authoritative; frontend alone insufficient; partial suspension blocked                              | `edge-case`        | Architecture invariant; not a discrete UI-testable action; covered by backend API tests                                            |
-| AC-11 | UI, API, direct URL, export, document, workflow all blocked for suspended users                                           | `separate-feature` | Cross-cutting enforcement; partly in US 28.10/28.16/28.25 specs; full API-layer blocking is a security spec concern                |
-| AC-12 | Auto-restore when Effective Until reached; system-triggered; no additional Four-Eyes; audit logged                        | `separate-feature` | Background-job/scheduling behaviour; belongs to a Restore Access or time-boxed suspension expiry spec; requires clock override     |
-| AC-13 | Authorized admin can restore; checks current role/scope/validity; backend-enforced; audit logged                          | `separate-feature` | Restore Access is a distinct admin action — belongs in a Restore Access user story                                                 |
-| AC-14 | In-flight workflow items flagged for reassignment; progression blocked until reassignment; audit logged                   | `edge-case`        | Requires seeded in-flight workflow items; heavily dependent on Workflow Engine state (D-series); not a suspension-form E2E concern |
-| AC-15 | Self-suspension blocked if would leave tenant with no active Power User; generic error; backend-enforced; audit traceable | `main-error`       | Hard guard returning a distinct validation error; directly observable in the UI response                                           |
+| AC    | Description                                                                                                                                                       | Classification     | Rationale                                                                                                                                                         |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01 | Suspension form accessible only to authorized admins; server-side auth; scope-limited                                                                             | `happy-path`       | Core entry point for the suspension flow; role access negative is auto-applied as RefiNext domain rule                                                            |
+| AC-02 | Reason field mandatory; Comment mandatory when Reason = Other; failed attempts traceable                                                                          | `main-error`       | Directly blocks form submission; the "Other + mandatory comment" branch is a key validation gate                                                                  |
+| AC-03 | Status changes to Suspended; sessions revoked; audit logged; immediate or per Effective From                                                                      | `happy-path`       | Primary success outcome — collapses with AC-01 into the happy-path Outline                                                                                        |
+| AC-04 | Four-Eyes required for Highly Privileged & Privileged users; Workflow Engine banner; status unchanged until approval                                              | `main-error`       | Blocks suspension from taking effect for most admin roles; RefiNext Four-Eyes domain rule; directly observable in UI                                              |
+| AC-05 | Suspended user blocked from login; no session tokens; API auth blocked; audit logged                                                                              | `separate-feature` | Covered by US 28.1 (User Login) AC-09; login layer, not suspension form                                                                                           |
+| AC-06 | Active sessions revoked on suspension; UI + API; audit traceable                                                                                                  | `separate-feature` | Covered by US 28.10 (Session Management); session layer, not suspension form                                                                                      |
+| AC-07 | Historical audit records, workflow history, role-at-time preserved                                                                                                | `edge-case`        | Backend invariant; no UI gesture to assert against; covered by backend integration tests                                                                          |
+| AC-08 | Future-dated Effective From schedules suspension; user stays active until then; server-side                                                                       | `edge-case`        | Timing/scheduling behaviour; requires time-travel seam (D21-equivalent) not confirmed available; boundary condition                                               |
+| AC-09 | Full audit record fields; immutable; failed attempts traceable                                                                                                    | `edge-case`        | Audit system implementation detail; not assertable through suspension form UI                                                                                     |
+| AC-10 | All validation server-authoritative; frontend alone insufficient; partial suspension blocked                                                                      | `edge-case`        | Architecture invariant; not a discrete UI-testable action; covered by backend API tests                                                                           |
+| AC-11 | UI, API, direct URL, export, document, workflow all blocked for suspended users                                                                                   | `separate-feature` | Cross-cutting enforcement; partly in US 28.10/28.16/28.25 specs; full API-layer blocking is a security spec concern                                               |
+| AC-12 | Auto-restore when Effective Until reached; system-triggered; no additional Four-Eyes; audit logged                                                                | `separate-feature` | Background-job/scheduling behaviour; belongs to a Restore Access or time-boxed suspension expiry spec; requires clock override                                    |
+| AC-13 | Authorized admin can restore; checks current role/scope/validity; backend-enforced; audit logged                                                                  | `separate-feature` | Restore Access is a distinct admin action — belongs in a Restore Access user story                                                                                |
+| AC-14 | In-flight workflow items flagged for reassignment; progression blocked until reassignment; audit logged                                                           | `edge-case`        | Requires seeded in-flight workflow items; heavily dependent on Workflow Engine state (D-series); not a suspension-form E2E concern                                |
+| AC-15 | Self-suspension blocked if would leave platform without active System Admin OR tenant with no active Bank Admin; generic error; backend-enforced; audit traceable | `main-error`       | Hard guard returning a distinct validation error; directly observable in the UI response; dual-tier — platform-level (System Admin) and tenant-level (Bank Admin) |
 
 **Gherkin generated for:** AC-01, AC-02, AC-03, AC-04, AC-15
 **Blocked (no Gherkin):** none
@@ -37,18 +39,19 @@ Figma design: None — no Figma URL found in story or child tickets (Stage 2 SKI
 
 ## Scenarios summary
 
-| Tag           | Scenario                                                                                                          | AC           | Priority | E2E                                    |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- | ------------ | -------- | -------------------------------------- |
-| `@happy-path` | Authorized admin opens suspension form for a user within scope (Scenario Outline — 2 roles)                       | AC-01, AC-03 | P0       | ⚙️ needs D19                           |
-| `@happy-path` | Valid suspension form submission changes status and audit-logs the event                                          | AC-01, AC-03 | P0       | ⚙️ needs D19                           |
-| `@main-error` | Missing suspension reason blocks form submission (UI + backend)                                                   | AC-02        | P0       | ✅                                     |
-| `@main-error` | Suspension reason "Other" without comment blocks form submission                                                  | AC-02        | P0       | ✅                                     |
-| `@main-error` | Four-Eyes gate — suspension of Highly Privileged user remains pending until approval (Scenario Outline — 2 tiers) | AC-04        | P0       | ✅                                     |
-| `@main-error` | Unauthorized role cannot access the Suspend User action                                                           | AC-01        | P0       | ✅                                     |
-| `@main-error` | Last active Power User self-suspension is rejected with validation error                                          | AC-15        | P0       | ⚙️ needs controlled single-admin state |
+| Tag           | Scenario                                                                                                                                   | AC           | Priority | E2E                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | -------- | -------------------------------------- |
+| `@happy-path` | Authorized admin opens suspension form for a user within scope (Scenario Outline — 2 roles: System Admin, Bank Admin)                      | AC-01, AC-03 | P0       | ⚙️ needs D19                           |
+| `@happy-path` | Valid suspension form submission changes status and audit-logs the event                                                                   | AC-01, AC-03 | P0       | ⚙️ needs D19                           |
+| `@main-error` | Missing suspension reason blocks form submission (UI + backend)                                                                            | AC-02        | P0       | ✅                                     |
+| `@main-error` | Suspension reason "Other" without comment blocks form submission                                                                           | AC-02        | P0       | ✅                                     |
+| `@main-error` | Four-Eyes gate — suspension of Highly Privileged user remains pending until approval (Scenario Outline — 2 tiers: Bank Admin, Back Office) | AC-04        | P0       | ✅                                     |
+| `@main-error` | Unauthorized role cannot access the Suspend User action                                                                                    | AC-01        | P0       | ✅                                     |
+| `@main-error` | Last active System Admin self-suspension is rejected with validation error (platform-level guard)                                          | AC-15        | P0       | ⚙️ needs controlled single-admin state |
+| `@main-error` | Last active Bank Admin self-suspension in a tenant is rejected with validation error (tenant-level guard)                                  | AC-15        | P0       | ⚙️ needs controlled single-admin state |
 
-Active scenario blocks: 7 (2 Outlines + 5 Scenarios)
-E2E automation candidates: 4 of 7 scenarios ✅
+Active scenario blocks: 8 (2 Outlines + 6 Scenarios)
+E2E automation candidates: 4 of 8 scenarios ✅
 
 ---
 
@@ -57,7 +60,7 @@ E2E automation candidates: 4 of 7 scenarios ✅
 ```gherkin
 @user-management @us-28.17 @p0
 Feature: User Suspension (US 28.17 — PRD1042-61)
-  As a Power User / System Admin
+  As a System Admin (platform-level users) or Bank Admin (users within its own bank tenant)
   I want to suspend a user account
   So that temporary access restrictions can be enforced without deleting the user or losing historical audit data
 
@@ -70,7 +73,12 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
   # Authorized admins can open the suspension form for users within their scope
   # and submit a valid suspension. Tests both the form entry point (AC-01) and
   # the successful status transition (AC-03) in a single Outline covering the
-  # two admin roles with unconditional suspension authority.
+  # two admin roles with suspension authority per corrected story (6 July 2026):
+  #   - system_admin: platform-level (platform_admin, support_user, auditor) users
+  #   - bank_admin:   users within its own bank tenant (front_office, back_office,
+  #                   support_user with tenant scope)
+  # Bank Admin authority is tenant-scoped — Bank Admin of Tenant A cannot suspend
+  # users of Tenant B (covered by tenant-isolation domain rule via 404-not-403).
   # Note: no Figma design available — copy assertions use story description as
   # source of truth (field labels, dropdown values, button labels).
   # ---------------------------------------------------------------------------
@@ -94,9 +102,10 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
     And the suspension event should include the actor, reason, timestamp, and tenant context
 
     Examples:
-      | admin_role   | target_email             | target_role  |
-      | system_admin | fo@refinext-test.com     | front_office |
-      | power_user   | support@refinext-test.com | support_user |
+      | admin_role   | target_email                  | target_role   |
+      | system_admin | support-platform@refinext-test.com | support_user  |
+      | bank_admin   | fo@refinext-test.com          | front_office  |
+      | bank_admin   | bo@refinext-test.com          | back_office   |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-02
@@ -165,9 +174,9 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
     And the pending suspension request should be recorded in the audit log
 
     Examples:
-      | target_role | target_email              |
-      | power_user  | power@refinext-test.com   |
-      | back_office | bo@refinext-test.com      |
+      | target_role | target_email                    |
+      | bank_admin  | bank-admin-b@refinext-test.com  |
+      | back_office | bo@refinext-test.com            |
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-01 (role-access negative — RefiNext domain rule)
@@ -187,19 +196,43 @@ Feature: User Suspension (US 28.17 — PRD1042-61)
     Then the response status should be 403
 
   # ---------------------------------------------------------------------------
-  # MAIN ERROR — AC-15
-  # Self-suspension must be blocked when it would leave the tenant without any
-  # active Power User / System Admin. This is a hard guard returning a generic
-  # validation error. Backend-enforced — frontend restriction alone is not
-  # sufficient per story spec.
-  # Requires test environment to be staged with exactly one active Power User
+  # MAIN ERROR — AC-15 (platform-level guard: System Admin)
+  # Self-suspension must be blocked when it would leave the platform without any
+  # active System Admin. Story wording: "platform must always retain at least one
+  # active System Admin". Hard guard returning a generic validation error.
+  # Backend-enforced — frontend restriction alone is not sufficient per story spec.
+  # Requires test environment staged with exactly one active System Admin
   # (D19-adjacent: throwaway user API needed to ensure single-admin state).
   # ---------------------------------------------------------------------------
 
   @main-error @ac-15 @p0
-  Scenario: Self-suspension is rejected when it would leave the tenant without an active Power User (AC-15)
-    Given the tenant has exactly one active "system_admin" user with email "admin@refinext-test.com"
+  Scenario: Last active System Admin self-suspension is rejected — platform-level guard (AC-15)
+    Given the platform has exactly one active "system_admin" user with email "admin@refinext-test.com"
     And I am authenticated as "admin@refinext-test.com"
+    When I navigate to my own user profile page
+    And I click the "Suspend User" action
+    And I select "Administrative Decision" from the "Suspension Reason" dropdown
+    And I set "Effective From" to the current date and time
+    And I submit the suspension form
+    Then the suspension request should be rejected with a validation error
+    And the error message should be a generic validation message and should not reveal the last-admin guard logic
+    And my user status should remain "Active"
+    And the failed self-suspension attempt should be recorded in the audit log
+
+  # ---------------------------------------------------------------------------
+  # MAIN ERROR — AC-15 (tenant-level guard: Bank Admin)
+  # Symmetric guard at bank-tenant level. Story wording: "each bank tenant at
+  # least one active Power User (Bank Admin)". A Bank Admin who is the last
+  # active Bank Admin in their own tenant must not be able to self-suspend.
+  # Guard is tenant-scoped: other tenants' Bank Admins are irrelevant to this
+  # tenant's minimum. Backend-enforced with generic error message. Requires
+  # controlled single-Bank-Admin state in the target tenant (D19-adjacent).
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-15 @p0
+  Scenario: Last active Bank Admin in tenant self-suspension is rejected — tenant-level guard (AC-15)
+    Given tenant "bank-a" has exactly one active "bank_admin" user with email "bank-admin-a@refinext-test.com"
+    And I am authenticated as "bank-admin-a@refinext-test.com" scoped to tenant "bank-a"
     When I navigate to my own user profile page
     And I click the "Suspend User" action
     And I select "Administrative Decision" from the "Suspension Reason" dropdown

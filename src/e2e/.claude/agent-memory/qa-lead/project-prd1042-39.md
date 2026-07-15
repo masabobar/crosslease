@@ -12,6 +12,7 @@ metadata:
 **Figma link:** NONE — [GAP] Stage 2 will be skipped; all test cases will be requirements-driven only
 
 **AC Summary (42 total across 9 categories):**
+
 - A (User Model): AC-A1 to AC-A5 — unique identity, exactly-one-role, platform/tenant/LC distinction
 - B (Authentication): AC-B1 to AC-B13 — invitation, login, password, session timeout (15min/8h), MFA, SSO, JWT validation flags, external key management, secret scanning
 - C (Role Management): AC-C1 to AC-C3 — 6 roles supported, hybrid roles blocked, one-role-per-user
@@ -25,6 +26,7 @@ metadata:
 **15 derived error scenarios** (ES-01 through ES-15): deactivated login, lockout, expired Auditor session, cross-tenant 404, URL/API bypass, role escalation, hybrid role assignment, FO self-approval, LC internal data access, LC state-action without proposal, expired/tampered JWT, CI secret detection, session timeout without re-auth, Support modifying business data, Power User creating business transactions.
 
 **Domain flags triggered (for test generation):**
+
 - FOUR_EYES_ENFORCEMENT (AC-E2, AC-E3) — negative case mandatory
 - TENANT_ISOLATION (AC-D1 to AC-D4, ES-04) — cross-tenant must return 404 not 403
 - ROLE_BASED_ACCESS (all of Category C and F) — negative cases for each wrong-role scenario
@@ -50,6 +52,7 @@ metadata:
 7. **8 child stories confirmed clean** (Philipp, 2026-05-11): PRD1042-49, -50, -51, -60, -62, -63, -65, -70 confirmed ready. PRD1042-51 (LC Access Restrictions) is the gold standard for LC isolation in this set.
 
 **Open alignment items:**
+
 - Four-Eyes for platform-role changes: pending PRD1042-48/-49/-59 pass
 - LC portfolio implementation story: not yet created in PRD1042-11 or PRD1042-20
 - PRD1042-16 (Redemption) alignment with proposal-confirmation model: Vesna to handle

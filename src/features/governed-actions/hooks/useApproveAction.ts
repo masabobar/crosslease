@@ -2,6 +2,13 @@ import { approveGovernedAction } from "@/features/governed-actions/api/governedA
 import { makeGovernedActionMutation } from "@/features/governed-actions/hooks/createGovernedActionMutation"
 
 export const useApproveAction = makeGovernedActionMutation(
-  ({ id, comment }: { id: string; comment?: string }) =>
-    approveGovernedAction(id, comment)
+  ({
+    id,
+    comment,
+    extraParams,
+  }: {
+    id: string
+    comment?: string
+    extraParams?: Record<string, unknown>
+  }) => approveGovernedAction(id, comment, extraParams)
 )

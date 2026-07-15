@@ -19,6 +19,7 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox"
 import { COUNTRIES } from "@/lib/countries"
+import { selectOnFocus } from "@/lib/utils"
 import {
   PartnerRoleSchema,
   PartnerTypeSchema,
@@ -32,8 +33,31 @@ const RISK_SENSITIVE_ROLES: PartnerRole[] = [
   "ubo_related_person",
 ]
 
+// RHF's reset() only clears top-level fields omitted from the new values —
+// nested paths like registered_address.street are left untouched unless
+// explicitly included, so a switch away from Legal Entity would otherwise
+// leave its address behind on the new (blank-looking) form.
+const BLANK_ADDRESS = {
+  street: "",
+  city: "",
+  postal_code: "",
+  state_region: "",
+}
+
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
 const PARTNER_TYPE_OPTIONS = PartnerTypeSchema.options
+const VALID_COUNTRY_CODES = new Set(COUNTRY_OPTIONS.map(o => o.value))
+
+// The Country field is a free-typeable Combobox — browser address autofill can
+// inject a full country name (or other stray text) into it instead of a valid
+// selection. Reject anything that isn't one of the known codes here so bad
+// input never reaches the match/submit API as a request that fails downstream.
+const countryCodeSchema = z
+  .string()
+  .min(1, "Required")
+  .refine(v => VALID_COUNTRY_CODES.has(v), {
+    message: "Select a country from the list",
+  })
 
 // Mirrors LegalEntityIdentityInput.validate_lei in refinext-api's partner_schemas.py —
 // ISO 17442 mod-97: move first 4 chars to end, convert letters to digits, check mod 97 == 1.
@@ -64,25 +88,22 @@ function blankToUndefined(
   return result
 }
 
-// NOTE: Figma design also shows a "State / Region (optional)" field in the
-// ADDRESS section, but RegisteredAddress in refinext-api has no such field
-// (street/city/postal_code/country only). Omitted here rather than building
-// a UI field with nowhere to send its value — see design-first.md §4.
-//
 // registered_address.country is not collected as a separate field — the form
 // reuses the top-level `country` value at submit time (see onValid) rather
-// than asking for the same country twice.
+// than asking for the same country twice. Per the design, street/city/
+// postal_code are mandatory; state_region is optional.
 const addressSchema = z.object({
-  street: z.string().optional(),
-  city: z.string().optional(),
-  postal_code: z.string().optional(),
+  street: z.string().min(1, "Required"),
+  city: z.string().min(1, "Required"),
+  postal_code: z.string().min(1, "Required"),
+  state_region: z.string().optional(),
 })
 
 const legalEntitySchema = z.object({
   partner_type: z.literal("legal_entity"),
   legal_name: z.string().min(1, "Required"),
-  legal_form: z.string().optional(),
-  country: z.string().min(1, "Required"),
+  legal_form: z.string().min(1, "Required"),
+  country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   lei: z
     .string()
@@ -91,7 +112,7 @@ const legalEntitySchema = z.object({
       message: "LEI must be exactly 20 alphanumeric characters (ISO 17442)",
     }),
   commercial_register_no: z.string().optional(),
-  registered_address: addressSchema.optional(),
+  registered_address: addressSchema,
   roles: z.array(PartnerRoleSchema).min(1, "Required"),
 })
 
@@ -100,10 +121,10 @@ const naturalPersonSchema = z.object({
   full_name: z.string().min(1, "Required"),
   date_of_birth: z.string().min(1, "Required"),
   place_of_birth: z.string().min(1, "Required"),
-  country: z.string().min(1, "Required"),
+  country: countryCodeSchema,
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
-  registered_address: addressSchema.optional(),
+  registered_address: addressSchema,
   roles: z.array(PartnerRoleSchema).min(1, "Required"),
 })
 
@@ -111,10 +132,10 @@ const soleProprietorSchema = z.object({
   partner_type: z.literal("sole_proprietor"),
   full_name: z.string().min(1, "Required"),
   date_of_birth: z.string().min(1, "Required"),
-  country: z.string().min(1, "Required"),
+  country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
-  registered_address: addressSchema.optional(),
+  registered_address: addressSchema,
   roles: z.array(PartnerRoleSchema).min(1, "Required"),
 })
 
@@ -144,7 +165,6 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
     register,
     handleSubmit,
     control,
-    getValues,
     reset,
     formState: { errors },
   } = useForm<IdentityForm>({
@@ -157,14 +177,26 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
     control,
     name: "country" as keyof IdentityForm,
   }) as string | undefined
-  const isDe = (country ?? "").toUpperCase() === "DE"
+  // Autofill (or any non-selection input) can put a non-string or malformed
+  // value into the free-typeable Country combobox before it's committed —
+  // guard the type here rather than assume useWatch always returns a string.
+  const isDe = typeof country === "string" && country.toUpperCase() === "DE"
 
   function handleTypeChange(type: PartnerType) {
-    setPartnerType(type)
-    reset({
-      partner_type: type,
-      roles: getValues("roles" as keyof IdentityForm),
-    } as IdentityForm)
+    // Deferred so the closing entity-type dropdown finishes its own
+    // close/focus-restore cycle before the form fields underneath it get
+    // swapped out — otherwise the two races and clicks right after switching
+    // land on nothing (same class of issue as mui/base-ui#3149).
+    setTimeout(() => {
+      setPartnerType(type)
+      // Full reset rather than carrying values forward — switching entity
+      // type starts the form over from a clean slate.
+      reset({
+        partner_type: type,
+        registered_address: BLANK_ADDRESS,
+        roles: [],
+      } as unknown as IdentityForm)
+    }, 0)
   }
 
   function onValid(values: IdentityForm) {
@@ -179,6 +211,12 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
       } as PartnerIdentityInput,
       roles,
     })
+    setPartnerType("legal_entity")
+    reset({
+      partner_type: "legal_entity",
+      registered_address: BLANK_ADDRESS,
+      roles: [],
+    } as unknown as IdentityForm)
   }
 
   const isLegalEntity = partnerType === "legal_entity"
@@ -214,6 +252,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             value={field.value as string}
             onChange={field.onChange}
             maxDate={new Date()}
+            captionLayout="dropdown"
             error={"date_of_birth" in errors && !!errors.date_of_birth}
           />
         )}
@@ -304,35 +343,33 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                   data-testid="field-legal_form"
                   {...register("legal_form" as keyof IdentityForm)}
                 />
-              </div>
-            ) : (
-              partnerType === "sole_proprietor" && dateOfBirthField
-            )}
-            {isLegalEntity || partnerType === "sole_proprietor" ? (
-              entityTypeField
-            ) : (
-              <div className="col-span-2">{entityTypeField}</div>
-            )}
-          </div>
-
-          {partnerType === "natural_person" && (
-            <div className="grid grid-cols-2 gap-4">
-              {dateOfBirthField}
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="place_of_birth">
-                  {t("submit.identityStep.fields.placeOfBirth")}
-                </Label>
-                <Input
-                  id="place_of_birth"
-                  data-testid="field-place_of_birth"
-                  {...register("place_of_birth" as keyof IdentityForm)}
-                />
-                {"place_of_birth" in errors && errors.place_of_birth && (
+                {"legal_form" in errors && errors.legal_form && (
                   <p className="text-xs text-destructive">
-                    {errors.place_of_birth.message}
+                    {errors.legal_form.message}
                   </p>
                 )}
               </div>
+            ) : (
+              dateOfBirthField
+            )}
+            {entityTypeField}
+          </div>
+
+          {partnerType === "natural_person" && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="place_of_birth">
+                {t("submit.identityStep.fields.placeOfBirth")}
+              </Label>
+              <Input
+                id="place_of_birth"
+                data-testid="field-place_of_birth"
+                {...register("place_of_birth" as keyof IdentityForm)}
+              />
+              {"place_of_birth" in errors && errors.place_of_birth && (
+                <p className="text-xs text-destructive">
+                  {errors.place_of_birth.message}
+                </p>
+              )}
             </div>
           )}
         </CardContent>
@@ -352,6 +389,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 {t("submit.identityStep.fields.country")}
               </Label>
               <Controller
+                key={partnerType}
                 control={control}
                 name={"country" as keyof IdentityForm}
                 render={({ field }) => (
@@ -365,6 +403,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                       data-testid="field-country"
                       placeholder={t("list.filters.countrySearchPlaceholder")}
                       showClear
+                      onFocus={selectOnFocus}
                     />
                     <ComboboxContent>
                       <ComboboxList>
@@ -373,7 +412,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                         </ComboboxEmpty>
                         <ComboboxCollection>
                           {(opt: { value: string; label: string }) => (
-                            <ComboboxItem value={opt.value}>
+                            <ComboboxItem key={opt.value} value={opt.value}>
                               {opt.label}
                             </ComboboxItem>
                           )}
@@ -488,14 +527,14 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             {t("submit.form.sections.address")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-4 flex flex-col gap-6">
+        <CardContent
+          key={partnerType}
+          className="px-4 py-4 flex flex-col gap-6"
+        >
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="street">
-                {t("submit.identityStep.fields.street")}{" "}
-                <span className="text-muted-foreground">
-                  ({t("submit.form.optional")})
-                </span>
+                {t("submit.identityStep.fields.street")}
               </Label>
               <Input
                 id="street"
@@ -511,10 +550,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="city">
-                {t("submit.identityStep.fields.city")}{" "}
-                <span className="text-muted-foreground">
-                  ({t("submit.form.optional")})
-                </span>
+                {t("submit.identityStep.fields.city")}
               </Label>
               <Input
                 id="city"
@@ -529,26 +565,40 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 )}
             </div>
           </div>
-          <div className="flex flex-col gap-1.5 w-1/2 pr-2">
-            <Label htmlFor="postal_code">
-              {t("submit.identityStep.fields.postalCode")}{" "}
-              <span className="text-muted-foreground">
-                ({t("submit.form.optional")})
-              </span>
-            </Label>
-            <Input
-              id="postal_code"
-              data-testid="field-postal_code"
-              {...register(
-                "registered_address.postal_code" as keyof IdentityForm
-              )}
-            />
-            {"registered_address" in errors &&
-              errors.registered_address?.postal_code && (
-                <p className="text-xs text-destructive">
-                  {errors.registered_address.postal_code.message}
-                </p>
-              )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="postal_code">
+                {t("submit.identityStep.fields.postalCode")}
+              </Label>
+              <Input
+                id="postal_code"
+                data-testid="field-postal_code"
+                {...register(
+                  "registered_address.postal_code" as keyof IdentityForm
+                )}
+              />
+              {"registered_address" in errors &&
+                errors.registered_address?.postal_code && (
+                  <p className="text-xs text-destructive">
+                    {errors.registered_address.postal_code.message}
+                  </p>
+                )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="state_region">
+                {t("submit.identityStep.fields.stateRegion")}{" "}
+                <span className="text-muted-foreground">
+                  ({t("submit.form.optional")})
+                </span>
+              </Label>
+              <Input
+                id="state_region"
+                data-testid="field-state_region"
+                {...register(
+                  "registered_address.state_region" as keyof IdentityForm
+                )}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -565,6 +615,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
         </CardHeader>
         <CardContent className="px-4 py-4">
           <Controller
+            key={partnerType}
             control={control}
             name={"roles" as keyof IdentityForm}
             render={({ field }) => {
@@ -582,15 +633,22 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                     const isRisky = RISK_SENSITIVE_ROLES.includes(role)
                     const checked = selected.includes(role)
                     return (
-                      <label
+                      // NOTE: plain <div> instead of <label htmlFor>. BaseUI's
+                      // Checkbox always renders a hidden native <input> for form
+                      // semantics; a native <label> wrapping it (with or without
+                      // htmlFor) makes the browser dispatch a second synthetic
+                      // click to that hidden input on every click, which after an
+                      // RHF reset() double-toggles this field back to its
+                      // previous value. onClick here is the single source of
+                      // truth for toggling instead.
+                      <div
                         key={role}
-                        htmlFor={`role-${role}`}
+                        onClick={() => toggle(role)}
                         className="flex items-start gap-2 p-3 rounded-xl border border-border cursor-pointer"
                       >
                         <Checkbox
-                          id={`role-${role}`}
                           checked={checked}
-                          onCheckedChange={() => toggle(role)}
+                          aria-label={t(`role.${role}` as "role.lessee")}
                           className="mt-1"
                         />
                         <div className="flex flex-col gap-1">
@@ -610,7 +668,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                             )}
                           </p>
                         </div>
-                      </label>
+                      </div>
                     )
                   })}
                 </div>

@@ -15,6 +15,7 @@ metadata:
 **Why:** Activation is a pre-authentication flow (invited user, no active session). Design reflects happy-path form entry + success + two generic blocked screens. Error states and the Confirm Password field follow the established RefiNext pattern of being added in a later design pass.
 
 **AC Summary (13 total):**
+
 - AC-01: Valid token → show activation form (server-side validated, unused, active, account in Invited/Pending state)
 - AC-02: Expired token → block activation, no sensitive token state exposed in error
 - AC-03: Password/confirm mismatch → validation error, no activation; Confirm Password field ABSENT from design (DG-01 MAJOR)
@@ -30,6 +31,7 @@ metadata:
 - AC-13: Already-used token rejected (single-use; no state change; audit logged)
 
 **Key design observations:**
+
 - Blocked State 1 ("Account isn't ready yet") covers both AC-08 invalid state AND AC-11 Auditor validity — shared screen with generic "access configuration" copy
 - Blocked State 2 ("This link is not valid") covers AC-02 expired + AC-13 already-used + revoked — shared screen, no token state exposed
 - "Generate password" link and 5-state password strength bar present in design but have no AC backing — scope unconfirmed (MAJOR gap)
@@ -38,6 +40,7 @@ metadata:
 - Auto-redirect "Auto-redirect in 5s" on success screen has no AC backing — scope unconfirmed (INFO)
 
 **Stage 3 outcome — WARNINGS (no CRITICAL blockers):**
+
 - DG-01 MAJOR: Confirm Password field absent from all design frames
 - DG-02 MAJOR: Button disabled state not designed
 - DG-03 MINOR: Password field error state not designed
@@ -49,12 +52,14 @@ metadata:
 - Ambiguities: which screen for already-active account (AC-08); LC scope vs Auditor validity — same screen or distinct; auto-redirect testability
 
 **AC scope filter decisions:**
+
 - happy-path: AC-01, AC-04
 - main-error: AC-02, AC-03, AC-08, AC-11, AC-12
 - edge-case: AC-05, AC-06, AC-07, AC-09, AC-10
 - separate-feature: AC-13
 
 **Stage 4 scope — 7 scenario blocks (3 Outlines + 4 Scenarios):**
+
 1. Activation form displayed — valid token (AC-01) — 1 Scenario
 2. Successful activation — 3 role rows: front_office, auditor, lc_user (AC-04) — 1 Outline
 3. Invalid token blocks activation — 3 token states: expired, already_used, revoked (AC-02) — 1 Outline
@@ -66,6 +71,7 @@ metadata:
 **No blocked ACs** — all main-error ACs have sufficient story text to write Gherkin without design confirmation.
 
 **Open alignment items (from Blockers and Gaps Summary):**
+
 - Which blocked screen applies to already-active account retrying activation (AC-08)?
 - Does LC scope failure (AC-12) share Blocked State 1 copy with Auditor validity (AC-11) or need distinct copy?
 - Is the 5s auto-redirect a testable requirement or UX convenience?

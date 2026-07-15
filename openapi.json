@@ -766,7 +766,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Invite a new user",
-        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.",
+        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.\n- `leasing_company_user` — `lc_partner_id` required; must be a confirmed partner within the same tenant.\n  All other roles must omit `lc_partner_id` (or send `null`).",
         "operationId": "invite_user_api_v1_users_post",
         "requestBody": {
           "required": true,
@@ -4789,6 +4789,1056 @@
         }
       }
     },
+    "/api/v1/framework-agreements": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Create Fa Draft",
+        "operationId": "create_fa_draft_api_v1_framework_agreements_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FADraftResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "List Framework Agreements",
+        "operationId": "list_framework_agreements_api_v1_framework_agreements_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FALifecycleStatus" },
+              "description": "Filter by lifecycle status (repeatable)",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by lifecycle status (repeatable)"
+          },
+          {
+            "name": "lc_partner_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string", "format": "uuid" },
+              "description": "Filter by LC partner (repeatable)",
+              "default": [],
+              "title": "Lc Partner Id"
+            },
+            "description": "Filter by LC partner (repeatable)"
+          },
+          {
+            "name": "bank_entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/BankEntity" },
+              "description": "Filter by bank entity (repeatable)",
+              "default": [],
+              "title": "Bank Entity"
+            },
+            "description": "Filter by bank entity (repeatable)"
+          },
+          {
+            "name": "valid_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Valid From"
+            }
+          },
+          {
+            "name": "valid_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Valid Until"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 25,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FAListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}": {
+      "patch": {
+        "tags": ["Framework Agreements"],
+        "summary": "Update Fa",
+        "operationId": "update_fa_api_v1_framework_agreements__id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FADraftResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Framework Agreements"],
+        "summary": "Delete Fa Draft",
+        "operationId": "delete_fa_draft_api_v1_framework_agreements__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Framework Agreement",
+        "operationId": "get_framework_agreement_api_v1_framework_agreements__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FADetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/activate": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Activate Fa",
+        "operationId": "activate_fa_api_v1_framework_agreements__id__activate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActivateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FADraftResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/suspension-readiness": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Suspension Readiness",
+        "operationId": "get_suspension_readiness_api_v1_framework_agreements__id__suspension_readiness_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuspensionReadinessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/suspend": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Suspend Fa",
+        "operationId": "suspend_fa_api_v1_framework_agreements__id__suspend_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SuspendFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FASuspendedResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/reactivate": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Reactivate Fa",
+        "operationId": "reactivate_fa_api_v1_framework_agreements__id__reactivate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReactivateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAReactivatedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/termination-readiness": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Termination Readiness",
+        "operationId": "get_termination_readiness_api_v1_framework_agreements__id__termination_readiness_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminationReadinessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/terminate": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Terminate Fa",
+        "operationId": "terminate_fa_api_v1_framework_agreements__id__terminate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TerminateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FATerminatedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/lc-partners": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "List Lc Partners",
+        "operationId": "list_lc_partners_api_v1_framework_agreements_lc_partners_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FALCPartnersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/utilization": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Fa Utilization",
+        "operationId": "get_fa_utilization_api_v1_framework_agreements__id__utilization_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAUtilizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/financings": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Fa Financings",
+        "operationId": "get_fa_financings_api_v1_framework_agreements__id__financings_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FALinkedFinancingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/pricing-snapshot": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Fa Pricing Snapshot",
+        "operationId": "get_fa_pricing_snapshot_api_v1_framework_agreements__id__pricing_snapshot_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAPricingSnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/audit-history": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Fa Audit History",
+        "operationId": "get_fa_audit_history_api_v1_framework_agreements__id__audit_history_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FAEventTypeFilter" },
+              "default": [],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAAuditHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/audit-history/export-csv": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Export Fa Audit History Csv",
+        "operationId": "export_fa_audit_history_csv_api_v1_framework_agreements__id__audit_history_export_csv_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Reason"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FAEventTypeFilter" },
+              "default": [],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date-time" },
+                { "type": "null" }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/reconstruct": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Reconstruct Fa",
+        "operationId": "reconstruct_fa_api_v1_framework_agreements__id__reconstruct_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO8601 timestamp — reconstruct FA state at this point",
+              "title": "As Of"
+            },
+            "description": "ISO8601 timestamp — reconstruct FA state at this point"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAReconstructResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/documents": {
+      "post": {
+        "tags": ["Framework Agreement Documents"],
+        "summary": "Attach Document",
+        "operationId": "attach_document_api_v1_framework_agreements__id__documents_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_attach_document_api_v1_framework_agreements__id__documents_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachDocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Framework Agreement Documents"],
+        "summary": "List Documents",
+        "operationId": "list_documents_api_v1_framework_agreements__id__documents_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentListItemResponse"
+                  },
+                  "title": "Response List Documents Api V1 Framework Agreements  Id  Documents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/documents/{doc_id}/download-url": {
+      "get": {
+        "tags": ["Framework Agreement Documents"],
+        "summary": "Get Download Url",
+        "operationId": "get_download_url_api_v1_framework_agreements__id__documents__doc_id__download_url_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Doc Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DownloadURLResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/documents/{doc_id}": {
+      "delete": {
+        "tags": ["Framework Agreement Documents"],
+        "summary": "Detach Document",
+        "operationId": "detach_document_api_v1_framework_agreements__id__documents__doc_id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Doc Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lc-portal/framework-agreements": {
+      "get": {
+        "tags": ["LC Portal"],
+        "summary": "Lc Portal List Fas",
+        "operationId": "lc_portal_list_fas_api_v1_lc_portal_framework_agreements_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LCPortalFAListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lc-portal/framework-agreements/{id}/documents/{doc_id}/download": {
+      "get": {
+        "tags": ["LC Portal"],
+        "summary": "Lc Portal Download Document",
+        "operationId": "lc_portal_download_document_api_v1_lc_portal_framework_agreements__id__documents__doc_id__download_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Doc Id" }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -4950,6 +6000,30 @@
         ],
         "title": "AccessReason"
       },
+      "ActivateFARequest": {
+        "properties": {
+          "documents_confirmed": {
+            "type": "boolean",
+            "title": "Documents Confirmed"
+          },
+          "effective_from": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Effective From"
+          },
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["documents_confirmed", "justification"],
+        "title": "ActivateFARequest"
+      },
       "ActorSummary": {
         "properties": {
           "user_id": { "type": "string", "title": "User Id" },
@@ -5070,6 +6144,49 @@
         ],
         "title": "AssetCategory"
       },
+      "AttachDocumentResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "framework_agreement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Framework Agreement Id"
+          },
+          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Label"
+          },
+          "file_name": { "type": "string", "title": "File Name" },
+          "file_size_bytes": { "type": "integer", "title": "File Size Bytes" },
+          "mime_type": { "type": "string", "title": "Mime Type" },
+          "lc_visible": { "type": "boolean", "title": "Lc Visible" },
+          "uploaded_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Uploaded By"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "framework_agreement_id",
+          "document_type",
+          "document_label",
+          "file_name",
+          "file_size_bytes",
+          "mime_type",
+          "lc_visible",
+          "uploaded_by",
+          "uploaded_at"
+        ],
+        "title": "AttachDocumentResponse"
+      },
       "AuditEventListItem": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -5185,6 +6302,16 @@
               { "type": "null" }
             ],
             "title": "Changed Fields"
+          },
+          "field_diffs": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Field Diffs"
           },
           "trigger_source": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5306,6 +6433,36 @@
         ],
         "title": "AuditorPeriodUpdateReason"
       },
+      "BankEntity": {
+        "type": "string",
+        "enum": ["sparkasse", "landesbank_1", "landesbank_2", "other"],
+        "title": "BankEntity"
+      },
+      "Body_attach_document_api_v1_framework_agreements__id__documents_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_label": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Document Label"
+          },
+          "lc_visible": {
+            "type": "boolean",
+            "title": "Lc Visible",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": ["file", "document_type"],
+        "title": "Body_attach_document_api_v1_framework_agreements__id__documents_post"
+      },
       "Body_upload_picture_api_v1_users_me_picture_post": {
         "properties": {
           "file": {
@@ -5409,6 +6566,118 @@
         "required": ["items", "next_cursor"],
         "title": "ConfirmationHistoryResponse"
       },
+      "CreateFARequest": {
+        "properties": {
+          "agreement_name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Agreement Name"
+          },
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "bank_entity": { "$ref": "#/components/schemas/BankEntity" },
+          "max_volume_eur": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Max Volume Eur"
+          },
+          "base_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 25.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Base Rate"
+          },
+          "spread": {
+            "anyOf": [
+              { "type": "number", "maximum": 15.0, "minimum": -5.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Spread"
+          },
+          "rate_type": {
+            "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
+          },
+          "effective_rate": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
+          },
+          "rate_lock_period_months": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 1.0,
+            "title": "Rate Lock Period Months"
+          },
+          "lg_coverage_rate_override": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lg Coverage Rate Override"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "special_conditions": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Conditions"
+          },
+          "product_template_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Product Template Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agreement_name",
+          "lc_partner_id",
+          "bank_entity",
+          "max_volume_eur",
+          "base_rate",
+          "spread",
+          "rate_type",
+          "rate_lock_period_months",
+          "valid_from",
+          "product_template_ids"
+        ],
+        "title": "CreateFARequest"
+      },
       "CreateGrantRequest": {
         "properties": {
           "grantee_id": {
@@ -5478,7 +6747,9 @@
           },
           "rate_type": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RateType" },
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
+              },
               { "type": "null" }
             ]
           },
@@ -5789,6 +7060,62 @@
         "enum": ["npv", "npv_ltv", "rv_only"],
         "title": "DisbursementDerivationRule"
       },
+      "DocumentListItemResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "framework_agreement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Framework Agreement Id"
+          },
+          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Label"
+          },
+          "file_name": { "type": "string", "title": "File Name" },
+          "file_size_bytes": { "type": "integer", "title": "File Size Bytes" },
+          "mime_type": { "type": "string", "title": "Mime Type" },
+          "lc_visible": { "type": "boolean", "title": "Lc Visible" },
+          "uploaded_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Uploaded By"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "framework_agreement_id",
+          "document_type",
+          "document_label",
+          "file_name",
+          "file_size_bytes",
+          "mime_type",
+          "lc_visible",
+          "uploaded_by",
+          "uploaded_at"
+        ],
+        "title": "DocumentListItemResponse"
+      },
+      "DownloadURLResponse": {
+        "properties": {
+          "url": { "type": "string", "title": "Url" },
+          "expires_in_seconds": {
+            "type": "integer",
+            "title": "Expires In Seconds",
+            "default": 300
+          }
+        },
+        "type": "object",
+        "required": ["url"],
+        "title": "DownloadURLResponse"
+      },
       "DownstreamImpact": {
         "properties": {
           "refinancing_requests": {
@@ -5926,6 +7253,817 @@
         },
         "type": "object",
         "title": "EditUserRequest"
+      },
+      "FAAuditEventResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "actor_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Actor Id"
+          },
+          "actor_first_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor First Name"
+          },
+          "actor_last_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Last Name"
+          },
+          "actor_type": { "type": "string", "title": "Actor Type" },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          },
+          "justification": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Justification"
+          },
+          "old_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Old Data"
+          },
+          "new_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "New Data"
+          },
+          "changed_fields": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Changed Fields"
+          },
+          "field_diffs": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Field Diffs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "actor_id",
+          "actor_type",
+          "recorded_at",
+          "justification",
+          "old_data",
+          "new_data",
+          "changed_fields"
+        ],
+        "title": "FAAuditEventResponse"
+      },
+      "FAAuditHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/FAAuditEventResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": ["items", "next_cursor"],
+        "title": "FAAuditHistoryResponse"
+      },
+      "FADetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "lc_partner_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lc Partner Name"
+          },
+          "status": { "$ref": "#/components/schemas/FALifecycleStatus" },
+          "currency": { "type": "string", "title": "Currency" },
+          "max_volume_eur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Volume Eur"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "edit_version_counter": {
+            "type": "integer",
+            "title": "Edit Version Counter"
+          },
+          "product_template_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Product Template Ids"
+          },
+          "document_count": { "type": "integer", "title": "Document Count" },
+          "linked_financings_count": {
+            "type": "integer",
+            "title": "Linked Financings Count"
+          },
+          "utilization_pct": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Utilization Pct"
+          },
+          "limit_available": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Limit Available"
+          },
+          "limit_breach": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Limit Breach"
+          },
+          "bank_entity": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Bank Entity"
+          },
+          "base_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Base Rate"
+          },
+          "spread": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Spread"
+          },
+          "effective_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
+          },
+          "rate_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Rate Type"
+          },
+          "rate_lock_period_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Rate Lock Period Months"
+          },
+          "lg_coverage_rate_override": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lg Coverage Rate Override"
+          },
+          "special_conditions": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Conditions"
+          },
+          "effective_from": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Effective From"
+          },
+          "activated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Activated At"
+          },
+          "activated_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Activated By"
+          },
+          "activated_by_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Activated By Name"
+          },
+          "suspended_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Suspended At"
+          },
+          "suspended_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Suspended By"
+          },
+          "terminated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Terminated At"
+          },
+          "terminated_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Terminated By"
+          },
+          "created_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Created By"
+          },
+          "created_by_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Created By Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "agreement_name",
+          "lc_partner_id",
+          "lc_partner_name",
+          "status",
+          "currency",
+          "max_volume_eur",
+          "valid_from",
+          "valid_until",
+          "edit_version_counter",
+          "product_template_ids",
+          "document_count",
+          "linked_financings_count",
+          "utilization_pct",
+          "limit_available",
+          "limit_breach",
+          "bank_entity",
+          "base_rate",
+          "spread",
+          "effective_rate",
+          "rate_type",
+          "rate_lock_period_months",
+          "lg_coverage_rate_override",
+          "special_conditions",
+          "effective_from",
+          "activated_at",
+          "activated_by",
+          "activated_by_name",
+          "suspended_at",
+          "suspended_by",
+          "terminated_at",
+          "terminated_by",
+          "created_by",
+          "created_by_name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FADetailResponse"
+      },
+      "FADocumentType": {
+        "type": "string",
+        "enum": ["original_agreement", "addendum", "side_letter", "other"],
+        "title": "FADocumentType"
+      },
+      "FADraftResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "bank_entity": { "$ref": "#/components/schemas/BankEntity" },
+          "currency": { "type": "string", "title": "Currency" },
+          "status": { "$ref": "#/components/schemas/FALifecycleStatus" },
+          "max_volume_eur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Volume Eur"
+          },
+          "base_rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Base Rate"
+          },
+          "spread": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Spread"
+          },
+          "effective_rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Effective Rate"
+          },
+          "rate_type": {
+            "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
+          },
+          "rate_lock_period_months": {
+            "type": "integer",
+            "title": "Rate Lock Period Months"
+          },
+          "lg_coverage_rate_override": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lg Coverage Rate Override"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "special_conditions": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Conditions"
+          },
+          "product_template_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Product Template Ids"
+          },
+          "edit_version_counter": {
+            "type": "integer",
+            "title": "Edit Version Counter"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "agreement_name",
+          "lc_partner_id",
+          "bank_entity",
+          "currency",
+          "status",
+          "max_volume_eur",
+          "base_rate",
+          "spread",
+          "effective_rate",
+          "rate_type",
+          "rate_lock_period_months",
+          "lg_coverage_rate_override",
+          "valid_from",
+          "valid_until",
+          "special_conditions",
+          "product_template_ids",
+          "edit_version_counter",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FADraftResponse"
+      },
+      "FAEventTypeFilter": {
+        "type": "string",
+        "enum": [
+          "draft_created",
+          "draft_edited",
+          "draft_deleted",
+          "document_attached",
+          "document_detached",
+          "document_downloaded",
+          "activation_submitted",
+          "activated",
+          "activation_rejected",
+          "activation_expired",
+          "suspended",
+          "suspension_blocked",
+          "reactivated",
+          "terminated",
+          "termination_blocked",
+          "edited",
+          "max_volume_reduced_below_exposure",
+          "list_accessed",
+          "detail_accessed",
+          "pricing_snapshot_accessed",
+          "auditor_audit_access",
+          "audit_export"
+        ],
+        "title": "FAEventTypeFilter"
+      },
+      "FALCPartnerItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "legal_name": { "type": "string", "title": "Legal Name" }
+        },
+        "type": "object",
+        "required": ["id", "legal_name"],
+        "title": "FALCPartnerItem"
+      },
+      "FALCPartnersResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/FALCPartnerItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "FALCPartnersResponse"
+      },
+      "FALifecycleStatus": {
+        "type": "string",
+        "enum": ["draft", "active", "suspended", "terminated"],
+        "title": "FALifecycleStatus"
+      },
+      "FALinkedFinancingsResponse": {
+        "properties": {
+          "count": { "type": "integer", "title": "Count", "default": 0 },
+          "items": { "items": {}, "type": "array", "title": "Items" }
+        },
+        "type": "object",
+        "title": "FALinkedFinancingsResponse"
+      },
+      "FAListItemResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "lc_partner_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lc Partner Name"
+          },
+          "bank_entity": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/BankEntity" },
+              { "type": "null" }
+            ]
+          },
+          "status": { "$ref": "#/components/schemas/FALifecycleStatus" },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "utilization_pct": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Utilization Pct"
+          },
+          "limit_breach": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Limit Breach"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "agreement_name",
+          "lc_partner_id",
+          "lc_partner_name",
+          "bank_entity",
+          "status",
+          "valid_from",
+          "valid_until",
+          "utilization_pct",
+          "limit_breach"
+        ],
+        "title": "FAListItemResponse"
+      },
+      "FAListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/FAListItemResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "FAListResponse"
+      },
+      "FAPricingSnapshotResponse": {
+        "properties": {
+          "fa_id": { "type": "string", "format": "uuid", "title": "Fa Id" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "edit_version_counter": {
+            "type": "integer",
+            "title": "Edit Version Counter"
+          },
+          "base_rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Base Rate"
+          },
+          "spread": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Spread"
+          },
+          "effective_rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Effective Rate"
+          },
+          "rate_type": { "type": "string", "title": "Rate Type" },
+          "rate_lock_period_months": {
+            "type": "integer",
+            "title": "Rate Lock Period Months"
+          },
+          "lg_coverage_rate_override": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lg Coverage Rate Override"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fa_id",
+          "agreement_name",
+          "edit_version_counter",
+          "base_rate",
+          "spread",
+          "effective_rate",
+          "rate_type",
+          "rate_lock_period_months"
+        ],
+        "title": "FAPricingSnapshotResponse",
+        "description": "Pricing snapshot returned to consuming epics (US 11.11).\n\nEpic 3 (Financing) uses edit_version_counter as the audit anchor\nto reconstruct which FA pricing snapshot was applied at Stage 2 approval."
+      },
+      "FAReactivatedResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "status": { "type": "string", "title": "Status" },
+          "reactivated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reactivated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "status", "reactivated_at"],
+        "title": "FAReactivatedResponse"
+      },
+      "FAReconstructResponse": {
+        "properties": {
+          "fa_id": { "type": "string", "format": "uuid", "title": "Fa Id" },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "events_replayed": { "type": "integer", "title": "Events Replayed" },
+          "state": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": ["fa_id", "as_of", "events_replayed", "state"],
+        "title": "FAReconstructResponse"
+      },
+      "FASuspendedResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "status": { "type": "string", "title": "Status" },
+          "suspended_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Suspended At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "status", "suspended_at"],
+        "title": "FASuspendedResponse"
+      },
+      "FATerminatedResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "status": { "type": "string", "title": "Status" },
+          "terminated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Terminated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "status", "terminated_at"],
+        "title": "FATerminatedResponse"
+      },
+      "FAUtilizationResponse": {
+        "properties": {
+          "max_volume_eur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Volume Eur"
+          },
+          "disbursed_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Disbursed Volume Eur"
+          },
+          "redeemed_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Redeemed Volume Eur"
+          },
+          "net_exposure_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Exposure Eur"
+          },
+          "available_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Available Volume Eur"
+          },
+          "utilization_pct": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Utilization Pct"
+          },
+          "limit_available_flag": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Limit Available Flag"
+          },
+          "limit_breach_flag": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Limit Breach Flag"
+          },
+          "last_refreshed_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Last Refreshed At"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "limit_management"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["max_volume_eur"],
+        "title": "FAUtilizationResponse"
+      },
+      "FieldDiffItem": {
+        "properties": {
+          "field": { "type": "string", "title": "Field" },
+          "old_value": {
+            "anyOf": [{}, { "type": "null" }],
+            "title": "Old Value"
+          },
+          "new_value": {
+            "anyOf": [{}, { "type": "null" }],
+            "title": "New Value"
+          }
+        },
+        "type": "object",
+        "required": ["field", "old_value", "new_value"],
+        "title": "FieldDiffItem"
       },
       "FinancingType": {
         "type": "string",
@@ -6531,11 +8669,135 @@
             ],
             "title": "Access Valid Until",
             "description": "Auditor only — end of access window"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id",
+            "description": "Required for leasing_company_user; must be null for all other roles"
           }
         },
         "type": "object",
         "required": ["first_name", "last_name", "email", "role"],
         "title": "InviteUserRequest"
+      },
+      "LCPortalDocumentItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "file_name": { "type": "string", "title": "File Name" },
+          "file_size_bytes": { "type": "integer", "title": "File Size Bytes" },
+          "mime_type": { "type": "string", "title": "Mime Type" },
+          "document_type": { "type": "string", "title": "Document Type" },
+          "document_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Label"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "file_name",
+          "file_size_bytes",
+          "mime_type",
+          "document_type",
+          "document_label",
+          "uploaded_at"
+        ],
+        "title": "LCPortalDocumentItem"
+      },
+      "LCPortalFAListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "status": { "$ref": "#/components/schemas/FALifecycleStatus" },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "max_volume_eur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Volume Eur"
+          },
+          "available_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Available Volume Eur"
+          },
+          "new_financings_available": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "New Financings Available"
+          },
+          "product_templates": {
+            "items": {
+              "$ref": "#/components/schemas/LCPortalProductTemplateItem"
+            },
+            "type": "array",
+            "title": "Product Templates"
+          },
+          "documents": {
+            "items": { "$ref": "#/components/schemas/LCPortalDocumentItem" },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "agreement_name",
+          "status",
+          "valid_from",
+          "valid_until",
+          "max_volume_eur",
+          "product_templates",
+          "documents"
+        ],
+        "title": "LCPortalFAListItem"
+      },
+      "LCPortalFAListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/LCPortalFAListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": ["items", "total"],
+        "title": "LCPortalFAListResponse"
+      },
+      "LCPortalProductTemplateItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "template_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Name"
+          }
+        },
+        "type": "object",
+        "required": ["id", "template_name"],
+        "title": "LCPortalProductTemplateItem"
       },
       "LegalEntityIdentityDetail": {
         "properties": {
@@ -6619,7 +8881,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           },
@@ -7017,7 +9279,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           }
@@ -7581,11 +9843,6 @@
         "enum": ["30_360", "act_360", "act_365", "act_act"],
         "title": "RateBasis"
       },
-      "RateType": {
-        "type": "string",
-        "enum": ["fixed", "floating", "euribor_spread"],
-        "title": "RateType"
-      },
       "ReInitiateRequest": {
         "properties": {
           "reason": {
@@ -7599,6 +9856,23 @@
         },
         "type": "object",
         "title": "ReInitiateRequest"
+      },
+      "ReactivateFARequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification"
+          },
+          "re_validation_confirmed": {
+            "type": "boolean",
+            "title": "Re Validation Confirmed"
+          }
+        },
+        "type": "object",
+        "required": ["justification", "re_validation_confirmed"],
+        "title": "ReactivateFARequest"
       },
       "ReactivateTenantRequest": {
         "properties": {
@@ -7654,10 +9928,35 @@
           "country": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Country"
+          },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
           }
         },
         "type": "object",
-        "title": "RegisteredAddress"
+        "title": "RegisteredAddress",
+        "description": "Address as returned in responses. Lenient — legacy rows may be incomplete."
+      },
+      "RegisteredAddressInput": {
+        "properties": {
+          "street": { "type": "string", "minLength": 1, "title": "Street" },
+          "city": { "type": "string", "minLength": 1, "title": "City" },
+          "postal_code": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Postal Code"
+          },
+          "country": { "type": "string", "minLength": 1, "title": "Country" },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
+          }
+        },
+        "type": "object",
+        "required": ["street", "city", "postal_code", "country"],
+        "title": "RegisteredAddressInput",
+        "description": "Address as submitted by a client. All fields mandatory except state_region."
       },
       "ResendInvitationRequest": {
         "properties": {
@@ -8193,7 +10492,7 @@
           },
           "registered_address": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
               { "type": "null" }
             ]
           }
@@ -8346,6 +10645,26 @@
         ],
         "title": "SupportGrantResponse"
       },
+      "SuspendFARequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification"
+          },
+          "effective_from": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Effective From"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "SuspendFARequest"
+      },
       "SuspendTenantRequest": {
         "properties": {
           "justification": {
@@ -8384,6 +10703,27 @@
         "type": "object",
         "required": ["reason", "effective_from"],
         "title": "SuspendUserRequest"
+      },
+      "SuspensionReadinessResponse": {
+        "properties": {
+          "can_suspend": { "type": "boolean", "title": "Can Suspend" },
+          "blocking_financing_count": {
+            "type": "integer",
+            "title": "Blocking Financing Count"
+          },
+          "blocking_financings": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Blocking Financings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "can_suspend",
+          "blocking_financing_count",
+          "blocking_financings"
+        ],
+        "title": "SuspensionReadinessResponse"
       },
       "SuspensionReason": {
         "type": "string",
@@ -8825,6 +11165,44 @@
         "enum": ["bank", "bank_entity", "bank_branch_group"],
         "title": "TenantType"
       },
+      "TerminateFARequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 30,
+            "title": "Justification"
+          },
+          "irreversibility_confirmed": {
+            "type": "boolean",
+            "title": "Irreversibility Confirmed"
+          }
+        },
+        "type": "object",
+        "required": ["justification", "irreversibility_confirmed"],
+        "title": "TerminateFARequest"
+      },
+      "TerminationReadinessResponse": {
+        "properties": {
+          "can_terminate": { "type": "boolean", "title": "Can Terminate" },
+          "blocking_financing_count": {
+            "type": "integer",
+            "title": "Blocking Financing Count"
+          },
+          "blocking_financings": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Blocking Financings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "can_terminate",
+          "blocking_financing_count",
+          "blocking_financings"
+        ],
+        "title": "TerminationReadinessResponse"
+      },
       "TestSessionRequest": {
         "properties": {
           "email": { "type": "string", "format": "email", "title": "Email" }
@@ -8924,6 +11302,129 @@
         "type": "object",
         "required": ["new_access_valid_until", "reason"],
         "title": "UpdateAuditorAccessPeriodRequest"
+      },
+      "UpdateFARequest": {
+        "properties": {
+          "agreement_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Agreement Name"
+          },
+          "max_volume_eur": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Volume Eur"
+          },
+          "base_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 25.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Base Rate"
+          },
+          "spread": {
+            "anyOf": [
+              { "type": "number", "maximum": 15.0, "minimum": -5.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Spread"
+          },
+          "rate_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
+              },
+              { "type": "null" }
+            ]
+          },
+          "effective_rate": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
+          },
+          "rate_lock_period_months": {
+            "anyOf": [
+              { "type": "integer", "maximum": 360.0, "minimum": 1.0 },
+              { "type": "null" }
+            ],
+            "title": "Rate Lock Period Months"
+          },
+          "lg_coverage_rate_override": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lg Coverage Rate Override"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "special_conditions": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Conditions"
+          },
+          "product_template_ids": {
+            "anyOf": [
+              {
+                "items": { "type": "string", "format": "uuid" },
+                "type": "array",
+                "minItems": 1
+              },
+              { "type": "null" }
+            ],
+            "title": "Product Template Ids"
+          },
+          "justification": {
+            "anyOf": [
+              { "type": "string", "maxLength": 1000, "minLength": 30 },
+              { "type": "null" }
+            ],
+            "title": "Justification"
+          },
+          "expected_version": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Expected Version"
+          }
+        },
+        "type": "object",
+        "title": "UpdateFARequest"
       },
       "UpdateMeRequest": {
         "properties": {
@@ -9040,7 +11541,9 @@
           },
           "rate_type": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RateType" },
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
+              },
               { "type": "null" }
             ]
           },
@@ -9223,6 +11726,13 @@
           "tenant_name": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Tenant Name"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
           },
           "phone_number": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9412,6 +11922,13 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Profile Picture Url"
           },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
+          },
           "access_valid_until": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
@@ -9582,7 +12099,9 @@
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
           "rate_type": {
             "anyOf": [
-              { "$ref": "#/components/schemas/RateType" },
+              {
+                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
+              },
               { "type": "null" }
             ]
           },
@@ -9759,6 +12278,16 @@
         "type": "object",
         "required": ["versions"],
         "title": "VersionHistoryResponse"
+      },
+      "app__modules__framework_agreements__domain__enums__RateType": {
+        "type": "string",
+        "enum": ["fixed", "floating", "euribor_plus_spread"],
+        "title": "RateType"
+      },
+      "app__modules__product_templates__domain__enums__RateType": {
+        "type": "string",
+        "enum": ["fixed", "floating", "euribor_spread"],
+        "title": "RateType"
       },
       "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
         "properties": {
