@@ -1,5 +1,10 @@
 import { test as base, expect } from "@playwright/test"
-import type { APIRequestContext, Locator, Page } from "@playwright/test"
+import type {
+  APIRequestContext,
+  APIResponse,
+  Locator,
+  Page,
+} from "@playwright/test"
 import { LoginPage } from "../pages/LoginPage"
 
 type Fixtures = {
@@ -49,17 +54,29 @@ export const test = base.extend<Fixtures>({
   },
 
   // Pre-authenticated session — bank front_office role
+  // Uses /internal/test/session to bypass OTP — matches authenticatedPage /
+  // supportPage / auditorPage. UI login timed out at 30s during Audit_Trail runs.
   bankProcessorPage: async ({ browser }, provide) => {
     const context = await browser.newContext()
     try {
       const page = await context.newPage()
-      const loginPage = new LoginPage(page)
-      await loginPage.goto()
-      await loginPage.login(
-        process.env.E2E_FRONT_OFFICE_USER_EMAIL ?? "",
-        process.env.E2E_FRONT_OFFICE_USER_PASSWORD ?? ""
+      const apiBase = process.env.E2E_API_BASE_URL ?? ""
+      const response = await page.request.post(
+        `${apiBase}/internal/test/session`,
+        { data: { email: process.env.E2E_FRONT_OFFICE_USER_EMAIL ?? "" } }
       )
-      await page.waitForURL("/dashboard")
+      if (!response.ok()) {
+        throw new Error(
+          `bankProcessorPage session creation failed: ${response.status()}`
+        )
+      }
+      await page.goto("/")
+      await page.evaluate(() => {
+        localStorage.setItem(
+          "auth",
+          JSON.stringify({ state: { isAuthenticated: true }, version: 0 })
+        )
+      })
       await provide(page)
     } finally {
       await context.close()
@@ -161,4 +178,4 @@ export const test = base.extend<Fixtures>({
 })
 
 export { expect }
-export type { APIRequestContext, Locator, Page }
+export type { APIRequestContext, APIResponse, Locator, Page }

@@ -10,15 +10,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dirname, ".env"), override: true })
 
 // Resolve environment-specific vars into normalized E2E_* names used throughout
-// the test suite. Locally (no CI flag) → DEV, in CI pipeline → STAGING.
+// the test suite. Target env is decided by GitLab's auto-exposed
+// CI_ENVIRONMENT_NAME ("Develop" | "Staging"); locally the variable is unset
+// and the DEV_* credentials from src/e2e/.env are used.
 // Role-specific staging credentials fall back to DEV values if unset in CI.
-const isCI = !!process.env.CI
+const targetEnv = process.env.CI_ENVIRONMENT_NAME ?? ""
+const isStaging = targetEnv === "Staging"
 const pick = (stg: string | undefined, dev: string | undefined) =>
-  isCI ? stg || dev || "" : dev || ""
+  isStaging ? stg || dev || "" : dev || ""
 
-process.env.E2E_BASE_URL = isCI
-  ? (process.env.STG_BASE_URL ?? "")
-  : (process.env.DEV_BASE_URL ?? "http://localhost:5173")
+process.env.E2E_BASE_URL =
+  process.env.BASE_URL ?? process.env.DEV_BASE_URL ?? "http://localhost:5173"
 process.env.E2E_API_BASE_URL = pick(
   process.env.E2E_STG_API_BASE_URL,
   process.env.E2E_DEV_API_BASE_URL
