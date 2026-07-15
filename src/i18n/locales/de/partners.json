@@ -366,9 +366,7 @@
     "title": "Add UBO",
     "fields": {
       "uboPartnerPlaceholder": "Search confirmed natural persons…",
-      "uboPartnerNoResults": "No matching partners found.",
-      "indirectOwnershipNotes": "Hinweise zu indirekter Beteiligung (optional)",
-      "indirectOwnershipNotesPlaceholder": "Beschreiben Sie relevante indirekte Beteiligungsstrukturen für diesen wirtschaftlich Berechtigten…"
+      "uboPartnerNoResults": "No matching partners found."
     },
     "errors": {
       "uboPartnerRequired": "Select a UBO partner.",
@@ -552,6 +550,7 @@
     "DUPLICATE_PAIR_ALREADY_RESOLVED": "Dieses Paar wurde bereits von einem anderen Prüfer geklärt.",
     "PARTNER_NOT_MERGEABLE": "Einer der ausgewählten Partner kann in seinem aktuellen Status nicht zusammengeführt werden.",
     "PAIR_NOT_FLAGGED_FOR_MERGE": "Dieses Paar muss als Duplikat bestätigt werden, bevor eine Zusammenführung eingeleitet werden kann.",
-    "MERGE_PARTNER_NOT_IN_PAIR": "Der ausgewählte überlebende Partner muss einer der beiden Partner in diesem Paar sein."
+    "MERGE_PARTNER_NOT_IN_PAIR": "Der ausgewählte überlebende Partner muss einer der beiden Partner in diesem Paar sein.",
+    "VALIDATION_ERROR": "Die übermittelten Daten sind ungültig. Bitte überprüfen Sie das Formular und versuchen Sie es erneut."
   }
 }
