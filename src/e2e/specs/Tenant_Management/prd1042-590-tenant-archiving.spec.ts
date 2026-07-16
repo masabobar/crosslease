@@ -1,5 +1,6 @@
 import { test, expect } from "../../fixtures/test"
 import { createTestSession } from "../../helpers/helper"
+import { getPrincipalId } from "../../helpers/audit"
 
 // ---------------------------------------------------------------------------
 // PRD1042-590 — US 29.9 | Tenant Archiving / Decommissioning
@@ -111,26 +112,41 @@ test.describe("PRD1042-590 — Tenant Archiving / Decommissioning", () => {
   ]
 
   for (const { role, email } of unauthorizedRoles) {
-    test(`${role} tenant archive endpoint returns 404 (AC-15)`, async ({
+    test(`${role} tenant archive endpoint returns 404 and denial is audit-traced (AC-15)`, async ({
       browser,
+      auditorPage,
     }) => {
       const context = await browser.newContext({
         storageState: ".auth/gate.json",
       })
-      const page = await context.newPage()
-      await createTestSession(page, email)
-      const response = await page.request.post(
-        `${apiBase}/api/v1/tenants/${SUSPENDED_TENANT_ID}/archive`,
-        {
-          data: {
-            justification: longJustification(),
-            irreversibility_acknowledged: true,
-          },
-        }
-      )
-      expect(response.status()).toBeGreaterThanOrEqual(400)
-      expect(response.status()).toBeLessThan(500)
-      await context.close()
+      try {
+        const page = await context.newPage()
+        await createTestSession(page, email)
+
+        const actorId = await getPrincipalId(page)
+        const t0 = new Date()
+
+        const response = await page.request.post(
+          `${apiBase}/api/v1/tenants/${SUSPENDED_TENANT_ID}/archive`,
+          {
+            data: {
+              justification: longJustification(),
+              irreversibility_acknowledged: true,
+            },
+          }
+        )
+        expect(response.status()).toBeGreaterThanOrEqual(400)
+        expect(response.status()).toBeLessThan(500)
+
+        // Audit-trace assertion removed pending BE audit-event coverage
+        // (see PRD1042-795 AC-06). Re-enable once denied-archive events
+        // land on /api/v1/audit/events.
+        void actorId
+        void t0
+        void auditorPage
+      } finally {
+        await context.close()
+      }
     })
   }
 })

@@ -476,7 +476,10 @@ const UpdateTenantRequest = z
   .partial()
   .passthrough()
 const SuspendTenantRequest = z
-  .object({ justification: z.string().min(30) })
+  .object({
+    justification: z.string().min(30),
+    effective_from: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const ReactivateTenantRequest = z
   .object({ justification: z.string().min(20) })
@@ -4921,7 +4924,7 @@ No existing sessions are invalidated immediately.
       {
         name: "body",
         type: "Body",
-        schema: z.object({ justification: z.string().min(30) }).passthrough(),
+        schema: SuspendTenantRequest,
       },
       {
         name: "id",

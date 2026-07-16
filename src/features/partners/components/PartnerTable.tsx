@@ -18,6 +18,7 @@ const COL_ROLES = "w-[200px] shrink-0"
 const COL_COUNTRY = "w-[90px] shrink-0"
 const COL_STATUS = "w-[160px] shrink-0"
 const COL_UBO = "w-[130px] shrink-0"
+const COL_ACTIONS = "shrink-0 ml-auto flex items-center justify-center p-2"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
@@ -116,7 +117,7 @@ function PartnerTable({
         <div className={`${COL_UBO} text-sm font-medium text-foreground px-2`}>
           {t("list.table.columns.uboStatus")}
         </div>
-        <div className="shrink-0 w-8" />
+        <div className={COL_ACTIONS} />
       </div>
 
       {/* Loading skeleton */}
@@ -143,7 +144,7 @@ function PartnerTable({
               <div className={`${COL_UBO} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-16" />
               </div>
-              <div className="shrink-0 w-8" />
+              <div className={COL_ACTIONS} />
             </div>
           ))}
         </div>
@@ -225,10 +226,7 @@ function PartnerTable({
                 </span>
               )}
             </div>
-            <div
-              className="shrink-0 p-2 flex items-center justify-center"
-              onClick={e => e.stopPropagation()}
-            >
+            <div className={COL_ACTIONS} onClick={e => e.stopPropagation()}>
               <KebabMenu
                 partner={partner}
                 canAction={canAction}
