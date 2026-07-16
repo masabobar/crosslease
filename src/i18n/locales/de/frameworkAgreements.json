@@ -1,0 +1,225 @@
+{
+  "list": {
+    "title": "Rahmenvereinbarungen",
+    "subtitle": "Kreditrahmen, die Finanzierungen mit jeder Leasinggesellschaft regeln",
+    "createButton": "Vereinbarung erstellen",
+    "filters": {
+      "searchPlaceholder": "Suche",
+      "allStatuses": "Alle Status",
+      "allLeasingCompanies": "Leasinggesellschaft",
+      "allBankEntities": "Bankeinheit"
+    },
+    "table": {
+      "columns": {
+        "agreement": "Vereinbarung",
+        "leasingCompany": "Leasinggesellschaft",
+        "status": "Status",
+        "validFrom": "Gültig ab",
+        "validUntil": "Gültig bis"
+      }
+    },
+    "emptyState": {
+      "title": "Noch keine Rahmenvereinbarungen",
+      "description": "Erstellen Sie die erste Vereinbarung, um einen Kreditrahmen für eine Leasinggesellschaft festzulegen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Vereinbarungen entsprechen Ihren Filtern",
+      "description": "Passen Sie die Suche oder Filter an."
+    }
+  },
+  "statuses": {
+    "draft": "Entwurf",
+    "active": "Aktiv",
+    "suspended": "Ausgesetzt",
+    "terminated": "Beendet"
+  },
+  "bankEntities": {
+    "sparkasse": "Sparkasse",
+    "landesbank_1": "Landesbank 1",
+    "landesbank_2": "Landesbank 2",
+    "other": "Andere"
+  },
+  "rateTypes": {
+    "fixed": "Fest",
+    "floating": "Variabel",
+    "euribor_plus_spread": "EURIBOR + Spread"
+  },
+  "documentTypes": {
+    "original_agreement": "Originalvereinbarung",
+    "addendum": "Nachtrag",
+    "side_letter": "Nebenabrede",
+    "other": "Andere"
+  },
+  "fields": {
+    "agreementName": "Vereinbarungsname",
+    "leasingCompany": "Leasinggesellschaft",
+    "leasingCompanyNoResults": "Keine Leasinggesellschaften gefunden",
+    "bankEntity": "Bankeinheit",
+    "currency": "Währung",
+    "maxVolumeEur": "Maximales Volumen",
+    "baseRate": "Basiszins",
+    "spread": "Spread",
+    "rateType": "Zinsart",
+    "effectiveRate": "Effektivzins",
+    "rateLockPeriodMonths": "Zinsbindungsfrist",
+    "lgCoverageRateOverride": "LG-spezifischer Deckungssatz (Override)",
+    "validFrom": "Gültig ab",
+    "validUntil": "Gültig bis",
+    "specialConditions": "Sonderbedingungen",
+    "allowedProductTemplates": "Zulässige Produktvorlagen",
+    "optional": "(optional)",
+    "openEnded": "Unbefristet"
+  },
+  "wizard": {
+    "steps": {
+      "identity": "Identität",
+      "envelopePricing": "Rahmen & Preisgestaltung",
+      "validityTemplates": "Gültigkeit & Vorlagen",
+      "conditions": "Bedingungen",
+      "documents": "Dokumente",
+      "review": "Prüfen & speichern"
+    },
+    "identity": {
+      "title": "Identität & Vertragspartner",
+      "subtitle": "Legen Sie die Identität der Vereinbarung und die beteiligten Parteien fest.",
+      "agreementNameHint": "Muss für diese Leasinggesellschaft und Bankeinheit eindeutig sein.",
+      "leasingCompanyHint": "Es werden nur aktive Leasinggesellschaften angezeigt",
+      "currencyHint": "Die Währung wird bei der Erstellung festgelegt und kann nicht geändert werden"
+    },
+    "envelopePricing": {
+      "title": "Rahmen & Preisgestaltung",
+      "subtitle": "Legen Sie den Kreditrahmen und die Preiskonditionen fest. Diese Werte werden von allen Finanzierungen unter dieser Vereinbarung übernommen.",
+      "creditEnvelopeSection": "Kreditrahmen",
+      "pricingSection": "Preisgestaltung (von Finanzierungen übernommen)",
+      "maxVolumeHint": "Feste Obergrenze für das gesamte auszahlbare Volumen unter dieser Vereinbarung.",
+      "spreadHint": "Zulässiger Bereich: -5,0 % bis 15,0 %.",
+      "effectiveRateHint": "Bei Fest- und Variabelzins sollte dies Basiszins plus Spread entsprechen.",
+      "rateLockPeriodHint": "Zulässiger Bereich: 1 bis 360 Monate.",
+      "coverageOverrideHint": "Überschreibt den Standard-Deckungssatz der Produktvorlage, sofern anwendbar."
+    },
+    "validityTemplates": {
+      "title": "Gültigkeit & Produktvorlagen",
+      "subtitle": "Legen Sie den Gültigkeitszeitraum fest und wählen Sie die für diese Vereinbarung zulässigen Produktvorlagen aus.",
+      "validityWindowSection": "Gültigkeitszeitraum",
+      "templatesSection": "Zulässige Produktvorlagen",
+      "templatesHint": "Es werden nur veröffentlichte Vorlagen innerhalb Ihres Mandanten angezeigt. Wählen Sie mindestens eine aus."
+    },
+    "conditions": {
+      "title": "Sonderbedingungen",
+      "subtitle": "Dokumentieren Sie kommerzielle Bedingungen, die für diese Vereinbarung spezifisch sind. Diese Angabe ist rein informativ und wirkt sich nicht auf das Systemverhalten aus.",
+      "hint": "Geben Sie Sonderbedingungen, kommerzielle Konditionen oder Anmerkungen zu dieser Vereinbarung ein."
+    },
+    "documents": {
+      "title": "Rahmendokumente",
+      "subtitle": "Fügen Sie unterzeichnete Rahmenvereinbarungsdokumente hinzu. Mindestens ein Dokument ist vor der Aktivierung erforderlich.",
+      "uploadPanelTitle": "Dokumente hochladen",
+      "optionalNotice": "Dokumente sind in dieser Phase optional. Mindestens ein unterzeichnetes Dokument muss vor der Aktivierung hinzugefügt werden.",
+      "dropzoneLabel": "PDF-Datei hierher ziehen oder klicken zum Durchsuchen",
+      "dropzoneHint": "Nur PDF. Max. 25 MB pro Datei. Bis zu 10 Dokumente.",
+      "documentCount": "{{count}} / 10 Dokumente",
+      "documentType": "Dokumenttyp",
+      "documentTypePlaceholder": "Auswählen",
+      "documentLabel": "Dokumentbezeichnung"
+    },
+    "review": {
+      "title": "Prüfen und speichern",
+      "subtitle": "Überprüfen Sie alle Details vor dem Speichern. Sie können zu jedem Schritt zurückkehren. Die Vereinbarung wird als Entwurf gespeichert. Die Aktivierung ist ein separater Schritt."
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "create": "Als Entwurf speichern"
+    },
+    "discardDialog": {
+      "title": "Diesen Entwurf verwerfen?",
+      "description": "Der Entwurf und alle angehängten Dokumente werden dauerhaft gelöscht.",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Entwurf verwerfen"
+    },
+    "incompleteDraft": "Füllen Sie die Pflichtfelder aus, bevor Sie als Entwurf speichern.",
+    "createdSuccess": {
+      "title": "Vereinbarung als Entwurf gespeichert",
+      "subtitle": "{{name}} wurde gespeichert. Prüfen Sie die Details und aktivieren Sie die Vereinbarung, wenn Sie bereit sind. Vor der Aktivierung muss mindestens ein unterzeichnetes Dokument angehängt werden.",
+      "backToAgreements": "Zurück zu den Vereinbarungen",
+      "viewAgreement": "Vereinbarung ansehen"
+    },
+    "loadingDraft": "Entwurf wird geladen…"
+  },
+  "detail": {
+    "tabs": {
+      "agreementDetails": "Vereinbarungsdetails",
+      "templatesAndDocuments": "Vorlagen und Dokumente",
+      "utilization": "Auslastung",
+      "financings": "Finanzierungen",
+      "auditHistory": "Prüfprotokoll"
+    },
+    "sections": {
+      "identity": "Identität",
+      "envelopeAndPricing": "Rahmen & Preisgestaltung",
+      "creditEnvelope": "Kreditrahmen",
+      "validity": "Gültigkeit",
+      "lifecycle": "Lebenszyklus",
+      "specialConditions": "Besondere Bedingungen"
+    },
+    "fields": {
+      "agreementId": "Vereinbarungs-ID",
+      "createdBy": "Erstellt von",
+      "createdAt": "Erstellt am",
+      "activatedBy": "Aktiviert von",
+      "activatedAt": "Aktiviert am",
+      "suspendedAt": "Ausgesetzt am",
+      "terminatedAt": "Beendet am"
+    },
+    "copied": "Kopiert",
+    "actions": {
+      "activate": "Aktivieren",
+      "edit": "Bearbeiten",
+      "suspend": "Aussetzen",
+      "reactivate": "Reaktivieren",
+      "terminate": "Beenden"
+    },
+    "financingsEmptyState": "Noch keine Finanzierungen",
+    "tabComingSoon": "Dieser Tab ist noch nicht verfügbar",
+    "loadError": "Beim Laden dieser Vereinbarung ist ein Fehler aufgetreten."
+  },
+  "activate": {
+    "dialogTitle": "Rahmenvereinbarung aktivieren",
+    "documentsConfirmed": "Ich bestätige, dass die erforderlichen Rahmendokumente vorliegen",
+    "justification": "Begründung",
+    "justificationHint": "Pflichtfeld. Wird im Prüfprotokoll gespeichert.",
+    "effectiveFrom": "Gültig ab",
+    "effectiveFromOptional": "Optional — Standard ist sofort",
+    "confirmButton": "Vereinbarung aktivieren"
+  },
+  "suspend": {
+    "dialogTitle": "Rahmenvereinbarung aussetzen",
+    "justification": "Begründung",
+    "justificationHint": "Pflichtfeld. Wird im Prüfprotokoll gespeichert.",
+    "effectiveFrom": "Gültig ab",
+    "effectiveFromOptional": "Optional — Standard ist sofort",
+    "confirmButton": "Vereinbarung aussetzen"
+  },
+  "reactivate": {
+    "dialogTitle": "Rahmenvereinbarung reaktivieren",
+    "reValidationConfirmed": "Ich bestätige, dass die Bedingungen der Vereinbarung erneut geprüft wurden und weiterhin korrekt sind",
+    "justification": "Begründung",
+    "justificationHint": "Pflichtfeld. Wird im Prüfprotokoll gespeichert.",
+    "confirmButton": "Vereinbarung reaktivieren"
+  },
+  "terminate": {
+    "dialogTitle": "Rahmenvereinbarung beenden",
+    "irreversibilityConfirmed": "Mir ist bewusst, dass diese Aktion endgültig ist und nicht rückgängig gemacht werden kann",
+    "justification": "Begründung",
+    "justificationHint": "Pflichtfeld (mind. 30 Zeichen). Wird im Prüfprotokoll gespeichert.",
+    "confirmButton": "Vereinbarung beenden",
+    "blockedTitle": "Diese Vereinbarung kann noch nicht beendet werden",
+    "blockedDescription": "{{count}} verknüpfte Finanzierung ist noch aktiv. Klären Sie diese, bevor Sie die Vereinbarung beenden.",
+    "blockedDescription_other": "{{count}} verknüpfte Finanzierungen sind noch aktiv. Klären Sie diese, bevor Sie die Vereinbarung beenden."
+  },
+  "errors": {
+    "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
+    "validUntilBeforeFrom": "„Gültig bis“ muss am oder nach „Gültig ab“ liegen",
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

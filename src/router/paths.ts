@@ -34,6 +34,11 @@ export const PATHS = {
     "/business-configuration/product-templates/:templateId/version-history",
   PRODUCT_TEMPLATE_NEW_VERSION:
     "/business-configuration/product-templates/:templateId/versions/:versionNumber/edit",
+  FRAMEWORK_AGREEMENT_LIST: "/business-configuration/framework-agreements",
+  FRAMEWORK_AGREEMENT_CREATE:
+    "/business-configuration/framework-agreements/new",
+  FRAMEWORK_AGREEMENT_DETAIL:
+    "/business-configuration/framework-agreements/:id",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -71,4 +76,8 @@ export function productTemplateNewVersionEdit(
     ":templateId",
     templateId
   ).replace(":versionNumber", versionNumber)
+}
+
+export function frameworkAgreementDetail(id: string): string {
+  return PATHS.FRAMEWORK_AGREEMENT_DETAIL.replace(":id", id)
 }

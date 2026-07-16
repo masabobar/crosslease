@@ -23,6 +23,10 @@ import {
   PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES,
   PRODUCT_TEMPLATE_READ_ALLOWED_ROLES,
 } from "@/features/productTemplates/types"
+import {
+  FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES,
+} from "@/features/frameworkAgreements/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -107,6 +111,18 @@ const CreateProductTemplateWizardPage = lazy(
 )
 const VersionHistoryPage = lazy(
   () => import("@/features/productTemplates/components/VersionHistoryPage")
+)
+const FrameworkAgreementListPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/FrameworkAgreementListPage")
+)
+const CreateFrameworkAgreementWizardPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/CreateFrameworkAgreementWizardPage")
+)
+const FrameworkAgreementDetailPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/FrameworkAgreementDetailPage")
 )
 
 export const router = createBrowserRouter([
@@ -373,6 +389,36 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES}>
               <CreateProductTemplateWizardPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.FRAMEWORK_AGREEMENT_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES}>
+              <FrameworkAgreementListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.FRAMEWORK_AGREEMENT_CREATE,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES}>
+              <CreateFrameworkAgreementWizardPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.FRAMEWORK_AGREEMENT_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES}>
+              <FrameworkAgreementDetailPage />
             </RoleGuard>
           </Suspense>
         ),
