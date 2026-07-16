@@ -1,0 +1,313 @@
+import { z } from "zod"
+
+// Wire enums — must match refinext-api src/app/modules/framework_agreements/domain/enums.py exactly
+export const FALifecycleStatusSchema = z.enum([
+  "draft",
+  "active",
+  "suspended",
+  "terminated",
+])
+export type FALifecycleStatus = z.infer<typeof FALifecycleStatusSchema>
+
+export const BankEntitySchema = z.enum([
+  "sparkasse",
+  "landesbank_1",
+  "landesbank_2",
+  "other",
+])
+export type BankEntity = z.infer<typeof BankEntitySchema>
+
+export const RateTypeSchema = z.enum([
+  "fixed",
+  "floating",
+  "euribor_plus_spread",
+])
+export type RateType = z.infer<typeof RateTypeSchema>
+
+export const FADocumentTypeSchema = z.enum([
+  "original_agreement",
+  "addendum",
+  "side_letter",
+  "other",
+])
+export type FADocumentType = z.infer<typeof FADocumentTypeSchema>
+
+// POST /framework-agreements — matches CreateFARequest in refinext-api fa_schemas.py exactly
+export const CreateFARequestSchema = z.object({
+  agreement_name: z.string().min(1).max(200),
+  lc_partner_id: z.string().uuid(),
+  bank_entity: BankEntitySchema,
+  max_volume_eur: z.number().gt(0),
+  base_rate: z.number().min(0).max(25),
+  spread: z.number().min(-5).max(15),
+  rate_type: RateTypeSchema,
+  effective_rate: z.number().optional(),
+  rate_lock_period_months: z.number().int().min(1).max(360),
+  lg_coverage_rate_override: z.number().optional(),
+  valid_from: z.string().min(1),
+  valid_until: z.string().optional(),
+  special_conditions: z.string().optional(),
+  product_template_ids: z.array(z.string().uuid()).min(1),
+})
+export type CreateFARequest = z.infer<typeof CreateFARequestSchema>
+
+export const FADraftResponseSchema = z.object({
+  id: z.string().uuid(),
+  agreement_name: z.string(),
+  lc_partner_id: z.string().uuid(),
+  bank_entity: BankEntitySchema,
+  currency: z.string(),
+  status: FALifecycleStatusSchema,
+  max_volume_eur: z.coerce.number(),
+  base_rate: z.coerce.number(),
+  spread: z.coerce.number(),
+  effective_rate: z.coerce.number(),
+  rate_type: RateTypeSchema,
+  rate_lock_period_months: z.number().int(),
+  lg_coverage_rate_override: z.coerce.number().nullable(),
+  valid_from: z.string(),
+  valid_until: z.string().nullable(),
+  special_conditions: z.string().nullable(),
+  product_template_ids: z.array(z.string().uuid()),
+  edit_version_counter: z.number().int(),
+  created_by: z.string().uuid(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+export type FADraftResponse = z.infer<typeof FADraftResponseSchema>
+
+// POST /framework-agreements/{id}/activate
+export const ActivateFARequestSchema = z.object({
+  documents_confirmed: z.boolean(),
+  effective_from: z.string().optional(),
+  justification: z.string().min(20).max(1000),
+})
+export type ActivateFARequest = z.infer<typeof ActivateFARequestSchema>
+
+// POST /framework-agreements/{id}/suspend
+export const SuspendFARequestSchema = z.object({
+  justification: z.string().min(20).max(1000),
+  effective_from: z.string().nullable().optional(),
+})
+export type SuspendFARequest = z.infer<typeof SuspendFARequestSchema>
+
+export const FASuspendedResponseSchema = z.object({
+  id: z.string().uuid(),
+  status: FALifecycleStatusSchema,
+  suspended_at: z.string(),
+})
+export type FASuspendedResponse = z.infer<typeof FASuspendedResponseSchema>
+
+// POST /framework-agreements/{id}/reactivate
+export const ReactivateFARequestSchema = z.object({
+  justification: z.string().min(20).max(1000),
+  re_validation_confirmed: z.boolean(),
+})
+export type ReactivateFARequest = z.infer<typeof ReactivateFARequestSchema>
+
+export const FAReactivatedResponseSchema = z.object({
+  id: z.string().uuid(),
+  status: FALifecycleStatusSchema,
+  reactivated_at: z.string(),
+})
+export type FAReactivatedResponse = z.infer<typeof FAReactivatedResponseSchema>
+
+// POST /framework-agreements/{id}/terminate
+export const TerminateFARequestSchema = z.object({
+  justification: z.string().min(30).max(1000),
+  irreversibility_confirmed: z.boolean(),
+})
+export type TerminateFARequest = z.infer<typeof TerminateFARequestSchema>
+
+export const FATerminatedResponseSchema = z.object({
+  id: z.string().uuid(),
+  status: FALifecycleStatusSchema,
+  terminated_at: z.string(),
+})
+export type FATerminatedResponse = z.infer<typeof FATerminatedResponseSchema>
+
+// GET /framework-agreements/{id}/termination-readiness
+export const TerminationReadinessResponseSchema = z.object({
+  can_terminate: z.boolean(),
+  blocking_financing_count: z.number().int(),
+  blocking_financings: z.array(z.unknown()),
+})
+export type TerminationReadinessResponse = z.infer<
+  typeof TerminationReadinessResponseSchema
+>
+
+// GET /framework-agreements/{id}/utilization — only max_volume_eur is ever populated
+// today (Limit Management/Epic 19 not built, `available` defaults false) — per
+// phase-9a Q-022, the rest is typed but deliberately never rendered.
+export const FAUtilizationResponseSchema = z.object({
+  max_volume_eur: z.coerce.number(),
+  disbursed_volume_eur: z.coerce.number().nullable(),
+  redeemed_volume_eur: z.coerce.number().nullable(),
+  net_exposure_eur: z.coerce.number().nullable(),
+  available_volume_eur: z.coerce.number().nullable(),
+  utilization_pct: z.coerce.number().nullable(),
+  limit_available_flag: z.boolean().nullable(),
+  limit_breach_flag: z.boolean().nullable(),
+  last_refreshed_at: z.string().nullable(),
+  source: z.string(),
+  available: z.boolean(),
+})
+export type FAUtilizationResponse = z.infer<typeof FAUtilizationResponseSchema>
+
+// GET /framework-agreements — utilization_pct/limit_breach are typed here (Limit Management
+// stub always returns null today — see phase-9a Q-022) but are deliberately never rendered.
+export const FAListItemSchema = z.object({
+  id: z.string().uuid(),
+  agreement_name: z.string(),
+  lc_partner_id: z.string().uuid(),
+  lc_partner_name: z.string().nullable(),
+  bank_entity: BankEntitySchema.nullable(),
+  status: FALifecycleStatusSchema,
+  valid_from: z.string(),
+  valid_until: z.string().nullable(),
+  utilization_pct: z.coerce.number().nullable(),
+  limit_breach: z.boolean().nullable(),
+})
+export type FAListItem = z.infer<typeof FAListItemSchema>
+
+export const FAListResponseSchema = z.object({
+  items: z.array(FAListItemSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  per_page: z.number().int(),
+  total_pages: z.number().int(),
+})
+export type FAListResponse = z.infer<typeof FAListResponseSchema>
+
+export const FALCPartnerItemSchema = z.object({
+  id: z.string().uuid(),
+  legal_name: z.string(),
+})
+export type FALCPartnerItem = z.infer<typeof FALCPartnerItemSchema>
+
+export const FALCPartnersResponseSchema = z.object({
+  items: z.array(FALCPartnerItemSchema),
+})
+export type FALCPartnersResponse = z.infer<typeof FALCPartnersResponseSchema>
+
+// GET /framework-agreements/{id} — role-scoped: pricing/lifecycle-actor/special_conditions
+// fields are null for front_office/leasing_company_user/support_user (see phase-9a).
+export const FADetailResponseSchema = z.object({
+  id: z.string().uuid(),
+  agreement_name: z.string(),
+  lc_partner_id: z.string().uuid(),
+  lc_partner_name: z.string().nullable(),
+  status: FALifecycleStatusSchema,
+  currency: z.string(),
+  max_volume_eur: z.coerce.number(),
+  valid_from: z.string(),
+  valid_until: z.string().nullable(),
+  edit_version_counter: z.number().int(),
+  product_template_ids: z.array(z.string().uuid()),
+  document_count: z.number().int(),
+  linked_financings_count: z.number().int(),
+  utilization_pct: z.coerce.number().nullable(),
+  limit_available: z.coerce.number().nullable(),
+  limit_breach: z.boolean().nullable(),
+  bank_entity: BankEntitySchema.nullable(),
+  base_rate: z.coerce.number().nullable(),
+  spread: z.coerce.number().nullable(),
+  effective_rate: z.coerce.number().nullable(),
+  rate_type: RateTypeSchema.nullable(),
+  rate_lock_period_months: z.number().int().nullable(),
+  lg_coverage_rate_override: z.coerce.number().nullable(),
+  special_conditions: z.string().nullable(),
+  effective_from: z.string().nullable(),
+  activated_at: z.string().nullable(),
+  activated_by: z.string().uuid().nullable(),
+  activated_by_name: z.string().nullable(),
+  suspended_at: z.string().nullable(),
+  suspended_by: z.string().uuid().nullable(),
+  terminated_at: z.string().nullable(),
+  terminated_by: z.string().uuid().nullable(),
+  created_by: z.string().uuid().nullable(),
+  created_by_name: z.string().nullable(),
+  created_at: z.string(),
+})
+export type FADetailResponse = z.infer<typeof FADetailResponseSchema>
+
+// GET /framework-agreements/{id}/financings — always empty today, no Financing module exists
+export const FALinkedFinancingsResponseSchema = z.object({
+  count: z.number().int(),
+  items: z.array(z.unknown()),
+})
+export type FALinkedFinancingsResponse = z.infer<
+  typeof FALinkedFinancingsResponseSchema
+>
+
+// GET /product-templates/selectable — reused from the Bank Product Template epic
+export const SelectableTemplateItemSchema = z.object({
+  template_id: z.string().uuid(),
+  template_name: z.string(),
+  version_number: z.string(),
+})
+export type SelectableTemplateItem = z.infer<
+  typeof SelectableTemplateItemSchema
+>
+
+export const SelectableTemplatesResponseSchema = z.object({
+  items: z.array(SelectableTemplateItemSchema),
+})
+export type SelectableTemplatesResponse = z.infer<
+  typeof SelectableTemplatesResponseSchema
+>
+
+// POST /framework-agreements/{fa_id}/documents
+export const AttachDocumentResponseSchema = z.object({
+  id: z.string().uuid(),
+  framework_agreement_id: z.string().uuid(),
+  document_type: FADocumentTypeSchema,
+  document_label: z.string().nullable(),
+  file_name: z.string(),
+  file_size_bytes: z.number().int(),
+  mime_type: z.string(),
+  lc_visible: z.boolean(),
+  uploaded_by: z.string().uuid(),
+  uploaded_at: z.string(),
+})
+export type AttachDocumentResponse = z.infer<
+  typeof AttachDocumentResponseSchema
+>
+
+// RHF-facing form schema — every field required across all 6 wizard steps, since
+// CreateFARequest hard-requires the full set on a single POST (no partial-draft
+// concept, unlike the Bank Product Template wizard).
+export const FrameworkAgreementWizardFormSchema = z
+  .object({
+    agreement_name: z.string().min(1, "required").max(200),
+    lc_partner_id: z.string().min(1, "required"),
+    lc_partner_name: z.string().optional(),
+    bank_entity: BankEntitySchema,
+    max_volume_eur: z.number().gt(0, "required"),
+    base_rate: z.number().min(0).max(25),
+    spread: z.number().min(-5).max(15),
+    rate_type: RateTypeSchema,
+    effective_rate: z.number(),
+    rate_lock_period_months: z.number().int().min(1).max(360),
+    lg_coverage_rate_override: z.number().optional(),
+    valid_from: z.string().min(1, "required"),
+    valid_until: z.string().optional(),
+    special_conditions: z.string().max(1000).optional(),
+    product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.valid_until !== undefined &&
+      data.valid_until !== "" &&
+      data.valid_until < data.valid_from
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "validUntilBeforeFrom",
+        path: ["valid_until"],
+      })
+    }
+  })
+export type FrameworkAgreementWizardForm = z.infer<
+  typeof FrameworkAgreementWizardFormSchema
+>

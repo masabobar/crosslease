@@ -63,6 +63,7 @@ export const INTERNAL_BANK_ROLES: readonly UserRole[] = [
   "auditor",
   "front_office",
   "back_office",
+  "bank_power_user",
 ]
 
 export const WRITE_ACTION_ROLES: readonly UserRole[] = [
