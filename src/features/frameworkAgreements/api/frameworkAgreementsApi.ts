@@ -33,6 +33,7 @@ import type {
   SuspendFARequest,
   TerminateFARequest,
   TerminationReadinessResponse,
+  UpdateFARequest,
 } from "@/features/frameworkAgreements/api/schema"
 
 export type FrameworkAgreementListParams = {
@@ -163,4 +164,12 @@ export async function fetchFrameworkAgreementFinancings(
 ): Promise<FALinkedFinancingsResponse> {
   const data = await api.get(`/framework-agreements/${id}/financings`)
   return FALinkedFinancingsResponseSchema.parse(data)
+}
+
+export async function updateFrameworkAgreement(
+  id: string,
+  body: UpdateFARequest
+): Promise<FADraftResponse> {
+  const data = await api.patch(`/framework-agreements/${id}`, body)
+  return FADraftResponseSchema.parse(data)
 }

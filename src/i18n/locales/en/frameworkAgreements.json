@@ -217,9 +217,29 @@
     "blockedDescription": "{{count}} linked financing is still active. Resolve it before terminating this agreement.",
     "blockedDescription_other": "{{count}} linked financings are still active. Resolve them before terminating this agreement."
   },
+  "edit": {
+    "dialogTitle": "Edit framework agreement",
+    "identitySection": "Agreement identity",
+    "lockedFieldHint": "Locked — cannot be changed after the agreement leaves Draft.",
+    "validUntilLockedHint": "This agreement has no end date. An end date cannot be introduced after Draft; it can only be extended once one is set.",
+    "templateRemovalHint": "Removing a template is blocked if any in-flight financing draft still references it.",
+    "justification": "Justification",
+    "justificationHint": "Mandatory (min. 30 characters). Stored in the audit trail.",
+    "confirmButton": "Save changes"
+  },
   "errors": {
     "atLeastOneTemplate": "Select at least one Product Template",
     "validUntilBeforeFrom": "Valid Until must be on or after Valid From",
+    "FA_NOT_FOUND": "This framework agreement could not be found.",
+    "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company and bank entity.",
+    "FA_TEMPLATE_NOT_PUBLISHED": "One of the selected product templates is not published.",
+    "FA_EDIT_JUSTIFICATION_REQUIRED": "A justification is required to edit this agreement.",
+    "FA_NOT_EDITABLE": "This agreement cannot be edited in its current status.",
+    "FA_NO_CHANGES": "No changes were made to save.",
+    "FA_VERSION_CONFLICT": "This agreement has changed since you opened this dialog. Reload and try again.",
+    "FA_VALID_UNTIL_SHORTENING": "Valid until can only be extended, not shortened.",
+    "FA_TEMPLATE_IN_USE": "This template cannot be removed while an in-flight financing draft references it.",
+    "FA_IMMUTABLE_FIELDS": "Agreement name and valid from cannot be changed after Draft.",
     "generic": "Something went wrong. Please try again."
   }
 }

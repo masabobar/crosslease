@@ -217,9 +217,29 @@
     "blockedDescription": "{{count}} verknüpfte Finanzierung ist noch aktiv. Klären Sie diese, bevor Sie die Vereinbarung beenden.",
     "blockedDescription_other": "{{count}} verknüpfte Finanzierungen sind noch aktiv. Klären Sie diese, bevor Sie die Vereinbarung beenden."
   },
+  "edit": {
+    "dialogTitle": "Rahmenvereinbarung bearbeiten",
+    "identitySection": "Identität der Vereinbarung",
+    "lockedFieldHint": "Gesperrt — kann nach Verlassen des Entwurfsstatus nicht mehr geändert werden.",
+    "validUntilLockedHint": "Diese Vereinbarung hat kein Enddatum. Nach dem Entwurfsstatus kann kein Enddatum mehr eingeführt werden; ein bestehendes Enddatum kann nur noch verlängert werden.",
+    "templateRemovalHint": "Das Entfernen einer Vorlage wird blockiert, wenn ein laufender Finanzierungsentwurf noch darauf verweist.",
+    "justification": "Begründung",
+    "justificationHint": "Pflichtfeld (mind. 30 Zeichen). Wird im Prüfprotokoll gespeichert.",
+    "confirmButton": "Änderungen speichern"
+  },
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
     "validUntilBeforeFrom": "„Gültig bis“ muss am oder nach „Gültig ab“ liegen",
+    "FA_NOT_FOUND": "Diese Rahmenvereinbarung konnte nicht gefunden werden.",
+    "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft und Bankeinheit existiert bereits eine Vereinbarung mit diesem Namen.",
+    "FA_TEMPLATE_NOT_PUBLISHED": "Eine der ausgewählten Produktvorlagen ist nicht veröffentlicht.",
+    "FA_EDIT_JUSTIFICATION_REQUIRED": "Zum Bearbeiten dieser Vereinbarung ist eine Begründung erforderlich.",
+    "FA_NOT_EDITABLE": "Diese Vereinbarung kann in ihrem aktuellen Status nicht bearbeitet werden.",
+    "FA_NO_CHANGES": "Es wurden keine Änderungen zum Speichern vorgenommen.",
+    "FA_VERSION_CONFLICT": "Diese Vereinbarung wurde geändert, seit Sie diesen Dialog geöffnet haben. Laden Sie neu und versuchen Sie es erneut.",
+    "FA_VALID_UNTIL_SHORTENING": "„Gültig bis“ kann nur verlängert, nicht verkürzt werden.",
+    "FA_TEMPLATE_IN_USE": "Diese Vorlage kann nicht entfernt werden, solange ein laufender Finanzierungsentwurf darauf verweist.",
+    "FA_IMMUTABLE_FIELDS": "Vereinbarungsname und Gültig-ab-Datum können nach dem Entwurfsstatus nicht mehr geändert werden.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }
