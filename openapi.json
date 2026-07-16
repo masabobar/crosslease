@@ -3647,6 +3647,94 @@
         }
       }
     },
+    "/api/v1/partners/{id}/confirm": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Confirm Partner",
+        "description": "Confirm a draft/pending-confirmation partner — single-actor FO action per\nUS 13.5 (Sys Admin ✓, FO ✓, BO/Risk ✗). No Four-Eyes approval (PRD1042-1449);\nrisk-sensitive roles are governed separately via partner_role_assign.",
+        "operationId": "confirm_partner_api_v1_partners__id__confirm_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerConfirmRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/reject": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Reject Partner",
+        "description": "Reject a draft/pending-confirmation partner — single-actor FO action (US 13.5).",
+        "operationId": "reject_partner_api_v1_partners__id__reject_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerRejectRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/{id}/archive": {
       "post": {
         "tags": ["Partners"],
@@ -9473,6 +9561,19 @@
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
       },
+      "PartnerConfirmRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "PartnerConfirmRequest"
+      },
       "PartnerDetailResponse": {
         "properties": {
           "partner_id": { "type": "string", "title": "Partner Id" },
@@ -9620,6 +9721,19 @@
           "inputs_hash"
         ],
         "title": "PartnerMatchResponse"
+      },
+      "PartnerRejectRequest": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["note"],
+        "title": "PartnerRejectRequest"
       },
       "PartnerRole": {
         "type": "string",
