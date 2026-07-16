@@ -11,11 +11,15 @@ import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements
 import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/SuspendFrameworkAgreementDialog"
 import { ReactivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ReactivateFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
+import { EditFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/EditFrameworkAgreementDialog"
+import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
 import NotFoundPage from "@/features/not-found/components/NotFoundPage"
 import { formatDateTime } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 
 const STATUS_BADGE_VARIANT: Record<
   string,
@@ -74,9 +78,15 @@ export default function FrameworkAgreementDetailPage() {
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const { data, isLoading, isError, error } = useFrameworkAgreementDetail(
     id ?? ""
+  )
+  const { data: currentUser } = useCurrentUser()
+  const canManageFrameworkAgreement = Boolean(
+    currentUser?.role &&
+    FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
   )
 
   if (isFrameworkAgreementNotFoundError(error)) {
@@ -122,6 +132,15 @@ export default function FrameworkAgreementDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {data.status !== "terminated" && canManageFrameworkAgreement && (
+            <Button
+              variant="outline"
+              data-testid="edit-fa-button"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              {t("detail.actions.edit")}
+            </Button>
+          )}
           {data.status === "draft" && (
             <Button
               variant="outline"
@@ -178,7 +197,10 @@ export default function FrameworkAgreementDetailPage() {
           >
             {t("detail.tabs.agreementDetails")}
           </TabsTrigger>
-          <TabsTrigger value="templatesAndDocuments" disabled>
+          <TabsTrigger
+            value="templatesAndDocuments"
+            data-testid="tab-templates-and-documents"
+          >
             {t("detail.tabs.templatesAndDocuments")}
           </TabsTrigger>
           <TabsTrigger value="utilization" data-testid="tab-utilization">
@@ -357,6 +379,15 @@ export default function FrameworkAgreementDetailPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="templatesAndDocuments">
+          <TemplatesAndDocumentsTab
+            frameworkAgreementId={data.id}
+            frameworkAgreementStatus={data.status}
+            productTemplateIds={data.product_template_ids}
+            canManageFrameworkAgreement={canManageFrameworkAgreement}
+          />
+        </TabsContent>
+
         <TabsContent value="utilization">
           <UtilizationTab frameworkAgreementId={data.id} />
         </TabsContent>
@@ -385,6 +416,11 @@ export default function FrameworkAgreementDetailPage() {
         open={terminateDialogOpen}
         onOpenChange={setTerminateDialogOpen}
         frameworkAgreementId={data.id}
+      />
+      <EditFrameworkAgreementDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        frameworkAgreement={data}
       />
     </div>
   )

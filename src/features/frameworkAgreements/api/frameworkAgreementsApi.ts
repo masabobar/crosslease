@@ -1,7 +1,9 @@
 import { api } from "@/lib/api"
 import {
   AttachDocumentResponseSchema,
+  DownloadURLResponseSchema,
   FADetailResponseSchema,
+  FADocumentListResponseSchema,
   FADraftResponseSchema,
   FALCPartnersResponseSchema,
   FALinkedFinancingsResponseSchema,
@@ -18,7 +20,9 @@ import type {
   AttachDocumentResponse,
   BankEntity,
   CreateFARequest,
+  DownloadURLResponse,
   FADetailResponse,
+  FADocumentListResponse,
   FADraftResponse,
   FALCPartnersResponse,
   FALifecycleStatus,
@@ -33,6 +37,7 @@ import type {
   SuspendFARequest,
   TerminateFARequest,
   TerminationReadinessResponse,
+  UpdateFARequest,
 } from "@/features/frameworkAgreements/api/schema"
 
 export type FrameworkAgreementListParams = {
@@ -57,6 +62,7 @@ export const FRAMEWORK_AGREEMENTS_QUERY_KEYS = {
     ["framework-agreements", "financings", id] as const,
   terminationReadiness: (id: string) =>
     ["framework-agreements", "termination-readiness", id] as const,
+  documents: (id: string) => ["framework-agreements", "documents", id] as const,
 } as const
 
 export async function fetchFrameworkAgreements(
@@ -163,4 +169,36 @@ export async function fetchFrameworkAgreementFinancings(
 ): Promise<FALinkedFinancingsResponse> {
   const data = await api.get(`/framework-agreements/${id}/financings`)
   return FALinkedFinancingsResponseSchema.parse(data)
+}
+
+export async function updateFrameworkAgreement(
+  id: string,
+  body: UpdateFARequest
+): Promise<FADraftResponse> {
+  const data = await api.patch(`/framework-agreements/${id}`, body)
+  return FADraftResponseSchema.parse(data)
+}
+
+export async function fetchFrameworkAgreementDocuments(
+  faId: string
+): Promise<FADocumentListResponse> {
+  const data = await api.get(`/framework-agreements/${faId}/documents`)
+  return FADocumentListResponseSchema.parse(data)
+}
+
+export async function fetchFrameworkAgreementDocumentDownloadUrl(
+  faId: string,
+  docId: string
+): Promise<DownloadURLResponse> {
+  const data = await api.get(
+    `/framework-agreements/${faId}/documents/${docId}/download-url`
+  )
+  return DownloadURLResponseSchema.parse(data)
+}
+
+export async function detachFrameworkAgreementDocument(
+  faId: string,
+  docId: string
+): Promise<void> {
+  await api.delete(`/framework-agreements/${faId}/documents/${docId}`)
 }

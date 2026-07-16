@@ -995,6 +995,13 @@ const ArchiveEligibilityResponse = z
     risk_sensitive_roles: z.array(z.string()),
   })
   .passthrough()
+const PartnerConfirmRequest = z
+  .object({ note: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const PartnerRejectRequest = z
+  .object({ note: z.string().min(10).max(2000) })
+  .passthrough()
 const ArchivePartnerRequest = z
   .object({ reason: z.string().min(20).max(2000) })
   .passthrough()
@@ -2073,6 +2080,8 @@ export const schemas = {
   DecisionHistoryEntry,
   DecisionHistoryResponse,
   ArchiveEligibilityResponse,
+  PartnerConfirmRequest,
+  PartnerRejectRequest,
   ArchivePartnerRequest,
   ArchivePartnerResponse,
   IdentityChangeProposalRequest,
@@ -3765,6 +3774,35 @@ Post-November: this endpoint will reflect live channel configuration.`,
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/partners/:id/confirm",
+    alias: "confirm_partner_api_v1_partners__id__confirm_post",
+    description: `Confirm a draft/pending-confirmation partner — single-actor FO action per
+US 13.5 (Sys Admin ✓, FO ✓, BO/Risk ✗). No Four-Eyes approval (PRD1042-1449);
+risk-sensitive roles are governed separately via partner_role_assign.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerConfirmRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/partners/:id/confirmation-history",
     alias:
@@ -3914,6 +3952,33 @@ Post-November: this endpoint will reflect live channel configuration.`,
       },
     ],
     response: MergeHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/reject",
+    alias: "reject_partner_api_v1_partners__id__reject_post",
+    description: `Reject a draft/pending-confirmation partner — single-actor FO action (US 13.5).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ note: z.string().min(10).max(2000) }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
     errors: [
       {
         status: 422,

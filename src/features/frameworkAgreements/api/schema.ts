@@ -76,6 +76,69 @@ export const FADraftResponseSchema = z.object({
 })
 export type FADraftResponse = z.infer<typeof FADraftResponseSchema>
 
+// PATCH /framework-agreements/{id} — matches UpdateFARequest in refinext-api fa_schemas.py
+// exactly. Every domain field is optional: the BE dispatches on current status to either
+// update_draft() (agreement_name/valid_from freely editable) or edit_governed()
+// (agreement_name/valid_from rejected as FA_IMMUTABLE_FIELDS if present — the FE never
+// sends them in that case, see EditFrameworkAgreementDialog). justification/
+// expected_version are governed-edit-only on the BE but harmless to always send.
+export const UpdateFARequestSchema = z.object({
+  agreement_name: z.string().min(1).max(200).optional(),
+  max_volume_eur: z.number().gt(0).optional(),
+  base_rate: z.number().min(0).max(25).optional(),
+  spread: z.number().min(-5).max(15).optional(),
+  rate_type: RateTypeSchema.optional(),
+  effective_rate: z.number().optional(),
+  rate_lock_period_months: z.number().int().min(1).max(360).optional(),
+  lg_coverage_rate_override: z.number().optional(),
+  valid_from: z.string().min(1).optional(),
+  valid_until: z.string().optional(),
+  special_conditions: z.string().optional(),
+  product_template_ids: z.array(z.string().uuid()).min(1).optional(),
+  justification: z.string().min(30).max(1000).optional(),
+  expected_version: z.number().int().optional(),
+})
+export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
+
+// RHF-facing form schema for EditFrameworkAgreementDialog/EditFrameworkAgreementFields.
+// Field constraints mirror UpdateFARequestSchema/FrameworkAgreementWizardFormSchema;
+// justification is required+min(30) here (client-side rule) even though the wire schema
+// keeps it optional (BE only requires it for active/suspended). expected_version is a
+// hidden field seeded from FADetailResponse.edit_version_counter when the dialog opens.
+export const EditFrameworkAgreementFormSchema = z
+  .object({
+    agreement_name: z.string().min(1, "required").max(200),
+    max_volume_eur: z.number().gt(0, "required"),
+    base_rate: z.number().min(0).max(25),
+    spread: z.number().min(-5).max(15),
+    rate_type: RateTypeSchema,
+    effective_rate: z.number(),
+    rate_lock_period_months: z.number().int().min(1).max(360),
+    lg_coverage_rate_override: z.number().optional(),
+    valid_from: z.string().min(1, "required"),
+    valid_until: z.string().optional(),
+    special_conditions: z.string().max(1000).optional(),
+    product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
+    justification: z.string().min(30, "required").max(1000),
+    expected_version: z.number().int(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.valid_until !== undefined &&
+      data.valid_until !== "" &&
+      data.valid_until < data.valid_from
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "validUntilBeforeFrom",
+        path: ["valid_until"],
+      })
+    }
+  })
+export type EditFrameworkAgreementFormValues = z.infer<
+  typeof EditFrameworkAgreementFormSchema
+>
+
 // POST /framework-agreements/{id}/activate
 export const ActivateFARequestSchema = z.object({
   documents_confirmed: z.boolean(),
@@ -273,6 +336,23 @@ export const AttachDocumentResponseSchema = z.object({
 export type AttachDocumentResponse = z.infer<
   typeof AttachDocumentResponseSchema
 >
+
+// GET /framework-agreements/{fa_id}/documents — bare array (not {items:[...]}).
+// DocumentListItemResponse on the BE is byte-for-byte identical to
+// AttachDocumentResponse, so reuse it rather than duplicating the shape.
+export const FADocumentListResponseSchema = z.array(
+  AttachDocumentResponseSchema
+)
+export type FADocumentListResponse = z.infer<
+  typeof FADocumentListResponseSchema
+>
+
+// GET /framework-agreements/{fa_id}/documents/{doc_id}/download-url
+export const DownloadURLResponseSchema = z.object({
+  url: z.string(),
+  expires_in_seconds: z.number().int(),
+})
+export type DownloadURLResponse = z.infer<typeof DownloadURLResponseSchema>
 
 // RHF-facing form schema — every field required across all 6 wizard steps, since
 // CreateFARequest hard-requires the full set on a single POST (no partial-draft

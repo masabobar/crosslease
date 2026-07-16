@@ -2,7 +2,10 @@ import { describe, it, expect } from "vitest"
 import {
   ActivateFARequestSchema,
   CreateFARequestSchema,
+  DownloadURLResponseSchema,
+  EditFrameworkAgreementFormSchema,
   FADetailResponseSchema,
+  FADocumentListResponseSchema,
   FADraftResponseSchema,
   FAListItemSchema,
   FAListResponseSchema,
@@ -17,6 +20,7 @@ import {
   SuspendFARequestSchema,
   TerminateFARequestSchema,
   TerminationReadinessResponseSchema,
+  UpdateFARequestSchema,
 } from "@/features/frameworkAgreements/api/schema"
 
 const validCreateRequest = {
@@ -147,6 +151,150 @@ describe("FADraftResponseSchema", () => {
   })
 })
 
+describe("UpdateFARequestSchema", () => {
+  it("accepts a fully populated payload", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({
+        agreement_name: "RV-SSKM-2026-002",
+        max_volume_eur: 30000000,
+        base_rate: 4.5,
+        spread: 0.6,
+        rate_type: "floating",
+        effective_rate: 5.1,
+        rate_lock_period_months: 24,
+        lg_coverage_rate_override: 4.4,
+        valid_from: "2026-06-01",
+        valid_until: "2029-06-01",
+        special_conditions: "Reviewed annually",
+        product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
+        justification: "Adjusting envelope after annual credit review",
+        expected_version: 3,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts a partial payload — every field is independently optional", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ max_volume_eur: 30000000 })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty payload", () => {
+    expect(() => UpdateFARequestSchema.parse({})).not.toThrow()
+  })
+
+  it("rejects an unknown rate_type", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ rate_type: "unknown_rate" })
+    ).toThrow()
+  })
+
+  it.each([
+    ["base_rate", 30],
+    ["spread", 20],
+    ["rate_lock_period_months", 400],
+    ["max_volume_eur", 0],
+  ])("rejects out-of-range %s", (field, value) => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ [field as string]: value })
+    ).toThrow()
+  })
+
+  it("rejects a justification shorter than 30 characters", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ justification: "too short" })
+    ).toThrow()
+  })
+
+  it("accepts a payload with justification omitted", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ max_volume_eur: 30000000 })
+    ).not.toThrow()
+  })
+
+  it("rejects an empty product_template_ids array", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ product_template_ids: [] })
+    ).toThrow()
+  })
+
+  it("rejects a non-numeric expected_version", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ expected_version: "3" })
+    ).toThrow()
+  })
+
+  it("accepts a numeric expected_version", () => {
+    expect(() =>
+      UpdateFARequestSchema.parse({ expected_version: 3 })
+    ).not.toThrow()
+  })
+})
+
+describe("EditFrameworkAgreementFormSchema", () => {
+  const validEditForm = {
+    agreement_name: "RV-SSKM-2026-002",
+    max_volume_eur: 30000000,
+    base_rate: 4.5,
+    spread: 0.6,
+    rate_type: "floating",
+    effective_rate: 5.1,
+    rate_lock_period_months: 24,
+    valid_from: "2026-06-01",
+    product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
+    justification: "Adjusting envelope after annual credit review",
+    expected_version: 3,
+  }
+
+  it("accepts a fully valid form", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse(validEditForm)
+    ).not.toThrow()
+  })
+
+  it("rejects a missing justification", () => {
+    const rest = { ...validEditForm } as Record<string, unknown>
+    delete rest.justification
+    expect(() => EditFrameworkAgreementFormSchema.parse(rest)).toThrow()
+  })
+
+  it("rejects a justification shorter than 30 characters", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        justification: "too short",
+      })
+    ).toThrow()
+  })
+
+  it("rejects an empty product_template_ids array", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        product_template_ids: [],
+      })
+    ).toThrow()
+  })
+
+  it("rejects valid_until before valid_from", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        valid_until: "2025-01-01",
+      })
+    ).toThrow()
+  })
+
+  it("accepts valid_until on or after valid_from", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        valid_until: "2029-06-01",
+      })
+    ).not.toThrow()
+  })
+})
+
 describe("ActivateFARequestSchema", () => {
   it("accepts a valid activation payload", () => {
     expect(() =>
@@ -255,6 +403,71 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
     expect(() =>
       SelectableTemplatesResponseSchema.parse({ items: [validItem] })
     ).not.toThrow()
+  })
+})
+
+describe("FADocumentListResponseSchema", () => {
+  const validDocument = {
+    id: "b3e1c9a0-1111-4a2b-8c3d-000000000005",
+    framework_agreement_id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
+    document_type: "original_agreement",
+    document_label: "Signed original",
+    file_name: "agreement.pdf",
+    file_size_bytes: 102400,
+    mime_type: "application/pdf",
+    lc_visible: true,
+    uploaded_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
+    uploaded_at: "2026-06-01T10:00:00Z",
+  }
+
+  it("accepts a valid array of documents", () => {
+    const parsed = FADocumentListResponseSchema.parse([
+      validDocument,
+      { ...validDocument, id: "b3e1c9a0-1111-4a2b-8c3d-000000000006" },
+    ])
+    expect(parsed).toHaveLength(2)
+  })
+
+  it("accepts an empty array", () => {
+    expect(() => FADocumentListResponseSchema.parse([])).not.toThrow()
+  })
+
+  it("rejects a wrapped {items: [...]} shape", () => {
+    expect(
+      FADocumentListResponseSchema.safeParse({ items: [validDocument] }).success
+    ).toBe(false)
+  })
+
+  it("rejects an array item missing a required field", () => {
+    const rest = { ...validDocument } as Record<string, unknown>
+    delete rest.document_type
+    expect(() => FADocumentListResponseSchema.parse([rest])).toThrow()
+  })
+})
+
+describe("DownloadURLResponseSchema", () => {
+  it("accepts a valid download-url response", () => {
+    expect(() =>
+      DownloadURLResponseSchema.parse({
+        url: "https://example.com/signed-url",
+        expires_in_seconds: 300,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-integer expires_in_seconds", () => {
+    expect(() =>
+      DownloadURLResponseSchema.parse({
+        url: "https://example.com/signed-url",
+        expires_in_seconds: 300.5,
+      })
+    ).toThrow()
+  })
+
+  it("rejects a missing url", () => {
+    expect(() =>
+      DownloadURLResponseSchema.parse({ expires_in_seconds: 300 })
+    ).toThrow()
   })
 })
 
