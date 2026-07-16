@@ -143,7 +143,13 @@ export default function ProductTemplateListPage() {
             data-testid="filter-status"
             className="w-[200px] px-[10px] py-[4px]"
           >
-            <SelectValue />
+            <SelectValue>
+              {statusFilter
+                ? t(
+                    `versionStatuses.${statusFilter}` as "versionStatuses.draft"
+                  )
+                : t("list.filters.allStatuses")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_STATUSES_VALUE}>

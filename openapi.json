@@ -10671,6 +10671,14 @@
             "type": "string",
             "minLength": 30,
             "title": "Justification"
+          },
+          "effective_from": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Effective From",
+            "description": "Suspension start — omitted/past for immediate on countersignature, future for scheduled"
           }
         },
         "type": "object",
