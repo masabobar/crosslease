@@ -217,6 +217,25 @@
     "blockedDescription": "{{count}} verknüpfte Finanzierung ist noch aktiv. Klären Sie diese, bevor Sie die Vereinbarung beenden.",
     "blockedDescription_other": "{{count}} verknüpfte Finanzierungen sind noch aktiv. Klären Sie diese, bevor Sie die Vereinbarung beenden."
   },
+  "documentsTab": {
+    "attachButton": "Dokument anhängen",
+    "downloadButton": "Herunterladen",
+    "detachButton": "Entfernen",
+    "limitReachedHint": "Maximal 10 Dokumente erreicht. Entfernen Sie ein Dokument, um ein neues anzuhängen.",
+    "documentsEmptyState": "Noch keine Dokumente angehängt",
+    "templatesEmptyState": "Keine Produktvorlagen verknüpft",
+    "templateUnresolved": "Vorlage nicht mehr verfügbar",
+    "attachDialog": {
+      "title": "Dokument anhängen",
+      "confirmButton": "Anhängen"
+    },
+    "detachConfirm": {
+      "title": "Dieses Dokument entfernen?",
+      "description": "„{{fileName}}“ wird von dieser Vereinbarung entfernt. Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Entfernen"
+    }
+  },
   "edit": {
     "dialogTitle": "Rahmenvereinbarung bearbeiten",
     "identitySection": "Identität der Vereinbarung",
@@ -240,6 +259,11 @@
     "FA_VALID_UNTIL_SHORTENING": "„Gültig bis“ kann nur verlängert, nicht verkürzt werden.",
     "FA_TEMPLATE_IN_USE": "Diese Vorlage kann nicht entfernt werden, solange ein laufender Finanzierungsentwurf darauf verweist.",
     "FA_IMMUTABLE_FIELDS": "Vereinbarungsname und Gültig-ab-Datum können nach dem Entwurfsstatus nicht mehr geändert werden.",
+    "FA_DOC_NOT_FOUND": "Dieses Dokument konnte nicht gefunden werden.",
+    "FA_DOC_LIMIT_EXCEEDED": "Für diese Vereinbarung sind bereits maximal 10 Dokumente angehängt.",
+    "FA_DOC_INVALID_MIME": "Nur PDF-Dateien werden unterstützt.",
+    "FA_DOC_FILE_TOO_LARGE": "Die Datei ist zu groß. Maximale Größe: 25 MB.",
+    "FA_DOC_IMMUTABLE": "Dokumente können nur im Entwurfsstatus angehängt oder entfernt werden.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

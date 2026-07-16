@@ -337,6 +337,23 @@ export type AttachDocumentResponse = z.infer<
   typeof AttachDocumentResponseSchema
 >
 
+// GET /framework-agreements/{fa_id}/documents — bare array (not {items:[...]}).
+// DocumentListItemResponse on the BE is byte-for-byte identical to
+// AttachDocumentResponse, so reuse it rather than duplicating the shape.
+export const FADocumentListResponseSchema = z.array(
+  AttachDocumentResponseSchema
+)
+export type FADocumentListResponse = z.infer<
+  typeof FADocumentListResponseSchema
+>
+
+// GET /framework-agreements/{fa_id}/documents/{doc_id}/download-url
+export const DownloadURLResponseSchema = z.object({
+  url: z.string(),
+  expires_in_seconds: z.number().int(),
+})
+export type DownloadURLResponse = z.infer<typeof DownloadURLResponseSchema>
+
 // RHF-facing form schema — every field required across all 6 wizard steps, since
 // CreateFARequest hard-requires the full set on a single POST (no partial-draft
 // concept, unlike the Bank Product Template wizard).

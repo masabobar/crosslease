@@ -12,6 +12,7 @@ import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/
 import { ReactivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ReactivateFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
 import { EditFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/EditFrameworkAgreementDialog"
+import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
 import NotFoundPage from "@/features/not-found/components/NotFoundPage"
@@ -196,7 +197,10 @@ export default function FrameworkAgreementDetailPage() {
           >
             {t("detail.tabs.agreementDetails")}
           </TabsTrigger>
-          <TabsTrigger value="templatesAndDocuments" disabled>
+          <TabsTrigger
+            value="templatesAndDocuments"
+            data-testid="tab-templates-and-documents"
+          >
             {t("detail.tabs.templatesAndDocuments")}
           </TabsTrigger>
           <TabsTrigger value="utilization" data-testid="tab-utilization">
@@ -373,6 +377,15 @@ export default function FrameworkAgreementDetailPage() {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="templatesAndDocuments">
+          <TemplatesAndDocumentsTab
+            frameworkAgreementId={data.id}
+            frameworkAgreementStatus={data.status}
+            productTemplateIds={data.product_template_ids}
+            canManageFrameworkAgreement={canManageFrameworkAgreement}
+          />
         </TabsContent>
 
         <TabsContent value="utilization">

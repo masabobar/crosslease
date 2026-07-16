@@ -217,6 +217,25 @@
     "blockedDescription": "{{count}} linked financing is still active. Resolve it before terminating this agreement.",
     "blockedDescription_other": "{{count}} linked financings are still active. Resolve them before terminating this agreement."
   },
+  "documentsTab": {
+    "attachButton": "Attach document",
+    "downloadButton": "Download",
+    "detachButton": "Detach",
+    "limitReachedHint": "Maximum of 10 documents reached. Detach a document to attach a new one.",
+    "documentsEmptyState": "No documents attached yet",
+    "templatesEmptyState": "No product templates linked",
+    "templateUnresolved": "Template no longer available",
+    "attachDialog": {
+      "title": "Attach document",
+      "confirmButton": "Attach"
+    },
+    "detachConfirm": {
+      "title": "Detach this document?",
+      "description": "\"{{fileName}}\" will be removed from this agreement. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Detach"
+    }
+  },
   "edit": {
     "dialogTitle": "Edit framework agreement",
     "identitySection": "Agreement identity",
@@ -240,6 +259,11 @@
     "FA_VALID_UNTIL_SHORTENING": "Valid until can only be extended, not shortened.",
     "FA_TEMPLATE_IN_USE": "This template cannot be removed while an in-flight financing draft references it.",
     "FA_IMMUTABLE_FIELDS": "Agreement name and valid from cannot be changed after Draft.",
+    "FA_DOC_NOT_FOUND": "This document could not be found.",
+    "FA_DOC_LIMIT_EXCEEDED": "Maximum of 10 documents already attached to this agreement.",
+    "FA_DOC_INVALID_MIME": "Only PDF files are supported.",
+    "FA_DOC_FILE_TOO_LARGE": "File is too large. Maximum size is 25 MB.",
+    "FA_DOC_IMMUTABLE": "Documents can only be attached or removed while this agreement is in Draft status.",
     "generic": "Something went wrong. Please try again."
   }
 }

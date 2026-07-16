@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest"
 import {
   ActivateFARequestSchema,
   CreateFARequestSchema,
+  DownloadURLResponseSchema,
   EditFrameworkAgreementFormSchema,
   FADetailResponseSchema,
+  FADocumentListResponseSchema,
   FADraftResponseSchema,
   FAListItemSchema,
   FAListResponseSchema,
@@ -401,6 +403,71 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
     expect(() =>
       SelectableTemplatesResponseSchema.parse({ items: [validItem] })
     ).not.toThrow()
+  })
+})
+
+describe("FADocumentListResponseSchema", () => {
+  const validDocument = {
+    id: "b3e1c9a0-1111-4a2b-8c3d-000000000005",
+    framework_agreement_id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
+    document_type: "original_agreement",
+    document_label: "Signed original",
+    file_name: "agreement.pdf",
+    file_size_bytes: 102400,
+    mime_type: "application/pdf",
+    lc_visible: true,
+    uploaded_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
+    uploaded_at: "2026-06-01T10:00:00Z",
+  }
+
+  it("accepts a valid array of documents", () => {
+    const parsed = FADocumentListResponseSchema.parse([
+      validDocument,
+      { ...validDocument, id: "b3e1c9a0-1111-4a2b-8c3d-000000000006" },
+    ])
+    expect(parsed).toHaveLength(2)
+  })
+
+  it("accepts an empty array", () => {
+    expect(() => FADocumentListResponseSchema.parse([])).not.toThrow()
+  })
+
+  it("rejects a wrapped {items: [...]} shape", () => {
+    expect(
+      FADocumentListResponseSchema.safeParse({ items: [validDocument] }).success
+    ).toBe(false)
+  })
+
+  it("rejects an array item missing a required field", () => {
+    const rest = { ...validDocument } as Record<string, unknown>
+    delete rest.document_type
+    expect(() => FADocumentListResponseSchema.parse([rest])).toThrow()
+  })
+})
+
+describe("DownloadURLResponseSchema", () => {
+  it("accepts a valid download-url response", () => {
+    expect(() =>
+      DownloadURLResponseSchema.parse({
+        url: "https://example.com/signed-url",
+        expires_in_seconds: 300,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-integer expires_in_seconds", () => {
+    expect(() =>
+      DownloadURLResponseSchema.parse({
+        url: "https://example.com/signed-url",
+        expires_in_seconds: 300.5,
+      })
+    ).toThrow()
+  })
+
+  it("rejects a missing url", () => {
+    expect(() =>
+      DownloadURLResponseSchema.parse({ expires_in_seconds: 300 })
+    ).toThrow()
   })
 })
 
