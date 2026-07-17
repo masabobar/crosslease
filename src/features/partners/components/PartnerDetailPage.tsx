@@ -2,7 +2,15 @@ import { useState } from "react"
 import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
-import { Archive, SquarePen, SquareCode, Landmark, MapPin } from "lucide-react"
+import {
+  Archive,
+  CircleCheck,
+  CircleX,
+  SquarePen,
+  SquareCode,
+  Landmark,
+  MapPin,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
@@ -19,6 +27,8 @@ import { ConfirmationHistoryTab } from "@/features/partners/components/tabs/Conf
 import { MergeHistoryTab } from "@/features/partners/components/tabs/MergeHistoryTab"
 import { DecisionHistoryTab } from "@/features/partners/components/tabs/DecisionHistoryTab"
 import { ArchivePartnerDialog } from "@/features/partners/components/ArchivePartnerDialog"
+import { ConfirmPartnerDialog } from "@/features/partners/components/ConfirmPartnerDialog"
+import { RejectPartnerDialog } from "@/features/partners/components/RejectPartnerDialog"
 import { ProposeIdentityChangeDialog } from "@/features/partners/components/ProposeIdentityChangeDialog"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -59,11 +69,20 @@ export default function PartnerDetailPage() {
   })
 
   const [archiveOpen, setArchiveOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
   const [proposeOpen, setProposeOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
 
   const canAction =
     !!currentUser && PARTNER_SUBMIT_ALLOWED_ROLES.includes(currentUser.role)
+
+  // Draft → Confirmed is a single-actor FO action per US 13.5 (PRD1042-1449);
+  // BO/Risk is not in this flow.
+  const canConfirmOrReject =
+    canAction &&
+    (partner?.status === PartnerStatusSchema.enum.draft ||
+      partner?.status === PartnerStatusSchema.enum.pending_confirmation)
 
   const canArchive =
     canAction && partner?.status === PartnerStatusSchema.enum.confirmed
@@ -116,6 +135,29 @@ export default function PartnerDetailPage() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 shrink-0">
+            {canConfirmOrReject && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRejectOpen(true)}
+                  data-testid="action-reject-partner"
+                  className="gap-1.5 text-destructive"
+                >
+                  <CircleX size={14} />
+                  {t("rejectDialog.triggerButton")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setConfirmOpen(true)}
+                  data-testid="action-confirm-partner"
+                  className="gap-1.5"
+                >
+                  <CircleCheck size={14} />
+                  {t("confirmDialog.triggerButton")}
+                </Button>
+              </>
+            )}
             {canProposeIdentityChange && (
               <Button
                 variant="outline"
@@ -273,6 +315,20 @@ export default function PartnerDetailPage() {
       </div>
 
       {/* Dialogs */}
+      <ConfirmPartnerDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        partnerId={partner.partner_id}
+        partnerName={partner.display_name}
+        partnerStatus={partner.status}
+      />
+      <RejectPartnerDialog
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        partnerId={partner.partner_id}
+        partnerName={partner.display_name}
+        partnerStatus={partner.status}
+      />
       <ArchivePartnerDialog
         open={archiveOpen}
         onOpenChange={setArchiveOpen}
