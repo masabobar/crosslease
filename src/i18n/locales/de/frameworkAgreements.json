@@ -156,14 +156,14 @@
     },
     "sections": {
       "identity": "Identität",
-      "envelopeAndPricing": "Rahmen & Preisgestaltung",
       "creditEnvelope": "Kreditrahmen",
-      "validity": "Gültigkeit",
+      "pricing": "Preisgestaltung",
       "lifecycle": "Lebenszyklus",
       "specialConditions": "Besondere Bedingungen"
     },
     "fields": {
       "agreementId": "Vereinbarungs-ID",
+      "status": "Status",
       "createdBy": "Erstellt von",
       "createdAt": "Erstellt am",
       "activatedBy": "Aktiviert von",
@@ -247,6 +247,8 @@
     "confirmButton": "Änderungen speichern"
   },
   "auditHistory": {
+    "viewEventLog": "Ereignisprotokoll",
+    "viewReconstruct": "Rekonstruieren",
     "sectionTitle": "Prüfprotokoll",
     "searchPlaceholder": "Suchen",
     "filterEventType": "Ereignistyp",
@@ -259,6 +261,7 @@
     "loadingMore": "Lädt…",
     "reconstructTitle": "Vereinbarungsstatus zu einem Zeitpunkt anzeigen",
     "reconstructButton": "Status anzeigen",
+    "reconstructBanner": "Zeigt den rekonstruierten Vereinbarungsstatus zum {{date}}. Dies ist eine schreibgeschützte historische Ansicht.",
     "eventsReplayed": "{{count}} Ereignis wiedergegeben",
     "eventsReplayed_other": "{{count}} Ereignisse wiedergegeben",
     "exportReasonPlaceholder": "Grund (erforderlich für Back Office)",

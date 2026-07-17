@@ -23,6 +23,19 @@ import type { UserRole } from "@/features/users/types"
 
 const AUDIT_HISTORY_PAGE_SIZE = 50
 
+type AuditView = "eventLog" | "reconstruct"
+
+// Primary fields highlighted on the reconstructed-state card, in display order —
+// matches the Figma "RECONSTRUCT" section. Any other field the BE snapshot
+// includes still renders below via the generic fallback, so nothing is hidden.
+// "status" is handled separately (below) since its label isn't a plain fields.* key.
+const RECONSTRUCT_PRIMARY_FIELDS = [
+  { key: "max_volume_eur", labelKey: "fields.maxVolumeEur" as const },
+  { key: "valid_until", labelKey: "fields.validUntil" as const },
+  { key: "base_rate", labelKey: "fields.baseRate" as const },
+  { key: "effective_rate", labelKey: "fields.effectiveRate" as const },
+]
+
 function formatDiffValue(value: unknown): string {
   if (value === null || value === undefined) return "—"
   if (typeof value === "object") return JSON.stringify(value)
@@ -94,6 +107,7 @@ type Props = {
 
 function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
   const { t } = useTranslation("frameworkAgreements")
+  const [activeView, setActiveView] = useState<AuditView>("eventLog")
   const [search, setSearch] = useState("")
   const [eventTypeFilters, setEventTypeFilters] = useState<FAEventTypeFilter[]>(
     []
@@ -182,232 +196,326 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
 
   const hasActiveFilters = eventTypeFilters.length > 0 || !!fromDate || !!toDate
 
+  function renderStateFieldValue(key: string, value: unknown): string {
+    if (key === "status" && typeof value === "string") {
+      return t(`statuses.${value}` as "statuses.active", {
+        defaultValue: value,
+      })
+    }
+    if ((key === "base_rate" || key === "effective_rate") && value !== null) {
+      return `${formatDiffValue(value)}%`
+    }
+    if (key === "valid_until" && value === null) {
+      return t("fields.openEnded")
+    }
+    return formatDiffValue(value)
+  }
+
   return (
     <div
       className="flex flex-col gap-4 mt-4"
       data-testid="fa-audit-history-tab"
     >
-      <div className="flex items-center gap-6 flex-wrap">
-        <SearchInput
-          placeholder={t("auditHistory.searchPlaceholder")}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-72"
-        />
-        <div className="flex items-center gap-2">
-          <FilterButton
-            label={t("auditHistory.filterEventType")}
-            count={eventTypeFilters.length}
-            contentClassName="w-64"
-            data-testid="audit-filter-event-type"
-          >
-            <div className="max-h-72 overflow-y-auto py-1">
-              {FAEventTypeFilterSchema.options.map(type => {
-                const checked = eventTypeFilters.includes(type)
-                return (
-                  <Button
-                    key={type}
-                    variant="ghost"
-                    onClick={() => toggleEventType(type)}
-                    className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-                    data-testid={`audit-filter-event-type-${type}`}
-                  >
-                    <span
-                      className={`shrink-0 size-4 rounded border flex items-center justify-center transition-colors ${
-                        checked ? "bg-primary border-primary" : "border-border"
-                      }`}
-                    >
-                      {checked && <Check size={10} className="text-white" />}
-                    </span>
-                    <span className="text-sm text-foreground">
-                      {t(
-                        `auditHistory.eventTypes.${type}` as "auditHistory.eventTypes.edited",
-                        { defaultValue: type }
-                      )}
-                    </span>
-                  </Button>
-                )
-              })}
-            </div>
-          </FilterButton>
-
-          <FilterButton
-            label={t("auditHistory.filterDateRange")}
-            count={[fromDate, toDate].filter(Boolean).length}
-            icon="calendar"
-            contentClassName="w-72 py-0"
-            data-testid="audit-filter-date-range"
-          >
-            <div className="p-3">
-              <div className="flex gap-2">
-                <DatePicker
-                  value={fromDate ?? undefined}
-                  onChange={v => setFromDate(v)}
-                  placeholder={t("auditHistory.from")}
-                  maxDate={new Date()}
-                />
-                <DatePicker
-                  value={toDate ?? undefined}
-                  onChange={v => setToDate(v)}
-                  placeholder={t("auditHistory.to")}
-                  maxDate={new Date()}
-                />
-              </div>
-            </div>
-          </FilterButton>
-        </div>
+      <div className="flex items-center gap-2 self-end">
+        <Button
+          type="button"
+          variant={activeView === "eventLog" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveView("eventLog")}
+          data-testid="audit-view-event-log"
+        >
+          {t("auditHistory.viewEventLog")}
+        </Button>
+        <Button
+          type="button"
+          variant={activeView === "reconstruct" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveView("reconstruct")}
+          data-testid="audit-view-reconstruct"
+        >
+          {t("auditHistory.viewReconstruct")}
+        </Button>
       </div>
 
-      {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2">
-          {eventTypeFilters.map(type => (
-            <FilterPill
-              key={type}
-              label={t(
-                `auditHistory.eventTypes.${type}` as "auditHistory.eventTypes.edited",
-                { defaultValue: type }
-              )}
-              onRemove={() => toggleEventType(type)}
-              data-testid={`audit-filter-pill-${type}`}
+      {activeView === "reconstruct" ? (
+        <SectionCard title={t("auditHistory.reconstructTitle")}>
+          <div className="flex items-end gap-2 flex-wrap">
+            <Input
+              type="datetime-local"
+              value={asOfInput}
+              onChange={e => setAsOfInput(e.target.value)}
+              max={new Date().toISOString().slice(0, 16)}
+              className="w-56"
+              data-testid="audit-reconstruct-as-of"
             />
-          ))}
-          {(fromDate || toDate) && (
-            <FilterPill
-              label={[fromDate, toDate].filter(Boolean).join(" – ")}
-              onRemove={() => {
-                setFromDate(null)
-                setToDate(null)
-              }}
-              data-testid="audit-filter-pill-date"
-            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleReconstruct}
+              disabled={!asOfInput}
+              data-testid="audit-reconstruct-submit"
+            >
+              {t("auditHistory.reconstructButton")}
+            </Button>
+          </div>
+
+          {reconstructQuery.isFetching && (
+            <p className="text-sm text-muted-foreground">…</p>
           )}
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={clearAllFilters}
-            data-testid="audit-filter-clear-all"
-            className="h-auto px-2 py-0 text-xs font-normal text-destructive hover:text-destructive hover:bg-transparent hover:opacity-80 transition-opacity"
-          >
-            {t("auditHistory.clearAll")}
-          </Button>
-        </div>
-      )}
-
-      <SectionCard title={t("auditHistory.reconstructTitle")}>
-        <div className="flex items-end gap-2 flex-wrap">
-          <Input
-            type="datetime-local"
-            value={asOfInput}
-            onChange={e => setAsOfInput(e.target.value)}
-            max={new Date().toISOString().slice(0, 16)}
-            className="w-56"
-            data-testid="audit-reconstruct-as-of"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleReconstruct}
-            disabled={!asOfInput}
-            data-testid="audit-reconstruct-submit"
-          >
-            {t("auditHistory.reconstructButton")}
-          </Button>
-        </div>
-
-        {reconstructQuery.isFetching && (
-          <p className="text-sm text-muted-foreground">…</p>
-        )}
-        {reconstructQuery.isError && (
-          <p className="text-sm text-destructive">
-            {reconstructQuery.error instanceof ApiError
-              ? t(`errors.${reconstructQuery.error.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")}
-          </p>
-        )}
-        {reconstructQuery.data && (
-          <div
-            className="flex flex-col gap-2 rounded-lg border border-border p-3"
-            data-testid="audit-reconstruct-state"
-          >
-            <p className="text-xs text-muted-foreground">
-              {t("auditHistory.eventsReplayed", {
-                count: reconstructQuery.data.events_replayed,
-              })}
+          {reconstructQuery.isError && (
+            <p className="text-sm text-destructive">
+              {reconstructQuery.error instanceof ApiError
+                ? t(
+                    `errors.${reconstructQuery.error.code}` as "errors.generic",
+                    { defaultValue: t("errors.generic") }
+                  )
+                : t("errors.generic")}
             </p>
-            {Object.entries(reconstructQuery.data.state).map(
-              ([field, value]) => (
-                <div key={field} className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground">{field}:</span>
-                  <span className="text-foreground">
-                    {formatDiffValue(value)}
-                  </span>
+          )}
+          {reconstructQuery.data &&
+            (() => {
+              const { state } = reconstructQuery.data
+              const primaryKeys = new Set([
+                "status",
+                ...RECONSTRUCT_PRIMARY_FIELDS.map(f => f.key),
+              ])
+              const otherEntries = Object.entries(state).filter(
+                ([key]) => !primaryKeys.has(key)
+              )
+              return (
+                <div className="flex flex-col gap-3">
+                  <p
+                    className="text-xs text-foreground rounded-lg bg-muted px-3 py-2"
+                    data-testid="audit-reconstruct-banner"
+                  >
+                    {t("auditHistory.reconstructBanner", {
+                      date: formatDateTime(reconstructQuery.data.as_of),
+                    })}
+                  </p>
+                  <div
+                    className="flex flex-col gap-2 rounded-lg border border-border p-3"
+                    data-testid="audit-reconstruct-state"
+                  >
+                    <p className="text-xs text-muted-foreground">
+                      {t("auditHistory.eventsReplayed", {
+                        count: reconstructQuery.data.events_replayed,
+                      })}
+                    </p>
+                    {Object.hasOwn(state, "status") && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">
+                          {t("detail.fields.status")}:
+                        </span>
+                        <span className="text-foreground">
+                          {renderStateFieldValue("status", state.status)}
+                        </span>
+                      </div>
+                    )}
+                    {RECONSTRUCT_PRIMARY_FIELDS.filter(({ key }) =>
+                      Object.hasOwn(state, key)
+                    ).map(({ key, labelKey }) => (
+                      <div
+                        key={key}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        <span className="text-muted-foreground">
+                          {t(labelKey)}:
+                        </span>
+                        <span className="text-foreground">
+                          {renderStateFieldValue(key, state[key])}
+                        </span>
+                      </div>
+                    ))}
+                    {otherEntries.map(([field, value]) => (
+                      <div
+                        key={field}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        <span className="text-muted-foreground">{field}:</span>
+                        <span className="text-foreground">
+                          {formatDiffValue(value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )
-            )}
+            })()}
+        </SectionCard>
+      ) : (
+        <>
+          <div className="flex items-center gap-6 flex-wrap">
+            <SearchInput
+              placeholder={t("auditHistory.searchPlaceholder")}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-72"
+            />
+            <div className="flex items-center gap-2">
+              <FilterButton
+                label={t("auditHistory.filterEventType")}
+                count={eventTypeFilters.length}
+                contentClassName="w-64"
+                data-testid="audit-filter-event-type"
+              >
+                <div className="max-h-72 overflow-y-auto py-1">
+                  {FAEventTypeFilterSchema.options.map(type => {
+                    const checked = eventTypeFilters.includes(type)
+                    return (
+                      <Button
+                        key={type}
+                        variant="ghost"
+                        onClick={() => toggleEventType(type)}
+                        className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
+                        data-testid={`audit-filter-event-type-${type}`}
+                      >
+                        <span
+                          className={`shrink-0 size-4 rounded border flex items-center justify-center transition-colors ${
+                            checked
+                              ? "bg-primary border-primary"
+                              : "border-border"
+                          }`}
+                        >
+                          {checked && (
+                            <Check size={10} className="text-white" />
+                          )}
+                        </span>
+                        <span className="text-sm text-foreground">
+                          {t(
+                            `auditHistory.eventTypes.${type}` as "auditHistory.eventTypes.edited",
+                            { defaultValue: type }
+                          )}
+                        </span>
+                      </Button>
+                    )
+                  })}
+                </div>
+              </FilterButton>
+
+              <FilterButton
+                label={t("auditHistory.filterDateRange")}
+                count={[fromDate, toDate].filter(Boolean).length}
+                icon="calendar"
+                contentClassName="w-72 py-0"
+                data-testid="audit-filter-date-range"
+              >
+                <div className="p-3">
+                  <div className="flex gap-2">
+                    <DatePicker
+                      value={fromDate ?? undefined}
+                      onChange={v => setFromDate(v)}
+                      placeholder={t("auditHistory.from")}
+                      maxDate={new Date()}
+                    />
+                    <DatePicker
+                      value={toDate ?? undefined}
+                      onChange={v => setToDate(v)}
+                      placeholder={t("auditHistory.to")}
+                      maxDate={new Date()}
+                    />
+                  </div>
+                </div>
+              </FilterButton>
+            </div>
           </div>
-        )}
-      </SectionCard>
 
-      <SectionCard title={t("auditHistory.sectionTitle")}>
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <Input
-            placeholder={t("auditHistory.exportReasonPlaceholder")}
-            value={exportReason}
-            onChange={e => setExportReason(e.target.value)}
-            className="w-64"
-            data-testid="audit-export-reason"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleExport}
-            disabled={
-              exportMutation.isPending ||
-              (reasonRequired && !exportReason.trim())
-            }
-            data-testid="audit-export-button"
-          >
-            {t("auditHistory.exportButton")}
-          </Button>
-        </div>
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2">
+              {eventTypeFilters.map(type => (
+                <FilterPill
+                  key={type}
+                  label={t(
+                    `auditHistory.eventTypes.${type}` as "auditHistory.eventTypes.edited",
+                    { defaultValue: type }
+                  )}
+                  onRemove={() => toggleEventType(type)}
+                  data-testid={`audit-filter-pill-${type}`}
+                />
+              ))}
+              {(fromDate || toDate) && (
+                <FilterPill
+                  label={[fromDate, toDate].filter(Boolean).join(" – ")}
+                  onRemove={() => {
+                    setFromDate(null)
+                    setToDate(null)
+                  }}
+                  data-testid="audit-filter-pill-date"
+                />
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={clearAllFilters}
+                data-testid="audit-filter-clear-all"
+                className="h-auto px-2 py-0 text-xs font-normal text-destructive hover:text-destructive hover:bg-transparent hover:opacity-80 transition-opacity"
+              >
+                {t("auditHistory.clearAll")}
+              </Button>
+            </div>
+          )}
 
-        {isLoading && <div className="h-48 animate-pulse bg-muted rounded" />}
+          <SectionCard title={t("auditHistory.sectionTitle")}>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <Input
+                placeholder={t("auditHistory.exportReasonPlaceholder")}
+                value={exportReason}
+                onChange={e => setExportReason(e.target.value)}
+                className="w-64"
+                data-testid="audit-export-reason"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleExport}
+                disabled={
+                  exportMutation.isPending ||
+                  (reasonRequired && !exportReason.trim())
+                }
+                data-testid="audit-export-button"
+              >
+                {t("auditHistory.exportButton")}
+              </Button>
+            </div>
 
-        {isError && !isLoading && (
-          <p className="text-sm text-destructive">{t("errors.generic")}</p>
-        )}
-
-        {!isLoading && !isError && events.length === 0 && (
-          <p className="text-sm text-muted-foreground py-4 text-center">
-            {t("auditHistory.noEvents")}
-          </p>
-        )}
-
-        {!isLoading && !isError && events.length > 0 && (
-          <>
-            {events.map(event => (
-              <EventCard key={event.id} event={event} />
-            ))}
-            {hasNextPage && (
-              <div className="pt-3 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  data-testid="audit-load-more"
-                >
-                  {isFetchingNextPage
-                    ? t("auditHistory.loadingMore")
-                    : t("auditHistory.loadMore")}
-                </Button>
-              </div>
+            {isLoading && (
+              <div className="h-48 animate-pulse bg-muted rounded" />
             )}
-          </>
-        )}
-      </SectionCard>
+
+            {isError && !isLoading && (
+              <p className="text-sm text-destructive">{t("errors.generic")}</p>
+            )}
+
+            {!isLoading && !isError && events.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {t("auditHistory.noEvents")}
+              </p>
+            )}
+
+            {!isLoading && !isError && events.length > 0 && (
+              <>
+                {events.map(event => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+                {hasNextPage && (
+                  <div className="pt-3 flex justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      data-testid="audit-load-more"
+                    >
+                      {isFetchingNextPage
+                        ? t("auditHistory.loadingMore")
+                        : t("auditHistory.loadMore")}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </SectionCard>
+        </>
+      )}
     </div>
   )
 }
