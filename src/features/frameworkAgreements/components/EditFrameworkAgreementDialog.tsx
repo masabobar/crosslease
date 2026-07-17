@@ -11,7 +11,10 @@ import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
 import { useUpdateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useUpdateFrameworkAgreement"
-import { EditFrameworkAgreementFormSchema } from "@/features/frameworkAgreements/api/schema"
+import {
+  EditFrameworkAgreementFormSchema,
+  FALifecycleStatusSchema,
+} from "@/features/frameworkAgreements/api/schema"
 import type {
   EditFrameworkAgreementFormValues,
   FADetailResponse,
@@ -33,7 +36,8 @@ function EditFrameworkAgreementDialog({
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useUpdateFrameworkAgreement()
 
-  const isDraft = frameworkAgreement.status === "draft"
+  const isDraft =
+    frameworkAgreement.status === FALifecycleStatusSchema.enum.draft
   const identityLocked = !isDraft
   const validUntilDisabled = !isDraft && frameworkAgreement.valid_until === null
   const validUntilMinDate =

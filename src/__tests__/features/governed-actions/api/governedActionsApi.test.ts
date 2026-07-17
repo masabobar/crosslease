@@ -3,7 +3,6 @@ import {
   withdrawGovernedAction,
   reInitiateGovernedAction,
   fetchGovernedActions,
-  fetchGovernedAction,
   approveGovernedAction,
   rejectGovernedAction,
 } from "@/features/governed-actions/api/governedActionsApi"
@@ -182,25 +181,6 @@ describe("fetchGovernedActions", () => {
   it("throws when response does not match PaginatedGovernedActionsSchema", async () => {
     mockApi.get.mockResolvedValue({ unexpected: true })
     await expect(fetchGovernedActions()).rejects.toThrow()
-  })
-})
-
-describe("fetchGovernedAction", () => {
-  it("calls GET /governed-actions/:id", async () => {
-    mockApi.get.mockResolvedValue(VALID_ACTION)
-    await fetchGovernedAction("action-123")
-    expect(mockApi.get).toHaveBeenCalledWith("/governed-actions/action-123")
-  })
-
-  it("returns the parsed GovernedAction", async () => {
-    mockApi.get.mockResolvedValue(VALID_ACTION)
-    const result = await fetchGovernedAction("action-123")
-    expect(result.id).toBe(VALID_ACTION.id)
-  })
-
-  it("throws when response does not match GovernedActionSchema", async () => {
-    mockApi.get.mockResolvedValue({ unexpected: true })
-    await expect(fetchGovernedAction("action-123")).rejects.toThrow()
   })
 })
 

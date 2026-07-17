@@ -8,6 +8,7 @@ import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 export function usePartnersByIds(ids: string[]): {
   partnersById: Map<string, PartnerDetailResponse>
   isLoading: boolean
+  isError: boolean
 } {
   const uniqueIds = Array.from(new Set(ids))
 
@@ -26,5 +27,6 @@ export function usePartnersByIds(ids: string[]): {
   return {
     partnersById,
     isLoading: results.some(r => r.isLoading),
+    isError: results.some(r => r.isError),
   }
 }

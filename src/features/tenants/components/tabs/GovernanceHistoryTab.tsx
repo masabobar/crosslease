@@ -1,16 +1,17 @@
 import { useState } from "react"
-import { ArrowRight, Check } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { SearchInput } from "@/components/ui/search-input"
 import { FilterButton } from "@/components/ui/filter-button"
 import { FilterPill } from "@/components/ui/filter-pill"
 import { DatePicker } from "@/components/ui/date-picker"
 import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
+import { StatusPill } from "@/features/tenants/components/StatusPill"
 import { useTenantGovernanceHistory } from "@/features/tenants/hooks/useTenantGovernanceHistory"
 import { formatDate, formatDateTime } from "@/lib/formatters"
-import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api"
 import type { GovernanceHistoryEvent } from "@/features/tenants/api/schema"
 
@@ -111,13 +112,7 @@ function SoftBadge({ label }: { label: string }) {
   const variant: BadgeVariant =
     STATUS_BADGE_VARIANT[label.toLowerCase()] ?? "neutral"
   const { bg, text } = BADGE_STYLES[variant]
-  return (
-    <span
-      className={`inline-flex items-center h-[18px] px-1.5 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}
-    >
-      {label}
-    </span>
-  )
+  return <StatusPill colorClassName={`${bg} ${text}`}>{label}</StatusPill>
 }
 
 function extractStatusValue(
@@ -303,14 +298,12 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
                     className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
                     data-testid={`filter-event-type-${type}`}
                   >
-                    <span
-                      className={cn(
-                        "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                        checked ? "bg-primary border-primary" : "border-border"
-                      )}
-                    >
-                      {checked && <Check size={10} className="text-white" />}
-                    </span>
+                    <Checkbox
+                      checked={checked}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      className="shrink-0"
+                    />
                     <span className="text-sm text-foreground">
                       {formatEventTypeLabel(type)}
                     </span>
@@ -392,9 +385,8 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
 
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {error instanceof ApiError &&
-            error.code === "AUDITOR_ACCESS_EXPIRED"
-              ? t("errors.AUDITOR_ACCESS_EXPIRED")
+            {error instanceof ApiError
+              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
               : t("errors.generic")}
           </p>
         )}

@@ -24,6 +24,9 @@ src/e2e/.auth/
 # Playwright output (HTML report + test artifacts)
 src/e2e/reports/
 
+# Playwright MCP browser session artifacts (screenshots, console logs, snapshots)
+.playwright-mcp/
+
 # Project management (internal tooling, not for source control)
 .project-management/
 

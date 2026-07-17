@@ -9,6 +9,7 @@ import {
   VALIDATION_RULE_SET_OPTIONS,
   WORKFLOW_TASK_OPTIONS,
 } from "@/features/productTemplates/constants"
+import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 type Props = {
@@ -21,13 +22,16 @@ function OrchestrationStep({ form }: Props) {
   const { control } = form
   const { errors } = useFormState({ control })
 
+  const errorMessages = {
+    atLeastOneWorkflowTask: t("errors.atLeastOneWorkflowTask"),
+    atLeastOneDocument: t("errors.atLeastOneDocument"),
+  }
   function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "required") return tCommon("validation.required")
-    if (msg === "atLeastOneWorkflowTask")
-      return t("errors.atLeastOneWorkflowTask")
-    if (msg === "atLeastOneDocument") return t("errors.atLeastOneDocument")
-    return msg
+    return resolveFieldErrorMessage(
+      msg,
+      tCommon("validation.required"),
+      errorMessages
+    )
   }
 
   function renderCheckboxGrid(

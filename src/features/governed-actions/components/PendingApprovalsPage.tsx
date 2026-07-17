@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useLocation, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Activity, Check } from "lucide-react"
@@ -49,7 +49,7 @@ export default function PendingApprovalsPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>("all")
   const [search, setSearch] = useState("")
-  const highlightRowRef = useRef<HTMLButtonElement | null>(null)
+  const highlightRowRef = useRef<HTMLDivElement | null>(null)
   const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [detailsAction, setDetailsAction] = useState<GovernedAction | null>(
@@ -71,6 +71,18 @@ export default function PendingApprovalsPage() {
   const highlightedActionId = highlightUserId
     ? (actions.find(a => a.subject_id === highlightUserId)?.id ?? null)
     : null
+
+  // Scroll to the highlighted row once per highlight change — not on every
+  // re-render — since the ref callback below only assigns the DOM node and
+  // no longer triggers the scroll itself.
+  useEffect(() => {
+    if (highlightedActionId) {
+      highlightRowRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      })
+    }
+  }, [highlightedActionId])
 
   const filtered = search.trim()
     ? actions.filter(a => {
@@ -298,12 +310,8 @@ export default function PendingApprovalsPage() {
               isHighlighted={action.id === highlightedActionId}
               ref={
                 action.id === highlightedActionId
-                  ? (el: HTMLButtonElement | null) => {
+                  ? (el: HTMLDivElement | null) => {
                       highlightRowRef.current = el
-                      el?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center",
-                      })
                     }
                   : undefined
               }

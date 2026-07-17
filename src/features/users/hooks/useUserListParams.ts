@@ -1,21 +1,14 @@
 import { useSearchParams } from "react-router-dom"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
-import { USER_STATUSES } from "@/features/users/api/schema"
+import { USER_STATUSES, USER_SORT_KEYS } from "@/features/users/api/schema"
 import type {
   UserStatus,
   UserSortKey,
   UserSortOrder,
 } from "@/features/users/api/schema"
 
-const VALID_SORT_KEYS: readonly string[] = [
-  "name",
-  "role",
-  "tenant_name",
-  "status",
-  "last_login",
-  "access_valid_until",
-]
+const VALID_SORT_KEYS: readonly string[] = USER_SORT_KEYS
 
 const VALID_STATUSES: readonly string[] = USER_STATUSES
 

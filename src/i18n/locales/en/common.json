@@ -5,6 +5,7 @@
   "loading": "Loading...",
   "validation": {
     "required": "This field is required.",
+    "invalidFormat": "Please enter a valid email address.",
     "dateMustBeAfterFrom": "The 'To' date must be after the 'From' date."
   },
   "nav": {
@@ -81,5 +82,10 @@
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago",
     "yesterday": "yesterday"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "title": "Something went wrong",
+    "retry": "Try again"
   }
 }

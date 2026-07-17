@@ -70,6 +70,11 @@
     "optional": "(optional)",
     "openEnded": "Open ended"
   },
+  "units": {
+    "eur": "EUR",
+    "months": "months",
+    "percent": "%"
+  },
   "wizard": {
     "steps": {
       "identity": "Identity",

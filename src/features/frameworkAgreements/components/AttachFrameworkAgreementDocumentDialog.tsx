@@ -21,18 +21,19 @@ import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
 import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
 import { FADocumentTypeSchema } from "@/features/frameworkAgreements/api/schema"
-
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
-const BYTES_PER_MB = 1024 * 1024
-const ACCEPTED_MIME = "application/pdf"
+import {
+  FA_DOCUMENT_ACCEPTED_MIME,
+  FA_DOCUMENT_BYTES_PER_MB,
+  FA_DOCUMENT_MAX_FILE_SIZE_BYTES,
+} from "@/features/frameworkAgreements/constants"
 
 const attachDocumentFormSchema = z.object({
   document_type: FADocumentTypeSchema,
   document_label: z.string().max(200).optional(),
   file: z
     .custom<File>(v => v instanceof File, { message: "required" })
-    .refine(f => f.type === ACCEPTED_MIME, "invalidMime")
-    .refine(f => f.size <= MAX_FILE_SIZE_BYTES, "fileTooLarge"),
+    .refine(f => f.type === FA_DOCUMENT_ACCEPTED_MIME, "invalidMime")
+    .refine(f => f.size <= FA_DOCUMENT_MAX_FILE_SIZE_BYTES, "fileTooLarge"),
 })
 type AttachDocumentFormValues = z.infer<typeof attachDocumentFormSchema>
 
@@ -165,17 +166,22 @@ function AttachFrameworkAgreementDocumentDialog({
                         {field.value.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {Math.round(field.value.size / BYTES_PER_MB)} MB
+                        {Math.round(
+                          field.value.size / FA_DOCUMENT_BYTES_PER_MB
+                        )}{" "}
+                        MB
                       </p>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={() => field.onChange(undefined)}
                       aria-label={field.value.name}
                       data-testid="attach-document-dialog-remove-file"
                     >
                       <X size={16} className="text-muted-foreground" />
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div
@@ -212,7 +218,7 @@ function AttachFrameworkAgreementDocumentDialog({
                     <input
                       ref={inputRef}
                       type="file"
-                      accept={ACCEPTED_MIME}
+                      accept={FA_DOCUMENT_ACCEPTED_MIME}
                       className="hidden"
                       data-testid="attach-document-dialog-file-input"
                       onChange={e => {

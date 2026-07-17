@@ -24,6 +24,7 @@ import { BankEntitySchema } from "@/features/frameworkAgreements/api/schema"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import { useLcPartnerOptions } from "@/features/frameworkAgreements/hooks/useLcPartnerOptions"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 
 type Props = {
   form: UseFormReturn<FrameworkAgreementWizardForm>
@@ -31,22 +32,16 @@ type Props = {
 
 function IdentityStep({ form }: Props) {
   const { t } = useTranslation("frameworkAgreements")
-  const { t: tCommon } = useTranslation("common")
   const { register, control, setValue } = form
   const { errors } = useFormState({ control })
   const { data: currentUser } = useCurrentUser()
+  const resolveMsg = useResolveFrameworkAgreementFieldError()
 
   const [lcSearch, setLcSearch] = useState("")
   const { options: lcOptions } = useLcPartnerOptions(
     currentUser?.tenant_id ?? null,
     lcSearch
   )
-
-  function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "required") return tCommon("validation.required")
-    return msg
-  }
 
   return (
     <div

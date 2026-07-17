@@ -8,6 +8,19 @@ import {
   UserMePermissionsResponseSchema,
   PaginatedUsersResponseSchema,
   UserStatusSchema,
+  UserSortKeySchema,
+  USER_SORT_KEYS,
+  SuspendUserInputSchema,
+  ReactivateUserInputSchema,
+  DeactivateUserInputSchema,
+  ResendInvitationInputSchema,
+  ChangeRoleRequestSchema,
+  ChangeEmailRequestSchema,
+  InviteUserInputSchema,
+  SUSPENSION_REASONS,
+  REACTIVATION_REASONS,
+  DEACTIVATION_REASONS,
+  RESEND_REASONS,
 } from "@/features/users/api/schema"
 
 const validUserListItem = {
@@ -414,6 +427,22 @@ describe("UserStatusSchema", () => {
   })
 })
 
+describe("UserSortKeySchema", () => {
+  it("accepts every documented sort key", () => {
+    for (const key of USER_SORT_KEYS) {
+      expect(() => UserSortKeySchema.parse(key)).not.toThrow()
+    }
+  })
+
+  it("rejects an unknown sort key", () => {
+    expect(() => UserSortKeySchema.parse("unknown_key")).toThrow()
+  })
+
+  it("rejects empty string", () => {
+    expect(() => UserSortKeySchema.parse("")).toThrow()
+  })
+})
+
 describe("ExportFormatSchema", () => {
   it("accepts csv", () => {
     expect(ExportFormatSchema.parse("csv")).toBe("csv")
@@ -591,5 +620,269 @@ describe("UserMePermissionsResponseSchema", () => {
         active_modules: [123],
       })
     ).toThrow()
+  })
+})
+
+describe("SuspendUserInputSchema", () => {
+  const valid = {
+    reason: "security_concern",
+    comment: "Suspicious activity detected",
+    effective_from: "2026-06-01T00:00:00.000Z",
+    effective_until: "2026-06-30T00:00:00.000Z",
+  }
+
+  it("accepts a valid payload", () => {
+    expect(() => SuspendUserInputSchema.parse(valid)).not.toThrow()
+  })
+
+  it("accepts every documented reason value", () => {
+    for (const reason of SUSPENSION_REASONS) {
+      expect(() =>
+        SuspendUserInputSchema.parse({ ...valid, reason })
+      ).not.toThrow()
+    }
+  })
+
+  it("accepts without optional comment and effective_until", () => {
+    expect(() =>
+      SuspendUserInputSchema.parse({
+        reason: "security_concern",
+        effective_from: valid.effective_from,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown reason", () => {
+    expect(() =>
+      SuspendUserInputSchema.parse({ ...valid, reason: "banana" })
+    ).toThrow()
+  })
+
+  it("rejects missing effective_from", () => {
+    expect(() =>
+      SuspendUserInputSchema.parse({
+        reason: valid.reason,
+        comment: valid.comment,
+      })
+    ).toThrow()
+  })
+})
+
+describe("ReactivateUserInputSchema", () => {
+  const valid = {
+    reason: "compliance_clearance",
+    comment: "Cleared by compliance review",
+  }
+
+  it("accepts a valid payload", () => {
+    expect(() => ReactivateUserInputSchema.parse(valid)).not.toThrow()
+  })
+
+  it("accepts every documented reason value", () => {
+    for (const reason of REACTIVATION_REASONS) {
+      expect(() =>
+        ReactivateUserInputSchema.parse({ ...valid, reason })
+      ).not.toThrow()
+    }
+  })
+
+  it("accepts without optional comment", () => {
+    expect(() =>
+      ReactivateUserInputSchema.parse({ reason: valid.reason })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown reason", () => {
+    expect(() =>
+      ReactivateUserInputSchema.parse({ ...valid, reason: "banana" })
+    ).toThrow()
+  })
+
+  it("rejects missing reason", () => {
+    expect(() =>
+      ReactivateUserInputSchema.parse({ comment: valid.comment })
+    ).toThrow()
+  })
+})
+
+describe("DeactivateUserInputSchema", () => {
+  const valid = {
+    reason: "offboarding",
+    comment: "Employee left the company",
+    effective_from: "2026-06-01T00:00:00.000Z",
+  }
+
+  it("accepts a valid payload", () => {
+    expect(() => DeactivateUserInputSchema.parse(valid)).not.toThrow()
+  })
+
+  it("accepts every documented reason value", () => {
+    for (const reason of DEACTIVATION_REASONS) {
+      expect(() =>
+        DeactivateUserInputSchema.parse({ ...valid, reason })
+      ).not.toThrow()
+    }
+  })
+
+  it("accepts without optional comment", () => {
+    expect(() =>
+      DeactivateUserInputSchema.parse({
+        reason: valid.reason,
+        effective_from: valid.effective_from,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown reason", () => {
+    expect(() =>
+      DeactivateUserInputSchema.parse({ ...valid, reason: "banana" })
+    ).toThrow()
+  })
+
+  it("rejects missing effective_from", () => {
+    expect(() =>
+      DeactivateUserInputSchema.parse({
+        reason: valid.reason,
+        comment: valid.comment,
+      })
+    ).toThrow()
+  })
+})
+
+describe("ResendInvitationInputSchema", () => {
+  it("accepts every documented reason value", () => {
+    for (const reason of RESEND_REASONS) {
+      expect(() => ResendInvitationInputSchema.parse({ reason })).not.toThrow()
+    }
+  })
+
+  it("rejects an unknown reason", () => {
+    expect(() =>
+      ResendInvitationInputSchema.parse({ reason: "banana" })
+    ).toThrow()
+  })
+
+  it("rejects missing reason", () => {
+    expect(() => ResendInvitationInputSchema.parse({})).toThrow()
+  })
+})
+
+describe("ChangeRoleRequestSchema", () => {
+  it("accepts a valid payload with reason", () => {
+    expect(() =>
+      ChangeRoleRequestSchema.parse({
+        new_role: "support_user",
+        reason: "Role change approved by manager",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts without optional reason", () => {
+    expect(() =>
+      ChangeRoleRequestSchema.parse({ new_role: "support_user" })
+    ).not.toThrow()
+  })
+
+  it("accepts null reason", () => {
+    expect(() =>
+      ChangeRoleRequestSchema.parse({ new_role: "support_user", reason: null })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown role", () => {
+    expect(() =>
+      ChangeRoleRequestSchema.parse({ new_role: "banana" })
+    ).toThrow()
+  })
+
+  it("rejects a reason shorter than the minimum length", () => {
+    expect(() =>
+      ChangeRoleRequestSchema.parse({
+        new_role: "support_user",
+        reason: "short",
+      })
+    ).toThrow()
+  })
+
+  it("rejects missing new_role", () => {
+    expect(() =>
+      ChangeRoleRequestSchema.parse({ reason: "Role change approved" })
+    ).toThrow()
+  })
+})
+
+describe("ChangeEmailRequestSchema", () => {
+  it("accepts a valid email", () => {
+    expect(() =>
+      ChangeEmailRequestSchema.parse({ new_email: "new.email@example.com" })
+    ).not.toThrow()
+  })
+
+  it("rejects an invalid email", () => {
+    expect(() =>
+      ChangeEmailRequestSchema.parse({ new_email: "not-an-email" })
+    ).toThrow()
+  })
+
+  it("rejects missing new_email", () => {
+    expect(() => ChangeEmailRequestSchema.parse({})).toThrow()
+  })
+})
+
+describe("InviteUserInputSchema", () => {
+  const valid = {
+    first_name: "Anna",
+    last_name: "Müller",
+    email: "anna.mueller@example.com",
+    role: "front_office",
+  }
+
+  it("accepts a valid minimal payload", () => {
+    expect(() => InviteUserInputSchema.parse(valid)).not.toThrow()
+  })
+
+  it("accepts a valid full payload", () => {
+    expect(() =>
+      InviteUserInputSchema.parse({
+        ...valid,
+        tenant_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        access_valid_until: "2026-12-31T23:59:59Z",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null tenant_id and access_valid_until", () => {
+    expect(() =>
+      InviteUserInputSchema.parse({
+        ...valid,
+        tenant_id: null,
+        access_valid_until: null,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown role value", () => {
+    expect(() =>
+      InviteUserInputSchema.parse({ ...valid, role: "banana" })
+    ).toThrow()
+  })
+
+  it("rejects an invalid email", () => {
+    expect(() =>
+      InviteUserInputSchema.parse({ ...valid, email: "not-an-email" })
+    ).toThrow()
+  })
+
+  it("rejects an empty first_name", () => {
+    expect(() =>
+      InviteUserInputSchema.parse({ ...valid, first_name: "" })
+    ).toThrow()
+  })
+
+  it("rejects missing last_name", () => {
+    const rest = Object.fromEntries(
+      Object.entries(valid).filter(([k]) => k !== "last_name")
+    )
+    expect(() => InviteUserInputSchema.parse(rest)).toThrow()
   })
 })

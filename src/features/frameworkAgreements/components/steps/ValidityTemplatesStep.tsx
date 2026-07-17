@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
-import { ProductTemplateMultiSelect } from "@/features/frameworkAgreements/components/ProductTemplateMultiSelect"
+import { ProductTemplatesField } from "@/features/frameworkAgreements/components/steps/ProductTemplatesField"
+import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 
 type Props = {
@@ -15,13 +16,7 @@ function ValidityTemplatesStep({ form }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const { control } = form
   const { errors } = useFormState({ control })
-
-  function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "validUntilBeforeFrom") return t("errors.validUntilBeforeFrom")
-    if (msg === "atLeastOneTemplate") return t("errors.atLeastOneTemplate")
-    return msg
-  }
+  const resolveMsg = useResolveFrameworkAgreementFieldError()
 
   return (
     <div
@@ -91,27 +86,11 @@ function ValidityTemplatesStep({ form }: Props) {
         </div>
       </SectionCard>
 
-      <SectionCard
-        title={t("wizard.validityTemplates.templatesSection")}
-        subtitle={t("wizard.validityTemplates.templatesHint")}
-      >
-        <Controller
-          control={control}
-          name="product_template_ids"
-          render={({ field }) => (
-            <ProductTemplateMultiSelect
-              value={field.value ?? []}
-              onChange={field.onChange}
-              error={!!errors.product_template_ids}
-            />
-          )}
-        />
-        {errors.product_template_ids && (
-          <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.product_template_ids.message)}
-          </p>
-        )}
-      </SectionCard>
+      <ProductTemplatesField
+        control={control}
+        errors={errors}
+        resolveMsg={resolveMsg}
+      />
     </div>
   )
 }

@@ -22,33 +22,11 @@ import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
-  FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
 } from "@/features/frameworkAgreements/types"
-
-const STATUS_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "outline"
-> = {
-  draft: "outline",
-  active: "default",
-  suspended: "secondary",
-  terminated: "outline",
-}
-
-function ReviewRow({
-  label,
-  value,
-}: {
-  label: string
-  value: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground">{value}</p>
-    </div>
-  )
-}
+import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
+import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
+import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useTranslation("frameworkAgreements")
@@ -62,16 +40,17 @@ function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    // NOTE: raw <button> — icon-only copy trigger inline with text; shadcn Button adds padding/height that distorts the row
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon-xs"
       data-testid="copy-agreement-id-button"
       onClick={handleCopy}
-      className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+      className="text-muted-foreground hover:text-foreground"
       title={copied ? t("detail.copied") : undefined}
     >
       {copied ? <Check size={14} /> : <Copy size={14} />}
-    </button>
+    </Button>
   )
 }
 
@@ -90,7 +69,7 @@ export default function FrameworkAgreementDetailPage() {
   const { data: currentUser } = useCurrentUser()
   const canManageFrameworkAgreement = Boolean(
     currentUser?.role &&
-    FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
+    FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   )
   const canViewAuditHistory = Boolean(
     currentUser?.role &&
@@ -121,7 +100,7 @@ export default function FrameworkAgreementDetailPage() {
             <h1 className="text-2xl font-semibold text-foreground">
               {data.agreement_name}
             </h1>
-            <Badge variant={STATUS_BADGE_VARIANT[data.status]}>
+            <Badge variant={FA_STATUS_BADGE_VARIANT[data.status]}>
               {t(`statuses.${data.status}`)}
             </Badge>
           </div>
@@ -140,16 +119,17 @@ export default function FrameworkAgreementDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          {data.status !== "terminated" && canManageFrameworkAgreement && (
-            <Button
-              variant="outline"
-              data-testid="edit-fa-button"
-              onClick={() => setEditDialogOpen(true)}
-            >
-              {t("detail.actions.edit")}
-            </Button>
-          )}
-          {data.status === "draft" && (
+          {data.status !== FALifecycleStatusSchema.enum.terminated &&
+            canManageFrameworkAgreement && (
+              <Button
+                variant="outline"
+                data-testid="edit-fa-button"
+                onClick={() => setEditDialogOpen(true)}
+              >
+                {t("detail.actions.edit")}
+              </Button>
+            )}
+          {data.status === FALifecycleStatusSchema.enum.draft && (
             <Button
               variant="outline"
               data-testid="activate-fa-button"
@@ -158,7 +138,7 @@ export default function FrameworkAgreementDetailPage() {
               {t("detail.actions.activate")}
             </Button>
           )}
-          {data.status === "active" && (
+          {data.status === FALifecycleStatusSchema.enum.active && (
             <>
               <Button
                 variant="outline"
@@ -176,7 +156,7 @@ export default function FrameworkAgreementDetailPage() {
               </Button>
             </>
           )}
-          {data.status === "suspended" && (
+          {data.status === FALifecycleStatusSchema.enum.suspended && (
             <>
               <Button
                 variant="outline"

@@ -63,8 +63,10 @@ export type PartnerListParams = {
 }
 
 export const PARTNERS_QUERY_KEYS = {
-  list: (tenantId: string | null, params?: PartnerListParams) =>
-    ["partners", "list", tenantId, params] as const,
+  list: (tenantId?: string | null, params?: PartnerListParams) =>
+    tenantId === undefined
+      ? (["partners", "list"] as const)
+      : (["partners", "list", tenantId, params] as const),
   detail: (id: string) => ["partners", "detail", id] as const,
   resolutionCandidates: (id: string) =>
     ["partners", "resolution-candidates", id] as const,

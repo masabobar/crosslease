@@ -13,9 +13,11 @@ export function useConfirmPartner(partnerId: string) {
       void queryClient.invalidateQueries({
         queryKey: PARTNERS_QUERY_KEYS.detail(partnerId),
       })
-      void queryClient.invalidateQueries({ queryKey: ["partners", "list"] })
       void queryClient.invalidateQueries({
-        queryKey: ["partners", "confirmation-history", partnerId],
+        queryKey: PARTNERS_QUERY_KEYS.list(),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: PARTNERS_QUERY_KEYS.confirmationHistory(partnerId),
       })
     },
   })

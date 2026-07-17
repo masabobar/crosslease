@@ -19,6 +19,13 @@ export const AuditEventListItemSchema = z.object({
 })
 export type AuditEventListItem = z.infer<typeof AuditEventListItemSchema>
 
+export const FieldDiffItemSchema = z.object({
+  field: z.string(),
+  old_value: z.unknown().nullable(),
+  new_value: z.unknown().nullable(),
+})
+export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+
 export const AuditEventSchema = z.object({
   id: z.string().uuid(),
   audit_seq: z.number().int(),
@@ -34,6 +41,7 @@ export const AuditEventSchema = z.object({
   old_data: z.record(z.string(), z.unknown()).nullable(),
   new_data: z.record(z.string(), z.unknown()).nullable(),
   changed_fields: z.array(z.string()).nullable(),
+  field_diffs: z.array(FieldDiffItemSchema).nullable().optional(),
   trigger_source: z.string().nullable(),
   reason: z.string().nullable(),
   comment: z.string().nullable(),
@@ -55,6 +63,11 @@ export const PaginatedAuditEventsSchema = z.object({
 })
 export type PaginatedAuditEvents = z.infer<typeof PaginatedAuditEventsSchema>
 
+// NOTE: not wired into AuditEventSchema/AuditEventListItemSchema (event_type stays
+// z.string()). openapi.json documents the `event_type` query param as a freeform
+// string with "Examples" only (not an exhaustive enum), so constraining it to this
+// hardcoded list here would risk `parse()` throwing on legitimate BE values not
+// listed below. Left as-is pending a confirmed exhaustive list from the BE.
 export const AUDIT_EVENT_TYPES = [
   // Auth
   "auth.login_success",
@@ -93,7 +106,8 @@ export const AUDIT_EVENT_TYPES = [
 
 export type AuditEventType = (typeof AUDIT_EVENT_TYPES)[number]
 
-export type AuditResult = "Success" | "Failed"
+export const AuditResultSchema = z.enum(["Success", "Failed"])
+export type AuditResult = z.infer<typeof AuditResultSchema>
 
 const FAILED_SUFFIXES = ["_failed", "_denied", "_rejected", "_violation"]
 

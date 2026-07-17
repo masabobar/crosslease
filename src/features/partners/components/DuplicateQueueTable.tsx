@@ -5,6 +5,7 @@ import { TableEmptyState } from "@/components/ui/empty"
 import { DuplicateConfidenceBadge } from "@/features/partners/components/DuplicateConfidenceBadge"
 import { DuplicatePairStatusBadge } from "@/features/partners/components/DuplicatePairStatusBadge"
 import { formatDate } from "@/lib/formatters"
+import { DuplicateCandidatePairStatusSchema } from "@/features/partners/api/schema"
 import type {
   DuplicateCandidatePairResponse,
   PartnerDetailResponse,
@@ -23,6 +24,7 @@ type DuplicateQueueTableProps = {
   pairs: DuplicateCandidatePairResponse[]
   partnersById: Map<string, PartnerDetailResponse>
   isLoading: boolean
+  partnersError: boolean
   hasActiveFilters: boolean
   canResolve: boolean
   canInitiateMerge: boolean
@@ -35,16 +37,18 @@ type DuplicateQueueTableProps = {
 function PartnerCell({
   partnerId,
   partnersById,
+  partnersError,
 }: {
   partnerId: string
   partnersById: Map<string, PartnerDetailResponse>
+  partnersError: boolean
 }) {
   const { t } = useTranslation("partners")
   const partner = partnersById.get(partnerId)
   return (
     <div className="p-2">
       <p className="text-sm font-medium truncate text-foreground leading-tight">
-        {partner?.display_name ?? "…"}
+        {partner?.display_name ?? (partnersError ? t("errors.generic") : "…")}
       </p>
       {partner && (
         <p className="text-xs text-muted-foreground truncate">
@@ -59,6 +63,7 @@ function DuplicateQueueTable({
   pairs,
   partnersById,
   isLoading,
+  partnersError,
   hasActiveFilters,
   canResolve,
   canInitiateMerge,
@@ -164,12 +169,14 @@ function DuplicateQueueTable({
               <PartnerCell
                 partnerId={pair.partner_a_id}
                 partnersById={partnersById}
+                partnersError={partnersError}
               />
             </div>
             <div className={COL_PARTNER_B}>
               <PartnerCell
                 partnerId={pair.partner_b_id}
                 partnersById={partnersById}
+                partnersError={partnersError}
               />
             </div>
             <div className={`${COL_CONFIDENCE} p-2`}>
@@ -188,7 +195,10 @@ function DuplicateQueueTable({
               onClick={e => e.stopPropagation()}
             >
               {canResolve &&
-                (pair.status === "pending" || pair.status === "deferred") && (
+                (pair.status ===
+                  DuplicateCandidatePairStatusSchema.enum.pending ||
+                  pair.status ===
+                    DuplicateCandidatePairStatusSchema.enum.deferred) && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -198,26 +208,31 @@ function DuplicateQueueTable({
                     {t("duplicates.list.table.actions.resolve")}
                   </Button>
                 )}
-              {canInitiateMerge && pair.status === "confirmed_duplicate" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  data-testid={`duplicate-pair-initiate-merge-${pair.pair_id}`}
-                  onClick={() => onInitiateMerge(pair)}
-                >
-                  {t("duplicates.list.table.actions.initiateMerge")}
-                </Button>
-              )}
-              {canResolve && pair.status === "merge_in_progress" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  data-testid={`duplicate-pair-review-merge-${pair.pair_id}`}
-                  onClick={onReviewMerge}
-                >
-                  {t("duplicates.list.table.actions.reviewMerge")}
-                </Button>
-              )}
+              {canInitiateMerge &&
+                pair.status ===
+                  DuplicateCandidatePairStatusSchema.enum
+                    .confirmed_duplicate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    data-testid={`duplicate-pair-initiate-merge-${pair.pair_id}`}
+                    onClick={() => onInitiateMerge(pair)}
+                  >
+                    {t("duplicates.list.table.actions.initiateMerge")}
+                  </Button>
+                )}
+              {canResolve &&
+                pair.status ===
+                  DuplicateCandidatePairStatusSchema.enum.merge_in_progress && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    data-testid={`duplicate-pair-review-merge-${pair.pair_id}`}
+                    onClick={onReviewMerge}
+                  >
+                    {t("duplicates.list.table.actions.reviewMerge")}
+                  </Button>
+                )}
             </div>
             <div className="shrink-0 w-8 flex items-center justify-center">
               <ChevronRight size={16} className="text-muted-foreground" />

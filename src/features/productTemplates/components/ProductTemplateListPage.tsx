@@ -19,6 +19,7 @@ import {
   PAGE_SIZES,
 } from "@/features/productTemplates/hooks/useProductTemplateListParams"
 import type { PageSize } from "@/features/productTemplates/hooks/useProductTemplateListParams"
+import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
   TemplateListItem,
@@ -27,7 +28,7 @@ import type {
 import { PATHS, productTemplateVersionHistory } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
-import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { TenantScopeGate } from "@/components/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
 import NotFoundPage from "@/features/not-found/components/NotFoundPage"
@@ -42,6 +43,10 @@ export default function ProductTemplateListPage() {
   const tenantId =
     currentUser?.tenant_id ??
     (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const canManageDraft = Boolean(
+    currentUser?.role &&
+    PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES.includes(currentUser.role)
+  )
 
   const {
     page,
@@ -80,22 +85,12 @@ export default function ProductTemplateListPage() {
   }
 
   if (currentUser && !tenantId) {
-    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
-      return (
-        <div className="p-8 max-w-sm space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("list.selectTenantPrompt")}
-          </p>
-          <TenantQuickSelect />
-        </div>
-      )
-    }
     return (
-      <div className="p-8">
-        <p className="text-sm text-muted-foreground">
-          {t("list.tenantRequired")}
-        </p>
-      </div>
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("list.selectTenantPrompt")}
+        tenantRequiredMessage={t("list.tenantRequired")}
+      />
     )
   }
 
@@ -111,14 +106,16 @@ export default function ProductTemplateListPage() {
             {t("list.subtitle")}
           </p>
         </div>
-        <Button
-          data-testid="create-template-button"
-          onClick={handleCreateTemplate}
-          className="h-9 rounded-xl px-4 gap-1.5"
-        >
-          <Plus size={16} />
-          {t("list.createButton")}
-        </Button>
+        {canManageDraft && (
+          <Button
+            data-testid="create-template-button"
+            onClick={handleCreateTemplate}
+            className="h-9 rounded-xl px-4 gap-1.5"
+          >
+            <Plus size={16} />
+            {t("list.createButton")}
+          </Button>
+        )}
       </div>
 
       {/* Filter bar */}
@@ -177,7 +174,7 @@ export default function ProductTemplateListPage() {
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
             onRowClick={handleRowClick}
-            onCreateTemplate={handleCreateTemplate}
+            onCreateTemplate={canManageDraft ? handleCreateTemplate : undefined}
           />
         )}
       </div>

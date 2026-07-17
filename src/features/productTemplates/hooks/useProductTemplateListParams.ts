@@ -4,6 +4,7 @@ import type { TemplateStatus } from "@/features/productTemplates/api/schema"
 
 export const PAGE_SIZES = [10, 25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
+export const DEFAULT_PAGE_SIZE: PageSize = 25
 
 type ParamUpdate = Record<string, string | null>
 
@@ -28,12 +29,12 @@ export function useProductTemplateListParams() {
   }
 
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1)
-  const rawPerPage = Number(params.get("per_page") ?? "25")
+  const rawPerPage = Number(params.get("per_page") ?? String(DEFAULT_PAGE_SIZE))
   const perPage: PageSize = (PAGE_SIZES as readonly number[]).includes(
     rawPerPage
   )
     ? (rawPerPage as PageSize)
-    : 25
+    : DEFAULT_PAGE_SIZE
   const search = params.get("q") ?? ""
   const rawStatus = params.get("status")
   const statusFilter: TemplateStatus | null =
@@ -47,7 +48,10 @@ export function useProductTemplateListParams() {
   }
 
   function setPerPage(size: PageSize) {
-    update({ per_page: size === 25 ? null : String(size), page: null })
+    update({
+      per_page: size === DEFAULT_PAGE_SIZE ? null : String(size),
+      page: null,
+    })
   }
 
   function setSearch(q: string) {

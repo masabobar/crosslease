@@ -462,10 +462,10 @@ describe("PartnerDetailResponseSchema", () => {
 // ── Match / Submit ────────────────────────────────────────────────────────────
 
 describe("PartnerMatchResponseSchema", () => {
-  it("accepts a NEW classification with no match", () => {
+  it("accepts a no_match classification with no match", () => {
     expect(() =>
       PartnerMatchResponseSchema.parse({
-        classification: "NEW",
+        classification: "no_match",
         confidence: null,
         matched_partner_id: null,
         candidate_summaries: [],
@@ -474,10 +474,10 @@ describe("PartnerMatchResponseSchema", () => {
     ).not.toThrow()
   })
 
-  it("accepts EXACT_MATCH with a matched ID", () => {
+  it("accepts an exact classification with a matched ID", () => {
     expect(() =>
       PartnerMatchResponseSchema.parse({
-        classification: "EXACT_MATCH",
+        classification: "exact",
         confidence: "high",
         matched_partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
         candidate_summaries: [],
@@ -486,10 +486,34 @@ describe("PartnerMatchResponseSchema", () => {
     ).not.toThrow()
   })
 
-  it("rejects missing inputs_hash", () => {
+  it("accepts an ambiguous classification", () => {
+    expect(() =>
+      PartnerMatchResponseSchema.parse({
+        classification: "ambiguous",
+        confidence: "medium",
+        matched_partner_id: null,
+        candidate_summaries: [],
+        inputs_hash: "abc123",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown classification value", () => {
     expect(() =>
       PartnerMatchResponseSchema.parse({
         classification: "NEW",
+        confidence: null,
+        matched_partner_id: null,
+        candidate_summaries: [],
+        inputs_hash: "abc123",
+      })
+    ).toThrow()
+  })
+
+  it("rejects missing inputs_hash", () => {
+    expect(() =>
+      PartnerMatchResponseSchema.parse({
+        classification: "no_match",
         confidence: null,
         matched_partner_id: null,
         candidate_summaries: [],

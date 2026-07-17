@@ -1,7 +1,9 @@
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Upload, X, FileText } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -11,11 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FADocumentTypeSchema } from "@/features/frameworkAgreements/api/schema"
+import {
+  FA_DOCUMENT_ACCEPTED_MIME,
+  FA_DOCUMENT_BYTES_PER_MB,
+  FA_DOCUMENT_MAX_FILE_SIZE_BYTES,
+} from "@/features/frameworkAgreements/constants"
 import type { FrameworkAgreementDocumentDraft } from "@/features/frameworkAgreements/types"
 
 const MAX_FILES = 10
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
-const BYTES_PER_MB = 1024 * 1024
 
 type Props = {
   documents: FrameworkAgreementDocumentDraft[]
@@ -29,11 +34,34 @@ function DocumentDropzone({ documents, onChange }: Props) {
 
   function addFiles(newFiles: FileList | null) {
     if (!newFiles) return
-    const valid = Array.from(newFiles)
+    const incoming = Array.from(newFiles)
+    const invalidMime = incoming.filter(
+      f => f.type !== FA_DOCUMENT_ACCEPTED_MIME
+    )
+    const tooLarge = incoming.filter(
+      f =>
+        f.type === FA_DOCUMENT_ACCEPTED_MIME &&
+        f.size > FA_DOCUMENT_MAX_FILE_SIZE_BYTES
+    )
+    const valid = incoming
       .filter(
-        f => f.type === "application/pdf" && f.size <= MAX_FILE_SIZE_BYTES
+        f =>
+          f.type === FA_DOCUMENT_ACCEPTED_MIME &&
+          f.size <= FA_DOCUMENT_MAX_FILE_SIZE_BYTES
       )
       .map(file => ({ file, documentType: "" as const, documentLabel: "" }))
+
+    if (invalidMime.length > 0) {
+      toast.error(
+        `${invalidMime.map(f => f.name).join(", ")}: ${t("errors.FA_DOC_INVALID_MIME")}`
+      )
+    }
+    if (tooLarge.length > 0) {
+      toast.error(
+        `${tooLarge.map(f => f.name).join(", ")}: ${t("errors.FA_DOC_FILE_TOO_LARGE")}`
+      )
+    }
+
     onChange([...documents, ...valid].slice(0, MAX_FILES))
   }
 
@@ -90,10 +118,11 @@ function DocumentDropzone({ documents, onChange }: Props) {
         <p className="text-sm text-muted-foreground">
           {t("wizard.documents.dropzoneHint")}
         </p>
+        {/* NOTE: raw <input type="file"> — no shadcn file-input primitive exists; hidden input triggered by a styled drop target, same pattern as AttachFrameworkAgreementDocumentDialog */}
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf"
+          accept={FA_DOCUMENT_ACCEPTED_MIME}
           multiple
           className="hidden"
           data-testid="document-dropzone-input"
@@ -111,7 +140,7 @@ function DocumentDropzone({ documents, onChange }: Props) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-foreground">{doc.file.name}</p>
             <p className="text-xs text-muted-foreground">
-              {Math.round(doc.file.size / BYTES_PER_MB)} MB
+              {Math.round(doc.file.size / FA_DOCUMENT_BYTES_PER_MB)} MB
             </p>
           </div>
 
@@ -158,14 +187,16 @@ function DocumentDropzone({ documents, onChange }: Props) {
             />
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-xs"
             onClick={() => removeDocument(index)}
             aria-label={doc.file.name}
             data-testid={`remove-document-file-${index}`}
           >
             <X size={16} className="text-muted-foreground" />
-          </button>
+          </Button>
         </div>
       ))}
     </div>

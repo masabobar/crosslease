@@ -1,9 +1,15 @@
 import { z } from "zod"
 import { UserResponseSchema } from "@/features/users/api/schema"
+import { TOTP_CODE_LENGTH } from "./mfaSchema"
+
+export const REQUIRED_FIELD_MESSAGE = "required"
 
 export const LoginInputSchema = z.object({
-  email: z.string().email().min(1),
-  password: z.string().min(1),
+  email: z
+    .string()
+    .min(1, REQUIRED_FIELD_MESSAGE)
+    .email(REQUIRED_FIELD_MESSAGE),
+  password: z.string().min(1, REQUIRED_FIELD_MESSAGE),
 })
 
 export type LoginInput = z.infer<typeof LoginInputSchema>
@@ -18,7 +24,7 @@ export type LoginStepResponse = z.infer<typeof LoginStepResponseSchema>
 
 export const VerifyOtpInputSchema = z.object({
   verification_token: z.string(),
-  code: z.string().length(6),
+  code: z.string().length(TOTP_CODE_LENGTH),
 })
 
 export type VerifyOtpInput = z.infer<typeof VerifyOtpInputSchema>

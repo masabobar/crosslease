@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Navigate, useNavigate } from "react-router-dom"
 import { useState, type FormEvent } from "react"
-import { z } from "zod"
 import {
   Lock,
   Mail,
@@ -18,6 +17,9 @@ import {
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { login, verifyOtp, resendOtp } from "../api/loginApi"
+import { LoginInputSchema, REQUIRED_FIELD_MESSAGE } from "../api/schema"
+import type { LoginInput } from "../api/schema"
+import { TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
@@ -31,13 +33,6 @@ import {
 } from "@/components/ui/input-otp"
 import { AppLogo } from "./AppLogo"
 import { SUCCESS_REDIRECT_DELAY_MS } from "@/lib/constants"
-
-const credentialsSchema = z.object({
-  email: z.string().min(1, "required").email("required"),
-  password: z.string().min(1, "required"),
-})
-
-type CredentialsInput = z.infer<typeof credentialsSchema>
 
 type OtpHelper =
   | { type: "none" }
@@ -69,27 +64,12 @@ export default function LoginPage() {
   const [isResending, setIsResending] = useState(false)
 
   const resolveMsg = (msg: string | undefined) =>
-    msg === "required" ? tCommon("validation.required") : msg
+    msg === REQUIRED_FIELD_MESSAGE ? tCommon("validation.required") : msg
 
-  const credentialsForm = useForm<CredentialsInput>({
-    resolver: zodResolver(credentialsSchema),
+  const credentialsForm = useForm<LoginInput>({
+    resolver: zodResolver(LoginInputSchema),
     defaultValues: { email: "", password: "" },
   })
-
-  const errorMessages: Record<string, string> = {
-    INVALID_CREDENTIALS: t("login.errors.INVALID_CREDENTIALS"),
-    ACCOUNT_LOCKED: t("login.errors.ACCOUNT_LOCKED"),
-    ACCOUNT_DISABLED: t("login.errors.ACCOUNT_DISABLED"),
-    IP_THROTTLED: t("login.errors.IP_THROTTLED"),
-    ACCOUNT_NOT_ACTIVATED: t("login.errors.ACCOUNT_NOT_ACTIVATED"),
-    ACCOUNT_SUSPENDED: t("login.errors.ACCOUNT_SUSPENDED"),
-    ACCOUNT_DEACTIVATED: t("login.errors.ACCOUNT_DEACTIVATED"),
-    ACCOUNT_EXPIRED: t("login.errors.ACCOUNT_EXPIRED"),
-    INVALID_OTP: t("login.errors.INVALID_OTP"),
-    OTP_EXPIRED: t("login.errors.OTP_EXPIRED"),
-    OTP_MAX_ATTEMPTS: t("login.errors.OTP_MAX_ATTEMPTS"),
-    OTP_RESEND_THROTTLED: t("login.errors.OTP_RESEND_THROTTLED"),
-  }
 
   if (isAuthenticated) {
     return <Navigate to={PATHS.DASHBOARD} replace />
@@ -123,14 +103,17 @@ export default function LoginPage() {
         return
       }
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
-      setServerError(errorMessages[code] ?? t("login.errors.default"))
+      setServerError(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     }
   })
 
   const handleOtpSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (otpValue.length !== 6 || isOtpSubmitting) return
+    if (otpValue.length !== TOTP_CODE_LENGTH || isOtpSubmitting) return
     setIsOtpSubmitting(true)
     setOtpHelper({ type: "none" })
     try {
@@ -142,16 +125,11 @@ export default function LoginPage() {
       setAuthenticated(true)
       setTimeout(() => navigate(PATHS.DASHBOARD), SUCCESS_REDIRECT_DELAY_MS)
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
-      const message = errorMessages[code] ?? t("login.errors.default")
-      if (code === "OTP_EXPIRED" || code === "OTP_MAX_ATTEMPTS") {
-        setServerError(message)
-        setStep("credentials")
-        setOtpValue("")
-        setOtpHelper({ type: "none" })
-      } else {
-        setOtpHelper({ type: "error", message })
-      }
+      const message =
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      setOtpHelper({ type: "error", message })
       setIsOtpSubmitting(false)
     }
   }
@@ -164,10 +142,12 @@ export default function LoginPage() {
       await resendOtp({ verification_token: verificationToken })
       setOtpValue("")
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
       setOtpHelper({
         type: "error",
-        message: errorMessages[code] ?? t("login.errors.default"),
+        message:
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic"),
       })
     } finally {
       setIsResending(false)
@@ -212,7 +192,7 @@ export default function LoginPage() {
 
                 <div className="flex flex-col gap-2">
                   <InputOTP
-                    maxLength={6}
+                    maxLength={TOTP_CODE_LENGTH}
                     value={otpValue}
                     onChange={setOtpValue}
                     hasError={otpHelper.type === "error"}
@@ -289,7 +269,9 @@ export default function LoginPage() {
                   type="submit"
                   data-testid="otp-submit-button"
                   disabled={
-                    otpValue.length !== 6 || isOtpSubmitting || isSuccess
+                    otpValue.length !== TOTP_CODE_LENGTH ||
+                    isOtpSubmitting ||
+                    isSuccess
                   }
                 >
                   {isSuccess ? (
@@ -491,9 +473,11 @@ export default function LoginPage() {
                   startIcon={<Lock size={20} />}
                   error={!!credentialsForm.formState.errors.password}
                   endAction={
-                    // NOTE: raw <button> — rendered inside the custom Input endAction slot which expects a bare element to avoid double padding
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      data-testid="login-toggle-password-visibility"
                       tabIndex={-1}
                       aria-label={
                         showPassword
@@ -501,10 +485,10 @@ export default function LoginPage() {
                           : t("login.showPassword")
                       }
                       onClick={() => setShowPassword(v => !v)}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground hover:bg-transparent [&_svg]:size-4"
                     >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </Button>
                   }
                   className="pl-12 py-3.5 bg-card rounded-xl"
                   {...credentialsForm.register("password")}

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import type { TenantStatus } from "@/features/tenants/api/schema"
+import { StatusPill } from "@/features/tenants/components/StatusPill"
 
 type TenantStatusBadgeProps = {
   status: TenantStatus
@@ -49,12 +50,12 @@ function TenantStatusBadge({ status }: TenantStatusBadgeProps) {
   const config = STATUS_CONFIG[status]
 
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.container} ${config.text}`}
+    <StatusPill
+      colorClassName={`${config.container} ${config.text}`}
+      dotClassName={config.dot}
     >
-      <span className={`size-1.5 rounded-full shrink-0 ${config.dot}`} />
       {t(`statuses.${status}` as `statuses.${TenantStatus}`)}
-    </span>
+    </StatusPill>
   )
 }
 

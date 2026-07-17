@@ -3,5 +3,7 @@ export const AUTH_QUERY_KEYS = {
     ["auth", "validateResetToken", token] as const,
   validateActivationToken: (token: string) =>
     ["auth", "validateActivationToken", token] as const,
+  verifyEmailChange: (token: string) =>
+    ["auth", "verifyEmailChange", token] as const,
   mfaEnroll: (token: string) => ["auth", "mfa-enroll", token] as const,
 } as const

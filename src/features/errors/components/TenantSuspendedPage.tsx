@@ -1,10 +1,24 @@
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { ApiError } from "@/lib/api"
 import { useLogout } from "@/features/auth/hooks/useLogout"
 
 export function TenantSuspendedPage() {
   const { t } = useTranslation("common")
   const { mutate: logout, isPending } = useLogout()
+
+  function handleLogout() {
+    logout(undefined, {
+      onError: err => {
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
+      },
+    })
+  }
 
   return (
     <div
@@ -20,8 +34,9 @@ export function TenantSuspendedPage() {
       <Button
         variant="outline"
         className="mt-2"
-        onClick={() => logout()}
+        onClick={handleLogout}
         disabled={isPending}
+        data-testid="tenant-suspended-logout-button"
       >
         {t("nav.logout")}
       </Button>

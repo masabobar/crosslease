@@ -70,6 +70,11 @@
     "optional": "(optional)",
     "openEnded": "Unbefristet"
   },
+  "units": {
+    "eur": "EUR",
+    "months": "Monate",
+    "percent": "%"
+  },
   "wizard": {
     "steps": {
       "identity": "Identität",

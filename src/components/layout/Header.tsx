@@ -1,5 +1,4 @@
-import { useState } from "react"
-import { useLocation, useMatch, Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import {
   ChevronRight,
@@ -9,165 +8,28 @@ import {
   LogOut,
   User,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { Button, buttonVariants } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useUserDetail } from "@/features/users/hooks/useUserDetail"
-import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useLogout } from "@/features/auth/hooks/useLogout"
-import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
-import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
-import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
-import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import { getInitials } from "@/lib/formatters"
-
-type Crumb = { labelKey?: string; label?: string; path?: string }
-
-const BREADCRUMBS: Record<string, Crumb[]> = {
-  [PATHS.USER_MANAGEMENT]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.userManagement" },
-  ],
-  [PATHS.PENDING_APPROVALS]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.pendingApprovals" },
-  ],
-  [PATHS.SETTINGS_PROFILE]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.myProfile" },
-  ],
-  [PATHS.AUDIT_TRAIL]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.auditTrail" },
-  ],
-  [PATHS.TENANT_MANAGEMENT]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.tenantManagement" },
-  ],
-  [PATHS.TENANT_MANAGEMENT_CREATE]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.tenantManagement", path: PATHS.TENANT_MANAGEMENT },
-    { labelKey: "breadcrumb.createTenant" },
-  ],
-  [PATHS.PARTNER_REGISTRY]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.partnerManagement" },
-  ],
-  [PATHS.PARTNER_SUBMIT]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.partnerManagement", path: PATHS.PARTNER_REGISTRY },
-    { labelKey: "breadcrumb.submitPartner" },
-  ],
-  [PATHS.PARTNER_DUPLICATES]: [
-    { labelKey: "breadcrumb.home" },
-    { labelKey: "breadcrumb.platformAdministration" },
-    { labelKey: "breadcrumb.duplicateQueue" },
-  ],
-}
+import { useBreadcrumbs } from "@/components/layout/useBreadcrumbs"
 
 export function Header() {
   const { t } = useTranslation("common")
-  const location = useLocation()
-  const userDetailMatch = useMatch(PATHS.USER_DETAIL)
-  const auditDetailMatch = useMatch(PATHS.AUDIT_TRAIL_DETAIL)
-  const tenantCreateMatch = useMatch(PATHS.TENANT_MANAGEMENT_CREATE)
-  const tenantDetailMatchRaw = useMatch(PATHS.TENANT_DETAIL)
-  const tenantDetailMatch = tenantCreateMatch ? null : tenantDetailMatchRaw
-  const partnerSubmitMatch = useMatch(PATHS.PARTNER_SUBMIT)
-  const partnerDuplicateDetailMatch = useMatch(PATHS.PARTNER_DUPLICATE_DETAIL)
-  const partnerDetailMatchRaw = useMatch(PATHS.PARTNER_DETAIL)
-  const partnerDetailMatch = partnerSubmitMatch ? null : partnerDetailMatchRaw
   const { data: currentUser } = useCurrentUser()
-  const { data: detailUser } = useUserDetail(userDetailMatch?.params.id ?? null)
-  const { data: detailTenant } = useTenantDetail(
-    tenantDetailMatch?.params.id ?? null
-  )
-  const { data: detailPartner } = usePartnerDetail(
-    partnerDetailMatch?.params.id ?? null
-  )
-  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
-  const duplicatesTenantId =
-    currentUser?.tenant_id ??
-    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
-  const { data: duplicatePairs } = useDuplicatePairs(
-    partnerDuplicateDetailMatch ? duplicatesTenantId : null
-  )
-  const duplicatePair = duplicatePairs?.items.find(
-    p => p.pair_id === partnerDuplicateDetailMatch?.params.pairId
-  )
-  const { data: duplicatePartnerA } = usePartnerDetail(
-    duplicatePair?.partner_a_id ?? null
-  )
-  const { data: duplicatePartnerB } = usePartnerDetail(
-    duplicatePair?.partner_b_id ?? null
-  )
+  const crumbs = useBreadcrumbs()
   const { mutate: doLogout, isPending: isLoggingOut } = useLogout()
-  const [profileOpen, setProfileOpen] = useState(false)
-
-  const crumbs: Crumb[] = userDetailMatch
-    ? [
-        { labelKey: "breadcrumb.home" },
-        { labelKey: "breadcrumb.platformAdministration" },
-        { labelKey: "breadcrumb.userManagement", path: PATHS.USER_MANAGEMENT },
-        {
-          label: detailUser
-            ? `${detailUser.first_name} ${detailUser.last_name}`
-            : "…",
-        },
-      ]
-    : tenantDetailMatch
-      ? [
-          { labelKey: "breadcrumb.home" },
-          { labelKey: "breadcrumb.platformAdministration" },
-          {
-            labelKey: "breadcrumb.tenantManagement",
-            path: PATHS.TENANT_MANAGEMENT,
-          },
-          { label: detailTenant?.name ?? "…" },
-        ]
-      : auditDetailMatch
-        ? [
-            { labelKey: "breadcrumb.home" },
-            { labelKey: "breadcrumb.platformAdministration" },
-            { labelKey: "breadcrumb.auditTrail", path: PATHS.AUDIT_TRAIL },
-            { labelKey: "breadcrumb.auditEvent" },
-          ]
-        : partnerDuplicateDetailMatch
-          ? [
-              { labelKey: "breadcrumb.home" },
-              { labelKey: "breadcrumb.platformAdministration" },
-              {
-                labelKey: "breadcrumb.duplicateQueue",
-                path: PATHS.PARTNER_DUPLICATES,
-              },
-              {
-                label:
-                  duplicatePartnerA && duplicatePartnerB
-                    ? `${duplicatePartnerA.display_name} vs ${duplicatePartnerB.display_name}`
-                    : "…",
-              },
-            ]
-          : partnerDetailMatch
-            ? [
-                { labelKey: "breadcrumb.home" },
-                { labelKey: "breadcrumb.platformAdministration" },
-                {
-                  labelKey: "breadcrumb.partnerManagement",
-                  path: PATHS.PARTNER_REGISTRY,
-                },
-                { label: detailPartner?.display_name ?? "…" },
-              ]
-            : (BREADCRUMBS[location.pathname] ??
-              Object.entries(BREADCRUMBS)
-                .filter(([path]) => location.pathname.startsWith(path + "/"))
-                .map(([, c]) => c)[0] ?? [{ labelKey: "breadcrumb.home" }])
 
   const initials = currentUser
     ? getInitials(currentUser.first_name, currentUser.last_name)
@@ -185,7 +47,7 @@ export function Header() {
       <nav className="flex items-center gap-1.5">
         {crumbs.map((crumb, i) => {
           const isLast = i === crumbs.length - 1
-          const label = crumb.label ?? t((crumb.labelKey ?? "") as never)
+          const label = crumb.label ?? t(crumb.labelKey ?? "breadcrumb.home")
           return (
             <span
               key={crumb.labelKey ?? crumb.label ?? i}
@@ -223,24 +85,28 @@ export function Header() {
       <div className="flex items-center gap-4 shrink-0">
         <div className="flex items-center gap-1.5">
           {[Bell, ClipboardList, Settings].map((Icon, i) => (
-            <div
+            <Button
               key={i}
-              className="flex items-center justify-center w-9 h-9 rounded-xl text-muted-foreground opacity-40"
+              variant="ghost"
+              size="icon"
+              disabled
+              className="rounded-xl text-muted-foreground opacity-40"
             >
               <Icon size={16} />
-            </div>
+            </Button>
           ))}
         </div>
 
         <div className="w-px h-4 bg-border" />
 
         {/* Profile */}
-        <div className="relative">
-          <Button
-            variant="ghost"
+        <DropdownMenu>
+          <DropdownMenuTrigger
             data-testid="header-profile-button"
-            className="h-auto items-center gap-2 rounded-xl px-2 py-1"
-            onClick={() => setProfileOpen(v => !v)}
+            className={cn(
+              buttonVariants({ variant: "ghost" }),
+              "h-auto items-center gap-2 rounded-xl px-2 py-1"
+            )}
           >
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-muted border border-border shrink-0">
               <span className="text-sm text-muted-foreground font-medium">
@@ -252,42 +118,39 @@ export function Header() {
                 {fullName}
               </span>
             )}
-          </Button>
-
-          {profileOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setProfileOpen(false)}
-              />
-              <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-border rounded-xl shadow-lg min-w-[160px] py-1">
-                <Link
-                  to={PATHS.SETTINGS_PROFILE}
-                  onClick={() => setProfileOpen(false)}
-                  data-testid="header-my-profile-link"
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <User size={14} />
-                  {t("nav.myProfile")}
-                </Link>
-                <div className="mx-3 my-1 h-px bg-border" />
-                <Button
-                  variant="ghost"
-                  data-testid="header-logout-button"
-                  onClick={() => {
-                    setProfileOpen(false)
-                    doLogout()
-                  }}
-                  disabled={isLoggingOut}
-                  className="h-auto w-full justify-start gap-2 rounded-none px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
-                >
-                  <LogOut size={14} />
-                  {t("nav.logout")}
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuItem
+              data-testid="header-my-profile-link"
+              render={<Link to={PATHS.SETTINGS_PROFILE} />}
+            >
+              <User size={14} />
+              {t("nav.myProfile")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              data-testid="header-logout-button"
+              disabled={isLoggingOut}
+              onClick={() => {
+                doLogout(undefined, {
+                  onError: err => {
+                    toast.error(
+                      err instanceof ApiError
+                        ? t(`errors.${err.code}`, {
+                            defaultValue: t("errors.generic"),
+                          })
+                        : t("errors.generic")
+                    )
+                  },
+                })
+              }}
+            >
+              <LogOut size={14} />
+              {t("nav.logout")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

@@ -1,6 +1,9 @@
 import { z } from "zod"
 import { UserResponseSchema } from "@/features/users/api/schema"
 
+export const TOTP_CODE_LENGTH = 6
+export const RECOVERY_CODE_LENGTH = 20
+
 export const MfaEnrollResponseSchema = z.object({
   qr_code: z.string(),
   secret: z.string(),
@@ -23,9 +26,6 @@ export const MfaVerifyResponseSchema = z.object({
 
 export type MfaVerifyResponse = z.infer<typeof MfaVerifyResponseSchema>
 
-export const ResetVerifyResponseSchema = z.object({
-  user: UserResponseSchema,
-  new_recovery_codes: z.array(z.string()).nullable().optional(),
-})
+export const ResetVerifyResponseSchema = MfaVerifyResponseSchema
 
-export type ResetVerifyResponse = z.infer<typeof ResetVerifyResponseSchema>
+export type ResetVerifyResponse = MfaVerifyResponse

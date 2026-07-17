@@ -22,6 +22,7 @@ import { useDetachFrameworkAgreementDocument } from "@/features/frameworkAgreeme
 import { useFrameworkAgreementDocumentDownloadUrl } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDocumentDownloadUrl"
 import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
+import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
 import type {
   AttachDocumentResponse,
   FALifecycleStatus,
@@ -54,7 +55,8 @@ function TemplatesAndDocumentsTab({
   const detachMutation = useDetachFrameworkAgreementDocument()
 
   const canManageDocuments =
-    canManageFrameworkAgreement && frameworkAgreementStatus === "draft"
+    canManageFrameworkAgreement &&
+    frameworkAgreementStatus === FALifecycleStatusSchema.enum.draft
   const documentsAtLimit =
     (documentsQuery.data?.length ?? 0) >= MAX_FA_DOCUMENTS
 
@@ -211,23 +213,27 @@ function TemplatesAndDocumentsTab({
               <span className="shrink-0 text-xs text-muted-foreground">
                 {formatDateTime(doc.uploaded_at)}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => handleDownload(doc.id)}
                 aria-label={t("documentsTab.downloadButton")}
                 data-testid={`download-document-${doc.id}`}
               >
                 <Download size={16} className="text-muted-foreground" />
-              </button>
+              </Button>
               {canManageDocuments && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => setDetachTarget(doc)}
                   aria-label={t("documentsTab.detachButton")}
                   data-testid={`detach-document-${doc.id}`}
                 >
                   <Trash2 size={16} className="text-muted-foreground" />
-                </button>
+                </Button>
               )}
             </div>
           ))}

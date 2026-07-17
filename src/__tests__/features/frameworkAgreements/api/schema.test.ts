@@ -9,6 +9,10 @@ import {
   FADetailResponseSchema,
   FADocumentListResponseSchema,
   FADraftResponseSchema,
+  FAEventTypeFilterSchema,
+  FALCPartnerItemSchema,
+  FALCPartnersResponseSchema,
+  FALinkedFinancingsResponseSchema,
   FAListItemSchema,
   FAListResponseSchema,
   FAReactivatedResponseSchema,
@@ -877,5 +881,102 @@ describe("FAReconstructResponseSchema", () => {
         state: {},
       })
     ).toThrow()
+  })
+})
+
+describe("FALCPartnerItemSchema / FALCPartnersResponseSchema", () => {
+  const validItem = {
+    id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
+    legal_name: "New Group Trade",
+  }
+
+  it("accepts a valid LC partner item", () => {
+    expect(() => FALCPartnerItemSchema.parse(validItem)).not.toThrow()
+  })
+
+  it("rejects a missing legal_name", () => {
+    expect(() => FALCPartnerItemSchema.parse({ id: validItem.id })).toThrow()
+  })
+
+  it("rejects a non-uuid id", () => {
+    expect(() =>
+      FALCPartnerItemSchema.parse({ ...validItem, id: "not-a-uuid" })
+    ).toThrow()
+  })
+
+  it("accepts a full LC partners response", () => {
+    expect(() =>
+      FALCPartnersResponseSchema.parse({ items: [validItem] })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty LC partners response", () => {
+    expect(() => FALCPartnersResponseSchema.parse({ items: [] })).not.toThrow()
+  })
+
+  it("rejects a missing items array", () => {
+    expect(() => FALCPartnersResponseSchema.parse({})).toThrow()
+  })
+})
+
+describe("FALinkedFinancingsResponseSchema", () => {
+  it("accepts an empty linked-financings response", () => {
+    expect(() =>
+      FALinkedFinancingsResponseSchema.parse({ count: 0, items: [] })
+    ).not.toThrow()
+  })
+
+  it("accepts a populated linked-financings response with opaque items", () => {
+    expect(() =>
+      FALinkedFinancingsResponseSchema.parse({
+        count: 2,
+        items: [{ id: "fin-1" }, { id: "fin-2" }],
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing count", () => {
+    expect(() =>
+      FALinkedFinancingsResponseSchema.parse({ items: [] })
+    ).toThrow()
+  })
+
+  it("rejects a non-integer count", () => {
+    expect(() =>
+      FALinkedFinancingsResponseSchema.parse({ count: 1.5, items: [] })
+    ).toThrow()
+  })
+})
+
+describe("FAEventTypeFilterSchema", () => {
+  it.each([
+    "draft_created",
+    "draft_edited",
+    "draft_deleted",
+    "document_attached",
+    "document_detached",
+    "document_downloaded",
+    "activation_submitted",
+    "activated",
+    "activation_rejected",
+    "activation_expired",
+    "suspended",
+    "suspension_blocked",
+    "reactivated",
+    "terminated",
+    "termination_blocked",
+    "edited",
+    "max_volume_reduced_below_exposure",
+    "list_accessed",
+    "detail_accessed",
+    "pricing_snapshot_accessed",
+    "auditor_audit_access",
+    "audit_export",
+  ])("accepts the documented event type %s", value => {
+    expect(() => FAEventTypeFilterSchema.parse(value)).not.toThrow()
+  })
+
+  it("rejects an unknown event type", () => {
+    expect(() => FAEventTypeFilterSchema.parse("unknown_event")).toThrow()
   })
 })

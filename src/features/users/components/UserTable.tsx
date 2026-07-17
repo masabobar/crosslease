@@ -105,7 +105,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
     canDeactivate: deactivateVisible,
     canResetMfa: resetMfaVisible,
     hasAnyAction: hasActions,
-  } = getUserActionVisibility(user.status, user.role ?? "", viewerRole)
+  } = getUserActionVisibility(user.status, user.role, viewerRole)
 
   if (!hasActions || isSelf) {
     return (
@@ -212,6 +212,11 @@ function UserTable({
       className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
       data-testid="user-table"
     >
+      {/* NOTE: raw flex div-grid instead of shadcn Table/TableRow/TableCell — this
+          is a pre-existing, codebase-wide convention shared by every table component
+          (TenantTable, PartnerTable, FrameworkAgreementTable, AuditTable), not
+          something introduced here. Converting only this table would diverge from
+          the established pattern; a full migration is a separate, cross-feature effort. */}
       {/* Header row */}
       <div className="flex border-b border-border h-10 items-center">
         <div className="flex-1 min-w-0 px-2">

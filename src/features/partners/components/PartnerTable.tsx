@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
+import {
+  PartnerStatusSchema,
+  UboCompletenessStatusSchema,
+} from "@/features/partners/api/schema"
 import type { PartnerListItem } from "@/features/partners/api/schema"
 import type { PartnerActionType } from "@/features/partners/types"
 
@@ -31,7 +35,8 @@ type KebabMenuProps = {
 function KebabMenu({ partner, canAction, onAction }: KebabMenuProps) {
   const { t } = useTranslation("partners")
 
-  const canArchive = canAction && partner.status === "confirmed"
+  const canArchive =
+    canAction && partner.status === PartnerStatusSchema.enum.confirmed
 
   if (!canArchive) {
     return (
@@ -50,7 +55,7 @@ function KebabMenu({ partner, canAction, onAction }: KebabMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         data-testid={`partner-row-menu-${partner.partner_id}`}
-        aria-label="Actions"
+        aria-label={t("list.table.actionsMenuLabel")}
         className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         <MoreHorizontal size={16} />
@@ -213,7 +218,8 @@ function PartnerTable({
               <PartnerStatusBadge status={partner.status} />
             </div>
             <div className={`${COL_UBO} p-2`}>
-              {partner.ubo_completeness_status === "missing" ? (
+              {partner.ubo_completeness_status ===
+              UboCompletenessStatusSchema.enum.missing ? (
                 <span className="text-sm text-muted-foreground">—</span>
               ) : (
                 <span className="flex items-center gap-1.5 text-sm text-foreground">

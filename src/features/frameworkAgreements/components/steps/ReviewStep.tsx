@@ -2,6 +2,7 @@ import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
+import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import type { FrameworkAgreementDocumentDraft } from "@/features/frameworkAgreements/types"
@@ -9,21 +10,6 @@ import type { FrameworkAgreementDocumentDraft } from "@/features/frameworkAgreem
 type Props = {
   form: UseFormReturn<FrameworkAgreementWizardForm>
   documents: FrameworkAgreementDocumentDraft[]
-}
-
-function ReviewRow({
-  label,
-  value,
-}: {
-  label: string
-  value: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="text-sm text-foreground">{value}</div>
-    </div>
-  )
 }
 
 function ReviewStep({ form, documents }: Props) {

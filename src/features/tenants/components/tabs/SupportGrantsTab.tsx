@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
 import { NewGrantDialog } from "@/features/tenants/components/NewGrantDialog"
 import { RevokeGrantDialog } from "@/features/tenants/components/RevokeGrantDialog"
+import { StatusPill } from "@/features/tenants/components/StatusPill"
 import { useTenantGrants } from "@/features/tenants/hooks/useTenantGrants"
 import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessPolicy"
 import { useUsers } from "@/features/users/hooks/useUsers"
@@ -15,9 +16,9 @@ import {
 } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
+import { SUPPORT_USERS_DROPDOWN_PAGE_SIZE } from "@/features/tenants/constants"
+import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
-
-const SUPPORT_USERS_DROPDOWN_PAGE_SIZE = 100
 
 type GrantBadgeVariant = "active" | "expired" | "revoked" | "emergency"
 
@@ -36,13 +37,7 @@ function GrantBadge({
   variant: GrantBadgeVariant
 }) {
   const { bg, text } = BADGE_STYLES[variant]
-  return (
-    <span
-      className={`inline-flex items-center h-[18px] px-1.5 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}
-    >
-      {label}
-    </span>
-  )
+  return <StatusPill colorClassName={`${bg} ${text}`}>{label}</StatusPill>
 }
 
 function GranteeAvatar({ name }: { name: string }) {
@@ -173,15 +168,18 @@ export function SupportGrantsTab({
   const [newGrantOpen, setNewGrantOpen] = useState(false)
   const [grantToRevoke, setGrantToRevoke] = useState<SupportGrant | null>(null)
 
-  const { data: grants, isLoading, isError } = useTenantGrants(tenantId)
-  const { data: accessPolicy } = useTenantAccessPolicy(tenantId)
+  const { data: grants, isLoading, isError, error } = useTenantGrants(tenantId)
+  const { data: accessPolicy, isError: isAccessPolicyError } =
+    useTenantAccessPolicy(tenantId)
   const { data: usersData } = useUsers({
     role: [SUPPORT_USER_ROLE],
     per_page: SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
   })
 
-  const supportAccessEnabled =
-    accessPolicy?.support_read_only_access.enabled ?? true
+  // Fail closed: an unknown/error policy state must not allow grant creation.
+  const supportAccessEnabled = isAccessPolicyError
+    ? false
+    : (accessPolicy?.support_read_only_access.enabled ?? true)
 
   const userMap = new Map<string, UserListItem>(
     (usersData?.users ?? []).map(u => [u.id, u])
@@ -210,7 +208,9 @@ export function SupportGrantsTab({
             className="text-destructive shrink-0 mt-0.5"
           />
           <p className="text-sm font-medium text-destructive">
-            {t("detail.grants.supportDisabledBanner")}
+            {isAccessPolicyError
+              ? t("errors.generic")
+              : t("detail.grants.supportDisabledBanner")}
           </p>
         </div>
       )}
@@ -223,7 +223,9 @@ export function SupportGrantsTab({
 
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {t("errors.generic")}
+            {error instanceof ApiError
+              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic")}
           </p>
         )}
 

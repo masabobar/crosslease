@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { Shield, AlertCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { mfaVerify } from "../api/mfaApi"
+import { RECOVERY_CODE_LENGTH, TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
@@ -42,6 +43,7 @@ export default function MfaVerifyPage() {
           <Button
             type="button"
             className="mt-4 w-full"
+            data-testid="mfa-verify-no-token-back-button"
             onClick={() => navigate(PATHS.LOGIN)}
           >
             {t("mfaVerify.backToLogin")}
@@ -51,15 +53,10 @@ export default function MfaVerifyPage() {
     )
   }
 
-  const isRecoveryCode = code.length === 20 && /^[0-9a-f]+$/.test(code)
-  const isTotpCode = code.length === 6 && /^\d+$/.test(code)
+  const isRecoveryCode =
+    code.length === RECOVERY_CODE_LENGTH && /^[0-9a-f]+$/.test(code)
+  const isTotpCode = code.length === TOTP_CODE_LENGTH && /^\d+$/.test(code)
   const isValid = isRecoveryCode || isTotpCode
-
-  const errorMessages: Record<string, string> = {
-    MFA_TOKEN_INVALID: t("mfaVerify.errors.MFA_TOKEN_INVALID"),
-    MFA_CODE_INVALID: t("mfaVerify.errors.MFA_CODE_INVALID"),
-    MFA_RECOVERY_RATE_LIMITED: t("mfaVerify.errors.MFA_RECOVERY_RATE_LIMITED"),
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,8 +68,11 @@ export default function MfaVerifyPage() {
       setAuthenticated(true)
       navigate(PATHS.DASHBOARD)
     } catch (err) {
-      const apiCode = err instanceof ApiError ? err.code : ""
-      setServerError(errorMessages[apiCode] ?? t("mfaVerify.errors.default"))
+      setServerError(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     } finally {
       setIsSubmitting(false)
     }

@@ -24,6 +24,7 @@ import {
 import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants"
 import { PATHS, partnerDetail } from "@/router/paths"
 import { formatDate } from "@/lib/formatters"
+import { DuplicateCandidatePairStatusSchema } from "@/features/partners/api/schema"
 import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 
 type ConfirmedDuplicateSectionProps = {
@@ -146,7 +147,7 @@ export default function DuplicatePairDetailPage() {
 
   const { data, isLoading, isError } = useDuplicatePairs(tenantId)
   const pair = data?.items.find(p => p.pair_id === pairId)
-  const { partnersById } = usePartnersByIds(
+  const { partnersById, isError: isPartnersError } = usePartnersByIds(
     pair ? [pair.partner_a_id, pair.partner_b_id] : []
   )
   const partnerA = pair ? partnersById.get(pair.partner_a_id) : undefined
@@ -184,7 +185,8 @@ export default function DuplicatePairDetailPage() {
       className="p-8 flex flex-col gap-6"
       data-testid="duplicate-pair-detail-page"
     >
-      {pair.status === "confirmed_duplicate" ? (
+      {pair.status ===
+      DuplicateCandidatePairStatusSchema.enum.confirmed_duplicate ? (
         <ConfirmedDuplicateSection
           partnerA={partnerA}
           partnerB={partnerB}
@@ -206,7 +208,8 @@ export default function DuplicatePairDetailPage() {
                       : t("duplicates.detail.partnerB")}
                   </p>
                   <p className="text-xl font-semibold text-foreground truncate mt-1">
-                    {partner?.display_name ?? "…"}
+                    {partner?.display_name ??
+                      (isPartnersError ? t("errors.generic") : "…")}
                   </p>
                   {partner && (
                     <div className="flex items-center gap-3 mt-2">
@@ -225,7 +228,10 @@ export default function DuplicatePairDetailPage() {
 
               <div className="shrink-0">
                 {canResolve &&
-                  (pair.status === "pending" || pair.status === "deferred") && (
+                  (pair.status ===
+                    DuplicateCandidatePairStatusSchema.enum.pending ||
+                    pair.status ===
+                      DuplicateCandidatePairStatusSchema.enum.deferred) && (
                     <Button
                       data-testid="duplicate-detail-resolve"
                       onClick={() => setResolveOpen(true)}
@@ -233,14 +239,17 @@ export default function DuplicatePairDetailPage() {
                       {t("duplicates.detail.resolveButton")}
                     </Button>
                   )}
-                {canResolve && pair.status === "merge_in_progress" && (
-                  <Button
-                    data-testid="duplicate-detail-review-merge"
-                    onClick={() => navigate(PATHS.PENDING_APPROVALS)}
-                  >
-                    {t("duplicates.detail.reviewMergeButton")}
-                  </Button>
-                )}
+                {canResolve &&
+                  pair.status ===
+                    DuplicateCandidatePairStatusSchema.enum
+                      .merge_in_progress && (
+                    <Button
+                      data-testid="duplicate-detail-review-merge"
+                      onClick={() => navigate(PATHS.PENDING_APPROVALS)}
+                    >
+                      {t("duplicates.detail.reviewMergeButton")}
+                    </Button>
+                  )}
               </div>
             </div>
 

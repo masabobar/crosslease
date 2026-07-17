@@ -5,6 +5,7 @@
   "loading": "Laden...",
   "validation": {
     "required": "Dieses Feld ist erforderlich.",
+    "invalidFormat": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
     "dateMustBeAfterFrom": "Das 'Bis'-Datum muss nach dem 'Von'-Datum liegen."
   },
   "nav": {
@@ -81,5 +82,10 @@
     "hoursAgo": "vor {{count}} Std.",
     "daysAgo": "vor {{count}} T.",
     "yesterday": "gestern"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "title": "Etwas ist schiefgelaufen",
+    "retry": "Erneut versuchen"
   }
 }

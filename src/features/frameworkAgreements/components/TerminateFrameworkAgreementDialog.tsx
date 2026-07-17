@@ -28,6 +28,42 @@ type Props = {
   frameworkAgreementId: string
 }
 
+// Shared shell for the two non-form states (readiness check failed / termination
+// blocked) — same header/separator/single-close-button chrome, differing only in
+// the message content.
+function TerminateBlockedMessage({
+  title,
+  onClose,
+  closeLabel,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  closeLabel: string
+  children: React.ReactNode
+}) {
+  return (
+    <>
+      <div className="px-4 py-4">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+      </div>
+      <Separator />
+      <div className="px-4 py-4">{children}</div>
+      <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
+        <Button
+          type="button"
+          onClick={onClose}
+          data-testid="terminate-blocked-close"
+        >
+          {closeLabel}
+        </Button>
+      </div>
+    </>
+  )
+}
+
 function TerminateFrameworkAgreementDialog({
   open,
   onOpenChange,
@@ -35,8 +71,11 @@ function TerminateFrameworkAgreementDialog({
 }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useTerminateFrameworkAgreement()
-  const { data: readiness, isLoading: isReadinessLoading } =
-    useFrameworkAgreementTerminationReadiness(frameworkAgreementId, open)
+  const {
+    data: readiness,
+    isLoading: isReadinessLoading,
+    isError: isReadinessError,
+  } = useFrameworkAgreementTerminationReadiness(frameworkAgreementId, open)
 
   const {
     handleSubmit,
@@ -76,31 +115,26 @@ function TerminateFrameworkAgreementDialog({
 
   return (
     <DialogModal open={open} onOpenChange={o => !o && handleClose()}>
-      {isBlocked ? (
-        <>
-          <div className="px-4 py-4">
-            <DialogHeader>
-              <DialogTitle>{t("terminate.blockedTitle")}</DialogTitle>
-            </DialogHeader>
-          </div>
-          <Separator />
-          <div className="px-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              {t("terminate.blockedDescription", {
-                count: readiness.blocking_financing_count,
-              })}
-            </p>
-          </div>
-          <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
-            <Button
-              type="button"
-              onClick={handleClose}
-              data-testid="terminate-blocked-close"
-            >
-              {t("wizard.actions.cancel")}
-            </Button>
-          </div>
-        </>
+      {isReadinessError ? (
+        <TerminateBlockedMessage
+          title={t("terminate.blockedTitle")}
+          onClose={handleClose}
+          closeLabel={t("wizard.actions.cancel")}
+        >
+          <p className="text-sm text-destructive">{t("errors.generic")}</p>
+        </TerminateBlockedMessage>
+      ) : isBlocked ? (
+        <TerminateBlockedMessage
+          title={t("terminate.blockedTitle")}
+          onClose={handleClose}
+          closeLabel={t("wizard.actions.cancel")}
+        >
+          <p className="text-sm text-muted-foreground">
+            {t("terminate.blockedDescription", {
+              count: readiness.blocking_financing_count,
+            })}
+          </p>
+        </TerminateBlockedMessage>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-4 py-4">

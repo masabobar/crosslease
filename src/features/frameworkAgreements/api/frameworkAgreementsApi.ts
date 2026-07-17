@@ -72,7 +72,9 @@ export type FrameworkAgreementAuditHistoryExportParams = Omit<
 
 export const FRAMEWORK_AGREEMENTS_QUERY_KEYS = {
   list: (params?: FrameworkAgreementListParams) =>
-    ["framework-agreements", "list", params] as const,
+    params
+      ? (["framework-agreements", "list", params] as const)
+      : (["framework-agreements", "list"] as const),
   lcPartners: () => ["framework-agreements", "lc-partners"] as const,
   detail: (id: string) => ["framework-agreements", "detail", id] as const,
   selectableTemplates: () =>
