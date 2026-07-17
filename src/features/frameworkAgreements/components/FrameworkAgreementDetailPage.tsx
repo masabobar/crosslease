@@ -262,17 +262,33 @@ export default function FrameworkAgreementDetailPage() {
               </div>
             </div>
 
+            <div className="border border-border rounded-xl bg-background overflow-hidden">
+              <div className="bg-muted px-4 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                  {t("detail.sections.creditEnvelope")}
+                </p>
+              </div>
+              <div className="p-4 flex flex-col gap-4">
+                <ReviewRow
+                  label={t("fields.maxVolumeEur")}
+                  value={data.max_volume_eur}
+                />
+              </div>
+            </div>
+
             {data.base_rate !== null && (
-              <div className="border border-border rounded-xl bg-background overflow-hidden">
+              <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
                 <div className="bg-muted px-4 py-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                    {t("detail.sections.envelopeAndPricing")}
+                    {t("detail.sections.pricing")}
                   </p>
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-4">
                   <ReviewRow
-                    label={t("fields.maxVolumeEur")}
-                    value={data.max_volume_eur}
+                    label={t("fields.rateType")}
+                    value={
+                      data.rate_type ? t(`rateTypes.${data.rate_type}`) : "—"
+                    }
                   />
                   <ReviewRow
                     label={t("fields.baseRate")}
@@ -281,12 +297,6 @@ export default function FrameworkAgreementDetailPage() {
                   <ReviewRow
                     label={t("fields.spread")}
                     value={data.spread !== null ? `${data.spread}%` : "—"}
-                  />
-                  <ReviewRow
-                    label={t("fields.rateType")}
-                    value={
-                      data.rate_type ? t(`rateTypes.${data.rate_type}`) : "—"
-                    }
                   />
                   <ReviewRow
                     label={t("fields.effectiveRate")}
@@ -325,31 +335,17 @@ export default function FrameworkAgreementDetailPage() {
               </div>
             )}
 
-            <div className="border border-border rounded-xl bg-background overflow-hidden">
-              <div className="bg-muted px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.sections.validity")}
-                </p>
-              </div>
-              <div className="p-4 grid grid-cols-2 gap-4">
-                <ReviewRow
-                  label={t("fields.validFrom")}
-                  value={data.valid_from}
-                />
-                <ReviewRow
-                  label={t("fields.validUntil")}
-                  value={data.valid_until ?? t("fields.openEnded")}
-                />
-              </div>
-            </div>
-
-            <div className="border border-border rounded-xl bg-background overflow-hidden">
+            <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
               <div className="bg-muted px-4 py-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
                   {t("detail.sections.lifecycle")}
                 </p>
               </div>
               <div className="p-4 grid grid-cols-2 gap-4">
+                <ReviewRow
+                  label={t("detail.fields.status")}
+                  value={t(`statuses.${data.status}`)}
+                />
                 {data.created_by_name && (
                   <ReviewRow
                     label={t("detail.fields.createdBy")}
@@ -372,6 +368,14 @@ export default function FrameworkAgreementDetailPage() {
                     value={formatDateTime(data.activated_at)}
                   />
                 )}
+                <ReviewRow
+                  label={t("fields.validFrom")}
+                  value={data.valid_from}
+                />
+                <ReviewRow
+                  label={t("fields.validUntil")}
+                  value={data.valid_until ?? t("fields.openEnded")}
+                />
                 {data.suspended_at && (
                   <ReviewRow
                     label={t("detail.fields.suspendedAt")}

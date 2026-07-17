@@ -156,14 +156,14 @@
     },
     "sections": {
       "identity": "Identity",
-      "envelopeAndPricing": "Envelope & pricing",
       "creditEnvelope": "Credit envelope",
-      "validity": "Validity",
+      "pricing": "Pricing",
       "lifecycle": "Lifecycle",
       "specialConditions": "Special conditions"
     },
     "fields": {
       "agreementId": "Agreement ID",
+      "status": "Status",
       "createdBy": "Created by",
       "createdAt": "Created at",
       "activatedBy": "Activated by",
@@ -247,6 +247,8 @@
     "confirmButton": "Save changes"
   },
   "auditHistory": {
+    "viewEventLog": "Event log",
+    "viewReconstruct": "Reconstruct",
     "sectionTitle": "Audit history",
     "searchPlaceholder": "Search",
     "filterEventType": "Event type",
@@ -259,6 +261,7 @@
     "loadingMore": "Loading…",
     "reconstructTitle": "View agreement state as of",
     "reconstructButton": "View state",
+    "reconstructBanner": "Showing reconstructed agreement state as of {{date}}. This is a read-only historical view.",
     "eventsReplayed": "{{count}} event replayed",
     "eventsReplayed_other": "{{count}} events replayed",
     "exportReasonPlaceholder": "Reason (required for Back Office)",

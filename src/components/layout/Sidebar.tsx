@@ -28,6 +28,8 @@ import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
 import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { BANK_PRODUCT_TEMPLATE_MODULE_KEY } from "@/features/productTemplates/constants"
+import { FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
+import { FRAMEWORK_AGREEMENT_MODULE_KEY } from "@/features/frameworkAgreements/constants"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 export function Sidebar() {
@@ -52,6 +54,11 @@ export function Sidebar() {
     PRODUCT_TEMPLATE_READ_ALLOWED_ROLES.includes(currentUser.role) &&
     (!currentUser.tenant_id ||
       !!permissions?.active_modules.includes(BANK_PRODUCT_TEMPLATE_MODULE_KEY))
+  const canAccessFrameworkAgreements =
+    !!currentUser &&
+    FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES.includes(currentUser.role) &&
+    (!currentUser.tenant_id ||
+      !!permissions?.active_modules.includes(FRAMEWORK_AGREEMENT_MODULE_KEY))
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -88,6 +95,9 @@ export function Sidebar() {
   )
   const isProductTemplateListActive = location.pathname.startsWith(
     "/business-configuration/product-templates"
+  )
+  const isFrameworkAgreementListActive = location.pathname.startsWith(
+    "/business-configuration/framework-agreements"
   )
 
   return (
@@ -363,6 +373,23 @@ export function Sidebar() {
                     >
                       {t("nav.productTemplates")}
                       {isProductTemplateListActive && (
+                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
+                      )}
+                    </Link>
+                  )}
+                  {canAccessFrameworkAgreements && (
+                    <Link
+                      to={PATHS.FRAMEWORK_AGREEMENT_LIST}
+                      data-testid="nav-framework-agreements"
+                      className={cn(
+                        "flex items-center justify-between text-sm whitespace-nowrap",
+                        isFrameworkAgreementListActive
+                          ? "font-medium text-[#1d41a8]"
+                          : "text-foreground hover:text-[#1d41a8]"
+                      )}
+                    >
+                      {t("nav.frameworkAgreements")}
+                      {isFrameworkAgreementListActive && (
                         <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
                       )}
                     </Link>
