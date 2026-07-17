@@ -160,6 +160,15 @@ export type ArchivePartnerBody = {
   reason: string
 }
 
+// Single-actor FO confirmation per US 13.5 (PRD1042-1449) — no Four-Eyes.
+export type ConfirmPartnerBody = {
+  note?: string | null
+}
+
+export type RejectPartnerBody = {
+  note: string
+}
+
 export type ProposeIdentityChangeBody = {
   target_anchors: string[]
   proposed_values: Record<string, unknown>
@@ -266,6 +275,22 @@ export async function fetchArchiveEligibility(
 ): Promise<ArchiveEligibilityResponse> {
   const data = await api.get(`/partners/${id}/archive-eligibility`)
   return ArchiveEligibilityResponseSchema.parse(data)
+}
+
+export async function confirmPartner(
+  id: string,
+  body: ConfirmPartnerBody
+): Promise<PartnerDetailResponse> {
+  const data = await api.post(`/partners/${id}/confirm`, body)
+  return PartnerDetailResponseSchema.parse(data)
+}
+
+export async function rejectPartner(
+  id: string,
+  body: RejectPartnerBody
+): Promise<PartnerDetailResponse> {
+  const data = await api.post(`/partners/${id}/reject`, body)
+  return PartnerDetailResponseSchema.parse(data)
 }
 
 export async function archivePartner(

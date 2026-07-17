@@ -553,5 +553,38 @@
     "PAIR_NOT_FLAGGED_FOR_MERGE": "This pair must be confirmed as a duplicate before a merge can be initiated.",
     "MERGE_PARTNER_NOT_IN_PAIR": "The selected surviving partner must be one of the two partners in this pair.",
     "VALIDATION_ERROR": "The submitted data isn't valid. Please review the form and try again."
+  },
+  "confirmDialog": {
+    "triggerButton": "Confirm partner",
+    "title": "Confirm partner",
+    "description": "Confirming makes this partner referenceable in contracts and financings. No additional approval is required.",
+    "fields": {
+      "note": "Note (optional)",
+      "notePlaceholder": "Add context for the confirmation record…"
+    },
+    "errors": {
+      "noteTooLong": "Note must be at most 2000 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Confirm",
+    "submitting": "Confirming…",
+    "success": "Partner confirmed."
+  },
+  "rejectDialog": {
+    "triggerButton": "Reject",
+    "title": "Reject partner",
+    "description": "Rejection is final — a rejected partner cannot be confirmed later.",
+    "fields": {
+      "note": "Reason",
+      "noteMinChars": "Min. 10 characters",
+      "notePlaceholder": "Explain why this partner is being rejected…"
+    },
+    "errors": {
+      "noteTooShort": "Reason must be at least 10 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Reject partner",
+    "submitting": "Rejecting…",
+    "success": "Partner rejected."
   }
 }
