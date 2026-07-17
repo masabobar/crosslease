@@ -15,6 +15,13 @@ export const FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES: readonly UserRole[] = [
   "auditor",
 ]
 
+// Narrower than FA_READ: front_office lacks FA_AUDIT_READ entirely (403), and
+// support_user/leasing_company_user hold the permission but the BE always 404s
+// them on these endpoints (existence non-disclosure) — never real data. Only
+// these four roles ever see populated audit history.
+export const FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES: readonly UserRole[] =
+  ["system_admin", "bank_power_user", "back_office", "auditor"]
+
 export type FrameworkAgreementWizardStep =
   | "identity"
   | "envelopePricing"

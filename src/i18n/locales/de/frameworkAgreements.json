@@ -246,6 +246,49 @@
     "justificationHint": "Pflichtfeld (mind. 30 Zeichen). Wird im Prüfprotokoll gespeichert.",
     "confirmButton": "Änderungen speichern"
   },
+  "auditHistory": {
+    "sectionTitle": "Prüfprotokoll",
+    "searchPlaceholder": "Suchen",
+    "filterEventType": "Ereignistyp",
+    "filterDateRange": "Zeitraum",
+    "from": "Von",
+    "to": "Bis",
+    "clearAll": "Alle löschen",
+    "noEvents": "Noch keine Prüfereignisse",
+    "loadMore": "Mehr laden",
+    "loadingMore": "Lädt…",
+    "reconstructTitle": "Vereinbarungsstatus zu einem Zeitpunkt anzeigen",
+    "reconstructButton": "Status anzeigen",
+    "eventsReplayed": "{{count}} Ereignis wiedergegeben",
+    "eventsReplayed_other": "{{count}} Ereignisse wiedergegeben",
+    "exportReasonPlaceholder": "Grund (erforderlich für Back Office)",
+    "exportButton": "CSV exportieren",
+    "systemActor": "System",
+    "eventTypes": {
+      "draft_created": "Vereinbarung erstellt",
+      "draft_edited": "Entwurf bearbeitet",
+      "draft_deleted": "Entwurf gelöscht",
+      "document_attached": "Dokument angehängt",
+      "document_detached": "Dokument entfernt",
+      "document_downloaded": "Dokument heruntergeladen",
+      "activation_submitted": "Aktivierung eingereicht",
+      "activated": "Vereinbarung aktiviert",
+      "activation_rejected": "Aktivierung abgelehnt",
+      "activation_expired": "Aktivierung abgelaufen",
+      "suspended": "Vereinbarung ausgesetzt",
+      "suspension_blocked": "Aussetzung blockiert",
+      "reactivated": "Vereinbarung reaktiviert",
+      "terminated": "Vereinbarung beendet",
+      "termination_blocked": "Beendigung blockiert",
+      "edited": "Vereinbarung bearbeitet",
+      "max_volume_reduced_below_exposure": "Maximalvolumen unter aktuelles Engagement reduziert",
+      "list_accessed": "Vereinbarungsliste aufgerufen",
+      "detail_accessed": "Vereinbarungsdetail aufgerufen",
+      "pricing_snapshot_accessed": "Preis-Snapshot aufgerufen",
+      "auditor_audit_access": "Prüfprotokoll aufgerufen",
+      "audit_export": "Prüfprotokoll exportiert"
+    }
+  },
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
     "validUntilBeforeFrom": "„Gültig bis“ muss am oder nach „Gültig ab“ liegen",
@@ -264,6 +307,8 @@
     "FA_DOC_INVALID_MIME": "Nur PDF-Dateien werden unterstützt.",
     "FA_DOC_FILE_TOO_LARGE": "Die Datei ist zu groß. Maximale Größe: 25 MB.",
     "FA_DOC_IMMUTABLE": "Dokumente können nur im Entwurfsstatus angehängt oder entfernt werden.",
+    "FA_RECONSTRUCTION_TIMESTAMP": "Dieser Zeitpunkt ist ungültig. Er muss in der Vergangenheit liegen, und die Vereinbarung muss zu diesem Zeitpunkt bereits bestanden haben.",
+    "FA_EXPORT_REASON_REQUIRED": "Zum Exportieren dieses Prüfprotokolls ist ein Grund erforderlich.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

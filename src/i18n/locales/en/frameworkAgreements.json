@@ -246,6 +246,49 @@
     "justificationHint": "Mandatory (min. 30 characters). Stored in the audit trail.",
     "confirmButton": "Save changes"
   },
+  "auditHistory": {
+    "sectionTitle": "Audit history",
+    "searchPlaceholder": "Search",
+    "filterEventType": "Event type",
+    "filterDateRange": "Date range",
+    "from": "From",
+    "to": "To",
+    "clearAll": "Clear all",
+    "noEvents": "No audit events yet",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "reconstructTitle": "View agreement state as of",
+    "reconstructButton": "View state",
+    "eventsReplayed": "{{count}} event replayed",
+    "eventsReplayed_other": "{{count}} events replayed",
+    "exportReasonPlaceholder": "Reason (required for Back Office)",
+    "exportButton": "Export CSV",
+    "systemActor": "System",
+    "eventTypes": {
+      "draft_created": "Agreement created",
+      "draft_edited": "Draft edited",
+      "draft_deleted": "Draft deleted",
+      "document_attached": "Document attached",
+      "document_detached": "Document removed",
+      "document_downloaded": "Document downloaded",
+      "activation_submitted": "Activation submitted",
+      "activated": "Agreement activated",
+      "activation_rejected": "Activation rejected",
+      "activation_expired": "Activation expired",
+      "suspended": "Agreement suspended",
+      "suspension_blocked": "Suspension blocked",
+      "reactivated": "Agreement reactivated",
+      "terminated": "Agreement terminated",
+      "termination_blocked": "Termination blocked",
+      "edited": "Agreement edited",
+      "max_volume_reduced_below_exposure": "Max volume reduced below exposure",
+      "list_accessed": "Agreement list accessed",
+      "detail_accessed": "Agreement detail accessed",
+      "pricing_snapshot_accessed": "Pricing snapshot accessed",
+      "auditor_audit_access": "Audit history accessed",
+      "audit_export": "Audit history exported"
+    }
+  },
   "errors": {
     "atLeastOneTemplate": "Select at least one Product Template",
     "validUntilBeforeFrom": "Valid Until must be on or after Valid From",
@@ -264,6 +307,8 @@
     "FA_DOC_INVALID_MIME": "Only PDF files are supported.",
     "FA_DOC_FILE_TOO_LARGE": "File is too large. Maximum size is 25 MB.",
     "FA_DOC_IMMUTABLE": "Documents can only be attached or removed while this agreement is in Draft status.",
+    "FA_RECONSTRUCTION_TIMESTAMP": "This timestamp is invalid. It must be in the past and the agreement must have existed at that point in time.",
+    "FA_EXPORT_REASON_REQUIRED": "A reason is required to export this audit history.",
     "generic": "Something went wrong. Please try again."
   }
 }

@@ -4,15 +4,19 @@ import {
   CreateFARequestSchema,
   DownloadURLResponseSchema,
   EditFrameworkAgreementFormSchema,
+  FAAuditEventResponseSchema,
+  FAAuditHistoryResponseSchema,
   FADetailResponseSchema,
   FADocumentListResponseSchema,
   FADraftResponseSchema,
   FAListItemSchema,
   FAListResponseSchema,
   FAReactivatedResponseSchema,
+  FAReconstructResponseSchema,
   FASuspendedResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
+  FieldDiffItemSchema,
   FrameworkAgreementWizardFormSchema,
   ReactivateFARequestSchema,
   SelectableTemplateItemSchema,
@@ -744,6 +748,133 @@ describe("FAUtilizationResponseSchema", () => {
         last_refreshed_at: null,
         source: "limit_management",
         available: false,
+      })
+    ).toThrow()
+  })
+})
+
+describe("FieldDiffItemSchema", () => {
+  it("accepts a diff with scalar old/new values", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "max_volume_eur",
+        old_value: 25000000,
+        new_value: 30000000,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null old_value (field newly set)", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "lg_coverage_rate_override",
+        old_value: null,
+        new_value: 1.5,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing field name", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        old_value: 1,
+        new_value: 2,
+      })
+    ).toThrow()
+  })
+})
+
+const validAuditEvent = {
+  id: "b3e1c9a0-1111-4a2b-8c3d-000000000010",
+  event_type: "edited",
+  actor_id: "b3e1c9a0-1111-4a2b-8c3d-000000000011",
+  actor_first_name: "Jane",
+  actor_last_name: "Doe",
+  actor_type: "user",
+  recorded_at: "2026-07-01T10:00:00Z",
+  justification: "Updated pricing per client request",
+  old_data: { base_rate: 4.0 },
+  new_data: { base_rate: 4.25 },
+  changed_fields: ["base_rate"],
+  field_diffs: [{ field: "base_rate", old_value: 4.0, new_value: 4.25 }],
+}
+
+describe("FAAuditEventResponseSchema", () => {
+  it("accepts a full field-change event", () => {
+    expect(() =>
+      FAAuditEventResponseSchema.parse(validAuditEvent)
+    ).not.toThrow()
+  })
+
+  it("accepts a system-actor event with null actor fields and diffs", () => {
+    expect(() =>
+      FAAuditEventResponseSchema.parse({
+        ...validAuditEvent,
+        event_type: "activation_expired",
+        actor_id: null,
+        actor_first_name: null,
+        actor_last_name: null,
+        actor_type: "system",
+        justification: null,
+        old_data: null,
+        new_data: null,
+        changed_fields: null,
+        field_diffs: null,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing recorded_at", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { recorded_at: _omit, ...rest } = validAuditEvent
+    expect(() => FAAuditEventResponseSchema.parse(rest)).toThrow()
+  })
+})
+
+describe("FAAuditHistoryResponseSchema", () => {
+  it("accepts a page with a next_cursor", () => {
+    expect(() =>
+      FAAuditHistoryResponseSchema.parse({
+        items: [validAuditEvent],
+        next_cursor: "eyJvZmZzZXQiOjUwfQ==",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts the last page with next_cursor null", () => {
+    expect(() =>
+      FAAuditHistoryResponseSchema.parse({
+        items: [],
+        next_cursor: null,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing items array", () => {
+    expect(() =>
+      FAAuditHistoryResponseSchema.parse({ next_cursor: null })
+    ).toThrow()
+  })
+})
+
+describe("FAReconstructResponseSchema", () => {
+  it("accepts a reconstructed state snapshot", () => {
+    expect(() =>
+      FAReconstructResponseSchema.parse({
+        fa_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
+        as_of: "2026-06-15T00:00:00Z",
+        events_replayed: 4,
+        state: { status: "active", max_volume_eur: 25000000 },
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing events_replayed", () => {
+    expect(() =>
+      FAReconstructResponseSchema.parse({
+        fa_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
+        as_of: "2026-06-15T00:00:00Z",
+        state: {},
       })
     ).toThrow()
   })
