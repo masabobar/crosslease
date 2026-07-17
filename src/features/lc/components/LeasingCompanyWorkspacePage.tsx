@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { FileText, BarChart2, FolderOpen, Send } from "lucide-react"
+import { FileText, BarChart2, FolderOpen, Send, Landmark } from "lucide-react"
 import { PATHS } from "@/router/paths"
 
 type WorkspaceSection = {
@@ -8,6 +8,7 @@ type WorkspaceSection = {
   label: string
   path: string
   icon: typeof FileText
+  comingSoon?: boolean
 }
 
 export default function LeasingCompanyWorkspacePage() {
@@ -19,24 +20,34 @@ export default function LeasingCompanyWorkspacePage() {
       label: t("workspace.sections.requests"),
       path: PATHS.LC_REQUESTS,
       icon: FileText,
+      comingSoon: true,
     },
     {
       key: "status",
       label: t("workspace.sections.status"),
       path: PATHS.LC_STATUS,
       icon: BarChart2,
+      comingSoon: true,
     },
     {
       key: "documents",
       label: t("workspace.sections.documents"),
       path: PATHS.LC_DOCUMENTS,
       icon: FolderOpen,
+      comingSoon: true,
     },
     {
       key: "proposals",
       label: t("workspace.sections.proposals"),
       path: PATHS.LC_PROPOSALS,
       icon: Send,
+      comingSoon: true,
+    },
+    {
+      key: "frameworkAgreements",
+      label: t("workspace.sections.frameworkAgreements"),
+      path: PATHS.LC_FRAMEWORK_AGREEMENTS,
+      icon: Landmark,
     },
   ]
 
@@ -55,7 +66,7 @@ export default function LeasingCompanyWorkspacePage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {sections.map(({ key, label, path, icon: Icon }) => (
+        {sections.map(({ key, label, path, icon: Icon, comingSoon }) => (
           <Link
             key={key}
             to={path}
@@ -66,9 +77,11 @@ export default function LeasingCompanyWorkspacePage() {
               <Icon size={20} className="text-[#1d41a8]" />
             </div>
             <span className="text-sm font-medium text-foreground">{label}</span>
-            <span className="text-xs text-muted-foreground">
-              {t("workspace.comingSoon")}
-            </span>
+            {comingSoon && (
+              <span className="text-xs text-muted-foreground">
+                {t("workspace.comingSoon")}
+              </span>
+            )}
           </Link>
         ))}
       </div>

@@ -6,8 +6,40 @@
       "requests": "Meine Anfragen",
       "status": "Statusübersicht",
       "documents": "Bankdokumente",
-      "proposals": "Vorschläge"
+      "proposals": "Vorschläge",
+      "frameworkAgreements": "Rahmenvereinbarungen"
     },
     "comingSoon": "Dieser Bereich ist in Kürze verfügbar."
+  },
+  "frameworkAgreements": {
+    "title": "Rahmenvereinbarungen",
+    "subtitle": "Die Kreditrahmen, die Ihr Unternehmen bei der Bank hält",
+    "emptyState": "Noch keine Rahmenvereinbarungen",
+    "status": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "suspended": "Ausgesetzt",
+      "terminated": "Beendet"
+    },
+    "documentTypes": {
+      "original_agreement": "Originalvereinbarung",
+      "addendum": "Nachtrag",
+      "side_letter": "Nebenabrede",
+      "other": "Sonstiges"
+    },
+    "fields": {
+      "maxVolumeEur": "Maximalvolumen",
+      "validity": "Gültigkeit",
+      "openEnded": "Unbefristet",
+      "permittedProductTemplates": "Zulässige Produktvorlagen",
+      "frameworkDocuments": "Rahmendokumente"
+    },
+    "templatesEmptyState": "Keine Produktvorlagen verknüpft",
+    "templateUnresolved": "Vorlage nicht mehr verfügbar",
+    "documentsEmptyState": "Noch keine Dokumente angehängt",
+    "downloadButton": "Herunterladen",
+    "errors": {
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    }
   }
 }
