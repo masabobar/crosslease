@@ -303,6 +303,76 @@ export type FALinkedFinancingsResponse = z.infer<
   typeof FALinkedFinancingsResponseSchema
 >
 
+// Wire enum for the audit-history `type[]` filter — matches FAEventTypeFilter in
+// refinext-api fa_schemas.py exactly.
+export const FAEventTypeFilterSchema = z.enum([
+  "draft_created",
+  "draft_edited",
+  "draft_deleted",
+  "document_attached",
+  "document_detached",
+  "document_downloaded",
+  "activation_submitted",
+  "activated",
+  "activation_rejected",
+  "activation_expired",
+  "suspended",
+  "suspension_blocked",
+  "reactivated",
+  "terminated",
+  "termination_blocked",
+  "edited",
+  "max_volume_reduced_below_exposure",
+  "list_accessed",
+  "detail_accessed",
+  "pricing_snapshot_accessed",
+  "auditor_audit_access",
+  "audit_export",
+])
+export type FAEventTypeFilter = z.infer<typeof FAEventTypeFilterSchema>
+
+export const FieldDiffItemSchema = z.object({
+  field: z.string(),
+  old_value: z.unknown().nullable(),
+  new_value: z.unknown().nullable(),
+})
+export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+
+// GET /framework-agreements/{id}/audit-history — cursor-paginated event timeline.
+export const FAAuditEventResponseSchema = z.object({
+  id: z.string().uuid(),
+  event_type: z.string(),
+  actor_id: z.string().uuid().nullable(),
+  actor_first_name: z.string().nullable(),
+  actor_last_name: z.string().nullable(),
+  actor_type: z.string(),
+  recorded_at: z.string(),
+  justification: z.string().nullable(),
+  old_data: z.record(z.string(), z.unknown()).nullable(),
+  new_data: z.record(z.string(), z.unknown()).nullable(),
+  changed_fields: z.array(z.string()).nullable(),
+  field_diffs: z.array(FieldDiffItemSchema).nullable(),
+})
+export type FAAuditEventResponse = z.infer<typeof FAAuditEventResponseSchema>
+
+export const FAAuditHistoryResponseSchema = z.object({
+  items: z.array(FAAuditEventResponseSchema),
+  next_cursor: z.string().nullable(),
+})
+export type FAAuditHistoryResponse = z.infer<
+  typeof FAAuditHistoryResponseSchema
+>
+
+// GET /framework-agreements/{id}/reconstruct — `state` is an untyped snapshot
+// (BE replays the live audit trail, see phase-9c note); rendered generically.
+export const FAReconstructResponseSchema = z.object({
+  fa_id: z.string().uuid(),
+  as_of: z.string(),
+  events_replayed: z.number().int(),
+  state: z.record(z.string(), z.unknown()),
+})
+export type FAReconstructResponse = z.infer<typeof FAReconstructResponseSchema>
+
 // GET /product-templates/selectable — reused from the Bank Product Template epic
 export const SelectableTemplateItemSchema = z.object({
   template_id: z.string().uuid(),

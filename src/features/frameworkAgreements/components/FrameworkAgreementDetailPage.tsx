@@ -15,11 +15,15 @@ import { EditFrameworkAgreementDialog } from "@/features/frameworkAgreements/com
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
+import { AuditHistoryTab } from "@/features/frameworkAgreements/components/AuditHistoryTab"
 import NotFoundPage from "@/features/not-found/components/NotFoundPage"
 import { formatDateTime } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
+import {
+  FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES,
+} from "@/features/frameworkAgreements/types"
 
 const STATUS_BADGE_VARIANT: Record<
   string,
@@ -87,6 +91,10 @@ export default function FrameworkAgreementDetailPage() {
   const canManageFrameworkAgreement = Boolean(
     currentUser?.role &&
     FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES.includes(currentUser.role)
+  )
+  const canViewAuditHistory = Boolean(
+    currentUser?.role &&
+    FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES.includes(currentUser.role)
   )
 
   if (isFrameworkAgreementNotFoundError(error)) {
@@ -209,9 +217,11 @@ export default function FrameworkAgreementDetailPage() {
           <TabsTrigger value="financings" data-testid="tab-financings">
             {t("detail.tabs.financings")}
           </TabsTrigger>
-          <TabsTrigger value="auditHistory" disabled>
-            {t("detail.tabs.auditHistory")}
-          </TabsTrigger>
+          {canViewAuditHistory && (
+            <TabsTrigger value="auditHistory" data-testid="tab-audit-history">
+              {t("detail.tabs.auditHistory")}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="agreementDetails">
@@ -395,6 +405,15 @@ export default function FrameworkAgreementDetailPage() {
         <TabsContent value="financings">
           <FinancingsTab frameworkAgreementId={data.id} />
         </TabsContent>
+
+        {canViewAuditHistory && (
+          <TabsContent value="auditHistory">
+            <AuditHistoryTab
+              frameworkAgreementId={data.id}
+              currentUserRole={currentUser?.role ?? null}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ActivateFrameworkAgreementDialog

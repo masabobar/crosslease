@@ -2,6 +2,7 @@ import { api } from "@/lib/api"
 import {
   AttachDocumentResponseSchema,
   DownloadURLResponseSchema,
+  FAAuditHistoryResponseSchema,
   FADetailResponseSchema,
   FADocumentListResponseSchema,
   FADraftResponseSchema,
@@ -9,6 +10,7 @@ import {
   FALinkedFinancingsResponseSchema,
   FAListResponseSchema,
   FAReactivatedResponseSchema,
+  FAReconstructResponseSchema,
   FASuspendedResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
@@ -21,14 +23,17 @@ import type {
   BankEntity,
   CreateFARequest,
   DownloadURLResponse,
+  FAAuditHistoryResponse,
   FADetailResponse,
   FADocumentListResponse,
   FADraftResponse,
+  FAEventTypeFilter,
   FALCPartnersResponse,
   FALifecycleStatus,
   FALinkedFinancingsResponse,
   FAListResponse,
   FAReactivatedResponse,
+  FAReconstructResponse,
   FASuspendedResponse,
   FATerminatedResponse,
   FAUtilizationResponse,
@@ -49,6 +54,22 @@ export type FrameworkAgreementListParams = {
   per_page?: number
 }
 
+export type FrameworkAgreementAuditHistoryParams = {
+  search?: string
+  type?: FAEventTypeFilter[]
+  from?: string
+  to?: string
+  per_page?: number
+  cursor?: string
+}
+
+export type FrameworkAgreementAuditHistoryExportParams = Omit<
+  FrameworkAgreementAuditHistoryParams,
+  "per_page" | "cursor"
+> & {
+  reason?: string
+}
+
 export const FRAMEWORK_AGREEMENTS_QUERY_KEYS = {
   list: (params?: FrameworkAgreementListParams) =>
     ["framework-agreements", "list", params] as const,
@@ -63,6 +84,12 @@ export const FRAMEWORK_AGREEMENTS_QUERY_KEYS = {
   terminationReadiness: (id: string) =>
     ["framework-agreements", "termination-readiness", id] as const,
   documents: (id: string) => ["framework-agreements", "documents", id] as const,
+  auditHistory: (
+    id: string,
+    params?: Omit<FrameworkAgreementAuditHistoryParams, "cursor">
+  ) => ["framework-agreements", "audit-history", id, params] as const,
+  reconstruct: (id: string, asOf: string) =>
+    ["framework-agreements", "reconstruct", id, asOf] as const,
 } as const
 
 export async function fetchFrameworkAgreements(
@@ -201,4 +228,34 @@ export async function detachFrameworkAgreementDocument(
   docId: string
 ): Promise<void> {
   await api.delete(`/framework-agreements/${faId}/documents/${docId}`)
+}
+
+export async function fetchFrameworkAgreementAuditHistory(
+  id: string,
+  params?: FrameworkAgreementAuditHistoryParams
+): Promise<FAAuditHistoryResponse> {
+  const data = await api.get(`/framework-agreements/${id}/audit-history`, {
+    params,
+  })
+  return FAAuditHistoryResponseSchema.parse(data)
+}
+
+export async function fetchFrameworkAgreementReconstruct(
+  id: string,
+  asOf: string
+): Promise<FAReconstructResponse> {
+  const data = await api.get(`/framework-agreements/${id}/reconstruct`, {
+    params: { as_of: asOf },
+  })
+  return FAReconstructResponseSchema.parse(data)
+}
+
+export async function exportFrameworkAgreementAuditHistoryCsv(
+  id: string,
+  params?: FrameworkAgreementAuditHistoryExportParams
+): Promise<Blob> {
+  return api.get(`/framework-agreements/${id}/audit-history/export-csv`, {
+    params,
+    responseType: "blob",
+  })
 }
