@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
+import { requiredEnum } from "@/lib/zodHelpers"
 
 // Wire enums — must match refinext-api src/app/modules/product_templates/domain/enums.py exactly
 export const FinancingTypeSchema = z.enum([
@@ -169,7 +171,7 @@ export type NewVersionCreatedResponse = z.infer<
 // deprecate_version never populates real counts (always defaults), so the FE doesn't
 // parse a field it can't trust (see plan Gap 3).
 export const DeprecateTemplateVersionRequestSchema = z.object({
-  justification: z.string().min(10).max(2000),
+  justification: z.string().min(DEPRECATION_JUSTIFICATION_MIN_LENGTH).max(2000),
 })
 export type DeprecateTemplateVersionRequest = z.infer<
   typeof DeprecateTemplateVersionRequestSchema
@@ -242,22 +244,24 @@ export const ProductTemplateWizardFormSchema = z
       .regex(/^[A-Za-z0-9-]+$/, "codeInvalidChars"),
     template_name: z.string().min(1, "required").max(200),
     template_description: z.string().max(1000).optional(),
-    financing_type: FinancingTypeSchema,
-    legal_structure: LegalStructureSchema,
-    payment_timing: PaymentTimingSchema,
-    rate_basis: RateBasisSchema,
-    calculation_model: CalculationModelSchema,
-    rate_type: RateTypeSchema,
-    npv_formula_ref: z.string().min(1, "required"),
-    first_installment_rule: FirstInstallmentRuleSchema,
-    disbursement_derivation_rule: DisbursementDerivationRuleSchema,
+    financing_type: requiredEnum(FinancingTypeSchema.options),
+    legal_structure: requiredEnum(LegalStructureSchema.options),
+    payment_timing: requiredEnum(PaymentTimingSchema.options),
+    rate_basis: requiredEnum(RateBasisSchema.options),
+    calculation_model: requiredEnum(CalculationModelSchema.options),
+    rate_type: requiredEnum(RateTypeSchema.options),
+    npv_formula_ref: z.string({ error: "required" }).min(1, "required"),
+    first_installment_rule: requiredEnum(FirstInstallmentRuleSchema.options),
+    disbursement_derivation_rule: requiredEnum(
+      DisbursementDerivationRuleSchema.options
+    ),
     allowed_asset_categories: z.array(AssetCategorySchema).min(1, "atLeastOne"),
     min_term_months: z.number().int().min(1).max(600),
     max_term_months: z.number().int().min(1).max(600),
     max_ltv_ratio: z.number().min(0).max(100),
     min_volume_eur: z.number().min(0).optional(),
     max_volume_eur: z.number().min(0).optional(),
-    valid_from: z.string().min(1, "required"),
+    valid_from: z.string({ error: "required" }).min(1, "required"),
     valid_until: z.string().optional(),
     required_workflow_tasks: z
       .array(z.string())

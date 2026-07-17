@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter } from "react-router-dom"
 import { lazy, Suspense } from "react"
-import App from "@/App"
 import { PATHS } from "./paths"
 import { RoleGuard } from "@/router/RoleGuard"
 import {
@@ -24,7 +23,7 @@ import {
   PRODUCT_TEMPLATE_READ_ALLOWED_ROLES,
 } from "@/features/productTemplates/types"
 import {
-  FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
   FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES,
 } from "@/features/frameworkAgreements/types"
 
@@ -51,6 +50,7 @@ const VerifyEmailPage = lazy(
   () => import("@/features/auth/components/VerifyEmailPage")
 )
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
+const App = lazy(() => import("@/App"))
 const NotFoundPage = lazy(
   () => import("@/features/not-found/components/NotFoundPage")
 )
@@ -203,9 +203,11 @@ export const router = createBrowserRouter([
       {
         path: PATHS.DASHBOARD,
         element: (
-          <RoleGuard allowed={INTERNAL_BANK_ROLES}>
-            <App />
-          </RoleGuard>
+          <Suspense fallback={null}>
+            <RoleGuard allowed={INTERNAL_BANK_ROLES}>
+              <App />
+            </RoleGuard>
+          </Suspense>
         ),
       },
       {
@@ -410,7 +412,7 @@ export const router = createBrowserRouter([
         path: PATHS.FRAMEWORK_AGREEMENT_CREATE,
         element: (
           <Suspense fallback={null}>
-            <RoleGuard allowed={FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES}>
               <CreateFrameworkAgreementWizardPage />
             </RoleGuard>
           </Suspense>

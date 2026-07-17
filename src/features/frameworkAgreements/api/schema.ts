@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { requiredEnum } from "@/lib/zodHelpers"
 
 // Wire enums — must match refinext-api src/app/modules/framework_agreements/domain/enums.py exactly
 export const FALifecycleStatusSchema = z.enum([
@@ -432,11 +433,11 @@ export const FrameworkAgreementWizardFormSchema = z
     agreement_name: z.string().min(1, "required").max(200),
     lc_partner_id: z.string().min(1, "required"),
     lc_partner_name: z.string().optional(),
-    bank_entity: BankEntitySchema,
+    bank_entity: requiredEnum(BankEntitySchema.options),
     max_volume_eur: z.number().gt(0, "required"),
     base_rate: z.number().min(0).max(25),
     spread: z.number().min(-5).max(15),
-    rate_type: RateTypeSchema,
+    rate_type: requiredEnum(RateTypeSchema.options),
     effective_rate: z.number(),
     rate_lock_period_months: z.number().int().min(1).max(360),
     lg_coverage_rate_override: z.number().optional(),

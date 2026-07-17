@@ -13,25 +13,21 @@ import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
 import { formatDateTime } from "@/lib/formatters"
 import {
+  getGovernedActionSubject,
+  type GovernedActionSubjectKind,
+} from "@/features/governed-actions/utils"
+import {
   GovernedActionStatusSchema,
-  roleChangeSnapshot,
-  platformInviteSnapshot,
-  emailChangeSnapshot,
   initiatorSnapshot,
   approverSnapshot,
-  displaySnapshot,
 } from "@/features/governed-actions/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+import type {
+  GovernedAction,
+  GovernedActionStatus,
+} from "@/features/governed-actions/api/schema"
+import { GOVERNED_ACTION_STATUS_DOT_COLOR } from "@/features/governed-actions/constants"
 
-const DOT_COLOR: Record<string, string> = {
-  pending: "bg-amber-400",
-  approved: "bg-green-500",
-  rejected: "bg-red-500",
-  withdrawn: "bg-gray-400",
-  expired: "bg-gray-400",
-}
-
-const BORDER_COLOR: Record<string, string> = {
+const BORDER_COLOR: Record<GovernedActionStatus, string> = {
   pending: "border-l-2 border-l-amber-400",
   approved: "",
   rejected: "border-l-2 border-l-red-500",
@@ -69,52 +65,19 @@ function formatRelativeSubmitted(dateStr: string, t: RowTranslator): string {
   return t("row.submittedDaysAgo", { count: days, absolute })
 }
 
-type SubjectLabelKey = "row.user" | "row.partner" | "row.template"
+type SubjectLabelKey =
+  | "row.user"
+  | "row.partner"
+  | "row.template"
+  | "row.tenant"
+  | "row.module"
 
-function getSubjectInfo(action: GovernedAction): {
-  labelKey: SubjectLabelKey
-  value: string
-} {
-  if (action.action_type === "user_platform_invite") {
-    return {
-      labelKey: "row.user",
-      value: platformInviteSnapshot(action).full_name ?? "—",
-    }
-  }
-  if (action.action_type === "user_role_change") {
-    return {
-      labelKey: "row.user",
-      value: roleChangeSnapshot(action).affected_user_email ?? "—",
-    }
-  }
-  if (action.action_type === "user_email_change") {
-    return {
-      labelKey: "row.user",
-      value: emailChangeSnapshot(action).new_email ?? "—",
-    }
-  }
-  if (action.action_type === "partner_merge") {
-    return {
-      labelKey: "row.partner",
-      value:
-        displaySnapshot<{ source_partner_id: string }>(action)
-          .source_partner_id ?? "—",
-    }
-  }
-  if (action.action_type.startsWith("partner_")) {
-    return {
-      labelKey: "row.partner",
-      value: displaySnapshot<{ partner_id: string }>(action).partner_id ?? "—",
-    }
-  }
-  if (action.action_type.startsWith("product_template_")) {
-    return {
-      labelKey: "row.template",
-      value:
-        displaySnapshot<{ template_name: string }>(action).template_name ?? "—",
-    }
-  }
-  return { labelKey: "row.user", value: "—" }
+const SUBJECT_LABEL_KEY: Record<GovernedActionSubjectKind, SubjectLabelKey> = {
+  user: "row.user",
+  partner: "row.partner",
+  template: "row.template",
+  tenant: "row.tenant",
+  module: "row.module",
 }
 
 function getInitiatorName(action: GovernedAction): string {
@@ -135,7 +98,7 @@ type Props = {
   currentUserId: string
   canReview: boolean
   isHighlighted?: boolean
-  ref?: React.Ref<HTMLButtonElement>
+  ref?: React.Ref<HTMLDivElement>
   onReview: (action: GovernedAction) => void
   onWithdraw: (action: GovernedAction) => void
   onReInitiate: (action: GovernedAction) => void
@@ -159,15 +122,15 @@ export function ActionRow({
   const isExpired = action.status === GovernedActionStatusSchema.enum.expired
   const isRejected = action.status === GovernedActionStatusSchema.enum.rejected
   const isApproved = action.status === GovernedActionStatusSchema.enum.approved
-  const subject = getSubjectInfo(action)
+  const subject = getGovernedActionSubject(action)
 
   const metaItems: React.ReactNode[] = [
     <span key="subject" className="flex items-center gap-1">
       <UserRound size={12} />
       <span className="font-medium text-foreground/80">
-        {t(subject.labelKey)}:
+        {t(SUBJECT_LABEL_KEY[subject.kind])}:
       </span>{" "}
-      {subject.value}
+      {subject.value ?? "—"}
     </span>,
     <span key="by" className="flex items-center gap-1">
       <CircleArrowUp size={12} />
@@ -242,10 +205,15 @@ export function ActionRow({
   ]
 
   return (
-    // NOTE: raw <button> — needs ref for scroll-to-highlight; full-width row layout requires full style control that Button's reset classes would conflict with
-    <button
+    // NOTE: outer wrapper is a plain <div>, not a <button>/role="button" — it
+    // wraps three real <Button> elements (Review/Withdraw/Re-initiate below),
+    // and nesting interactive elements inside a button (or an ARIA button)
+    // is invalid and breaks keyboard/screen-reader navigation. The onClick
+    // here only handles "click anywhere in the row" to view details; each
+    // nested Button calls stopPropagation so its own click isn't swallowed
+    // by this row-level handler. Keyboard users tab directly to the buttons.
+    <div
       ref={ref}
-      type="button"
       className={cn(
         "w-full text-left flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors",
         BORDER_COLOR[action.status]
@@ -265,7 +233,7 @@ export function ActionRow({
           <span
             className={cn(
               "size-2 rounded-full shrink-0 mt-0.5",
-              DOT_COLOR[action.status]
+              GOVERNED_ACTION_STATUS_DOT_COLOR[action.status]
             )}
           />
           <span className="text-sm font-medium text-foreground">
@@ -338,6 +306,6 @@ export function ActionRow({
           </Button>
         )}
       </div>
-    </button>
+    </div>
   )
 }

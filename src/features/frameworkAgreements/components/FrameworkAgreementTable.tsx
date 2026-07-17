@@ -4,6 +4,7 @@ import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { FAListItem } from "@/features/frameworkAgreements/api/schema"
+import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 
 const COL_AGREEMENT = "flex-1 min-w-[180px]"
 const COL_LC = "w-[240px] shrink-0"
@@ -12,16 +13,6 @@ const COL_VALID_FROM = "w-[110px] shrink-0"
 const COL_VALID_UNTIL = "w-[110px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
-
-const STATUS_BADGE_VARIANT: Record<
-  FAListItem["status"],
-  "default" | "secondary" | "outline"
-> = {
-  draft: "outline",
-  active: "default",
-  suspended: "secondary",
-  terminated: "outline",
-}
 
 type Props = {
   agreements: FAListItem[]
@@ -41,6 +32,10 @@ function FrameworkAgreementTable({
   const { t } = useTranslation("frameworkAgreements")
 
   return (
+    // NOTE: raw <div> rows instead of shadcn Table/TableRow/TableCell — fixed-width
+    // flex columns (COL_*) drive alignment with the loading-skeleton row shape, which
+    // the semantic <table> layout model doesn't support as directly; same div-based
+    // flex-table pattern used by AuditTable and DuplicateQueueTable in this codebase.
     <div
       className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
       data-testid="framework-agreement-table"
@@ -143,7 +138,7 @@ function FrameworkAgreementTable({
               </span>
             </div>
             <div className={`${COL_STATUS} p-2`}>
-              <Badge variant={STATUS_BADGE_VARIANT[item.status]}>
+              <Badge variant={FA_STATUS_BADGE_VARIANT[item.status]}>
                 {t(`statuses.${item.status}`)}
               </Badge>
             </div>

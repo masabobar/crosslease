@@ -1,13 +1,23 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
 import { fetchUsers, USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
-import type { UsersQueryParams } from "@/features/users/api/schema"
+import type {
+  PaginatedUsersResponse,
+  UsersQueryParams,
+} from "@/features/users/api/schema"
 import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
-export function useUsers(params: UsersQueryParams = {}) {
+const MIN_SEARCH_LENGTH = 3
+
+export function useUsers(
+  params: UsersQueryParams = {}
+): UseQueryResult<PaginatedUsersResponse, Error> {
   const normalizedParams: UsersQueryParams = {
     ...params,
     search:
-      params.search && params.search.length >= 3 ? params.search : undefined,
+      params.search && params.search.length >= MIN_SEARCH_LENGTH
+        ? params.search
+        : undefined,
   }
 
   return useQuery({

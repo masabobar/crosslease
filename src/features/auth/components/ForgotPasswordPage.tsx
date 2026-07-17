@@ -54,14 +54,11 @@ export default function ForgotPasswordPage() {
       setSubmittedEmail(data.email)
       setStep("check-email")
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
-      if (code === "PASSWORD_RESET_THROTTLED") {
-        setServerError(
-          t("forgotPassword.enterEmail.errors.PASSWORD_RESET_THROTTLED")
-        )
-      } else {
-        setServerError(t("forgotPassword.enterEmail.errors.default"))
-      }
+      setServerError(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     }
   })
 
@@ -70,20 +67,14 @@ export default function ForgotPasswordPage() {
     try {
       await requestPasswordReset(submittedEmail)
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
-      if (code === "PASSWORD_RESET_THROTTLED") {
-        showToast({
-          variant: "warning",
-          title: t("forgotPassword.checkEmail.resendThrottled.title"),
-          message: t("forgotPassword.checkEmail.resendThrottled.message"),
-        })
-      } else {
-        showToast({
-          variant: "warning",
-          title: t("forgotPassword.checkEmail.resendFailed.title"),
-          message: t("forgotPassword.checkEmail.resendFailed.message"),
-        })
-      }
+      showToast({
+        variant: "warning",
+        title: t("forgotPassword.checkEmail.resendFailed.title"),
+        message:
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic"),
+      })
     } finally {
       setIsResending(false)
     }

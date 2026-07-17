@@ -60,7 +60,8 @@ export default function FrameworkAgreementListPage() {
     ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
     ...(bankEntityFilter ? { bank_entity: bankEntityFilter } : {}),
   })
-  const { data: lcPartnersData } = useFrameworkAgreementLcPartners()
+  const { data: lcPartnersData, isError: isLcPartnersError } =
+    useFrameworkAgreementLcPartners()
 
   const agreements = data?.items ?? []
   const total = data?.total ?? 0
@@ -132,30 +133,41 @@ export default function FrameworkAgreementListPage() {
           </SelectContent>
         </Select>
 
-        <Select
-          value={lcPartnerId ?? ALL_VALUE}
-          onValueChange={v => setLcPartnerId(v === ALL_VALUE ? null : v)}
-        >
-          <SelectTrigger data-testid="fa-filter-lc" className="w-[200px]">
-            <SelectValue>
-              {lcPartnerId
-                ? (lcPartnersData?.items ?? []).find(
-                    lc => lc.id === lcPartnerId
-                  )?.legal_name
-                : t("list.filters.allLeasingCompanies")}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>
-              {t("list.filters.allLeasingCompanies")}
-            </SelectItem>
-            {(lcPartnersData?.items ?? []).map(lc => (
-              <SelectItem key={lc.id} value={lc.id}>
-                {lc.legal_name}
+        <div className="flex flex-col gap-1">
+          <Select
+            value={lcPartnerId ?? ALL_VALUE}
+            onValueChange={v => setLcPartnerId(v === ALL_VALUE ? null : v)}
+            disabled={isLcPartnersError}
+          >
+            <SelectTrigger data-testid="fa-filter-lc" className="w-[200px]">
+              <SelectValue>
+                {lcPartnerId
+                  ? (lcPartnersData?.items ?? []).find(
+                      lc => lc.id === lcPartnerId
+                    )?.legal_name
+                  : t("list.filters.allLeasingCompanies")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>
+                {t("list.filters.allLeasingCompanies")}
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+              {(lcPartnersData?.items ?? []).map(lc => (
+                <SelectItem key={lc.id} value={lc.id}>
+                  {lc.legal_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isLcPartnersError && (
+            <p
+              className="text-xs text-destructive"
+              data-testid="fa-filter-lc-error"
+            >
+              {t("errors.generic")}
+            </p>
+          )}
+        </div>
 
         <Select
           value={bankEntityFilter ?? ALL_VALUE}

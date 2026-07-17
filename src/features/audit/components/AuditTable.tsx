@@ -1,7 +1,6 @@
 import { ChevronRight } from "lucide-react"
 import { TableEmptyState } from "@/components/ui/empty"
 import { useTranslation } from "react-i18next"
-import { cn } from "@/lib/utils"
 import {
   formatEventType,
   formatActionType,
@@ -11,6 +10,8 @@ import {
   deriveAuditResult,
   type AuditEventListItem,
 } from "@/features/audit/api/schema"
+import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
+import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
 
 const COL_TIMESTAMP = "w-[150px] shrink-0"
 const COL_ENTITY = "flex-1 min-w-[140px]"
@@ -22,58 +23,6 @@ const COL_FLAG = "w-[90px] shrink-0"
 const COL_CHEVRON = "w-[32px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
-
-const ENTITY_TYPE_STYLES: Record<string, string> = {
-  user: "border-sky-500 text-sky-700",
-  contract: "border-teal-500 text-teal-700",
-  financing: "border-amber-500 text-amber-700",
-  request: "border-violet-500 text-violet-700",
-  document: "border-slate-400 text-slate-600",
-  partner: "border-rose-500 text-rose-700",
-  system: "border-zinc-400 text-zinc-600",
-}
-
-function EntityTypeBadge({ entityType }: { entityType: string }) {
-  const { t } = useTranslation("audit")
-  const style =
-    ENTITY_TYPE_STYLES[entityType] ?? "border-border text-muted-foreground"
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center justify-center rounded-full border px-1.5 py-0.5 text-xs font-medium leading-4 whitespace-nowrap",
-        style
-      )}
-    >
-      {t(`entityType.${entityType}`, {
-        defaultValue: formatActionType(entityType),
-      })}
-    </span>
-  )
-}
-
-function ResultBadge({
-  eventType,
-  actionType,
-}: {
-  eventType: string
-  actionType: string
-}) {
-  const { t } = useTranslation("audit")
-  const result = deriveAuditResult(eventType, actionType)
-  const isFailed = result === "Failed"
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center justify-center rounded-full border px-1.5 py-0.5 text-xs font-medium leading-4 whitespace-nowrap",
-        isFailed
-          ? "border-destructive/50 bg-destructive/10 text-destructive"
-          : "border-emerald-500/50 bg-emerald-500/10 text-emerald-700"
-      )}
-    >
-      {isFailed ? t("result.failed") : t("result.success")}
-    </span>
-  )
-}
 
 function SensitiveBadge() {
   const { t } = useTranslation("audit")
@@ -104,6 +53,14 @@ export function AuditTable({
       className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
       data-testid="audit-table"
     >
+      {/* NOTE: raw flex div-grid instead of shadcn Table/TableRow/TableCell — this
+          is a pre-existing, codebase-wide convention shared by every table component
+          (UserTable, TenantTable, PartnerTable, FrameworkAgreementTable,
+          ProductTemplateTable, DuplicateQueueTable), not something introduced here.
+          Converting only this table would diverge from the established pattern and
+          risks breaking the fixed column widths / sticky-header behavior without a
+          browser to verify against; a full migration is a separate, cross-feature
+          effort. See UserTable.tsx for the identical precedent. */}
       {/* Header */}
       <div className="flex border-b border-border h-10 items-center">
         <div
@@ -195,6 +152,11 @@ export function AuditTable({
       {/* Data rows */}
       {!isLoading &&
         events.map(event => (
+          // NOTE: raw <div role="button"> — full-row click target for a row rendered
+          // as a flex div (see NOTE above on the div-grid table convention); a native
+          // shadcn Button/Table primitive can't wrap an entire row of nested cells,
+          // so role="button" + tabIndex + onKeyDown provides the equivalent keyboard
+          // and assistive-tech affordance.
           <div
             key={event.id}
             role="button"
@@ -249,9 +211,8 @@ export function AuditTable({
             </div>
 
             <div className={`${COL_RESULT} p-2`}>
-              <ResultBadge
-                eventType={event.event_type}
-                actionType={event.action_type}
+              <AuditResultBadge
+                result={deriveAuditResult(event.event_type, event.action_type)}
               />
             </div>
 

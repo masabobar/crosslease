@@ -14,6 +14,7 @@ import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBad
 import { SuspendTenantDialog } from "@/features/tenants/components/SuspendTenantDialog"
 import { ReactivateTenantDialog } from "@/features/tenants/components/ReactivateTenantDialog"
 import { ArchiveTenantDialog } from "@/features/tenants/components/ArchiveTenantDialog"
+import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,10 @@ import type {
   TenantListItem,
   TenantStatus,
 } from "@/features/tenants/api/schema"
-import { TenantStatusSchema } from "@/features/tenants/api/schema"
+import {
+  TenantStatusSchema,
+  isFullTenantResponse,
+} from "@/features/tenants/api/schema"
 
 const COL_TENANT = "flex-1 min-w-[180px]"
 const COL_CODE = "flex-1 min-w-[140px]"
@@ -72,8 +76,22 @@ function TenantTable({
   const [reactivateOpen, setReactivateOpen] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
 
+  // List endpoint doesn't return the active-user count (only the detail
+  // endpoint does), so fetch the detail record for the active-user
+  // acknowledgement checkbox when the archive dialog is opened.
+  const { data: selectedTenantDetail, isError: isSelectedTenantDetailError } =
+    useTenantDetail(archiveOpen && selectedTenant ? selectedTenant.id : null)
+  const selectedTenantActiveUserCount =
+    selectedTenantDetail && isFullTenantResponse(selectedTenantDetail)
+      ? selectedTenantDetail.bank_user_utilisation
+      : 0
+
   function openSuspend(tenant: TenantListItem) {
     setSelectedTenant(tenant)
+    // Deferred to the next tick: setting this synchronously with the
+    // dropdown menu's own close (triggered by the same item click) races
+    // with the menu's outside-click/focus handling and can close the
+    // dialog immediately after it opens.
     setTimeout(() => setSuspendOpen(true), 0)
   }
 
@@ -256,7 +274,7 @@ function TenantTable({
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         data-testid={`tenant-row-menu-${tenant.id}`}
-                        aria-label="Tenant actions"
+                        aria-label={t("list.table.tenantActions")}
                         className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       >
                         <MoreHorizontal size={16} />
@@ -302,7 +320,7 @@ function TenantTable({
                   ) : (
                     <Button
                       data-testid={`tenant-row-menu-${tenant.id}`}
-                      aria-label="Tenant actions"
+                      aria-label={t("list.table.tenantActions")}
                       variant="ghost"
                       size="icon-sm"
                       disabled
@@ -339,7 +357,8 @@ function TenantTable({
             tenantId={selectedTenant.id}
             tenantName={selectedTenant.name}
             tenantStatus={selectedTenant.status}
-            activeUserCount={0}
+            activeUserCount={selectedTenantActiveUserCount}
+            activeUserCountUnknown={isSelectedTenantDetailError}
           />
         </>
       )}

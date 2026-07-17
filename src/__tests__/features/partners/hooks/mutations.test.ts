@@ -46,7 +46,10 @@ vi.mock("@/features/partners/api/partnersApi", () => ({
   resolveDuplicatePair: vi.fn(),
   initiateMerge: vi.fn(),
   PARTNERS_QUERY_KEYS: {
-    list: (params?: unknown) => ["partners", "list", params],
+    list: (tenantId?: unknown, params?: unknown) =>
+      tenantId === undefined
+        ? ["partners", "list"]
+        : ["partners", "list", tenantId, params],
     detail: (id: string) => ["partners", "detail", id],
     resolutionCandidates: (id: string) => [
       "partners",

@@ -62,7 +62,7 @@ export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: partner, isLoading, isError } = usePartnerDetail(id ?? null)
   const { data: currentUser } = useCurrentUser()
-  const { data: rolesData } = useQuery({
+  const { data: rolesData, isError: isRolesError } = useQuery({
     queryKey: PARTNERS_QUERY_KEYS.roles(partner?.partner_id ?? ""),
     queryFn: () => fetchPartnerRoles(partner?.partner_id ?? ""),
     enabled: !!partner,
@@ -202,7 +202,11 @@ export default function PartnerDetailPage() {
               {t("detail.header.roles")}
             </span>
             <span className="text-sm text-foreground">
-              <RolesList roles={rolesData?.roles ?? []} />
+              {isRolesError ? (
+                <span className="text-destructive">{t("errors.generic")}</span>
+              ) : (
+                <RolesList roles={rolesData?.roles ?? []} />
+              )}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -285,14 +289,12 @@ export default function PartnerDetailPage() {
           {activeTab === "roles" && (
             <RolesTab
               partnerId={partner.partner_id}
-              partnerStatus={partner.status}
               canAssignRole={canAssignRole}
             />
           )}
           {activeTab === "ubo" && (
             <UboTab
               partnerId={partner.partner_id}
-              partnerType={partner.partner_type}
               canCaptureUbo={canCaptureUbo}
             />
           )}

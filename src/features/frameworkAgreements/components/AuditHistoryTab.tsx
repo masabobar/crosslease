@@ -19,6 +19,7 @@ import type {
 } from "@/features/frameworkAgreements/api/schema"
 import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
+import { BACK_OFFICE_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
 const AUDIT_HISTORY_PAGE_SIZE = 50
@@ -118,7 +119,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
   const [submittedAsOf, setSubmittedAsOf] = useState<string | null>(null)
   const [exportReason, setExportReason] = useState("")
 
-  const reasonRequired = currentUserRole === "back_office"
+  const reasonRequired = currentUserRole === BACK_OFFICE_ROLE
 
   const {
     data,

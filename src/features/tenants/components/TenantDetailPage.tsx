@@ -276,6 +276,7 @@ export default function TenantDetailPage() {
               activeUserCount={
                 isFullTenantResponse(tenant) ? tenant.bank_user_utilisation : 0
               }
+              activeUserCountUnknown={isError}
             />
           )}
           <div className="flex flex-col flex-1 overflow-hidden">

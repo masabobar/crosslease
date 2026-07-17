@@ -3,11 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useConfirmPartner } from "@/features/partners/hooks/useConfirmPartner"
 import { ApiError } from "@/lib/api"
@@ -72,73 +68,49 @@ function ConfirmPartnerDialog({
   }
 
   return (
-    <DialogModal open={open} onOpenChange={onOpenChange}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="px-4 py-4">
-          <DialogHeader>
-            <DialogTitle>{t("confirmDialog.title")}</DialogTitle>
-          </DialogHeader>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-4 px-4 py-4">
+    <ConfirmActionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit(onSubmit)}
+      title={t("confirmDialog.title")}
+      infoRows={
+        <>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Partner</span>
+            <span className="text-muted-foreground">
+              {t("list.table.columns.name")}
+            </span>
             <span className="font-medium text-foreground">{partnerName}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Status</span>
+            <span className="text-muted-foreground">
+              {t("list.table.columns.status")}
+            </span>
             <PartnerStatusBadge status={partnerStatus} />
           </div>
-
           <p className="text-sm text-muted-foreground">
             {t("confirmDialog.description")}
           </p>
-
-          <Separator />
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirm-note">
-              {t("confirmDialog.fields.note")}
-            </Label>
-            <Textarea
-              id="confirm-note"
-              data-testid="confirm-partner-note"
-              placeholder={t("confirmDialog.fields.notePlaceholder")}
-              rows={3}
-              {...register("note")}
-            />
-            {errors.note && (
-              <p className="text-xs text-destructive" role="alert">
-                {t("confirmDialog.errors.noteTooLong")}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={mutation.isPending}
-            data-testid="confirm-partner-cancel"
-          >
-            {t("confirmDialog.cancel")}
-          </Button>
-          <Button
-            type="submit"
-            disabled={mutation.isPending}
-            data-testid="confirm-partner-submit"
-          >
-            {mutation.isPending
-              ? t("confirmDialog.submitting")
-              : t("confirmDialog.submit")}
-          </Button>
-        </div>
-      </form>
-    </DialogModal>
+        </>
+      }
+      justificationFieldId="confirm-partner-note"
+      justificationLabel={t("confirmDialog.fields.note")}
+      justificationMinCharsLabel=""
+      justificationHint={t("confirmDialog.fields.noteHint")}
+      justificationErrorMessage={
+        errors.note ? t("confirmDialog.errors.noteTooLong") : undefined
+      }
+      justificationRegister={register("note")}
+      justificationPlaceholder={t("confirmDialog.fields.notePlaceholder")}
+      justificationRows={3}
+      onCancel={handleClose}
+      isActionDisabled={mutation.isPending}
+      isPending={mutation.isPending}
+      cancelLabel={t("confirmDialog.cancel")}
+      cancelTestId="confirm-partner-cancel"
+      submitLabel={t("confirmDialog.submit")}
+      submittingLabel={t("confirmDialog.submitting")}
+      submitTestId="confirm-partner-submit"
+    />
   )
 }
 

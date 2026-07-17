@@ -68,9 +68,11 @@ function InfoRows({ rows }: { rows: InfoRow[] }) {
 
 export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   const { t } = useTranslation("tenants")
-  const { data: accessPolicy } = useTenantAccessPolicy(
-    isAdmin ? tenantId : null
-  )
+  const {
+    data: accessPolicy,
+    isError: isAccessPolicyError,
+    error: accessPolicyError,
+  } = useTenantAccessPolicy(isAdmin ? tenantId : null)
   const fullTenant = isFullTenantResponse(tenant) ? tenant : null
   const isArchived = tenant.status === TenantStatusSchema.enum.archived
   const isDraft = tenant.status === TenantStatusSchema.enum.draft
@@ -84,7 +86,6 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<UpdateTenantForm>({
     resolver: zodResolver(createUpdateTenantFormSchema(fullTenant?.name ?? "")),
@@ -171,22 +172,13 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       toast.success(t("detail.overview.editDialog.successToast"))
       setIsEditingIdentity(false)
     } catch (err) {
-      if (err instanceof ApiError) {
-        switch (err.code) {
-          case "TENANT_ALREADY_EXISTS":
-            setError("name", {
-              type: "server",
-              message: t(
-                "detail.overview.editDialog.errors.TENANT_ALREADY_EXISTS"
-              ),
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, {
+              defaultValue: t("detail.overview.editDialog.errors.generic"),
             })
-            return
-          default:
-            toast.error(t("detail.overview.editDialog.errors.generic"))
-            return
-        }
-      }
-      toast.error(t("detail.overview.editDialog.errors.generic"))
+          : t("detail.overview.editDialog.errors.generic")
+      )
     }
   }
 
@@ -595,7 +587,18 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
               title={t("detail.overview.accessPolicy.title")}
               editButton={accessPolicyCardActions}
             >
-              {isEditingAccessPolicy ? (
+              {isAccessPolicyError ? (
+                <p
+                  data-testid="access-policy-error"
+                  className="text-sm text-destructive"
+                >
+                  {accessPolicyError instanceof ApiError
+                    ? t(`errors.${accessPolicyError.code}`, {
+                        defaultValue: t("errors.generic"),
+                      })
+                    : t("errors.generic")}
+                </p>
+              ) : isEditingAccessPolicy ? (
                 <form
                   id="access-policy-edit-form"
                   onSubmit={apHandleSubmit(onSubmitAccessPolicy)}

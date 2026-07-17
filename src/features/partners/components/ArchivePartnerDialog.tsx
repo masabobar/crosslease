@@ -5,12 +5,8 @@ import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ShieldAlert, TriangleAlert } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
 import {
@@ -44,7 +40,11 @@ function ArchivePartnerDialog({
   const { t } = useTranslation("partners")
   const mutation = useArchivePartner(partnerId)
 
-  const { data: eligibility } = useQuery({
+  const {
+    data: eligibility,
+    isLoading: isEligibilityLoading,
+    isError: isEligibilityError,
+  } = useQuery({
     queryKey: PARTNERS_QUERY_KEYS.archiveEligibility(partnerId),
     queryFn: () => fetchArchiveEligibility(partnerId),
     enabled: open,
@@ -92,51 +92,39 @@ function ArchivePartnerDialog({
   }
 
   return (
-    <DialogModal open={open} onOpenChange={onOpenChange}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="px-4 py-4">
-          <DialogHeader>
-            <DialogTitle>{t("archiveDialog.title")}</DialogTitle>
-          </DialogHeader>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-4 px-4 py-4">
+    <ConfirmActionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit(onSubmit)}
+      title={t("archiveDialog.title")}
+      infoRows={
+        <>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Partner</span>
+            <span className="text-muted-foreground">
+              {t("list.table.columns.name")}
+            </span>
             <span className="font-medium text-foreground">{partnerName}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Status</span>
+            <span className="text-muted-foreground">
+              {t("list.table.columns.status")}
+            </span>
             <PartnerStatusBadge status={partnerStatus} />
           </div>
-
-          <Separator />
-
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="archive-reason">
-                {t("archiveDialog.fields.reason")}
-              </Label>
-              <span className="text-xs text-muted-foreground">
-                {t("archiveDialog.fields.reasonMinChars")}
-              </span>
-            </div>
-            <Textarea
-              id="archive-reason"
-              data-testid="archive-reason"
-              placeholder={t("archiveDialog.fields.reasonPlaceholder")}
-              rows={4}
-              {...register("reason")}
-            />
-            {errors.reason && (
-              <p className="text-xs text-destructive" role="alert">
-                {t("archiveDialog.errors.reasonTooShort")}
-              </p>
-            )}
-          </div>
-
+        </>
+      }
+      justificationFieldId="archive-reason"
+      justificationLabel={t("archiveDialog.fields.reason")}
+      justificationMinCharsLabel={t("archiveDialog.fields.reasonMinChars")}
+      justificationHint={t("archiveDialog.fields.reasonHint")}
+      justificationErrorMessage={
+        errors.reason ? t("archiveDialog.errors.reasonTooShort") : undefined
+      }
+      justificationRegister={register("reason")}
+      justificationPlaceholder={t("archiveDialog.fields.reasonPlaceholder")}
+      justificationRows={4}
+      extraContent={
+        <>
           <label className="flex items-center gap-2 cursor-pointer">
             <Controller
               control={control}
@@ -170,6 +158,18 @@ function ArchivePartnerDialog({
             </div>
           )}
 
+          {isEligibilityError && (
+            <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-destructive/10">
+              <TriangleAlert
+                size={16}
+                className="text-destructive shrink-0 mt-0.5"
+              />
+              <p className="text-sm text-destructive/80">
+                {t("errors.generic")}
+              </p>
+            </div>
+          )}
+
           <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-destructive/10">
             <TriangleAlert
               size={16}
@@ -179,31 +179,20 @@ function ArchivePartnerDialog({
               {t("archiveDialog.description")}
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={mutation.isPending}
-            data-testid="archive-cancel"
-          >
-            {t("archiveDialog.cancel")}
-          </Button>
-          <Button
-            type="submit"
-            className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-transparent shadow-none"
-            disabled={mutation.isPending}
-            data-testid="archive-submit"
-          >
-            {mutation.isPending
-              ? t("archiveDialog.submitting")
-              : t("archiveDialog.submit")}
-          </Button>
-        </div>
-      </form>
-    </DialogModal>
+        </>
+      }
+      onCancel={handleClose}
+      isActionDisabled={
+        mutation.isPending || isEligibilityLoading || isEligibilityError
+      }
+      isPending={mutation.isPending}
+      cancelLabel={t("archiveDialog.cancel")}
+      cancelTestId="archive-cancel"
+      submitLabel={t("archiveDialog.submit")}
+      submittingLabel={t("archiveDialog.submitting")}
+      submitTestId="archive-submit"
+      submitButtonClassName="bg-destructive/10 text-destructive hover:bg-destructive/20 border-transparent shadow-none"
+    />
   )
 }
 

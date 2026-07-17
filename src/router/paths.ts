@@ -1,3 +1,6 @@
+export const PLATFORM_ADMINISTRATION_PREFIX = "/platform-administration"
+export const BUSINESS_CONFIGURATION_PREFIX = "/business-configuration"
+
 export const PATHS = {
   LOGIN: "/login",
   FORGOT_PASSWORD: "/forgot-password",

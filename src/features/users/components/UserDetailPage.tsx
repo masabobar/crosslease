@@ -1,4 +1,4 @@
-import { useState, useRef, type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { toast } from "sonner"
 import { ApiError } from "@/lib/api"
 import { useParams, useNavigate, Navigate } from "react-router-dom"
@@ -17,13 +17,6 @@ import {
   ShieldAlert,
   ShieldOff,
 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useTranslation } from "react-i18next"
 import {
   Dialog,
@@ -34,10 +27,12 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { UserStatusBanner } from "@/features/users/components/UserStatusBanner"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
+import { AvatarUploadMenu } from "@/features/users/components/AvatarUploadMenu"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { PATHS } from "@/router/paths"
@@ -289,7 +284,6 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   const [isEditingRole, setIsEditingRole] = useState(false)
   const [isEditingAuditorPeriod, setIsEditingAuditorPeriod] = useState(false)
   const [showMfaResetConfirm, setShowMfaResetConfirm] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const identityForm = useForm<IdentityFormValues>({
     resolver: zodResolver(IdentityFormSchema),
@@ -503,55 +497,17 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         <div className="bg-card flex items-center justify-between px-3 py-4 rounded-t-[10px]">
           <div className="flex items-center gap-3">
             {isOwnProfile ? (
-              <>
-                {/* NOTE: raw <input type="file"> — hidden file input triggered programmatically; no shadcn equivalent */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleFileSelected}
-                  data-testid="avatar-file-input"
-                />
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    data-testid="avatar-dropdown-trigger"
-                    disabled={
-                      uploadPictureMutation.isPending ||
-                      deletePictureMutation.isPending
-                    }
-                    className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {user.profile_picture_url ? (
-                      <img
-                        src={user.profile_picture_url}
-                        alt={name}
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xl font-normal text-muted-foreground">
-                        {initials}
-                      </span>
-                    )}
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem
-                      data-testid="avatar-replace-photo"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      {t("detail.page.selfProfile.avatar.replacePhoto")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      data-testid="avatar-remove-photo"
-                      disabled={!user.profile_picture_url}
-                      onClick={handleRemovePicture}
-                    >
-                      {t("detail.page.selfProfile.avatar.removePhoto")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+              <AvatarUploadMenu
+                name={name}
+                initials={initials}
+                profilePictureUrl={user.profile_picture_url}
+                isPending={
+                  uploadPictureMutation.isPending ||
+                  deletePictureMutation.isPending
+                }
+                onFileSelected={handleFileSelected}
+                onRemove={handleRemovePicture}
+              />
             ) : (
               <div className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden">
                 {user.profile_picture_url ? (
@@ -980,7 +936,7 @@ export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(id ?? null)
-  const { data: currentUser } = useCurrentUser()
+  const { data: currentUser, isError: isCurrentUserError } = useCurrentUser()
 
   if (currentUser && id && currentUser.id === id) {
     return <Navigate to={PATHS.SETTINGS_PROFILE} replace />
@@ -988,6 +944,18 @@ export default function UserDetailPage() {
 
   return (
     <div className="p-8" data-testid="user-detail-page">
+      {isCurrentUserError && (
+        <Alert
+          variant="destructive"
+          className="mb-4"
+          data-testid="current-user-error-banner"
+        >
+          <AlertDescription>
+            {t("detail.currentUserLoadError")}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {isLoading && (
         <div data-testid="user-detail-loading" className="space-y-6">
           <div className="h-28 bg-muted rounded-[10px] animate-pulse" />

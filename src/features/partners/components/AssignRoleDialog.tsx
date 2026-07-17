@@ -120,7 +120,9 @@ function AssignRoleDialog({
               )}
             />
             {errors.role && (
-              <p className="text-xs text-destructive">Role is required.</p>
+              <p className="text-xs text-destructive">
+                {t("assignRoleDialog.errors.roleRequired")}
+              </p>
             )}
           </div>
 

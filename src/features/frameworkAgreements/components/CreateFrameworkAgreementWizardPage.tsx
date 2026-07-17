@@ -18,12 +18,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ApiError } from "@/lib/api"
 import { PATHS, frameworkAgreementDetail } from "@/router/paths"
-import {
-  attachFrameworkAgreementDocument,
-  createFrameworkAgreementDraft,
-} from "@/features/frameworkAgreements/api/frameworkAgreementsApi"
+import { useCreateFrameworkAgreementDraft } from "@/features/frameworkAgreements/hooks/useCreateFrameworkAgreementDraft"
+import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
 import { FrameworkAgreementWizardFormSchema } from "@/features/frameworkAgreements/api/schema"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
+import { FRAMEWORK_AGREEMENT_WIZARD_STEPS } from "@/features/frameworkAgreements/types"
 import type {
   FrameworkAgreementDocumentDraft,
   FrameworkAgreementWizardStep,
@@ -36,14 +35,8 @@ import { ConditionsStep } from "@/features/frameworkAgreements/components/steps/
 import { DocumentsStep } from "@/features/frameworkAgreements/components/steps/DocumentsStep"
 import { ReviewStep } from "@/features/frameworkAgreements/components/steps/ReviewStep"
 
-const ORDERED_STEPS: FrameworkAgreementWizardStep[] = [
-  "identity",
-  "envelopePricing",
-  "validityTemplates",
-  "conditions",
-  "documents",
-  "review",
-]
+const ORDERED_STEPS: readonly FrameworkAgreementWizardStep[] =
+  FRAMEWORK_AGREEMENT_WIZARD_STEPS
 
 const STEP_FIELDS: Record<
   FrameworkAgreementWizardStep,
@@ -73,11 +66,15 @@ export default function CreateFrameworkAgreementWizardPage() {
     []
   )
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const [createdAgreement, setCreatedAgreement] = useState<{
     id: string
     agreementName: string
   } | null>(null)
+
+  const createDraftMutation = useCreateFrameworkAgreementDraft()
+  const attachDocumentMutation = useAttachFrameworkAgreementDocument()
+  const isSaving =
+    createDraftMutation.isPending || attachDocumentMutation.isPending
 
   const form = useForm<FrameworkAgreementWizardForm>({
     resolver: zodResolver(FrameworkAgreementWizardFormSchema),
@@ -144,10 +141,9 @@ export default function CreateFrameworkAgreementWizardPage() {
       return
     }
 
-    setIsSaving(true)
     try {
       const values = form.getValues()
-      const draft = await createFrameworkAgreementDraft({
+      const draft = await createDraftMutation.mutateAsync({
         agreement_name: values.agreement_name,
         lc_partner_id: values.lc_partner_id,
         bank_entity: values.bank_entity,
@@ -165,12 +161,12 @@ export default function CreateFrameworkAgreementWizardPage() {
       })
 
       for (const doc of documents) {
-        await attachFrameworkAgreementDocument(
-          draft.id,
-          doc.file,
-          doc.documentType || "other",
-          doc.documentLabel || undefined
-        )
+        await attachDocumentMutation.mutateAsync({
+          faId: draft.id,
+          file: doc.file,
+          documentType: doc.documentType || "other",
+          documentLabel: doc.documentLabel || undefined,
+        })
       }
 
       setCreatedAgreement({
@@ -185,8 +181,6 @@ export default function CreateFrameworkAgreementWizardPage() {
             })
           : t("errors.generic")
       )
-    } finally {
-      setIsSaving(false)
     }
   }
 

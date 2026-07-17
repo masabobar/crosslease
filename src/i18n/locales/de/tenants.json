@@ -214,7 +214,8 @@
         "status": "Status",
         "createdAt": "Erstellt am"
       },
-      "modules": "{{count}} Module"
+      "modules": "{{count}} Module",
+      "tenantActions": "Mandantenaktionen"
     },
     "actions": {
       "suspend": "Sperren",
@@ -339,7 +340,8 @@
           "emphasis": "unwiderruflich",
           "suffix": " ist und nicht rückgängig gemacht werden kann."
         },
-        "activeUserAck": "Dieser Mandant hat {{count}} aktives Benutzerkonto(s). Ich bestätige, dass der Zugang nach der Archivierung entzogen wird."
+        "activeUserAck": "Dieser Mandant hat {{count}} aktives Benutzerkonto(s). Ich bestätige, dass der Zugang nach der Archivierung entzogen wird.",
+        "activeUserAckUnknown": "Die aktuelle Anzahl aktiver Benutzer konnte nicht bestätigt werden. Ich bestätige, dass alle aktiven Benutzer nach der Archivierung den Zugang verlieren."
       },
       "alert": {
         "destructive": "Die Archivierung deaktiviert die Integrationsbindung, macht alle Anmeldedaten ungültig und weist alle zukünftigen eingehenden Ereignisse ab. Alle historischen Daten und Prüfprotokolle werden aufbewahrt.",
@@ -375,23 +377,10 @@
     "modules": {
       "activate": "Aktivieren",
       "deactivate": "Deaktivieren",
-      "edit": "Bearbeiten",
       "activatedFrom": "Ab {{date}}",
       "sections": {
         "moduleProfile": "MODULPROFIL",
-        "integrationBinding": "INTEGRATIONSBINDUNG",
-        "configurationOverride": "KONFIGURATIONSÜBERSCHREIBUNG"
-      },
-      "configOverride": {
-        "productTemplate": "Produktvorlage",
-        "rateTable": "Zinstabelle",
-        "workflowDefinition": "Workflow-Definition",
-        "documentPolicySet": "Dokumentrichtlinienset",
-        "override": "Überschrieben",
-        "default": "Standard",
-        "supersededWarning": "Referenziertes Objekt wurde ersetzt. Aktualisierung erforderlich.",
-        "addOverride": "Überschreibung hinzufügen",
-        "platformDefault": "Plattformstandard"
+        "integrationBinding": "INTEGRATIONSBINDUNG"
       },
       "status": {
         "active": "Aktiv",
@@ -413,11 +402,6 @@
         "info": {
           "moduleName": "Modulname",
           "currentStatus": "Aktueller Status"
-        },
-        "dependencyCheck": {
-          "title": "Abhängigkeitsprüfung",
-          "checking": "Ergebnis wird geprüft...",
-          "resolved": "Keine Konflikte gefunden"
         },
         "fields": {
           "justification": "Governance-Begründung",

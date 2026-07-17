@@ -74,7 +74,8 @@
       },
       "actions": {
         "archive": "Archive"
-      }
+      },
+      "actionsMenuLabel": "Actions"
     },
     "emptyState": {
       "title": "No partners yet",
@@ -164,7 +165,10 @@
         "ubo_related_person": "Requires counter-confirmation"
       },
       "errors": {
-        "roleRequired": "Select at least one role."
+        "roleRequired": "Select at least one role.",
+        "required": "This field is required.",
+        "invalidCountry": "Select a country from the list.",
+        "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442)."
       }
     },
     "matchStep": {
@@ -332,6 +336,7 @@
       "reason": "Reason",
       "reasonMinChars": "Min. 20 characters",
       "reasonPlaceholder": "Describe why this partner is being archived…",
+      "reasonHint": "Mandatory. Stored in the audit trail.",
       "irreversibilityAck": {
         "prefix": "I understand that archiving is ",
         "emphasis": "irreversible",
@@ -383,6 +388,9 @@
       "role": "Role",
       "rolePlaceholder": "Select role…",
       "note": "Note (optional)"
+    },
+    "errors": {
+      "roleRequired": "Role is required."
     },
     "cancel": "Cancel",
     "submit": "Assign",
@@ -560,7 +568,8 @@
     "description": "Confirming makes this partner referenceable in contracts and financings. No additional approval is required.",
     "fields": {
       "note": "Note (optional)",
-      "notePlaceholder": "Add context for the confirmation record…"
+      "notePlaceholder": "Add context for the confirmation record…",
+      "noteHint": "Optional. Stored in the audit trail."
     },
     "errors": {
       "noteTooLong": "Note must be at most 2000 characters."
@@ -577,7 +586,8 @@
     "fields": {
       "note": "Reason",
       "noteMinChars": "Min. 10 characters",
-      "notePlaceholder": "Explain why this partner is being rejected…"
+      "notePlaceholder": "Explain why this partner is being rejected…",
+      "noteHint": "Mandatory. Stored in the audit trail."
     },
     "errors": {
       "noteTooShort": "Reason must be at least 10 characters."

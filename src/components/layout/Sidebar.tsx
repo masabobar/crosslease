@@ -14,9 +14,18 @@ import {
   Send,
   Landmark,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
-import { PATHS } from "@/router/paths"
+import {
+  PATHS,
+  PLATFORM_ADMINISTRATION_PREFIX,
+  BUSINESS_CONFIGURATION_PREFIX,
+} from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useCurrentUserPermissions } from "@/features/users/hooks/useCurrentUserPermissions"
 import {
@@ -31,6 +40,41 @@ import { BANK_PRODUCT_TEMPLATE_MODULE_KEY } from "@/features/productTemplates/co
 import { FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 import { FRAMEWORK_AGREEMENT_MODULE_KEY } from "@/features/frameworkAgreements/constants"
 import crossleaseLogo from "@/assets/crosslease.png"
+
+type SidebarNavLinkProps = {
+  to: string
+  label: string
+  testid: string
+  isActive: boolean
+  indent?: boolean
+}
+
+function SidebarNavLink({
+  to,
+  label,
+  testid,
+  isActive,
+  indent,
+}: SidebarNavLinkProps) {
+  return (
+    <Link
+      to={to}
+      data-testid={testid}
+      className={cn(
+        "flex items-center justify-between text-sm whitespace-nowrap",
+        indent && "pl-3",
+        isActive
+          ? "font-medium text-sidebar-primary-foreground"
+          : "text-foreground hover:text-sidebar-primary-foreground"
+      )}
+    >
+      {label}
+      {isActive && (
+        <span className="size-1.5 rounded-full bg-sidebar-primary-foreground shrink-0" />
+      )}
+    </Link>
+  )
+}
 
 export function Sidebar() {
   const { t } = useTranslation("common")
@@ -63,15 +107,15 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
   const [isPlatformAdminExpanded, setIsPlatformAdminExpanded] = useState(() =>
-    location.pathname.startsWith("/platform-administration")
+    location.pathname.startsWith(PLATFORM_ADMINISTRATION_PREFIX)
   )
   const [isBusinessConfigExpanded, setIsBusinessConfigExpanded] = useState(() =>
-    location.pathname.startsWith("/business-configuration")
+    location.pathname.startsWith(BUSINESS_CONFIGURATION_PREFIX)
   )
 
   const isMainActive = location.pathname === PATHS.DASHBOARD
   const isPlatformAdminActive = location.pathname.startsWith(
-    "/platform-administration"
+    PLATFORM_ADMINISTRATION_PREFIX
   )
   const isUserManagementActive =
     location.pathname === PATHS.USER_MANAGEMENT ||
@@ -91,13 +135,13 @@ export function Sidebar() {
     PATHS.PARTNER_DUPLICATES
   )
   const isBusinessConfigActive = location.pathname.startsWith(
-    "/business-configuration"
+    BUSINESS_CONFIGURATION_PREFIX
   )
   const isProductTemplateListActive = location.pathname.startsWith(
-    "/business-configuration/product-templates"
+    PATHS.PRODUCT_TEMPLATE_LIST
   )
   const isFrameworkAgreementListActive = location.pathname.startsWith(
-    "/business-configuration/framework-agreements"
+    PATHS.FRAMEWORK_AGREEMENT_LIST
   )
 
   return (
@@ -195,21 +239,25 @@ export function Sidebar() {
                   data-testid={`nav-lc-${key}`}
                   className={cn(
                     "flex items-center gap-2 px-2 py-2 rounded-[10px]",
-                    isActive ? "bg-[#dbe9fc]" : "hover:bg-muted"
+                    isActive ? "bg-sidebar-primary" : "hover:bg-muted"
                   )}
                 >
                   <Icon
                     size={16}
                     className={cn(
                       "shrink-0",
-                      isActive ? "text-[#1d41a8]" : "text-muted-foreground"
+                      isActive
+                        ? "text-sidebar-primary-foreground"
+                        : "text-muted-foreground"
                     )}
                   />
                   {!isCollapsed && (
                     <span
                       className={cn(
                         "flex-1 text-sm min-w-0 truncate",
-                        isActive ? "text-[#1d41a8]" : "text-foreground"
+                        isActive
+                          ? "text-sidebar-primary-foreground"
+                          : "text-foreground"
                       )}
                     >
                       {label}
@@ -225,12 +273,14 @@ export function Sidebar() {
         {!isLcUser && (
           <>
             {/* ── Main group (expandable) ── */}
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsMainExpanded(prev => !prev)}
+            <Collapsible
+              open={isMainExpanded}
+              onOpenChange={setIsMainExpanded}
+              className="flex flex-col gap-2"
+            >
+              <CollapsibleTrigger
                 className={cn(
+                  buttonVariants({ variant: "ghost" }),
                   "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
                   isMainActive &&
                     "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
@@ -267,9 +317,9 @@ export function Sidebar() {
                     )}
                   </>
                 )}
-              </Button>
-              {!isCollapsed && isMainExpanded && (
-                <div className="flex flex-col gap-3 pl-8 pr-2">
+              </CollapsibleTrigger>
+              {!isCollapsed && (
+                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
                   {[
                     t("nav.dashboard"),
                     t("nav.refinancingRequests"),
@@ -283,9 +333,9 @@ export function Sidebar() {
                       {label}
                     </span>
                   ))}
-                </div>
+                </CollapsibleContent>
               )}
-            </div>
+            </Collapsible>
 
             {/* ── Flat items with right chevron ── */}
             {[
@@ -315,12 +365,14 @@ export function Sidebar() {
             ))}
 
             {/* ── Business configuration group (expandable) ── */}
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsBusinessConfigExpanded(prev => !prev)}
+            <Collapsible
+              open={isBusinessConfigExpanded}
+              onOpenChange={setIsBusinessConfigExpanded}
+              className="flex flex-col gap-2"
+            >
+              <CollapsibleTrigger
                 className={cn(
+                  buttonVariants({ variant: "ghost" }),
                   "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
                   isBusinessConfigActive &&
                     "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
@@ -357,54 +409,38 @@ export function Sidebar() {
                     )}
                   </>
                 )}
-              </Button>
-              {!isCollapsed && isBusinessConfigExpanded && (
-                <div className="flex flex-col gap-3 pl-8 pr-2">
+              </CollapsibleTrigger>
+              {!isCollapsed && (
+                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
                   {canAccessProductTemplates && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.PRODUCT_TEMPLATE_LIST}
-                      data-testid="nav-product-templates"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isProductTemplateListActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.productTemplates")}
-                      {isProductTemplateListActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.productTemplates")}
+                      testid="nav-product-templates"
+                      isActive={isProductTemplateListActive}
+                    />
                   )}
                   {canAccessFrameworkAgreements && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.FRAMEWORK_AGREEMENT_LIST}
-                      data-testid="nav-framework-agreements"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isFrameworkAgreementListActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.frameworkAgreements")}
-                      {isFrameworkAgreementListActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.frameworkAgreements")}
+                      testid="nav-framework-agreements"
+                      isActive={isFrameworkAgreementListActive}
+                    />
                   )}
-                </div>
+                </CollapsibleContent>
               )}
-            </div>
+            </Collapsible>
 
             {/* ── Platform administration group (expandable) ── */}
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsPlatformAdminExpanded(prev => !prev)}
+            <Collapsible
+              open={isPlatformAdminExpanded}
+              onOpenChange={setIsPlatformAdminExpanded}
+              className="flex flex-col gap-2"
+            >
+              <CollapsibleTrigger
                 className={cn(
+                  buttonVariants({ variant: "ghost" }),
                   "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
                   isPlatformAdminActive &&
                     "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
@@ -441,117 +477,64 @@ export function Sidebar() {
                     )}
                   </>
                 )}
-              </Button>
-              {!isCollapsed && isPlatformAdminExpanded && (
-                <div className="flex flex-col gap-3 pl-8 pr-2">
+              </CollapsibleTrigger>
+              {!isCollapsed && (
+                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
                   {canAccessUserManagement && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.USER_MANAGEMENT}
-                      data-testid="nav-user-management"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isUserManagementActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.userManagement")}
-                      {isUserManagementActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.userManagement")}
+                      testid="nav-user-management"
+                      isActive={isUserManagementActive}
+                    />
                   )}
                   {canAccessUserManagement && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.PENDING_APPROVALS}
-                      data-testid="nav-pending-approvals"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isPendingApprovalsActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.pendingApprovals")}
-                      {isPendingApprovalsActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.pendingApprovals")}
+                      testid="nav-pending-approvals"
+                      isActive={isPendingApprovalsActive}
+                    />
                   )}
                   {canAccessAuditTrail && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.AUDIT_TRAIL}
-                      data-testid="nav-audit-trail"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isAuditTrailActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.auditTrail")}
-                      {isAuditTrailActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.auditTrail")}
+                      testid="nav-audit-trail"
+                      isActive={isAuditTrailActive}
+                    />
                   )}
                   {canAccessPartnerRegistry && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.PARTNER_REGISTRY}
-                      data-testid="nav-partner-registry"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isPartnerRegistryActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.partnerManagement")}
-                      {isPartnerRegistryActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.partnerManagement")}
+                      testid="nav-partner-registry"
+                      isActive={isPartnerRegistryActive}
+                    />
                   )}
                   {canAccessPartnerRegistry && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.PARTNER_DUPLICATES}
-                      data-testid="nav-partner-duplicates"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap pl-3",
-                        isPartnerDuplicatesActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.partnerDuplicates")}
-                      {isPartnerDuplicatesActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.partnerDuplicates")}
+                      testid="nav-partner-duplicates"
+                      isActive={isPartnerDuplicatesActive}
+                      indent
+                    />
                   )}
                   <span className="text-sm text-foreground whitespace-nowrap cursor-default">
                     {t("nav.coreBankingIntegration")}
                   </span>
                   {canAccessTenantManagement && (
-                    <Link
+                    <SidebarNavLink
                       to={PATHS.TENANT_MANAGEMENT}
-                      data-testid="nav-tenant-management"
-                      className={cn(
-                        "flex items-center justify-between text-sm whitespace-nowrap",
-                        isTenantManagementActive
-                          ? "font-medium text-[#1d41a8]"
-                          : "text-foreground hover:text-[#1d41a8]"
-                      )}
-                    >
-                      {t("nav.tenantManagement")}
-                      {isTenantManagementActive && (
-                        <span className="size-1.5 rounded-full bg-[#1d41a8] shrink-0" />
-                      )}
-                    </Link>
+                      label={t("nav.tenantManagement")}
+                      testid="nav-tenant-management"
+                      isActive={isTenantManagementActive}
+                    />
                   )}
-                </div>
+                </CollapsibleContent>
               )}
-            </div>
+            </Collapsible>
           </>
         )}
       </nav>

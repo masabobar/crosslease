@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { PasswordPolicySchema } from "./passwordPolicy"
 
 export const ResetPasswordResponseSchema = z.object({
   mfa_required: z.boolean(),
@@ -13,25 +14,31 @@ export const ForgotPasswordInputSchema = z.object({
 
 export type ForgotPasswordInput = z.infer<typeof ForgotPasswordInputSchema>
 
+export const PASSWORDS_DO_NOT_MATCH = "PASSWORDS_DO_NOT_MATCH"
+
 export const ResetPasswordInputSchema = z
   .object({
-    password: z
-      .string()
-      .min(8)
-      .regex(/[a-z]/)
-      .regex(/[A-Z]/)
-      .regex(/[0-9]/)
-      .regex(/[^a-zA-Z0-9]/),
+    password: PasswordPolicySchema,
     password_confirm: z.string(),
   })
   .refine(data => data.password === data.password_confirm, {
-    message: "PASSWORDS_DO_NOT_MATCH",
+    message: PASSWORDS_DO_NOT_MATCH,
     path: ["password_confirm"],
   })
 
 export type ResetPasswordInput = z.infer<typeof ResetPasswordInputSchema>
 
-export function getPasswordRequirements(password: string) {
+export type PasswordRequirements = {
+  minLength: boolean
+  hasLower: boolean
+  hasUpper: boolean
+  hasNumber: boolean
+  hasSymbol: boolean
+}
+
+export function getPasswordRequirements(
+  password: string
+): PasswordRequirements {
   return {
     minLength: password.length >= 8,
     hasLower: /[a-z]/.test(password),

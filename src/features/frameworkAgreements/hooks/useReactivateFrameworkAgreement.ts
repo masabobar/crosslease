@@ -20,6 +20,9 @@ export function useReactivateFrameworkAgreement() {
       queryClient.invalidateQueries({
         queryKey: FRAMEWORK_AGREEMENTS_QUERY_KEYS.detail(id),
       })
+      queryClient.invalidateQueries({
+        queryKey: FRAMEWORK_AGREEMENTS_QUERY_KEYS.list(),
+      })
     },
   })
 }

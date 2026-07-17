@@ -1,11 +1,8 @@
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
-import {
-  LockIcon,
-  ArrowRightIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-} from "lucide-react"
+import { LockIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react"
 import { DialogModal, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,27 +12,26 @@ import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api"
 import { useApproveAction } from "@/features/governed-actions/hooks/useApproveAction"
 import { useRejectAction } from "@/features/governed-actions/hooks/useRejectAction"
-import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
+import { ChangeSection } from "@/features/governed-actions/components/ChangeSection"
+import { FieldRow } from "@/features/governed-actions/components/FieldRow"
+import { ChainEntry } from "@/features/governed-actions/components/ChainEntry"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { USER_ROLES } from "@/features/users/types"
 import { formatDateTime } from "@/lib/formatters"
 import type { UserRole } from "@/features/users/types"
 import {
-  roleChangeSnapshot,
-  platformInviteSnapshot,
-  emailChangeSnapshot,
+  getGovernedActionSubject,
+  HAS_CHANGE_SECTION,
+  type GovernedActionSubjectKind,
+} from "@/features/governed-actions/utils"
+import {
   initiatorSnapshot,
-  displaySnapshot,
+  REVIEW_COMMENT_MIN_LENGTH,
+  ReviewCommentFormSchema,
 } from "@/features/governed-actions/api/schema"
 import type {
   GovernedAction,
-  GovernedActionStatus,
-  PartnerArchiveSnapshot,
-  PartnerRoleAssignSnapshot,
-  PartnerIdentityChangeSnapshot,
-  PartnerMergeSnapshot,
-  ProductTemplateActivateSnapshot,
-  ProductTemplateDeprecateSnapshot,
+  ReviewCommentForm,
 } from "@/features/governed-actions/api/schema"
 
 type Props = {
@@ -58,132 +54,22 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function FieldRow({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-foreground">{label}</span>
-      <div className="text-right">{children}</div>
-    </div>
-  )
-}
-
-const CHANGE_BOX_STYLES = {
-  current: {
-    wrapper:
-      "bg-red-500/10 border border-red-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3",
-    label: "text-xs font-semibold text-red-700 uppercase",
-    value: "text-sm text-red-700 mt-1",
-  },
-  proposed: {
-    wrapper:
-      "bg-green-500/10 border border-green-500/50 rounded-[10px] flex-1 min-w-0 px-4 py-3",
-    label: "text-xs font-semibold text-green-700 uppercase",
-    value: "text-sm text-green-700 mt-1",
-  },
-} as const
-
-function ChangeBox({
-  variant,
-  label,
-  children,
-}: {
-  variant: "current" | "proposed"
-  label: string
-  children: React.ReactNode
-}) {
-  const styles = CHANGE_BOX_STYLES[variant]
-  return (
-    <div className={styles.wrapper}>
-      <p className={styles.label}>{label}</p>
-      <p className={styles.value}>{children}</p>
-    </div>
-  )
-}
-
-function ChainEntry({
-  description,
-  date,
-  status,
-}: {
-  description: string
-  date: string
-  status: GovernedActionStatus
-}) {
-  const dotColor: Record<GovernedActionStatus, string> = {
-    pending: "bg-amber-600",
-    approved: "bg-green-500",
-    rejected: "bg-red-500",
-    expired: "bg-slate-300",
-    withdrawn: "bg-slate-300",
-  }
-
-  return (
-    <div className="flex items-start gap-2 w-full">
-      <div className="flex items-start self-stretch pr-2 pt-1.5 shrink-0">
-        <div className={cn("size-2 rounded-full", dotColor[status])} />
-      </div>
-      <div className="flex flex-1 items-center min-w-0 gap-3">
-        <div className="flex flex-col flex-1 min-w-0 opacity-80">
-          <p className="text-sm text-foreground">{description}</p>
-          <p className="text-sm text-muted-foreground">{date}</p>
-        </div>
-        <ActionStatusBadge status={status} />
-      </div>
-    </div>
-  )
-}
-
-const MIN_COMMENT_LENGTH = 10
-
 type AffectedEntityLabelKey =
   | "modal.affectedUser"
   | "modal.affectedPartner"
   | "modal.affectedTemplate"
+  | "modal.affectedTenant"
+  | "modal.affectedModule"
 
-function getAffectedEntity(action: GovernedAction): {
-  labelKey: AffectedEntityLabelKey
-  value: string | null
-} {
-  if (action.action_type === "user_platform_invite") {
-    return {
-      labelKey: "modal.affectedUser",
-      value: platformInviteSnapshot(action).full_name ?? null,
-    }
-  }
-  if (action.action_type === "user_email_change") {
-    return {
-      labelKey: "modal.affectedUser",
-      value: emailChangeSnapshot(action).old_email ?? null,
-    }
-  }
-  if (action.action_type === "partner_merge") {
-    return {
-      labelKey: "modal.affectedPartner",
-      value:
-        displaySnapshot<PartnerMergeSnapshot>(action).source_partner_id ?? null,
-    }
-  }
-  if (action.action_type.startsWith("partner_")) {
-    return {
-      labelKey: "modal.affectedPartner",
-      value: displaySnapshot<{ partner_id: string }>(action).partner_id ?? null,
-    }
-  }
-  if (action.action_type.startsWith("product_template_")) {
-    return {
-      labelKey: "modal.affectedTemplate",
-      value:
-        displaySnapshot<{ template_name: string }>(action).template_name ??
-        null,
-    }
-  }
-  return { labelKey: "modal.affectedUser", value: null }
+const AFFECTED_ENTITY_LABEL_KEY: Record<
+  GovernedActionSubjectKind,
+  AffectedEntityLabelKey
+> = {
+  user: "modal.affectedUser",
+  partner: "modal.affectedPartner",
+  template: "modal.affectedTemplate",
+  tenant: "modal.affectedTenant",
+  module: "modal.affectedModule",
 }
 
 export function ReviewRequestModal({
@@ -194,13 +80,21 @@ export function ReviewRequestModal({
   onRejectSuccess,
 }: Props) {
   const { t } = useTranslation("pendingApprovals")
-  const [comment, setComment] = useState("")
-  const [commentValidationError, setCommentValidationError] = useState<
-    string | null
-  >(null)
   const [errorCode, setErrorCode] = useState<string | null>(null)
   const [chainExpanded, setChainExpanded] = useState(true)
   const [conflictAcknowledged, setConflictAcknowledged] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm<ReviewCommentForm>({
+    resolver: zodResolver(ReviewCommentFormSchema),
+    defaultValues: { comment: "" },
+  })
+  const commentField = register("comment")
 
   const approveAction = useApproveAction()
   const rejectAction = useRejectAction()
@@ -208,23 +102,15 @@ export function ReviewRequestModal({
 
   function handleClose() {
     if (isPending) return
-    setComment("")
-    setCommentValidationError(null)
+    reset()
     setErrorCode(null)
     setConflictAcknowledged(false)
     onOpenChange(false)
   }
 
-  function handleApprove() {
+  const handleApprove = handleSubmit(values => {
     if (!action) return
-    const trimmed = comment.trim()
-    if (trimmed && trimmed.length < MIN_COMMENT_LENGTH) {
-      setCommentValidationError(
-        t("modal.justificationTooShort", { min: MIN_COMMENT_LENGTH })
-      )
-      return
-    }
-    setCommentValidationError(null)
+    const trimmed = values.comment.trim()
     setErrorCode(null)
     const isMergeConflictGate = action.action_type === "partner_merge"
     approveAction.mutate(
@@ -245,22 +131,18 @@ export function ReviewRequestModal({
         },
       }
     )
-  }
+  })
 
-  function handleReject() {
+  const handleReject = handleSubmit(values => {
     if (!action) return
-    const trimmed = comment.trim()
+    const trimmed = values.comment.trim()
     if (!trimmed) {
-      setCommentValidationError(t("modal.justificationRequired"))
+      setError("comment", {
+        type: "required",
+        message: "justificationRequired",
+      })
       return
     }
-    if (trimmed.length < MIN_COMMENT_LENGTH) {
-      setCommentValidationError(
-        t("modal.justificationTooShort", { min: MIN_COMMENT_LENGTH })
-      )
-      return
-    }
-    setCommentValidationError(null)
     setErrorCode(null)
     rejectAction.mutate(
       { id: action.id, comment: trimmed },
@@ -274,7 +156,7 @@ export function ReviewRequestModal({
         },
       }
     )
-  }
+  })
 
   if (!action) return null
 
@@ -282,7 +164,7 @@ export function ReviewRequestModal({
   const initiatorName = initiator?.first_name
     ? `${initiator.first_name} ${initiator.last_name}`
     : "—"
-  const affectedEntity = getAffectedEntity(action)
+  const subject = getGovernedActionSubject(action)
   const isMergeConflictGate = action.action_type === "partner_merge"
   const canApprove = !isMergeConflictGate || conflictAcknowledged
 
@@ -312,10 +194,8 @@ export function ReviewRequestModal({
             <FieldRow label={t("modal.actionType")}>
               <span>{t(`actionTypes.${action.action_type}`)}</span>
             </FieldRow>
-            <FieldRow label={t(affectedEntity.labelKey)}>
-              <span className="font-semibold">
-                {affectedEntity.value ?? "—"}
-              </span>
+            <FieldRow label={t(AFFECTED_ENTITY_LABEL_KEY[subject.kind])}>
+              <span className="font-semibold">{subject.value ?? "—"}</span>
             </FieldRow>
             {action.tenant_id && (
               <FieldRow label={t("modal.tenant")}>
@@ -328,7 +208,12 @@ export function ReviewRequestModal({
         <Divider />
 
         {/* CHANGE */}
-        <ChangeSection action={action} />
+        {HAS_CHANGE_SECTION.has(action.action_type) && (
+          <div className="flex flex-col gap-4">
+            <SectionLabel>{t("modal.change")}</SectionLabel>
+            <ChangeSection action={action} keyPrefix="modal" />
+          </div>
+        )}
 
         {isMergeConflictGate && (
           <>
@@ -432,22 +317,28 @@ export function ReviewRequestModal({
           <div
             className={cn(
               "border rounded-xl bg-white px-2.5 py-1",
-              commentValidationError ? "border-destructive" : "border-border"
+              errors.comment ? "border-destructive" : "border-border"
             )}
           >
             <Textarea
               className="h-16 border-0 p-0 rounded-none resize-none text-sm focus-visible:ring-0 focus-visible:border-0"
-              value={comment}
+              {...commentField}
               onChange={e => {
-                setComment(e.target.value)
-                setCommentValidationError(null)
+                void commentField.onChange(e)
                 setErrorCode(null)
               }}
               data-testid="review-comment-input"
             />
           </div>
-          {commentValidationError ? (
-            <p className="text-xs text-destructive">{commentValidationError}</p>
+          {errors.comment ? (
+            <p className="text-xs text-destructive">
+              {t(
+                `modal.${errors.comment.message}` as
+                  | "modal.justificationRequired"
+                  | "modal.justificationTooShort",
+                { min: REVIEW_COMMENT_MIN_LENGTH }
+              )}
+            </p>
           ) : errorCode ? (
             <p className="text-xs text-destructive" data-testid="modal-error">
               {t(`modal.errors.${errorCode}`, {
@@ -490,163 +381,4 @@ export function ReviewRequestModal({
       </div>
     </DialogModal>
   )
-}
-
-function ChangeSection({ action }: { action: GovernedAction }) {
-  const { t } = useTranslation("pendingApprovals")
-
-  if (action.action_type === "user_role_change") {
-    const s = roleChangeSnapshot(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <div className="flex items-center gap-2">
-          <ChangeBox variant="current" label={t("modal.current")}>
-            {s.old_role
-              ? t(`roles.${s.old_role}`, { defaultValue: s.old_role })
-              : "—"}
-          </ChangeBox>
-          <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
-          <ChangeBox variant="proposed" label={t("modal.proposed")}>
-            {s.new_role
-              ? t(`roles.${s.new_role}`, { defaultValue: s.new_role })
-              : "—"}
-          </ChangeBox>
-        </div>
-      </div>
-    )
-  }
-
-  if (action.action_type === "user_email_change") {
-    const s = emailChangeSnapshot(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <div className="flex items-center gap-2">
-          <ChangeBox variant="current" label={t("modal.current")}>
-            {s.old_email ?? "—"}
-          </ChangeBox>
-          <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" />
-          <ChangeBox variant="proposed" label={t("modal.proposed")}>
-            {s.new_email ?? "—"}
-          </ChangeBox>
-        </div>
-      </div>
-    )
-  }
-
-  if (action.action_type === "user_platform_invite") {
-    const s = platformInviteSnapshot(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <div className="flex flex-col gap-3">
-          <FieldRow label={t("modal.email")}>
-            <span>{s.email ?? "—"}</span>
-          </FieldRow>
-          <FieldRow label={t("modal.actionType")}>
-            <span>
-              {s.role_label
-                ? t(`roles.${s.role_label}`, { defaultValue: s.role_label })
-                : "—"}
-            </span>
-          </FieldRow>
-        </div>
-      </div>
-    )
-  }
-
-  if (action.action_type === "partner_archive") {
-    const s = displaySnapshot<PartnerArchiveSnapshot>(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <FieldRow label={t("modal.archiveReason")}>
-          <span>{s.reason ?? "—"}</span>
-        </FieldRow>
-      </div>
-    )
-  }
-
-  if (action.action_type === "partner_role_assign") {
-    const s = displaySnapshot<PartnerRoleAssignSnapshot>(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <FieldRow label={t("modal.roleToAssign")}>
-          <span>{t(`roles.${s.role}`, { defaultValue: s.role })}</span>
-        </FieldRow>
-      </div>
-    )
-  }
-
-  if (action.action_type === "partner_identity_change") {
-    const s = displaySnapshot<PartnerIdentityChangeSnapshot>(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <div className="flex flex-col gap-3">
-          <FieldRow label={t("modal.targetAnchors")}>
-            <span>{s.target_anchors?.join(", ") || "—"}</span>
-          </FieldRow>
-          <FieldRow label={t("modal.changeReason")}>
-            <span>{s.change_reason ?? "—"}</span>
-          </FieldRow>
-          <FieldRow label={t("modal.highRisk")}>
-            <span>{s.is_high_risk ? t("modal.yes") : t("modal.no")}</span>
-          </FieldRow>
-        </div>
-      </div>
-    )
-  }
-
-  if (action.action_type === "partner_merge") {
-    const s = displaySnapshot<PartnerMergeSnapshot>(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <div className="flex flex-col gap-3">
-          <FieldRow label={t("modal.mergeSource")}>
-            <span>{s.source_partner_id}</span>
-          </FieldRow>
-          <FieldRow label={t("modal.mergeTarget")}>
-            <span>{s.target_partner_id}</span>
-          </FieldRow>
-          <FieldRow label={t("modal.mergeReasonCode")}>
-            <span>{s.merge_reason_code}</span>
-          </FieldRow>
-        </div>
-      </div>
-    )
-  }
-
-  if (
-    action.action_type === "product_template_activate" ||
-    action.action_type === "product_template_deprecate"
-  ) {
-    const s = displaySnapshot<
-      ProductTemplateActivateSnapshot &
-        Partial<ProductTemplateDeprecateSnapshot>
-    >(action)
-    return (
-      <div className="flex flex-col gap-4">
-        <SectionLabel>{t("modal.change")}</SectionLabel>
-        <div className="flex flex-col gap-3">
-          <FieldRow label={t("modal.templateName")}>
-            <span>{s.template_name ?? "—"}</span>
-          </FieldRow>
-          <FieldRow label={t("modal.versionNumber")}>
-            <span>{s.version_number ?? "—"}</span>
-          </FieldRow>
-          {action.action_type === "product_template_deprecate" && (
-            <FieldRow label={t("modal.justification")}>
-              <span>{s.justification ?? "—"}</span>
-            </FieldRow>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  return null
 }

@@ -1,24 +1,17 @@
 import { useTranslation } from "react-i18next"
 import { Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ApiError } from "@/lib/api"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { useLcPortalFrameworkAgreements } from "@/features/lc/hooks/useLcPortalFrameworkAgreements"
 import { getLcPortalDocumentDownloadUrl } from "@/features/lc/api/lcPortalApi"
 import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreements/utils"
+import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 import NotFoundPage from "@/features/not-found/components/NotFoundPage"
 import type { LCPortalFAListItem } from "@/features/lc/api/schema"
 
 const BYTES_PER_MB = 1024 * 1024
-
-const STATUS_BADGE_VARIANT: Record<
-  LCPortalFAListItem["status"],
-  "default" | "secondary" | "outline"
-> = {
-  draft: "outline",
-  active: "default",
-  suspended: "secondary",
-  terminated: "outline",
-}
 
 function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
   const { t } = useTranslation("lc")
@@ -32,7 +25,7 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
         <h2 className="text-sm font-semibold text-foreground">
           {fa.agreement_name}
         </h2>
-        <Badge variant={STATUS_BADGE_VARIANT[fa.status]}>
+        <Badge variant={FA_STATUS_BADGE_VARIANT[fa.status]}>
           {t(`frameworkAgreements.status.${fa.status}`)}
         </Badge>
       </div>
@@ -110,6 +103,12 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {Math.round(doc.file_size_bytes / BYTES_PER_MB)} MB
                   </span>
+                  {/* NOTE: raw <a> — shadcn Button's `render` prop can only
+                      compose onto a non-<button> element with
+                      nativeButton={false}, which forces role="button" onto
+                      this anchor and overrides its native link semantics; a
+                      plain styled <a> preserves correct link semantics for a
+                      download action */}
                   <a
                     href={getLcPortalDocumentDownloadUrl(fa.id, doc.id)}
                     target="_blank"
@@ -151,11 +150,15 @@ export default function LcFrameworkAgreementsPage() {
         </p>
       </div>
 
-      {isLoading && <div className="h-48 animate-pulse bg-muted rounded-xl" />}
+      {isLoading && <Skeleton className="h-48 rounded-xl" />}
 
       {isError && !isLoading && (
         <p className="text-sm text-destructive py-8 text-center">
-          {t("frameworkAgreements.errors.generic")}
+          {error instanceof ApiError
+            ? t(`frameworkAgreements.errors.${error.code}`, {
+                defaultValue: t("frameworkAgreements.errors.generic"),
+              })
+            : t("frameworkAgreements.errors.generic")}
         </p>
       )}
 

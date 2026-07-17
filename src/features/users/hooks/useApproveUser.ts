@@ -1,7 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
 import { approveUser, USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
+import type { UserActionResponse } from "@/features/users/api/schema"
 
-export function useApproveUser() {
+export function useApproveUser(): UseMutationResult<
+  UserActionResponse,
+  Error,
+  string
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

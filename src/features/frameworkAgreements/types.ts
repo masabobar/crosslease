@@ -1,7 +1,7 @@
 import type { UserRole } from "@/features/users/types"
 import type { FADocumentType } from "@/features/frameworkAgreements/api/schema"
 
-export const FRAMEWORK_AGREEMENT_CREATE_ALLOWED_ROLES: readonly UserRole[] = [
+export const FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "bank_power_user",
 ]
@@ -29,6 +29,16 @@ export type FrameworkAgreementWizardStep =
   | "conditions"
   | "documents"
   | "review"
+
+export const FRAMEWORK_AGREEMENT_WIZARD_STEPS: readonly FrameworkAgreementWizardStep[] =
+  [
+    "identity",
+    "envelopePricing",
+    "validityTemplates",
+    "conditions",
+    "documents",
+    "review",
+  ]
 
 export type FrameworkAgreementDocumentDraft = {
   file: File

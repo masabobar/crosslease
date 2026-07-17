@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   AuditEventSchema,
   AuditFilterOptionsSchema,
+  AuditResultSchema,
   PaginatedAuditEventsSchema,
   deriveAuditResult,
 } from "@/features/audit/api/schema"
@@ -93,6 +94,48 @@ describe("AuditEventSchema", () => {
     }
     const parsed = AuditEventSchema.parse(event)
     expect(parsed.payload?.retention_category).toBe("standard")
+  })
+
+  it("accepts a valid field_diffs array", () => {
+    const event = {
+      ...validAuditEvent,
+      field_diffs: [{ field: "status", old_value: "active", new_value: null }],
+    }
+    const parsed = AuditEventSchema.parse(event)
+    expect(parsed.field_diffs?.[0]).toEqual({
+      field: "status",
+      old_value: "active",
+      new_value: null,
+    })
+  })
+
+  it("accepts null field_diffs", () => {
+    expect(() =>
+      AuditEventSchema.parse({ ...validAuditEvent, field_diffs: null })
+    ).not.toThrow()
+  })
+
+  it("accepts a missing field_diffs field", () => {
+    expect(() => AuditEventSchema.parse(validAuditEvent)).not.toThrow()
+  })
+
+  it("rejects a field_diffs entry missing the field key", () => {
+    const event = {
+      ...validAuditEvent,
+      field_diffs: [{ old_value: "active", new_value: null }],
+    }
+    expect(() => AuditEventSchema.parse(event)).toThrow()
+  })
+})
+
+describe("AuditResultSchema", () => {
+  it("accepts Success and Failed", () => {
+    expect(() => AuditResultSchema.parse("Success")).not.toThrow()
+    expect(() => AuditResultSchema.parse("Failed")).not.toThrow()
+  })
+
+  it("rejects an unknown result value", () => {
+    expect(() => AuditResultSchema.parse("Pending")).toThrow()
   })
 })
 
