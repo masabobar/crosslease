@@ -141,6 +141,19 @@ describe("useAssignPartnerRoles", () => {
       queryKey: ["partners", "roles", PARTNER_ID],
     })
   })
+
+  it("accepts risk-sensitive roles (PRD1042-1452)", async () => {
+    vi.mocked(assignPartnerRoles).mockResolvedValue({ results: [] } as never)
+    const mutation = useAssignPartnerRoles(PARTNER_ID)
+    await mutation.mutate({
+      roles: ["bank_entity", "leasing_company"],
+      note: null,
+    })
+    expect(assignPartnerRoles).toHaveBeenCalledWith(PARTNER_ID, {
+      roles: ["bank_entity", "leasing_company"],
+      note: null,
+    })
+  })
 })
 
 describe("useProposeIdentityChange", () => {

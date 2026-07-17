@@ -143,7 +143,9 @@ export type SubmitPartnerBody = {
 }
 
 export type AssignRolesBody = {
-  roles: Array<"lessee" | "guarantor" | "supplier">
+  // Full role set (PRD1042-1452): risk-sensitive roles are accepted and come
+  // back as pending governed actions awaiting BO counter-confirmation.
+  roles: PartnerRole[]
   note?: string | null
 }
 
