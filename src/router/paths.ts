@@ -16,6 +16,7 @@ export const PATHS = {
   LC_STATUS: "/lc/status",
   LC_DOCUMENTS: "/lc/documents",
   LC_PROPOSALS: "/lc/proposals",
+  LC_FRAMEWORK_AGREEMENTS: "/lc/framework-agreements",
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
   TENANT_MANAGEMENT: "/platform-administration/tenant-management",
   TENANT_MANAGEMENT_CREATE: "/platform-administration/tenant-management/create",

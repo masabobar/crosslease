@@ -66,6 +66,9 @@ const UserDetailPage = lazy(
 const LeasingCompanyWorkspacePage = lazy(
   () => import("@/features/lc/components/LeasingCompanyWorkspacePage")
 )
+const LcFrameworkAgreementsPage = lazy(
+  () => import("@/features/lc/components/LcFrameworkAgreementsPage")
+)
 const PendingApprovalsPage = lazy(
   () => import("@/features/governed-actions/components/PendingApprovalsPage")
 )
@@ -459,6 +462,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={LC_ONLY_ROLES}>
               <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_FRAMEWORK_AGREEMENTS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LcFrameworkAgreementsPage />
             </RoleGuard>
           </Suspense>
         ),

@@ -12,6 +12,7 @@ import {
   BarChart2,
   FolderOpen,
   Send,
+  Landmark,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -168,6 +169,12 @@ export function Sidebar() {
                 label: t("nav.lcProposals"),
                 icon: Send,
                 path: PATHS.LC_PROPOSALS,
+              },
+              {
+                key: "frameworkAgreements",
+                label: t("nav.lcFrameworkAgreements"),
+                icon: Landmark,
+                path: PATHS.LC_FRAMEWORK_AGREEMENTS,
               },
             ].map(({ key, label, icon: Icon, path }) => {
               const isActive = location.pathname === path
