@@ -387,7 +387,8 @@
     "cancel": "Cancel",
     "submit": "Assign",
     "submitting": "Assigning…",
-    "success": "Role assigned successfully."
+    "success": "Role assigned successfully.",
+    "successPending": "Role submitted for Back Office approval."
   },
   "duplicates": {
     "list": {

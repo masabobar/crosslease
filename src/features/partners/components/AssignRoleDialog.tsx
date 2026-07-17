@@ -15,12 +15,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { NonRiskPartnerRoleSchema } from "@/features/partners/api/schema"
+import { PartnerRoleSchema } from "@/features/partners/api/schema"
 import { useAssignPartnerRoles } from "@/features/partners/hooks/useAssignPartnerRoles"
-import type { NonRiskPartnerRole } from "@/features/partners/api/schema"
+import type {
+  PartnerRole,
+  RoleAssignResponse,
+} from "@/features/partners/api/schema"
 
+// Full role set (PRD1042-1452): risk-sensitive roles are selectable and are
+// recorded as pending until Back Office counter-confirms (US 13.6).
 const assignSchema = z.object({
-  role: NonRiskPartnerRoleSchema,
+  role: PartnerRoleSchema,
   note: z.string().optional(),
 })
 type AssignForm = z.infer<typeof assignSchema>
@@ -29,7 +34,7 @@ type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   partnerId: string
-  onSuccess: () => void
+  onSuccess: (response: RoleAssignResponse) => void
   onError: (err: unknown) => void
 }
 
@@ -42,7 +47,7 @@ function AssignRoleDialog({
 }: Props) {
   const { t } = useTranslation("partners")
   const mutation = useAssignPartnerRoles(partnerId)
-  const NON_RISK_ROLES: NonRiskPartnerRole[] = NonRiskPartnerRoleSchema.options
+  const ROLES: PartnerRole[] = PartnerRoleSchema.options
 
   const {
     handleSubmit,
@@ -63,8 +68,8 @@ function AssignRoleDialog({
     mutation.mutate(
       { roles: [values.role], note: values.note ?? null },
       {
-        onSuccess: () => {
-          onSuccess()
+        onSuccess: response => {
+          onSuccess(response)
           handleClose()
         },
         onError,
@@ -105,7 +110,7 @@ function AssignRoleDialog({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {NON_RISK_ROLES.map(role => (
+                    {ROLES.map(role => (
                       <SelectItem key={role} value={role}>
                         {t(`role.${role}` as "role.lessee")}
                       </SelectItem>

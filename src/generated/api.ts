@@ -917,12 +917,17 @@ const PartnerRolesResponse = z
   .passthrough()
 const RoleAssignRequest = z
   .object({
-    roles: z.array(z.enum(["lessee", "guarantor", "supplier"])).min(1),
+    roles: z.array(PartnerRole).min(1),
     note: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const RoleAssignResult = z
-  .object({ role: PartnerRole, status: z.string(), is_new: z.boolean() })
+  .object({
+    role: PartnerRole,
+    status: z.string(),
+    is_new: z.boolean(),
+    governed_action_id: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const RoleAssignResponse = z
   .object({ results: z.array(RoleAssignResult) })

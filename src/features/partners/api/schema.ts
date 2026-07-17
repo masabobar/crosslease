@@ -30,13 +30,6 @@ export const PartnerRoleSchema = z.enum([
 ])
 export type PartnerRole = z.infer<typeof PartnerRoleSchema>
 
-export const NonRiskPartnerRoleSchema = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-])
-export type NonRiskPartnerRole = z.infer<typeof NonRiskPartnerRoleSchema>
-
 // BE's governed-action-backed role entries currently send the generic
 // governed_action status "pending" instead of the role-specific
 // "pending_four_eyes" (see .project-management/input/open-questions.md Q-008).
@@ -263,6 +256,9 @@ export const RoleAssignResultSchema = z.object({
   role: PartnerRoleSchema,
   status: RoleStatusSchema,
   is_new: z.boolean(),
+  // Set when the role is risk-sensitive: the pending partner_role_assign
+  // governed action awaiting BO counter-confirmation (PRD1042-1452).
+  governed_action_id: z.string().uuid().nullable().optional(),
 })
 export type RoleAssignResult = z.infer<typeof RoleAssignResultSchema>
 

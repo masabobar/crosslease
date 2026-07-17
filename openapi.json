@@ -10278,10 +10278,7 @@
       "RoleAssignRequest": {
         "properties": {
           "roles": {
-            "items": {
-              "type": "string",
-              "enum": ["lessee", "guarantor", "supplier"]
-            },
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
             "type": "array",
             "minItems": 1,
             "title": "Roles"
@@ -10314,7 +10311,14 @@
         "properties": {
           "role": { "$ref": "#/components/schemas/PartnerRole" },
           "status": { "type": "string", "title": "Status" },
-          "is_new": { "type": "boolean", "title": "Is New" }
+          "is_new": { "type": "boolean", "title": "Is New" },
+          "governed_action_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Governed Action Id"
+          }
         },
         "type": "object",
         "required": ["role", "status", "is_new"],

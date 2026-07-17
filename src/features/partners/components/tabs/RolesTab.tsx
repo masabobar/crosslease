@@ -233,8 +233,15 @@ function RolesTab({
           open={assignOpen}
           onOpenChange={setAssignOpen}
           partnerId={partnerId}
-          onSuccess={() => {
-            toast.success(t("assignRoleDialog.success"))
+          onSuccess={response => {
+            const pendingApproval = response.results.some(
+              r => r.status === "pending_four_eyes"
+            )
+            toast.success(
+              pendingApproval
+                ? t("assignRoleDialog.successPending")
+                : t("assignRoleDialog.success")
+            )
           }}
           onError={(err: unknown) => {
             toast.error(

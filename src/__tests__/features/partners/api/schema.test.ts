@@ -584,6 +584,24 @@ describe("RoleAssignResponseSchema", () => {
       })
     ).toThrow()
   })
+
+  it("accepts a risk-sensitive result and keeps its governed_action_id", () => {
+    // PRD1042-1452: risky roles come back as pending governed actions
+    const parsed = RoleAssignResponseSchema.parse({
+      results: [
+        {
+          role: "bank_entity",
+          status: "pending",
+          is_new: true,
+          governed_action_id: "3f1a2b4c-5d6e-4f70-8a9b-0c1d2e3f4a5b",
+        },
+      ],
+    })
+    expect(parsed.results[0].status).toBe("pending_four_eyes")
+    expect(parsed.results[0].governed_action_id).toBe(
+      "3f1a2b4c-5d6e-4f70-8a9b-0c1d2e3f4a5b"
+    )
+  })
 })
 
 // ── UBO ───────────────────────────────────────────────────────────────────────
