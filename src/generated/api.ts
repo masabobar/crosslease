@@ -875,21 +875,13 @@ const ResolutionCandidatesResponse = z
     candidates: z.array(CandidateSummary),
   })
   .passthrough()
-const PartnerRole = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-])
 const ActorSummary = z
   .object({ user_id: z.string(), display_name: z.string(), email: z.string() })
   .passthrough()
 const RoleAssignmentSummary = z
   .object({
     role_assignment_id: z.string(),
-    role: PartnerRole,
+    role: z.string(),
     status: z.string(),
     is_risk_sensitive: z.boolean(),
     assigned_by: ActorSummary,
@@ -915,6 +907,7 @@ const PartnerRolesResponse = z
     history: z.array(RoleHistoryEntry),
   })
   .passthrough()
+const PartnerRole = z.enum(["lessee", "guarantor", "supplier", "bank_entity"])
 const RoleAssignRequest = z
   .object({
     roles: z.array(PartnerRole).min(1),
@@ -1168,7 +1161,7 @@ const PartnerSubmitRequest = z
       NaturalPersonIdentityInput,
       SoleProprietorIdentityInput,
     ]),
-    roles: z.array(PartnerRole).min(1),
+    roles: z.array(PartnerRole).optional(),
   })
   .passthrough()
 const PartnerSubmitResponse = z
@@ -1203,7 +1196,7 @@ const PartnerListItem = z
     status: z.string(),
     country: z.union([z.string(), z.null()]),
     ubo_completeness_status: z.string(),
-    roles: z.array(PartnerRole),
+    roles: z.array(z.string()),
   })
   .passthrough()
 const PartnerListResponse = z
@@ -1951,13 +1944,6 @@ const LCPortalFAListItem = z
 const LCPortalFAListResponse = z
   .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
   .passthrough()
-const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
-const OTPResponse = z
-  .object({
-    code: z.string(),
-    expires_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
 
 export const schemas = {
   LoginRequest,
@@ -2069,11 +2055,11 @@ export const schemas = {
   ResolutionEventSummary,
   CandidateSummary,
   ResolutionCandidatesResponse,
-  PartnerRole,
   ActorSummary,
   RoleAssignmentSummary,
   RoleHistoryEntry,
   PartnerRolesResponse,
+  PartnerRole,
   RoleAssignRequest,
   RoleAssignResult,
   RoleAssignResponse,
@@ -2188,8 +2174,6 @@ export const schemas = {
   LCPortalDocumentItem,
   LCPortalFAListItem,
   LCPortalFAListResponse,
-  TestSessionRequest,
-  OTPResponse,
 }
 
 const endpoints = makeApi([
@@ -5372,7 +5356,8 @@ Requires &#x60;system_admin&#x60; role.`,
 - Tenant roles (&#x60;front_office&#x60;, &#x60;back_office&#x60;, &#x60;leasing_company_user&#x60;) — &#x60;tenant_id&#x60; required, tenant must be active.
   Immediate execution; returns &#x60;UserResponse&#x60; with status &#x60;invited&#x60;.
 - &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.
-- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same tenant.
+- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same
+  tenant that is the leasing-company party of at least one non-terminated framework agreement.
   All other roles must omit &#x60;lc_partner_id&#x60; (or send &#x60;null&#x60;).`,
     requestFormat: "json",
     parameters: [
@@ -5908,60 +5893,6 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
     alias: "health_check_health_get",
     requestFormat: "json",
     response: z.unknown(),
-  },
-  {
-    method: "get",
-    path: "/internal/test/otp",
-    alias: "test_get_otp_internal_test_otp_get",
-    description: `Return the current valid OTP code for a user.
-
-Use after POST /api/v1/auth/login to retrieve the generated OTP without
-needing email access. Returns 404 if no active (non-expired, non-used) OTP
-exists for the given email.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "email",
-        type: "Query",
-        schema: z.string(),
-      },
-    ],
-    response: OTPResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/internal/test/session",
-    alias: "test_session_internal_test_session_post",
-    description: `Create a real authenticated session for any user without going through 2FA.
-
-Replicates the tail of verify_otp: evicts oldest session if needed, issues
-access + refresh tokens as HTTP-only cookies.
-
-User status is NOT checked — QA can obtain a session for suspended or
-deactivated users to test authenticated edge-case scenarios.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z.object({ email: z.string().email() }).passthrough(),
-      },
-    ],
-    response: LoginResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
   },
 ])
 

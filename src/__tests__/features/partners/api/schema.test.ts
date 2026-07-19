@@ -77,14 +77,7 @@ describe("PartnerStatusSchema", () => {
 })
 
 describe("PartnerRoleSchema", () => {
-  const values = [
-    "lessee",
-    "guarantor",
-    "supplier",
-    "leasing_company",
-    "bank_entity",
-    "ubo_related_person",
-  ] as const
+  const values = ["lessee", "guarantor", "supplier", "bank_entity"] as const
   it("accepts all valid values", () => {
     for (const v of values) {
       expect(() => PartnerRoleSchema.parse(v)).not.toThrow()
@@ -372,10 +365,13 @@ describe("PartnerListItemSchema", () => {
     ).not.toThrow()
   })
 
-  it("rejects invalid role in roles array", () => {
+  it("accepts legacy role values removed from the enum (PRD1042-1453)", () => {
     expect(() =>
-      PartnerListItemSchema.parse({ ...validListItem, roles: ["borrower"] })
-    ).toThrow()
+      PartnerListItemSchema.parse({
+        ...validListItem,
+        roles: ["leasing_company", "ubo_related_person"],
+      })
+    ).not.toThrow()
   })
 
   it("rejects invalid status", () => {
@@ -543,7 +539,7 @@ describe("PartnerSubmitResponseSchema", () => {
         display_name: "Acme GmbH",
         partner_type: "legal_entity",
         status: "pending_confirmation",
-        roles: ["lessee", "leasing_company"],
+        roles: ["lessee", "bank_entity"],
         is_new: true,
       })
     ).not.toThrow()
@@ -601,12 +597,14 @@ describe("RoleAssignResponseSchema", () => {
     ).not.toThrow()
   })
 
-  it("rejects invalid role in results", () => {
+  it("accepts any role string in results (legacy tolerance, PRD1042-1453)", () => {
     expect(() =>
       RoleAssignResponseSchema.parse({
-        results: [{ role: "borrower", status: "active", is_new: true }],
+        results: [
+          { role: "leasing_company", status: "withdrawn", is_new: false },
+        ],
       })
-    ).toThrow()
+    ).not.toThrow()
   })
 
   it("accepts a risk-sensitive result and keeps its governed_action_id", () => {

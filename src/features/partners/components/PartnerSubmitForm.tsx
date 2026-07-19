@@ -21,17 +21,11 @@ import {
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
 import {
-  PartnerRoleSchema,
+  AssignablePartnerRoleSchema,
   PartnerTypeSchema,
 } from "@/features/partners/api/schema"
 import type { PartnerRole, PartnerType } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
-
-const RISK_SENSITIVE_ROLES: PartnerRole[] = [
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-]
 
 // RHF's reset() only clears top-level fields omitted from the new values —
 // nested paths like registered_address.street are left untouched unless
@@ -113,7 +107,7 @@ const legalEntitySchema = z.object({
     }),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(PartnerRoleSchema).min(1, "Required"),
+  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 const naturalPersonSchema = z.object({
@@ -125,7 +119,7 @@ const naturalPersonSchema = z.object({
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(PartnerRoleSchema).min(1, "Required"),
+  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 const soleProprietorSchema = z.object({
@@ -136,7 +130,7 @@ const soleProprietorSchema = z.object({
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(PartnerRoleSchema).min(1, "Required"),
+  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 type LegalEntityForm = z.infer<typeof legalEntitySchema>
@@ -651,8 +645,10 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               }
               return (
                 <div className="grid grid-cols-2 gap-2">
-                  {PartnerRoleSchema.options.map(role => {
-                    const isRisky = RISK_SENSITIVE_ROLES.includes(role)
+                  {AssignablePartnerRoleSchema.options.map(role => {
+                    // every manually assignable role is risk-sensitive —
+                    // deal roles are contract-derived (PRD1042-1453)
+                    const isRisky = true
                     const checked = selected.includes(role)
                     return (
                       // NOTE: plain <div> instead of <label htmlFor>. BaseUI's
@@ -698,11 +694,6 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               )
             }}
           />
-          {"roles" in errors && errors.roles && (
-            <p className="text-xs text-destructive mt-2">
-              {t("submit.form.errors.roleRequired")}
-            </p>
-          )}
         </CardContent>
       </Card>
     </form>

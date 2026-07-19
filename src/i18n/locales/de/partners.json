@@ -141,7 +141,7 @@
       "submitButton": "Submit for matching",
       "submitting": "Submitting…",
       "fourEyesBadge": "Four-eyes",
-      "classificationHint": "Select all roles that apply. At least one is required.",
+      "classificationHint": "Optional. Deal roles (lessee, guarantor, supplier) are derived from the contract process and cannot be assigned here.",
       "sections": {
         "basicIdentity": "BASIC IDENTITY",
         "registryIdentifiers": "REGISTRY IDENTIFIERS",
