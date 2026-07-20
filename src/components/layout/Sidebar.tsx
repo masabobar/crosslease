@@ -33,6 +33,7 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
+import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
 import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates/types"
@@ -85,6 +86,9 @@ export function Sidebar() {
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessAuditTrail =
     !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
+  const canAccessNotificationConfig =
+    !!currentUser &&
+    NOTIFICATION_CONFIG_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessTenantManagement =
     !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessPartnerRegistry =
@@ -127,6 +131,8 @@ export function Sidebar() {
   const isAuditTrailActive =
     location.pathname === PATHS.AUDIT_TRAIL ||
     location.pathname.startsWith(PATHS.AUDIT_TRAIL + "/")
+  const isNotificationConfigActive =
+    location.pathname === PATHS.NOTIFICATION_CONFIGURATION
   const isPartnerRegistryActive =
     location.pathname === PATHS.PARTNER_REGISTRY ||
     (location.pathname.startsWith(PATHS.PARTNER_REGISTRY + "/") &&
@@ -502,6 +508,14 @@ export function Sidebar() {
                       label={t("nav.auditTrail")}
                       testid="nav-audit-trail"
                       isActive={isAuditTrailActive}
+                    />
+                  )}
+                  {canAccessNotificationConfig && (
+                    <SidebarNavLink
+                      to={PATHS.NOTIFICATION_CONFIGURATION}
+                      label={t("nav.notificationConfiguration")}
+                      testid="nav-notification-configuration"
+                      isActive={isNotificationConfigActive}
                     />
                   )}
                   {canAccessPartnerRegistry && (

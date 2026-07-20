@@ -1,0 +1,39 @@
+{
+  "page": {
+    "title": "Benachrichtigungskonfiguration",
+    "bannerTitle": "Demnächst verfügbar",
+    "bannerDescription": "Kanalaktivierung und Vorlagenzuweisung sind nach dem November-Release verfügbar.",
+    "column": {
+      "notificationType": "Benachrichtigungstyp",
+      "inPlatform": "In der Plattform",
+      "email": "E-Mail",
+      "template": "Vorlage"
+    },
+    "assignTemplate": "Vorlage zuweisen"
+  },
+  "eventType": {
+    "taskAssigned": "Aufgabe zugewiesen",
+    "taskReassigned": "Aufgabe neu zugewiesen",
+    "taskReworkRequested": "Nacharbeit angefordert",
+    "taskEscalated": "Eskalation ausgelöst",
+    "requestApproved": "Antrag genehmigt",
+    "requestRejected": "Antrag abgelehnt",
+    "disbursementConfirmed": "Auszahlung bestätigt",
+    "disbursementFailed": "Auszahlung fehlgeschlagen",
+    "conditionOverdue": "Bedingung überfällig",
+    "faSuspended": "Rahmenvereinbarung ausgesetzt",
+    "faReactivated": "Rahmenvereinbarung reaktiviert",
+    "faTerminated": "Rahmenvereinbarung beendet",
+    "faEdited": "Rahmenvereinbarung bearbeitet"
+  },
+  "group": {
+    "workflow": "Workflow",
+    "financing": "Finanzierung",
+    "disbursement": "Auszahlung",
+    "conditions": "Bedingungen",
+    "frameworkAgreements": "Rahmenvereinbarungen"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

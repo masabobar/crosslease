@@ -16,6 +16,7 @@ export type BreadcrumbLabelKey =
   | "breadcrumb.myProfile"
   | "breadcrumb.auditTrail"
   | "breadcrumb.auditEvent"
+  | "breadcrumb.notificationConfiguration"
   | "breadcrumb.tenantManagement"
   | "breadcrumb.createTenant"
   | "breadcrumb.partnerManagement"
@@ -46,6 +47,11 @@ const BREADCRUMBS: Record<string, Crumb[]> = {
     { labelKey: "breadcrumb.home" },
     { labelKey: "breadcrumb.platformAdministration" },
     { labelKey: "breadcrumb.auditTrail" },
+  ],
+  [PATHS.NOTIFICATION_CONFIGURATION]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.platformAdministration" },
+    { labelKey: "breadcrumb.notificationConfiguration" },
   ],
   [PATHS.TENANT_MANAGEMENT]: [
     { labelKey: "breadcrumb.home" },

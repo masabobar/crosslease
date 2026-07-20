@@ -1,0 +1,39 @@
+{
+  "page": {
+    "title": "Notification configuration",
+    "bannerTitle": "Coming soon",
+    "bannerDescription": "Channel activation and template assignment will be available after the November release.",
+    "column": {
+      "notificationType": "Notification type",
+      "inPlatform": "In platform",
+      "email": "Email",
+      "template": "Template"
+    },
+    "assignTemplate": "Assign template"
+  },
+  "eventType": {
+    "taskAssigned": "Task assigned",
+    "taskReassigned": "Task reassigned",
+    "taskReworkRequested": "Rework requested",
+    "taskEscalated": "Escalation raised",
+    "requestApproved": "Request approved",
+    "requestRejected": "Request rejected",
+    "disbursementConfirmed": "Disbursement confirmed",
+    "disbursementFailed": "Disbursement failed",
+    "conditionOverdue": "Condition overdue",
+    "faSuspended": "Framework agreement suspended",
+    "faReactivated": "Framework agreement reactivated",
+    "faTerminated": "Framework agreement terminated",
+    "faEdited": "Framework agreement edited"
+  },
+  "group": {
+    "workflow": "Workflow",
+    "financing": "Financing",
+    "disbursement": "Disbursement",
+    "conditions": "Conditions",
+    "frameworkAgreements": "Framework agreements"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  }
+}
