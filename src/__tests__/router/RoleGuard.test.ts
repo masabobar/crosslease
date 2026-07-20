@@ -42,6 +42,10 @@ describe("RoleGuard allowed-role logic", () => {
     expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("back_office")).toBe(true)
   })
 
+  it("bank_power_user is in USER_MANAGEMENT_ALLOWED_ROLES", () => {
+    expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("bank_power_user")).toBe(true)
+  })
+
   it("leasing_company_user is NOT in USER_MANAGEMENT_ALLOWED_ROLES", () => {
     expect(USER_MANAGEMENT_ALLOWED_ROLES.includes("leasing_company_user")).toBe(
       false

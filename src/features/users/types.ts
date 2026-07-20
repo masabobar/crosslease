@@ -20,6 +20,7 @@ export const FOUR_EYES_ROLES: readonly UserRole[] = [
 
 export const TENANT_SCOPED_ROLES: readonly UserRole[] = [
   "auditor",
+  "bank_power_user",
   "front_office",
   "back_office",
   "leasing_company_user",
@@ -36,6 +37,7 @@ export const USER_MANAGEMENT_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "support_user",
   "auditor",
+  "bank_power_user",
   "front_office",
   "back_office",
 ]
@@ -68,6 +70,7 @@ export const INTERNAL_BANK_ROLES: readonly UserRole[] = [
 
 export const WRITE_ACTION_ROLES: readonly UserRole[] = [
   "system_admin",
+  "bank_power_user",
   "front_office",
   "back_office",
 ]

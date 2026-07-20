@@ -58,6 +58,11 @@ describe("useCanPerformAction", () => {
     expect(useCanPerformAction()).toBe(true)
   })
 
+  it("returns true for bank_power_user", () => {
+    mockUser("bank_power_user")
+    expect(useCanPerformAction()).toBe(true)
+  })
+
   it("returns false for support_user (read-only)", () => {
     mockUser("support_user")
     expect(useCanPerformAction()).toBe(false)
@@ -80,10 +85,11 @@ describe("useCanPerformAction", () => {
 })
 
 describe("WRITE_ACTION_ROLES constant", () => {
-  it("contains system_admin, front_office, back_office", () => {
+  it("contains system_admin, front_office, back_office, bank_power_user", () => {
     expect(WRITE_ACTION_ROLES).toContain("system_admin")
     expect(WRITE_ACTION_ROLES).toContain("front_office")
     expect(WRITE_ACTION_ROLES).toContain("back_office")
+    expect(WRITE_ACTION_ROLES).toContain("bank_power_user")
   })
 
   it("does NOT contain support_user", () => {
