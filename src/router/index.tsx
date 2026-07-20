@@ -9,6 +9,7 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
+import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import {
   TENANT_LIST_ALLOWED_ROLES,
   TENANT_CREATE_ALLOWED_ROLES,
@@ -80,6 +81,9 @@ const AuditTrailPage = lazy(
 )
 const AuditEventDetailPage = lazy(
   () => import("@/features/audit/components/AuditEventDetailPage")
+)
+const NotificationConfigPage = lazy(
+  () => import("@/features/notifications/components/NotificationConfigPage")
 )
 const TenantManagementPage = lazy(
   () => import("@/features/tenants/components/TenantManagementPage")
@@ -336,6 +340,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={AUDIT_TRAIL_ALLOWED_ROLES}>
               <AuditEventDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.NOTIFICATION_CONFIGURATION,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={NOTIFICATION_CONFIG_ALLOWED_ROLES}>
+              <NotificationConfigPage />
             </RoleGuard>
           </Suspense>
         ),

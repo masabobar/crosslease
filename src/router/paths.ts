@@ -27,6 +27,8 @@ export const PATHS = {
   SETTINGS_PROFILE: "/settings/profile",
   AUDIT_TRAIL: "/platform-administration/audit-trail",
   AUDIT_TRAIL_DETAIL: "/platform-administration/audit-trail/:eventId",
+  NOTIFICATION_CONFIGURATION:
+    "/platform-administration/notification-configuration",
   PARTNER_REGISTRY: "/partners",
   PARTNER_SUBMIT: "/partners/new",
   PARTNER_DETAIL: "/partners/:id",
