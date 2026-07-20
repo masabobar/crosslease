@@ -368,7 +368,9 @@
     "title": "Add UBO",
     "fields": {
       "uboPartnerPlaceholder": "Search confirmed natural persons…",
-      "uboPartnerNoResults": "No matching partners found."
+      "uboPartnerNoResults": "No matching partners found.",
+      "indirectOwnershipNotes": "Hinweise zu indirekter Beteiligung (optional)",
+      "indirectOwnershipNotesPlaceholder": "Beschreiben Sie relevante indirekte Beteiligungsstrukturen für diesen wirtschaftlich Berechtigten…"
     },
     "errors": {
       "uboPartnerRequired": "Select a UBO partner.",
