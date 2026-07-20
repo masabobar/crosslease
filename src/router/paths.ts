@@ -1,3 +1,6 @@
+export const PLATFORM_ADMINISTRATION_PREFIX = "/platform-administration"
+export const BUSINESS_CONFIGURATION_PREFIX = "/business-configuration"
+
 export const PATHS = {
   LOGIN: "/login",
   FORGOT_PASSWORD: "/forgot-password",
@@ -16,6 +19,7 @@ export const PATHS = {
   LC_STATUS: "/lc/status",
   LC_DOCUMENTS: "/lc/documents",
   LC_PROPOSALS: "/lc/proposals",
+  LC_FRAMEWORK_AGREEMENTS: "/lc/framework-agreements",
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
   TENANT_MANAGEMENT: "/platform-administration/tenant-management",
   TENANT_MANAGEMENT_CREATE: "/platform-administration/tenant-management/create",
@@ -34,6 +38,11 @@ export const PATHS = {
     "/business-configuration/product-templates/:templateId/version-history",
   PRODUCT_TEMPLATE_NEW_VERSION:
     "/business-configuration/product-templates/:templateId/versions/:versionNumber/edit",
+  FRAMEWORK_AGREEMENT_LIST: "/business-configuration/framework-agreements",
+  FRAMEWORK_AGREEMENT_CREATE:
+    "/business-configuration/framework-agreements/new",
+  FRAMEWORK_AGREEMENT_DETAIL:
+    "/business-configuration/framework-agreements/:id",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -71,4 +80,8 @@ export function productTemplateNewVersionEdit(
     ":templateId",
     templateId
   ).replace(":versionNumber", versionNumber)
+}
+
+export function frameworkAgreementDetail(id: string): string {
+  return PATHS.FRAMEWORK_AGREEMENT_DETAIL.replace(":id", id)
 }

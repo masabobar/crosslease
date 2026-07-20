@@ -5,6 +5,7 @@
   "loading": "Laden...",
   "validation": {
     "required": "Dieses Feld ist erforderlich.",
+    "invalidFormat": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
     "dateMustBeAfterFrom": "Das 'Bis'-Datum muss nach dem 'Von'-Datum liegen."
   },
   "nav": {
@@ -17,6 +18,7 @@
     "operations": "Betrieb",
     "businessConfigurations": "Geschäftskonfigurationen",
     "productTemplates": "Produktvorlagen",
+    "frameworkAgreements": "Rahmenvereinbarungen",
     "rulesSetup": "Regelkonfiguration",
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
@@ -31,6 +33,7 @@
     "lcStatus": "Statusübersicht",
     "lcDocuments": "Bankdokumente",
     "lcProposals": "Vorschläge",
+    "lcFrameworkAgreements": "Rahmenvereinbarungen",
     "pendingApprovals": "Ausstehende Genehmigungen",
     "myProfile": "Mein Profil"
   },
@@ -79,5 +82,10 @@
     "hoursAgo": "vor {{count}} Std.",
     "daysAgo": "vor {{count}} T.",
     "yesterday": "gestern"
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "title": "Etwas ist schiefgelaufen",
+    "retry": "Erneut versuchen"
   }
 }

@@ -7,6 +7,7 @@ import { partnerDetail, PATHS } from "@/router/paths"
 import { countryName } from "@/lib/countries"
 import { cn } from "@/lib/utils"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
+import { PartnerMatchClassificationSchema } from "@/features/partners/api/schema"
 import type {
   CandidateSummary,
   PartnerMatchResponse,
@@ -151,7 +152,8 @@ function MatchingReview({
   const { t } = useTranslation("partners")
 
   const exactMatchPartnerId =
-    matchResult && matchResult.classification === "exact"
+    matchResult &&
+    matchResult.classification === PartnerMatchClassificationSchema.enum.exact
       ? matchResult.matched_partner_id
       : null
   const exactMatchQuery = usePartnerDetail(exactMatchPartnerId)
@@ -195,7 +197,8 @@ function MatchingReview({
             </div>
           )}
 
-          {matchResult?.classification === "exact" && (
+          {matchResult?.classification ===
+            PartnerMatchClassificationSchema.enum.exact && (
             <>
               <div className="flex items-center gap-2 rounded-xl border border-success/60 bg-success/10 px-2.5 py-2 mb-4">
                 <CheckCheck size={16} className="text-success shrink-0" />
@@ -219,7 +222,8 @@ function MatchingReview({
             </>
           )}
 
-          {matchResult?.classification === "ambiguous" && (
+          {matchResult?.classification ===
+            PartnerMatchClassificationSchema.enum.ambiguous && (
             <>
               <div className="flex items-start gap-2 rounded-xl border border-warning/60 bg-warning/10 px-2.5 py-2 mb-4">
                 <CircleAlert
@@ -237,7 +241,8 @@ function MatchingReview({
             </>
           )}
 
-          {matchResult?.classification === "no_match" && (
+          {matchResult?.classification ===
+            PartnerMatchClassificationSchema.enum.no_match && (
             <>
               <div className="flex items-start gap-2 rounded-xl border border-info/60 bg-info/10 px-2.5 py-2 mb-4">
                 <Info size={16} className="text-info shrink-0 mt-0.5" />
@@ -268,7 +273,8 @@ function MatchingReview({
       </div>
 
       <div className="flex items-center justify-between px-8 py-3.5 border-t border-border">
-        {matchResult?.classification === "exact" ? (
+        {matchResult?.classification ===
+        PartnerMatchClassificationSchema.enum.exact ? (
           <>
             <span />
             <Button
@@ -294,7 +300,8 @@ function MatchingReview({
                 {t("submit.form.submitButton")}
               </Button>
             )}
-            {matchResult?.classification === "ambiguous" && (
+            {matchResult?.classification ===
+              PartnerMatchClassificationSchema.enum.ambiguous && (
               <Button
                 onClick={onConfirmCreate}
                 disabled={isSubmitting}
@@ -305,7 +312,8 @@ function MatchingReview({
                   : t("submit.matchStep.goToPendingConfirmation")}
               </Button>
             )}
-            {matchResult?.classification === "no_match" && (
+            {matchResult?.classification ===
+              PartnerMatchClassificationSchema.enum.no_match && (
               <Button
                 onClick={onConfirmCreate}
                 disabled={isSubmitting}

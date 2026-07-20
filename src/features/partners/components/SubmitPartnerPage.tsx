@@ -24,7 +24,7 @@ import { partnerDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
-import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { TenantScopeGate } from "@/components/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 type View = "form" | "matching"
@@ -86,8 +86,13 @@ export default function SubmitPartnerPage() {
     setPending({ identity, roles })
     setMatchResult(null)
     setView("matching")
-    const result = await matchMutation.mutateAsync({ identity })
-    if (result) setMatchResult(result)
+    try {
+      const result = await matchMutation.mutateAsync({ identity })
+      if (result) setMatchResult(result)
+    } catch {
+      // onError above already surfaces the toast; catch here only to
+      // prevent an unhandled promise rejection.
+    }
   }
 
   function handleConfirmCreate() {
@@ -105,22 +110,12 @@ export default function SubmitPartnerPage() {
   // System Admin has no single tenant_id, so a quick session-only tenant select lets them
   // pick which tenant to submit for (see TenantQuickSelect / tenantSelectionStore).
   if (currentUser && !tenantId) {
-    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
-      return (
-        <div className="p-8 max-w-sm space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("submit.selectTenantPrompt")}
-          </p>
-          <TenantQuickSelect />
-        </div>
-      )
-    }
     return (
-      <div className="p-8">
-        <p className="text-sm text-muted-foreground">
-          {t("submit.tenantRequired")}
-        </p>
-      </div>
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("submit.selectTenantPrompt")}
+        tenantRequiredMessage={t("submit.tenantRequired")}
+      />
     )
   }
 

@@ -5,7 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Eye, EyeOff, Check, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { ResetPasswordInputSchema } from "../api/forgotPasswordSchema"
+import {
+  ResetPasswordInputSchema,
+  PASSWORDS_DO_NOT_MATCH,
+} from "../api/forgotPasswordSchema"
 import type { ResetPasswordInput } from "../api/forgotPasswordSchema"
 import { validateResetToken, resetPassword } from "../api/forgotPasswordApi"
 import { AUTH_QUERY_KEYS } from "../api/queryKeys"
@@ -84,17 +87,10 @@ export default function ResetPasswordPage() {
       }
       setIsSuccess(true)
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
-      const messages: Record<string, string> = {
-        PASSWORD_RESET_TOKEN_INVALID: t(
-          "resetPassword.setPassword.errors.PASSWORD_RESET_TOKEN_INVALID"
-        ),
-        PASSWORD_RESET_TOKEN_EXPIRED: t(
-          "resetPassword.setPassword.errors.PASSWORD_RESET_TOKEN_EXPIRED"
-        ),
-      }
       setServerError(
-        messages[code] ?? t("resetPassword.setPassword.errors.default")
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
       )
     }
   })
@@ -278,8 +274,7 @@ export default function ResetPasswordPage() {
                     data-testid="reset-password-confirm-error"
                     className="mt-1.5 text-xs text-destructive"
                   >
-                    {errors.password_confirm.message ===
-                    "PASSWORDS_DO_NOT_MATCH"
+                    {errors.password_confirm.message === PASSWORDS_DO_NOT_MATCH
                       ? t(
                           "resetPassword.setPassword.errors.PASSWORDS_DO_NOT_MATCH"
                         )

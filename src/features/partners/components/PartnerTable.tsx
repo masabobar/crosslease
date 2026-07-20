@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
+import {
+  PartnerStatusSchema,
+  UboCompletenessStatusSchema,
+} from "@/features/partners/api/schema"
 import type { PartnerListItem } from "@/features/partners/api/schema"
 import type { PartnerActionType } from "@/features/partners/types"
 
@@ -18,6 +22,7 @@ const COL_ROLES = "w-[200px] shrink-0"
 const COL_COUNTRY = "w-[90px] shrink-0"
 const COL_STATUS = "w-[160px] shrink-0"
 const COL_UBO = "w-[130px] shrink-0"
+const COL_ACTIONS = "shrink-0 ml-auto flex items-center justify-center p-2"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
@@ -30,7 +35,8 @@ type KebabMenuProps = {
 function KebabMenu({ partner, canAction, onAction }: KebabMenuProps) {
   const { t } = useTranslation("partners")
 
-  const canArchive = canAction && partner.status === "confirmed"
+  const canArchive =
+    canAction && partner.status === PartnerStatusSchema.enum.confirmed
 
   if (!canArchive) {
     return (
@@ -49,7 +55,7 @@ function KebabMenu({ partner, canAction, onAction }: KebabMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         data-testid={`partner-row-menu-${partner.partner_id}`}
-        aria-label="Actions"
+        aria-label={t("list.table.actionsMenuLabel")}
         className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         <MoreHorizontal size={16} />
@@ -116,7 +122,7 @@ function PartnerTable({
         <div className={`${COL_UBO} text-sm font-medium text-foreground px-2`}>
           {t("list.table.columns.uboStatus")}
         </div>
-        <div className="shrink-0 w-8" />
+        <div className={COL_ACTIONS} />
       </div>
 
       {/* Loading skeleton */}
@@ -143,7 +149,7 @@ function PartnerTable({
               <div className={`${COL_UBO} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-16" />
               </div>
-              <div className="shrink-0 w-8" />
+              <div className={COL_ACTIONS} />
             </div>
           ))}
         </div>
@@ -212,7 +218,8 @@ function PartnerTable({
               <PartnerStatusBadge status={partner.status} />
             </div>
             <div className={`${COL_UBO} p-2`}>
-              {partner.ubo_completeness_status === "missing" ? (
+              {partner.ubo_completeness_status ===
+              UboCompletenessStatusSchema.enum.missing ? (
                 <span className="text-sm text-muted-foreground">—</span>
               ) : (
                 <span className="flex items-center gap-1.5 text-sm text-foreground">
@@ -225,10 +232,7 @@ function PartnerTable({
                 </span>
               )}
             </div>
-            <div
-              className="shrink-0 p-2 flex items-center justify-center"
-              onClick={e => e.stopPropagation()}
-            >
+            <div className={COL_ACTIONS} onClick={e => e.stopPropagation()}>
               <KebabMenu
                 partner={partner}
                 canAction={canAction}

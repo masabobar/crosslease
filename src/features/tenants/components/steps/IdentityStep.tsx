@@ -16,6 +16,8 @@ import {
   ComboboxEmpty,
 } from "@/components/ui/combobox"
 import { selectOnFocus } from "@/lib/utils"
+import { COUNTRIES } from "@/lib/countries"
+import { TenantTypeSchema } from "@/features/tenants/api/schema"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
 
 const CURRENCY_OPTIONS: SelectOption[] = [
@@ -23,39 +25,10 @@ const CURRENCY_OPTIONS: SelectOption[] = [
   { value: "USD", label: "US Dollar · USD" },
 ]
 
-// ISO 3166-1 alpha-2 — common European countries; extend as needed
-const COUNTRY_OPTIONS = [
-  { value: "AT", label: "Austria" },
-  { value: "BE", label: "Belgium" },
-  { value: "BG", label: "Bulgaria" },
-  { value: "CH", label: "Switzerland" },
-  { value: "CZ", label: "Czech Republic" },
-  { value: "DE", label: "Germany" },
-  { value: "DK", label: "Denmark" },
-  { value: "EE", label: "Estonia" },
-  { value: "ES", label: "Spain" },
-  { value: "FI", label: "Finland" },
-  { value: "FR", label: "France" },
-  { value: "GB", label: "United Kingdom" },
-  { value: "GR", label: "Greece" },
-  { value: "HR", label: "Croatia" },
-  { value: "HU", label: "Hungary" },
-  { value: "IE", label: "Ireland" },
-  { value: "IT", label: "Italy" },
-  { value: "LT", label: "Lithuania" },
-  { value: "LU", label: "Luxembourg" },
-  { value: "LV", label: "Latvia" },
-  { value: "MT", label: "Malta" },
-  { value: "NL", label: "Netherlands" },
-  { value: "PL", label: "Poland" },
-  { value: "PT", label: "Portugal" },
-  { value: "RO", label: "Romania" },
-  { value: "RS", label: "Serbia" },
-  { value: "SE", label: "Sweden" },
-  { value: "SI", label: "Slovenia" },
-  { value: "SK", label: "Slovakia" },
-  { value: "US", label: "United States" },
-]
+const COUNTRY_OPTIONS: SelectOption[] = COUNTRIES.map(({ code, name }) => ({
+  value: code,
+  label: name,
+}))
 
 type Props = {
   form: UseFormReturn<CreateTenantForm>
@@ -67,12 +40,12 @@ function IdentityStep({ form }: Props) {
   const { register, control } = form
   const { errors } = useFormState({ control })
 
-  const tenantTypeOptions: SelectOption[] = (
-    ["bank", "bank_entity", "bank_branch_group"] as const
-  ).map(type => ({
-    value: type,
-    label: t(`tenantTypes.${type}`),
-  }))
+  const tenantTypeOptions: SelectOption[] = TenantTypeSchema.options.map(
+    type => ({
+      value: type,
+      label: t(`tenantTypes.${type}`),
+    })
+  )
 
   function resolveMsg(msg: string | undefined) {
     if (!msg) return undefined

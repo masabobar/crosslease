@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
 import { Copy, Check, ArrowRight, ChevronDown, ChevronUp } from "lucide-react"
 import { useAuditEventDetail } from "@/features/audit/hooks/useAuditEventDetail"
+import { useAuditEventLabels } from "@/features/audit/hooks/useAuditEventLabels"
+import { ApiError } from "@/lib/api"
 import {
   formatEventType,
   formatActionType,
@@ -11,34 +13,31 @@ import {
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import type { AuditEvent } from "@/features/audit/api/schema"
+import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
 
 type Tab = "overview" | "actor" | "payload"
 
 // ── Shared primitives ────────────────────────────────────────────────────────
 
-function EntityTypeBadge({ entityType }: { entityType: string }) {
-  return (
-    <span className="inline-flex items-center h-[18px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium leading-4 whitespace-nowrap">
-      {formatActionType(entityType)}
-    </span>
-  )
-}
-
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, testId }: { text: string; testId: string }) {
   const { t } = useTranslation("audit")
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
-    })
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
+      })
+      .catch(() => {})
   }
 
   return (
     // NOTE: raw <button> — icon-only copy trigger nested inside a grid cell; shadcn Button adds padding/height that distorts the cell layout
     <button
       type="button"
+      data-testid={testId}
       onClick={handleCopy}
       className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
       title={copied ? t("drawer.copied") : undefined}
@@ -105,11 +104,19 @@ function FieldRows({
 // ── Tab: Overview ─────────────────────────────────────────────────────────────
 
 function extractPrimaryStateValue(
-  data: Record<string, unknown> | null,
-  changedFields: string[] | null
+  event: AuditEvent,
+  key: "old_value" | "new_value"
 ): string | null {
-  if (!data || !changedFields?.length) return null
-  const field = changedFields[0]
+  const primaryDiff = event.field_diffs?.[0]
+  if (primaryDiff) {
+    const val = primaryDiff[key]
+    if (val === null || val === undefined) return null
+    if (typeof val === "string") return formatActionType(val)
+    return String(val)
+  }
+  const data = key === "old_value" ? event.old_data : event.new_data
+  const field = event.changed_fields?.[0]
+  if (!data || !field) return null
   const val = data[field]
   if (val === null || val === undefined) return null
   if (typeof val === "string") return formatActionType(val)
@@ -118,6 +125,8 @@ function extractPrimaryStateValue(
 
 function StateChangeCard({ event }: { event: AuditEvent }) {
   const { t } = useTranslation("audit")
+  const { changedFieldsLabel, reasonLabel, commentLabel } =
+    useAuditEventLabels(event)
 
   const hasContent =
     (event.changed_fields && event.changed_fields.length > 0) ||
@@ -127,34 +136,22 @@ function StateChangeCard({ event }: { event: AuditEvent }) {
 
   if (!hasContent) return null
 
-  const oldValue = extractPrimaryStateValue(
-    event.old_data,
-    event.changed_fields
-  )
-  const newValue = extractPrimaryStateValue(
-    event.new_data,
-    event.changed_fields
-  )
+  const oldValue = extractPrimaryStateValue(event, "old_value")
+  const newValue = extractPrimaryStateValue(event, "new_value")
 
   return (
     <InfoCard title={t("drawer.sections.stateChange")}>
       <div className="flex flex-col gap-3">
-        {event.changed_fields && event.changed_fields.length > 0 && (
+        {changedFieldsLabel && (
           <FieldRow label={t("drawer.fields.changedFields")}>
-            <span className="font-semibold">
-              {event.changed_fields.map(formatActionType).join(", ")}
-            </span>
+            <span className="font-semibold">{changedFieldsLabel}</span>
           </FieldRow>
         )}
         {event.reason !== undefined && (
-          <FieldRow label={t("drawer.fields.reason")}>
-            {event.reason ?? "—"}
-          </FieldRow>
+          <FieldRow label={t("drawer.fields.reason")}>{reasonLabel}</FieldRow>
         )}
         {event.comment !== undefined && (
-          <FieldRow label={t("drawer.fields.comment")}>
-            {event.comment ?? "—"}
-          </FieldRow>
+          <FieldRow label={t("drawer.fields.comment")}>{commentLabel}</FieldRow>
         )}
 
         {(event.old_data || event.new_data) && (
@@ -239,6 +236,13 @@ function TimingCard({ event }: { event: AuditEvent }) {
 
 function OverviewTab({ event }: { event: AuditEvent }) {
   const { t } = useTranslation("audit")
+  const {
+    eventTypeLabel,
+    actionTypeLabel,
+    recordedAtLabel,
+    sensitiveLabel,
+    triggerSourceLabel,
+  } = useAuditEventLabels(event)
 
   const eventFields = [
     { label: t("drawer.fields.auditId"), value: event.id },
@@ -248,27 +252,23 @@ function OverviewTab({ event }: { event: AuditEvent }) {
     },
     {
       label: t("drawer.fields.eventType"),
-      value: formatEventType(event.event_type),
+      value: eventTypeLabel,
     },
     {
       label: t("drawer.fields.actionType"),
-      value: formatActionType(event.action_type),
+      value: actionTypeLabel,
     },
     {
       label: t("drawer.fields.triggerSource"),
-      value: event.trigger_source
-        ? formatActionType(event.trigger_source)
-        : "—",
+      value: triggerSourceLabel,
     },
     {
       label: t("drawer.fields.recordedAt"),
-      value: formatDateTime(event.recorded_at),
+      value: recordedAtLabel,
     },
     {
       label: t("drawer.fields.sensitive"),
-      value: event.sensitive
-        ? t("drawer.fields.sensitiveYes")
-        : t("drawer.fields.sensitiveNo"),
+      value: sensitiveLabel,
     },
   ]
 
@@ -297,7 +297,10 @@ function OverviewTab({ event }: { event: AuditEvent }) {
                     <span className="text-xs text-muted-foreground font-mono">
                       {event.entity_id}
                     </span>
-                    <CopyButton text={event.entity_id} />
+                    <CopyButton
+                      text={event.entity_id}
+                      testId="audit-event-copy-entity-id"
+                    />
                   </div>
                 )}
               </div>
@@ -308,7 +311,10 @@ function OverviewTab({ event }: { event: AuditEvent }) {
                   <span className="font-mono text-xs text-muted-foreground">
                     {event.tenant_id}
                   </span>
-                  <CopyButton text={event.tenant_id} />
+                  <CopyButton
+                    text={event.tenant_id}
+                    testId="audit-event-copy-tenant-id"
+                  />
                 </div>
               ) : (
                 <span className="text-muted-foreground">—</span>
@@ -320,7 +326,10 @@ function OverviewTab({ event }: { event: AuditEvent }) {
                   <span className="font-mono text-xs text-muted-foreground">
                     {event.correlation_id}
                   </span>
-                  <CopyButton text={event.correlation_id} />
+                  <CopyButton
+                    text={event.correlation_id}
+                    testId="audit-event-copy-correlation-id"
+                  />
                 </div>
               ) : (
                 <span className="text-muted-foreground">—</span>
@@ -338,6 +347,7 @@ function OverviewTab({ event }: { event: AuditEvent }) {
 
 function ActorTab({ event }: { event: AuditEvent }) {
   const { t } = useTranslation("audit")
+  const { actorTypeLabel, roleAtTimeLabel } = useAuditEventLabels(event)
 
   const performedByFields = [
     {
@@ -346,13 +356,11 @@ function ActorTab({ event }: { event: AuditEvent }) {
     },
     {
       label: t("drawer.fields.actorType"),
-      value: formatActionType(event.actor_type) as React.ReactNode,
+      value: actorTypeLabel as React.ReactNode,
     },
     {
       label: t("drawer.fields.roleAtTime"),
-      value: (event.actor_role_at_time
-        ? formatActionType(event.actor_role_at_time)
-        : "—") as React.ReactNode,
+      value: roleAtTimeLabel as React.ReactNode,
     },
     {
       label: t("drawer.fields.actorId"),
@@ -361,7 +369,10 @@ function ActorTab({ event }: { event: AuditEvent }) {
           <span className="font-mono text-xs text-muted-foreground">
             {event.actor_id}
           </span>
-          <CopyButton text={event.actor_id} />
+          <CopyButton
+            text={event.actor_id}
+            testId="audit-event-copy-actor-id"
+          />
         </div>
       ),
     },
@@ -392,7 +403,10 @@ function ActorTab({ event }: { event: AuditEvent }) {
                     <span className="text-xs text-muted-foreground font-mono">
                       {event.entity_id}
                     </span>
-                    <CopyButton text={event.entity_id} />
+                    <CopyButton
+                      text={event.entity_id}
+                      testId="audit-event-copy-affected-entity-id"
+                    />
                   </div>
                 )}
               </div>
@@ -407,7 +421,10 @@ function ActorTab({ event }: { event: AuditEvent }) {
                       <span className="font-mono text-xs text-muted-foreground">
                         {event.tenant_id}
                       </span>
-                      <CopyButton text={event.tenant_id} />
+                      <CopyButton
+                        text={event.tenant_id}
+                        testId="audit-event-copy-affected-tenant-id"
+                      />
                     </div>
                   ) as React.ReactNode,
                 },
@@ -450,6 +467,7 @@ function PayloadTab({ event }: { event: AuditEvent }) {
       {/* NOTE: raw <button> — full-width collapsible header that composes with custom border-radius and bg; shadcn Collapsible trigger does not expose the same layout control */}
       <button
         type="button"
+        data-testid="audit-event-payload-toggle"
         className="w-full px-2 h-10 flex items-center justify-between hover:bg-slate-200/50 transition-colors rounded-t-[10px]"
         onClick={() => setExpanded(v => !v)}
       >
@@ -524,6 +542,7 @@ export default function AuditEventDetailPage() {
     data: event,
     isLoading,
     isError,
+    error,
   } = useAuditEventDetail(eventId ?? null)
 
   const TABS: { key: Tab; label: string; testId: string }[] = [
@@ -549,7 +568,11 @@ export default function AuditEventDetailPage() {
       {isLoading && <DetailSkeleton />}
 
       {isError && !isLoading && (
-        <p className="text-sm text-muted-foreground">{t("drawer.loadError")}</p>
+        <p className="text-sm text-muted-foreground">
+          {error instanceof ApiError
+            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")}
+        </p>
       )}
 
       {event && !isLoading && (

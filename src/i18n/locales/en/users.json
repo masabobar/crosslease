@@ -3,6 +3,7 @@
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
     "loadError": "Failed to load users. Please try again.",
+    "currentUserLoadError": "Failed to load your profile. Some actions may be unavailable.",
     "inviteButton": "Invite users",
     "filters": {
       "label": "Filters:",
@@ -217,6 +218,7 @@
   },
   "detail": {
     "loadError": "Failed to load user details. Please try again.",
+    "currentUserLoadError": "Failed to load your profile. Some actions may be unavailable.",
     "drawer": {
       "title": "User details",
       "openFullProfile": "Open full profile",
@@ -455,7 +457,9 @@
     "errorTitle": "Export failed",
     "errorMessage": "Something went wrong. Please try again.",
     "expiredTitle": "Export expired",
-    "expiredMessage": "The export expired before it could be downloaded. Please try again."
+    "expiredMessage": "The export expired before it could be downloaded. Please try again.",
+    "timeoutTitle": "Export timed out",
+    "timeoutMessage": "The export is taking longer than expected. Please try again."
   },
   "quickFilters": {
     "searchPlaceholder": "Search",
@@ -485,7 +489,9 @@
     "errorTitle": "Export failed",
     "errorMessage": "Something went wrong. Please try again.",
     "expiredTitle": "Export expired",
-    "expiredMessage": "The export expired before it could be downloaded. Please try again."
+    "expiredMessage": "The export expired before it could be downloaded. Please try again.",
+    "timeoutTitle": "Export timed out",
+    "timeoutMessage": "The export is taking longer than expected. Please try again."
   },
   "errors": {
     "generic": "Something went wrong. Please try again."

@@ -30,13 +30,6 @@ export const PartnerRoleSchema = z.enum([
 ])
 export type PartnerRole = z.infer<typeof PartnerRoleSchema>
 
-export const NonRiskPartnerRoleSchema = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-])
-export type NonRiskPartnerRole = z.infer<typeof NonRiskPartnerRoleSchema>
-
 // BE's governed-action-backed role entries currently send the generic
 // governed_action status "pending" instead of the role-specific
 // "pending_four_eyes" (see .project-management/input/open-questions.md Q-008).
@@ -138,8 +131,17 @@ export const CandidateSummarySchema = z.object({
 })
 export type CandidateSummary = z.infer<typeof CandidateSummarySchema>
 
+export const PartnerMatchClassificationSchema = z.enum([
+  "exact",
+  "ambiguous",
+  "no_match",
+])
+export type PartnerMatchClassification = z.infer<
+  typeof PartnerMatchClassificationSchema
+>
+
 export const PartnerMatchResponseSchema = z.object({
-  classification: z.string(),
+  classification: PartnerMatchClassificationSchema,
   confidence: z.string().nullable(),
   matched_partner_id: z.string().uuid().nullable(),
   candidate_summaries: z.array(CandidateSummarySchema),
@@ -263,6 +265,9 @@ export const RoleAssignResultSchema = z.object({
   role: PartnerRoleSchema,
   status: RoleStatusSchema,
   is_new: z.boolean(),
+  // Set when the role is risk-sensitive: the pending partner_role_assign
+  // governed action awaiting BO counter-confirmation (PRD1042-1452).
+  governed_action_id: z.string().uuid().nullable().optional(),
 })
 export type RoleAssignResult = z.infer<typeof RoleAssignResultSchema>
 
@@ -493,7 +498,7 @@ export const DuplicateCandidatePairResponseSchema = z.object({
   detected_at: z.string().datetime(),
   resolved_by: z.string().nullable(),
   resolved_at: z.string().datetime().nullable(),
-  reason_code: z.string().nullable(),
+  reason_code: DuplicateResolutionReasonCodeSchema.nullable(),
   resolution_note: z.string().nullable(),
 })
 export type DuplicateCandidatePairResponse = z.infer<
@@ -534,7 +539,7 @@ export const MergeLineageRecordResponseSchema = z.object({
   governed_action_id: z.string().uuid(),
   executed_by: z.string().uuid(),
   executed_at: z.string().datetime(),
-  merge_reason_code: z.string(),
+  merge_reason_code: MergeReasonCodeSchema,
   reference_manifest: z.record(z.string(), z.unknown()),
 })
 export type MergeLineageRecordResponse = z.infer<

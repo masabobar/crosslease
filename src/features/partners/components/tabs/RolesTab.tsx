@@ -14,7 +14,8 @@ import {
 } from "@/features/partners/api/partnersApi"
 import { formatDateTime } from "@/lib/formatters"
 import { ApiError } from "@/lib/api"
-import type { PartnerStatus, RoleStatus } from "@/features/partners/api/schema"
+import { RoleStatusSchema } from "@/features/partners/api/schema"
+import type { RoleStatus } from "@/features/partners/api/schema"
 import { AssignRoleDialog } from "@/features/partners/components/AssignRoleDialog"
 import { initialsFromName } from "@/features/partners/utils"
 
@@ -25,7 +26,7 @@ const COL_ASSIGNED_ON = "w-[160px] shrink-0"
 
 function RoleStatusCell({ status }: { status: RoleStatus }) {
   const { t } = useTranslation("partners")
-  if (status === "active") {
+  if (status === RoleStatusSchema.in.enum.active) {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-success/10 text-success">
         {t(`roleStatus.${status}`)}
@@ -47,15 +48,10 @@ function RoleStatusCell({ status }: { status: RoleStatus }) {
 
 type RolesTabProps = {
   partnerId: string
-  partnerStatus: PartnerStatus
   canAssignRole: boolean
 }
 
-function RolesTab({
-  partnerId,
-  partnerStatus: _partnerStatus,
-  canAssignRole,
-}: RolesTabProps) {
+function RolesTab({ partnerId, canAssignRole }: RolesTabProps) {
   const { t } = useTranslation("partners")
   const [assignOpen, setAssignOpen] = useState(false)
 
@@ -233,8 +229,15 @@ function RolesTab({
           open={assignOpen}
           onOpenChange={setAssignOpen}
           partnerId={partnerId}
-          onSuccess={() => {
-            toast.success(t("assignRoleDialog.success"))
+          onSuccess={response => {
+            const pendingApproval = response.results.some(
+              r => r.status === RoleStatusSchema.in.enum.pending_four_eyes
+            )
+            toast.success(
+              pendingApproval
+                ? t("assignRoleDialog.successPending")
+                : t("assignRoleDialog.success")
+            )
           }}
           onError={(err: unknown) => {
             toast.error(

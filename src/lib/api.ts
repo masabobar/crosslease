@@ -1,7 +1,12 @@
 import axios from "axios"
 import type { AxiosError, InternalAxiosRequestConfig } from "axios"
+import { z } from "zod"
 import { useAuthStore } from "@/store/authStore"
-import type { ApiErrorDetail } from "@/types/api"
+import { ApiErrorDetailSchema } from "@/types/api"
+
+const ApiErrorEnvelopeSchema = z.object({
+  detail: ApiErrorDetailSchema.optional(),
+})
 
 export class ApiError extends Error {
   code: string
@@ -72,7 +77,8 @@ api.interceptors.response.use(
       return api(original)
     }
 
-    const detail = (error.response?.data as { detail?: ApiErrorDetail })?.detail
+    const envelope = ApiErrorEnvelopeSchema.safeParse(error.response?.data)
+    const detail = envelope.success ? envelope.data.detail : undefined
 
     throw new ApiError(
       detail?.code ?? "BAD_REQUEST",

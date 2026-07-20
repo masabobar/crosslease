@@ -1,9 +1,9 @@
-import { useEffect } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Check, Link2Off, ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { verifyEmailChange } from "../api/verifyEmailApi"
+import { AUTH_QUERY_KEYS } from "../api/queryKeys"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
@@ -20,24 +20,21 @@ export default function VerifyEmailPage() {
 
   const token = searchParams.get("token") ?? ""
 
-  const mutation = useMutation({ mutationFn: verifyEmailChange })
-
-  // Trigger the email verification once on mount
-  useEffect(() => {
-    if (token) mutation.mutate(token)
-    // intentional empty deps — fires once on mount, token is stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const { isSuccess, error } = useQuery({
+    queryKey: AUTH_QUERY_KEYS.verifyEmailChange(token),
+    queryFn: async () => {
+      await verifyEmailChange(token)
+      return null
+    },
+    enabled: !!token,
+    retry: false,
+    staleTime: Infinity,
+  })
 
   const pageState =
-    !token || mutation.isError
-      ? "error"
-      : mutation.isSuccess
-        ? "success"
-        : "loading"
+    !token || error ? "error" : isSuccess ? "success" : "loading"
 
-  const errorCode =
-    mutation.error instanceof ApiError ? mutation.error.code : ""
+  const errorCode = error instanceof ApiError ? error.code : ""
 
   const countdown = useCountdownRedirect(
     pageState === "success",
@@ -79,6 +76,7 @@ export default function VerifyEmailPage() {
             <Button
               type="button"
               className="w-full"
+              data-testid="verify-email-success-go-to-login-button"
               onClick={() => navigate(PATHS.LOGIN)}
             >
               {t("verifyEmail.success.goToLogin")}
@@ -119,6 +117,7 @@ export default function VerifyEmailPage() {
         <Button
           variant="outline"
           className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
+          data-testid="verify-email-error-go-to-login-button"
           onClick={() => navigate(PATHS.LOGIN)}
         >
           <ArrowRight size={16} className="shrink-0" />

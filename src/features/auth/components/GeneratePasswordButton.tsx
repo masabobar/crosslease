@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { toast } from "sonner"
 import { Wand2, CheckCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -15,18 +16,17 @@ export function GeneratePasswordButton({
   const { t } = useTranslation("auth")
   const [copied, setCopied] = useState(false)
 
-  function handleClick() {
+  async function handleClick() {
     const password = generatePassword()
     onGenerate(password)
 
     try {
-      navigator.clipboard.writeText(password)
+      await navigator.clipboard.writeText(password)
+      setCopied(true)
+      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
     } catch {
-      // Clipboard may be unavailable in some contexts — silently ignore
+      toast.error(t("clipboard.copyFailed"))
     }
-
-    setCopied(true)
-    setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
   }
 
   return (

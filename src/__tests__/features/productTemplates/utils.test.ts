@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest"
 import { ApiError } from "@/lib/api"
-import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
+import {
+  isProductTemplateNotFoundError,
+  resolveFieldErrorMessage,
+} from "@/features/productTemplates/utils"
 
 describe("isProductTemplateNotFoundError", () => {
   it("returns true for PRODUCT_TEMPLATE_NOT_FOUND", () => {
@@ -35,5 +38,37 @@ describe("isProductTemplateNotFoundError", () => {
   it("returns false for null or undefined", () => {
     expect(isProductTemplateNotFoundError(null)).toBe(false)
     expect(isProductTemplateNotFoundError(undefined)).toBe(false)
+  })
+})
+
+describe("resolveFieldErrorMessage", () => {
+  it("returns undefined when msg is undefined", () => {
+    expect(resolveFieldErrorMessage(undefined, "Required")).toBeUndefined()
+  })
+
+  it("returns the shared required message for the 'required' code", () => {
+    expect(resolveFieldErrorMessage("required", "Required")).toBe("Required")
+  })
+
+  it("returns the mapped string when the code is found in the map", () => {
+    expect(
+      resolveFieldErrorMessage("codeInvalidChars", "Required", {
+        codeInvalidChars: "Only letters and numbers are allowed",
+      })
+    ).toBe("Only letters and numbers are allowed")
+  })
+
+  it("returns the raw code as-is when not found in the map", () => {
+    expect(
+      resolveFieldErrorMessage("someUnmappedCode", "Required", {
+        codeInvalidChars: "Only letters and numbers are allowed",
+      })
+    ).toBe("someUnmappedCode")
+  })
+
+  it("returns the raw code as-is when no map is supplied", () => {
+    expect(resolveFieldErrorMessage("someUnmappedCode", "Required")).toBe(
+      "someUnmappedCode"
+    )
   })
 })

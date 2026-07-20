@@ -2,7 +2,9 @@ import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Shield, AlertCircle, Check, Copy } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { resetPasswordVerify } from "../api/mfaApi"
+import { RECOVERY_CODE_LENGTH, TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
@@ -49,6 +51,7 @@ export default function ResetPasswordVerifyPage() {
           <Button
             type="button"
             className="mt-4 w-full"
+            data-testid="reset-password-verify-no-token-request-new-button"
             onClick={() => navigate(PATHS.FORGOT_PASSWORD)}
           >
             {t("resetPasswordVerify.requestNew")}
@@ -58,17 +61,10 @@ export default function ResetPasswordVerifyPage() {
     )
   }
 
-  const isRecoveryCode = code.length === 20 && /^[0-9a-f]+$/.test(code)
-  const isTotpCode = code.length === 6 && /^\d+$/.test(code)
+  const isRecoveryCode =
+    code.length === RECOVERY_CODE_LENGTH && /^[0-9a-f]+$/.test(code)
+  const isTotpCode = code.length === TOTP_CODE_LENGTH && /^\d+$/.test(code)
   const isValid = isRecoveryCode || isTotpCode
-
-  const errorMessages: Record<string, string> = {
-    MFA_TOKEN_INVALID: t("resetPasswordVerify.errors.MFA_TOKEN_INVALID"),
-    MFA_CODE_INVALID: t("resetPasswordVerify.errors.MFA_CODE_INVALID"),
-    MFA_RECOVERY_RATE_LIMITED: t(
-      "resetPasswordVerify.errors.MFA_RECOVERY_RATE_LIMITED"
-    ),
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -85,9 +81,10 @@ export default function ResetPasswordVerifyPage() {
         setStep("success")
       }
     } catch (err) {
-      const apiCode = err instanceof ApiError ? err.code : ""
       setServerError(
-        errorMessages[apiCode] ?? t("resetPasswordVerify.errors.default")
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
       )
     } finally {
       setIsSubmitting(false)
@@ -96,9 +93,13 @@ export default function ResetPasswordVerifyPage() {
 
   const handleCopyCodes = async () => {
     if (!newRecoveryCodes) return
-    await navigator.clipboard.writeText(newRecoveryCodes.join("\n"))
-    setCopied(true)
-    setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
+    try {
+      await navigator.clipboard.writeText(newRecoveryCodes.join("\n"))
+      setCopied(true)
+      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
+    } catch {
+      toast.error(t("clipboard.copyFailed"))
+    }
   }
 
   if (step === "success") {

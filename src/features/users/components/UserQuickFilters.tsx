@@ -1,5 +1,5 @@
 import { parseISO } from "date-fns"
-import { Check, FileDown, Loader2 } from "lucide-react"
+import { FileDown, Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
@@ -21,6 +21,7 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { RoleBadge } from "./RoleBadge"
 import { UserStatusBadge } from "./UserStatusBadge"
+import { FilterCheckboxRow } from "./FilterCheckboxRow"
 
 export type QuickFilterKey = "role" | "tenant" | "mfa" | "status" | "lastLogin"
 
@@ -118,9 +119,9 @@ export function UserQuickFilters({
         return USER_ROLES.map((role: UserRole) => {
           const checked = appliedFilters.role.includes(role)
           return (
-            <Button
+            <FilterCheckboxRow
               key={role}
-              variant="ghost"
+              checked={checked}
               data-testid={`filter-option-role-${role}`}
               onClick={() =>
                 onFilterChange({
@@ -129,18 +130,9 @@ export function UserQuickFilters({
                     : [...appliedFilters.role, role],
                 })
               }
-              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
-              <span
-                className={cn(
-                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                  checked ? "bg-primary border-primary" : "border-border"
-                )}
-              >
-                {checked && <Check size={10} className="text-white" />}
-              </span>
               <RoleBadge role={role} />
-            </Button>
+            </FilterCheckboxRow>
           )
         })
 
@@ -187,27 +179,18 @@ export function UserQuickFilters({
         return MFA_OPTIONS.map(opt => {
           const checked = appliedFilters.mfa_enabled === opt.value
           return (
-            <Button
+            <FilterCheckboxRow
               key={opt.value}
-              variant="ghost"
+              checked={checked}
               data-testid={`filter-option-mfa-${opt.value}`}
               onClick={() =>
                 onFilterChange({ mfa_enabled: checked ? null : opt.value })
               }
-              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
-              <span
-                className={cn(
-                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                  checked ? "bg-primary border-primary" : "border-border"
-                )}
-              >
-                {checked && <Check size={10} className="text-white" />}
-              </span>
               <span className="text-sm text-foreground">
                 {t(`filter.mfa.${opt.value}` as `filter.mfa.${MfaOptionValue}`)}
               </span>
-            </Button>
+            </FilterCheckboxRow>
           )
         })
 
@@ -215,9 +198,9 @@ export function UserQuickFilters({
         return USER_STATUSES.map((status: UserStatus) => {
           const checked = appliedFilters.status.includes(status)
           return (
-            <Button
+            <FilterCheckboxRow
               key={status}
-              variant="ghost"
+              checked={checked}
               data-testid={`filter-option-status-${status}`}
               onClick={() =>
                 onFilterChange({
@@ -226,18 +209,9 @@ export function UserQuickFilters({
                     : [...appliedFilters.status, status],
                 })
               }
-              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
-              <span
-                className={cn(
-                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                  checked ? "bg-primary border-primary" : "border-border"
-                )}
-              >
-                {checked && <Check size={10} className="text-white" />}
-              </span>
               <UserStatusBadge status={status} />
-            </Button>
+            </FilterCheckboxRow>
           )
         })
 

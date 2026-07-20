@@ -2,25 +2,24 @@ import { useState } from "react"
 import { parseISO } from "date-fns"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import {
-  Building2Icon,
-  Check,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "lucide-react"
+import { Building2Icon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { SearchInput } from "@/components/ui/search-input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { FilterButton } from "@/components/ui/filter-button"
 import { FilterPill } from "@/components/ui/filter-pill"
-import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/formatters"
 import { COUNTRIES, countryName } from "@/lib/countries"
 import { TenantTable } from "@/features/tenants/components/TenantTable"
 import { useTenantList } from "@/features/tenants/hooks/useTenantList"
 import { usePlatformModules } from "@/features/tenants/hooks/usePlatformModules"
 import type { TenantStatus, TenantType } from "@/features/tenants/api/schema"
+import {
+  TenantStatusSchema,
+  TenantTypeSchema,
+} from "@/features/tenants/api/schema"
 import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
@@ -28,16 +27,18 @@ import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 
 const PAGE_SIZE = 20
 
+// Display order intentionally differs from TenantStatusSchema's declaration
+// order (active first) — kept explicit rather than derived from `.options`.
 const STATUS_OPTIONS: TenantStatus[] = [
-  "active",
-  "draft",
-  "suspended",
-  "archived",
-  "rejected",
-  "expired",
+  TenantStatusSchema.enum.active,
+  TenantStatusSchema.enum.draft,
+  TenantStatusSchema.enum.suspended,
+  TenantStatusSchema.enum.archived,
+  TenantStatusSchema.enum.rejected,
+  TenantStatusSchema.enum.expired,
 ]
 
-const TYPE_OPTIONS: TenantType[] = ["bank", "bank_entity", "bank_branch_group"]
+const TYPE_OPTIONS: TenantType[] = TenantTypeSchema.options
 
 export default function TenantManagementPage() {
   const { t } = useTranslation("tenants")
@@ -198,14 +199,12 @@ export default function TenantManagementPage() {
                 onClick={() => toggleStatus(s)}
                 className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
               >
-                <span
-                  className={cn(
-                    "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                    checked ? "bg-primary border-primary" : "border-border"
-                  )}
-                >
-                  {checked && <Check size={10} className="text-white" />}
-                </span>
+                <Checkbox
+                  checked={checked}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  className="shrink-0"
+                />
                 <span className="text-sm text-foreground">
                   {t(`statuses.${s}` as "statuses.active")}
                 </span>
@@ -230,14 +229,12 @@ export default function TenantManagementPage() {
                 onClick={() => toggleType(type)}
                 className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
               >
-                <span
-                  className={cn(
-                    "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                    checked ? "bg-primary border-primary" : "border-border"
-                  )}
-                >
-                  {checked && <Check size={10} className="text-white" />}
-                </span>
+                <Checkbox
+                  checked={checked}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  className="shrink-0"
+                />
                 <span className="text-sm text-foreground">
                   {t(`tenantTypes.${type}` as "tenantTypes.bank")}
                 </span>
@@ -281,14 +278,12 @@ export default function TenantManagementPage() {
                     }}
                     className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
                   >
-                    <span
-                      className={cn(
-                        "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                        selected ? "bg-primary border-primary" : "border-border"
-                      )}
-                    >
-                      {selected && <Check size={10} className="text-white" />}
-                    </span>
+                    <Checkbox
+                      checked={selected}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      className="shrink-0"
+                    />
                     <span className="text-sm text-foreground">{name}</span>
                     <span className="ml-auto text-xs text-muted-foreground shrink-0">
                       {code}
@@ -354,14 +349,12 @@ export default function TenantManagementPage() {
                   onClick={() => toggleModuleKey(module.key)}
                   className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
                 >
-                  <span
-                    className={cn(
-                      "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                      checked ? "bg-primary border-primary" : "border-border"
-                    )}
-                  >
-                    {checked && <Check size={10} className="text-white" />}
-                  </span>
+                  <Checkbox
+                    checked={checked}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="shrink-0"
+                  />
                   <span className="text-sm text-foreground">
                     {module.display_name}
                   </span>
@@ -383,14 +376,12 @@ export default function TenantManagementPage() {
                   onClick={() => toggleModuleActive(value)}
                   className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
                 >
-                  <span
-                    className={cn(
-                      "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                      checked ? "bg-primary border-primary" : "border-border"
-                    )}
-                  >
-                    {checked && <Check size={10} className="text-white" />}
-                  </span>
+                  <Checkbox
+                    checked={checked}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="shrink-0"
+                  />
                   <span className="text-sm text-foreground">
                     {t(`list.filters.moduleStatus.${key}`)}
                   </span>

@@ -2,11 +2,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ConfirmActionDialog } from "@/components/ConfirmActionDialog"
 import { useRevokeGrant } from "@/features/tenants/hooks/useRevokeGrant"
 import { RevokeGrantFormSchema } from "@/features/tenants/api/schema"
 import type {
@@ -79,103 +75,63 @@ export function RevokeGrantDialog({
   }
 
   return (
-    <DialogModal open={open} onOpenChange={onOpenChange}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="px-4 py-4">
-          <DialogHeader>
-            <DialogTitle>{t("detail.grants.revokeDialog.title")}</DialogTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">{tenantName}</p>
-          </DialogHeader>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-6 px-4 py-4">
-          {/* Read-only grant summary */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {t("detail.grants.revokeDialog.info.affectedUser")}
-              </span>
-              <span className="font-semibold text-foreground">
-                {granteeName}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {t("detail.grants.revokeDialog.info.accessReason")}
-              </span>
-              <span className="font-semibold text-foreground">
-                {t(`detail.grants.accessReasons.${grant.access_reason}`)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {t("detail.grants.revokeDialog.info.activeUntil")}
-              </span>
-              <span className="text-foreground">
-                {formatDateTime(grant.valid_until)}
-              </span>
-            </div>
+    <ConfirmActionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit(onSubmit)}
+      title={t("detail.grants.revokeDialog.title")}
+      subtitle={tenantName}
+      infoRows={
+        <>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {t("detail.grants.revokeDialog.info.affectedUser")}
+            </span>
+            <span className="font-semibold text-foreground">{granteeName}</span>
           </div>
-
-          <Separator />
-
-          {/* Revocation reason */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="revocation-reason"
-                className="text-sm font-medium"
-              >
-                {t("detail.grants.revokeDialog.fields.revocationReason")}
-              </Label>
-              <span className="text-xs text-muted-foreground/80">
-                {t(
-                  "detail.grants.revokeDialog.fields.revocationReasonMinChars"
-                )}
-              </span>
-            </div>
-            <Textarea
-              id="revocation-reason"
-              data-testid="revocation-reason"
-              rows={3}
-              {...register("revocation_reason")}
-            />
-            {errors.revocation_reason ? (
-              <p className="text-sm text-destructive" role="alert">
-                {t("detail.grants.revokeDialog.errors.reasonTooShort")}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground/80">
-                {t("detail.grants.revokeDialog.fields.revocationReasonHint")}
-              </p>
-            )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {t("detail.grants.revokeDialog.info.accessReason")}
+            </span>
+            <span className="font-semibold text-foreground">
+              {t(`detail.grants.accessReasons.${grant.access_reason}`)}
+            </span>
           </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting || mutation.isPending}
-            data-testid="revoke-dialog-cancel"
-          >
-            {t("detail.grants.revokeDialog.cancel")}
-          </Button>
-          <Button
-            type="submit"
-            className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-transparent shadow-none"
-            disabled={isSubmitting || mutation.isPending}
-            data-testid="revoke-dialog-submit"
-          >
-            {mutation.isPending
-              ? t("detail.grants.revokeDialog.submitting")
-              : t("detail.grants.revokeDialog.submit")}
-          </Button>
-        </div>
-      </form>
-    </DialogModal>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {t("detail.grants.revokeDialog.info.activeUntil")}
+            </span>
+            <span className="text-foreground">
+              {formatDateTime(grant.valid_until)}
+            </span>
+          </div>
+        </>
+      }
+      justificationFieldId="revocation-reason"
+      justificationLabel={t(
+        "detail.grants.revokeDialog.fields.revocationReason"
+      )}
+      justificationMinCharsLabel={t(
+        "detail.grants.revokeDialog.fields.revocationReasonMinChars"
+      )}
+      justificationHint={t(
+        "detail.grants.revokeDialog.fields.revocationReasonHint"
+      )}
+      justificationErrorMessage={
+        errors.revocation_reason
+          ? t("detail.grants.revokeDialog.errors.reasonTooShort")
+          : undefined
+      }
+      justificationRegister={register("revocation_reason")}
+      onCancel={handleClose}
+      isActionDisabled={isSubmitting || mutation.isPending}
+      isPending={mutation.isPending}
+      cancelLabel={t("detail.grants.revokeDialog.cancel")}
+      cancelTestId="revoke-dialog-cancel"
+      submitLabel={t("detail.grants.revokeDialog.submit")}
+      submittingLabel={t("detail.grants.revokeDialog.submitting")}
+      submitTestId="revoke-dialog-submit"
+      submitButtonClassName="bg-destructive/10 text-destructive hover:bg-destructive/20 border-transparent shadow-none"
+    />
   )
 }

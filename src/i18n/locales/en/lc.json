@@ -6,8 +6,40 @@
       "requests": "My Requests",
       "status": "Status Overview",
       "documents": "Bank Documents",
-      "proposals": "Proposals"
+      "proposals": "Proposals",
+      "frameworkAgreements": "Framework Agreements"
     },
     "comingSoon": "This section is coming soon."
+  },
+  "frameworkAgreements": {
+    "title": "Framework Agreements",
+    "subtitle": "The credit envelopes your company holds with the Bank",
+    "emptyState": "No framework agreements yet",
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "suspended": "Suspended",
+      "terminated": "Terminated"
+    },
+    "documentTypes": {
+      "original_agreement": "Original agreement",
+      "addendum": "Addendum",
+      "side_letter": "Side letter",
+      "other": "Other"
+    },
+    "fields": {
+      "maxVolumeEur": "Max volume",
+      "validity": "Validity",
+      "openEnded": "Open ended",
+      "permittedProductTemplates": "Permitted product templates",
+      "frameworkDocuments": "Framework documents"
+    },
+    "templatesEmptyState": "No product templates linked",
+    "templateUnresolved": "Template no longer available",
+    "documentsEmptyState": "No documents attached yet",
+    "downloadButton": "Download",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }

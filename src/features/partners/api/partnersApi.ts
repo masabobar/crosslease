@@ -63,8 +63,10 @@ export type PartnerListParams = {
 }
 
 export const PARTNERS_QUERY_KEYS = {
-  list: (tenantId: string | null, params?: PartnerListParams) =>
-    ["partners", "list", tenantId, params] as const,
+  list: (tenantId?: string | null, params?: PartnerListParams) =>
+    tenantId === undefined
+      ? (["partners", "list"] as const)
+      : (["partners", "list", tenantId, params] as const),
   detail: (id: string) => ["partners", "detail", id] as const,
   resolutionCandidates: (id: string) =>
     ["partners", "resolution-candidates", id] as const,
@@ -143,7 +145,9 @@ export type SubmitPartnerBody = {
 }
 
 export type AssignRolesBody = {
-  roles: Array<"lessee" | "guarantor" | "supplier">
+  // Full role set (PRD1042-1452): risk-sensitive roles are accepted and come
+  // back as pending governed actions awaiting BO counter-confirmation.
+  roles: PartnerRole[]
   note?: string | null
 }
 
@@ -156,6 +160,15 @@ export type CaptureUboBody = {
 
 export type ArchivePartnerBody = {
   reason: string
+}
+
+// Single-actor FO confirmation per US 13.5 (PRD1042-1449) — no Four-Eyes.
+export type ConfirmPartnerBody = {
+  note?: string | null
+}
+
+export type RejectPartnerBody = {
+  note: string
 }
 
 export type ProposeIdentityChangeBody = {
@@ -264,6 +277,22 @@ export async function fetchArchiveEligibility(
 ): Promise<ArchiveEligibilityResponse> {
   const data = await api.get(`/partners/${id}/archive-eligibility`)
   return ArchiveEligibilityResponseSchema.parse(data)
+}
+
+export async function confirmPartner(
+  id: string,
+  body: ConfirmPartnerBody
+): Promise<PartnerDetailResponse> {
+  const data = await api.post(`/partners/${id}/confirm`, body)
+  return PartnerDetailResponseSchema.parse(data)
+}
+
+export async function rejectPartner(
+  id: string,
+  body: RejectPartnerBody
+): Promise<PartnerDetailResponse> {
+  const data = await api.post(`/partners/${id}/reject`, body)
+  return PartnerDetailResponseSchema.parse(data)
 }
 
 export async function archivePartner(

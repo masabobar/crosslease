@@ -3,9 +3,10 @@ import {
   useAuditorExpiry,
   formatCountdown,
 } from "@/features/users/hooks/useAuditorExpiry"
+import { DATE_LOCALE } from "@/lib/formatters"
 
 function formatBannerDate(date: Date): string {
-  return date.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString(DATE_LOCALE, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -13,7 +14,7 @@ function formatBannerDate(date: Date): string {
 }
 
 function formatBannerTime(date: Date): string {
-  return date.toLocaleTimeString("en-GB", {
+  return date.toLocaleTimeString(DATE_LOCALE, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,

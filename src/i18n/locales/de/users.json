@@ -3,6 +3,7 @@
     "title": "User Management",
     "subtitle": "Manage users and their permissions",
     "loadError": "Benutzer konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "currentUserLoadError": "Ihr Profil konnte nicht geladen werden. Einige Aktionen sind möglicherweise nicht verfügbar.",
     "inviteButton": "Invite users",
     "filters": {
       "label": "Filter:",
@@ -217,6 +218,7 @@
   },
   "detail": {
     "loadError": "Benutzerdetails konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "currentUserLoadError": "Ihr Profil konnte nicht geladen werden. Einige Aktionen sind möglicherweise nicht verfügbar.",
     "drawer": {
       "title": "Benutzerdetails",
       "openFullProfile": "Vollständiges Profil öffnen",
@@ -455,7 +457,9 @@
     "errorTitle": "Export fehlgeschlagen",
     "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "expiredTitle": "Export abgelaufen",
-    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
+    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut.",
+    "timeoutTitle": "Export-Zeitüberschreitung",
+    "timeoutMessage": "Der Export dauert länger als erwartet. Bitte versuchen Sie es erneut."
   },
   "quickFilters": {
     "searchPlaceholder": "Suchen",
@@ -485,7 +489,9 @@
     "errorTitle": "Export fehlgeschlagen",
     "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "expiredTitle": "Export abgelaufen",
-    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut."
+    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut.",
+    "timeoutTitle": "Export-Zeitüberschreitung",
+    "timeoutMessage": "Der Export dauert länger als erwartet. Bitte versuchen Sie es erneut."
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."

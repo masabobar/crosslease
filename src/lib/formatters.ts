@@ -1,4 +1,4 @@
-const DATE_LOCALE = "en-GB"
+export const DATE_LOCALE = "en-GB"
 
 const MS_PER_MINUTE = 1000 * 60
 const MS_PER_HOUR = MS_PER_MINUTE * 60

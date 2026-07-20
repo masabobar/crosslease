@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useSearchParams, useNavigate } from "react-router-dom"
+import { ApiError } from "@/lib/api"
 import { AuditTable } from "@/features/audit/components/AuditTable"
 import { AuditQuickFilters } from "@/features/audit/components/AuditQuickFilters"
 import { FilterPill } from "@/components/ui/filter-pill"
@@ -77,7 +78,6 @@ function useAuditListParams() {
     : 10
 
   const appliedFilters: AuditFilterState = {
-    search: params.get("search"),
     event_type: params.getAll("event_type"),
     entity_type: params.get("entity_type"),
     entity_id: params.get("entity_id"),
@@ -104,7 +104,6 @@ function useAuditListParams() {
   function setAppliedFilters(filters: AuditFilterState) {
     update(
       {
-        search: filters.search,
         entity_type: filters.entity_type,
         entity_id: filters.entity_id,
         actor_id: filters.actor_id,
@@ -143,7 +142,7 @@ export default function AuditTrailPage() {
     setAppliedFilters,
   } = useAuditListParams()
 
-  const { data, isLoading, isError } = useAuditEvents({
+  const { data, isLoading, isError, error } = useAuditEvents({
     page,
     per_page: perPage,
     event_type:
@@ -316,7 +315,9 @@ export default function AuditTrailPage() {
             className="py-12 text-center text-sm text-muted-foreground"
             data-testid="audit-load-error"
           >
-            {t("page.loadError")}
+            {error instanceof ApiError
+              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic")}
           </p>
         )}
         {!isError && (
@@ -325,7 +326,6 @@ export default function AuditTrailPage() {
             isLoading={isLoading}
             onRowClick={handleRowClick}
             hasActiveFilters={
-              !!appliedFilters.search ||
               appliedFilters.event_type.length > 0 ||
               !!appliedFilters.entity_type ||
               !!appliedFilters.entity_id ||

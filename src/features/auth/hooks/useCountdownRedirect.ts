@@ -15,13 +15,14 @@ export function useCountdownRedirect(
   useEffect(() => {
     if (!isActive) return
     const id = setInterval(() => {
-      setCountdown(c => {
-        if (c <= 1) navigate(destination)
-        return c - 1
-      })
+      setCountdown(c => c - 1)
     }, ONE_SECOND_MS)
     return () => clearInterval(id)
-  }, [isActive, navigate, destination])
+  }, [isActive])
+
+  useEffect(() => {
+    if (isActive && countdown <= 0) navigate(destination)
+  }, [isActive, countdown, navigate, destination])
 
   return countdown
 }

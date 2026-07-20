@@ -48,6 +48,7 @@ function SeedPackageStep({ form, packages, isLoading }: Props) {
                   {/* NOTE: raw <input type="radio"> — custom card layout wraps label+radio in a styled card; RadioGroup primitive doesn't expose per-item card styling at this level */}
                   <input
                     type="radio"
+                    data-testid={`seed-package-input-${pkg.key}`}
                     className="mt-1 shrink-0 accent-[#1d41a8]"
                     value={pkg.key}
                     checked={isSelected}

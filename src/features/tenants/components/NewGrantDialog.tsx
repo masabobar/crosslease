@@ -1,7 +1,5 @@
 import { useState } from "react"
-
-const SUPPORT_USERS_DROPDOWN_PAGE_SIZE = 100
-import { useForm, Controller } from "react-hook-form"
+import { useForm, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { addDays, parseISO, format } from "date-fns"
@@ -21,25 +19,16 @@ import {
 import { SelectField } from "@/components/ui/select"
 import { useCreateGrant } from "@/features/tenants/hooks/useCreateGrant"
 import { useUsers } from "@/features/users/hooks/useUsers"
-import { CreateGrantFormSchema } from "@/features/tenants/api/schema"
-import type {
-  CreateGrantForm,
-  AccessReason,
+import {
+  AccessReasonSchema,
+  CreateGrantFormSchema,
 } from "@/features/tenants/api/schema"
+import type { CreateGrantForm } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
 import { ApiError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
-
-const ACCESS_REASONS: AccessReason[] = [
-  "user_access_issue",
-  "workflow_processing_diagnostic",
-  "document_generation_diagnostic",
-  "integration_troubleshooting",
-  "compliance_query_support",
-  "regulatory_assistance",
-  "emergency_incident_response",
-]
+import { SUPPORT_USERS_DROPDOWN_PAGE_SIZE } from "@/features/tenants/constants"
 
 const MAX_GRANT_DAYS = 30
 
@@ -177,11 +166,6 @@ export function NewGrantDialog({
   })
   const supportUsers = usersData?.users ?? []
 
-  const [validFrom, setValidFrom] = useState(today)
-  const [accessReason, setAccessReason] = useState("")
-  const isEmergency = accessReason === "emergency_incident_response"
-  const maxUntilDate = addDays(parseISO(validFrom), MAX_GRANT_DAYS)
-
   const {
     control,
     register,
@@ -199,11 +183,14 @@ export function NewGrantDialog({
     },
   })
 
+  const validFrom = useWatch({ control, name: "valid_from" })
+  const accessReason = useWatch({ control, name: "access_reason" })
+  const isEmergency = accessReason === "emergency_incident_response"
+  const maxUntilDate = addDays(parseISO(validFrom || today), MAX_GRANT_DAYS)
+
   function handleClose() {
     onOpenChange(false)
     reset()
-    setValidFrom(today)
-    setAccessReason("")
   }
 
   function onSubmit(values: CreateGrantForm) {
@@ -296,11 +283,8 @@ export function NewGrantDialog({
                   id="grant-access-reason"
                   data-testid="grant-access-reason"
                   value={field.value ?? ""}
-                  onValueChange={v => {
-                    field.onChange(v)
-                    setAccessReason(v)
-                  }}
-                  options={ACCESS_REASONS.map(reason => ({
+                  onValueChange={field.onChange}
+                  options={AccessReasonSchema.options.map(reason => ({
                     value: reason,
                     label: t(`detail.grants.accessReasons.${reason}`),
                   }))}
@@ -325,10 +309,7 @@ export function NewGrantDialog({
                 render={({ field }) => (
                   <DatePicker
                     value={field.value}
-                    onChange={v => {
-                      field.onChange(v)
-                      setValidFrom(v)
-                    }}
+                    onChange={field.onChange}
                     placeholder={t("list.filters.from")}
                     minDate={parseISO(today)}
                     error={!!errors.valid_from}

@@ -1,5 +1,14 @@
 import type { UserRole } from "@/features/users/types"
 
+// Shared shape for the color/label config badges use to render a status pill —
+// PartnerStatusBadge and DuplicatePairStatusBadge each key their own enum
+// against this same structure.
+export type StatusConfig = {
+  container: string
+  dot: string
+  text: string
+}
+
 // Per US 13.1 / US 13.7 permission matrix: Sys Admin is ✓ for both view and create/submit.
 export const PARTNER_VIEW_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",

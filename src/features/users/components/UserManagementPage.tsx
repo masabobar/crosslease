@@ -46,6 +46,7 @@ import { buildPageNumbers } from "@/lib/pagination"
 import { getUserFilterVisibility } from "@/features/users/utils"
 import { useUserManagementHandlers } from "@/features/users/hooks/useUserManagementHandlers"
 import { FilterPill } from "@/components/ui/filter-pill"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ApiError } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -141,7 +142,7 @@ export default function UserManagementPage() {
     setAppliedFilters,
     setSort,
   } = useUserListParams()
-  const { data: currentUser } = useCurrentUser()
+  const { data: currentUser, isError: isCurrentUserError } = useCurrentUser()
   const { data: tenantsData } = useTenants(
     getUserFilterVisibility(currentUser?.role).tenant
   )
@@ -205,6 +206,16 @@ export default function UserManagementPage() {
 
   return (
     <div className="p-8" data-testid="user-management-page">
+      {isCurrentUserError && (
+        <Alert
+          variant="destructive"
+          className="mb-4"
+          data-testid="current-user-error-banner"
+        >
+          <AlertDescription>{t("page.currentUserLoadError")}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">

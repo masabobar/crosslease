@@ -340,7 +340,8 @@
           "emphasis": "irreversible",
           "suffix": " and cannot be undone."
         },
-        "activeUserAck": "This tenant has {{count}} active user account(s). I confirm they will lose access when archiving takes effect."
+        "activeUserAck": "This tenant has {{count}} active user account(s). I confirm they will lose access when archiving takes effect.",
+        "activeUserAckUnknown": "The current active user count could not be confirmed. I confirm any active users will lose access when archiving takes effect."
       },
       "alert": {
         "destructive": "Archiving decommissions the integration binding, invalidates all credentials, and rejects all future inbound events. All historical data and audit records are preserved.",
@@ -376,23 +377,10 @@
     "modules": {
       "activate": "Activate",
       "deactivate": "Deactivate",
-      "edit": "Edit",
       "activatedFrom": "From {{date}}",
       "sections": {
         "moduleProfile": "MODULE PROFILE",
-        "integrationBinding": "INTEGRATION BINDING",
-        "configurationOverride": "CONFIGURATION OVERRIDE"
-      },
-      "configOverride": {
-        "productTemplate": "Product template",
-        "rateTable": "Rate table",
-        "workflowDefinition": "Workflow definition",
-        "documentPolicySet": "Document policy set",
-        "override": "Override",
-        "default": "Default",
-        "supersededWarning": "Referenced object has been superseded. Update required.",
-        "addOverride": "Add override",
-        "platformDefault": "Platform default"
+        "integrationBinding": "INTEGRATION BINDING"
       },
       "status": {
         "active": "Active",
@@ -414,11 +402,6 @@
         "info": {
           "moduleName": "Module name",
           "currentStatus": "Current status"
-        },
-        "dependencyCheck": {
-          "title": "Dependency check result",
-          "checking": "Checking the result...",
-          "resolved": "No conflicts found"
         },
         "fields": {
           "justification": "Governance justification",

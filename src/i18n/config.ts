@@ -9,6 +9,7 @@ import enAudit from "./locales/en/audit.json"
 import enTenants from "./locales/en/tenants.json"
 import enPartners from "./locales/en/partners.json"
 import enProductTemplates from "./locales/en/productTemplates.json"
+import enFrameworkAgreements from "./locales/en/frameworkAgreements.json"
 
 i18n.use(initReactI18next).init({
   lng: "en",
@@ -25,6 +26,7 @@ i18n.use(initReactI18next).init({
       tenants: enTenants,
       partners: enPartners,
       productTemplates: enProductTemplates,
+      frameworkAgreements: enFrameworkAgreements,
     },
   },
   interpolation: {
@@ -44,6 +46,7 @@ const languageLoaders: Partial<Record<string, () => Promise<void>>> = {
       tenants,
       partners,
       productTemplates,
+      frameworkAgreements,
     ] = await Promise.all([
       import("./locales/de/common.json"),
       import("./locales/de/auth.json"),
@@ -54,6 +57,7 @@ const languageLoaders: Partial<Record<string, () => Promise<void>>> = {
       import("./locales/de/tenants.json"),
       import("./locales/de/partners.json"),
       import("./locales/de/productTemplates.json"),
+      import("./locales/de/frameworkAgreements.json"),
     ])
     i18n.addResourceBundle("de", "common", common.default)
     i18n.addResourceBundle("de", "auth", auth.default)
@@ -64,6 +68,11 @@ const languageLoaders: Partial<Record<string, () => Promise<void>>> = {
     i18n.addResourceBundle("de", "tenants", tenants.default)
     i18n.addResourceBundle("de", "partners", partners.default)
     i18n.addResourceBundle("de", "productTemplates", productTemplates.default)
+    i18n.addResourceBundle(
+      "de",
+      "frameworkAgreements",
+      frameworkAgreements.default
+    )
   },
 }
 
