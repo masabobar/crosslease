@@ -41,7 +41,7 @@ import { PATHS, partnerDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { PARTNER_SUBMIT_ALLOWED_ROLES } from "@/features/partners/types"
-import { TenantScopeGate } from "@/components/TenantScopeGate"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 const STATUS_OPTIONS: PartnerStatus[] = [

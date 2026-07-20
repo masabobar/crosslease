@@ -1,4 +1,7 @@
 {
+  "tenantQuickSelect": {
+    "placeholder": "Select a tenant…"
+  },
   "wizard": {
     "steps": {
       "identity": "Identity",

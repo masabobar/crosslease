@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ShieldAlert, TriangleAlert } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ConfirmActionDialog } from "@/components/ConfirmActionDialog"
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
 import {

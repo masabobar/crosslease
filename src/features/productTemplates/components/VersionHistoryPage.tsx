@@ -38,7 +38,7 @@ import {
   isProductTemplateNotFoundError,
   showApiError,
 } from "@/features/productTemplates/utils"
-import NotFoundPage from "@/features/not-found/components/NotFoundPage"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 
 // Timeline-rail dot color per status — the colored dot sits on the left rail
 // connecting rows; the status badge itself (TemplateVersionStatusBadge) is a plain

@@ -52,7 +52,7 @@ const VerifyEmailPage = lazy(
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
 const App = lazy(() => import("@/App"))
 const NotFoundPage = lazy(
-  () => import("@/features/not-found/components/NotFoundPage")
+  () => import("@/features/errors/components/NotFoundPage")
 )
 const ForbiddenPage = lazy(
   () => import("@/features/errors/components/ForbiddenPage")

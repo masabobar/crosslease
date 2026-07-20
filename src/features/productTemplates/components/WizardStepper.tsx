@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { WizardStepper as SharedWizardStepper } from "@/components/WizardStepper"
+import { WizardStepper as SharedWizardStepper } from "@/components/shared/WizardStepper"
 import type { ProductTemplateWizardStep } from "@/features/productTemplates/types"
 
 const DISPLAY_STEPS = [

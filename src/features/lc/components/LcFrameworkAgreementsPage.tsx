@@ -8,7 +8,7 @@ import { useLcPortalFrameworkAgreements } from "@/features/lc/hooks/useLcPortalF
 import { getLcPortalDocumentDownloadUrl } from "@/features/lc/api/lcPortalApi"
 import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreements/utils"
 import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
-import NotFoundPage from "@/features/not-found/components/NotFoundPage"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import type { LCPortalFAListItem } from "@/features/lc/api/schema"
 
 const BYTES_PER_MB = 1024 * 1024

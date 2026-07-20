@@ -11,7 +11,7 @@ import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 export function TenantQuickSelect() {
-  const { t } = useTranslation("partners")
+  const { t } = useTranslation("tenants")
   const { data, isLoading, isError } = useTenants()
   const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
   const setSelectedTenantId = useTenantSelectionStore(

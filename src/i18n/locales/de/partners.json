@@ -55,9 +55,6 @@
     "system_import_error": "System import error",
     "legal_restructuring": "Legal restructuring"
   },
-  "tenantQuickSelect": {
-    "placeholder": "Mandant auswählen…"
-  },
   "list": {
     "title": "Partnerverwaltung",
     "subtitle": "Gegenparteien-Identitäten im Mandanten suchen und verwalten.",
