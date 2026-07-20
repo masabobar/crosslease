@@ -256,11 +256,19 @@ export const ProductTemplateWizardFormSchema = z
       DisbursementDerivationRuleSchema.options
     ),
     allowed_asset_categories: z.array(AssetCategorySchema).min(1, "atLeastOne"),
-    min_term_months: z.number().int().min(1).max(600),
-    max_term_months: z.number().int().min(1).max(600),
-    max_ltv_ratio: z.number().min(0).max(100),
-    min_volume_eur: z.number().min(0).optional(),
-    max_volume_eur: z.number().min(0).optional(),
+    min_term_months: z
+      .number()
+      .int()
+      .min(1, "termBelowMin")
+      .max(600, "termAboveMax"),
+    max_term_months: z
+      .number()
+      .int()
+      .min(1, "termBelowMin")
+      .max(600, "termAboveMax"),
+    max_ltv_ratio: z.number().min(0, "ltvBelowMin").max(100, "ltvAboveMax"),
+    min_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
+    max_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
     valid_from: z.string({ error: "required" }).min(1, "required"),
     valid_until: z.string().optional(),
     required_workflow_tasks: z
