@@ -875,21 +875,13 @@ const ResolutionCandidatesResponse = z
     candidates: z.array(CandidateSummary),
   })
   .passthrough()
-const PartnerRole = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-])
 const ActorSummary = z
   .object({ user_id: z.string(), display_name: z.string(), email: z.string() })
   .passthrough()
 const RoleAssignmentSummary = z
   .object({
     role_assignment_id: z.string(),
-    role: PartnerRole,
+    role: z.string(),
     status: z.string(),
     is_risk_sensitive: z.boolean(),
     assigned_by: ActorSummary,
@@ -915,6 +907,7 @@ const PartnerRolesResponse = z
     history: z.array(RoleHistoryEntry),
   })
   .passthrough()
+const PartnerRole = z.enum(["lessee", "guarantor", "supplier", "bank_entity"])
 const RoleAssignRequest = z
   .object({
     roles: z.array(PartnerRole).min(1),
@@ -1168,7 +1161,7 @@ const PartnerSubmitRequest = z
       NaturalPersonIdentityInput,
       SoleProprietorIdentityInput,
     ]),
-    roles: z.array(PartnerRole).min(1),
+    roles: z.array(PartnerRole).optional(),
   })
   .passthrough()
 const PartnerSubmitResponse = z
@@ -1203,7 +1196,7 @@ const PartnerListItem = z
     status: z.string(),
     country: z.union([z.string(), z.null()]),
     ubo_completeness_status: z.string(),
-    roles: z.array(PartnerRole),
+    roles: z.array(z.string()),
   })
   .passthrough()
 const PartnerListResponse = z
@@ -2069,11 +2062,11 @@ export const schemas = {
   ResolutionEventSummary,
   CandidateSummary,
   ResolutionCandidatesResponse,
-  PartnerRole,
   ActorSummary,
   RoleAssignmentSummary,
   RoleHistoryEntry,
   PartnerRolesResponse,
+  PartnerRole,
   RoleAssignRequest,
   RoleAssignResult,
   RoleAssignResponse,
@@ -5372,7 +5365,8 @@ Requires &#x60;system_admin&#x60; role.`,
 - Tenant roles (&#x60;front_office&#x60;, &#x60;back_office&#x60;, &#x60;leasing_company_user&#x60;) — &#x60;tenant_id&#x60; required, tenant must be active.
   Immediate execution; returns &#x60;UserResponse&#x60; with status &#x60;invited&#x60;.
 - &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.
-- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same tenant.
+- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same
+  tenant that is the leasing-company party of at least one non-terminated framework agreement.
   All other roles must omit &#x60;lc_partner_id&#x60; (or send &#x60;null&#x60;).`,
     requestFormat: "json",
     parameters: [
