@@ -203,15 +203,15 @@ describe("useAssignPartnerRoles", () => {
     })
   })
 
-  it("accepts risk-sensitive roles (PRD1042-1452)", async () => {
+  it("accepts the risk-sensitive bank_entity role (PRD1042-1452/1453)", async () => {
     vi.mocked(assignPartnerRoles).mockResolvedValue({ results: [] } as never)
     const mutation = useAssignPartnerRoles(PARTNER_ID)
     await mutation.mutate({
-      roles: ["bank_entity", "leasing_company"],
+      roles: ["bank_entity"],
       note: null,
     })
     expect(assignPartnerRoles).toHaveBeenCalledWith(PARTNER_ID, {
-      roles: ["bank_entity", "leasing_company"],
+      roles: ["bank_entity"],
       note: null,
     })
   })

@@ -15,17 +15,18 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { PartnerRoleSchema } from "@/features/partners/api/schema"
+import { AssignablePartnerRoleSchema } from "@/features/partners/api/schema"
 import { useAssignPartnerRoles } from "@/features/partners/hooks/useAssignPartnerRoles"
 import type {
-  PartnerRole,
+  AssignablePartnerRole,
   RoleAssignResponse,
 } from "@/features/partners/api/schema"
 
-// Full role set (PRD1042-1452): risk-sensitive roles are selectable and are
-// recorded as pending until Back Office counter-confirms (US 13.6).
+// Only bank_entity is manually assignable (PRD1042-1453) — deal roles are
+// contract-derived. It is risk-sensitive and is recorded as pending until
+// Back Office counter-confirms (US 13.6, PRD1042-1452).
 const assignSchema = z.object({
-  role: PartnerRoleSchema,
+  role: AssignablePartnerRoleSchema,
   note: z.string().optional(),
 })
 type AssignForm = z.infer<typeof assignSchema>
@@ -47,7 +48,7 @@ function AssignRoleDialog({
 }: Props) {
   const { t } = useTranslation("partners")
   const mutation = useAssignPartnerRoles(partnerId)
-  const ROLES: PartnerRole[] = PartnerRoleSchema.options
+  const ROLES: AssignablePartnerRole[] = AssignablePartnerRoleSchema.options
 
   const {
     handleSubmit,
