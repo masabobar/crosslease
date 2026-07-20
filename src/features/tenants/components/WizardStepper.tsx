@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { WizardStepper as SharedWizardStepper } from "@/components/WizardStepper"
+import { WizardStepper as SharedWizardStepper } from "@/components/shared/WizardStepper"
 
 type WizardStep = "identity" | "modules" | "seed" | "integration" | "review"
 

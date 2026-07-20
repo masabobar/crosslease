@@ -16,7 +16,7 @@ import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/compone
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
 import { AuditHistoryTab } from "@/features/frameworkAgreements/components/AuditHistoryTab"
-import NotFoundPage from "@/features/not-found/components/NotFoundPage"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { formatDateTime } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"

@@ -1,4 +1,7 @@
 {
+  "tenantQuickSelect": {
+    "placeholder": "Mandant auswählen…"
+  },
   "wizard": {
     "steps": {
       "identity": "Identität",

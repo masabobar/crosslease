@@ -1,4 +1,4 @@
-import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { TenantQuickSelect } from "@/features/tenants/components/TenantQuickSelect"
 
 type Props = {
   isSystemAdmin: boolean

@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { ConfirmActionDialog } from "@/components/ConfirmActionDialog"
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { useRevokeGrant } from "@/features/tenants/hooks/useRevokeGrant"
 import { RevokeGrantFormSchema } from "@/features/tenants/api/schema"
 import type {

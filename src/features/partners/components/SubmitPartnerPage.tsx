@@ -24,7 +24,7 @@ import { partnerDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
-import { TenantScopeGate } from "@/components/TenantScopeGate"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 type View = "form" | "matching"

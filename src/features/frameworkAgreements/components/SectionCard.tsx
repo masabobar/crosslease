@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { SectionCard as SharedSectionCard } from "@/components/SectionCard"
+import { SectionCard as SharedSectionCard } from "@/components/shared/SectionCard"
 
 type Props = {
   title: string

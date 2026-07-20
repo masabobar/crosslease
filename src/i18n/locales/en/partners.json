@@ -55,9 +55,6 @@
     "system_import_error": "System import error",
     "legal_restructuring": "Legal restructuring"
   },
-  "tenantQuickSelect": {
-    "placeholder": "Select a tenant…"
-  },
   "list": {
     "title": "Partner management",
     "subtitle": "Search and manage counterparty identities across the tenant.",
