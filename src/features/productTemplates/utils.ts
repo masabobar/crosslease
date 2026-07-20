@@ -2,13 +2,11 @@ import { toast } from "sonner"
 import type { TFunction } from "i18next"
 import { ApiError } from "@/lib/api"
 
-// These three codes all mean "render Not-Found, not a generic error" — the BE returns
-// the same 404 shape for a genuinely missing template, a cross-tenant one, and one behind
-// an inactive module, by design (existence non-disclosure), so the FE treats them alike.
+// These two codes both mean "render Not-Found, not a generic error" — the BE returns
+// the same 404 shape for a genuinely missing template and a cross-tenant one.
 const PRODUCT_TEMPLATE_NOT_FOUND_CODES = new Set([
   "PRODUCT_TEMPLATE_NOT_FOUND",
   "PRODUCT_TEMPLATE_VERSION_NOT_FOUND",
-  "BPT_MODULE_NOT_ACTIVE",
 ])
 
 export function isProductTemplateNotFoundError(error: unknown): boolean {
@@ -16,6 +14,20 @@ export function isProductTemplateNotFoundError(error: unknown): boolean {
     error instanceof ApiError &&
     PRODUCT_TEMPLATE_NOT_FOUND_CODES.has(error.code)
   )
+}
+
+// The BE enforces module activation via two different code paths that emit two different
+// codes for the same condition: the shared permissions dependency (list/read endpoints)
+// returns "MODULE_NOT_ACTIVE", while the create endpoint's own domain exception returns
+// "BPT_MODULE_NOT_ACTIVE" — this checks for either so the FE surfaces the same message
+// regardless of which endpoint the tenant's inactive module was hit on.
+const MODULE_NOT_ACTIVE_CODES = new Set([
+  "MODULE_NOT_ACTIVE",
+  "BPT_MODULE_NOT_ACTIVE",
+])
+
+export function isModuleNotActiveError(error: unknown): boolean {
+  return error instanceof ApiError && MODULE_NOT_ACTIVE_CODES.has(error.code)
 }
 
 // Resolves a Zod form-validation message code to its display string. Wizard step schemas

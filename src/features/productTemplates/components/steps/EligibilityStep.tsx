@@ -27,6 +27,11 @@ function EligibilityStep({ form }: Props) {
     minTermExceedsMax: t("errors.minTermExceedsMax"),
     minVolumeExceedsMax: t("errors.minVolumeExceedsMax"),
     validUntilBeforeFrom: t("errors.validUntilBeforeFrom"),
+    termBelowMin: t("errors.termBelowMin"),
+    termAboveMax: t("errors.termAboveMax"),
+    ltvBelowMin: t("errors.ltvBelowMin"),
+    ltvAboveMax: t("errors.ltvAboveMax"),
+    volumeBelowMin: t("errors.volumeBelowMin"),
   }
   function resolveMsg(msg: string | undefined) {
     return resolveFieldErrorMessage(

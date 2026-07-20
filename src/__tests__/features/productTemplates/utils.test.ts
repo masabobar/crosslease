@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import { ApiError } from "@/lib/api"
 import {
   isProductTemplateNotFoundError,
+  isModuleNotActiveError,
   resolveFieldErrorMessage,
 } from "@/features/productTemplates/utils"
 
@@ -19,9 +20,9 @@ describe("isProductTemplateNotFoundError", () => {
     expect(isProductTemplateNotFoundError(error)).toBe(true)
   })
 
-  it("returns true for BPT_MODULE_NOT_ACTIVE", () => {
+  it("returns false for BPT_MODULE_NOT_ACTIVE", () => {
     const error = new ApiError("BPT_MODULE_NOT_ACTIVE", "Module inactive")
-    expect(isProductTemplateNotFoundError(error)).toBe(true)
+    expect(isProductTemplateNotFoundError(error)).toBe(false)
   })
 
   it("returns false for an unrelated ApiError code", () => {
@@ -38,6 +39,27 @@ describe("isProductTemplateNotFoundError", () => {
   it("returns false for null or undefined", () => {
     expect(isProductTemplateNotFoundError(null)).toBe(false)
     expect(isProductTemplateNotFoundError(undefined)).toBe(false)
+  })
+})
+
+describe("isModuleNotActiveError", () => {
+  it("returns true for MODULE_NOT_ACTIVE", () => {
+    const error = new ApiError("MODULE_NOT_ACTIVE", "Module inactive")
+    expect(isModuleNotActiveError(error)).toBe(true)
+  })
+
+  it("returns true for BPT_MODULE_NOT_ACTIVE", () => {
+    const error = new ApiError("BPT_MODULE_NOT_ACTIVE", "Module inactive")
+    expect(isModuleNotActiveError(error)).toBe(true)
+  })
+
+  it("returns false for an unrelated ApiError code", () => {
+    const error = new ApiError("VALIDATION_ERROR", "Invalid")
+    expect(isModuleNotActiveError(error)).toBe(false)
+  })
+
+  it("returns false for a non-ApiError value", () => {
+    expect(isModuleNotActiveError(new Error("network down"))).toBe(false)
   })
 })
 

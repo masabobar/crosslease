@@ -322,6 +322,9 @@ function WizardFormView({
   }
 
   async function handleSaveDraft() {
+    const fields = STEP_FIELDS[step]
+    const valid = await form.trigger(fields)
+    if (!valid) return
     try {
       const ref = await saveDraftAndOrchestration()
       if (!ref) return

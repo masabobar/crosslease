@@ -30,8 +30,13 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
-import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
+import {
+  isProductTemplateNotFoundError,
+  isModuleNotActiveError,
+} from "@/features/productTemplates/utils"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
+import { TableEmptyState } from "@/components/ui/empty"
+import { ApiError } from "@/lib/api"
 
 const ALL_STATUSES_VALUE = "all"
 
@@ -82,6 +87,27 @@ export default function ProductTemplateListPage() {
 
   if (isProductTemplateNotFoundError(error)) {
     return <NotFoundPage />
+  }
+
+  if (isModuleNotActiveError(error)) {
+    return (
+      <div className="p-8">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {t("list.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("list.subtitle")}
+          </p>
+        </div>
+        <div className="mt-4">
+          <TableEmptyState
+            title={t("list.moduleNotActive.title")}
+            description={t("list.moduleNotActive.description")}
+          />
+        </div>
+      </div>
+    )
   }
 
   if (currentUser && !tenantId) {
@@ -165,7 +191,11 @@ export default function ProductTemplateListPage() {
       <div className="mt-4">
         {isError && !isLoading && (
           <p className="text-sm text-destructive py-8 text-center">
-            {t("errors.generic")}
+            {error instanceof ApiError
+              ? t(`errors.${error.code}` as "errors.generic", {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")}
           </p>
         )}
         {!isError && (

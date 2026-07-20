@@ -24,6 +24,10 @@
       "title": "No templates match your filters",
       "description": "Try adjusting your search or status filter."
     },
+    "moduleNotActive": {
+      "title": "Product templates aren't available",
+      "description": "This feature isn't active for your organization. Contact your platform administrator if you believe this is a mistake."
+    },
     "filters": {
       "searchPlaceholder": "Search by code or name…",
       "allStatuses": "All statuses"
@@ -255,6 +259,11 @@
     "minTermExceedsMax": "Min term must not exceed max term.",
     "minVolumeExceedsMax": "Min volume must not exceed max volume.",
     "validUntilBeforeFrom": "Valid until must be on or after valid from.",
+    "termBelowMin": "Term must be at least 1 month.",
+    "termAboveMax": "Term cannot exceed 600 months.",
+    "ltvBelowMin": "Max LTV ratio cannot be negative.",
+    "ltvAboveMax": "Max LTV ratio cannot exceed 100%.",
+    "volumeBelowMin": "Volume cannot be negative.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "This template code is already in use within your tenant.",
     "BPT_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",

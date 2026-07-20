@@ -24,6 +24,10 @@
       "title": "Keine Vorlagen entsprechen Ihren Filtern",
       "description": "Passen Sie Ihre Suche oder den Statusfilter an."
     },
+    "moduleNotActive": {
+      "title": "Produktvorlagen sind nicht verfügbar",
+      "description": "Diese Funktion ist für Ihre Organisation nicht aktiviert. Wenden Sie sich an Ihren Plattform-Administrator, falls Sie dies für einen Fehler halten."
+    },
     "filters": {
       "searchPlaceholder": "Nach Code oder Name suchen…",
       "allStatuses": "Alle Status"
@@ -255,6 +259,11 @@
     "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
     "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
     "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
+    "termBelowMin": "Die Laufzeit muss mindestens 1 Monat betragen.",
+    "termAboveMax": "Die Laufzeit darf 600 Monate nicht überschreiten.",
+    "ltvBelowMin": "Der maximale Beleihungsauslauf darf nicht negativ sein.",
+    "ltvAboveMax": "Der maximale Beleihungsauslauf darf 100 % nicht überschreiten.",
+    "volumeBelowMin": "Das Volumen darf nicht negativ sein.",
     "PRODUCT_TEMPLATE_CODE_CONFLICT": "Dieser Vorlagencode wird bereits innerhalb Ihres Mandanten verwendet.",
     "BPT_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "Diese Produktvorlage konnte nicht gefunden werden.",
