@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import {
   Combobox,
@@ -28,6 +29,7 @@ import { selectOnFocus } from "@/lib/utils"
 const captureUboSchema = z.object({
   ubo_partner_id: z.string().min(1),
   ownership_percentage: z.number().gt(0).max(100),
+  indirect_ownership_notes: z.string().optional(),
 })
 type CaptureUboForm = z.infer<typeof captureUboSchema>
 
@@ -81,6 +83,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
         ubo_partner_id: values.ubo_partner_id,
         ownership_percentage: values.ownership_percentage,
         ownership_type: "direct",
+        indirect_ownership_notes: values.indirect_ownership_notes || null,
       },
       {
         onSuccess: () => {
@@ -179,6 +182,21 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
                 {t("captureUboDialog.errors.percentageInvalid")}
               </p>
             )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="indirect-ownership-notes">
+              {t("captureUboDialog.fields.indirectOwnershipNotes")}
+            </Label>
+            <Textarea
+              id="indirect-ownership-notes"
+              data-testid="capture-ubo-indirect-notes"
+              rows={2}
+              placeholder={t(
+                "captureUboDialog.fields.indirectOwnershipNotesPlaceholder"
+              )}
+              {...register("indirect_ownership_notes")}
+            />
           </div>
         </div>
 

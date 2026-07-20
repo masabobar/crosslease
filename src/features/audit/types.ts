@@ -1,9 +1,10 @@
 import type { UserRole } from "@/features/users/types"
 
-// Backend grants AUDIT_READ only to system_admin and auditor; support_user is excluded
+// Backend grants AUDIT_READ to system_admin, auditor, and bank_power_user; support_user is excluded
 export const AUDIT_TRAIL_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "auditor",
+  "bank_power_user",
 ]
 
 export type AuditFilterState = {
