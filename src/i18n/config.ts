@@ -11,6 +11,7 @@ import enPartners from "./locales/en/partners.json"
 import enProductTemplates from "./locales/en/productTemplates.json"
 import enFrameworkAgreements from "./locales/en/frameworkAgreements.json"
 import enNotifications from "./locales/en/notifications.json"
+import enWorkflowTaskCatalog from "./locales/en/workflowTaskCatalog.json"
 
 i18n.use(initReactI18next).init({
   lng: "en",
@@ -29,6 +30,7 @@ i18n.use(initReactI18next).init({
       productTemplates: enProductTemplates,
       frameworkAgreements: enFrameworkAgreements,
       notifications: enNotifications,
+      workflowTaskCatalog: enWorkflowTaskCatalog,
     },
   },
   interpolation: {
@@ -50,6 +52,7 @@ const languageLoaders: Partial<Record<string, () => Promise<void>>> = {
       productTemplates,
       frameworkAgreements,
       notifications,
+      workflowTaskCatalog,
     ] = await Promise.all([
       import("./locales/de/common.json"),
       import("./locales/de/auth.json"),
@@ -62,6 +65,7 @@ const languageLoaders: Partial<Record<string, () => Promise<void>>> = {
       import("./locales/de/productTemplates.json"),
       import("./locales/de/frameworkAgreements.json"),
       import("./locales/de/notifications.json"),
+      import("./locales/de/workflowTaskCatalog.json"),
     ])
     i18n.addResourceBundle("de", "common", common.default)
     i18n.addResourceBundle("de", "auth", auth.default)
@@ -78,6 +82,11 @@ const languageLoaders: Partial<Record<string, () => Promise<void>>> = {
       frameworkAgreements.default
     )
     i18n.addResourceBundle("de", "notifications", notifications.default)
+    i18n.addResourceBundle(
+      "de",
+      "workflowTaskCatalog",
+      workflowTaskCatalog.default
+    )
   },
 }
 

@@ -9,6 +9,7 @@ import type enPartners from "./locales/en/partners.json"
 import type enProductTemplates from "./locales/en/productTemplates.json"
 import type enFrameworkAgreements from "./locales/en/frameworkAgreements.json"
 import type enNotifications from "./locales/en/notifications.json"
+import type enWorkflowTaskCatalog from "./locales/en/workflowTaskCatalog.json"
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -25,6 +26,7 @@ declare module "i18next" {
       productTemplates: typeof enProductTemplates
       frameworkAgreements: typeof enFrameworkAgreements
       notifications: typeof enNotifications
+      workflowTaskCatalog: typeof enWorkflowTaskCatalog
     }
   }
 }
