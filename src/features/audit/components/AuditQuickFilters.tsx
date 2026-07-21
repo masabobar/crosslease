@@ -271,6 +271,7 @@ export function AuditQuickFilters({
               }}
               placeholder={t("filter.placeholders.from")}
               maxDate={new Date()}
+              captionLayout="dropdown"
             />
             <DatePicker
               value={appliedFilters.to_dt ?? undefined}
@@ -282,6 +283,7 @@ export function AuditQuickFilters({
                   ? parseISO(appliedFilters.from_dt)
                   : undefined
               }
+              captionLayout="dropdown"
             />
           </div>
         </div>

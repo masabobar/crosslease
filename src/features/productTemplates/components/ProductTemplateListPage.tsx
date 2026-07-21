@@ -132,7 +132,7 @@ export default function ProductTemplateListPage() {
             {t("list.subtitle")}
           </p>
         </div>
-        {canManageDraft && (
+        {canManageDraft && !isLoading && (
           <Button
             data-testid="create-template-button"
             onClick={handleCreateTemplate}

@@ -191,34 +191,40 @@ function IdentityStep({ form }: Props) {
         <Controller
           control={control}
           name="country"
-          render={({ field }) => (
-            <Combobox
-              items={COUNTRY_OPTIONS}
-              value={field.value ?? ""}
-              onValueChange={field.onChange}
-            >
-              <ComboboxInput
-                id="country"
-                data-testid="country-combobox"
-                placeholder={t("fields.countrySearchPlaceholder")}
-                showClear
-                aria-invalid={!!errors.country}
-                onFocus={selectOnFocus}
-              />
-              <ComboboxContent>
-                <ComboboxList>
-                  <ComboboxEmpty>{t("fields.countryNoResults")}</ComboboxEmpty>
-                  <ComboboxCollection>
-                    {(opt: { value: string; label: string }) => (
-                      <ComboboxItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxCollection>
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-          )}
+          render={({ field }) => {
+            const selectedCountry =
+              COUNTRY_OPTIONS.find(o => o.value === field.value) ?? null
+            return (
+              <Combobox
+                items={COUNTRY_OPTIONS}
+                value={selectedCountry}
+                onValueChange={option => field.onChange(option?.value ?? "")}
+              >
+                <ComboboxInput
+                  id="country"
+                  data-testid="country-combobox"
+                  placeholder={t("fields.countrySearchPlaceholder")}
+                  showClear
+                  aria-invalid={!!errors.country}
+                  onFocus={selectOnFocus}
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    <ComboboxEmpty>
+                      {t("fields.countryNoResults")}
+                    </ComboboxEmpty>
+                    <ComboboxCollection>
+                      {(opt: { value: string; label: string }) => (
+                        <ComboboxItem key={opt.value} value={opt}>
+                          {opt.label}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxCollection>
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            )
+          }}
         />
         {errors.country && (
           <p className="mt-1 text-sm text-destructive">

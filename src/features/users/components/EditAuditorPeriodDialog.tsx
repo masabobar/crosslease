@@ -132,6 +132,7 @@ export function EditAuditorPeriodDialog({
                   placeholder={t("detail.page.editRole.selectDate")}
                   minDate={new Date()}
                   error={!!form.formState.errors.new_access_valid_until}
+                  captionLayout="dropdown"
                 />
               </div>
             </div>

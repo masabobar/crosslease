@@ -70,6 +70,7 @@ function EditFrameworkAgreementFields({
                 error={!!errors.valid_until}
                 disabled={validUntilDisabled}
                 minDate={validUntilMin}
+                captionLayout="dropdown"
               />
             )}
           />

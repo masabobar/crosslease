@@ -315,6 +315,7 @@ export default function TenantManagementPage() {
                 }}
                 placeholder={t("list.filters.from")}
                 maxDate={new Date()}
+                captionLayout="dropdown"
               />
               <DatePicker
                 value={toDate ?? undefined}
@@ -325,6 +326,7 @@ export default function TenantManagementPage() {
                 placeholder={t("list.filters.to")}
                 maxDate={new Date()}
                 minDate={fromDate ? parseISO(fromDate) : undefined}
+                captionLayout="dropdown"
               />
             </div>
           </div>

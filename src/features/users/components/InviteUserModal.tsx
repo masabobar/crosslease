@@ -389,6 +389,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                           ? new Date(accessValidUntilValue + "T00:00:00")
                           : undefined
                       }
+                      captionLayout="dropdown"
                     />
                   )}
                 />
@@ -422,6 +423,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                           ? new Date(accessValidFromValue + "T00:00:00")
                           : undefined
                       }
+                      captionLayout="dropdown"
                     />
                   )}
                 />

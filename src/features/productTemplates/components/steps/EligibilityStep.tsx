@@ -231,6 +231,7 @@ function EligibilityStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_from}
+                  captionLayout="dropdown"
                 />
               )}
             />
@@ -262,6 +263,7 @@ function EligibilityStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_until}
+                  captionLayout="dropdown"
                 />
               )}
             />

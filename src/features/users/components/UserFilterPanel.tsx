@@ -425,6 +425,7 @@ function UserFilterPanel({
                     }
                     placeholder={t("filter.placeholders.from")}
                     maxDate={new Date()}
+                    captionLayout="dropdown"
                   />
                   <DatePicker
                     value={staged.last_login_to ?? undefined}
@@ -436,6 +437,7 @@ function UserFilterPanel({
                         ? parseISO(staged.last_login_from)
                         : undefined
                     }
+                    captionLayout="dropdown"
                   />
                 </div>
               </FilterField>

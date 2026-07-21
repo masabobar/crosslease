@@ -89,6 +89,7 @@ function SuspendFrameworkAgreementDialog({
                   data-testid="suspend-effective-from"
                   value={field.value ?? undefined}
                   onChange={field.onChange}
+                  captionLayout="dropdown"
                 />
               )}
             />

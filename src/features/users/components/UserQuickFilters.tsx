@@ -236,6 +236,7 @@ export function UserQuickFilters({
                 }}
                 placeholder={t("filter.placeholders.from")}
                 maxDate={new Date()}
+                captionLayout="dropdown"
               />
               <DatePicker
                 value={appliedFilters.last_login_to ?? undefined}
@@ -247,6 +248,7 @@ export function UserQuickFilters({
                     ? parseISO(appliedFilters.last_login_from)
                     : undefined
                 }
+                captionLayout="dropdown"
               />
             </div>
           </div>

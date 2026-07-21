@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { FileText } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -95,6 +96,7 @@ export default function NotificationConfigPage() {
                         disabled
                         data-testid={`notification-config-assign-template-${eventType}`}
                       >
+                        <FileText data-icon="inline-start" />
                         {t("page.assignTemplate")}
                       </Button>
                     </TableCell>

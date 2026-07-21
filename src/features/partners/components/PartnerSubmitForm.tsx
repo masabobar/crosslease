@@ -398,35 +398,41 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 key={partnerType}
                 control={control}
                 name={"country" as keyof IdentityForm}
-                render={({ field }) => (
-                  <Combobox
-                    items={COUNTRY_OPTIONS}
-                    value={(field.value as string) ?? ""}
-                    onValueChange={field.onChange}
-                  >
-                    <ComboboxInput
-                      id="country"
-                      data-testid="field-country"
-                      placeholder={t("list.filters.countrySearchPlaceholder")}
-                      showClear
-                      onFocus={selectOnFocus}
-                    />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        <ComboboxEmpty>
-                          {t("list.filters.noCountriesFound")}
-                        </ComboboxEmpty>
-                        <ComboboxCollection>
-                          {(opt: { value: string; label: string }) => (
-                            <ComboboxItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </ComboboxItem>
-                          )}
-                        </ComboboxCollection>
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                )}
+                render={({ field }) => {
+                  const selectedCountry =
+                    COUNTRY_OPTIONS.find(o => o.value === field.value) ?? null
+                  return (
+                    <Combobox
+                      items={COUNTRY_OPTIONS}
+                      value={selectedCountry}
+                      onValueChange={option =>
+                        field.onChange(option?.value ?? "")
+                      }
+                    >
+                      <ComboboxInput
+                        id="country"
+                        data-testid="field-country"
+                        placeholder={t("list.filters.countrySearchPlaceholder")}
+                        showClear
+                        onFocus={selectOnFocus}
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          <ComboboxEmpty>
+                            {t("list.filters.noCountriesFound")}
+                          </ComboboxEmpty>
+                          <ComboboxCollection>
+                            {(opt: { value: string; label: string }) => (
+                              <ComboboxItem key={opt.value} value={opt}>
+                                {opt.label}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxCollection>
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  )
+                }}
               />
               {"country" in errors && errors.country && (
                 <p className="text-xs text-destructive">
