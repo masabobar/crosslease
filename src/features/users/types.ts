@@ -20,6 +20,7 @@ export const FOUR_EYES_ROLES: readonly UserRole[] = [
 
 export const TENANT_SCOPED_ROLES: readonly UserRole[] = [
   "auditor",
+  "bank_power_user",
   "front_office",
   "back_office",
   "leasing_company_user",
@@ -36,6 +37,7 @@ export const USER_MANAGEMENT_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "support_user",
   "auditor",
+  "bank_power_user",
   "front_office",
   "back_office",
 ]
@@ -63,10 +65,12 @@ export const INTERNAL_BANK_ROLES: readonly UserRole[] = [
   "auditor",
   "front_office",
   "back_office",
+  "bank_power_user",
 ]
 
 export const WRITE_ACTION_ROLES: readonly UserRole[] = [
   "system_admin",
+  "bank_power_user",
   "front_office",
   "back_office",
 ]
@@ -152,10 +156,15 @@ export const PLATFORM_USER_ROLES: readonly UserRole[] = [
   "auditor",
 ]
 
+export const INVITE_RESULT_TYPE = {
+  INVITED: "invited",
+  PENDING_APPROVAL: "pending_approval",
+} as const
+
 export type InviteSuccessResult =
-  | { type: "invited"; user: UserResponse }
+  | { type: typeof INVITE_RESULT_TYPE.INVITED; user: UserResponse }
   | {
-      type: "pending_approval"
+      type: typeof INVITE_RESULT_TYPE.PENDING_APPROVAL
       firstName: string
       lastName: string
       email: string

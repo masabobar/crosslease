@@ -9,7 +9,7 @@ import { FilterPill } from "@/components/ui/filter-pill"
 import { cn } from "@/lib/utils"
 import { DuplicateQueueTable } from "@/features/partners/components/DuplicateQueueTable"
 import { ResolveDuplicateDialog } from "@/features/partners/components/ResolveDuplicateDialog"
-import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
 import { usePartnersByIds } from "@/features/partners/hooks/usePartnersByIds"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -20,26 +20,21 @@ import {
   PARTNER_MERGE_INITIATE_ALLOWED_ROLES,
 } from "@/features/partners/types"
 import { PATHS, partnerDuplicateDetail } from "@/router/paths"
+import {
+  DuplicateCandidatePairStatusSchema,
+  DuplicateConfidenceSchema,
+} from "@/features/partners/api/schema"
 import type {
   DuplicateCandidatePairResponse,
   DuplicateCandidatePairStatus,
   DuplicateConfidence,
 } from "@/features/partners/api/schema"
 
-const STATUS_OPTIONS: DuplicateCandidatePairStatus[] = [
-  "pending",
-  "confirmed_duplicate",
-  "confirmed_distinct",
-  "deferred",
-  "merge_in_progress",
-  "merged",
-]
+const STATUS_OPTIONS: DuplicateCandidatePairStatus[] =
+  DuplicateCandidatePairStatusSchema.options
 
-const CONFIDENCE_OPTIONS: DuplicateConfidence[] = [
-  "definite",
-  "probable",
-  "possible",
-]
+const CONFIDENCE_OPTIONS: DuplicateConfidence[] =
+  DuplicateConfidenceSchema.options
 
 export default function DuplicateQueuePage() {
   const { t } = useTranslation("partners")
@@ -71,7 +66,8 @@ export default function DuplicateQueuePage() {
   const pairs = data?.items ?? []
 
   const partnerIds = pairs.flatMap(p => [p.partner_a_id, p.partner_b_id])
-  const { partnersById } = usePartnersByIds(partnerIds)
+  const { partnersById, isError: isPartnersError } =
+    usePartnersByIds(partnerIds)
 
   const searchValue = search.trim().toLowerCase()
   const filteredPairs = pairs.filter(pair => {
@@ -115,22 +111,12 @@ export default function DuplicateQueuePage() {
   }
 
   if (currentUser && !tenantId) {
-    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
-      return (
-        <div className="p-8 max-w-sm space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("list.selectTenantPrompt")}
-          </p>
-          <TenantQuickSelect />
-        </div>
-      )
-    }
     return (
-      <div className="p-8">
-        <p className="text-sm text-muted-foreground">
-          {t("list.tenantRequired")}
-        </p>
-      </div>
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("list.selectTenantPrompt")}
+        tenantRequiredMessage={t("list.tenantRequired")}
+      />
     )
   }
 
@@ -291,6 +277,7 @@ export default function DuplicateQueuePage() {
             pairs={filteredPairs}
             partnersById={partnersById}
             isLoading={isLoading}
+            partnersError={isPartnersError}
             hasActiveFilters={hasActiveFilters}
             canResolve={canResolve}
             canInitiateMerge={canInitiateMerge}

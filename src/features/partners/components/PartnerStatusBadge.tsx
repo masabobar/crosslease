@@ -1,11 +1,6 @@
 import { useTranslation } from "react-i18next"
 import type { PartnerStatus } from "@/features/partners/api/schema"
-
-type StatusConfig = {
-  container: string
-  dot: string
-  text: string
-}
+import type { StatusConfig } from "@/features/partners/types"
 
 const STATUS_CONFIG: Record<PartnerStatus, StatusConfig> = {
   draft: {

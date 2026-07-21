@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api"
 import type { AuditFilterState } from "@/features/audit/types"
 import { Button } from "@/components/ui/button"
 import { formatEventType, formatActionType } from "@/lib/formatters"
@@ -61,6 +62,17 @@ function SingleSelectPopover<T extends string>({
   )
 }
 
+function FilterOptionsError({ error }: { error: unknown }) {
+  const { t } = useTranslation("audit")
+  return (
+    <p className="px-3 py-2 text-sm text-destructive">
+      {error instanceof ApiError
+        ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+        : t("errors.generic")}
+    </p>
+  )
+}
+
 export function AuditQuickFilters({
   appliedFilters,
   onFilterChange,
@@ -70,7 +82,18 @@ export function AuditQuickFilters({
   const [actorInputValue, setActorInputValue] = useState(
     appliedFilters.actor_id ?? ""
   )
-  const { data: filterOptions } = useAuditFilterOptions()
+  const [lastAppliedActorId, setLastAppliedActorId] = useState(
+    appliedFilters.actor_id
+  )
+  if (appliedFilters.actor_id !== lastAppliedActorId) {
+    setLastAppliedActorId(appliedFilters.actor_id)
+    setActorInputValue(appliedFilters.actor_id ?? "")
+  }
+  const {
+    data: filterOptions,
+    isError: isFilterOptionsError,
+    error: filterOptionsError,
+  } = useAuditFilterOptions()
 
   const entityTypes = filterOptions?.entity_types ?? []
   const actionTypes = filterOptions?.action_types ?? []
@@ -85,15 +108,19 @@ export function AuditQuickFilters({
         count={appliedFilters.entity_type ? 1 : 0}
         contentClassName="w-48"
       >
-        <SingleSelectPopover
-          options={entityTypes}
-          selected={appliedFilters.entity_type}
-          onSelect={v => onFilterChange({ entity_type: v })}
-          formatLabel={v =>
-            t(`entityType.${v}`, { defaultValue: formatActionType(v) })
-          }
-          testIdPrefix="filter-option-entity-type"
-        />
+        {isFilterOptionsError ? (
+          <FilterOptionsError error={filterOptionsError} />
+        ) : (
+          <SingleSelectPopover
+            options={entityTypes}
+            selected={appliedFilters.entity_type}
+            onSelect={v => onFilterChange({ entity_type: v })}
+            formatLabel={v =>
+              t(`entityType.${v}`, { defaultValue: formatActionType(v) })
+            }
+            testIdPrefix="filter-option-entity-type"
+          />
+        )}
       </FilterButton>
 
       <FilterButton
@@ -102,36 +129,40 @@ export function AuditQuickFilters({
         count={appliedFilters.event_type.length}
         contentClassName="w-56 max-h-72 overflow-y-auto"
       >
-        {eventTypes.map(et => {
-          const checked = appliedFilters.event_type.includes(et)
-          return (
-            <Button
-              key={et}
-              variant="ghost"
-              data-testid={`filter-option-event-type-${et}`}
-              onClick={() =>
-                onFilterChange({
-                  event_type: checked
-                    ? appliedFilters.event_type.filter(e => e !== et)
-                    : [...appliedFilters.event_type, et],
-                })
-              }
-              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-            >
-              <span
-                className={cn(
-                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                  checked ? "bg-primary border-primary" : "border-border"
-                )}
+        {isFilterOptionsError && (
+          <FilterOptionsError error={filterOptionsError} />
+        )}
+        {!isFilterOptionsError &&
+          eventTypes.map(et => {
+            const checked = appliedFilters.event_type.includes(et)
+            return (
+              <Button
+                key={et}
+                variant="ghost"
+                data-testid={`filter-option-event-type-${et}`}
+                onClick={() =>
+                  onFilterChange({
+                    event_type: checked
+                      ? appliedFilters.event_type.filter(e => e !== et)
+                      : [...appliedFilters.event_type, et],
+                  })
+                }
+                className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
               >
-                {checked && <Check size={10} className="text-white" />}
-              </span>
-              <span className="text-sm text-foreground">
-                {formatEventType(et)}
-              </span>
-            </Button>
-          )
-        })}
+                <span
+                  className={cn(
+                    "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
+                    checked ? "bg-primary border-primary" : "border-border"
+                  )}
+                >
+                  {checked && <Check size={10} className="text-white" />}
+                </span>
+                <span className="text-sm text-foreground">
+                  {formatEventType(et)}
+                </span>
+              </Button>
+            )
+          })}
       </FilterButton>
 
       <FilterButton
@@ -140,13 +171,17 @@ export function AuditQuickFilters({
         count={appliedFilters.action_type ? 1 : 0}
         contentClassName="w-48"
       >
-        <SingleSelectPopover
-          options={actionTypes}
-          selected={appliedFilters.action_type}
-          onSelect={v => onFilterChange({ action_type: v })}
-          formatLabel={v => formatActionType(v)}
-          testIdPrefix="filter-option-action-type"
-        />
+        {isFilterOptionsError ? (
+          <FilterOptionsError error={filterOptionsError} />
+        ) : (
+          <SingleSelectPopover
+            options={actionTypes}
+            selected={appliedFilters.action_type}
+            onSelect={v => onFilterChange({ action_type: v })}
+            formatLabel={v => formatActionType(v)}
+            testIdPrefix="filter-option-action-type"
+          />
+        )}
       </FilterButton>
 
       <FilterButton
@@ -195,13 +230,17 @@ export function AuditQuickFilters({
         count={appliedFilters.trigger_source ? 1 : 0}
         contentClassName="w-48"
       >
-        <SingleSelectPopover
-          options={triggerSources}
-          selected={appliedFilters.trigger_source}
-          onSelect={v => onFilterChange({ trigger_source: v })}
-          formatLabel={v => formatActionType(v)}
-          testIdPrefix="filter-option-trigger-source"
-        />
+        {isFilterOptionsError ? (
+          <FilterOptionsError error={filterOptionsError} />
+        ) : (
+          <SingleSelectPopover
+            options={triggerSources}
+            selected={appliedFilters.trigger_source}
+            onSelect={v => onFilterChange({ trigger_source: v })}
+            formatLabel={v => formatActionType(v)}
+            testIdPrefix="filter-option-trigger-source"
+          />
+        )}
       </FilterButton>
 
       <FilterButton
@@ -232,6 +271,7 @@ export function AuditQuickFilters({
               }}
               placeholder={t("filter.placeholders.from")}
               maxDate={new Date()}
+              captionLayout="dropdown"
             />
             <DatePicker
               value={appliedFilters.to_dt ?? undefined}
@@ -243,6 +283,7 @@ export function AuditQuickFilters({
                   ? parseISO(appliedFilters.from_dt)
                   : undefined
               }
+              captionLayout="dropdown"
             />
           </div>
         </div>

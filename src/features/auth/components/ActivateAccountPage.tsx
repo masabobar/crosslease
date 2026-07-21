@@ -61,7 +61,6 @@ export default function ActivateAccountPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [isFormBlocked, setIsFormBlocked] = useState(false)
 
   const token = searchParams.get("token") ?? ""
   const [email] = useState(() => (token ? (decodeTokenEmail(token) ?? "") : ""))
@@ -78,7 +77,7 @@ export default function ActivateAccountPage() {
   })
 
   const pageState: PageState = (() => {
-    if (!token || isFormBlocked) return "blocked-link"
+    if (!token) return "blocked-link"
     if (isSuccess) return "success"
     if (isValidating) return "loading"
     if (validationError) {
@@ -132,15 +131,10 @@ export default function ActivateAccountPage() {
       }
       setIsSuccess(true)
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : ""
-      if (LINK_BLOCKED_CODES.has(code)) {
-        setIsFormBlocked(true)
-        return
-      }
       setServerError(
-        code === "PASSWORD_POLICY_VIOLATION"
-          ? t("activateAccount.errors.PASSWORD_POLICY_VIOLATION")
-          : t("activateAccount.errors.default")
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
       )
     }
   })
@@ -181,6 +175,7 @@ export default function ActivateAccountPage() {
             </p>
             <p className="text-sm text-muted-foreground">
               {t("activateAccount.blockedLink.contactSupportPrompt")}{" "}
+              {/* NOTE: raw <a> — inline mailto link inside body text; shadcn Button doesn't compose as inline text */}
               <a
                 href="mailto:support@crosslease.com"
                 className="text-primary underline underline-offset-2 hover:opacity-80"
@@ -227,6 +222,9 @@ export default function ActivateAccountPage() {
             variant="outline"
             data-testid="activate-account-contact-admin-button"
             className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
+            onClick={() => {
+              window.location.href = "mailto:support@crosslease.com"
+            }}
           >
             <Mail size={16} className="shrink-0" />
             <span className="flex-1 text-left">
@@ -263,6 +261,7 @@ export default function ActivateAccountPage() {
             <Button
               type="button"
               className="w-full"
+              data-testid="activate-account-go-to-login-button"
               onClick={() => navigate(PATHS.LOGIN)}
             >
               {t("activateAccount.success.goToLogin")}

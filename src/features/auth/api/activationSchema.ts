@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { PasswordPolicySchema } from "./passwordPolicy"
 
 export { getPasswordRequirements } from "./forgotPasswordSchema"
 
@@ -11,13 +12,7 @@ export type SetPasswordResponse = z.infer<typeof SetPasswordResponseSchema>
 
 export const ActivateAccountInputSchema = z
   .object({
-    password: z
-      .string()
-      .min(8)
-      .regex(/[a-z]/)
-      .regex(/[A-Z]/)
-      .regex(/[0-9]/)
-      .regex(/[^a-zA-Z0-9]/),
+    password: PasswordPolicySchema,
     passwordConfirm: z.string(),
   })
   .refine(data => data.password === data.passwordConfirm, {

@@ -19,6 +19,7 @@ import {
   PAGE_SIZES,
 } from "@/features/productTemplates/hooks/useProductTemplateListParams"
 import type { PageSize } from "@/features/productTemplates/hooks/useProductTemplateListParams"
+import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
   TemplateListItem,
@@ -27,10 +28,15 @@ import type {
 import { PATHS, productTemplateVersionHistory } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
-import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
-import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
-import NotFoundPage from "@/features/not-found/components/NotFoundPage"
+import {
+  isProductTemplateNotFoundError,
+  isModuleNotActiveError,
+} from "@/features/productTemplates/utils"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
+import { TableEmptyState } from "@/components/ui/empty"
+import { ApiError } from "@/lib/api"
 
 const ALL_STATUSES_VALUE = "all"
 
@@ -42,6 +48,10 @@ export default function ProductTemplateListPage() {
   const tenantId =
     currentUser?.tenant_id ??
     (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const canManageDraft = Boolean(
+    currentUser?.role &&
+    PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES.includes(currentUser.role)
+  )
 
   const {
     page,
@@ -79,23 +89,34 @@ export default function ProductTemplateListPage() {
     return <NotFoundPage />
   }
 
-  if (currentUser && !tenantId) {
-    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
-      return (
-        <div className="p-8 max-w-sm space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("list.selectTenantPrompt")}
-          </p>
-          <TenantQuickSelect />
-        </div>
-      )
-    }
+  if (isModuleNotActiveError(error)) {
     return (
       <div className="p-8">
-        <p className="text-sm text-muted-foreground">
-          {t("list.tenantRequired")}
-        </p>
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {t("list.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("list.subtitle")}
+          </p>
+        </div>
+        <div className="mt-4">
+          <TableEmptyState
+            title={t("list.moduleNotActive.title")}
+            description={t("list.moduleNotActive.description")}
+          />
+        </div>
       </div>
+    )
+  }
+
+  if (currentUser && !tenantId) {
+    return (
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("list.selectTenantPrompt")}
+        tenantRequiredMessage={t("list.tenantRequired")}
+      />
     )
   }
 
@@ -111,14 +132,16 @@ export default function ProductTemplateListPage() {
             {t("list.subtitle")}
           </p>
         </div>
-        <Button
-          data-testid="create-template-button"
-          onClick={handleCreateTemplate}
-          className="h-9 rounded-xl px-4 gap-1.5"
-        >
-          <Plus size={16} />
-          {t("list.createButton")}
-        </Button>
+        {canManageDraft && !isLoading && (
+          <Button
+            data-testid="create-template-button"
+            onClick={handleCreateTemplate}
+            className="h-9 rounded-xl px-4 gap-1.5"
+          >
+            <Plus size={16} />
+            {t("list.createButton")}
+          </Button>
+        )}
       </div>
 
       {/* Filter bar */}
@@ -143,7 +166,13 @@ export default function ProductTemplateListPage() {
             data-testid="filter-status"
             className="w-[200px] px-[10px] py-[4px]"
           >
-            <SelectValue />
+            <SelectValue>
+              {statusFilter
+                ? t(
+                    `versionStatuses.${statusFilter}` as "versionStatuses.draft"
+                  )
+                : t("list.filters.allStatuses")}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_STATUSES_VALUE}>
@@ -162,7 +191,11 @@ export default function ProductTemplateListPage() {
       <div className="mt-4">
         {isError && !isLoading && (
           <p className="text-sm text-destructive py-8 text-center">
-            {t("errors.generic")}
+            {error instanceof ApiError
+              ? t(`errors.${error.code}` as "errors.generic", {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")}
           </p>
         )}
         {!isError && (
@@ -171,7 +204,7 @@ export default function ProductTemplateListPage() {
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
             onRowClick={handleRowClick}
-            onCreateTemplate={handleCreateTemplate}
+            onCreateTemplate={canManageDraft ? handleCreateTemplate : undefined}
           />
         )}
       </div>

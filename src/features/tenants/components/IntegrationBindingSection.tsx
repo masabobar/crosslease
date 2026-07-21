@@ -307,10 +307,17 @@ export function IntegrationBindingSection({
   onDialogOpenChange,
 }: SectionProps) {
   const { t } = useTranslation("tenants")
-  const { data: binding, isLoading } = useTenantIntegrationBinding(tenantId)
+  const {
+    data: binding,
+    isLoading,
+    isError,
+    error,
+  } = useTenantIntegrationBinding(tenantId)
 
   const hasBinding = !!binding?.id
 
+  // Only ever rendered via `hasBinding ? editButton : undefined` below, so
+  // this is always the "edit" (not "configure") state.
   const editButton =
     isAdmin && !isArchived ? (
       <Button
@@ -318,18 +325,10 @@ export function IntegrationBindingSection({
         variant="outline"
         className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
         onClick={() => onDialogOpenChange(true)}
-        data-testid={
-          hasBinding
-            ? "btn-edit-integration-binding"
-            : "btn-configure-integration-binding"
-        }
+        data-testid="btn-edit-integration-binding"
       >
-        {hasBinding ? (
-          <>
-            <SquarePen size={14} />
-            {t("detail.overview.integrationBinding.editButton")}
-          </>
-        ) : null}
+        <SquarePen size={14} />
+        {t("detail.overview.integrationBinding.editButton")}
       </Button>
     ) : undefined
 
@@ -351,6 +350,15 @@ export function IntegrationBindingSection({
       >
         {isLoading ? (
           <div className="h-20 animate-pulse bg-muted rounded-md" />
+        ) : isError ? (
+          <p
+            className="text-sm text-muted-foreground py-4 text-center"
+            data-testid="integration-binding-error"
+          >
+            {error instanceof ApiError
+              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic")}
+          </p>
         ) : !hasBinding ? (
           <div className="flex flex-col items-center gap-3 py-8 px-2">
             <p className="text-sm text-muted-foreground text-center">

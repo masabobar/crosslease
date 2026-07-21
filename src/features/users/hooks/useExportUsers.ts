@@ -8,11 +8,13 @@ import {
   getExportJobStatus,
   initiateExport,
 } from "@/features/users/api/usersApi"
+import { ExportJobStatusValueSchema } from "@/features/users/api/schema"
 import type { ExportFormat, ExportParams } from "@/features/users/api/schema"
 
 type ExportState = "idle" | "initiating" | "polling" | "downloading"
 
 const POLL_INTERVAL_MS = 2000
+const MAX_POLL_ATTEMPTS = 150 // ~5 minutes at POLL_INTERVAL_MS intervals
 
 export function useExportUsers() {
   const { t } = useTranslation("users")
@@ -38,11 +40,25 @@ export function useExportUsers() {
     URL.revokeObjectURL(url)
   }
 
-  async function pollAndDownload(jobId: string, format: ExportFormat) {
+  async function pollAndDownload(
+    jobId: string,
+    format: ExportFormat,
+    attempt = 0
+  ) {
+    if (attempt >= MAX_POLL_ATTEMPTS) {
+      showToast({
+        variant: "error",
+        title: t("export.timeoutTitle"),
+        message: t("export.timeoutMessage"),
+      })
+      setState("idle")
+      return
+    }
+
     try {
       const { status } = await getExportJobStatus(jobId)
 
-      if (status === "ready") {
+      if (status === ExportJobStatusValueSchema.enum.ready) {
         setState("downloading")
         const blob = await downloadExportFile(jobId)
 
@@ -67,7 +83,7 @@ export function useExportUsers() {
         return
       }
 
-      if (status === "failed") {
+      if (status === ExportJobStatusValueSchema.enum.failed) {
         showToast({
           variant: "error",
           title: t("export.errorTitle"),
@@ -79,7 +95,7 @@ export function useExportUsers() {
 
       // still processing — poll again
       pollTimeoutRef.current = setTimeout(
-        () => void pollAndDownload(jobId, format),
+        () => void pollAndDownload(jobId, format, attempt + 1),
         POLL_INTERVAL_MS
       )
     } catch (err) {

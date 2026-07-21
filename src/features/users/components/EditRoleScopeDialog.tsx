@@ -35,7 +35,15 @@ export function EditRoleScopeDialog({
 }: Props) {
   const { t } = useTranslation("users")
 
-  const allowedRoles = (ROLE_TRANSITIONS[currentRole] ?? []) as [
+  const configuredTransitions = ROLE_TRANSITIONS[currentRole]
+
+  if (open && (!configuredTransitions || configuredTransitions.length === 0)) {
+    throw new Error(
+      `EditRoleScopeDialog: no role transitions configured for role "${currentRole}"`
+    )
+  }
+
+  const allowedRoles = (configuredTransitions ?? []) as [
     UserRole,
     ...UserRole[],
   ]

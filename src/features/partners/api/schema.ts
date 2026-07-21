@@ -20,22 +20,23 @@ export const PartnerStatusSchema = z.enum([
 ])
 export type PartnerStatus = z.infer<typeof PartnerStatusSchema>
 
+// PRD1042-1453: leasing_company and ubo_related_person no longer exist as
+// partner roles — counterparty status is derived from the Framework Agreement
+// and UBO lives in the identity/KYC layer. Deal roles (lessee/guarantor/
+// supplier) are contract-derived and cannot be assigned manually; they remain
+// here for the list filter and read paths only.
 export const PartnerRoleSchema = z.enum([
   "lessee",
   "guarantor",
   "supplier",
-  "leasing_company",
   "bank_entity",
-  "ubo_related_person",
 ])
 export type PartnerRole = z.infer<typeof PartnerRoleSchema>
 
-export const NonRiskPartnerRoleSchema = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-])
-export type NonRiskPartnerRole = z.infer<typeof NonRiskPartnerRoleSchema>
+// The only role that may be assigned manually (at submit or via the assign
+// dialog). Risk-sensitive: routes through Four-Eyes BO counter-confirmation.
+export const AssignablePartnerRoleSchema = z.enum(["bank_entity"])
+export type AssignablePartnerRole = z.infer<typeof AssignablePartnerRoleSchema>
 
 // BE's governed-action-backed role entries currently send the generic
 // governed_action status "pending" instead of the role-specific
@@ -138,8 +139,17 @@ export const CandidateSummarySchema = z.object({
 })
 export type CandidateSummary = z.infer<typeof CandidateSummarySchema>
 
+export const PartnerMatchClassificationSchema = z.enum([
+  "exact",
+  "ambiguous",
+  "no_match",
+])
+export type PartnerMatchClassification = z.infer<
+  typeof PartnerMatchClassificationSchema
+>
+
 export const PartnerMatchResponseSchema = z.object({
-  classification: z.string(),
+  classification: PartnerMatchClassificationSchema,
   confidence: z.string().nullable(),
   matched_partner_id: z.string().uuid().nullable(),
   candidate_summaries: z.array(CandidateSummarySchema),
@@ -166,7 +176,9 @@ export const PartnerListItemSchema = z.object({
   status: PartnerStatusSchema,
   country: z.string().nullable(),
   ubo_completeness_status: UboCompletenessStatusSchema,
-  roles: z.array(PartnerRoleSchema),
+  // plain strings: rows may carry historical role values that no longer exist
+  // in PartnerRoleSchema (leasing_company/ubo_related_person, PRD1042-1453)
+  roles: z.array(z.string()),
 })
 export type PartnerListItem = z.infer<typeof PartnerListItemSchema>
 
@@ -232,7 +244,8 @@ export type ActorSummary = z.infer<typeof ActorSummarySchema>
 
 export const RoleAssignmentSummarySchema = z.object({
   role_assignment_id: z.string().uuid(),
-  role: PartnerRoleSchema,
+  // plain string: history may carry removed role values (PRD1042-1453)
+  role: z.string(),
   status: RoleStatusSchema,
   is_risk_sensitive: z.boolean(),
   assigned_by: ActorSummarySchema,
@@ -260,9 +273,12 @@ export const PartnerRolesResponseSchema = z.object({
 export type PartnerRolesResponse = z.infer<typeof PartnerRolesResponseSchema>
 
 export const RoleAssignResultSchema = z.object({
-  role: PartnerRoleSchema,
+  role: z.string(),
   status: RoleStatusSchema,
   is_new: z.boolean(),
+  // Set when the role is risk-sensitive: the pending partner_role_assign
+  // governed action awaiting BO counter-confirmation (PRD1042-1452).
+  governed_action_id: z.string().uuid().nullable().optional(),
 })
 export type RoleAssignResult = z.infer<typeof RoleAssignResultSchema>
 
@@ -493,7 +509,7 @@ export const DuplicateCandidatePairResponseSchema = z.object({
   detected_at: z.string().datetime(),
   resolved_by: z.string().nullable(),
   resolved_at: z.string().datetime().nullable(),
-  reason_code: z.string().nullable(),
+  reason_code: DuplicateResolutionReasonCodeSchema.nullable(),
   resolution_note: z.string().nullable(),
 })
 export type DuplicateCandidatePairResponse = z.infer<
@@ -534,7 +550,7 @@ export const MergeLineageRecordResponseSchema = z.object({
   governed_action_id: z.string().uuid(),
   executed_by: z.string().uuid(),
   executed_at: z.string().datetime(),
-  merge_reason_code: z.string(),
+  merge_reason_code: MergeReasonCodeSchema,
   reference_manifest: z.record(z.string(), z.unknown()),
 })
 export type MergeLineageRecordResponse = z.infer<

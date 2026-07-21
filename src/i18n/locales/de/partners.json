@@ -55,9 +55,6 @@
     "system_import_error": "System import error",
     "legal_restructuring": "Legal restructuring"
   },
-  "tenantQuickSelect": {
-    "placeholder": "Mandant auswählen…"
-  },
   "list": {
     "title": "Partnerverwaltung",
     "subtitle": "Gegenparteien-Identitäten im Mandanten suchen und verwalten.",
@@ -74,7 +71,8 @@
       },
       "actions": {
         "archive": "Archivieren"
-      }
+      },
+      "actionsMenuLabel": "Aktionen"
     },
     "emptyState": {
       "title": "No partners yet",
@@ -140,7 +138,7 @@
       "submitButton": "Submit for matching",
       "submitting": "Submitting…",
       "fourEyesBadge": "Four-eyes",
-      "classificationHint": "Select all roles that apply. At least one is required.",
+      "classificationHint": "Optional. Deal roles (lessee, guarantor, supplier) are derived from the contract process and cannot be assigned here.",
       "sections": {
         "basicIdentity": "BASIC IDENTITY",
         "registryIdentifiers": "REGISTRY IDENTIFIERS",
@@ -164,7 +162,10 @@
         "ubo_related_person": "Requires counter-confirmation"
       },
       "errors": {
-        "roleRequired": "Select at least one role."
+        "roleRequired": "Select at least one role.",
+        "required": "Dieses Feld ist erforderlich.",
+        "invalidCountry": "Wählen Sie ein Land aus der Liste aus.",
+        "leiInvalid": "Die LEI muss aus genau 20 alphanumerischen Zeichen bestehen (ISO 17442)."
       }
     },
     "matchStep": {
@@ -332,6 +333,7 @@
       "reason": "Reason",
       "reasonMinChars": "Min. 20 characters",
       "reasonPlaceholder": "Describe why this partner is being archived…",
+      "reasonHint": "Mandatory. Stored in the audit trail.",
       "irreversibilityAck": {
         "prefix": "I understand that archiving is ",
         "emphasis": "irreversible",
@@ -386,10 +388,14 @@
       "rolePlaceholder": "Select role…",
       "note": "Note (optional)"
     },
+    "errors": {
+      "roleRequired": "Rolle ist erforderlich."
+    },
     "cancel": "Cancel",
     "submit": "Assign",
     "submitting": "Assigning…",
-    "success": "Role assigned successfully."
+    "success": "Role assigned successfully.",
+    "successPending": "Role submitted for Back Office approval."
   },
   "duplicates": {
     "list": {
@@ -552,6 +558,42 @@
     "DUPLICATE_PAIR_ALREADY_RESOLVED": "Dieses Paar wurde bereits von einem anderen Prüfer geklärt.",
     "PARTNER_NOT_MERGEABLE": "Einer der ausgewählten Partner kann in seinem aktuellen Status nicht zusammengeführt werden.",
     "PAIR_NOT_FLAGGED_FOR_MERGE": "Dieses Paar muss als Duplikat bestätigt werden, bevor eine Zusammenführung eingeleitet werden kann.",
-    "MERGE_PARTNER_NOT_IN_PAIR": "Der ausgewählte überlebende Partner muss einer der beiden Partner in diesem Paar sein."
+    "MERGE_PARTNER_NOT_IN_PAIR": "Der ausgewählte überlebende Partner muss einer der beiden Partner in diesem Paar sein.",
+    "VALIDATION_ERROR": "Die übermittelten Daten sind ungültig. Bitte überprüfen Sie das Formular und versuchen Sie es erneut."
+  },
+  "confirmDialog": {
+    "triggerButton": "Confirm partner",
+    "title": "Confirm partner",
+    "description": "Confirming makes this partner referenceable in contracts and financings. No additional approval is required.",
+    "fields": {
+      "note": "Note (optional)",
+      "notePlaceholder": "Add context for the confirmation record…",
+      "noteHint": "Optional. Stored in the audit trail."
+    },
+    "errors": {
+      "noteTooLong": "Note must be at most 2000 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Confirm",
+    "submitting": "Confirming…",
+    "success": "Partner confirmed."
+  },
+  "rejectDialog": {
+    "triggerButton": "Reject",
+    "title": "Reject partner",
+    "description": "Rejection is final — a rejected partner cannot be confirmed later.",
+    "fields": {
+      "note": "Reason",
+      "noteMinChars": "Min. 10 characters",
+      "notePlaceholder": "Explain why this partner is being rejected…",
+      "noteHint": "Mandatory. Stored in the audit trail."
+    },
+    "errors": {
+      "noteTooShort": "Reason must be at least 10 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Reject partner",
+    "submitting": "Rejecting…",
+    "success": "Partner rejected."
   }
 }

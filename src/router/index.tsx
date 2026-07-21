@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter } from "react-router-dom"
 import { lazy, Suspense } from "react"
-import App from "@/App"
 import { PATHS } from "./paths"
 import { RoleGuard } from "@/router/RoleGuard"
 import {
@@ -10,6 +9,7 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
+import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import {
   TENANT_LIST_ALLOWED_ROLES,
   TENANT_CREATE_ALLOWED_ROLES,
@@ -23,6 +23,10 @@ import {
   PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES,
   PRODUCT_TEMPLATE_READ_ALLOWED_ROLES,
 } from "@/features/productTemplates/types"
+import {
+  FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES,
+} from "@/features/frameworkAgreements/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -47,8 +51,9 @@ const VerifyEmailPage = lazy(
   () => import("@/features/auth/components/VerifyEmailPage")
 )
 const ProtectedLayout = lazy(() => import("./ProtectedLayout"))
+const App = lazy(() => import("@/App"))
 const NotFoundPage = lazy(
-  () => import("@/features/not-found/components/NotFoundPage")
+  () => import("@/features/errors/components/NotFoundPage")
 )
 const ForbiddenPage = lazy(
   () => import("@/features/errors/components/ForbiddenPage")
@@ -62,6 +67,9 @@ const UserDetailPage = lazy(
 const LeasingCompanyWorkspacePage = lazy(
   () => import("@/features/lc/components/LeasingCompanyWorkspacePage")
 )
+const LcFrameworkAgreementsPage = lazy(
+  () => import("@/features/lc/components/LcFrameworkAgreementsPage")
+)
 const PendingApprovalsPage = lazy(
   () => import("@/features/governed-actions/components/PendingApprovalsPage")
 )
@@ -73,6 +81,9 @@ const AuditTrailPage = lazy(
 )
 const AuditEventDetailPage = lazy(
   () => import("@/features/audit/components/AuditEventDetailPage")
+)
+const NotificationConfigPage = lazy(
+  () => import("@/features/notifications/components/NotificationConfigPage")
 )
 const TenantManagementPage = lazy(
   () => import("@/features/tenants/components/TenantManagementPage")
@@ -107,6 +118,18 @@ const CreateProductTemplateWizardPage = lazy(
 )
 const VersionHistoryPage = lazy(
   () => import("@/features/productTemplates/components/VersionHistoryPage")
+)
+const FrameworkAgreementListPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/FrameworkAgreementListPage")
+)
+const CreateFrameworkAgreementWizardPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/CreateFrameworkAgreementWizardPage")
+)
+const FrameworkAgreementDetailPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/FrameworkAgreementDetailPage")
 )
 
 export const router = createBrowserRouter([
@@ -184,9 +207,11 @@ export const router = createBrowserRouter([
       {
         path: PATHS.DASHBOARD,
         element: (
-          <RoleGuard allowed={INTERNAL_BANK_ROLES}>
-            <App />
-          </RoleGuard>
+          <Suspense fallback={null}>
+            <RoleGuard allowed={INTERNAL_BANK_ROLES}>
+              <App />
+            </RoleGuard>
+          </Suspense>
         ),
       },
       {
@@ -320,6 +345,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: PATHS.NOTIFICATION_CONFIGURATION,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={NOTIFICATION_CONFIG_ALLOWED_ROLES}>
+              <NotificationConfigPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
         path: PATHS.SETTINGS_PROFILE,
         element: (
           <Suspense fallback={null}>
@@ -378,6 +413,36 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: PATHS.FRAMEWORK_AGREEMENT_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES}>
+              <FrameworkAgreementListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.FRAMEWORK_AGREEMENT_CREATE,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES}>
+              <CreateFrameworkAgreementWizardPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.FRAMEWORK_AGREEMENT_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES}>
+              <FrameworkAgreementDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
         path: PATHS.LC_REQUESTS,
         element: (
           <Suspense fallback={null}>
@@ -413,6 +478,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={LC_ONLY_ROLES}>
               <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.LC_FRAMEWORK_AGREEMENTS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LcFrameworkAgreementsPage />
             </RoleGuard>
           </Suspense>
         ),

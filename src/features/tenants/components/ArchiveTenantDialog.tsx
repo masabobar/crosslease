@@ -3,12 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { ShieldAlert, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { useArchiveTenant } from "@/features/tenants/hooks/useArchiveTenant"
 import { createArchiveTenantFormSchema } from "@/features/tenants/api/schema"
@@ -25,6 +21,10 @@ type Props = {
   tenantName: string
   tenantStatus: TenantStatus
   activeUserCount: number
+  // True when the active-user count could not be loaded (e.g. the detail
+  // fetch failed). Treated as "active users may exist" so the acknowledgement
+  // is still required rather than silently skipped.
+  activeUserCountUnknown?: boolean
 }
 
 export function ArchiveTenantDialog({
@@ -34,10 +34,11 @@ export function ArchiveTenantDialog({
   tenantName,
   tenantStatus,
   activeUserCount,
+  activeUserCountUnknown = false,
 }: Props) {
   const { t } = useTranslation("tenants")
   const mutation = useArchiveTenant(tenantId)
-  const hasActiveUsers = activeUserCount > 0
+  const hasActiveUsers = activeUserCountUnknown || activeUserCount > 0
   const schema = createArchiveTenantFormSchema(hasActiveUsers)
 
   const {
@@ -87,70 +88,45 @@ export function ArchiveTenantDialog({
   }
 
   return (
-    <DialogModal open={open} onOpenChange={onOpenChange}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Header */}
-        <div className="px-4 py-4">
-          <DialogHeader>
-            <DialogTitle>{t("detail.archiveDialog.title")}</DialogTitle>
-          </DialogHeader>
-        </div>
-
-        <Separator />
-
-        {/* Content */}
-        <div className="flex flex-col gap-6 px-4 py-4">
-          {/* Tenant info rows */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-foreground">
-                {t("detail.archiveDialog.info.tenant")}
-              </span>
-              <span className="text-foreground font-medium">{tenantName}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-foreground">
-                {t("detail.archiveDialog.info.currentStatus")}
-              </span>
-              <TenantStatusBadge status={tenantStatus} />
-            </div>
+    <ConfirmActionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit(onSubmit)}
+      title={t("detail.archiveDialog.title")}
+      infoRows={
+        <>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-foreground">
+              {t("detail.archiveDialog.info.tenant")}
+            </span>
+            <span className="text-foreground font-medium">{tenantName}</span>
           </div>
-
-          <Separator />
-
-          {/* Justification input */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="archive-justification"
-                className="text-sm font-medium"
-              >
-                {t("detail.archiveDialog.fields.justification")}
-              </Label>
-              <span className="text-sm text-muted-foreground/80">
-                {t("detail.archiveDialog.fields.justificationMinChars")}
-              </span>
-            </div>
-            <Textarea
-              id="archive-justification"
-              data-testid="archive-justification"
-              placeholder={t(
-                "detail.archiveDialog.fields.justificationPlaceholder"
-              )}
-              rows={4}
-              {...register("justification")}
-            />
-            {errors.justification ? (
-              <p className="text-sm text-destructive" role="alert">
-                {t("detail.archiveDialog.errors.justificationTooShort")}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground/80">
-                {t("detail.archiveDialog.fields.justificationHint")}
-              </p>
-            )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-foreground">
+              {t("detail.archiveDialog.info.currentStatus")}
+            </span>
+            <TenantStatusBadge status={tenantStatus} />
           </div>
-
+        </>
+      }
+      justificationFieldId="archive-justification"
+      justificationLabel={t("detail.archiveDialog.fields.justification")}
+      justificationMinCharsLabel={t(
+        "detail.archiveDialog.fields.justificationMinChars"
+      )}
+      justificationHint={t("detail.archiveDialog.fields.justificationHint")}
+      justificationErrorMessage={
+        errors.justification
+          ? t("detail.archiveDialog.errors.justificationTooShort")
+          : undefined
+      }
+      justificationRegister={register("justification")}
+      justificationPlaceholder={t(
+        "detail.archiveDialog.fields.justificationPlaceholder"
+      )}
+      justificationRows={4}
+      extraContent={
+        <>
           {/* Irreversibility acknowledgement */}
           <label className="flex items-center gap-2 cursor-pointer">
             <Controller
@@ -188,9 +164,11 @@ export function ArchiveTenantDialog({
                 )}
               />
               <span className="text-sm text-foreground leading-snug">
-                {t("detail.archiveDialog.fields.activeUserAck", {
-                  count: activeUserCount,
-                })}
+                {activeUserCountUnknown
+                  ? t("detail.archiveDialog.fields.activeUserAckUnknown")
+                  : t("detail.archiveDialog.fields.activeUserAck", {
+                      count: activeUserCount,
+                    })}
               </span>
             </label>
           )}
@@ -221,31 +199,17 @@ export function ArchiveTenantDialog({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting || mutation.isPending}
-            data-testid="archive-cancel"
-          >
-            {t("detail.archiveDialog.cancel")}
-          </Button>
-          <Button
-            type="submit"
-            className="bg-destructive/10 text-destructive hover:bg-destructive/20 border-transparent shadow-none"
-            disabled={isSubmitting || mutation.isPending}
-            data-testid="archive-submit"
-          >
-            {mutation.isPending
-              ? t("detail.archiveDialog.submitting")
-              : t("detail.archiveDialog.submit")}
-          </Button>
-        </div>
-      </form>
-    </DialogModal>
+        </>
+      }
+      onCancel={handleClose}
+      isActionDisabled={isSubmitting || mutation.isPending}
+      isPending={mutation.isPending}
+      cancelLabel={t("detail.archiveDialog.cancel")}
+      cancelTestId="archive-cancel"
+      submitLabel={t("detail.archiveDialog.submit")}
+      submittingLabel={t("detail.archiveDialog.submitting")}
+      submitTestId="archive-submit"
+      submitButtonClassName="bg-destructive/10 text-destructive hover:bg-destructive/20 border-transparent shadow-none"
+    />
   )
 }

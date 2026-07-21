@@ -17,8 +17,8 @@ type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>
   justification: string
   onJustificationChange: (value: string) => void
-  confirmed: boolean
-  onConfirmedChange: (value: boolean) => void
+  isConfirmed: boolean
+  onIsConfirmedChange: (value: boolean) => void
 }
 
 function ReviewRow({
@@ -69,8 +69,8 @@ function ReviewStep({
   form,
   justification,
   onJustificationChange,
-  confirmed,
-  onConfirmedChange,
+  isConfirmed,
+  onIsConfirmedChange,
 }: Props) {
   const { t } = useTranslation("productTemplates")
   const values = useWatch({ control: form.control })
@@ -345,8 +345,8 @@ function ReviewStep({
         <Checkbox
           id="confirm-publication"
           data-testid="confirm-publication-checkbox"
-          checked={confirmed}
-          onCheckedChange={value => onConfirmedChange(value === true)}
+          checked={isConfirmed}
+          onCheckedChange={value => onIsConfirmedChange(value === true)}
         />
         <span className="text-sm text-foreground">
           {t("fields.confirmPublication")}

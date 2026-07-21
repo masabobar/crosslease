@@ -17,12 +17,14 @@ import type { UserStatus } from "@/features/users/api/schema"
 import { getUserFilterVisibility } from "@/features/users/utils"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 
 // i18n key casts for dynamic lookups
 type RolesKey = `roles.${UserRole}`
 type StatusesKey = `statuses.${UserStatus}`
 import { RoleBadge } from "./RoleBadge"
 import { UserStatusBadge } from "./UserStatusBadge"
+import { FilterCheckboxRow } from "./FilterCheckboxRow"
 
 type UserFilterPanelProps = {
   onClose: () => void
@@ -132,24 +134,14 @@ function MultiSelectDropdown<T extends string>({
         {options.map(option => {
           const checked = value.includes(option)
           return (
-            <Button
+            <FilterCheckboxRow
               key={option}
-              type="button"
-              variant="ghost"
+              checked={checked}
               data-testid={`filter-option-${option}`}
               onClick={() => toggle(option)}
-              className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
             >
-              <span
-                className={cn(
-                  "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-                  checked ? "bg-primary border-primary" : "border-border"
-                )}
-              >
-                {checked && <Check size={10} className="text-white" />}
-              </span>
               {renderOption(option)}
-            </Button>
+            </FilterCheckboxRow>
           )
         })}
       </PopoverContent>
@@ -318,242 +310,245 @@ function UserFilterPanel({
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Drawer */}
-      <div
-        className="fixed right-0 inset-y-0 w-[420px] bg-white shadow-xl z-50 flex flex-col"
+    <Sheet
+      open
+      onOpenChange={o => {
+        if (!o) onClose()
+      }}
+    >
+      <SheetContent
+        side="right"
+        className="w-[420px] sm:max-w-[420px] gap-0 p-0"
+        showCloseButton={false}
         data-testid="user-filter-panel"
       >
-        {/* Header */}
-        <div className="px-4 py-4 border-b border-border shrink-0">
-          <h2 className="text-sm font-semibold text-foreground">
-            {t("filter.title")}
-          </h2>
-        </div>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="px-4 py-4 border-b border-border shrink-0">
+            <SheetTitle className="text-sm font-semibold text-foreground">
+              {t("filter.title")}
+            </SheetTitle>
+          </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto">
-          {/* ── IDENTITY & ACCESS ── */}
-          <SectionHeader>{t("filter.sections.identityAccess")}</SectionHeader>
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto">
+            {/* ── IDENTITY & ACCESS ── */}
+            <SectionHeader>{t("filter.sections.identityAccess")}</SectionHeader>
 
-          <FilterField label={t("filter.fields.role")}>
-            <MultiSelectDropdown
-              value={staged.role}
-              onChange={roles => setStaged(s => ({ ...s, role: roles }))}
-              options={[...USER_ROLES]}
-              placeholder={t("filter.placeholders.select")}
-              renderOption={role => <RoleBadge role={role} />}
-              getLabel={role => t(`roles.${role}` as RolesKey)}
-              getMultiLabel={count => t("filter.selectedCount", { count })}
-              data-testid="filter-role-select"
-            />
-          </FilterField>
-
-          <FilterField label={t("filter.fields.status")}>
-            <MultiSelectDropdown
-              value={staged.status}
-              onChange={statuses =>
-                setStaged(s => ({ ...s, status: statuses }))
-              }
-              options={[...USER_STATUSES]}
-              placeholder={t("filter.placeholders.select")}
-              renderOption={status => <UserStatusBadge status={status} />}
-              getLabel={status => t(`statuses.${status}` as StatusesKey)}
-              getMultiLabel={count => t("filter.selectedCount", { count })}
-              data-testid="filter-status-select"
-            />
-          </FilterField>
-
-          {/* MFA filter: UI ready — backend does not support mfa_enabled filter yet */}
-          {filterVis.mfa && (
-            <FilterField label={t("filter.fields.mfaStatus")}>
-              <TextToggle
-                options={[
-                  { value: "enabled", label: t("filter.mfa.enabled") },
-                  { value: "disabled", label: t("filter.mfa.disabled") },
-                ]}
-                value={staged.mfa_enabled}
-                onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
-                disabled
+            <FilterField label={t("filter.fields.role")}>
+              <MultiSelectDropdown
+                value={staged.role}
+                onChange={roles => setStaged(s => ({ ...s, role: roles }))}
+                options={[...USER_ROLES]}
+                placeholder={t("filter.placeholders.select")}
+                renderOption={role => <RoleBadge role={role} />}
+                getLabel={role => t(`roles.${role}` as RolesKey)}
+                getMultiLabel={count => t("filter.selectedCount", { count })}
+                data-testid="filter-role-select"
               />
             </FilterField>
-          )}
 
-          {filterVis.tenant && (
-            <FilterField label={t("filter.fields.tenant")}>
-              <SingleSelectDropdown
-                value={staged.tenant_id}
-                onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
-                options={tenantOptions}
-                placeholder={t("filter.placeholders.tenant")}
-                data-testid="filter-tenant-select"
+            <FilterField label={t("filter.fields.status")}>
+              <MultiSelectDropdown
+                value={staged.status}
+                onChange={statuses =>
+                  setStaged(s => ({ ...s, status: statuses }))
+                }
+                options={[...USER_STATUSES]}
+                placeholder={t("filter.placeholders.select")}
+                renderOption={status => <UserStatusBadge status={status} />}
+                getLabel={status => t(`statuses.${status}` as StatusesKey)}
+                getMultiLabel={count => t("filter.selectedCount", { count })}
+                data-testid="filter-status-select"
               />
             </FilterField>
-          )}
 
-          {/* LG filter: UI ready — backend does not support lg_id filter yet */}
-          {filterVis.lg && (
-            <FilterField label={t("filter.fields.leasingCompany")}>
-              <DisabledSelect
-                placeholder={t("filter.placeholders.leasingCompany")}
-              />
-            </FilterField>
-          )}
-
-          {/* ── ACTIVITY ── */}
-          <SectionHeader>{t("filter.sections.activity")}</SectionHeader>
-
-          {filterVis.lastLogin && (
-            <FilterField label={t("filter.fields.lastLoginRange")}>
-              <div className="flex gap-2">
-                <DatePicker
-                  value={staged.last_login_from ?? undefined}
-                  onChange={v =>
-                    setStaged(s => {
-                      const newFrom = parseISO(v)
-                      const currentTo = s.last_login_to
-                        ? parseISO(s.last_login_to)
-                        : null
-                      return {
-                        ...s,
-                        last_login_from: v,
-                        last_login_to:
-                          currentTo && currentTo < newFrom
-                            ? null
-                            : s.last_login_to,
-                      }
-                    })
-                  }
-                  placeholder={t("filter.placeholders.from")}
-                  maxDate={new Date()}
+            {/* MFA filter: UI ready — backend does not support mfa_enabled filter yet */}
+            {filterVis.mfa && (
+              <FilterField label={t("filter.fields.mfaStatus")}>
+                <TextToggle
+                  options={[
+                    { value: "enabled", label: t("filter.mfa.enabled") },
+                    { value: "disabled", label: t("filter.mfa.disabled") },
+                  ]}
+                  value={staged.mfa_enabled}
+                  onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
+                  disabled
                 />
-                <DatePicker
-                  value={staged.last_login_to ?? undefined}
-                  onChange={v => setStaged(s => ({ ...s, last_login_to: v }))}
-                  placeholder={t("filter.placeholders.to")}
-                  maxDate={new Date()}
-                  minDate={
-                    staged.last_login_from
-                      ? parseISO(staged.last_login_from)
-                      : undefined
-                  }
+              </FilterField>
+            )}
+
+            {filterVis.tenant && (
+              <FilterField label={t("filter.fields.tenant")}>
+                <SingleSelectDropdown
+                  value={staged.tenant_id}
+                  onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
+                  options={tenantOptions}
+                  placeholder={t("filter.placeholders.tenant")}
+                  data-testid="filter-tenant-select"
                 />
-              </div>
-            </FilterField>
-          )}
-          {/* access_expiry_from/to, created_from/to — backend does not support yet */}
+              </FilterField>
+            )}
 
-          <FilterField label={t("filter.fields.userCreationDate")}>
-            <DisabledDateField
-              placeholder={t("filter.placeholders.chooseDate")}
-            />
-          </FilterField>
+            {/* LG filter: UI ready — backend does not support lg_id filter yet */}
+            {filterVis.lg && (
+              <FilterField label={t("filter.fields.leasingCompany")}>
+                <DisabledSelect
+                  placeholder={t("filter.placeholders.leasingCompany")}
+                />
+              </FilterField>
+            )}
 
-          {filterVis.accessExpiry && (
-            <FilterField label={t("filter.fields.accessExpiry")}>
+            {/* ── ACTIVITY ── */}
+            <SectionHeader>{t("filter.sections.activity")}</SectionHeader>
+
+            {filterVis.lastLogin && (
+              <FilterField label={t("filter.fields.lastLoginRange")}>
+                <div className="flex gap-2">
+                  <DatePicker
+                    value={staged.last_login_from ?? undefined}
+                    onChange={v =>
+                      setStaged(s => {
+                        const newFrom = parseISO(v)
+                        const currentTo = s.last_login_to
+                          ? parseISO(s.last_login_to)
+                          : null
+                        return {
+                          ...s,
+                          last_login_from: v,
+                          last_login_to:
+                            currentTo && currentTo < newFrom
+                              ? null
+                              : s.last_login_to,
+                        }
+                      })
+                    }
+                    placeholder={t("filter.placeholders.from")}
+                    maxDate={new Date()}
+                    captionLayout="dropdown"
+                  />
+                  <DatePicker
+                    value={staged.last_login_to ?? undefined}
+                    onChange={v => setStaged(s => ({ ...s, last_login_to: v }))}
+                    placeholder={t("filter.placeholders.to")}
+                    maxDate={new Date()}
+                    minDate={
+                      staged.last_login_from
+                        ? parseISO(staged.last_login_from)
+                        : undefined
+                    }
+                    captionLayout="dropdown"
+                  />
+                </div>
+              </FilterField>
+            )}
+            {/* access_expiry_from/to, created_from/to — backend does not support yet */}
+
+            <FilterField label={t("filter.fields.userCreationDate")}>
               <DisabledDateField
                 placeholder={t("filter.placeholders.chooseDate")}
               />
             </FilterField>
-          )}
 
-          {/* ── GOVERNANCE & ACCOUNT ── */}
-          <SectionHeader>
-            {t("filter.sections.governanceAccount")}
-          </SectionHeader>
+            {filterVis.accessExpiry && (
+              <FilterField label={t("filter.fields.accessExpiry")}>
+                <DisabledDateField
+                  placeholder={t("filter.placeholders.chooseDate")}
+                />
+              </FilterField>
+            )}
 
-          {/* Audit Engagement Status: system_admin + auditor only */}
-          {filterVis.auditEngagementStatus && (
-            <FilterField label={t("filter.fields.auditEngagementStatus")}>
-              <DisabledSelect placeholder={t("filter.placeholders.select")} />
-            </FilterField>
-          )}
+            {/* ── GOVERNANCE & ACCOUNT ── */}
+            <SectionHeader>
+              {t("filter.sections.governanceAccount")}
+            </SectionHeader>
 
-          {/* Last Role Change Date: system_admin + auditor only */}
-          {filterVis.lastRoleChangeDate && (
-            <FilterField label={t("filter.fields.lastRoleChangeDate")}>
-              <DisabledDateField
-                placeholder={t("filter.placeholders.chooseDate")}
-              />
-            </FilterField>
-          )}
+            {/* Audit Engagement Status: system_admin + auditor only */}
+            {filterVis.auditEngagementStatus && (
+              <FilterField label={t("filter.fields.auditEngagementStatus")}>
+                <DisabledSelect placeholder={t("filter.placeholders.select")} />
+              </FilterField>
+            )}
 
-          {/* Last Permission Change Date: system_admin + auditor only */}
-          {filterVis.lastPermissionChangeDate && (
-            <FilterField label={t("filter.fields.lastPermissionChangeDate")}>
-              <DisabledDateField
-                placeholder={t("filter.placeholders.chooseDate")}
-              />
-            </FilterField>
-          )}
+            {/* Last Role Change Date: system_admin + auditor only */}
+            {filterVis.lastRoleChangeDate && (
+              <FilterField label={t("filter.fields.lastRoleChangeDate")}>
+                <DisabledDateField
+                  placeholder={t("filter.placeholders.chooseDate")}
+                />
+              </FilterField>
+            )}
 
-          {/* Origin Type: system_admin + auditor + support_user */}
-          {filterVis.originType && (
-            <FilterField label={t("filter.fields.originType")}>
-              <DisabledSelect placeholder={t("filter.placeholders.select")} />
-            </FilterField>
-          )}
+            {/* Last Permission Change Date: system_admin + auditor only */}
+            {filterVis.lastPermissionChangeDate && (
+              <FilterField label={t("filter.fields.lastPermissionChangeDate")}>
+                <DisabledDateField
+                  placeholder={t("filter.placeholders.chooseDate")}
+                />
+              </FilterField>
+            )}
 
-          {/* System User Flag: system_admin + auditor only */}
-          {filterVis.systemUserFlag && (
-            <FilterField label={t("filter.fields.systemUserFlag")}>
-              <TextToggle
-                options={[
-                  { value: "human", label: t("filter.flags.humanUser") },
-                  { value: "system", label: t("filter.flags.systemUser") },
-                ]}
-                value={null}
-                onChange={() => {}}
-                disabled
-              />
-            </FilterField>
-          )}
+            {/* Origin Type: system_admin + auditor + support_user */}
+            {filterVis.originType && (
+              <FilterField label={t("filter.fields.originType")}>
+                <DisabledSelect placeholder={t("filter.placeholders.select")} />
+              </FilterField>
+            )}
 
-          {/* Service Account Flag: system_admin + auditor only */}
-          {filterVis.serviceAccountFlag && (
-            <FilterField label={t("filter.fields.serviceAccountFlag")}>
-              <TextToggle
-                options={[
-                  { value: "enabled", label: t("filter.flags.enabled") },
-                  { value: "disabled", label: t("filter.flags.disabled") },
-                ]}
-                value={null}
-                onChange={() => {}}
-                disabled
-              />
-            </FilterField>
-          )}
+            {/* System User Flag: system_admin + auditor only */}
+            {filterVis.systemUserFlag && (
+              <FilterField label={t("filter.fields.systemUserFlag")}>
+                <TextToggle
+                  options={[
+                    { value: "human", label: t("filter.flags.humanUser") },
+                    { value: "system", label: t("filter.flags.systemUser") },
+                  ]}
+                  value={null}
+                  onChange={() => {}}
+                  disabled
+                />
+              </FilterField>
+            )}
+
+            {/* Service Account Flag: system_admin + auditor only */}
+            {filterVis.serviceAccountFlag && (
+              <FilterField label={t("filter.fields.serviceAccountFlag")}>
+                <TextToggle
+                  options={[
+                    { value: "enabled", label: t("filter.flags.enabled") },
+                    { value: "disabled", label: t("filter.flags.disabled") },
+                  ]}
+                  value={null}
+                  onChange={() => {}}
+                  disabled
+                />
+              </FilterField>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-border px-4 py-3 flex gap-3 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="filter-cancel-button"
+              onClick={onClose}
+              className="flex-1"
+            >
+              {t("filter.actions.cancel")}
+            </Button>
+            <Button
+              type="button"
+              data-testid="filter-apply-button"
+              onClick={handleApply}
+              className="flex-1"
+            >
+              {t("filter.actions.apply")}
+            </Button>
+          </div>
         </div>
-
-        {/* Footer */}
-        <div className="border-t border-border px-4 py-3 flex gap-3 shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            data-testid="filter-cancel-button"
-            onClick={onClose}
-            className="flex-1"
-          >
-            {t("filter.actions.cancel")}
-          </Button>
-          <Button
-            type="button"
-            data-testid="filter-apply-button"
-            onClick={handleApply}
-            className="flex-1"
-          >
-            {t("filter.actions.apply")}
-          </Button>
-        </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   )
 }
 

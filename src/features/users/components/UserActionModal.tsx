@@ -2,6 +2,7 @@ import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { DialogModal } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -13,6 +14,7 @@ import {
   SUSPENSION_REASONS,
   REACTIVATION_REASONS,
   DEACTIVATION_REASONS,
+  DEACTIVATION_REASON_OTHER,
   RESEND_REASONS,
   SuspendUserInputSchema,
   ReactivateUserInputSchema,
@@ -96,7 +98,7 @@ const DEACTIVATE_SCHEMA = DeactivateUserInputSchema.extend({
       message: "required",
       path: ["effective_from"],
     })
-  if (data.reason === "other" && !data.comment?.trim())
+  if (data.reason === DEACTIVATION_REASON_OTHER && !data.comment?.trim())
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "required",
@@ -251,12 +253,11 @@ function UserActionModal({
       form.reset()
       onSuccess()
     } catch (err) {
-      form.setError("root", {
-        message:
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic"),
-      })
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     }
   })
 
@@ -355,6 +356,7 @@ function UserActionModal({
                     onChange={field.onChange}
                     error={!!errors.effective_from}
                     minDate={new Date()}
+                    captionLayout="dropdown"
                   />
                 )}
               />
@@ -378,6 +380,7 @@ function UserActionModal({
                       data-testid="action-effective-until"
                       value={field.value}
                       onChange={field.onChange}
+                      captionLayout="dropdown"
                     />
                   )}
                 />
@@ -394,7 +397,8 @@ function UserActionModal({
               error={!!errors.comment}
               className="mb-1.5"
             >
-              {action === "deactivate" && watchedReason === "other"
+              {action === "deactivate" &&
+              watchedReason === DEACTIVATION_REASON_OTHER
                 ? t("actions.fields.commentRequired")
                 : t("actions.fields.comment")}
             </Label>
@@ -412,11 +416,6 @@ function UserActionModal({
               </p>
             )}
           </div>
-        )}
-
-        {/* Root error */}
-        {errors.root && (
-          <p className="text-sm text-destructive">{errors.root.message}</p>
         )}
 
         {/* Actions */}

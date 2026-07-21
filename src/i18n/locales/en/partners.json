@@ -55,9 +55,6 @@
     "system_import_error": "System import error",
     "legal_restructuring": "Legal restructuring"
   },
-  "tenantQuickSelect": {
-    "placeholder": "Select a tenant…"
-  },
   "list": {
     "title": "Partner management",
     "subtitle": "Search and manage counterparty identities across the tenant.",
@@ -74,7 +71,8 @@
       },
       "actions": {
         "archive": "Archive"
-      }
+      },
+      "actionsMenuLabel": "Actions"
     },
     "emptyState": {
       "title": "No partners yet",
@@ -140,7 +138,7 @@
       "submitButton": "Submit for matching",
       "submitting": "Submitting…",
       "fourEyesBadge": "Four-eyes",
-      "classificationHint": "Select all roles that apply. At least one is required.",
+      "classificationHint": "Optional. Deal roles (lessee, guarantor, supplier) are derived from the contract process and cannot be assigned here.",
       "sections": {
         "basicIdentity": "BASIC IDENTITY",
         "registryIdentifiers": "REGISTRY IDENTIFIERS",
@@ -164,7 +162,10 @@
         "ubo_related_person": "Requires counter-confirmation"
       },
       "errors": {
-        "roleRequired": "Select at least one role."
+        "roleRequired": "Select at least one role.",
+        "required": "This field is required.",
+        "invalidCountry": "Select a country from the list.",
+        "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442)."
       }
     },
     "matchStep": {
@@ -332,6 +333,7 @@
       "reason": "Reason",
       "reasonMinChars": "Min. 20 characters",
       "reasonPlaceholder": "Describe why this partner is being archived…",
+      "reasonHint": "Mandatory. Stored in the audit trail.",
       "irreversibilityAck": {
         "prefix": "I understand that archiving is ",
         "emphasis": "irreversible",
@@ -386,10 +388,14 @@
       "rolePlaceholder": "Select role…",
       "note": "Note (optional)"
     },
+    "errors": {
+      "roleRequired": "Role is required."
+    },
     "cancel": "Cancel",
     "submit": "Assign",
     "submitting": "Assigning…",
-    "success": "Role assigned successfully."
+    "success": "Role assigned successfully.",
+    "successPending": "Role submitted for Back Office approval."
   },
   "duplicates": {
     "list": {
@@ -552,6 +558,42 @@
     "DUPLICATE_PAIR_ALREADY_RESOLVED": "This pair has already been resolved by another reviewer.",
     "PARTNER_NOT_MERGEABLE": "One of the selected partners cannot be merged in its current state.",
     "PAIR_NOT_FLAGGED_FOR_MERGE": "This pair must be confirmed as a duplicate before a merge can be initiated.",
-    "MERGE_PARTNER_NOT_IN_PAIR": "The selected surviving partner must be one of the two partners in this pair."
+    "MERGE_PARTNER_NOT_IN_PAIR": "The selected surviving partner must be one of the two partners in this pair.",
+    "VALIDATION_ERROR": "The submitted data isn't valid. Please review the form and try again."
+  },
+  "confirmDialog": {
+    "triggerButton": "Confirm partner",
+    "title": "Confirm partner",
+    "description": "Confirming makes this partner referenceable in contracts and financings. No additional approval is required.",
+    "fields": {
+      "note": "Note (optional)",
+      "notePlaceholder": "Add context for the confirmation record…",
+      "noteHint": "Optional. Stored in the audit trail."
+    },
+    "errors": {
+      "noteTooLong": "Note must be at most 2000 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Confirm",
+    "submitting": "Confirming…",
+    "success": "Partner confirmed."
+  },
+  "rejectDialog": {
+    "triggerButton": "Reject",
+    "title": "Reject partner",
+    "description": "Rejection is final — a rejected partner cannot be confirmed later.",
+    "fields": {
+      "note": "Reason",
+      "noteMinChars": "Min. 10 characters",
+      "notePlaceholder": "Explain why this partner is being rejected…",
+      "noteHint": "Mandatory. Stored in the audit trail."
+    },
+    "errors": {
+      "noteTooShort": "Reason must be at least 10 characters."
+    },
+    "cancel": "Cancel",
+    "submit": "Reject partner",
+    "submitting": "Rejecting…",
+    "success": "Partner rejected."
   }
 }

@@ -2,7 +2,6 @@ import { useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
-import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -19,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
+import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
@@ -26,18 +26,19 @@ import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/
 import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
   IncrementType,
   TemplateStatus,
   TemplateVersionSummary,
 } from "@/features/productTemplates/api/schema"
 import { PATHS, productTemplateNewVersionEdit } from "@/router/paths"
-import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
-import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
-import NotFoundPage from "@/features/not-found/components/NotFoundPage"
-
-const DEPRECATION_JUSTIFICATION_MIN_LENGTH = 10
+import {
+  isProductTemplateNotFoundError,
+  showApiError,
+} from "@/features/productTemplates/utils"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 
 // Timeline-rail dot color per status — the colored dot sits on the left rail
 // connecting rows; the status badge itself (TemplateVersionStatusBadge) is a plain
@@ -84,7 +85,7 @@ export default function VersionHistoryPage() {
   } = useTemplateVersions(templateId ?? "")
 
   const latestVersionNumber = history?.versions[0]?.version_number ?? null
-  const { data: header } = useTemplateVersionDetail(
+  const { data: header, isError: isHeaderError } = useTemplateVersionDetail(
     templateId ?? "",
     latestVersionNumber
   )
@@ -109,13 +110,7 @@ export default function VersionHistoryPage() {
       })
       setDiscardTarget(null)
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      showApiError(err, t)
     }
   }
 
@@ -130,13 +125,7 @@ export default function VersionHistoryPage() {
       setIncrementType(null)
       navigate(productTemplateNewVersionEdit(templateId, result.version_number))
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      showApiError(err, t)
     }
   }
 
@@ -151,13 +140,7 @@ export default function VersionHistoryPage() {
       setDeprecateTarget(null)
       setDeprecationJustification("")
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      showApiError(err, t)
     }
   }
 
@@ -170,6 +153,11 @@ export default function VersionHistoryPage() {
         {header && (
           <p className="mt-1 text-sm text-muted-foreground">
             {header.template_name}
+          </p>
+        )}
+        {!header && isHeaderError && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("errors.generic")}
           </p>
         )}
       </div>
@@ -191,10 +179,16 @@ export default function VersionHistoryPage() {
 
       {history && !isLoadingVersions && (
         <div className="px-8 pb-8">
+          {/* NOTE: raw <div> list instead of shadcn Table — this view is a timeline
+              (status dot + rail), not tabular data, and matches the same div-grid
+              pattern already used by list tables elsewhere in this codebase (e.g.
+              TenantTable, PartnerTable); a full conversion is out of scope here. */}
           <div className="border border-border rounded-xl bg-background overflow-hidden">
             {history.versions.map((version, index) => {
-              const isDraft = version.version_status === "draft"
-              const isPublished = version.version_status === "published"
+              const isDraft =
+                version.version_status === TemplateStatusSchema.enum.draft
+              const isPublished =
+                version.version_status === TemplateStatusSchema.enum.published
               const isLast = index === history.versions.length - 1
 
               return (

@@ -476,7 +476,10 @@ const UpdateTenantRequest = z
   .partial()
   .passthrough()
 const SuspendTenantRequest = z
-  .object({ justification: z.string().min(30) })
+  .object({
+    justification: z.string().min(30),
+    effective_from: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const ReactivateTenantRequest = z
   .object({ justification: z.string().min(20) })
@@ -872,21 +875,13 @@ const ResolutionCandidatesResponse = z
     candidates: z.array(CandidateSummary),
   })
   .passthrough()
-const PartnerRole = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-])
 const ActorSummary = z
   .object({ user_id: z.string(), display_name: z.string(), email: z.string() })
   .passthrough()
 const RoleAssignmentSummary = z
   .object({
     role_assignment_id: z.string(),
-    role: PartnerRole,
+    role: z.string(),
     status: z.string(),
     is_risk_sensitive: z.boolean(),
     assigned_by: ActorSummary,
@@ -912,14 +907,20 @@ const PartnerRolesResponse = z
     history: z.array(RoleHistoryEntry),
   })
   .passthrough()
+const PartnerRole = z.enum(["lessee", "guarantor", "supplier", "bank_entity"])
 const RoleAssignRequest = z
   .object({
-    roles: z.array(z.enum(["lessee", "guarantor", "supplier"])).min(1),
+    roles: z.array(PartnerRole).min(1),
     note: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const RoleAssignResult = z
-  .object({ role: PartnerRole, status: z.string(), is_new: z.boolean() })
+  .object({
+    role: PartnerRole,
+    status: z.string(),
+    is_new: z.boolean(),
+    governed_action_id: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const RoleAssignResponse = z
   .object({ results: z.array(RoleAssignResult) })
@@ -991,6 +992,13 @@ const ArchiveEligibilityResponse = z
     requires_counter_confirmation: z.boolean(),
     risk_sensitive_roles: z.array(z.string()),
   })
+  .passthrough()
+const PartnerConfirmRequest = z
+  .object({ note: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const PartnerRejectRequest = z
+  .object({ note: z.string().min(10).max(2000) })
   .passthrough()
 const ArchivePartnerRequest = z
   .object({ reason: z.string().min(20).max(2000) })
@@ -1153,7 +1161,7 @@ const PartnerSubmitRequest = z
       NaturalPersonIdentityInput,
       SoleProprietorIdentityInput,
     ]),
-    roles: z.array(PartnerRole).min(1),
+    roles: z.array(PartnerRole).optional(),
   })
   .passthrough()
 const PartnerSubmitResponse = z
@@ -1188,7 +1196,7 @@ const PartnerListItem = z
     status: z.string(),
     country: z.union([z.string(), z.null()]),
     ubo_completeness_status: z.string(),
-    roles: z.array(PartnerRole),
+    roles: z.array(z.string()),
   })
   .passthrough()
 const PartnerListResponse = z
@@ -2054,11 +2062,11 @@ export const schemas = {
   ResolutionEventSummary,
   CandidateSummary,
   ResolutionCandidatesResponse,
-  PartnerRole,
   ActorSummary,
   RoleAssignmentSummary,
   RoleHistoryEntry,
   PartnerRolesResponse,
+  PartnerRole,
   RoleAssignRequest,
   RoleAssignResult,
   RoleAssignResponse,
@@ -2070,6 +2078,8 @@ export const schemas = {
   DecisionHistoryEntry,
   DecisionHistoryResponse,
   ArchiveEligibilityResponse,
+  PartnerConfirmRequest,
+  PartnerRejectRequest,
   ArchivePartnerRequest,
   ArchivePartnerResponse,
   IdentityChangeProposalRequest,
@@ -3762,6 +3772,35 @@ Post-November: this endpoint will reflect live channel configuration.`,
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/partners/:id/confirm",
+    alias: "confirm_partner_api_v1_partners__id__confirm_post",
+    description: `Confirm a draft/pending-confirmation partner — single-actor FO action per
+US 13.5 (Sys Admin ✓, FO ✓, BO/Risk ✗). No Four-Eyes approval (PRD1042-1449);
+risk-sensitive roles are governed separately via partner_role_assign.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerConfirmRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/partners/:id/confirmation-history",
     alias:
@@ -3911,6 +3950,33 @@ Post-November: this endpoint will reflect live channel configuration.`,
       },
     ],
     response: MergeHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/reject",
+    alias: "reject_partner_api_v1_partners__id__reject_post",
+    description: `Reject a draft/pending-confirmation partner — single-actor FO action (US 13.5).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ note: z.string().min(10).max(2000) }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
     errors: [
       {
         status: 422,
@@ -4921,7 +4987,7 @@ No existing sessions are invalidated immediately.
       {
         name: "body",
         type: "Body",
-        schema: z.object({ justification: z.string().min(30) }).passthrough(),
+        schema: SuspendTenantRequest,
       },
       {
         name: "id",
@@ -5299,7 +5365,8 @@ Requires &#x60;system_admin&#x60; role.`,
 - Tenant roles (&#x60;front_office&#x60;, &#x60;back_office&#x60;, &#x60;leasing_company_user&#x60;) — &#x60;tenant_id&#x60; required, tenant must be active.
   Immediate execution; returns &#x60;UserResponse&#x60; with status &#x60;invited&#x60;.
 - &#x60;auditor&#x60; — &#x60;access_valid_until&#x60; required.
-- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same tenant.
+- &#x60;leasing_company_user&#x60; — &#x60;lc_partner_id&#x60; required; must be a confirmed partner within the same
+  tenant that is the leasing-company party of at least one non-terminated framework agreement.
   All other roles must omit &#x60;lc_partner_id&#x60; (or send &#x60;null&#x60;).`,
     requestFormat: "json",
     parameters: [

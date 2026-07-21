@@ -1,5 +1,10 @@
 import { test as base, expect } from "@playwright/test"
-import type { APIRequestContext, Locator, Page } from "@playwright/test"
+import type {
+  APIRequestContext,
+  APIResponse,
+  Locator,
+  Page,
+} from "@playwright/test"
 import { LoginPage } from "../pages/LoginPage"
 
 type Fixtures = {
@@ -49,7 +54,8 @@ export const test = base.extend<Fixtures>({
   },
 
   // Pre-authenticated session — bank front_office role
-  // Uses /internal/test/session to bypass OTP — same pattern as authenticatedPage.
+  // Uses /internal/test/session to bypass OTP — matches authenticatedPage /
+  // supportPage / auditorPage. UI login timed out at 30s during Audit_Trail runs.
   bankProcessorPage: async ({ browser }, provide) => {
     const context = await browser.newContext()
     try {
@@ -172,4 +178,4 @@ export const test = base.extend<Fixtures>({
 })
 
 export { expect }
-export type { APIRequestContext, Locator, Page }
+export type { APIRequestContext, APIResponse, Locator, Page }

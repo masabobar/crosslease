@@ -30,12 +30,17 @@ describe("LC workspace paths", () => {
     expect(PATHS.LC_PROPOSALS).toBe("/lc/proposals")
   })
 
+  it("LC_FRAMEWORK_AGREEMENTS path is /lc/framework-agreements", () => {
+    expect(PATHS.LC_FRAMEWORK_AGREEMENTS).toBe("/lc/framework-agreements")
+  })
+
   it("all LC sub-paths start with the LC_WORKSPACE prefix", () => {
     const lcSubPaths = [
       PATHS.LC_REQUESTS,
       PATHS.LC_STATUS,
       PATHS.LC_DOCUMENTS,
       PATHS.LC_PROPOSALS,
+      PATHS.LC_FRAMEWORK_AGREEMENTS,
     ]
     lcSubPaths.forEach(path => {
       expect(path.startsWith(PATHS.LC_WORKSPACE)).toBe(true)

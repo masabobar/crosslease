@@ -28,6 +28,10 @@ import {
   PAGE_SIZES,
 } from "@/features/partners/hooks/usePartnerListParams"
 import type { PageSize } from "@/features/partners/hooks/usePartnerListParams"
+import {
+  PartnerRoleSchema,
+  UboCompletenessStatusSchema,
+} from "@/features/partners/api/schema"
 import type {
   PartnerStatus,
   PartnerRole,
@@ -37,7 +41,7 @@ import { PATHS, partnerDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { PARTNER_SUBMIT_ALLOWED_ROLES } from "@/features/partners/types"
-import { TenantQuickSelect } from "@/features/partners/components/TenantQuickSelect"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 const STATUS_OPTIONS: PartnerStatus[] = [
@@ -49,16 +53,9 @@ const STATUS_OPTIONS: PartnerStatus[] = [
   "pending_archive",
 ]
 
-const ROLE_OPTIONS: PartnerRole[] = [
-  "lessee",
-  "guarantor",
-  "supplier",
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-]
+const ROLE_OPTIONS: PartnerRole[] = PartnerRoleSchema.options
 
-const UBO_OPTIONS: UboCompletenessStatus[] = ["missing", "partial", "complete"]
+const UBO_OPTIONS: UboCompletenessStatus[] = UboCompletenessStatusSchema.options
 
 export default function PartnerRegistryPage() {
   const { t } = useTranslation("partners")
@@ -164,22 +161,12 @@ export default function PartnerRegistryPage() {
   // System Admin has no single tenant_id, so a quick session-only tenant select lets them
   // pick which tenant's registry to view (see TenantQuickSelect / tenantSelectionStore).
   if (currentUser && !tenantId) {
-    if (currentUser.role === SYSTEM_ADMIN_ROLE) {
-      return (
-        <div className="p-8 max-w-sm space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("list.selectTenantPrompt")}
-          </p>
-          <TenantQuickSelect />
-        </div>
-      )
-    }
     return (
-      <div className="p-8">
-        <p className="text-sm text-muted-foreground">
-          {t("list.tenantRequired")}
-        </p>
-      </div>
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("list.selectTenantPrompt")}
+        tenantRequiredMessage={t("list.tenantRequired")}
+      />
     )
   }
 

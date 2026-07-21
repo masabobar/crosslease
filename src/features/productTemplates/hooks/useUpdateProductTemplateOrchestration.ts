@@ -1,5 +1,8 @@
-import { useMutation } from "@tanstack/react-query"
-import { updateProductTemplateOrchestration } from "@/features/productTemplates/api/productTemplatesApi"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  updateProductTemplateOrchestration,
+  PRODUCT_TEMPLATES_QUERY_KEYS,
+} from "@/features/productTemplates/api/productTemplatesApi"
 import type { UpdateOrchestrationRequest } from "@/features/productTemplates/api/schema"
 
 type UpdateOrchestrationInput = {
@@ -9,6 +12,8 @@ type UpdateOrchestrationInput = {
 }
 
 export function useUpdateProductTemplateOrchestration() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: ({
       templateId,
@@ -16,5 +21,10 @@ export function useUpdateProductTemplateOrchestration() {
       body,
     }: UpdateOrchestrationInput) =>
       updateProductTemplateOrchestration(templateId, versionNumber, body),
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.versions(variables.templateId),
+      })
+    },
   })
 }

@@ -41,7 +41,6 @@ export async function fetchAuditEvents(
         params.sensitive !== undefined && params.sensitive !== null
           ? params.sensitive
           : undefined,
-      tenant_id: params.tenant_id,
       from_dt: params.from_dt,
       to_dt: params.to_dt,
     })}`

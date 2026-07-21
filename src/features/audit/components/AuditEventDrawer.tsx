@@ -9,14 +9,13 @@ import {
   SheetClose,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
+import { ApiError } from "@/lib/api"
 import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
+import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
 import { useAuditEventDetail } from "@/features/audit/hooks/useAuditEventDetail"
+import { useAuditEventLabels } from "@/features/audit/hooks/useAuditEventLabels"
 import { deriveAuditResult } from "@/features/audit/api/schema"
-import {
-  formatEventType,
-  formatActionType,
-  formatDateTime,
-} from "@/lib/formatters"
+import { formatEventType } from "@/lib/formatters"
 import type { AuditEvent, AuditResult } from "@/features/audit/api/schema"
 
 type DrawerTab = "overview" | "actor" | "payload"
@@ -134,23 +133,25 @@ function OverviewTab({
   result: AuditResult
 }) {
   const { t } = useTranslation("audit")
+  const { eventTypeLabel, actionTypeLabel, recordedAtLabel, sensitiveLabel } =
+    useAuditEventLabels(event)
 
   const summaryFields: { label: string; value: ReactNode }[] = [
     {
       label: t("drawer.fields.recordedAt"),
-      value: formatDateTime(event.recorded_at),
+      value: recordedAtLabel,
     },
     {
       label: t("drawer.fields.eventType"),
-      value: formatEventType(event.event_type),
+      value: eventTypeLabel,
     },
     {
       label: t("drawer.fields.actionType"),
-      value: formatActionType(event.action_type),
+      value: actionTypeLabel,
     },
     {
       label: t("drawer.fields.entityType"),
-      value: formatActionType(event.entity_type),
+      value: <EntityTypeBadge entityType={event.entity_type} />,
     },
     {
       label: t("drawer.fields.userAffected"),
@@ -178,9 +179,7 @@ function OverviewTab({
     },
     {
       label: t("drawer.fields.sensitive"),
-      value: event.sensitive
-        ? t("drawer.fields.sensitiveYes")
-        : t("drawer.fields.sensitiveNo"),
+      value: sensitiveLabel,
     },
   ]
 
@@ -194,6 +193,14 @@ function OverviewTab({
 
 function ActorTab({ event }: { event: AuditEvent }) {
   const { t } = useTranslation("audit")
+  const {
+    actorTypeLabel,
+    roleAtTimeLabel,
+    triggerSourceLabel,
+    reasonLabel,
+    commentLabel,
+    changedFieldsLabel,
+  } = useAuditEventLabels(event)
 
   const actorFields: { label: string; value: ReactNode }[] = [
     {
@@ -202,33 +209,29 @@ function ActorTab({ event }: { event: AuditEvent }) {
     },
     {
       label: t("drawer.fields.actorType"),
-      value: formatActionType(event.actor_type),
+      value: actorTypeLabel,
     },
     {
       label: t("drawer.fields.roleAtTime"),
-      value: event.actor_role_at_time
-        ? formatActionType(event.actor_role_at_time)
-        : "—",
+      value: roleAtTimeLabel,
     },
     {
       label: t("drawer.fields.triggerSource"),
-      value: event.trigger_source
-        ? formatActionType(event.trigger_source)
-        : "—",
+      value: triggerSourceLabel,
     },
     {
       label: t("drawer.fields.reason"),
-      value: event.reason ?? "—",
+      value: reasonLabel,
     },
     {
       label: t("drawer.fields.comment"),
-      value: event.comment ?? "—",
+      value: commentLabel,
     },
-    ...(event.changed_fields && event.changed_fields.length > 0
+    ...(changedFieldsLabel
       ? [
           {
             label: t("drawer.fields.changedFields"),
-            value: event.changed_fields.map(formatActionType).join(", "),
+            value: changedFieldsLabel,
           },
         ]
       : []),
@@ -337,7 +340,12 @@ function DrawerContent({ event }: { event: AuditEvent }) {
 
 export function AuditEventDrawer({ eventId, onClose }: AuditEventDrawerProps) {
   const { t } = useTranslation("audit")
-  const { data: event, isLoading, isError } = useAuditEventDetail(eventId)
+  const {
+    data: event,
+    isLoading,
+    isError,
+    error,
+  } = useAuditEventDetail(eventId)
 
   return (
     <Sheet
@@ -382,7 +390,11 @@ export function AuditEventDrawer({ eventId, onClose }: AuditEventDrawerProps) {
         {isError && !isLoading && (
           <div className="flex-1 flex items-center justify-center px-4 h-full">
             <p className="text-sm text-muted-foreground text-center">
-              {t("drawer.loadError")}
+              {error instanceof ApiError
+                ? t(`errors.${error.code}`, {
+                    defaultValue: t("errors.generic"),
+                  })
+                : t("errors.generic")}
             </p>
           </div>
         )}

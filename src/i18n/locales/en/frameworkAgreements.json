@@ -1,0 +1,322 @@
+{
+  "list": {
+    "title": "Framework agreements",
+    "subtitle": "Credit envelopes governing Financings executed with each Leasing Company",
+    "createButton": "Create agreement",
+    "filters": {
+      "searchPlaceholder": "Search",
+      "allStatuses": "All statuses",
+      "allLeasingCompanies": "Leasing company",
+      "allBankEntities": "Bank entity"
+    },
+    "table": {
+      "columns": {
+        "agreement": "Agreement",
+        "leasingCompany": "Leasing company",
+        "status": "Status",
+        "validFrom": "Valid from",
+        "validUntil": "Valid until"
+      }
+    },
+    "emptyState": {
+      "title": "No framework agreements yet",
+      "description": "Create the first agreement to define a credit envelope for a Leasing Company."
+    },
+    "emptyFiltered": {
+      "title": "No agreements match your filters",
+      "description": "Try adjusting the search or filters."
+    }
+  },
+  "statuses": {
+    "draft": "Draft",
+    "active": "Active",
+    "suspended": "Suspended",
+    "terminated": "Terminated"
+  },
+  "bankEntities": {
+    "sparkasse": "Sparkasse",
+    "landesbank_1": "Landesbank 1",
+    "landesbank_2": "Landesbank 2",
+    "other": "Other"
+  },
+  "rateTypes": {
+    "fixed": "Fixed",
+    "floating": "Floating",
+    "euribor_plus_spread": "EURIBOR + Spread"
+  },
+  "documentTypes": {
+    "original_agreement": "Original agreement",
+    "addendum": "Addendum",
+    "side_letter": "Side letter",
+    "other": "Other"
+  },
+  "fields": {
+    "agreementName": "Agreement name",
+    "leasingCompany": "Leasing company",
+    "leasingCompanyNoResults": "No leasing companies found",
+    "bankEntity": "Bank entity",
+    "currency": "Currency",
+    "maxVolumeEur": "Max volume",
+    "baseRate": "Base rate",
+    "spread": "Spread",
+    "rateType": "Rate type",
+    "effectiveRate": "Effective rate",
+    "rateLockPeriodMonths": "Rate lock period",
+    "lgCoverageRateOverride": "LG-specific coverage rate override",
+    "validFrom": "Valid from",
+    "validUntil": "Valid until",
+    "specialConditions": "Special conditions",
+    "allowedProductTemplates": "Allowed product templates",
+    "optional": "(optional)",
+    "openEnded": "Open ended"
+  },
+  "units": {
+    "eur": "EUR",
+    "months": "months",
+    "percent": "%"
+  },
+  "wizard": {
+    "steps": {
+      "identity": "Identity",
+      "envelopePricing": "Envelope & pricing",
+      "validityTemplates": "Validity & templates",
+      "conditions": "Conditions",
+      "documents": "Documents",
+      "review": "Review & save"
+    },
+    "identity": {
+      "title": "Identity & counterparty",
+      "subtitle": "Define the agreement identity and the parties involved.",
+      "agreementNameHint": "Must be unique for this leasing company and bank entity.",
+      "leasingCompanyHint": "Only active leasing companies are shown",
+      "currencyHint": "Currency is fixed at creation and cannot be changed"
+    },
+    "envelopePricing": {
+      "title": "Envelope & pricing",
+      "subtitle": "Set the credit envelope and pricing terms. These values will be inherited by all financings under this agreement.",
+      "creditEnvelopeSection": "Credit envelope",
+      "pricingSection": "Pricing (inherited by financings)",
+      "maxVolumeHint": "Hard ceiling on total disbursable amount under this agreement.",
+      "spreadHint": "Permitted range: -5.0% to 15.0%.",
+      "effectiveRateHint": "For Fixed and Floating types, this should equal base rate plus spread.",
+      "rateLockPeriodHint": "Permitted range: 1 to 360 months.",
+      "coverageOverrideHint": "Overrides the standard product template rate where applicable."
+    },
+    "validityTemplates": {
+      "title": "Validity & product templates",
+      "subtitle": "Set the agreement validity window and select which product templates are permitted under this agreement.",
+      "validityWindowSection": "Validity window",
+      "templatesSection": "Allowed products templates",
+      "templatesHint": "Only published templates within your tenant are shown. Select at least one."
+    },
+    "conditions": {
+      "title": "Special conditions",
+      "subtitle": "Document any commercial terms or conditions specific to this agreement. This information is advisory only and does not affect system behavior.",
+      "hint": "Enter any special conditions, commercial terms, or notes relevant to this agreement."
+    },
+    "documents": {
+      "title": "Framework documents",
+      "subtitle": "Attach signed framework agreement documents. At least one document is required before the agreement can be activated.",
+      "uploadPanelTitle": "Upload documents",
+      "optionalNotice": "Documents are optional at this stage. At least one signed document must be attached before the agreement can be activated.",
+      "dropzoneLabel": "Drag and drop your PDF file here or click to browse",
+      "dropzoneHint": "PDF only. Max 25 MB per file. Up to 10 documents.",
+      "documentCount": "{{count}} / 10 documents",
+      "documentType": "Document type",
+      "documentTypePlaceholder": "Select",
+      "documentLabel": "Document label"
+    },
+    "review": {
+      "title": "Review and save",
+      "subtitle": "Review all details before saving. You can return to any step to make changes. The agreement will be saved as Draft. Activation is a separate step."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "create": "Save as draft"
+    },
+    "discardDialog": {
+      "title": "Discard this draft?",
+      "description": "The draft and any attached documents will be permanently deleted.",
+      "keep": "Keep editing",
+      "confirm": "Discard draft"
+    },
+    "incompleteDraft": "Complete the required fields before saving as draft.",
+    "createdSuccess": {
+      "title": "Agreement saved as draft",
+      "subtitle": "{{name}} has been saved. Review the details and activate the agreement when you are ready. At least one signed document must be attached before activation.",
+      "backToAgreements": "Back to agreements",
+      "viewAgreement": "View agreement"
+    },
+    "loadingDraft": "Loading draft…"
+  },
+  "detail": {
+    "tabs": {
+      "agreementDetails": "Agreement details",
+      "templatesAndDocuments": "Templates and documents",
+      "utilization": "Utilization",
+      "financings": "Financings",
+      "auditHistory": "Audit history"
+    },
+    "sections": {
+      "identity": "Identity",
+      "creditEnvelope": "Credit envelope",
+      "pricing": "Pricing",
+      "lifecycle": "Lifecycle",
+      "specialConditions": "Special conditions"
+    },
+    "fields": {
+      "agreementId": "Agreement ID",
+      "status": "Status",
+      "createdBy": "Created by",
+      "createdAt": "Created at",
+      "activatedBy": "Activated by",
+      "activatedAt": "Activated at",
+      "suspendedAt": "Suspended at",
+      "terminatedAt": "Terminated at"
+    },
+    "copied": "Copied",
+    "actions": {
+      "activate": "Activate",
+      "edit": "Edit",
+      "suspend": "Suspend",
+      "reactivate": "Reactivate",
+      "terminate": "Terminate"
+    },
+    "financingsEmptyState": "No financings yet",
+    "tabComingSoon": "This tab isn't available yet",
+    "loadError": "Something went wrong loading this agreement."
+  },
+  "activate": {
+    "dialogTitle": "Activate framework agreement",
+    "documentsConfirmed": "I confirm the required framework documents are attached",
+    "justification": "Justification",
+    "justificationHint": "Mandatory. Stored in the audit trail.",
+    "effectiveFrom": "Effective from",
+    "effectiveFromOptional": "Optional — defaults to now",
+    "confirmButton": "Activate agreement"
+  },
+  "suspend": {
+    "dialogTitle": "Suspend framework agreement",
+    "justification": "Justification",
+    "justificationHint": "Mandatory. Stored in the audit trail.",
+    "effectiveFrom": "Effective from",
+    "effectiveFromOptional": "Optional — defaults to now",
+    "confirmButton": "Suspend agreement"
+  },
+  "reactivate": {
+    "dialogTitle": "Reactivate framework agreement",
+    "reValidationConfirmed": "I confirm the agreement's terms have been re-validated and remain accurate",
+    "justification": "Justification",
+    "justificationHint": "Mandatory. Stored in the audit trail.",
+    "confirmButton": "Reactivate agreement"
+  },
+  "terminate": {
+    "dialogTitle": "Terminate framework agreement",
+    "irreversibilityConfirmed": "I understand this action is irreversible and cannot be undone",
+    "justification": "Justification",
+    "justificationHint": "Mandatory (min. 30 characters). Stored in the audit trail.",
+    "confirmButton": "Terminate agreement",
+    "blockedTitle": "This agreement cannot be terminated yet",
+    "blockedDescription": "{{count}} linked financing is still active. Resolve it before terminating this agreement.",
+    "blockedDescription_other": "{{count}} linked financings are still active. Resolve them before terminating this agreement."
+  },
+  "documentsTab": {
+    "attachButton": "Attach document",
+    "downloadButton": "Download",
+    "detachButton": "Detach",
+    "limitReachedHint": "Maximum of 10 documents reached. Detach a document to attach a new one.",
+    "documentsEmptyState": "No documents attached yet",
+    "templatesEmptyState": "No product templates linked",
+    "templateUnresolved": "Template no longer available",
+    "attachDialog": {
+      "title": "Attach document",
+      "confirmButton": "Attach"
+    },
+    "detachConfirm": {
+      "title": "Detach this document?",
+      "description": "\"{{fileName}}\" will be removed from this agreement. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Detach"
+    }
+  },
+  "edit": {
+    "dialogTitle": "Edit framework agreement",
+    "identitySection": "Agreement identity",
+    "lockedFieldHint": "Locked — cannot be changed after the agreement leaves Draft.",
+    "validUntilLockedHint": "This agreement has no end date. An end date cannot be introduced after Draft; it can only be extended once one is set.",
+    "templateRemovalHint": "Removing a template is blocked if any in-flight financing draft still references it.",
+    "justification": "Justification",
+    "justificationHint": "Mandatory (min. 30 characters). Stored in the audit trail.",
+    "confirmButton": "Save changes"
+  },
+  "auditHistory": {
+    "viewEventLog": "Event log",
+    "viewReconstruct": "Reconstruct",
+    "sectionTitle": "Audit history",
+    "searchPlaceholder": "Search",
+    "filterEventType": "Event type",
+    "filterDateRange": "Date range",
+    "from": "From",
+    "to": "To",
+    "clearAll": "Clear all",
+    "noEvents": "No audit events yet",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "reconstructTitle": "View agreement state as of",
+    "reconstructButton": "View state",
+    "reconstructBanner": "Showing reconstructed agreement state as of {{date}}. This is a read-only historical view.",
+    "eventsReplayed": "{{count}} event replayed",
+    "eventsReplayed_other": "{{count}} events replayed",
+    "exportReasonPlaceholder": "Reason (required for Back Office)",
+    "exportButton": "Export CSV",
+    "systemActor": "System",
+    "eventTypes": {
+      "draft_created": "Agreement created",
+      "draft_edited": "Draft edited",
+      "draft_deleted": "Draft deleted",
+      "document_attached": "Document attached",
+      "document_detached": "Document removed",
+      "document_downloaded": "Document downloaded",
+      "activation_submitted": "Activation submitted",
+      "activated": "Agreement activated",
+      "activation_rejected": "Activation rejected",
+      "activation_expired": "Activation expired",
+      "suspended": "Agreement suspended",
+      "suspension_blocked": "Suspension blocked",
+      "reactivated": "Agreement reactivated",
+      "terminated": "Agreement terminated",
+      "termination_blocked": "Termination blocked",
+      "edited": "Agreement edited",
+      "max_volume_reduced_below_exposure": "Max volume reduced below exposure",
+      "list_accessed": "Agreement list accessed",
+      "detail_accessed": "Agreement detail accessed",
+      "pricing_snapshot_accessed": "Pricing snapshot accessed",
+      "auditor_audit_access": "Audit history accessed",
+      "audit_export": "Audit history exported"
+    }
+  },
+  "errors": {
+    "atLeastOneTemplate": "Select at least one Product Template",
+    "validUntilBeforeFrom": "Valid Until must be on or after Valid From",
+    "FA_NOT_FOUND": "This framework agreement could not be found.",
+    "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company and bank entity.",
+    "FA_TEMPLATE_NOT_PUBLISHED": "One of the selected product templates is not published.",
+    "FA_EDIT_JUSTIFICATION_REQUIRED": "A justification is required to edit this agreement.",
+    "FA_NOT_EDITABLE": "This agreement cannot be edited in its current status.",
+    "FA_NO_CHANGES": "No changes were made to save.",
+    "FA_VERSION_CONFLICT": "This agreement has changed since you opened this dialog. Reload and try again.",
+    "FA_VALID_UNTIL_SHORTENING": "Valid until can only be extended, not shortened.",
+    "FA_TEMPLATE_IN_USE": "This template cannot be removed while an in-flight financing draft references it.",
+    "FA_IMMUTABLE_FIELDS": "Agreement name and valid from cannot be changed after Draft.",
+    "FA_DOC_NOT_FOUND": "This document could not be found.",
+    "FA_DOC_LIMIT_EXCEEDED": "Maximum of 10 documents already attached to this agreement.",
+    "FA_DOC_INVALID_MIME": "Only PDF files are supported.",
+    "FA_DOC_FILE_TOO_LARGE": "File is too large. Maximum size is 25 MB.",
+    "FA_DOC_IMMUTABLE": "Documents can only be attached or removed while this agreement is in Draft status.",
+    "FA_RECONSTRUCTION_TIMESTAMP": "This timestamp is invalid. It must be in the past and the agreement must have existed at that point in time.",
+    "FA_EXPORT_REASON_REQUIRED": "A reason is required to export this audit history.",
+    "generic": "Something went wrong. Please try again."
+  }
+}

@@ -4,24 +4,27 @@ import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>
-  hideTemplateCode?: boolean
+  shouldHideTemplateCode?: boolean
 }
 
-function IdentityStep({ form, hideTemplateCode = false }: Props) {
+function IdentityStep({ form, shouldHideTemplateCode = false }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
   const { register, control } = form
   const { errors } = useFormState({ control })
 
+  const errorMessages = { codeInvalidChars: t("errors.codeInvalidChars") }
   function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "required") return tCommon("validation.required")
-    if (msg === "codeInvalidChars") return t("errors.codeInvalidChars")
-    return msg
+    return resolveFieldErrorMessage(
+      msg,
+      tCommon("validation.required"),
+      errorMessages
+    )
   }
 
   return (
@@ -50,7 +53,7 @@ function IdentityStep({ form, hideTemplateCode = false }: Props) {
         )}
       </div>
 
-      {!hideTemplateCode && (
+      {!shouldHideTemplateCode && (
         <div>
           <Label
             htmlFor="template_code"

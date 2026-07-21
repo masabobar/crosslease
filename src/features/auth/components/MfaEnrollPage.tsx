@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Shield, AlertCircle, Copy, Check } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { mfaEnroll, mfaActivate } from "../api/mfaApi"
+import { TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import type { MfaEnrollResponse } from "../api/mfaSchema"
 import { AUTH_QUERY_KEYS } from "@/features/auth/api/queryKeys"
 import { useAuthStore } from "@/store/authStore"
@@ -63,6 +65,7 @@ export default function MfaEnrollPage() {
           <Button
             type="button"
             className="mt-4 w-full"
+            data-testid="mfa-enroll-no-token-back-button"
             onClick={() => navigate(PATHS.LOGIN)}
           >
             {t("mfaEnroll.backToLogin")}
@@ -83,18 +86,20 @@ export default function MfaEnrollPage() {
   }
 
   if (enrollError || !enrollData) {
-    const apiCode = enrollError instanceof ApiError ? enrollError.code : ""
     return (
       <AuthPageLayout>
         <div className="w-full max-w-[400px] bg-card rounded-xl shadow-sm border border-border p-6">
           <p className="text-sm text-destructive">
-            {apiCode === "MFA_TOKEN_INVALID"
-              ? t("mfaEnroll.errors.MFA_TOKEN_INVALID")
-              : t("mfaEnroll.errors.default")}
+            {enrollError instanceof ApiError
+              ? t(`errors.${enrollError.code}`, {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")}
           </p>
           <Button
             type="button"
             className="mt-4 w-full"
+            data-testid="mfa-enroll-error-back-button"
             onClick={() => navigate(PATHS.LOGIN)}
           >
             {t("mfaEnroll.backToLogin")}
@@ -106,7 +111,7 @@ export default function MfaEnrollPage() {
 
   const handleActivate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (code.length !== 6 || isActivating) return
+    if (code.length !== TOTP_CODE_LENGTH || isActivating) return
     setIsActivating(true)
     setServerError(null)
     try {
@@ -115,21 +120,24 @@ export default function MfaEnrollPage() {
       setAuthenticated(true)
       setStep("recovery")
     } catch (err) {
-      const apiCode = err instanceof ApiError ? err.code : ""
-      const messages: Record<string, string> = {
-        MFA_CODE_INVALID: t("mfaEnroll.errors.MFA_CODE_INVALID"),
-        MFA_TOKEN_INVALID: t("mfaEnroll.errors.MFA_TOKEN_INVALID"),
-      }
-      setServerError(messages[apiCode] ?? t("mfaEnroll.errors.default"))
+      setServerError(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     } finally {
       setIsActivating(false)
     }
   }
 
   const handleCopyCodes = async () => {
-    await navigator.clipboard.writeText(recoveryCodes.join("\n"))
-    setCopied(true)
-    setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
+    try {
+      await navigator.clipboard.writeText(recoveryCodes.join("\n"))
+      setCopied(true)
+      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
+    } catch {
+      toast.error(t("clipboard.copyFailed"))
+    }
   }
 
   if (step === "recovery") {
@@ -255,7 +263,12 @@ export default function MfaEnrollPage() {
                 data-testid="mfa-activate-code-input"
                 value={code}
                 onChange={e =>
-                  setCode(e.target.value.trim().replace(/\D/g, "").slice(0, 6))
+                  setCode(
+                    e.target.value
+                      .trim()
+                      .replace(/\D/g, "")
+                      .slice(0, TOTP_CODE_LENGTH)
+                  )
                 }
                 placeholder="000000"
                 className="text-sm"
@@ -279,7 +292,7 @@ export default function MfaEnrollPage() {
           <Button
             type="submit"
             form="mfa-activate-form"
-            disabled={code.length !== 6 || isActivating}
+            disabled={code.length !== TOTP_CODE_LENGTH || isActivating}
             data-testid="mfa-enroll-activate-button"
           >
             {isActivating ? t("mfaEnroll.activating") : t("mfaEnroll.activate")}

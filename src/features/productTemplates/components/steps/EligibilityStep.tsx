@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
+import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   AssetCategorySchema,
   type ProductTemplateWizardForm,
@@ -21,14 +22,23 @@ function EligibilityStep({ form }: Props) {
   const { register, control } = form
   const { errors } = useFormState({ control })
 
+  const errorMessages = {
+    atLeastOne: t("errors.atLeastOneAssetCategory"),
+    minTermExceedsMax: t("errors.minTermExceedsMax"),
+    minVolumeExceedsMax: t("errors.minVolumeExceedsMax"),
+    validUntilBeforeFrom: t("errors.validUntilBeforeFrom"),
+    termBelowMin: t("errors.termBelowMin"),
+    termAboveMax: t("errors.termAboveMax"),
+    ltvBelowMin: t("errors.ltvBelowMin"),
+    ltvAboveMax: t("errors.ltvAboveMax"),
+    volumeBelowMin: t("errors.volumeBelowMin"),
+  }
   function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "required") return tCommon("validation.required")
-    if (msg === "atLeastOne") return t("errors.atLeastOneAssetCategory")
-    if (msg === "minTermExceedsMax") return t("errors.minTermExceedsMax")
-    if (msg === "minVolumeExceedsMax") return t("errors.minVolumeExceedsMax")
-    if (msg === "validUntilBeforeFrom") return t("errors.validUntilBeforeFrom")
-    return msg
+    return resolveFieldErrorMessage(
+      msg,
+      tCommon("validation.required"),
+      errorMessages
+    )
   }
 
   return (
@@ -221,6 +231,7 @@ function EligibilityStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_from}
+                  captionLayout="dropdown"
                 />
               )}
             />
@@ -252,6 +263,7 @@ function EligibilityStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_until}
+                  captionLayout="dropdown"
                 />
               )}
             />

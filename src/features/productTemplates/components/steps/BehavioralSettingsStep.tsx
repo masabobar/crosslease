@@ -7,6 +7,7 @@ import type { SelectOption } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
 import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
+import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   CalculationModelSchema,
   DisbursementDerivationRuleSchema,
@@ -29,10 +30,17 @@ function BehavioralSettingsStep({ form }: Props) {
   const { control } = form
   const { errors } = useFormState({ control })
 
+  // No custom (non-"required") message codes on this step's fields today — the
+  // map is declared explicitly, matching IdentityStep's pattern, so the next
+  // custom code added to one of these Zod fields has an obvious place to go
+  // instead of silently falling through to an untranslated raw code string.
+  const errorMessages: Record<string, string> = {}
   function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "required") return tCommon("validation.required")
-    return msg
+    return resolveFieldErrorMessage(
+      msg,
+      tCommon("validation.required"),
+      errorMessages
+    )
   }
 
   // Building option lists generically across several enums means the translation key is

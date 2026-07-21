@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { ApiError } from "@/lib/api"
 import { useForm } from "react-hook-form"
@@ -10,13 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { AvatarUploadMenu } from "@/features/users/components/AvatarUploadMenu"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useProfilePicture } from "@/features/users/hooks/useProfilePicture"
@@ -52,7 +46,6 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
   const [activeTab, setActiveTab] = useState<"lifecycle" | "auth" | "audit">(
     "lifecycle"
   )
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
     isPending: isPicturePending,
@@ -118,50 +111,14 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
       <div className="flex flex-col border border-border rounded-[10px]">
         <div className="bg-card flex items-center px-3 py-4 rounded-t-[10px]">
           <div className="flex items-center gap-3">
-            {/* NOTE: raw <input type="file"> — hidden file input triggered programmatically; no shadcn equivalent */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleFileSelected}
-              data-testid="avatar-file-input"
+            <AvatarUploadMenu
+              name={name}
+              initials={initials}
+              profilePictureUrl={user.profile_picture_url}
+              isPending={isPicturePending}
+              onFileSelected={handleFileSelected}
+              onRemove={handleRemovePicture}
             />
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                data-testid="avatar-dropdown-trigger"
-                disabled={isPicturePending}
-                className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {user.profile_picture_url ? (
-                  <img
-                    src={user.profile_picture_url}
-                    alt={name}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xl font-normal text-muted-foreground">
-                    {initials}
-                  </span>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  data-testid="avatar-replace-photo"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {t("detail.page.selfProfile.avatar.replacePhoto")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  data-testid="avatar-remove-photo"
-                  disabled={!user.profile_picture_url}
-                  onClick={handleRemovePicture}
-                >
-                  {t("detail.page.selfProfile.avatar.removePhoto")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <div className="flex flex-col gap-3">
               <p className="text-2xl font-semibold text-foreground">{name}</p>
@@ -400,7 +357,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
 
 export default function SelfProfilePage() {
   const { t } = useTranslation("users")
-  const { data: currentUser } = useCurrentUser()
+  const { data: currentUser, isError: isCurrentUserError } = useCurrentUser()
   const {
     data: user,
     isLoading,
@@ -420,8 +377,11 @@ export default function SelfProfilePage() {
         </div>
       )}
 
-      {isError && !isLoading && (
-        <div className="flex items-center justify-center h-40">
+      {(isError || isCurrentUserError) && !isLoading && (
+        <div
+          className="flex items-center justify-center h-40"
+          data-testid="self-profile-error"
+        >
           <p className="text-sm text-muted-foreground">
             {t("detail.loadError")}
           </p>

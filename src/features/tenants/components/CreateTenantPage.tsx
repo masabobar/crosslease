@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button"
 import { PATHS } from "@/router/paths"
 import { CreateTenantFormSchema } from "@/features/tenants/api/schema"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
-import { WizardStepper } from "@/features/tenants/components/WizardStepper"
+import {
+  WizardStepper,
+  ORDERED_STEPS as ORDERED_WIZARD_STEPS,
+} from "@/features/tenants/components/WizardStepper"
 import type { WizardStep } from "@/features/tenants/components/WizardStepper"
 import { IdentityStep } from "@/features/tenants/components/steps/IdentityStep"
 import { ModulesStep } from "@/features/tenants/components/steps/ModulesStep"
@@ -39,14 +42,6 @@ import {
 
 type FullStep = WizardStep | "success"
 
-const ORDERED_WIZARD_STEPS: WizardStep[] = [
-  "identity",
-  "modules",
-  "seed",
-  "integration",
-  "review",
-]
-
 const STEP_FIELDS: Record<WizardStep, (keyof CreateTenantForm)[]> = {
   identity: ["name", "code", "tenant_type", "legal_entity_name", "country"],
   modules: [],
@@ -65,9 +60,18 @@ export default function CreateTenantPage() {
   const { data: currentUser } = useCurrentUser()
   const userId = currentUser?.id
 
-  const { data: modulesData, isLoading: isModulesLoading } =
-    usePlatformModules()
-  const { data: packagesData, isLoading: isPackagesLoading } = useSeedPackages()
+  const {
+    data: modulesData,
+    isLoading: isModulesLoading,
+    isError: isModulesError,
+    error: modulesError,
+  } = usePlatformModules()
+  const {
+    data: packagesData,
+    isLoading: isPackagesLoading,
+    isError: isPackagesError,
+    error: packagesError,
+  } = useSeedPackages()
   const { mutateAsync: createTenant, isPending } = useCreateTenant()
 
   const form = useForm<CreateTenantForm>({
@@ -124,24 +128,11 @@ export default function CreateTenantPage() {
         if (userId) clearWizardDraft(userId)
         setStep("success")
       } catch (err) {
-        if (err instanceof ApiError) {
-          if (
-            err.code === "TENANT_NAME_ALREADY_EXISTS" ||
-            err.code === "TENANT_ALREADY_EXISTS"
-          ) {
-            form.setError("name", {
-              type: "server",
-              message: t("errors.TENANT_NAME_ALREADY_EXISTS"),
-            })
-            setStep("identity")
-          } else {
-            toast.error(
-              t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            )
-          }
-        } else {
-          toast.error(t("errors.generic"))
-        }
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+            : t("errors.generic")
+        )
       }
       return
     }
@@ -254,18 +245,46 @@ export default function CreateTenantPage() {
           {/* Step content */}
           {step === "identity" && <IdentityStep form={form} />}
           {step === "modules" && (
-            <ModulesStep
-              form={form}
-              modules={modules}
-              isLoading={isModulesLoading}
-            />
+            <>
+              {isModulesError && (
+                <p
+                  className="mb-4 text-sm text-destructive"
+                  data-testid="modules-fetch-error"
+                >
+                  {modulesError instanceof ApiError
+                    ? t(`errors.${modulesError.code}`, {
+                        defaultValue: t("errors.generic"),
+                      })
+                    : t("errors.generic")}
+                </p>
+              )}
+              <ModulesStep
+                form={form}
+                modules={modules}
+                isLoading={isModulesLoading}
+              />
+            </>
           )}
           {step === "seed" && (
-            <SeedPackageStep
-              form={form}
-              packages={packages}
-              isLoading={isPackagesLoading}
-            />
+            <>
+              {isPackagesError && (
+                <p
+                  className="mb-4 text-sm text-destructive"
+                  data-testid="seed-fetch-error"
+                >
+                  {packagesError instanceof ApiError
+                    ? t(`errors.${packagesError.code}`, {
+                        defaultValue: t("errors.generic"),
+                      })
+                    : t("errors.generic")}
+                </p>
+              )}
+              <SeedPackageStep
+                form={form}
+                packages={packages}
+                isLoading={isPackagesLoading}
+              />
+            </>
           )}
           {step === "integration" && <IntegrationStep form={form} />}
           {step === "review" && (

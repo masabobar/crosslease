@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import type { TenantModuleStatus } from "@/features/tenants/api/schema"
+import { StatusPill } from "@/features/tenants/components/StatusPill"
 
 type StatusConfig = { container: string; dot: string; text: string }
 
@@ -40,13 +41,14 @@ export function ModuleStatusBadge({ status }: Props) {
   const config = MODULE_STATUS_CONFIG[status]
 
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${config.container} ${config.text}`}
+    <StatusPill
+      colorClassName={`${config.container} ${config.text}`}
+      dotClassName={config.dot}
+      shrink
     >
-      <span className={`size-1.5 rounded-full shrink-0 ${config.dot}`} />
       {t(`detail.modules.status.${status}` as "detail.modules.status.active", {
         defaultValue: status,
       })}
-    </span>
+    </StatusPill>
   )
 }

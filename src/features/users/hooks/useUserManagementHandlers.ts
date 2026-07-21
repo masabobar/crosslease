@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next"
 import { useToastStore } from "@/store/toastStore"
 import { adminUserDetail, PATHS } from "@/router/paths"
 import { buildActionToastPayload } from "@/features/users/utils"
-import { UserStatusSchema } from "@/features/users/api/schema"
 import type { UserListItem, UserDetail } from "@/features/users/api/schema"
+import { INVITE_RESULT_TYPE } from "@/features/users/types"
 import type {
   UserActionType,
   UserModalActionType,
@@ -99,7 +99,7 @@ export function useUserManagementHandlers() {
   }
 
   function handleInviteSuccess(result: InviteSuccessResult) {
-    if (result.type === UserStatusSchema.enum.pending_approval) {
+    if (result.type === INVITE_RESULT_TYPE.PENDING_APPROVAL) {
       const name = `${result.firstName} ${result.lastName}`
       showToast({
         variant: "warning",

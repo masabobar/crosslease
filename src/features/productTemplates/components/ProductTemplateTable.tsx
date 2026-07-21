@@ -14,6 +14,15 @@ const COL_VERSION = "w-[70px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
+const HEADER_COLUMNS = [
+  { width: COL_PRODUCT, labelKey: "list.table.columns.product" },
+  { width: COL_FINANCING, labelKey: "list.table.columns.financingType" },
+  { width: COL_CALCULATION, labelKey: "list.table.columns.calculation" },
+  { width: COL_LTV_TERM, labelKey: "list.table.columns.ltvAndTerm" },
+  { width: COL_STATUS, labelKey: "list.table.columns.status" },
+  { width: COL_VERSION, labelKey: "list.table.columns.version" },
+] as const
+
 function ltvAndTerm(item: TemplateListItem, maxLtvPrefix: string): string {
   const v = item.current_version
   if (!v || v.max_ltv_ratio === null || v.max_ltv_ratio === undefined)
@@ -48,42 +57,23 @@ function ProductTemplateTable({
   const { t } = useTranslation("productTemplates")
 
   return (
+    // NOTE: raw <div> grid instead of shadcn Table — matches the pre-existing div-grid
+    // pattern used by other list tables in this codebase (e.g. TenantTable, PartnerTable,
+    // AuditTable); a full conversion to <Table>/<TableRow>/<TableCell> is out of scope here.
     <div
       className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
       data-testid="product-template-table"
     >
       {/* Header */}
       <div className="flex border-b border-border h-10 items-center">
-        <div
-          className={`${COL_PRODUCT} text-sm font-medium text-foreground px-2`}
-        >
-          {t("list.table.columns.product")}
-        </div>
-        <div
-          className={`${COL_FINANCING} text-sm font-medium text-foreground px-2`}
-        >
-          {t("list.table.columns.financingType")}
-        </div>
-        <div
-          className={`${COL_CALCULATION} text-sm font-medium text-foreground px-2`}
-        >
-          {t("list.table.columns.calculation")}
-        </div>
-        <div
-          className={`${COL_LTV_TERM} text-sm font-medium text-foreground px-2`}
-        >
-          {t("list.table.columns.ltvAndTerm")}
-        </div>
-        <div
-          className={`${COL_STATUS} text-sm font-medium text-foreground px-2`}
-        >
-          {t("list.table.columns.status")}
-        </div>
-        <div
-          className={`${COL_VERSION} text-sm font-medium text-foreground px-2`}
-        >
-          {t("list.table.columns.version")}
-        </div>
+        {HEADER_COLUMNS.map(col => (
+          <div
+            key={col.labelKey}
+            className={`${col.width} text-sm font-medium text-foreground px-2`}
+          >
+            {t(col.labelKey)}
+          </div>
+        ))}
         <div className="shrink-0 w-8" />
       </div>
 
@@ -134,6 +124,7 @@ function ProductTemplateTable({
             action={
               onCreateTemplate && (
                 <Button
+                  data-testid="create-template-empty-state-button"
                   onClick={onCreateTemplate}
                   className="h-9 rounded-xl px-4 gap-1.5"
                 >

@@ -2,6 +2,8 @@ import { z } from "zod"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
+export const UserRoleSchema = z.enum(USER_ROLES)
+
 export const UserStatusSchema = z.enum([
   "pending_approval",
   "invited",
@@ -21,7 +23,7 @@ export const UserResponseSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   email: z.string().email(),
-  role: z.enum(USER_ROLES),
+  role: UserRoleSchema,
   permissions: z.array(z.string()).default([]),
   tenant_id: z.string().nullable(),
   status: UserStatusSchema,
@@ -39,7 +41,7 @@ export const UserResponseSchema = z.object({
 export type UserResponse = z.infer<typeof UserResponseSchema>
 
 export const UserMePermissionsResponseSchema = z.object({
-  role: z.enum(USER_ROLES),
+  role: UserRoleSchema,
   permissions: z.array(z.string()),
   active_modules: z.array(z.string()),
 })
@@ -72,7 +74,7 @@ export const InviteUserInputSchema = z.object({
   first_name: z.string().min(1),
   last_name: z.string().min(1),
   email: z.string().email(),
-  role: z.enum(USER_ROLES),
+  role: UserRoleSchema,
   tenant_id: z.string().nullable().optional(),
   access_valid_until: z.string().nullable().optional(),
 })
@@ -84,7 +86,7 @@ export const UserListItemSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   email: z.string().email(),
-  role: z.enum(USER_ROLES),
+  role: UserRoleSchema,
   tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
   profile_picture_url: z.string().nullable().optional(),
@@ -106,13 +108,17 @@ export type PaginatedUsersResponse = z.infer<
   typeof PaginatedUsersResponseSchema
 >
 
-export type UserSortKey =
-  | "name"
-  | "role"
-  | "tenant_name"
-  | "status"
-  | "last_login"
-  | "access_valid_until"
+export const UserSortKeySchema = z.enum([
+  "name",
+  "role",
+  "tenant_name",
+  "status",
+  "last_login",
+  "access_valid_until",
+])
+export type UserSortKey = z.infer<typeof UserSortKeySchema>
+
+export const USER_SORT_KEYS = UserSortKeySchema.options
 
 export type UserSortOrder = "asc" | "desc"
 
@@ -166,6 +172,7 @@ export const DEACTIVATION_REASONS = [
   "other",
 ] as const
 export type DeactivationReason = (typeof DEACTIVATION_REASONS)[number]
+export const DEACTIVATION_REASON_OTHER: DeactivationReason = "other"
 
 export const RESEND_REASONS = [
   "invitation_expired",
@@ -207,7 +214,7 @@ export const UserDetailResponseSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   email: z.string().email(),
-  role: z.enum(USER_ROLES),
+  role: UserRoleSchema,
   status: UserStatusSchema,
   tenant_id: z.string().nullable(),
   tenant_name: z.string().nullable(),
@@ -253,7 +260,7 @@ export const ChangeEmailRequestSchema = z.object({
 export type ChangeEmailInput = z.infer<typeof ChangeEmailRequestSchema>
 
 export const ChangeRoleRequestSchema = z.object({
-  new_role: z.enum(USER_ROLES),
+  new_role: UserRoleSchema,
   reason: z.string().min(10).nullable().optional(),
 })
 export type ChangeRoleInput = z.infer<typeof ChangeRoleRequestSchema>
@@ -288,9 +295,15 @@ export const ExportJobSchema = z.object({
 })
 export type ExportJob = z.infer<typeof ExportJobSchema>
 
+export const ExportJobStatusValueSchema = z.enum([
+  "processing",
+  "ready",
+  "failed",
+])
+
 export const ExportJobStatusSchema = z.object({
   job_id: z.string(),
-  status: z.enum(["processing", "ready", "failed"]),
+  status: ExportJobStatusValueSchema,
   row_count: z.number().optional(),
   error_code: z.string().optional(),
 })

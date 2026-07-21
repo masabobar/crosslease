@@ -4,7 +4,16 @@ import {
   GovernedActionStatusSchema,
   GovernedActionTypeSchema,
   PaginatedGovernedActionsSchema,
+  RoleChangeSnapshotSchema,
+  ReviewCommentFormSchema,
+  REVIEW_COMMENT_MIN_LENGTH,
+  displaySnapshot,
+  roleChangeSnapshot,
+  emailChangeSnapshot,
+  initiatorSnapshot,
+  approverSnapshot,
 } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governed-actions/api/schema"
 
 const VALID_ACTION = {
   id: "550e8400-e29b-41d4-a716-446655440000",
@@ -131,6 +140,94 @@ describe("GovernedActionSchema", () => {
   })
 })
 
+describe("display_snapshot accessors (safeParse, not a blind cast)", () => {
+  it("parses matching fields from display_snapshot", () => {
+    const action = {
+      ...VALID_ACTION,
+      display_snapshot: {
+        user_id: "u-1",
+        affected_user_email: "jane@example.com",
+        old_role: "auditor",
+        new_role: "system_admin",
+      },
+    } as GovernedAction
+    const snap = roleChangeSnapshot(action)
+    expect(snap.affected_user_email).toBe("jane@example.com")
+    expect(snap.old_role).toBe("auditor")
+    expect(snap.new_role).toBe("system_admin")
+  })
+
+  it("falls back to an empty object when a field has the wrong type", () => {
+    const action = {
+      ...VALID_ACTION,
+      // old_role sent as a number instead of a string — malformed BE data
+      display_snapshot: { old_role: 123, new_role: "system_admin" },
+    } as unknown as GovernedAction
+    const snap = roleChangeSnapshot(action)
+    expect(snap).toEqual({})
+  })
+
+  it("falls back to an empty object when display_snapshot is missing fields entirely", () => {
+    const action = { ...VALID_ACTION, display_snapshot: {} } as GovernedAction
+    const snap = roleChangeSnapshot(action)
+    expect(snap.old_role).toBeUndefined()
+    expect(snap.new_role).toBeUndefined()
+  })
+
+  it("emailChangeSnapshot rejects wrong-typed fields the same way", () => {
+    const action = {
+      ...VALID_ACTION,
+      display_snapshot: { old_email: 42, new_email: "new@example.com" },
+    } as unknown as GovernedAction
+    expect(emailChangeSnapshot(action)).toEqual({})
+  })
+
+  it("displaySnapshot generic helper validates against the given schema", () => {
+    const validAction = {
+      ...VALID_ACTION,
+      display_snapshot: { old_role: "auditor", new_role: "system_admin" },
+    } as GovernedAction
+    expect(
+      displaySnapshot(validAction, RoleChangeSnapshotSchema).old_role
+    ).toBe("auditor")
+
+    const malformedAction = {
+      ...VALID_ACTION,
+      display_snapshot: { old_role: { nested: true } },
+    } as unknown as GovernedAction
+    expect(displaySnapshot(malformedAction, RoleChangeSnapshotSchema)).toEqual(
+      {}
+    )
+  })
+})
+
+describe("initiator_snapshot / approver_snapshot validation", () => {
+  it("accepts a snapshot missing individual fields", () => {
+    const result = GovernedActionSchema.parse({
+      ...VALID_ACTION,
+      initiator_snapshot: { user_id: "USR-00001" },
+    })
+    expect(initiatorSnapshot(result).first_name).toBeUndefined()
+  })
+
+  it("throws when a snapshot field has the wrong type", () => {
+    expect(() =>
+      GovernedActionSchema.parse({
+        ...VALID_ACTION,
+        initiator_snapshot: {
+          ...VALID_ACTION.initiator_snapshot,
+          first_name: 42,
+        },
+      })
+    ).toThrow()
+  })
+
+  it("accepts a null approver_snapshot and returns null via the accessor", () => {
+    const result = GovernedActionSchema.parse(VALID_ACTION)
+    expect(approverSnapshot(result)).toBeNull()
+  })
+})
+
 describe("PaginatedGovernedActionsSchema", () => {
   it("parses a paginated response", () => {
     const result = PaginatedGovernedActionsSchema.parse({
@@ -153,5 +250,31 @@ describe("PaginatedGovernedActionsSchema", () => {
         total_pages: 1,
       })
     ).toThrow()
+  })
+})
+
+describe("ReviewCommentFormSchema", () => {
+  it("accepts an empty comment (optional for approval)", () => {
+    expect(ReviewCommentFormSchema.parse({ comment: "" }).comment).toBe("")
+  })
+
+  it("accepts a whitespace-only comment (treated as empty)", () => {
+    expect(ReviewCommentFormSchema.parse({ comment: "   " }).comment).toBe(
+      "   "
+    )
+  })
+
+  it(`accepts a comment at least ${REVIEW_COMMENT_MIN_LENGTH} characters long`, () => {
+    const comment = "a".repeat(REVIEW_COMMENT_MIN_LENGTH)
+    expect(ReviewCommentFormSchema.parse({ comment }).comment).toBe(comment)
+  })
+
+  it("rejects a non-empty comment shorter than the minimum length", () => {
+    const comment = "a".repeat(REVIEW_COMMENT_MIN_LENGTH - 1)
+    expect(() => ReviewCommentFormSchema.parse({ comment })).toThrow()
+  })
+
+  it("throws when comment field is missing", () => {
+    expect(() => ReviewCommentFormSchema.parse({})).toThrow()
   })
 })

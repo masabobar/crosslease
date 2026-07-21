@@ -16,19 +16,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ApiError } from "@/lib/api"
 import { PATHS, productTemplateVersionHistory } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
-import NotFoundPage from "@/features/not-found/components/NotFoundPage"
-import { ProductTemplateWizardFormSchema } from "@/features/productTemplates/api/schema"
+import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
+import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
+import {
+  isProductTemplateNotFoundError,
+  showApiError,
+} from "@/features/productTemplates/utils"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
+import {
+  DisbursementDerivationRuleSchema,
+  FirstInstallmentRuleSchema,
+  ProductTemplateWizardFormSchema,
+  RateTypeSchema,
+  TemplateStatusSchema,
+} from "@/features/productTemplates/api/schema"
 import type {
   CreateProductTemplateDraftRequest,
   ProductTemplateWizardForm,
   TemplateVersionDetail,
   UpdateProductTemplateDraftRequest,
 } from "@/features/productTemplates/api/schema"
-import type { ProductTemplateWizardStep } from "@/features/productTemplates/types"
+import type {
+  DraftRef,
+  ProductTemplateWizardStep,
+} from "@/features/productTemplates/types"
 import { WizardStepper } from "@/features/productTemplates/components/WizardStepper"
 import { IdentityStep } from "@/features/productTemplates/components/steps/IdentityStep"
 import { BehavioralSettingsStep } from "@/features/productTemplates/components/steps/BehavioralSettingsStep"
@@ -109,8 +123,6 @@ function toUpdatePayload(
   }
 }
 
-type DraftRef = { templateId: string; versionNumber: string }
-
 // Seeded into the (hidden, immutable) template_code field when authoring a new version
 // from a Published template — VersionDetailResponse doesn't return template_code (no
 // reachable single-template lookup exists either, see plan Gap 4), and template_code is
@@ -129,10 +141,14 @@ function toNewVersionFormDefaults(
     payment_timing: detail.payment_timing,
     rate_basis: detail.rate_basis,
     calculation_model: detail.calculation_model,
-    rate_type: detail.rate_type ?? "fixed",
+    rate_type: detail.rate_type ?? RateTypeSchema.enum.fixed,
     npv_formula_ref: detail.npv_formula_ref ?? "",
-    first_installment_rule: detail.first_installment_rule ?? "following_month",
-    disbursement_derivation_rule: detail.disbursement_derivation_rule ?? "npv",
+    first_installment_rule:
+      detail.first_installment_rule ??
+      FirstInstallmentRuleSchema.enum.following_month,
+    disbursement_derivation_rule:
+      detail.disbursement_derivation_rule ??
+      DisbursementDerivationRuleSchema.enum.npv,
     allowed_asset_categories: detail.allowed_asset_categories ?? [],
     min_term_months: detail.min_term_months ?? 1,
     max_term_months: detail.max_term_months ?? 1,
@@ -154,13 +170,13 @@ function toNewVersionFormDefaults(
 type WizardFormProps = {
   initialDraftRef: DraftRef | null
   initialFormValues: ProductTemplateWizardForm | undefined
-  hideTemplateCode: boolean
+  shouldHideTemplateCode: boolean
 }
 
 function WizardFormView({
   initialDraftRef,
   initialFormValues,
-  hideTemplateCode,
+  shouldHideTemplateCode,
 }: WizardFormProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
@@ -170,7 +186,10 @@ function WizardFormView({
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
 
   const { data: currentUser } = useCurrentUser()
-  const tenantId = currentUser?.tenant_id ?? null
+  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
+  const tenantId =
+    currentUser?.tenant_id ??
+    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
 
   const { mutateAsync: createDraft, isPending: isCreating } =
     useCreateProductTemplateDraft()
@@ -184,7 +203,7 @@ function WizardFormView({
     usePublishProductTemplate()
 
   const [justification, setJustification] = useState("")
-  const [confirmed, setConfirmed] = useState(false)
+  const [isConfirmed, setIsConfirmed] = useState(false)
   const [isPublished, setIsPublished] = useState(false)
 
   const form = useForm<ProductTemplateWizardForm>({
@@ -303,18 +322,15 @@ function WizardFormView({
   }
 
   async function handleSaveDraft() {
+    const fields = STEP_FIELDS[step]
+    const valid = await form.trigger(fields)
+    if (!valid) return
     try {
       const ref = await saveDraftAndOrchestration()
       if (!ref) return
       toast.success(t("wizard.draftSaved"))
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      showApiError(err, t)
     }
   }
 
@@ -329,13 +345,7 @@ function WizardFormView({
       })
       setIsPublished(true)
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      showApiError(err, t)
     }
   }
 
@@ -346,13 +356,7 @@ function WizardFormView({
       setDiscardDialogOpen(false)
       navigate(-1)
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      showApiError(err, t)
     }
   }
 
@@ -362,6 +366,16 @@ function WizardFormView({
       return
     }
     navigate(-1)
+  }
+
+  if (currentUser && !tenantId) {
+    return (
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("list.selectTenantPrompt")}
+        tenantRequiredMessage={t("list.tenantRequired")}
+      />
+    )
   }
 
   if (isPublished) {
@@ -414,7 +428,10 @@ function WizardFormView({
           </div>
 
           {step === "identity" && (
-            <IdentityStep form={form} hideTemplateCode={hideTemplateCode} />
+            <IdentityStep
+              form={form}
+              shouldHideTemplateCode={shouldHideTemplateCode}
+            />
           )}
           {step === "behavioral" && <BehavioralSettingsStep form={form} />}
           {step === "eligibility" && <EligibilityStep form={form} />}
@@ -424,8 +441,8 @@ function WizardFormView({
               form={form}
               justification={justification}
               onJustificationChange={setJustification}
-              confirmed={confirmed}
-              onConfirmedChange={setConfirmed}
+              isConfirmed={isConfirmed}
+              onIsConfirmedChange={setIsConfirmed}
             />
           )}
         </div>
@@ -480,7 +497,7 @@ function WizardFormView({
               type="button"
               data-testid="wizard-publish-button"
               onClick={handlePublish}
-              disabled={isSaving || !confirmed}
+              disabled={isSaving || !isConfirmed}
             >
               {t("wizard.actions.publish")}
             </Button>
@@ -552,7 +569,7 @@ export default function CreateProductTemplateWizardPage() {
   if (
     draftRefFromRoute &&
     existingDraft &&
-    existingDraft.version_status !== "draft"
+    existingDraft.version_status !== TemplateStatusSchema.enum.draft
   ) {
     return (
       <div
@@ -596,7 +613,7 @@ export default function CreateProductTemplateWizardPage() {
           ? toNewVersionFormDefaults(existingDraft)
           : undefined
       }
-      hideTemplateCode={draftRefFromRoute !== null}
+      shouldHideTemplateCode={draftRefFromRoute !== null}
     />
   )
 }

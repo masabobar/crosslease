@@ -766,7 +766,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Invite a new user",
-        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.\n- `leasing_company_user` — `lc_partner_id` required; must be a confirmed partner within the same tenant.\n  All other roles must omit `lc_partner_id` (or send `null`).",
+        "description": "Create and invite a new user. Requires `system_admin` role.\n\n**Role constraints:**\n- Platform roles (`system_admin`, `support_user`, `auditor`) — `tenant_id` must be null.\n  Initiates a Four-Eyes governed action; returns `GovernedActionResponse` with `status=pending`.\n  A second admin must approve before the user is created.\n- Tenant roles (`front_office`, `back_office`, `leasing_company_user`) — `tenant_id` required, tenant must be active.\n  Immediate execution; returns `UserResponse` with status `invited`.\n- `auditor` — `access_valid_until` required.\n- `leasing_company_user` — `lc_partner_id` required; must be a confirmed partner within the same\n  tenant that is the leasing-company party of at least one non-terminated framework agreement.\n  All other roles must omit `lc_partner_id` (or send `null`).",
         "operationId": "invite_user_api_v1_users_post",
         "requestBody": {
           "required": true,
@@ -3632,6 +3632,94 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ArchiveEligibilityResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/confirm": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Confirm Partner",
+        "description": "Confirm a draft/pending-confirmation partner — single-actor FO action per\nUS 13.5 (Sys Admin ✓, FO ✓, BO/Risk ✗). No Four-Eyes approval (PRD1042-1449);\nrisk-sensitive roles are governed separately via partner_role_assign.",
+        "operationId": "confirm_partner_api_v1_partners__id__confirm_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerConfirmRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/reject": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Reject Partner",
+        "description": "Reject a draft/pending-confirmation partner — single-actor FO action (US 13.5).",
+        "operationId": "reject_partner_api_v1_partners__id__reject_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerRejectRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDetailResponse"
                 }
               }
             }
@@ -9473,6 +9561,19 @@
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
       },
+      "PartnerConfirmRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "PartnerConfirmRequest"
+      },
       "PartnerDetailResponse": {
         "properties": {
           "partner_id": { "type": "string", "title": "Partner Id" },
@@ -9538,7 +9639,7 @@
             "title": "Ubo Completeness Status"
           },
           "roles": {
-            "items": { "$ref": "#/components/schemas/PartnerRole" },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Roles"
           }
@@ -9621,16 +9722,22 @@
         ],
         "title": "PartnerMatchResponse"
       },
+      "PartnerRejectRequest": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["note"],
+        "title": "PartnerRejectRequest"
+      },
       "PartnerRole": {
         "type": "string",
-        "enum": [
-          "lessee",
-          "guarantor",
-          "supplier",
-          "leasing_company",
-          "bank_entity",
-          "ubo_related_person"
-        ],
+        "enum": ["lessee", "guarantor", "supplier", "bank_entity"],
         "title": "PartnerRole"
       },
       "PartnerRolesResponse": {
@@ -9685,12 +9792,11 @@
           "roles": {
             "items": { "$ref": "#/components/schemas/PartnerRole" },
             "type": "array",
-            "minItems": 1,
             "title": "Roles"
           }
         },
         "type": "object",
-        "required": ["identity", "roles"],
+        "required": ["identity"],
         "title": "PartnerSubmitRequest"
       },
       "PartnerSubmitResponse": {
@@ -10164,10 +10270,7 @@
       "RoleAssignRequest": {
         "properties": {
           "roles": {
-            "items": {
-              "type": "string",
-              "enum": ["lessee", "guarantor", "supplier"]
-            },
+            "items": { "$ref": "#/components/schemas/PartnerRole" },
             "type": "array",
             "minItems": 1,
             "title": "Roles"
@@ -10200,7 +10303,14 @@
         "properties": {
           "role": { "$ref": "#/components/schemas/PartnerRole" },
           "status": { "type": "string", "title": "Status" },
-          "is_new": { "type": "boolean", "title": "Is New" }
+          "is_new": { "type": "boolean", "title": "Is New" },
+          "governed_action_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Governed Action Id"
+          }
         },
         "type": "object",
         "required": ["role", "status", "is_new"],
@@ -10212,7 +10322,7 @@
             "type": "string",
             "title": "Role Assignment Id"
           },
-          "role": { "$ref": "#/components/schemas/PartnerRole" },
+          "role": { "type": "string", "title": "Role" },
           "status": { "type": "string", "title": "Status" },
           "is_risk_sensitive": {
             "type": "boolean",
@@ -10671,6 +10781,14 @@
             "type": "string",
             "minLength": 30,
             "title": "Justification"
+          },
+          "effective_from": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Effective From",
+            "description": "Suspension start — omitted/past for immediate on countersignature, future for scheduled"
           }
         },
         "type": "object",

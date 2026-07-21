@@ -11,7 +11,6 @@ export const GOVERNED_ACTIONS_QUERY_KEYS = {
   lists: () => ["governed-actions", "list"] as const,
   list: (params: GovernedActionsQueryParams) =>
     ["governed-actions", "list", params] as const,
-  detail: (id: string) => ["governed-actions", "detail", id] as const,
 } as const
 
 export type GovernedActionsQueryParams = {
@@ -31,11 +30,6 @@ export async function fetchGovernedActions(
     })}`
   )
   return PaginatedGovernedActionsSchema.parse(data)
-}
-
-export async function fetchGovernedAction(id: string): Promise<GovernedAction> {
-  const data = await api.get(`/governed-actions/${id}`)
-  return GovernedActionSchema.parse(data)
 }
 
 export async function approveGovernedAction(

@@ -21,17 +21,11 @@ import {
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
 import {
-  PartnerRoleSchema,
+  AssignablePartnerRoleSchema,
   PartnerTypeSchema,
 } from "@/features/partners/api/schema"
 import type { PartnerRole, PartnerType } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
-
-const RISK_SENSITIVE_ROLES: PartnerRole[] = [
-  "leasing_company",
-  "bank_entity",
-  "ubo_related_person",
-]
 
 // RHF's reset() only clears top-level fields omitted from the new values —
 // nested paths like registered_address.street are left untouched unless
@@ -54,9 +48,9 @@ const VALID_COUNTRY_CODES = new Set(COUNTRY_OPTIONS.map(o => o.value))
 // input never reaches the match/submit API as a request that fails downstream.
 const countryCodeSchema = z
   .string()
-  .min(1, "Required")
+  .min(1, "required")
   .refine(v => VALID_COUNTRY_CODES.has(v), {
-    message: "Select a country from the list",
+    message: "invalidCountry",
   })
 
 // Mirrors LegalEntityIdentityInput.validate_lei in refinext-api's partner_schemas.py —
@@ -93,50 +87,50 @@ function blankToUndefined(
 // than asking for the same country twice. Per the design, street/city/
 // postal_code are mandatory; state_region is optional.
 const addressSchema = z.object({
-  street: z.string().min(1, "Required"),
-  city: z.string().min(1, "Required"),
-  postal_code: z.string().min(1, "Required"),
+  street: z.string().min(1, "required"),
+  city: z.string().min(1, "required"),
+  postal_code: z.string().min(1, "required"),
   state_region: z.string().optional(),
 })
 
 const legalEntitySchema = z.object({
   partner_type: z.literal("legal_entity"),
-  legal_name: z.string().min(1, "Required"),
-  legal_form: z.string().min(1, "Required"),
+  legal_name: z.string().min(1, "required"),
+  legal_form: z.string().min(1, "required"),
   country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   lei: z
     .string()
     .optional()
     .refine(v => !v || isValidLei(v), {
-      message: "LEI must be exactly 20 alphanumeric characters (ISO 17442)",
+      message: "leiInvalid",
     }),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(PartnerRoleSchema).min(1, "Required"),
+  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 const naturalPersonSchema = z.object({
   partner_type: z.literal("natural_person"),
-  full_name: z.string().min(1, "Required"),
-  date_of_birth: z.string().min(1, "Required"),
-  place_of_birth: z.string().min(1, "Required"),
+  full_name: z.string().min(1, "required"),
+  date_of_birth: z.string().min(1, "required"),
+  place_of_birth: z.string().min(1, "required"),
   country: countryCodeSchema,
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(PartnerRoleSchema).min(1, "Required"),
+  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 const soleProprietorSchema = z.object({
   partner_type: z.literal("sole_proprietor"),
-  full_name: z.string().min(1, "Required"),
-  date_of_birth: z.string().min(1, "Required"),
+  full_name: z.string().min(1, "required"),
+  date_of_birth: z.string().min(1, "required"),
   country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(PartnerRoleSchema).min(1, "Required"),
+  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 type LegalEntityForm = z.infer<typeof legalEntitySchema>
@@ -259,7 +253,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
       />
       {"date_of_birth" in errors && errors.date_of_birth && (
         <p className="text-xs text-destructive">
-          {errors.date_of_birth.message}
+          {t(
+            `submit.form.errors.${errors.date_of_birth.message}` as "submit.form.errors.required"
+          )}
         </p>
       )}
     </div>
@@ -271,6 +267,8 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
       onSubmit={handleSubmit(onValid)}
       className="flex flex-col gap-4"
     >
+      {/* NOTE: raw <input type="hidden"> — no shadcn equivalent for a hidden
+          field; used only to include partner_type in native form submission. */}
       <input
         type="hidden"
         {...register("partner_type" as keyof IdentityForm)}
@@ -296,7 +294,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               />
               {"legal_name" in errors && errors.legal_name && (
                 <p className="text-xs text-destructive">
-                  {errors.legal_name.message}
+                  {t(
+                    `submit.form.errors.${errors.legal_name.message}` as "submit.form.errors.required"
+                  )}
                 </p>
               )}
             </div>
@@ -313,7 +313,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 />
                 {"full_name" in errors && errors.full_name && (
                   <p className="text-xs text-destructive">
-                    {errors.full_name.message}
+                    {t(
+                      `submit.form.errors.${errors.full_name.message}` as "submit.form.errors.required"
+                    )}
                   </p>
                 )}
               </div>
@@ -345,7 +347,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 />
                 {"legal_form" in errors && errors.legal_form && (
                   <p className="text-xs text-destructive">
-                    {errors.legal_form.message}
+                    {t(
+                      `submit.form.errors.${errors.legal_form.message}` as "submit.form.errors.required"
+                    )}
                   </p>
                 )}
               </div>
@@ -367,7 +371,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               />
               {"place_of_birth" in errors && errors.place_of_birth && (
                 <p className="text-xs text-destructive">
-                  {errors.place_of_birth.message}
+                  {t(
+                    `submit.form.errors.${errors.place_of_birth.message}` as "submit.form.errors.required"
+                  )}
                 </p>
               )}
             </div>
@@ -392,39 +398,47 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 key={partnerType}
                 control={control}
                 name={"country" as keyof IdentityForm}
-                render={({ field }) => (
-                  <Combobox
-                    items={COUNTRY_OPTIONS}
-                    value={(field.value as string) ?? ""}
-                    onValueChange={field.onChange}
-                  >
-                    <ComboboxInput
-                      id="country"
-                      data-testid="field-country"
-                      placeholder={t("list.filters.countrySearchPlaceholder")}
-                      showClear
-                      onFocus={selectOnFocus}
-                    />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        <ComboboxEmpty>
-                          {t("list.filters.noCountriesFound")}
-                        </ComboboxEmpty>
-                        <ComboboxCollection>
-                          {(opt: { value: string; label: string }) => (
-                            <ComboboxItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </ComboboxItem>
-                          )}
-                        </ComboboxCollection>
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                )}
+                render={({ field }) => {
+                  const selectedCountry =
+                    COUNTRY_OPTIONS.find(o => o.value === field.value) ?? null
+                  return (
+                    <Combobox
+                      items={COUNTRY_OPTIONS}
+                      value={selectedCountry}
+                      onValueChange={option =>
+                        field.onChange(option?.value ?? "")
+                      }
+                    >
+                      <ComboboxInput
+                        id="country"
+                        data-testid="field-country"
+                        placeholder={t("list.filters.countrySearchPlaceholder")}
+                        showClear
+                        onFocus={selectOnFocus}
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          <ComboboxEmpty>
+                            {t("list.filters.noCountriesFound")}
+                          </ComboboxEmpty>
+                          <ComboboxCollection>
+                            {(opt: { value: string; label: string }) => (
+                              <ComboboxItem key={opt.value} value={opt}>
+                                {opt.label}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxCollection>
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  )
+                }}
               />
               {"country" in errors && errors.country && (
                 <p className="text-xs text-destructive">
-                  {errors.country.message}
+                  {t(
+                    `submit.form.errors.${errors.country.message}` as "submit.form.errors.required"
+                  )}
                 </p>
               )}
             </div>
@@ -492,7 +506,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 />
                 {"lei" in errors && errors.lei && (
                   <p className="text-xs text-destructive">
-                    {errors.lei.message}
+                    {t(
+                      `submit.form.errors.${errors.lei.message}` as "submit.form.errors.required"
+                    )}
                   </p>
                 )}
                 <p className="text-sm text-muted-foreground opacity-80">
@@ -544,7 +560,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               {"registered_address" in errors &&
                 errors.registered_address?.street && (
                   <p className="text-xs text-destructive">
-                    {errors.registered_address.street.message}
+                    {t(
+                      `submit.form.errors.${errors.registered_address.street.message}` as "submit.form.errors.required"
+                    )}
                   </p>
                 )}
             </div>
@@ -560,7 +578,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               {"registered_address" in errors &&
                 errors.registered_address?.city && (
                   <p className="text-xs text-destructive">
-                    {errors.registered_address.city.message}
+                    {t(
+                      `submit.form.errors.${errors.registered_address.city.message}` as "submit.form.errors.required"
+                    )}
                   </p>
                 )}
             </div>
@@ -580,7 +600,9 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               {"registered_address" in errors &&
                 errors.registered_address?.postal_code && (
                   <p className="text-xs text-destructive">
-                    {errors.registered_address.postal_code.message}
+                    {t(
+                      `submit.form.errors.${errors.registered_address.postal_code.message}` as "submit.form.errors.required"
+                    )}
                   </p>
                 )}
             </div>
@@ -629,8 +651,10 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               }
               return (
                 <div className="grid grid-cols-2 gap-2">
-                  {PartnerRoleSchema.options.map(role => {
-                    const isRisky = RISK_SENSITIVE_ROLES.includes(role)
+                  {AssignablePartnerRoleSchema.options.map(role => {
+                    // every manually assignable role is risk-sensitive —
+                    // deal roles are contract-derived (PRD1042-1453)
+                    const isRisky = true
                     const checked = selected.includes(role)
                     return (
                       // NOTE: plain <div> instead of <label htmlFor>. BaseUI's
@@ -644,6 +668,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                       <div
                         key={role}
                         onClick={() => toggle(role)}
+                        data-testid={`field-role-${role}`}
                         className="flex items-start gap-2 p-3 rounded-xl border border-border cursor-pointer"
                       >
                         <Checkbox
@@ -675,11 +700,6 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
               )
             }}
           />
-          {"roles" in errors && errors.roles && (
-            <p className="text-xs text-destructive mt-2">
-              {t("submit.form.errors.roleRequired")}
-            </p>
-          )}
         </CardContent>
       </Card>
     </form>

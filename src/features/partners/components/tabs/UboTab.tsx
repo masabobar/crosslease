@@ -11,7 +11,6 @@ import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
 import { CaptureUboDialog } from "@/features/partners/components/CaptureUboDialog"
 import { initialsFromName } from "@/features/partners/utils"
 import { formatDateTime } from "@/lib/formatters"
-import type { PartnerType } from "@/features/partners/api/schema"
 
 const COL_PARTNER = "flex-1 min-w-[220px]"
 const COL_OWNERSHIP = "w-[140px] shrink-0"
@@ -21,15 +20,10 @@ const COL_CAPTURED_ON = "w-[160px] shrink-0"
 
 type UboTabProps = {
   partnerId: string
-  partnerType: PartnerType
   canCaptureUbo: boolean
 }
 
-function UboTab({
-  partnerId,
-  partnerType: _partnerType,
-  canCaptureUbo,
-}: UboTabProps) {
+function UboTab({ partnerId, canCaptureUbo }: UboTabProps) {
   const { t } = useTranslation("partners")
   const [captureOpen, setCaptureOpen] = useState(false)
   const { data, isLoading, isError } = useQuery({

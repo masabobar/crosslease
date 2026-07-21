@@ -2,6 +2,7 @@ import { useForm, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { AlertCircle } from "lucide-react"
 import { DialogModal } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -35,7 +36,7 @@ const formSchema = z
   .object({
     firstName: z.string().min(1, "required"),
     lastName: z.string().min(1, "required"),
-    email: z.string().min(1, "required"),
+    email: z.string().min(1, "required").email("invalidFormat"),
     role: z.enum(USER_ROLES, { error: "required" }),
     tenant: z.string().optional(),
     accessValidFrom: z.string().optional(),
@@ -88,6 +89,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
 
   const resolveMsg = (msg: string | undefined) => {
     if (msg === "required") return tCommon("validation.required")
+    if (msg === "invalidFormat") return tCommon("validation.invalidFormat")
     if (msg === "mustBeAfterFrom")
       return tCommon("validation.dateMustBeAfterFrom")
     return msg
@@ -179,33 +181,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         })
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        const errMessage = t(`errors.${err.code}`, {
-          defaultValue: t("errors.generic"),
-        })
-        if (err.code === "EMAIL_ALREADY_EXISTS") {
-          form.setError("email", { message: errMessage })
-        } else if (err.code === "AUDITOR_PROVISIONING_NOT_ALLOWED") {
-          form.setError("role", { message: errMessage })
-        } else if (err.errors?.length) {
-          const fieldMap: Record<string, keyof typeof data> = {
-            first_name: "firstName",
-            last_name: "lastName",
-            email: "email",
-            role: "role",
-            tenant_id: "tenant",
-            access_valid_until: "accessValidUntil",
-          }
-          for (const e of err.errors) {
-            const formField = fieldMap[e.field]
-            if (formField) form.setError(formField, { message: errMessage })
-          }
-        } else {
-          form.setError("root", { message: errMessage })
-        }
-      } else {
-        form.setError("root", { message: t("errors.generic") })
-      }
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
     }
   })
 
@@ -409,6 +389,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                           ? new Date(accessValidUntilValue + "T00:00:00")
                           : undefined
                       }
+                      captionLayout="dropdown"
                     />
                   )}
                 />
@@ -442,6 +423,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                           ? new Date(accessValidFromValue + "T00:00:00")
                           : undefined
                       }
+                      captionLayout="dropdown"
                     />
                   )}
                 />
@@ -456,11 +438,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
               {t("modal.hints.accessDates")}
             </p>
           </div>
-        )}
-
-        {/* Root error */}
-        {errors.root && (
-          <p className="text-sm text-destructive">{errors.root.message}</p>
         )}
 
         {/* Actions */}

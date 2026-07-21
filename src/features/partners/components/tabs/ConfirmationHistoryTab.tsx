@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/formatters"
 import { ApiError } from "@/lib/api"
 
 const CONFIRMATION_HISTORY_PAGE_SIZE = 50
+const CONFIRMED_STATUS = "confirmed"
 
 const COL_STATUS = "w-[140px] shrink-0"
 const COL_CAPTURED_BY = "flex-1 min-w-[220px]"
@@ -14,7 +15,7 @@ const COL_NOTE = "flex-1 min-w-[280px]"
 
 function ConfirmationStatusBadge({ status }: { status: string }) {
   const { t } = useTranslation("partners")
-  const isConfirmed = status === "confirmed"
+  const isConfirmed = status === CONFIRMED_STATUS
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
