@@ -8,7 +8,6 @@ import type { Locator, Page } from "../fixtures/test"
 //   - Page heading: "Add new partner"
 //   - Subtitle: "Submit a new counterparty into the partner registry"
 //   - Form sections: BASIC IDENTITY, REGISTRY IDENTIFIERS, ADDRESS, CLASSIFICATION
-//   - CLASSIFICATION helper: "Select all roles that apply. At least one is required."
 //   - Primary CTA: "Submit for matching"
 //   - Secondary CTA: "Cancel"
 //   - Partner Type variants covered: Legal entity, Natural person
@@ -24,7 +23,6 @@ export class PartnerSubmissionPage {
   readonly subtitle: Locator
   readonly submitButton: Locator
   readonly cancelButton: Locator
-  readonly classificationHelperText: Locator
   readonly successMessage: Locator
 
   constructor(page: Page) {
@@ -38,9 +36,6 @@ export class PartnerSubmissionPage {
       name: /submit for matching/i,
     })
     this.cancelButton = page.getByRole("button", { name: /^cancel$/i })
-    this.classificationHelperText = page.getByText(
-      /select all roles that apply.*at least one is required/i
-    )
     this.successMessage = page
       .getByRole("status")
       .filter({ hasText: /partner.*created|saved successfully/i })
@@ -64,6 +59,15 @@ export class PartnerSubmissionPage {
   async submitForm() {
     await this.submitButton.click()
     await this.page.waitForLoadState("networkidle")
+  }
+
+  // Anchor for the type-conditional mandatory field the AC-04 scenarios omit.
+  // Keyed off the field's data-testid ("Legal Form" → field-legal_form),
+  // which is stable across copy changes — unlike the old classification
+  // helper text that PRD1042-1453 rewrote once the role model shifted.
+  mandatoryFieldControl(fieldName: string): Locator {
+    const slug = fieldName.toLowerCase().replace(/\s+/g, "_")
+    return this.page.getByTestId(`field-${slug}`)
   }
 
   // Returns the visible FormMessage error text for a named field.

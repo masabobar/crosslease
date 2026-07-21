@@ -34,8 +34,11 @@ test.describe("PRD1042-747 — Submit New Counterparty into Partner Registry (US
       await expect(submissionPage.subtitle).toBeVisible()
 
       await submissionPage.selectPartnerType(partnerType)
-      // Classification helper is a design-verified visual anchor for the form
-      await expect(submissionPage.classificationHelperText).toBeVisible()
+      // Confirm the type-conditional mandatory field is present before we
+      // omit it — proves the type-select actually rendered its variant fields.
+      await expect(
+        submissionPage.mandatoryFieldControl(missingField)
+      ).toBeVisible()
 
       // Submit without filling the mandatory field — triggers server-side 400
       await submissionPage.submitForm()
