@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/combobox"
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
+import { isCommercialRegisterApplicable } from "@/features/partners/utils"
 import {
   AssignablePartnerRoleSchema,
   PartnerTypeSchema,
@@ -174,7 +175,10 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
   // Autofill (or any non-selection input) can put a non-string or malformed
   // value into the free-typeable Country combobox before it's committed —
   // guard the type here rather than assume useWatch always returns a string.
-  const isDe = typeof country === "string" && country.toUpperCase() === "DE"
+  const isCommercialRegisterFieldEditable = isCommercialRegisterApplicable(
+    partnerType,
+    typeof country === "string" ? country : null
+  )
 
   function handleTypeChange(type: PartnerType) {
     // Deferred so the closing entity-type dropdown finishes its own
@@ -464,7 +468,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 <Input
                   id="commercial_register_no"
                   data-testid="field-commercial_register_no"
-                  disabled={!isDe}
+                  disabled={!isCommercialRegisterFieldEditable}
                   {...register("commercial_register_no" as keyof IdentityForm)}
                 />
                 <p className="text-sm text-muted-foreground opacity-80">

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/combobox"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
+import { isCommercialRegisterApplicable } from "@/features/partners/utils"
 import { ApiError } from "@/lib/api"
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
@@ -82,6 +83,16 @@ function ProposeIdentityChangeDialog({
   const anchors = ANCHOR_FIELDS[identity.partner_type]
   const values = useWatch({ control, name: "values" }) ?? {}
 
+  // Country anchor isn't required to be proposed — fall back to the
+  // partner's current country so the HRB gate reflects reality even when
+  // only commercial_register_no is being changed.
+  const effectiveCountry =
+    "country" in values ? values.country : identity.country
+  const isCommercialRegisterFieldEditable = isCommercialRegisterApplicable(
+    identity.partner_type,
+    effectiveCountry
+  )
+
   function toggleAnchor(key: string, checked: boolean) {
     const next = { ...getValues("values") }
     if (checked) {
@@ -91,6 +102,21 @@ function ProposeIdentityChangeDialog({
       delete next[key]
     }
     setValue("values", next, { shouldValidate: true })
+  }
+
+  // A commercial register number only makes sense for DE — if the proposed
+  // country moves away from DE, drop any pending HRB anchor rather than let
+  // a country/HRB mismatch reach the API (US 13.1).
+  function dropCommercialRegisterIfIneligible(newCountry: string) {
+    const currentValues = getValues("values")
+    if (
+      "commercial_register_no" in currentValues &&
+      !isCommercialRegisterApplicable(identity.partner_type, newCountry)
+    ) {
+      const next = { ...currentValues }
+      delete next.commercial_register_no
+      setValue("values", next, { shouldValidate: true })
+    }
   }
 
   function handleClose() {
@@ -149,6 +175,10 @@ function ProposeIdentityChangeDialog({
                   <Checkbox
                     data-testid={`propose-anchor-${anchor.key}`}
                     checked={anchor.key in values}
+                    disabled={
+                      anchor.key === "commercial_register_no" &&
+                      !isCommercialRegisterFieldEditable
+                    }
                     onCheckedChange={c => toggleAnchor(anchor.key, !!c)}
                   />
                   <span className="text-sm text-foreground">
@@ -157,6 +187,12 @@ function ProposeIdentityChangeDialog({
                     )}
                   </span>
                 </Label>
+                {anchor.key === "commercial_register_no" &&
+                  !isCommercialRegisterFieldEditable && (
+                    <p className="ml-6 text-sm text-muted-foreground opacity-80">
+                      {t("submit.form.hints.hrbMandatoryDe")}
+                    </p>
+                  )}
                 {anchor.key in values && (
                   <div className="ml-6">
                     {anchor.key === "country" ? (
@@ -174,9 +210,11 @@ function ProposeIdentityChangeDialog({
                             <Combobox
                               items={COUNTRY_OPTIONS}
                               value={selectedCountry}
-                              onValueChange={option =>
-                                field.onChange(option?.value ?? "")
-                              }
+                              onValueChange={option => {
+                                const newCountry = option?.value ?? ""
+                                field.onChange(newCountry)
+                                dropCommercialRegisterIfIneligible(newCountry)
+                              }}
                             >
                               <ComboboxInput
                                 data-testid={`propose-value-${anchor.key}`}
