@@ -120,41 +120,47 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
             <Controller
               control={control}
               name="ubo_partner_id"
-              render={({ field }) => (
-                <Combobox
-                  items={partnerOptions}
-                  filter={null}
-                  value={field.value ?? ""}
-                  onValueChange={field.onChange}
-                  inputValue={search}
-                  onInputValueChange={setSearch}
-                >
-                  <ComboboxInput
-                    id="ubo-partner-combobox"
-                    data-testid="capture-ubo-partner"
-                    placeholder={t(
-                      "captureUboDialog.fields.uboPartnerPlaceholder"
-                    )}
-                    showClear
-                    aria-invalid={!!errors.ubo_partner_id}
-                    onFocus={selectOnFocus}
-                  />
-                  <ComboboxContent>
-                    <ComboboxList>
-                      <ComboboxEmpty>
-                        {t("captureUboDialog.fields.uboPartnerNoResults")}
-                      </ComboboxEmpty>
-                      <ComboboxCollection>
-                        {(opt: { value: string; label: string }) => (
-                          <ComboboxItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxCollection>
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              )}
+              render={({ field }) => {
+                const selectedPartner =
+                  partnerOptions.find(o => o.value === field.value) ?? null
+                return (
+                  <Combobox
+                    items={partnerOptions}
+                    filter={null}
+                    value={selectedPartner}
+                    onValueChange={option =>
+                      field.onChange(option?.value ?? "")
+                    }
+                    inputValue={search}
+                    onInputValueChange={setSearch}
+                  >
+                    <ComboboxInput
+                      id="ubo-partner-combobox"
+                      data-testid="capture-ubo-partner"
+                      placeholder={t(
+                        "captureUboDialog.fields.uboPartnerPlaceholder"
+                      )}
+                      showClear
+                      aria-invalid={!!errors.ubo_partner_id}
+                      onFocus={selectOnFocus}
+                    />
+                    <ComboboxContent>
+                      <ComboboxList>
+                        <ComboboxEmpty>
+                          {t("captureUboDialog.fields.uboPartnerNoResults")}
+                        </ComboboxEmpty>
+                        <ComboboxCollection>
+                          {(opt: { value: string; label: string }) => (
+                            <ComboboxItem key={opt.value} value={opt}>
+                              {opt.label}
+                            </ComboboxItem>
+                          )}
+                        </ComboboxCollection>
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
+                )
+              }}
             />
             {errors.ubo_partner_id && (
               <p className="text-xs text-destructive">
