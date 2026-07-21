@@ -332,6 +332,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
                   }}
                   placeholder={t("list.filters.from")}
                   maxDate={new Date()}
+                  captionLayout="dropdown"
                 />
                 <DatePicker
                   value={toDate ?? undefined}
@@ -339,6 +340,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
                   placeholder={t("list.filters.to")}
                   maxDate={new Date()}
                   minDate={fromDate ? parseISO(fromDate) : undefined}
+                  captionLayout="dropdown"
                 />
               </div>
             </div>

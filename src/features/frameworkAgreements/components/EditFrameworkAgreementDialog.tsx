@@ -163,6 +163,7 @@ function EditFrameworkAgreementDialog({
                       onChange={field.onChange}
                       disabled={identityLocked}
                       error={!!errors.valid_from}
+                      captionLayout="dropdown"
                     />
                   )}
                 />

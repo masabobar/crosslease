@@ -313,6 +313,7 @@ export function NewGrantDialog({
                     placeholder={t("list.filters.from")}
                     minDate={parseISO(today)}
                     error={!!errors.valid_from}
+                    captionLayout="dropdown"
                     data-testid="grant-valid-from"
                   />
                 )}
@@ -328,6 +329,7 @@ export function NewGrantDialog({
                     minDate={validFrom ? parseISO(validFrom) : undefined}
                     maxDate={maxUntilDate}
                     error={!!errors.valid_until}
+                    captionLayout="dropdown"
                     data-testid="grant-valid-until"
                   />
                 )}

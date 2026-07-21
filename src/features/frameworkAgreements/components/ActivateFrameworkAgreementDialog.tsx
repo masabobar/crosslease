@@ -119,6 +119,7 @@ function ActivateFrameworkAgreementDialog({
                   data-testid="activate-effective-from"
                   value={field.value}
                   onChange={field.onChange}
+                  captionLayout="dropdown"
                 />
               )}
             />

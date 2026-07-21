@@ -43,6 +43,7 @@ function ValidityTemplatesStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_from}
+                  captionLayout="dropdown"
                 />
               )}
             />
@@ -74,6 +75,7 @@ function ValidityTemplatesStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_until}
+                  captionLayout="dropdown"
                 />
               )}
             />

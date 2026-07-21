@@ -356,6 +356,7 @@ function UserActionModal({
                     onChange={field.onChange}
                     error={!!errors.effective_from}
                     minDate={new Date()}
+                    captionLayout="dropdown"
                   />
                 )}
               />
@@ -379,6 +380,7 @@ function UserActionModal({
                       data-testid="action-effective-until"
                       value={field.value}
                       onChange={field.onChange}
+                      captionLayout="dropdown"
                     />
                   )}
                 />

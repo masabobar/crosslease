@@ -407,12 +407,14 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
                       onChange={v => setFromDate(v)}
                       placeholder={t("auditHistory.from")}
                       maxDate={new Date()}
+                      captionLayout="dropdown"
                     />
                     <DatePicker
                       value={toDate ?? undefined}
                       onChange={v => setToDate(v)}
                       placeholder={t("auditHistory.to")}
                       maxDate={new Date()}
+                      captionLayout="dropdown"
                     />
                   </div>
                 </div>
