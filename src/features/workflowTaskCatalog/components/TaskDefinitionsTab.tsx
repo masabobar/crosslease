@@ -119,7 +119,7 @@ function TaskDefinitionsTab({ catalogLayer, canEdit }: Props) {
                     ? t("detail.taskDefinitions.notApplicable")
                     : task.mandatory
                       ? t("detail.taskDefinitions.yes")
-                      : t("detail.taskDefinitions.notApplicable")}
+                      : t("detail.taskDefinitions.no")}
                 </TableCell>
                 <TableCell>
                   {task.responsibleRole

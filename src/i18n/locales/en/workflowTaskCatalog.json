@@ -154,6 +154,7 @@
         "docRef": "Doc ref"
       },
       "yes": "Yes",
+      "no": "No",
       "notApplicable": "-",
       "inheritedSuffix": "inherited",
       "types": {

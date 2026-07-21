@@ -133,6 +133,7 @@ function TaskDefinitionSheet({
   onRequestEdit,
 }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
+  const { t: tCommon } = useTranslation("common")
   const isGlobalDefaultLayer = catalogLayer === CATALOG_LAYER.GLOBAL_DEFAULT
   const defaultAddType: TaskDefinitionType = isGlobalDefaultLayer
     ? TASK_DEFINITION_TYPE.GLOBAL
@@ -158,6 +159,12 @@ function TaskDefinitionSheet({
   const parentTask = PLACEHOLDER_PARENT_TASK_OPTIONS.find(
     o => o.value === selectedParentTaskCode
   )
+
+  function resolveMessage(message: string | undefined): string | undefined {
+    if (!message) return undefined
+    if (message === "required") return tCommon("validation.required")
+    return message
+  }
 
   function handleClose() {
     onOpenChange(false)
@@ -360,6 +367,11 @@ function TaskDefinitionSheet({
                       />
                     )}
                   />
+                  {errors.parentTaskCode && (
+                    <p className="mt-1 text-sm text-destructive">
+                      {resolveMessage(errors.parentTaskCode.message)}
+                    </p>
+                  )}
                 </div>
 
                 {parentTask && (
@@ -394,6 +406,11 @@ function TaskDefinitionSheet({
                     error={!!errors.taskCode}
                     {...register("taskCode")}
                   />
+                  {errors.taskCode && (
+                    <p className="mt-1 text-sm text-destructive">
+                      {resolveMessage(errors.taskCode.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label
@@ -409,6 +426,11 @@ function TaskDefinitionSheet({
                     error={!!errors.taskName}
                     {...register("taskName")}
                   />
+                  {errors.taskName && (
+                    <p className="mt-1 text-sm text-destructive">
+                      {resolveMessage(errors.taskName.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label
@@ -425,6 +447,11 @@ function TaskDefinitionSheet({
                     aria-invalid={!!errors.description || undefined}
                     {...register("description")}
                   />
+                  {errors.description && (
+                    <p className="mt-1 text-sm text-destructive">
+                      {resolveMessage(errors.description.message)}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label className="mb-2">
