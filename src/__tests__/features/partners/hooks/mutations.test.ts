@@ -38,7 +38,6 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("@/features/partners/api/partnersApi", () => ({
   archivePartner: vi.fn(),
-  assignPartnerRoles: vi.fn(),
   confirmPartner: vi.fn(),
   rejectPartner: vi.fn(),
   proposeIdentityChange: vi.fn(),
@@ -82,7 +81,6 @@ vi.mock("@/features/partners/api/partnersApi", () => ({
 
 import {
   archivePartner,
-  assignPartnerRoles,
   confirmPartner,
   rejectPartner,
   proposeIdentityChange,
@@ -94,7 +92,6 @@ import {
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
 import { useConfirmPartner } from "@/features/partners/hooks/useConfirmPartner"
 import { useRejectPartner } from "@/features/partners/hooks/useRejectPartner"
-import { useAssignPartnerRoles } from "@/features/partners/hooks/useAssignPartnerRoles"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
 import { useCaptureUboOwnership } from "@/features/partners/hooks/useCaptureUboOwnership"
 import { useResolveDuplicatePair } from "@/features/partners/hooks/useResolveDuplicatePair"
@@ -179,40 +176,6 @@ describe("useRejectPartner", () => {
     })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["partners", "confirmation-history", PARTNER_ID],
-    })
-  })
-})
-
-describe("useAssignPartnerRoles", () => {
-  it("calls assignPartnerRoles with the correct arguments", async () => {
-    vi.mocked(assignPartnerRoles).mockResolvedValue({ results: [] } as never)
-    const mutation = useAssignPartnerRoles(PARTNER_ID)
-    await mutation.mutate({ roles: ["lessee", "guarantor"], note: null })
-    expect(assignPartnerRoles).toHaveBeenCalledWith(PARTNER_ID, {
-      roles: ["lessee", "guarantor"],
-      note: null,
-    })
-  })
-
-  it("invalidates roles query on success", async () => {
-    vi.mocked(assignPartnerRoles).mockResolvedValue({ results: [] } as never)
-    const mutation = useAssignPartnerRoles(PARTNER_ID)
-    await mutation.mutate({ roles: ["supplier"] })
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["partners", "roles", PARTNER_ID],
-    })
-  })
-
-  it("accepts the risk-sensitive bank_entity role (PRD1042-1452/1453)", async () => {
-    vi.mocked(assignPartnerRoles).mockResolvedValue({ results: [] } as never)
-    const mutation = useAssignPartnerRoles(PARTNER_ID)
-    await mutation.mutate({
-      roles: ["bank_entity"],
-      note: null,
-    })
-    expect(assignPartnerRoles).toHaveBeenCalledWith(PARTNER_ID, {
-      roles: ["bank_entity"],
-      note: null,
     })
   })
 })

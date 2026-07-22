@@ -11,12 +11,12 @@ export function useLcPartnerOptions(tenantId: string | null, search: string) {
   })
 
   return {
-    options: (data?.items ?? [])
-      .filter(p => p.partner_type === "legal_entity")
-      .map(p => ({
-        value: p.partner_id,
-        label: p.display_name,
-      })),
+    // No partner-type restriction (PRD1042-1453 AC): LCs are expected to be
+    // legal entities in practice but this must not be enforced.
+    options: (data?.items ?? []).map(p => ({
+      value: p.partner_id,
+      label: p.display_name,
+    })),
     isLoading,
   }
 }

@@ -11,7 +11,6 @@ import { PartnerMatchClassificationSchema } from "@/features/partners/api/schema
 import type {
   CandidateSummary,
   PartnerMatchResponse,
-  PartnerRole,
 } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
 
@@ -76,7 +75,6 @@ function MatchedCandidatesCard({
 type MatchingReviewProps = {
   matchResult: PartnerMatchResponse | null
   identity: PartnerIdentityInput
-  roles: PartnerRole[]
   isSubmitting: boolean
   onConfirmCreate: () => void
   onCancel: () => void
@@ -88,13 +86,8 @@ function formatCountry(code: string): string {
 
 function summaryRows(
   identity: PartnerIdentityInput,
-  roles: PartnerRole[],
   t: TFunction<"partners">
 ) {
-  const rolesRow = {
-    label: t("submit.matchStep.summaryFields.roles"),
-    value: roles.map(role => t(`role.${role}` as "role.lessee")).join(", "),
-  }
   if (identity.partner_type === "legal_entity") {
     return [
       {
@@ -119,7 +112,6 @@ function summaryRows(
         label: t("submit.identityStep.fields.taxIdVat"),
         value: identity.tax_id_vat,
       },
-      rolesRow,
     ]
   }
   return [
@@ -137,14 +129,12 @@ function summaryRows(
         ? formatCountry(identity.country)
         : identity.country,
     },
-    rolesRow,
   ]
 }
 
 function MatchingReview({
   matchResult,
   identity,
-  roles,
   isSubmitting,
   onConfirmCreate,
   onCancel,
@@ -255,7 +245,7 @@ function MatchingReview({
                   {t("submit.matchStep.newPartnerSummary")}
                 </p>
                 <div className="rounded-xl bg-muted px-4 py-3 border-l-3 border-info flex flex-col gap-3">
-                  {summaryRows(identity, roles, t)
+                  {summaryRows(identity, t)
                     .filter(row => row.value)
                     .map(row => (
                       <div key={row.label} className="flex gap-20 text-sm">

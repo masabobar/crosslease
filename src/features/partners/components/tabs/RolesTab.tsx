@@ -1,9 +1,6 @@
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { Plus, ShieldCheck } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ShieldCheck } from "lucide-react"
 import { PartnerRoleBadge } from "@/features/partners/components/PartnerRoleBadge"
 import { SectionCard } from "@/features/partners/components/PartnerDetailPrimitives"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
@@ -13,10 +10,8 @@ import {
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
 import { formatDateTime } from "@/lib/formatters"
-import { ApiError } from "@/lib/api"
 import { RoleStatusSchema } from "@/features/partners/api/schema"
 import type { RoleStatus } from "@/features/partners/api/schema"
-import { AssignRoleDialog } from "@/features/partners/components/AssignRoleDialog"
 import { initialsFromName } from "@/features/partners/utils"
 
 const COL_ROLE = "flex-1 min-w-[160px]"
@@ -48,12 +43,10 @@ function RoleStatusCell({ status }: { status: RoleStatus }) {
 
 type RolesTabProps = {
   partnerId: string
-  canAssignRole: boolean
 }
 
-function RolesTab({ partnerId, canAssignRole }: RolesTabProps) {
+function RolesTab({ partnerId }: RolesTabProps) {
   const { t } = useTranslation("partners")
-  const [assignOpen, setAssignOpen] = useState(false)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: PARTNERS_QUERY_KEYS.roles(partnerId),
@@ -97,18 +90,6 @@ function RolesTab({ partnerId, canAssignRole }: RolesTabProps) {
               {t("detail.roles.subtitle")}
             </p>
           </div>
-          {canAssignRole && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setAssignOpen(true)}
-              data-testid="assign-role-button"
-              className="gap-1.5"
-            >
-              <Plus size={14} />
-              {t("detail.roles.assignButton")}
-            </Button>
-          )}
         </div>
 
         {roles.length === 0 ? (
@@ -224,30 +205,6 @@ function RolesTab({ partnerId, canAssignRole }: RolesTabProps) {
         )}
       </SectionCard>
 
-      {canAssignRole && (
-        <AssignRoleDialog
-          open={assignOpen}
-          onOpenChange={setAssignOpen}
-          partnerId={partnerId}
-          onSuccess={response => {
-            const pendingApproval = response.results.some(
-              r => r.status === RoleStatusSchema.in.enum.pending_four_eyes
-            )
-            toast.success(
-              pendingApproval
-                ? t("assignRoleDialog.successPending")
-                : t("assignRoleDialog.success")
-            )
-          }}
-          onError={(err: unknown) => {
-            toast.error(
-              err instanceof ApiError
-                ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-                : t("errors.generic")
-            )
-          }}
-        />
-      )}
     </div>
   )
 }

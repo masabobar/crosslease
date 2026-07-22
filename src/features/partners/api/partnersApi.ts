@@ -18,7 +18,6 @@ import {
   PartnerUboResponseSchema,
   ResolutionCandidatesResponseSchema,
   ResolveDuplicatePairResponseSchema,
-  RoleAssignResponseSchema,
   UboOwnershipRecordResponseSchema,
 } from "./schema"
 import type {
@@ -45,7 +44,6 @@ import type {
   PartnerUboResponse,
   ResolutionCandidatesResponse,
   ResolveDuplicatePairResponse,
-  RoleAssignResponse,
   UboCompletenessStatus,
   UboOwnershipRecordResponse,
 } from "./schema"
@@ -140,15 +138,9 @@ export type MatchPartnerBody = {
 }
 
 export type SubmitPartnerBody = {
+  // No roles at intake (PRD1042-1453): deal roles are contract-derived and
+  // standing classifications come from the Framework Agreement.
   identity: PartnerIdentityInput
-  roles: PartnerRole[]
-}
-
-export type AssignRolesBody = {
-  // Full role set (PRD1042-1452): risk-sensitive roles are accepted and come
-  // back as pending governed actions awaiting BO counter-confirmation.
-  roles: PartnerRole[]
-  note?: string | null
 }
 
 export type CaptureUboBody = {
@@ -233,14 +225,6 @@ export async function fetchPartnerRoles(
 ): Promise<PartnerRolesResponse> {
   const data = await api.get(`/partners/${id}/roles`)
   return PartnerRolesResponseSchema.parse(data)
-}
-
-export async function assignPartnerRoles(
-  id: string,
-  body: AssignRolesBody
-): Promise<RoleAssignResponse> {
-  const data = await api.post(`/partners/${id}/roles`, body)
-  return RoleAssignResponseSchema.parse(data)
 }
 
 export async function captureUboOwnership(
