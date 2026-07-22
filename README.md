@@ -43,6 +43,11 @@ pnpm dev
 
 App runs at `http://localhost:5173`.
 
+`.env.example` documents two setups — pick one when filling in `.env`:
+
+- **Local `refinext-api`** (default) — `VITE_API_URL=http://localhost:3530/api/v1`
+- **No local API, point at a remote environment (dev/staging)** — set `VITE_API_URL=/api/v1` and `API_PROXY_TARGET=<remote API origin>` instead. A direct URL to a remote API doesn't work here: the auth cookie is `SameSite=Lax`, which the browser withholds on cross-site requests from `localhost`; routing through the Vite dev proxy keeps requests same-origin so the cookie round-trips correctly.
+
 ## Commands
 
 ```bash
