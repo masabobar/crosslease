@@ -14,6 +14,9 @@ dist-ssr
 *.local
 package-lock.json
 
+# Local env — per-developer, never shared; .env.example is the tracked template
+.env
+
 # E2E environment files and auth state
 .env.e2e*
 .auth/
