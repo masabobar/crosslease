@@ -65,7 +65,7 @@ const STEP_FIELDS: Record<
   ProductTemplateWizardStep,
   (keyof ProductTemplateWizardForm)[]
 > = {
-  identity: ["template_code", "template_name"],
+  identity: ["template_name"],
   behavioral: [
     "financing_type",
     "legal_structure",
@@ -87,8 +87,7 @@ const STEP_FIELDS: Record<
   review: [],
 }
 
-// Builds the update-shaped wire payload from form values (template_code is immutable
-// after creation, so it's never part of an update body), omitting an empty valid_until.
+// Builds the update-shaped wire payload from form values, omitting an empty valid_until.
 function toUpdatePayload(
   values: ProductTemplateWizardForm
 ): UpdateProductTemplateDraftRequest {
@@ -115,17 +114,10 @@ function toUpdatePayload(
   }
 }
 
-// Seeded into the (hidden, immutable) template_code field when authoring a new version
-// from a Published template — VersionDetailResponse doesn't return template_code (no
-// reachable single-template lookup exists either, see plan Gap 4), and template_code is
-// stripped from every update payload regardless, so the placeholder itself is inert.
-const NEW_VERSION_TEMPLATE_CODE_PLACEHOLDER = "N/A"
-
 function toNewVersionFormDefaults(
   detail: TemplateVersionDetail
 ): ProductTemplateWizardForm {
   return {
-    template_code: NEW_VERSION_TEMPLATE_CODE_PLACEHOLDER,
     template_name: detail.template_name,
     template_description: detail.template_description ?? "",
     financing_type: detail.financing_type,
@@ -155,13 +147,11 @@ function toNewVersionFormDefaults(
 type WizardFormProps = {
   initialDraftRef: DraftRef | null
   initialFormValues: ProductTemplateWizardForm | undefined
-  shouldHideTemplateCode: boolean
 }
 
 function WizardFormView({
   initialDraftRef,
   initialFormValues,
-  shouldHideTemplateCode,
 }: WizardFormProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
@@ -192,7 +182,6 @@ function WizardFormView({
   const form = useForm<ProductTemplateWizardForm>({
     resolver: zodResolver(ProductTemplateWizardFormSchema),
     defaultValues: initialFormValues ?? {
-      template_code: "",
       template_name: "",
       template_description: "",
       allowed_asset_categories: [],
@@ -202,7 +191,6 @@ function WizardFormView({
   const isSaving = isCreating || isUpdating || isPublishing
 
   const [
-    watchedCode,
     watchedName,
     watchedFinancingType,
     watchedLegalStructure,
@@ -212,7 +200,6 @@ function WizardFormView({
   ] = useWatch({
     control: form.control,
     name: [
-      "template_code",
       "template_name",
       "financing_type",
       "legal_structure",
@@ -222,11 +209,10 @@ function WizardFormView({
     ],
   })
 
-  // Gap 2 (see plan): the create endpoint hard-requires these 7 fields even though the
-  // PRD narrative says draft creation needs only code + name. Save-as-draft only becomes
-  // clickable once all 7 are present, not the full per-step form validity.
+  // Gap 2 (see plan): the create endpoint hard-requires these 6 fields even though the
+  // PRD narrative says draft creation needs only name. Save-as-draft only becomes
+  // clickable once all 6 are present, not the full per-step form validity.
   const canSaveDraft = Boolean(
-    watchedCode &&
     watchedName &&
     watchedFinancingType &&
     watchedLegalStructure &&
@@ -261,14 +247,11 @@ function WizardFormView({
     let ref = draftRef
     if (!ref) {
       if (!tenantId) return null
-      // canSaveDraft (gating the button that calls this) guarantees the 7 wire-required
+      // canSaveDraft (gating the button that calls this) guarantees the 6 wire-required
       // fields are present, which TS can't infer from the looser wizard-form type.
       const result = await createDraft({
         tenantId,
-        body: {
-          template_code: values.template_code,
-          ...updatePayload,
-        } as CreateProductTemplateDraftRequest,
+        body: updatePayload as CreateProductTemplateDraftRequest,
       })
       ref = { templateId: result.id, versionNumber: result.version_number }
       setDraftRef(ref)
@@ -389,12 +372,7 @@ function WizardFormView({
             </p>
           </div>
 
-          {step === "identity" && (
-            <IdentityStep
-              form={form}
-              shouldHideTemplateCode={shouldHideTemplateCode}
-            />
-          )}
+          {step === "identity" && <IdentityStep form={form} />}
           {step === "behavioral" && <BehavioralSettingsStep form={form} />}
           {step === "eligibility" && <EligibilityStep form={form} />}
           {step === "review" && (
@@ -574,7 +552,6 @@ export default function CreateProductTemplateWizardPage() {
           ? toNewVersionFormDefaults(existingDraft)
           : undefined
       }
-      shouldHideTemplateCode={draftRefFromRoute !== null}
     />
   )
 }

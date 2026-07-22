@@ -48,16 +48,10 @@ function ReviewStep({
   return (
     <div className="flex flex-col gap-4" data-testid="review-step">
       <SectionCard title={t("sections.identity")}>
-        <div className="grid grid-cols-2 gap-4">
-          <ReviewRow
-            label={t("fields.templateCode")}
-            value={values.template_code || "—"}
-          />
-          <ReviewRow
-            label={t("fields.templateName")}
-            value={values.template_name || "—"}
-          />
-        </div>
+        <ReviewRow
+          label={t("fields.templateName")}
+          value={values.template_name || "—"}
+        />
         {values.template_description && (
           <ReviewRow
             label={t("fields.templateDescription")}

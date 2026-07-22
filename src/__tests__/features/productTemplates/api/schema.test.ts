@@ -23,7 +23,6 @@ import {
 } from "@/features/productTemplates/api/schema"
 
 const validCreateRequest = {
-  template_code: "REFI-FULL-STD",
   template_name: "Full refinancing standard",
   financing_type: "full_refinancing",
   legal_structure: "loan_credit",
@@ -61,7 +60,6 @@ describe("CreateProductTemplateDraftRequestSchema", () => {
   })
 
   it.each([
-    "template_code",
     "template_name",
     "financing_type",
     "legal_structure",
@@ -111,36 +109,39 @@ describe("UpdateProductTemplateDraftRequestSchema", () => {
 })
 
 describe("TemplateDraftCreatedResponseSchema", () => {
+  const validDraftCreatedResponse = {
+    id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    template_code: "REFI-001",
+    version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    version_number: "0.1",
+    version_status: "draft",
+  }
+
   it("accepts a valid response", () => {
     expect(() =>
-      TemplateDraftCreatedResponseSchema.parse({
-        id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        version_number: "0.1",
-        version_status: "draft",
-      })
+      TemplateDraftCreatedResponseSchema.parse(validDraftCreatedResponse)
     ).not.toThrow()
   })
 
   it("rejects a non-UUID id", () => {
     expect(() =>
       TemplateDraftCreatedResponseSchema.parse({
+        ...validDraftCreatedResponse,
         id: "not-a-uuid",
-        version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        version_number: "0.1",
-        version_status: "draft",
       })
     ).toThrow()
   })
 
   it("rejects a missing version_number", () => {
-    expect(() =>
-      TemplateDraftCreatedResponseSchema.parse({
-        id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        version_status: "draft",
-      })
-    ).toThrow()
+    const rest = { ...validDraftCreatedResponse } as Record<string, unknown>
+    delete rest.version_number
+    expect(() => TemplateDraftCreatedResponseSchema.parse(rest)).toThrow()
+  })
+
+  it("rejects a missing template_code", () => {
+    const rest = { ...validDraftCreatedResponse } as Record<string, unknown>
+    delete rest.template_code
+    expect(() => TemplateDraftCreatedResponseSchema.parse(rest)).toThrow()
   })
 })
 
@@ -229,7 +230,6 @@ describe("PublishTemplateDraftResponseSchema", () => {
 
 describe("ProductTemplateWizardFormSchema", () => {
   const validForm = {
-    template_code: "REFI-FULL-STD",
     template_name: "Full refinancing standard",
     financing_type: "full_refinancing",
     legal_structure: "loan_credit",
@@ -257,15 +257,6 @@ describe("ProductTemplateWizardFormSchema", () => {
     delete rest.max_term_months
     delete rest.max_ltv_ratio
     expect(() => ProductTemplateWizardFormSchema.parse(rest)).not.toThrow()
-  })
-
-  it("rejects a template_code with invalid characters", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        template_code: "REFI FULL/STD",
-      })
-    ).toThrow()
   })
 
   it("rejects an empty allowed_asset_categories array", () => {

@@ -65,7 +65,6 @@ export type AssetCategory = z.infer<typeof AssetCategorySchema>
 // every other field is optional at the wire level even though the PRD marks most of them Mandatory
 // (full validation is deferred to publish, per the PRD's own Validation Rules section).
 export const CreateProductTemplateDraftRequestSchema = z.object({
-  template_code: z.string().min(1).max(50),
   template_name: z.string().min(1).max(200),
   financing_type: FinancingTypeSchema,
   legal_structure: LegalStructureSchema,
@@ -91,15 +90,14 @@ export type CreateProductTemplateDraftRequest = z.infer<
 >
 
 export const UpdateProductTemplateDraftRequestSchema =
-  CreateProductTemplateDraftRequestSchema.omit({
-    template_code: true,
-  }).partial()
+  CreateProductTemplateDraftRequestSchema.partial()
 export type UpdateProductTemplateDraftRequest = z.infer<
   typeof UpdateProductTemplateDraftRequestSchema
 >
 
 export const TemplateDraftCreatedResponseSchema = z.object({
   id: z.string().uuid(),
+  template_code: z.string(),
   version_id: z.string().uuid(),
   version_number: z.string(),
   version_status: z.string(),
@@ -237,11 +235,6 @@ export type OrchestrationResponse = z.infer<typeof OrchestrationResponseSchema>
 // payload sent to the API is the looser wire schema above.
 export const ProductTemplateWizardFormSchema = z
   .object({
-    template_code: z
-      .string()
-      .min(1, "required")
-      .max(50)
-      .regex(/^[A-Za-z0-9-]+$/, "codeInvalidChars"),
     template_name: z.string().min(1, "required").max(200),
     template_description: z.string().max(1000).optional(),
     financing_type: requiredEnum(FinancingTypeSchema.options),

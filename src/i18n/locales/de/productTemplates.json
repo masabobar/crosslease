@@ -45,7 +45,7 @@
     },
     "identity": {
       "title": "Neue Produktvorlage erstellen",
-      "subtitle": "Geben Sie der Vorlage einen eindeutigen Code und einen aussagekräftigen Namen."
+      "subtitle": "Geben Sie der Vorlage einen aussagekräftigen Namen."
     },
     "behavioral": {
       "title": "Verhaltenseinstellungen",
@@ -93,8 +93,6 @@
   },
   "fields": {
     "templateName": "Vorlagenname",
-    "templateCode": "Vorlagencode",
-    "templateCodeHint": "Eindeutig innerhalb des Mandanten.",
     "templateDescription": "Beschreibung",
     "templateDescriptionHint": "Max. 1000 Zeichen.",
     "optional": "(optional)",
@@ -219,7 +217,6 @@
     }
   },
   "errors": {
-    "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
     "atLeastOneAssetCategory": "Wählen Sie mindestens eine Vermögenskategorie aus.",
     "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
     "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",

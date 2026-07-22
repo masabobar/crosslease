@@ -45,7 +45,7 @@
     },
     "identity": {
       "title": "Create new product template",
-      "subtitle": "Give the template a unique code and a descriptive name."
+      "subtitle": "Give the template a descriptive name."
     },
     "behavioral": {
       "title": "Behavioral settings",
@@ -93,8 +93,6 @@
   },
   "fields": {
     "templateName": "Template name",
-    "templateCode": "Template code",
-    "templateCodeHint": "Unique within tenant.",
     "templateDescription": "Description",
     "templateDescriptionHint": "Max 1000 characters.",
     "optional": "(optional)",
@@ -219,7 +217,6 @@
     }
   },
   "errors": {
-    "codeInvalidChars": "Only letters, numbers, and hyphens are allowed.",
     "atLeastOneAssetCategory": "Select at least one asset category.",
     "minTermExceedsMax": "Min term must not exceed max term.",
     "minVolumeExceedsMax": "Min volume must not exceed max volume.",

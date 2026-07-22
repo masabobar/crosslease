@@ -6806,7 +6806,6 @@
       },
       "CreateTemplateDraftRequest": {
         "properties": {
-          "template_code": { "type": "string", "title": "Template Code" },
           "template_name": { "type": "string", "title": "Template Name" },
           "financing_type": { "$ref": "#/components/schemas/FinancingType" },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
@@ -6911,7 +6910,6 @@
         },
         "type": "object",
         "required": [
-          "template_code",
           "template_name",
           "financing_type",
           "legal_structure",
@@ -10919,6 +10917,7 @@
       "TemplateDraftCreatedResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "template_code": { "type": "string", "title": "Template Code" },
           "version_id": {
             "type": "string",
             "format": "uuid",
@@ -10928,7 +10927,13 @@
           "version_status": { "type": "string", "title": "Version Status" }
         },
         "type": "object",
-        "required": ["id", "version_id", "version_number", "version_status"],
+        "required": [
+          "id",
+          "template_code",
+          "version_id",
+          "version_number",
+          "version_status"
+        ],
         "title": "TemplateDraftCreatedResponse"
       },
       "TemplateDraftDiscardedResponse": {

@@ -1527,7 +1527,6 @@ const TemplateListResponse = z
   .passthrough()
 const CreateTemplateDraftRequest = z
   .object({
-    template_code: z.string(),
     template_name: z.string(),
     financing_type: FinancingType,
     legal_structure: LegalStructure,
@@ -1563,6 +1562,7 @@ const CreateTemplateDraftRequest = z
 const TemplateDraftCreatedResponse = z
   .object({
     id: z.string().uuid(),
+    template_code: z.string(),
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
