@@ -19,6 +19,18 @@ Frontend application for the RefiNext platform.
 - Node 22
 - pnpm 11 (`corepack enable && corepack prepare pnpm@11.1.1 --activate`)
 
+## Windows development
+
+**Recommended: WSL2.** Install Ubuntu via WSL2, clone the repo inside the Linux filesystem (not `/mnt/c/...`), and follow the setup below exactly as on macOS/Linux — Docker Desktop's WSL2 backend integrates directly with it.
+
+**Native Windows (no WSL2):**
+
+- Install [Git for Windows](https://git-scm.com/download/win) — its bundled Git Bash is required. Git hooks (`.husky/*`) are `sh` scripts and only run correctly under Git Bash's `sh.exe`; PowerShell/cmd cannot execute them directly, but Git itself invokes hooks through Git Bash automatically as long as it's installed.
+- Node via [nvm-windows](https://github.com/coreybutler/nvm-windows) or `fnm` — nvm-windows does **not** read `.nvmrc` automatically (unlike nvm on macOS/Linux); run `nvm install 22 && nvm use 22` explicitly, or use `fnm use` which does respect `.nvmrc`.
+- Enable Corepack for pnpm: `corepack enable` (may require an elevated/Administrator shell the first time).
+- Docker Desktop with the WSL2 backend enabled, even if you don't develop inside WSL2 — it's required for `docker compose up` to work reliably.
+- `.gitattributes` in this repo forces LF line endings on checkout — leave `core.autocrlf` at its default (`true` is fine) rather than overriding it, so hook scripts and source files aren't corrupted with CRLF.
+
 ## Local setup
 
 ```bash
