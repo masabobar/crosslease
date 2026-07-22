@@ -330,6 +330,10 @@
 }
 
 @keyframes row-highlight-fade {
-  0% { background-color: oklch(97% 0.05 85); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: oklch(97% 0.05 85);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
