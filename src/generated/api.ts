@@ -907,24 +907,6 @@ const PartnerRolesResponse = z
     history: z.array(RoleHistoryEntry),
   })
   .passthrough()
-const PartnerRole = z.enum(["lessee", "guarantor", "supplier", "bank_entity"])
-const RoleAssignRequest = z
-  .object({
-    roles: z.array(PartnerRole).min(1),
-    note: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const RoleAssignResult = z
-  .object({
-    role: PartnerRole,
-    status: z.string(),
-    is_new: z.boolean(),
-    governed_action_id: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const RoleAssignResponse = z
-  .object({ results: z.array(RoleAssignResult) })
-  .passthrough()
 const UboOwnershipRequest = z
   .object({
     ubo_partner_id: z.string().uuid(),
@@ -1161,7 +1143,6 @@ const PartnerSubmitRequest = z
       NaturalPersonIdentityInput,
       SoleProprietorIdentityInput,
     ]),
-    roles: z.array(PartnerRole).optional(),
   })
   .passthrough()
 const PartnerSubmitResponse = z
@@ -1170,7 +1151,6 @@ const PartnerSubmitResponse = z
     display_name: z.string(),
     partner_type: PartnerType,
     status: z.string(),
-    roles: z.array(PartnerRole),
     is_new: z.boolean(),
     governed_action_id: z.union([z.string(), z.null()]).optional(),
     country: z.union([z.string(), z.null()]).optional(),
@@ -1187,6 +1167,7 @@ const PartnerStatus = z.enum([
   "archived",
   "pending_archive",
 ])
+const PartnerRole = z.enum(["lessee", "guarantor", "supplier"])
 const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
 const PartnerListItem = z
   .object({
@@ -1527,7 +1508,6 @@ const TemplateListResponse = z
   .passthrough()
 const CreateTemplateDraftRequest = z
   .object({
-    template_code: z.string(),
     template_name: z.string(),
     financing_type: FinancingType,
     legal_structure: LegalStructure,
@@ -1563,6 +1543,7 @@ const CreateTemplateDraftRequest = z
 const TemplateDraftCreatedResponse = z
   .object({
     id: z.string().uuid(),
+    template_code: z.string(),
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
@@ -2066,10 +2047,6 @@ export const schemas = {
   RoleAssignmentSummary,
   RoleHistoryEntry,
   PartnerRolesResponse,
-  PartnerRole,
-  RoleAssignRequest,
-  RoleAssignResult,
-  RoleAssignResponse,
   UboOwnershipRequest,
   UboOwnershipRecordResponse,
   PartnerUboResponse,
@@ -2100,6 +2077,7 @@ export const schemas = {
   PartnerSubmitRequest,
   PartnerSubmitResponse,
   PartnerStatus,
+  PartnerRole,
   UboCompletenessStatus,
   PartnerListItem,
   PartnerListResponse,
@@ -4020,32 +3998,6 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       },
     ],
     response: PartnerRolesResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/partners/:id/roles",
-    alias: "assign_partner_role_api_v1_partners__id__roles_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: RoleAssignRequest,
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: RoleAssignResponse,
     errors: [
       {
         status: 422,
