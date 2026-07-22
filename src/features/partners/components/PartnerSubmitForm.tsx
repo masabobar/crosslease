@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { SelectField } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
@@ -21,11 +20,8 @@ import {
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
 import { isCommercialRegisterApplicable } from "@/features/partners/utils"
-import {
-  AssignablePartnerRoleSchema,
-  PartnerTypeSchema,
-} from "@/features/partners/api/schema"
-import type { PartnerRole, PartnerType } from "@/features/partners/api/schema"
+import { PartnerTypeSchema } from "@/features/partners/api/schema"
+import type { PartnerType } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
 
 // RHF's reset() only clears top-level fields omitted from the new values —
@@ -108,7 +104,6 @@ const legalEntitySchema = z.object({
     }),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 const naturalPersonSchema = z.object({
@@ -120,7 +115,6 @@ const naturalPersonSchema = z.object({
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 const soleProprietorSchema = z.object({
@@ -131,7 +125,6 @@ const soleProprietorSchema = z.object({
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
   registered_address: addressSchema,
-  roles: z.array(AssignablePartnerRoleSchema),
 })
 
 type LegalEntityForm = z.infer<typeof legalEntitySchema>
@@ -145,7 +138,7 @@ function schemaForType(type: PartnerType) {
   return legalEntitySchema
 }
 
-type SubmitResult = { identity: PartnerIdentityInput; roles: PartnerRole[] }
+type SubmitResult = { identity: PartnerIdentityInput }
 
 type PartnerSubmitFormProps = {
   formId: string
@@ -192,13 +185,12 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
       reset({
         partner_type: type,
         registered_address: BLANK_ADDRESS,
-        roles: [],
       } as unknown as IdentityForm)
     }, 0)
   }
 
   function onValid(values: IdentityForm) {
-    const { roles, registered_address, ...rest } = values
+    const { registered_address, ...rest } = values
     onSubmit({
       identity: {
         ...blankToUndefined(rest),
@@ -207,13 +199,11 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
           country: rest.country,
         }),
       } as PartnerIdentityInput,
-      roles,
     })
     setPartnerType("legal_entity")
     reset({
       partner_type: "legal_entity",
       registered_address: BLANK_ADDRESS,
-      roles: [],
     } as unknown as IdentityForm)
   }
 
@@ -629,83 +619,6 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
         </CardContent>
       </Card>
 
-      {/* CLASSIFICATION */}
-      <Card className="p-0 overflow-hidden">
-        <CardHeader className="bg-muted px-4 py-2 gap-1">
-          <CardTitle className="text-xs">
-            {t("submit.form.sections.classification")}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("submit.form.classificationHint")}
-          </p>
-        </CardHeader>
-        <CardContent className="px-4 py-4">
-          <Controller
-            key={partnerType}
-            control={control}
-            name={"roles" as keyof IdentityForm}
-            render={({ field }) => {
-              const selected = (field.value as PartnerRole[] | undefined) ?? []
-              function toggle(role: PartnerRole) {
-                field.onChange(
-                  selected.includes(role)
-                    ? selected.filter(r => r !== role)
-                    : [...selected, role]
-                )
-              }
-              return (
-                <div className="grid grid-cols-2 gap-2">
-                  {AssignablePartnerRoleSchema.options.map(role => {
-                    // every manually assignable role is risk-sensitive —
-                    // deal roles are contract-derived (PRD1042-1453)
-                    const isRisky = true
-                    const checked = selected.includes(role)
-                    return (
-                      // NOTE: plain <div> instead of <label htmlFor>. BaseUI's
-                      // Checkbox always renders a hidden native <input> for form
-                      // semantics; a native <label> wrapping it (with or without
-                      // htmlFor) makes the browser dispatch a second synthetic
-                      // click to that hidden input on every click, which after an
-                      // RHF reset() double-toggles this field back to its
-                      // previous value. onClick here is the single source of
-                      // truth for toggling instead.
-                      <div
-                        key={role}
-                        onClick={() => toggle(role)}
-                        data-testid={`field-role-${role}`}
-                        className="flex items-start gap-2 p-3 rounded-xl border border-border cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={checked}
-                          aria-label={t(`role.${role}` as "role.lessee")}
-                          className="mt-1"
-                        />
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm font-medium text-foreground">
-                              {t(`role.${role}` as "role.lessee")}
-                            </span>
-                            {isRisky && (
-                              <span className="text-xs font-medium text-warning bg-warning/10 rounded-full px-1.5 py-0.5">
-                                {t("submit.form.fourEyesBadge")}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {t(
-                              `submit.form.roleDescriptions.${role}` as "submit.form.roleDescriptions.lessee"
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            }}
-          />
-        </CardContent>
-      </Card>
     </form>
   )
 }

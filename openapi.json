@@ -3385,45 +3385,6 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": ["Partners"],
-        "summary": "Assign Partner Role",
-        "operationId": "assign_partner_role_api_v1_partners__id__roles_post",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/RoleAssignRequest" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/RoleAssignResponse" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/partners/{id}/ubo": {
@@ -6806,7 +6767,6 @@
       },
       "CreateTemplateDraftRequest": {
         "properties": {
-          "template_code": { "type": "string", "title": "Template Code" },
           "template_name": { "type": "string", "title": "Template Name" },
           "financing_type": { "$ref": "#/components/schemas/FinancingType" },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
@@ -6911,7 +6871,6 @@
         },
         "type": "object",
         "required": [
-          "template_code",
           "template_name",
           "financing_type",
           "legal_structure",
@@ -9737,7 +9696,7 @@
       },
       "PartnerRole": {
         "type": "string",
-        "enum": ["lessee", "guarantor", "supplier", "bank_entity"],
+        "enum": ["lessee", "guarantor", "supplier"],
         "title": "PartnerRole"
       },
       "PartnerRolesResponse": {
@@ -9788,11 +9747,6 @@
                 "sole_proprietor": "#/components/schemas/SoleProprietorIdentityInput"
               }
             }
-          },
-          "roles": {
-            "items": { "$ref": "#/components/schemas/PartnerRole" },
-            "type": "array",
-            "title": "Roles"
           }
         },
         "type": "object",
@@ -9805,11 +9759,6 @@
           "display_name": { "type": "string", "title": "Display Name" },
           "partner_type": { "$ref": "#/components/schemas/PartnerType" },
           "status": { "type": "string", "title": "Status" },
-          "roles": {
-            "items": { "$ref": "#/components/schemas/PartnerRole" },
-            "type": "array",
-            "title": "Roles"
-          },
           "is_new": { "type": "boolean", "title": "Is New" },
           "governed_action_id": {
             "anyOf": [
@@ -9837,7 +9786,6 @@
           "display_name",
           "partner_type",
           "status",
-          "roles",
           "is_new"
         ],
         "title": "PartnerSubmitResponse"
@@ -10266,55 +10214,6 @@
         "type": "object",
         "required": ["revocation_reason"],
         "title": "RevokeGrantRequest"
-      },
-      "RoleAssignRequest": {
-        "properties": {
-          "roles": {
-            "items": { "$ref": "#/components/schemas/PartnerRole" },
-            "type": "array",
-            "minItems": 1,
-            "title": "Roles"
-          },
-          "note": {
-            "anyOf": [
-              { "type": "string", "maxLength": 2000 },
-              { "type": "null" }
-            ],
-            "title": "Note"
-          }
-        },
-        "type": "object",
-        "required": ["roles"],
-        "title": "RoleAssignRequest"
-      },
-      "RoleAssignResponse": {
-        "properties": {
-          "results": {
-            "items": { "$ref": "#/components/schemas/RoleAssignResult" },
-            "type": "array",
-            "title": "Results"
-          }
-        },
-        "type": "object",
-        "required": ["results"],
-        "title": "RoleAssignResponse"
-      },
-      "RoleAssignResult": {
-        "properties": {
-          "role": { "$ref": "#/components/schemas/PartnerRole" },
-          "status": { "type": "string", "title": "Status" },
-          "is_new": { "type": "boolean", "title": "Is New" },
-          "governed_action_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Governed Action Id"
-          }
-        },
-        "type": "object",
-        "required": ["role", "status", "is_new"],
-        "title": "RoleAssignResult"
       },
       "RoleAssignmentSummary": {
         "properties": {
@@ -10919,6 +10818,7 @@
       "TemplateDraftCreatedResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "template_code": { "type": "string", "title": "Template Code" },
           "version_id": {
             "type": "string",
             "format": "uuid",
@@ -10928,7 +10828,13 @@
           "version_status": { "type": "string", "title": "Version Status" }
         },
         "type": "object",
-        "required": ["id", "version_id", "version_number", "version_status"],
+        "required": [
+          "id",
+          "template_code",
+          "version_id",
+          "version_number",
+          "version_status"
+        ],
         "title": "TemplateDraftCreatedResponse"
       },
       "TemplateDraftDiscardedResponse": {

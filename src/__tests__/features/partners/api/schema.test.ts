@@ -19,7 +19,6 @@ import {
   PartnerSubmitResponseSchema,
   ResolutionCandidatesResponseSchema,
   PartnerRolesResponseSchema,
-  RoleAssignResponseSchema,
   PartnerUboResponseSchema,
   ConfirmationHistoryResponseSchema,
   DecisionHistoryResponseSchema,
@@ -77,7 +76,7 @@ describe("PartnerStatusSchema", () => {
 })
 
 describe("PartnerRoleSchema", () => {
-  const values = ["lessee", "guarantor", "supplier", "bank_entity"] as const
+  const values = ["lessee", "guarantor", "supplier"] as const
   it("accepts all valid values", () => {
     for (const v of values) {
       expect(() => PartnerRoleSchema.parse(v)).not.toThrow()
@@ -519,43 +518,16 @@ describe("PartnerMatchResponseSchema", () => {
 })
 
 describe("PartnerSubmitResponseSchema", () => {
-  it("accepts a valid submit response", () => {
+  it("accepts a valid submit response (no roles — PRD1042-1453)", () => {
     expect(() =>
       PartnerSubmitResponseSchema.parse({
         partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
         display_name: "Acme GmbH",
         partner_type: "legal_entity",
         status: "pending_confirmation",
-        roles: ["lessee"],
         is_new: true,
       })
     ).not.toThrow()
-  })
-
-  it("accepts multiple roles", () => {
-    expect(() =>
-      PartnerSubmitResponseSchema.parse({
-        partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        display_name: "Acme GmbH",
-        partner_type: "legal_entity",
-        status: "pending_confirmation",
-        roles: ["lessee", "bank_entity"],
-        is_new: true,
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects invalid role", () => {
-    expect(() =>
-      PartnerSubmitResponseSchema.parse({
-        partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-        display_name: "Acme GmbH",
-        partner_type: "legal_entity",
-        status: "pending_confirmation",
-        roles: ["borrower"],
-        is_new: true,
-      })
-    ).toThrow()
   })
 })
 
@@ -587,46 +559,6 @@ describe("PartnerRolesResponseSchema", () => {
     ).not.toThrow()
   })
 })
-
-describe("RoleAssignResponseSchema", () => {
-  it("accepts a valid assign response", () => {
-    expect(() =>
-      RoleAssignResponseSchema.parse({
-        results: [{ role: "lessee", status: "active", is_new: true }],
-      })
-    ).not.toThrow()
-  })
-
-  it("accepts any role string in results (legacy tolerance, PRD1042-1453)", () => {
-    expect(() =>
-      RoleAssignResponseSchema.parse({
-        results: [
-          { role: "leasing_company", status: "withdrawn", is_new: false },
-        ],
-      })
-    ).not.toThrow()
-  })
-
-  it("accepts a risk-sensitive result and keeps its governed_action_id", () => {
-    // PRD1042-1452: risky roles come back as pending governed actions
-    const parsed = RoleAssignResponseSchema.parse({
-      results: [
-        {
-          role: "bank_entity",
-          status: "pending",
-          is_new: true,
-          governed_action_id: "3f1a2b4c-5d6e-4f70-8a9b-0c1d2e3f4a5b",
-        },
-      ],
-    })
-    expect(parsed.results[0].status).toBe("pending_four_eyes")
-    expect(parsed.results[0].governed_action_id).toBe(
-      "3f1a2b4c-5d6e-4f70-8a9b-0c1d2e3f4a5b"
-    )
-  })
-})
-
-// ── UBO ───────────────────────────────────────────────────────────────────────
 
 describe("PartnerUboResponseSchema", () => {
   it("accepts a response with no records", () => {
