@@ -5911,6 +5911,74 @@
           }
         }
       }
+    },
+    "/internal/test/session": {
+      "post": {
+        "tags": ["Internal - Test Hooks"],
+        "summary": "Test Session",
+        "description": "Create a real authenticated session for any user without going through 2FA.\n\nReplicates the tail of verify_otp: evicts oldest session if needed, issues\naccess + refresh tokens as HTTP-only cookies.\n\nUser status is NOT checked — QA can obtain a session for suspended or\ndeactivated users to test authenticated edge-case scenarios.",
+        "operationId": "test_session_internal_test_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TestSessionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/test/otp": {
+      "get": {
+        "tags": ["Internal - Test Hooks"],
+        "summary": "Test Get Otp",
+        "description": "Return the current valid OTP code for a user.\n\nUse after POST /api/v1/auth/login to retrieve the generated OTP without\nneeding email access. Returns 404 if no active (non-expired, non-used) OTP\nexists for the given email.",
+        "operationId": "test_get_otp_internal_test_otp_get",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Email" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OTPResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9314,6 +9382,19 @@
         ],
         "title": "NewVersionCreatedResponse"
       },
+      "OTPResponse": {
+        "properties": {
+          "code": { "type": "string", "title": "Code" },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": ["code", "expires_at"],
+        "title": "OTPResponse"
+      },
       "OrchestrationLinkageItem": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -11145,6 +11226,14 @@
           "blocking_financings"
         ],
         "title": "TerminationReadinessResponse"
+      },
+      "TestSessionRequest": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["email"],
+        "title": "TestSessionRequest"
       },
       "UboCompletenessStatus": {
         "type": "string",

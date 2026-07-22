@@ -1925,6 +1925,13 @@ const LCPortalFAListItem = z
 const LCPortalFAListResponse = z
   .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
   .passthrough()
+const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
+const OTPResponse = z
+  .object({
+    code: z.string(),
+    expires_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
 
 export const schemas = {
   LoginRequest,
@@ -2152,6 +2159,8 @@ export const schemas = {
   LCPortalDocumentItem,
   LCPortalFAListItem,
   LCPortalFAListResponse,
+  TestSessionRequest,
+  OTPResponse,
 }
 
 const endpoints = makeApi([
@@ -5845,6 +5854,60 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
     alias: "health_check_health_get",
     requestFormat: "json",
     response: z.unknown(),
+  },
+  {
+    method: "get",
+    path: "/internal/test/otp",
+    alias: "test_get_otp_internal_test_otp_get",
+    description: `Return the current valid OTP code for a user.
+
+Use after POST /api/v1/auth/login to retrieve the generated OTP without
+needing email access. Returns 404 if no active (non-expired, non-used) OTP
+exists for the given email.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "email",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: OTPResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/internal/test/session",
+    alias: "test_session_internal_test_session_post",
+    description: `Create a real authenticated session for any user without going through 2FA.
+
+Replicates the tail of verify_otp: evicts oldest session if needed, issues
+access + refresh tokens as HTTP-only cookies.
+
+User status is NOT checked — QA can obtain a session for suspended or
+deactivated users to test authenticated edge-case scenarios.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ email: z.string().email() }).passthrough(),
+      },
+    ],
+    response: LoginResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
 ])
 
