@@ -16,6 +16,12 @@ type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>
 }
 
+// react-hook-form's valueAsNumber turns an emptied input into NaN, not undefined,
+// which fails these optional fields' zod validation. Coerce blank to undefined instead.
+function optionalNumber(value: string): number | undefined {
+  return value === "" ? undefined : Number(value)
+}
+
 function EligibilityStep({ form }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
@@ -97,14 +103,17 @@ function EligibilityStep({ form }: Props) {
               error={!!errors.min_term_months}
               className="mb-2"
             >
-              {t("fields.minTermMonths")}
+              {t("fields.minTermMonths")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {t("fields.optional")}
+              </span>
             </Label>
             <Input
               id="min_term_months"
               type="number"
               data-testid="min-term-months-input"
               error={!!errors.min_term_months}
-              {...register("min_term_months", { valueAsNumber: true })}
+              {...register("min_term_months", { setValueAs: optionalNumber })}
             />
             {errors.min_term_months && (
               <p className="mt-1 text-sm text-destructive">
@@ -119,14 +128,17 @@ function EligibilityStep({ form }: Props) {
               error={!!errors.max_term_months}
               className="mb-2"
             >
-              {t("fields.maxTermMonths")}
+              {t("fields.maxTermMonths")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {t("fields.optional")}
+              </span>
             </Label>
             <Input
               id="max_term_months"
               type="number"
               data-testid="max-term-months-input"
               error={!!errors.max_term_months}
-              {...register("max_term_months", { valueAsNumber: true })}
+              {...register("max_term_months", { setValueAs: optionalNumber })}
             />
             {errors.max_term_months && (
               <p className="mt-1 text-sm text-destructive">
@@ -143,14 +155,17 @@ function EligibilityStep({ form }: Props) {
               error={!!errors.max_ltv_ratio}
               className="mb-2"
             >
-              {t("fields.maxLtvRatio")}
+              {t("fields.maxLtvRatio")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {t("fields.optional")}
+              </span>
             </Label>
             <Input
               id="max_ltv_ratio"
               type="number"
               data-testid="max-ltv-ratio-input"
               error={!!errors.max_ltv_ratio}
-              {...register("max_ltv_ratio", { valueAsNumber: true })}
+              {...register("max_ltv_ratio", { setValueAs: optionalNumber })}
             />
             {errors.max_ltv_ratio && (
               <p className="mt-1 text-sm text-destructive">
@@ -177,7 +192,7 @@ function EligibilityStep({ form }: Props) {
               type="number"
               data-testid="min-volume-eur-input"
               error={!!errors.min_volume_eur}
-              {...register("min_volume_eur", { valueAsNumber: true })}
+              {...register("min_volume_eur", { setValueAs: optionalNumber })}
             />
             {errors.min_volume_eur && (
               <p className="mt-1 text-sm text-destructive">
@@ -202,7 +217,7 @@ function EligibilityStep({ form }: Props) {
               type="number"
               data-testid="max-volume-eur-input"
               error={!!errors.max_volume_eur}
-              {...register("max_volume_eur", { valueAsNumber: true })}
+              {...register("max_volume_eur", { setValueAs: optionalNumber })}
             />
             {errors.max_volume_eur && (
               <p className="mt-1 text-sm text-destructive">

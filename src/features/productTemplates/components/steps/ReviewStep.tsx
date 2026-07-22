@@ -5,12 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
-import {
-  DOCUMENT_OPTIONS,
-  NPV_FORMULA_OPTIONS,
-  VALIDATION_RULE_SET_OPTIONS,
-  WORKFLOW_TASK_OPTIONS,
-} from "@/features/productTemplates/constants"
+import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 type Props = {
@@ -36,35 +31,6 @@ function ReviewRow({
   )
 }
 
-function ReviewTagList({
-  labels,
-}: {
-  labels: { key: string; label: string; sublabel?: string }[]
-}) {
-  if (labels.length === 0) {
-    return <span className="text-sm text-muted-foreground">—</span>
-  }
-  return (
-    <div className="flex flex-wrap gap-2">
-      {labels.map(item => (
-        <span
-          key={item.key}
-          className="inline-flex flex-col rounded-lg border border-border px-2.5 py-1.5"
-        >
-          <span className="text-sm font-medium text-foreground">
-            {item.label}
-          </span>
-          {item.sublabel && (
-            <span className="text-xs text-muted-foreground">
-              {item.sublabel}
-            </span>
-          )}
-        </span>
-      ))}
-    </div>
-  )
-}
-
 function ReviewStep({
   form,
   justification,
@@ -79,47 +45,13 @@ function ReviewStep({
     o => o.ref === values.npv_formula_ref
   )
 
-  const workflowTaskTags = (values.required_workflow_tasks ?? []).map(id => {
-    const option = WORKFLOW_TASK_OPTIONS.find(o => o.id === id)
-    return {
-      key: id,
-      label: option ? t(option.labelKey) : id,
-      sublabel: option ? `${option.code} · ${option.version}` : undefined,
-    }
-  })
-  const requiredDocumentTags = (values.required_documents ?? []).map(id => {
-    const option = DOCUMENT_OPTIONS.find(o => o.id === id)
-    return {
-      key: id,
-      label: option ? t(option.labelKey) : id,
-      sublabel: option ? `${option.code} · ${option.version}` : undefined,
-    }
-  })
-  const optionalDocumentTags = (values.optional_documents ?? []).map(id => {
-    const option = DOCUMENT_OPTIONS.find(o => o.id === id)
-    return {
-      key: id,
-      label: option ? t(option.labelKey) : id,
-      sublabel: option ? `${option.code} · ${option.version}` : undefined,
-    }
-  })
-  const validationRuleSet = VALIDATION_RULE_SET_OPTIONS.find(
-    o => o.id === values.validation_rule_set_id
-  )
-
   return (
     <div className="flex flex-col gap-4" data-testid="review-step">
       <SectionCard title={t("sections.identity")}>
-        <div className="grid grid-cols-2 gap-4">
-          <ReviewRow
-            label={t("fields.templateCode")}
-            value={values.template_code || "—"}
-          />
-          <ReviewRow
-            label={t("fields.templateName")}
-            value={values.template_name || "—"}
-          />
-        </div>
+        <ReviewRow
+          label={t("fields.templateName")}
+          value={values.template_name || "—"}
+        />
         {values.template_description && (
           <ReviewRow
             label={t("fields.templateDescription")}
@@ -286,39 +218,6 @@ function ReviewStep({
             value={values.valid_until || t("fields.openEnded")}
           />
         </div>
-      </SectionCard>
-
-      <SectionCard title={t("sections.orchestrationLinkage")}>
-        <ReviewRow
-          label={t("sections.requiredWorkflowTasks")}
-          value={<ReviewTagList labels={workflowTaskTags} />}
-        />
-        <ReviewRow
-          label={t("sections.requiredDocuments")}
-          value={<ReviewTagList labels={requiredDocumentTags} />}
-        />
-        <ReviewRow
-          label={t("sections.optionalDocuments")}
-          value={<ReviewTagList labels={optionalDocumentTags} />}
-        />
-        <ReviewRow
-          label={t("sections.validationRuleSet")}
-          value={
-            <ReviewTagList
-              labels={
-                validationRuleSet
-                  ? [
-                      {
-                        key: validationRuleSet.id,
-                        label: t(validationRuleSet.labelKey),
-                        sublabel: `${validationRuleSet.code} · ${validationRuleSet.version}`,
-                      },
-                    ]
-                  : []
-              }
-            />
-          }
-        />
       </SectionCard>
 
       <div className="flex flex-col gap-2">

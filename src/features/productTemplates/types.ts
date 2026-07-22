@@ -18,7 +18,6 @@ export type ProductTemplateWizardStep =
   | "identity"
   | "behavioral"
   | "eligibility"
-  | "orchestration"
   | "review"
 
 export type DraftRef = { templateId: string; versionNumber: string }

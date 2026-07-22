@@ -8,7 +8,6 @@ import type { TemplateListItem } from "@/features/productTemplates/api/schema"
 const COL_PRODUCT = "flex-1 min-w-[180px]"
 const COL_FINANCING = "w-[170px] shrink-0"
 const COL_CALCULATION = "w-[120px] shrink-0"
-const COL_LTV_TERM = "w-[150px] shrink-0"
 const COL_STATUS = "w-[110px] shrink-0"
 const COL_VERSION = "w-[70px] shrink-0"
 const ROW_H = "h-[52px]"
@@ -18,26 +17,9 @@ const HEADER_COLUMNS = [
   { width: COL_PRODUCT, labelKey: "list.table.columns.product" },
   { width: COL_FINANCING, labelKey: "list.table.columns.financingType" },
   { width: COL_CALCULATION, labelKey: "list.table.columns.calculation" },
-  { width: COL_LTV_TERM, labelKey: "list.table.columns.ltvAndTerm" },
   { width: COL_STATUS, labelKey: "list.table.columns.status" },
   { width: COL_VERSION, labelKey: "list.table.columns.version" },
 ] as const
-
-function ltvAndTerm(item: TemplateListItem, maxLtvPrefix: string): string {
-  const v = item.current_version
-  if (!v || v.max_ltv_ratio === null || v.max_ltv_ratio === undefined)
-    return "—"
-  const term =
-    v.min_term_months !== null &&
-    v.min_term_months !== undefined &&
-    v.max_term_months !== null &&
-    v.max_term_months !== undefined
-      ? `${v.min_term_months}-${v.max_term_months}m`
-      : null
-  return term
-    ? `${maxLtvPrefix} ${v.max_ltv_ratio}% / ${term}`
-    : `${maxLtvPrefix} ${v.max_ltv_ratio}%`
-}
 
 type ProductTemplateTableProps = {
   templates: TemplateListItem[]
@@ -93,9 +75,6 @@ function ProductTemplateTable({
               </div>
               <div className={`${COL_CALCULATION} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-16" />
-              </div>
-              <div className={`${COL_LTV_TERM} p-2`}>
-                <div className="bg-muted rounded h-4 animate-pulse w-24" />
               </div>
               <div className={`${COL_STATUS} p-2`}>
                 <div className="bg-muted rounded-full h-5 animate-pulse w-16" />
@@ -168,11 +147,6 @@ function ProductTemplateTable({
                       `calculationModels.${item.current_version.calculation_model}` as "calculationModels.annuity"
                     )
                   : "—"}
-              </span>
-            </div>
-            <div className={`${COL_LTV_TERM} p-2`}>
-              <span className="text-sm text-foreground">
-                {ltvAndTerm(item, t("list.table.maxLtvPrefix"))}
               </span>
             </div>
             <div className={`${COL_STATUS} p-2`}>

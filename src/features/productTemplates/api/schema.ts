@@ -65,7 +65,6 @@ export type AssetCategory = z.infer<typeof AssetCategorySchema>
 // every other field is optional at the wire level even though the PRD marks most of them Mandatory
 // (full validation is deferred to publish, per the PRD's own Validation Rules section).
 export const CreateProductTemplateDraftRequestSchema = z.object({
-  template_code: z.string().min(1).max(50),
   template_name: z.string().min(1).max(200),
   financing_type: FinancingTypeSchema,
   legal_structure: LegalStructureSchema,
@@ -91,15 +90,14 @@ export type CreateProductTemplateDraftRequest = z.infer<
 >
 
 export const UpdateProductTemplateDraftRequestSchema =
-  CreateProductTemplateDraftRequestSchema.omit({
-    template_code: true,
-  }).partial()
+  CreateProductTemplateDraftRequestSchema.partial()
 export type UpdateProductTemplateDraftRequest = z.infer<
   typeof UpdateProductTemplateDraftRequestSchema
 >
 
 export const TemplateDraftCreatedResponseSchema = z.object({
   id: z.string().uuid(),
+  template_code: z.string(),
   version_id: z.string().uuid(),
   version_number: z.string(),
   version_status: z.string(),
@@ -237,11 +235,6 @@ export type OrchestrationResponse = z.infer<typeof OrchestrationResponseSchema>
 // payload sent to the API is the looser wire schema above.
 export const ProductTemplateWizardFormSchema = z
   .object({
-    template_code: z
-      .string()
-      .min(1, "required")
-      .max(50)
-      .regex(/^[A-Za-z0-9-]+$/, "codeInvalidChars"),
     template_name: z.string().min(1, "required").max(200),
     template_description: z.string().max(1000).optional(),
     financing_type: requiredEnum(FinancingTypeSchema.options),
@@ -260,26 +253,30 @@ export const ProductTemplateWizardFormSchema = z
       .number()
       .int()
       .min(1, "termBelowMin")
-      .max(600, "termAboveMax"),
+      .max(600, "termAboveMax")
+      .optional(),
     max_term_months: z
       .number()
       .int()
       .min(1, "termBelowMin")
-      .max(600, "termAboveMax"),
-    max_ltv_ratio: z.number().min(0, "ltvBelowMin").max(100, "ltvAboveMax"),
+      .max(600, "termAboveMax")
+      .optional(),
+    max_ltv_ratio: z
+      .number()
+      .min(0, "ltvBelowMin")
+      .max(100, "ltvAboveMax")
+      .optional(),
     min_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
     max_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
     valid_from: z.string({ error: "required" }).min(1, "required"),
     valid_until: z.string().optional(),
-    required_workflow_tasks: z
-      .array(z.string())
-      .min(1, "atLeastOneWorkflowTask"),
-    required_documents: z.array(z.string()).min(1, "atLeastOneDocument"),
-    optional_documents: z.array(z.string()),
-    validation_rule_set_id: z.string().min(1, "required"),
   })
   .superRefine((data, ctx) => {
-    if (data.min_term_months > data.max_term_months) {
+    if (
+      data.min_term_months !== undefined &&
+      data.max_term_months !== undefined &&
+      data.min_term_months > data.max_term_months
+    ) {
       ctx.addIssue({
         code: "custom",
         message: "minTermExceedsMax",

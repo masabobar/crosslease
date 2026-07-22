@@ -9,22 +9,16 @@ import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/
 
 type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>
-  shouldHideTemplateCode?: boolean
 }
 
-function IdentityStep({ form, shouldHideTemplateCode = false }: Props) {
+function IdentityStep({ form }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
   const { register, control } = form
   const { errors } = useFormState({ control })
 
-  const errorMessages = { codeInvalidChars: t("errors.codeInvalidChars") }
   function resolveMsg(msg: string | undefined) {
-    return resolveFieldErrorMessage(
-      msg,
-      tCommon("validation.required"),
-      errorMessages
-    )
+    return resolveFieldErrorMessage(msg, tCommon("validation.required"))
   }
 
   return (
@@ -52,32 +46,6 @@ function IdentityStep({ form, shouldHideTemplateCode = false }: Props) {
           </p>
         )}
       </div>
-
-      {!shouldHideTemplateCode && (
-        <div>
-          <Label
-            htmlFor="template_code"
-            error={!!errors.template_code}
-            className="mb-2"
-          >
-            {t("fields.templateCode")}
-          </Label>
-          <Input
-            id="template_code"
-            data-testid="template-code-input"
-            error={!!errors.template_code}
-            {...register("template_code")}
-          />
-          <p className="mt-2 text-sm text-muted-foreground opacity-80">
-            {t("fields.templateCodeHint")}
-          </p>
-          {errors.template_code && (
-            <p className="mt-1 text-sm text-destructive">
-              {resolveMsg(errors.template_code.message)}
-            </p>
-          )}
-        </div>
-      )}
 
       <div>
         <Label

@@ -6,7 +6,6 @@ const DISPLAY_STEPS = [
   "identity",
   "behavioral",
   "eligibility",
-  "orchestration",
   "review",
 ] as const
 

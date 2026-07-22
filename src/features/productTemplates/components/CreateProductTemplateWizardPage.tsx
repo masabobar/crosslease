@@ -47,11 +47,9 @@ import { WizardStepper } from "@/features/productTemplates/components/WizardStep
 import { IdentityStep } from "@/features/productTemplates/components/steps/IdentityStep"
 import { BehavioralSettingsStep } from "@/features/productTemplates/components/steps/BehavioralSettingsStep"
 import { EligibilityStep } from "@/features/productTemplates/components/steps/EligibilityStep"
-import { OrchestrationStep } from "@/features/productTemplates/components/steps/OrchestrationStep"
 import { ReviewStep } from "@/features/productTemplates/components/steps/ReviewStep"
 import { useCreateProductTemplateDraft } from "@/features/productTemplates/hooks/useCreateProductTemplateDraft"
 import { useUpdateProductTemplateDraft } from "@/features/productTemplates/hooks/useUpdateProductTemplateDraft"
-import { useUpdateProductTemplateOrchestration } from "@/features/productTemplates/hooks/useUpdateProductTemplateOrchestration"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
 import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
@@ -60,7 +58,6 @@ const ORDERED_STEPS: ProductTemplateWizardStep[] = [
   "identity",
   "behavioral",
   "eligibility",
-  "orchestration",
   "review",
 ]
 
@@ -68,7 +65,7 @@ const STEP_FIELDS: Record<
   ProductTemplateWizardStep,
   (keyof ProductTemplateWizardForm)[]
 > = {
-  identity: ["template_code", "template_name"],
+  identity: ["template_name"],
   behavioral: [
     "financing_type",
     "legal_structure",
@@ -87,16 +84,10 @@ const STEP_FIELDS: Record<
     "max_ltv_ratio",
     "valid_from",
   ],
-  orchestration: [
-    "required_workflow_tasks",
-    "required_documents",
-    "validation_rule_set_id",
-  ],
   review: [],
 }
 
-// Builds the update-shaped wire payload from form values (template_code is immutable
-// after creation, so it's never part of an update body), omitting an empty valid_until.
+// Builds the update-shaped wire payload from form values, omitting an empty valid_until.
 function toUpdatePayload(
   values: ProductTemplateWizardForm
 ): UpdateProductTemplateDraftRequest {
@@ -123,17 +114,10 @@ function toUpdatePayload(
   }
 }
 
-// Seeded into the (hidden, immutable) template_code field when authoring a new version
-// from a Published template — VersionDetailResponse doesn't return template_code (no
-// reachable single-template lookup exists either, see plan Gap 4), and template_code is
-// stripped from every update payload regardless, so the placeholder itself is inert.
-const NEW_VERSION_TEMPLATE_CODE_PLACEHOLDER = "N/A"
-
 function toNewVersionFormDefaults(
   detail: TemplateVersionDetail
 ): ProductTemplateWizardForm {
   return {
-    template_code: NEW_VERSION_TEMPLATE_CODE_PLACEHOLDER,
     template_name: detail.template_name,
     template_description: detail.template_description ?? "",
     financing_type: detail.financing_type,
@@ -157,26 +141,17 @@ function toNewVersionFormDefaults(
     max_volume_eur: detail.max_volume_eur ?? undefined,
     valid_from: detail.valid_from ?? "",
     valid_until: detail.valid_until ?? "",
-    // No GET endpoint returns a version's saved orchestration linkage (only the PATCH
-    // response ever does), so re-versioning from a Published template can't pre-fill these
-    // — the author has to re-select them (see plan Gap 5).
-    required_workflow_tasks: [],
-    required_documents: [],
-    optional_documents: [],
-    validation_rule_set_id: "",
   }
 }
 
 type WizardFormProps = {
   initialDraftRef: DraftRef | null
   initialFormValues: ProductTemplateWizardForm | undefined
-  shouldHideTemplateCode: boolean
 }
 
 function WizardFormView({
   initialDraftRef,
   initialFormValues,
-  shouldHideTemplateCode,
 }: WizardFormProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
@@ -197,8 +172,6 @@ function WizardFormView({
     useUpdateProductTemplateDraft()
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
-  const { mutateAsync: saveOrchestration, isPending: isSavingOrchestration } =
-    useUpdateProductTemplateOrchestration()
   const { mutateAsync: publishDraft, isPending: isPublishing } =
     usePublishProductTemplate()
 
@@ -209,22 +182,15 @@ function WizardFormView({
   const form = useForm<ProductTemplateWizardForm>({
     resolver: zodResolver(ProductTemplateWizardFormSchema),
     defaultValues: initialFormValues ?? {
-      template_code: "",
       template_name: "",
       template_description: "",
       allowed_asset_categories: [],
-      required_workflow_tasks: [],
-      required_documents: [],
-      optional_documents: [],
-      validation_rule_set_id: "",
     },
   })
 
-  const isSaving =
-    isCreating || isUpdating || isSavingOrchestration || isPublishing
+  const isSaving = isCreating || isUpdating || isPublishing
 
   const [
-    watchedCode,
     watchedName,
     watchedFinancingType,
     watchedLegalStructure,
@@ -234,7 +200,6 @@ function WizardFormView({
   ] = useWatch({
     control: form.control,
     name: [
-      "template_code",
       "template_name",
       "financing_type",
       "legal_structure",
@@ -244,11 +209,10 @@ function WizardFormView({
     ],
   })
 
-  // Gap 2 (see plan): the create endpoint hard-requires these 7 fields even though the
-  // PRD narrative says draft creation needs only code + name. Save-as-draft only becomes
-  // clickable once all 7 are present, not the full per-step form validity.
+  // Gap 2 (see plan): the create endpoint hard-requires these 6 fields even though the
+  // PRD narrative says draft creation needs only name. Save-as-draft only becomes
+  // clickable once all 6 are present, not the full per-step form validity.
   const canSaveDraft = Boolean(
-    watchedCode &&
     watchedName &&
     watchedFinancingType &&
     watchedLegalStructure &&
@@ -273,24 +237,21 @@ function WizardFormView({
     setStep(ORDERED_STEPS[currentIndex - 1])
   }
 
-  // Shared by Save as draft and Publish — creates/updates the draft and its
-  // orchestration linkage, returning the resolved draft ref. Returns null (silently,
-  // matching the pre-existing behavior) only when there's no tenant to create against yet.
-  async function saveDraftAndOrchestration(): Promise<DraftRef | null> {
+  // Shared by Save as draft and Publish — creates/updates the draft, returning the
+  // resolved draft ref. Returns null (silently, matching the pre-existing behavior)
+  // only when there's no tenant to create against yet.
+  async function saveDraft(): Promise<DraftRef | null> {
     const values = form.getValues()
     const updatePayload = toUpdatePayload(values)
 
     let ref = draftRef
     if (!ref) {
       if (!tenantId) return null
-      // canSaveDraft (gating the button that calls this) guarantees the 7 wire-required
+      // canSaveDraft (gating the button that calls this) guarantees the 6 wire-required
       // fields are present, which TS can't infer from the looser wizard-form type.
       const result = await createDraft({
         tenantId,
-        body: {
-          template_code: values.template_code,
-          ...updatePayload,
-        } as CreateProductTemplateDraftRequest,
+        body: updatePayload as CreateProductTemplateDraftRequest,
       })
       ref = { templateId: result.id, versionNumber: result.version_number }
       setDraftRef(ref)
@@ -302,22 +263,6 @@ function WizardFormView({
       })
     }
 
-    // The orchestration PATCH requires validation_rule_set_id unconditionally, with no
-    // partial-save variant (see plan Gap 5) — only call it once the author has actually
-    // reached that point in the step, rather than on every step's Save as draft.
-    if (values.validation_rule_set_id) {
-      await saveOrchestration({
-        templateId: ref.templateId,
-        versionNumber: ref.versionNumber,
-        body: {
-          required_workflow_tasks: values.required_workflow_tasks,
-          required_documents: values.required_documents,
-          optional_documents: values.optional_documents,
-          validation_rule_set_id: values.validation_rule_set_id,
-        },
-      })
-    }
-
     return ref
   }
 
@@ -326,7 +271,7 @@ function WizardFormView({
     const valid = await form.trigger(fields)
     if (!valid) return
     try {
-      const ref = await saveDraftAndOrchestration()
+      const ref = await saveDraft()
       if (!ref) return
       toast.success(t("wizard.draftSaved"))
     } catch (err) {
@@ -336,7 +281,7 @@ function WizardFormView({
 
   async function handlePublish() {
     try {
-      const ref = await saveDraftAndOrchestration()
+      const ref = await saveDraft()
       if (!ref) return
       await publishDraft({
         templateId: ref.templateId,
@@ -427,15 +372,9 @@ function WizardFormView({
             </p>
           </div>
 
-          {step === "identity" && (
-            <IdentityStep
-              form={form}
-              shouldHideTemplateCode={shouldHideTemplateCode}
-            />
-          )}
+          {step === "identity" && <IdentityStep form={form} />}
           {step === "behavioral" && <BehavioralSettingsStep form={form} />}
           {step === "eligibility" && <EligibilityStep form={form} />}
-          {step === "orchestration" && <OrchestrationStep form={form} />}
           {step === "review" && (
             <ReviewStep
               form={form}
@@ -613,7 +552,6 @@ export default function CreateProductTemplateWizardPage() {
           ? toNewVersionFormDefaults(existingDraft)
           : undefined
       }
-      shouldHideTemplateCode={draftRefFromRoute !== null}
     />
   )
 }
