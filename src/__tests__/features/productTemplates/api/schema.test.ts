@@ -245,50 +245,18 @@ describe("ProductTemplateWizardFormSchema", () => {
     max_term_months: 84,
     max_ltv_ratio: 85,
     valid_from: "2026-06-12",
-    required_workflow_tasks: ["b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e01"],
-    required_documents: ["c4e2b3f5-9a7b-4d22-8e3c-2b3c4d5e6f01"],
-    optional_documents: [],
-    validation_rule_set_id: "d5f3c4a6-ab8c-4e33-9f4d-3c4d5e6f7a01",
   }
 
   it("accepts a fully valid form", () => {
     expect(() => ProductTemplateWizardFormSchema.parse(validForm)).not.toThrow()
   })
 
-  it("rejects an empty required_workflow_tasks array", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        required_workflow_tasks: [],
-      })
-    ).toThrow()
-  })
-
-  it("rejects an empty required_documents array", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        required_documents: [],
-      })
-    ).toThrow()
-  })
-
-  it("rejects a missing validation_rule_set_id", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        validation_rule_set_id: "",
-      })
-    ).toThrow()
-  })
-
-  it("accepts an empty optional_documents array", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        optional_documents: [],
-      })
-    ).not.toThrow()
+  it("accepts a form with min_term_months, max_term_months, and max_ltv_ratio omitted", () => {
+    const rest = { ...validForm } as Record<string, unknown>
+    delete rest.min_term_months
+    delete rest.max_term_months
+    delete rest.max_ltv_ratio
+    expect(() => ProductTemplateWizardFormSchema.parse(rest)).not.toThrow()
   })
 
   it("rejects a template_code with invalid characters", () => {

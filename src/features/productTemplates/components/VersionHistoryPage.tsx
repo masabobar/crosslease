@@ -232,7 +232,7 @@ export default function VersionHistoryPage() {
                           : formatDateTime(version.created_at)}
                       </p>
                       {version.deprecated_by && (
-                        <p className="text-xs text-foreground">
+                        <p className="text-xs text-muted-foreground">
                           {t("versionHistory.deprecatedBy", {
                             name: version.deprecated_by.display_name,
                             date: formatDateTime(version.deprecated_at ?? null),

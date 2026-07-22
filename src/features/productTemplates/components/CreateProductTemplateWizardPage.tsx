@@ -47,11 +47,9 @@ import { WizardStepper } from "@/features/productTemplates/components/WizardStep
 import { IdentityStep } from "@/features/productTemplates/components/steps/IdentityStep"
 import { BehavioralSettingsStep } from "@/features/productTemplates/components/steps/BehavioralSettingsStep"
 import { EligibilityStep } from "@/features/productTemplates/components/steps/EligibilityStep"
-import { OrchestrationStep } from "@/features/productTemplates/components/steps/OrchestrationStep"
 import { ReviewStep } from "@/features/productTemplates/components/steps/ReviewStep"
 import { useCreateProductTemplateDraft } from "@/features/productTemplates/hooks/useCreateProductTemplateDraft"
 import { useUpdateProductTemplateDraft } from "@/features/productTemplates/hooks/useUpdateProductTemplateDraft"
-import { useUpdateProductTemplateOrchestration } from "@/features/productTemplates/hooks/useUpdateProductTemplateOrchestration"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
 import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
@@ -60,7 +58,6 @@ const ORDERED_STEPS: ProductTemplateWizardStep[] = [
   "identity",
   "behavioral",
   "eligibility",
-  "orchestration",
   "review",
 ]
 
@@ -86,11 +83,6 @@ const STEP_FIELDS: Record<
     "max_term_months",
     "max_ltv_ratio",
     "valid_from",
-  ],
-  orchestration: [
-    "required_workflow_tasks",
-    "required_documents",
-    "validation_rule_set_id",
   ],
   review: [],
 }
@@ -157,13 +149,6 @@ function toNewVersionFormDefaults(
     max_volume_eur: detail.max_volume_eur ?? undefined,
     valid_from: detail.valid_from ?? "",
     valid_until: detail.valid_until ?? "",
-    // No GET endpoint returns a version's saved orchestration linkage (only the PATCH
-    // response ever does), so re-versioning from a Published template can't pre-fill these
-    // — the author has to re-select them (see plan Gap 5).
-    required_workflow_tasks: [],
-    required_documents: [],
-    optional_documents: [],
-    validation_rule_set_id: "",
   }
 }
 
@@ -197,8 +182,6 @@ function WizardFormView({
     useUpdateProductTemplateDraft()
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
-  const { mutateAsync: saveOrchestration, isPending: isSavingOrchestration } =
-    useUpdateProductTemplateOrchestration()
   const { mutateAsync: publishDraft, isPending: isPublishing } =
     usePublishProductTemplate()
 
@@ -213,15 +196,10 @@ function WizardFormView({
       template_name: "",
       template_description: "",
       allowed_asset_categories: [],
-      required_workflow_tasks: [],
-      required_documents: [],
-      optional_documents: [],
-      validation_rule_set_id: "",
     },
   })
 
-  const isSaving =
-    isCreating || isUpdating || isSavingOrchestration || isPublishing
+  const isSaving = isCreating || isUpdating || isPublishing
 
   const [
     watchedCode,
@@ -273,10 +251,10 @@ function WizardFormView({
     setStep(ORDERED_STEPS[currentIndex - 1])
   }
 
-  // Shared by Save as draft and Publish — creates/updates the draft and its
-  // orchestration linkage, returning the resolved draft ref. Returns null (silently,
-  // matching the pre-existing behavior) only when there's no tenant to create against yet.
-  async function saveDraftAndOrchestration(): Promise<DraftRef | null> {
+  // Shared by Save as draft and Publish — creates/updates the draft, returning the
+  // resolved draft ref. Returns null (silently, matching the pre-existing behavior)
+  // only when there's no tenant to create against yet.
+  async function saveDraft(): Promise<DraftRef | null> {
     const values = form.getValues()
     const updatePayload = toUpdatePayload(values)
 
@@ -302,22 +280,6 @@ function WizardFormView({
       })
     }
 
-    // The orchestration PATCH requires validation_rule_set_id unconditionally, with no
-    // partial-save variant (see plan Gap 5) — only call it once the author has actually
-    // reached that point in the step, rather than on every step's Save as draft.
-    if (values.validation_rule_set_id) {
-      await saveOrchestration({
-        templateId: ref.templateId,
-        versionNumber: ref.versionNumber,
-        body: {
-          required_workflow_tasks: values.required_workflow_tasks,
-          required_documents: values.required_documents,
-          optional_documents: values.optional_documents,
-          validation_rule_set_id: values.validation_rule_set_id,
-        },
-      })
-    }
-
     return ref
   }
 
@@ -326,7 +288,7 @@ function WizardFormView({
     const valid = await form.trigger(fields)
     if (!valid) return
     try {
-      const ref = await saveDraftAndOrchestration()
+      const ref = await saveDraft()
       if (!ref) return
       toast.success(t("wizard.draftSaved"))
     } catch (err) {
@@ -336,7 +298,7 @@ function WizardFormView({
 
   async function handlePublish() {
     try {
-      const ref = await saveDraftAndOrchestration()
+      const ref = await saveDraft()
       if (!ref) return
       await publishDraft({
         templateId: ref.templateId,
@@ -435,7 +397,6 @@ function WizardFormView({
           )}
           {step === "behavioral" && <BehavioralSettingsStep form={form} />}
           {step === "eligibility" && <EligibilityStep form={form} />}
-          {step === "orchestration" && <OrchestrationStep form={form} />}
           {step === "review" && (
             <ReviewStep
               form={form}

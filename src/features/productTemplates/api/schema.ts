@@ -260,26 +260,30 @@ export const ProductTemplateWizardFormSchema = z
       .number()
       .int()
       .min(1, "termBelowMin")
-      .max(600, "termAboveMax"),
+      .max(600, "termAboveMax")
+      .optional(),
     max_term_months: z
       .number()
       .int()
       .min(1, "termBelowMin")
-      .max(600, "termAboveMax"),
-    max_ltv_ratio: z.number().min(0, "ltvBelowMin").max(100, "ltvAboveMax"),
+      .max(600, "termAboveMax")
+      .optional(),
+    max_ltv_ratio: z
+      .number()
+      .min(0, "ltvBelowMin")
+      .max(100, "ltvAboveMax")
+      .optional(),
     min_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
     max_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
     valid_from: z.string({ error: "required" }).min(1, "required"),
     valid_until: z.string().optional(),
-    required_workflow_tasks: z
-      .array(z.string())
-      .min(1, "atLeastOneWorkflowTask"),
-    required_documents: z.array(z.string()).min(1, "atLeastOneDocument"),
-    optional_documents: z.array(z.string()),
-    validation_rule_set_id: z.string().min(1, "required"),
   })
   .superRefine((data, ctx) => {
-    if (data.min_term_months > data.max_term_months) {
+    if (
+      data.min_term_months !== undefined &&
+      data.max_term_months !== undefined &&
+      data.min_term_months > data.max_term_months
+    ) {
       ctx.addIssue({
         code: "custom",
         message: "minTermExceedsMax",

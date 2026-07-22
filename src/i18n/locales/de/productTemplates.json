@@ -10,11 +10,9 @@
         "product": "Produkt",
         "financingType": "Finanzierungsart",
         "calculation": "Berechnung",
-        "ltvAndTerm": "LTV & Laufzeit",
         "status": "Status",
         "version": "Version"
-      },
-      "maxLtvPrefix": "Max."
+      }
     },
     "emptyState": {
       "title": "Noch keine Produktvorlagen",
@@ -43,7 +41,6 @@
       "identity": "Identität",
       "behavioral": "Verhaltenseinstellungen",
       "eligibility": "Berechtigung",
-      "orchestration": "Orchestrierungsverknüpfung",
       "review": "Prüfen & veröffentlichen"
     },
     "identity": {
@@ -57,10 +54,6 @@
     "eligibility": {
       "title": "Berechtigung",
       "subtitle": "Legen Sie den Vermögensumfang, die Laufzeit- und Volumengrenzen sowie das Gültigkeitsfenster fest."
-    },
-    "orchestration": {
-      "title": "Orchestrierungsverknüpfung",
-      "subtitle": "Verknüpfen Sie die Workflow-Aufgaben, Dokumente und Validierungsregeln aus den Mandantenkatalogen."
     },
     "review": {
       "title": "Prüfen und veröffentlichen",
@@ -93,15 +86,10 @@
     "npvFormulaReference": "NPV-Formelreferenz",
     "allowedAssetCategories": "Zulässige Vermögenskategorien",
     "details": "Details",
-    "requiredWorkflowTasks": "Erforderliche Workflow-Aufgaben",
-    "requiredDocuments": "Erforderliche Dokumente",
-    "optionalDocuments": "Optionale Dokumente",
-    "validationRuleSet": "Validierungsregelwerk",
     "identity": "Identität",
     "behavioralSettings": "Verhaltenseinstellungen",
     "eligibility": "Berechtigung",
-    "validity": "Gültigkeit",
-    "orchestrationLinkage": "Orchestrierungsverknüpfung"
+    "validity": "Gültigkeit"
   },
   "fields": {
     "templateName": "Vorlagenname",
@@ -129,10 +117,6 @@
     "validFrom": "Gültig ab",
     "validUntil": "Gültig bis",
     "validUntilHint": "Leer lassen für unbefristet.",
-    "requiredWorkflowTasksHint": "Wählen Sie mindestens einen aktiven Eintrag aus dem Workflow-Aufgabenkatalog.",
-    "requiredDocumentsHint": "Wählen Sie mindestens einen aktiven Eintrag aus dem Dokumentenanforderungskatalog.",
-    "optionalDocumentsHint": "Null oder mehr Einträge aus dem Dokumentenanforderungskatalog.",
-    "validationRuleSetHint": "Genau eine aktive Version aus der Validierungs- und Gating-Engine.",
     "openEnded": "Unbefristet",
     "publicationJustification": "Begründung der Veröffentlichung",
     "publicationJustificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Veröffentlichung hinzu…",
@@ -193,23 +177,6 @@
     "energy_assets": "Energieanlagen",
     "other": "Sonstiges"
   },
-  "workflowTasks": {
-    "creditAssessment": "Bonitätsprüfung",
-    "collateralValuation": "Sicherheitenbewertung",
-    "amlScreening": "Geldwäsche-Prüfung",
-    "disbursementApproval": "Auszahlungsfreigabe"
-  },
-  "documentRequirements": {
-    "assetInvoice": "Anlagenrechnung",
-    "leaseAgreement": "Leasingvertrag",
-    "financialStatements": "Finanzberichte",
-    "insuranceCertificate": "Versicherungsnachweis"
-  },
-  "validationRuleSets": {
-    "standardGating": "Standard-Gating-Regeln",
-    "realEstateGating": "Immobilien-Gating",
-    "portfolioGating": "Portfolio-Gating"
-  },
   "versionStatuses": {
     "draft": "Entwurf",
     "published": "Veröffentlicht",
@@ -254,8 +221,6 @@
   "errors": {
     "codeInvalidChars": "Nur Buchstaben, Zahlen und Bindestriche sind erlaubt.",
     "atLeastOneAssetCategory": "Wählen Sie mindestens eine Vermögenskategorie aus.",
-    "atLeastOneWorkflowTask": "Wählen Sie mindestens eine Workflow-Aufgabe aus.",
-    "atLeastOneDocument": "Wählen Sie mindestens ein erforderliches Dokument aus.",
     "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
     "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
     "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
