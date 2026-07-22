@@ -907,24 +907,6 @@ const PartnerRolesResponse = z
     history: z.array(RoleHistoryEntry),
   })
   .passthrough()
-const PartnerRole = z.enum(["lessee", "guarantor", "supplier", "bank_entity"])
-const RoleAssignRequest = z
-  .object({
-    roles: z.array(PartnerRole).min(1),
-    note: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const RoleAssignResult = z
-  .object({
-    role: PartnerRole,
-    status: z.string(),
-    is_new: z.boolean(),
-    governed_action_id: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const RoleAssignResponse = z
-  .object({ results: z.array(RoleAssignResult) })
-  .passthrough()
 const UboOwnershipRequest = z
   .object({
     ubo_partner_id: z.string().uuid(),
@@ -1161,7 +1143,6 @@ const PartnerSubmitRequest = z
       NaturalPersonIdentityInput,
       SoleProprietorIdentityInput,
     ]),
-    roles: z.array(PartnerRole).optional(),
   })
   .passthrough()
 const PartnerSubmitResponse = z
@@ -1170,7 +1151,6 @@ const PartnerSubmitResponse = z
     display_name: z.string(),
     partner_type: PartnerType,
     status: z.string(),
-    roles: z.array(PartnerRole),
     is_new: z.boolean(),
     governed_action_id: z.union([z.string(), z.null()]).optional(),
     country: z.union([z.string(), z.null()]).optional(),
@@ -1187,6 +1167,7 @@ const PartnerStatus = z.enum([
   "archived",
   "pending_archive",
 ])
+const PartnerRole = z.enum(["lessee", "guarantor", "supplier"])
 const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
 const PartnerListItem = z
   .object({
@@ -1527,7 +1508,6 @@ const TemplateListResponse = z
   .passthrough()
 const CreateTemplateDraftRequest = z
   .object({
-    template_code: z.string(),
     template_name: z.string(),
     financing_type: FinancingType,
     legal_structure: LegalStructure,
@@ -1563,6 +1543,7 @@ const CreateTemplateDraftRequest = z
 const TemplateDraftCreatedResponse = z
   .object({
     id: z.string().uuid(),
+    template_code: z.string(),
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
@@ -1944,13 +1925,6 @@ const LCPortalFAListItem = z
 const LCPortalFAListResponse = z
   .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
   .passthrough()
-const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
-const OTPResponse = z
-  .object({
-    code: z.string(),
-    expires_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
 
 export const schemas = {
   LoginRequest,
@@ -2066,10 +2040,6 @@ export const schemas = {
   RoleAssignmentSummary,
   RoleHistoryEntry,
   PartnerRolesResponse,
-  PartnerRole,
-  RoleAssignRequest,
-  RoleAssignResult,
-  RoleAssignResponse,
   UboOwnershipRequest,
   UboOwnershipRecordResponse,
   PartnerUboResponse,
@@ -2100,6 +2070,7 @@ export const schemas = {
   PartnerSubmitRequest,
   PartnerSubmitResponse,
   PartnerStatus,
+  PartnerRole,
   UboCompletenessStatus,
   PartnerListItem,
   PartnerListResponse,
@@ -2181,8 +2152,6 @@ export const schemas = {
   LCPortalDocumentItem,
   LCPortalFAListItem,
   LCPortalFAListResponse,
-  TestSessionRequest,
-  OTPResponse,
 }
 
 const endpoints = makeApi([
@@ -4020,32 +3989,6 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       },
     ],
     response: PartnerRolesResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/partners/:id/roles",
-    alias: "assign_partner_role_api_v1_partners__id__roles_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: RoleAssignRequest,
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: RoleAssignResponse,
     errors: [
       {
         status: 422,
@@ -5902,60 +5845,6 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
     alias: "health_check_health_get",
     requestFormat: "json",
     response: z.unknown(),
-  },
-  {
-    method: "get",
-    path: "/internal/test/otp",
-    alias: "test_get_otp_internal_test_otp_get",
-    description: `Return the current valid OTP code for a user.
-
-Use after POST /api/v1/auth/login to retrieve the generated OTP without
-needing email access. Returns 404 if no active (non-expired, non-used) OTP
-exists for the given email.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "email",
-        type: "Query",
-        schema: z.string(),
-      },
-    ],
-    response: OTPResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/internal/test/session",
-    alias: "test_session_internal_test_session_post",
-    description: `Create a real authenticated session for any user without going through 2FA.
-
-Replicates the tail of verify_otp: evicts oldest session if needed, issues
-access + refresh tokens as HTTP-only cookies.
-
-User status is NOT checked — QA can obtain a session for suspended or
-deactivated users to test authenticated edge-case scenarios.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z.object({ email: z.string().email() }).passthrough(),
-      },
-    ],
-    response: LoginResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
   },
 ])
 

@@ -18,7 +18,6 @@ import type {
 } from "@/features/partners/api/partnersApi"
 import type {
   PartnerMatchResponse,
-  PartnerRole,
 } from "@/features/partners/api/schema"
 import { partnerDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
@@ -43,7 +42,6 @@ export default function SubmitPartnerPage() {
   const [view, setView] = useState<View>("form")
   const [pending, setPending] = useState<{
     identity: PartnerIdentityInput
-    roles: PartnerRole[]
   } | null>(null)
   const [matchResult, setMatchResult] = useState<PartnerMatchResponse | null>(
     null
@@ -81,9 +79,9 @@ export default function SubmitPartnerPage() {
     },
   })
 
-  async function handleFormSubmit({ identity, roles }: SubmitResult) {
+  async function handleFormSubmit({ identity }: SubmitResult) {
     if (!tenantId) return
-    setPending({ identity, roles })
+    setPending({ identity })
     setMatchResult(null)
     setView("matching")
     try {
@@ -166,7 +164,6 @@ export default function SubmitPartnerPage() {
           <MatchingReview
             matchResult={matchResult}
             identity={pending.identity}
-            roles={pending.roles}
             isSubmitting={submitMutation.isPending}
             onConfirmCreate={handleConfirmCreate}
             onCancel={handleCancel}

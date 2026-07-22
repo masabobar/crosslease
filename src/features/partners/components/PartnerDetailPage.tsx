@@ -86,8 +86,6 @@ export default function PartnerDetailPage() {
 
   const canArchive =
     canAction && partner?.status === PartnerStatusSchema.enum.confirmed
-  const canAssignRole =
-    canAction && partner?.status === PartnerStatusSchema.enum.confirmed
   const canProposeIdentityChange =
     currentUser?.role === FRONT_OFFICE_ROLE &&
     partner?.status === PartnerStatusSchema.enum.confirmed
@@ -287,10 +285,7 @@ export default function PartnerDetailPage() {
             <ResolutionCandidatesTab partnerId={partner.partner_id} />
           )}
           {activeTab === "roles" && (
-            <RolesTab
-              partnerId={partner.partner_id}
-              canAssignRole={canAssignRole}
-            />
+            <RolesTab partnerId={partner.partner_id} />
           )}
           {activeTab === "ubo" && (
             <UboTab

@@ -20,23 +20,13 @@ export const PartnerStatusSchema = z.enum([
 ])
 export type PartnerStatus = z.infer<typeof PartnerStatusSchema>
 
-// PRD1042-1453: leasing_company and ubo_related_person no longer exist as
-// partner roles — counterparty status is derived from the Framework Agreement
-// and UBO lives in the identity/KYC layer. Deal roles (lessee/guarantor/
-// supplier) are contract-derived and cannot be assigned manually; they remain
-// here for the list filter and read paths only.
-export const PartnerRoleSchema = z.enum([
-  "lessee",
-  "guarantor",
-  "supplier",
-  "bank_entity",
-])
+// PRD1042-1453 (final scope): no partner role is manually assignable.
+// Standing classifications (leasing_company, bank_entity) are derived from
+// the Framework Agreement; ubo_related_person lives in the identity/KYC
+// layer. Deal roles are contract-derived and remain only for the list
+// filter and read paths.
+export const PartnerRoleSchema = z.enum(["lessee", "guarantor", "supplier"])
 export type PartnerRole = z.infer<typeof PartnerRoleSchema>
-
-// The only role that may be assigned manually (at submit or via the assign
-// dialog). Risk-sensitive: routes through Four-Eyes BO counter-confirmation.
-export const AssignablePartnerRoleSchema = z.enum(["bank_entity"])
-export type AssignablePartnerRole = z.infer<typeof AssignablePartnerRoleSchema>
 
 // BE's governed-action-backed role entries currently send the generic
 // governed_action status "pending" instead of the role-specific
@@ -162,7 +152,6 @@ export const PartnerSubmitResponseSchema = z.object({
   display_name: z.string(),
   partner_type: PartnerTypeSchema,
   status: PartnerStatusSchema,
-  roles: z.array(PartnerRoleSchema),
   is_new: z.boolean(),
 })
 export type PartnerSubmitResponse = z.infer<typeof PartnerSubmitResponseSchema>
@@ -271,21 +260,6 @@ export const PartnerRolesResponseSchema = z.object({
   history: z.array(RoleHistoryEntrySchema),
 })
 export type PartnerRolesResponse = z.infer<typeof PartnerRolesResponseSchema>
-
-export const RoleAssignResultSchema = z.object({
-  role: z.string(),
-  status: RoleStatusSchema,
-  is_new: z.boolean(),
-  // Set when the role is risk-sensitive: the pending partner_role_assign
-  // governed action awaiting BO counter-confirmation (PRD1042-1452).
-  governed_action_id: z.string().uuid().nullable().optional(),
-})
-export type RoleAssignResult = z.infer<typeof RoleAssignResultSchema>
-
-export const RoleAssignResponseSchema = z.object({
-  results: z.array(RoleAssignResultSchema),
-})
-export type RoleAssignResponse = z.infer<typeof RoleAssignResponseSchema>
 
 // ── UBO ───────────────────────────────────────────────────────────────────────
 
