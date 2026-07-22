@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { DetailRow } from "@/features/partners/components/PartnerDetailPrimitives"
+import { isCommercialRegisterApplicable } from "@/features/partners/utils"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
 
 function formatAddressLines(
@@ -47,9 +48,14 @@ function PartnerIdentityFields({
         <DetailRow label={t("detail.overview.fields.legalForm")}>
           {identity.legal_form ?? "—"}
         </DetailRow>
-        <DetailRow label={t("detail.overview.fields.commercialRegisterNo")}>
-          {identity.commercial_register_no ?? "—"}
-        </DetailRow>
+        {isCommercialRegisterApplicable(
+          identity.partner_type,
+          identity.country
+        ) && (
+          <DetailRow label={t("detail.overview.fields.commercialRegisterNo")}>
+            {identity.commercial_register_no ?? "—"}
+          </DetailRow>
+        )}
         <DetailRow label={t("detail.overview.fields.taxIdVat")}>
           {identity.tax_id_vat ?? "—"}
         </DetailRow>
@@ -108,9 +114,14 @@ function PartnerIdentityFields({
       <DetailRow label={t("detail.overview.fields.taxIdVat")}>
         {identity.tax_id_vat ?? "—"}
       </DetailRow>
-      <DetailRow label={t("detail.overview.fields.commercialRegisterNo")}>
-        {identity.commercial_register_no ?? "—"}
-      </DetailRow>
+      {isCommercialRegisterApplicable(
+        identity.partner_type,
+        identity.country
+      ) && (
+        <DetailRow label={t("detail.overview.fields.commercialRegisterNo")}>
+          {identity.commercial_register_no ?? "—"}
+        </DetailRow>
+      )}
       {showAddress && (
         <DetailRow label={t("detail.overview.fields.address")}>
           {addressValue}

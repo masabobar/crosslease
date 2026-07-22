@@ -39,6 +39,7 @@ import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
 import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 import { FRAMEWORK_AGREEMENT_MODULE_KEY } from "@/features/frameworkAgreements/constants"
+import { WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 type SidebarNavLinkProps = {
@@ -106,6 +107,11 @@ export function Sidebar() {
     FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES.includes(currentUser.role) &&
     (!currentUser.tenant_id ||
       !!permissions?.active_modules.includes(FRAMEWORK_AGREEMENT_MODULE_KEY))
+  // Not gated on module activation — mirrors Product Templates: no live API to detect
+  // module-inactive state in this static shell (Epic 15 has no backend yet).
+  const canAccessWorkflowTaskCatalog =
+    !!currentUser &&
+    WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -147,6 +153,9 @@ export function Sidebar() {
   )
   const isFrameworkAgreementListActive = location.pathname.startsWith(
     PATHS.FRAMEWORK_AGREEMENT_LIST
+  )
+  const isWorkflowTaskCatalogListActive = location.pathname.startsWith(
+    PATHS.WORKFLOW_TASK_CATALOG_LIST
   )
 
   return (
@@ -431,6 +440,14 @@ export function Sidebar() {
                       label={t("nav.frameworkAgreements")}
                       testid="nav-framework-agreements"
                       isActive={isFrameworkAgreementListActive}
+                    />
+                  )}
+                  {canAccessWorkflowTaskCatalog && (
+                    <SidebarNavLink
+                      to={PATHS.WORKFLOW_TASK_CATALOG_LIST}
+                      label={t("nav.workflowTaskCatalogs")}
+                      testid="nav-workflow-task-catalogs"
+                      isActive={isWorkflowTaskCatalogListActive}
                     />
                   )}
                 </CollapsibleContent>

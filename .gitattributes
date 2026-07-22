@@ -1,0 +1,15 @@
+# Normalize line endings so Windows checkouts don't corrupt shell scripts
+# (husky hooks are sh scripts — CRLF breaks them) or produce phantom diffs.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Husky hooks and shell scripts must stay LF regardless of platform config
+/.husky/* text eol=lf
+*.sh text eol=lf
