@@ -5,13 +5,6 @@ import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Combobox,
   ComboboxCollection,
   ComboboxContent,
@@ -20,7 +13,6 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
-import { BankEntitySchema } from "@/features/frameworkAgreements/api/schema"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import { useLcPartnerOptions } from "@/features/frameworkAgreements/hooks/useLcPartnerOptions"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -129,34 +121,6 @@ function IdentityStep({ form }: Props) {
             {resolveMsg(errors.lc_partner_id.message)}
           </p>
         )}
-      </div>
-
-      <div>
-        <Label
-          htmlFor="bank_entity"
-          error={!!errors.bank_entity}
-          className="mb-2"
-        >
-          {t("fields.bankEntity")}
-        </Label>
-        <Controller
-          control={control}
-          name="bank_entity"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="bank_entity" data-testid="bank-entity-select">
-                <SelectValue>{t(`bankEntities.${field.value}`)}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {BankEntitySchema.options.map(entity => (
-                  <SelectItem key={entity} value={entity}>
-                    {t(`bankEntities.${entity}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
       </div>
 
       <div>

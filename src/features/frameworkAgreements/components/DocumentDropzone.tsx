@@ -49,7 +49,13 @@ function DocumentDropzone({ documents, onChange }: Props) {
           f.type === FA_DOCUMENT_ACCEPTED_MIME &&
           f.size <= FA_DOCUMENT_MAX_FILE_SIZE_BYTES
       )
-      .map(file => ({ file, documentType: "" as const, documentLabel: "" }))
+      // Defaults to "other" (uncategorized) — per PRD1042-1495 (A6), categorizing
+      // a framework document is not mandatory to the user.
+      .map(file => ({
+        file,
+        documentType: "other" as const,
+        documentLabel: "",
+      }))
 
     if (invalidMime.length > 0) {
       toast.error(

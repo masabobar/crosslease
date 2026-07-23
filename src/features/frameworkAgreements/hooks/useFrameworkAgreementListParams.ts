@@ -1,12 +1,6 @@
 import { useSearchParams } from "react-router-dom"
-import {
-  BankEntitySchema,
-  FALifecycleStatusSchema,
-} from "@/features/frameworkAgreements/api/schema"
-import type {
-  BankEntity,
-  FALifecycleStatus,
-} from "@/features/frameworkAgreements/api/schema"
+import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
+import type { FALifecycleStatus } from "@/features/frameworkAgreements/api/schema"
 
 export const PAGE_SIZES = [10, 25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
@@ -48,12 +42,6 @@ export function useFrameworkAgreementListParams() {
       ? (rawStatus as FALifecycleStatus)
       : null
   const lcPartnerId = params.get("lc_partner_id")
-  const rawBankEntity = params.get("bank_entity")
-  const bankEntityFilter: BankEntity | null =
-    rawBankEntity &&
-    BankEntitySchema.options.includes(rawBankEntity as BankEntity)
-      ? (rawBankEntity as BankEntity)
-      : null
 
   function setPage(p: number) {
     update({ page: p === 1 ? null : String(p) })
@@ -75,22 +63,16 @@ export function useFrameworkAgreementListParams() {
     update({ lc_partner_id: id, page: null })
   }
 
-  function setBankEntityFilter(bankEntity: BankEntity | null) {
-    update({ bank_entity: bankEntity, page: null })
-  }
-
   return {
     page,
     perPage,
     search,
     statusFilter,
     lcPartnerId,
-    bankEntityFilter,
     setPage,
     setPerPage,
     setSearch,
     setStatusFilter,
     setLcPartnerId,
-    setBankEntityFilter,
   }
 }

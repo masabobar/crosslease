@@ -42,7 +42,7 @@ const STEP_FIELDS: Record<
   FrameworkAgreementWizardStep,
   (keyof FrameworkAgreementWizardForm)[]
 > = {
-  identity: ["agreement_name", "lc_partner_id", "bank_entity"],
+  identity: ["agreement_name", "lc_partner_id"],
   envelopePricing: [
     "max_volume_eur",
     "base_rate",
@@ -82,7 +82,9 @@ export default function CreateFrameworkAgreementWizardPage() {
       agreement_name: "",
       lc_partner_id: "",
       lc_partner_name: "",
-      bank_entity: "sparkasse",
+      // Bank entity is hidden from the UI per PRD1042-1495 (A4) — only relevant for
+      // syndication, out of MVP scope. Defaults to "other" like the BE column default.
+      bank_entity: "other",
       rate_type: "fixed",
       product_template_ids: [],
       special_conditions: "",
@@ -126,17 +128,10 @@ export default function CreateFrameworkAgreementWizardPage() {
 
   async function handleSave() {
     const formValid = await form.trigger()
-    const documentsValid = documents.every(doc => doc.documentType !== "")
 
     if (!formValid) {
       const invalidStep = firstStepWithFieldError()
       if (invalidStep) setStep(invalidStep)
-      toast.error(t("wizard.incompleteDraft"))
-      return
-    }
-
-    if (!documentsValid) {
-      setStep("documents")
       toast.error(t("wizard.incompleteDraft"))
       return
     }

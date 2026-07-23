@@ -6,8 +6,7 @@
     "filters": {
       "searchPlaceholder": "Suche",
       "allStatuses": "Alle Status",
-      "allLeasingCompanies": "Leasinggesellschaft",
-      "allBankEntities": "Bankeinheit"
+      "allLeasingCompanies": "Leasinggesellschaft"
     },
     "table": {
       "columns": {
@@ -33,12 +32,6 @@
     "suspended": "Ausgesetzt",
     "terminated": "Beendet"
   },
-  "bankEntities": {
-    "sparkasse": "Sparkasse",
-    "landesbank_1": "Landesbank 1",
-    "landesbank_2": "Landesbank 2",
-    "other": "Andere"
-  },
   "rateTypes": {
     "fixed": "Fest",
     "floating": "Variabel",
@@ -54,7 +47,6 @@
     "agreementName": "Vereinbarungsname",
     "leasingCompany": "Leasinggesellschaft",
     "leasingCompanyNoResults": "Keine Leasinggesellschaften gefunden",
-    "bankEntity": "Bankeinheit",
     "currency": "Währung",
     "maxVolumeEur": "Maximales Volumen",
     "baseRate": "Basiszins",
@@ -87,7 +79,7 @@
     "identity": {
       "title": "Identität & Vertragspartner",
       "subtitle": "Legen Sie die Identität der Vereinbarung und die beteiligten Parteien fest.",
-      "agreementNameHint": "Muss für diese Leasinggesellschaft und Bankeinheit eindeutig sein.",
+      "agreementNameHint": "Muss für diese Leasinggesellschaft eindeutig sein.",
       "leasingCompanyHint": "Es werden nur aktive Leasinggesellschaften angezeigt",
       "currencyHint": "Die Währung wird bei der Erstellung festgelegt und kann nicht geändert werden"
     },
@@ -181,7 +173,6 @@
       "activate": "Aktivieren",
       "edit": "Bearbeiten",
       "suspend": "Aussetzen",
-      "reactivate": "Reaktivieren",
       "terminate": "Beenden"
     },
     "financingsEmptyState": "Noch keine Finanzierungen",
@@ -301,7 +292,7 @@
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
     "validUntilBeforeFrom": "„Gültig bis“ muss am oder nach „Gültig ab“ liegen",
     "FA_NOT_FOUND": "Diese Rahmenvereinbarung konnte nicht gefunden werden.",
-    "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft und Bankeinheit existiert bereits eine Vereinbarung mit diesem Namen.",
+    "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft existiert bereits eine Vereinbarung mit diesem Namen.",
     "FA_TEMPLATE_NOT_PUBLISHED": "Eine der ausgewählten Produktvorlagen ist nicht veröffentlicht.",
     "FA_EDIT_JUSTIFICATION_REQUIRED": "Zum Bearbeiten dieser Vereinbarung ist eine Begründung erforderlich.",
     "FA_NOT_EDITABLE": "Diese Vereinbarung kann in ihrem aktuellen Status nicht bearbeitet werden.",

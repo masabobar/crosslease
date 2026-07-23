@@ -9,7 +9,6 @@ import { useFrameworkAgreementDetail } from "@/features/frameworkAgreements/hook
 import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreements/utils"
 import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementDialog"
 import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/SuspendFrameworkAgreementDialog"
-import { ReactivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ReactivateFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
 import { EditFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/EditFrameworkAgreementDialog"
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
@@ -59,7 +58,6 @@ export default function FrameworkAgreementDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
-  const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
 
@@ -111,10 +109,6 @@ export default function FrameworkAgreementDetailPage() {
             <span>
               {t("fields.leasingCompany")}: {data.lc_partner_name ?? "—"}
             </span>
-            <span>
-              {t("fields.bankEntity")}:{" "}
-              {data.bank_entity ? t(`bankEntities.${data.bank_entity}`) : "—"}
-            </span>
           </div>
         </div>
 
@@ -156,23 +150,17 @@ export default function FrameworkAgreementDetailPage() {
               </Button>
             </>
           )}
+          {/* Reactivation is hidden from the UI per PRD1042-1495 (B5) — MVP lifecycle
+              is CRUD + Suspend/Terminate only. ReactivateFrameworkAgreementDialog and
+              its hook are retained, unused, for when this is re-enabled. */}
           {data.status === FALifecycleStatusSchema.enum.suspended && (
-            <>
-              <Button
-                variant="outline"
-                data-testid="reactivate-fa-button"
-                onClick={() => setReactivateDialogOpen(true)}
-              >
-                {t("detail.actions.reactivate")}
-              </Button>
-              <Button
-                variant="outline"
-                data-testid="terminate-fa-button"
-                onClick={() => setTerminateDialogOpen(true)}
-              >
-                {t("detail.actions.terminate")}
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              data-testid="terminate-fa-button"
+              onClick={() => setTerminateDialogOpen(true)}
+            >
+              {t("detail.actions.terminate")}
+            </Button>
           )}
         </div>
       </div>
@@ -229,14 +217,6 @@ export default function FrameworkAgreementDetailPage() {
                 <ReviewRow
                   label={t("fields.leasingCompany")}
                   value={data.lc_partner_name ?? "—"}
-                />
-                <ReviewRow
-                  label={t("fields.bankEntity")}
-                  value={
-                    data.bank_entity
-                      ? t(`bankEntities.${data.bank_entity}`)
-                      : "—"
-                  }
                 />
                 <ReviewRow label={t("fields.currency")} value={data.currency} />
               </div>
@@ -408,11 +388,6 @@ export default function FrameworkAgreementDetailPage() {
       <SuspendFrameworkAgreementDialog
         open={suspendDialogOpen}
         onOpenChange={setSuspendDialogOpen}
-        frameworkAgreementId={data.id}
-      />
-      <ReactivateFrameworkAgreementDialog
-        open={reactivateDialogOpen}
-        onOpenChange={setReactivateDialogOpen}
         frameworkAgreementId={data.id}
       />
       <TerminateFrameworkAgreementDialog
