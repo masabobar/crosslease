@@ -200,9 +200,7 @@
     "authorNewVersion": "Author new version",
     "authorNewVersionDialog": {
       "title": "Author a new version?",
-      "description": "A new draft version will be created from this version's current values. Choose whether this change is major or minor before continuing.",
-      "majorLabel": "Major — structural changes (financing type, legal structure, payment timing, NPV formula, calculation model)",
-      "minorLabel": "Minor — parameter refinements",
+      "description": "A new draft version will be created from this version's current values.",
       "keep": "Cancel",
       "confirm": "Create draft"
     },
@@ -233,7 +231,6 @@
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
-    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "This change affects core behavioral fields and requires a major version increment.",
     "generic": "Something went wrong. Please try again."
   }
 }

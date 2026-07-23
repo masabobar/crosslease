@@ -80,7 +80,7 @@ beforeEach(() => {
   mockUpdateDraft.mockResolvedValue({})
   mockDiscardDraft.mockResolvedValue({})
   mockPublish.mockResolvedValue({})
-  mockCreateNewVersion.mockResolvedValue({ version_number: "2.0.0" })
+  mockCreateNewVersion.mockResolvedValue({ version_number: "2" })
   mockDeprecate.mockResolvedValue({})
 })
 
@@ -182,17 +182,15 @@ describe("usePublishProductTemplate", () => {
 })
 
 describe("useCreateNewProductTemplateVersion", () => {
-  const body = { increment_type: "minor" as const }
-
-  it("calls createNewProductTemplateVersion with the correct templateId and body", async () => {
+  it("calls createNewProductTemplateVersion with the correct templateId", async () => {
     const { mutate } = useCreateNewProductTemplateVersion()
-    await mutate({ templateId: TEMPLATE_ID, body })
-    expect(mockCreateNewVersion).toHaveBeenCalledWith(TEMPLATE_ID, body)
+    await mutate({ templateId: TEMPLATE_ID })
+    expect(mockCreateNewVersion).toHaveBeenCalledWith(TEMPLATE_ID)
   })
 
   it("invalidates versions for the template on success", async () => {
     const { mutate } = useCreateNewProductTemplateVersion()
-    await mutate({ templateId: TEMPLATE_ID, body })
+    await mutate({ templateId: TEMPLATE_ID })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["product-templates", "versions", TEMPLATE_ID],
     })

@@ -140,23 +140,14 @@ export type PublishTemplateDraftResponse = z.infer<
   typeof PublishTemplateDraftResponseSchema
 >
 
-// Wire request/response for POST /product-templates/{id}/versions (create_new_version)
-// in refinext-api. Matches CreateNewVersionRequest / NewVersionCreatedResponse.
-export const IncrementTypeSchema = z.enum(["major", "minor"])
-export type IncrementType = z.infer<typeof IncrementTypeSchema>
-
-export const CreateNewVersionRequestSchema = z.object({
-  increment_type: IncrementTypeSchema,
-})
-export type CreateNewVersionRequest = z.infer<
-  typeof CreateNewVersionRequestSchema
->
-
+// Wire response for POST /product-templates/{id}/versions (create_new_version) in
+// refinext-api. Matches NewVersionCreatedResponse. The endpoint takes no request body:
+// versioning is sequential integers (CR-1474), so there is no major/minor increment_type
+// to choose — the BE derives the next version_number itself.
 export const NewVersionCreatedResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
   version_status: z.string(),
-  increment_type: IncrementTypeSchema.nullable(),
   predecessor_version_id: z.string().uuid().nullable(),
   snapshot_source_version_id: z.string().uuid().nullable(),
 })

@@ -1244,7 +1244,6 @@ const SelectableTemplateItem = z
 const SelectableTemplatesResponse = z
   .object({ items: z.array(SelectableTemplateItem) })
   .passthrough()
-const IncrementType = z.enum(["major", "minor"])
 const LegalStructure = z.enum(["loan_credit", "true_sale"])
 const PaymentTiming = z.enum(["advance", "arrears"])
 const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
@@ -1276,7 +1275,6 @@ const VersionDetailResponse = z
     template_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    increment_type: z.union([IncrementType, z.null()]),
     referenced: z.boolean(),
     template_name: z.string(),
     template_description: z.union([z.string(), z.null()]),
@@ -1392,15 +1390,11 @@ const PublishTemplateDraftResponse = z
     published_by: z.string().uuid(),
   })
   .passthrough()
-const CreateNewVersionRequest = z
-  .object({ increment_type: IncrementType })
-  .passthrough()
 const NewVersionCreatedResponse = z
   .object({
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    increment_type: z.union([IncrementType, z.null()]),
     predecessor_version_id: z.union([z.string(), z.null()]),
     snapshot_source_version_id: z.union([z.string(), z.null()]),
   })
@@ -2088,7 +2082,6 @@ export const schemas = {
   financing_type,
   SelectableTemplateItem,
   SelectableTemplatesResponse,
-  IncrementType,
   LegalStructure,
   PaymentTiming,
   RateBasis,
@@ -2107,7 +2100,6 @@ export const schemas = {
   OrchestrationResponse,
   PublishTemplateDraftRequest,
   PublishTemplateDraftResponse,
-  CreateNewVersionRequest,
   NewVersionCreatedResponse,
   TemplateVersionSummary,
   VersionHistoryResponse,
@@ -4127,11 +4119,6 @@ Accessible to all authenticated users.`,
       "create_new_version_api_v1_product_templates__template_id__versions_post",
     requestFormat: "json",
     parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: CreateNewVersionRequest,
-      },
       {
         name: "template_id",
         type: "Path",

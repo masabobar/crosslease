@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest"
 import {
-  CreateNewVersionRequestSchema,
   CreateProductTemplateDraftRequestSchema,
   DeprecateTemplateVersionRequestSchema,
   DeprecateTemplateVersionResponseSchema,
@@ -486,30 +485,11 @@ describe("TemplateVersionDetailSchema", () => {
   })
 })
 
-describe("CreateNewVersionRequestSchema / NewVersionCreatedResponseSchema", () => {
-  it("accepts a valid major increment request", () => {
-    expect(() =>
-      CreateNewVersionRequestSchema.parse({ increment_type: "major" })
-    ).not.toThrow()
-  })
-
-  it("accepts a valid minor increment request", () => {
-    expect(() =>
-      CreateNewVersionRequestSchema.parse({ increment_type: "minor" })
-    ).not.toThrow()
-  })
-
-  it("rejects an unknown increment_type", () => {
-    expect(() =>
-      CreateNewVersionRequestSchema.parse({ increment_type: "patch" })
-    ).toThrow()
-  })
-
+describe("NewVersionCreatedResponseSchema", () => {
   const validNewVersionResponse = {
     version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-    version_number: "2.0",
+    version_number: "2",
     version_status: "draft",
-    increment_type: "major",
     predecessor_version_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     snapshot_source_version_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   }
@@ -520,11 +500,10 @@ describe("CreateNewVersionRequestSchema / NewVersionCreatedResponseSchema", () =
     ).not.toThrow()
   })
 
-  it("accepts null increment_type/predecessor/snapshot fields", () => {
+  it("accepts null predecessor/snapshot fields", () => {
     expect(() =>
       NewVersionCreatedResponseSchema.parse({
         ...validNewVersionResponse,
-        increment_type: null,
         predecessor_version_id: null,
         snapshot_source_version_id: null,
       })

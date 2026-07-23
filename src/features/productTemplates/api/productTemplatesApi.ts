@@ -11,7 +11,6 @@ import {
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 import type {
-  CreateNewVersionRequest,
   CreateProductTemplateDraftRequest,
   DeprecateTemplateVersionRequest,
   DeprecateTemplateVersionResponse,
@@ -116,10 +115,9 @@ export async function fetchTemplateVersionDetail(
 }
 
 export async function createNewProductTemplateVersion(
-  templateId: string,
-  body: CreateNewVersionRequest
+  templateId: string
 ): Promise<NewVersionCreatedResponse> {
-  const data = await api.post(`/product-templates/${templateId}/versions`, body)
+  const data = await api.post(`/product-templates/${templateId}/versions`)
   return NewVersionCreatedResponseSchema.parse(data)
 }
 
