@@ -200,9 +200,7 @@
     "authorNewVersion": "Neue Version erstellen",
     "authorNewVersionDialog": {
       "title": "Neue Version erstellen?",
-      "description": "Es wird ein neuer Entwurf mit den aktuellen Werten dieser Version erstellt. Wählen Sie, ob es sich um eine größere oder kleinere Änderung handelt, bevor Sie fortfahren.",
-      "majorLabel": "Groß — strukturelle Änderungen (Finanzierungsart, Rechtsstruktur, Zahlungszeitpunkt, NPV-Formel, Berechnungsmodell)",
-      "minorLabel": "Klein — Parameteranpassungen",
+      "description": "Es wird ein neuer Entwurf mit den aktuellen Werten dieser Version erstellt.",
       "keep": "Abbrechen",
       "confirm": "Entwurf erstellen"
     },
@@ -233,7 +231,6 @@
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "Für diese Vorlage existiert bereits ein Entwurf. Verwerfen oder veröffentlichen Sie ihn, bevor Sie einen neuen erstellen.",
-    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "Diese Änderung betrifft zentrale Verhaltensfelder und erfordert eine große Versionsänderung.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

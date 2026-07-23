@@ -4474,16 +4474,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNewVersionRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -6757,14 +6747,6 @@
         "required": ["grantee_id", "access_reason", "valid_until"],
         "title": "CreateGrantRequest"
       },
-      "CreateNewVersionRequest": {
-        "properties": {
-          "increment_type": { "$ref": "#/components/schemas/IncrementType" }
-        },
-        "type": "object",
-        "required": ["increment_type"],
-        "title": "CreateNewVersionRequest"
-      },
       "CreateTemplateDraftRequest": {
         "properties": {
           "template_name": { "type": "string", "title": "Template Name" },
@@ -8583,11 +8565,6 @@
         "type": "object",
         "title": "ImpactSummary"
       },
-      "IncrementType": {
-        "type": "string",
-        "enum": ["major", "minor"],
-        "title": "IncrementType"
-      },
       "InitiateRoleChangeRequest": {
         "properties": {
           "new_role": { "$ref": "#/components/schemas/UserRole" },
@@ -9350,12 +9327,6 @@
           },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "increment_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/IncrementType" },
-              { "type": "null" }
-            ]
-          },
           "predecessor_version_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -9376,7 +9347,6 @@
           "version_id",
           "version_number",
           "version_status",
-          "increment_type",
           "predecessor_version_id",
           "snapshot_source_version_id"
         ],
@@ -12091,12 +12061,6 @@
           },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "increment_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/IncrementType" },
-              { "type": "null" }
-            ]
-          },
           "referenced": { "type": "boolean", "title": "Referenced" },
           "template_name": { "type": "string", "title": "Template Name" },
           "template_description": {
@@ -12261,7 +12225,6 @@
           "template_id",
           "version_number",
           "version_status",
-          "increment_type",
           "referenced",
           "template_name",
           "template_description",

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +27,6 @@ import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplat
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
-  IncrementType,
   TemplateStatus,
   TemplateVersionSummary,
 } from "@/features/productTemplates/api/schema"
@@ -66,7 +64,6 @@ export default function VersionHistoryPage() {
     useState<TemplateVersionSummary | null>(null)
   const [newVersionTarget, setNewVersionTarget] =
     useState<TemplateVersionSummary | null>(null)
-  const [incrementType, setIncrementType] = useState<IncrementType | null>(null)
   const [deprecateTarget, setDeprecateTarget] =
     useState<TemplateVersionSummary | null>(null)
   const [deprecationJustification, setDeprecationJustification] = useState("")
@@ -115,14 +112,10 @@ export default function VersionHistoryPage() {
   }
 
   async function handleConfirmAuthorNewVersion() {
-    if (!newVersionTarget || !templateId || !incrementType) return
+    if (!newVersionTarget || !templateId) return
     try {
-      const result = await createNewVersion({
-        templateId,
-        body: { increment_type: incrementType },
-      })
+      const result = await createNewVersion({ templateId })
       setNewVersionTarget(null)
-      setIncrementType(null)
       navigate(productTemplateNewVersionEdit(templateId, result.version_number))
     } catch (err) {
       showApiError(err, t)
@@ -349,12 +342,7 @@ export default function VersionHistoryPage() {
 
       <AlertDialog
         open={newVersionTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setNewVersionTarget(null)
-            setIncrementType(null)
-          }
-        }}
+        onOpenChange={open => !open && setNewVersionTarget(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -365,29 +353,6 @@ export default function VersionHistoryPage() {
               {t("versionHistory.authorNewVersionDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex flex-col gap-2 px-1">
-            <RadioGroup
-              data-testid="increment-type-radio-group"
-              value={incrementType ?? undefined}
-              onValueChange={value => setIncrementType(value as IncrementType)}
-              className="gap-3"
-            >
-              <label
-                htmlFor="increment-type-major"
-                className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
-              >
-                <RadioGroupItem id="increment-type-major" value="major" />
-                {t("versionHistory.authorNewVersionDialog.majorLabel")}
-              </label>
-              <label
-                htmlFor="increment-type-minor"
-                className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
-              >
-                <RadioGroupItem id="increment-type-minor" value="minor" />
-                {t("versionHistory.authorNewVersionDialog.minorLabel")}
-              </label>
-            </RadioGroup>
-          </div>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="version-new-dialog-keep">
               {t("versionHistory.authorNewVersionDialog.keep")}
@@ -395,7 +360,7 @@ export default function VersionHistoryPage() {
             <AlertDialogAction
               data-testid="version-new-dialog-confirm"
               onClick={handleConfirmAuthorNewVersion}
-              disabled={isCreatingNewVersion || !incrementType}
+              disabled={isCreatingNewVersion}
             >
               {t("versionHistory.authorNewVersionDialog.confirm")}
             </AlertDialogAction>
