@@ -134,9 +134,9 @@ function toNewVersionFormDefaults(
       detail.disbursement_derivation_rule ??
       DisbursementDerivationRuleSchema.enum.npv,
     allowed_asset_categories: detail.allowed_asset_categories ?? [],
-    min_term_months: detail.min_term_months ?? 1,
-    max_term_months: detail.max_term_months ?? 1,
-    max_ltv_ratio: detail.max_ltv_ratio ?? 0,
+    min_term_months: detail.min_term_months ?? undefined,
+    max_term_months: detail.max_term_months ?? undefined,
+    max_ltv_ratio: detail.max_ltv_ratio ?? undefined,
     min_volume_eur: detail.min_volume_eur ?? undefined,
     max_volume_eur: detail.max_volume_eur ?? undefined,
     valid_from: detail.valid_from ?? "",

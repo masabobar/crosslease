@@ -31,7 +31,6 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("@/features/productTemplates/api/productTemplatesApi", () => ({
   createProductTemplateDraft: vi.fn(),
   updateProductTemplateDraft: vi.fn(),
-  updateProductTemplateOrchestration: vi.fn(),
   discardProductTemplateDraft: vi.fn(),
   publishProductTemplate: vi.fn(),
   createNewProductTemplateVersion: vi.fn(),
@@ -47,7 +46,6 @@ vi.mock("@/features/productTemplates/api/productTemplatesApi", () => ({
 
 import { useCreateProductTemplateDraft } from "@/features/productTemplates/hooks/useCreateProductTemplateDraft"
 import { useUpdateProductTemplateDraft } from "@/features/productTemplates/hooks/useUpdateProductTemplateDraft"
-import { useUpdateProductTemplateOrchestration } from "@/features/productTemplates/hooks/useUpdateProductTemplateOrchestration"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
 import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
@@ -55,7 +53,6 @@ import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/
 import {
   createProductTemplateDraft,
   updateProductTemplateDraft,
-  updateProductTemplateOrchestration,
   discardProductTemplateDraft,
   publishProductTemplate,
   createNewProductTemplateVersion,
@@ -64,8 +61,6 @@ import {
 
 const mockCreateDraft = createProductTemplateDraft as ReturnType<typeof vi.fn>
 const mockUpdateDraft = updateProductTemplateDraft as ReturnType<typeof vi.fn>
-const mockUpdateOrchestration =
-  updateProductTemplateOrchestration as ReturnType<typeof vi.fn>
 const mockDiscardDraft = discardProductTemplateDraft as ReturnType<typeof vi.fn>
 const mockPublish = publishProductTemplate as ReturnType<typeof vi.fn>
 const mockCreateNewVersion = createNewProductTemplateVersion as ReturnType<
@@ -83,7 +78,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockCreateDraft.mockResolvedValue({ id: TEMPLATE_ID })
   mockUpdateDraft.mockResolvedValue({})
-  mockUpdateOrchestration.mockResolvedValue({})
   mockDiscardDraft.mockResolvedValue({})
   mockPublish.mockResolvedValue({})
   mockCreateNewVersion.mockResolvedValue({ version_number: "2.0.0" })
@@ -92,7 +86,6 @@ beforeEach(() => {
 
 describe("useCreateProductTemplateDraft", () => {
   const body = {
-    template_code: "TC-1",
     template_name: "Template 1",
     financing_type: "full_refinancing" as const,
     legal_structure: "loan_credit" as const,
@@ -135,41 +128,6 @@ describe("useUpdateProductTemplateDraft", () => {
 
   it("invalidates versions for the template on success", async () => {
     const { mutate } = useUpdateProductTemplateDraft()
-    await mutate({
-      templateId: TEMPLATE_ID,
-      versionNumber: VERSION_NUMBER,
-      body,
-    })
-    expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
-    })
-  })
-})
-
-describe("useUpdateProductTemplateOrchestration", () => {
-  const body = {
-    required_workflow_tasks: ["task-1"],
-    required_documents: ["doc-1"],
-    optional_documents: [],
-    validation_rule_set_id: "rule-1",
-  }
-
-  it("calls updateProductTemplateOrchestration with the correct ids and body", async () => {
-    const { mutate } = useUpdateProductTemplateOrchestration()
-    await mutate({
-      templateId: TEMPLATE_ID,
-      versionNumber: VERSION_NUMBER,
-      body,
-    })
-    expect(mockUpdateOrchestration).toHaveBeenCalledWith(
-      TEMPLATE_ID,
-      VERSION_NUMBER,
-      body
-    )
-  })
-
-  it("invalidates versions for the template on success", async () => {
-    const { mutate } = useUpdateProductTemplateOrchestration()
     await mutate({
       templateId: TEMPLATE_ID,
       versionNumber: VERSION_NUMBER,

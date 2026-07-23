@@ -5,7 +5,6 @@ import {
   DeprecateTemplateVersionRequestSchema,
   DeprecateTemplateVersionResponseSchema,
   NewVersionCreatedResponseSchema,
-  OrchestrationResponseSchema,
   ProductTemplateWizardFormSchema,
   PublishTemplateDraftRequestSchema,
   PublishTemplateDraftResponseSchema,
@@ -17,7 +16,6 @@ import {
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
   TemplateVersionSummarySchema,
-  UpdateOrchestrationRequestSchema,
   UpdateProductTemplateDraftRequestSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
@@ -583,106 +581,6 @@ describe("DeprecateTemplateVersionRequestSchema / DeprecateTemplateVersionRespon
       DeprecateTemplateVersionResponseSchema.parse({
         ...validDeprecateResponse,
         deprecated_by: "not-a-uuid",
-      })
-    ).toThrow()
-  })
-})
-
-describe("UpdateOrchestrationRequestSchema", () => {
-  const validOrchestrationRequest = {
-    required_workflow_tasks: ["b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e01"],
-    required_documents: ["c4e2b3f5-9a7b-4d22-8e3c-2b3c4d5e6f01"],
-    validation_rule_set_id: "d5f3c4a6-ab8c-4e33-9f4d-3c4d5e6f7a01",
-  }
-
-  it("accepts a valid request without optional_documents", () => {
-    expect(() =>
-      UpdateOrchestrationRequestSchema.parse(validOrchestrationRequest)
-    ).not.toThrow()
-  })
-
-  it("defaults optional_documents to an empty array when omitted", () => {
-    const result = UpdateOrchestrationRequestSchema.parse(
-      validOrchestrationRequest
-    )
-    expect(result.optional_documents).toEqual([])
-  })
-
-  it("accepts an empty required_workflow_tasks array (BE doesn't enforce min-length)", () => {
-    expect(() =>
-      UpdateOrchestrationRequestSchema.parse({
-        ...validOrchestrationRequest,
-        required_workflow_tasks: [],
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects a non-UUID entry in required_workflow_tasks", () => {
-    expect(() =>
-      UpdateOrchestrationRequestSchema.parse({
-        ...validOrchestrationRequest,
-        required_workflow_tasks: ["not-a-uuid"],
-      })
-    ).toThrow()
-  })
-
-  it("rejects a non-UUID validation_rule_set_id", () => {
-    expect(() =>
-      UpdateOrchestrationRequestSchema.parse({
-        ...validOrchestrationRequest,
-        validation_rule_set_id: "not-a-uuid",
-      })
-    ).toThrow()
-  })
-
-  it("rejects a missing validation_rule_set_id", () => {
-    const rest = { ...validOrchestrationRequest } as Record<string, unknown>
-    delete rest.validation_rule_set_id
-    expect(() => UpdateOrchestrationRequestSchema.parse(rest)).toThrow()
-  })
-})
-
-describe("OrchestrationResponseSchema", () => {
-  const validLinkage = {
-    id: "e6f4d5b7-bc9d-4f44-af5e-4d5e6f7a8b01",
-    link_type: "required_workflow_task",
-    catalog_ref_id: "b3d1a2e4-8f6a-4c11-9d2b-1a2b3c4d5e01",
-    catalog_ref_type: "workflow_task",
-  }
-
-  it("accepts a valid response with multiple linkage types", () => {
-    expect(() =>
-      OrchestrationResponseSchema.parse({
-        linkages: [
-          validLinkage,
-          {
-            ...validLinkage,
-            link_type: "validation_rule_set",
-            catalog_ref_type: "validation_rule_set",
-          },
-        ],
-      })
-    ).not.toThrow()
-  })
-
-  it("accepts an empty linkages array", () => {
-    expect(() =>
-      OrchestrationResponseSchema.parse({ linkages: [] })
-    ).not.toThrow()
-  })
-
-  it("rejects an unknown link_type", () => {
-    expect(() =>
-      OrchestrationResponseSchema.parse({
-        linkages: [{ ...validLinkage, link_type: "unknown_type" }],
-      })
-    ).toThrow()
-  })
-
-  it("rejects an unknown catalog_ref_type", () => {
-    expect(() =>
-      OrchestrationResponseSchema.parse({
-        linkages: [{ ...validLinkage, catalog_ref_type: "unknown_catalog" }],
       })
     ).toThrow()
   })
