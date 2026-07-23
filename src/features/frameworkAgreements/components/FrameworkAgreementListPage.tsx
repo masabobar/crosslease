@@ -20,12 +20,8 @@ import {
   PAGE_SIZES,
 } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementListParams"
 import type { PageSize } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementListParams"
-import {
-  BankEntitySchema,
-  FALifecycleStatusSchema,
-} from "@/features/frameworkAgreements/api/schema"
+import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
 import type {
-  BankEntity,
   FAListItem,
   FALifecycleStatus,
 } from "@/features/frameworkAgreements/api/schema"
@@ -43,13 +39,11 @@ export default function FrameworkAgreementListPage() {
     search,
     statusFilter,
     lcPartnerId,
-    bankEntityFilter,
     setPage,
     setPerPage,
     setSearch,
     setStatusFilter,
     setLcPartnerId,
-    setBankEntityFilter,
   } = useFrameworkAgreementListParams()
 
   const { data, isLoading, isError } = useFrameworkAgreementList({
@@ -58,7 +52,6 @@ export default function FrameworkAgreementListPage() {
     ...(search.trim() ? { q: search.trim() } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
-    ...(bankEntityFilter ? { bank_entity: bankEntityFilter } : {}),
   })
   const { data: lcPartnersData, isError: isLcPartnersError } =
     useFrameworkAgreementLcPartners()
@@ -67,8 +60,7 @@ export default function FrameworkAgreementListPage() {
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / perPage))
   const pageNumbers = data ? buildPageNumbers(page, totalPages) : []
-  const hasActiveFilters =
-    !!search.trim() || !!statusFilter || !!lcPartnerId || !!bankEntityFilter
+  const hasActiveFilters = !!search.trim() || !!statusFilter || !!lcPartnerId
 
   function handleRowClick(agreement: FAListItem) {
     navigate(frameworkAgreementDetail(agreement.id))
@@ -168,34 +160,6 @@ export default function FrameworkAgreementListPage() {
             </p>
           )}
         </div>
-
-        <Select
-          value={bankEntityFilter ?? ALL_VALUE}
-          onValueChange={v =>
-            setBankEntityFilter(v === ALL_VALUE ? null : (v as BankEntity))
-          }
-        >
-          <SelectTrigger
-            data-testid="fa-filter-bank-entity"
-            className="w-[180px]"
-          >
-            <SelectValue>
-              {bankEntityFilter
-                ? t(`bankEntities.${bankEntityFilter}`)
-                : t("list.filters.allBankEntities")}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>
-              {t("list.filters.allBankEntities")}
-            </SelectItem>
-            {BankEntitySchema.options.map(bankEntity => (
-              <SelectItem key={bankEntity} value={bankEntity}>
-                {t(`bankEntities.${bankEntity}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="mt-4">

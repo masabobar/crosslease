@@ -6,8 +6,7 @@
     "filters": {
       "searchPlaceholder": "Search",
       "allStatuses": "All statuses",
-      "allLeasingCompanies": "Leasing company",
-      "allBankEntities": "Bank entity"
+      "allLeasingCompanies": "Leasing company"
     },
     "table": {
       "columns": {
@@ -33,12 +32,6 @@
     "suspended": "Suspended",
     "terminated": "Terminated"
   },
-  "bankEntities": {
-    "sparkasse": "Sparkasse",
-    "landesbank_1": "Landesbank 1",
-    "landesbank_2": "Landesbank 2",
-    "other": "Other"
-  },
   "rateTypes": {
     "fixed": "Fixed",
     "floating": "Floating",
@@ -54,7 +47,6 @@
     "agreementName": "Agreement name",
     "leasingCompany": "Leasing company",
     "leasingCompanyNoResults": "No leasing companies found",
-    "bankEntity": "Bank entity",
     "currency": "Currency",
     "maxVolumeEur": "Max volume",
     "baseRate": "Base rate",
@@ -87,7 +79,7 @@
     "identity": {
       "title": "Identity & counterparty",
       "subtitle": "Define the agreement identity and the parties involved.",
-      "agreementNameHint": "Must be unique for this leasing company and bank entity.",
+      "agreementNameHint": "Must be unique for this leasing company.",
       "leasingCompanyHint": "Only active leasing companies are shown",
       "currencyHint": "Currency is fixed at creation and cannot be changed"
     },
@@ -181,7 +173,6 @@
       "activate": "Activate",
       "edit": "Edit",
       "suspend": "Suspend",
-      "reactivate": "Reactivate",
       "terminate": "Terminate"
     },
     "financingsEmptyState": "No financings yet",
@@ -301,7 +292,7 @@
     "atLeastOneTemplate": "Select at least one Product Template",
     "validUntilBeforeFrom": "Valid Until must be on or after Valid From",
     "FA_NOT_FOUND": "This framework agreement could not be found.",
-    "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company and bank entity.",
+    "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company.",
     "FA_TEMPLATE_NOT_PUBLISHED": "One of the selected product templates is not published.",
     "FA_EDIT_JUSTIFICATION_REQUIRED": "A justification is required to edit this agreement.",
     "FA_NOT_EDITABLE": "This agreement cannot be edited in its current status.",

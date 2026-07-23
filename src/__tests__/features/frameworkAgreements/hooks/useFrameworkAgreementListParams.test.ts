@@ -90,24 +90,6 @@ describe("useFrameworkAgreementListParams", () => {
     })
   })
 
-  describe("bankEntityFilter", () => {
-    it("defaults to null when absent", () => {
-      expect(useFrameworkAgreementListParams().bankEntityFilter).toBeNull()
-    })
-
-    it("parses a valid bank entity", () => {
-      setUrlParams("bank_entity=sparkasse")
-      expect(useFrameworkAgreementListParams().bankEntityFilter).toBe(
-        "sparkasse"
-      )
-    })
-
-    it("returns null for an invalid bank entity", () => {
-      setUrlParams("bank_entity=bogus")
-      expect(useFrameworkAgreementListParams().bankEntityFilter).toBeNull()
-    })
-  })
-
   describe("lcPartnerId", () => {
     it("defaults to null when absent", () => {
       expect(useFrameworkAgreementListParams().lcPartnerId).toBeNull()
@@ -162,12 +144,6 @@ describe("useFrameworkAgreementListParams", () => {
       useFrameworkAgreementListParams().setStatusFilter(null)
       const next = latestUpdater()(new URLSearchParams("status=active"))
       expect(next.get("status")).toBeNull()
-    })
-
-    it("setBankEntityFilter writes the bank_entity param", () => {
-      useFrameworkAgreementListParams().setBankEntityFilter("sparkasse")
-      const next = latestUpdater()(new URLSearchParams())
-      expect(next.get("bank_entity")).toBe("sparkasse")
     })
 
     it("setLcPartnerId(null) removes the lc_partner_id param", () => {

@@ -61,7 +61,9 @@ function AttachFrameworkAgreementDocumentDialog({
     formState: { errors },
   } = useForm<AttachDocumentFormValues>({
     resolver: zodResolver(attachDocumentFormSchema),
-    defaultValues: { document_type: "original_agreement", document_label: "" },
+    // Defaults to "other" (uncategorized) — per PRD1042-1495 (A6), categorizing a
+    // framework document is not mandatory to the user.
+    defaultValues: { document_type: "other", document_label: "" },
   })
 
   function handleClose() {
@@ -106,7 +108,10 @@ function AttachFrameworkAgreementDocumentDialog({
         <div className="flex flex-col gap-4 px-4 py-4">
           <div>
             <Label htmlFor="attach_document_type" className="mb-2">
-              {t("wizard.documents.documentType")}
+              {t("wizard.documents.documentType")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {t("fields.optional")}
+              </span>
             </Label>
             <Controller
               control={control}

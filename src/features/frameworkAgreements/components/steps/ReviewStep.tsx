@@ -37,12 +37,6 @@ function ReviewStep({ form, documents }: Props) {
             label={t("fields.leasingCompany")}
             value={values.lc_partner_name || "—"}
           />
-          <ReviewRow
-            label={t("fields.bankEntity")}
-            value={
-              values.bank_entity ? t(`bankEntities.${values.bank_entity}`) : "—"
-            }
-          />
           <ReviewRow label={t("fields.currency")} value="EUR" />
         </div>
       </SectionCard>
