@@ -10,6 +10,7 @@
         "product": "Product",
         "financingType": "Financing type",
         "calculation": "Calculation",
+        "ltvTerm": "LTV & term",
         "status": "Status",
         "version": "Version"
       }
@@ -34,7 +35,16 @@
       "rowsPerPage": "Rows per page",
       "previous": "Previous",
       "next": "Next"
-    }
+    },
+    "ltvValue": "Max {{value}}%",
+    "termValue": "{{min}}–{{max}}m"
+  },
+  "detail": {
+    "title": "Template details",
+    "subtitle": "Product template",
+    "viewVersionHistory": "View version history",
+    "noPublishedVersion": "This template has no published version yet. Open version history to see its draft.",
+    "loading": "Loading details…"
   },
   "wizard": {
     "steps": {
@@ -89,7 +99,8 @@
     "identity": "Identity",
     "behavioralSettings": "Behavioral settings",
     "eligibility": "Eligibility",
-    "validity": "Validity"
+    "validity": "Validity",
+    "metadata": "Metadata"
   },
   "fields": {
     "templateName": "Template name",
@@ -118,7 +129,8 @@
     "openEnded": "Open ended",
     "publicationJustification": "Publication justification",
     "publicationJustificationPlaceholder": "Add a note about this publication…",
-    "confirmPublication": "I confirm this template is ready for publication."
+    "confirmPublication": "I confirm this template is ready for publication.",
+    "createdAt": "Created at"
   },
   "financingTypes": {
     "full_refinancing": "Full refinancing",

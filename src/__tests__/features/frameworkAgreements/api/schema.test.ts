@@ -55,10 +55,17 @@ describe("CreateFARequestSchema", () => {
       CreateFARequestSchema.parse({
         ...validCreateRequest,
         lg_coverage_rate_override: 4.3,
+        vfe_rate: 2.5,
         valid_until: "2028-06-01",
         special_conditions: "Pending credit review",
       })
     ).not.toThrow()
+  })
+
+  it("rejects vfe_rate outside 0-100", () => {
+    expect(() =>
+      CreateFARequestSchema.parse({ ...validCreateRequest, vfe_rate: 150 })
+    ).toThrow()
   })
 
   it.each([
@@ -130,6 +137,7 @@ describe("FADraftResponseSchema", () => {
     rate_type: "fixed",
     rate_lock_period_months: 12,
     lg_coverage_rate_override: null,
+    vfe_rate: null,
     valid_from: "2026-06-01",
     valid_until: null,
     special_conditions: null,
@@ -504,6 +512,7 @@ describe("FADetailResponseSchema", () => {
     rate_type: null,
     rate_lock_period_months: null,
     lg_coverage_rate_override: null,
+    vfe_rate: null,
     special_conditions: null,
     effective_from: null,
     activated_at: null,
@@ -532,10 +541,19 @@ describe("FADetailResponseSchema", () => {
         effective_rate: 4.75,
         rate_type: "fixed",
         rate_lock_period_months: 12,
+        vfe_rate: "1.5000",
         created_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
         created_by_name: "Vincent Brooke",
       })
     ).not.toThrow()
+  })
+
+  it("coerces a numeric-string vfe_rate and accepts null", () => {
+    expect(
+      FADetailResponseSchema.parse({ ...baseDetail, vfe_rate: "2.5000" })
+        .vfe_rate
+    ).toBe(2.5)
+    expect(FADetailResponseSchema.parse(baseDetail).vfe_rate).toBeNull()
   })
 
   it("rejects a missing required id", () => {

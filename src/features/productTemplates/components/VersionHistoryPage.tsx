@@ -4,8 +4,6 @@ import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,12 +15,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
-import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
-import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
-import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
@@ -50,8 +45,12 @@ const TIMELINE_DOT_CLASSES: Record<TemplateStatus, string> = {
   awaiting_deprecation_countersignature: "bg-amber-600",
 }
 
-function auditTrailLink(versionId: string): string {
-  return `${PATHS.AUDIT_TRAIL}?entity_type=product_template&entity_id=${versionId}`
+// Audit events for a product template are recorded by the backend against the
+// TEMPLATE id (the version id is carried in the event payload, not entity_id),
+// so the drill-down must filter by templateId — filtering by a version id
+// returns no rows. The audit list endpoint has no per-version filter param.
+function auditTrailLink(templateId: string): string {
+  return `${PATHS.AUDIT_TRAIL}?entity_type=product_template&entity_id=${templateId}`
 }
 
 export default function VersionHistoryPage() {
@@ -62,11 +61,6 @@ export default function VersionHistoryPage() {
 
   const [discardTarget, setDiscardTarget] =
     useState<TemplateVersionSummary | null>(null)
-  const [newVersionTarget, setNewVersionTarget] =
-    useState<TemplateVersionSummary | null>(null)
-  const [deprecateTarget, setDeprecateTarget] =
-    useState<TemplateVersionSummary | null>(null)
-  const [deprecationJustification, setDeprecationJustification] = useState("")
 
   const { data: currentUser } = useCurrentUser()
   const canManageDraft = Boolean(
@@ -89,10 +83,6 @@ export default function VersionHistoryPage() {
 
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
-  const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
-    useCreateNewProductTemplateVersion()
-  const { mutateAsync: deprecateVersion, isPending: isDeprecating } =
-    useDeprecateProductTemplateVersion()
 
   if (isProductTemplateNotFoundError(versionsError)) {
     return <NotFoundPage />
@@ -106,32 +96,6 @@ export default function VersionHistoryPage() {
         versionNumber: discardTarget.version_number,
       })
       setDiscardTarget(null)
-    } catch (err) {
-      showApiError(err, t)
-    }
-  }
-
-  async function handleConfirmAuthorNewVersion() {
-    if (!newVersionTarget || !templateId) return
-    try {
-      const result = await createNewVersion({ templateId })
-      setNewVersionTarget(null)
-      navigate(productTemplateNewVersionEdit(templateId, result.version_number))
-    } catch (err) {
-      showApiError(err, t)
-    }
-  }
-
-  async function handleConfirmDeprecate() {
-    if (!deprecateTarget || !templateId) return
-    try {
-      await deprecateVersion({
-        templateId,
-        versionNumber: deprecateTarget.version_number,
-        body: { justification: deprecationJustification },
-      })
-      setDeprecateTarget(null)
-      setDeprecationJustification("")
     } catch (err) {
       showApiError(err, t)
     }
@@ -180,8 +144,6 @@ export default function VersionHistoryPage() {
             {history.versions.map((version, index) => {
               const isDraft =
                 version.version_status === TemplateStatusSchema.enum.draft
-              const isPublished =
-                version.version_status === TemplateStatusSchema.enum.published
               const isLast = index === history.versions.length - 1
 
               return (
@@ -272,30 +234,8 @@ export default function VersionHistoryPage() {
                         )
                       ) : (
                         <div className="flex flex-col items-end gap-2">
-                          {isPublished && canManageDraft && (
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                data-testid={`deprecate-version-${version.version_number}`}
-                                onClick={() => setDeprecateTarget(version)}
-                              >
-                                {t("versionHistory.deprecate")}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                data-testid={`author-new-version-${version.version_number}`}
-                                onClick={() => setNewVersionTarget(version)}
-                              >
-                                {t("versionHistory.authorNewVersion")}
-                              </Button>
-                            </div>
-                          )}
                           <Link
-                            to={auditTrailLink(version.id)}
+                            to={auditTrailLink(templateId ?? "")}
                             className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                           >
                             {t("versionHistory.viewAuditTrail")}
@@ -335,86 +275,6 @@ export default function VersionHistoryPage() {
               disabled={isDiscarding}
             >
               {t("versionHistory.discardDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={newVersionTarget !== null}
-        onOpenChange={open => !open && setNewVersionTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("versionHistory.authorNewVersionDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("versionHistory.authorNewVersionDialog.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-new-dialog-keep">
-              {t("versionHistory.authorNewVersionDialog.keep")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="version-new-dialog-confirm"
-              onClick={handleConfirmAuthorNewVersion}
-              disabled={isCreatingNewVersion}
-            >
-              {t("versionHistory.authorNewVersionDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={deprecateTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setDeprecateTarget(null)
-            setDeprecationJustification("")
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("versionHistory.deprecateDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("versionHistory.deprecateDialog.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex flex-col gap-2 px-1">
-            <Label htmlFor="deprecate-justification">
-              {t("versionHistory.deprecateDialog.justificationLabel")}
-            </Label>
-            <Textarea
-              id="deprecate-justification"
-              data-testid="deprecate-justification-input"
-              rows={3}
-              value={deprecationJustification}
-              onChange={e => setDeprecationJustification(e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground opacity-80">
-              {t("versionHistory.deprecateDialog.justificationHint")}
-            </p>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-deprecate-dialog-keep">
-              {t("versionHistory.deprecateDialog.keep")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="version-deprecate-dialog-confirm"
-              onClick={handleConfirmDeprecate}
-              disabled={
-                isDeprecating ||
-                deprecationJustification.trim().length <
-                  DEPRECATION_JUSTIFICATION_MIN_LENGTH
-              }
-            >
-              {t("versionHistory.deprecateDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

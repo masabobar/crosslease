@@ -328,6 +328,11 @@ export const TemplateVersionDetailSchema = z.object({
   max_volume_eur: z.coerce.number().nullable().optional(),
   valid_from: z.string().nullable().optional(),
   valid_until: z.string().nullable().optional(),
+  // On the wire but previously stripped — surfaced for the detail drawer's Metadata
+  // section (US-10.8). Optional so the header/wizard-prefill consumers of this schema
+  // never break if it's absent. created_by / updated_by / updated_at / tenant name are
+  // NOT provided by the backend (see open-questions Q-028).
+  created_at: z.string().nullable().optional(),
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
 

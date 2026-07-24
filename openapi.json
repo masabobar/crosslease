@@ -5878,6 +5878,119 @@
         }
       }
     },
+    "/api/v1/vfe-rates": {
+      "get": {
+        "tags": ["VFE Rates"],
+        "summary": "List Vfe Rates",
+        "operationId": "list_vfe_rates_api_v1_vfe_rates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VfeRateListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["VFE Rates"],
+        "summary": "Create Vfe Rate",
+        "operationId": "create_vfe_rate_api_v1_vfe_rates_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VfeRateCreateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VfeRateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vfe-rates/{rate_id}": {
+      "patch": {
+        "tags": ["VFE Rates"],
+        "summary": "Update Vfe Rate",
+        "operationId": "update_vfe_rate_api_v1_vfe_rates__rate_id__patch",
+        "parameters": [
+          {
+            "name": "rate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Rate Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VfeRateUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VfeRateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["VFE Rates"],
+        "summary": "Delete Vfe Rate",
+        "operationId": "delete_vfe_rate_api_v1_vfe_rates__rate_id__delete",
+        "parameters": [
+          {
+            "name": "rate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Rate Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -6191,7 +6304,12 @@
             "format": "uuid",
             "title": "Framework Agreement Id"
           },
-          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FADocumentType" },
+              { "type": "null" }
+            ]
+          },
           "document_label": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Document Label"
@@ -6484,7 +6602,12 @@
             "contentMediaType": "application/octet-stream",
             "title": "File"
           },
-          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FADocumentType" },
+              { "type": "null" }
+            ]
+          },
           "document_label": {
             "anyOf": [
               { "type": "string", "maxLength": 200 },
@@ -6499,7 +6622,7 @@
           }
         },
         "type": "object",
-        "required": ["file", "document_type"],
+        "required": ["file"],
         "title": "Body_attach_document_api_v1_framework_agreements__id__documents_post"
       },
       "Body_upload_picture_api_v1_users_me_picture_post": {
@@ -6694,6 +6817,17 @@
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
+          },
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
           },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
@@ -7097,7 +7231,12 @@
             "format": "uuid",
             "title": "Framework Agreement Id"
           },
-          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FADocumentType" },
+              { "type": "null" }
+            ]
+          },
           "document_label": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Document Label"
@@ -7496,6 +7635,16 @@
             ],
             "title": "Lg Coverage Rate Override"
           },
+          "vfe_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
+          },
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
@@ -7600,6 +7749,7 @@
           "rate_type",
           "rate_lock_period_months",
           "lg_coverage_rate_override",
+          "vfe_rate",
           "special_conditions",
           "effective_from",
           "activated_at",
@@ -7686,6 +7836,16 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
+          "vfe_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
+          },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
             "type": "array",
@@ -7729,6 +7889,7 @@
           "valid_from",
           "valid_until",
           "special_conditions",
+          "vfe_rate",
           "product_template_ids",
           "edit_version_counter",
           "created_by",
@@ -11394,6 +11555,17 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
+          },
           "product_template_ids": {
             "anyOf": [
               {
@@ -12265,6 +12437,103 @@
         "type": "object",
         "required": ["versions"],
         "title": "VersionHistoryResponse"
+      },
+      "VfeRateCreateRequest": {
+        "properties": {
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Vfe Rate"
+          }
+        },
+        "type": "object",
+        "required": ["lc_partner_id", "vfe_rate"],
+        "title": "VfeRateCreateRequest"
+      },
+      "VfeRateListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/VfeRateResponse" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "VfeRateListResponse"
+      },
+      "VfeRateResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "vfe_rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Vfe Rate"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "lc_partner_id",
+          "vfe_rate",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "VfeRateResponse"
+      },
+      "VfeRateUpdateRequest": {
+        "properties": {
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Vfe Rate"
+          }
+        },
+        "type": "object",
+        "required": ["vfe_rate"],
+        "title": "VfeRateUpdateRequest"
       },
       "app__modules__framework_agreements__domain__enums__RateType": {
         "type": "string",

@@ -22,6 +22,7 @@ export type EnvelopePricingFormFields = {
   effective_rate: number
   rate_lock_period_months: number
   lg_coverage_rate_override?: number
+  vfe_rate?: number
 }
 
 type Props<T extends EnvelopePricingFormFields> = {
@@ -255,6 +256,31 @@ function EnvelopePricingFields<T extends EnvelopePricingFormFields>({
             />
             <p className="mt-1 text-xs text-muted-foreground">
               {t("wizard.envelopePricing.coverageOverrideHint")}
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor={`${idPrefix}vfe_rate`} className="mb-2">
+              {t("fields.vfeRate")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {t("fields.optional")}
+              </span>
+            </Label>
+            <Input
+              id={`${idPrefix}vfe_rate`}
+              type="number"
+              data-testid={`${testIdPrefix}vfe-rate-input`}
+              endAction={
+                <span className="text-sm text-muted-foreground">
+                  {t("units.percent")}
+                </span>
+              }
+              {...typedRegister("vfe_rate", {
+                setValueAs: v => (v === "" ? undefined : Number(v)),
+              })}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("wizard.envelopePricing.vfeRateHint")}
             </p>
           </div>
         </div>

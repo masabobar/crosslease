@@ -276,6 +276,12 @@ export default function FrameworkAgreementDetailPage() {
                       value={`${data.lg_coverage_rate_override}%`}
                     />
                   )}
+                  {data.vfe_rate !== null && (
+                    <ReviewRow
+                      label={t("fields.vfeRate")}
+                      value={`${data.vfe_rate}%`}
+                    />
+                  )}
                 </div>
               </div>
             )}
