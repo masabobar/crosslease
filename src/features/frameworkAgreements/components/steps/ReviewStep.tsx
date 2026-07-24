@@ -86,6 +86,14 @@ function ReviewStep({ form, documents }: Props) {
                 : "—"
             }
           />
+          <ReviewRow
+            label={t("fields.vfeRate")}
+            value={
+              values.vfe_rate !== undefined && !Number.isNaN(values.vfe_rate)
+                ? `${values.vfe_rate}%`
+                : "—"
+            }
+          />
         </div>
       </SectionCard>
 

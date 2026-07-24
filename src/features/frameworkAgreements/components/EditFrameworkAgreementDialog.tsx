@@ -57,6 +57,7 @@ function EditFrameworkAgreementDialog({
       rate_lock_period_months: frameworkAgreement.rate_lock_period_months ?? 1,
       lg_coverage_rate_override:
         frameworkAgreement.lg_coverage_rate_override ?? undefined,
+      vfe_rate: frameworkAgreement.vfe_rate ?? undefined,
       valid_from: frameworkAgreement.valid_from,
       valid_until: frameworkAgreement.valid_until ?? "",
       special_conditions: frameworkAgreement.special_conditions ?? "",
