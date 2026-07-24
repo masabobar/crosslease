@@ -1571,6 +1571,7 @@ const CreateFARequest = z
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]).optional(),
     special_conditions: z.union([z.string(), z.null()]).optional(),
+    vfe_rate: z.union([z.number(), z.string(), z.null()]).optional(),
     product_template_ids: z.array(z.string().uuid()).min(1),
   })
   .passthrough()
@@ -1593,6 +1594,7 @@ const FADraftResponse = z
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    vfe_rate: z.union([z.string(), z.null()]),
     product_template_ids: z.array(z.string().uuid()),
     edit_version_counter: z.number().int(),
     created_by: z.string().uuid(),
@@ -1639,6 +1641,7 @@ const UpdateFARequest = z
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    vfe_rate: z.union([z.number(), z.string(), z.null()]),
     product_template_ids: z.union([z.array(z.string().uuid()), z.null()]),
     justification: z.union([z.string(), z.null()]),
     expected_version: z.union([z.number(), z.null()]),
@@ -1670,6 +1673,7 @@ const FADetailResponse = z
     rate_type: z.union([z.string(), z.null()]),
     rate_lock_period_months: z.union([z.number(), z.null()]),
     lg_coverage_rate_override: z.union([z.string(), z.null()]),
+    vfe_rate: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     effective_from: z.union([z.string(), z.null()]),
     activated_at: z.union([z.string(), z.null()]),
@@ -1846,7 +1850,7 @@ const FADocumentType = z.enum([
 const Body_attach_document_api_v1_framework_agreements__id__documents_post = z
   .object({
     file: z.string(),
-    document_type: FADocumentType,
+    document_type: z.union([FADocumentType, z.null()]).optional(),
     document_label: z.union([z.string(), z.null()]).optional(),
     lc_visible: z.boolean().optional().default(true),
   })
@@ -1855,7 +1859,7 @@ const AttachDocumentResponse = z
   .object({
     id: z.string().uuid(),
     framework_agreement_id: z.string().uuid(),
-    document_type: FADocumentType,
+    document_type: z.union([FADocumentType, z.null()]),
     document_label: z.union([z.string(), z.null()]),
     file_name: z.string(),
     file_size_bytes: z.number().int(),
@@ -1869,7 +1873,7 @@ const DocumentListItemResponse = z
   .object({
     id: z.string().uuid(),
     framework_agreement_id: z.string().uuid(),
-    document_type: FADocumentType,
+    document_type: z.union([FADocumentType, z.null()]),
     document_label: z.union([z.string(), z.null()]),
     file_name: z.string(),
     file_size_bytes: z.number().int(),
@@ -1918,6 +1922,29 @@ const LCPortalFAListItem = z
   .passthrough()
 const LCPortalFAListResponse = z
   .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
+  .passthrough()
+const VfeRateResponse = z
+  .object({
+    id: z.string().uuid(),
+    tenant_id: z.string().uuid(),
+    lc_partner_id: z.string().uuid(),
+    vfe_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const VfeRateListResponse = z
+  .object({ items: z.array(VfeRateResponse) })
+  .passthrough()
+const VfeRateCreateRequest = z
+  .object({
+    lc_partner_id: z.string().uuid(),
+    vfe_rate: z.union([z.number(), z.string()]),
+  })
+  .passthrough()
+const VfeRateUpdateRequest = z
+  .object({ vfe_rate: z.union([z.number(), z.string()]) })
   .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
@@ -2151,6 +2178,10 @@ export const schemas = {
   LCPortalDocumentItem,
   LCPortalFAListItem,
   LCPortalFAListResponse,
+  VfeRateResponse,
+  VfeRateListResponse,
+  VfeRateCreateRequest,
+  VfeRateUpdateRequest,
   TestSessionRequest,
   OTPResponse,
 }
@@ -5834,6 +5865,81 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
     description: `Delete the current user&#x27;s profile picture. Idempotent — returns 204 even if none exists.`,
     requestFormat: "json",
     response: z.void(),
+  },
+  {
+    method: "get",
+    path: "/api/v1/vfe-rates",
+    alias: "list_vfe_rates_api_v1_vfe_rates_get",
+    requestFormat: "json",
+    response: VfeRateListResponse,
+  },
+  {
+    method: "post",
+    path: "/api/v1/vfe-rates",
+    alias: "create_vfe_rate_api_v1_vfe_rates_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: VfeRateCreateRequest,
+      },
+    ],
+    response: VfeRateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/vfe-rates/:rate_id",
+    alias: "update_vfe_rate_api_v1_vfe_rates__rate_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: VfeRateUpdateRequest,
+      },
+      {
+        name: "rate_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: VfeRateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/vfe-rates/:rate_id",
+    alias: "delete_vfe_rate_api_v1_vfe_rates__rate_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "rate_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
   {
     method: "get",
