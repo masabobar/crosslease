@@ -457,8 +457,21 @@ describe("TemplateVersionDetailSchema", () => {
         max_volume_eur: "5000000.00",
         valid_from: "2026-06-12",
         valid_until: "2027-06-12",
+        created_at: "2026-06-12T14:32:00Z",
       })
     ).not.toThrow()
+  })
+
+  it("parses created_at when present and tolerates its absence", () => {
+    expect(
+      TemplateVersionDetailSchema.parse({
+        ...validDetail,
+        created_at: "2026-06-12T14:32:00Z",
+      }).created_at
+    ).toBe("2026-06-12T14:32:00Z")
+    expect(
+      TemplateVersionDetailSchema.parse(validDetail).created_at
+    ).toBeUndefined()
   })
 
   it("coerces string decimal fields to numbers", () => {
