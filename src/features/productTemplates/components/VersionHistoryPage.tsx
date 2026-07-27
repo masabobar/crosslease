@@ -14,7 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { SelectField } from "@/components/ui/select"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
+import { CompareVersionsModal } from "@/features/productTemplates/components/CompareVersionsModal"
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
@@ -62,6 +64,9 @@ export default function VersionHistoryPage() {
 
   const [discardTarget, setDiscardTarget] =
     useState<TemplateVersionSummary | null>(null)
+  const [compareFrom, setCompareFrom] = useState("")
+  const [compareTo, setCompareTo] = useState("")
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false)
 
   const { data: currentUser } = useCurrentUser()
   const canManageDraft = Boolean(
@@ -85,6 +90,16 @@ export default function VersionHistoryPage() {
 
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
+
+  const versionOptions = (history?.versions ?? []).map(version => ({
+    value: version.version_number,
+    label: t("versionHistory.compare.versionOptionLabel", {
+      version: version.version_number,
+      status: t(
+        `versionStatuses.${version.version_status}` as "versionStatuses.draft"
+      ),
+    }),
+  }))
 
   if (isProductTemplateNotFoundError(versionsError)) {
     return <NotFoundPage />
@@ -120,6 +135,42 @@ export default function VersionHistoryPage() {
           </p>
         )}
       </div>
+
+      {history && !isLoadingVersions && (
+        <div className="px-8 pb-6">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background p-4">
+            <span className="text-sm font-medium text-foreground">
+              {t("versionHistory.compare.compareLabel")}
+            </span>
+            <SelectField
+              value={compareFrom}
+              onValueChange={setCompareFrom}
+              options={versionOptions}
+              placeholder={t("fields.selectPlaceholder")}
+              data-testid="compare-from-select"
+            />
+            <span className="text-sm font-medium text-foreground">
+              {t("versionHistory.compare.withLabel")}
+            </span>
+            <SelectField
+              value={compareTo}
+              onValueChange={setCompareTo}
+              options={versionOptions}
+              placeholder={t("fields.selectPlaceholder")}
+              data-testid="compare-to-select"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!compareFrom || !compareTo || compareFrom === compareTo}
+              onClick={() => setIsCompareModalOpen(true)}
+              data-testid="compare-versions-button"
+            >
+              {t("versionHistory.compare.compareButton")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isLoadingVersions && (
         <div className="px-8 pb-8">
@@ -281,6 +332,14 @@ export default function VersionHistoryPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CompareVersionsModal
+        templateId={templateId ?? ""}
+        fromVersion={compareFrom}
+        toVersion={compareTo}
+        open={isCompareModalOpen}
+        onOpenChange={setIsCompareModalOpen}
+      />
     </div>
   )
 }

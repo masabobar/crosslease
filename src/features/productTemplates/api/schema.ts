@@ -336,6 +336,30 @@ export const TemplateVersionDetailSchema = z.object({
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
 
+// Wire shape for GET /product-templates/{id}/diff (US 10.8 "Compare versions").
+// Identical to audit's FieldDiffItem (src/features/audit/api/schema.ts) and
+// frameworkAgreements' (src/features/frameworkAgreements/api/schema.ts) — 3rd
+// occurrence per the Rule of Three, noted rather than extracted since it would mean
+// touching two unrelated, already-shipped features for this story.
+export const FieldDiffItemSchema = z.object({
+  field: z.string(),
+  old_value: z.unknown().nullable(),
+  new_value: z.unknown().nullable(),
+})
+export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+
+// Every compared field is returned, changed or not — the compare modal renders
+// unchanged rows too and derives its highlight from old_value !== new_value client-side.
+export const VersionDiffResponseSchema = z.object({
+  template_id: z.string().uuid(),
+  from_version: z.string(),
+  to_version: z.string(),
+  behavioral_settings: z.array(FieldDiffItemSchema),
+  eligibility: z.array(FieldDiffItemSchema),
+  orchestration_linkage: z.array(FieldDiffItemSchema),
+})
+export type VersionDiffResponse = z.infer<typeof VersionDiffResponseSchema>
+
 // Wire response for GET /tenants/{tenant_id}/product-templates (list_templates) in
 // refinext-api. TemplateListItem deliberately has no template_name field on the BE —
 // only template_code — even though the Figma design's "Product" column shows a
