@@ -7,6 +7,10 @@ export const AUDIT_TRAIL_ALLOWED_ROLES: readonly UserRole[] = [
   "bank_power_user",
 ]
 
+export function canAccessAuditTrail(role: UserRole | undefined): boolean {
+  return role !== undefined && AUDIT_TRAIL_ALLOWED_ROLES.includes(role)
+}
+
 export type AuditFilterState = {
   event_type: string[]
   entity_type: string | null
