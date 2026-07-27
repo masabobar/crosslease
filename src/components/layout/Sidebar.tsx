@@ -32,7 +32,7 @@ import {
   USER_MANAGEMENT_ALLOWED_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
-import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
+import { canAccessAuditTrail as hasAuditTrailAccess } from "@/features/audit/types"
 import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
@@ -84,8 +84,7 @@ export function Sidebar() {
   const { data: permissions } = useCurrentUserPermissions()
   const canAccessUserManagement =
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
-  const canAccessAuditTrail =
-    !!currentUser && AUDIT_TRAIL_ALLOWED_ROLES.includes(currentUser.role)
+  const canAccessAuditTrail = hasAuditTrailAccess(currentUser?.role)
   const canAccessNotificationConfig =
     !!currentUser &&
     NOTIFICATION_CONFIG_ALLOWED_ROLES.includes(currentUser.role)
