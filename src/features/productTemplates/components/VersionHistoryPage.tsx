@@ -19,6 +19,7 @@ import { useTemplateVersions } from "@/features/productTemplates/hooks/useTempla
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
+import { canAccessAuditTrail } from "@/features/audit/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
@@ -67,6 +68,7 @@ export default function VersionHistoryPage() {
     currentUser?.role &&
     PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES.includes(currentUser.role)
   )
+  const canViewAuditTrail = canAccessAuditTrail(currentUser?.role)
 
   const {
     data: history,
@@ -202,47 +204,47 @@ export default function VersionHistoryPage() {
                           count: version.bindings_count,
                         })}
                       </span>
-                      {isDraft ? (
-                        canManageDraft && (
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              data-testid={`discard-version-${version.version_number}`}
-                              onClick={() => setDiscardTarget(version)}
-                            >
-                              {t("versionHistory.discard")}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              data-testid={`continue-editing-${version.version_number}`}
-                              onClick={() =>
-                                navigate(
-                                  productTemplateNewVersionEdit(
-                                    templateId ?? "",
-                                    version.version_number
+                      {isDraft
+                        ? canManageDraft && (
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                data-testid={`discard-version-${version.version_number}`}
+                                onClick={() => setDiscardTarget(version)}
+                              >
+                                {t("versionHistory.discard")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                data-testid={`continue-editing-${version.version_number}`}
+                                onClick={() =>
+                                  navigate(
+                                    productTemplateNewVersionEdit(
+                                      templateId ?? "",
+                                      version.version_number
+                                    )
                                   )
-                                )
-                              }
-                            >
-                              {t("versionHistory.continueEditing")}
-                            </Button>
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex flex-col items-end gap-2">
-                          <Link
-                            to={auditTrailLink(templateId ?? "")}
-                            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                          >
-                            {t("versionHistory.viewAuditTrail")}
-                            <ExternalLink size={16} />
-                          </Link>
-                        </div>
-                      )}
+                                }
+                              >
+                                {t("versionHistory.continueEditing")}
+                              </Button>
+                            </div>
+                          )
+                        : canViewAuditTrail && (
+                            <div className="flex flex-col items-end gap-2">
+                              <Link
+                                to={auditTrailLink(templateId ?? "")}
+                                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                              >
+                                {t("versionHistory.viewAuditTrail")}
+                                <ExternalLink size={16} />
+                              </Link>
+                            </div>
+                          )}
                     </div>
                   </div>
                 </div>

@@ -17,6 +17,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import { PATHS } from "@/router/paths"
 import { canReviewGovernedAction } from "@/features/governed-actions/constants"
+import { canAccessAuditTrail } from "@/features/audit/types"
 import {
   GovernedActionStatusSchema,
   initiatorSnapshot,
@@ -284,16 +285,18 @@ export default function PendingApprovalsPage() {
                 </p>
               </div>
             )}
-            <Link
-              to={PATHS.AUDIT_TRAIL}
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
-              )}
-            >
-              <Activity size={16} />
-              {t("empty.viewAuditLog")}
-            </Link>
+            {canAccessAuditTrail(currentUser?.role) && (
+              <Link
+                to={PATHS.AUDIT_TRAIL}
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-auto gap-1.5 rounded-[12px] px-2.5 py-2 text-sm"
+                )}
+              >
+                <Activity size={16} />
+                {t("empty.viewAuditLog")}
+              </Link>
+            )}
           </div>
         )}
 
