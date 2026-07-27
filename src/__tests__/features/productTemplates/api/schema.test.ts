@@ -11,11 +11,13 @@ import {
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
+  FieldDiffItemSchema,
   TemplateListItemSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
   TemplateVersionSummarySchema,
   UpdateProductTemplateDraftRequestSchema,
+  VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 
@@ -421,6 +423,90 @@ describe("VersionHistoryResponseSchema", () => {
     expect(() =>
       VersionHistoryResponseSchema.parse({ versions: validVersionSummary })
     ).toThrow()
+  })
+})
+
+describe("FieldDiffItemSchema", () => {
+  it("accepts a diff with scalar old/new values", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "max_ltv_ratio",
+        old_value: 80,
+        new_value: 85,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts array old/new values (asset categories, orchestration linkage)", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "allowed_asset_categories",
+        old_value: ["machinery"],
+        new_value: ["machinery", "vehicles"],
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null old_value (field newly set)", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "npv_formula_ref",
+        old_value: null,
+        new_value: "NPV-2024-A",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing field name", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({ old_value: 1, new_value: 2 })
+    ).toThrow()
+  })
+})
+
+describe("VersionDiffResponseSchema", () => {
+  const validDiff = {
+    template_id: "123e4567-e89b-12d3-a456-426614174000",
+    from_version: "3",
+    to_version: "4",
+    behavioral_settings: [
+      { field: "payment_timing", old_value: "advance", new_value: "arrears" },
+    ],
+    eligibility: [{ field: "max_term_months", old_value: 60, new_value: 84 }],
+    orchestration_linkage: [
+      {
+        field: "validation_rule_set_id",
+        old_value: "44444444-4444-4444-4444-444444444444",
+        new_value: "55555555-5555-5555-5555-555555555555",
+      },
+    ],
+  }
+
+  it("accepts a full diff response", () => {
+    expect(() => VersionDiffResponseSchema.parse(validDiff)).not.toThrow()
+  })
+
+  it("accepts empty section arrays", () => {
+    expect(() =>
+      VersionDiffResponseSchema.parse({
+        ...validDiff,
+        behavioral_settings: [],
+        eligibility: [],
+        orchestration_linkage: [],
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-UUID template_id", () => {
+    expect(() =>
+      VersionDiffResponseSchema.parse({ ...validDiff, template_id: "bad" })
+    ).toThrow()
+  })
+
+  it("rejects a missing section", () => {
+    const rest = { ...validDiff } as Record<string, unknown>
+    delete rest.eligibility
+    expect(() => VersionDiffResponseSchema.parse(rest)).toThrow()
   })
 })
 

@@ -99,6 +99,7 @@
     "identity": "Identity",
     "behavioralSettings": "Behavioral settings",
     "eligibility": "Eligibility",
+    "orchestrationLinkage": "Orchestration linkage",
     "validity": "Validity",
     "metadata": "Metadata"
   },
@@ -224,6 +225,26 @@
       "justificationHint": "Mandatory. Minimum 10 characters.",
       "keep": "Cancel",
       "confirm": "Deprecate version"
+    },
+    "compare": {
+      "compareLabel": "Compare",
+      "withLabel": "with",
+      "compareButton": "Compare versions",
+      "modalTitle": "Comparing {{from}} with {{to}}",
+      "versionOptionLabel": "v{{version}} - {{status}}",
+      "fieldColumn": "Field",
+      "fields": {
+        "requiredWorkflowTasks": "Required workflow tasks",
+        "requiredDocuments": "Required documents",
+        "optionalDocuments": "Optional documents",
+        "validationRuleSet": "Validation rule set"
+      },
+      "taskCount": "{{count}} task",
+      "taskCount_other": "{{count}} tasks",
+      "documentCount": "{{count}} document",
+      "documentCount_other": "{{count}} documents",
+      "ruleSetChanged": "Changed",
+      "ruleSetUnchanged": "No change"
     }
   },
   "errors": {
@@ -243,6 +264,7 @@
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
+    "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Select two different versions to compare.",
     "generic": "Something went wrong. Please try again."
   }
 }

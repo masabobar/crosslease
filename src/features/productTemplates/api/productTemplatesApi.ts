@@ -8,6 +8,7 @@ import {
   TemplateDraftUpdatedResponseSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
+  VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 import type {
@@ -24,6 +25,7 @@ import type {
   TemplateStatus,
   TemplateVersionDetail,
   UpdateProductTemplateDraftRequest,
+  VersionDiffResponse,
   VersionHistoryResponse,
 } from "@/features/productTemplates/api/schema"
 
@@ -43,6 +45,8 @@ export const PRODUCT_TEMPLATES_QUERY_KEYS = {
     ["product-templates", "versions", templateId] as const,
   versionDetail: (templateId: string, versionNumber: string) =>
     ["product-templates", "version-detail", templateId, versionNumber] as const,
+  diff: (templateId: string, fromVersion: string, toVersion: string) =>
+    ["product-templates", "diff", templateId, fromVersion, toVersion] as const,
 } as const
 
 export async function fetchProductTemplates(
@@ -112,6 +116,17 @@ export async function fetchTemplateVersionDetail(
     `/product-templates/${templateId}/versions/${versionNumber}`
   )
   return TemplateVersionDetailSchema.parse(data)
+}
+
+export async function fetchTemplateVersionDiff(
+  templateId: string,
+  fromVersion: string,
+  toVersion: string
+): Promise<VersionDiffResponse> {
+  const data = await api.get(`/product-templates/${templateId}/diff`, {
+    params: { from_version: fromVersion, to_version: toVersion },
+  })
+  return VersionDiffResponseSchema.parse(data)
 }
 
 export async function createNewProductTemplateVersion(

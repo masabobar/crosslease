@@ -99,6 +99,7 @@
     "identity": "Identität",
     "behavioralSettings": "Verhaltenseinstellungen",
     "eligibility": "Berechtigung",
+    "orchestrationLinkage": "Orchestrierungsverknüpfung",
     "validity": "Gültigkeit",
     "metadata": "Metadaten"
   },
@@ -224,6 +225,26 @@
       "justificationHint": "Erforderlich. Mindestens 10 Zeichen.",
       "keep": "Abbrechen",
       "confirm": "Version außer Kraft setzen"
+    },
+    "compare": {
+      "compareLabel": "Vergleichen",
+      "withLabel": "mit",
+      "compareButton": "Versionen vergleichen",
+      "modalTitle": "Vergleich von {{from}} mit {{to}}",
+      "versionOptionLabel": "v{{version}} - {{status}}",
+      "fieldColumn": "Feld",
+      "fields": {
+        "requiredWorkflowTasks": "Erforderliche Workflow-Aufgaben",
+        "requiredDocuments": "Erforderliche Dokumente",
+        "optionalDocuments": "Optionale Dokumente",
+        "validationRuleSet": "Validierungsregelwerk"
+      },
+      "taskCount": "{{count}} Aufgabe",
+      "taskCount_other": "{{count}} Aufgaben",
+      "documentCount": "{{count}} Dokument",
+      "documentCount_other": "{{count}} Dokumente",
+      "ruleSetChanged": "Geändert",
+      "ruleSetUnchanged": "Keine Änderung"
     }
   },
   "errors": {
@@ -243,6 +264,7 @@
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "Für diese Vorlage existiert bereits ein Entwurf. Verwerfen oder veröffentlichen Sie ihn, bevor Sie einen neuen erstellen.",
+    "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Wählen Sie zwei unterschiedliche Versionen zum Vergleich aus.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

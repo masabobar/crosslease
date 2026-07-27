@@ -4698,6 +4698,67 @@
         }
       }
     },
+    "/api/v1/product-templates/{template_id}/diff": {
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "Diff Template Versions",
+        "operationId": "diff_template_versions_api_v1_product_templates__template_id__diff_get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "from_version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Version number on the old side of the diff",
+              "title": "From Version"
+            },
+            "description": "Version number on the old side of the diff"
+          },
+          {
+            "name": "to_version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Version number on the new side of the diff",
+              "title": "To Version"
+            },
+            "description": "Version number on the new side of the diff"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionDiffResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenant_id}/product-templates": {
       "get": {
         "tags": ["Product Templates"],
@@ -12425,6 +12486,43 @@
           "created_at"
         ],
         "title": "VersionDetailResponse"
+      },
+      "VersionDiffResponse": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "from_version": { "type": "string", "title": "From Version" },
+          "to_version": { "type": "string", "title": "To Version" },
+          "behavioral_settings": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Behavioral Settings"
+          },
+          "eligibility": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Eligibility"
+          },
+          "orchestration_linkage": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Orchestration Linkage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id",
+          "from_version",
+          "to_version",
+          "behavioral_settings",
+          "eligibility",
+          "orchestration_linkage"
+        ],
+        "title": "VersionDiffResponse",
+        "description": "Field-level deltas between two versions, grouped by section.\n\nEvery compared field is returned, changed or not — the compare modal renders\nunchanged rows too and highlights from `old_value != new_value` client-side."
       },
       "VersionHistoryResponse": {
         "properties": {

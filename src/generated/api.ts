@@ -1453,6 +1453,16 @@ const SubmitForActivationRequest = z
 const SubmitDeprecationRequest = z
   .object({ justification: z.string().min(10).max(2000) })
   .passthrough()
+const VersionDiffResponse = z
+  .object({
+    template_id: z.string().uuid(),
+    from_version: z.string(),
+    to_version: z.string(),
+    behavioral_settings: z.array(FieldDiffItem),
+    eligibility: z.array(FieldDiffItem),
+    orchestration_linkage: z.array(FieldDiffItem),
+  })
+  .passthrough()
 const TemplateStatus = z.enum([
   "draft",
   "awaiting_activation_countersignature",
@@ -2135,6 +2145,7 @@ export const schemas = {
   DeprecateVersionResponse,
   SubmitForActivationRequest,
   SubmitDeprecationRequest,
+  VersionDiffResponse,
   TemplateStatus,
   status,
   TemplateCurrentVersionSummary,
@@ -4142,6 +4153,38 @@ Used by the tenant creation wizard (Step 3 — Seed package).
 Accessible to all authenticated users.`,
     requestFormat: "json",
     response: SeedPackagesResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/product-templates/:template_id/diff",
+    alias:
+      "diff_template_versions_api_v1_product_templates__template_id__diff_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "from_version",
+        type: "Query",
+        schema: z.string().min(1),
+      },
+      {
+        name: "to_version",
+        type: "Query",
+        schema: z.string().min(1),
+      },
+    ],
+    response: VersionDiffResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
   {
     method: "post",
