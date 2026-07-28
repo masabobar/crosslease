@@ -1,6 +1,7 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller, useFormState } from "react-hook-form"
+import { Controller, useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { addDays, parseISO, startOfToday } from "date-fns"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
@@ -17,6 +18,14 @@ function ValidityTemplatesStep({ form }: Props) {
   const { control } = form
   const { errors } = useFormState({ control })
   const resolveMsg = useResolveFrameworkAgreementFieldError()
+  const validFrom = useWatch({ control, name: "valid_from" })
+
+  // A new agreement cannot start in the past, and valid_until must fall strictly
+  // after valid_from (CreateFARequest rejects equal dates) — so the end date's
+  // floor is the day after the chosen start. Edit is unconstrained by design:
+  // existing agreements legitimately have start dates in the past.
+  const today = startOfToday()
+  const validUntilMin = validFrom ? addDays(parseISO(validFrom), 1) : today
 
   return (
     <div
@@ -43,6 +52,7 @@ function ValidityTemplatesStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_from}
+                  minDate={today}
                   captionLayout="dropdown"
                 />
               )}
@@ -75,6 +85,7 @@ function ValidityTemplatesStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_until}
+                  minDate={validUntilMin}
                   captionLayout="dropdown"
                 />
               )}

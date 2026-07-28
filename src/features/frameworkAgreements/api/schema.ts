@@ -105,10 +105,13 @@ export const EditFrameworkAgreementFormSchema = z
     expected_version: z.number().int(),
   })
   .superRefine((data, ctx) => {
+    // `<=`, not `<`: UpdateFARequest rejects valid_until == valid_from
+    // ("valid_until must be after valid_from"), so equal dates must fail here too
+    // rather than reaching the API as a 422.
     if (
       data.valid_until !== undefined &&
       data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_until <= data.valid_from
     ) {
       ctx.addIssue({
         code: "custom",
@@ -424,10 +427,12 @@ export const FrameworkAgreementWizardFormSchema = z
     product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
   })
   .superRefine((data, ctx) => {
+    // `<=` mirrors CreateFARequest's own validator (valid_until must be *after*
+    // valid_from) — with `<`, equal dates passed the FE and 422'd at the API.
     if (
       data.valid_until !== undefined &&
       data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_until <= data.valid_from
     ) {
       ctx.addIssue({
         code: "custom",

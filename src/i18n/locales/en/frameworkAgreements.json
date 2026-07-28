@@ -282,7 +282,7 @@
   },
   "errors": {
     "atLeastOneTemplate": "Select at least one Product Template",
-    "validUntilBeforeFrom": "Valid Until must be on or after Valid From",
+    "validUntilBeforeFrom": "Valid Until must be after Valid From",
     "FA_NOT_FOUND": "This framework agreement could not be found.",
     "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company.",
     "FA_TEMPLATE_NOT_PUBLISHED": "One of the selected product templates is not published.",

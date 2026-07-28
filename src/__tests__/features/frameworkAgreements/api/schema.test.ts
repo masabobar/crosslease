@@ -298,13 +298,24 @@ describe("EditFrameworkAgreementFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts valid_until on or after valid_from", () => {
+  it("accepts valid_until after valid_from", () => {
     expect(() =>
       EditFrameworkAgreementFormSchema.parse({
         ...validEditForm,
         valid_until: "2029-06-01",
       })
     ).not.toThrow()
+  })
+
+  // UpdateFARequest raises "valid_until must be after valid_from" on equal dates,
+  // so the form must reject them rather than let the API 422 (PRD1042-1652).
+  it("rejects valid_until equal to valid_from", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        valid_until: validEditForm.valid_from,
+      })
+    ).toThrow()
   })
 })
 
@@ -608,13 +619,24 @@ describe("FrameworkAgreementWizardFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts valid_until on or after valid_from", () => {
+  it("accepts valid_until after valid_from", () => {
     expect(() =>
       FrameworkAgreementWizardFormSchema.parse({
         ...validForm,
         valid_until: "2028-06-01",
       })
     ).not.toThrow()
+  })
+
+  // CreateFARequest raises "valid_until must be after valid_from" on equal dates
+  // (PRD1042-1652) — the wizard must not let that reach the API.
+  it("rejects valid_until equal to valid_from", () => {
+    expect(() =>
+      FrameworkAgreementWizardFormSchema.parse({
+        ...validForm,
+        valid_until: validForm.valid_from,
+      })
+    ).toThrow()
   })
 })
 
