@@ -37,6 +37,11 @@ export type ProductTemplateListParams = {
 }
 
 export const PRODUCT_TEMPLATES_QUERY_KEYS = {
+  // Prefix shared by every key below — the invalidation target for status-changing
+  // mutations. They can't rebuild the `list` key (it carries the caller's tenant and
+  // filter params) or know which version details are cached, so they invalidate the
+  // whole feature instead of leaving those screens showing a stale status.
+  all: ["product-templates"] as const,
   list: (tenantId: string | null, params?: ProductTemplateListParams) =>
     ["product-templates", "list", tenantId, params] as const,
   detail: (templateId: string) =>

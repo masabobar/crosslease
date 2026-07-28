@@ -80,6 +80,7 @@ const STEP_FIELDS: Record<
     "max_term_months",
     "max_ltv_ratio",
     "valid_from",
+    "valid_until",
   ],
   review: [],
 }
@@ -140,11 +141,13 @@ function toNewVersionFormDefaults(
 type WizardFormProps = {
   initialDraftRef: DraftRef | null
   initialFormValues: ProductTemplateWizardForm | undefined
+  onPublished: () => void
 }
 
 function WizardFormView({
   initialDraftRef,
   initialFormValues,
+  onPublished,
 }: WizardFormProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
@@ -170,7 +173,6 @@ function WizardFormView({
 
   const [justification, setJustification] = useState("")
   const [isConfirmed, setIsConfirmed] = useState(false)
-  const [isPublished, setIsPublished] = useState(false)
 
   const form = useForm<ProductTemplateWizardForm>({
     resolver: zodResolver(ProductTemplateWizardFormSchema),
@@ -281,7 +283,7 @@ function WizardFormView({
         versionNumber: ref.versionNumber,
         body: { justification: justification.trim() || null },
       })
-      setIsPublished(true)
+      onPublished()
     } catch (err) {
       showApiError(err, t)
     }
@@ -313,40 +315,6 @@ function WizardFormView({
         selectTenantPrompt={t("list.selectTenantPrompt")}
         tenantRequiredMessage={t("list.tenantRequired")}
       />
-    )
-  }
-
-  if (isPublished) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center bg-slate-50">
-        <div
-          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6 items-center"
-          data-testid="template-published-success"
-        >
-          <div className="flex flex-col items-center gap-3 w-full">
-            <div className="bg-success/10 p-3 rounded-[14px]">
-              <Check size={24} className="text-success" strokeWidth={2.5} />
-            </div>
-            <div className="flex flex-col gap-3 text-center w-full">
-              <h1 className="text-xl font-semibold text-foreground">
-                {t("wizard.templatePublished.title")}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t("wizard.templatePublished.subtitle")}
-              </p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            className="w-full"
-            data-testid="back-to-template-list-button"
-            onClick={() => navigate(PATHS.PRODUCT_TEMPLATE_LIST)}
-          >
-            <ArrowLeft size={16} />
-            {t("wizard.templatePublished.backButton")}
-          </Button>
-        </div>
-      </div>
     )
   }
 
@@ -465,6 +433,43 @@ function WizardFormView({
   )
 }
 
+function TemplatePublishedSuccess() {
+  const { t } = useTranslation("productTemplates")
+  const navigate = useNavigate()
+
+  return (
+    <div className="flex flex-col h-full items-center justify-center bg-slate-50">
+      <div
+        className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6 items-center"
+        data-testid="template-published-success"
+      >
+        <div className="flex flex-col items-center gap-3 w-full">
+          <div className="bg-success/10 p-3 rounded-[14px]">
+            <Check size={24} className="text-success" strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col gap-3 text-center w-full">
+            <h1 className="text-xl font-semibold text-foreground">
+              {t("wizard.templatePublished.title")}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {t("wizard.templatePublished.subtitle")}
+            </p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          className="w-full"
+          data-testid="back-to-template-list-button"
+          onClick={() => navigate(PATHS.PRODUCT_TEMPLATE_LIST)}
+        >
+          <ArrowLeft size={16} />
+          {t("wizard.templatePublished.backButton")}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function CreateProductTemplateWizardPage() {
   const { t } = useTranslation("productTemplates")
   const { templateId, versionNumber } = useParams<{
@@ -473,6 +478,8 @@ export default function CreateProductTemplateWizardPage() {
   }>()
   const draftRefFromRoute =
     templateId && versionNumber ? { templateId, versionNumber } : null
+
+  const [isPublished, setIsPublished] = useState(false)
 
   const {
     data: existingDraft,
@@ -483,6 +490,13 @@ export default function CreateProductTemplateWizardPage() {
     draftRefFromRoute?.templateId ?? "",
     draftRefFromRoute?.versionNumber ?? null
   )
+
+  // Checked before the guards below: publishing flips this version's status out of
+  // `draft`, so once the refreshed detail arrives the immutability guard would
+  // otherwise replace the success screen with "this action is no longer allowed".
+  if (isPublished) {
+    return <TemplatePublishedSuccess />
+  }
 
   if (draftRefFromRoute && isLoading) {
     return (
@@ -545,6 +559,7 @@ export default function CreateProductTemplateWizardPage() {
           ? toNewVersionFormDefaults(existingDraft)
           : undefined
       }
+      onPublished={() => setIsPublished(true)}
     />
   )
 }

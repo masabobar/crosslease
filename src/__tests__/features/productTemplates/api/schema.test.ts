@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import { addDays, format } from "date-fns"
 import {
   CreateProductTemplateDraftRequestSchema,
   DeprecateTemplateVersionRequestSchema,
@@ -228,6 +229,15 @@ describe("PublishTemplateDraftResponseSchema", () => {
 })
 
 describe("ProductTemplateWizardFormSchema", () => {
+  // valid_from is validated against "today", so the fixtures are relative to the run
+  // date rather than hardcoded — a fixed date would silently start failing once it
+  // fell into the past.
+  const isoDateOffsetByDays = (days: number) =>
+    format(addDays(new Date(), days), "yyyy-MM-dd")
+  const TODAY = isoDateOffsetByDays(0)
+  const YESTERDAY = isoDateOffsetByDays(-1)
+  const NEXT_MONTH = isoDateOffsetByDays(30)
+
   const validForm = {
     template_name: "Full refinancing standard",
     financing_type: "full_refinancing",
@@ -241,7 +251,7 @@ describe("ProductTemplateWizardFormSchema", () => {
     min_term_months: 12,
     max_term_months: 84,
     max_ltv_ratio: 85,
-    valid_from: "2026-06-12",
+    valid_from: TODAY,
   }
 
   it("accepts a fully valid form", () => {
@@ -308,10 +318,57 @@ describe("ProductTemplateWizardFormSchema", () => {
     expect(() =>
       ProductTemplateWizardFormSchema.parse({
         ...validForm,
-        valid_from: "2026-06-12",
-        valid_until: "2025-01-01",
+        valid_from: NEXT_MONTH,
+        valid_until: TODAY,
       })
     ).toThrow()
+  })
+
+  it("rejects valid_until equal to valid_from — the period must be at least a day", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_from: TODAY,
+        valid_until: TODAY,
+      })
+    ).toThrow()
+  })
+
+  it("accepts valid_until after valid_from", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_from: TODAY,
+        valid_until: NEXT_MONTH,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a valid_from in the past", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_from: YESTERDAY,
+      })
+    ).toThrow()
+  })
+
+  it("accepts a valid_from of today", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({ ...validForm, valid_from: TODAY })
+    ).not.toThrow()
+  })
+
+  it("reports only 'required' for a blank valid_from, not also validFromInPast", () => {
+    const result = ProductTemplateWizardFormSchema.safeParse({
+      ...validForm,
+      valid_from: "",
+    })
+    expect(result.success).toBe(false)
+    const validFromMessages = result.error?.issues
+      .filter(issue => issue.path[0] === "valid_from")
+      .map(issue => issue.message)
+    expect(validFromMessages).toEqual(["required"])
   })
 
   it("accepts an open-ended valid_until", () => {
