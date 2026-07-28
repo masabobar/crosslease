@@ -40,6 +40,16 @@ const STATUS_OPTIONS: TenantStatus[] = [
 
 const TYPE_OPTIONS: TenantType[] = TenantTypeSchema.options
 
+// `module_active` is only honoured by GET /tenants when `module_key` is sent
+// too, so the two always travel together. Omitting the status defaults to
+// active on the API side — the UI states it explicitly instead.
+type ModuleFilter = { key: string; isActive: boolean }
+
+const MODULE_STATUS_OPTIONS = [
+  { isActive: true, key: "active" as const },
+  { isActive: false, key: "inactive" as const },
+]
+
 export default function TenantManagementPage() {
   const { t } = useTranslation("tenants")
   const navigate = useNavigate()
@@ -56,13 +66,16 @@ export default function TenantManagementPage() {
   const [fromDate, setFromDate] = useState<string | null>(null)
   const [toDate, setToDate] = useState<string | null>(null)
   const [countrySearch, setCountrySearch] = useState("")
-  const [moduleKeyFilter, setModuleKeyFilter] = useState<string | null>(null)
-  const [moduleActiveFilter, setModuleActiveFilter] = useState<boolean | null>(
-    null
-  )
+  // Single piece of state: the API ignores `module_active` unless `module_key`
+  // is also sent, so a status can never exist without a module.
+  const [moduleFilter, setModuleFilter] = useState<ModuleFilter | null>(null)
 
   const { data: platformModulesData } = usePlatformModules()
-  const platformModules = platformModulesData?.modules ?? []
+  // Always-on modules are active for every provisioned tenant and cannot be
+  // toggled, so filtering by their status has no meaning.
+  const platformModules = (platformModulesData?.modules ?? []).filter(
+    m => !m.always_on
+  )
 
   const filteredCountries = countrySearch.trim()
     ? COUNTRIES.filter(
@@ -81,9 +94,8 @@ export default function TenantManagementPage() {
     ...(countryFilter ? { country: countryFilter } : {}),
     ...(fromDate ? { from_date: fromDate } : {}),
     ...(toDate ? { to_date: toDate } : {}),
-    ...(moduleKeyFilter ? { module_key: moduleKeyFilter } : {}),
-    ...(moduleActiveFilter !== null
-      ? { module_active: moduleActiveFilter }
+    ...(moduleFilter
+      ? { module_key: moduleFilter.key, module_active: moduleFilter.isActive }
       : {}),
   }
 
@@ -100,8 +112,7 @@ export default function TenantManagementPage() {
     !!countryFilter ||
     !!fromDate ||
     !!toDate ||
-    !!moduleKeyFilter ||
-    moduleActiveFilter !== null
+    !!moduleFilter
 
   function toggleStatus(s: TenantStatus) {
     setStatusFilters(prev =>
@@ -118,12 +129,14 @@ export default function TenantManagementPage() {
   }
 
   function toggleModuleKey(key: string) {
-    setModuleKeyFilter(prev => (prev === key ? null : key))
+    setModuleFilter(prev =>
+      prev?.key === key ? null : { key, isActive: prev?.isActive ?? true }
+    )
     setPage(1)
   }
 
-  function toggleModuleActive(active: boolean) {
-    setModuleActiveFilter(prev => (prev === active ? null : active))
+  function selectModuleStatus(isActive: boolean) {
+    setModuleFilter(prev => (prev ? { ...prev, isActive } : prev))
     setPage(1)
   }
 
@@ -135,8 +148,7 @@ export default function TenantManagementPage() {
     setCountrySearch("")
     setFromDate(null)
     setToDate(null)
-    setModuleKeyFilter(null)
-    setModuleActiveFilter(null)
+    setModuleFilter(null)
     setPage(1)
   }
 
@@ -335,14 +347,12 @@ export default function TenantManagementPage() {
         <FilterButton
           data-testid="filter-active-module"
           label={t("list.filters.activeModule")}
-          count={
-            (moduleKeyFilter ? 1 : 0) + (moduleActiveFilter !== null ? 1 : 0)
-          }
+          count={moduleFilter ? 1 : 0}
           contentClassName="w-56"
         >
-          <div className="max-h-52 overflow-y-auto py-1">
+          <div className="max-h-52 overflow-y-auto overflow-x-hidden py-1">
             {platformModules.map(module => {
-              const checked = moduleKeyFilter === module.key
+              const checked = moduleFilter?.key === module.key
               return (
                 <Button
                   key={module.key}
@@ -357,7 +367,7 @@ export default function TenantManagementPage() {
                     aria-hidden="true"
                     className="shrink-0"
                   />
-                  <span className="text-sm text-foreground">
+                  <span className="text-sm text-foreground text-left whitespace-normal">
                     {module.display_name}
                   </span>
                 </Button>
@@ -365,31 +375,31 @@ export default function TenantManagementPage() {
             })}
           </div>
           <div className="border-t border-border py-1">
-            {[
-              { value: true, key: "active" as const },
-              { value: false, key: "inactive" as const },
-            ].map(({ value, key }) => {
-              const checked = moduleActiveFilter === value
-              return (
-                <Button
-                  key={key}
-                  variant="ghost"
-                  data-testid={`filter-module-${key}`}
-                  onClick={() => toggleModuleActive(value)}
-                  className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-                >
-                  <Checkbox
-                    checked={checked}
-                    tabIndex={-1}
-                    aria-hidden="true"
-                    className="shrink-0"
-                  />
-                  <span className="text-sm text-foreground">
-                    {t(`list.filters.moduleStatus.${key}`)}
-                  </span>
-                </Button>
-              )
-            })}
+            {MODULE_STATUS_OPTIONS.map(({ isActive, key }) => (
+              <Button
+                key={key}
+                variant="ghost"
+                disabled={!moduleFilter}
+                data-testid={`filter-module-status-${key}`}
+                onClick={() => selectModuleStatus(isActive)}
+                className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal disabled:opacity-50"
+              >
+                <Checkbox
+                  checked={moduleFilter?.isActive === isActive}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  className="shrink-0"
+                />
+                <span className="text-sm text-foreground">
+                  {t(`list.filters.moduleStatus.${key}`)}
+                </span>
+              </Button>
+            ))}
+            {!moduleFilter && (
+              <p className="px-3 py-1 text-xs text-muted-foreground">
+                {t("list.filters.moduleStatusHint")}
+              </p>
+            )}
           </div>
         </FilterButton>
       </div>
@@ -452,32 +462,21 @@ export default function TenantManagementPage() {
               data-testid="filter-pill-remove-date"
             />
           )}
-          {moduleKeyFilter && (
+          {moduleFilter && (
             <FilterPill
               label={t("list.filterPills.module", {
                 value:
-                  platformModules.find(m => m.key === moduleKeyFilter)
-                    ?.display_name ?? moduleKeyFilter,
-              })}
-              onRemove={() => {
-                setModuleKeyFilter(null)
-                setPage(1)
-              }}
-              data-testid="filter-pill-remove-module"
-            />
-          )}
-          {moduleActiveFilter !== null && (
-            <FilterPill
-              label={t("list.filterPills.moduleStatus", {
-                value: t(
-                  `list.filters.moduleStatus.${moduleActiveFilter ? "active" : "inactive"}`
+                  platformModules.find(m => m.key === moduleFilter.key)
+                    ?.display_name ?? moduleFilter.key,
+                status: t(
+                  `list.filters.moduleStatus.${moduleFilter.isActive ? "active" : "inactive"}`
                 ),
               })}
               onRemove={() => {
-                setModuleActiveFilter(null)
+                setModuleFilter(null)
                 setPage(1)
               }}
-              data-testid="filter-pill-remove-module-status"
+              data-testid="filter-pill-remove-module"
             />
           )}
           <Button

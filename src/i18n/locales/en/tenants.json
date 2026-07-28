@@ -240,7 +240,8 @@
       "moduleStatus": {
         "active": "Active",
         "inactive": "Inactive"
-      }
+      },
+      "moduleStatusHint": "Select a module first"
     },
     "filterPills": {
       "search": "Search: {{value}}",
@@ -248,8 +249,7 @@
       "type": "Type: {{value}}",
       "country": "Country: {{value}}",
       "dateRange": "Created: {{range}}",
-      "module": "Module: {{value}}",
-      "moduleStatus": "Module status: {{value}}"
+      "module": "Module: {{value}} ({{status}})"
     },
     "pagination": {
       "page": "Page {{page}} of {{total}}"
