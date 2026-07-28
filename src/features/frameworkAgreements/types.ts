@@ -6,12 +6,16 @@ export const FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES: readonly UserRole[] = [
   "bank_power_user",
 ]
 
+// support_user is deliberately absent: the BE grants it neither FA_LIST nor
+// FA_READ, so every query on the list and detail screens 403s and the user only
+// ever reaches a generic error state. The spec's grant-scoped support view is
+// not implemented — permissions resolve from a static role matrix with no
+// grant-based elevation. Restore this role once the BE actually serves it.
 export const FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES: readonly UserRole[] = [
   "system_admin",
   "bank_power_user",
   "front_office",
   "back_office",
-  "support_user",
   "auditor",
 ]
 
