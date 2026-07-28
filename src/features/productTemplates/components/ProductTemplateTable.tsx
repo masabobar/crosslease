@@ -159,11 +159,8 @@ function ProductTemplateTable({
             className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
           >
             <div className={`${COL_PRODUCT} p-2`}>
-              {/* NOTE: TemplateListItem has no template_name on the BE (only
-                  template_code) — see schema.ts comment. Renders the code as the
-                  primary label until the BE maps template_name through. */}
               <p className="text-sm font-medium truncate text-foreground leading-tight">
-                {item.template_code}
+                {item.template_name || item.template_code}
               </p>
             </div>
             <div className={`${COL_FINANCING} p-2`}>
@@ -200,7 +197,9 @@ function ProductTemplateTable({
             </div>
             <div className={`${COL_VERSION} p-2`}>
               <span className="text-sm text-foreground">
-                {item.current_version?.version_number ?? "—"}
+                {item.current_version
+                  ? `v${item.current_version.version_number}`
+                  : "—"}
               </span>
             </div>
             <div className="shrink-0 p-2 flex items-center justify-center">

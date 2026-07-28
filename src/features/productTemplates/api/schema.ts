@@ -373,11 +373,7 @@ export const VersionDiffResponseSchema = z.object({
 export type VersionDiffResponse = z.infer<typeof VersionDiffResponseSchema>
 
 // Wire response for GET /tenants/{tenant_id}/product-templates (list_templates) in
-// refinext-api. TemplateListItem deliberately has no template_name field on the BE —
-// only template_code — even though the Figma design's "Product" column shows a
-// human-readable name; the join already fetches it but the response schema doesn't map
-// it through. Flagged BE gap: FE renders template_code as the primary label until the BE
-// maps template_name through.
+// refinext-api.
 export const TemplateCurrentVersionSummarySchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
@@ -399,6 +395,11 @@ export type TemplateCurrentVersionSummary = z.infer<
 export const TemplateListItemSchema = z.object({
   id: z.string().uuid(),
   template_code: z.string(),
+  // Optional because TemplateListItem in refinext-api doesn't serialize it yet — the
+  // list query already loads the version row that holds it (product_template_repo.py
+  // list_templates), so it arrives once the BE maps it through. Until then the list
+  // falls back to template_code (PRD1042-1649).
+  template_name: z.string().nullable().optional(),
   current_version: TemplateCurrentVersionSummarySchema.nullable(),
   created_at: z.string(),
 })
