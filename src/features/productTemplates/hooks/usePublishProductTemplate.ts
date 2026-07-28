@@ -17,9 +17,9 @@ export function usePublishProductTemplate() {
   return useMutation({
     mutationFn: ({ templateId, versionNumber, body }: PublishDraftInput) =>
       publishProductTemplate(templateId, versionNumber, body),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.versions(variables.templateId),
+        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.all,
       })
     },
   })

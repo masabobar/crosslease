@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { format } from "date-fns"
 import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
 import { requiredEnum } from "@/lib/zodHelpers"
 
@@ -238,14 +239,27 @@ export const ProductTemplateWizardFormSchema = z
         path: ["min_volume_eur"],
       })
     }
+    // Both dates are wire-formatted yyyy-MM-dd, so lexicographic comparison is
+    // chronological. valid_from is guarded against "" so a blank field reports only
+    // its own "required" issue rather than also claiming to be in the past.
     if (
-      data.valid_until !== undefined &&
-      data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_from !== "" &&
+      data.valid_from < format(new Date(), "yyyy-MM-dd")
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "validUntilBeforeFrom",
+        message: "validFromInPast",
+        path: ["valid_from"],
+      })
+    }
+    if (
+      data.valid_until !== undefined &&
+      data.valid_until !== "" &&
+      data.valid_until <= data.valid_from
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "validUntilNotAfterFrom",
         path: ["valid_until"],
       })
     }

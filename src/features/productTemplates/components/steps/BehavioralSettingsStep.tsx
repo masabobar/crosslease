@@ -1,5 +1,5 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller, useFormState } from "react-hook-form"
+import { Controller } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
@@ -25,7 +25,6 @@ function BehavioralSettingsStep({ form }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
   const { control } = form
-  const { errors } = useFormState({ control })
 
   // No custom (non-"required") message codes on this step's fields today — the
   // map is declared explicitly, matching IdentityStep's pattern, so the next
@@ -91,15 +90,20 @@ function BehavioralSettingsStep({ form }: Props) {
     labelKey: string,
     options: SelectOption[]
   ) {
+    // Label and message live inside Controller's render prop and read from its
+    // `fieldState` rather than a shared `errors` object: indexing `errors[name]` by a
+    // computed key makes React Compiler depend on the whole errors object, which
+    // react-hook-form mutates in place — so the memoized markup was never invalidated
+    // and these fields silently showed no validation feedback at all.
     return (
-      <div>
-        <Label htmlFor={name} error={!!errors[name]} className="mb-2">
-          {t(labelKey as "fields.optional")}
-        </Label>
-        <Controller
-          control={control}
-          name={name}
-          render={({ field }) => (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field, fieldState }) => (
+          <div>
+            <Label htmlFor={name} error={!!fieldState.error} className="mb-2">
+              {t(labelKey as "fields.optional")}
+            </Label>
             <SelectField
               id={name}
               data-testid={`${name.replace(/_/g, "-")}-select`}
@@ -107,16 +111,16 @@ function BehavioralSettingsStep({ form }: Props) {
               onValueChange={field.onChange}
               options={options}
               placeholder={t("fields.selectPlaceholder")}
-              error={!!errors[name]}
+              error={!!fieldState.error}
             />
-          )}
-        />
-        {errors[name] && (
-          <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors[name]?.message as string | undefined)}
-          </p>
+            {fieldState.error && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMsg(fieldState.error.message)}
+              </p>
+            )}
+          </div>
         )}
-      </div>
+      />
     )
   }
 

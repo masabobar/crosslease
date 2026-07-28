@@ -14,9 +14,9 @@ export function useCreateNewProductTemplateVersion() {
   return useMutation({
     mutationFn: ({ templateId }: CreateNewVersionInput) =>
       createNewProductTemplateVersion(templateId),
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.versions(variables.templateId),
+        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.all,
       })
     },
   })

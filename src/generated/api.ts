@@ -1908,6 +1908,271 @@ const VfeRateCreateRequest = z
 const VfeRateUpdateRequest = z
   .object({ vfe_rate: z.union([z.number(), z.string()]) })
   .passthrough()
+const UpdateCatalogRequest = z
+  .object({
+    catalog_name: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const CatalogType = z.enum(["global_default", "product_specific"])
+const CatalogResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()),
+    product_template_id: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const RequirementClassification = z.enum([
+  "mandatory",
+  "optional",
+  "conditional",
+])
+const GovernanceClassification = z.enum([
+  "operational",
+  "compliance_sensitive",
+  "regulatory_critical",
+])
+const SourceLayer = z.enum(["default", "override", "supplement", "deactivated"])
+const StageCategorization = z.enum([
+  "submission",
+  "approval",
+  "disbursement_readiness",
+])
+const DocumentOrigin = z.enum(["uploaded", "generated"])
+const RequirementResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_id: z.string().uuid(),
+    requirement_code: z.string(),
+    document_type_code: z.string(),
+    document_type_name: z.string(),
+    description: z.union([z.string(), z.null()]),
+    classification: RequirementClassification,
+    governance_classification: GovernanceClassification,
+    source_layer: SourceLayer,
+    applicable_process_contexts: z.array(z.string()),
+    stage_categorization: z.union([StageCategorization, z.null()]),
+    blocks_submission: z.boolean(),
+    document_origin: DocumentOrigin,
+    is_active: z.boolean(),
+    sort_order: z.number().int(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CatalogDetailResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()),
+    product_template_id: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+    requirements: z.array(RequirementResponse).optional(),
+  })
+  .passthrough()
+const CreateCatalogRequest = z
+  .object({
+    catalog_name: z.string().min(1).max(200),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()).min(1),
+    product_template_id: z.union([z.string(), z.null()]).optional(),
+    valid_from: z.union([z.string(), z.null()]).optional(),
+    valid_to: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const catalog_type = z.union([CatalogType, z.null()]).optional()
+const CatalogListItem = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()),
+    product_template_id: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CatalogListResponse = z
+  .object({
+    items: z.array(CatalogListItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const AddRequirementRequest = z
+  .object({
+    requirement_code: z.string().min(1).max(100),
+    document_type_code: z.string().min(1).max(100),
+    document_type_name: z.string().min(1).max(255),
+    description: z.union([z.string(), z.null()]).optional(),
+    classification: RequirementClassification.optional(),
+    governance_classification: GovernanceClassification,
+    source_layer: z.union([SourceLayer, z.null()]).optional(),
+    applicable_process_contexts: z.array(z.string()).min(1),
+    stage_categorization: z.union([StageCategorization, z.null()]).optional(),
+    blocks_submission: z.boolean().optional().default(true),
+    document_origin: DocumentOrigin.optional(),
+    sort_order: z.number().int().optional().default(0),
+  })
+  .passthrough()
+const RequirementListResponse = z
+  .object({
+    items: z.array(RequirementResponse),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const UpdateRequirementRequest = z
+  .object({
+    document_type_name: z.union([z.string(), z.null()]),
+    description: z.union([z.string(), z.null()]),
+    classification: z.union([RequirementClassification, z.null()]),
+    governance_classification: z.union([GovernanceClassification, z.null()]),
+    applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
+    stage_categorization: z.union([StageCategorization, z.null()]),
+    blocks_submission: z.union([z.boolean(), z.null()]),
+    document_origin: z.union([DocumentOrigin, z.null()]),
+    sort_order: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const RuntimeRequirementItem = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    requirement_code: z.string(),
+    document_type_name: z.string(),
+    classification: z.string(),
+    source_layer: z.string(),
+    stage_categorization: z.union([z.string(), z.null()]),
+    fulfilment_status: z.string(),
+    is_blocking: z.boolean(),
+    blocks_submission: z.boolean(),
+    document_origin: z.string(),
+  })
+  .passthrough()
+const RuntimeRequirementSurfaceResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    process_context: z.string(),
+    completeness_summary: z.string(),
+    requirements: z.array(RuntimeRequirementItem),
+  })
+  .passthrough()
+const MaterializeRequest = z
+  .object({ process_context: z.string() })
+  .passthrough()
+const MaterializedRequirementResponse = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    requirement_code: z.string(),
+    document_type_code: z.string(),
+    document_type_name: z.string(),
+    classification: z.string(),
+    governance_classification: z.string(),
+    source_layer: z.string(),
+    stage_categorization: z.union([z.string(), z.null()]),
+    applicable_process_contexts: z.array(z.string()),
+    blocks_submission: z.boolean(),
+    document_origin: z.string(),
+  })
+  .passthrough()
+const MaterializationResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    process_context: z.string(),
+    effective_requirements: z.array(MaterializedRequirementResponse),
+    total: z.number().int(),
+  })
+  .passthrough()
+const LCObligationItem = z
+  .object({
+    document_type_name: z.string(),
+    is_mandatory: z.boolean(),
+    fulfilment_status: z.string(),
+    action_needed: z.boolean(),
+  })
+  .passthrough()
+const LCObligationResponse = z
+  .object({
+    business_object_id: z.string().uuid(),
+    process_context: z.string(),
+    documents_status_summary: z.string(),
+    obligations: z.array(LCObligationItem),
+  })
+  .passthrough()
+const LinkDocumentRequest = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    business_object_type: z.string(),
+    linked_document_id: z.string().uuid(),
+    linked_document_type_code: z.string(),
+  })
+  .passthrough()
+const FulfilmentResponse = z
+  .object({
+    id: z.string().uuid(),
+    requirement_definition_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    business_object_type: z.string(),
+    status: z.string(),
+    linked_document_id: z.union([z.string(), z.null()]),
+    linked_document_type_code: z.union([z.string(), z.null()]),
+    transition_reason: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const TransitionStatusRequest = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    business_object_type: z.string(),
+    new_status: z.string(),
+    transition_reason: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const PerRequirementStatusResponse = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    requirement_code: z.string(),
+    classification: z.string(),
+    status: z.string(),
+  })
+  .passthrough()
+const CompletenessResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    process_context: z.string(),
+    business_object_id: z.string().uuid(),
+    summary: z.string(),
+    mandatory_total: z.number().int(),
+    mandatory_fulfilled: z.number().int(),
+    mandatory_pending: z.number().int(),
+    mandatory_missing: z.number().int(),
+    per_requirement: z.array(PerRequirementStatusResponse),
+  })
+  .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
   .object({
@@ -2144,6 +2409,35 @@ export const schemas = {
   VfeRateListResponse,
   VfeRateCreateRequest,
   VfeRateUpdateRequest,
+  UpdateCatalogRequest,
+  CatalogType,
+  CatalogResponse,
+  RequirementClassification,
+  GovernanceClassification,
+  SourceLayer,
+  StageCategorization,
+  DocumentOrigin,
+  RequirementResponse,
+  CatalogDetailResponse,
+  CreateCatalogRequest,
+  catalog_type,
+  CatalogListItem,
+  CatalogListResponse,
+  AddRequirementRequest,
+  RequirementListResponse,
+  UpdateRequirementRequest,
+  RuntimeRequirementItem,
+  RuntimeRequirementSurfaceResponse,
+  MaterializeRequest,
+  MaterializedRequirementResponse,
+  MaterializationResponse,
+  LCObligationItem,
+  LCObligationResponse,
+  LinkDocumentRequest,
+  FulfilmentResponse,
+  TransitionStatusRequest,
+  PerRequirementStatusResponse,
+  CompletenessResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -2765,6 +3059,350 @@ and invalidates all active sessions.`,
       },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id",
+    alias:
+      "update_catalog_api_v1_document_requirement_catalogs__catalog_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateCatalogRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id",
+    alias:
+      "get_catalog_detail_api_v1_document_requirement_catalogs__catalog_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CatalogDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/completeness",
+    alias:
+      "get_completeness_api_v1_document_requirement_catalogs__catalog_id__completeness_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
+        name: "business_object_id",
+        type: "Query",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "business_object_type",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: CompletenessResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/fulfilments/link",
+    alias:
+      "link_document_api_v1_document_requirement_catalogs__catalog_id__fulfilments_link_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: LinkDocumentRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/fulfilments/transition",
+    alias:
+      "transition_status_api_v1_document_requirement_catalogs__catalog_id__fulfilments_transition_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: TransitionStatusRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/materialize",
+    alias:
+      "materialize_catalog_api_v1_document_requirement_catalogs__catalog_id__materialize_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ process_context: z.string() }).passthrough(),
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MaterializationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/objects/:object_id/requirements",
+    alias:
+      "get_runtime_requirements_api_v1_document_requirement_catalogs__catalog_id__objects__object_id__requirements_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "object_type",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: RuntimeRequirementSurfaceResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/preview",
+    alias:
+      "preview_catalog_api_v1_document_requirement_catalogs__catalog_id__preview_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: MaterializationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/requirements",
+    alias:
+      "add_requirement_api_v1_document_requirement_catalogs__catalog_id__requirements_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AddRequirementRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequirementResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/requirements",
+    alias:
+      "list_requirements_api_v1_document_requirement_catalogs__catalog_id__requirements_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "include_inactive",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(50),
+      },
+    ],
+    response: RequirementListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/document-requirements/:requirement_id",
+    alias:
+      "update_requirement_api_v1_document_requirements__requirement_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateRequirementRequest,
+      },
+      {
+        name: "requirement_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequirementResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirements/:requirement_id/deactivate",
+    alias:
+      "deactivate_requirement_api_v1_document_requirements__requirement_id__deactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "requirement_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequirementResponse,
     errors: [
       {
         status: 422,
@@ -3645,6 +4283,42 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
         description: `Successful Response`,
         schema: z.unknown(),
       },
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/obligations/:business_object_id",
+    alias: "get_lc_obligations_api_v1_lc_obligations__business_object_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "catalog_id",
+        type: "Query",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "object_type",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: LCObligationResponse,
+    errors: [
       {
         status: 422,
         description: `Validation Error`,
@@ -5007,6 +5681,80 @@ No existing sessions are invalidated immediately.
       },
     ],
     response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/document-requirement-catalogs",
+    alias:
+      "create_catalog_api_v1_tenants__tenant_id__document_requirement_catalogs_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateCatalogRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/document-requirement-catalogs",
+    alias:
+      "list_catalogs_api_v1_tenants__tenant_id__document_requirement_catalogs_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "catalog_type",
+        type: "Query",
+        schema: catalog_type,
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(20),
+      },
+    ],
+    response: CatalogListResponse,
     errors: [
       {
         status: 422,

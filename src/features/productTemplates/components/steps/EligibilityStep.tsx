@@ -1,6 +1,7 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller, useFormState } from "react-hook-form"
+import { Controller, useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { addDays, parseISO } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -27,12 +28,21 @@ function EligibilityStep({ form }: Props) {
   const { t: tCommon } = useTranslation("common")
   const { register, control } = form
   const { errors } = useFormState({ control })
+  const validFrom = useWatch({ control, name: "valid_from" })
+
+  // Mirrors the schema's date rules in the pickers themselves: validity cannot start in
+  // the past, and the end date must fall strictly after the start date.
+  const today = new Date()
+  const validUntilMinDate = validFrom
+    ? addDays(parseISO(validFrom), 1)
+    : addDays(today, 1)
 
   const errorMessages = {
     atLeastOne: t("errors.atLeastOneAssetCategory"),
     minTermExceedsMax: t("errors.minTermExceedsMax"),
     minVolumeExceedsMax: t("errors.minVolumeExceedsMax"),
-    validUntilBeforeFrom: t("errors.validUntilBeforeFrom"),
+    validFromInPast: t("errors.validFromInPast"),
+    validUntilNotAfterFrom: t("errors.validUntilNotAfterFrom"),
     termBelowMin: t("errors.termBelowMin"),
     termAboveMax: t("errors.termAboveMax"),
     ltvBelowMin: t("errors.ltvBelowMin"),
@@ -246,6 +256,7 @@ function EligibilityStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_from}
+                  minDate={today}
                   captionLayout="dropdown"
                 />
               )}
@@ -278,6 +289,7 @@ function EligibilityStep({ form }: Props) {
                   value={field.value}
                   onChange={field.onChange}
                   error={!!errors.valid_until}
+                  minDate={validUntilMinDate}
                   captionLayout="dropdown"
                 />
               )}
