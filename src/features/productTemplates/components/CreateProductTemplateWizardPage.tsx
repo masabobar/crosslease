@@ -30,7 +30,6 @@ import {
   DisbursementDerivationRuleSchema,
   FirstInstallmentRuleSchema,
   ProductTemplateWizardFormSchema,
-  RateTypeSchema,
   TemplateStatusSchema,
 } from "@/features/productTemplates/api/schema"
 import type {
@@ -72,10 +71,8 @@ const STEP_FIELDS: Record<
     "payment_timing",
     "rate_basis",
     "calculation_model",
-    "rate_type",
     "first_installment_rule",
     "disbursement_derivation_rule",
-    "npv_formula_ref",
   ],
   eligibility: [
     "allowed_asset_categories",
@@ -99,8 +96,6 @@ function toUpdatePayload(
     payment_timing: values.payment_timing,
     rate_basis: values.rate_basis,
     calculation_model: values.calculation_model,
-    rate_type: values.rate_type,
-    npv_formula_ref: values.npv_formula_ref,
     first_installment_rule: values.first_installment_rule,
     disbursement_derivation_rule: values.disbursement_derivation_rule,
     allowed_asset_categories: values.allowed_asset_categories,
@@ -125,8 +120,6 @@ function toNewVersionFormDefaults(
     payment_timing: detail.payment_timing,
     rate_basis: detail.rate_basis,
     calculation_model: detail.calculation_model,
-    rate_type: detail.rate_type ?? RateTypeSchema.enum.fixed,
-    npv_formula_ref: detail.npv_formula_ref ?? "",
     first_installment_rule:
       detail.first_installment_rule ??
       FirstInstallmentRuleSchema.enum.following_month,

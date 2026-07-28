@@ -17,7 +17,6 @@ function EnvelopePricingStep({ form }: Props) {
     <div className="flex flex-col gap-4" data-testid="fa-envelope-pricing-step">
       <EnvelopePricingFields
         register={register}
-        control={control}
         errors={errors}
         resolveMsg={resolveMsg}
       />

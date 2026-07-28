@@ -188,8 +188,6 @@ export const ProductTemplateWizardFormSchema = z
     payment_timing: requiredEnum(PaymentTimingSchema.options),
     rate_basis: requiredEnum(RateBasisSchema.options),
     calculation_model: requiredEnum(CalculationModelSchema.options),
-    rate_type: requiredEnum(RateTypeSchema.options),
-    npv_formula_ref: z.string({ error: "required" }).min(1, "required"),
     first_installment_rule: requiredEnum(FirstInstallmentRuleSchema.options),
     disbursement_derivation_rule: requiredEnum(
       DisbursementDerivationRuleSchema.options

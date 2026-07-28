@@ -5398,6 +5398,104 @@
         }
       }
     },
+    "/api/v1/framework-agreements/export-csv": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Export Framework Agreements Csv",
+        "operationId": "export_framework_agreements_csv_api_v1_framework_agreements_export_csv_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FALifecycleStatus" },
+              "description": "Filter by lifecycle status (repeatable)",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by lifecycle status (repeatable)"
+          },
+          {
+            "name": "lc_partner_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string", "format": "uuid" },
+              "description": "Filter by LC partner (repeatable)",
+              "default": [],
+              "title": "Lc Partner Id"
+            },
+            "description": "Filter by LC partner (repeatable)"
+          },
+          {
+            "name": "bank_entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/BankEntity" },
+              "description": "Filter by bank entity (repeatable)",
+              "default": [],
+              "title": "Bank Entity"
+            },
+            "description": "Filter by bank entity (repeatable)"
+          },
+          {
+            "name": "valid_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Valid From"
+            }
+          },
+          {
+            "name": "valid_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Valid Until"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/framework-agreements/{id}/utilization": {
       "get": {
         "tags": ["Framework Agreements"],
@@ -6812,7 +6910,7 @@
             ],
             "title": "Max Volume Eur"
           },
-          "base_rate": {
+          "effective_rate": {
             "anyOf": [
               { "type": "number", "maximum": 25.0, "minimum": 0.0 },
               {
@@ -6820,48 +6918,7 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Base Rate"
-          },
-          "spread": {
-            "anyOf": [
-              { "type": "number", "maximum": 15.0, "minimum": -5.0 },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              }
-            ],
-            "title": "Spread"
-          },
-          "rate_type": {
-            "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
-          },
-          "effective_rate": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
             "title": "Effective Rate"
-          },
-          "rate_lock_period_months": {
-            "type": "integer",
-            "maximum": 360.0,
-            "minimum": 1.0,
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "valid_from": {
             "type": "string",
@@ -6903,10 +6960,7 @@
           "lc_partner_id",
           "bank_entity",
           "max_volume_eur",
-          "base_rate",
-          "spread",
-          "rate_type",
-          "rate_lock_period_months",
+          "effective_rate",
           "valid_from",
           "product_template_ids"
         ],
@@ -6972,9 +7026,7 @@
           },
           "rate_type": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
-              },
+              { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
           },
@@ -7606,6 +7658,7 @@
             ],
             "title": "Valid Until"
           },
+          "is_expired": { "type": "boolean", "title": "Is Expired" },
           "edit_version_counter": {
             "type": "integer",
             "title": "Edit Version Counter"
@@ -7648,26 +7701,6 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Bank Entity"
           },
-          "base_rate": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Base Rate"
-          },
-          "spread": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Spread"
-          },
           "effective_rate": {
             "anyOf": [
               {
@@ -7677,24 +7710,6 @@
               { "type": "null" }
             ],
             "title": "Effective Rate"
-          },
-          "rate_type": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Rate Type"
-          },
-          "rate_lock_period_months": {
-            "anyOf": [{ "type": "integer" }, { "type": "null" }],
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "vfe_rate": {
             "anyOf": [
@@ -7796,6 +7811,7 @@
           "max_volume_eur",
           "valid_from",
           "valid_until",
+          "is_expired",
           "edit_version_counter",
           "product_template_ids",
           "document_count",
@@ -7804,12 +7820,7 @@
           "limit_available",
           "limit_breach",
           "bank_entity",
-          "base_rate",
-          "spread",
           "effective_rate",
-          "rate_type",
-          "rate_lock_period_months",
-          "lg_coverage_rate_override",
           "vfe_rate",
           "special_conditions",
           "effective_from",
@@ -7849,37 +7860,10 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Max Volume Eur"
           },
-          "base_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Base Rate"
-          },
-          "spread": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Spread"
-          },
           "effective_rate": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Effective Rate"
-          },
-          "rate_type": {
-            "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
-          },
-          "rate_lock_period_months": {
-            "type": "integer",
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "valid_from": {
             "type": "string",
@@ -7941,12 +7925,7 @@
           "currency",
           "status",
           "max_volume_eur",
-          "base_rate",
-          "spread",
           "effective_rate",
-          "rate_type",
-          "rate_lock_period_months",
-          "lg_coverage_rate_override",
           "valid_from",
           "valid_until",
           "special_conditions",
@@ -8053,6 +8032,7 @@
             ],
             "title": "Valid Until"
           },
+          "is_expired": { "type": "boolean", "title": "Is Expired" },
           "utilization_pct": {
             "anyOf": [
               {
@@ -8078,6 +8058,7 @@
           "status",
           "valid_from",
           "valid_until",
+          "is_expired",
           "utilization_pct",
           "limit_breach"
         ],
@@ -8107,35 +8088,10 @@
             "type": "integer",
             "title": "Edit Version Counter"
           },
-          "base_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Base Rate"
-          },
-          "spread": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Spread"
-          },
           "effective_rate": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Effective Rate"
-          },
-          "rate_type": { "type": "string", "title": "Rate Type" },
-          "rate_lock_period_months": {
-            "type": "integer",
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           }
         },
         "type": "object",
@@ -8143,11 +8099,7 @@
           "fa_id",
           "agreement_name",
           "edit_version_counter",
-          "base_rate",
-          "spread",
-          "effective_rate",
-          "rate_type",
-          "rate_lock_period_months"
+          "effective_rate"
         ],
         "title": "FAPricingSnapshotResponse",
         "description": "Pricing snapshot returned to consuming epics (US 11.11).\n\nEpic 3 (Financing) uses edit_version_counter as the audit anchor\nto reconstruct which FA pricing snapshot was applied at Stage 2 approval."
@@ -10089,6 +10041,11 @@
         "enum": ["30_360", "act_360", "act_365", "act_act"],
         "title": "RateBasis"
       },
+      "RateType": {
+        "type": "string",
+        "enum": ["fixed", "floating", "euribor_spread"],
+        "title": "RateType"
+      },
       "ReInitiateRequest": {
         "properties": {
           "reason": {
@@ -11539,7 +11496,7 @@
             ],
             "title": "Max Volume Eur"
           },
-          "base_rate": {
+          "effective_rate": {
             "anyOf": [
               { "type": "number", "maximum": 25.0, "minimum": 0.0 },
               {
@@ -11548,55 +11505,7 @@
               },
               { "type": "null" }
             ],
-            "title": "Base Rate"
-          },
-          "spread": {
-            "anyOf": [
-              { "type": "number", "maximum": 15.0, "minimum": -5.0 },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Spread"
-          },
-          "rate_type": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
-              },
-              { "type": "null" }
-            ]
-          },
-          "effective_rate": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
             "title": "Effective Rate"
-          },
-          "rate_lock_period_months": {
-            "anyOf": [
-              { "type": "integer", "maximum": 360.0, "minimum": 1.0 },
-              { "type": "null" }
-            ],
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "valid_from": {
             "anyOf": [
@@ -11768,9 +11677,7 @@
           },
           "rate_type": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
-              },
+              { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
           },
@@ -12320,9 +12227,7 @@
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
           "rate_type": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
-              },
+              { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
           },
@@ -12632,16 +12537,6 @@
         "type": "object",
         "required": ["vfe_rate"],
         "title": "VfeRateUpdateRequest"
-      },
-      "app__modules__framework_agreements__domain__enums__RateType": {
-        "type": "string",
-        "enum": ["fixed", "floating", "euribor_plus_spread"],
-        "title": "RateType"
-      },
-      "app__modules__product_templates__domain__enums__RateType": {
-        "type": "string",
-        "enum": ["fixed", "floating", "euribor_spread"],
-        "title": "RateType"
       },
       "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
         "properties": {

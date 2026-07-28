@@ -1247,11 +1247,7 @@ const SelectableTemplatesResponse = z
 const LegalStructure = z.enum(["loan_credit", "true_sale"])
 const PaymentTiming = z.enum(["advance", "arrears"])
 const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
-const app__modules__product_templates__domain__enums__RateType = z.enum([
-  "fixed",
-  "floating",
-  "euribor_spread",
-])
+const RateType = z.enum(["fixed", "floating", "euribor_spread"])
 const CalculationModel = z.enum(["annuity", "bullet", "irregular"])
 const FirstInstallmentRule = z.enum([
   "submission_month",
@@ -1284,10 +1280,7 @@ const VersionDetailResponse = z
     legal_structure: LegalStructure,
     payment_timing: PaymentTiming,
     rate_basis: RateBasis,
-    rate_type: z.union([
-      app__modules__product_templates__domain__enums__RateType,
-      z.null(),
-    ]),
+    rate_type: z.union([RateType, z.null()]),
     calculation_model: CalculationModel,
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
@@ -1332,10 +1325,7 @@ const UpdateTemplateDraftRequest = z
     legal_structure: z.union([LegalStructure, z.null()]),
     payment_timing: z.union([PaymentTiming, z.null()]),
     rate_basis: z.union([RateBasis, z.null()]),
-    rate_type: z.union([
-      app__modules__product_templates__domain__enums__RateType,
-      z.null(),
-    ]),
+    rate_type: z.union([RateType, z.null()]),
     calculation_model: z.union([CalculationModel, z.null()]),
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
@@ -1521,12 +1511,7 @@ const CreateTemplateDraftRequest = z
     template_description: z.union([z.string(), z.null()]).optional(),
     valid_from: z.union([z.string(), z.null()]).optional(),
     valid_until: z.union([z.string(), z.null()]).optional(),
-    rate_type: z
-      .union([
-        app__modules__product_templates__domain__enums__RateType,
-        z.null(),
-      ])
-      .optional(),
+    rate_type: z.union([RateType, z.null()]).optional(),
     npv_formula_ref: z.union([z.string(), z.null()]).optional(),
     first_installment_rule: z
       .union([FirstInstallmentRule, z.null()])
@@ -1559,25 +1544,13 @@ const BankEntity = z.enum([
   "landesbank_2",
   "other",
 ])
-const app__modules__framework_agreements__domain__enums__RateType = z.enum([
-  "fixed",
-  "floating",
-  "euribor_plus_spread",
-])
 const CreateFARequest = z
   .object({
     agreement_name: z.string().max(200),
     lc_partner_id: z.string().uuid(),
     bank_entity: BankEntity,
     max_volume_eur: z.union([z.number(), z.string()]),
-    base_rate: z.union([z.number(), z.string()]),
-    spread: z.union([z.number(), z.string()]),
-    rate_type: app__modules__framework_agreements__domain__enums__RateType,
-    effective_rate: z.union([z.number(), z.string(), z.null()]).optional(),
-    rate_lock_period_months: z.number().int().gte(1).lte(360),
-    lg_coverage_rate_override: z
-      .union([z.number(), z.string(), z.null()])
-      .optional(),
+    effective_rate: z.union([z.number(), z.string()]),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]).optional(),
     special_conditions: z.union([z.string(), z.null()]).optional(),
@@ -1595,12 +1568,7 @@ const FADraftResponse = z
     currency: z.string(),
     status: FALifecycleStatus,
     max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    base_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    spread: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     effective_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    rate_type: app__modules__framework_agreements__domain__enums__RateType,
-    rate_lock_period_months: z.number().int(),
-    lg_coverage_rate_override: z.union([z.string(), z.null()]),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
@@ -1622,6 +1590,7 @@ const FAListItemResponse = z
     status: FALifecycleStatus,
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
+    is_expired: z.boolean(),
     utilization_pct: z.union([z.string(), z.null()]),
     limit_breach: z.union([z.boolean(), z.null()]),
   })
@@ -1639,15 +1608,7 @@ const UpdateFARequest = z
   .object({
     agreement_name: z.union([z.string(), z.null()]),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]),
-    base_rate: z.union([z.number(), z.string(), z.null()]),
-    spread: z.union([z.number(), z.string(), z.null()]),
-    rate_type: z.union([
-      app__modules__framework_agreements__domain__enums__RateType,
-      z.null(),
-    ]),
     effective_rate: z.union([z.number(), z.string(), z.null()]),
-    rate_lock_period_months: z.union([z.number(), z.null()]),
-    lg_coverage_rate_override: z.union([z.number(), z.string(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
@@ -1669,6 +1630,7 @@ const FADetailResponse = z
     max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
+    is_expired: z.boolean(),
     edit_version_counter: z.number().int(),
     product_template_ids: z.array(z.string().uuid()),
     document_count: z.number().int(),
@@ -1677,12 +1639,7 @@ const FADetailResponse = z
     limit_available: z.union([z.string(), z.null()]),
     limit_breach: z.union([z.boolean(), z.null()]),
     bank_entity: z.union([z.string(), z.null()]),
-    base_rate: z.union([z.string(), z.null()]),
-    spread: z.union([z.string(), z.null()]),
     effective_rate: z.union([z.string(), z.null()]),
-    rate_type: z.union([z.string(), z.null()]),
-    rate_lock_period_months: z.union([z.number(), z.null()]),
-    lg_coverage_rate_override: z.union([z.string(), z.null()]),
     vfe_rate: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     effective_from: z.union([z.string(), z.null()]),
@@ -1789,12 +1746,7 @@ const FAPricingSnapshotResponse = z
     fa_id: z.string().uuid(),
     agreement_name: z.string(),
     edit_version_counter: z.number().int(),
-    base_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    spread: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     effective_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    rate_type: z.string(),
-    rate_lock_period_months: z.number().int(),
-    lg_coverage_rate_override: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const FAEventTypeFilter = z.enum([
@@ -2122,7 +2074,7 @@ export const schemas = {
   LegalStructure,
   PaymentTiming,
   RateBasis,
-  app__modules__product_templates__domain__enums__RateType,
+  RateType,
   CalculationModel,
   FirstInstallmentRule,
   DisbursementDerivationRule,
@@ -2154,7 +2106,6 @@ export const schemas = {
   CreateTemplateDraftRequest,
   TemplateDraftCreatedResponse,
   BankEntity,
-  app__modules__framework_agreements__domain__enums__RateType,
   CreateFARequest,
   FALifecycleStatus,
   FADraftResponse,
@@ -3399,6 +3350,53 @@ and invalidates all active sessions.`,
       },
     ],
     response: FAUtilizationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/export-csv",
+    alias:
+      "export_framework_agreements_csv_api_v1_framework_agreements_export_csv_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(FALifecycleStatus).optional().default([]),
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: z.array(z.string().uuid()).optional().default([]),
+      },
+      {
+        name: "bank_entity",
+        type: "Query",
+        schema: z.array(BankEntity).optional().default([]),
+      },
+      {
+        name: "valid_from",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "valid_until",
+        type: "Query",
+        schema: search,
+      },
+    ],
+    response: z.unknown(),
     errors: [
       {
         status: 422,

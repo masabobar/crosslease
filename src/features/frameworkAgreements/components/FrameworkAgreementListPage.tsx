@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight, Download, Plus } from "lucide-react"
+import { toast } from "sonner"
+import { ApiError } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
 import { PaginationEllipsis } from "@/components/ui/pagination"
@@ -15,6 +17,7 @@ import { buildPageNumbers } from "@/lib/pagination"
 import { FrameworkAgreementTable } from "@/features/frameworkAgreements/components/FrameworkAgreementTable"
 import { useFrameworkAgreementList } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementList"
 import { useFrameworkAgreementLcPartners } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementLcPartners"
+import { useExportFrameworkAgreementsCsv } from "@/features/frameworkAgreements/hooks/useExportFrameworkAgreementsCsv"
 import {
   useFrameworkAgreementListParams,
   PAGE_SIZES,
@@ -62,6 +65,7 @@ export default function FrameworkAgreementListPage() {
     currentUser?.role &&
     FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   )
+  const exportMutation = useExportFrameworkAgreementsCsv()
 
   const agreements = data?.items ?? []
   const total = data?.total ?? 0
@@ -77,6 +81,35 @@ export default function FrameworkAgreementListPage() {
     navigate(PATHS.FRAMEWORK_AGREEMENT_CREATE)
   }
 
+  function handleExportCsv() {
+    exportMutation.mutate(
+      {
+        ...(search.trim() ? { search: search.trim() } : {}),
+        ...(statusFilter ? { status: statusFilter } : {}),
+        ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
+      },
+      {
+        onSuccess: blob => {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = "framework-agreements.csv"
+          link.click()
+          URL.revokeObjectURL(url)
+        },
+        onError: err => {
+          toast.error(
+            err instanceof ApiError
+              ? t(`errors.${err.code}` as "errors.generic", {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")
+          )
+        },
+      }
+    )
+  }
+
   return (
     <div className="p-8">
       <div className="flex items-start justify-between">
@@ -88,16 +121,28 @@ export default function FrameworkAgreementListPage() {
             {t("list.subtitle")}
           </p>
         </div>
-        {canManageFrameworkAgreement && (
+        <div className="flex items-center gap-2">
           <Button
-            data-testid="create-framework-agreement-button"
-            onClick={handleCreateAgreement}
+            variant="outline"
+            data-testid="export-framework-agreements-csv-button"
+            onClick={handleExportCsv}
+            disabled={exportMutation.isPending}
             className="h-9 rounded-xl px-4 gap-1.5"
           >
-            <Plus size={16} />
-            {t("list.createButton")}
+            <Download size={16} />
+            {t("list.exportButton")}
           </Button>
-        )}
+          {canManageFrameworkAgreement && (
+            <Button
+              data-testid="create-framework-agreement-button"
+              onClick={handleCreateAgreement}
+              className="h-9 rounded-xl px-4 gap-1.5"
+            >
+              <Plus size={16} />
+              {t("list.createButton")}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 mt-6">

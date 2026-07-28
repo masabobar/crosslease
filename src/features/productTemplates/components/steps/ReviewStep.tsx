@@ -5,7 +5,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
-import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 type Props = {
@@ -40,10 +39,6 @@ function ReviewStep({
 }: Props) {
   const { t } = useTranslation("productTemplates")
   const values = useWatch({ control: form.control })
-
-  const npvFormula = NPV_FORMULA_OPTIONS.find(
-    o => o.ref === values.npv_formula_ref
-  )
 
   return (
     <div className="flex flex-col gap-4" data-testid="review-step">
@@ -111,14 +106,6 @@ function ReviewStep({
             }
           />
           <ReviewRow
-            label={t("fields.rateType")}
-            value={
-              values.rate_type
-                ? t(`rateTypes.${values.rate_type}` as "rateTypes.fixed")
-                : "—"
-            }
-          />
-          <ReviewRow
             label={t("fields.firstInstallmentRule")}
             value={
               values.first_installment_rule
@@ -139,21 +126,6 @@ function ReviewStep({
             }
           />
         </div>
-        <ReviewRow
-          label={t("sections.npvFormulaReference")}
-          value={
-            npvFormula ? (
-              <span className="inline-flex items-center gap-1.5">
-                {t(npvFormula.labelKey)}
-                <span className="text-xs text-muted-foreground">
-                  {npvFormula.code} · {npvFormula.version}
-                </span>
-              </span>
-            ) : (
-              "—"
-            )
-          }
-        />
       </SectionCard>
 
       <SectionCard title={t("sections.eligibility")}>
