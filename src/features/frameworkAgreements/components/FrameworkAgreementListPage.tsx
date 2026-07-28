@@ -25,6 +25,8 @@ import type {
   FAListItem,
   FALifecycleStatus,
 } from "@/features/frameworkAgreements/api/schema"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 import { PATHS, frameworkAgreementDetail } from "@/router/paths"
 
 const ALL_VALUE = "all"
@@ -55,6 +57,11 @@ export default function FrameworkAgreementListPage() {
   })
   const { data: lcPartnersData, isError: isLcPartnersError } =
     useFrameworkAgreementLcPartners()
+  const { data: currentUser } = useCurrentUser()
+  const canManageFrameworkAgreement = Boolean(
+    currentUser?.role &&
+    FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
+  )
 
   const agreements = data?.items ?? []
   const total = data?.total ?? 0
@@ -81,14 +88,16 @@ export default function FrameworkAgreementListPage() {
             {t("list.subtitle")}
           </p>
         </div>
-        <Button
-          data-testid="create-framework-agreement-button"
-          onClick={handleCreateAgreement}
-          className="h-9 rounded-xl px-4 gap-1.5"
-        >
-          <Plus size={16} />
-          {t("list.createButton")}
-        </Button>
+        {canManageFrameworkAgreement && (
+          <Button
+            data-testid="create-framework-agreement-button"
+            onClick={handleCreateAgreement}
+            className="h-9 rounded-xl px-4 gap-1.5"
+          >
+            <Plus size={16} />
+            {t("list.createButton")}
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center gap-4 mt-6">
@@ -174,7 +183,9 @@ export default function FrameworkAgreementListPage() {
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
             onRowClick={handleRowClick}
-            onCreateAgreement={handleCreateAgreement}
+            onCreateAgreement={
+              canManageFrameworkAgreement ? handleCreateAgreement : undefined
+            }
           />
         )}
       </div>
