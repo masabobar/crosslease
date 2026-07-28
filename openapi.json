@@ -6150,6 +6150,787 @@
         }
       }
     },
+    "/api/v1/document-requirement-catalogs/{catalog_id}": {
+      "patch": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Update Catalog",
+        "operationId": "update_catalog_api_v1_document_requirement_catalogs__catalog_id__patch",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateCatalogRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Get Catalog Detail",
+        "operationId": "get_catalog_detail_api_v1_document_requirement_catalogs__catalog_id__get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/document-requirement-catalogs": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Create Catalog",
+        "operationId": "create_catalog_api_v1_tenants__tenant_id__document_requirement_catalogs_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCatalogRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "List Catalogs",
+        "operationId": "list_catalogs_api_v1_tenants__tenant_id__document_requirement_catalogs_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "catalog_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/CatalogType" },
+                { "type": "null" }
+              ],
+              "title": "Catalog Type"
+            }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/requirements": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Add Requirement",
+        "operationId": "add_requirement_api_v1_document_requirement_catalogs__catalog_id__requirements_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddRequirementRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "List Requirements",
+        "operationId": "list_requirements_api_v1_document_requirement_catalogs__catalog_id__requirements_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequirementListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirements/{requirement_id}": {
+      "patch": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Update Requirement",
+        "operationId": "update_requirement_api_v1_document_requirements__requirement_id__patch",
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequirementRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirements/{requirement_id}/deactivate": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Deactivate Requirement",
+        "operationId": "deactivate_requirement_api_v1_document_requirements__requirement_id__deactivate_post",
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/objects/{object_id}/requirements": {
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Get Runtime Requirements",
+        "operationId": "get_runtime_requirements_api_v1_document_requirement_catalogs__catalog_id__objects__object_id__requirements_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Object Id"
+            }
+          },
+          {
+            "name": "object_type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Object Type" }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeRequirementSurfaceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/materialize": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Materialize Catalog",
+        "operationId": "materialize_catalog_api_v1_document_requirement_catalogs__catalog_id__materialize_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterializeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterializationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/preview": {
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Preview Catalog",
+        "operationId": "preview_catalog_api_v1_document_requirement_catalogs__catalog_id__preview_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterializationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lc/obligations/{business_object_id}": {
+      "get": {
+        "tags": ["Document Requirement Catalog — LC"],
+        "summary": "Get Lc Obligations",
+        "operationId": "get_lc_obligations_api_v1_lc_obligations__business_object_id__get",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "catalog_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "object_type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Object Type" }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LCObligationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/fulfilments/link": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Fulfilment"],
+        "summary": "Link Document",
+        "operationId": "link_document_api_v1_document_requirement_catalogs__catalog_id__fulfilments_link_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LinkDocumentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FulfilmentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/fulfilments/transition": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Fulfilment"],
+        "summary": "Transition Status",
+        "operationId": "transition_status_api_v1_document_requirement_catalogs__catalog_id__fulfilments_transition_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FulfilmentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/completeness": {
+      "get": {
+        "tags": ["Document Requirement Catalog — Fulfilment"],
+        "summary": "Get Completeness",
+        "operationId": "get_completeness_api_v1_document_requirement_catalogs__catalog_id__completeness_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          },
+          {
+            "name": "business_object_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "business_object_type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Business Object Type" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletenessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -6344,6 +7125,80 @@
         "type": "object",
         "required": ["user_id", "display_name", "email"],
         "title": "ActorSummary"
+      },
+      "AddRequirementRequest": {
+        "properties": {
+          "requirement_code": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Requirement Code"
+          },
+          "document_type_code": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Document Type Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/RequirementClassification",
+            "default": "mandatory"
+          },
+          "governance_classification": {
+            "$ref": "#/components/schemas/GovernanceClassification"
+          },
+          "source_layer": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/SourceLayer" },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Applicable Process Contexts"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/StageCategorization" },
+              { "type": "null" }
+            ]
+          },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission",
+            "default": true
+          },
+          "document_origin": {
+            "$ref": "#/components/schemas/DocumentOrigin",
+            "default": "uploaded"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_code",
+          "document_type_code",
+          "document_type_name",
+          "governance_classification",
+          "applicable_process_contexts"
+        ],
+        "title": "AddRequirementRequest"
       },
       "ApproveRejectRequest": {
         "properties": {
@@ -6825,6 +7680,206 @@
         ],
         "title": "CandidateSummary"
       },
+      "CatalogDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "requirements": {
+            "items": { "$ref": "#/components/schemas/RequirementResponse" },
+            "type": "array",
+            "title": "Requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogDetailResponse"
+      },
+      "CatalogListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_at"
+        ],
+        "title": "CatalogListItem"
+      },
+      "CatalogListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/CatalogListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "CatalogListResponse"
+      },
+      "CatalogResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogResponse"
+      },
+      "CatalogType": {
+        "type": "string",
+        "enum": ["global_default", "product_specific"],
+        "title": "CatalogType"
+      },
       "ChangeEmailRequest": {
         "properties": {
           "new_email": {
@@ -6849,6 +7904,55 @@
         "type": "object",
         "required": ["outcome"],
         "title": "CompleteReviewRequest"
+      },
+      "CompletenessResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "summary": { "type": "string", "title": "Summary" },
+          "mandatory_total": { "type": "integer", "title": "Mandatory Total" },
+          "mandatory_fulfilled": {
+            "type": "integer",
+            "title": "Mandatory Fulfilled"
+          },
+          "mandatory_pending": {
+            "type": "integer",
+            "title": "Mandatory Pending"
+          },
+          "mandatory_missing": {
+            "type": "integer",
+            "title": "Mandatory Missing"
+          },
+          "per_requirement": {
+            "items": {
+              "$ref": "#/components/schemas/PerRequirementStatusResponse"
+            },
+            "type": "array",
+            "title": "Per Requirement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "process_context",
+          "business_object_id",
+          "summary",
+          "mandatory_total",
+          "mandatory_fulfilled",
+          "mandatory_pending",
+          "mandatory_missing",
+          "per_requirement"
+        ],
+        "title": "CompletenessResponse"
       },
       "ConfirmationHistoryEntry": {
         "properties": {
@@ -6886,6 +7990,51 @@
         "type": "object",
         "required": ["items", "next_cursor"],
         "title": "ConfirmationHistoryResponse"
+      },
+      "CreateCatalogRequest": {
+        "properties": {
+          "catalog_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Catalog Name"
+          },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts"
+        ],
+        "title": "CreateCatalogRequest"
       },
       "CreateFARequest": {
         "properties": {
@@ -7383,6 +8532,11 @@
           "uploaded_at"
         ],
         "title": "DocumentListItemResponse"
+      },
+      "DocumentOrigin": {
+        "type": "string",
+        "enum": ["uploaded", "generated"],
+        "title": "DocumentOrigin"
       },
       "DownloadURLResponse": {
         "properties": {
@@ -8298,6 +9452,64 @@
         "required": ["email"],
         "title": "ForgotPasswordRequest"
       },
+      "FulfilmentResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "business_object_type": {
+            "type": "string",
+            "title": "Business Object Type"
+          },
+          "status": { "type": "string", "title": "Status" },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          },
+          "linked_document_type_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Linked Document Type Code"
+          },
+          "transition_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Transition Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_definition_id",
+          "business_object_id",
+          "business_object_type",
+          "status",
+          "linked_document_id",
+          "linked_document_type_code",
+          "transition_reason",
+          "created_at"
+        ],
+        "title": "FulfilmentResponse"
+      },
+      "GovernanceClassification": {
+        "type": "string",
+        "enum": ["operational", "compliance_sensitive", "regulatory_critical"],
+        "title": "GovernanceClassification"
+      },
       "GovernanceHistoryEventResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -8881,6 +10093,55 @@
         "required": ["first_name", "last_name", "email", "role"],
         "title": "InviteUserRequest"
       },
+      "LCObligationItem": {
+        "properties": {
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "is_mandatory": { "type": "boolean", "title": "Is Mandatory" },
+          "fulfilment_status": {
+            "type": "string",
+            "title": "Fulfilment Status"
+          },
+          "action_needed": { "type": "boolean", "title": "Action Needed" }
+        },
+        "type": "object",
+        "required": [
+          "document_type_name",
+          "is_mandatory",
+          "fulfilment_status",
+          "action_needed"
+        ],
+        "title": "LCObligationItem"
+      },
+      "LCObligationResponse": {
+        "properties": {
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "documents_status_summary": {
+            "type": "string",
+            "title": "Documents Status Summary"
+          },
+          "obligations": {
+            "items": { "$ref": "#/components/schemas/LCObligationItem" },
+            "type": "array",
+            "title": "Obligations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_object_id",
+          "process_context",
+          "documents_status_summary",
+          "obligations"
+        ],
+        "title": "LCObligationResponse"
+      },
       "LCPortalDocumentItem": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -9097,6 +10358,42 @@
         "enum": ["loan_credit", "true_sale"],
         "title": "LegalStructure"
       },
+      "LinkDocumentRequest": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "business_object_type": {
+            "type": "string",
+            "title": "Business Object Type"
+          },
+          "linked_document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Linked Document Id"
+          },
+          "linked_document_type_code": {
+            "type": "string",
+            "title": "Linked Document Type Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "business_object_id",
+          "business_object_type",
+          "linked_document_id",
+          "linked_document_type_code"
+        ],
+        "title": "LinkDocumentRequest"
+      },
       "LoginRequest": {
         "properties": {
           "email": { "type": "string", "format": "email", "title": "Email" },
@@ -9147,6 +10444,93 @@
         "type": "object",
         "required": ["anchor", "a_value", "b_value", "match"],
         "title": "MatchingEvidenceItem"
+      },
+      "MaterializationResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "effective_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/MaterializedRequirementResponse"
+            },
+            "type": "array",
+            "title": "Effective Requirements"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "process_context",
+          "effective_requirements",
+          "total"
+        ],
+        "title": "MaterializationResponse"
+      },
+      "MaterializeRequest": {
+        "properties": {
+          "process_context": { "type": "string", "title": "Process Context" }
+        },
+        "type": "object",
+        "required": ["process_context"],
+        "title": "MaterializeRequest"
+      },
+      "MaterializedRequirementResponse": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "document_type_code": {
+            "type": "string",
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "classification": { "type": "string", "title": "Classification" },
+          "governance_classification": {
+            "type": "string",
+            "title": "Governance Classification"
+          },
+          "source_layer": { "type": "string", "title": "Source Layer" },
+          "stage_categorization": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Stage Categorization"
+          },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission"
+          },
+          "document_origin": { "type": "string", "title": "Document Origin" }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "requirement_code",
+          "document_type_code",
+          "document_type_name",
+          "classification",
+          "governance_classification",
+          "source_layer",
+          "stage_categorization",
+          "applicable_process_contexts",
+          "blocks_submission",
+          "document_origin"
+        ],
+        "title": "MaterializedRequirementResponse"
       },
       "MergeHistoryResponse": {
         "properties": {
@@ -9962,6 +11346,26 @@
         "enum": ["advance", "arrears"],
         "title": "PaymentTiming"
       },
+      "PerRequirementStatusResponse": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "classification": { "type": "string", "title": "Classification" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "requirement_code",
+          "classification",
+          "status"
+        ],
+        "title": "PerRequirementStatusResponse"
+      },
       "PlatformModuleEntry": {
         "properties": {
           "key": { "type": "string", "title": "Key" },
@@ -10160,6 +11564,106 @@
         "required": ["street", "city", "postal_code", "country"],
         "title": "RegisteredAddressInput",
         "description": "Address as submitted by a client. All fields mandatory except state_region."
+      },
+      "RequirementClassification": {
+        "type": "string",
+        "enum": ["mandatory", "optional", "conditional"],
+        "title": "RequirementClassification"
+      },
+      "RequirementListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/RequirementResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "RequirementListResponse"
+      },
+      "RequirementResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "document_type_code": {
+            "type": "string",
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/RequirementClassification"
+          },
+          "governance_classification": {
+            "$ref": "#/components/schemas/GovernanceClassification"
+          },
+          "source_layer": { "$ref": "#/components/schemas/SourceLayer" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/StageCategorization" },
+              { "type": "null" }
+            ]
+          },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission"
+          },
+          "document_origin": { "$ref": "#/components/schemas/DocumentOrigin" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "sort_order": { "type": "integer", "title": "Sort Order" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_id",
+          "requirement_code",
+          "document_type_code",
+          "document_type_name",
+          "description",
+          "classification",
+          "governance_classification",
+          "source_layer",
+          "applicable_process_contexts",
+          "stage_categorization",
+          "blocks_submission",
+          "document_origin",
+          "is_active",
+          "sort_order",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RequirementResponse"
       },
       "ResendInvitationRequest": {
         "properties": {
@@ -10434,6 +11938,83 @@
         ],
         "title": "RoleHistoryEntry"
       },
+      "RuntimeRequirementItem": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "classification": { "type": "string", "title": "Classification" },
+          "source_layer": { "type": "string", "title": "Source Layer" },
+          "stage_categorization": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Stage Categorization"
+          },
+          "fulfilment_status": {
+            "type": "string",
+            "title": "Fulfilment Status"
+          },
+          "is_blocking": { "type": "boolean", "title": "Is Blocking" },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission"
+          },
+          "document_origin": { "type": "string", "title": "Document Origin" }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "requirement_code",
+          "document_type_name",
+          "classification",
+          "source_layer",
+          "stage_categorization",
+          "fulfilment_status",
+          "is_blocking",
+          "blocks_submission",
+          "document_origin"
+        ],
+        "title": "RuntimeRequirementItem"
+      },
+      "RuntimeRequirementSurfaceResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "completeness_summary": {
+            "type": "string",
+            "title": "Completeness Summary"
+          },
+          "requirements": {
+            "items": { "$ref": "#/components/schemas/RuntimeRequirementItem" },
+            "type": "array",
+            "title": "Requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "business_object_id",
+          "process_context",
+          "completeness_summary",
+          "requirements"
+        ],
+        "title": "RuntimeRequirementSurfaceResponse"
+      },
       "SeedPackage": {
         "type": "string",
         "enum": ["standard_retail_bank", "minimal_sandbox"],
@@ -10658,6 +12239,16 @@
         "type": "object",
         "required": ["partner_type", "full_name", "date_of_birth", "country"],
         "title": "SoleProprietorIdentityInput"
+      },
+      "SourceLayer": {
+        "type": "string",
+        "enum": ["default", "override", "supplement", "deactivated"],
+        "title": "SourceLayer"
+      },
+      "StageCategorization": {
+        "type": "string",
+        "enum": ["submission", "approval", "disbursement_readiness"],
+        "title": "StageCategorization"
       },
       "SubjectType": {
         "type": "string",
@@ -11384,6 +12975,37 @@
         "required": ["email"],
         "title": "TestSessionRequest"
       },
+      "TransitionStatusRequest": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "business_object_type": {
+            "type": "string",
+            "title": "Business Object Type"
+          },
+          "new_status": { "type": "string", "title": "New Status" },
+          "transition_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Transition Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "business_object_id",
+          "business_object_type",
+          "new_status"
+        ],
+        "title": "TransitionStatusRequest"
+      },
       "UboCompletenessStatus": {
         "type": "string",
         "enum": ["missing", "partial", "complete"],
@@ -11475,6 +13097,40 @@
         "type": "object",
         "required": ["new_access_valid_until", "reason"],
         "title": "UpdateAuditorAccessPeriodRequest"
+      },
+      "UpdateCatalogRequest": {
+        "properties": {
+          "catalog_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Catalog Name"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array", "minItems": 1 },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          }
+        },
+        "type": "object",
+        "title": "UpdateCatalogRequest"
       },
       "UpdateFARequest": {
         "properties": {
@@ -11626,6 +13282,62 @@
           "validation_rule_set_id"
         ],
         "title": "UpdateOrchestrationRequest"
+      },
+      "UpdateRequirementRequest": {
+        "properties": {
+          "document_type_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 255, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Document Type Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "classification": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RequirementClassification" },
+              { "type": "null" }
+            ]
+          },
+          "governance_classification": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/GovernanceClassification" },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array", "minItems": 1 },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/StageCategorization" },
+              { "type": "null" }
+            ]
+          },
+          "blocks_submission": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Blocks Submission"
+          },
+          "document_origin": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocumentOrigin" },
+              { "type": "null" }
+            ]
+          },
+          "sort_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Sort Order"
+          }
+        },
+        "type": "object",
+        "title": "UpdateRequirementRequest"
       },
       "UpdateTemplateDraftRequest": {
         "properties": {
