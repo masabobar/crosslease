@@ -54,7 +54,6 @@ describe("CreateFARequestSchema", () => {
     expect(() =>
       CreateFARequestSchema.parse({
         ...validCreateRequest,
-        lg_coverage_rate_override: 4.3,
         vfe_rate: 2.5,
         valid_until: "2028-06-01",
         special_conditions: "Pending credit review",
@@ -66,6 +65,14 @@ describe("CreateFARequestSchema", () => {
     expect(() =>
       CreateFARequestSchema.parse({ ...validCreateRequest, vfe_rate: 150 })
     ).toThrow()
+  })
+
+  it("strips lg_coverage_rate_override — not in v9's field list (CR PRD1042-1552 A4)", () => {
+    const parsed = CreateFARequestSchema.parse({
+      ...validCreateRequest,
+      lg_coverage_rate_override: 4.3,
+    }) as Record<string, unknown>
+    expect(parsed.lg_coverage_rate_override).toBeUndefined()
   })
 
   it.each([
@@ -173,12 +180,7 @@ describe("UpdateFARequestSchema", () => {
       UpdateFARequestSchema.parse({
         agreement_name: "RV-SSKM-2026-002",
         max_volume_eur: 30000000,
-        base_rate: 4.5,
-        spread: 0.6,
-        rate_type: "floating",
         effective_rate: 5.1,
-        rate_lock_period_months: 24,
-        lg_coverage_rate_override: 4.4,
         valid_from: "2026-06-01",
         valid_until: "2029-06-01",
         special_conditions: "Reviewed annually",
@@ -199,21 +201,15 @@ describe("UpdateFARequestSchema", () => {
     expect(() => UpdateFARequestSchema.parse({})).not.toThrow()
   })
 
-  it("rejects an unknown rate_type", () => {
-    expect(() =>
-      UpdateFARequestSchema.parse({ rate_type: "unknown_rate" })
-    ).toThrow()
+  it("strips rate_type — pricing trimmed to effective_rate only (CR PRD1042-1552 A1-A3)", () => {
+    const parsed = UpdateFARequestSchema.parse({
+      rate_type: "unknown_rate",
+    }) as Record<string, unknown>
+    expect(parsed.rate_type).toBeUndefined()
   })
 
-  it.each([
-    ["base_rate", 30],
-    ["spread", 20],
-    ["rate_lock_period_months", 400],
-    ["max_volume_eur", 0],
-  ])("rejects out-of-range %s", (field, value) => {
-    expect(() =>
-      UpdateFARequestSchema.parse({ [field as string]: value })
-    ).toThrow()
+  it("rejects a non-positive max_volume_eur", () => {
+    expect(() => UpdateFARequestSchema.parse({ max_volume_eur: 0 })).toThrow()
   })
 
   it("rejects a justification shorter than 30 characters", () => {
@@ -251,11 +247,7 @@ describe("EditFrameworkAgreementFormSchema", () => {
   const validEditForm = {
     agreement_name: "RV-SSKM-2026-002",
     max_volume_eur: 30000000,
-    base_rate: 4.5,
-    spread: 0.6,
-    rate_type: "floating",
     effective_rate: 5.1,
-    rate_lock_period_months: 24,
     valid_from: "2026-06-01",
     product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
     justification: "Adjusting envelope after annual credit review",
@@ -506,12 +498,7 @@ describe("FADetailResponseSchema", () => {
     limit_available: null,
     limit_breach: null,
     bank_entity: null,
-    base_rate: null,
-    spread: null,
     effective_rate: null,
-    rate_type: null,
-    rate_lock_period_months: null,
-    lg_coverage_rate_override: null,
     vfe_rate: null,
     special_conditions: null,
     effective_from: null,
@@ -536,11 +523,7 @@ describe("FADetailResponseSchema", () => {
       FADetailResponseSchema.parse({
         ...baseDetail,
         bank_entity: "sparkasse",
-        base_rate: 4.25,
-        spread: 0.5,
         effective_rate: 4.75,
-        rate_type: "fixed",
-        rate_lock_period_months: 12,
         vfe_rate: "1.5000",
         created_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
         created_by_name: "Vincent Brooke",
@@ -560,6 +543,22 @@ describe("FADetailResponseSchema", () => {
     const rest = { ...baseDetail } as Record<string, unknown>
     delete rest.id
     expect(() => FADetailResponseSchema.parse(rest)).toThrow()
+  })
+
+  it("strips base_rate/spread/rate_type/rate_lock_period_months/lg_coverage_rate_override — trimmed to effective_rate + vfe_rate (CR PRD1042-1552 A1-A4)", () => {
+    const parsed = FADetailResponseSchema.parse({
+      ...baseDetail,
+      base_rate: 4.25,
+      spread: 0.5,
+      rate_type: "fixed",
+      rate_lock_period_months: 12,
+      lg_coverage_rate_override: 4.3,
+    }) as Record<string, unknown>
+    expect(parsed.base_rate).toBeUndefined()
+    expect(parsed.spread).toBeUndefined()
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.rate_lock_period_months).toBeUndefined()
+    expect(parsed.lg_coverage_rate_override).toBeUndefined()
   })
 })
 

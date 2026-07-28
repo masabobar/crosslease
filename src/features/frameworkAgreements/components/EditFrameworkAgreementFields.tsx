@@ -44,6 +44,7 @@ function EditFrameworkAgreementFields({
         resolveMsg={resolveMsg}
         idPrefix="edit_"
         testIdPrefix="edit-"
+        mode="edit"
       />
 
       <SectionCard title={t("wizard.validityTemplates.validityWindowSection")}>

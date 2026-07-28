@@ -78,15 +78,6 @@ function ReviewStep({ form, documents }: Props) {
             value={values.rate_lock_period_months ?? "—"}
           />
           <ReviewRow
-            label={t("fields.lgCoverageRateOverride")}
-            value={
-              values.lg_coverage_rate_override !== undefined &&
-              !Number.isNaN(values.lg_coverage_rate_override)
-                ? `${values.lg_coverage_rate_override}%`
-                : "—"
-            }
-          />
-          <ReviewRow
             label={t("fields.vfeRate")}
             value={
               values.vfe_rate !== undefined && !Number.isNaN(values.vfe_rate)

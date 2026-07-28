@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { FAListItem } from "@/features/frameworkAgreements/api/schema"
 import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
+import { getFrameworkAgreementDisplayStatus } from "@/features/frameworkAgreements/utils"
 
 const COL_AGREEMENT = "flex-1 min-w-[180px]"
 const COL_LC = "w-[240px] shrink-0"
@@ -120,41 +121,49 @@ function FrameworkAgreementTable({
         ))}
 
       {!isLoading &&
-        agreements.map(item => (
-          <div
-            key={item.id}
-            data-testid={`framework-agreement-row-${item.id}`}
-            onClick={() => onRowClick?.(item)}
-            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
-          >
-            <div className={`${COL_AGREEMENT} p-2`}>
-              <p className="text-sm font-medium truncate text-foreground leading-tight">
-                {item.agreement_name}
-              </p>
+        agreements.map(item => {
+          const displayStatus = getFrameworkAgreementDisplayStatus(
+            item.status,
+            item.valid_until
+          )
+          return (
+            <div
+              key={item.id}
+              data-testid={`framework-agreement-row-${item.id}`}
+              onClick={() => onRowClick?.(item)}
+              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+            >
+              <div className={`${COL_AGREEMENT} p-2`}>
+                <p className="text-sm font-medium truncate text-foreground leading-tight">
+                  {item.agreement_name}
+                </p>
+              </div>
+              <div className={`${COL_LC} p-2`}>
+                <span className="text-sm text-foreground truncate">
+                  {item.lc_partner_name ?? "—"}
+                </span>
+              </div>
+              <div className={`${COL_STATUS} p-2`}>
+                <Badge variant={FA_STATUS_BADGE_VARIANT[displayStatus]}>
+                  {t(`statuses.${displayStatus}`)}
+                </Badge>
+              </div>
+              <div className={`${COL_VALID_FROM} p-2`}>
+                <span className="text-sm text-foreground">
+                  {item.valid_from}
+                </span>
+              </div>
+              <div className={`${COL_VALID_UNTIL} p-2`}>
+                <span className="text-sm text-foreground">
+                  {item.valid_until ?? t("fields.openEnded")}
+                </span>
+              </div>
+              <div className="shrink-0 p-2 flex items-center justify-center">
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </div>
             </div>
-            <div className={`${COL_LC} p-2`}>
-              <span className="text-sm text-foreground truncate">
-                {item.lc_partner_name ?? "—"}
-              </span>
-            </div>
-            <div className={`${COL_STATUS} p-2`}>
-              <Badge variant={FA_STATUS_BADGE_VARIANT[item.status]}>
-                {t(`statuses.${item.status}`)}
-              </Badge>
-            </div>
-            <div className={`${COL_VALID_FROM} p-2`}>
-              <span className="text-sm text-foreground">{item.valid_from}</span>
-            </div>
-            <div className={`${COL_VALID_UNTIL} p-2`}>
-              <span className="text-sm text-foreground">
-                {item.valid_until ?? t("fields.openEnded")}
-              </span>
-            </div>
-            <div className="shrink-0 p-2 flex items-center justify-center">
-              <ChevronRight size={16} className="text-muted-foreground" />
-            </div>
-          </div>
-        ))}
+          )
+        })}
     </div>
   )
 }

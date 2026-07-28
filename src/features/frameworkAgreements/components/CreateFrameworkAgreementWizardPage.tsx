@@ -148,7 +148,6 @@ export default function CreateFrameworkAgreementWizardPage() {
         rate_type: values.rate_type,
         effective_rate: values.effective_rate,
         rate_lock_period_months: values.rate_lock_period_months,
-        lg_coverage_rate_override: values.lg_coverage_rate_override,
         vfe_rate: values.vfe_rate,
         valid_from: values.valid_from,
         valid_until: values.valid_until || undefined,

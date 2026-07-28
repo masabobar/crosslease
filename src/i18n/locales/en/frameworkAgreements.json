@@ -30,7 +30,8 @@
     "draft": "Draft",
     "active": "Active",
     "suspended": "Suspended",
-    "terminated": "Terminated"
+    "terminated": "Terminated",
+    "expired": "Expired"
   },
   "rateTypes": {
     "fixed": "Fixed",
@@ -54,7 +55,6 @@
     "rateType": "Rate type",
     "effectiveRate": "Effective rate",
     "rateLockPeriodMonths": "Rate lock period",
-    "lgCoverageRateOverride": "LG-specific coverage rate override",
     "vfeRate": "Early-repayment penalty (VFE)",
     "validFrom": "Valid from",
     "validUntil": "Valid until",
@@ -93,7 +93,6 @@
       "spreadHint": "Permitted range: -5.0% to 15.0%.",
       "effectiveRateHint": "For Fixed and Floating types, this should equal base rate plus spread.",
       "rateLockPeriodHint": "Permitted range: 1 to 360 months.",
-      "coverageOverrideHint": "Overrides the standard product template rate where applicable.",
       "vfeRateHint": "Flat early-repayment penalty rate for this leasing company. Prefilled from the leasing company default; override per agreement."
     },
     "validityTemplates": {

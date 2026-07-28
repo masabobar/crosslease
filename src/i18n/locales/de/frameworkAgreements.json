@@ -30,7 +30,8 @@
     "draft": "Entwurf",
     "active": "Aktiv",
     "suspended": "Ausgesetzt",
-    "terminated": "Beendet"
+    "terminated": "Beendet",
+    "expired": "Abgelaufen"
   },
   "rateTypes": {
     "fixed": "Fest",
@@ -54,7 +55,6 @@
     "rateType": "Zinsart",
     "effectiveRate": "Effektivzins",
     "rateLockPeriodMonths": "Zinsbindungsfrist",
-    "lgCoverageRateOverride": "LG-spezifischer Deckungssatz (Override)",
     "vfeRate": "Vorfälligkeitsentschädigung (VFE)",
     "validFrom": "Gültig ab",
     "validUntil": "Gültig bis",
@@ -93,7 +93,6 @@
       "spreadHint": "Zulässiger Bereich: -5,0 % bis 15,0 %.",
       "effectiveRateHint": "Bei Fest- und Variabelzins sollte dies Basiszins plus Spread entsprechen.",
       "rateLockPeriodHint": "Zulässiger Bereich: 1 bis 360 Monate.",
-      "coverageOverrideHint": "Überschreibt den Standard-Deckungssatz der Produktvorlage, sofern anwendbar.",
       "vfeRateHint": "Pauschale Vorfälligkeitsentschädigung für diese Leasinggesellschaft. Wird aus dem Standardwert der Leasinggesellschaft vorbelegt; pro Vereinbarung überschreibbar."
     },
     "validityTemplates": {
