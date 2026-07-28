@@ -90,7 +90,8 @@
       "subtitle": "Set the agreement validity window and select which product templates are permitted under this agreement.",
       "validityWindowSection": "Validity window",
       "templatesSection": "Allowed products templates",
-      "templatesHint": "Only published templates within your tenant are shown. Select at least one."
+      "templatesHint": "Only published templates within your tenant are shown. Select at least one.",
+      "templatesEmpty": "No product templates are available yet. Only templates with a published version that is valid today can be selected."
     },
     "conditions": {
       "title": "Special conditions",
