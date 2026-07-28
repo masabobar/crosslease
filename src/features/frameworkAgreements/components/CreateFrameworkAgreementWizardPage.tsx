@@ -55,6 +55,13 @@ export default function CreateFrameworkAgreementWizardPage() {
   const navigate = useNavigate()
 
   const [step, setStep] = useState<FrameworkAgreementWizardStep>("identity")
+  // Steps the user has actually opened. "Save as draft" has to validate the whole
+  // form (CreateFARequest takes every field in one POST — there is no partial
+  // draft), but flagging fields on steps nobody has reached yet reads as premature
+  // validation (PRD1042-1653), so those errors are dropped before they render.
+  const [visitedSteps, setVisitedSteps] = useState<
+    ReadonlySet<FrameworkAgreementWizardStep>
+  >(new Set(["identity"]))
   const [documents, setDocuments] = useState<FrameworkAgreementDocumentDraft[]>(
     []
   )
@@ -89,16 +96,21 @@ export default function CreateFrameworkAgreementWizardPage() {
   const isFirstStep = currentIndex === 0
   const isReviewStep = step === "review"
 
+  function goToStep(next: FrameworkAgreementWizardStep) {
+    setStep(next)
+    setVisitedSteps(previous => new Set(previous).add(next))
+  }
+
   async function handleNext() {
     const fields = STEP_FIELDS[step]
     const valid = fields.length === 0 || (await form.trigger(fields))
     if (!valid) return
-    setStep(ORDERED_STEPS[currentIndex + 1])
+    goToStep(ORDERED_STEPS[currentIndex + 1])
   }
 
   function handleBack() {
     if (isFirstStep) return
-    setStep(ORDERED_STEPS[currentIndex - 1])
+    goToStep(ORDERED_STEPS[currentIndex - 1])
   }
 
   function handleCancel() {
@@ -122,8 +134,15 @@ export default function CreateFrameworkAgreementWizardPage() {
     const formValid = await form.trigger()
 
     if (!formValid) {
+      const unvisitedFields = ORDERED_STEPS.filter(
+        s => !visitedSteps.has(s)
+      ).flatMap(s => STEP_FIELDS[s])
+      if (unvisitedFields.length > 0) form.clearErrors(unvisitedFields)
+
+      // Only jump to a step the user has already seen — the toast covers the rest,
+      // and those steps surface their own errors when the user reaches them.
       const invalidStep = firstStepWithFieldError()
-      if (invalidStep) setStep(invalidStep)
+      if (invalidStep) goToStep(invalidStep)
       toast.error(t("wizard.incompleteDraft"))
       return
     }
