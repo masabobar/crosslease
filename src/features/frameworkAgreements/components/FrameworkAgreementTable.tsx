@@ -124,7 +124,7 @@ function FrameworkAgreementTable({
         agreements.map(item => {
           const displayStatus = getFrameworkAgreementDisplayStatus(
             item.status,
-            item.valid_until
+            item.is_expired
           )
           return (
             <div

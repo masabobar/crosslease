@@ -52,30 +52,12 @@ function ReviewStep({ form, documents }: Props) {
             }
           />
           <ReviewRow
-            label={t("fields.baseRate")}
-            value={
-              values.base_rate !== undefined ? `${values.base_rate}%` : "—"
-            }
-          />
-          <ReviewRow
-            label={t("fields.spread")}
-            value={values.spread !== undefined ? `${values.spread}%` : "—"}
-          />
-          <ReviewRow
-            label={t("fields.rateType")}
-            value={values.rate_type ? t(`rateTypes.${values.rate_type}`) : "—"}
-          />
-          <ReviewRow
             label={t("fields.effectiveRate")}
             value={
               values.effective_rate !== undefined
                 ? `${values.effective_rate}%`
                 : "—"
             }
-          />
-          <ReviewRow
-            label={t("fields.rateLockPeriodMonths")}
-            value={values.rate_lock_period_months ?? "—"}
           />
           <ReviewRow
             label={t("fields.vfeRate")}

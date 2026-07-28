@@ -95,7 +95,7 @@ export default function FrameworkAgreementDetailPage() {
 
   const displayStatus = getFrameworkAgreementDisplayStatus(
     data.status,
-    data.valid_until
+    data.is_expired
   )
 
   return (

@@ -36,11 +36,7 @@ const validCreateRequest = {
   lc_partner_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
   bank_entity: "sparkasse",
   max_volume_eur: 25000000,
-  base_rate: 4.25,
-  spread: 0.5,
-  rate_type: "fixed",
   effective_rate: 4.75,
-  rate_lock_period_months: 12,
   valid_from: "2026-06-01",
   product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
 }
@@ -80,10 +76,7 @@ describe("CreateFARequestSchema", () => {
     "lc_partner_id",
     "bank_entity",
     "max_volume_eur",
-    "base_rate",
-    "spread",
-    "rate_type",
-    "rate_lock_period_months",
+    "effective_rate",
     "valid_from",
     "product_template_ids",
   ])("rejects a payload missing required field %s", field => {
@@ -98,16 +91,19 @@ describe("CreateFARequestSchema", () => {
     ).toThrow()
   })
 
-  it("rejects base_rate outside 0-25", () => {
-    expect(() =>
-      CreateFARequestSchema.parse({ ...validCreateRequest, base_rate: 30 })
-    ).toThrow()
-  })
-
-  it("rejects spread outside -5 to 15", () => {
-    expect(() =>
-      CreateFARequestSchema.parse({ ...validCreateRequest, spread: 20 })
-    ).toThrow()
+  it("strips base_rate/spread/rate_type/rate_lock_period_months — create takes one hand-entered rate (CR PRD1042-1552 A1-A2)", () => {
+    const parsed = CreateFARequestSchema.parse({
+      ...validCreateRequest,
+      base_rate: 4.25,
+      spread: 0.5,
+      rate_type: "fixed",
+      rate_lock_period_months: 12,
+    }) as Record<string, unknown>
+    expect(parsed.base_rate).toBeUndefined()
+    expect(parsed.spread).toBeUndefined()
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.rate_lock_period_months).toBeUndefined()
+    expect(parsed.effective_rate).toBe(4.75)
   })
 
   it("rejects an empty product_template_ids array", () => {
@@ -138,12 +134,7 @@ describe("FADraftResponseSchema", () => {
     currency: "EUR",
     status: "draft",
     max_volume_eur: 25000000,
-    base_rate: 4.25,
-    spread: 0.5,
     effective_rate: 4.75,
-    rate_type: "fixed",
-    rate_lock_period_months: 12,
-    lg_coverage_rate_override: null,
     vfe_rate: null,
     valid_from: "2026-06-01",
     valid_until: null,
@@ -157,6 +148,20 @@ describe("FADraftResponseSchema", () => {
 
   it("accepts a valid draft response", () => {
     expect(() => FADraftResponseSchema.parse(validResponse)).not.toThrow()
+  })
+
+  // Regression: the BE trimmed these out of FADraftResponse under CR A1/A4. While the
+  // schema still declared them required, every create/activate/update threw on parse.
+  it("does not require the trimmed pricing fields the BE no longer returns", () => {
+    const parsed = FADraftResponseSchema.parse(validResponse) as Record<
+      string,
+      unknown
+    >
+    expect(parsed.base_rate).toBeUndefined()
+    expect(parsed.spread).toBeUndefined()
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.rate_lock_period_months).toBeUndefined()
+    expect(parsed.lg_coverage_rate_override).toBeUndefined()
   })
 
   it("rejects an unknown status", () => {
@@ -339,6 +344,7 @@ describe("FAListItemSchema / FAListResponseSchema", () => {
     lc_partner_name: "New Group Trade",
     bank_entity: "sparkasse",
     status: "active",
+    is_expired: false,
     valid_from: "2026-06-01",
     valid_until: null,
     utilization_pct: null,
@@ -486,6 +492,7 @@ describe("FADetailResponseSchema", () => {
     lc_partner_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
     lc_partner_name: "New Group Trade",
     status: "active",
+    is_expired: false,
     currency: "EUR",
     max_volume_eur: 25000000,
     valid_from: "2026-06-01",

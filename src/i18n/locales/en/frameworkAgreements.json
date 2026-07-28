@@ -3,6 +3,7 @@
     "title": "Framework agreements",
     "subtitle": "Credit envelopes governing Financings executed with each Leasing Company",
     "createButton": "Create agreement",
+    "exportButton": "Export CSV",
     "filters": {
       "searchPlaceholder": "Search",
       "allStatuses": "All statuses",
@@ -33,11 +34,6 @@
     "terminated": "Terminated",
     "expired": "Expired"
   },
-  "rateTypes": {
-    "fixed": "Fixed",
-    "floating": "Floating",
-    "euribor_plus_spread": "EURIBOR + Spread"
-  },
   "documentTypes": {
     "original_agreement": "Original agreement",
     "addendum": "Addendum",
@@ -51,10 +47,7 @@
     "currency": "Currency",
     "maxVolumeEur": "Max volume",
     "baseRate": "Base rate",
-    "spread": "Spread",
-    "rateType": "Rate type",
     "effectiveRate": "Effective rate",
-    "rateLockPeriodMonths": "Rate lock period",
     "vfeRate": "Early-repayment penalty (VFE)",
     "validFrom": "Valid from",
     "validUntil": "Valid until",
@@ -90,9 +83,6 @@
       "creditEnvelopeSection": "Credit envelope",
       "pricingSection": "Pricing (inherited by financings)",
       "maxVolumeHint": "Hard ceiling on total disbursable amount under this agreement.",
-      "spreadHint": "Permitted range: -5.0% to 15.0%.",
-      "effectiveRateHint": "For Fixed and Floating types, this should equal base rate plus spread.",
-      "rateLockPeriodHint": "Permitted range: 1 to 360 months.",
       "vfeRateHint": "Flat early-repayment penalty rate for this leasing company. Prefilled from the leasing company default; override per agreement."
     },
     "validityTemplates": {

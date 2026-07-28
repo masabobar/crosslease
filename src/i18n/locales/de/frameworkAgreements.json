@@ -3,6 +3,7 @@
     "title": "Rahmenvereinbarungen",
     "subtitle": "Kreditrahmen, die Finanzierungen mit jeder Leasinggesellschaft regeln",
     "createButton": "Vereinbarung erstellen",
+    "exportButton": "CSV exportieren",
     "filters": {
       "searchPlaceholder": "Suche",
       "allStatuses": "Alle Status",
@@ -33,11 +34,6 @@
     "terminated": "Beendet",
     "expired": "Abgelaufen"
   },
-  "rateTypes": {
-    "fixed": "Fest",
-    "floating": "Variabel",
-    "euribor_plus_spread": "EURIBOR + Spread"
-  },
   "documentTypes": {
     "original_agreement": "Originalvereinbarung",
     "addendum": "Nachtrag",
@@ -51,10 +47,7 @@
     "currency": "Währung",
     "maxVolumeEur": "Maximales Volumen",
     "baseRate": "Basiszins",
-    "spread": "Spread",
-    "rateType": "Zinsart",
     "effectiveRate": "Effektivzins",
-    "rateLockPeriodMonths": "Zinsbindungsfrist",
     "vfeRate": "Vorfälligkeitsentschädigung (VFE)",
     "validFrom": "Gültig ab",
     "validUntil": "Gültig bis",
@@ -90,9 +83,6 @@
       "creditEnvelopeSection": "Kreditrahmen",
       "pricingSection": "Preisgestaltung (von Finanzierungen übernommen)",
       "maxVolumeHint": "Feste Obergrenze für das gesamte auszahlbare Volumen unter dieser Vereinbarung.",
-      "spreadHint": "Zulässiger Bereich: -5,0 % bis 15,0 %.",
-      "effectiveRateHint": "Bei Fest- und Variabelzins sollte dies Basiszins plus Spread entsprechen.",
-      "rateLockPeriodHint": "Zulässiger Bereich: 1 bis 360 Monate.",
       "vfeRateHint": "Pauschale Vorfälligkeitsentschädigung für diese Leasinggesellschaft. Wird aus dem Standardwert der Leasinggesellschaft vorbelegt; pro Vereinbarung überschreibbar."
     },
     "validityTemplates": {

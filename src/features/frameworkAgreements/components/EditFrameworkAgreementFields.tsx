@@ -39,12 +39,10 @@ function EditFrameworkAgreementFields({
     <div className="flex flex-col gap-4" data-testid="edit-fa-fields">
       <EnvelopePricingFields
         register={register}
-        control={control}
         errors={errors}
         resolveMsg={resolveMsg}
         idPrefix="edit_"
         testIdPrefix="edit-"
-        mode="edit"
       />
 
       <SectionCard title={t("wizard.validityTemplates.validityWindowSection")}>
