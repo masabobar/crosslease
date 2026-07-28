@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { UseFormReturn } from "react-hook-form"
-import { Controller, useFormState } from "react-hook-form"
+import { Controller, useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,6 +29,7 @@ function IdentityStep({ form }: Props) {
   const { data: currentUser } = useCurrentUser()
   const resolveMsg = useResolveFrameworkAgreementFieldError()
 
+  const selectedLcName = useWatch({ control, name: "lc_partner_name" })
   const [lcSearch, setLcSearch] = useState("")
   const { options: lcOptions } = useLcPartnerOptions(
     currentUser?.tenant_id ?? null,
@@ -76,8 +77,15 @@ function IdentityStep({ form }: Props) {
           control={control}
           name="lc_partner_id"
           render={({ field }) => {
+            // lcOptions is search-filtered, so once the search text changes the
+            // selected partner drops out of it. Falling back to the label already
+            // stored in lc_partner_name keeps the selection visible instead of
+            // rendering an empty input over a set lc_partner_id.
             const selectedOption =
-              lcOptions.find(o => o.value === field.value) ?? null
+              lcOptions.find(o => o.value === field.value) ??
+              (field.value
+                ? { value: field.value, label: selectedLcName ?? "" }
+                : null)
             return (
               <Combobox
                 items={lcOptions}

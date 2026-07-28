@@ -94,8 +94,11 @@ export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
 export const EditFrameworkAgreementFormSchema = z
   .object({
     agreement_name: z.string().min(1, "required").max(200),
-    max_volume_eur: z.number().gt(0, "required"),
-    effective_rate: z.number(),
+    // `{ error: "required" }` covers the missing/NaN case — an empty number input
+    // registered with valueAsNumber yields NaN, and without this Zod's untranslated
+    // default ("Invalid input: expected number, received NaN") reaches the UI.
+    max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
+    effective_rate: z.number({ error: "required" }),
     vfe_rate: z.number().min(0).max(100).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
@@ -418,8 +421,10 @@ export const FrameworkAgreementWizardFormSchema = z
     lc_partner_id: z.string().min(1, "required"),
     lc_partner_name: z.string().optional(),
     bank_entity: requiredEnum(BankEntitySchema.options),
-    max_volume_eur: z.number().gt(0, "required"),
-    effective_rate: z.number(),
+    // See EditFrameworkAgreementFormSchema — `{ error: "required" }` keeps Zod's
+    // untranslated NaN/undefined message out of the UI for empty number inputs.
+    max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
+    effective_rate: z.number({ error: "required" }),
     vfe_rate: z.number().min(0).max(100).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
