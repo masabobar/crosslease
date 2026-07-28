@@ -90,7 +90,8 @@
       "subtitle": "Legen Sie den Gültigkeitszeitraum fest und wählen Sie die für diese Vereinbarung zulässigen Produktvorlagen aus.",
       "validityWindowSection": "Gültigkeitszeitraum",
       "templatesSection": "Zulässige Produktvorlagen",
-      "templatesHint": "Es werden nur veröffentlichte Vorlagen innerhalb Ihres Mandanten angezeigt. Wählen Sie mindestens eine aus."
+      "templatesHint": "Es werden nur veröffentlichte Vorlagen innerhalb Ihres Mandanten angezeigt. Wählen Sie mindestens eine aus.",
+      "templatesEmpty": "Es sind noch keine Produktvorlagen verfügbar. Nur Vorlagen mit einer veröffentlichten Version, die heute gültig ist, können ausgewählt werden."
     },
     "conditions": {
       "title": "Sonderbedingungen",

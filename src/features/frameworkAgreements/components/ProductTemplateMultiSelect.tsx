@@ -11,6 +11,7 @@ type Props = {
 
 function ProductTemplateMultiSelect({ value, onChange, error }: Props) {
   const { t } = useTranslation("frameworkAgreements")
+  const { t: tCommon } = useTranslation("common")
   const { data, isLoading, isError } = useSelectableProductTemplates()
 
   const options = data?.items ?? []
@@ -20,11 +21,22 @@ function ProductTemplateMultiSelect({ value, onChange, error }: Props) {
   }
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">…</p>
+    return <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
   }
 
   if (isError) {
     return <p className="text-sm text-destructive">{t("errors.generic")}</p>
+  }
+
+  if (options.length === 0) {
+    return (
+      <p
+        className="text-sm text-muted-foreground"
+        data-testid="product-template-multi-select-empty"
+      >
+        {t("wizard.validityTemplates.templatesEmpty")}
+      </p>
+    )
   }
 
   return (
