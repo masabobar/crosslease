@@ -7,11 +7,20 @@ import type { FAListItem } from "@/features/frameworkAgreements/api/schema"
 import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 import { getFrameworkAgreementDisplayStatus } from "@/features/frameworkAgreements/utils"
 
-const COL_AGREEMENT = "flex-1 min-w-[180px]"
-const COL_LC = "w-[240px] shrink-0"
-const COL_STATUS = "w-[110px] shrink-0"
-const COL_VALID_FROM = "w-[110px] shrink-0"
-const COL_VALID_UNTIL = "w-[110px] shrink-0"
+// Widths mirror the FA list design (Figma node 1:9673, table frame 1:9695): Agreement
+// 200, Leasing company 284, Status 130, Valid from 120, Valid until 120, row action 32.
+// The design's Utilization (120) and Limit breach (130) columns are deliberately absent —
+// utilization_pct and limit_breach are on FAListItem but the BE returns null for both
+// until Limit Management ships (see Q-022).
+// Leasing company is the flexible column so the page's full-width layout has somewhere to
+// put slack: agreement codes are effectively fixed-length while partner names are not.
+// Same one-flexible-text-column shape as AuditTable and DuplicateQueueTable.
+const COL_AGREEMENT = "w-[200px] shrink-0"
+const COL_LC = "flex-1 min-w-[284px]"
+const COL_STATUS = "w-[130px] shrink-0"
+const COL_VALID_FROM = "w-[120px] shrink-0"
+const COL_VALID_UNTIL = "w-[120px] shrink-0"
+const COL_ACTION = "w-[32px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
@@ -65,7 +74,7 @@ function FrameworkAgreementTable({
         >
           {t("list.table.columns.validUntil")}
         </div>
-        <div className="shrink-0 w-8" />
+        <div className={COL_ACTION} />
       </div>
 
       {isLoading && (
@@ -90,7 +99,7 @@ function FrameworkAgreementTable({
               <div className={`${COL_VALID_UNTIL} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-16" />
               </div>
-              <div className="shrink-0 w-8" />
+              <div className={COL_ACTION} />
             </div>
           ))}
         </div>
@@ -158,7 +167,9 @@ function FrameworkAgreementTable({
                   {item.valid_until ?? t("fields.openEnded")}
                 </span>
               </div>
-              <div className="shrink-0 p-2 flex items-center justify-center">
+              <div
+                className={`${COL_ACTION} p-2 flex items-center justify-center`}
+              >
                 <ChevronRight size={16} className="text-muted-foreground" />
               </div>
             </div>
