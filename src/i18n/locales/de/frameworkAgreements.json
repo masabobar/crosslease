@@ -282,7 +282,7 @@
   },
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
-    "validUntilBeforeFrom": "„Gültig bis“ muss am oder nach „Gültig ab“ liegen",
+    "validUntilBeforeFrom": "„Gültig bis“ muss nach „Gültig ab“ liegen",
     "FA_NOT_FOUND": "Diese Rahmenvereinbarung konnte nicht gefunden werden.",
     "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft existiert bereits eine Vereinbarung mit diesem Namen.",
     "FA_TEMPLATE_NOT_PUBLISHED": "Eine der ausgewählten Produktvorlagen ist nicht veröffentlicht.",

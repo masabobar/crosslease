@@ -94,8 +94,11 @@ export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
 export const EditFrameworkAgreementFormSchema = z
   .object({
     agreement_name: z.string().min(1, "required").max(200),
-    max_volume_eur: z.number().gt(0, "required"),
-    effective_rate: z.number(),
+    // `{ error: "required" }` covers the missing/NaN case — an empty number input
+    // registered with valueAsNumber yields NaN, and without this Zod's untranslated
+    // default ("Invalid input: expected number, received NaN") reaches the UI.
+    max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
+    effective_rate: z.number({ error: "required" }),
     vfe_rate: z.number().min(0).max(100).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
@@ -105,10 +108,13 @@ export const EditFrameworkAgreementFormSchema = z
     expected_version: z.number().int(),
   })
   .superRefine((data, ctx) => {
+    // `<=`, not `<`: UpdateFARequest rejects valid_until == valid_from
+    // ("valid_until must be after valid_from"), so equal dates must fail here too
+    // rather than reaching the API as a 422.
     if (
       data.valid_until !== undefined &&
       data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_until <= data.valid_from
     ) {
       ctx.addIssue({
         code: "custom",
@@ -415,8 +421,10 @@ export const FrameworkAgreementWizardFormSchema = z
     lc_partner_id: z.string().min(1, "required"),
     lc_partner_name: z.string().optional(),
     bank_entity: requiredEnum(BankEntitySchema.options),
-    max_volume_eur: z.number().gt(0, "required"),
-    effective_rate: z.number(),
+    // See EditFrameworkAgreementFormSchema — `{ error: "required" }` keeps Zod's
+    // untranslated NaN/undefined message out of the UI for empty number inputs.
+    max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
+    effective_rate: z.number({ error: "required" }),
     vfe_rate: z.number().min(0).max(100).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
@@ -424,10 +432,12 @@ export const FrameworkAgreementWizardFormSchema = z
     product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
   })
   .superRefine((data, ctx) => {
+    // `<=` mirrors CreateFARequest's own validator (valid_until must be *after*
+    // valid_from) — with `<`, equal dates passed the FE and 422'd at the API.
     if (
       data.valid_until !== undefined &&
       data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_until <= data.valid_from
     ) {
       ctx.addIssue({
         code: "custom",

@@ -298,13 +298,24 @@ describe("EditFrameworkAgreementFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts valid_until on or after valid_from", () => {
+  it("accepts valid_until after valid_from", () => {
     expect(() =>
       EditFrameworkAgreementFormSchema.parse({
         ...validEditForm,
         valid_until: "2029-06-01",
       })
     ).not.toThrow()
+  })
+
+  // UpdateFARequest raises "valid_until must be after valid_from" on equal dates,
+  // so the form must reject them rather than let the API 422 (PRD1042-1652).
+  it("rejects valid_until equal to valid_from", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        valid_until: validEditForm.valid_from,
+      })
+    ).toThrow()
   })
 })
 
@@ -608,13 +619,50 @@ describe("FrameworkAgreementWizardFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts valid_until on or after valid_from", () => {
+  it("accepts valid_until after valid_from", () => {
     expect(() =>
       FrameworkAgreementWizardFormSchema.parse({
         ...validForm,
         valid_until: "2028-06-01",
       })
     ).not.toThrow()
+  })
+
+  // CreateFARequest raises "valid_until must be after valid_from" on equal dates
+  // (PRD1042-1652) — the wizard must not let that reach the API.
+  it("rejects valid_until equal to valid_from", () => {
+    expect(() =>
+      FrameworkAgreementWizardFormSchema.parse({
+        ...validForm,
+        valid_until: validForm.valid_from,
+      })
+    ).toThrow()
+  })
+
+  // Guards the i18n contract: resolveFrameworkAgreementFieldError only translates
+  // known message codes and returns anything else verbatim, so an untranslated Zod
+  // default here would be rendered to the user (PRD1042-1653).
+  it.each(["max_volume_eur", "effective_rate"])(
+    "reports a translatable 'required' message when %s is missing",
+    field => {
+      const payload = { ...validForm } as Record<string, unknown>
+      delete payload[field]
+      const result = FrameworkAgreementWizardFormSchema.safeParse(payload)
+      expect(result.success).toBe(false)
+      const issue = result.error!.issues.find(i => i.path[0] === field)
+      expect(issue?.message).toBe("required")
+    }
+  )
+
+  it("reports 'required' for an empty number input coerced to NaN", () => {
+    const result = FrameworkAgreementWizardFormSchema.safeParse({
+      ...validForm,
+      max_volume_eur: Number.NaN,
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error!.issues.find(i => i.path[0] === "max_volume_eur")?.message
+    ).toBe("required")
   })
 })
 
