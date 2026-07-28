@@ -788,6 +788,34 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
     ).not.toThrow()
   })
 
+  it("accepts a list item carrying a template_name", () => {
+    expect(
+      TemplateListItemSchema.parse({
+        ...validListItem,
+        template_name: "Refinancing Standard",
+      }).template_name
+    ).toBe("Refinancing Standard")
+  })
+
+  it("accepts a list item without a template_name", () => {
+    expect(
+      TemplateListItemSchema.parse(validListItem).template_name
+    ).toBeUndefined()
+  })
+
+  it("accepts a null template_name", () => {
+    expect(
+      TemplateListItemSchema.parse({ ...validListItem, template_name: null })
+        .template_name
+    ).toBeNull()
+  })
+
+  it("rejects a non-string template_name", () => {
+    expect(() =>
+      TemplateListItemSchema.parse({ ...validListItem, template_name: 42 })
+    ).toThrow()
+  })
+
   it("rejects a list item missing template_code", () => {
     const rest = { ...validListItem } as Record<string, unknown>
     delete rest.template_code
