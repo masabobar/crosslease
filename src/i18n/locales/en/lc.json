@@ -19,7 +19,8 @@
       "draft": "Draft",
       "active": "Active",
       "suspended": "Suspended",
-      "terminated": "Terminated"
+      "terminated": "Terminated",
+      "expired": "Expired"
     },
     "documentTypes": {
       "original_agreement": "Original agreement",

@@ -43,14 +43,7 @@ const STEP_FIELDS: Record<
   (keyof FrameworkAgreementWizardForm)[]
 > = {
   identity: ["agreement_name", "lc_partner_id"],
-  envelopePricing: [
-    "max_volume_eur",
-    "base_rate",
-    "spread",
-    "rate_type",
-    "effective_rate",
-    "rate_lock_period_months",
-  ],
+  envelopePricing: ["max_volume_eur", "effective_rate"],
   validityTemplates: ["valid_from", "valid_until", "product_template_ids"],
   conditions: ["special_conditions"],
   documents: [],
@@ -85,7 +78,6 @@ export default function CreateFrameworkAgreementWizardPage() {
       // Bank entity is hidden from the UI per PRD1042-1495 (A4) — only relevant for
       // syndication, out of MVP scope. Defaults to "other" like the BE column default.
       bank_entity: "other",
-      rate_type: "fixed",
       product_template_ids: [],
       special_conditions: "",
       valid_from: "",
@@ -143,12 +135,7 @@ export default function CreateFrameworkAgreementWizardPage() {
         lc_partner_id: values.lc_partner_id,
         bank_entity: values.bank_entity,
         max_volume_eur: values.max_volume_eur,
-        base_rate: values.base_rate,
-        spread: values.spread,
-        rate_type: values.rate_type,
         effective_rate: values.effective_rate,
-        rate_lock_period_months: values.rate_lock_period_months,
-        lg_coverage_rate_override: values.lg_coverage_rate_override,
         vfe_rate: values.vfe_rate,
         valid_from: values.valid_from,
         valid_until: values.valid_until || undefined,

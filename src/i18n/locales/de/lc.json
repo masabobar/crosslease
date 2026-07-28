@@ -19,7 +19,8 @@
       "draft": "Entwurf",
       "active": "Aktiv",
       "suspended": "Ausgesetzt",
-      "terminated": "Beendet"
+      "terminated": "Beendet",
+      "expired": "Abgelaufen"
     },
     "documentTypes": {
       "original_agreement": "Originalvereinbarung",
