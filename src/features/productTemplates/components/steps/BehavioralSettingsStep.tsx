@@ -4,9 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
 import type { SelectOption } from "@/components/ui/select"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
-import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   CalculationModelSchema,
@@ -16,7 +14,6 @@ import {
   LegalStructureSchema,
   PaymentTimingSchema,
   RateBasisSchema,
-  RateTypeSchema,
 } from "@/features/productTemplates/api/schema"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
@@ -73,7 +70,6 @@ function BehavioralSettingsStep({ form }: Props) {
     CalculationModelSchema.options,
     "calculationModels"
   )
-  const rateTypeOptions = optionsFor(RateTypeSchema.options, "rateTypes")
   const firstInstallmentRuleOptions = optionsFor(
     FirstInstallmentRuleSchema.options,
     "firstInstallmentRules"
@@ -90,7 +86,6 @@ function BehavioralSettingsStep({ form }: Props) {
       | "payment_timing"
       | "rate_basis"
       | "calculation_model"
-      | "rate_type"
       | "first_installment_rule"
       | "disbursement_derivation_rule",
     labelKey: string,
@@ -154,7 +149,6 @@ function BehavioralSettingsStep({ form }: Props) {
             "fields.calculationModel",
             calculationModelOptions
           )}
-          {renderSelectField("rate_type", "fields.rateType", rateTypeOptions)}
           {renderSelectField(
             "first_installment_rule",
             "fields.firstInstallmentRule",
@@ -166,47 +160,6 @@ function BehavioralSettingsStep({ form }: Props) {
             disbursementDerivationRuleOptions
           )}
         </div>
-      </SectionCard>
-
-      <SectionCard
-        title={t("sections.npvFormulaReference")}
-        subtitle={t("fields.npvFormulaReferenceHint")}
-      >
-        <Controller
-          control={control}
-          name="npv_formula_ref"
-          render={({ field }) => (
-            <RadioGroup
-              data-testid="npv-formula-radio-group"
-              value={field.value}
-              onValueChange={field.onChange}
-              className="gap-3"
-            >
-              {NPV_FORMULA_OPTIONS.map(option => (
-                <label
-                  key={option.ref}
-                  htmlFor={`npv-${option.ref}`}
-                  className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
-                >
-                  <RadioGroupItem id={`npv-${option.ref}`} value={option.ref} />
-                  <span className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground">
-                      {t(option.labelKey)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {option.code} · {option.version}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </RadioGroup>
-          )}
-        />
-        {errors.npv_formula_ref && (
-          <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.npv_formula_ref.message)}
-          </p>
-        )}
       </SectionCard>
     </div>
   )

@@ -235,8 +235,6 @@ describe("ProductTemplateWizardFormSchema", () => {
     payment_timing: "advance",
     rate_basis: "30_360",
     calculation_model: "annuity",
-    rate_type: "fixed",
-    npv_formula_ref: "NPV-FORMULA-STD-v3",
     first_installment_rule: "following_month",
     disbursement_derivation_rule: "npv",
     allowed_asset_categories: ["machinery"],
@@ -248,6 +246,16 @@ describe("ProductTemplateWizardFormSchema", () => {
 
   it("accepts a fully valid form", () => {
     expect(() => ProductTemplateWizardFormSchema.parse(validForm)).not.toThrow()
+  })
+
+  it("strips rate_type/npv_formula_ref — not user-selectable on this form (CR PRD1042-1548 B9/B10)", () => {
+    const parsed = ProductTemplateWizardFormSchema.parse({
+      ...validForm,
+      rate_type: "fixed",
+      npv_formula_ref: "NPV-FORMULA-STD-v3",
+    }) as Record<string, unknown>
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.npv_formula_ref).toBeUndefined()
   })
 
   it("accepts a form with min_term_months, max_term_months, and max_ltv_ratio omitted", () => {
