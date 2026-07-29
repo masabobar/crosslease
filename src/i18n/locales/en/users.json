@@ -482,18 +482,5 @@
     "hoursAgo": "{{count}}h ago",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}}d ago"
-  },
-  "export": {
-    "successTitle": "Export ready",
-    "successMessage": "Your file has been downloaded.",
-    "errorTitle": "Export failed",
-    "errorMessage": "Something went wrong. Please try again.",
-    "expiredTitle": "Export expired",
-    "expiredMessage": "The export expired before it could be downloaded. Please try again.",
-    "timeoutTitle": "Export timed out",
-    "timeoutMessage": "The export is taking longer than expected. Please try again."
-  },
-  "errors": {
-    "generic": "Something went wrong. Please try again."
   }
 }

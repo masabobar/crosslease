@@ -482,18 +482,5 @@
     "hoursAgo": "Vor {{count}} Std.",
     "yesterday": "Gestern",
     "daysAgo": "Vor {{count}} Tagen"
-  },
-  "export": {
-    "successTitle": "Export bereit",
-    "successMessage": "Ihre Datei wurde heruntergeladen.",
-    "errorTitle": "Export fehlgeschlagen",
-    "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-    "expiredTitle": "Export abgelaufen",
-    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut.",
-    "timeoutTitle": "Export-Zeitüberschreitung",
-    "timeoutMessage": "Der Export dauert länger als erwartet. Bitte versuchen Sie es erneut."
-  },
-  "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }
