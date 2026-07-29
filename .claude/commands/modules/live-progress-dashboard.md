@@ -3,7 +3,6 @@
 **Purpose:** Auto-update progress files during work execution for real-time visibility without running commands.
 
 **Used by:** `/execute-work`
-**Companion module:** `live-progress-sub-files.md` (per-file formats for daily-summary, weekly-report, current-status, completed, blockers)
 
 ---
 
@@ -11,7 +10,7 @@
 
 Old approach:
 
-- ❌ Must run `/project-status` to see progress
+- ❌ No single live view of progress
 - ❌ Progress files not automatically updated
 - ❌ No quick at-a-glance view
 
@@ -151,7 +150,6 @@ New approach:
 ## 🔗 Quick Links
 
 - **[Current Phase Plan](../phases/phase-2.md)**
-- **[Backlog](../../input/backlog/)**
 - **[Detailed Status](current-status.md)**
 - **[Completed Work](completed.md)**
 - **[Blockers](blockers.md)**
@@ -223,10 +221,10 @@ Sequence during a story run:
 
 ## Backward Compatibility
 
-Legacy projects without `DASHBOARD.md` still work — old progress files keep being updated. Use `/migrate-to-modular` to create the live dashboard on an existing project.
+Projects without `DASHBOARD.md` still work — the older progress files keep being updated.
 
 ---
 
 **Version:** 2.0.0 (split from original combined module)
 **Last Updated:** 2026-04-21
-**Related:** `live-progress-sub-files.md`, `execute-work-dashboard-events.md`, `execute-work-dashboard-mechanics.md`, `backlog-organization.md`
+**Related:** `execute-work-dashboard-events.md`, `execute-work-dashboard-mechanics.md`

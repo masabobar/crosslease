@@ -289,6 +289,7 @@
   },
   "errors": {
     "atLeastOneTemplate": "Select at least one Product Template",
+    "rateRange": "Enter a value between {{min}} and {{max}} %.",
     "validUntilBeforeFrom": "Valid Until must be after Valid From",
     "FA_NOT_FOUND": "This framework agreement could not be found.",
     "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company.",

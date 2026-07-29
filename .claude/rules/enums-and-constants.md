@@ -105,7 +105,6 @@ The cross-layer rule applies only when the value becomes a string identifier tha
 ## Related
 
 - `../refinext-api/` — owns wire values and their migrations
-- `.claude/rules/api-versioning.md` — when the BE changes an enum, refresh `openapi.json` + schemas + tests together
 - `.claude/rules/code-review.md` §10 — hardcoded-value review gate
 - `.claude/rules/error-handling-and-logging.md` — error codes are enums too (`errors.<CODE>` i18n keys)
 

@@ -289,6 +289,7 @@
   },
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
+    "rateRange": "Geben Sie einen Wert zwischen {{min}} und {{max}} % ein.",
     "validUntilBeforeFrom": "„Gültig bis“ muss nach „Gültig ab“ liegen",
     "FA_NOT_FOUND": "Diese Rahmenvereinbarung konnte nicht gefunden werden.",
     "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft existiert bereits eine Vereinbarung mit diesem Namen.",

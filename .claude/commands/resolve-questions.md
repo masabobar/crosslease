@@ -5,7 +5,7 @@ description: Re-open unanswered clarification questions from input/open-question
 
 # Resolve Questions Command
 
-Reads `.project-management/input/open-questions.md`, filters questions with `Status: Open`, and runs them back through the interactive Q&A loop defined in `modules/interactive-clarifications.md`. Use when you skipped questions during `/process-client-docs` (or other PM commands) and now have the answers.
+Reads `.project-management/input/open-questions.md`, filters questions with `Status: Open`, and runs them back through the interactive Q&A loop defined in `modules/interactive-clarifications.md`. Use when you skipped questions during a PM command and now have the answers.
 
 **All output must be in English only.**
 
@@ -65,7 +65,7 @@ Reads `.project-management/input/open-questions.md`, filters questions with `Sta
 
 Invoke the loop defined in `.claude/commands/modules/interactive-clarifications.md`, **STEPS B → G**. The same `AskUserQuestion` shape, `Skip` option, anonymization, and artefact-write logic apply.
 
-Two differences vs the original `/process-client-docs` invocation:
+Two differences vs the original invocation:
 
 - **Skip semantics:** when the user skips again, increment the `Skipped:` counter on the existing entry instead of creating a duplicate (the module already does this, but it's the primary path here).
 - **No file generation step preceded this.** If an `applies_to` target file no longer exists (e.g., user reorganized the backlog), log the answer as `Applied to: (orphaned — target file missing)` with a `Notes:` line, keep the entry in `Resolved` so it's traceable.
@@ -124,7 +124,6 @@ NEXT STEPS:
 - **Template:** `.project-management/templates/open-questions-template.md`
 - **Live file:** `.project-management/input/open-questions.md` (created on first skip)
 - **Rule:** `.claude/rules/anonymization.md` (free-text answer anonymization)
-- **Source command:** `.claude/commands/process-client-docs.md` (STEP 5 — initial Q&A flow)
 - **Reference:** `resolve-questions-reference.md` (worked example + edge-case detail)
 
 ---

@@ -5,7 +5,7 @@
 
 - `execute-work-implementation-continuous.md` — Sub-Agent Prompt Template + orchestrator handling + dispatch failure fallback (Continuous mode, STEP 3-A in `execute-work.md`)
 - `execute-work-implementation-paused.md` — In-line workflow (Paused mode, STEP 3-B in `execute-work.md`)
-- `execute-work-progress-updates.md` — per-mode progress-file update templates (shared)
+- `execute-work-dashboard-events.md` — DASHBOARD.md update events (shared)
 
 ---
 
@@ -36,7 +36,7 @@ Execution proceeds in one of two modes, selected per run:
 | Verify i18n (conditional)                       | `execute-work-implementation-paused.md`     | §3.5    |
 | Run tests                                       | `execute-work-implementation-paused.md`     | §3.6    |
 | Git commit                                      | `execute-work-implementation-paused.md`     | §3.7    |
-| Update progress tracking + screen-map refresh   | `execute-work-implementation-paused.md`     | §3.8    |
+| Update DASHBOARD.md                             | `execute-work-dashboard-events.md`          | §3      |
 | Story completion display                        | `execute-work-implementation-paused.md`     | §3.9    |
 | Pause for user (Paused only)                    | `execute-work-implementation-paused.md`     | §3.10   |
 
@@ -69,5 +69,4 @@ Full checklist: [`execute-work-quality-gates.md`](execute-work-quality-gates.md)
 - [`execute-work-implementation-continuous.md`](execute-work-implementation-continuous.md) — Continuous mode workflow
 - [`execute-work-implementation-paused.md`](execute-work-implementation-paused.md) — Paused mode workflow
 - [`execute-work-quality-gates.md`](execute-work-quality-gates.md) — test/coverage validation + per-domain gates
-- [`execute-work-progress-updates.md`](execute-work-progress-updates.md) — per-mode progress-file templates
 - [`execute-work-dashboard-events.md`](execute-work-dashboard-events.md) + [`-mechanics.md`](execute-work-dashboard-mechanics.md) — DASHBOARD auto-update

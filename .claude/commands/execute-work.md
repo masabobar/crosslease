@@ -45,8 +45,6 @@ Execute implementation of a phase, epic, or individual story with full automatio
 
 **For any handler / service / API change** (HTTP endpoint touched):
 
-- `.claude/rules/api-documentation.md` — Schema validation in code + matching docs (STRICT public, SOFT `@internal`)
-- `.claude/rules/api-versioning.md` — `/api/v{N}/` versioning + mandatory change-propagation (docs, schemas, ALL related tests, consumer code in same PR)
 - `.claude/rules/error-handling-and-logging.md` — Canonical envelope (`detail.code`), `ApiError.code` handling, never-swallow, no `console.*` / PII / tokens
 - `.claude/rules/security-and-auth.md` — Token handling via auth store + `@/lib/api` interceptor only, RBAC wire values, XSS hygiene, `VITE_` env safety
 
@@ -58,7 +56,6 @@ Execute implementation of a phase, epic, or individual story with full automatio
 
 - `.claude/rules/api-first.md` — Phase A contract verification before any frontend code; gaps block & file backend work
 - `.claude/rules/screen-driven-backlog.md` — One screen per story (wizard exception), `**Screen:**` + `**API Endpoints Used:**` table mandatory
-- _`.claude/rules/screen-inventory.md`_ — If project is web CMS / mobile / web-with-admin: screen-map refreshed on story completion (per STEP 3-A.4 / 3-B.11 below)
 
 **For any artifact that may carry input-document content** (PRD, scope, backlog, technical spec, status reports):
 
@@ -158,10 +155,11 @@ Store both choices. For trade-offs, see `execute-work-reference.md` → Executio
 **1A. Detect backlog structure:**
 
 ```
-if exists(".project-management/input/backlog/README.md"):
-    structure_type = "modular"      # input/backlog/phase-*.md
-else if exists(".project-management/input/backlog.md"):
-    structure_type = "monolithic"   # input/backlog.md
+# Scope lives in Jira (PRD1042). Resolve the unit from a Jira key:
+#   FE subtask (PRD1042-NNNN)  → the unit
+#   Story (PRD1042-NNN)        → resolve its `FE ` subtask (see /jira-handoff Step 2)
+#   Bug (PRD1042-NNNN)         → the unit
+# Pull the requirement text with /jira-sync if a local mirror is wanted.
 ```
 
 **1B. Read context files** — see `modules/execute-work-plan-mode.md` for the full read list per structure type.
@@ -173,9 +171,9 @@ else if exists(".project-management/input/backlog.md"):
 - List every screen the story touches (wizard = enumerate steps)
 - For each screen, list every API endpoint it calls (method + path)
 - For each endpoint, confirm doc exists, request schema covers UI inputs, response shape covers UI outputs, error states are distinguishable, auth matches
-- **Result:** ✅ contract complete (proceed to STEP 2) **OR** ⚠️ gaps documented → mark story `Blocked by: <backend story/bug>`, file the backend work via `/add-scope` or bug roadmap, and **do not exit plan mode for this story**. Move on to other stories or return to user.
+- **Result:** ✅ contract complete (proceed to STEP 2) **OR** ⚠️ gaps documented → mark story `Blocked by: <backend story/bug>`, file the backend work in Jira and note it in `input/open-questions.md`, and **do not exit plan mode for this story**. Move on to other stories or return to user.
 
-**For bugs:** read `output/bugs/bug-roadmap.md`, analyze affected component, plan fix with root-cause analysis + regression-test requirements.
+**For bugs:** read the Jira bug ticket, analyze affected component, plan fix with root-cause analysis + regression-test requirements.
 
 **Output:** approved plan + detected `structure_type`.
 
@@ -203,15 +201,15 @@ For each unit (story or bug) in scope:
 3. **Dispatch via Agent tool** with `subagent_type="general-purpose"` and the per-unit prompt from `modules/execute-work-implementation-continuous.md` §1 (Sub-agent Prompt Template). Pass:
    - Unit ID, title, type (story | bug), phase/epic (n/a for bugs)
    - Absolute path to unit file:
-     - Stories → `.project-management/output/phases/phase-N.md`
-     - Bugs → `.project-management/output/bugs/bug-roadmap.md`
+     - Stories → `output/progress/DASHBOARD.md`
+     - Bugs → the Jira ticket
    - Tracking mode (Phase Only / Complete)
    - Execution context (modular vs monolithic backlog)
 4. **Sub-agent executes the full per-unit workflow in its own clean context** — reads rules, implements, writes tests, runs tests (new schemas / stores / utils covered per `.claude/rules/testing.md`), verifies i18n + API docs + frontend contract, updates progress files, creates git commit. Returns a structured JSON summary.
 5. **Orchestrator processes the response** per `modules/execute-work-implementation-continuous.md` §2:
    - Validate gate-evidence fields (`quality_gates_passed`, `frontend_contract`, `linter`, `required_tests`, `commit_hash`). Re-classify as `blocked` if validation fails.
    - On validated `status: "completed"` → display unit summary block, log, proceed to next unit.
-   - On `status: "blocked"` (whether sub-agent returned it or orchestrator re-classified) → reconcile DASHBOARD per `execute-work-implementation-continuous.md` §2 step 5, display blocker reason and `recommended_next`, ask user `[Continue with next unit / Skip to next epic / Abort run]`. If `recommended_next` proposes filing backend work, the **orchestrator** does it via `/add-scope` or by appending to the bug roadmap, after user confirmation — the sub-agent never files anything itself.
+   - On `status: "blocked"` (whether sub-agent returned it or orchestrator re-classified) → reconcile DASHBOARD per `execute-work-implementation-continuous.md` §2 step 5, display blocker reason and `recommended_next`, ask user `[Continue with next unit / Skip to next epic / Abort run]`. If `recommended_next` proposes filing backend work, the **orchestrator** files it in Jira after user confirmation — the sub-agent never files anything itself.
 6. **Dispatch failure handling** — if the `Agent` tool itself errors (unknown subagent_type, tool refused, sub-agent crashed without producing JSON): fall back to STEP 3-B (in-line) for this unit, per `modules/execute-work-implementation-continuous.md` §3. After two consecutive dispatch failures, fall back for the remainder of the run.
 7. **Orchestrator keeps ONLY the summary** (~1KB) — no unit-level work bleeds into the next dispatch. This is the auto-reset.
 
@@ -236,19 +234,17 @@ Workflow per story (detailed in `modules/execute-work-implementation-paused.md`)
 
 1. Break down with TodoWrite.
 2. Auto-update `DASHBOARD.md` → "Currently Working On" _(modular only)_.
-3. Read context (story from phase backlog / bug from bug-roadmap). Load all applicable rules per the CRITICAL RULES list above — `modules/execute-work-implementation-continuous.md` §1 STEP 1 enumerates the conditional reading list.
+3. Read context (story or bug from its Jira ticket). Load all applicable rules per the CRITICAL RULES list above — `modules/execute-work-implementation-continuous.md` §1 STEP 1 enumerates the conditional reading list.
 4. **For frontend (web/mobile) stories:** before implementation, re-confirm Phase A from `.claude/rules/api-first.md` is still ✅ — endpoints exist, docs match, schema covers UI inputs/outputs, error states distinguishable. If any contract gap is detected now (backend changed, doc drifted), STOP, file backend gap, mark story Blocked. Do not stub the frontend.
 5. Implement following `.claude/rules/code-quality.md` (SOLID & DRY). For enum / wire-format work also apply `.claude/rules/enums-and-constants.md` (one source of truth per enum; wire values match `../refinext-api/`). For artifacts that may carry input-document content apply `.claude/rules/anonymization.md` (replace names with role labels).
 6. Write tests following `.claude/rules/testing.md` (unit tests for new Zod schemas, store logic, and utilities; for bugs, a regression test that fails without the fix).
 7. Verify i18n (if `.project-management/rules/I18N-RULES.md` exists).
 8. **If the story added/changed any HTTP endpoint:** run the complete API quality gate stack from `modules/execute-work-quality-gates.md`:
-   - `.claude/rules/api-documentation.md` — schema validation in code, typed response, doc block per `documentation-templates.md` §2.1, drift check (STRICT for public endpoints, SOFT for `@internal`)
-   - `.claude/rules/api-versioning.md` — `/api/v{N}/` path correct; if change is breaking, new major version + deprecation headers on old version; ALL tests touching this endpoint re-run and pass; Zod request + response schemas updated in same commit; consumer code (FE / mobile) updated
    - `.claude/rules/error-handling-and-logging.md` — every new/changed error code surfaced in the UI with `errors.<CODE>` i18n keys (en + de) per `api-error-display.md`
    - `.claude/rules/security-and-auth.md` — RBAC gates match BE enforcement, no tokens/PII in logs or fixtures (BE-side gates run in `../refinext-api/`)
 9. **Second-to-last step:** run tests (see `modules/execute-work-quality-gates.md`); auto-update DASHBOARD "Quality Metrics".
 10. **Final step:** git commit per `.claude/rules/git.md` (NO AI credits). Bug commits reference `BUG-XXX`.
-11. Update progress tracking (phase file + DASHBOARD auto-update + completed.md / daily-summary.md per Complete mode). **For frontend stories (Type: Frontend) with an existing `input/screens/screen-map.md`:** invoke `/screen-map` to refresh the derived API columns + Status; drift items surface in the completion summary but do not block (per `modules/execute-work-implementation-paused.md` §3.8 and `modules/execute-work-dashboard-events.md` §3.8).
+11. Update `DASHBOARD.md` per `modules/execute-work-dashboard-events.md`.
 12. Pause and ask user `[Yes / No / Skip to Epic X]`.
 
 #### Common quality gate (both modes)
@@ -299,5 +295,5 @@ Full quality-gate checklist + error handling: `execute-work-reference.md`. Auto-
 
 **Version:** 3.3.3
 **Created:** 2026-03-27
-**Updated:** 2026-05-11 (3.3.3 split implementation module into continuous + paused companions; CRITICAL RULES list expanded to cover v3.3 additions; screen-map refresh wired into post-completion)
+**Updated:** 2026-05-11 (3.3.3 split implementation module into continuous + paused companions; CRITICAL RULES list expanded to cover v3.3 additions)
 **Command Type:** Implementation Automation

@@ -2,7 +2,7 @@
 
 **Purpose:** Reusable interactive Q&A loop for any PM command that generates open clarification questions. Drives the user through questions one-by-one via `AskUserQuestion`, with an explicit **Skip** option. Skipped questions persist to `.project-management/input/open-questions.md` for later resolution via `/resolve-questions`.
 
-**Invoked by:** `/process-client-docs` (STEP 5), `/init-project` (STEP 6 post-generation gate). Documented integration targets: `/add-scope`, `/execute-work`, `/add-bug` (deferred — apply same invocation pattern).
+**Invoked by:** `/resolve-questions`. Documented integration target: `/execute-work` (deferred — apply same invocation pattern).
 
 ---
 
@@ -27,8 +27,6 @@ Upstream extraction logic emits a list of clarification questions in this schema
     - label: "JWT (client request)"
       description: "Client requested. localStorage exploitable to XSS — needs mitigation plan."
   applies_to: # files the answer should be written into
-    - input/technologies.md
-    - input/backlog/phase-1-foundation.md
   notes: "" # optional free-text context preserved on skip
 ```
 
@@ -37,13 +35,13 @@ Constraints:
 - `options` length: minimum 2, maximum 3. The loop always appends a 4th `Skip — answer later` option.
 - `category` becomes the AskUserQuestion `header` field — truncate to 12 chars.
 - Multi-select is not used (previews + multi-select don't combine — single-select only).
-- `skippable` (optional, default `true`): when `false`, the loop omits the `Skip — answer later` option. Use only for questions that gate downstream work (e.g. project type). Default behavior (`true`) is the existing `/process-client-docs` behavior — Skip is always available.
+- `skippable` (optional, default `true`): when `false`, the loop omits the `Skip — answer later` option. Use only for questions that gate downstream work (e.g. project type). Default behavior (`true`) — Skip is always available.
 
 ---
 
 ## STEP A — Build the question list
 
-Before invoking the loop, the parent command MUST produce a list of schema-shaped entries (above). `/process-client-docs` collects them during extraction (see `extraction-quality-output.md` and `extraction-by-section.md`). Other commands derive them from their own decision points.
+Before invoking the loop, the parent command MUST produce a list of schema-shaped entries (above). Commands derive them from their own decision points.
 
 Sort the list by priority: **P0 first → P1 → P2**. Within priority, preserve emission order.
 
@@ -160,11 +158,9 @@ Resolved manually later:  /resolve-questions
 
 Documented for the deferred extension wave:
 
-| Command         | Insertion point                                           | Question source                                        |
-| --------------- | --------------------------------------------------------- | ------------------------------------------------------ |
-| `/add-scope`    | After STEP 6 (story drafted), before STEP 7 (docs update) | Story acceptance criteria gaps, dependency ambiguities |
-| `/execute-work` | On `Blocked` status during STEP 3-B implementation loop   | Architecture decision required mid-implementation      |
-| `/add-bug`      | After STEP 1 intake, before STEP 4 phase assignment       | Severity / reproduction-step ambiguities               |
+| Command         | Insertion point                                         | Question source                                   |
+| --------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| `/execute-work` | On `Blocked` status during STEP 3-B implementation loop | Architecture decision required mid-implementation |
 
 Each integration follows the same pattern: emit schema-shaped questions → invoke STEPS A–G of this module.
 
@@ -176,4 +172,4 @@ Each integration follows the same pattern: emit schema-shaped questions → invo
 - **Resolution command:** `.claude/commands/resolve-questions.md` — re-runs this loop on existing `Open` questions
 - **Anonymization rule:** `.claude/rules/anonymization.md` — applied to free-text answers
 - **Doc rules:** `.claude/rules/documentation.md` §2.1 — `open-questions.md` ≤ 200 lines
-- **Parent command (initial):** `.claude/commands/process-client-docs.md` STEP 5
+- **Parent command:** `.claude/commands/resolve-questions.md`

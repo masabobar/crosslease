@@ -6,7 +6,7 @@ Companion to `resolve-questions.md`. Worked example, edge-case detail, and the p
 
 ## Worked Example
 
-**Scenario:** A week ago `/process-client-docs` ran on a client brief. The user skipped 3 of 8 questions. The user is back today with answers from a stakeholder call.
+**Scenario:** A week ago a PM command surfaced 8 clarification questions. The user skipped 3. The user is back today with answers from a stakeholder call.
 
 **State of `input/open-questions.md` (excerpted):**
 
@@ -16,7 +16,7 @@ Companion to `resolve-questions.md`. Worked example, edge-case detail, and the p
 **Status:** Open
 **Priority:** P0 (Blocker)
 **Category:** integrations
-**Asked During:** /process-client-docs on 2026-05-07
+**Asked During:** /execute-work on 2026-05-07
 **Skipped:** 2026-05-07 (1× skipped)
 
 **Question:**
@@ -67,7 +67,7 @@ Proceed? [Yes / No / Revise]
 
 **Resulting changes:**
 
-- `input/technologies.md` — line referencing `<!-- TBD: Q-002 -->` replaced with `**Email provider:** AWS SES (with SNS for bounce handling)`.
+- `src/features/frameworkAgreements/api/schema.ts` — the `<!-- TBD: Q-002 -->` note replaced with the resolved decision.
 - `input/open-questions.md`:
   - Q-002 entry removed from `## Open Questions`
   - Appended to `## Resolved Questions` with the `## Resolution Format` block (Resolved date, Answer, Applied to, Notes).
@@ -86,8 +86,7 @@ Skipped:   0
 Orphaned:  0
 
 📝 FILES MODIFIED:
-- input/technologies.md
-- input/backlog/phase-1-foundation.md
+- src/features/frameworkAgreements/api/schema.ts
 - input/open-questions.md
 
 REMAINING OPEN:
@@ -133,7 +132,7 @@ On `Answer`:
 
   **Resolved:** 2026-05-14
   **Answer:** AWS SES
-  **Applied to:** input/technologies.md, input/backlog/phase-1-foundation.md
+  **Applied to:** src/features/frameworkAgreements/api/schema.ts
   **Notes:** Client confirmed existing AWS account; SES chosen for cost + integration alignment.
   ```
 

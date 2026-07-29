@@ -1,7 +1,7 @@
 # Execute Work — Implementation Loop (Continuous Mode / Sub-Agent)
 
 **Referenced by:** `execute-work.md` STEP 3-A (Continuous mode)
-**Companion:** `execute-work-implementation-paused.md` (in-line Paused mode), `execute-work-progress-updates.md` (per-mode progress-file updates)
+**Companion:** `execute-work-implementation-paused.md` (in-line Paused mode), `execute-work-dashboard-events.md` (DASHBOARD.md updates)
 **Parent:** `execute-work-implementation.md` (overview of both modes)
 
 The orchestrator dispatches each story by calling the `Agent` tool with `subagent_type="general-purpose"` and the prompt below. The sub-agent executes the entire per-story workflow in its own clean context, then returns a strict JSON summary. The orchestrator keeps only the summary — no per-story work bleeds into the next dispatch. **This is the auto-context-reset mechanism.**
@@ -22,8 +22,8 @@ Unit:        {{UNIT_ID}} — {{UNIT_TITLE}}                # US-XXX or BUG-XXX
 Type:        {{story | bug}}
 Phase:       {{N}}                                       # for stories; "n/a" for bugs
 Epic:        {{EPIC_ID}}                                  # for stories; "n/a" for bugs
-Unit file:   {{ABSOLUTE_PATH_TO_UNIT_FILE}}              # stories: .project-management/output/phases/phase-N.md
-                                                         # bugs:    .project-management/output/bugs/bug-roadmap.md
+Unit:        {{JIRA_KEY}}                                 # FE subtask / story / bug in PRD1042
+                                                         # bugs:    the Jira ticket
 Tracking:    {{Phase Only | Complete}}
 Backlog:     {{modular | monolithic}}
 Working dir: {{CWD}}
@@ -32,7 +32,7 @@ Working dir: {{CWD}}
 AUTONOMY BOUNDARY — you may NOT do any of the following:
 ═══════════════════════════════════════════════════════════════
 
-- Do NOT call slash commands (/add-scope, /add-bug, /promote-requirement,
+- Do NOT call slash commands (
   /execute-work, etc.). Slash commands are orchestrator-level.
 - Do NOT file new backend stories or bugs yourself. On any contract gap
   per .claude/rules/api-first.md, return status:"blocked" with a clear
@@ -40,12 +40,11 @@ AUTONOMY BOUNDARY — you may NOT do any of the following:
   files it.
 - Do NOT ask the user questions. You cannot receive answers. If you
   need a decision, return status:"blocked" with a question in blockers.
-- Do NOT modify .project-management/output/bugs/bug-roadmap.md unless
+- Do NOT modify the Jira ticket unless
   this unit IS a bug fix (Type == "bug").
-- Do NOT modify .project-management/input/backlog/* (phase backlogs).
   Story content is read-only from your perspective; only the progress
-  state in phase-N.md / bug-roadmap.md / completed.md / current-status.md
-  / DASHBOARD.md is yours to update per execute-work-progress-updates.md.
+  state in the phase file / DASHBOARD.md
+  / DASHBOARD.md is yours to update per execute-work-dashboard-events.md.
 
 ═══════════════════════════════════════════════════════════════
 MANDATORY WORKFLOW — every step must complete before you return.
@@ -63,7 +62,6 @@ STEP 1 — Read context (do not skip any applicable file):
   - CLAUDE.md
 
   If unit consumes a new/changed API contract (openapi.json refreshed, BE endpoint changed):
-  - .claude/rules/api-versioning.md             (FE consequence: refresh openapi.json + update feature Zod schemas + their tests together)
   - .claude/rules/error-handling-and-logging.md (canonical envelope detail.code, ApiError.code handling, never-swallow)
   - .claude/rules/security-and-auth.md          (token handling via auth store + interceptor, RBAC wire values, VITE_ env safety)
 
@@ -73,7 +71,6 @@ STEP 1 — Read context (do not skip any applicable file):
   If frontend story (Type: Frontend per .claude/rules/screen-driven-backlog.md):
   - .claude/rules/api-first.md                  (Phase A contract verification before any frontend code)
   - .claude/rules/screen-driven-backlog.md      (one-screen-per-story + API endpoints table)
-  - .claude/rules/screen-inventory.md           (if input/screens/screen-map.md exists — derives API cols from this story's table on completion)
 
   If unit generates any artifact that may carry input-document content
   (PRD, scope, backlog edits, status, technical spec, ADR):
@@ -85,8 +82,7 @@ STEP 1 — Read context (do not skip any applicable file):
   Workflow / orchestration:
   - .claude/commands/modules/execute-work-implementation-paused.md (in-line workflow detail — same gates)
   - .claude/commands/modules/execute-work-quality-gates.md
-  - .claude/commands/modules/execute-work-progress-updates.md
-  - .claude/commands/modules/run-tests-framework-commands.md (for project test commands)
+  - .claude/commands/modules/execute-work-dashboard-events.md
 
 STEP 2 — Plan with TodoWrite (mirror the in-line §3.1 list — implement, test, i18n, run tests, commit, progress).
 
@@ -99,11 +95,11 @@ STEP 4 — Write tests per .claude/rules/testing.md:
 
 STEP 5 — Verify i18n (only if I18N-RULES.md exists).
 
-STEP 6 — If unit touched any HTTP endpoint: run api-documentation.md gate
+STEP 6 — If unit touched any HTTP endpoint: verify against openapi.json
   (schema validation in code, typed response, doc block, no drift between code/docs/tests).
 
 STEP 7 — Run tests using project-detected commands per
-  .claude/commands/modules/run-tests-framework-commands.md
+  pnpm test:run / pnpm type-check / pnpm lint
   (auto-detect package manager from lockfile: pnpm-lock.yaml → pnpm,
   yarn.lock → yarn, bun.lockb → bun, otherwise npm).
   Required gates:
@@ -112,28 +108,18 @@ STEP 7 — Run tests using project-detected commands per
     - Linter clean (no errors)
   If anything fails: fix → re-run. Loop until all gates pass OR you hit a true blocker.
 
-STEP 8 — Update progress files per execute-work-progress-updates.md and tracking mode "{{Tracking}}":
+STEP 8 — Update DASHBOARD.md per execute-work-dashboard-events.md:
   - For STORIES (Type == "story"):
-      Phase Only: phase-N.md only
-      Complete:   phase-N.md + completed.md + current-status.md (+ velocity recalc)
+      DASHBOARD.md only
       Modular backlog: also fire DASHBOARD EVENT 3 (story completed)
         per execute-work-dashboard-events.md
   - For BUGS (Type == "bug"):
-      In bug-roadmap.md: update BUG-XXX status from "Open" / "In Progress"
+      In Jira: update the bug status
       to "Fixed" with commit hash + ISO date.
       Modular backlog: fire DASHBOARD EVENT 5 (bug fixed) per
         execute-work-dashboard-events.md
-      Do NOT touch phase-N.md or completed.md for bug fixes (bugs are
+      Do NOT add a DASHBOARD story entry for bug fixes (bugs are
       tracked separately).
-
-  Screen-map refresh signal (DO NOT run /screen-map yourself):
-  - If unit_type == "story" AND the story is a frontend story
-    (Type: Frontend per .claude/rules/screen-driven-backlog.md)
-    AND .project-management/input/screens/screen-map.md exists,
-    set "screen_map_refresh_needed": true in the JSON return.
-    The orchestrator (running outside the sub-agent's clean context)
-    will invoke /screen-map after dispatch returns. The sub-agent
-    must NOT invoke /screen-map itself.
 
 STEP 9 — Git commit per .claude/rules/git.md:
   - Conventional commit (feat: / fix: / refactor: / test: / docs:)
@@ -167,7 +153,6 @@ On success:
   "commit_hash":         "abc1234",
   "files_touched":       ["path/to/file.ts", ...],
   "duration_estimate":   "Xm",
-  "screen_map_refresh_needed": true | false,    # true if frontend story AND screen-map.md exists
   "blockers":            []
 }
 
@@ -213,9 +198,7 @@ After the sub-agent returns, the orchestrator MUST:
 
 3. **`status: "completed"` (validated)** → display the standard unit-completion block (see `execute-work-implementation-paused.md` §3.9 template, adapted for stories vs bugs), log the summary, proceed to dispatch the next unit.
 
-   3a. **Screen-map refresh (frontend stories).** If the sub-agent returned `"screen_map_refresh_needed": true`, the orchestrator invokes `/screen-map` (skill) BEFORE dispatching the next unit. This regenerates the API columns and Status in `input/screens/screen-map.md` from the latest stories — keeps the consolidated screen view in sync with the backlog. If `/screen-map` reports drift items in its summary, the orchestrator surfaces them in the unit-completion block but does NOT block the run.
-
-4. **`status: "blocked"`** → display blocker reason(s) and `recommended_next`. Run reconciliation (step 5). Then ask user `[Continue with next unit / Skip to next epic / Abort run]`. If `recommended_next` proposes filing a backend story, the orchestrator (NOT the sub-agent) does so via `/add-scope` or by appending to the bug roadmap, after user confirmation.
+4. **`status: "blocked"`** → display blocker reason(s) and `recommended_next`. Run reconciliation (step 5). Then ask user `[Continue with next unit / Skip to next epic / Abort run]`. If `recommended_next` proposes filing a backend story, the orchestrator (NOT the sub-agent) files it in Jira after user confirmation.
 
 5. **DASHBOARD reconciliation (modular backlog only).** When this story produced `blocked`, malformed JSON, or a dispatch failure:
    - Revert the "Currently Working On" entry that the orchestrator wrote in STEP 3-A.2 — either clear it or replace it with the next unit being dispatched.
@@ -265,5 +248,5 @@ This keeps the framework usable even if `general-purpose` is reconfigured or una
 - `execute-work-implementation.md` — parent overview of both modes
 - `execute-work-implementation-paused.md` — in-line workflow (Paused mode)
 - `execute-work-quality-gates.md` — test/coverage validation (same gates as Paused)
-- `execute-work-progress-updates.md` — per-mode progress-file templates
+- `execute-work-dashboard-events.md` — DASHBOARD.md update events
 - `execute-work-dashboard-events.md` — DASHBOARD auto-update events

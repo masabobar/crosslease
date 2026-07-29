@@ -18,7 +18,6 @@
 **Skip for monolithic structure or if DASHBOARD.md doesn't exist:**
 
 - Falls back to standard progress tracking (phase files only)
-- User can run `/project-status` manually for reports
 
 ---
 
@@ -128,20 +127,6 @@ Example:
 ### 3.7 Story Points Completed Today counter
 
 `**Story Points Completed Today:** 8`
-
-### 3.8 Screen-map refresh (frontend stories only)
-
-**Trigger:** completed story is a frontend story (Type: Frontend per `.claude/rules/screen-driven-backlog.md`) AND `.project-management/input/screens/screen-map.md` exists.
-
-**Action:**
-
-1. The orchestrator invokes `/screen-map` (skill) AFTER §3.1–3.7 above, BEFORE dispatching the next unit. In sub-agent / Continuous mode the sub-agent does NOT invoke `/screen-map` itself — it sets `"screen_map_refresh_needed": true` in its JSON return and the orchestrator runs the refresh (full handoff documented in `execute-work-implementation-continuous.md` §2 step 3a).
-2. `/screen-map` regenerates the API endpoint columns + Status fields in the screen map from the current story tables. Hand-curated content (navigation hierarchy, screen metadata, descriptions) is preserved.
-3. If `/screen-map` reports drift (stories referencing screens not in the map, orphan screens, malformed stories, nav ↔ registry mismatches) the orchestrator surfaces a one-line note under the completed-story display: `⚠️ Screen-map drift: <N> items — see input/screens/screen-map.md §4`. Drift is informational, never blocks the run.
-
-**Skip if:** story is backend-only / bug / no `**Screen:**` field; or the project has no screen-map (API-only / simple SPA per `.claude/rules/screen-inventory.md` §1).
-
----
 
 ## EVENT 4: Phase Completed
 

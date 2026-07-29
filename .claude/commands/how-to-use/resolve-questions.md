@@ -1,9 +1,9 @@
 # Resolve Questions - Quick Guide
 
-**Use when:** You skipped clarification questions during `/process-client-docs` (or other PM commands) and now have the answers.
+**Use when:** You skipped clarification questions during a PM command and now have the answers.
 **Command:** `/resolve-questions [--priority Px | Q-NNN]`
 **Time:** 1 minute per question
-**Files affected:** `input/open-questions.md`, plus artefacts listed in each question's `Applied to:` field (e.g. `input/technologies.md`, `input/backlog/phase-N.md`)
+**Files affected:** `input/open-questions.md`, plus artefacts listed in each question's `Applied to:` field
 
 **All output must be in English only.**
 
@@ -27,7 +27,7 @@
 ```
 
 **What it does:** Same loop but filtered to P0 entries. Use before starting Phase 1 to clear all blockers.
-**When:** About to run `/init-project` or `/execute-work phase 1` and need P0 questions answered first.
+**When:** About to run `/execute-work phase 1` and need P0 questions answered first.
 
 ### 3. Resolve one specific question
 
@@ -63,7 +63,7 @@
 
 ## 🔗 Related
 
-- **Source command:** `/process-client-docs` (STEP 5 is where these questions first appear)
+- **Source:** whichever PM command surfaced the question (recorded per entry as `Asked During:`)
 - **Reusable module:** `.claude/commands/modules/interactive-clarifications.md`
 - **Template:** `.project-management/templates/open-questions-template.md`
 - **Full command spec:** `.claude/commands/resolve-questions.md` + `resolve-questions-reference.md`

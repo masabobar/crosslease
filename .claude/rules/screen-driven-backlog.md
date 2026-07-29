@@ -107,7 +107,7 @@ Modals, dialogs, and slide-over panels follow the same rule as mobile: own story
 
 ## 6. Backlog Authoring Workflow
 
-When `/process-client-docs` or `/init-project` generates a backlog with frontend phases, or when `/add-scope` adds a frontend story:
+When authoring or refining a frontend story from Jira requirements:
 
 1. **Identify all screens** in the design / specification first. Number or name them. This is the screen list.
 2. **One story per screen** (or per wizard, per §1).
@@ -143,8 +143,4 @@ In every web/mobile feature phase, this rule applies.
 
 - `.claude/rules/api-first.md` — uses the API endpoint table from §3 to gate frontend implementation start
 - `.claude/rules/documentation-templates.md` §1.1 — base user-story format that frontend stories extend
-- `.claude/rules/api-documentation.md` — what the linked endpoint docs must contain
-- `.claude/rules/screen-inventory.md` — consolidated screen map (web CMS / mobile) that derives its API columns from the tables defined here
-- `.claude/commands/add-scope.md` — slash command that enforces this template when adding frontend stories
-- `.claude/commands/process-client-docs.md` — extracts screens from designs and generates screen-driven stories
-- `.claude/commands/screen-map.md` — refreshes the consolidated screen map from these stories
+- `.claude/commands/jira-sync.md` — briefs the Jira story these are derived from
