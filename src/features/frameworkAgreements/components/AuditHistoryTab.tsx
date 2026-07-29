@@ -241,6 +241,11 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
       {activeView === "reconstruct" ? (
         <SectionCard title={t("auditHistory.reconstructTitle")}>
           <div className="flex items-end gap-2 flex-wrap">
+            {/* NOTE: native datetime-local rather than the shadcn DatePicker used for the
+                event-log filters below — GET /reconstruct takes `as_of` as a full
+                ISO8601 date-time, and DatePicker is date-only (it emits yyyy-MM-dd).
+                Convert both to a shared datetime primitive if a second such field
+                appears; one call site does not justify building one. */}
             <Input
               type="datetime-local"
               value={asOfInput}

@@ -255,7 +255,13 @@ export default function CreateFrameworkAgreementWizardPage() {
           {step === "validityTemplates" && (
             <ValidityTemplatesStep form={form} />
           )}
-          {step === "conditions" && <ConditionsStep form={form} />}
+          {step === "conditions" && (
+            <ConditionsStep
+              register={form.register}
+              errors={form.formState.errors}
+              testIdPrefix="fa-"
+            />
+          )}
           {step === "documents" && (
             <DocumentsStep
               documents={documents}

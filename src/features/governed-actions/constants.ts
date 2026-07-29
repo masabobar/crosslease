@@ -5,6 +5,19 @@ import type {
   GovernedActionStatus,
 } from "@/features/governed-actions/api/schema"
 
+// Roles that hold `governed_action:list` in refinext-api's
+// `src/app/shared/permissions/matrix.py`. front_office holds NO governed_action:*
+// permission at all, so it 403s on the pending-approvals query — it must not reach
+// the screen (PRD1042-1496). Do not reuse USER_MANAGEMENT_ALLOWED_ROLES here: that
+// list includes front_office and is wider than the permission it fronts.
+export const GOVERNED_ACTION_LIST_ALLOWED_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "support_user",
+  "auditor",
+  "bank_power_user",
+  "back_office",
+]
+
 // Mirrors ACTION_TYPE_POLICY.approve_roles in refinext-api's governed_actions/constants.py.
 // Platform-level types are approved by System Admin only; tenant-level partner_* types
 // are approved by Back Office only — System Admin is deliberately excluded from those

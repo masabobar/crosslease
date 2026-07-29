@@ -46,6 +46,17 @@ export const FRAMEWORK_AGREEMENT_WIZARD_STEPS: readonly FrameworkAgreementWizard
     "review",
   ]
 
+// The edit wizard mirrors the create steps minus "documents": the BE only permits
+// attach/detach while the agreement is in Draft (FA_DOC_IMMUTABLE), so documents stay
+// on the detail page's Templates & Documents tab.
+export type FrameworkAgreementEditStep = Exclude<
+  FrameworkAgreementWizardStep,
+  "documents"
+>
+
+export const FRAMEWORK_AGREEMENT_EDIT_STEPS: readonly FrameworkAgreementEditStep[] =
+  ["identity", "envelopePricing", "validityTemplates", "conditions", "review"]
+
 export type FrameworkAgreementDocumentDraft = {
   file: File
   documentType: FADocumentType | ""

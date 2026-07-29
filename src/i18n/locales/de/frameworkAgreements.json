@@ -232,14 +232,24 @@
     }
   },
   "edit": {
-    "dialogTitle": "Rahmenvereinbarung bearbeiten",
-    "identitySection": "Identität der Vereinbarung",
+    "title": "{{name}} bearbeiten",
+    "reviewSubtitle": "Prüfen Sie alle Änderungen, bevor Sie speichern. Sie können zu jedem Schritt zurückkehren. Eine Begründung ist erforderlich und wird im Audit-Trail gespeichert.",
     "lockedFieldHint": "Gesperrt — kann nach Verlassen des Entwurfsstatus nicht mehr geändert werden.",
     "validUntilLockedHint": "Diese Vereinbarung hat kein Enddatum. Nach dem Entwurfsstatus kann kein Enddatum mehr eingeführt werden; ein bestehendes Enddatum kann nur noch verlängert werden.",
     "templateRemovalHint": "Das Entfernen einer Vorlage wird blockiert, wenn ein laufender Finanzierungsentwurf noch darauf verweist.",
     "justification": "Begründung",
     "justificationHint": "Pflichtfeld (mind. 30 Zeichen). Wird im Prüfprotokoll gespeichert.",
-    "confirmButton": "Änderungen speichern"
+    "confirmButton": "Änderungen speichern",
+    "loading": "Vereinbarung wird geladen…",
+    "saved": "Änderungen gespeichert.",
+    "incompleteForm": "Füllen Sie die erforderlichen Felder aus, bevor Sie speichern.",
+    "backToAgreement": "Zurück zur Vereinbarung",
+    "discardDialog": {
+      "title": "Änderungen verwerfen?",
+      "description": "Ihre Änderungen an dieser Vereinbarung gehen verloren. Die Vereinbarung selbst bleibt unverändert.",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Änderungen verwerfen"
+    }
   },
   "auditHistory": {
     "viewEventLog": "Ereignisprotokoll",

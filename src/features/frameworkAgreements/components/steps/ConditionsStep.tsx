@@ -1,43 +1,56 @@
-import type { UseFormReturn } from "react-hook-form"
-import { useFormState } from "react-hook-form"
+import type { FieldErrors, UseFormRegister } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 
-type Props = {
-  form: UseFormReturn<FrameworkAgreementWizardForm>
+// Shared by the create wizard and the edit wizard — same field, same copy, only the
+// element ids differ. Generic over the form type like EnvelopePricingFields.
+export type ConditionsFormFields = {
+  special_conditions?: string
 }
 
-function ConditionsStep({ form }: Props) {
+type Props<T extends ConditionsFormFields> = {
+  register: UseFormRegister<T>
+  errors: FieldErrors<T>
+  idPrefix?: string
+  testIdPrefix?: string
+}
+
+function ConditionsStep<T extends ConditionsFormFields>({
+  register,
+  errors,
+  idPrefix = "",
+  testIdPrefix = "",
+}: Props<T>) {
   const { t } = useTranslation("frameworkAgreements")
-  const { register, control } = form
-  const { errors } = useFormState({ control })
+  const typedRegister =
+    register as unknown as UseFormRegister<ConditionsFormFields>
+  const typedErrors = errors as unknown as FieldErrors<ConditionsFormFields>
 
   return (
     <div
       className="border border-border rounded-xl bg-background p-4"
-      data-testid="fa-conditions-step"
+      data-testid={`${testIdPrefix}conditions-step`}
     >
-      <Label htmlFor="special_conditions" className="mb-2">
+      <Label htmlFor={`${idPrefix}special_conditions`} className="mb-2">
         {t("fields.specialConditions")}{" "}
         <span className="font-normal text-muted-foreground">
           {t("fields.optional")}
         </span>
       </Label>
       <Textarea
-        id="special_conditions"
-        data-testid="special-conditions-textarea"
+        id={`${idPrefix}special_conditions`}
+        data-testid={`${testIdPrefix}special-conditions-textarea`}
         className="min-h-[120px] resize-none"
         rows={5}
-        {...register("special_conditions")}
+        {...typedRegister("special_conditions")}
       />
       <p className="mt-1 text-xs text-muted-foreground">
         {t("wizard.conditions.hint")}
       </p>
-      {errors.special_conditions && (
+      {typedErrors.special_conditions && (
         <p className="mt-1 text-sm text-destructive">
-          {errors.special_conditions.message}
+          {typedErrors.special_conditions.message}
         </p>
       )}
     </div>
