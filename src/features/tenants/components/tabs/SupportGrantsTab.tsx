@@ -15,8 +15,11 @@ import {
   TenantStatusSchema,
 } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
-import { SUPPORT_USER_ROLE } from "@/features/users/types"
-import { SUPPORT_USERS_DROPDOWN_PAGE_SIZE } from "@/features/tenants/constants"
+import { SUPPORT_USER_ROLE, SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import {
+  GRANTOR_LOOKUP_PAGE_SIZE,
+  SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
+} from "@/features/tenants/constants"
 import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
 
@@ -175,6 +178,12 @@ export function SupportGrantsTab({
     role: [SUPPORT_USER_ROLE],
     per_page: SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
   })
+  // Grantors are system admins, who are absent from the support-user list above —
+  // without this the `granted by` column always fell back to a truncated UUID.
+  const { data: grantorsData } = useUsers({
+    role: [SYSTEM_ADMIN_ROLE],
+    per_page: GRANTOR_LOOKUP_PAGE_SIZE,
+  })
 
   // Fail closed: an unknown/error policy state must not allow grant creation.
   const supportAccessEnabled = isAccessPolicyError
@@ -182,7 +191,10 @@ export function SupportGrantsTab({
     : (accessPolicy?.support_read_only_access.enabled ?? true)
 
   const userMap = new Map<string, UserListItem>(
-    (usersData?.users ?? []).map(u => [u.id, u])
+    [...(usersData?.users ?? []), ...(grantorsData?.users ?? [])].map(u => [
+      u.id,
+      u,
+    ])
   )
 
   const newGrantButton =
