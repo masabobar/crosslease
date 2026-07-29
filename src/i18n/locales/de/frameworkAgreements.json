@@ -134,6 +134,7 @@
       "confirm": "Entwurf verwerfen"
     },
     "incompleteDraft": "Füllen Sie die Pflichtfelder aus, bevor Sie als Entwurf speichern.",
+    "documentsPartiallyAttached": "{{count}} Dokument(e) konnten nicht angehängt werden ({{names}}). Die Vereinbarung wurde als Entwurf gespeichert — hängen Sie sie auf der Detailseite der Vereinbarung an.",
     "createdSuccess": {
       "title": "Vereinbarung als Entwurf gespeichert",
       "subtitle": "{{name}} wurde gespeichert. Prüfen Sie die Details und aktivieren Sie die Vereinbarung, wenn Sie bereit sind. Vor der Aktivierung muss mindestens ein unterzeichnetes Dokument angehängt werden.",

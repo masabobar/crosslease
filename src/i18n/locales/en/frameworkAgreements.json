@@ -134,6 +134,7 @@
       "confirm": "Discard draft"
     },
     "incompleteDraft": "Complete the required fields before saving as draft.",
+    "documentsPartiallyAttached": "{{count}} document(s) could not be attached ({{names}}). The agreement was saved as a draft — attach them from the agreement detail page.",
     "createdSuccess": {
       "title": "Agreement saved as draft",
       "subtitle": "{{name}} has been saved. Review the details and activate the agreement when you are ready. At least one signed document must be attached before activation.",
