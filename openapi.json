@@ -12603,6 +12603,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "template_code": { "type": "string", "title": "Template Code" },
+          "template_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Name"
+          },
           "current_version": {
             "anyOf": [
               { "$ref": "#/components/schemas/TemplateCurrentVersionSummary" },
@@ -12616,7 +12620,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "template_code", "current_version", "created_at"],
+        "required": [
+          "id",
+          "template_code",
+          "template_name",
+          "current_version",
+          "created_at"
+        ],
         "title": "TemplateListItem"
       },
       "TemplateListResponse": {
