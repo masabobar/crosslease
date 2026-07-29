@@ -99,6 +99,10 @@ function SuspendFrameworkAgreementDialog({
                   value={field.value ?? undefined}
                   onChange={field.onChange}
                   captionLayout="dropdown"
+                  // Suspension is always immediate: backdating would falsify the audit
+                  // record and future scheduling isn't supported by the API
+                  minDate={new Date()}
+                  maxDate={new Date()}
                 />
               )}
             />
