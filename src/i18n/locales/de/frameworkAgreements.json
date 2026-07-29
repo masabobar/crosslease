@@ -40,9 +40,16 @@
     "side_letter": "Nebenabrede",
     "other": "Andere"
   },
+  "bankEntities": {
+    "sparkasse": "Sparkasse",
+    "landesbank_1": "Landesbank 1",
+    "landesbank_2": "Landesbank 2",
+    "other": "Sonstige"
+  },
   "fields": {
     "agreementName": "Vereinbarungsname",
     "leasingCompany": "Leasinggesellschaft",
+    "bankEntity": "Bankeinheit",
     "leasingCompanyNoResults": "Keine Leasinggesellschaften gefunden",
     "currency": "Währung",
     "maxVolumeEur": "Maximales Volumen",
