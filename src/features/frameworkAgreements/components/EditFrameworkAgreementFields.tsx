@@ -1,6 +1,7 @@
 import type { UseFormReturn } from "react-hook-form"
 import { Controller, useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { addDays, parseISO } from "date-fns"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -29,9 +30,11 @@ function EditFrameworkAgreementFields({
   const validFrom = useWatch({ control, name: "valid_from" })
   const resolveMsg = useResolveFrameworkAgreementFieldError()
 
+  // Day after Valid From, matching the wizard: the API rejects valid_until equal to
+  // valid_from ("must be after"), so offering the same day only produces a 422.
   const validUntilMin = isDraft
     ? validFrom
-      ? new Date(validFrom)
+      ? addDays(parseISO(validFrom), 1)
       : undefined
     : validUntilMinDate
 

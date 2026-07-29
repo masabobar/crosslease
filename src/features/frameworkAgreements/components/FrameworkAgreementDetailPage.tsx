@@ -384,6 +384,8 @@ export default function FrameworkAgreementDetailPage() {
         open={activateDialogOpen}
         onOpenChange={setActivateDialogOpen}
         frameworkAgreementId={data.id}
+        validFrom={data.valid_from}
+        validUntil={data.valid_until}
       />
       <SuspendFrameworkAgreementDialog
         open={suspendDialogOpen}

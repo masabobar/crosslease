@@ -1,6 +1,7 @@
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
+import { parseISO, subDays } from "date-fns"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -25,15 +26,27 @@ type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   frameworkAgreementId: string
+  validFrom: string
+  validUntil: string | null
 }
 
 function ActivateFrameworkAgreementDialog({
   open,
   onOpenChange,
   frameworkAgreementId,
+  validFrom,
+  validUntil,
 }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useActivateFrameworkAgreement()
+
+  // Mirrors what the API accepts: effective_from must be >= valid_from and strictly
+  // before valid_until. Deliberately not floored at today — backdating to valid_from is
+  // a legitimate activation the API allows.
+  const effectiveFromMin = parseISO(validFrom)
+  const effectiveFromMax = validUntil
+    ? subDays(parseISO(validUntil), 1)
+    : undefined
 
   const {
     handleSubmit,
@@ -128,6 +141,8 @@ function ActivateFrameworkAgreementDialog({
                   data-testid="activate-effective-from"
                   value={field.value}
                   onChange={field.onChange}
+                  minDate={effectiveFromMin}
+                  maxDate={effectiveFromMax}
                   captionLayout="dropdown"
                 />
               )}
