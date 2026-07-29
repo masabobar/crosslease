@@ -45,7 +45,16 @@ function SuspendFrameworkAgreementDialog({
 
   function onSubmit(values: SuspendFARequest) {
     mutation.mutate(
-      { id: frameworkAgreementId, body: values },
+      {
+        id: frameworkAgreementId,
+        body: {
+          ...values,
+          // DatePicker emits "yyyy-MM-dd"; the API expects a timezone-aware datetime
+          effective_from: values.effective_from
+            ? new Date(values.effective_from).toISOString()
+            : null,
+        },
+      },
       {
         onSuccess: () => handleClose(),
         onError: err => {
