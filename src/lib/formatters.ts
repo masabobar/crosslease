@@ -56,6 +56,29 @@ export function getInitials(firstName: string, lastName: string): string {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
+// Monetary amounts follow the design's "€ 25.000.000,00" — German digit grouping with the
+// symbol leading. No single Intl locale produces that (de-DE trails the symbol, en-GB
+// groups with commas), so the formatted parts are reassembled. Deliberately not tied to
+// the UI language: these are the bank's own figures and must read identically in both.
+const CURRENCY_LOCALE = "de-DE"
+
+export function formatCurrency(amount: number, currencyCode: string): string {
+  const parts = new Intl.NumberFormat(CURRENCY_LOCALE, {
+    style: "currency",
+    currency: currencyCode,
+    currencyDisplay: "narrowSymbol",
+  }).formatToParts(amount)
+  const symbol =
+    parts.find(part => part.type === "currency")?.value ?? currencyCode
+  // Drops the literal separating symbol and digits; group/decimal separators keep their
+  // own part types, so only the symbol-adjacent whitespace is removed.
+  const digits = parts
+    .filter(part => part.type !== "currency" && part.type !== "literal")
+    .map(part => part.value)
+    .join("")
+  return `${symbol} ${digits}`
+}
+
 /**
  * Converts a dot-separated event type identifier into a human-readable label.
  * "auth.login_success" → "Login Success"

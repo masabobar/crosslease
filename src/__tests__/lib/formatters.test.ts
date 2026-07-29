@@ -6,6 +6,7 @@ import {
   getInitials,
   formatEventType,
   formatActionType,
+  formatCurrency,
 } from "@/lib/formatters"
 
 function mockT(key: string, options?: Record<string, unknown>): string {
@@ -110,5 +111,46 @@ describe("formatActionType", () => {
 
   it("title-cases a single word", () => {
     expect(formatActionType("created")).toBe("Created")
+  })
+})
+
+describe("formatCurrency", () => {
+  const fmt = (amount: number, code = "EUR") => formatCurrency(amount, code)
+
+  it("formats the design's reference amount", () => {
+    expect(fmt(25000000)).toBe("€ 25.000.000,00")
+  })
+
+  it("groups thousands with dots and separates decimals with a comma", () => {
+    expect(fmt(3456)).toBe("€ 3.456,00")
+  })
+
+  it("always shows two decimal places", () => {
+    expect(fmt(1)).toBe("€ 1,00")
+    expect(fmt(0)).toBe("€ 0,00")
+  })
+
+  it("rounds to two decimals", () => {
+    expect(fmt(1234.567)).toBe("€ 1.234,57")
+  })
+
+  it("keeps decimals the caller already provided", () => {
+    expect(fmt(1234.5)).toBe("€ 1.234,50")
+  })
+
+  it("leads with the symbol rather than trailing it as de-DE would", () => {
+    expect(fmt(100).startsWith("€")).toBe(true)
+  })
+
+  it("handles negative amounts", () => {
+    expect(fmt(-500)).toBe("€ -500,00")
+  })
+
+  it("uses the symbol of the given currency code", () => {
+    expect(fmt(10, "USD")).toBe("$ 10,00")
+  })
+
+  it("falls back to the raw code when it has no distinct symbol", () => {
+    expect(fmt(10, "CHF")).toBe("CHF 10,00")
   })
 })

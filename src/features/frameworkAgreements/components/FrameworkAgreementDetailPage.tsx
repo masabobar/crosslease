@@ -19,7 +19,7 @@ import { UtilizationTab } from "@/features/frameworkAgreements/components/Utiliz
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
 import { AuditHistoryTab } from "@/features/frameworkAgreements/components/AuditHistoryTab"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
-import { formatDateTime } from "@/lib/formatters"
+import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
@@ -226,6 +226,16 @@ export default function FrameworkAgreementDetailPage() {
                   label={t("fields.leasingCompany")}
                   value={data.lc_partner_name ?? "—"}
                 />
+                <ReviewRow
+                  label={t("fields.bankEntity")}
+                  value={
+                    data.bank_entity
+                      ? t(
+                          `bankEntities.${data.bank_entity}` as "bankEntities.sparkasse"
+                        )
+                      : "—"
+                  }
+                />
                 <ReviewRow label={t("fields.currency")} value={data.currency} />
               </div>
             </div>
@@ -239,7 +249,7 @@ export default function FrameworkAgreementDetailPage() {
               <div className="p-4 flex flex-col gap-4">
                 <ReviewRow
                   label={t("fields.maxVolumeEur")}
-                  value={data.max_volume_eur}
+                  value={formatCurrency(data.max_volume_eur, data.currency)}
                 />
                 <ReviewRow label={t("fields.currency")} value={data.currency} />
               </div>
@@ -350,7 +360,10 @@ export default function FrameworkAgreementDetailPage() {
         </TabsContent>
 
         <TabsContent value="utilization">
-          <UtilizationTab frameworkAgreementId={data.id} />
+          <UtilizationTab
+            frameworkAgreementId={data.id}
+            currency={data.currency}
+          />
         </TabsContent>
 
         <TabsContent value="financings">

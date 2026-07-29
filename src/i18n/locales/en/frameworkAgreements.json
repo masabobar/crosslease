@@ -40,9 +40,16 @@
     "side_letter": "Side letter",
     "other": "Other"
   },
+  "bankEntities": {
+    "sparkasse": "Sparkasse",
+    "landesbank_1": "Landesbank 1",
+    "landesbank_2": "Landesbank 2",
+    "other": "Other"
+  },
   "fields": {
     "agreementName": "Agreement name",
     "leasingCompany": "Leasing company",
+    "bankEntity": "Bank entity",
     "leasingCompanyNoResults": "No leasing companies found",
     "currency": "Currency",
     "maxVolumeEur": "Max volume",
