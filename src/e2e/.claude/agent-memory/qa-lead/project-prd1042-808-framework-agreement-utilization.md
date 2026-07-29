@@ -78,3 +78,20 @@ Epic folder: `PRD1042-22-Framework Agreement`.
 **Note:** BE work per CR is UI-only hiding — backend endpoint contract stays intact. FE team may optionally pause list-view surfacing work per PO note (US 11.9 Dev-in-progress).
 
 See also [[project-cr-prd1042-1495-framework-agreement-cr]].
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas applied:**
+
+- **Header** — CR v10 acknowledgement note added; [CR-PENDING B4] on entire utilization surface.
+- **Entire suite** `Blocked-by-CR-pending` — v10 §6 US 11.9 proposes REAL FINANCINGS (not Limit Management) as source of truth for used-against-approved figure. Current 808 scenarios source everything from Limit Management (spec-anchored). Marked as B4-provisional. AC-01 tagged `@cr-pending-b4`; other scenarios inherit note.
+- **CRITICAL non-gating invariant CONFIRMED** — v10 §6 US 11.9: "No operation is blocked, refused, or gated on the strength of the utilisation figure." AC-11 (Validation & Gating Engine blocking on Limit Breach) already classified `separate-feature` — belongs to Validation Engine suite, not this surfacing story. Header display remains informational only.
+- **State model** — 4 stored values (Draft/Active/Suspended/Terminated) reinforced. AC-03 Outline (Suspended / Terminated → limitAvailableFlag = false) remains correct.
+
+**No `[CR-REMOVED — coordinate spec deletion]`** items.
+
+**No new dependencies.**
+
+See also [[project-cr-prd1042-22-reconciliation-v10]].

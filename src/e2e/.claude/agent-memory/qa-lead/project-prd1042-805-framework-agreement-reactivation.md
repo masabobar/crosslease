@@ -60,3 +60,20 @@ Epic folder: `PRD1042-22-Framework Agreement`.
 **New / reused D-\* dependencies:** D-CR-B5-Rollback (introduced by this CR).
 
 See also [[project-cr-prd1042-1495-framework-agreement-cr]].
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas applied:**
+
+- **Header** — CR v10 acknowledgement note added confirming §4.3 (Suspended is a UI dead-end in November) + §6 US 11.6/11.17 (no reactivation control, no four-eyes in MVP UI; both retained in model).
+- **AC-11** `Blocked-by-CR-pending` — 5-role 404 Outline tagged `@cr-pending-b5` pending Philipp Maute's decision on 4 contested permission-matrix cells.
+- **State model** — 4 stored values (Draft/Active/Suspended/Terminated) reinforced.
+- **`D-CR-B5-Rollback`** — pre-existing dependency (from CR 1495) remains the tracked toggle for future UI re-enablement.
+
+**No `[CR-REMOVED — coordinate spec deletion]`** items.
+
+**No new dependencies.**
+
+See also [[project-cr-prd1042-22-reconciliation-v10]].

@@ -6,6 +6,7 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (21 ACs, description present with LC permission matrix + field visibility spec + edge cases, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 12 of 21 | Blocked: 1 (D-LimitMgmt-Degraded) | Excluded: 8 (edge-case, separate-feature, NFR, or bundled — scope filter table only)
 Figma design: Node 109:8688 on canvas 100:10990 (LC Portal summary page), file aQGn5OLEjEGJO7xGzFikP5. Design-blind on this run — Figma MCP is quota-exhausted on the Professional View seat, REST API is unreachable without shell access, and no rendered PNG for this node was present in `src/e2e/fixtures/figma-e11/rendered-nodes/` at generation time. Test copy anchors to the spec (which the pipeline convention treats as authoritative for this run).
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): B2/v10 note — LC Portal list is already filtered to Active + Suspended only (Draft/Terminated hidden); past `valid_until` state derivation (Expired) is bank-side (see 801 AC-CR-B2). LC sees only own-LC agreements; the state model 4-values invariant is honoured server-side before DTO assembly. Bank-internal hidden field inventory (AC-04/AC-07) already excludes `Base Rate`, `Spread`, `Rate Type`, `LG-Specific Coverage Rate Override` — all removed from the bank contract per v10 A1/A4; the LC-side hidden inventory remains correct. No new scenarios required.
 
 ---
 

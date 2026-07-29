@@ -4,49 +4,55 @@ Generated: 2026-07-23
 Story: PRD1042-799 — US 11.1 | Framework Agreement | Framework Agreement Creation (Draft)
 Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (17 ACs + 1 CR-derived AC, description present, stakeholder-reviewed, Dev in progress)
-ACs with Gherkin scenarios: 8 of 18 | Blocked: 4 (OQ-11.01-A, OQ-11.01-B, OQ-11.01-C, B2-VFE-BE-pending) | Excluded: 6 (edge-case or separate-feature — scope filter table only)
+ACs with Gherkin scenarios: 8 of 18 | Blocked: 3 (B1 asset-type PENDING, B8/OQ-11-02 term location PENDING, B2-VFE-BE-pending) | Excluded: 8 (edge-case, separate-feature, or [CR-REMOVED per v10 A1] — scope filter table only)
 Figma design: Nodes 9:13370 (CREATE AGREEMENT) + 9:13722 (CREATE - documents optional), file aQGn5OLEjEGJO7xGzFikP5 — 6-step wizard: Identity / Envelope & pricing / Validity & templates / Conditions (docs) / Review & save. Stage 2 COMPLETE via REST /nodes fallback (primary /files endpoint quota-exhausted; /nodes bucket independent).
-Updated per CR PRD1042-1495 (2026-07-23): Bank Entity hidden (A4); EUR fixed display-only (A5); pricing on FA confirmed (B1); VFE field blocked — BE-pending (B2)
+Updated per CR PRD1042-1495 (2026-07-23): Bank Entity hidden (A4/1495); EUR fixed display-only (A5/1495); pricing on FA confirmed (B1/1495); VFE field blocked — BE-pending (B2/1495).
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): Pricing narrowed to single `effective_rate` + `vfe_rate` (A1/v10); rate derivation removed — value stored as entered, resolves prior OQ-11.01-B on AC-16 (A2/v10); `lg_coverage_rate_override` removed from create/edit contracts (A4/v10); `rate_table_ref`, `predecessor_fa_id`, `countersignatory_id` remain null/unwritten (A5/v10); state model corrected to 4 stored values (Draft, Active, Suspended, Terminated) — Expired is DERIVED from `valid_until`, not stored (B2/v10); AC-15 asset-type uniqueness marked [CR-PENDING B1] pending Philipp; AC-17 term location marked [CR-PENDING B8] pending OQ-11-02; AC-09/AC-10 [CR-REMOVED per v10 A1] — obsolete pricing fields dropped from API contract.
 
 ---
 
 ## Blocked ACs (no scenarios generated)
 
-| AC     | Reason                                                                               | Blocking dependency                                                           |
-| ------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| AC-15  | Bank Entity enum values for tenant-1 unconfirmed (OQ-11.01-A)                        | OQ-11.01-A — pending confirmation from Philipp                                |
-| AC-16  | Effective Rate auto-derivation vs user-entered behaviour undefined (OQ-11.01-B)      | OQ-11.01-B — pending confirmation from Philipp                                |
-| AC-17  | FieldSpec v4 scope classification for five pricing fields not finalised (OQ-11.01-C) | OQ-11.01-C — pending FieldSpec v4 update                                      |
-| AC-VFE | VFE (early-repayment penalty) field added per CR B2 — BE implementation pending      | B2-VFE-BE-pending — Nevena 2026-07-23: BE build gap; FE hidden until BE ships |
+| AC     | Reason                                                                                                                                             | Blocking dependency                                                                                                                                                         |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-15  | Asset type / uniqueness rule contested — v10 §7 pending decision: multiple-agreements-per-LC mechanism vs dedicated field + uniqueness change      | **[CR-PENDING B1]** — pending Philipp Maute per CR PRD1042-22 v10 §7. Bank Entity enum values also unresolved (OQ-11.01-A) but Bank Entity is hidden per 1495 A4 / v10 §8.2 |
+| AC-17  | Term location undecided — v10 §7 pending decision: deal-only vs prefilled FA default field. Do NOT reuse `rate_lock_period_months` (removed by A1) | **[CR-PENDING B8]** — OQ-11-02 pending Philipp Maute per CR PRD1042-22 v10 §7                                                                                               |
+| AC-VFE | VFE (early-repayment penalty) field added per CR PRD1042-1495 B2 — BE implementation pending. v10 retains `vfe_rate` alongside `effective_rate`    | B2-VFE-BE-pending — Nevena 2026-07-23: BE build gap; FE hidden until BE ships                                                                                               |
+
+**Resolved by CR PRD1042-22 v10 (previously Blocked):**
+
+- **AC-16** — Effective Rate auto-derivation vs user-entered behaviour: v10 A2 resolves as **user-entered, stored-as-entered, no derivation**. Assertion now bundled into AC-01/AC-02 happy path (the value the user enters equals the stored `effective_rate`).
 
 ---
 
 ## AC Scope Filter
 
-| AC     | Description                                                                                    | Classification | Rationale                                                                                        |
-| ------ | ---------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------ |
-| AC-01  | Power User opens FA Cockpit, initiates Create; system loads active LCs                         | `happy-path`   | Core flow initiation; gate for all downstream actions                                            |
-| AC-02  | Power User fills identity, pricing, validity, templates, documents; FA persisted Draft         | `happy-path`   | Core creation flow; all mandatory fields covered in happy-path scenario                          |
-| AC-03  | FA invisible to downstream consumers (Financing assembly, Limit Management) while Draft        | `edge-case`    | Backend state assertion; no UI surface to verify Draft isolation from downstream at E2E layer    |
-| AC-04  | Draft fully editable by Power User; hard delete permitted pre-activation                       | `happy-path`   | Hard delete is a user-visible action within this story's scope                                   |
-| AC-05  | Agreement Name unique within (Tenant, Bank Entity, LC) across non-Terminated FAs               | `main-error`   | Directly blocks creation; conflict error returned to user                                        |
-| AC-06  | LC must be Active; Suspended or Archived LC rejected at draft creation                         | `main-error`   | Directly blocks creation; explicit LC-status error returned                                      |
-| AC-07  | Every referenced Product Template must be Published; deprecated templates rejected             | `edge-case`    | Requires seeding deprecated-template state; complex pre-condition; low-frequency path            |
-| AC-08  | Max Volume EUR > 0; zero or negative rejected                                                  | `main-error`   | Inline field validation; directly blocks form submission                                         |
-| AC-09  | Pricing field ranges: Base Rate 0–25%, Spread -5%–15%, Rate Lock 1–360 months                  | `edge-case`    | Boundary validation; implementation-level detail; not a primary user-flow blocker                |
-| AC-10  | Effective Rate consistency (Fixed/Floating); EURIBOR+Spread indicative (soft warning only)     | `edge-case`    | Soft warning, not a hard block; nuanced behaviour better covered at unit/integration level       |
-| AC-11  | POST /api/framework-agreements: Power User only; all other roles → HTTP 404                    | `main-error`   | RBAC enforcement; auto-applies per domain rule; 404-not-403 tenant isolation pattern             |
-| AC-12  | Tenant ID bound from session JWT; non-overridable by request parameters                        | `edge-case`    | Security implementation detail; requires JWT forge tooling (D17); not observable via standard UI |
-| AC-13  | Audit event fa.created emitted on save with full Draft snapshot reference                      | `edge-case`    | Backend audit assertion; requires audit query API (D-Audit-Read-API); no E2E surface             |
-| AC-14  | Hard delete pre-activation permitted; audit record fa.draft.deleted retained                   | `happy-path`   | Merged into AC-04 happy-path scenario — same user action                                         |
-| AC-15  | Bank Entity enum values for tenant-1 to be confirmed (OQ-11.01-A)                              | `Blocked`      | Open question; cannot write tests for enum values until confirmed by Philipp (OQ-11.01-A)        |
-| AC-16  | Effective Rate auto-derivation vs user-entered with soft warning (OQ-11.01-B)                  | `Blocked`      | Open question; field behaviour undefined                                                         |
-| AC-17  | FieldSpec v4 scope classification for five pricing fields (OQ-11.01-C)                         | `Blocked`      | Open question; field definitions not finalised; treat as MVP-equivalent per client direction     |
-| AC-VFE | VFE (Vorfälligkeitsentschädigung) optional field as early-redemption calculation input (CR B2) | `Blocked`      | BE implementation pending per PRD1042-1495 Nevena 2026-07-23; FE hidden until BE ships           |
+| AC       | Description                                                                                                    | Classification                 | Rationale                                                                                                                                                                                                                           |
+| -------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC-01    | Power User opens FA Cockpit, initiates Create; system loads active LCs                                         | `happy-path`                   | Core flow initiation; gate for all downstream actions                                                                                                                                                                               |
+| AC-02    | Power User fills identity, pricing, validity, templates, documents; FA persisted Draft                         | `happy-path`                   | Core creation flow; all mandatory fields covered in happy-path scenario                                                                                                                                                             |
+| AC-03    | FA invisible to downstream consumers (Financing assembly, Limit Management) while Draft                        | `edge-case`                    | Backend state assertion; no UI surface to verify Draft isolation from downstream at E2E layer                                                                                                                                       |
+| AC-04    | Draft fully editable by Power User; hard delete permitted pre-activation                                       | `happy-path`                   | Hard delete is a user-visible action within this story's scope                                                                                                                                                                      |
+| AC-05    | Agreement Name unique within (Tenant, Bank Entity, LC) across non-Terminated FAs                               | `main-error`                   | Directly blocks creation; conflict error returned to user                                                                                                                                                                           |
+| AC-06    | LC must be Active; Suspended or Archived LC rejected at draft creation                                         | `main-error`                   | Directly blocks creation; explicit LC-status error returned                                                                                                                                                                         |
+| AC-07    | Every referenced Product Template must be Published; deprecated templates rejected                             | `edge-case`                    | Requires seeding deprecated-template state; complex pre-condition; low-frequency path                                                                                                                                               |
+| AC-08    | Max Volume EUR > 0; zero or negative rejected                                                                  | `main-error`                   | Inline field validation; directly blocks form submission                                                                                                                                                                            |
+| AC-09    | ~~Pricing field ranges: Base Rate 0–25%, Spread -5%–15%, Rate Lock 1–360 months~~                              | **[CR-REMOVED per v10 A1]**    | Obsolete — `base_rate`, `spread`, `rate_lock_period_months` removed from API contract per CR PRD1042-22 v10 A1 (2026-07-27). Only `effective_rate` and `vfe_rate` retained. No boundary validation scenario needed                  |
+| AC-10    | ~~Effective Rate consistency (Fixed/Floating); EURIBOR+Spread indicative (soft warning only)~~                 | **[CR-REMOVED per v10 A1+A2]** | Obsolete — `rate_type` removed from API contract per A1; Effective Rate is now stored-as-entered per A2 (no derivation, no Fixed/Floating consistency check, no EURIBOR+Spread indicative warning)                                  |
+| AC-11    | POST /api/framework-agreements: Power User only; all other roles → HTTP 404                                    | `main-error`                   | RBAC enforcement; 404-not-403 tenant isolation pattern. **[CR-PENDING B5]** — v10 §5 flags 4 contested cells (FO create/enrich? SA least-privilege? BO review? FO sees pricing?); current Outline retained pending Philipp decision |
+| AC-12    | Tenant ID bound from session JWT; non-overridable by request parameters                                        | `edge-case`                    | Security implementation detail; requires JWT forge tooling (D17); not observable via standard UI                                                                                                                                    |
+| AC-13    | Audit event fa.created emitted on save with full Draft snapshot reference                                      | `edge-case`                    | Backend audit assertion; requires audit query API (D-Audit-Read-API); no E2E surface                                                                                                                                                |
+| AC-14    | Hard delete pre-activation permitted; audit record fa.draft.deleted retained                                   | `happy-path`                   | Merged into AC-04 happy-path scenario — same user action                                                                                                                                                                            |
+| AC-15    | Asset type / uniqueness — Bank Entity enum values pending (OQ-11.01-A) + multiple-agreements mechanism pending | **[CR-PENDING B1]**            | v10 §7 blocker — Philipp Maute decision required                                                                                                                                                                                    |
+| AC-16    | Effective Rate stored as user-entered (no derivation) per v10 A2 — resolves OQ-11.01-B                         | `happy-path`                   | **Resolved by v10 A2** — bundled into AC-01/AC-02 happy path (stored value = entered value)                                                                                                                                         |
+| AC-17    | Term location (deal-only vs prefilled FA default) — do NOT reuse `rate_lock_period_months`                     | **[CR-PENDING B8]**            | v10 §7 blocker — OQ-11-02 pending Philipp Maute                                                                                                                                                                                     |
+| AC-VFE   | VFE (Vorfälligkeitsentschädigung) optional field as early-redemption calculation input                         | `Blocked`                      | BE implementation pending per PRD1042-1495 Nevena 2026-07-23; v10 retains `vfe_rate`; FE hidden until BE ships                                                                                                                      |
+| AC-CR-A5 | `rate_table_ref`, `predecessor_fa_id`, `countersignatory_id` remain null after full lifecycle run              | `edge-case`                    | v10 A5 verification — no code path sets these fields; bundled into AC-01/AC-02 happy path assertion + AC-04 hard-delete audit record inspection                                                                                     |
 
-**Gherkin generated for:** AC-01, AC-02, AC-04, AC-05, AC-06, AC-08, AC-11, AC-14
-**Blocked (no Gherkin):** AC-15, AC-16, AC-17, AC-VFE
-**No Gherkin (edge-case or separate-feature):** AC-03, AC-07, AC-09, AC-10, AC-12, AC-13
+**Gherkin generated for:** AC-01, AC-02, AC-04, AC-05, AC-06, AC-08, AC-11, AC-14, AC-16 (bundled), AC-CR-A5 (bundled)
+**Blocked (no Gherkin):** AC-15 [CR-PENDING B1], AC-17 [CR-PENDING B8], AC-VFE
+**[CR-REMOVED per v10 A1]:** AC-09, AC-10 — obsolete pricing fields dropped from API contract
+**No Gherkin (edge-case or separate-feature):** AC-03, AC-07, AC-12, AC-13
 
 ---
 
@@ -81,16 +87,29 @@ Feature: Framework Agreement Creation — Draft (US 11.1 — PRD1042-799)
     And I am authenticated as a Power User (Bank Admin) with an MFA-validated session
 
   # ---------------------------------------------------------------------------
-  # HAPPY PATH — AC-01, AC-02
+  # HAPPY PATH — AC-01, AC-02, AC-16, AC-CR-A5
   # Power User opens the creation wizard and fills all mandatory fields:
   # Agreement Name, Leasing Company (Active), Max Volume EUR, ≥1 Published
-  # Product Template, pricing fields, Valid From. Bank Entity is hidden from
-  # the form per CR A4 (backend defaults to "OTHER"). Currency is EUR fixed
-  # and displayed read-only per CR A5. Draft is persisted on save.
+  # Product Template, single Effective Rate, Valid From. Bank Entity is hidden
+  # from the form per CR 1495 A4 (backend defaults to "OTHER"). Currency is
+  # EUR fixed and displayed read-only per CR 1495 A5. Draft is persisted.
+  #
+  # CR PRD1042-22 v10 (2026-07-27):
+  #  - A1: `base_rate`, `spread`, `rate_type`, `rate_lock_period_months`
+  #    REMOVED from the create contract. Only `effective_rate` remains
+  #    (plus `vfe_rate` — BE-pending per 1495 B2).
+  #  - A2: `effective_rate` is stored as entered — no derivation from
+  #    base+spread. Resolves prior OQ-11.01-B / AC-16.
+  #  - A4: `lg_coverage_rate_override` REMOVED from the create contract.
+  #  - A5: `rate_table_ref`, `predecessor_fa_id`, `countersignatory_id`
+  #    must remain null after a full lifecycle run — assertion added.
+  #  - B8/OQ-11-02: term location undecided; do NOT reintroduce
+  #    `rate_lock_period_months`. Term will land on the deal or as a
+  #    prefilled FA default field once Philipp confirms.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @ac-02 @p0 @e2e-ready
-  Scenario: Power User creates Framework Agreement Draft with valid data (AC-01, AC-02)
+  @happy-path @ac-01 @ac-02 @ac-16 @ac-cr-a5 @p0 @e2e-ready
+  Scenario: Power User creates Framework Agreement Draft with valid data (AC-01, AC-02, AC-16, AC-CR-A5)
     Given a Leasing Company "LC Test GmbH" exists and is Active in Partner Management
     And a Bank Product Template "Standard Lease Template" exists in Published state
     When I navigate to "Framework agreements" from the Business configuration menu
@@ -99,22 +118,27 @@ Feature: Framework Agreement Creation — Draft (US 11.1 — PRD1042-799)
     And the creation form loads with a list of active Leasing Companies
     And the Bank Entity field is not visible on the form
     And the Currency field displays "EUR" as read-only
+    And the following fields are NOT present on the form (per CR PRD1042-22 v10 A1/A4):
+      | field                             |
+      | Base Rate                         |
+      | Spread                            |
+      | Rate Type                         |
+      | Rate Lock Period                  |
+      | LG-Specific Coverage Rate Override|
     When I fill in the following fields:
       | Field                     | Value             |
       | Agreement Name            | RV-SSKM-2026-001  |
       | Leasing Company           | LC Test GmbH      |
       | Max Volume EUR            | 5000000.00        |
       | Allowed Product Templates | Standard Lease Template |
-      | Base Rate (%)             | 3.5000            |
-      | Spread (%)                | 1.2500            |
       | Effective Rate (%)        | 4.7500            |
-      | Rate Type                 | Fixed             |
-      | Rate Lock Period (months) | 36                |
       | Valid From                | 2026-08-01        |
     And I click "Save as draft"
     Then the Framework Agreement "RV-SSKM-2026-001" is created in Draft state
     And I am navigated to the detail view of the new Framework Agreement
     And the agreement appears in the FA list with status badge "Draft"
+    And the persisted `effective_rate` equals 4.7500 exactly (stored as entered, no derivation per v10 A2)
+    And the persisted record has `rate_table_ref` null, `predecessor_fa_id` null, `countersignatory_id` null (per v10 A5)
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-04, AC-14
@@ -188,9 +212,15 @@ Feature: Framework Agreement Creation — Draft (US 11.1 — PRD1042-799)
   # POST /api/framework-agreements is restricted to Power User (Bank Admin).
   # All other roles receive HTTP 404 per the 404-not-403 tenant isolation
   # pattern. UI visibility is NOT a permission boundary — backend enforces this.
+  #
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested cells in the
+  # permission matrix (FO create/enrich? SA least-privilege? BO review?
+  # FO sees pricing?). The current 5-role Outline is retained as-is pending
+  # Philipp Maute's decision. Do NOT pre-emptively add FO-authoring rows —
+  # granting FO create/enrich touches MaRisk BTO 1.1 front/back-office separation.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-11 @p0 @e2e-ready
+  @main-error @ac-11 @p0 @e2e-ready @cr-pending-b5
   Scenario Outline: Unauthorized roles cannot create a Framework Agreement — HTTP 404 (AC-11)
     Given I am authenticated as a <role> user
     When I POST to "/api/framework-agreements" with a valid FA creation payload

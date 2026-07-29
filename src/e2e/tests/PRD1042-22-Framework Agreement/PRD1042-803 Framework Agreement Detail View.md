@@ -6,7 +6,8 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (16 derived ACs + 1 CR-derived AC, description present with permission matrix + field specs, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 9 of 17 | Blocked: 2 (D-LimitMgmt-Degraded, D-DocMgmt-FileMissing) | Excluded: 6 (edge-case, separate-feature, or NFR — scope filter table only; AC-CR-A4 bundled into AC-01)
 Figma design: Node 24:948 (DETAIL PAGE) on canvas 10:15285, file aQGn5OLEjEGJO7xGzFikP5 — frame render available in fixtures (see "Design references" below). REST + MCP were quota-exhausted on 2026-07-24; frame was manually PNG-exported from Figma. Chip row and IDENTITY section content in the exported PNG shows Bank entity — the exported frame is pre-CR; treat the Bank entity affordance as `pre-CR design — refresh needed` per CR PRD1042-1495 A4.
-Updated per CR PRD1042-1495 (2026-07-24): Bank Entity hidden from chip row and IDENTITY section (A4) — assertion inverted from "present" to "not present in the DOM" for ALL roles (previously only LC user had this exclusion at AC-07).
+Updated per CR PRD1042-1495 (2026-07-24): Bank Entity hidden from chip row and IDENTITY section (A4/1495) — assertion inverted from "present" to "not present in the DOM" for ALL roles (previously only LC user had this exclusion at AC-07).
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): PRICING section narrowed to single `effective_rate` + `edit_version_counter` per A1/A3 (v10) — `base_rate`, `spread`, `rate_type`, `rate_lock_period_months` REMOVED from the detail response and NOT displayed; `lg_coverage_rate_override` field REMOVED (A4/v10). Background updated to reflect the new field set. AC-03 role Outline `lg_override_visible` column REMOVED. State model 4-values reinforced (Draft/Active/Suspended/Terminated); derived-Expired read applies to LIFECYCLE section (per v10 §4 B2). AC-08/AC-09/AC-10 role Outlines marked [CR-PENDING B5] pending Philipp Maute's decision on 4 contested permission-matrix cells.
 
 ---
 
@@ -113,8 +114,11 @@ Feature: Framework Agreement Detail View (US 11.4 — PRD1042-803)
 
   Background:
     Given the RefiNext platform is up and healthy
-    And a Framework Agreement with agreement name "RV-SSKM-2026-001" and ID "FA-2026-00041" exists in Active state bound to Leasing Company "New Group Trade" (Bank entity "Sparkasse")
-    And "FA-2026-00041" has Max volume EUR 25,000,000.00, Base rate 4.25%, Spread 0.5%, Effective rate 4.75%, Rate type "Fixed", Rate lock period "12 months"
+    And a Framework Agreement with agreement name "RV-SSKM-2026-001" and ID "FA-2026-00041" exists in Active state bound to Leasing Company "New Group Trade" (Bank entity "Sparkasse" — hidden per CR 1495 A4)
+    # Per CR PRD1042-22 v10 A1/A2/A3/A4: pricing is a single Effective rate stored-as-entered.
+    # `base_rate`, `spread`, `rate_type`, `rate_lock_period_months`, `lg_coverage_rate_override`
+    # are NOT part of the API contract or the detail response.
+    And "FA-2026-00041" has Max volume EUR 25,000,000.00 and Effective rate 4.75% (stored as entered, no derivation)
     And "FA-2026-00041" has 3 framework documents attached (1 Original agreement "Framework agreement_signed.pdf" 2.4 MB, 1 Addendum 480 KB, 1 Side letter 310 KB)
     And "FA-2026-00041" has 3 linked Financings (1 Active, 1 Draft, 1 Pending)
     And "FA-2026-00041" audit history contains at least 6 lifecycle events (Agreement created, Base rate updated, Document attached, Max volume updated, Product template removed, Agreement suspended)
@@ -151,21 +155,32 @@ Feature: Framework Agreement Detail View (US 11.4 — PRD1042-803)
   # (In the design, sections are on the same tab — visibility is section-level, not tab-level.)
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-03 @p0 @e2e-ready
+  # CR PRD1042-22 v10 A1/A3/A4 amendments:
+  #  - PRICING section content narrowed to `effective_rate` + `edit_version_counter`.
+  #  - `base_rate`, `spread`, `rate_type`, `rate_lock_period_months` REMOVED from
+  #    the detail response and MUST NOT be present in the DOM.
+  #  - `lg_coverage_rate_override` REMOVED (A4/v10) — the entire `lg_override_visible`
+  #    Outline column removed.
+  #  - [CR-PENDING B5] — v10 §5 flags Front Office pricing visibility as contested
+  #    (v9 lets FO see pricing; code blanks it). Current "FO hidden" row retained
+  #    pending Philipp Maute confirmation.
+
+  @happy-path @ac-03 @p0 @e2e-ready @cr-pending-b5
   Scenario Outline: Agreement details tab reveals PRICING section per role (AC-03)
     Given I am logged in as <role>
     When I open "FA-2026-00041" detail on the "Agreement details" tab
     Then I should see the "CREDIT ENVELOPE" section with Max volume "€ 25.000.000,00" and Currency "EUR"
     And I should see the "LIFECYCLE" section with Valid from "13 Jun 2026" and Valid until "Open ended"
     And the "PRICING" section visibility should be <pricing_visible>
-    And the "LG-specific coverage rate override" field (within PRICING) should be <lg_override_visible>
+    And when the PRICING section is visible, it should show only the "Effective rate" field with value "4,75%" and the `edit_version_counter` reference
+    And the PRICING section should NOT contain any of the following fields in the DOM (per v10 A1/A4): "Base rate", "Spread", "Rate type", "Rate lock period", "LG-specific coverage rate override"
     And the "SPECIAL CONDITIONS" section visibility should be <special_conditions_visible>
 
     Examples:
-      | role                     | pricing_visible | lg_override_visible | special_conditions_visible |
-      | Power User (Bank Admin)  | visible         | visible             | visible                    |
-      | Back Office              | visible         | visible             | visible                    |
-      | Front Office             | hidden          | hidden              | hidden                     |
+      | role                     | pricing_visible | special_conditions_visible |
+      | Power User (Bank Admin)  | visible         | visible                    |
+      | Back Office              | visible         | visible                    |
+      | Front Office             | hidden          | hidden                     |
 
   # ---------------------------------------------------------------------------
   # HAPPY PATH — AC-04

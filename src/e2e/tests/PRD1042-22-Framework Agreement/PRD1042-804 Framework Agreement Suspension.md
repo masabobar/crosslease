@@ -6,6 +6,7 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (18 derived ACs, description present with permission matrix + field specs + edge cases + audit events + security requirements, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 12 of 18 | Blocked: 2 (D-Concurrency-Forge, D-MFA-StepUp) | Excluded: 4 (edge-case, separate-feature, or bundled — scope filter table only)
 Figma design: Node 29:3780 (SUSPEND AGREEMENT) on canvas 10:15285, file aQGn5OLEjEGJO7xGzFikP5 — DESIGN-BLIND. MCP quota-exhausted on 2026-07-24; no cached PNG for node 29:3780 in `src/e2e/fixtures/figma-e11/rendered-nodes/` (verified — sibling nodes 24:948 Detail and 100:6629 Edit are cached, but 29:3780 Suspend variant was never exported). Test assertions anchor to the Jira Field Specification table + Validation Rules + System Behavior sections as source of truth. Re-export PNG from Figma when quota resets to verify verbatim modal copy (button labels, justification counter placement, dependency-check inline text, future-dated Effective From warning banner).
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): **[CR-PENDING B4]** — dependency-check reference figure contested: v9 uses active-financings volume; Scope Recon v2 proposes current outstanding residual debt. Numeric assertions in AC-10 conflict list remain valid (structural — enumerates blocking Financing IDs + states, not a numeric figure). §6 US 11.5 confirms "dependency checks query real financings (B4), never return empty lists, and never block on the utilisation figure" — the Active-Financings-existence gate is CORRECT and RETAINED; only the utilisation FIGURE is non-gating (utilisation is out of scope for this suspension suite — see 808). **B7/v10 APPLIED** — single-admin suspension confirmed (no Four-Eyes). State model 4 stored values reinforced. **[CR-PENDING B5]** on AC-14/AC-16 5-role Outline pending Philipp Maute's decision.
 
 ---
 
@@ -285,7 +286,14 @@ Feature: Framework Agreement Suspension (US 11.5 — PRD1042-804)
   # audit event is emitted (assertion covered in Epic 26 tests, not here).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-10 @p0 @e2e-ready
+  # [CR-PENDING B4] — v10 §7 pending decision: the dependency check queries
+  # real financings (§6 confirmed), but the SOURCE OF TRUTH for the reference
+  # figure is contested (active-financings volume vs current outstanding
+  # residual debt). Structural assertions (blocking Financing IDs + states +
+  # 409 conflict list) are UNAFFECTED and remain @e2e-ready. Do NOT introduce
+  # numeric utilisation-figure assertions here — those live on 808.
+
+  @main-error @ac-10 @p0 @e2e-ready @cr-pending-b4
   Scenario Outline: Suspend with Active/Disbursing/Approved Financings returns 409 + conflict list (AC-10)
     Given "FA-Active-001" has a Financing "<blocking_financing_id>" in <blocking_state> state
     And I am logged in as Power User (Bank Admin) with a valid MFA-validated session
@@ -357,7 +365,10 @@ Feature: Framework Agreement Suspension (US 11.5 — PRD1042-804)
   # Justification field MUST NOT be exposed in the 404 response body.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-14 @ac-16 @p0
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested permission-matrix
+  # cells. Current 5-role 404 Outline retained pending Philipp Maute decision.
+
+  @main-error @ac-14 @ac-16 @p0 @cr-pending-b5
   Scenario Outline: Non-Power-User (Bank Admin) role Suspend returns 404 (AC-14, AC-16)
     Given <precondition>
     And I am logged in as <role> <scope>

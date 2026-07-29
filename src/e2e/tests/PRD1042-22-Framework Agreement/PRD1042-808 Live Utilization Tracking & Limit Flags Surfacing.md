@@ -5,7 +5,8 @@ Story: PRD1042-808 — US 11.9 | Framework Agreement | Live Utilization Tracking
 Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (17 derived ACs from Functional Requirements + Field Specification + Validation Rules + System Behavior + Security Requirements + Non-Functional Requirements + Edge Cases + Audit Requirements, description present with permission matrix + endpoint contract + event fan-out, stakeholder-reviewed, Dev in progress; children BE PRD1042-1360, FE PRD1042-1361 QA-ready, QA PRD1042-1362)
 ACs with Gherkin scenarios: 10 of 17 | Blocked: 0 | Excluded: 7 (2 separate-feature — Epic 26 audit + Epic 31 event bus / Validation Engine; 5 edge-case / bundled / NFR — scope filter table only)
-Updated per CR PRD1042-1495 (2026-07-24): List-view surfacing of utilization figures (US 11.03 mini-gauge + limit flag badges columns) is HIDDEN per CR A1/A3 — UI-only change; backend endpoints `GET /utilization` + `POST /utilization:batch` remain active and unchanged. Detail-view Utilization tab (US 11.04) surfacing is RETAINED. AC-17 batch endpoint remains testable at API layer but has no user-visible list-view consumer in November MVP. FE team may optionally pause list-view surfacing work per PO note.
+Updated per CR PRD1042-1495 (2026-07-24): List-view surfacing of utilization figures (US 11.03 mini-gauge + limit flag badges columns) is HIDDEN per CR A1/A3 (1495) — UI-only change; backend endpoints `GET /utilization` + `POST /utilization:batch` remain active and unchanged. Detail-view Utilization tab (US 11.04) surfacing is RETAINED. AC-17 batch endpoint remains testable at API layer but has no user-visible list-view consumer in November MVP. FE team may optionally pause list-view surfacing work per PO note.
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): **[CR-PENDING B4]** on the ENTIRE utilization surface — v10 §7 pending decision: the used-against-approved figure should be sourced from REAL FINANCINGS (not Limit Management) per v10 §6 US 11.9. Current 808 scenarios source everything from Limit Management (spec-anchored). Once Philipp confirms the reference figure, this suite may need to be re-anchored to real-financings computation. **CRITICAL non-gating invariant confirmed** — §6 US 11.9: "No operation is blocked, refused, or gated on the strength of the utilisation figure." AC-11 (blocking new Financing assembly by Validation & Gating on Limit Breach) is already classified `separate-feature` — behaviour remains valid but belongs to the Validation & Gating Engine suite, not this surfacing story. Header display of Limit Breach Flag is INFORMATIONAL only per v10. State model 4 stored values reinforced.
 Figma design: Shared Epic 11 file `aQGn5OLEjEGJO7xGzFikP5`. Target frames — Utilization tab within FA detail view (US 11.04) + list-view utilization column (US 11.03). Stage 2 FAILED (MCP `get_metadata` returned "You've reached the Figma MCP tool call limit for your View seat on the Professional plan" — same quota state as prior 803/804/805/806/807/809/812 batch; REST `/v1/files` also quota-exhausted per [[feedback-figma-nodes-fallback]] confirmed in prior sessions on this token; WebFetch cannot pass `X-Figma-Token`; no shell available; no cached PNG fixture in `rendered-nodes/` for a Utilization tab or list-view mini-gauge). Design-blind, spec-anchored per user directive; verbatim gauge / badge / tooltip / mini-gauge / stale-state copy remains an OPEN design gap logged in the Design specification section below.
 
 ---
@@ -129,6 +130,8 @@ Scenarios below are anchored to the **Jira story spec verbatim** rather than des
 
 **Consumed events (cache invalidation triggers):** `disbursement.confirmed`, `redemption.reconciled`, `fa.max-volume.changed`
 
+**[CR-PENDING B4] Non-gating invariant (v10 §6 US 11.9):** "No operation is blocked, refused, or gated on the strength of the utilisation figure." This suite's scenarios remain valid as informational surfacing; the Validation & Gating Engine blocking-behaviour scenario (AC-11) is out of scope here (already classified `separate-feature`). SOURCE OF TRUTH for the used-against-approved figure is contested (Limit Management per current spec vs REAL FINANCINGS per v10 §6). Suite will need re-anchoring once Philipp confirms — until then, treat all Limit Management-sourced assertions as B4-provisional.
+
 **Consistency with prior Epic 11 stories:**
 
 - Read-only surfacing story — no Four-Eyes, no governed modal, no wizard (contrast with [[project-prd1042-804-framework-agreement-suspension]], [[project-prd1042-805-framework-agreement-reactivation]], [[project-prd1042-806-framework-agreement-termination]]).
@@ -165,7 +168,13 @@ Feature: Live Utilization Tracking & Limit Flags Surfacing (US 11.9 — PRD1042-
   # tab renders the gauge + badges accordingly.
   # ---------------------------------------------------------------------------
 
-  @happy-path @ac-01 @ac-06 @ac-09 @p0
+  # [CR-PENDING B4] — v10 §6 US 11.9 pending: SOURCE OF TRUTH is contested.
+  # Current spec sources from Limit Management (assumed here); v10 proposes
+  # REAL FINANCINGS. Assertions remain valid as behavioural contract; once
+  # Philipp confirms, this scenario may re-anchor to real-financings compute.
+  # Non-gating invariant is CONFIRMED: no operation blocks on this figure.
+
+  @happy-path @ac-01 @ac-06 @ac-09 @p0 @cr-pending-b4
   Scenario: Power User (Bank Admin) reads live utilization on a normal Active FA (AC-01, AC-06, AC-09)
     Given I am logged in as Power User (Bank Admin) with a valid session bound to Tenant ID "TNT-00042"
     And I am viewing "FA-Utilization-Normal" detail

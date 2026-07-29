@@ -71,7 +71,26 @@ metadata:
 
 ## Open questions blocking tests
 
-- **OQ-11.01-A** (AC-15 in 799): Bank Entity enum values for tenant-1 — pending Philipp confirmation
-- **OQ-11.01-B** (AC-16 in 799): Effective Rate auto-derivation vs user-entered — pending Philipp
-- **OQ-11.01-C** (AC-17 in 799): FieldSpec v4 pricing field scope classification — pending FieldSpec v4 update
+- **OQ-11.01-A** (AC-15 in 799): Bank Entity enum values for tenant-1 — subsumed by v10 [CR-PENDING B1] asset-type / uniqueness decision (Bank Entity itself hidden per v10 §8.2)
+- **~~OQ-11.01-B~~** (AC-16 in 799): **RESOLVED by CR PRD1042-22 v10 A2** — Effective Rate is user-entered, stored-as-entered, no derivation. AC-16 unblocked and bundled into AC-01 happy path
+- **~~OQ-11.01-C~~** (AC-17 in 799): **SUPERSEDED by v10 A1 + [CR-PENDING B8]** — the five pricing fields (base_rate/spread/rate_type/rate_lock_period/lg_coverage) are REMOVED per A1/A4; term location becomes OQ-11-02 pending Philipp
 - **B2/VFE** (AC-VFE in 799): BE build gap; unblock when BE implements VFE calculation
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas per suite covered by this memory:**
+
+- **799 FA Creation Draft** — A1/A2/A4/A5 pricing narrowed to single `effective_rate` (+ `vfe_rate` BE-pending). Happy-path input table stripped of `Base Rate`, `Spread`, `Rate Type`, `Rate Lock Period`. AC-09/AC-10 marked `[CR-REMOVED per v10 A1]`. AC-16 unblocked (A2 resolves). AC-15 `[CR-PENDING B1]`, AC-17 `[CR-PENDING B8]`. AC-CR-A5 added asserting `rate_table_ref` / `predecessor_fa_id` / `countersignatory_id` null. AC-11 5-role Outline `[CR-PENDING B5]`.
+- **800 FA Activation** — B7 single-admin activation reinforced (CLAUDE.md correction upstream). State model 4 stored values reinforced. AC-08 5-role Outline `[CR-PENDING B5]`.
+- **801 FA List View** — B2 new `AC-CR-B2` derived-Expired assertion (past `valid_until` reads as "not active"). B3 new `AC-CR-B3` filterable inventory CSV export (viewer-scoped, audit-logged) — role Outline over Power User + BO/Risk. Bank Entity hidden state re-confirmed per v10 §8.2.
+- **807 Framework Document Attachment** — B6 tenant-configurable required-document set (default non-blocking) formally recognised; AC-CR-B3 rationale updated to reference v10 B6. AC-08 `[CR-PENDING B5]`.
+
+**New dependencies:** none new — v10 uses existing D-\* IDs.
+
+**`[CR-REMOVED — coordinate spec deletion]` items:** 799 AC-09 + AC-10 — both were `edge-case`-classified with no active Gherkin scenarios; no coordination needed beyond this memory-log entry.
+
+**Governance flags:** [CR-PENDING B5] on 799/800/807 role Outlines pending Philipp Maute's decision on 4 contested permission-matrix cells (FO create/enrich, SA least-privilege, BO review-on-activation, FO pricing view). Do NOT pre-emptively add FO-authoring scenarios — MaRisk BTO 1.1 front/back-office separation concern.
+
+See also [[project-cr-prd1042-22-reconciliation-v10]] for the full CR context and cross-suite deltas.

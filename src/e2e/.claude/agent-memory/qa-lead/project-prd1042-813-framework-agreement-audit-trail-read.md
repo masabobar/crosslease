@@ -74,3 +74,21 @@ Domain rules:
 - [[project-prd1042-759]] — US 13.13 Reconstruct Full Merge History — same event-replay-from-creation-snapshot-forward reconstruction pattern; 813 replays FA lifecycle events, 759 replays Partner merge events.
 
 Epic folder: `PRD1042-22-Framework Agreement`.
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas applied:**
+
+- **Header** — CR v10 acknowledgement note added.
+- **New Scenario `AC-CR-A6`** — SECURITY module-gate: `FA_AUDIT_READ` MUST map to `PlatformModule.FRAMEWORK_AGREEMENT`. When the tenant has the FRAMEWORK_AGREEMENT module deactivated, the audit-history endpoint fails closed with 404 (uniform with 404-not-403 pattern). Fix the mapping, not the endpoint. Scenario tagged `@cr-v10-a6`. This closes the systemic A6 defect for the audit-read leg (SUSPEND/REACTIVATE/TERMINATE/VFE_MANAGE mappings covered in their respective suites — 804/805/806, VFE covered on 799).
+- **AC-15** `Blocked-by-CR-pending` — 6-role Outline tagged `@cr-pending-b5` pending Philipp Maute's decision on 4 contested permission-matrix cells.
+- **State model** — 4 stored values reinforced. Background event history already uses only stored enum values (Draft/Active/Suspended/Terminated) — no change needed.
+- **Countersignatory field** — remains null for November (single-admin model) per v10 §6 US 11.6/11.17; already correct in AC-01 event-row assertions.
+
+**No `[CR-REMOVED — coordinate spec deletion]`** items.
+
+**No new dependencies.**
+
+See also [[project-cr-prd1042-22-reconciliation-v10]].

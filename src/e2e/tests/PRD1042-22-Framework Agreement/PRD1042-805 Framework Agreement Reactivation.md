@@ -19,6 +19,8 @@ Once the frame is exported, upgrade behavioural assertions in AC-02 / AC-03 / AC
 
 **CR PRD1042-1495 B5 note (2026-07-20, Philipp Maute + Laurence Ahrabian, FE-merged Nevena 2026-07-23):** Reactivation entry-point (sidebar button on FA Detail page) is currently HIDDEN in the UI, code retained. Interpretation applied here: POST `/api/framework-agreements/{id}/reactivate` remains active and role-gated; UI happy-path via clicking Reactivate is not currently reachable in-build. UI-click scenarios are marked ⚙️ needs `D-CR-B5-Rollback`; API-level scenarios remain @e2e-ready.
 
+**CR PRD1042-22 Reconciliation v10 note (2026-07-27):** §4.3 confirms Suspended → Active transition is "retained in model; hidden from MVP UI (Suspended is a UI dead-end in November)". §6 US 11.6/11.17 confirms "No reactivation control and no four-eyes step in the MVP UI; both retained in the model; absence is not a defect." No behaviour changes required in this suite — `D-CR-B5-Rollback` remains the tracked dependency for future UI re-enablement. State model 4 stored values reinforced (Draft/Active/Suspended/Terminated). **[CR-PENDING B5]** on AC-11 5-role Outline pending Philipp Maute's decision on 4 contested permission-matrix cells.
+
 ---
 
 ## Blocked ACs (no scenarios generated)
@@ -200,7 +202,10 @@ Feature: Framework Agreement Reactivation (US 11.6 — PRD1042-805)
   # affordance (matches PRD1042-803/807/809/812 sibling stories).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-11 @p0 @e2e-ready
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested permission-matrix
+  # cells. Current 5-role 404 Outline retained pending Philipp Maute decision.
+
+  @main-error @ac-11 @p0 @e2e-ready @cr-pending-b5
   Scenario Outline: Non-permitted role attempts reactivate — 404 (AC-11)
     Given I am logged in as <role> bound to "tenant-1"
     When I POST to "/api/framework-agreements/FA-2026-00041/reactivate" with body

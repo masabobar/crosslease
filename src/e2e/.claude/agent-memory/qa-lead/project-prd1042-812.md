@@ -55,3 +55,18 @@ Processed 2026-07-24. First LC Portal story for Epic 11 — sibling to Bank-side
 **Design-blind extraction note:** Same failure mode as [[project-prd1042-803-807-809-framework-agreement]] — Figma MCP quota exhausted, WebFetch cannot pass X-Figma-Token, no shell for REST curl. LC Portal frames have not been PNG-exported to `rendered-nodes/` yet. Recommend PNG export of page 100:10990 for follow-up test refinement.
 
 **Related sibling stories:** [[project-prd1042-22-framework-agreement]] (bank-side 799/800/801/807), [[project-prd1042-803-807-809-framework-agreement]] (bank-side 803/807/809). This story completes the initial LC-portal-side leg.
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas applied:**
+
+- **Header** — CR v10 acknowledgement note added.
+- **AC-03 lifecycle status filter** — v10 §4 B2 confirms `FALifecycleStatus` enum stays FOUR stored values (Draft/Active/Suspended/Terminated). LC portal already filters to Active + Suspended only (Draft/Terminated stripped at API layer). Behaviour unchanged.
+- **AC-04/AC-07 hidden bank-internal inventory** — already excludes `Base Rate`, `Spread`, `Rate Type`, `LG-Specific Coverage Rate Override` (all REMOVED from bank contract per v10 A1/A4). LC-side hidden inventory remains correct.
+- **State model** — Expired is DERIVED, not stored (per v10 §4 + B2). LC list never receives Expired agreements — bank-side derives, LC-side sees only stored Active/Suspended.
+
+**No scenarios required to change.** No `[CR-REMOVED]` items. No new dependencies.
+
+See also [[project-cr-prd1042-22-reconciliation-v10]].

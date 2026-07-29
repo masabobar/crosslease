@@ -6,6 +6,7 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (13 derived ACs, description present with permission matrix + termination modal field spec + edge-case table, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 10 of 13 | Blocked: 2 (D-Concurrency-Forge AC-11, D-MFA-StepUp AC-13) | Excluded: 1 (separate-feature — scope filter table only)
 Figma design: Node 29:3780 (SUSPEND / REACTIVATE / TERMINATE canvas) on file aQGn5OLEjEGJO7xGzFikP5 — Stage 2 FAILED (MCP quota exhausted, REST /v1/files quota exhausted, no cached PNG fixture in `rendered-nodes/` for node 29:3780 or its parent page, WebFetch cannot pass X-Figma-Token, no shell available). Design-blind, spec-anchored per user directive; verbatim modal copy remains an OPEN design gap logged below.
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): **B7/v10 APPLIED** — single-admin two-step termination confirmed (no Four-Eyes). §6 US 11.7: "Terminate is a single-admin two-step from Active or Suspended" — already reflected in AC-01/AC-04. **[CR-PENDING B4]** on AC-03/AC-10 dependency-check reference figure (structural assertions on conflict list unaffected; SOURCE OF TRUTH for numeric figure contested). §6 US 11.7 confirms "dependency checks query real financings (B4), never return empty lists" — the active-financings-existence gate is CORRECT and RETAINED; the utilisation FIGURE is separately non-gating (out of scope here — see 808). AC-09 confirms Limit Breach Flag does NOT block termination (already correct per spec + §6). State model 4 stored values reinforced. **[CR-PENDING B5]** on AC-07/AC-08 5-role Outline pending Philipp Maute's decision.
 
 ---
 
@@ -244,7 +245,13 @@ Feature: Framework Agreement Termination (US 11.7 — PRD1042-806)
   # UI shows the blocking count and disables the submit button.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-03 @ac-10 @p0
+  # [CR-PENDING B4] — v10 §7 pending decision on the SOURCE OF TRUTH for the
+  # dependency-check reference figure (active-financings volume vs current
+  # outstanding residual debt). Structural conflict-list assertions are
+  # UNAFFECTED (they enumerate blocking Financing IDs + states, not a numeric
+  # figure). No numeric utilisation-figure assertion is introduced here.
+
+  @main-error @ac-03 @ac-10 @p0 @cr-pending-b4
   Scenario: Termination on FA with active Financings returns 409 with conflict list; button disabled in UI (AC-03, AC-10)
     Given Financings "FIN-001" (Active) and "FIN-002" (Disbursing) exist referencing "FA-Active-001"
     And I am logged in as Power User (Bank Admin) with a valid MFA-validated session
@@ -317,7 +324,10 @@ Feature: Framework Agreement Termination (US 11.7 — PRD1042-806)
   # also 404 (tenant isolation).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-07 @ac-08 @p0
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested permission-matrix
+  # cells. Current 5-role 404 Outline retained pending Philipp Maute decision.
+
+  @main-error @ac-07 @ac-08 @p0 @cr-pending-b5
   Scenario Outline: Non-Power-User (Bank Admin) role POST /terminate returns 404 (AC-07, AC-08)
     Given <precondition>
     And I am logged in as <role> <scope>

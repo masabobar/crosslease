@@ -6,7 +6,8 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (18 derived ACs, description present with permission matrix + editable/immutable field lists, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 12 of 18 | Blocked: 2 (D-Concurrency-Forge, D-MFA-StepUp) | Excluded: 4 (edge-case, separate-feature, or bundled — scope filter table only)
 Figma design: Node 100:6629 (EDIT AGREEMENT) on canvas 10:15285, file aQGn5OLEjEGJO7xGzFikP5 — frame render available in fixtures (see "Design references" below). REST + MCP were quota-exhausted on 2026-07-24; frames were manually PNG-exported from Figma. LIMIT BREACH variant (node 100:10496) is NOT extracted — AC-12 warning-path copy remains design-blind. Exported frame shows the pre-CR two-step edit wizard (`Edit agreement details` → `Review your changes`); per CR B4 the edit flow is being reworked to mirror the 6-step creation wizard — treat the exported frame as `pre-CR design — refresh needed`.
-Updated per CR PRD1042-1495 (2026-07-24): Edit flow aligned with the 6-step Creation wizard (including the Special Conditions step) per B4 — the two-step exported frame is stale; the reworked wizard preserves the existing `edit_version_counter` behaviour (each save bumps the version). Immutable-field list (AC-03) is unchanged: Agreement ID / Name / LC / Bank Entity / Tenant ID / Currency / Valid From remain rejected on modification. Bank Entity remains hidden per CR A4 but was already immutable — no additional test surface for A4 in this story.
+Updated per CR PRD1042-1495 (2026-07-24): Edit flow aligned with the 6-step Creation wizard (including the Special Conditions step) per B4/1495 — the two-step exported frame is stale; the reworked wizard preserves the existing `edit_version_counter` behaviour (each save bumps the version). Immutable-field list (AC-03) is unchanged: Agreement ID / Name / LC / Bank Entity / Tenant ID / Currency / Valid From remain rejected on modification. Bank Entity remains hidden per CR 1495 A4 but was already immutable — no additional test surface for A4 in this story.
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): EDITABLE FIELDS list narrowed per A1/A4 (v10) — `Base rate`, `Spread`, `Rate type`, `Rate lock period`, `LG-specific coverage rate override` REMOVED from the edit contract. Only `Effective rate` (single, stored-as-entered per A2) plus `Max volume`, `Allowed product templates`, `Valid until`, `Special conditions`, `Edit justification` (mandatory ≥30 chars) remain editable. `vfe_rate` retained but BE-pending per 1495 B2. Happy-path multi-field edit scenario rewritten to change `Effective rate` + `Max volume` only. AC-15/AC-17 role Outline marked [CR-PENDING B5]. Term location [CR-PENDING B8] — do NOT reintroduce `rate_lock_period_months` even if OQ-11-02 lands on FA-default (naming per Philipp's decision).
 
 ---
 
@@ -101,19 +102,19 @@ Framework Agreement Edit as built in Figma frame `100:6629` and detail zoom `det
 
 **EDITABLE FIELDS section — verbatim field labels (lowercase-t/l):**
 
-| Label                                           | Type                         | Notes                                                                                               |
-| ----------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| `Max volume`                                    | number input (EUR suffix)    |                                                                                                     |
-| `Base rate`                                     | number input (% suffix)      |                                                                                                     |
-| `Spread`                                        | number input (% suffix)      |                                                                                                     |
-| `Effective rate`                                | number input (% suffix)      |                                                                                                     |
-| `Rate type`                                     | dropdown                     | e.g. `Fixed`                                                                                        |
-| `Rate lock period`                              | number input (months suffix) |                                                                                                     |
-| `LG-specific coverage rate override (optional)` | number input (% suffix)      |                                                                                                     |
-| `Allowed product templates`                     | chip list + `+ Add` button   | Helper text begins: `Removing a template is blocked if any in-flight financing draft`               |
-| `Valid until`                                   | date picker                  | Helper text begins: `Extension only. The date can only be moved later, not earlier.`                |
-| `Special conditions (optional)`                 | textarea                     |                                                                                                     |
-| `Edit justification`                            | textarea                     | Counter `Min 30 characters` (right-aligned above); helper `Mandatory. Recorded in the audit trail.` |
+Per CR PRD1042-22 v10 A1/A4 (2026-07-27), the following fields are REMOVED from the edit contract and MUST NOT appear on the edit form: ~~`Base rate`~~, ~~`Spread`~~, ~~`Rate type`~~, ~~`Rate lock period`~~, ~~`LG-specific coverage rate override (optional)`~~. The exported PNG frame `100:6629` still shows these — treat as `pre-CR design — refresh needed`. Only the fields below remain editable:
+
+| Label                           | Type                       | Notes                                                                                               |
+| ------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Max volume`                    | number input (EUR suffix)  |                                                                                                     |
+| `Effective rate`                | number input (% suffix)    | Single rate, stored as entered (no derivation) per v10 A1/A2                                        |
+| `VFE rate` (BE-pending)         | number input (% suffix)    | Optional; retained per 1495 B2; hidden until BE ships                                               |
+| `Allowed product templates`     | chip list + `+ Add` button | Helper text begins: `Removing a template is blocked if any in-flight financing draft`               |
+| `Valid until`                   | date picker                | Helper text begins: `Extension only. The date can only be moved later, not earlier.`                |
+| `Special conditions (optional)` | textarea                   |                                                                                                     |
+| `Edit justification`            | textarea                   | Counter `Min 30 characters` (right-aligned above); helper `Mandatory. Recorded in the audit trail.` |
+
+**Term location:** [CR-PENDING B8] — OQ-11-02 pending Philipp Maute. If Philipp lands on "prefilled FA default field", a new field will be added here under a new name; do NOT reintroduce `rate_lock_period_months`.
 
 **Step-1 gate:** `Next →` is disabled until (a) at least one editable field has changed AND (b) `Edit justification` reaches 30 characters.
 
@@ -135,7 +136,9 @@ Feature: Framework Agreement Edit — Active & Suspended (US 11.10 — PRD1042-8
   Background:
     Given the RefiNext platform is up and healthy
     And a Framework Agreement "FA-Active-001" (agreement name "RV-SSKM-2026-001", ID "FA-2026-00041") exists in Active state bound to Leasing Company "New Group Trade" (Bank entity "Sparkasse", Tenant ID "TNT-00042")
-    And "FA-Active-001" has Max volume "€ 25.000.000,00", Base rate "4,25%", Spread "0,5%", Effective rate "4,75%", Rate type "Fixed", Rate lock period "12 months", Valid from "13 Jun 2026", Valid until "Open ended", version counter 5
+    # Per CR PRD1042-22 v10 A1: base_rate / spread / rate_type / rate_lock_period_months REMOVED from the FA contract.
+    # Only the single effective_rate remains (stored-as-entered per A2). LG-specific coverage rate override REMOVED per A4.
+    And "FA-Active-001" has Max volume "€ 25.000.000,00", Effective rate "4,75%", Valid from "13 Jun 2026", Valid until "Open ended", version counter 5
     And "FA-Active-001" has Net exposure "€ 8.500.000,00" sourced from Limit Management
     And "FA-Active-001" permits Allowed product templates "Full refinancing v1", "Credit line v2", "True sale v1"
     And an Approved Financing "FIN-001" under "FA-Active-001" was approved at Effective rate "4,75%"
@@ -163,9 +166,11 @@ Feature: Framework Agreement Edit — Active & Suspended (US 11.10 — PRD1042-8
     And a two-step stepper should be visible reading "1 Details — Edit framework agreement" (current) and "2 Review — Confirm and submit"
     And the page heading should read "Edit agreement details" with subtitle "Update the fields below. Immutable fields are locked and cannot be changed."
     And a "LOCKED FIELDS" section should show Agreement ID "FA-2026-00041", Agreement name "RV-SSKM-2026-001", Leasing company "New Group Trade", Bank entity "Sparkasse", Tenant ID "TNT-00042", Currency "EUR", Valid from "13 Jun 2026" — all read-only
-    And an "EDITABLE FIELDS" section should show pre-filled inputs: Max volume "25.000.000,00" (EUR), Base rate "4,25" (%), Spread "0,5" (%), Effective rate "4,75" (%), Rate type "Fixed", Rate lock period "12" (months)
+    # Per CR PRD1042-22 v10 A1/A4: base_rate/spread/rate_type/rate_lock_period/lg_override REMOVED.
+    # EDITABLE FIELDS section pre-fills only the fields that remain in the contract.
+    And an "EDITABLE FIELDS" section should show pre-filled inputs: Max volume "25.000.000,00" (EUR), Effective rate "4,75" (%)
+    And the EDITABLE FIELDS section should NOT contain any of the following inputs in the DOM (per v10 A1/A4): "Base rate", "Spread", "Rate type", "Rate lock period", "LG-specific coverage rate override"
     When I change Max volume to "30.000.000,00"
-    And I change Base rate to "4,5"
     And I change Effective rate to "5"
     And I enter Edit justification "Approved uplift per Q3 credit committee 2026-07-15 minutes."
     And I click "Next →"
@@ -173,11 +178,10 @@ Feature: Framework Agreement Edit — Active & Suspended (US 11.10 — PRD1042-8
     And the "CHANGES" section should show a table with columns "Field", "Current value", "New value" containing exactly:
       | Field           | Current value    | New value        |
       | Max volume      | € 25.000.000,00  | € 30.000.000,00  |
-      | Base rate       | 4,25%            | 4,5%             |
       | Effective rate  | 4,75%            | 5%               |
     And the "JUSTIFICATION" section should quote "Approved uplift per Q3 credit committee 2026-07-15 minutes."
     When I click "Save changes"
-    Then the PATCH request to "/api/framework-agreements/FA-Active-001" should include expectedVersion 5 and the 3 changed fields under one justification
+    Then the PATCH request to "/api/framework-agreements/FA-Active-001" should include expectedVersion 5 and the 2 changed fields under one justification
     And the response status should be 200
     And a single FA_EDITED audit event should be emitted with structured diff containing all 3 field changes and the justification
     And a success panel should show a green check, heading "Agreement updated", body "Your changes to RV-SSKM-2026-001 have been saved and will apply to new financings created from this point forward. Existing financings are unaffected.", and a "← Back to agreement details" button
@@ -193,14 +197,15 @@ Feature: Framework Agreement Edit — Active & Suspended (US 11.10 — PRD1042-8
   Scenario: Review step shows only changed fields before submission (AC-06)
     Given I am logged in as Power User (Bank Admin) with a valid MFA-validated session
     And I have navigated to "Edit agreement details" for "FA-Active-001"
+    # Per CR PRD1042-22 v10 A1: base_rate no longer in the contract; change effective_rate instead.
     When I change Max volume to "30.000.000,00"
-    And I change Base rate to "4,5"
+    And I change Effective rate to "5"
     And I enter Edit justification "Approved uplift per credit committee 2026-07-15."
     And I click "Next →"
     Then the "CHANGES" table should list exactly:
       | Field           | Current value    | New value        |
       | Max volume      | € 25.000.000,00  | € 30.000.000,00  |
-      | Base rate       | 4,25%            | 4,5%             |
+      | Effective rate  | 4,75%            | 5%               |
     And no other field row should appear in the CHANGES table
     And a "← Back" button should be present alongside "Save changes" so the user can return to Details
 
@@ -367,7 +372,11 @@ Feature: Framework Agreement Edit — Active & Suspended (US 11.10 — PRD1042-8
   # Other roles get HTTP 404 (not 403). LC user cross-LC is also 404 (tenant isolation).
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-15 @ac-17 @p0
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested permission-matrix
+  # cells (FO create/enrich? SA least-privilege? BO edit-review? FO sees pricing?).
+  # Current 5-role 404 Outline retained pending Philipp Maute decision.
+
+  @main-error @ac-15 @ac-17 @p0 @cr-pending-b5
   Scenario Outline: Non-Power-User (Bank Admin) role PATCH returns 404 (AC-15, AC-17)
     Given <precondition>
     And I am logged in as <role> <scope>

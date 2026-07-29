@@ -6,6 +6,7 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (17 derived ACs from Functional Requirements + Field Specification + Validation Rules + System Behavior + Security Requirements + Non-Functional Requirements + Edge Cases + Audit Requirements, description present with Permission Matrix + endpoint contract + event fan-out + Field Spec table, stakeholder-reviewed, Dev in progress; children BE PRD1042-1372, FE PRD1042-1373 QA-ready, QA PRD1042-1374)
 ACs with Gherkin scenarios: 11 of 17 | Blocked: 1 (AC-12 — D21 + D-Session-Revalidation-Signal) | Excluded: 5 (AC-02/16/17 bundled into AC-01/AC-09; AC-05 immutability invariant covered by Epic 26 US 26.03 PRD1042-780; AC-14 >10,000 events volume warning bundled into AC-07 cursor pagination happy path)
 Figma design: Shared Epic 11 file `aQGn5OLEjEGJO7xGzFikP5`. Target frame — Audit / Lifecycle History tab within FA detail view (US 11.04) on canvas `10:15285` (FA details page). Stage 2 FAILED (MCP `get_metadata` returned "You've reached the Figma MCP tool call limit for your View seat on the Professional plan" — same quota state as prior 803/804/805/806/807/808/809/812 batch; REST `/v1/files` also quota-exhausted per [[feedback-figma-nodes-fallback]] confirmed in prior sessions on this token; WebFetch cannot pass `X-Figma-Token`; no shell available; no cached PNG fixture in `rendered-nodes/` for the Audit tab / as-of picker overlay / volume warning banner). Design-blind, spec-anchored per user directive; verbatim tab label / as-of picker copy / reconstruction overlay heading / volume warning banner / session-expired banner / FA-did-not-exist message copy remain OPEN design gaps logged in the Design specification section below.
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): **A6/v10 SECURITY** — `FA_AUDIT_READ` (and `FA_SUSPEND`, `FA_REACTIVATE`, `FA_TERMINATE`, `FA_VFE_MANAGE`) MUST be mapped to `PlatformModule.FRAMEWORK_AGREEMENT`. Fix the mapping, not the endpoints. If a tenant has the FRAMEWORK_AGREEMENT module deactivated, the audit-history endpoint must fail-closed. New assertion added to AC-15 RBAC Outline. State model 4 stored values (Draft, Active, Suspended, Terminated) reinforced — Expired NOT stored per v10 §4 B2. AC-15 6-role Outline marked [CR-PENDING B5] pending Philipp Maute's confirmation on 4 contested cells.
 
 ---
 
@@ -412,7 +413,29 @@ Feature: Framework Agreement Audit Trail Read & Reconstruction (US 11.14 — PRD
   # cross-tenant → 404 via tenant isolation.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-15 @p0
+  # ---------------------------------------------------------------------------
+  # NEW SCENARIO — CR PRD1042-22 v10 A6 (SECURITY module-gate)
+  # `FA_AUDIT_READ` MUST be mapped to `PlatformModule.FRAMEWORK_AGREEMENT`.
+  # When the tenant has the FRAMEWORK_AGREEMENT module deactivated, the
+  # audit-history endpoint MUST fail-closed with 404 (uniform with the
+  # 404-not-403 pattern). This is a mapping fix, not an endpoint change —
+  # any bypass indicates the systemic A6 defect (unmapped permissions).
+  # ---------------------------------------------------------------------------
+
+  @main-error @ac-cr-a6 @p0 @cr-v10-a6
+  Scenario: Audit-history endpoint fails closed when FRAMEWORK_AGREEMENT module is deactivated (CR PRD1042-22 v10 A6)
+    Given the Framework Agreement module is DEACTIVATED for tenant "TNT-00042"
+    And I am logged in as Power User (Bank Admin) "Vincent Brooke" with a valid session bound to Tenant ID "TNT-00042"
+    When I GET "/api/framework-agreements/FA-Audit-Alpha/audit-history"
+    Then the response status should be 404
+    And the response body should NOT include the string "403" or "Forbidden"
+    And the response body should NOT include any event rows
+    And the module-gate mapping for `FA_AUDIT_READ` should resolve to `PlatformModule.FRAMEWORK_AGREEMENT` (server-side assertion; if the permission maps elsewhere the request would incorrectly bypass the tenant module gate — the systemic A6 defect)
+
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested permission-matrix
+  # cells. Current 6-role Outline retained pending Philipp Maute decision.
+
+  @main-error @ac-15 @p0 @cr-pending-b5
   Scenario Outline: RBAC 404 + LC/Support justification-filter Outline (AC-15)
     Given I am logged in as <role> with a valid session <session_scope>
     When I GET "/api/framework-agreements/<faId>/audit-history"

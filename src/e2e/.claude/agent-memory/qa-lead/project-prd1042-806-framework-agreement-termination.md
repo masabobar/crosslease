@@ -36,3 +36,23 @@ Processed 2026-07-24 as a single-story pipeline run against shared Epic 11 Figma
 - Mirrors [[project-prd1042-809-framework-agreement]] governed-modal pattern (30-char justification, wizard).
 
 Epic folder: `PRD1042-22-Framework Agreement`.
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas applied:**
+
+- **Header** — CR v10 acknowledgement note added distinguishing 1495 vs v10 items.
+- **AC-03/AC-10** `Blocked-by-CR-pending` — dependency-check reference figure contested per v10 §7 B4. Structural conflict-list assertions UNAFFECTED. Scenario tagged `@cr-pending-b4`.
+- **AC-07/AC-08** `Blocked-by-CR-pending` — 5-role 404 Outline tagged `@cr-pending-b5` pending Philipp Maute.
+- **B7 confirmation** — single-admin two-step termination (no Four-Eyes) reinforced by v10 §4.3 / §6 US 11.7; already implemented — no test change.
+- **State model** — 4 stored values (Draft/Active/Suspended/Terminated) reinforced. AC-05 back-transition Outline (Terminated → Suspend/Reactivate all 409) remains correct.
+- **AC-09 Limit Breach non-blocker** — v10 §6 US 11.7 confirms Limit Breach Flag does NOT block termination (already correct per spec).
+- **Non-gating invariant** — v10 §6 US 11.9: no operation blocks on utilisation figure. Termination's Active-Financings gate is on existence (not utilisation percentage) — CORRECT and RETAINED.
+
+**No `[CR-REMOVED — coordinate spec deletion]`** items.
+
+**No new dependencies.**
+
+See also [[project-cr-prd1042-22-reconciliation-v10]].

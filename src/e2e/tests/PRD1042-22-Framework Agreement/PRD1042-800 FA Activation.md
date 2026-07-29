@@ -6,7 +6,8 @@ Epic: PRD1042-22 — Epic 11: Framework Agreement
 DoR status: PASS (14 ACs, description present, stakeholder-reviewed, Dev in progress)
 ACs with Gherkin scenarios: 7 of 14 | Blocked: 0 | Excluded: 7 (edge-case or separate-feature — scope filter table only)
 Figma design: Node 28:4119 (ACTIVATE agreement) — sub-frames 27:5706 (activation dialog) + 28:3688 (post-activation success), file aQGn5OLEjEGJO7xGzFikP5. Dialog verbatim: "Activate framework agreement" / "Effective from (optional)" / "Defaults to now. Set a future date if the agreement becomes effective later" / "Activation justification" (min 20 characters) / "I confirm that all signed framework documents have been attached." Success alert: "Framework agreement activated." + "{FA_ID} is now active." Stage 2 COMPLETE via REST /nodes fallback.
-Updated per CR PRD1042-1495 (2026-07-23): Optional "Valid Until" field confirmed in activation modal (B6) — DESIGN GAP: not yet visible in current Figma dialog 27:5706, FE needs to add. Reactivation hidden from UI, sidebar shows only Edit/Suspend/Terminate post-activation per B5 (confirmed in success frame 28:3688).
+Updated per CR PRD1042-1495 (2026-07-23): Optional "Valid Until" field confirmed in activation modal (B6/1495) — DESIGN GAP: not yet visible in current Figma dialog 27:5706, FE needs to add. Reactivation hidden from UI, sidebar shows only Edit/Suspend/Terminate post-activation per B5/1495 (confirmed in success frame 28:3688).
+Updated per CR PRD1042-22 Reconciliation v10 (2026-07-27): Single-admin activation reinforced (B7/v10) — `framework_agreements/CLAUDE.md` corrected to single-admin activation, not two-admin four-eyes; the machinery-retained-in-model / disabled-in-UI pattern is preserved for post-November four-eyes re-enablement. State model corrected to 4 stored values (Draft, Active, Suspended, Terminated) per v10 §4 — Expired is DERIVED from `valid_until`, not stored. AC-08 5-role Outline marked [CR-PENDING B5] pending Philipp Maute's decision on 4 contested permission-matrix cells (FO authoring, SA least-privilege, BO activation-review, FO pricing view).
 
 ---
 
@@ -148,9 +149,15 @@ Feature: Framework Agreement Activation — Draft to Active (US 11.2 — PRD1042
   # POST /api/framework-agreements/{id}/activate is restricted to Power User
   # (Bank Admin). All other roles receive HTTP 404 per the 404-not-403 tenant
   # isolation pattern. Backend authorization is mandatory.
+  #
+  # [CR-PENDING B5] — CR PRD1042-22 v10 §5 flags 4 contested cells in the
+  # permission matrix; specifically for activation: v9 gives Back Office
+  # review authority on activation while code = Bank Admin only. Current
+  # 5-role Outline is retained as-is pending Philipp Maute's confirmation.
+  # Do NOT pre-emptively add BO-review-on-activation scenarios.
   # ---------------------------------------------------------------------------
 
-  @main-error @ac-08 @p0 @e2e-ready
+  @main-error @ac-08 @p0 @e2e-ready @cr-pending-b5
   Scenario Outline: Unauthorized roles cannot activate a Framework Agreement — HTTP 404 (AC-08)
     Given a Framework Agreement "RV-SSKM-2026-001" exists in Draft state
     And I am authenticated as a <role> user

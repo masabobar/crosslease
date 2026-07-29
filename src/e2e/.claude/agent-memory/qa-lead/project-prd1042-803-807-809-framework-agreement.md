@@ -67,3 +67,21 @@ Epic folder: `PRD1042-22-Framework Agreement` (existing, per [[project-prd1042-2
 **New / reused D-\* dependencies:** none. Existing D-LimitMgmt-Degraded, D-DocMgmt-FileMissing, D-VirusScan-Force, D-DocMgmt-Down, D-Concurrency-Forge, D-MFA-StepUp all unaffected.
 
 See also [[project-cr-prd1042-1495-framework-agreement-cr]].
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas per suite in this batch:**
+
+- **803 FA Detail View** — A1/A3/A4 pricing narrowed. Background stripped of `Base rate`, `Spread`, `Rate type`, `Rate lock period` (keeps `Effective rate` only). AC-03 role Outline `lg_override_visible` column REMOVED per A4. PRICING section content narrowed to `effective_rate` + `edit_version_counter` only. AC-08 Outline `[CR-PENDING B5]`.
+- **807 Framework Document Attachment** — B6 tenant-configurable required-document set formally recognised (default non-blocking replaces hard-coded `FANoDocumentsError`). AC-CR-B3 rationale updated. AC-08 `[CR-PENDING B5]`.
+- **809 FA Edit Active/Suspended** — A1/A4 EDITABLE FIELDS list narrowed. Removed `Base rate`, `Spread`, `Rate type`, `Rate lock period`, `LG-specific coverage rate override (optional)`. Happy-path multi-field edit rewritten to change `Effective rate` + `Max volume` only. Design-spec table annotated to reflect pre-CR vs post-CR field set. AC-15/AC-17 5-role Outline `[CR-PENDING B5]`. Term location `[CR-PENDING B8]` — do NOT reintroduce `rate_lock_period_months`.
+
+**`[CR-REMOVED — coordinate spec deletion]` items:** none in this batch (799 owns the removed pricing ACs — see [[project-prd1042-22-framework-agreement]]).
+
+**New dependencies:** none new.
+
+**Governance flags:** [CR-PENDING B5] on 803/807/809 role Outlines pending Philipp Maute; [CR-PENDING B8] on 809 term-location field.
+
+See also [[project-cr-prd1042-22-reconciliation-v10]] for the full CR context.

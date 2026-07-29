@@ -46,3 +46,22 @@ Processed 2026-07-24 as a single-story pipeline run against shared Epic 11 Figma
 - PRD1042-809 (Edit Active/Suspended, 12 scenarios) — closest sibling. Uses 30-char justification (vs 20-char here), full 2-step wizard (vs single modal here), Four-Eyes deferred both. Same D-Concurrency-Forge + D-MFA-StepUp + D20 dependency set.
 
 Epic folder: `PRD1042-22-Framework Agreement` (existing, per [[project-prd1042-22-framework-agreement]] and [[feedback-epic-folder-naming]]).
+
+## CR Amendments — PRD1042-22 Reconciliation v10
+
+**Effective:** 2026-07-22 (Scope Reconciliation v2). **QA merge:** 2026-07-27.
+
+**Deltas applied:**
+
+- **Header** — CR v10 acknowledgement note added distinguishing 1495 vs v10 items.
+- **AC-10** `Blocked-by-CR-pending` — dependency-check reference figure contested per v10 §7 B4 (active-financings volume vs current outstanding residual debt). Structural conflict-list assertions (blocking Financing IDs + states) are UNAFFECTED. Scenario tagged `@cr-pending-b4`.
+- **AC-14/AC-16** `Blocked-by-CR-pending` — 5-role 404 Outline tagged `@cr-pending-b5` pending Philipp Maute's decision on 4 contested permission-matrix cells.
+- **B7 confirmation** — single-admin suspension (no Four-Eyes) reinforced by v10; already implemented — no test change.
+- **State model** — 4 stored values (Draft/Active/Suspended/Terminated) reinforced.
+- **Non-gating invariant** — v10 §6 US 11.5: dependency checks query real financings, never return empty lists, never block on utilisation figure. This suite's AC-10 gate is on Active/Disbursing/Approved existence (not on the utilisation percentage) — CORRECT and RETAINED.
+
+**No `[CR-REMOVED — coordinate spec deletion]`** items.
+
+**New dependencies:** none new.
+
+See also [[project-cr-prd1042-22-reconciliation-v10]].
