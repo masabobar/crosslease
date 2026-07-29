@@ -97,10 +97,11 @@ export function Sidebar() {
   const canAccessProductTemplates =
     !!currentUser &&
     PRODUCT_TEMPLATE_READ_ALLOWED_ROLES.includes(currentUser.role)
-  // Users without a home tenant (system_admin, support_user) aren't gated on module
-  // activation here — /me/permissions only reflects always-on modules for them, since
-  // module activation is per-tenant and they operate across tenants. Enforcement for
-  // a specific tenant still happens at the API layer once one is selected.
+  // Users without a home tenant (auditor is the only such role left with FA read)
+  // aren't gated on module activation here — /me/permissions only reflects always-on
+  // modules for them, since module activation is per-tenant and they operate across
+  // tenants. Enforcement for a specific tenant still happens at the API layer once
+  // one is selected.
   const canAccessFrameworkAgreements =
     !!currentUser &&
     FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES.includes(currentUser.role) &&

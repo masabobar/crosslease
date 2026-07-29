@@ -13,6 +13,7 @@ import {
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
   FieldDiffItemSchema,
+  ImpactSummarySchema,
   TemplateListItemSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
@@ -38,6 +39,19 @@ describe("CreateProductTemplateDraftRequestSchema", () => {
     ).not.toThrow()
   })
 
+  // The BE removed both from CreateTemplateDraftRequest under CR PRD1042-1546 B9/B10, so the
+  // wire schema must not carry them forward either — a caller passing them gets them dropped
+  // rather than silently ignored server-side.
+  it("strips rate_type/npv_formula_ref from the wire payload", () => {
+    const parsed = CreateProductTemplateDraftRequestSchema.parse({
+      ...validCreateRequest,
+      rate_type: "fixed",
+      npv_formula_ref: "NPV-FORMULA-STD-v3",
+    }) as Record<string, unknown>
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.npv_formula_ref).toBeUndefined()
+  })
+
   it("accepts a fully populated payload", () => {
     expect(() =>
       CreateProductTemplateDraftRequestSchema.parse({
@@ -45,8 +59,6 @@ describe("CreateProductTemplateDraftRequestSchema", () => {
         template_description: "Standard blueprint",
         valid_from: "2026-06-12",
         valid_until: "2027-06-12",
-        rate_type: "fixed",
-        npv_formula_ref: "NPV-FORMULA-STD-v3",
         first_installment_rule: "following_month",
         disbursement_derivation_rule: "npv",
         allowed_asset_categories: ["machinery", "vehicles"],
@@ -727,6 +739,42 @@ describe("DeprecateTemplateVersionRequestSchema / DeprecateTemplateVersionRespon
       })
     ).toThrow()
   })
+
+  it("parses the impact summary when the response carries one", () => {
+    const parsed = DeprecateTemplateVersionResponseSchema.parse({
+      ...validDeprecateResponse,
+      impact_summary: {
+        rr_count: 0,
+        financing_count: 2,
+        contract_count: 0,
+        framework_agreement_count: 3,
+      },
+    })
+    expect(parsed.impact_summary?.framework_agreement_count).toBe(3)
+    expect(parsed.impact_summary?.financing_count).toBe(2)
+  })
+
+  it("leaves impact_summary undefined when the response omits it", () => {
+    expect(
+      DeprecateTemplateVersionResponseSchema.parse(validDeprecateResponse)
+        .impact_summary
+    ).toBeUndefined()
+  })
+
+  it("defaults every impact count to zero", () => {
+    expect(ImpactSummarySchema.parse({})).toEqual({
+      rr_count: 0,
+      financing_count: 0,
+      contract_count: 0,
+      framework_agreement_count: 0,
+    })
+  })
+
+  it("rejects a non-integer framework_agreement_count", () => {
+    expect(() =>
+      ImpactSummarySchema.parse({ framework_agreement_count: 1.5 })
+    ).toThrow()
+  })
 })
 
 describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / TemplateListResponseSchema", () => {
@@ -774,6 +822,7 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
   const validListItem = {
     id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     template_code: "REFI-FULL-STD",
+    template_name: "Full refinancing standard",
     current_version: validCurrentVersion,
     created_at: "2026-05-22T14:30:00Z",
   }
@@ -797,10 +846,12 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
     ).toBe("Refinancing Standard")
   })
 
-  it("accepts a list item without a template_name", () => {
-    expect(
-      TemplateListItemSchema.parse(validListItem).template_name
-    ).toBeUndefined()
+  // Serialized unconditionally since PRD1042-1649 — a payload without the key is a
+  // contract violation, not the pre-1649 fallback case that null now covers.
+  it("rejects a list item missing template_name", () => {
+    const rest = { ...validListItem } as Record<string, unknown>
+    delete rest.template_name
+    expect(() => TemplateListItemSchema.parse(rest)).toThrow()
   })
 
   it("accepts a null template_name", () => {

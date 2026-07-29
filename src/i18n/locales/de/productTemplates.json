@@ -265,6 +265,7 @@
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "Für diese Vorlage existiert bereits ein Entwurf. Verwerfen oder veröffentlichen Sie ihn, bevor Sie einen neuen erstellen.",
     "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Wählen Sie zwei unterschiedliche Versionen zum Vergleich aus.",
+    "PRODUCT_TEMPLATE_IN_USE_BY_FRAMEWORK_AGREEMENT": "Diese Version kann nicht außer Kraft gesetzt werden, solange aktive Rahmenverträge auf sie verweisen – diese hätten dann kein veröffentlichtes Produkt mehr.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

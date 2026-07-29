@@ -1325,9 +1325,7 @@ const UpdateTemplateDraftRequest = z
     legal_structure: z.union([LegalStructure, z.null()]),
     payment_timing: z.union([PaymentTiming, z.null()]),
     rate_basis: z.union([RateBasis, z.null()]),
-    rate_type: z.union([RateType, z.null()]),
     calculation_model: z.union([CalculationModel, z.null()]),
-    npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
     disbursement_derivation_rule: z.union([
       DisbursementDerivationRule,
@@ -1425,6 +1423,7 @@ const ImpactSummary = z
     rr_count: z.number().int().default(0),
     financing_count: z.number().int().default(0),
     contract_count: z.number().int().default(0),
+    framework_agreement_count: z.number().int().default(0),
   })
   .partial()
   .passthrough()
@@ -1487,6 +1486,7 @@ const TemplateListItem = z
   .object({
     id: z.string().uuid(),
     template_code: z.string(),
+    template_name: z.union([z.string(), z.null()]),
     current_version: z.union([TemplateCurrentVersionSummary, z.null()]),
     created_at: z.string().datetime({ offset: true }),
   })
@@ -1511,8 +1511,6 @@ const CreateTemplateDraftRequest = z
     template_description: z.union([z.string(), z.null()]).optional(),
     valid_from: z.union([z.string(), z.null()]).optional(),
     valid_until: z.union([z.string(), z.null()]).optional(),
-    rate_type: z.union([RateType, z.null()]).optional(),
-    npv_formula_ref: z.union([z.string(), z.null()]).optional(),
     first_installment_rule: z
       .union([FirstInstallmentRule, z.null()])
       .optional(),

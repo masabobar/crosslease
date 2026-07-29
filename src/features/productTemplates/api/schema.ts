@@ -75,8 +75,9 @@ export const CreateProductTemplateDraftRequestSchema = z.object({
   template_description: z.string().max(1000).optional(),
   valid_from: z.string().optional(),
   valid_until: z.string().optional(),
-  rate_type: RateTypeSchema.optional(),
-  npv_formula_ref: z.string().optional(),
+  // rate_type and npv_formula_ref are deliberately absent: the BE dropped both from the
+  // create/edit requests under CR PRD1042-1546 B9/B10 (pricing belongs to the deal, and the
+  // NPV formula resolves server-side to one method). Both stay on the detail response.
   first_installment_rule: FirstInstallmentRuleSchema.optional(),
   disbursement_derivation_rule: DisbursementDerivationRuleSchema.optional(),
   allowed_asset_categories: z.array(AssetCategorySchema).optional(),
@@ -157,9 +158,6 @@ export type NewVersionCreatedResponse = z.infer<
 >
 
 // Wire request/response for POST .../deprecate (deprecate_version) in refinext-api.
-// impact_summary is intentionally omitted — the BE response schema declares it but
-// deprecate_version never populates real counts (always defaults), so the FE doesn't
-// parse a field it can't trust (see plan Gap 3).
 export const DeprecateTemplateVersionRequestSchema = z.object({
   justification: z.string().min(DEPRECATION_JUSTIFICATION_MIN_LENGTH).max(2000),
 })
@@ -167,11 +165,25 @@ export type DeprecateTemplateVersionRequest = z.infer<
   typeof DeprecateTemplateVersionRequestSchema
 >
 
+// framework_agreement_count was added under CR PRD1042-1546 B3, which is also what made
+// the summary worth parsing — deprecate_version populates it for real now. The other three
+// counts stay at their 0 default until E1/E2/E3 deliver back-reference tracking.
+export const ImpactSummarySchema = z.object({
+  rr_count: z.number().int().default(0),
+  financing_count: z.number().int().default(0),
+  contract_count: z.number().int().default(0),
+  framework_agreement_count: z.number().int().default(0),
+})
+export type ImpactSummary = z.infer<typeof ImpactSummarySchema>
+
 export const DeprecateTemplateVersionResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_status: z.string(),
   deprecated_at: z.string(),
   deprecated_by: z.string().uuid(),
+  // Optional to match the BE default — the field carries a default, so it is absent
+  // from the endpoint's required list even though the response always serializes it.
+  impact_summary: ImpactSummarySchema.optional(),
 })
 export type DeprecateTemplateVersionResponse = z.infer<
   typeof DeprecateTemplateVersionResponseSchema
@@ -395,11 +407,9 @@ export type TemplateCurrentVersionSummary = z.infer<
 export const TemplateListItemSchema = z.object({
   id: z.string().uuid(),
   template_code: z.string(),
-  // Optional because TemplateListItem in refinext-api doesn't serialize it yet — the
-  // list query already loads the version row that holds it (product_template_repo.py
-  // list_templates), so it arrives once the BE maps it through. Until then the list
-  // falls back to template_code (PRD1042-1649).
-  template_name: z.string().nullable().optional(),
+  // Serialized since PRD1042-1649. Still nullable: it is read off the latest version row,
+  // so a template with no version yet has no name — the list falls back to template_code.
+  template_name: z.string().nullable(),
   current_version: TemplateCurrentVersionSummarySchema.nullable(),
   created_at: z.string(),
 })
