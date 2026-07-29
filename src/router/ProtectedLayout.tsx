@@ -11,6 +11,11 @@ import { Button } from "@/components/ui/button"
 
 const TENANT_NOT_ACTIVE_ERROR_CODE = "TENANT_NOT_ACTIVE"
 
+// Paths outside the LC workspace that LC-only users may still reach. Their own
+// profile is role-agnostic (PATHS.SETTINGS_PROFILE carries no RoleGuard), so
+// without this exception the redirect below made it permanently unreachable.
+const LC_ALLOWED_NON_LC_PATHS: readonly string[] = [PATHS.SETTINGS_PROFILE]
+
 export default function ProtectedLayout() {
   const { t } = useTranslation("common")
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
@@ -57,7 +62,10 @@ export default function ProtectedLayout() {
   // LC users must land on their dedicated workspace, not the internal dashboard
   if (currentUser && LC_ONLY_ROLES.includes(currentUser.role)) {
     const isOnLcPath = location.pathname.startsWith(PATHS.LC_WORKSPACE)
-    if (!isOnLcPath) {
+    const isOnAllowedPath = LC_ALLOWED_NON_LC_PATHS.some(p =>
+      location.pathname.startsWith(p)
+    )
+    if (!isOnLcPath && !isOnAllowedPath) {
       return <Navigate to={PATHS.LC_WORKSPACE} replace />
     }
   }
