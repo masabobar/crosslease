@@ -1883,6 +1883,378 @@ const LCPortalFAListItem = z
 const LCPortalFAListResponse = z
   .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
   .passthrough()
+const CatalogLayer = z.enum(["global_default", "product_specific"])
+const catalog_layer = z.union([z.array(CatalogLayer), z.null()]).optional()
+const CatalogEntityType = z.enum([
+  "refinancing_request",
+  "financing",
+  "redemption_request",
+])
+const entity_type = z.union([z.array(CatalogEntityType), z.null()]).optional()
+const product_template_id = z
+  .union([z.array(z.string().uuid()), z.null()])
+  .optional()
+const CatalogState = z.enum(["active", "archived"])
+const catalog_state = z.union([z.array(CatalogState), z.null()]).optional()
+const CatalogListItemResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_layer: CatalogLayer,
+    catalog_state: CatalogState,
+    entity_type: z.union([CatalogEntityType, z.null()]),
+    entity_id: z.union([z.string(), z.null()]),
+    valid_from: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse =
+  z
+    .object({
+      items: z.array(CatalogListItemResponse),
+      total: z.number().int(),
+      page: z.number().int(),
+      per_page: z.number().int(),
+      total_pages: z.number().int(),
+    })
+    .passthrough()
+const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest =
+  z
+    .object({
+      catalog_name: z.string().min(1).max(200),
+      catalog_layer: CatalogLayer,
+      valid_from: z.string(),
+      valid_until: z.union([z.string(), z.null()]).optional(),
+      description: z.union([z.string(), z.null()]).optional(),
+      entity_type: z.union([CatalogEntityType, z.null()]).optional(),
+      entity_id: z.union([z.string(), z.null()]).optional(),
+    })
+    .passthrough()
+const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse =
+  z
+    .object({
+      id: z.string().uuid(),
+      tenant_id: z.string().uuid(),
+      catalog_name: z.string(),
+      catalog_layer: CatalogLayer,
+      catalog_state: CatalogState,
+      entity_type: z.union([CatalogEntityType, z.null()]),
+      entity_id: z.union([z.string(), z.null()]),
+      valid_from: z.string(),
+      valid_until: z.union([z.string(), z.null()]),
+      description: z.union([z.string(), z.null()]),
+      created_by: z.string().uuid(),
+      created_at: z.string().datetime({ offset: true }),
+      updated_at: z.string().datetime({ offset: true }),
+      current_version_id: z.union([z.string(), z.null()]).optional(),
+      warnings: z.array(z.string()).optional().default([]),
+    })
+    .passthrough()
+const LayerAction = z.enum(["defined", "override", "deactivated", "supplement"])
+const TaskCategory = z.enum([
+  "legal",
+  "compliance",
+  "credit",
+  "operations",
+  "treasury",
+  "documentation",
+  "other",
+])
+const TaskResponsibleRole = z.enum([
+  "front_office",
+  "back_office_risk",
+  "compliance",
+  "legal",
+  "treasury",
+  "support",
+  "system",
+])
+const app__modules__workflow_task_catalog__domain__enums__StageCategorization =
+  z.enum([
+    "pre_submission",
+    "stage_1_review",
+    "stage_2_review",
+    "pre_disbursement",
+    "servicing",
+    "redemption",
+  ])
+const TaskProcessContext = z.enum([
+  "rr_submission",
+  "request_approval_readiness",
+  "financing_approval_readiness",
+  "disbursement_readiness",
+  "stage_1_review",
+  "stage_2_review",
+  "conditions_follow_up",
+  "servicing",
+  "redemption",
+])
+const DocRequirementPinMode = z.enum(["pin_by_id", "pin_by_version"])
+const ConditionalTrigger = z.literal("financing_amount_over_threshold")
+const InheritedGDValues = z
+  .object({
+    task_code: z.union([z.string(), z.null()]),
+    task_name: z.union([z.string(), z.null()]),
+    task_description: z.union([z.string(), z.null()]),
+    category: z.union([TaskCategory, z.null()]),
+    applicable_process_contexts: z.union([
+      z.array(TaskProcessContext),
+      z.null(),
+    ]),
+    is_mandatory: z.union([z.boolean(), z.null()]),
+    weight: z.union([z.number(), z.null()]),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    display_order: z.union([z.number(), z.null()]),
+    stage_categorization: z.union([
+      app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
+    doc_requirement_ref: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const TaskDefinitionItem = z
+  .object({
+    id: z.string().uuid(),
+    catalog_version_id: z.string().uuid(),
+    layer_action: LayerAction,
+    task_code: z.union([z.string(), z.null()]),
+    task_name: z.union([z.string(), z.null()]),
+    task_description: z.union([z.string(), z.null()]),
+    category: z.union([TaskCategory, z.null()]),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    is_mandatory: z.union([z.boolean(), z.null()]),
+    weight: z.union([z.number(), z.null()]),
+    display_order: z.union([z.number(), z.null()]),
+    stage_categorization: z.union([
+      app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
+    applicable_process_contexts: z.union([
+      z.array(TaskProcessContext),
+      z.null(),
+    ]),
+    is_active: z.boolean(),
+    parent_task_id: z.union([z.string(), z.null()]),
+    doc_requirement_ref: z.union([z.string(), z.null()]),
+    doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
+    conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+    inherited: z.union([InheritedGDValues, z.null()]).optional(),
+  })
+  .passthrough()
+const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse =
+  z
+    .object({
+      id: z.string().uuid(),
+      tenant_id: z.string().uuid(),
+      catalog_name: z.string(),
+      catalog_layer: CatalogLayer,
+      entity_type: z.union([CatalogEntityType, z.null()]),
+      entity_id: z.union([z.string(), z.null()]),
+      catalog_state: CatalogState,
+      valid_from: z.string(),
+      valid_until: z.union([z.string(), z.null()]),
+      description: z.union([z.string(), z.null()]),
+      created_by: z.string().uuid(),
+      created_at: z.string().datetime({ offset: true }),
+      updated_at: z.string().datetime({ offset: true }),
+      current_version_id: z.union([z.string(), z.null()]),
+      tasks: z.array(TaskDefinitionItem),
+    })
+    .passthrough()
+const AuditTrailEventItem = z
+  .object({
+    id: z.string().uuid(),
+    event_type: z.string(),
+    action_type: z.string(),
+    actor_id: z.string(),
+    actor_role_at_time: z.union([z.string(), z.null()]),
+    actor_display: z.union([z.string(), z.null()]),
+    recorded_at: z.string().datetime({ offset: true }),
+    entity_display: z.union([z.string(), z.null()]),
+    old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
+    changed_fields: z.union([z.array(z.string()), z.null()]),
+  })
+  .passthrough()
+const AuditTrailResponse = z
+  .object({
+    events: z.array(AuditTrailEventItem),
+    next_cursor: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const AddTaskRequest = z
+  .object({
+    layer_action: LayerAction,
+    task_code: z.union([z.string(), z.null()]).optional(),
+    task_name: z.union([z.string(), z.null()]).optional(),
+    task_description: z.union([z.string(), z.null()]).optional(),
+    category: z.union([TaskCategory, z.null()]).optional(),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
+    is_mandatory: z.union([z.boolean(), z.null()]).optional(),
+    weight: z.union([z.number(), z.null()]).optional(),
+    display_order: z.union([z.number(), z.null()]).optional(),
+    stage_categorization: z
+      .union([
+        app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+        z.null(),
+      ])
+      .optional(),
+    applicable_process_contexts: z
+      .union([z.array(TaskProcessContext), z.null()])
+      .optional(),
+    is_active: z.boolean().optional().default(true),
+    parent_task_id: z.union([z.string(), z.null()]).optional(),
+    doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
+    doc_requirement_pin_mode: z
+      .union([DocRequirementPinMode, z.null()])
+      .optional(),
+    conditional_trigger: z.union([ConditionalTrigger, z.null()]).optional(),
+  })
+  .passthrough()
+const TaskResponseWithWarnings = z
+  .object({
+    id: z.string().uuid(),
+    catalog_version_id: z.string().uuid(),
+    layer_action: LayerAction,
+    task_code: z.union([z.string(), z.null()]),
+    task_name: z.union([z.string(), z.null()]),
+    task_description: z.union([z.string(), z.null()]),
+    category: z.union([TaskCategory, z.null()]),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    is_mandatory: z.union([z.boolean(), z.null()]),
+    weight: z.union([z.number(), z.null()]),
+    display_order: z.union([z.number(), z.null()]),
+    stage_categorization: z.union([
+      app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
+    applicable_process_contexts: z.union([
+      z.array(TaskProcessContext),
+      z.null(),
+    ]),
+    is_active: z.boolean(),
+    parent_task_id: z.union([z.string(), z.null()]),
+    doc_requirement_ref: z.union([z.string(), z.null()]),
+    doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
+    conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+    warnings: z.array(z.string()).optional().default([]),
+  })
+  .passthrough()
+const TaskResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_version_id: z.string().uuid(),
+    layer_action: LayerAction,
+    task_code: z.union([z.string(), z.null()]),
+    task_name: z.union([z.string(), z.null()]),
+    task_description: z.union([z.string(), z.null()]),
+    category: z.union([TaskCategory, z.null()]),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    is_mandatory: z.union([z.boolean(), z.null()]),
+    weight: z.union([z.number(), z.null()]),
+    display_order: z.union([z.number(), z.null()]),
+    stage_categorization: z.union([
+      app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
+    applicable_process_contexts: z.union([
+      z.array(TaskProcessContext),
+      z.null(),
+    ]),
+    is_active: z.boolean(),
+    parent_task_id: z.union([z.string(), z.null()]),
+    doc_requirement_ref: z.union([z.string(), z.null()]),
+    doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
+    conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const UpdateTaskRequest = z
+  .object({
+    task_name: z.union([z.string(), z.null()]),
+    task_description: z.union([z.string(), z.null()]),
+    category: z.union([TaskCategory, z.null()]),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    is_mandatory: z.union([z.boolean(), z.null()]),
+    weight: z.union([z.number(), z.null()]),
+    display_order: z.union([z.number(), z.null()]),
+    stage_categorization: z.union([
+      app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
+    applicable_process_contexts: z.union([
+      z.array(TaskProcessContext),
+      z.null(),
+    ]),
+    is_active: z.union([z.boolean(), z.null()]),
+    doc_requirement_ref: z.union([z.string(), z.null()]),
+    doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
+    conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+  })
+  .partial()
+  .passthrough()
+const MaterializeChecklistRequest = z
+  .object({
+    entity_type: CatalogEntityType,
+    product_template_id: z.union([z.string(), z.null()]).optional(),
+    amount_eur: z.union([z.number(), z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const ChecklistItemStatus = z.enum(["open", "checked", "not_applicable"])
+const ChecklistItemResponse = z
+  .object({
+    id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    source_catalog_task_id: z.string().uuid(),
+    task_code: z.union([z.string(), z.null()]),
+    task_name: z.union([z.string(), z.null()]),
+    is_mandatory: z.boolean(),
+    weight: z.union([z.string(), z.null()]),
+    status: ChecklistItemStatus,
+    note: z.union([z.string(), z.null()]),
+    checked_by: z.union([z.string(), z.null()]),
+    checked_at: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const SetItemStatusRequest = z
+  .object({
+    status: ChecklistItemStatus,
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const RequiredProjectionResponse = z
+  .object({
+    business_object_id: z.string().uuid(),
+    all_required_done: z.boolean(),
+    required_items: z.array(ChecklistItemResponse),
+  })
+  .passthrough()
+const PhaseGateStatus = z.enum(["open", "in_review", "approved", "rejected"])
+const PhaseGateResponse = z
+  .object({
+    phase:
+      app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+    status: PhaseGateStatus,
+    gate_approver: z.union([z.string(), z.null()]),
+    decided_at: z.union([z.string(), z.null()]),
+    note: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const SetPhaseGateRequest = z
+  .object({
+    status: PhaseGateStatus,
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const VfeRateResponse = z
   .object({
     id: z.string().uuid(),
@@ -1916,20 +2288,21 @@ const UpdateCatalogRequest = z
   .partial()
   .passthrough()
 const CatalogType = z.enum(["global_default", "product_specific"])
-const CatalogResponse = z
-  .object({
-    id: z.string().uuid(),
-    catalog_name: z.string(),
-    catalog_type: CatalogType,
-    applicable_process_contexts: z.array(z.string()),
-    product_template_id: z.union([z.string(), z.null()]),
-    valid_from: z.union([z.string(), z.null()]),
-    valid_to: z.union([z.string(), z.null()]),
-    created_by: z.string().uuid(),
-    created_at: z.string().datetime({ offset: true }),
-    updated_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
+const app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse =
+  z
+    .object({
+      id: z.string().uuid(),
+      catalog_name: z.string(),
+      catalog_type: CatalogType,
+      applicable_process_contexts: z.array(z.string()),
+      product_template_id: z.union([z.string(), z.null()]),
+      valid_from: z.union([z.string(), z.null()]),
+      valid_to: z.union([z.string(), z.null()]),
+      created_by: z.string().uuid(),
+      created_at: z.string().datetime({ offset: true }),
+      updated_at: z.string().datetime({ offset: true }),
+    })
+    .passthrough()
 const RequirementClassification = z.enum([
   "mandatory",
   "optional",
@@ -1941,11 +2314,8 @@ const GovernanceClassification = z.enum([
   "regulatory_critical",
 ])
 const SourceLayer = z.enum(["default", "override", "supplement", "deactivated"])
-const StageCategorization = z.enum([
-  "submission",
-  "approval",
-  "disbursement_readiness",
-])
+const app__modules__document_requirement_catalog__domain__enums__StageCategorization =
+  z.enum(["submission", "approval", "disbursement_readiness"])
 const DocumentOrigin = z.enum(["uploaded", "generated"])
 const RequirementResponse = z
   .object({
@@ -1959,7 +2329,10 @@ const RequirementResponse = z
     governance_classification: GovernanceClassification,
     source_layer: SourceLayer,
     applicable_process_contexts: z.array(z.string()),
-    stage_categorization: z.union([StageCategorization, z.null()]),
+    stage_categorization: z.union([
+      app__modules__document_requirement_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
     blocks_submission: z.boolean(),
     document_origin: DocumentOrigin,
     is_active: z.boolean(),
@@ -1968,31 +2341,33 @@ const RequirementResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const CatalogDetailResponse = z
-  .object({
-    id: z.string().uuid(),
-    catalog_name: z.string(),
-    catalog_type: CatalogType,
-    applicable_process_contexts: z.array(z.string()),
-    product_template_id: z.union([z.string(), z.null()]),
-    valid_from: z.union([z.string(), z.null()]),
-    valid_to: z.union([z.string(), z.null()]),
-    created_by: z.string().uuid(),
-    created_at: z.string().datetime({ offset: true }),
-    updated_at: z.string().datetime({ offset: true }),
-    requirements: z.array(RequirementResponse).optional(),
-  })
-  .passthrough()
-const CreateCatalogRequest = z
-  .object({
-    catalog_name: z.string().min(1).max(200),
-    catalog_type: CatalogType,
-    applicable_process_contexts: z.array(z.string()).min(1),
-    product_template_id: z.union([z.string(), z.null()]).optional(),
-    valid_from: z.union([z.string(), z.null()]).optional(),
-    valid_to: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
+const app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse =
+  z
+    .object({
+      id: z.string().uuid(),
+      catalog_name: z.string(),
+      catalog_type: CatalogType,
+      applicable_process_contexts: z.array(z.string()),
+      product_template_id: z.union([z.string(), z.null()]),
+      valid_from: z.union([z.string(), z.null()]),
+      valid_to: z.union([z.string(), z.null()]),
+      created_by: z.string().uuid(),
+      created_at: z.string().datetime({ offset: true }),
+      updated_at: z.string().datetime({ offset: true }),
+      requirements: z.array(RequirementResponse).optional(),
+    })
+    .passthrough()
+const app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest =
+  z
+    .object({
+      catalog_name: z.string().min(1).max(200),
+      catalog_type: CatalogType,
+      applicable_process_contexts: z.array(z.string()).min(1),
+      product_template_id: z.union([z.string(), z.null()]).optional(),
+      valid_from: z.union([z.string(), z.null()]).optional(),
+      valid_to: z.union([z.string(), z.null()]).optional(),
+    })
+    .passthrough()
 const catalog_type = z.union([CatalogType, z.null()]).optional()
 const CatalogListItem = z
   .object({
@@ -2006,15 +2381,16 @@ const CatalogListItem = z
     created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const CatalogListResponse = z
-  .object({
-    items: z.array(CatalogListItem),
-    total: z.number().int(),
-    page: z.number().int(),
-    per_page: z.number().int(),
-    total_pages: z.number().int(),
-  })
-  .passthrough()
+const app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse =
+  z
+    .object({
+      items: z.array(CatalogListItem),
+      total: z.number().int(),
+      page: z.number().int(),
+      per_page: z.number().int(),
+      total_pages: z.number().int(),
+    })
+    .passthrough()
 const AddRequirementRequest = z
   .object({
     requirement_code: z.string().min(1).max(100),
@@ -2025,7 +2401,12 @@ const AddRequirementRequest = z
     governance_classification: GovernanceClassification,
     source_layer: z.union([SourceLayer, z.null()]).optional(),
     applicable_process_contexts: z.array(z.string()).min(1),
-    stage_categorization: z.union([StageCategorization, z.null()]).optional(),
+    stage_categorization: z
+      .union([
+        app__modules__document_requirement_catalog__domain__enums__StageCategorization,
+        z.null(),
+      ])
+      .optional(),
     blocks_submission: z.boolean().optional().default(true),
     document_origin: DocumentOrigin.optional(),
     sort_order: z.number().int().optional().default(0),
@@ -2047,7 +2428,10 @@ const UpdateRequirementRequest = z
     classification: z.union([RequirementClassification, z.null()]),
     governance_classification: z.union([GovernanceClassification, z.null()]),
     applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
-    stage_categorization: z.union([StageCategorization, z.null()]),
+    stage_categorization: z.union([
+      app__modules__document_requirement_catalog__domain__enums__StageCategorization,
+      z.null(),
+    ]),
     blocks_submission: z.union([z.boolean(), z.null()]),
     document_origin: z.union([DocumentOrigin, z.null()]),
     sort_order: z.union([z.number(), z.null()]),
@@ -2403,24 +2787,59 @@ export const schemas = {
   LCPortalDocumentItem,
   LCPortalFAListItem,
   LCPortalFAListResponse,
+  CatalogLayer,
+  catalog_layer,
+  CatalogEntityType,
+  entity_type,
+  product_template_id,
+  CatalogState,
+  catalog_state,
+  CatalogListItemResponse,
+  app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
+  app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
+  app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
+  LayerAction,
+  TaskCategory,
+  TaskResponsibleRole,
+  app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+  TaskProcessContext,
+  DocRequirementPinMode,
+  ConditionalTrigger,
+  InheritedGDValues,
+  TaskDefinitionItem,
+  app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
+  AuditTrailEventItem,
+  AuditTrailResponse,
+  AddTaskRequest,
+  TaskResponseWithWarnings,
+  TaskResponse,
+  UpdateTaskRequest,
+  MaterializeChecklistRequest,
+  ChecklistItemStatus,
+  ChecklistItemResponse,
+  SetItemStatusRequest,
+  RequiredProjectionResponse,
+  PhaseGateStatus,
+  PhaseGateResponse,
+  SetPhaseGateRequest,
   VfeRateResponse,
   VfeRateListResponse,
   VfeRateCreateRequest,
   VfeRateUpdateRequest,
   UpdateCatalogRequest,
   CatalogType,
-  CatalogResponse,
+  app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
   RequirementClassification,
   GovernanceClassification,
   SourceLayer,
-  StageCategorization,
+  app__modules__document_requirement_catalog__domain__enums__StageCategorization,
   DocumentOrigin,
   RequirementResponse,
-  CatalogDetailResponse,
-  CreateCatalogRequest,
+  app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
+  app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
   catalog_type,
   CatalogListItem,
-  CatalogListResponse,
+  app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
   AddRequirementRequest,
   RequirementListResponse,
   UpdateRequirementRequest,
@@ -3066,6 +3485,168 @@ and invalidates all active sessions.`,
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/cases/:business_object_id/checklist",
+    alias:
+      "materialize_checklist_api_v1_cases__business_object_id__checklist_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MaterializeChecklistRequest,
+      },
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(ChecklistItemResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:business_object_id/checklist",
+    alias: "get_checklist_api_v1_cases__business_object_id__checklist_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(ChecklistItemResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/cases/:business_object_id/checklist/items/:item_id",
+    alias:
+      "set_item_status_api_v1_cases__business_object_id__checklist_items__item_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SetItemStatusRequest,
+      },
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "item_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ChecklistItemResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:business_object_id/checklist/required",
+    alias:
+      "get_required_projection_api_v1_cases__business_object_id__checklist_required_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequiredProjectionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:business_object_id/phase-gates",
+    alias: "get_phase_gates_api_v1_cases__business_object_id__phase_gates_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(PhaseGateResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/cases/:business_object_id/phase-gates/:phase",
+    alias:
+      "set_phase_gate_api_v1_cases__business_object_id__phase_gates__phase__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SetPhaseGateRequest,
+      },
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "phase",
+        type: "Path",
+        schema: z.enum([
+          "pre_submission",
+          "stage_1_review",
+          "stage_2_review",
+          "pre_disbursement",
+          "servicing",
+          "redemption",
+        ]),
+      },
+    ],
+    response: PhaseGateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "patch",
     path: "/api/v1/document-requirement-catalogs/:catalog_id",
     alias:
@@ -3083,7 +3664,8 @@ and invalidates all active sessions.`,
         schema: z.string().uuid(),
       },
     ],
-    response: CatalogResponse,
+    response:
+      app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
     errors: [
       {
         status: 422,
@@ -3105,7 +3687,8 @@ and invalidates all active sessions.`,
         schema: z.string().uuid(),
       },
     ],
-    response: CatalogDetailResponse,
+    response:
+      app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
     errors: [
       {
         status: 422,
@@ -5697,7 +6280,8 @@ No existing sessions are invalidated immediately.
       {
         name: "body",
         type: "Body",
-        schema: CreateCatalogRequest,
+        schema:
+          app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
       },
       {
         name: "tenant_id",
@@ -5705,7 +6289,8 @@ No existing sessions are invalidated immediately.
         schema: z.string().uuid(),
       },
     ],
-    response: CatalogResponse,
+    response:
+      app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
     errors: [
       {
         status: 422,
@@ -5752,7 +6337,8 @@ No existing sessions are invalidated immediately.
         schema: z.number().int().gte(1).lte(100).optional().default(20),
       },
     ],
-    response: CatalogListResponse,
+    response:
+      app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
     errors: [
       {
         status: 422,
@@ -6715,6 +7301,269 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
     parameters: [
       {
         name: "rate_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs",
+    alias: "list_catalogs_api_v1_workflow_task_catalogs_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "catalog_layer",
+        type: "Query",
+        schema: catalog_layer,
+      },
+      {
+        name: "entity_type",
+        type: "Query",
+        schema: entity_type,
+      },
+      {
+        name: "product_template_id",
+        type: "Query",
+        schema: product_template_id,
+      },
+      {
+        name: "catalog_state",
+        type: "Query",
+        schema: catalog_state,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(20),
+      },
+    ],
+    response:
+      app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs",
+    alias: "create_catalog_api_v1_workflow_task_catalogs_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema:
+          app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
+      },
+    ],
+    response:
+      app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id",
+    alias: "get_catalog_detail_api_v1_workflow_task_catalogs__catalog_id__get",
+    description: `US 15.23 — Catalog Detail (Identity &amp; Scope + Task Definitions).
+
+BPU + Support + Auditor (read). Not found / cross-tenant / non-authorized → 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/audit-trail",
+    alias:
+      "get_catalog_audit_trail_api_v1_workflow_task_catalogs__catalog_id__audit_trail_get",
+    description: `US 15.23 — Audit Trail tab: append-only change log for this catalog.
+
+BPU + Support + Auditor (read). Cursor-paginated, newest first.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "cursor",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(50).optional().default(50),
+      },
+    ],
+    response: AuditTrailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/tasks",
+    alias:
+      "add_task_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AddTaskRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: TaskResponseWithWarnings,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/tasks",
+    alias:
+      "list_tasks_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(TaskResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/tasks/:task_id",
+    alias:
+      "update_task_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks__task_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateTaskRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "task_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: TaskResponseWithWarnings,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/tasks/:task_id",
+    alias:
+      "remove_task_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks__task_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "task_id",
         type: "Path",
         schema: z.string().uuid(),
       },
