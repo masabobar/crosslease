@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Copy, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +13,6 @@ import {
 import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementDialog"
 import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/SuspendFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
-import { EditFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/EditFrameworkAgreementDialog"
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
@@ -21,6 +20,7 @@ import { AuditHistoryTab } from "@/features/frameworkAgreements/components/Audit
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { frameworkAgreementEdit } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
@@ -62,7 +62,7 @@ export default function FrameworkAgreementDetailPage() {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const navigate = useNavigate()
 
   const { data, isLoading, isError, error } = useFrameworkAgreementDetail(
     id ?? ""
@@ -126,7 +126,7 @@ export default function FrameworkAgreementDetailPage() {
               <Button
                 variant="outline"
                 data-testid="edit-fa-button"
-                onClick={() => setEditDialogOpen(true)}
+                onClick={() => navigate(frameworkAgreementEdit(data.id))}
               >
                 {t("detail.actions.edit")}
               </Button>
@@ -396,11 +396,6 @@ export default function FrameworkAgreementDetailPage() {
         open={terminateDialogOpen}
         onOpenChange={setTerminateDialogOpen}
         frameworkAgreementId={data.id}
-      />
-      <EditFrameworkAgreementDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        frameworkAgreement={data}
       />
     </div>
   )

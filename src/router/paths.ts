@@ -45,6 +45,8 @@ export const PATHS = {
     "/business-configuration/framework-agreements/new",
   FRAMEWORK_AGREEMENT_DETAIL:
     "/business-configuration/framework-agreements/:id",
+  FRAMEWORK_AGREEMENT_EDIT:
+    "/business-configuration/framework-agreements/:id/edit",
   WORKFLOW_TASK_CATALOG_LIST: "/business-configuration/workflow-task-catalogs",
   WORKFLOW_TASK_CATALOG_DETAIL:
     "/business-configuration/workflow-task-catalogs/:id",
@@ -91,6 +93,10 @@ export function productTemplateNewVersionEdit(
 
 export function frameworkAgreementDetail(id: string): string {
   return PATHS.FRAMEWORK_AGREEMENT_DETAIL.replace(":id", id)
+}
+
+export function frameworkAgreementEdit(id: string): string {
+  return PATHS.FRAMEWORK_AGREEMENT_EDIT.replace(":id", id)
 }
 
 export function workflowTaskCatalogDetail(id: string): string {

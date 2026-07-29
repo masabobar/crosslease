@@ -5,16 +5,21 @@ import type { FrameworkAgreementWizardStep } from "@/features/frameworkAgreement
 
 type Props = {
   currentStep: FrameworkAgreementWizardStep
+  // The edit wizard shows the same steps minus "documents" (see FRAMEWORK_AGREEMENT_EDIT_STEPS).
+  steps?: readonly FrameworkAgreementWizardStep[]
 }
 
-function WizardStepper({ currentStep }: Props) {
+function WizardStepper({
+  currentStep,
+  steps = FRAMEWORK_AGREEMENT_WIZARD_STEPS,
+}: Props) {
   const { t } = useTranslation("frameworkAgreements")
 
   return (
     <SharedWizardStepper
       testIdPrefix="fa-"
       currentStepKey={currentStep}
-      steps={FRAMEWORK_AGREEMENT_WIZARD_STEPS.map(step => ({
+      steps={steps.map(step => ({
         key: step,
         label: t(`wizard.steps.${step}`),
       }))}

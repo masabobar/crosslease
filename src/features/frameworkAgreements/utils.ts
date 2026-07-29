@@ -50,7 +50,7 @@ export function isFrameworkAgreementExpiredByDate(
 
 // Shared Zod refine-error-code → i18n message resolver for the wizard/edit form
 // steps (IdentityStep, EnvelopePricingStep, ValidityTemplatesStep,
-// EditFrameworkAgreementFields). Handles every custom refine code used across those
+// the edit wizard's steps). Handles every custom refine code used across those
 // forms' Zod schemas (see api/schema.ts): "required", "validUntilBeforeFrom",
 // "atLeastOneTemplate", "effectiveRateRange", "vfeRateRange". Unrecognized messages
 // are returned as-is.

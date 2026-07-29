@@ -3,51 +3,46 @@ import { Controller, useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { addDays, parseISO } from "date-fns"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
-import { EnvelopePricingFields } from "@/features/frameworkAgreements/components/steps/EnvelopePricingFields"
 import { ProductTemplatesField } from "@/features/frameworkAgreements/components/steps/ProductTemplatesField"
+import { isFrameworkAgreementDraft } from "@/features/frameworkAgreements/editWizard"
 import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
-import type { EditFrameworkAgreementFormValues } from "@/features/frameworkAgreements/api/schema"
+import type {
+  EditFrameworkAgreementFormValues,
+  FADetailResponse,
+} from "@/features/frameworkAgreements/api/schema"
 
 type Props = {
   form: UseFormReturn<EditFrameworkAgreementFormValues>
-  isDraft: boolean
-  validUntilDisabled: boolean
-  validUntilMinDate: Date | undefined
+  frameworkAgreement: FADetailResponse
 }
 
-function EditFrameworkAgreementFields({
-  form,
-  isDraft,
-  validUntilDisabled,
-  validUntilMinDate,
-}: Props) {
+function EditValidityTemplatesStep({ form, frameworkAgreement }: Props) {
   const { t } = useTranslation("frameworkAgreements")
-  const { register, control } = form
+  const { control } = form
   const { errors } = useFormState({ control })
-  const validFrom = useWatch({ control, name: "valid_from" })
   const resolveMsg = useResolveFrameworkAgreementFieldError()
+  const validFrom = useWatch({ control, name: "valid_from" })
 
-  // Day after Valid From, matching the wizard: the API rejects valid_until equal to
-  // valid_from ("must be after"), so offering the same day only produces a 422.
+  const isDraft = isFrameworkAgreementDraft(frameworkAgreement)
+  // Once past Draft an end date can only be extended (FA_VALID_UNTIL_SHORTENING), and an
+  // open-ended agreement can never gain one at all. Drafts keep the create-wizard rule:
+  // the day after valid_from, since UpdateFARequest rejects equal dates.
+  const validUntilDisabled = !isDraft && frameworkAgreement.valid_until === null
   const validUntilMin = isDraft
     ? validFrom
       ? addDays(parseISO(validFrom), 1)
       : undefined
-    : validUntilMinDate
+    : frameworkAgreement.valid_until
+      ? new Date(frameworkAgreement.valid_until)
+      : undefined
 
   return (
-    <div className="flex flex-col gap-4" data-testid="edit-fa-fields">
-      <EnvelopePricingFields
-        register={register}
-        errors={errors}
-        resolveMsg={resolveMsg}
-        idPrefix="edit_"
-        testIdPrefix="edit-"
-      />
-
+    <div
+      className="flex flex-col gap-4"
+      data-testid="edit-fa-validity-templates-step"
+    >
       <SectionCard title={t("wizard.validityTemplates.validityWindowSection")}>
         <div>
           <Label
@@ -95,32 +90,8 @@ function EditFrameworkAgreementFields({
         resolveMsg={resolveMsg}
         hint={t("edit.templateRemovalHint")}
       />
-
-      <div className="border border-border rounded-xl bg-background p-4">
-        <Label htmlFor="edit_special_conditions" className="mb-2">
-          {t("fields.specialConditions")}{" "}
-          <span className="font-normal text-muted-foreground">
-            {t("fields.optional")}
-          </span>
-        </Label>
-        <Textarea
-          id="edit_special_conditions"
-          data-testid="edit-special-conditions-textarea"
-          className="min-h-[120px] resize-none"
-          rows={5}
-          {...register("special_conditions")}
-        />
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("wizard.conditions.hint")}
-        </p>
-        {errors.special_conditions && (
-          <p className="mt-1 text-sm text-destructive">
-            {errors.special_conditions.message}
-          </p>
-        )}
-      </div>
     </div>
   )
 }
 
-export { EditFrameworkAgreementFields }
+export { EditValidityTemplatesStep }

@@ -79,7 +79,7 @@ export type FADraftResponse = z.infer<typeof FADraftResponseSchema>
 // exactly. Every domain field is optional: the BE dispatches on current status to either
 // update_draft() (agreement_name/valid_from freely editable) or edit_governed()
 // (agreement_name/valid_from rejected as FA_IMMUTABLE_FIELDS if present — the FE never
-// sends them in that case, see EditFrameworkAgreementDialog). justification/
+// sends them in that case, see editWizard.buildUpdateFAPayload). justification/
 // expected_version are governed-edit-only on the BE but harmless to always send.
 export const UpdateFARequestSchema = z.object({
   agreement_name: z.string().min(1).max(200).optional(),
@@ -99,7 +99,7 @@ export const UpdateFARequestSchema = z.object({
 })
 export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
 
-// RHF-facing form schema for EditFrameworkAgreementDialog/EditFrameworkAgreementFields.
+// RHF-facing form schema for EditFrameworkAgreementWizardPage and its steps.
 // Field constraints mirror UpdateFARequestSchema/FrameworkAgreementWizardFormSchema;
 // justification is required+min(30) here (client-side rule) even though the wire schema
 // keeps it optional (BE only requires it for active/suspended). expected_version is a

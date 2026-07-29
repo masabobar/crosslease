@@ -232,14 +232,24 @@
     }
   },
   "edit": {
-    "dialogTitle": "Edit framework agreement",
-    "identitySection": "Agreement identity",
+    "title": "Editing {{name}}",
+    "reviewSubtitle": "Review all changes before saving. You can return to any step to adjust them. A justification is required and is stored in the audit trail.",
     "lockedFieldHint": "Locked — cannot be changed after the agreement leaves Draft.",
     "validUntilLockedHint": "This agreement has no end date. An end date cannot be introduced after Draft; it can only be extended once one is set.",
     "templateRemovalHint": "Removing a template is blocked if any in-flight financing draft still references it.",
     "justification": "Justification",
     "justificationHint": "Mandatory (min. 30 characters). Stored in the audit trail.",
-    "confirmButton": "Save changes"
+    "confirmButton": "Save changes",
+    "loading": "Loading agreement…",
+    "saved": "Changes saved.",
+    "incompleteForm": "Complete the required fields before saving.",
+    "backToAgreement": "Back to the agreement",
+    "discardDialog": {
+      "title": "Discard changes?",
+      "description": "Your edits to this agreement will be lost. The agreement itself is not affected.",
+      "keep": "Keep editing",
+      "confirm": "Discard changes"
+    }
   },
   "auditHistory": {
     "viewEventLog": "Event log",
