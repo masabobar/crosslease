@@ -1,6 +1,7 @@
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
+import { startOfToday } from "date-fns"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +37,9 @@ function EditFrameworkAgreementDialog({
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useUpdateFrameworkAgreement()
 
+  // Only ever applies to drafts — the field is disabled once identity is locked, so an
+  // agreement that legitimately started in the past is unaffected.
+  const today = startOfToday()
   const isDraft =
     frameworkAgreement.status === FALifecycleStatusSchema.enum.draft
   const identityLocked = !isDraft
@@ -157,6 +161,7 @@ function EditFrameworkAgreementDialog({
                       onChange={field.onChange}
                       disabled={identityLocked}
                       error={!!errors.valid_from}
+                      minDate={today}
                       captionLayout="dropdown"
                     />
                   )}
