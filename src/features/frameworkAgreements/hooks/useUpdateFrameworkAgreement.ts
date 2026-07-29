@@ -21,7 +21,7 @@ export function useUpdateFrameworkAgreement() {
         queryKey: FRAMEWORK_AGREEMENTS_QUERY_KEYS.detail(id),
       })
       queryClient.invalidateQueries({
-        queryKey: ["framework-agreements", "list"],
+        queryKey: FRAMEWORK_AGREEMENTS_QUERY_KEYS.list(),
       })
     },
   })

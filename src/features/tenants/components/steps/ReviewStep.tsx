@@ -40,13 +40,13 @@ function ReviewTable({ rows }: { rows: ReviewRow[] }) {
   return (
     <div className="grid grid-cols-[160px_1fr] gap-x-6 gap-y-3 text-sm">
       {rows.map((row, i) => (
-        <Fragment key={i} label={row.label} value={row.value} />
+        <LabelValueRow key={i} label={row.label} value={row.value} />
       ))}
     </div>
   )
 }
 
-function Fragment({ label, value }: ReviewRow) {
+function LabelValueRow({ label, value }: ReviewRow) {
   return (
     <>
       <span className="text-muted-foreground leading-5">{label}</span>
