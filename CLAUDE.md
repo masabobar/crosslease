@@ -570,21 +570,25 @@ Generic: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `UNAUTHORIZED`, `BAD_REQU
 
 ### Known data shapes
 
-**User** (derive Zod schema from this when building the feature):
+**User** — the canonical shape is `UserResponseSchema` in `src/features/users/api/schema.ts`. Derive the type with `z.infer<typeof UserResponseSchema>`; never hand-write it, and treat the schema (not this block) as the source of truth:
 
 ```ts
 {
   id: string // UUID
   user_id: string // "USR-00001"
-  username: string
-  display_name: string
+  first_name: string
+  last_name: string
   email: string
-  role: UserRole | null
-  user_type: UserType | null
-  tenant_scope: string | null
+  role: UserRole
+  permissions: string[] // defaults to []
+  tenant_id: string | null
   status: UserStatus
-  access_valid_from: string | null // ISO datetime
+  phone_number?: string | null
+  profile_picture_url?: string | null
   access_valid_until: string | null // ISO datetime
+  invited_by: string | null // UUID
+  invited_at: string | null // ISO datetime
+  activated_at: string | null // ISO datetime
   last_login: string | null // ISO datetime
   created_at: string // ISO datetime
   updated_at: string // ISO datetime
@@ -593,9 +597,8 @@ Generic: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `UNAUTHORIZED`, `BAD_REQU
 
 **Enums:**
 
-- `UserRole`: `system_admin` | `support_user` | `auditor` | `front_office` | `back_office` | `leasing_company_user`
-- `UserType`: `platform` | `bank_tenant` | `leasing_company`
-- `UserStatus`: `active` | `invited` | `suspended` | `expired` | `deactivated`
+- `UserRole`: `system_admin` | `support_user` | `auditor` | `bank_power_user` | `front_office` | `back_office` | `leasing_company_user`
+- `UserStatus`: `pending_approval` | `invited` | `active` | `suspended` | `deactivated` | `expired` | `rejected`
 
 ---
 

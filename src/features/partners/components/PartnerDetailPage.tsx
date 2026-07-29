@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
 import {
   Archive,
   CircleCheck,
@@ -31,11 +30,8 @@ import { ConfirmPartnerDialog } from "@/features/partners/components/ConfirmPart
 import { RejectPartnerDialog } from "@/features/partners/components/RejectPartnerDialog"
 import { ProposeIdentityChangeDialog } from "@/features/partners/components/ProposeIdentityChangeDialog"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
+import { usePartnerRoles } from "@/features/partners/hooks/usePartnerRoles"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import {
-  fetchPartnerRoles,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
 import {
   PartnerStatusSchema,
   PartnerTypeSchema,
@@ -62,11 +58,9 @@ export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: partner, isLoading, isError } = usePartnerDetail(id ?? null)
   const { data: currentUser } = useCurrentUser()
-  const { data: rolesData, isError: isRolesError } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.roles(partner?.partner_id ?? ""),
-    queryFn: () => fetchPartnerRoles(partner?.partner_id ?? ""),
-    enabled: !!partner,
-  })
+  const { data: rolesData, isError: isRolesError } = usePartnerRoles(
+    partner?.partner_id ?? null
+  )
 
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -284,9 +278,7 @@ export default function PartnerDetailPage() {
           {activeTab === "resolution" && showResolutionTab && (
             <ResolutionCandidatesTab partnerId={partner.partner_id} />
           )}
-          {activeTab === "roles" && (
-            <RolesTab partnerId={partner.partner_id} />
-          )}
+          {activeTab === "roles" && <RolesTab partnerId={partner.partner_id} />}
           {activeTab === "ubo" && (
             <UboTab
               partnerId={partner.partner_id}

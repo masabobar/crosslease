@@ -34,7 +34,7 @@ Every wire enum has **exactly one** definition in this repo — the Zod schema i
 ```ts
 // features/users/api/schema.ts — single source of truth
 export const UserRoleSchema = z.enum([
-  "system_admin", "support_user", "auditor",
+  "system_admin", "support_user", "auditor", "bank_power_user",
   "front_office", "back_office", "leasing_company_user",
 ])
 export type UserRole = z.infer<typeof UserRoleSchema>

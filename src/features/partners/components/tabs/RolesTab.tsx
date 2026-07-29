@@ -1,14 +1,10 @@
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
 import { ShieldCheck } from "lucide-react"
 import { PartnerRoleBadge } from "@/features/partners/components/PartnerRoleBadge"
 import { SectionCard } from "@/features/partners/components/PartnerDetailPrimitives"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import type { UserRole } from "@/features/users/types"
-import {
-  fetchPartnerRoles,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
+import { usePartnerRoles } from "@/features/partners/hooks/usePartnerRoles"
 import { formatDateTime } from "@/lib/formatters"
 import { RoleStatusSchema } from "@/features/partners/api/schema"
 import type { RoleStatus } from "@/features/partners/api/schema"
@@ -48,10 +44,7 @@ type RolesTabProps = {
 function RolesTab({ partnerId }: RolesTabProps) {
   const { t } = useTranslation("partners")
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.roles(partnerId),
-    queryFn: () => fetchPartnerRoles(partnerId),
-  })
+  const { data, isLoading, isError } = usePartnerRoles(partnerId)
 
   if (isLoading) {
     return (
@@ -204,7 +197,6 @@ function RolesTab({ partnerId }: RolesTabProps) {
           </div>
         )}
       </SectionCard>
-
     </div>
   )
 }
