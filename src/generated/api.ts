@@ -1486,6 +1486,7 @@ const TemplateListItem = z
   .object({
     id: z.string().uuid(),
     template_code: z.string(),
+    template_name: z.union([z.string(), z.null()]),
     current_version: z.union([TemplateCurrentVersionSummary, z.null()]),
     created_at: z.string().datetime({ offset: true }),
   })
