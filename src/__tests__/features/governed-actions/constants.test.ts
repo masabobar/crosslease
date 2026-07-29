@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
-import { canReviewGovernedAction } from "@/features/governed-actions/constants"
+import {
+  canReviewGovernedAction,
+  GOVERNED_ACTION_LIST_ALLOWED_ROLES,
+} from "@/features/governed-actions/constants"
 
 describe("canReviewGovernedAction", () => {
   it("allows back_office to review partner_confirm", () => {
@@ -39,5 +42,30 @@ describe("canReviewGovernedAction", () => {
 
   it("returns false when role is undefined", () => {
     expect(canReviewGovernedAction("partner_confirm", undefined)).toBe(false)
+  })
+})
+
+describe("GOVERNED_ACTION_LIST_ALLOWED_ROLES", () => {
+  // Mirrors refinext-api's permission matrix: front_office holds no
+  // governed_action:* permission, so it must never reach the pending-approvals
+  // screen — it would only ever get a 403 error state (PRD1042-1496).
+  it("excludes front_office", () => {
+    expect(GOVERNED_ACTION_LIST_ALLOWED_ROLES).not.toContain("front_office")
+  })
+
+  it("excludes leasing_company_user", () => {
+    expect(GOVERNED_ACTION_LIST_ALLOWED_ROLES).not.toContain(
+      "leasing_company_user"
+    )
+  })
+
+  it("includes the five roles that hold governed_action:list", () => {
+    expect([...GOVERNED_ACTION_LIST_ALLOWED_ROLES].sort()).toEqual([
+      "auditor",
+      "back_office",
+      "bank_power_user",
+      "support_user",
+      "system_admin",
+    ])
   })
 })
