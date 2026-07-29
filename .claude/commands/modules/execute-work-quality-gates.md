@@ -84,6 +84,50 @@ Issues:
 - ✅ All API data consumed through Zod schemas (`features/<name>/api/schema.ts`)
 - ✅ New interactive elements have `data-testid` attributes
 - ✅ SOLID & DRY principles followed
+- ✅ `/code-review` run on the story diff — no Critical or High findings outstanding
+
+---
+
+### Diff Review (after the mechanical checks pass)
+
+The checks above are mechanical — they prove the code compiles, lints, and tests green. They do not
+prove it follows the review checklist. Run the diff review as the last gate before the commit:
+
+```bash
+/code-review          # scope: the story's staged diff
+```
+
+Treat its findings as part of this gate:
+
+- **Critical** — blocks the story; fix and re-run
+- **High** — fix before the commit, unless the fix needs a coordinated multi-call-site change; then
+  state the scope rather than applying it half-way (non-breaking rule, `.claude/rules/code-review.md`)
+- **Medium / Low** — record in the story progress file; do not silently defer
+
+`/code-review` applies its own fix-on-encounter fixes inline (missing `onError`, missing i18n keys) per
+`.claude/rules/api-error-display.md` §4 — re-run `pnpm test:run` after it touches anything.
+
+**Do not** run `/review-codebase` here. It audits all of `src/`, so its findings are mostly unrelated to
+this story and mixing them into the story diff makes the MR unreviewable. Save it for the
+per-feature run when the feature lands.
+
+---
+
+### Browser Verification (last gate before handoff)
+
+Every gate above is blind to rendering — none of them draw a page. Before the story is complete, exercise
+the change in a real browser per **`.claude/rules/browser-verification.md`**:
+
+- Dev server at `http://localhost:5173`, driven with the Playwright MCP
+- Walk the story's **acceptance criteria**, not a general smoke test
+- Read the browser console — an error there is a finding even when the UI looks correct
+- Check no raw i18n key is rendered (a key missing from **both** locales passes every automated gate)
+- **Name the role you signed in as**, and for role-gated screens check a role that should _not_ see the control
+
+This adds no `.spec.ts` files — E2E specs remain QA's per `.claude/rules/testing.md`.
+
+Report what you exercised and observed. If something could not be reached locally (no test data, role
+unavailable), say so explicitly — never report a pass you did not observe.
 
 ---
 
@@ -105,6 +149,7 @@ All checks completed:
 ✅ Zod schemas: API data validated at query layer
 ✅ data-testid: interactive elements annotated
 ✅ Code Quality: SOLID & DRY compliant
+✅ Code Review: /code-review clean — no Critical/High findings
 ```
 
 **Mark "Run all tests" todo as completed**
@@ -124,6 +169,7 @@ All checks completed:
 - [ ] Follows project conventions
 - [ ] No over-engineering
 - [ ] No unused code
+- [ ] `/code-review` run on the diff — no Critical or High findings
 
 ### Testing
 

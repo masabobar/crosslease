@@ -144,7 +144,6 @@ See `.claude/rules/git.md` for the canonical commit message format, multi-line H
 
 **Required fields recap:** method + path, description, authentication, request body example, success response example, error responses (matrix from `.claude/rules/testing.md`), rate limiting note when applicable.
 
-> Internal / admin-only endpoints have a reduced documentation requirement — see `.claude/rules/api-documentation.md` §3 (SOFT tier).
 
 ---
 
@@ -152,7 +151,6 @@ See `.claude/rules/git.md` for the canonical commit message format, multi-line H
 
 - `.claude/rules/documentation.md` — language, style, file-size, quality checklist (core rules)
 - `.claude/rules/documentation-extras.md` — code comments, diagrams, tools, good/bad examples
-- `.claude/rules/api-documentation.md` — when these templates are mandatory (strict vs internal tier)
 - `.claude/rules/testing.md` — HTTP status-code matrix that endpoint docs must cover
 - `.claude/rules/screen-driven-backlog.md` — frontend story format extending §1.1
 - `.claude/rules/git.md` — canonical commit message format

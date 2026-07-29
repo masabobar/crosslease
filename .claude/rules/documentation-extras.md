@@ -126,7 +126,7 @@ cspell "**/*.md"
 
 ```bash
 # Check file sizes
-wc -l .project-management/input/backlog/*.md
+wc -l .claude/rules/*.md
 ```
 
 ### 3.2 Pre-commit Hook (Optional)
@@ -136,7 +136,7 @@ wc -l .project-management/input/backlog/*.md
 # .git/hooks/pre-commit
 
 # Check documentation file sizes
-for file in .project-management/input/backlog/*.md; do
+for file in .claude/rules/*.md; do
   lines=$(wc -l < "$file")
   if [ "$lines" -gt 200 ]; then
     echo "ERROR: $file exceeds 200 lines ($lines lines)"

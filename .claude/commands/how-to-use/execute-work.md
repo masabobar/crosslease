@@ -295,7 +295,7 @@ command was removed in v3.2.0.
 **Check overall status:**
 
 ```bash
-/project-status
+
 ```
 
 **Continue to next phase:**

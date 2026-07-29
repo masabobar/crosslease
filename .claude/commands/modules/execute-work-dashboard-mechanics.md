@@ -115,12 +115,12 @@ Verify after every update:
 
 ## Error Handling
 
-| Error                             | Action                                                             |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `DASHBOARD.md` not found          | Skip auto-update; suggest `/migrate-to-modular` or `/init-project` |
-| Regex parse miss                  | Warn, skip that metric, continue work (never block)                |
-| Calculated ≠ stored metric        | Recalculate from backlog + progress; overwrite with correct value  |
-| Write failure (permissions, lock) | Log error, continue; user can edit manually later                  |
+| Error                             | Action                                                            |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `DASHBOARD.md` not found          | Skip auto-update; report the missing dashboard file               |
+| Regex parse miss                  | Warn, skip that metric, continue work (never block)               |
+| Calculated ≠ stored metric        | Recalculate from backlog + progress; overwrite with correct value |
+| Write failure (permissions, lock) | Log error, continue; user can edit manually later                 |
 
 The guiding principle: **never block a story's implementation on a dashboard write.** DASHBOARD.md is observability, not a gate.
 

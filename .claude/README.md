@@ -9,11 +9,10 @@ This folder contains Claude Code configuration files for the project management 
 ```
 .claude/
 ├── commands/              # Slash commands for project management
-│   ├── init-project.md
 │   ├── execute-work.md
-│   ├── generate-docs.md
-│   ├── project-status.md
-│   ├── process-client-docs.md
+│   ├── code-review.md
+│   ├── jira-sync.md
+│   ├── jira-handoff.md
 │   └── modules/          # Modular command components
 │
 ├── rules/                # Core coding standards and rules
@@ -147,9 +146,8 @@ This file serves as a template showing the recommended permissions for this proj
 
 3. **Start using slash commands:**
    ```bash
-   /init-project
    /execute-work phase 1
-   /project-status
+   /code-review
    ```
 
 ---
@@ -175,10 +173,9 @@ This file serves as a template showing the recommended permissions for this proj
 
 With recommended permissions enabled, you get:
 
-✅ **Automatic Documentation Generation**
+✅ **Automatic Progress Tracking**
 
-- `/generate-docs` runs without asking for permission
-- Updates technical specs, PRD, architecture docs
+- `/execute-work` updates `DASHBOARD.md` without asking for permission
 
 ✅ **Automatic Bash Commands**
 

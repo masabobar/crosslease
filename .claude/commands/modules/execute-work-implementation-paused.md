@@ -1,7 +1,7 @@
 # Execute Work — Implementation Loop (Paused Mode / In-Line)
 
 **Referenced by:** `execute-work.md` STEP 3-B (Paused mode)
-**Companion:** `execute-work-implementation-continuous.md` (sub-agent dispatch for Continuous), `execute-work-progress-updates.md` (per-mode progress-file updates)
+**Companion:** `execute-work-implementation-continuous.md` (sub-agent dispatch for Continuous), `execute-work-dashboard-events.md` (DASHBOARD.md updates)
 **Parent:** `execute-work-implementation.md` (overview of both modes)
 
 Used directly by the orchestrator when the user selected Paused. The orchestrator's context accumulates across stories within the run. If the context grows too large, the user can stop at the next pause (`[No]`) and start a fresh `/execute-work` invocation — running `/clear` mid-run wipes the approved plan and abandons the in-progress story, so it is not a recommended way to "free up context."
@@ -88,7 +88,7 @@ TodoWrite({
 
 ## §3.2 Read Story Context
 
-- Re-read technical-spec sections relevant to this story.
+- Re-read the Jira issue for the unit.
 - Re-read coding standards.
 - Understand acceptance criteria.
 - Mark todo completed; move on.
@@ -222,14 +222,12 @@ On success: `✅ Git commit created: [commit-hash]`. Mark todo completed.
 
 Mark progress todo `in_progress`. Update behavior depends on the tracking mode selected in STEP 0:
 
-- **Phase Only (faster)** — updates only `output/phases/phase-N.md`.
+- Updates `output/progress/DASHBOARD.md`.
 - **Complete (slower)** — updates phase file + `completed.md` + `current-status.md`; recalculates velocity.
 
-Full templates for both modes (file lists, update templates, display blocks): **`execute-work-progress-updates.md`**.
+DASHBOARD.md is the only progress artifact — update it per **`execute-work-dashboard-events.md`**.
 
 **Never update `blockers.md` automatically** — blockers need human context; edit the file directly.
-
-**Screen-map refresh (frontend stories only).** If the completed unit is a frontend story (Type: Frontend per `.claude/rules/screen-driven-backlog.md`) AND `.project-management/input/screens/screen-map.md` exists, invoke `/screen-map` after the progress files are updated. The command regenerates the API endpoint columns and Status field in the screen map from the latest stories. If `/screen-map` reports drift items, display them in the unit-completion summary but do NOT block — drift is informational. Skip the refresh if the story is backend-only / bug / story without a `**Screen:**` field, OR if the screen-map file does not exist (project is API-only / simple SPA per `.claude/rules/screen-inventory.md` §1).
 
 Mark todo completed.
 
@@ -278,5 +276,5 @@ When all stories in scope are done → STEP 4 (completion report).
 - `execute-work-implementation.md` — parent overview of both modes
 - `execute-work-implementation-continuous.md` — sub-agent dispatch (Continuous mode)
 - `execute-work-quality-gates.md` — test/coverage validation
-- `execute-work-progress-updates.md` — per-mode progress-file templates
+- `execute-work-dashboard-events.md` — DASHBOARD.md update events
 - `execute-work-dashboard-events.md` + `-mechanics.md` — DASHBOARD auto-update

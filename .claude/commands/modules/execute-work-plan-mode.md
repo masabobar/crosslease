@@ -20,51 +20,49 @@ Analyzing: [Phase N / Epic X / Story US-XXX]
 
 **MANDATORY FILES - Read in this order:**
 
-1. `.project-management/output/docs/technical-spec.md`
+1. The Jira issue for the unit — epic/story/FE-subtask (`/jira-sync` mirror if present)
    - Architecture decisions
    - Design patterns
    - Tech stack details
 
-2. `.project-management/input/backlog.md`
    - All user stories in scope
    - Epic details
    - Dependencies
 
-3. `CLAUDE.md`
+2. `CLAUDE.md`
    - Core development standards
    - Workflow requirements
    - Quality gates
 
-4. `.claude/rules/code-quality.md`
+3. `.claude/rules/code-quality.md`
    - SOLID & DRY principles (MANDATORY)
    - Code standards
 
-5. `.claude/rules/testing.md`
+4. `.claude/rules/testing.md`
    - Unit tests for Zod schemas / stores / utilities (behavior-based, no numeric coverage target)
    - What we deliberately skip (component tests, E2E — QA-owned)
    - Test organization
 
-6. `.claude/rules/git.md`
+5. `.claude/rules/git.md`
    - Commit message format
    - **CRITICAL:** NO AI credits in commits
 
-7. `.claude/rules/enums-and-constants.md`
+6. `.claude/rules/enums-and-constants.md`
    - Wire-format rules (if enum-like values in scope; values change in `../refinext-api/`)
 
-8. `.claude/rules/stack-specific.md`
+7. `.claude/rules/stack-specific.md`
    - Framework-specific guidelines
 
-9. `.project-management/rules/project-rules.md`
+8. `.project-management/rules/project-rules.md`
    - Project-specific conventions
    - Business logic rules
 
-10. `.project-management/rules/I18N-RULES.md` **(CONDITIONAL)**
-    - **IF this file exists:** i18n is MANDATORY for all user-facing text
-    - **IF file missing:** Skip i18n requirements
+9. `.project-management/rules/I18N-RULES.md` **(CONDITIONAL)**
+   - **IF this file exists:** i18n is MANDATORY for all user-facing text
+   - **IF file missing:** Skip i18n requirements
 
-11. `.project-management/rules/TESTING-RULES.md` **(CONDITIONAL)**
-    - **IF this file exists:** Apply project-specific testing rules
-    - **IF file missing:** Use only general testing.md rules
+   - **IF this file exists:** Apply project-specific testing rules
+   - **IF file missing:** Use only general testing.md rules
 
 **Display progress:**
 

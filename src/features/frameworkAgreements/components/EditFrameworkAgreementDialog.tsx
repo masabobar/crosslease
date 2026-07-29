@@ -113,7 +113,10 @@ function EditFrameworkAgreementDialog({
 
   return (
     <DialogModal open={open} onOpenChange={o => !o && handleClose()}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      {/* noValidate: the number inputs carry min/max so their steppers clamp, but
+          validation feedback must come from Zod through the translated field errors,
+          not from an untranslated native browser tooltip. */}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="px-4 py-4">
           <DialogHeader>
             <DialogTitle>{t("edit.dialogTitle")}</DialogTitle>

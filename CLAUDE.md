@@ -12,10 +12,9 @@
 **Read priority order:**
 
 1. **Project Planning** (`.project-management/`)
-   - `input/scope.md`, `input/backlog/phase-*.md`
-   - `input/screens/screen-map.md`
-   - `output/docs/technical-spec.md`
-   - `output/phases/phase-N.md`
+   - `input/open-questions.md` — open BE/design gaps and resolved decisions
+   - `output/progress/DASHBOARD.md` — live status
+   - Scope itself lives in **Jira (PRD1042)** — pull with `/jira-sync`
 
 2. **Core Standards** (`CLAUDE.md` — this file)
 
@@ -42,16 +41,11 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 
 ## 🎯 COMMANDS
 
-| Command                      | When to use                                 |
-| ---------------------------- | ------------------------------------------- |
-| `/execute-work story US-XXX` | Implement a specific story                  |
-| `/execute-work phase N`      | Run all stories in a phase sequentially     |
-| `/project-status`            | Full written status report                  |
-| `/add-scope`                 | Add a new story to the backlog              |
-| `/add-bug`                   | File a bug                                  |
-| `/run-tests all`             | Run unit tests + type-check + lint manually |
-| `/promote-requirement`       | Move a future story to an active phase      |
-| `/resolve-questions`         | Answer open clarification questions         |
+| Command                      | When to use                             |
+| ---------------------------- | --------------------------------------- |
+| `/execute-work story US-XXX` | Implement a specific story              |
+| `/execute-work phase N`      | Run all stories in a phase sequentially |
+| `/resolve-questions`         | Answer open clarification questions     |
 
 **Live status:** open `.project-management/output/progress/DASHBOARD.md`
 
@@ -61,7 +55,7 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 
 **Before ANY code changes:**
 
-1. **Read the technical spec** — `output/docs/technical-spec.md`
+1. **Read the story** — the Jira issue for the unit (`/jira-sync` to mirror it locally)
 2. **Read existing code** — understand current patterns before modifying
 3. **Plan (MANDATORY)** — `/execute-work` auto-enters plan mode; for manual work use TodoWrite
 4. **API contract check** — read `../refinext-api/` source or `openapi.json` before touching any screen that calls the API (see API-first rule below)
@@ -495,7 +489,14 @@ docker compose up
 
 BuildKit must be enabled (`DOCKER_BUILDKIT=1`) for cache mounts to work.
 
-See `.project-management/docs/refinext-app-notes.md` for full rationale on Docker and CI/CD decisions.
+Constraints that are easy to break (learned the hard way — the notes file that recorded the full
+rationale was retired 2026-07-29):
+
+- `pnpm-workspace.yaml` must be copied **before** `pnpm install` in the Dockerfile
+- `--mount=type=cache` for the pnpm store requires BuildKit (above)
+- nginx needs the SPA-routing fallback and serves hashed assets with a 1-year cache
+- CI runs DinD with TLS **disabled**; the SSH deploy key must match `authorized_keys` on the server
+- Staging is set up; **production is not**
 
 ---
 

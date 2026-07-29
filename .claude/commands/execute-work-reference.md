@@ -26,10 +26,8 @@ Companion to `execute-work.md`. Holds the long-tail material (modes, templates, 
 
 ### 2. Progress Tracking Mode
 
-| Mode                         | Updates                                                                 | Use when                                                                        |
-| ---------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **Phase Only (recommended)** | Only `phase-N.md`                                                       | Long phases, many stories. Saves ~10-30s per story.                             |
-| **Complete**                 | `phase-N.md`, `completed.md`, `current-status.md`, full velocity recalc | Short phases, final phase, or when you need comprehensive tracking in one pass. |
+| Mode | Updates | Use when |
+| ---- | ------- | -------- |
 
 **Neither mode updates `blockers.md`** — that file requires manual input (see `.claude/rules/…`).
 
@@ -93,7 +91,6 @@ A story moves to Completed only when:
 - [ ] All tests passing
 - [ ] Every consumed BE error code surfaced with `errors.<CODE>` i18n keys (per `.claude/rules/api-error-display.md`)
 - [ ] i18n translations added (if required)
-- [ ] API documentation gate clean if endpoints touched (`.claude/rules/api-documentation.md`): schema validation, typed response, doc block per `documentation-templates.md` §2.1, no drift between code/docs/tests
 - [ ] **Frontend stories only:** API contract verified per `.claude/rules/api-first.md` Phase A (or story was Blocked and resumed only after backend gap closed)
 - [ ] **Frontend stories only:** story scoped to one screen (or wizard with steps enumerated) per `.claude/rules/screen-driven-backlog.md`; API endpoints table present
 - [ ] SOLID & DRY principles followed
@@ -122,18 +119,16 @@ Implementation detail: `modules/execute-work-quality-gates.md`.
 
 ### Modular backlog structure (default in v3.1+)
 
-- Reads only the relevant `input/backlog/phase-*.md` file (not entire backlog).
+- Reads the Jira issue for the unit (via `/jira-sync` mirror if one exists).
 - Auto-updates `output/progress/DASHBOARD.md` during work (real-time visibility).
 - Auto-updates `daily-summary.md` as stories progress.
-- Auto-updates `input/backlog/README.md` master-index statistics.
 - ~60-70% token savings vs monolithic per run.
 
 ### Monolithic backlog structure (legacy)
 
-- Reads the single `input/backlog.md`.
+- Reads the Jira issue directly.
 - Updates phase file + progress files based on chosen tracking mode.
 - Fully supported, no deprecation.
-- Consider `/migrate-to-modular` to upgrade (one-shot).
 
 Detection is automatic; no user action.
 
@@ -208,7 +203,6 @@ Claude: 🚀 Starting US-002…
 - `modules/execute-work-quality-gates.md` — validation
 - `modules/execute-work-dashboard-events.md` — DASHBOARD update triggers
 - `modules/execute-work-dashboard-mechanics.md` — DASHBOARD update internals
-- `modules/backlog-organization.md` — modular vs monolithic backlog rules
 
 ---
 

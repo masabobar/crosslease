@@ -26,6 +26,15 @@ export const FADocumentTypeSchema = z.enum([
 ])
 export type FADocumentType = z.infer<typeof FADocumentTypeSchema>
 
+// Rate bounds mirror refinext-api fa_schemas.py exactly:
+// effective_rate = Field(ge=0, le=25), vfe_rate = Field(ge=0, le=100).
+// Both columns are Numeric(8, 4), so fractional rates are valid — the inputs must not
+// restrict entry to whole numbers.
+export const EFFECTIVE_RATE_MIN = 0
+export const EFFECTIVE_RATE_MAX = 25
+export const VFE_RATE_MIN = 0
+export const VFE_RATE_MAX = 100
+
 // POST /framework-agreements — matches CreateFARequest in refinext-api fa_schemas.py exactly
 export const CreateFARequestSchema = z.object({
   agreement_name: z.string().min(1).max(200),
@@ -34,10 +43,10 @@ export const CreateFARequestSchema = z.object({
   max_volume_eur: z.number().gt(0),
   // The single hand-entered interest rate (CR PRD1042-1552 A1/A2) — required on create
   // since the BE stopped deriving it from base_rate + spread.
-  effective_rate: z.number(),
+  effective_rate: z.number().min(EFFECTIVE_RATE_MIN).max(EFFECTIVE_RATE_MAX),
   // VFE (early-repayment penalty) flat rate — optional override; BE prefills from the
   // per-LC default on create (CR PRD1042-1495 B2). Matches CreateFARequest.vfe_rate.
-  vfe_rate: z.number().min(0).max(100).optional(),
+  vfe_rate: z.number().min(VFE_RATE_MIN).max(VFE_RATE_MAX).optional(),
   valid_from: z.string().min(1),
   valid_until: z.string().optional(),
   special_conditions: z.string().optional(),
@@ -75,8 +84,12 @@ export type FADraftResponse = z.infer<typeof FADraftResponseSchema>
 export const UpdateFARequestSchema = z.object({
   agreement_name: z.string().min(1).max(200).optional(),
   max_volume_eur: z.number().gt(0).optional(),
-  effective_rate: z.number().optional(),
-  vfe_rate: z.number().min(0).max(100).optional(),
+  effective_rate: z
+    .number()
+    .min(EFFECTIVE_RATE_MIN)
+    .max(EFFECTIVE_RATE_MAX)
+    .optional(),
+  vfe_rate: z.number().min(VFE_RATE_MIN).max(VFE_RATE_MAX).optional(),
   valid_from: z.string().min(1).optional(),
   valid_until: z.string().optional(),
   special_conditions: z.string().optional(),
@@ -98,8 +111,15 @@ export const EditFrameworkAgreementFormSchema = z
     // registered with valueAsNumber yields NaN, and without this Zod's untranslated
     // default ("Invalid input: expected number, received NaN") reaches the UI.
     max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
-    effective_rate: z.number({ error: "required" }),
-    vfe_rate: z.number().min(0).max(100).optional(),
+    effective_rate: z
+      .number({ error: "required" })
+      .min(EFFECTIVE_RATE_MIN, "effectiveRateRange")
+      .max(EFFECTIVE_RATE_MAX, "effectiveRateRange"),
+    vfe_rate: z
+      .number()
+      .min(VFE_RATE_MIN, "vfeRateRange")
+      .max(VFE_RATE_MAX, "vfeRateRange")
+      .optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
     special_conditions: z.string().max(1000).optional(),
@@ -424,8 +444,15 @@ export const FrameworkAgreementWizardFormSchema = z
     // See EditFrameworkAgreementFormSchema — `{ error: "required" }` keeps Zod's
     // untranslated NaN/undefined message out of the UI for empty number inputs.
     max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
-    effective_rate: z.number({ error: "required" }),
-    vfe_rate: z.number().min(0).max(100).optional(),
+    effective_rate: z
+      .number({ error: "required" })
+      .min(EFFECTIVE_RATE_MIN, "effectiveRateRange")
+      .max(EFFECTIVE_RATE_MAX, "effectiveRateRange"),
+    vfe_rate: z
+      .number()
+      .min(VFE_RATE_MIN, "vfeRateRange")
+      .max(VFE_RATE_MAX, "vfeRateRange")
+      .optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
     special_conditions: z.string().max(1000).optional(),

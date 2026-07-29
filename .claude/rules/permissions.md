@@ -6,9 +6,6 @@
 
 Core rules for managing `.claude/settings.json` permissions: what Claude MUST and MUST NOT do, safety deny patterns, best practices, and troubleshooting. See companion files for examples and reference:
 
-- **`.claude/rules/permissions-patterns.md`** — Pattern syntax + common permission patterns + "permission needed" response template
-- **`.claude/rules/permissions-examples.md`** — Full settings.json examples (Option A broad, Option B granular, recommended setup, corruption recovery)
-
 ---
 
 ## 🚨 CRITICAL: Settings File Behavior
@@ -45,7 +42,7 @@ When adding a new permission, Claude may overwrite the entire `.claude/settings.
 **If you need to add a permission:**
 
 1. ✅ **Ask the user** to add it manually
-2. ✅ **Provide exact syntax** for copy-paste (see `permissions-patterns.md` §3 for the response template)
+2. ✅ **Provide exact syntax** for copy-paste
 3. ❌ **NEVER write to `settings.json`** automatically
 
 **Example — Correct Approach:**
@@ -73,8 +70,6 @@ Or, for broader permissions, you can use:
 
 Would you like to add this permission?"
 ```
-
-For the full response template Claude must use when blocked, see `.claude/rules/permissions-patterns.md` §3.
 
 ---
 
@@ -163,7 +158,7 @@ For the full response template Claude must use when blocked, see `.claude/rules/
 
 ### Settings file gets corrupted
 
-**Solution:** See `.claude/rules/permissions-examples.md` §3 for full recovery steps. Short version:
+**Solution:**
 
 1. Restore from `settings.example.json`
 2. Or use git: `git restore .claude/settings.json`
@@ -173,8 +168,6 @@ For the full response template Claude must use when blocked, see `.claude/rules/
 
 ## 📚 Related Documentation
 
-- `.claude/rules/permissions-patterns.md` — Pattern matching syntax, common patterns, "permission needed" response template
-- `.claude/rules/permissions-examples.md` — Full settings.json templates (broad/granular/recommended), corruption recovery
 - `.claude/settings.example.json` — Template for new projects
 - `.gitignore` — Settings that should be ignored
 - `CLAUDE.md` — Main Claude configuration

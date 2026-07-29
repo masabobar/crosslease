@@ -63,6 +63,26 @@ describe("CreateFARequestSchema", () => {
     ).toThrow()
   })
 
+  // CreateFARequest declares effective_rate = Field(ge=0, le=25) — the FE bound must
+  // match, or an out-of-range rate only fails at the API as a 422.
+  it.each([-0.1, 25.1, 100])("rejects effective_rate %s", rate => {
+    expect(() =>
+      CreateFARequestSchema.parse({
+        ...validCreateRequest,
+        effective_rate: rate,
+      })
+    ).toThrow()
+  })
+
+  it.each([0, 25])("accepts effective_rate at the %s bound", rate => {
+    expect(() =>
+      CreateFARequestSchema.parse({
+        ...validCreateRequest,
+        effective_rate: rate,
+      })
+    ).not.toThrow()
+  })
+
   it("strips lg_coverage_rate_override — not in v9's field list (CR PRD1042-1552 A4)", () => {
     const parsed = CreateFARequestSchema.parse({
       ...validCreateRequest,
@@ -206,6 +226,14 @@ describe("UpdateFARequestSchema", () => {
     expect(() => UpdateFARequestSchema.parse({})).not.toThrow()
   })
 
+  it.each([
+    { effective_rate: 25.1 },
+    { effective_rate: -1 },
+    { vfe_rate: 100.5 },
+  ])("rejects an out-of-range rate: %o", payload => {
+    expect(() => UpdateFARequestSchema.parse(payload)).toThrow()
+  })
+
   it("strips rate_type — pricing trimmed to effective_rate only (CR PRD1042-1552 A1-A3)", () => {
     const parsed = UpdateFARequestSchema.parse({
       rate_type: "unknown_rate",
@@ -316,6 +344,23 @@ describe("EditFrameworkAgreementFormSchema", () => {
         valid_until: validEditForm.valid_from,
       })
     ).toThrow()
+  })
+
+  // Same i18n contract as the wizard: an out-of-range rate must carry a message code
+  // the resolver translates, not Zod's untranslated default.
+  it.each([
+    { field: "effective_rate", value: 26, code: "effectiveRateRange" },
+    { field: "effective_rate", value: -1, code: "effectiveRateRange" },
+    { field: "vfe_rate", value: 101, code: "vfeRateRange" },
+  ])("reports '$code' when $field is $value", ({ field, value, code }) => {
+    const result = EditFrameworkAgreementFormSchema.safeParse({
+      ...validEditForm,
+      [field]: value,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
+      code
+    )
   })
 })
 
@@ -653,6 +698,20 @@ describe("FrameworkAgreementWizardFormSchema", () => {
       expect(issue?.message).toBe("required")
     }
   )
+
+  it.each([
+    { field: "effective_rate", value: 26, code: "effectiveRateRange" },
+    { field: "vfe_rate", value: 101, code: "vfeRateRange" },
+  ])("reports '$code' when $field is $value", ({ field, value, code }) => {
+    const result = FrameworkAgreementWizardFormSchema.safeParse({
+      ...validForm,
+      [field]: value,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
+      code
+    )
+  })
 
   it("reports 'required' for an empty number input coerced to NaN", () => {
     const result = FrameworkAgreementWizardFormSchema.safeParse({
