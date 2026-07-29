@@ -8173,16 +8173,6 @@
             ],
             "title": "Valid Until"
           },
-          "rate_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/RateType" },
-              { "type": "null" }
-            ]
-          },
-          "npv_formula_ref": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Npv Formula Ref"
-          },
           "first_installment_rule": {
             "anyOf": [
               { "$ref": "#/components/schemas/FirstInstallmentRule" },
@@ -8467,7 +8457,8 @@
             "default": {
               "rr_count": 0,
               "financing_count": 0,
-              "contract_count": 0
+              "contract_count": 0,
+              "framework_agreement_count": 0
             }
           }
         },
@@ -9945,6 +9936,11 @@
           "contract_count": {
             "type": "integer",
             "title": "Contract Count",
+            "default": 0
+          },
+          "framework_agreement_count": {
+            "type": "integer",
+            "title": "Framework Agreement Count",
             "default": 0
           }
         },
@@ -12607,6 +12603,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "template_code": { "type": "string", "title": "Template Code" },
+          "template_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Name"
+          },
           "current_version": {
             "anyOf": [
               { "$ref": "#/components/schemas/TemplateCurrentVersionSummary" },
@@ -12620,7 +12620,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "template_code", "current_version", "created_at"],
+        "required": [
+          "id",
+          "template_code",
+          "template_name",
+          "current_version",
+          "created_at"
+        ],
         "title": "TemplateListItem"
       },
       "TemplateListResponse": {
@@ -13387,21 +13393,11 @@
               { "type": "null" }
             ]
           },
-          "rate_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/RateType" },
-              { "type": "null" }
-            ]
-          },
           "calculation_model": {
             "anyOf": [
               { "$ref": "#/components/schemas/CalculationModel" },
               { "type": "null" }
             ]
-          },
-          "npv_formula_ref": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Npv Formula Ref"
           },
           "first_installment_rule": {
             "anyOf": [
