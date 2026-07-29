@@ -1,8 +1,45 @@
 import { useTranslation } from "react-i18next"
 import { ApiError } from "@/lib/api"
+import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
+import type { FALifecycleStatus } from "@/features/frameworkAgreements/api/schema"
 
 export function isFrameworkAgreementNotFoundError(error: unknown): boolean {
   return error instanceof ApiError && error.code === "FA_NOT_FOUND"
+}
+
+// Display-only status: an Active agreement the BE reports as expired reads as
+// "expired" in the UI. Per CR PRD1042-1552 B2, this is presentation only —
+// FALifecycleStatus stays at 4 wire values; no new lifecycle state is added.
+export type FADisplayStatus = FALifecycleStatus | "expired"
+
+export function getFrameworkAgreementDisplayStatus(
+  status: FALifecycleStatus,
+  isExpired: boolean
+): FADisplayStatus {
+  if (status === FALifecycleStatusSchema.enum.active && isExpired) {
+    return "expired"
+  }
+  return status
+}
+
+// `valid_until` is a date-only wire value (`format: date`), so expiry must be a
+// calendar-date comparison — an agreement is valid through the whole of that day.
+// Mirrors is_fa_expired() in refinext-api (`valid_until < date.today()`).
+//
+// Only the LC portal needs this: LCPortalFAListItem is the one FA response the BE
+// does not carry `is_expired` on, and the LC card must not disagree with the
+// bank-side list and detail views. Delete once the BE adds the flag — see Q-033.
+export function isFrameworkAgreementExpiredByDate(
+  validUntil: string | null,
+  today: Date = new Date()
+): boolean {
+  if (validUntil === null) return false
+  const localToday = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-")
+  return validUntil < localToday
 }
 
 // Shared Zod refine-error-code → i18n message resolver for the wizard/edit form

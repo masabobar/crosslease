@@ -36,11 +36,7 @@ vi.mock("@/features/productTemplates/api/productTemplatesApi", () => ({
   createNewProductTemplateVersion: vi.fn(),
   deprecateProductTemplateVersion: vi.fn(),
   PRODUCT_TEMPLATES_QUERY_KEYS: {
-    versions: (templateId: string) => [
-      "product-templates",
-      "versions",
-      templateId,
-    ],
+    all: ["product-templates"],
   },
 }))
 
@@ -80,7 +76,7 @@ beforeEach(() => {
   mockUpdateDraft.mockResolvedValue({})
   mockDiscardDraft.mockResolvedValue({})
   mockPublish.mockResolvedValue({})
-  mockCreateNewVersion.mockResolvedValue({ version_number: "2.0.0" })
+  mockCreateNewVersion.mockResolvedValue({ version_number: "2" })
   mockDeprecate.mockResolvedValue({})
 })
 
@@ -100,11 +96,11 @@ describe("useCreateProductTemplateDraft", () => {
     expect(mockCreateDraft).toHaveBeenCalledWith(TENANT_ID, body)
   })
 
-  it("invalidates versions for the newly created template on success", async () => {
+  it("invalidates the whole feature on success", async () => {
     const { mutate } = useCreateProductTemplateDraft()
     await mutate({ tenantId: TENANT_ID, body })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
+      queryKey: ["product-templates"],
     })
   })
 })
@@ -126,7 +122,7 @@ describe("useUpdateProductTemplateDraft", () => {
     )
   })
 
-  it("invalidates versions for the template on success", async () => {
+  it("invalidates the whole feature on success", async () => {
     const { mutate } = useUpdateProductTemplateDraft()
     await mutate({
       templateId: TEMPLATE_ID,
@@ -134,7 +130,7 @@ describe("useUpdateProductTemplateDraft", () => {
       body,
     })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
+      queryKey: ["product-templates"],
     })
   })
 })
@@ -146,11 +142,11 @@ describe("useDiscardProductTemplateDraft", () => {
     expect(mockDiscardDraft).toHaveBeenCalledWith(TEMPLATE_ID, VERSION_NUMBER)
   })
 
-  it("invalidates versions for the template on success", async () => {
+  it("invalidates the whole feature on success", async () => {
     const { mutate } = useDiscardProductTemplateDraft()
     await mutate({ templateId: TEMPLATE_ID, versionNumber: VERSION_NUMBER })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
+      queryKey: ["product-templates"],
     })
   })
 })
@@ -168,7 +164,7 @@ describe("usePublishProductTemplate", () => {
     expect(mockPublish).toHaveBeenCalledWith(TEMPLATE_ID, VERSION_NUMBER, body)
   })
 
-  it("invalidates versions for the template on success", async () => {
+  it("invalidates the whole feature on success", async () => {
     const { mutate } = usePublishProductTemplate()
     await mutate({
       templateId: TEMPLATE_ID,
@@ -176,25 +172,23 @@ describe("usePublishProductTemplate", () => {
       body,
     })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
+      queryKey: ["product-templates"],
     })
   })
 })
 
 describe("useCreateNewProductTemplateVersion", () => {
-  const body = { increment_type: "minor" as const }
-
-  it("calls createNewProductTemplateVersion with the correct templateId and body", async () => {
+  it("calls createNewProductTemplateVersion with the correct templateId", async () => {
     const { mutate } = useCreateNewProductTemplateVersion()
-    await mutate({ templateId: TEMPLATE_ID, body })
-    expect(mockCreateNewVersion).toHaveBeenCalledWith(TEMPLATE_ID, body)
+    await mutate({ templateId: TEMPLATE_ID })
+    expect(mockCreateNewVersion).toHaveBeenCalledWith(TEMPLATE_ID)
   })
 
-  it("invalidates versions for the template on success", async () => {
+  it("invalidates the whole feature on success", async () => {
     const { mutate } = useCreateNewProductTemplateVersion()
-    await mutate({ templateId: TEMPLATE_ID, body })
+    await mutate({ templateId: TEMPLATE_ID })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
+      queryKey: ["product-templates"],
     })
   })
 })
@@ -216,7 +210,7 @@ describe("useDeprecateProductTemplateVersion", () => {
     )
   })
 
-  it("invalidates versions for the template on success", async () => {
+  it("invalidates the whole feature on success", async () => {
     const { mutate } = useDeprecateProductTemplateVersion()
     await mutate({
       templateId: TEMPLATE_ID,
@@ -224,7 +218,7 @@ describe("useDeprecateProductTemplateVersion", () => {
       body,
     })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["product-templates", "versions", TEMPLATE_ID],
+      queryKey: ["product-templates"],
     })
   })
 })

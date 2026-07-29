@@ -52,20 +52,6 @@ function ReviewStep({ form, documents }: Props) {
             }
           />
           <ReviewRow
-            label={t("fields.baseRate")}
-            value={
-              values.base_rate !== undefined ? `${values.base_rate}%` : "—"
-            }
-          />
-          <ReviewRow
-            label={t("fields.spread")}
-            value={values.spread !== undefined ? `${values.spread}%` : "—"}
-          />
-          <ReviewRow
-            label={t("fields.rateType")}
-            value={values.rate_type ? t(`rateTypes.${values.rate_type}`) : "—"}
-          />
-          <ReviewRow
             label={t("fields.effectiveRate")}
             value={
               values.effective_rate !== undefined
@@ -74,15 +60,10 @@ function ReviewStep({ form, documents }: Props) {
             }
           />
           <ReviewRow
-            label={t("fields.rateLockPeriodMonths")}
-            value={values.rate_lock_period_months ?? "—"}
-          />
-          <ReviewRow
-            label={t("fields.lgCoverageRateOverride")}
+            label={t("fields.vfeRate")}
             value={
-              values.lg_coverage_rate_override !== undefined &&
-              !Number.isNaN(values.lg_coverage_rate_override)
-                ? `${values.lg_coverage_rate_override}%`
+              values.vfe_rate !== undefined && !Number.isNaN(values.vfe_rate)
+                ? `${values.vfe_rate}%`
                 : "—"
             }
           />

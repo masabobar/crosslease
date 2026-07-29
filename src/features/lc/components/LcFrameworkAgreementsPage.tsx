@@ -6,7 +6,11 @@ import { ApiError } from "@/lib/api"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { useLcPortalFrameworkAgreements } from "@/features/lc/hooks/useLcPortalFrameworkAgreements"
 import { getLcPortalDocumentDownloadUrl } from "@/features/lc/api/lcPortalApi"
-import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreements/utils"
+import {
+  isFrameworkAgreementNotFoundError,
+  isFrameworkAgreementExpiredByDate,
+  getFrameworkAgreementDisplayStatus,
+} from "@/features/frameworkAgreements/utils"
 import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import type { LCPortalFAListItem } from "@/features/lc/api/schema"
@@ -15,6 +19,14 @@ const BYTES_PER_MB = 1024 * 1024
 
 function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
   const { t } = useTranslation("lc")
+
+  // LCPortalFAListItem carries no `is_expired` (unlike the bank-side list and detail
+  // responses), so it is derived here — otherwise the same agreement would read
+  // "Active" here and "Expired" in the bank portal. See Q-033.
+  const displayStatus = getFrameworkAgreementDisplayStatus(
+    fa.status,
+    isFrameworkAgreementExpiredByDate(fa.valid_until)
+  )
 
   return (
     <div
@@ -25,8 +37,8 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
         <h2 className="text-sm font-semibold text-foreground">
           {fa.agreement_name}
         </h2>
-        <Badge variant={FA_STATUS_BADGE_VARIANT[fa.status]}>
-          {t(`frameworkAgreements.status.${fa.status}`)}
+        <Badge variant={FA_STATUS_BADGE_VARIANT[displayStatus]}>
+          {t(`frameworkAgreements.status.${displayStatus}`)}
         </Badge>
       </div>
 

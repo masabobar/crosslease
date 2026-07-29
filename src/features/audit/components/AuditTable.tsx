@@ -15,7 +15,7 @@ import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
 
 const COL_TIMESTAMP = "w-[150px] shrink-0"
 const COL_ENTITY = "flex-1 min-w-[140px]"
-const COL_ENTITY_TYPE = "w-[110px] shrink-0"
+const COL_ENTITY_TYPE = "w-[150px] shrink-0"
 const COL_EVENT = "w-[210px] shrink-0"
 const COL_ACTOR = "w-[230px] shrink-0"
 const COL_RESULT = "w-[90px] shrink-0"
@@ -188,7 +188,7 @@ export function AuditTable({
               )}
             </div>
 
-            <div className={`${COL_ENTITY_TYPE} p-2`}>
+            <div className={`${COL_ENTITY_TYPE} p-2 overflow-hidden`}>
               <EntityTypeBadge entityType={event.entity_type} />
             </div>
 

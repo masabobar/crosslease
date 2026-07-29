@@ -1244,15 +1244,10 @@ const SelectableTemplateItem = z
 const SelectableTemplatesResponse = z
   .object({ items: z.array(SelectableTemplateItem) })
   .passthrough()
-const IncrementType = z.enum(["major", "minor"])
 const LegalStructure = z.enum(["loan_credit", "true_sale"])
 const PaymentTiming = z.enum(["advance", "arrears"])
 const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
-const app__modules__product_templates__domain__enums__RateType = z.enum([
-  "fixed",
-  "floating",
-  "euribor_spread",
-])
+const RateType = z.enum(["fixed", "floating", "euribor_spread"])
 const CalculationModel = z.enum(["annuity", "bullet", "irregular"])
 const FirstInstallmentRule = z.enum([
   "submission_month",
@@ -1276,7 +1271,6 @@ const VersionDetailResponse = z
     template_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    increment_type: z.union([IncrementType, z.null()]),
     referenced: z.boolean(),
     template_name: z.string(),
     template_description: z.union([z.string(), z.null()]),
@@ -1286,10 +1280,7 @@ const VersionDetailResponse = z
     legal_structure: LegalStructure,
     payment_timing: PaymentTiming,
     rate_basis: RateBasis,
-    rate_type: z.union([
-      app__modules__product_templates__domain__enums__RateType,
-      z.null(),
-    ]),
+    rate_type: z.union([RateType, z.null()]),
     calculation_model: CalculationModel,
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
@@ -1334,10 +1325,7 @@ const UpdateTemplateDraftRequest = z
     legal_structure: z.union([LegalStructure, z.null()]),
     payment_timing: z.union([PaymentTiming, z.null()]),
     rate_basis: z.union([RateBasis, z.null()]),
-    rate_type: z.union([
-      app__modules__product_templates__domain__enums__RateType,
-      z.null(),
-    ]),
+    rate_type: z.union([RateType, z.null()]),
     calculation_model: z.union([CalculationModel, z.null()]),
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
@@ -1392,15 +1380,11 @@ const PublishTemplateDraftResponse = z
     published_by: z.string().uuid(),
   })
   .passthrough()
-const CreateNewVersionRequest = z
-  .object({ increment_type: IncrementType })
-  .passthrough()
 const NewVersionCreatedResponse = z
   .object({
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    increment_type: z.union([IncrementType, z.null()]),
     predecessor_version_id: z.union([z.string(), z.null()]),
     snapshot_source_version_id: z.union([z.string(), z.null()]),
   })
@@ -1458,6 +1442,16 @@ const SubmitForActivationRequest = z
   .passthrough()
 const SubmitDeprecationRequest = z
   .object({ justification: z.string().min(10).max(2000) })
+  .passthrough()
+const VersionDiffResponse = z
+  .object({
+    template_id: z.string().uuid(),
+    from_version: z.string(),
+    to_version: z.string(),
+    behavioral_settings: z.array(FieldDiffItem),
+    eligibility: z.array(FieldDiffItem),
+    orchestration_linkage: z.array(FieldDiffItem),
+  })
   .passthrough()
 const TemplateStatus = z.enum([
   "draft",
@@ -1517,12 +1511,7 @@ const CreateTemplateDraftRequest = z
     template_description: z.union([z.string(), z.null()]).optional(),
     valid_from: z.union([z.string(), z.null()]).optional(),
     valid_until: z.union([z.string(), z.null()]).optional(),
-    rate_type: z
-      .union([
-        app__modules__product_templates__domain__enums__RateType,
-        z.null(),
-      ])
-      .optional(),
+    rate_type: z.union([RateType, z.null()]).optional(),
     npv_formula_ref: z.union([z.string(), z.null()]).optional(),
     first_installment_rule: z
       .union([FirstInstallmentRule, z.null()])
@@ -1555,28 +1544,17 @@ const BankEntity = z.enum([
   "landesbank_2",
   "other",
 ])
-const app__modules__framework_agreements__domain__enums__RateType = z.enum([
-  "fixed",
-  "floating",
-  "euribor_plus_spread",
-])
 const CreateFARequest = z
   .object({
     agreement_name: z.string().max(200),
     lc_partner_id: z.string().uuid(),
     bank_entity: BankEntity,
     max_volume_eur: z.union([z.number(), z.string()]),
-    base_rate: z.union([z.number(), z.string()]),
-    spread: z.union([z.number(), z.string()]),
-    rate_type: app__modules__framework_agreements__domain__enums__RateType,
-    effective_rate: z.union([z.number(), z.string(), z.null()]).optional(),
-    rate_lock_period_months: z.number().int().gte(1).lte(360),
-    lg_coverage_rate_override: z
-      .union([z.number(), z.string(), z.null()])
-      .optional(),
+    effective_rate: z.union([z.number(), z.string()]),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]).optional(),
     special_conditions: z.union([z.string(), z.null()]).optional(),
+    vfe_rate: z.union([z.number(), z.string(), z.null()]).optional(),
     product_template_ids: z.array(z.string().uuid()).min(1),
   })
   .passthrough()
@@ -1590,15 +1568,11 @@ const FADraftResponse = z
     currency: z.string(),
     status: FALifecycleStatus,
     max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    base_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    spread: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     effective_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    rate_type: app__modules__framework_agreements__domain__enums__RateType,
-    rate_lock_period_months: z.number().int(),
-    lg_coverage_rate_override: z.union([z.string(), z.null()]),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    vfe_rate: z.union([z.string(), z.null()]),
     product_template_ids: z.array(z.string().uuid()),
     edit_version_counter: z.number().int(),
     created_by: z.string().uuid(),
@@ -1616,6 +1590,7 @@ const FAListItemResponse = z
     status: FALifecycleStatus,
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
+    is_expired: z.boolean(),
     utilization_pct: z.union([z.string(), z.null()]),
     limit_breach: z.union([z.boolean(), z.null()]),
   })
@@ -1633,18 +1608,11 @@ const UpdateFARequest = z
   .object({
     agreement_name: z.union([z.string(), z.null()]),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]),
-    base_rate: z.union([z.number(), z.string(), z.null()]),
-    spread: z.union([z.number(), z.string(), z.null()]),
-    rate_type: z.union([
-      app__modules__framework_agreements__domain__enums__RateType,
-      z.null(),
-    ]),
     effective_rate: z.union([z.number(), z.string(), z.null()]),
-    rate_lock_period_months: z.union([z.number(), z.null()]),
-    lg_coverage_rate_override: z.union([z.number(), z.string(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    vfe_rate: z.union([z.number(), z.string(), z.null()]),
     product_template_ids: z.union([z.array(z.string().uuid()), z.null()]),
     justification: z.union([z.string(), z.null()]),
     expected_version: z.union([z.number(), z.null()]),
@@ -1662,6 +1630,7 @@ const FADetailResponse = z
     max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
+    is_expired: z.boolean(),
     edit_version_counter: z.number().int(),
     product_template_ids: z.array(z.string().uuid()),
     document_count: z.number().int(),
@@ -1670,12 +1639,8 @@ const FADetailResponse = z
     limit_available: z.union([z.string(), z.null()]),
     limit_breach: z.union([z.boolean(), z.null()]),
     bank_entity: z.union([z.string(), z.null()]),
-    base_rate: z.union([z.string(), z.null()]),
-    spread: z.union([z.string(), z.null()]),
     effective_rate: z.union([z.string(), z.null()]),
-    rate_type: z.union([z.string(), z.null()]),
-    rate_lock_period_months: z.union([z.number(), z.null()]),
-    lg_coverage_rate_override: z.union([z.string(), z.null()]),
+    vfe_rate: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     effective_from: z.union([z.string(), z.null()]),
     activated_at: z.union([z.string(), z.null()]),
@@ -1781,12 +1746,7 @@ const FAPricingSnapshotResponse = z
     fa_id: z.string().uuid(),
     agreement_name: z.string(),
     edit_version_counter: z.number().int(),
-    base_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    spread: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     effective_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    rate_type: z.string(),
-    rate_lock_period_months: z.number().int(),
-    lg_coverage_rate_override: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const FAEventTypeFilter = z.enum([
@@ -1852,7 +1812,7 @@ const FADocumentType = z.enum([
 const Body_attach_document_api_v1_framework_agreements__id__documents_post = z
   .object({
     file: z.string(),
-    document_type: FADocumentType,
+    document_type: z.union([FADocumentType, z.null()]).optional(),
     document_label: z.union([z.string(), z.null()]).optional(),
     lc_visible: z.boolean().optional().default(true),
   })
@@ -1861,7 +1821,7 @@ const AttachDocumentResponse = z
   .object({
     id: z.string().uuid(),
     framework_agreement_id: z.string().uuid(),
-    document_type: FADocumentType,
+    document_type: z.union([FADocumentType, z.null()]),
     document_label: z.union([z.string(), z.null()]),
     file_name: z.string(),
     file_size_bytes: z.number().int(),
@@ -1875,7 +1835,7 @@ const DocumentListItemResponse = z
   .object({
     id: z.string().uuid(),
     framework_agreement_id: z.string().uuid(),
-    document_type: FADocumentType,
+    document_type: z.union([FADocumentType, z.null()]),
     document_label: z.union([z.string(), z.null()]),
     file_name: z.string(),
     file_size_bytes: z.number().int(),
@@ -1924,6 +1884,294 @@ const LCPortalFAListItem = z
   .passthrough()
 const LCPortalFAListResponse = z
   .object({ items: z.array(LCPortalFAListItem), total: z.number().int() })
+  .passthrough()
+const VfeRateResponse = z
+  .object({
+    id: z.string().uuid(),
+    tenant_id: z.string().uuid(),
+    lc_partner_id: z.string().uuid(),
+    vfe_rate: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const VfeRateListResponse = z
+  .object({ items: z.array(VfeRateResponse) })
+  .passthrough()
+const VfeRateCreateRequest = z
+  .object({
+    lc_partner_id: z.string().uuid(),
+    vfe_rate: z.union([z.number(), z.string()]),
+  })
+  .passthrough()
+const VfeRateUpdateRequest = z
+  .object({ vfe_rate: z.union([z.number(), z.string()]) })
+  .passthrough()
+const UpdateCatalogRequest = z
+  .object({
+    catalog_name: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const CatalogType = z.enum(["global_default", "product_specific"])
+const CatalogResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()),
+    product_template_id: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const RequirementClassification = z.enum([
+  "mandatory",
+  "optional",
+  "conditional",
+])
+const GovernanceClassification = z.enum([
+  "operational",
+  "compliance_sensitive",
+  "regulatory_critical",
+])
+const SourceLayer = z.enum(["default", "override", "supplement", "deactivated"])
+const StageCategorization = z.enum([
+  "submission",
+  "approval",
+  "disbursement_readiness",
+])
+const DocumentOrigin = z.enum(["uploaded", "generated"])
+const RequirementResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_id: z.string().uuid(),
+    requirement_code: z.string(),
+    document_type_code: z.string(),
+    document_type_name: z.string(),
+    description: z.union([z.string(), z.null()]),
+    classification: RequirementClassification,
+    governance_classification: GovernanceClassification,
+    source_layer: SourceLayer,
+    applicable_process_contexts: z.array(z.string()),
+    stage_categorization: z.union([StageCategorization, z.null()]),
+    blocks_submission: z.boolean(),
+    document_origin: DocumentOrigin,
+    is_active: z.boolean(),
+    sort_order: z.number().int(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CatalogDetailResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()),
+    product_template_id: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+    requirements: z.array(RequirementResponse).optional(),
+  })
+  .passthrough()
+const CreateCatalogRequest = z
+  .object({
+    catalog_name: z.string().min(1).max(200),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()).min(1),
+    product_template_id: z.union([z.string(), z.null()]).optional(),
+    valid_from: z.union([z.string(), z.null()]).optional(),
+    valid_to: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const catalog_type = z.union([CatalogType, z.null()]).optional()
+const CatalogListItem = z
+  .object({
+    id: z.string().uuid(),
+    catalog_name: z.string(),
+    catalog_type: CatalogType,
+    applicable_process_contexts: z.array(z.string()),
+    product_template_id: z.union([z.string(), z.null()]),
+    valid_from: z.union([z.string(), z.null()]),
+    valid_to: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CatalogListResponse = z
+  .object({
+    items: z.array(CatalogListItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const AddRequirementRequest = z
+  .object({
+    requirement_code: z.string().min(1).max(100),
+    document_type_code: z.string().min(1).max(100),
+    document_type_name: z.string().min(1).max(255),
+    description: z.union([z.string(), z.null()]).optional(),
+    classification: RequirementClassification.optional(),
+    governance_classification: GovernanceClassification,
+    source_layer: z.union([SourceLayer, z.null()]).optional(),
+    applicable_process_contexts: z.array(z.string()).min(1),
+    stage_categorization: z.union([StageCategorization, z.null()]).optional(),
+    blocks_submission: z.boolean().optional().default(true),
+    document_origin: DocumentOrigin.optional(),
+    sort_order: z.number().int().optional().default(0),
+  })
+  .passthrough()
+const RequirementListResponse = z
+  .object({
+    items: z.array(RequirementResponse),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const UpdateRequirementRequest = z
+  .object({
+    document_type_name: z.union([z.string(), z.null()]),
+    description: z.union([z.string(), z.null()]),
+    classification: z.union([RequirementClassification, z.null()]),
+    governance_classification: z.union([GovernanceClassification, z.null()]),
+    applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
+    stage_categorization: z.union([StageCategorization, z.null()]),
+    blocks_submission: z.union([z.boolean(), z.null()]),
+    document_origin: z.union([DocumentOrigin, z.null()]),
+    sort_order: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const RuntimeRequirementItem = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    requirement_code: z.string(),
+    document_type_name: z.string(),
+    classification: z.string(),
+    source_layer: z.string(),
+    stage_categorization: z.union([z.string(), z.null()]),
+    fulfilment_status: z.string(),
+    is_blocking: z.boolean(),
+    blocks_submission: z.boolean(),
+    document_origin: z.string(),
+  })
+  .passthrough()
+const RuntimeRequirementSurfaceResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    process_context: z.string(),
+    completeness_summary: z.string(),
+    requirements: z.array(RuntimeRequirementItem),
+  })
+  .passthrough()
+const MaterializeRequest = z
+  .object({ process_context: z.string() })
+  .passthrough()
+const MaterializedRequirementResponse = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    requirement_code: z.string(),
+    document_type_code: z.string(),
+    document_type_name: z.string(),
+    classification: z.string(),
+    governance_classification: z.string(),
+    source_layer: z.string(),
+    stage_categorization: z.union([z.string(), z.null()]),
+    applicable_process_contexts: z.array(z.string()),
+    blocks_submission: z.boolean(),
+    document_origin: z.string(),
+  })
+  .passthrough()
+const MaterializationResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    process_context: z.string(),
+    effective_requirements: z.array(MaterializedRequirementResponse),
+    total: z.number().int(),
+  })
+  .passthrough()
+const LCObligationItem = z
+  .object({
+    document_type_name: z.string(),
+    is_mandatory: z.boolean(),
+    fulfilment_status: z.string(),
+    action_needed: z.boolean(),
+  })
+  .passthrough()
+const LCObligationResponse = z
+  .object({
+    business_object_id: z.string().uuid(),
+    process_context: z.string(),
+    documents_status_summary: z.string(),
+    obligations: z.array(LCObligationItem),
+  })
+  .passthrough()
+const LinkDocumentRequest = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    business_object_type: z.string(),
+    linked_document_id: z.string().uuid(),
+    linked_document_type_code: z.string(),
+  })
+  .passthrough()
+const FulfilmentResponse = z
+  .object({
+    id: z.string().uuid(),
+    requirement_definition_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    business_object_type: z.string(),
+    status: z.string(),
+    linked_document_id: z.union([z.string(), z.null()]),
+    linked_document_type_code: z.union([z.string(), z.null()]),
+    transition_reason: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const TransitionStatusRequest = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    business_object_id: z.string().uuid(),
+    business_object_type: z.string(),
+    new_status: z.string(),
+    transition_reason: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const PerRequirementStatusResponse = z
+  .object({
+    requirement_definition_id: z.string().uuid(),
+    requirement_code: z.string(),
+    classification: z.string(),
+    status: z.string(),
+  })
+  .passthrough()
+const CompletenessResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    process_context: z.string(),
+    business_object_id: z.string().uuid(),
+    summary: z.string(),
+    mandatory_total: z.number().int(),
+    mandatory_fulfilled: z.number().int(),
+    mandatory_pending: z.number().int(),
+    mandatory_missing: z.number().int(),
+    per_requirement: z.array(PerRequirementStatusResponse),
+  })
   .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
@@ -2088,11 +2336,10 @@ export const schemas = {
   financing_type,
   SelectableTemplateItem,
   SelectableTemplatesResponse,
-  IncrementType,
   LegalStructure,
   PaymentTiming,
   RateBasis,
-  app__modules__product_templates__domain__enums__RateType,
+  RateType,
   CalculationModel,
   FirstInstallmentRule,
   DisbursementDerivationRule,
@@ -2107,7 +2354,6 @@ export const schemas = {
   OrchestrationResponse,
   PublishTemplateDraftRequest,
   PublishTemplateDraftResponse,
-  CreateNewVersionRequest,
   NewVersionCreatedResponse,
   TemplateVersionSummary,
   VersionHistoryResponse,
@@ -2116,6 +2362,7 @@ export const schemas = {
   DeprecateVersionResponse,
   SubmitForActivationRequest,
   SubmitDeprecationRequest,
+  VersionDiffResponse,
   TemplateStatus,
   status,
   TemplateCurrentVersionSummary,
@@ -2124,7 +2371,6 @@ export const schemas = {
   CreateTemplateDraftRequest,
   TemplateDraftCreatedResponse,
   BankEntity,
-  app__modules__framework_agreements__domain__enums__RateType,
   CreateFARequest,
   FALifecycleStatus,
   FADraftResponse,
@@ -2159,6 +2405,39 @@ export const schemas = {
   LCPortalDocumentItem,
   LCPortalFAListItem,
   LCPortalFAListResponse,
+  VfeRateResponse,
+  VfeRateListResponse,
+  VfeRateCreateRequest,
+  VfeRateUpdateRequest,
+  UpdateCatalogRequest,
+  CatalogType,
+  CatalogResponse,
+  RequirementClassification,
+  GovernanceClassification,
+  SourceLayer,
+  StageCategorization,
+  DocumentOrigin,
+  RequirementResponse,
+  CatalogDetailResponse,
+  CreateCatalogRequest,
+  catalog_type,
+  CatalogListItem,
+  CatalogListResponse,
+  AddRequirementRequest,
+  RequirementListResponse,
+  UpdateRequirementRequest,
+  RuntimeRequirementItem,
+  RuntimeRequirementSurfaceResponse,
+  MaterializeRequest,
+  MaterializedRequirementResponse,
+  MaterializationResponse,
+  LCObligationItem,
+  LCObligationResponse,
+  LinkDocumentRequest,
+  FulfilmentResponse,
+  TransitionStatusRequest,
+  PerRequirementStatusResponse,
+  CompletenessResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -2789,6 +3068,350 @@ and invalidates all active sessions.`,
     ],
   },
   {
+    method: "patch",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id",
+    alias:
+      "update_catalog_api_v1_document_requirement_catalogs__catalog_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateCatalogRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id",
+    alias:
+      "get_catalog_detail_api_v1_document_requirement_catalogs__catalog_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CatalogDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/completeness",
+    alias:
+      "get_completeness_api_v1_document_requirement_catalogs__catalog_id__completeness_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
+        name: "business_object_id",
+        type: "Query",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "business_object_type",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: CompletenessResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/fulfilments/link",
+    alias:
+      "link_document_api_v1_document_requirement_catalogs__catalog_id__fulfilments_link_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: LinkDocumentRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/fulfilments/transition",
+    alias:
+      "transition_status_api_v1_document_requirement_catalogs__catalog_id__fulfilments_transition_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: TransitionStatusRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/materialize",
+    alias:
+      "materialize_catalog_api_v1_document_requirement_catalogs__catalog_id__materialize_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ process_context: z.string() }).passthrough(),
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MaterializationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/objects/:object_id/requirements",
+    alias:
+      "get_runtime_requirements_api_v1_document_requirement_catalogs__catalog_id__objects__object_id__requirements_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "object_type",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: RuntimeRequirementSurfaceResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/preview",
+    alias:
+      "preview_catalog_api_v1_document_requirement_catalogs__catalog_id__preview_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: MaterializationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/requirements",
+    alias:
+      "add_requirement_api_v1_document_requirement_catalogs__catalog_id__requirements_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AddRequirementRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequirementResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/:catalog_id/requirements",
+    alias:
+      "list_requirements_api_v1_document_requirement_catalogs__catalog_id__requirements_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "include_inactive",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(50),
+      },
+    ],
+    response: RequirementListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/document-requirements/:requirement_id",
+    alias:
+      "update_requirement_api_v1_document_requirements__requirement_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateRequirementRequest,
+      },
+      {
+        name: "requirement_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequirementResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/document-requirements/:requirement_id/deactivate",
+    alias:
+      "deactivate_requirement_api_v1_document_requirements__requirement_id__deactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "requirement_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: RequirementResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/framework-agreements",
     alias: "create_fa_draft_api_v1_framework_agreements_post",
@@ -3375,6 +3998,53 @@ and invalidates all active sessions.`,
   },
   {
     method: "get",
+    path: "/api/v1/framework-agreements/export-csv",
+    alias:
+      "export_framework_agreements_csv_api_v1_framework_agreements_export_csv_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(FALifecycleStatus).optional().default([]),
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: z.array(z.string().uuid()).optional().default([]),
+      },
+      {
+        name: "bank_entity",
+        type: "Query",
+        schema: z.array(BankEntity).optional().default([]),
+      },
+      {
+        name: "valid_from",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "valid_until",
+        type: "Query",
+        schema: search,
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
     path: "/api/v1/framework-agreements/lc-partners",
     alias: "list_lc_partners_api_v1_framework_agreements_lc_partners_get",
     requestFormat: "json",
@@ -3613,6 +4283,42 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
         description: `Successful Response`,
         schema: z.unknown(),
       },
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/obligations/:business_object_id",
+    alias: "get_lc_obligations_api_v1_lc_obligations__business_object_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "catalog_id",
+        type: "Query",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "object_type",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: LCObligationResponse,
+    errors: [
       {
         status: 422,
         description: `Validation Error`,
@@ -4121,17 +4827,44 @@ Accessible to all authenticated users.`,
     response: SeedPackagesResponse,
   },
   {
+    method: "get",
+    path: "/api/v1/product-templates/:template_id/diff",
+    alias:
+      "diff_template_versions_api_v1_product_templates__template_id__diff_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "from_version",
+        type: "Query",
+        schema: z.string().min(1),
+      },
+      {
+        name: "to_version",
+        type: "Query",
+        schema: z.string().min(1),
+      },
+    ],
+    response: VersionDiffResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/product-templates/:template_id/versions",
     alias:
       "create_new_version_api_v1_product_templates__template_id__versions_post",
     requestFormat: "json",
     parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: CreateNewVersionRequest,
-      },
       {
         name: "template_id",
         type: "Path",
@@ -4948,6 +5681,80 @@ No existing sessions are invalidated immediately.
       },
     ],
     response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/document-requirement-catalogs",
+    alias:
+      "create_catalog_api_v1_tenants__tenant_id__document_requirement_catalogs_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateCatalogRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/document-requirement-catalogs",
+    alias:
+      "list_catalogs_api_v1_tenants__tenant_id__document_requirement_catalogs_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "catalog_type",
+        type: "Query",
+        schema: catalog_type,
+      },
+      {
+        name: "process_context",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(20),
+      },
+    ],
+    response: CatalogListResponse,
     errors: [
       {
         status: 422,
@@ -5847,6 +6654,81 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
     description: `Delete the current user&#x27;s profile picture. Idempotent — returns 204 even if none exists.`,
     requestFormat: "json",
     response: z.void(),
+  },
+  {
+    method: "get",
+    path: "/api/v1/vfe-rates",
+    alias: "list_vfe_rates_api_v1_vfe_rates_get",
+    requestFormat: "json",
+    response: VfeRateListResponse,
+  },
+  {
+    method: "post",
+    path: "/api/v1/vfe-rates",
+    alias: "create_vfe_rate_api_v1_vfe_rates_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: VfeRateCreateRequest,
+      },
+    ],
+    response: VfeRateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/vfe-rates/:rate_id",
+    alias: "update_vfe_rate_api_v1_vfe_rates__rate_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: VfeRateUpdateRequest,
+      },
+      {
+        name: "rate_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: VfeRateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/vfe-rates/:rate_id",
+    alias: "delete_vfe_rate_api_v1_vfe_rates__rate_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "rate_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
   {
     method: "get",

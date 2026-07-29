@@ -50,13 +50,8 @@ function EditFrameworkAgreementDialog({
     values: {
       agreement_name: frameworkAgreement.agreement_name,
       max_volume_eur: frameworkAgreement.max_volume_eur,
-      base_rate: frameworkAgreement.base_rate ?? 0,
-      spread: frameworkAgreement.spread ?? 0,
-      rate_type: frameworkAgreement.rate_type ?? "fixed",
       effective_rate: frameworkAgreement.effective_rate ?? 0,
-      rate_lock_period_months: frameworkAgreement.rate_lock_period_months ?? 1,
-      lg_coverage_rate_override:
-        frameworkAgreement.lg_coverage_rate_override ?? undefined,
+      vfe_rate: frameworkAgreement.vfe_rate ?? undefined,
       valid_from: frameworkAgreement.valid_from,
       valid_until: frameworkAgreement.valid_until ?? "",
       special_conditions: frameworkAgreement.special_conditions ?? "",
@@ -90,7 +85,6 @@ function EditFrameworkAgreementDialog({
     const body: UpdateFARequest = {
       ...rest,
       valid_until: values.valid_until || undefined,
-      lg_coverage_rate_override: values.lg_coverage_rate_override ?? undefined,
       justification,
       expected_version,
       ...(isDraft ? { agreement_name, valid_from } : {}),

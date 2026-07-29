@@ -18,13 +18,6 @@ export const BankEntitySchema = z.enum([
 ])
 export type BankEntity = z.infer<typeof BankEntitySchema>
 
-export const RateTypeSchema = z.enum([
-  "fixed",
-  "floating",
-  "euribor_plus_spread",
-])
-export type RateType = z.infer<typeof RateTypeSchema>
-
 export const FADocumentTypeSchema = z.enum([
   "original_agreement",
   "addendum",
@@ -39,12 +32,12 @@ export const CreateFARequestSchema = z.object({
   lc_partner_id: z.string().uuid(),
   bank_entity: BankEntitySchema,
   max_volume_eur: z.number().gt(0),
-  base_rate: z.number().min(0).max(25),
-  spread: z.number().min(-5).max(15),
-  rate_type: RateTypeSchema,
-  effective_rate: z.number().optional(),
-  rate_lock_period_months: z.number().int().min(1).max(360),
-  lg_coverage_rate_override: z.number().optional(),
+  // The single hand-entered interest rate (CR PRD1042-1552 A1/A2) — required on create
+  // since the BE stopped deriving it from base_rate + spread.
+  effective_rate: z.number(),
+  // VFE (early-repayment penalty) flat rate — optional override; BE prefills from the
+  // per-LC default on create (CR PRD1042-1495 B2). Matches CreateFARequest.vfe_rate.
+  vfe_rate: z.number().min(0).max(100).optional(),
   valid_from: z.string().min(1),
   valid_until: z.string().optional(),
   special_conditions: z.string().optional(),
@@ -60,12 +53,8 @@ export const FADraftResponseSchema = z.object({
   currency: z.string(),
   status: FALifecycleStatusSchema,
   max_volume_eur: z.coerce.number(),
-  base_rate: z.coerce.number(),
-  spread: z.coerce.number(),
   effective_rate: z.coerce.number(),
-  rate_type: RateTypeSchema,
-  rate_lock_period_months: z.number().int(),
-  lg_coverage_rate_override: z.coerce.number().nullable(),
+  vfe_rate: z.coerce.number().nullable(),
   valid_from: z.string(),
   valid_until: z.string().nullable(),
   special_conditions: z.string().nullable(),
@@ -86,12 +75,8 @@ export type FADraftResponse = z.infer<typeof FADraftResponseSchema>
 export const UpdateFARequestSchema = z.object({
   agreement_name: z.string().min(1).max(200).optional(),
   max_volume_eur: z.number().gt(0).optional(),
-  base_rate: z.number().min(0).max(25).optional(),
-  spread: z.number().min(-5).max(15).optional(),
-  rate_type: RateTypeSchema.optional(),
   effective_rate: z.number().optional(),
-  rate_lock_period_months: z.number().int().min(1).max(360).optional(),
-  lg_coverage_rate_override: z.number().optional(),
+  vfe_rate: z.number().min(0).max(100).optional(),
   valid_from: z.string().min(1).optional(),
   valid_until: z.string().optional(),
   special_conditions: z.string().optional(),
@@ -109,13 +94,12 @@ export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
 export const EditFrameworkAgreementFormSchema = z
   .object({
     agreement_name: z.string().min(1, "required").max(200),
-    max_volume_eur: z.number().gt(0, "required"),
-    base_rate: z.number().min(0).max(25),
-    spread: z.number().min(-5).max(15),
-    rate_type: RateTypeSchema,
-    effective_rate: z.number(),
-    rate_lock_period_months: z.number().int().min(1).max(360),
-    lg_coverage_rate_override: z.number().optional(),
+    // `{ error: "required" }` covers the missing/NaN case — an empty number input
+    // registered with valueAsNumber yields NaN, and without this Zod's untranslated
+    // default ("Invalid input: expected number, received NaN") reaches the UI.
+    max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
+    effective_rate: z.number({ error: "required" }),
+    vfe_rate: z.number().min(0).max(100).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
     special_conditions: z.string().max(1000).optional(),
@@ -124,10 +108,13 @@ export const EditFrameworkAgreementFormSchema = z
     expected_version: z.number().int(),
   })
   .superRefine((data, ctx) => {
+    // `<=`, not `<`: UpdateFARequest rejects valid_until == valid_from
+    // ("valid_until must be after valid_from"), so equal dates must fail here too
+    // rather than reaching the API as a 422.
     if (
       data.valid_until !== undefined &&
       data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_until <= data.valid_from
     ) {
       ctx.addIssue({
         code: "custom",
@@ -227,6 +214,7 @@ export const FAListItemSchema = z.object({
   lc_partner_name: z.string().nullable(),
   bank_entity: BankEntitySchema.nullable(),
   status: FALifecycleStatusSchema,
+  is_expired: z.boolean(),
   valid_from: z.string(),
   valid_until: z.string().nullable(),
   utilization_pct: z.coerce.number().nullable(),
@@ -262,6 +250,9 @@ export const FADetailResponseSchema = z.object({
   lc_partner_id: z.string().uuid(),
   lc_partner_name: z.string().nullable(),
   status: FALifecycleStatusSchema,
+  // Derived server-side from valid_until (CR PRD1042-1552 B2) — see is_fa_expired() in
+  // refinext-api. FALifecycleStatus still has four values; expiry is never a wire status.
+  is_expired: z.boolean(),
   currency: z.string(),
   max_volume_eur: z.coerce.number(),
   valid_from: z.string(),
@@ -274,12 +265,8 @@ export const FADetailResponseSchema = z.object({
   limit_available: z.coerce.number().nullable(),
   limit_breach: z.boolean().nullable(),
   bank_entity: BankEntitySchema.nullable(),
-  base_rate: z.coerce.number().nullable(),
-  spread: z.coerce.number().nullable(),
   effective_rate: z.coerce.number().nullable(),
-  rate_type: RateTypeSchema.nullable(),
-  rate_lock_period_months: z.number().int().nullable(),
-  lg_coverage_rate_override: z.coerce.number().nullable(),
+  vfe_rate: z.coerce.number().nullable(),
   special_conditions: z.string().nullable(),
   effective_from: z.string().nullable(),
   activated_at: z.string().nullable(),
@@ -434,23 +421,23 @@ export const FrameworkAgreementWizardFormSchema = z
     lc_partner_id: z.string().min(1, "required"),
     lc_partner_name: z.string().optional(),
     bank_entity: requiredEnum(BankEntitySchema.options),
-    max_volume_eur: z.number().gt(0, "required"),
-    base_rate: z.number().min(0).max(25),
-    spread: z.number().min(-5).max(15),
-    rate_type: requiredEnum(RateTypeSchema.options),
-    effective_rate: z.number(),
-    rate_lock_period_months: z.number().int().min(1).max(360),
-    lg_coverage_rate_override: z.number().optional(),
+    // See EditFrameworkAgreementFormSchema — `{ error: "required" }` keeps Zod's
+    // untranslated NaN/undefined message out of the UI for empty number inputs.
+    max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
+    effective_rate: z.number({ error: "required" }),
+    vfe_rate: z.number().min(0).max(100).optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
     special_conditions: z.string().max(1000).optional(),
     product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
   })
   .superRefine((data, ctx) => {
+    // `<=` mirrors CreateFARequest's own validator (valid_until must be *after*
+    // valid_from) — with `<`, equal dates passed the FE and 422'd at the API.
     if (
       data.valid_until !== undefined &&
       data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_until <= data.valid_from
     ) {
       ctx.addIssue({
         code: "custom",

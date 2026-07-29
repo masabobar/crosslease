@@ -10,6 +10,7 @@
         "product": "Product",
         "financingType": "Financing type",
         "calculation": "Calculation",
+        "ltvTerm": "LTV & term",
         "status": "Status",
         "version": "Version"
       }
@@ -34,7 +35,16 @@
       "rowsPerPage": "Rows per page",
       "previous": "Previous",
       "next": "Next"
-    }
+    },
+    "ltvValue": "Max {{value}}%",
+    "termValue": "{{min}}–{{max}}m"
+  },
+  "detail": {
+    "title": "Template details",
+    "subtitle": "Product template",
+    "viewVersionHistory": "View version history",
+    "noPublishedVersion": "This template has no published version yet. Open version history to see its draft.",
+    "loading": "Loading details…"
   },
   "wizard": {
     "steps": {
@@ -89,7 +99,9 @@
     "identity": "Identity",
     "behavioralSettings": "Behavioral settings",
     "eligibility": "Eligibility",
-    "validity": "Validity"
+    "orchestrationLinkage": "Orchestration linkage",
+    "validity": "Validity",
+    "metadata": "Metadata"
   },
   "fields": {
     "templateName": "Template name",
@@ -105,7 +117,6 @@
     "rateType": "Rate type",
     "firstInstallmentRule": "First installment rule",
     "disbursementDerivationRule": "Disbursement derivation rule",
-    "npvFormulaReferenceHint": "Select the NPV calculation formula for this product.",
     "allowedAssetCategoriesHint": "Select at least one.",
     "minTermMonths": "Min term (months)",
     "maxTermMonths": "Max term (months)",
@@ -118,7 +129,8 @@
     "openEnded": "Open ended",
     "publicationJustification": "Publication justification",
     "publicationJustificationPlaceholder": "Add a note about this publication…",
-    "confirmPublication": "I confirm this template is ready for publication."
+    "confirmPublication": "I confirm this template is ready for publication.",
+    "createdAt": "Created at"
   },
   "financingTypes": {
     "full_refinancing": "Full refinancing",
@@ -200,9 +212,7 @@
     "authorNewVersion": "Author new version",
     "authorNewVersionDialog": {
       "title": "Author a new version?",
-      "description": "A new draft version will be created from this version's current values. Choose whether this change is major or minor before continuing.",
-      "majorLabel": "Major — structural changes (financing type, legal structure, payment timing, NPV formula, calculation model)",
-      "minorLabel": "Minor — parameter refinements",
+      "description": "A new draft version will be created from this version's current values.",
       "keep": "Cancel",
       "confirm": "Create draft"
     },
@@ -214,13 +224,34 @@
       "justificationHint": "Mandatory. Minimum 10 characters.",
       "keep": "Cancel",
       "confirm": "Deprecate version"
+    },
+    "compare": {
+      "compareLabel": "Compare",
+      "withLabel": "with",
+      "compareButton": "Compare versions",
+      "modalTitle": "Comparing {{from}} with {{to}}",
+      "versionOptionLabel": "v{{version}} - {{status}}",
+      "fieldColumn": "Field",
+      "fields": {
+        "requiredWorkflowTasks": "Required workflow tasks",
+        "requiredDocuments": "Required documents",
+        "optionalDocuments": "Optional documents",
+        "validationRuleSet": "Validation rule set"
+      },
+      "taskCount": "{{count}} task",
+      "taskCount_other": "{{count}} tasks",
+      "documentCount": "{{count}} document",
+      "documentCount_other": "{{count}} documents",
+      "ruleSetChanged": "Changed",
+      "ruleSetUnchanged": "No change"
     }
   },
   "errors": {
     "atLeastOneAssetCategory": "Select at least one asset category.",
     "minTermExceedsMax": "Min term must not exceed max term.",
     "minVolumeExceedsMax": "Min volume must not exceed max volume.",
-    "validUntilBeforeFrom": "Valid until must be on or after valid from.",
+    "validFromInPast": "Valid from cannot be in the past.",
+    "validUntilNotAfterFrom": "Valid until must be after valid from.",
     "termBelowMin": "Term must be at least 1 month.",
     "termAboveMax": "Term cannot exceed 600 months.",
     "ltvBelowMin": "Max LTV ratio cannot be negative.",
@@ -233,7 +264,7 @@
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
-    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "This change affects core behavioral fields and requires a major version increment.",
+    "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Select two different versions to compare.",
     "generic": "Something went wrong. Please try again."
   }
 }

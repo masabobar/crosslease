@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { buildPageNumbers } from "@/lib/pagination"
 import { ProductTemplateTable } from "@/features/productTemplates/components/ProductTemplateTable"
+import { ProductTemplateDetailDrawer } from "@/features/productTemplates/components/ProductTemplateDetailDrawer"
 import { useProductTemplateList } from "@/features/productTemplates/hooks/useProductTemplateList"
 import {
   useProductTemplateListParams,
@@ -25,7 +27,7 @@ import type {
   TemplateListItem,
   TemplateStatus,
 } from "@/features/productTemplates/api/schema"
-import { PATHS, productTemplateVersionHistory } from "@/router/paths"
+import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
@@ -43,6 +45,9 @@ const ALL_STATUSES_VALUE = "all"
 export default function ProductTemplateListPage() {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<TemplateListItem | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const { data: currentUser } = useCurrentUser()
   const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
   const tenantId =
@@ -78,7 +83,8 @@ export default function ProductTemplateListPage() {
   const hasActiveFilters = !!search.trim() || !!statusFilter
 
   function handleRowClick(template: TemplateListItem) {
-    navigate(productTemplateVersionHistory(template.id))
+    setSelectedTemplate(template)
+    setIsDrawerOpen(true)
   }
 
   function handleCreateTemplate() {
@@ -277,6 +283,14 @@ export default function ProductTemplateListPage() {
           </div>
         </div>
       )}
+
+      <ProductTemplateDetailDrawer
+        templateId={selectedTemplate?.id ?? null}
+        currentVersion={selectedTemplate?.current_version ?? null}
+        canManageDraft={canManageDraft}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+      />
     </div>
   )
 }

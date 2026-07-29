@@ -43,14 +43,7 @@ const STEP_FIELDS: Record<
   (keyof FrameworkAgreementWizardForm)[]
 > = {
   identity: ["agreement_name", "lc_partner_id"],
-  envelopePricing: [
-    "max_volume_eur",
-    "base_rate",
-    "spread",
-    "rate_type",
-    "effective_rate",
-    "rate_lock_period_months",
-  ],
+  envelopePricing: ["max_volume_eur", "effective_rate"],
   validityTemplates: ["valid_from", "valid_until", "product_template_ids"],
   conditions: ["special_conditions"],
   documents: [],
@@ -62,6 +55,13 @@ export default function CreateFrameworkAgreementWizardPage() {
   const navigate = useNavigate()
 
   const [step, setStep] = useState<FrameworkAgreementWizardStep>("identity")
+  // Steps the user has actually opened. "Save as draft" has to validate the whole
+  // form (CreateFARequest takes every field in one POST — there is no partial
+  // draft), but flagging fields on steps nobody has reached yet reads as premature
+  // validation (PRD1042-1653), so those errors are dropped before they render.
+  const [visitedSteps, setVisitedSteps] = useState<
+    ReadonlySet<FrameworkAgreementWizardStep>
+  >(new Set(["identity"]))
   const [documents, setDocuments] = useState<FrameworkAgreementDocumentDraft[]>(
     []
   )
@@ -85,7 +85,6 @@ export default function CreateFrameworkAgreementWizardPage() {
       // Bank entity is hidden from the UI per PRD1042-1495 (A4) — only relevant for
       // syndication, out of MVP scope. Defaults to "other" like the BE column default.
       bank_entity: "other",
-      rate_type: "fixed",
       product_template_ids: [],
       special_conditions: "",
       valid_from: "",
@@ -97,16 +96,21 @@ export default function CreateFrameworkAgreementWizardPage() {
   const isFirstStep = currentIndex === 0
   const isReviewStep = step === "review"
 
+  function goToStep(next: FrameworkAgreementWizardStep) {
+    setStep(next)
+    setVisitedSteps(previous => new Set(previous).add(next))
+  }
+
   async function handleNext() {
     const fields = STEP_FIELDS[step]
     const valid = fields.length === 0 || (await form.trigger(fields))
     if (!valid) return
-    setStep(ORDERED_STEPS[currentIndex + 1])
+    goToStep(ORDERED_STEPS[currentIndex + 1])
   }
 
   function handleBack() {
     if (isFirstStep) return
-    setStep(ORDERED_STEPS[currentIndex - 1])
+    goToStep(ORDERED_STEPS[currentIndex - 1])
   }
 
   function handleCancel() {
@@ -130,8 +134,15 @@ export default function CreateFrameworkAgreementWizardPage() {
     const formValid = await form.trigger()
 
     if (!formValid) {
+      const unvisitedFields = ORDERED_STEPS.filter(
+        s => !visitedSteps.has(s)
+      ).flatMap(s => STEP_FIELDS[s])
+      if (unvisitedFields.length > 0) form.clearErrors(unvisitedFields)
+
+      // Only jump to a step the user has already seen — the toast covers the rest,
+      // and those steps surface their own errors when the user reaches them.
       const invalidStep = firstStepWithFieldError()
-      if (invalidStep) setStep(invalidStep)
+      if (invalidStep) goToStep(invalidStep)
       toast.error(t("wizard.incompleteDraft"))
       return
     }
@@ -143,12 +154,8 @@ export default function CreateFrameworkAgreementWizardPage() {
         lc_partner_id: values.lc_partner_id,
         bank_entity: values.bank_entity,
         max_volume_eur: values.max_volume_eur,
-        base_rate: values.base_rate,
-        spread: values.spread,
-        rate_type: values.rate_type,
         effective_rate: values.effective_rate,
-        rate_lock_period_months: values.rate_lock_period_months,
-        lg_coverage_rate_override: values.lg_coverage_rate_override,
+        vfe_rate: values.vfe_rate,
         valid_from: values.valid_from,
         valid_until: values.valid_until || undefined,
         special_conditions: values.special_conditions || undefined,

@@ -1,12 +1,10 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller, useFormState } from "react-hook-form"
+import { Controller } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
 import type { SelectOption } from "@/components/ui/select"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SectionCard } from "@/features/productTemplates/components/SectionCard"
-import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   CalculationModelSchema,
@@ -16,7 +14,6 @@ import {
   LegalStructureSchema,
   PaymentTimingSchema,
   RateBasisSchema,
-  RateTypeSchema,
 } from "@/features/productTemplates/api/schema"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
@@ -28,7 +25,6 @@ function BehavioralSettingsStep({ form }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
   const { control } = form
-  const { errors } = useFormState({ control })
 
   // No custom (non-"required") message codes on this step's fields today — the
   // map is declared explicitly, matching IdentityStep's pattern, so the next
@@ -73,7 +69,6 @@ function BehavioralSettingsStep({ form }: Props) {
     CalculationModelSchema.options,
     "calculationModels"
   )
-  const rateTypeOptions = optionsFor(RateTypeSchema.options, "rateTypes")
   const firstInstallmentRuleOptions = optionsFor(
     FirstInstallmentRuleSchema.options,
     "firstInstallmentRules"
@@ -90,21 +85,25 @@ function BehavioralSettingsStep({ form }: Props) {
       | "payment_timing"
       | "rate_basis"
       | "calculation_model"
-      | "rate_type"
       | "first_installment_rule"
       | "disbursement_derivation_rule",
     labelKey: string,
     options: SelectOption[]
   ) {
+    // Label and message live inside Controller's render prop and read from its
+    // `fieldState` rather than a shared `errors` object: indexing `errors[name]` by a
+    // computed key makes React Compiler depend on the whole errors object, which
+    // react-hook-form mutates in place — so the memoized markup was never invalidated
+    // and these fields silently showed no validation feedback at all.
     return (
-      <div>
-        <Label htmlFor={name} error={!!errors[name]} className="mb-2">
-          {t(labelKey as "fields.optional")}
-        </Label>
-        <Controller
-          control={control}
-          name={name}
-          render={({ field }) => (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field, fieldState }) => (
+          <div>
+            <Label htmlFor={name} error={!!fieldState.error} className="mb-2">
+              {t(labelKey as "fields.optional")}
+            </Label>
             <SelectField
               id={name}
               data-testid={`${name.replace(/_/g, "-")}-select`}
@@ -112,16 +111,16 @@ function BehavioralSettingsStep({ form }: Props) {
               onValueChange={field.onChange}
               options={options}
               placeholder={t("fields.selectPlaceholder")}
-              error={!!errors[name]}
+              error={!!fieldState.error}
             />
-          )}
-        />
-        {errors[name] && (
-          <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors[name]?.message as string | undefined)}
-          </p>
+            {fieldState.error && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMsg(fieldState.error.message)}
+              </p>
+            )}
+          </div>
         )}
-      </div>
+      />
     )
   }
 
@@ -154,7 +153,6 @@ function BehavioralSettingsStep({ form }: Props) {
             "fields.calculationModel",
             calculationModelOptions
           )}
-          {renderSelectField("rate_type", "fields.rateType", rateTypeOptions)}
           {renderSelectField(
             "first_installment_rule",
             "fields.firstInstallmentRule",
@@ -166,47 +164,6 @@ function BehavioralSettingsStep({ form }: Props) {
             disbursementDerivationRuleOptions
           )}
         </div>
-      </SectionCard>
-
-      <SectionCard
-        title={t("sections.npvFormulaReference")}
-        subtitle={t("fields.npvFormulaReferenceHint")}
-      >
-        <Controller
-          control={control}
-          name="npv_formula_ref"
-          render={({ field }) => (
-            <RadioGroup
-              data-testid="npv-formula-radio-group"
-              value={field.value}
-              onValueChange={field.onChange}
-              className="gap-3"
-            >
-              {NPV_FORMULA_OPTIONS.map(option => (
-                <label
-                  key={option.ref}
-                  htmlFor={`npv-${option.ref}`}
-                  className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
-                >
-                  <RadioGroupItem id={`npv-${option.ref}`} value={option.ref} />
-                  <span className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground">
-                      {t(option.labelKey)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {option.code} · {option.version}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </RadioGroup>
-          )}
-        />
-        {errors.npv_formula_ref && (
-          <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.npv_formula_ref.message)}
-          </p>
-        )}
       </SectionCard>
     </div>
   )

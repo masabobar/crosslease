@@ -1,16 +1,17 @@
-import type { FALifecycleStatus } from "@/features/frameworkAgreements/api/schema"
+import type { FADisplayStatus } from "@/features/frameworkAgreements/utils"
 
 // Wire value for the platform module key, per `../refinext-api/src/app/core/platform/modules.py`.
 export const FRAMEWORK_AGREEMENT_MODULE_KEY = "framework_agreement"
 
 export const FA_STATUS_BADGE_VARIANT: Record<
-  FALifecycleStatus,
+  FADisplayStatus,
   "default" | "secondary" | "outline"
 > = {
   draft: "outline",
   active: "default",
   suspended: "secondary",
   terminated: "outline",
+  expired: "secondary",
 }
 
 // Shared document-upload constraints for FA document attach flows

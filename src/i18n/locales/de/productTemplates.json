@@ -10,6 +10,7 @@
         "product": "Produkt",
         "financingType": "Finanzierungsart",
         "calculation": "Berechnung",
+        "ltvTerm": "LTV & Laufzeit",
         "status": "Status",
         "version": "Version"
       }
@@ -34,7 +35,16 @@
       "rowsPerPage": "Zeilen pro Seite",
       "previous": "Zurück",
       "next": "Weiter"
-    }
+    },
+    "ltvValue": "Max {{value}} %",
+    "termValue": "{{min}}–{{max}} Mon."
+  },
+  "detail": {
+    "title": "Vorlagendetails",
+    "subtitle": "Produktvorlage",
+    "viewVersionHistory": "Versionsverlauf anzeigen",
+    "noPublishedVersion": "Diese Vorlage hat noch keine veröffentlichte Version. Öffnen Sie den Versionsverlauf, um ihren Entwurf zu sehen.",
+    "loading": "Details werden geladen…"
   },
   "wizard": {
     "steps": {
@@ -89,7 +99,9 @@
     "identity": "Identität",
     "behavioralSettings": "Verhaltenseinstellungen",
     "eligibility": "Berechtigung",
-    "validity": "Gültigkeit"
+    "orchestrationLinkage": "Orchestrierungsverknüpfung",
+    "validity": "Gültigkeit",
+    "metadata": "Metadaten"
   },
   "fields": {
     "templateName": "Vorlagenname",
@@ -105,7 +117,6 @@
     "rateType": "Zinstyp",
     "firstInstallmentRule": "Regel für erste Rate",
     "disbursementDerivationRule": "Auszahlungsableitungsregel",
-    "npvFormulaReferenceHint": "Wählen Sie die NPV-Berechnungsformel für dieses Produkt.",
     "allowedAssetCategoriesHint": "Wählen Sie mindestens eine aus.",
     "minTermMonths": "Min. Laufzeit (Monate)",
     "maxTermMonths": "Max. Laufzeit (Monate)",
@@ -118,7 +129,8 @@
     "openEnded": "Unbefristet",
     "publicationJustification": "Begründung der Veröffentlichung",
     "publicationJustificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Veröffentlichung hinzu…",
-    "confirmPublication": "Ich bestätige, dass diese Vorlage bereit zur Veröffentlichung ist."
+    "confirmPublication": "Ich bestätige, dass diese Vorlage bereit zur Veröffentlichung ist.",
+    "createdAt": "Erstellt am"
   },
   "financingTypes": {
     "full_refinancing": "Vollrefinanzierung",
@@ -200,9 +212,7 @@
     "authorNewVersion": "Neue Version erstellen",
     "authorNewVersionDialog": {
       "title": "Neue Version erstellen?",
-      "description": "Es wird ein neuer Entwurf mit den aktuellen Werten dieser Version erstellt. Wählen Sie, ob es sich um eine größere oder kleinere Änderung handelt, bevor Sie fortfahren.",
-      "majorLabel": "Groß — strukturelle Änderungen (Finanzierungsart, Rechtsstruktur, Zahlungszeitpunkt, NPV-Formel, Berechnungsmodell)",
-      "minorLabel": "Klein — Parameteranpassungen",
+      "description": "Es wird ein neuer Entwurf mit den aktuellen Werten dieser Version erstellt.",
       "keep": "Abbrechen",
       "confirm": "Entwurf erstellen"
     },
@@ -214,13 +224,34 @@
       "justificationHint": "Erforderlich. Mindestens 10 Zeichen.",
       "keep": "Abbrechen",
       "confirm": "Version außer Kraft setzen"
+    },
+    "compare": {
+      "compareLabel": "Vergleichen",
+      "withLabel": "mit",
+      "compareButton": "Versionen vergleichen",
+      "modalTitle": "Vergleich von {{from}} mit {{to}}",
+      "versionOptionLabel": "v{{version}} - {{status}}",
+      "fieldColumn": "Feld",
+      "fields": {
+        "requiredWorkflowTasks": "Erforderliche Workflow-Aufgaben",
+        "requiredDocuments": "Erforderliche Dokumente",
+        "optionalDocuments": "Optionale Dokumente",
+        "validationRuleSet": "Validierungsregelwerk"
+      },
+      "taskCount": "{{count}} Aufgabe",
+      "taskCount_other": "{{count}} Aufgaben",
+      "documentCount": "{{count}} Dokument",
+      "documentCount_other": "{{count}} Dokumente",
+      "ruleSetChanged": "Geändert",
+      "ruleSetUnchanged": "Keine Änderung"
     }
   },
   "errors": {
     "atLeastOneAssetCategory": "Wählen Sie mindestens eine Vermögenskategorie aus.",
     "minTermExceedsMax": "Die Mindestlaufzeit darf die Höchstlaufzeit nicht überschreiten.",
     "minVolumeExceedsMax": "Das Mindestvolumen darf das Höchstvolumen nicht überschreiten.",
-    "validUntilBeforeFrom": "Gültig bis muss am oder nach Gültig ab liegen.",
+    "validFromInPast": "Gültig ab darf nicht in der Vergangenheit liegen.",
+    "validUntilNotAfterFrom": "Gültig bis muss nach Gültig ab liegen.",
     "termBelowMin": "Die Laufzeit muss mindestens 1 Monat betragen.",
     "termAboveMax": "Die Laufzeit darf 600 Monate nicht überschreiten.",
     "ltvBelowMin": "Der maximale Beleihungsauslauf darf nicht negativ sein.",
@@ -233,7 +264,7 @@
     "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "Für diese Vorlage existiert bereits ein Entwurf. Verwerfen oder veröffentlichen Sie ihn, bevor Sie einen neuen erstellen.",
-    "PRODUCT_TEMPLATE_MAJOR_INCREMENT_REQUIRED": "Diese Änderung betrifft zentrale Verhaltensfelder und erfordert eine große Versionsänderung.",
+    "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Wählen Sie zwei unterschiedliche Versionen zum Vergleich aus.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

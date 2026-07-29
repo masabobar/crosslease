@@ -54,6 +54,17 @@ export type FrameworkAgreementListParams = {
   per_page?: number
 }
 
+// Query params accepted by GET /framework-agreements/export-csv — the list filters
+// minus pagination. `search` is the wire name the endpoint expects.
+export type FrameworkAgreementExportParams = {
+  search?: string
+  status?: FALifecycleStatus
+  lc_partner_id?: string
+  bank_entity?: BankEntity
+  valid_from?: string
+  valid_until?: string
+}
+
 export type FrameworkAgreementAuditHistoryParams = {
   search?: string
   type?: FAEventTypeFilter[]
@@ -99,6 +110,18 @@ export async function fetchFrameworkAgreements(
 ): Promise<FAListResponse> {
   const data = await api.get("/framework-agreements", { params })
   return FAListResponseSchema.parse(data)
+}
+
+// GET /framework-agreements/export-csv — plain inventory export of the list, scoped to
+// the caller and respecting the same filters (CR PRD1042-1552 B3). Returns a CSV blob,
+// not the JSON envelope, so it bypasses schema parsing like the audit-history export.
+export async function exportFrameworkAgreementsCsv(
+  params?: FrameworkAgreementExportParams
+): Promise<Blob> {
+  return api.get("/framework-agreements/export-csv", {
+    params,
+    responseType: "blob",
+  })
 }
 
 export async function fetchFrameworkAgreementLcPartners(): Promise<FALCPartnersResponse> {

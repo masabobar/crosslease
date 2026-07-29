@@ -8,10 +8,10 @@ import {
   TemplateDraftUpdatedResponseSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
+  VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 import type {
-  CreateNewVersionRequest,
   CreateProductTemplateDraftRequest,
   DeprecateTemplateVersionRequest,
   DeprecateTemplateVersionResponse,
@@ -25,6 +25,7 @@ import type {
   TemplateStatus,
   TemplateVersionDetail,
   UpdateProductTemplateDraftRequest,
+  VersionDiffResponse,
   VersionHistoryResponse,
 } from "@/features/productTemplates/api/schema"
 
@@ -36,6 +37,11 @@ export type ProductTemplateListParams = {
 }
 
 export const PRODUCT_TEMPLATES_QUERY_KEYS = {
+  // Prefix shared by every key below — the invalidation target for status-changing
+  // mutations. They can't rebuild the `list` key (it carries the caller's tenant and
+  // filter params) or know which version details are cached, so they invalidate the
+  // whole feature instead of leaving those screens showing a stale status.
+  all: ["product-templates"] as const,
   list: (tenantId: string | null, params?: ProductTemplateListParams) =>
     ["product-templates", "list", tenantId, params] as const,
   detail: (templateId: string) =>
@@ -44,6 +50,8 @@ export const PRODUCT_TEMPLATES_QUERY_KEYS = {
     ["product-templates", "versions", templateId] as const,
   versionDetail: (templateId: string, versionNumber: string) =>
     ["product-templates", "version-detail", templateId, versionNumber] as const,
+  diff: (templateId: string, fromVersion: string, toVersion: string) =>
+    ["product-templates", "diff", templateId, fromVersion, toVersion] as const,
 } as const
 
 export async function fetchProductTemplates(
@@ -115,11 +123,21 @@ export async function fetchTemplateVersionDetail(
   return TemplateVersionDetailSchema.parse(data)
 }
 
-export async function createNewProductTemplateVersion(
+export async function fetchTemplateVersionDiff(
   templateId: string,
-  body: CreateNewVersionRequest
+  fromVersion: string,
+  toVersion: string
+): Promise<VersionDiffResponse> {
+  const data = await api.get(`/product-templates/${templateId}/diff`, {
+    params: { from_version: fromVersion, to_version: toVersion },
+  })
+  return VersionDiffResponseSchema.parse(data)
+}
+
+export async function createNewProductTemplateVersion(
+  templateId: string
 ): Promise<NewVersionCreatedResponse> {
-  const data = await api.post(`/product-templates/${templateId}/versions`, body)
+  const data = await api.post(`/product-templates/${templateId}/versions`)
   return NewVersionCreatedResponseSchema.parse(data)
 }
 

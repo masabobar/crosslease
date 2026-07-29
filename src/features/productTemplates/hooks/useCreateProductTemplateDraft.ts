@@ -16,9 +16,9 @@ export function useCreateProductTemplateDraft() {
   return useMutation({
     mutationFn: ({ tenantId, body }: CreateDraftInput) =>
       createProductTemplateDraft(tenantId, body),
-    onSuccess: data => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.versions(data.id),
+        queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.all,
       })
     },
   })

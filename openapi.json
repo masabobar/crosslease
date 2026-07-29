@@ -4474,16 +4474,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNewVersionRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -4694,6 +4684,67 @@
                 "schema": {
                   "$ref": "#/components/schemas/GovernedActionResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/diff": {
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "Diff Template Versions",
+        "operationId": "diff_template_versions_api_v1_product_templates__template_id__diff_get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "from_version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Version number on the old side of the diff",
+              "title": "From Version"
+            },
+            "description": "Version number on the old side of the diff"
+          },
+          {
+            "name": "to_version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Version number on the new side of the diff",
+              "title": "To Version"
+            },
+            "description": "Version number on the new side of the diff"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VersionDiffResponse" }
               }
             }
           },
@@ -5347,6 +5398,104 @@
         }
       }
     },
+    "/api/v1/framework-agreements/export-csv": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Export Framework Agreements Csv",
+        "operationId": "export_framework_agreements_csv_api_v1_framework_agreements_export_csv_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FALifecycleStatus" },
+              "description": "Filter by lifecycle status (repeatable)",
+              "default": [],
+              "title": "Status"
+            },
+            "description": "Filter by lifecycle status (repeatable)"
+          },
+          {
+            "name": "lc_partner_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "type": "string", "format": "uuid" },
+              "description": "Filter by LC partner (repeatable)",
+              "default": [],
+              "title": "Lc Partner Id"
+            },
+            "description": "Filter by LC partner (repeatable)"
+          },
+          {
+            "name": "bank_entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/BankEntity" },
+              "description": "Filter by bank entity (repeatable)",
+              "default": [],
+              "title": "Bank Entity"
+            },
+            "description": "Filter by bank entity (repeatable)"
+          },
+          {
+            "name": "valid_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Valid From"
+            }
+          },
+          {
+            "name": "valid_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "title": "Valid Until"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/framework-agreements/{id}/utilization": {
       "get": {
         "tags": ["Framework Agreements"],
@@ -5888,6 +6037,900 @@
         }
       }
     },
+    "/api/v1/vfe-rates": {
+      "get": {
+        "tags": ["VFE Rates"],
+        "summary": "List Vfe Rates",
+        "operationId": "list_vfe_rates_api_v1_vfe_rates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VfeRateListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["VFE Rates"],
+        "summary": "Create Vfe Rate",
+        "operationId": "create_vfe_rate_api_v1_vfe_rates_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VfeRateCreateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VfeRateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vfe-rates/{rate_id}": {
+      "patch": {
+        "tags": ["VFE Rates"],
+        "summary": "Update Vfe Rate",
+        "operationId": "update_vfe_rate_api_v1_vfe_rates__rate_id__patch",
+        "parameters": [
+          {
+            "name": "rate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Rate Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VfeRateUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VfeRateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["VFE Rates"],
+        "summary": "Delete Vfe Rate",
+        "operationId": "delete_vfe_rate_api_v1_vfe_rates__rate_id__delete",
+        "parameters": [
+          {
+            "name": "rate_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Rate Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}": {
+      "patch": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Update Catalog",
+        "operationId": "update_catalog_api_v1_document_requirement_catalogs__catalog_id__patch",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateCatalogRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Get Catalog Detail",
+        "operationId": "get_catalog_detail_api_v1_document_requirement_catalogs__catalog_id__get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/document-requirement-catalogs": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Create Catalog",
+        "operationId": "create_catalog_api_v1_tenants__tenant_id__document_requirement_catalogs_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCatalogRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "List Catalogs",
+        "operationId": "list_catalogs_api_v1_tenants__tenant_id__document_requirement_catalogs_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "catalog_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/CatalogType" },
+                { "type": "null" }
+              ],
+              "title": "Catalog Type"
+            }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/requirements": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Add Requirement",
+        "operationId": "add_requirement_api_v1_document_requirement_catalogs__catalog_id__requirements_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddRequirementRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "List Requirements",
+        "operationId": "list_requirements_api_v1_document_requirement_catalogs__catalog_id__requirements_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequirementListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirements/{requirement_id}": {
+      "patch": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Update Requirement",
+        "operationId": "update_requirement_api_v1_document_requirements__requirement_id__patch",
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequirementRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirements/{requirement_id}/deactivate": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Deactivate Requirement",
+        "operationId": "deactivate_requirement_api_v1_document_requirements__requirement_id__deactivate_post",
+        "parameters": [
+          {
+            "name": "requirement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RequirementResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/objects/{object_id}/requirements": {
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Get Runtime Requirements",
+        "operationId": "get_runtime_requirements_api_v1_document_requirement_catalogs__catalog_id__objects__object_id__requirements_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Object Id"
+            }
+          },
+          {
+            "name": "object_type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Object Type" }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeRequirementSurfaceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/materialize": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Materialize Catalog",
+        "operationId": "materialize_catalog_api_v1_document_requirement_catalogs__catalog_id__materialize_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaterializeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterializationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/preview": {
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Preview Catalog",
+        "operationId": "preview_catalog_api_v1_document_requirement_catalogs__catalog_id__preview_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterializationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lc/obligations/{business_object_id}": {
+      "get": {
+        "tags": ["Document Requirement Catalog — LC"],
+        "summary": "Get Lc Obligations",
+        "operationId": "get_lc_obligations_api_v1_lc_obligations__business_object_id__get",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "catalog_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "object_type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Object Type" }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LCObligationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/fulfilments/link": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Fulfilment"],
+        "summary": "Link Document",
+        "operationId": "link_document_api_v1_document_requirement_catalogs__catalog_id__fulfilments_link_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LinkDocumentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FulfilmentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/fulfilments/transition": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Fulfilment"],
+        "summary": "Transition Status",
+        "operationId": "transition_status_api_v1_document_requirement_catalogs__catalog_id__fulfilments_transition_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FulfilmentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/document-requirement-catalogs/{catalog_id}/completeness": {
+      "get": {
+        "tags": ["Document Requirement Catalog — Fulfilment"],
+        "summary": "Get Completeness",
+        "operationId": "get_completeness_api_v1_document_requirement_catalogs__catalog_id__completeness_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          },
+          {
+            "name": "business_object_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "business_object_type",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Business Object Type" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletenessResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -6083,6 +7126,80 @@
         "required": ["user_id", "display_name", "email"],
         "title": "ActorSummary"
       },
+      "AddRequirementRequest": {
+        "properties": {
+          "requirement_code": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Requirement Code"
+          },
+          "document_type_code": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Document Type Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/RequirementClassification",
+            "default": "mandatory"
+          },
+          "governance_classification": {
+            "$ref": "#/components/schemas/GovernanceClassification"
+          },
+          "source_layer": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/SourceLayer" },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Applicable Process Contexts"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/StageCategorization" },
+              { "type": "null" }
+            ]
+          },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission",
+            "default": true
+          },
+          "document_origin": {
+            "$ref": "#/components/schemas/DocumentOrigin",
+            "default": "uploaded"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_code",
+          "document_type_code",
+          "document_type_name",
+          "governance_classification",
+          "applicable_process_contexts"
+        ],
+        "title": "AddRequirementRequest"
+      },
       "ApproveRejectRequest": {
         "properties": {
           "comment": {
@@ -6201,7 +7318,12 @@
             "format": "uuid",
             "title": "Framework Agreement Id"
           },
-          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FADocumentType" },
+              { "type": "null" }
+            ]
+          },
           "document_label": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Document Label"
@@ -6494,7 +7616,12 @@
             "contentMediaType": "application/octet-stream",
             "title": "File"
           },
-          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FADocumentType" },
+              { "type": "null" }
+            ]
+          },
           "document_label": {
             "anyOf": [
               { "type": "string", "maxLength": 200 },
@@ -6509,7 +7636,7 @@
           }
         },
         "type": "object",
-        "required": ["file", "document_type"],
+        "required": ["file"],
         "title": "Body_attach_document_api_v1_framework_agreements__id__documents_post"
       },
       "Body_upload_picture_api_v1_users_me_picture_post": {
@@ -6553,6 +7680,206 @@
         ],
         "title": "CandidateSummary"
       },
+      "CatalogDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "requirements": {
+            "items": { "$ref": "#/components/schemas/RequirementResponse" },
+            "type": "array",
+            "title": "Requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogDetailResponse"
+      },
+      "CatalogListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_at"
+        ],
+        "title": "CatalogListItem"
+      },
+      "CatalogListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/CatalogListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "CatalogListResponse"
+      },
+      "CatalogResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogResponse"
+      },
+      "CatalogType": {
+        "type": "string",
+        "enum": ["global_default", "product_specific"],
+        "title": "CatalogType"
+      },
       "ChangeEmailRequest": {
         "properties": {
           "new_email": {
@@ -6577,6 +7904,55 @@
         "type": "object",
         "required": ["outcome"],
         "title": "CompleteReviewRequest"
+      },
+      "CompletenessResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "summary": { "type": "string", "title": "Summary" },
+          "mandatory_total": { "type": "integer", "title": "Mandatory Total" },
+          "mandatory_fulfilled": {
+            "type": "integer",
+            "title": "Mandatory Fulfilled"
+          },
+          "mandatory_pending": {
+            "type": "integer",
+            "title": "Mandatory Pending"
+          },
+          "mandatory_missing": {
+            "type": "integer",
+            "title": "Mandatory Missing"
+          },
+          "per_requirement": {
+            "items": {
+              "$ref": "#/components/schemas/PerRequirementStatusResponse"
+            },
+            "type": "array",
+            "title": "Per Requirement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "process_context",
+          "business_object_id",
+          "summary",
+          "mandatory_total",
+          "mandatory_fulfilled",
+          "mandatory_pending",
+          "mandatory_missing",
+          "per_requirement"
+        ],
+        "title": "CompletenessResponse"
       },
       "ConfirmationHistoryEntry": {
         "properties": {
@@ -6615,6 +7991,51 @@
         "required": ["items", "next_cursor"],
         "title": "ConfirmationHistoryResponse"
       },
+      "CreateCatalogRequest": {
+        "properties": {
+          "catalog_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Catalog Name"
+          },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts"
+        ],
+        "title": "CreateCatalogRequest"
+      },
       "CreateFARequest": {
         "properties": {
           "agreement_name": {
@@ -6638,7 +8059,7 @@
             ],
             "title": "Max Volume Eur"
           },
-          "base_rate": {
+          "effective_rate": {
             "anyOf": [
               { "type": "number", "maximum": 25.0, "minimum": 0.0 },
               {
@@ -6646,48 +8067,7 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Base Rate"
-          },
-          "spread": {
-            "anyOf": [
-              { "type": "number", "maximum": 15.0, "minimum": -5.0 },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              }
-            ],
-            "title": "Spread"
-          },
-          "rate_type": {
-            "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
-          },
-          "effective_rate": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
             "title": "Effective Rate"
-          },
-          "rate_lock_period_months": {
-            "type": "integer",
-            "maximum": 360.0,
-            "minimum": 1.0,
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "valid_from": {
             "type": "string",
@@ -6705,6 +8085,17 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
+          },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
             "type": "array",
@@ -6718,10 +8109,7 @@
           "lc_partner_id",
           "bank_entity",
           "max_volume_eur",
-          "base_rate",
-          "spread",
-          "rate_type",
-          "rate_lock_period_months",
+          "effective_rate",
           "valid_from",
           "product_template_ids"
         ],
@@ -6757,14 +8145,6 @@
         "required": ["grantee_id", "access_reason", "valid_until"],
         "title": "CreateGrantRequest"
       },
-      "CreateNewVersionRequest": {
-        "properties": {
-          "increment_type": { "$ref": "#/components/schemas/IncrementType" }
-        },
-        "type": "object",
-        "required": ["increment_type"],
-        "title": "CreateNewVersionRequest"
-      },
       "CreateTemplateDraftRequest": {
         "properties": {
           "template_name": { "type": "string", "title": "Template Name" },
@@ -6795,9 +8175,7 @@
           },
           "rate_type": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
-              },
+              { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
           },
@@ -7115,7 +8493,12 @@
             "format": "uuid",
             "title": "Framework Agreement Id"
           },
-          "document_type": { "$ref": "#/components/schemas/FADocumentType" },
+          "document_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FADocumentType" },
+              { "type": "null" }
+            ]
+          },
           "document_label": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Document Label"
@@ -7149,6 +8532,11 @@
           "uploaded_at"
         ],
         "title": "DocumentListItemResponse"
+      },
+      "DocumentOrigin": {
+        "type": "string",
+        "enum": ["uploaded", "generated"],
+        "title": "DocumentOrigin"
       },
       "DownloadURLResponse": {
         "properties": {
@@ -7424,6 +8812,7 @@
             ],
             "title": "Valid Until"
           },
+          "is_expired": { "type": "boolean", "title": "Is Expired" },
           "edit_version_counter": {
             "type": "integer",
             "title": "Edit Version Counter"
@@ -7466,26 +8855,6 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Bank Entity"
           },
-          "base_rate": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Base Rate"
-          },
-          "spread": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Spread"
-          },
           "effective_rate": {
             "anyOf": [
               {
@@ -7496,15 +8865,7 @@
             ],
             "title": "Effective Rate"
           },
-          "rate_type": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Rate Type"
-          },
-          "rate_lock_period_months": {
-            "anyOf": [{ "type": "integer" }, { "type": "null" }],
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
+          "vfe_rate": {
             "anyOf": [
               {
                 "type": "string",
@@ -7512,7 +8873,7 @@
               },
               { "type": "null" }
             ],
-            "title": "Lg Coverage Rate Override"
+            "title": "Vfe Rate"
           },
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -7604,6 +8965,7 @@
           "max_volume_eur",
           "valid_from",
           "valid_until",
+          "is_expired",
           "edit_version_counter",
           "product_template_ids",
           "document_count",
@@ -7612,12 +8974,8 @@
           "limit_available",
           "limit_breach",
           "bank_entity",
-          "base_rate",
-          "spread",
           "effective_rate",
-          "rate_type",
-          "rate_lock_period_months",
-          "lg_coverage_rate_override",
+          "vfe_rate",
           "special_conditions",
           "effective_from",
           "activated_at",
@@ -7656,37 +9014,10 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Max Volume Eur"
           },
-          "base_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Base Rate"
-          },
-          "spread": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Spread"
-          },
           "effective_rate": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Effective Rate"
-          },
-          "rate_type": {
-            "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
-          },
-          "rate_lock_period_months": {
-            "type": "integer",
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "valid_from": {
             "type": "string",
@@ -7703,6 +9034,16 @@
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
+          },
+          "vfe_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
           },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
@@ -7738,15 +9079,11 @@
           "currency",
           "status",
           "max_volume_eur",
-          "base_rate",
-          "spread",
           "effective_rate",
-          "rate_type",
-          "rate_lock_period_months",
-          "lg_coverage_rate_override",
           "valid_from",
           "valid_until",
           "special_conditions",
+          "vfe_rate",
           "product_template_ids",
           "edit_version_counter",
           "created_by",
@@ -7849,6 +9186,7 @@
             ],
             "title": "Valid Until"
           },
+          "is_expired": { "type": "boolean", "title": "Is Expired" },
           "utilization_pct": {
             "anyOf": [
               {
@@ -7874,6 +9212,7 @@
           "status",
           "valid_from",
           "valid_until",
+          "is_expired",
           "utilization_pct",
           "limit_breach"
         ],
@@ -7903,35 +9242,10 @@
             "type": "integer",
             "title": "Edit Version Counter"
           },
-          "base_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Base Rate"
-          },
-          "spread": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Spread"
-          },
           "effective_rate": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Effective Rate"
-          },
-          "rate_type": { "type": "string", "title": "Rate Type" },
-          "rate_lock_period_months": {
-            "type": "integer",
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           }
         },
         "type": "object",
@@ -7939,11 +9253,7 @@
           "fa_id",
           "agreement_name",
           "edit_version_counter",
-          "base_rate",
-          "spread",
-          "effective_rate",
-          "rate_type",
-          "rate_lock_period_months"
+          "effective_rate"
         ],
         "title": "FAPricingSnapshotResponse",
         "description": "Pricing snapshot returned to consuming epics (US 11.11).\n\nEpic 3 (Financing) uses edit_version_counter as the audit anchor\nto reconstruct which FA pricing snapshot was applied at Stage 2 approval."
@@ -8141,6 +9451,64 @@
         "type": "object",
         "required": ["email"],
         "title": "ForgotPasswordRequest"
+      },
+      "FulfilmentResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "business_object_type": {
+            "type": "string",
+            "title": "Business Object Type"
+          },
+          "status": { "type": "string", "title": "Status" },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          },
+          "linked_document_type_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Linked Document Type Code"
+          },
+          "transition_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Transition Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_definition_id",
+          "business_object_id",
+          "business_object_type",
+          "status",
+          "linked_document_id",
+          "linked_document_type_code",
+          "transition_reason",
+          "created_at"
+        ],
+        "title": "FulfilmentResponse"
+      },
+      "GovernanceClassification": {
+        "type": "string",
+        "enum": ["operational", "compliance_sensitive", "regulatory_critical"],
+        "title": "GovernanceClassification"
       },
       "GovernanceHistoryEventResponse": {
         "properties": {
@@ -8583,11 +9951,6 @@
         "type": "object",
         "title": "ImpactSummary"
       },
-      "IncrementType": {
-        "type": "string",
-        "enum": ["major", "minor"],
-        "title": "IncrementType"
-      },
       "InitiateRoleChangeRequest": {
         "properties": {
           "new_role": { "$ref": "#/components/schemas/UserRole" },
@@ -8729,6 +10092,55 @@
         "type": "object",
         "required": ["first_name", "last_name", "email", "role"],
         "title": "InviteUserRequest"
+      },
+      "LCObligationItem": {
+        "properties": {
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "is_mandatory": { "type": "boolean", "title": "Is Mandatory" },
+          "fulfilment_status": {
+            "type": "string",
+            "title": "Fulfilment Status"
+          },
+          "action_needed": { "type": "boolean", "title": "Action Needed" }
+        },
+        "type": "object",
+        "required": [
+          "document_type_name",
+          "is_mandatory",
+          "fulfilment_status",
+          "action_needed"
+        ],
+        "title": "LCObligationItem"
+      },
+      "LCObligationResponse": {
+        "properties": {
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "documents_status_summary": {
+            "type": "string",
+            "title": "Documents Status Summary"
+          },
+          "obligations": {
+            "items": { "$ref": "#/components/schemas/LCObligationItem" },
+            "type": "array",
+            "title": "Obligations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_object_id",
+          "process_context",
+          "documents_status_summary",
+          "obligations"
+        ],
+        "title": "LCObligationResponse"
       },
       "LCPortalDocumentItem": {
         "properties": {
@@ -8946,6 +10358,42 @@
         "enum": ["loan_credit", "true_sale"],
         "title": "LegalStructure"
       },
+      "LinkDocumentRequest": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "business_object_type": {
+            "type": "string",
+            "title": "Business Object Type"
+          },
+          "linked_document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Linked Document Id"
+          },
+          "linked_document_type_code": {
+            "type": "string",
+            "title": "Linked Document Type Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "business_object_id",
+          "business_object_type",
+          "linked_document_id",
+          "linked_document_type_code"
+        ],
+        "title": "LinkDocumentRequest"
+      },
       "LoginRequest": {
         "properties": {
           "email": { "type": "string", "format": "email", "title": "Email" },
@@ -8996,6 +10444,93 @@
         "type": "object",
         "required": ["anchor", "a_value", "b_value", "match"],
         "title": "MatchingEvidenceItem"
+      },
+      "MaterializationResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "effective_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/MaterializedRequirementResponse"
+            },
+            "type": "array",
+            "title": "Effective Requirements"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "process_context",
+          "effective_requirements",
+          "total"
+        ],
+        "title": "MaterializationResponse"
+      },
+      "MaterializeRequest": {
+        "properties": {
+          "process_context": { "type": "string", "title": "Process Context" }
+        },
+        "type": "object",
+        "required": ["process_context"],
+        "title": "MaterializeRequest"
+      },
+      "MaterializedRequirementResponse": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "document_type_code": {
+            "type": "string",
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "classification": { "type": "string", "title": "Classification" },
+          "governance_classification": {
+            "type": "string",
+            "title": "Governance Classification"
+          },
+          "source_layer": { "type": "string", "title": "Source Layer" },
+          "stage_categorization": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Stage Categorization"
+          },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission"
+          },
+          "document_origin": { "type": "string", "title": "Document Origin" }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "requirement_code",
+          "document_type_code",
+          "document_type_name",
+          "classification",
+          "governance_classification",
+          "source_layer",
+          "stage_categorization",
+          "applicable_process_contexts",
+          "blocks_submission",
+          "document_origin"
+        ],
+        "title": "MaterializedRequirementResponse"
       },
       "MergeHistoryResponse": {
         "properties": {
@@ -9350,12 +10885,6 @@
           },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "increment_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/IncrementType" },
-              { "type": "null" }
-            ]
-          },
           "predecessor_version_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -9376,7 +10905,6 @@
           "version_id",
           "version_number",
           "version_status",
-          "increment_type",
           "predecessor_version_id",
           "snapshot_source_version_id"
         ],
@@ -9818,6 +11346,26 @@
         "enum": ["advance", "arrears"],
         "title": "PaymentTiming"
       },
+      "PerRequirementStatusResponse": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "classification": { "type": "string", "title": "Classification" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "requirement_code",
+          "classification",
+          "status"
+        ],
+        "title": "PerRequirementStatusResponse"
+      },
       "PlatformModuleEntry": {
         "properties": {
           "key": { "type": "string", "title": "Key" },
@@ -9896,6 +11444,11 @@
         "type": "string",
         "enum": ["30_360", "act_360", "act_365", "act_act"],
         "title": "RateBasis"
+      },
+      "RateType": {
+        "type": "string",
+        "enum": ["fixed", "floating", "euribor_spread"],
+        "title": "RateType"
       },
       "ReInitiateRequest": {
         "properties": {
@@ -10011,6 +11564,106 @@
         "required": ["street", "city", "postal_code", "country"],
         "title": "RegisteredAddressInput",
         "description": "Address as submitted by a client. All fields mandatory except state_region."
+      },
+      "RequirementClassification": {
+        "type": "string",
+        "enum": ["mandatory", "optional", "conditional"],
+        "title": "RequirementClassification"
+      },
+      "RequirementListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/RequirementResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "RequirementListResponse"
+      },
+      "RequirementResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "document_type_code": {
+            "type": "string",
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/RequirementClassification"
+          },
+          "governance_classification": {
+            "$ref": "#/components/schemas/GovernanceClassification"
+          },
+          "source_layer": { "$ref": "#/components/schemas/SourceLayer" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/StageCategorization" },
+              { "type": "null" }
+            ]
+          },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission"
+          },
+          "document_origin": { "$ref": "#/components/schemas/DocumentOrigin" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "sort_order": { "type": "integer", "title": "Sort Order" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_id",
+          "requirement_code",
+          "document_type_code",
+          "document_type_name",
+          "description",
+          "classification",
+          "governance_classification",
+          "source_layer",
+          "applicable_process_contexts",
+          "stage_categorization",
+          "blocks_submission",
+          "document_origin",
+          "is_active",
+          "sort_order",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RequirementResponse"
       },
       "ResendInvitationRequest": {
         "properties": {
@@ -10285,6 +11938,83 @@
         ],
         "title": "RoleHistoryEntry"
       },
+      "RuntimeRequirementItem": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "requirement_code": { "type": "string", "title": "Requirement Code" },
+          "document_type_name": {
+            "type": "string",
+            "title": "Document Type Name"
+          },
+          "classification": { "type": "string", "title": "Classification" },
+          "source_layer": { "type": "string", "title": "Source Layer" },
+          "stage_categorization": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Stage Categorization"
+          },
+          "fulfilment_status": {
+            "type": "string",
+            "title": "Fulfilment Status"
+          },
+          "is_blocking": { "type": "boolean", "title": "Is Blocking" },
+          "blocks_submission": {
+            "type": "boolean",
+            "title": "Blocks Submission"
+          },
+          "document_origin": { "type": "string", "title": "Document Origin" }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "requirement_code",
+          "document_type_name",
+          "classification",
+          "source_layer",
+          "stage_categorization",
+          "fulfilment_status",
+          "is_blocking",
+          "blocks_submission",
+          "document_origin"
+        ],
+        "title": "RuntimeRequirementItem"
+      },
+      "RuntimeRequirementSurfaceResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "process_context": { "type": "string", "title": "Process Context" },
+          "completeness_summary": {
+            "type": "string",
+            "title": "Completeness Summary"
+          },
+          "requirements": {
+            "items": { "$ref": "#/components/schemas/RuntimeRequirementItem" },
+            "type": "array",
+            "title": "Requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "business_object_id",
+          "process_context",
+          "completeness_summary",
+          "requirements"
+        ],
+        "title": "RuntimeRequirementSurfaceResponse"
+      },
       "SeedPackage": {
         "type": "string",
         "enum": ["standard_retail_bank", "minimal_sandbox"],
@@ -10509,6 +12239,16 @@
         "type": "object",
         "required": ["partner_type", "full_name", "date_of_birth", "country"],
         "title": "SoleProprietorIdentityInput"
+      },
+      "SourceLayer": {
+        "type": "string",
+        "enum": ["default", "override", "supplement", "deactivated"],
+        "title": "SourceLayer"
+      },
+      "StageCategorization": {
+        "type": "string",
+        "enum": ["submission", "approval", "disbursement_readiness"],
+        "title": "StageCategorization"
       },
       "SubjectType": {
         "type": "string",
@@ -11235,6 +12975,37 @@
         "required": ["email"],
         "title": "TestSessionRequest"
       },
+      "TransitionStatusRequest": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "business_object_type": {
+            "type": "string",
+            "title": "Business Object Type"
+          },
+          "new_status": { "type": "string", "title": "New Status" },
+          "transition_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Transition Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requirement_definition_id",
+          "business_object_id",
+          "business_object_type",
+          "new_status"
+        ],
+        "title": "TransitionStatusRequest"
+      },
       "UboCompletenessStatus": {
         "type": "string",
         "enum": ["missing", "partial", "complete"],
@@ -11327,6 +13098,40 @@
         "required": ["new_access_valid_until", "reason"],
         "title": "UpdateAuditorAccessPeriodRequest"
       },
+      "UpdateCatalogRequest": {
+        "properties": {
+          "catalog_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Catalog Name"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array", "minItems": 1 },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          }
+        },
+        "type": "object",
+        "title": "UpdateCatalogRequest"
+      },
       "UpdateFARequest": {
         "properties": {
           "agreement_name": {
@@ -11347,7 +13152,7 @@
             ],
             "title": "Max Volume Eur"
           },
-          "base_rate": {
+          "effective_rate": {
             "anyOf": [
               { "type": "number", "maximum": 25.0, "minimum": 0.0 },
               {
@@ -11356,55 +13161,7 @@
               },
               { "type": "null" }
             ],
-            "title": "Base Rate"
-          },
-          "spread": {
-            "anyOf": [
-              { "type": "number", "maximum": 15.0, "minimum": -5.0 },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Spread"
-          },
-          "rate_type": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__framework_agreements__domain__enums__RateType"
-              },
-              { "type": "null" }
-            ]
-          },
-          "effective_rate": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
             "title": "Effective Rate"
-          },
-          "rate_lock_period_months": {
-            "anyOf": [
-              { "type": "integer", "maximum": 360.0, "minimum": 1.0 },
-              { "type": "null" }
-            ],
-            "title": "Rate Lock Period Months"
-          },
-          "lg_coverage_rate_override": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Lg Coverage Rate Override"
           },
           "valid_from": {
             "anyOf": [
@@ -11423,6 +13180,17 @@
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
+          },
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
           },
           "product_template_ids": {
             "anyOf": [
@@ -11515,6 +13283,62 @@
         ],
         "title": "UpdateOrchestrationRequest"
       },
+      "UpdateRequirementRequest": {
+        "properties": {
+          "document_type_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 255, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Document Type Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "classification": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RequirementClassification" },
+              { "type": "null" }
+            ]
+          },
+          "governance_classification": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/GovernanceClassification" },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array", "minItems": 1 },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/StageCategorization" },
+              { "type": "null" }
+            ]
+          },
+          "blocks_submission": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Blocks Submission"
+          },
+          "document_origin": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocumentOrigin" },
+              { "type": "null" }
+            ]
+          },
+          "sort_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Sort Order"
+          }
+        },
+        "type": "object",
+        "title": "UpdateRequirementRequest"
+      },
       "UpdateTemplateDraftRequest": {
         "properties": {
           "template_name": {
@@ -11565,9 +13389,7 @@
           },
           "rate_type": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
-              },
+              { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
           },
@@ -12091,12 +13913,6 @@
           },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "increment_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/IncrementType" },
-              { "type": "null" }
-            ]
-          },
           "referenced": { "type": "boolean", "title": "Referenced" },
           "template_name": { "type": "string", "title": "Template Name" },
           "template_description": {
@@ -12123,9 +13939,7 @@
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
           "rate_type": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__modules__product_templates__domain__enums__RateType"
-              },
+              { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
           },
@@ -12261,7 +14075,6 @@
           "template_id",
           "version_number",
           "version_status",
-          "increment_type",
           "referenced",
           "template_name",
           "template_description",
@@ -12291,6 +14104,43 @@
         ],
         "title": "VersionDetailResponse"
       },
+      "VersionDiffResponse": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "from_version": { "type": "string", "title": "From Version" },
+          "to_version": { "type": "string", "title": "To Version" },
+          "behavioral_settings": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Behavioral Settings"
+          },
+          "eligibility": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Eligibility"
+          },
+          "orchestration_linkage": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Orchestration Linkage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id",
+          "from_version",
+          "to_version",
+          "behavioral_settings",
+          "eligibility",
+          "orchestration_linkage"
+        ],
+        "title": "VersionDiffResponse",
+        "description": "Field-level deltas between two versions, grouped by section.\n\nEvery compared field is returned, changed or not — the compare modal renders\nunchanged rows too and highlights from `old_value != new_value` client-side."
+      },
       "VersionHistoryResponse": {
         "properties": {
           "versions": {
@@ -12303,15 +14153,102 @@
         "required": ["versions"],
         "title": "VersionHistoryResponse"
       },
-      "app__modules__framework_agreements__domain__enums__RateType": {
-        "type": "string",
-        "enum": ["fixed", "floating", "euribor_plus_spread"],
-        "title": "RateType"
+      "VfeRateCreateRequest": {
+        "properties": {
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Vfe Rate"
+          }
+        },
+        "type": "object",
+        "required": ["lc_partner_id", "vfe_rate"],
+        "title": "VfeRateCreateRequest"
       },
-      "app__modules__product_templates__domain__enums__RateType": {
-        "type": "string",
-        "enum": ["fixed", "floating", "euribor_spread"],
-        "title": "RateType"
+      "VfeRateListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/VfeRateResponse" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "VfeRateListResponse"
+      },
+      "VfeRateResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "lc_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Lc Partner Id"
+          },
+          "vfe_rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Vfe Rate"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "lc_partner_id",
+          "vfe_rate",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "VfeRateResponse"
+      },
+      "VfeRateUpdateRequest": {
+        "properties": {
+          "vfe_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Vfe Rate"
+          }
+        },
+        "type": "object",
+        "required": ["vfe_rate"],
+        "title": "VfeRateUpdateRequest"
       },
       "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
         "properties": {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
+import { addDays, format } from "date-fns"
 import {
-  CreateNewVersionRequestSchema,
   CreateProductTemplateDraftRequestSchema,
   DeprecateTemplateVersionRequestSchema,
   DeprecateTemplateVersionResponseSchema,
@@ -12,11 +12,13 @@ import {
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
+  FieldDiffItemSchema,
   TemplateListItemSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
   TemplateVersionSummarySchema,
   UpdateProductTemplateDraftRequestSchema,
+  VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 
@@ -227,6 +229,15 @@ describe("PublishTemplateDraftResponseSchema", () => {
 })
 
 describe("ProductTemplateWizardFormSchema", () => {
+  // valid_from is validated against "today", so the fixtures are relative to the run
+  // date rather than hardcoded — a fixed date would silently start failing once it
+  // fell into the past.
+  const isoDateOffsetByDays = (days: number) =>
+    format(addDays(new Date(), days), "yyyy-MM-dd")
+  const TODAY = isoDateOffsetByDays(0)
+  const YESTERDAY = isoDateOffsetByDays(-1)
+  const NEXT_MONTH = isoDateOffsetByDays(30)
+
   const validForm = {
     template_name: "Full refinancing standard",
     financing_type: "full_refinancing",
@@ -234,19 +245,27 @@ describe("ProductTemplateWizardFormSchema", () => {
     payment_timing: "advance",
     rate_basis: "30_360",
     calculation_model: "annuity",
-    rate_type: "fixed",
-    npv_formula_ref: "NPV-FORMULA-STD-v3",
     first_installment_rule: "following_month",
     disbursement_derivation_rule: "npv",
     allowed_asset_categories: ["machinery"],
     min_term_months: 12,
     max_term_months: 84,
     max_ltv_ratio: 85,
-    valid_from: "2026-06-12",
+    valid_from: TODAY,
   }
 
   it("accepts a fully valid form", () => {
     expect(() => ProductTemplateWizardFormSchema.parse(validForm)).not.toThrow()
+  })
+
+  it("strips rate_type/npv_formula_ref — not user-selectable on this form (CR PRD1042-1548 B9/B10)", () => {
+    const parsed = ProductTemplateWizardFormSchema.parse({
+      ...validForm,
+      rate_type: "fixed",
+      npv_formula_ref: "NPV-FORMULA-STD-v3",
+    }) as Record<string, unknown>
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.npv_formula_ref).toBeUndefined()
   })
 
   it("accepts a form with min_term_months, max_term_months, and max_ltv_ratio omitted", () => {
@@ -299,10 +318,57 @@ describe("ProductTemplateWizardFormSchema", () => {
     expect(() =>
       ProductTemplateWizardFormSchema.parse({
         ...validForm,
-        valid_from: "2026-06-12",
-        valid_until: "2025-01-01",
+        valid_from: NEXT_MONTH,
+        valid_until: TODAY,
       })
     ).toThrow()
+  })
+
+  it("rejects valid_until equal to valid_from — the period must be at least a day", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_from: TODAY,
+        valid_until: TODAY,
+      })
+    ).toThrow()
+  })
+
+  it("accepts valid_until after valid_from", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_from: TODAY,
+        valid_until: NEXT_MONTH,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a valid_from in the past", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_from: YESTERDAY,
+      })
+    ).toThrow()
+  })
+
+  it("accepts a valid_from of today", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({ ...validForm, valid_from: TODAY })
+    ).not.toThrow()
+  })
+
+  it("reports only 'required' for a blank valid_from, not also validFromInPast", () => {
+    const result = ProductTemplateWizardFormSchema.safeParse({
+      ...validForm,
+      valid_from: "",
+    })
+    expect(result.success).toBe(false)
+    const validFromMessages = result.error?.issues
+      .filter(issue => issue.path[0] === "valid_from")
+      .map(issue => issue.message)
+    expect(validFromMessages).toEqual(["required"])
   })
 
   it("accepts an open-ended valid_until", () => {
@@ -425,6 +491,90 @@ describe("VersionHistoryResponseSchema", () => {
   })
 })
 
+describe("FieldDiffItemSchema", () => {
+  it("accepts a diff with scalar old/new values", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "max_ltv_ratio",
+        old_value: 80,
+        new_value: 85,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts array old/new values (asset categories, orchestration linkage)", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "allowed_asset_categories",
+        old_value: ["machinery"],
+        new_value: ["machinery", "vehicles"],
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts null old_value (field newly set)", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({
+        field: "npv_formula_ref",
+        old_value: null,
+        new_value: "NPV-2024-A",
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing field name", () => {
+    expect(() =>
+      FieldDiffItemSchema.parse({ old_value: 1, new_value: 2 })
+    ).toThrow()
+  })
+})
+
+describe("VersionDiffResponseSchema", () => {
+  const validDiff = {
+    template_id: "123e4567-e89b-12d3-a456-426614174000",
+    from_version: "3",
+    to_version: "4",
+    behavioral_settings: [
+      { field: "payment_timing", old_value: "advance", new_value: "arrears" },
+    ],
+    eligibility: [{ field: "max_term_months", old_value: 60, new_value: 84 }],
+    orchestration_linkage: [
+      {
+        field: "validation_rule_set_id",
+        old_value: "44444444-4444-4444-4444-444444444444",
+        new_value: "55555555-5555-5555-5555-555555555555",
+      },
+    ],
+  }
+
+  it("accepts a full diff response", () => {
+    expect(() => VersionDiffResponseSchema.parse(validDiff)).not.toThrow()
+  })
+
+  it("accepts empty section arrays", () => {
+    expect(() =>
+      VersionDiffResponseSchema.parse({
+        ...validDiff,
+        behavioral_settings: [],
+        eligibility: [],
+        orchestration_linkage: [],
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-UUID template_id", () => {
+    expect(() =>
+      VersionDiffResponseSchema.parse({ ...validDiff, template_id: "bad" })
+    ).toThrow()
+  })
+
+  it("rejects a missing section", () => {
+    const rest = { ...validDiff } as Record<string, unknown>
+    delete rest.eligibility
+    expect(() => VersionDiffResponseSchema.parse(rest)).toThrow()
+  })
+})
+
 describe("TemplateVersionDetailSchema", () => {
   const validDetail = {
     version_number: "1.0",
@@ -458,8 +608,21 @@ describe("TemplateVersionDetailSchema", () => {
         max_volume_eur: "5000000.00",
         valid_from: "2026-06-12",
         valid_until: "2027-06-12",
+        created_at: "2026-06-12T14:32:00Z",
       })
     ).not.toThrow()
+  })
+
+  it("parses created_at when present and tolerates its absence", () => {
+    expect(
+      TemplateVersionDetailSchema.parse({
+        ...validDetail,
+        created_at: "2026-06-12T14:32:00Z",
+      }).created_at
+    ).toBe("2026-06-12T14:32:00Z")
+    expect(
+      TemplateVersionDetailSchema.parse(validDetail).created_at
+    ).toBeUndefined()
   })
 
   it("coerces string decimal fields to numbers", () => {
@@ -486,30 +649,11 @@ describe("TemplateVersionDetailSchema", () => {
   })
 })
 
-describe("CreateNewVersionRequestSchema / NewVersionCreatedResponseSchema", () => {
-  it("accepts a valid major increment request", () => {
-    expect(() =>
-      CreateNewVersionRequestSchema.parse({ increment_type: "major" })
-    ).not.toThrow()
-  })
-
-  it("accepts a valid minor increment request", () => {
-    expect(() =>
-      CreateNewVersionRequestSchema.parse({ increment_type: "minor" })
-    ).not.toThrow()
-  })
-
-  it("rejects an unknown increment_type", () => {
-    expect(() =>
-      CreateNewVersionRequestSchema.parse({ increment_type: "patch" })
-    ).toThrow()
-  })
-
+describe("NewVersionCreatedResponseSchema", () => {
   const validNewVersionResponse = {
     version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-    version_number: "2.0",
+    version_number: "2",
     version_status: "draft",
-    increment_type: "major",
     predecessor_version_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     snapshot_source_version_id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   }
@@ -520,11 +664,10 @@ describe("CreateNewVersionRequestSchema / NewVersionCreatedResponseSchema", () =
     ).not.toThrow()
   })
 
-  it("accepts null increment_type/predecessor/snapshot fields", () => {
+  it("accepts null predecessor/snapshot fields", () => {
     expect(() =>
       NewVersionCreatedResponseSchema.parse({
         ...validNewVersionResponse,
-        increment_type: null,
         predecessor_version_id: null,
         snapshot_source_version_id: null,
       })
@@ -643,6 +786,34 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
     expect(() =>
       TemplateListItemSchema.parse({ ...validListItem, current_version: null })
     ).not.toThrow()
+  })
+
+  it("accepts a list item carrying a template_name", () => {
+    expect(
+      TemplateListItemSchema.parse({
+        ...validListItem,
+        template_name: "Refinancing Standard",
+      }).template_name
+    ).toBe("Refinancing Standard")
+  })
+
+  it("accepts a list item without a template_name", () => {
+    expect(
+      TemplateListItemSchema.parse(validListItem).template_name
+    ).toBeUndefined()
+  })
+
+  it("accepts a null template_name", () => {
+    expect(
+      TemplateListItemSchema.parse({ ...validListItem, template_name: null })
+        .template_name
+    ).toBeNull()
+  })
+
+  it("rejects a non-string template_name", () => {
+    expect(() =>
+      TemplateListItemSchema.parse({ ...validListItem, template_name: 42 })
+    ).toThrow()
   })
 
   it("rejects a list item missing template_code", () => {

@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useFrameworkAgreementDetail } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDetail"
-import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreements/utils"
+import {
+  isFrameworkAgreementNotFoundError,
+  getFrameworkAgreementDisplayStatus,
+} from "@/features/frameworkAgreements/utils"
 import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementDialog"
 import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/SuspendFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
@@ -90,6 +93,11 @@ export default function FrameworkAgreementDetailPage() {
     )
   }
 
+  const displayStatus = getFrameworkAgreementDisplayStatus(
+    data.status,
+    data.is_expired
+  )
+
   return (
     <div className="p-8 flex flex-col gap-6">
       <div className="flex items-start justify-between">
@@ -98,8 +106,8 @@ export default function FrameworkAgreementDetailPage() {
             <h1 className="text-2xl font-semibold text-foreground">
               {data.agreement_name}
             </h1>
-            <Badge variant={FA_STATUS_BADGE_VARIANT[data.status]}>
-              {t(`statuses.${data.status}`)}
+            <Badge variant={FA_STATUS_BADGE_VARIANT[displayStatus]}>
+              {t(`statuses.${displayStatus}`)}
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -236,7 +244,7 @@ export default function FrameworkAgreementDetailPage() {
               </div>
             </div>
 
-            {data.base_rate !== null && (
+            {data.effective_rate !== null && (
               <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
                 <div className="bg-muted px-4 py-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
@@ -245,35 +253,13 @@ export default function FrameworkAgreementDetailPage() {
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-4">
                   <ReviewRow
-                    label={t("fields.rateType")}
-                    value={
-                      data.rate_type ? t(`rateTypes.${data.rate_type}`) : "—"
-                    }
-                  />
-                  <ReviewRow
-                    label={t("fields.baseRate")}
-                    value={`${data.base_rate}%`}
-                  />
-                  <ReviewRow
-                    label={t("fields.spread")}
-                    value={data.spread !== null ? `${data.spread}%` : "—"}
-                  />
-                  <ReviewRow
                     label={t("fields.effectiveRate")}
-                    value={
-                      data.effective_rate !== null
-                        ? `${data.effective_rate}%`
-                        : "—"
-                    }
+                    value={`${data.effective_rate}%`}
                   />
-                  <ReviewRow
-                    label={t("fields.rateLockPeriodMonths")}
-                    value={data.rate_lock_period_months ?? "—"}
-                  />
-                  {data.lg_coverage_rate_override !== null && (
+                  {data.vfe_rate !== null && (
                     <ReviewRow
-                      label={t("fields.lgCoverageRateOverride")}
-                      value={`${data.lg_coverage_rate_override}%`}
+                      label={t("fields.vfeRate")}
+                      value={`${data.vfe_rate}%`}
                     />
                   )}
                 </div>
@@ -304,7 +290,7 @@ export default function FrameworkAgreementDetailPage() {
               <div className="p-4 grid grid-cols-2 gap-4">
                 <ReviewRow
                   label={t("detail.fields.status")}
-                  value={t(`statuses.${data.status}`)}
+                  value={t(`statuses.${displayStatus}`)}
                 />
                 {data.created_by_name && (
                   <ReviewRow

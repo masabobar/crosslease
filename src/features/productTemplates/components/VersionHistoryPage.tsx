@@ -4,9 +4,6 @@ import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,18 +14,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { SelectField } from "@/components/ui/select"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
-import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
+import { CompareVersionsModal } from "@/features/productTemplates/components/CompareVersionsModal"
 import { useTemplateVersions } from "@/features/productTemplates/hooks/useTemplateVersions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
-import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
-import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
+import { canAccessAuditTrail } from "@/features/audit/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
-  IncrementType,
   TemplateStatus,
   TemplateVersionSummary,
 } from "@/features/productTemplates/api/schema"
@@ -52,8 +48,12 @@ const TIMELINE_DOT_CLASSES: Record<TemplateStatus, string> = {
   awaiting_deprecation_countersignature: "bg-amber-600",
 }
 
-function auditTrailLink(versionId: string): string {
-  return `${PATHS.AUDIT_TRAIL}?entity_type=product_template&entity_id=${versionId}`
+// Audit events for a product template are recorded by the backend against the
+// TEMPLATE id (the version id is carried in the event payload, not entity_id),
+// so the drill-down must filter by templateId — filtering by a version id
+// returns no rows. The audit list endpoint has no per-version filter param.
+function auditTrailLink(templateId: string): string {
+  return `${PATHS.AUDIT_TRAIL}?entity_type=product_template&entity_id=${templateId}`
 }
 
 export default function VersionHistoryPage() {
@@ -64,18 +64,16 @@ export default function VersionHistoryPage() {
 
   const [discardTarget, setDiscardTarget] =
     useState<TemplateVersionSummary | null>(null)
-  const [newVersionTarget, setNewVersionTarget] =
-    useState<TemplateVersionSummary | null>(null)
-  const [incrementType, setIncrementType] = useState<IncrementType | null>(null)
-  const [deprecateTarget, setDeprecateTarget] =
-    useState<TemplateVersionSummary | null>(null)
-  const [deprecationJustification, setDeprecationJustification] = useState("")
+  const [compareFrom, setCompareFrom] = useState("")
+  const [compareTo, setCompareTo] = useState("")
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false)
 
   const { data: currentUser } = useCurrentUser()
   const canManageDraft = Boolean(
     currentUser?.role &&
     PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES.includes(currentUser.role)
   )
+  const canViewAuditTrail = canAccessAuditTrail(currentUser?.role)
 
   const {
     data: history,
@@ -92,10 +90,16 @@ export default function VersionHistoryPage() {
 
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
-  const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
-    useCreateNewProductTemplateVersion()
-  const { mutateAsync: deprecateVersion, isPending: isDeprecating } =
-    useDeprecateProductTemplateVersion()
+
+  const versionOptions = (history?.versions ?? []).map(version => ({
+    value: version.version_number,
+    label: t("versionHistory.compare.versionOptionLabel", {
+      version: version.version_number,
+      status: t(
+        `versionStatuses.${version.version_status}` as "versionStatuses.draft"
+      ),
+    }),
+  }))
 
   if (isProductTemplateNotFoundError(versionsError)) {
     return <NotFoundPage />
@@ -109,36 +113,6 @@ export default function VersionHistoryPage() {
         versionNumber: discardTarget.version_number,
       })
       setDiscardTarget(null)
-    } catch (err) {
-      showApiError(err, t)
-    }
-  }
-
-  async function handleConfirmAuthorNewVersion() {
-    if (!newVersionTarget || !templateId || !incrementType) return
-    try {
-      const result = await createNewVersion({
-        templateId,
-        body: { increment_type: incrementType },
-      })
-      setNewVersionTarget(null)
-      setIncrementType(null)
-      navigate(productTemplateNewVersionEdit(templateId, result.version_number))
-    } catch (err) {
-      showApiError(err, t)
-    }
-  }
-
-  async function handleConfirmDeprecate() {
-    if (!deprecateTarget || !templateId) return
-    try {
-      await deprecateVersion({
-        templateId,
-        versionNumber: deprecateTarget.version_number,
-        body: { justification: deprecationJustification },
-      })
-      setDeprecateTarget(null)
-      setDeprecationJustification("")
     } catch (err) {
       showApiError(err, t)
     }
@@ -161,6 +135,42 @@ export default function VersionHistoryPage() {
           </p>
         )}
       </div>
+
+      {history && !isLoadingVersions && (
+        <div className="px-8 pb-6">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background p-4">
+            <span className="text-sm font-medium text-foreground">
+              {t("versionHistory.compare.compareLabel")}
+            </span>
+            <SelectField
+              value={compareFrom}
+              onValueChange={setCompareFrom}
+              options={versionOptions}
+              placeholder={t("fields.selectPlaceholder")}
+              data-testid="compare-from-select"
+            />
+            <span className="text-sm font-medium text-foreground">
+              {t("versionHistory.compare.withLabel")}
+            </span>
+            <SelectField
+              value={compareTo}
+              onValueChange={setCompareTo}
+              options={versionOptions}
+              placeholder={t("fields.selectPlaceholder")}
+              data-testid="compare-to-select"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!compareFrom || !compareTo || compareFrom === compareTo}
+              onClick={() => setIsCompareModalOpen(true)}
+              data-testid="compare-versions-button"
+            >
+              {t("versionHistory.compare.compareButton")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isLoadingVersions && (
         <div className="px-8 pb-8">
@@ -187,8 +197,6 @@ export default function VersionHistoryPage() {
             {history.versions.map((version, index) => {
               const isDraft =
                 version.version_status === TemplateStatusSchema.enum.draft
-              const isPublished =
-                version.version_status === TemplateStatusSchema.enum.published
               const isLast = index === history.versions.length - 1
 
               return (
@@ -247,69 +255,47 @@ export default function VersionHistoryPage() {
                           count: version.bindings_count,
                         })}
                       </span>
-                      {isDraft ? (
-                        canManageDraft && (
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              data-testid={`discard-version-${version.version_number}`}
-                              onClick={() => setDiscardTarget(version)}
-                            >
-                              {t("versionHistory.discard")}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              data-testid={`continue-editing-${version.version_number}`}
-                              onClick={() =>
-                                navigate(
-                                  productTemplateNewVersionEdit(
-                                    templateId ?? "",
-                                    version.version_number
-                                  )
-                                )
-                              }
-                            >
-                              {t("versionHistory.continueEditing")}
-                            </Button>
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex flex-col items-end gap-2">
-                          {isPublished && canManageDraft && (
+                      {isDraft
+                        ? canManageDraft && (
                             <div className="flex gap-2">
                               <Button
                                 type="button"
                                 variant="destructive"
                                 size="sm"
-                                data-testid={`deprecate-version-${version.version_number}`}
-                                onClick={() => setDeprecateTarget(version)}
+                                data-testid={`discard-version-${version.version_number}`}
+                                onClick={() => setDiscardTarget(version)}
                               >
-                                {t("versionHistory.deprecate")}
+                                {t("versionHistory.discard")}
                               </Button>
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                data-testid={`author-new-version-${version.version_number}`}
-                                onClick={() => setNewVersionTarget(version)}
+                                data-testid={`continue-editing-${version.version_number}`}
+                                onClick={() =>
+                                  navigate(
+                                    productTemplateNewVersionEdit(
+                                      templateId ?? "",
+                                      version.version_number
+                                    )
+                                  )
+                                }
                               >
-                                {t("versionHistory.authorNewVersion")}
+                                {t("versionHistory.continueEditing")}
                               </Button>
                             </div>
+                          )
+                        : canViewAuditTrail && (
+                            <div className="flex flex-col items-end gap-2">
+                              <Link
+                                to={auditTrailLink(templateId ?? "")}
+                                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                              >
+                                {t("versionHistory.viewAuditTrail")}
+                                <ExternalLink size={16} />
+                              </Link>
+                            </div>
                           )}
-                          <Link
-                            to={auditTrailLink(version.id)}
-                            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                          >
-                            {t("versionHistory.viewAuditTrail")}
-                            <ExternalLink size={16} />
-                          </Link>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -347,113 +333,13 @@ export default function VersionHistoryPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={newVersionTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setNewVersionTarget(null)
-            setIncrementType(null)
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("versionHistory.authorNewVersionDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("versionHistory.authorNewVersionDialog.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex flex-col gap-2 px-1">
-            <RadioGroup
-              data-testid="increment-type-radio-group"
-              value={incrementType ?? undefined}
-              onValueChange={value => setIncrementType(value as IncrementType)}
-              className="gap-3"
-            >
-              <label
-                htmlFor="increment-type-major"
-                className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
-              >
-                <RadioGroupItem id="increment-type-major" value="major" />
-                {t("versionHistory.authorNewVersionDialog.majorLabel")}
-              </label>
-              <label
-                htmlFor="increment-type-minor"
-                className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
-              >
-                <RadioGroupItem id="increment-type-minor" value="minor" />
-                {t("versionHistory.authorNewVersionDialog.minorLabel")}
-              </label>
-            </RadioGroup>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-new-dialog-keep">
-              {t("versionHistory.authorNewVersionDialog.keep")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="version-new-dialog-confirm"
-              onClick={handleConfirmAuthorNewVersion}
-              disabled={isCreatingNewVersion || !incrementType}
-            >
-              {t("versionHistory.authorNewVersionDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={deprecateTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setDeprecateTarget(null)
-            setDeprecationJustification("")
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("versionHistory.deprecateDialog.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("versionHistory.deprecateDialog.description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex flex-col gap-2 px-1">
-            <Label htmlFor="deprecate-justification">
-              {t("versionHistory.deprecateDialog.justificationLabel")}
-            </Label>
-            <Textarea
-              id="deprecate-justification"
-              data-testid="deprecate-justification-input"
-              rows={3}
-              value={deprecationJustification}
-              onChange={e => setDeprecationJustification(e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground opacity-80">
-              {t("versionHistory.deprecateDialog.justificationHint")}
-            </p>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-deprecate-dialog-keep">
-              {t("versionHistory.deprecateDialog.keep")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              data-testid="version-deprecate-dialog-confirm"
-              onClick={handleConfirmDeprecate}
-              disabled={
-                isDeprecating ||
-                deprecationJustification.trim().length <
-                  DEPRECATION_JUSTIFICATION_MIN_LENGTH
-              }
-            >
-              {t("versionHistory.deprecateDialog.confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <CompareVersionsModal
+        templateId={templateId ?? ""}
+        fromVersion={compareFrom}
+        toVersion={compareTo}
+        open={isCompareModalOpen}
+        onOpenChange={setIsCompareModalOpen}
+      />
     </div>
   )
 }

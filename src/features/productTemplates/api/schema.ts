@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { format } from "date-fns"
 import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
 import { requiredEnum } from "@/lib/zodHelpers"
 
@@ -140,23 +141,14 @@ export type PublishTemplateDraftResponse = z.infer<
   typeof PublishTemplateDraftResponseSchema
 >
 
-// Wire request/response for POST /product-templates/{id}/versions (create_new_version)
-// in refinext-api. Matches CreateNewVersionRequest / NewVersionCreatedResponse.
-export const IncrementTypeSchema = z.enum(["major", "minor"])
-export type IncrementType = z.infer<typeof IncrementTypeSchema>
-
-export const CreateNewVersionRequestSchema = z.object({
-  increment_type: IncrementTypeSchema,
-})
-export type CreateNewVersionRequest = z.infer<
-  typeof CreateNewVersionRequestSchema
->
-
+// Wire response for POST /product-templates/{id}/versions (create_new_version) in
+// refinext-api. Matches NewVersionCreatedResponse. The endpoint takes no request body:
+// versioning is sequential integers (CR-1474), so there is no major/minor increment_type
+// to choose — the BE derives the next version_number itself.
 export const NewVersionCreatedResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
   version_status: z.string(),
-  increment_type: IncrementTypeSchema.nullable(),
   predecessor_version_id: z.string().uuid().nullable(),
   snapshot_source_version_id: z.string().uuid().nullable(),
 })
@@ -197,8 +189,6 @@ export const ProductTemplateWizardFormSchema = z
     payment_timing: requiredEnum(PaymentTimingSchema.options),
     rate_basis: requiredEnum(RateBasisSchema.options),
     calculation_model: requiredEnum(CalculationModelSchema.options),
-    rate_type: requiredEnum(RateTypeSchema.options),
-    npv_formula_ref: z.string({ error: "required" }).min(1, "required"),
     first_installment_rule: requiredEnum(FirstInstallmentRuleSchema.options),
     disbursement_derivation_rule: requiredEnum(
       DisbursementDerivationRuleSchema.options
@@ -249,14 +239,27 @@ export const ProductTemplateWizardFormSchema = z
         path: ["min_volume_eur"],
       })
     }
+    // Both dates are wire-formatted yyyy-MM-dd, so lexicographic comparison is
+    // chronological. valid_from is guarded against "" so a blank field reports only
+    // its own "required" issue rather than also claiming to be in the past.
     if (
-      data.valid_until !== undefined &&
-      data.valid_until !== "" &&
-      data.valid_until < data.valid_from
+      data.valid_from !== "" &&
+      data.valid_from < format(new Date(), "yyyy-MM-dd")
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "validUntilBeforeFrom",
+        message: "validFromInPast",
+        path: ["valid_from"],
+      })
+    }
+    if (
+      data.valid_until !== undefined &&
+      data.valid_until !== "" &&
+      data.valid_until <= data.valid_from
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "validUntilNotAfterFrom",
         path: ["valid_until"],
       })
     }
@@ -337,15 +340,40 @@ export const TemplateVersionDetailSchema = z.object({
   max_volume_eur: z.coerce.number().nullable().optional(),
   valid_from: z.string().nullable().optional(),
   valid_until: z.string().nullable().optional(),
+  // On the wire but previously stripped — surfaced for the detail drawer's Metadata
+  // section (US-10.8). Optional so the header/wizard-prefill consumers of this schema
+  // never break if it's absent. created_by / updated_by / updated_at / tenant name are
+  // NOT provided by the backend (see open-questions Q-028).
+  created_at: z.string().nullable().optional(),
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
 
+// Wire shape for GET /product-templates/{id}/diff (US 10.8 "Compare versions").
+// Identical to audit's FieldDiffItem (src/features/audit/api/schema.ts) and
+// frameworkAgreements' (src/features/frameworkAgreements/api/schema.ts) — 3rd
+// occurrence per the Rule of Three, noted rather than extracted since it would mean
+// touching two unrelated, already-shipped features for this story.
+export const FieldDiffItemSchema = z.object({
+  field: z.string(),
+  old_value: z.unknown().nullable(),
+  new_value: z.unknown().nullable(),
+})
+export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+
+// Every compared field is returned, changed or not — the compare modal renders
+// unchanged rows too and derives its highlight from old_value !== new_value client-side.
+export const VersionDiffResponseSchema = z.object({
+  template_id: z.string().uuid(),
+  from_version: z.string(),
+  to_version: z.string(),
+  behavioral_settings: z.array(FieldDiffItemSchema),
+  eligibility: z.array(FieldDiffItemSchema),
+  orchestration_linkage: z.array(FieldDiffItemSchema),
+})
+export type VersionDiffResponse = z.infer<typeof VersionDiffResponseSchema>
+
 // Wire response for GET /tenants/{tenant_id}/product-templates (list_templates) in
-// refinext-api. TemplateListItem deliberately has no template_name field on the BE —
-// only template_code — even though the Figma design's "Product" column shows a
-// human-readable name; the join already fetches it but the response schema doesn't map
-// it through. Flagged BE gap: FE renders template_code as the primary label until the BE
-// maps template_name through.
+// refinext-api.
 export const TemplateCurrentVersionSummarySchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
@@ -367,6 +395,11 @@ export type TemplateCurrentVersionSummary = z.infer<
 export const TemplateListItemSchema = z.object({
   id: z.string().uuid(),
   template_code: z.string(),
+  // Optional because TemplateListItem in refinext-api doesn't serialize it yet — the
+  // list query already loads the version row that holds it (product_template_repo.py
+  // list_templates), so it arrives once the BE maps it through. Until then the list
+  // falls back to template_code (PRD1042-1649).
+  template_name: z.string().nullable().optional(),
   current_version: TemplateCurrentVersionSummarySchema.nullable(),
   created_at: z.string(),
 })

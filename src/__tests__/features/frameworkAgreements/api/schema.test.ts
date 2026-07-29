@@ -36,11 +36,7 @@ const validCreateRequest = {
   lc_partner_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
   bank_entity: "sparkasse",
   max_volume_eur: 25000000,
-  base_rate: 4.25,
-  spread: 0.5,
-  rate_type: "fixed",
   effective_rate: 4.75,
-  rate_lock_period_months: 12,
   valid_from: "2026-06-01",
   product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
 }
@@ -54,11 +50,25 @@ describe("CreateFARequestSchema", () => {
     expect(() =>
       CreateFARequestSchema.parse({
         ...validCreateRequest,
-        lg_coverage_rate_override: 4.3,
+        vfe_rate: 2.5,
         valid_until: "2028-06-01",
         special_conditions: "Pending credit review",
       })
     ).not.toThrow()
+  })
+
+  it("rejects vfe_rate outside 0-100", () => {
+    expect(() =>
+      CreateFARequestSchema.parse({ ...validCreateRequest, vfe_rate: 150 })
+    ).toThrow()
+  })
+
+  it("strips lg_coverage_rate_override — not in v9's field list (CR PRD1042-1552 A4)", () => {
+    const parsed = CreateFARequestSchema.parse({
+      ...validCreateRequest,
+      lg_coverage_rate_override: 4.3,
+    }) as Record<string, unknown>
+    expect(parsed.lg_coverage_rate_override).toBeUndefined()
   })
 
   it.each([
@@ -66,10 +76,7 @@ describe("CreateFARequestSchema", () => {
     "lc_partner_id",
     "bank_entity",
     "max_volume_eur",
-    "base_rate",
-    "spread",
-    "rate_type",
-    "rate_lock_period_months",
+    "effective_rate",
     "valid_from",
     "product_template_ids",
   ])("rejects a payload missing required field %s", field => {
@@ -84,16 +91,19 @@ describe("CreateFARequestSchema", () => {
     ).toThrow()
   })
 
-  it("rejects base_rate outside 0-25", () => {
-    expect(() =>
-      CreateFARequestSchema.parse({ ...validCreateRequest, base_rate: 30 })
-    ).toThrow()
-  })
-
-  it("rejects spread outside -5 to 15", () => {
-    expect(() =>
-      CreateFARequestSchema.parse({ ...validCreateRequest, spread: 20 })
-    ).toThrow()
+  it("strips base_rate/spread/rate_type/rate_lock_period_months — create takes one hand-entered rate (CR PRD1042-1552 A1-A2)", () => {
+    const parsed = CreateFARequestSchema.parse({
+      ...validCreateRequest,
+      base_rate: 4.25,
+      spread: 0.5,
+      rate_type: "fixed",
+      rate_lock_period_months: 12,
+    }) as Record<string, unknown>
+    expect(parsed.base_rate).toBeUndefined()
+    expect(parsed.spread).toBeUndefined()
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.rate_lock_period_months).toBeUndefined()
+    expect(parsed.effective_rate).toBe(4.75)
   })
 
   it("rejects an empty product_template_ids array", () => {
@@ -124,12 +134,8 @@ describe("FADraftResponseSchema", () => {
     currency: "EUR",
     status: "draft",
     max_volume_eur: 25000000,
-    base_rate: 4.25,
-    spread: 0.5,
     effective_rate: 4.75,
-    rate_type: "fixed",
-    rate_lock_period_months: 12,
-    lg_coverage_rate_override: null,
+    vfe_rate: null,
     valid_from: "2026-06-01",
     valid_until: null,
     special_conditions: null,
@@ -142,6 +148,20 @@ describe("FADraftResponseSchema", () => {
 
   it("accepts a valid draft response", () => {
     expect(() => FADraftResponseSchema.parse(validResponse)).not.toThrow()
+  })
+
+  // Regression: the BE trimmed these out of FADraftResponse under CR A1/A4. While the
+  // schema still declared them required, every create/activate/update threw on parse.
+  it("does not require the trimmed pricing fields the BE no longer returns", () => {
+    const parsed = FADraftResponseSchema.parse(validResponse) as Record<
+      string,
+      unknown
+    >
+    expect(parsed.base_rate).toBeUndefined()
+    expect(parsed.spread).toBeUndefined()
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.rate_lock_period_months).toBeUndefined()
+    expect(parsed.lg_coverage_rate_override).toBeUndefined()
   })
 
   it("rejects an unknown status", () => {
@@ -165,12 +185,7 @@ describe("UpdateFARequestSchema", () => {
       UpdateFARequestSchema.parse({
         agreement_name: "RV-SSKM-2026-002",
         max_volume_eur: 30000000,
-        base_rate: 4.5,
-        spread: 0.6,
-        rate_type: "floating",
         effective_rate: 5.1,
-        rate_lock_period_months: 24,
-        lg_coverage_rate_override: 4.4,
         valid_from: "2026-06-01",
         valid_until: "2029-06-01",
         special_conditions: "Reviewed annually",
@@ -191,21 +206,15 @@ describe("UpdateFARequestSchema", () => {
     expect(() => UpdateFARequestSchema.parse({})).not.toThrow()
   })
 
-  it("rejects an unknown rate_type", () => {
-    expect(() =>
-      UpdateFARequestSchema.parse({ rate_type: "unknown_rate" })
-    ).toThrow()
+  it("strips rate_type — pricing trimmed to effective_rate only (CR PRD1042-1552 A1-A3)", () => {
+    const parsed = UpdateFARequestSchema.parse({
+      rate_type: "unknown_rate",
+    }) as Record<string, unknown>
+    expect(parsed.rate_type).toBeUndefined()
   })
 
-  it.each([
-    ["base_rate", 30],
-    ["spread", 20],
-    ["rate_lock_period_months", 400],
-    ["max_volume_eur", 0],
-  ])("rejects out-of-range %s", (field, value) => {
-    expect(() =>
-      UpdateFARequestSchema.parse({ [field as string]: value })
-    ).toThrow()
+  it("rejects a non-positive max_volume_eur", () => {
+    expect(() => UpdateFARequestSchema.parse({ max_volume_eur: 0 })).toThrow()
   })
 
   it("rejects a justification shorter than 30 characters", () => {
@@ -243,11 +252,7 @@ describe("EditFrameworkAgreementFormSchema", () => {
   const validEditForm = {
     agreement_name: "RV-SSKM-2026-002",
     max_volume_eur: 30000000,
-    base_rate: 4.5,
-    spread: 0.6,
-    rate_type: "floating",
     effective_rate: 5.1,
-    rate_lock_period_months: 24,
     valid_from: "2026-06-01",
     product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
     justification: "Adjusting envelope after annual credit review",
@@ -293,13 +298,24 @@ describe("EditFrameworkAgreementFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts valid_until on or after valid_from", () => {
+  it("accepts valid_until after valid_from", () => {
     expect(() =>
       EditFrameworkAgreementFormSchema.parse({
         ...validEditForm,
         valid_until: "2029-06-01",
       })
     ).not.toThrow()
+  })
+
+  // UpdateFARequest raises "valid_until must be after valid_from" on equal dates,
+  // so the form must reject them rather than let the API 422 (PRD1042-1652).
+  it("rejects valid_until equal to valid_from", () => {
+    expect(() =>
+      EditFrameworkAgreementFormSchema.parse({
+        ...validEditForm,
+        valid_until: validEditForm.valid_from,
+      })
+    ).toThrow()
   })
 })
 
@@ -339,6 +355,7 @@ describe("FAListItemSchema / FAListResponseSchema", () => {
     lc_partner_name: "New Group Trade",
     bank_entity: "sparkasse",
     status: "active",
+    is_expired: false,
     valid_from: "2026-06-01",
     valid_until: null,
     utilization_pct: null,
@@ -486,6 +503,7 @@ describe("FADetailResponseSchema", () => {
     lc_partner_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
     lc_partner_name: "New Group Trade",
     status: "active",
+    is_expired: false,
     currency: "EUR",
     max_volume_eur: 25000000,
     valid_from: "2026-06-01",
@@ -498,12 +516,8 @@ describe("FADetailResponseSchema", () => {
     limit_available: null,
     limit_breach: null,
     bank_entity: null,
-    base_rate: null,
-    spread: null,
     effective_rate: null,
-    rate_type: null,
-    rate_lock_period_months: null,
-    lg_coverage_rate_override: null,
+    vfe_rate: null,
     special_conditions: null,
     effective_from: null,
     activated_at: null,
@@ -527,21 +541,42 @@ describe("FADetailResponseSchema", () => {
       FADetailResponseSchema.parse({
         ...baseDetail,
         bank_entity: "sparkasse",
-        base_rate: 4.25,
-        spread: 0.5,
         effective_rate: 4.75,
-        rate_type: "fixed",
-        rate_lock_period_months: 12,
+        vfe_rate: "1.5000",
         created_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
         created_by_name: "Vincent Brooke",
       })
     ).not.toThrow()
   })
 
+  it("coerces a numeric-string vfe_rate and accepts null", () => {
+    expect(
+      FADetailResponseSchema.parse({ ...baseDetail, vfe_rate: "2.5000" })
+        .vfe_rate
+    ).toBe(2.5)
+    expect(FADetailResponseSchema.parse(baseDetail).vfe_rate).toBeNull()
+  })
+
   it("rejects a missing required id", () => {
     const rest = { ...baseDetail } as Record<string, unknown>
     delete rest.id
     expect(() => FADetailResponseSchema.parse(rest)).toThrow()
+  })
+
+  it("strips base_rate/spread/rate_type/rate_lock_period_months/lg_coverage_rate_override — trimmed to effective_rate + vfe_rate (CR PRD1042-1552 A1-A4)", () => {
+    const parsed = FADetailResponseSchema.parse({
+      ...baseDetail,
+      base_rate: 4.25,
+      spread: 0.5,
+      rate_type: "fixed",
+      rate_lock_period_months: 12,
+      lg_coverage_rate_override: 4.3,
+    }) as Record<string, unknown>
+    expect(parsed.base_rate).toBeUndefined()
+    expect(parsed.spread).toBeUndefined()
+    expect(parsed.rate_type).toBeUndefined()
+    expect(parsed.rate_lock_period_months).toBeUndefined()
+    expect(parsed.lg_coverage_rate_override).toBeUndefined()
   })
 })
 
@@ -584,13 +619,50 @@ describe("FrameworkAgreementWizardFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts valid_until on or after valid_from", () => {
+  it("accepts valid_until after valid_from", () => {
     expect(() =>
       FrameworkAgreementWizardFormSchema.parse({
         ...validForm,
         valid_until: "2028-06-01",
       })
     ).not.toThrow()
+  })
+
+  // CreateFARequest raises "valid_until must be after valid_from" on equal dates
+  // (PRD1042-1652) — the wizard must not let that reach the API.
+  it("rejects valid_until equal to valid_from", () => {
+    expect(() =>
+      FrameworkAgreementWizardFormSchema.parse({
+        ...validForm,
+        valid_until: validForm.valid_from,
+      })
+    ).toThrow()
+  })
+
+  // Guards the i18n contract: resolveFrameworkAgreementFieldError only translates
+  // known message codes and returns anything else verbatim, so an untranslated Zod
+  // default here would be rendered to the user (PRD1042-1653).
+  it.each(["max_volume_eur", "effective_rate"])(
+    "reports a translatable 'required' message when %s is missing",
+    field => {
+      const payload = { ...validForm } as Record<string, unknown>
+      delete payload[field]
+      const result = FrameworkAgreementWizardFormSchema.safeParse(payload)
+      expect(result.success).toBe(false)
+      const issue = result.error!.issues.find(i => i.path[0] === field)
+      expect(issue?.message).toBe("required")
+    }
+  )
+
+  it("reports 'required' for an empty number input coerced to NaN", () => {
+    const result = FrameworkAgreementWizardFormSchema.safeParse({
+      ...validForm,
+      max_volume_eur: Number.NaN,
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error!.issues.find(i => i.path[0] === "max_volume_eur")?.message
+    ).toBe("required")
   })
 })
 
