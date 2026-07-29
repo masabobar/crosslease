@@ -241,6 +241,7 @@ export default function FrameworkAgreementDetailPage() {
                   label={t("fields.maxVolumeEur")}
                   value={data.max_volume_eur}
                 />
+                <ReviewRow label={t("fields.currency")} value={data.currency} />
               </div>
             </div>
 
