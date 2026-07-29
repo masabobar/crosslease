@@ -373,6 +373,16 @@
           "title": "Verification email sent",
           "message": "Verification email sent to {{newEmail}}. Email will not update until the user clicks the verification link. Previous address {{oldEmail}} remains active as recovery anchor until verification completes."
         },
+        "partial": {
+          "profileOnly": {
+            "title": "Profile saved, email change failed",
+            "message": "The name and phone changes were saved. The email change did not go through: {{reason}}. Re-open the editor to try the email change again."
+          },
+          "emailOnly": {
+            "title": "Verification email sent, profile not saved",
+            "message": "A verification email was sent to {{newEmail}}. The name and phone changes were not saved: {{reason}}. Re-open the editor to try them again."
+          }
+        },
         "emailResendSuccess": {
           "title": "Verification email resent",
           "message": "Verification email resent to {{newEmail}}. Email will not update until the user clicks the verification link. Previous address {{oldEmail}} remains active as recovery anchor until verification completes."
