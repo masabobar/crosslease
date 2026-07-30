@@ -19,6 +19,7 @@ import type {
   IntegrationBindingResponse,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { formatDateTime } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +52,8 @@ function ConfigureBindingDialog({
   const hasBinding = !!existing?.id
 
   const {
+    setError,
+    getValues,
     register,
     control,
     handleSubmit,
@@ -112,6 +115,15 @@ function ConfigureBindingDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

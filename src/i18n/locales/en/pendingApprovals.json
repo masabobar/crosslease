@@ -221,7 +221,8 @@
     "GOVERNED_ACTION_ALREADY_RESOLVED": "This request has already been resolved and can no longer be modified.",
     "GOVERNED_ACTION_NOT_EXPIRED": "Only expired requests can be re-initiated.",
     "REINITIATION_REASON_REQUIRED": "A reason is required to re-initiate this request on behalf of another user.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   },
   "roles": {
     "system_admin": "Admin",

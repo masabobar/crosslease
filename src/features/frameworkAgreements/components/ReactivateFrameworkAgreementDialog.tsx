@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useReactivateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useReactivateFrameworkAgreement"
 import { ReactivateFARequestSchema } from "@/features/frameworkAgreements/api/schema"
 import type { ReactivateFARequest } from "@/features/frameworkAgreements/api/schema"
@@ -36,6 +37,8 @@ function ReactivateFrameworkAgreementDialog({
   const mutation = useReactivateFrameworkAgreement()
 
   const {
+    setError,
+    getValues,
     handleSubmit,
     reset,
     control,
@@ -57,6 +60,15 @@ function ReactivateFrameworkAgreementDialog({
       {
         onSuccess: () => handleClose(),
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

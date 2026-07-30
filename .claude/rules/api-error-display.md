@@ -1,7 +1,7 @@
 # API Error Display — Exhaustive BE Error Handling
 
-**Version:** 1.0
-**Last Updated:** 2026-06-05
+**Version:** 1.1
+**Last Updated:** 2026-07-30
 **Status:** Active
 
 **MANDATORY: Every API mutation and every user-visible query error MUST be caught and surfaced to the user. Silent API failures are bugs. When reviewing or modifying code, FIX missing error handling immediately — do not flag for later.**
@@ -59,9 +59,46 @@ mutation.mutate(payload, {
 
 **What error codes to handle:**
 
-- Check `openapi.json` (or `../refinext-api/`) for every code the endpoint documents, and add an `errors.<CODE>` i18n key for each — the dynamic lookup then handles display with no code change.
+- Check `openapi.json` (or `../refinext-api/`) for every code the endpoint documents, and add an `errors.<CODE>` i18n key for each — the dynamic lookup then handles display with no code change. Note `openapi.json` **understates** the taxonomy: it declares only `422 HTTPValidationError`, while the real codes are registered in `../refinext-api/src/app/shared/errors/handlers.py`. Read the handlers.
 - Unknown codes and non-`ApiError` throws (network down, timeout) fall back to `errors.generic`.
-- **No side effects from `onError`** — no `form.setError` or step navigation driven by error codes; the UI shows what went wrong, nothing more.
+- **No side effects from `onError`** — no step navigation driven by error codes, and no `form.setError` keyed off a specific code. The UI shows what went wrong, nothing more. The single exception is §2.1, which is driven by the payload rather than by a code list.
+
+---
+
+## 2.1 The One Exception — `VALIDATION_ERROR` Field Detail
+
+The backend emits exactly two error shapes:
+
+| Shape                                                                   | Produced by                                    | Field detail?                                   |
+| ----------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| `{code, message}`                                                       | `create_error_response()` — every domain error | ❌ never; the function has no `field` parameter |
+| `{code: "VALIDATION_ERROR", message, errors:[{field, message, input}]}` | the `RequestValidationError` handler           | ✅ always, per field                            |
+
+So for a domain error there is **no field to map** and the toast is the only possible display. For `VALIDATION_ERROR` the BE names the exact fields, and discarding them to show "Something went wrong" is a defect, not a policy.
+
+```ts
+onError: err => {
+  if (applyApiFieldErrors({
+    error: err,
+    fields: Object.keys(getValues()),
+    setError,
+  })) return
+
+  toast.error(
+    err instanceof ApiError
+      ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+      : t("errors.generic")
+  )
+},
+```
+
+Why this does not reopen the drift the rest of this file prevents:
+
+- It branches on **one** code that means "field detail follows", not on a list of domain codes — so it never needs editing when the BE adds a code.
+- `applyApiFieldErrors` (`src/lib/apiFieldErrors.ts`) returns `false` unless it attached at least one error to a field the form actually has, so the toast still fires for unmappable payloads. It cannot silently swallow an error.
+- The attached message is `common:validation.rejectedByServer`, never the BE's own English prose (§6 of `code-review.md`).
+
+Add `errors.VALIDATION_ERROR` to a feature's namespace as the fallback for when no field resolves.
 
 ---
 

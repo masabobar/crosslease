@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSuspendFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useSuspendFrameworkAgreement"
 import { SuspendFARequestSchema } from "@/features/frameworkAgreements/api/schema"
 import type { SuspendFARequest } from "@/features/frameworkAgreements/api/schema"
@@ -27,6 +28,8 @@ function SuspendFrameworkAgreementDialog({
   const mutation = useSuspendFrameworkAgreement()
 
   const {
+    setError,
+    getValues,
     handleSubmit,
     reset,
     register,
@@ -52,6 +55,15 @@ function SuspendFrameworkAgreementDialog({
       {
         onSuccess: () => handleClose(),
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

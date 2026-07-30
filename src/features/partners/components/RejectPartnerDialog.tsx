@@ -8,6 +8,7 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useRejectPartner } from "@/features/partners/hooks/useRejectPartner"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
 
 // Rejection is terminal — note is mandatory (min 10 chars, per BE contract).
@@ -35,6 +36,8 @@ function RejectPartnerDialog({
   const mutation = useRejectPartner(partnerId)
 
   const {
+    setError,
+    getValues,
     register,
     handleSubmit,
     reset,
@@ -58,6 +61,15 @@ function RejectPartnerDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

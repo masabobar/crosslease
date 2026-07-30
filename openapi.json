@@ -4069,6 +4069,18 @@
             "description": "Filter by UBO completeness, repeatable"
           },
           {
+            "name": "lc_eligible",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only confirmed partners that are the LC party of at least one non-terminated framework agreement — valid lc_partner_id targets for a leasing_company_user invite",
+              "default": false,
+              "title": "Lc Eligible"
+            },
+            "description": "Only confirmed partners that are the LC party of at least one non-terminated framework agreement — valid lc_partner_id targets for a leasing_company_user invite"
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,

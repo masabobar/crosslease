@@ -266,6 +266,7 @@
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
     "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Select two different versions to compare.",
     "PRODUCT_TEMPLATE_IN_USE_BY_FRAMEWORK_AGREEMENT": "This version can't be deprecated while active framework agreements reference it — they would be left without a published product.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }

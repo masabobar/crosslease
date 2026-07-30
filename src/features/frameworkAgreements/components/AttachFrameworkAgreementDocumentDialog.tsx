@@ -19,6 +19,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
 import { FADocumentTypeSchema } from "@/features/frameworkAgreements/api/schema"
 import {
@@ -54,6 +55,8 @@ function AttachFrameworkAgreementDocumentDialog({
   const inputRef = useRef<HTMLInputElement>(null)
 
   const {
+    setError,
+    getValues,
     handleSubmit,
     reset,
     control,
@@ -82,6 +85,15 @@ function AttachFrameworkAgreementDocumentDialog({
       {
         onSuccess: () => handleClose(),
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

@@ -14,6 +14,7 @@ import {
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
 
 const archiveSchema = z.object({
@@ -57,6 +58,8 @@ function ArchivePartnerDialog({
     handleSubmit,
     reset,
     control,
+    setError,
+    getValues,
     formState: { errors },
   } = useForm<ArchiveForm>({
     resolver: zodResolver(archiveSchema),
@@ -81,6 +84,15 @@ function ArchivePartnerDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

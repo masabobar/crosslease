@@ -24,6 +24,7 @@ import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { selectOnFocus } from "@/lib/utils"
 
 const captureUboSchema = z.object({
@@ -62,6 +63,8 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
     .map(p => ({ value: p.partner_id, label: p.display_name }))
 
   const {
+    setError,
+    getValues,
     handleSubmit,
     reset,
     control,
@@ -91,6 +94,15 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

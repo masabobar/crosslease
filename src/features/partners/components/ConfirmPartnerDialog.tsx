@@ -7,6 +7,7 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useConfirmPartner } from "@/features/partners/hooks/useConfirmPartner"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
 
 // Single-actor FO confirmation per US 13.5 (PRD1042-1449): no BO approval.
@@ -34,6 +35,8 @@ function ConfirmPartnerDialog({
   const mutation = useConfirmPartner(partnerId)
 
   const {
+    setError,
+    getValues,
     register,
     handleSubmit,
     reset,
@@ -57,6 +60,15 @@ function ConfirmPartnerDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

@@ -1,7 +1,7 @@
 # Error Handling & Logging (Frontend)
 
-**Version:** 2.0
-**Last Updated:** 2026-07-05
+**Version:** 2.1
+**Last Updated:** 2026-07-30
 **Status:** Active
 
 **MANDATORY: Every API failure is surfaced to the user. Programmatic handling uses `ApiError.code` — never message strings. Display goes through the dynamic i18n lookup with a generic fallback. Errors are never silently swallowed. No `console.*`, PII, or tokens in shipped code.**
@@ -52,7 +52,7 @@ mutation.mutate(payload, {
 - Any BE code translates via the `errors.<CODE>` i18n key; unknown codes and non-`ApiError` throws (network down, timeout) fall back to `errors.generic`.
 - Adding a new BE error code requires **only a new i18n key** in `en/<feature>.json` + `de/<feature>.json` — no code change.
 - **No `switch` per error code.** Switches drift and break every time the BE adds a code.
-- **No side effects from `onError`** — no `form.setError`, no step navigation driven by error codes. The BE tells us what went wrong via the code; the UI shows it.
+- **No side effects from `onError`** — no step navigation driven by error codes, and no `form.setError` keyed off a specific domain code. The BE tells us what went wrong via the code; the UI shows it. **One exception:** `VALIDATION_ERROR` is the only code that carries `errors:[{field,…}]`, and that detail is applied to the form via `applyApiFieldErrors()` before falling back to the toast — see `.claude/rules/api-error-display.md` §2.1. Every other code comes from `create_error_response()`, which has no `field` at all.
 - Queries render a visible error state via `isError` — never blank or stale content on failure.
 
 Coverage requirements (every mutation has `onError`, every foreground query has an `isError` branch) and the fix-on-encounter procedure are in `.claude/rules/api-error-display.md` — that is the operative enforcement rule.

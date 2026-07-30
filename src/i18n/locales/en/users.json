@@ -464,7 +464,8 @@
     "DUPLICATE_PENDING_ACTION": "A pending action of this type already exists for this user.",
     "USER_NOT_ACTIVE": "Operation requires an active user account.",
     "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish.",
-    "AUDITOR_PROVISIONING_NOT_ALLOWED": "This tenant does not allow auditor accounts. Enable auditor access for the tenant before inviting this user."
+    "AUDITOR_PROVISIONING_NOT_ALLOWED": "This tenant does not allow auditor accounts. Enable auditor access for the tenant before inviting this user.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   },
   "export": {
     "successTitle": "Export ready",

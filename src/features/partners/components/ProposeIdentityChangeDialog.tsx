@@ -25,6 +25,7 @@ import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeId
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
 import { isCommercialRegisterApplicable } from "@/features/partners/utils"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
@@ -67,6 +68,7 @@ function ProposeIdentityChangeDialog({
   const mutation = useProposeIdentityChange(partnerId)
 
   const {
+    setError,
     control,
     register,
     handleSubmit,
@@ -143,6 +145,15 @@ function ProposeIdentityChangeDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

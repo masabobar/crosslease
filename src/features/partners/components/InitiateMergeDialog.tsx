@@ -20,6 +20,7 @@ import { MergeReasonCodeSchema } from "@/features/partners/api/schema"
 import { MERGE_REASON_CODES } from "@/features/partners/constants"
 import { useInitiateMerge } from "@/features/partners/hooks/useInitiateMerge"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { PATHS } from "@/router/paths"
 import type {
   DuplicateCandidatePairResponse,
@@ -54,6 +55,8 @@ function InitiateMergeDialog({
   const mutation = useInitiateMerge(tenantId)
 
   const {
+    setError,
+    getValues,
     handleSubmit,
     reset,
     control,
@@ -83,6 +86,15 @@ function InitiateMergeDialog({
           navigate(PATHS.PENDING_APPROVALS)
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

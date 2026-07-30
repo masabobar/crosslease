@@ -19,6 +19,7 @@ import { DuplicateResolutionReasonCodeSchema } from "@/features/partners/api/sch
 import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants"
 import { useResolveDuplicatePair } from "@/features/partners/hooks/useResolveDuplicatePair"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { DuplicateCandidatePairResponse } from "@/features/partners/api/schema"
 
 const DECISION_OPTIONS = [
@@ -64,6 +65,8 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
   const mutation = useResolveDuplicatePair(tenantId)
 
   const {
+    setError,
+    getValues,
     handleSubmit,
     reset,
     control,
@@ -96,6 +99,15 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

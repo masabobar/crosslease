@@ -221,7 +221,8 @@
     "GOVERNED_ACTION_ALREADY_RESOLVED": "Diese Anfrage wurde bereits bearbeitet und kann nicht mehr geändert werden.",
     "GOVERNED_ACTION_NOT_EXPIRED": "Nur abgelaufene Anfragen können erneut eingereicht werden.",
     "REINITIATION_REASON_REQUIRED": "Ein Grund ist erforderlich, um diese Anfrage im Namen einer anderen Person erneut einzureichen.",
-    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+    "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   },
   "roles": {
     "system_admin": "Admin",
