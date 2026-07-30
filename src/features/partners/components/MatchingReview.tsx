@@ -84,10 +84,7 @@ function formatCountry(code: string): string {
   return `${countryName(code)} (${code})`
 }
 
-function summaryRows(
-  identity: PartnerIdentityInput,
-  t: TFunction<"partners">
-) {
+function summaryRows(identity: PartnerIdentityInput, t: TFunction<"partners">) {
   if (identity.partner_type === "legal_entity") {
     return [
       {

@@ -16,9 +16,7 @@ import type {
   PartnerIdentityInput,
   SubmitPartnerBody,
 } from "@/features/partners/api/partnersApi"
-import type {
-  PartnerMatchResponse,
-} from "@/features/partners/api/schema"
+import type { PartnerMatchResponse } from "@/features/partners/api/schema"
 import { partnerDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
