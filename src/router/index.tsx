@@ -28,10 +28,7 @@ import {
   FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
   FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES,
 } from "@/features/frameworkAgreements/types"
-import {
-  WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES,
-  WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES,
-} from "@/features/workflowTaskCatalog/types"
+import { WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -147,10 +144,6 @@ const WorkflowTaskCatalogListPage = lazy(
 const WorkflowTaskCatalogDetailPage = lazy(
   () =>
     import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogDetailPage")
-)
-const WorkflowTaskCatalogMigrationWizardPage = lazy(
-  () =>
-    import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogMigrationWizardPage")
 )
 
 export const router = createBrowserRouter([
@@ -491,16 +484,6 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES}>
               <WorkflowTaskCatalogDetailPage />
-            </RoleGuard>
-          </Suspense>
-        ),
-      },
-      {
-        path: PATHS.WORKFLOW_TASK_CATALOG_MIGRATION,
-        element: (
-          <Suspense fallback={null}>
-            <RoleGuard allowed={WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES}>
-              <WorkflowTaskCatalogMigrationWizardPage />
             </RoleGuard>
           </Suspense>
         ),

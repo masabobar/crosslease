@@ -13,10 +13,10 @@ import {
 import { TaskDefinitionSheet } from "@/features/workflowTaskCatalog/components/TaskDefinitionSheet"
 import { PLACEHOLDER_TASK_DEFINITIONS } from "@/features/workflowTaskCatalog/constants"
 import type {
-  CatalogLayer,
   PlaceholderTaskDefinition,
   TaskDefinitionType,
 } from "@/features/workflowTaskCatalog/constants"
+import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
 
 const TYPE_BADGE_CLASSES: Record<TaskDefinitionType, string> = {
   global: "bg-sky-600/10 text-sky-600",

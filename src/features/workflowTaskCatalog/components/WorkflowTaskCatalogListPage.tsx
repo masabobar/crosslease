@@ -12,67 +12,22 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { buildPageNumbers } from "@/lib/pagination"
+import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { workflowTaskCatalogDetail } from "@/router/paths"
 import { WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import { WorkflowTaskCatalogFilterBar } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogFilterBar"
 import { WorkflowTaskCatalogTable } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogTable"
 import { CreateWorkflowTaskCatalogDialog } from "@/features/workflowTaskCatalog/components/CreateWorkflowTaskCatalogDialog"
-import { CatalogLifecycleActionDialog } from "@/features/workflowTaskCatalog/components/CatalogLifecycleActionDialog"
+import { useWorkflowTaskCatalogList } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogList"
 import {
-  CATALOG_LAYER,
-  EMPTY_CATALOG_FILTER_STATE,
   PAGE_SIZES,
-  PLACEHOLDER_CATALOG_ROWS,
-  PLACEHOLDER_PRODUCT_TEMPLATE_OPTIONS,
-} from "@/features/workflowTaskCatalog/constants"
-import type {
-  CatalogLayer,
-  CatalogLifecycleAction,
-  CatalogRowAction,
-  PageSize,
-  WorkflowTaskCatalogFilterState,
-  WorkflowTaskCatalogRow,
-} from "@/features/workflowTaskCatalog/constants"
-
-function matchesFilters(
-  row: WorkflowTaskCatalogRow,
-  search: string,
-  filters: WorkflowTaskCatalogFilterState
-): boolean {
-  const trimmedSearch = search.trim().toLowerCase()
-  if (trimmedSearch && !row.catalogName.toLowerCase().includes(trimmedSearch)) {
-    return false
-  }
-  if (
-    filters.catalogLayer.length > 0 &&
-    !filters.catalogLayer.includes(row.catalogLayer)
-  ) {
-    return false
-  }
-  if (
-    filters.entityType.length > 0 &&
-    !filters.entityType.includes(row.entityType)
-  ) {
-    return false
-  }
-  if (
-    filters.productTemplate.length > 0 &&
-    (!row.productTemplateName ||
-      !filters.productTemplate.includes(row.productTemplateName))
-  ) {
-    return false
-  }
-  if (
-    filters.catalogState.length > 0 &&
-    !filters.catalogState.includes(row.catalogState)
-  ) {
-    return false
-  }
-  // filters.versionState is presentational only — see constants.ts VERSION_STATE_OPTIONS
-  // comment: no per-row version-state field exists on the placeholder rows to filter by.
-  return true
-}
+  useWorkflowTaskCatalogListParams,
+} from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogListParams"
+import type { PageSize } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogListParams"
+import { CatalogLayerSchema } from "@/features/workflowTaskCatalog/api/schema"
+import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
 
 export default function WorkflowTaskCatalogListPage() {
   const { t } = useTranslation("workflowTaskCatalog")
@@ -84,67 +39,53 @@ export default function WorkflowTaskCatalogListPage() {
     WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   )
 
-  const [search, setSearch] = useState("")
-  const [filters, setFilters] = useState<WorkflowTaskCatalogFilterState>(
-    EMPTY_CATALOG_FILTER_STATE
-  )
-  const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState<PageSize>(25)
+  const {
+    page,
+    perPage,
+    search,
+    filters,
+    hasActiveFilters,
+    setPage,
+    setPerPage,
+    setSearch,
+    setFilters,
+  } = useWorkflowTaskCatalogListParams()
+
   const [createDialogLayer, setCreateDialogLayer] =
     useState<CatalogLayer | null>(null)
-  const [lifecycleAction, setLifecycleAction] = useState<{
-    mode: CatalogLifecycleAction
-    row: WorkflowTaskCatalogRow
-  } | null>(null)
 
-  const filteredRows = PLACEHOLDER_CATALOG_ROWS.filter(row =>
-    matchesFilters(row, search, filters)
+  // Product Template names are not on the list response — only entity_id — so US 15.22's
+  // "Applicable Product Template" column and filter are resolved against the selectable
+  // templates list. See open-questions.md Q-042: the durable fix is BE-side.
+  const { data: templates } = useSelectableProductTemplates()
+  const templateItems = templates?.items ?? []
+  const templateNames = new Map(
+    templateItems.map(item => [item.template_id, item.template_name])
   )
-  const total = filteredRows.length
-  const totalPages = Math.max(1, Math.ceil(total / perPage))
-  const pageNumbers = buildPageNumbers(page, totalPages)
-  const pagedRows = filteredRows.slice((page - 1) * perPage, page * perPage)
-  const hasActiveFilters =
-    Boolean(search.trim()) ||
-    Object.values(filters).some(list => list.length > 0)
+  const productTemplateOptions = templateItems.map(item => ({
+    value: item.template_id,
+    label: item.template_name,
+  }))
 
-  function handleFiltersChange(
-    update: Partial<WorkflowTaskCatalogFilterState>
-  ) {
-    setFilters(f => ({ ...f, ...update }))
-    setPage(1)
-  }
+  const { data, isLoading, isError, error } = useWorkflowTaskCatalogList({
+    page,
+    per_page: perPage,
+    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(filters.catalogLayer.length
+      ? { catalog_layer: filters.catalogLayer }
+      : {}),
+    ...(filters.entityType.length ? { entity_type: filters.entityType } : {}),
+    ...(filters.productTemplate.length
+      ? { product_template_id: filters.productTemplate }
+      : {}),
+    ...(filters.catalogState.length
+      ? { catalog_state: filters.catalogState }
+      : {}),
+  })
 
-  function handleSearchChange(value: string) {
-    setSearch(value)
-    setPage(1)
-  }
-
-  function handleRowAction(
-    action: CatalogRowAction,
-    row: WorkflowTaskCatalogRow
-  ) {
-    switch (action) {
-      case "openDetail":
-        navigate(workflowTaskCatalogDetail(row.id))
-        return
-      case "versionHistory":
-        navigate(`${workflowTaskCatalogDetail(row.id)}?tab=versionHistory`)
-        return
-      case "migrationHistory":
-        navigate(`${workflowTaskCatalogDetail(row.id)}?tab=migrationHistory`)
-        return
-      case "newDraftVersion":
-        // No "new draft version" screen was in scope for this pass's Figma nodes —
-        // left as a no-op pending that follow-up screen.
-        return
-      case "deprecate":
-        setLifecycleAction({ mode: "deprecate", row })
-        return
-      case "archive":
-        setLifecycleAction({ mode: "archive", row })
-    }
-  }
+  const rows = data?.items ?? []
+  const totalPages = Math.max(1, data?.total_pages ?? 1)
+  const pageNumbers = data ? buildPageNumbers(page, totalPages) : []
 
   return (
     <div className="p-8">
@@ -163,7 +104,9 @@ export default function WorkflowTaskCatalogListPage() {
             <Button
               variant="outline"
               data-testid="create-global-default-catalog-button"
-              onClick={() => setCreateDialogLayer(CATALOG_LAYER.GLOBAL_DEFAULT)}
+              onClick={() =>
+                setCreateDialogLayer(CatalogLayerSchema.enum.global_default)
+              }
             >
               <FileText size={16} />
               {t("list.createGlobalDefaultButton")}
@@ -172,7 +115,7 @@ export default function WorkflowTaskCatalogListPage() {
               variant="outline"
               data-testid="create-product-specific-catalog-button"
               onClick={() =>
-                setCreateDialogLayer(CATALOG_LAYER.PRODUCT_SPECIFIC)
+                setCreateDialogLayer(CatalogLayerSchema.enum.product_specific)
               }
             >
               <Settings size={16} />
@@ -186,25 +129,40 @@ export default function WorkflowTaskCatalogListPage() {
       <div className="mt-6">
         <WorkflowTaskCatalogFilterBar
           search={search}
-          onSearchChange={handleSearchChange}
+          onSearchChange={setSearch}
           filters={filters}
-          onFiltersChange={handleFiltersChange}
-          productTemplateOptions={PLACEHOLDER_PRODUCT_TEMPLATE_OPTIONS}
+          onFiltersChange={setFilters}
+          productTemplateOptions={productTemplateOptions}
         />
       </div>
 
       {/* Table */}
       <div className="mt-4">
-        <WorkflowTaskCatalogTable
-          rows={pagedRows}
-          hasActiveFilters={hasActiveFilters}
-          canManage={canManage}
-          onRowAction={handleRowAction}
-        />
+        {isError && !isLoading && (
+          <p
+            data-testid="workflow-task-catalog-list-error"
+            className="text-sm text-destructive py-8 text-center"
+          >
+            {error instanceof ApiError
+              ? t(`errors.${error.code}` as "errors.generic", {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")}
+          </p>
+        )}
+        {!isError && (
+          <WorkflowTaskCatalogTable
+            rows={rows}
+            isLoading={isLoading}
+            hasActiveFilters={hasActiveFilters}
+            templateNames={templateNames}
+            onOpenDetail={id => navigate(workflowTaskCatalogDetail(id))}
+          />
+        )}
       </div>
 
       {/* Pagination */}
-      {total > 0 && (
+      {data && data.total > 0 && (
         <div className="mt-4 flex items-center justify-end gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-foreground">
@@ -212,10 +170,7 @@ export default function WorkflowTaskCatalogListPage() {
             </span>
             <Select
               value={String(perPage)}
-              onValueChange={v => {
-                setPerPage(Number(v) as PageSize)
-                setPage(1)
-              }}
+              onValueChange={v => setPerPage(Number(v) as PageSize)}
             >
               <SelectTrigger
                 data-testid="pagination-page-size-select"
@@ -279,14 +234,6 @@ export default function WorkflowTaskCatalogListPage() {
         <CreateWorkflowTaskCatalogDialog
           layer={createDialogLayer}
           onOpenChange={open => !open && setCreateDialogLayer(null)}
-        />
-      )}
-
-      {lifecycleAction && (
-        <CatalogLifecycleActionDialog
-          mode={lifecycleAction.mode}
-          row={lifecycleAction.row}
-          onOpenChange={open => !open && setLifecycleAction(null)}
         />
       )}
     </div>

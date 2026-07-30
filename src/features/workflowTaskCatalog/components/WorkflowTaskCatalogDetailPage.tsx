@@ -1,23 +1,18 @@
 import { useState } from "react"
 import { useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Eye, Landmark, ListFilter } from "lucide-react"
+import { Landmark, ListFilter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
 import { IdentityScopeTab } from "@/features/workflowTaskCatalog/components/IdentityScopeTab"
 import { TaskDefinitionsTab } from "@/features/workflowTaskCatalog/components/TaskDefinitionsTab"
-import { VersionHistoryTab } from "@/features/workflowTaskCatalog/components/VersionHistoryTab"
-import { MigrationHistoryTab } from "@/features/workflowTaskCatalog/components/MigrationHistoryTab"
 import { AuditTrailTab } from "@/features/workflowTaskCatalog/components/AuditTrailTab"
-import { EffectiveTaskSetPreviewSheet } from "@/features/workflowTaskCatalog/components/EffectiveTaskSetPreviewSheet"
-import { SubmitForActivationDialog } from "@/features/workflowTaskCatalog/components/SubmitForActivationDialog"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import type { WorkflowTaskCatalogDetailTab } from "@/features/workflowTaskCatalog/types"
+import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
 import {
-  CATALOG_STATE,
   PLACEHOLDER_CATALOG_DETAIL_META,
   PLACEHOLDER_CATALOG_ROWS,
 } from "@/features/workflowTaskCatalog/constants"
@@ -26,10 +21,10 @@ import {
 // render as ONE combined tab trigger — the Figma design ("Identity & task
 // definitions") shows the Identity/Lifecycle cards and the Task definitions table
 // stacked under a single tab, not two separate ones. Both values are accepted from
-// ?tab= (and from WorkflowTaskCatalogListPage row actions) and displayed identically.
+// ?tab= and displayed identically.
 function toDisplayTab(
   tab: WorkflowTaskCatalogDetailTab
-): "identity" | "versionHistory" | "migrationHistory" | "auditTrail" {
+): "identity" | "auditTrail" {
   return tab === "taskDefinitions" ? "identity" : tab
 }
 
@@ -38,8 +33,6 @@ function toDisplayTab(
 const DETAIL_TABS: readonly WorkflowTaskCatalogDetailTab[] = [
   "identity",
   "taskDefinitions",
-  "versionHistory",
-  "migrationHistory",
   "auditTrail",
 ]
 
@@ -59,12 +52,10 @@ export default function WorkflowTaskCatalogDetailPage() {
   const [activeTab, setActiveTab] = useState<WorkflowTaskCatalogDetailTab>(
     isDetailTab(tabParam) ? tabParam : "identity"
   )
-  const [previewOpen, setPreviewOpen] = useState(false)
-  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
 
-  // Placeholder-only lookup — no detail endpoint exists yet for Epic 15 (see
-  // CLAUDE.md). Reusing the matching list row keeps the header consistent with
-  // whichever row the user navigated from; falls back to the first row directly.
+  // Placeholder-only lookup: GET /workflow-task-catalogs/{catalog_id} exists but this page
+  // is not wired to it yet (Q-024). Real ids are UUIDs, so the find never matches and the
+  // first row is used — this page does NOT reflect the catalog that was clicked.
   const row =
     PLACEHOLDER_CATALOG_ROWS.find(r => r.id === id) ??
     PLACEHOLDER_CATALOG_ROWS[0]
@@ -73,8 +64,10 @@ export default function WorkflowTaskCatalogDetailPage() {
     currentUser?.role &&
     WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   )
-  const isDraft = row.catalogState === CATALOG_STATE.DRAFT
-  const canEditTasks = canManage && isDraft
+  // No draft state exists on the wire — a catalog is created directly active and nothing
+  // transitions it, so "active" is the editable state and "archived" is terminal read-only.
+  const isEditableState = row.catalogState === CatalogStateSchema.enum.active
+  const canEditTasks = canManage && isEditableState
 
   const displayTab = toDisplayTab(activeTab)
 
@@ -94,27 +87,6 @@ export default function WorkflowTaskCatalogDetailPage() {
             </Badge>
             <WorkflowTaskCatalogStateBadge state={row.catalogState} />
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            data-testid="preview-effective-tasks-button"
-            onClick={() => setPreviewOpen(true)}
-          >
-            <Eye size={16} />
-            {t("detail.header.previewEffectiveTasksButton")}
-          </Button>
-          {canEditTasks && (
-            <Button
-              type="button"
-              data-testid="submit-for-activation-button"
-              onClick={() => setSubmitDialogOpen(true)}
-            >
-              {t("detail.header.submitForActivationButton")}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -145,16 +117,6 @@ export default function WorkflowTaskCatalogDetailPage() {
             key: "identity",
             label: t("detail.tabs.identityAndTaskDefinitions"),
             testId: "tab-identity-and-task-definitions",
-          },
-          {
-            key: "versionHistory",
-            label: t("detail.tabs.versionHistory"),
-            testId: "tab-version-history",
-          },
-          {
-            key: "migrationHistory",
-            label: t("detail.tabs.migrationHistory"),
-            testId: "tab-migration-history",
           },
           {
             key: "auditTrail",
@@ -194,25 +156,8 @@ export default function WorkflowTaskCatalogDetailPage() {
             />
           </div>
         )}
-        {displayTab === "versionHistory" && <VersionHistoryTab />}
-        {displayTab === "migrationHistory" && (
-          <MigrationHistoryTab catalogId={row.id} canManage={canManage} />
-        )}
         {displayTab === "auditTrail" && <AuditTrailTab />}
       </div>
-
-      {previewOpen && (
-        <EffectiveTaskSetPreviewSheet
-          activeVersion={row.version}
-          productTemplateName={row.productTemplateName}
-          entityType={row.entityType}
-          onOpenChange={setPreviewOpen}
-        />
-      )}
-
-      {submitDialogOpen && (
-        <SubmitForActivationDialog onOpenChange={setSubmitDialogOpen} />
-      )}
     </div>
   )
 }

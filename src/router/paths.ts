@@ -50,8 +50,6 @@ export const PATHS = {
   WORKFLOW_TASK_CATALOG_LIST: "/business-configuration/workflow-task-catalogs",
   WORKFLOW_TASK_CATALOG_DETAIL:
     "/business-configuration/workflow-task-catalogs/:id",
-  WORKFLOW_TASK_CATALOG_MIGRATION:
-    "/business-configuration/workflow-task-catalogs/:id/migrate",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -101,8 +99,4 @@ export function frameworkAgreementEdit(id: string): string {
 
 export function workflowTaskCatalogDetail(id: string): string {
   return PATHS.WORKFLOW_TASK_CATALOG_DETAIL.replace(":id", id)
-}
-
-export function workflowTaskCatalogMigration(id: string): string {
-  return PATHS.WORKFLOW_TASK_CATALOG_MIGRATION.replace(":id", id)
 }

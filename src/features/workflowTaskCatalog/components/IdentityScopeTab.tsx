@@ -2,15 +2,15 @@ import { useTranslation } from "react-i18next"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
 import { formatDate, formatDateTime } from "@/lib/formatters"
 import type {
+  CatalogEntityType,
   CatalogLayer,
   CatalogState,
-  EntityType,
-} from "@/features/workflowTaskCatalog/constants"
+} from "@/features/workflowTaskCatalog/api/schema"
 
 type Props = {
   catalogName: string
   catalogLayer: CatalogLayer
-  entityType: EntityType
+  entityType: CatalogEntityType
   productTemplateName: string | null
   tenantName: string
   catalogState: CatalogState

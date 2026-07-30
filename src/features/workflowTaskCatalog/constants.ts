@@ -1,284 +1,114 @@
-// Local UI-only enums and placeholder data for the Workflow Task Catalog static shell.
-// No backend exists yet for Epic 15 (see CLAUDE.md "Critical constraint") — nothing here
-// crosses a network boundary, so plain TS const objects are used instead of Zod schemas
-// (Zod is reserved for data that actually comes from an API response).
+// UI-only select-option labels and placeholder data for the Workflow Task Catalog.
+// Wire enums live in api/schema.ts — one source of truth per
+// .claude/rules/enums-and-constants.md §3; this file only maps them to i18n label keys.
+// The PLACEHOLDER_* blocks below back the catalog DETAIL page, which is not wired yet
+// (see .project-management/input/open-questions.md Q-024). The list screen reads the API.
 
-export const CATALOG_LAYER = {
-  GLOBAL_DEFAULT: "global_default",
-  PRODUCT_SPECIFIC: "product_specific",
-} as const
-export type CatalogLayer = (typeof CATALOG_LAYER)[keyof typeof CATALOG_LAYER]
-
-export const ENTITY_TYPE = {
-  REFINANCING_REQUEST: "refinancing_request",
-  FINANCING: "financing",
-  REDEMPTION_REQUEST: "redemption_request",
-} as const
-export type EntityType = (typeof ENTITY_TYPE)[keyof typeof ENTITY_TYPE]
-
-export const CATALOG_STATE = {
-  DRAFT: "draft",
-  ACTIVE: "active",
-  DEPRECATED: "deprecated",
-  ARCHIVED: "archived",
-} as const
-export type CatalogState = (typeof CATALOG_STATE)[keyof typeof CATALOG_STATE]
+import {
+  CatalogEntityTypeSchema,
+  CatalogLayerSchema,
+  CatalogStateSchema,
+} from "@/features/workflowTaskCatalog/api/schema"
+import type {
+  CatalogEntityType,
+  CatalogLayer,
+  CatalogState,
+} from "@/features/workflowTaskCatalog/api/schema"
 
 export const CATALOG_LAYER_OPTIONS = [
   {
-    value: CATALOG_LAYER.GLOBAL_DEFAULT,
+    value: CatalogLayerSchema.enum.global_default,
     labelKey: "catalogLayers.global_default",
   },
   {
-    value: CATALOG_LAYER.PRODUCT_SPECIFIC,
+    value: CatalogLayerSchema.enum.product_specific,
     labelKey: "catalogLayers.product_specific",
   },
 ] as const
 
 export const ENTITY_TYPE_OPTIONS = [
   {
-    value: ENTITY_TYPE.REFINANCING_REQUEST,
+    value: CatalogEntityTypeSchema.enum.refinancing_request,
     labelKey: "entityTypes.refinancing_request",
   },
-  { value: ENTITY_TYPE.FINANCING, labelKey: "entityTypes.financing" },
   {
-    value: ENTITY_TYPE.REDEMPTION_REQUEST,
+    value: CatalogEntityTypeSchema.enum.financing,
+    labelKey: "entityTypes.financing",
+  },
+  {
+    value: CatalogEntityTypeSchema.enum.redemption_request,
     labelKey: "entityTypes.redemption_request",
   },
 ] as const
 
 export const CATALOG_STATE_OPTIONS = [
-  { value: CATALOG_STATE.DRAFT, labelKey: "catalogStates.draft" },
-  { value: CATALOG_STATE.ACTIVE, labelKey: "catalogStates.active" },
-  { value: CATALOG_STATE.DEPRECATED, labelKey: "catalogStates.deprecated" },
-  { value: CATALOG_STATE.ARCHIVED, labelKey: "catalogStates.archived" },
+  { value: CatalogStateSchema.enum.active, labelKey: "catalogStates.active" },
+  {
+    value: CatalogStateSchema.enum.archived,
+    labelKey: "catalogStates.archived",
+  },
 ] as const
 
-// "Version State" per PRD1042-1179 adds "published" on top of the four Catalog States.
-// Presentational only — see WorkflowTaskCatalogFilterBar: no per-row version-state field
-// exists on the placeholder rows below, so this filter tracks a selection but does not
-// narrow the static rows (there is no per-version data to filter against yet).
-export const VERSION_STATE_OPTIONS = [
-  { value: "draft", labelKey: "versionStates.draft" },
-  { value: "published", labelKey: "versionStates.published" },
-  { value: "active", labelKey: "versionStates.active" },
-  { value: "deprecated", labelKey: "versionStates.deprecated" },
-  { value: "archived", labelKey: "versionStates.archived" },
-] as const
-export type VersionState = (typeof VERSION_STATE_OPTIONS)[number]["value"]
-
-// Shared by the Deprecate/Archive justification textareas — matches the Figma
-// "min 10 characters" hint under both fields.
-export const JUSTIFICATION_MIN_LENGTH = 10
-
-export const PAGE_SIZES = [10, 25, 50, 100] as const
-export type PageSize = (typeof PAGE_SIZES)[number]
-
-export type CatalogRowAction =
-  | "openDetail"
-  | "newDraftVersion"
-  | "versionHistory"
-  | "migrationHistory"
-  | "deprecate"
-  | "archive"
-
-export type CatalogLifecycleAction = "deprecate" | "archive"
-
-export type WorkflowTaskCatalogRow = {
+// Not exported: nothing outside this file consumes the shape any more. The list screen reads
+// CatalogListItem from api/schema.ts, and the detail page infers this from the array below.
+type WorkflowTaskCatalogRow = {
   id: string
   catalogName: string
   catalogLayer: CatalogLayer
-  entityType: EntityType
-  // null for Global Default rows — Product Template reference is forced null for that
-  // layer per PRD1042-1158 (rejected as a structural error if non-null).
+  entityType: CatalogEntityType
+  // null for Global Default rows — the Product Template reference is forced null for that
+  // layer (CreateCatalogRequest rejects a non-null entity_id on global_default).
   productTemplateName: string | null
   version: string
-  // null = "Open ended" (no Valid Until set).
   publishedAt: string | null
   catalogState: CatalogState
-  objectRefCount: number
 }
 
-// Placeholder Active Product Templates — no Product Template list endpoint is queried
-// here; this is static population only for the "Applicable product template" selector
-// and the list's Product template filter (see CLAUDE.md constraint: no data wiring).
-export const PLACEHOLDER_PRODUCT_TEMPLATE_OPTIONS = [
-  "Standard Loan",
-  "Mortgage Plus",
-  "Auto Lease",
-  "SME Standard",
-  "Consumer Loan",
-  "Equipment Lease",
-  "Auto Refinance",
-  "Corporate Lease",
-  "Insurance Bundle",
-  "Asset Recovery",
-  "Solar Leasing",
-  "Premium Lease",
-].map(name => ({ value: name, label: name }))
-
-// Placeholder rows — no API exists yet for Epic 15 (see CLAUDE.md), used only to
-// populate the static list shell. Global Default rows carry a null product template per
-// the "forced null" business rule in PRD1042-1158, even though the Figma sample data
-// shows a template name against those rows.
+// Placeholder rows for the still-unwired DETAIL page only — the list screen reads the API.
+// Real catalog ids are UUIDs, so the detail page's id lookup never matches and it falls back
+// to the first row; the second row exists so the archived (read-only) path stays reachable.
+// Two rows rather than the previous twelve: the ten extra list fixtures became dead weight
+// once the list stopped reading them.
 export const PLACEHOLDER_CATALOG_ROWS: WorkflowTaskCatalogRow[] = [
   {
     id: "wtc-1",
-    catalogName: "Financing Default",
-    catalogLayer: CATALOG_LAYER.GLOBAL_DEFAULT,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: null,
-    version: "v4",
+    catalogName: "Refinancing Rules",
+    catalogLayer: CatalogLayerSchema.enum.product_specific,
+    entityType: CatalogEntityTypeSchema.enum.refinancing_request,
+    productTemplateName: "Mortgage Plus",
+    version: "v0.1",
     publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.ACTIVE,
-    objectRefCount: 124,
+    catalogState: CatalogStateSchema.enum.active,
   },
   {
     id: "wtc-2",
-    catalogName: "Refinancing Rules",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.REFINANCING_REQUEST,
-    productTemplateName: "Mortgage Plus",
-    version: "v5",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.ACTIVE,
-    objectRefCount: 36,
-  },
-  {
-    id: "wtc-3",
-    catalogName: "Redemption Workflow",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.REDEMPTION_REQUEST,
-    productTemplateName: "Auto Lease",
-    version: "v3",
-    publishedAt: null,
-    catalogState: CATALOG_STATE.ACTIVE,
-    objectRefCount: 87,
-  },
-  {
-    id: "wtc-4",
-    catalogName: "SME Financing",
-    catalogLayer: CATALOG_LAYER.GLOBAL_DEFAULT,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: null,
-    version: "v2",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.ACTIVE,
-    objectRefCount: 59,
-  },
-  {
-    id: "wtc-5",
-    catalogName: "Consumer Loan Flow",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: "Consumer Loan",
-    version: "v7",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.ACTIVE,
-    objectRefCount: 41,
-  },
-  {
-    id: "wtc-6",
-    catalogName: "Leasing Approval",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: "Equipment Lease",
-    version: "v8",
-    publishedAt: null,
-    catalogState: CATALOG_STATE.ACTIVE,
-    objectRefCount: 73,
-  },
-  {
-    id: "wtc-7",
-    catalogName: "Vehicle Refinancing",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.REFINANCING_REQUEST,
-    productTemplateName: "Auto Refinance",
-    version: "v1",
-    publishedAt: null,
-    catalogState: CATALOG_STATE.DEPRECATED,
-    objectRefCount: 0,
-  },
-  {
-    id: "wtc-8",
-    catalogName: "Corporate Workflow",
-    catalogLayer: CATALOG_LAYER.GLOBAL_DEFAULT,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: null,
-    version: "v4",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.DEPRECATED,
-    objectRefCount: 198,
-  },
-  {
-    id: "wtc-9",
-    catalogName: "Insurance Extension",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: "Insurance Bundle",
-    version: "v6",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.DRAFT,
-    objectRefCount: 14,
-  },
-  {
-    id: "wtc-10",
-    catalogName: "Asset Redemption",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.REDEMPTION_REQUEST,
-    productTemplateName: "Asset Recovery",
-    version: "v7",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.DEPRECATED,
-    objectRefCount: 65,
-  },
-  {
-    id: "wtc-11",
     catalogName: "Green Energy Finance",
-    catalogLayer: CATALOG_LAYER.GLOBAL_DEFAULT,
-    entityType: ENTITY_TYPE.FINANCING,
+    catalogLayer: CatalogLayerSchema.enum.global_default,
+    entityType: CatalogEntityTypeSchema.enum.financing,
     productTemplateName: null,
-    version: "v1",
+    version: "v0.1",
     publishedAt: null,
-    catalogState: CATALOG_STATE.ARCHIVED,
-    objectRefCount: 0,
-  },
-  {
-    id: "wtc-12",
-    catalogName: "Premium Leasing",
-    catalogLayer: CATALOG_LAYER.PRODUCT_SPECIFIC,
-    entityType: ENTITY_TYPE.FINANCING,
-    productTemplateName: "Premium Lease",
-    version: "v9",
-    publishedAt: "2028-12-31",
-    catalogState: CATALOG_STATE.ARCHIVED,
-    objectRefCount: 0,
+    catalogState: CatalogStateSchema.enum.archived,
   },
 ]
 
+// Version state is gone — it has no wire concept at all; versioning is a hidden implementation
+// detail with a single active version (BE detail_service.py), and US 15.22's November scope note
+// removes the version-state columns and filters outright.
+// productTemplate holds Product Template UUIDs (the `product_template_id` query param), not names.
 export type WorkflowTaskCatalogFilterState = {
   catalogLayer: CatalogLayer[]
-  entityType: EntityType[]
+  entityType: CatalogEntityType[]
   productTemplate: string[]
-  versionState: VersionState[]
   catalogState: CatalogState[]
 }
 
-export const EMPTY_CATALOG_FILTER_STATE: WorkflowTaskCatalogFilterState = {
-  catalogLayer: [],
-  entityType: [],
-  productTemplate: [],
-  versionState: [],
-  catalogState: [],
-}
-
-// ─── Catalog Detail page — placeholder data (PRD1042-1180/1160-1163/1175-1177) ───
-// No API exists yet for Epic 15 (see CLAUDE.md). Everything below is static shell
-// data derived from the Figma "True Sale Catalog" example — used regardless of the
-// route :id, except catalogState/layer/entityType/productTemplateName/version/
-// publishedAt/objectRefCount, which are read from the matching PLACEHOLDER_CATALOG_ROWS
-// entry so the Draft vs Active header/editability actually varies by which list row
-// was clicked.
+// ─── Catalog Detail page — placeholder data ───
+// GET /workflow-task-catalogs/{catalog_id} exists but the detail page is not wired to it
+// yet (Q-024): everything below is static data derived from the Figma "True Sale Catalog"
+// example, used regardless of the route :id. Wiring it is its own unit — several of these
+// fields have no wire source (published at/by, the version label) and the response returns
+// created_by/tenant_id as UUIDs rather than display names.
 
 // Fixed lifecycle fields the list row shape doesn't carry (Tenant, Created/Published by).
 export const PLACEHOLDER_CATALOG_DETAIL_META = {
@@ -508,135 +338,6 @@ export const PLACEHOLDER_PARENT_TASK_OPTIONS =
     label: `${task.taskCode}, ${task.taskName}`,
   }))
 
-export type PlaceholderVersionHistoryEntry = {
-  id: string
-  version: string
-  state: CatalogState
-  activatedAt: string
-  changeSummary: string
-  objectRefs: number
-  archivable: boolean
-  publishedAt: string | null
-  publishedBy: string | null
-  approvedAt: string | null
-  approvedBy: string | null
-  deprecatedAt: string | null
-}
-
-// True Sale Catalog's version history, per the Figma "Version history" tab.
-export const PLACEHOLDER_VERSION_HISTORY: PlaceholderVersionHistoryEntry[] = [
-  {
-    id: "version-2",
-    version: "v2",
-    state: CATALOG_STATE.ACTIVE,
-    activatedAt: "2024-06-12T15:32:00Z",
-    changeSummary: "Updated FHA weight thresholds per Q3 compliance guidance",
-    objectRefs: 42,
-    archivable: false,
-    publishedAt: "2024-06-12T15:32:00Z",
-    publishedBy: "Adam Sandler",
-    approvedAt: "2024-06-12T15:32:00Z",
-    approvedBy: "Bruce Wayne",
-    deprecatedAt: null,
-  },
-  {
-    id: "version-3",
-    version: "v3",
-    state: CATALOG_STATE.DEPRECATED,
-    activatedAt: "2024-06-12T15:32:00Z",
-    changeSummary: "Added MIP calculation review task (FHA-002)",
-    objectRefs: 0,
-    archivable: true,
-    publishedAt: "2024-06-12T15:32:00Z",
-    publishedBy: "James Wu",
-    approvedAt: "2024-06-12T15:32:00Z",
-    approvedBy: "Bruce Wayne",
-    deprecatedAt: "2024-06-12T15:32:00Z",
-  },
-  {
-    id: "version-1",
-    version: "v1",
-    state: CATALOG_STATE.ARCHIVED,
-    activatedAt: "2024-06-12T15:32:00Z",
-    changeSummary: "Bug fix: corrected stage assignment for FHA-002",
-    objectRefs: 0,
-    archivable: true,
-    publishedAt: "2024-06-12T15:32:00Z",
-    publishedBy: "James Wu",
-    approvedAt: "2024-06-12T15:32:00Z",
-    approvedBy: "Bruce Wayne",
-    deprecatedAt: "2024-06-12T15:32:00Z",
-  },
-  {
-    id: "version-4",
-    version: "v4",
-    state: CATALOG_STATE.ARCHIVED,
-    activatedAt: "2024-06-12T15:32:00Z",
-    changeSummary: "Initial product specific catalog for FHA Standard 2024",
-    objectRefs: 0,
-    archivable: true,
-    publishedAt: "2024-06-12T15:32:00Z",
-    publishedBy: "James Wu",
-    approvedAt: "2024-06-12T15:32:00Z",
-    approvedBy: "Bruce Wayne",
-    deprecatedAt: "2024-06-12T15:32:00Z",
-  },
-]
-
-export type PlaceholderMigrationHistoryEntry = {
-  id: string
-  fromVersion: string
-  toVersion: string
-  objectsInScope: number
-  decisionAt: string
-  dryRunReportName: string
-  initiator: string
-  approver: string
-  reconciledCount: number
-  manualReviewCount: number
-}
-
-// True Sale Catalog's migration history, per the Figma "Migration history" tab.
-export const PLACEHOLDER_MIGRATION_HISTORY: PlaceholderMigrationHistoryEntry[] =
-  [
-    {
-      id: "migration-v2-v3",
-      fromVersion: "v2",
-      toVersion: "v3",
-      objectsInScope: 12,
-      decisionAt: "2024-06-12T15:32:00Z",
-      dryRunReportName: "rpt-mig-20240801",
-      initiator: "Operations",
-      approver: "Bruce Wayne",
-      reconciledCount: 12,
-      manualReviewCount: 0,
-    },
-    {
-      id: "migration-v3-v4",
-      fromVersion: "v3",
-      toVersion: "v4",
-      objectsInScope: 8,
-      decisionAt: "2024-06-12T15:32:00Z",
-      dryRunReportName: "rpt-mig-20240801",
-      initiator: "Operations",
-      approver: "Bruce Wayne",
-      reconciledCount: 12,
-      manualReviewCount: 2,
-    },
-    {
-      id: "migration-v1-v2",
-      fromVersion: "v1",
-      toVersion: "v2",
-      objectsInScope: 8,
-      decisionAt: "2024-06-12T15:32:00Z",
-      dryRunReportName: "rpt-mig-20240801",
-      initiator: "Operations",
-      approver: "Bruce Wayne",
-      reconciledCount: 8,
-      manualReviewCount: 0,
-    },
-  ]
-
 export const AUDIT_ACTOR_TYPE = {
   HUMAN_USER: "human_user",
   SYSTEM: "system",
@@ -731,272 +432,3 @@ export const PLACEHOLDER_AUDIT_TRAIL: PlaceholderAuditTrailEntry[] = [
     fieldDelta: "version: 2 → 3",
   },
 ]
-
-export type PlaceholderEffectiveTask = {
-  code: string
-  taskName: string
-  source: TaskDefinitionType
-  mandatory: boolean
-  weight: number
-  responsibleRole: TaskResponsibleRole
-  stage: string
-  documentRequirementRef: string | null
-}
-
-// Resolved effective task set for the "Preview effective tasks" sheet, per
-// PRD1042-1181 (out of this story's 5-tab scope, but directly triggered from this
-// page's header in both fetched Figma nodes, so included as a static shell).
-export const PLACEHOLDER_EFFECTIVE_TASKS: PlaceholderEffectiveTask[] = [
-  {
-    code: "KYC-001",
-    taskName: "Identity verification",
-    source: TASK_DEFINITION_TYPE.OVERRIDE,
-    mandatory: true,
-    weight: 8,
-    responsibleRole: TASK_RESPONSIBLE_ROLE.COMPLIANCE,
-    stage: "Pre-application",
-    documentRequirementRef: "DOC-KYC-001",
-  },
-  {
-    code: "KYC-002",
-    taskName: "AML screening",
-    source: TASK_DEFINITION_TYPE.GLOBAL,
-    mandatory: true,
-    weight: 8,
-    responsibleRole: TASK_RESPONSIBLE_ROLE.COMPLIANCE,
-    stage: "Pre-application",
-    documentRequirementRef: null,
-  },
-  {
-    code: "INC-001",
-    taskName: "Income verification",
-    source: TASK_DEFINITION_TYPE.GLOBAL,
-    mandatory: true,
-    weight: 7,
-    responsibleRole: TASK_RESPONSIBLE_ROLE.FRONT_OFFICE,
-    stage: "Application",
-    documentRequirementRef: null,
-  },
-  {
-    code: "APR-001",
-    taskName: "Underwriter review",
-    source: TASK_DEFINITION_TYPE.GLOBAL,
-    mandatory: true,
-    weight: 10,
-    responsibleRole: TASK_RESPONSIBLE_ROLE.BACK_OFFICE_RISK,
-    stage: "Underwriting",
-    documentRequirementRef: "DOC-APR-001",
-  },
-  {
-    code: "FHA-001",
-    taskName: "FHA eligibility check",
-    source: TASK_DEFINITION_TYPE.SUPPLEMENT,
-    mandatory: true,
-    weight: 7,
-    responsibleRole: TASK_RESPONSIBLE_ROLE.FRONT_OFFICE,
-    stage: "Application",
-    documentRequirementRef: "DOC-FHA-001",
-  },
-  {
-    code: "FHA-002",
-    taskName: "MIP calculation review",
-    source: TASK_DEFINITION_TYPE.SUPPLEMENT,
-    mandatory: true,
-    weight: 4,
-    responsibleRole: TASK_RESPONSIBLE_ROLE.FRONT_OFFICE,
-    stage: "Application",
-    documentRequirementRef: "DOC-FHA-001",
-  },
-]
-
-export type PlaceholderPrecheckIssue = {
-  id: string
-  title: string
-  description: string
-}
-
-// Fixed "Publication check failed" issues for the Submit for activation dialog, per
-// the Figma "PRECHECK FAIL" state. Always the same 3 issues in this static shell —
-// there is no real validation engine yet, so the dialog only demonstrates the blocked
-// state (Submit stays disabled); see CLAUDE.md "Critical constraint".
-export const PLACEHOLDER_SUBMIT_PRECHECK_ISSUES: PlaceholderPrecheckIssue[] = [
-  {
-    id: "issue-1",
-    title: "Document requirement ref is deprecated",
-    description:
-      "Task FHA-002, MIP calculation review, references document requirement DR-7.1 which is deprecated. Update to an active version or remove the reference.",
-  },
-  {
-    id: "issue-2",
-    title: "Contradictory override and deactivate pair on same parent task",
-    description:
-      "Task code KYC-001 has both an override entry and a deactivate entry in this product specific catalog. Remove one of the conflicting entries before submitting.",
-  },
-  {
-    id: "issue-3",
-    title: "Parent task ID unresolvable",
-    description:
-      "Task FHA-001, FHA eligibility check, declares parent task GD-MORG-999 which does not exist in the active global default catalog. Remove or correct the parent reference.",
-  },
-]
-
-// ─── Migration Wizard — placeholder data (PRD1042-1172/1173/1174) ───────────
-// No API exists yet for Epic 15 (see CLAUDE.md). The dry-run/execution report below is a
-// single fixed canned report reused across the Define Scope, Approval, and Execution
-// steps — a real system would compute the report from the scope IDs entered in Define
-// Scope; this static shell does not perform that computation.
-
-export const MIGRATION_TO_VERSION_OPTIONS = [
-  { value: "v3", label: "v3 - Mortgage task set refresh" },
-  { value: "v4", label: "v4 - Q1 underwriting model update" },
-] as const
-
-export const PLACEHOLDER_MIGRATION_DEFAULT_SCOPE_IDS = [
-  "BO-10045",
-  "BO-10087",
-  "BO-1034",
-  "BO-10402",
-  "BO-10112",
-]
-
-export const PLACEHOLDER_MIGRATION_DRY_RUN_SUMMARY = {
-  reportId: "DRR-2025-07-08-0042",
-  fromVersion: "v2",
-  toVersion: "v3",
-  added: 12,
-  modified: 9,
-  deactivated: 4,
-  newInstances: 132,
-  naInstances: 33,
-}
-
-export type PlaceholderMigrationScopeObject = {
-  id: string
-  name: string
-  naInstances: number
-  mandatoryChanges: number
-  newInstances: number
-  taskDelta: string[]
-}
-
-// True Sale Catalog migration dry-run's 6 in-scope objects, per the Figma "Dry run
-// report" / "Approve or reject" frames (both reuse the same canned report).
-export const PLACEHOLDER_MIGRATION_SCOPE_OBJECTS: PlaceholderMigrationScopeObject[] =
-  [
-    {
-      id: "BO-10145",
-      name: "Mortgage origination standard",
-      naInstances: 0,
-      mandatoryChanges: 2,
-      newInstances: 47,
-      taskDelta: [
-        "Annual income verification: threshold 680 → 700",
-        "Employment continuity check",
-        "Property appraisal review",
-        "Credit score evaluation",
-        "Debt to income assessment: cap updated",
-      ],
-    },
-    {
-      id: "BO-10123",
-      name: "Home equity line of credit",
-      naInstances: 8,
-      mandatoryChanges: 1,
-      newInstances: 12,
-      taskDelta: ["1 task added, 4 modified, 1 deactivated"],
-    },
-    {
-      id: "BO-10223",
-      name: "Auto refinance standard",
-      naInstances: 0,
-      mandatoryChanges: 0,
-      newInstances: 23,
-      taskDelta: ["2 tasks added, 1 modified"],
-    },
-    {
-      id: "BO-10201",
-      name: "Personal loan standard",
-      naInstances: 18,
-      mandatoryChanges: 3,
-      newInstances: 0,
-      taskDelta: ["Active task instances blocking migration for 18 records"],
-    },
-    {
-      id: "BO-10189",
-      name: "Student loan refinance",
-      naInstances: 7,
-      mandatoryChanges: 0,
-      newInstances: 0,
-      taskDelta: ["Version lock conflict detected on 7 in progress workflows"],
-    },
-    {
-      id: "BO-10167",
-      name: "Commercial property loan",
-      naInstances: 2,
-      mandatoryChanges: 1,
-      newInstances: 19,
-      taskDelta: ["2 tasks added, 2 modified"],
-    },
-  ]
-
-export const MIGRATION_OBJECT_OUTCOME = {
-  RECONCILED: "reconciled",
-  FAILED: "failed",
-} as const
-export type MigrationObjectOutcome =
-  (typeof MIGRATION_OBJECT_OUTCOME)[keyof typeof MIGRATION_OBJECT_OUTCOME]
-
-export type PlaceholderMigrationExecutionOutcome = {
-  id: string
-  name: string
-  outcome: MigrationObjectOutcome
-  details: string
-}
-
-// Per-object outcomes for the Execution Report, per the Figma "Execution report" frame
-// (4 reconciled, 2 failed — matches the header chip counts).
-export const PLACEHOLDER_MIGRATION_EXECUTION_OUTCOMES: PlaceholderMigrationExecutionOutcome[] =
-  [
-    {
-      id: "BO-10145",
-      name: "Mortgage origination standard",
-      outcome: MIGRATION_OBJECT_OUTCOME.RECONCILED,
-      details: "3 tasks added, 2 modified. 47 new instances created.",
-    },
-    {
-      id: "BO-10123",
-      name: "Home equity line of credit",
-      outcome: MIGRATION_OBJECT_OUTCOME.RECONCILED,
-      details:
-        "1 task added, 4 modified, 1 deactivated. 12 new instances, 8 marked NA.",
-    },
-    {
-      id: "BO-10223",
-      name: "Auto refinance standard",
-      outcome: MIGRATION_OBJECT_OUTCOME.RECONCILED,
-      details: "2 tasks added, 1 modified. 23 new instances created.",
-    },
-    {
-      id: "BO-10201",
-      name: "Personal loan standard",
-      outcome: MIGRATION_OBJECT_OUTCOME.FAILED,
-      details:
-        "Active task instances blocking migration for 18 records. Object retains v2.",
-    },
-    {
-      id: "BO-10189",
-      name: "Student loan refinance",
-      outcome: MIGRATION_OBJECT_OUTCOME.FAILED,
-      details:
-        "Version lock conflict detected on 7 in progress workflows. Object retains v2.",
-    },
-    {
-      id: "BO-10167",
-      name: "Commercial property loan",
-      outcome: MIGRATION_OBJECT_OUTCOME.RECONCILED,
-      details: "2 tasks added, 2 modified. 19 new instances created.",
-    },
-  ]
-
-export const PLACEHOLDER_MIGRATION_EXECUTION_GENERATED_AT =
-  "2025-07-08T14:32:00Z"
