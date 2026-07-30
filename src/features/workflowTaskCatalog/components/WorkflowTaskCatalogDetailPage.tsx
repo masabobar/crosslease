@@ -3,25 +3,31 @@ import { useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Landmark, ListFilter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
+import { ApiError } from "@/lib/api"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
 import { IdentityScopeTab } from "@/features/workflowTaskCatalog/components/IdentityScopeTab"
 import { TaskDefinitionsTab } from "@/features/workflowTaskCatalog/components/TaskDefinitionsTab"
 import { AuditTrailTab } from "@/features/workflowTaskCatalog/components/AuditTrailTab"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useUsers } from "@/features/users/hooks/useUsers"
+import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
+import { useWorkflowTaskCatalogDetail } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogDetail"
 import { WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import type { WorkflowTaskCatalogDetailTab } from "@/features/workflowTaskCatalog/types"
 import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
-import {
-  PLACEHOLDER_CATALOG_DETAIL_META,
-  PLACEHOLDER_CATALOG_ROWS,
-} from "@/features/workflowTaskCatalog/constants"
 
-// The "identity" and "taskDefinitions" tab values from WorkflowTaskCatalogDetailTab
-// render as ONE combined tab trigger — the Figma design ("Identity & task
-// definitions") shows the Identity/Lifecycle cards and the Task definitions table
-// stacked under a single tab, not two separate ones. Both values are accepted from
-// ?tab= and displayed identically.
+// The detail response returns created_by and tenant_id as UUIDs with no display names, so they
+// are resolved against the tenant's user list — the same join SupportGrantsTab uses for a
+// grant's "granted by". Generous page size because created_by may be any user in the tenant;
+// an id outside the page falls back to the raw UUID rather than rendering blank. The durable
+// fix is BE-side (see open-questions.md Q-042).
+const NAME_LOOKUP_PAGE_SIZE = 100
+
+// The "identity" and "taskDefinitions" tab values render as ONE combined tab trigger — the
+// Figma design ("Identity & task definitions") stacks the identity cards and the task table
+// under a single tab. Both values are accepted from ?tab= and displayed identically.
 function toDisplayTab(
   tab: WorkflowTaskCatalogDetailTab
 ): "identity" | "auditTrail" {
@@ -53,23 +59,80 @@ export default function WorkflowTaskCatalogDetailPage() {
     isDetailTab(tabParam) ? tabParam : "identity"
   )
 
-  // Placeholder-only lookup: GET /workflow-task-catalogs/{catalog_id} exists but this page
-  // is not wired to it yet (Q-024). Real ids are UUIDs, so the find never matches and the
-  // first row is used — this page does NOT reflect the catalog that was clicked.
-  const row =
-    PLACEHOLDER_CATALOG_ROWS.find(r => r.id === id) ??
-    PLACEHOLDER_CATALOG_ROWS[0]
+  const {
+    data: catalog,
+    isLoading,
+    isError,
+    error,
+  } = useWorkflowTaskCatalogDetail(id)
+
+  const { data: usersData } = useUsers({
+    tenant_id: catalog?.tenant_id,
+    per_page: NAME_LOOKUP_PAGE_SIZE,
+  })
+  const { data: templates } = useSelectableProductTemplates()
 
   const canManage = Boolean(
     currentUser?.role &&
     WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   )
-  // No draft state exists on the wire — a catalog is created directly active and nothing
-  // transitions it, so "active" is the editable state and "archived" is terminal read-only.
-  const isEditableState = row.catalogState === CatalogStateSchema.enum.active
-  const canEditTasks = canManage && isEditableState
 
   const displayTab = toDisplayTab(activeTab)
+
+  if (isLoading) {
+    return (
+      <div
+        className="p-8 flex flex-col gap-4"
+        data-testid="catalog-detail-loading"
+      >
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  // Unknown id, cross-tenant id and non-authorised role all come back as the same 404
+  // (WTC_CATALOG_NOT_FOUND) by design — existence non-disclosure — so one message covers all
+  // three without revealing which it was.
+  if (isError || !catalog) {
+    return (
+      <div className="p-8">
+        <p
+          data-testid="catalog-detail-error"
+          className="text-sm text-destructive py-8 text-center"
+        >
+          {error instanceof ApiError
+            ? t(`errors.${error.code}` as "errors.generic", {
+                defaultValue: t("errors.generic"),
+              })
+            : t("errors.generic")}
+        </p>
+      </div>
+    )
+  }
+
+  const users = usersData?.users ?? []
+  // One id→name map serves both consumers of the lookup: the identity card's created_by and
+  // the audit trail's per-event actor.
+  const userNamesById = Object.fromEntries(
+    users.map(u => [u.id, `${u.first_name} ${u.last_name}`])
+  )
+  const createdByName = userNamesById[catalog.created_by] ?? null
+  const tenantName = users.find(u => u.tenant_name)?.tenant_name ?? null
+  const productTemplateName = catalog.entity_id
+    ? ((templates?.items ?? []).find(i => i.template_id === catalog.entity_id)
+        ?.template_name ?? null)
+    : null
+
+  // No draft state exists on the wire — a catalogue is created directly active and nothing
+  // transitions it, so "active" is the editable state and "archived" is terminal read-only.
+  // current_version_id is the only source of the version every task mutation needs: with no
+  // version there is no request to build, so authoring is off rather than failing on submit.
+  const canEditTasks =
+    canManage &&
+    catalog.catalog_state === CatalogStateSchema.enum.active &&
+    catalog.current_version_id !== null
 
   return (
     <div
@@ -80,12 +143,12 @@ export default function WorkflowTaskCatalogDetailPage() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold text-foreground">
-              {row.catalogName}
+              {catalog.catalog_name}
             </h1>
             <Badge variant="secondary">
-              {t(`catalogLayers.${row.catalogLayer}`)}
+              {t(`catalogLayers.${catalog.catalog_layer}`)}
             </Badge>
-            <WorkflowTaskCatalogStateBadge state={row.catalogState} />
+            <WorkflowTaskCatalogStateBadge state={catalog.catalog_state} />
           </div>
         </div>
       </div>
@@ -97,7 +160,7 @@ export default function WorkflowTaskCatalogDetailPage() {
             {t("detail.header.tenant")}
           </span>
           <span className="text-foreground">
-            {PLACEHOLDER_CATALOG_DETAIL_META.tenantName}
+            {tenantName ?? catalog.tenant_id}
           </span>
         </span>
         <span className="flex items-center gap-1.5 text-sm">
@@ -106,7 +169,9 @@ export default function WorkflowTaskCatalogDetailPage() {
             {t("detail.header.entityType")}
           </span>
           <span className="text-foreground">
-            {t(`entityTypes.${row.entityType}`)}
+            {catalog.entity_type
+              ? t(`entityTypes.${catalog.entity_type}`)
+              : t("detail.identity.notApplicable")}
           </span>
         </span>
       </div>
@@ -132,31 +197,24 @@ export default function WorkflowTaskCatalogDetailPage() {
         {displayTab === "identity" && (
           <div className="flex flex-col gap-6">
             <IdentityScopeTab
-              catalogName={row.catalogName}
-              catalogLayer={row.catalogLayer}
-              entityType={row.entityType}
-              productTemplateName={row.productTemplateName}
-              tenantName={PLACEHOLDER_CATALOG_DETAIL_META.tenantName}
-              catalogState={row.catalogState}
-              createdAt={PLACEHOLDER_CATALOG_DETAIL_META.createdAt}
-              createdBy={PLACEHOLDER_CATALOG_DETAIL_META.createdBy}
-              activeVersion={row.version}
-              publishedAt={row.publishedAt}
-              publishedBy={
-                row.publishedAt
-                  ? PLACEHOLDER_CATALOG_DETAIL_META.publishedBy
-                  : null
-              }
-              validFrom={PLACEHOLDER_CATALOG_DETAIL_META.validFrom}
-              validUntil={PLACEHOLDER_CATALOG_DETAIL_META.validUntil}
+              catalog={catalog}
+              tenantName={tenantName}
+              createdByName={createdByName}
+              productTemplateName={productTemplateName}
             />
             <TaskDefinitionsTab
-              catalogLayer={row.catalogLayer}
+              catalogId={catalog.id}
+              versionId={catalog.current_version_id}
+              catalogLayer={catalog.catalog_layer}
+              entityType={catalog.entity_type}
+              tasks={catalog.tasks}
               canEdit={canEditTasks}
             />
           </div>
         )}
-        {displayTab === "auditTrail" && <AuditTrailTab />}
+        {displayTab === "auditTrail" && (
+          <AuditTrailTab catalogId={catalog.id} userNamesById={userNamesById} />
+        )}
       </div>
     </div>
   )

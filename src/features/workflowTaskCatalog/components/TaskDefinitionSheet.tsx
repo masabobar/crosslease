@@ -2,12 +2,12 @@ import { useForm, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
-import { FileText } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 import { SelectField } from "@/components/ui/select"
 import {
   Sheet,
@@ -17,89 +17,194 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
+import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
+import { useAddCatalogTask } from "@/features/workflowTaskCatalog/hooks/useAddCatalogTask"
+import { useUpdateCatalogTask } from "@/features/workflowTaskCatalog/hooks/useUpdateCatalogTask"
+import { useRemoveCatalogTask } from "@/features/workflowTaskCatalog/hooks/useRemoveCatalogTask"
 import {
-  DOCUMENT_PINNING_BEHAVIOR,
-  PLACEHOLDER_DOCUMENT_REQUIREMENT_OPTIONS,
-  PLACEHOLDER_PARENT_TASK_OPTIONS,
   PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS,
   TASK_CATEGORY_OPTIONS,
-  TASK_DEFINITION_TYPE,
   TASK_RESPONSIBLE_ROLE_OPTIONS,
   TASK_STAGE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
+import {
+  CatalogLayerSchema,
+  ConditionalTriggerSchema,
+  LayerActionSchema,
+  TaskProcessContextSchema,
+} from "@/features/workflowTaskCatalog/api/schema"
 import type {
-  DocumentPinningBehavior,
-  PlaceholderTaskDefinition,
-  TaskDefinitionType,
-} from "@/features/workflowTaskCatalog/constants"
-import { CatalogLayerSchema } from "@/features/workflowTaskCatalog/api/schema"
-import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
+  AddTaskRequest,
+  CatalogEntityType,
+  CatalogLayer,
+  LayerAction,
+  TaskDefinitionItem,
+  UpdateTaskRequest,
+} from "@/features/workflowTaskCatalog/api/schema"
 
 type SheetMode = "view" | "edit" | "add"
 
-const taskDefinitionFormSchema = z
+// Identity fields belong to the task itself for `defined` and `supplement`; for `override` and
+// `deactivated` they come from the Global Default parent, so the form requires a parent instead.
+const PARENT_BACKED_ACTIONS: readonly LayerAction[] = [
+  LayerActionSchema.enum.override,
+  LayerActionSchema.enum.deactivated,
+]
+
+// Mirrors AddTaskRequest.validate_action_constraints: a defined/supplement task must carry all
+// of these. `openapi.json` marks them optional — the requirement lives in the Pydantic model
+// validator, not the schema, so the FE has to encode it or every submit 422s.
+const REQUIRED_FOR_OWN_TASK = [
+  "task_name",
+  "task_description",
+  "category",
+  "responsible_role",
+  "is_mandatory",
+  "display_order",
+  "stage_categorization",
+] as const
+
+const taskFormSchema = z
   .object({
-    type: z.enum(["global", "override", "deactivate", "supplement"]),
-    parentTaskCode: z.string(),
-    taskCode: z.string(),
-    taskName: z.string(),
-    description: z.string(),
+    layer_action: LayerActionSchema,
+    parent_task_id: z.string(),
+    task_code: z.string(),
+    task_name: z.string(),
+    task_description: z.string(),
     category: z.string(),
-    responsibleRole: z.string(),
+    responsible_role: z.string(),
     weight: z.string(),
-    displayOrder: z.string(),
-    mandatory: z.string(),
-    stage: z.string(),
-    documentRequirementRef: z.string(),
-    pinningBehavior: z.string(),
+    display_order: z.string(),
+    is_mandatory: z.string(),
+    stage_categorization: z.string(),
+    applicable_process_contexts: z.array(TaskProcessContextSchema),
+    is_active: z.boolean(),
+    treasury_threshold_trigger: z.boolean(),
   })
   .superRefine((data, ctx) => {
-    if (data.type === "override" || data.type === "deactivate") {
-      if (!data.parentTaskCode) {
+    // Override and deactivate carry nothing but their parent — the values are inherited.
+    if (PARENT_BACKED_ACTIONS.includes(data.layer_action)) {
+      if (!data.parent_task_id) {
         ctx.addIssue({
           code: "custom",
-          path: ["parentTaskCode"],
+          path: ["parent_task_id"],
           message: "required",
         })
       }
       return
     }
-    if (!data.taskCode.trim()) {
-      ctx.addIssue({ code: "custom", path: ["taskCode"], message: "required" })
+
+    if (!data.task_code.trim()) {
+      ctx.addIssue({ code: "custom", path: ["task_code"], message: "required" })
     }
-    if (!data.taskName.trim()) {
-      ctx.addIssue({ code: "custom", path: ["taskName"], message: "required" })
+    for (const field of REQUIRED_FOR_OWN_TASK) {
+      if (!data[field].trim()) {
+        ctx.addIssue({ code: "custom", path: [field], message: "required" })
+      }
     }
-    if (!data.description.trim()) {
+    // Required by the BE too, and easy to miss because it is a multi-select rather than a field.
+    if (data.applicable_process_contexts.length === 0) {
       ctx.addIssue({
         code: "custom",
-        path: ["description"],
+        path: ["applicable_process_contexts"],
         message: "required",
       })
     }
   })
 
-type TaskDefinitionFormValues = z.infer<typeof taskDefinitionFormSchema>
+type TaskFormValues = z.infer<typeof taskFormSchema>
 
 function toFormValues(
-  task: PlaceholderTaskDefinition | null,
-  defaultType: TaskDefinitionType
-): TaskDefinitionFormValues {
+  task: TaskDefinitionItem | null,
+  defaultAction: LayerAction
+): TaskFormValues {
   return {
-    type: task?.type ?? defaultType,
-    parentTaskCode: task?.parentTaskCode ?? "",
-    taskCode: task?.taskCode ?? "",
-    taskName: task?.taskName ?? "",
-    description: task?.description ?? "",
+    layer_action: task?.layer_action ?? defaultAction,
+    parent_task_id: task?.parent_task_id ?? "",
+    task_code: task?.task_code ?? "",
+    task_name: task?.task_name ?? "",
+    task_description: task?.task_description ?? "",
     category: task?.category ?? "",
-    responsibleRole: task?.responsibleRole ?? "",
+    responsible_role: task?.responsible_role ?? "",
     weight: task && task.weight !== null ? String(task.weight) : "",
-    displayOrder:
-      task && task.displayOrder !== null ? String(task.displayOrder) : "",
-    mandatory: task && task.mandatory !== null ? String(task.mandatory) : "",
-    stage: task?.stage ?? "",
-    documentRequirementRef: task?.documentRequirementRef ?? "",
-    pinningBehavior: DOCUMENT_PINNING_BEHAVIOR.PIN_BY_VERSION,
+    display_order:
+      task && task.display_order !== null ? String(task.display_order) : "",
+    is_mandatory:
+      task && task.is_mandatory !== null ? String(task.is_mandatory) : "",
+    stage_categorization: task?.stage_categorization ?? "",
+    applicable_process_contexts: task?.applicable_process_contexts ?? [],
+    is_active: task?.is_active ?? true,
+    treasury_threshold_trigger: Boolean(task && task.conditional_trigger),
+  }
+}
+
+/**
+ * Builds the wire payload for one `layer_action`, and only the keys that action allows.
+ *
+ * This cannot be a single shared shape: `AddTaskRequest`'s model validator **rejects** a field
+ * that the action does not own, not just ignores it. An override that sends `category` fails with
+ * "Fields not authorable on Override (inherited from Global Default)", and a deactivate entry
+ * accepts nothing but its parent. Empty optionals are omitted rather than nulled, because the BE
+ * distinguishes "not provided" from an explicit null (PATCH rejects the latter on a mandatory
+ * field with WTC_TASK_MANDATORY_FIELD_NULL).
+ */
+function toWirePayload(
+  values: TaskFormValues
+): Omit<AddTaskRequest, "layer_action"> {
+  const orUndefined = (value: string): string | undefined =>
+    value === "" ? undefined : value
+  const weight = values.weight === "" ? undefined : Number(values.weight)
+
+  // Deactivate: parent only. Every content field is forbidden.
+  if (values.layer_action === LayerActionSchema.enum.deactivated) {
+    return {
+      parent_task_id: values.parent_task_id,
+      is_active: values.is_active,
+    }
+  }
+
+  // Override: only the six values US 15.4 makes authorable. The rest is inherited from the
+  // Global Default parent and must not be sent at all.
+  if (values.layer_action === LayerActionSchema.enum.override) {
+    return {
+      parent_task_id: values.parent_task_id,
+      is_mandatory:
+        values.is_mandatory === "" ? undefined : values.is_mandatory === "true",
+      weight,
+      responsible_role: orUndefined(
+        values.responsible_role
+      ) as AddTaskRequest["responsible_role"],
+      display_order:
+        values.display_order === "" ? undefined : Number(values.display_order),
+      stage_categorization: orUndefined(
+        values.stage_categorization
+      ) as AddTaskRequest["stage_categorization"],
+      is_active: values.is_active,
+    }
+  }
+
+  // defined / supplement: the task owns all of its own values.
+  return {
+    task_code: values.task_code.trim(),
+    task_name: values.task_name.trim(),
+    task_description: values.task_description.trim(),
+    category: orUndefined(values.category) as AddTaskRequest["category"],
+    responsible_role: orUndefined(
+      values.responsible_role
+    ) as AddTaskRequest["responsible_role"],
+    is_mandatory: values.is_mandatory === "true",
+    weight,
+    display_order: Number(values.display_order),
+    stage_categorization: orUndefined(
+      values.stage_categorization
+    ) as AddTaskRequest["stage_categorization"],
+    applicable_process_contexts: values.applicable_process_contexts,
+    is_active: values.is_active,
+    conditional_trigger: values.treasury_threshold_trigger
+      ? ConditionalTriggerSchema.enum.financing_amount_over_threshold
+      : undefined,
   }
 }
 
@@ -114,20 +219,28 @@ function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 type Props = {
   mode: SheetMode
-  task: PlaceholderTaskDefinition | null
+  task: TaskDefinitionItem | null
+  catalogId: string
+  versionId: string
   catalogLayer: CatalogLayer
+  entityType: CatalogEntityType | null
+  // Used to hide Global Default parents this catalogue already overrides or deactivates — the
+  // BE allows one product-specific entry per parent per version and rejects a second with
+  // WTC_TASK_PARENT_CONFLICT.
+  existingTasks: TaskDefinitionItem[]
   canEdit: boolean
   onOpenChange: (open: boolean) => void
   onRequestEdit: () => void
 }
 
-// Static shell only — no backend exists yet for Epic 15 (see CLAUDE.md). Saving
-// validates the form client-side, then only closes the sheet; it never simulates a
-// network call or shows a success toast.
 function TaskDefinitionSheet({
   mode,
   task,
+  catalogId,
+  versionId,
   catalogLayer,
+  entityType,
+  existingTasks,
   canEdit,
   onOpenChange,
   onRequestEdit,
@@ -136,29 +249,57 @@ function TaskDefinitionSheet({
   const { t: tCommon } = useTranslation("common")
   const isGlobalDefaultLayer =
     catalogLayer === CatalogLayerSchema.enum.global_default
-  const defaultAddType: TaskDefinitionType = isGlobalDefaultLayer
-    ? TASK_DEFINITION_TYPE.GLOBAL
-    : TASK_DEFINITION_TYPE.OVERRIDE
+  const defaultAction: LayerAction = isGlobalDefaultLayer
+    ? LayerActionSchema.enum.defined
+    : LayerActionSchema.enum.override
+
+  const addTask = useAddCatalogTask()
+  const updateTask = useUpdateCatalogTask()
+  const removeTask = useRemoveCatalogTask()
+  const { data: globalDefaultTasks, isError: isParentLoadError } =
+    useGlobalDefaultTasks(isGlobalDefaultLayer ? null : entityType)
 
   const {
     control,
     register,
     handleSubmit,
+    setError,
+    getValues,
     formState: { errors },
-  } = useForm<TaskDefinitionFormValues>({
-    resolver: zodResolver(taskDefinitionFormSchema),
-    values: toFormValues(task, defaultAddType),
+  } = useForm<TaskFormValues>({
+    resolver: zodResolver(taskFormSchema),
+    // defaultValues, NOT values: `values` re-syncs the form from the outside on every render, so
+    // any re-render mid-edit (a settling query, a toast) silently discarded what the user had
+    // typed. The caller gives this component a key per mode+task so a fresh default set is
+    // picked up by remounting instead.
+    defaultValues: toFormValues(task, defaultAction),
   })
 
-  // useWatch (a proper hook) instead of the form's watch() function — watch() returns
-  // fresh values on every call in a way the React Compiler cannot memoize safely.
-  const selectedType = useWatch({ control, name: "type" })
-  const selectedParentTaskCode = useWatch({ control, name: "parentTaskCode" })
-  const isLockedIdentity =
-    selectedType === TASK_DEFINITION_TYPE.OVERRIDE ||
-    selectedType === TASK_DEFINITION_TYPE.DEACTIVATE
-  const parentTask = PLACEHOLDER_PARENT_TASK_OPTIONS.find(
-    o => o.value === selectedParentTaskCode
+  // useWatch (a proper hook) rather than the form's watch() function — watch() returns fresh
+  // values on every call in a way the React Compiler cannot memoize safely.
+  const selectedAction = useWatch({ control, name: "layer_action" })
+  const selectedParentId = useWatch({ control, name: "parent_task_id" })
+  const isParentBacked = PARENT_BACKED_ACTIONS.includes(selectedAction)
+  const isPending =
+    addTask.isPending || updateTask.isPending || removeTask.isPending
+  const isEdit = mode === "edit"
+  const notApplicable = t("detail.taskDefinitions.notApplicable")
+
+  // Already-claimed parents are excluded so a guaranteed 409 is never sent — except the one
+  // this task itself points at, which must stay selectable while editing it.
+  const claimedParentIds = new Set(
+    existingTasks
+      .filter(other => other.parent_task_id && other.id !== task?.id)
+      .map(other => other.parent_task_id as string)
+  )
+  const parentOptions = (globalDefaultTasks ?? [])
+    .filter(candidate => !claimedParentIds.has(candidate.id))
+    .map(candidate => ({
+      value: candidate.id,
+      label: `${candidate.task_code ?? candidate.id}, ${candidate.task_name ?? ""}`,
+    }))
+  const selectedParent = (globalDefaultTasks ?? []).find(
+    candidate => candidate.id === selectedParentId
   )
 
   function resolveMessage(message: string | undefined): string | undefined {
@@ -171,8 +312,74 @@ function TaskDefinitionSheet({
     onOpenChange(false)
   }
 
-  function onSubmit() {
-    handleClose()
+  function reportError(err: unknown) {
+    if (
+      applyApiFieldErrors({
+        error: err,
+        fields: Object.keys(getValues()),
+        setError,
+      })
+    )
+      return
+
+    toast.error(
+      err instanceof ApiError
+        ? t(`errors.${err.code}` as "errors.generic", {
+            defaultValue: t("errors.generic"),
+          })
+        : t("errors.generic")
+    )
+  }
+
+  function onSubmit(values: TaskFormValues) {
+    const payload = toWirePayload(values)
+
+    if (isEdit && task) {
+      // layer_action, task_code and parent_task_id are absent from UpdateTaskRequest — they are
+      // immutable once created, so they are never sent even though the form still holds them.
+      const body: UpdateTaskRequest = payload
+      updateTask.mutate(
+        { catalogId, versionId, taskId: task.id, body },
+        {
+          onSuccess: () => {
+            toast.success(t("detail.taskSheet.updated"))
+            handleClose()
+          },
+          onError: reportError,
+        }
+      )
+      return
+    }
+
+    addTask.mutate(
+      {
+        catalogId,
+        versionId,
+        body: { layer_action: values.layer_action, ...payload },
+      },
+      {
+        onSuccess: response => {
+          toast.success(t("detail.taskSheet.created"))
+          for (const warning of response.warnings) toast.warning(warning)
+          handleClose()
+        },
+        onError: reportError,
+      }
+    )
+  }
+
+  function onRemove() {
+    if (!task) return
+    removeTask.mutate(
+      { catalogId, versionId, taskId: task.id },
+      {
+        onSuccess: () => {
+          toast.success(t("detail.taskSheet.removed"))
+          handleClose()
+        },
+        onError: reportError,
+      }
+    )
   }
 
   if (mode === "view" && task) {
@@ -180,114 +387,117 @@ function TaskDefinitionSheet({
       <Sheet open onOpenChange={o => !o && handleClose()}>
         <SheetContent data-testid="task-definition-view-sheet">
           <SheetHeader>
-            <SheetTitle>{task.taskName}</SheetTitle>
+            <SheetTitle>
+              {task.task_name ?? task.inherited?.task_name ?? task.id}
+            </SheetTitle>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span>{task.taskCode}</span>
+              <span>{task.task_code ?? task.inherited?.task_code ?? "—"}</span>
               <Badge variant="outline">
                 {t(`catalogLayers.${catalogLayer}`)}
               </Badge>
               <Badge variant="secondary">
-                {t(`detail.taskDefinitions.types.${task.type}`)}
+                {t(`detail.taskDefinitions.types.${task.layer_action}`)}
               </Badge>
             </div>
           </SheetHeader>
 
           <div className="flex flex-col gap-4 px-4 overflow-y-auto">
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                {t("detail.taskSheet.sections.taskIdentity")}
-              </p>
-              <p className="text-sm text-foreground">{task.description}</p>
-            </div>
+            {task.task_description && (
+              <p className="text-sm text-foreground">{task.task_description}</p>
+            )}
 
             <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
                 {t("detail.taskSheet.sections.behaviorAndGating")}
               </p>
-              {task.category && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.category")}
-                  value={t(`detail.taskSheet.categories.${task.category}`)}
-                />
-              )}
               <ViewRow
                 label={t("detail.taskSheet.fields.mandatory")}
                 value={
-                  task.mandatory === null
-                    ? t("detail.taskDefinitions.notApplicable")
+                  task.is_mandatory === null
+                    ? notApplicable
                     : t(
-                        task.mandatory
+                        task.is_mandatory
                           ? "detail.taskSheet.mandatoryOptions.yes"
                           : "detail.taskSheet.mandatoryOptions.no"
                       )
                 }
               />
-              {task.weight !== null && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.weight")}
-                  value={task.weight}
-                />
-              )}
-              {task.displayOrder !== null && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.displayOrder")}
-                  value={task.displayOrder}
-                />
-              )}
-              {task.responsibleRole && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.responsibleRole")}
-                  value={t(
-                    `detail.taskSheet.responsibleRoles.${task.responsibleRole}`
-                  )}
-                />
-              )}
-              {task.stage && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.stage")}
-                  value={t(`detail.taskSheet.stages.${task.stage}`)}
-                />
-              )}
-              {task.processContext && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.processContext")}
-                  value={task.processContext}
-                />
-              )}
               <ViewRow
-                label={t("detail.taskSheet.fields.active")}
-                value={t(
-                  task.active
-                    ? "detail.taskSheet.mandatoryOptions.yes"
-                    : "detail.taskSheet.mandatoryOptions.no"
-                )}
+                label={t("detail.taskSheet.fields.weight")}
+                value={task.weight ?? notApplicable}
               />
+              <ViewRow
+                label={t("detail.taskSheet.fields.displayOrder")}
+                value={task.display_order ?? notApplicable}
+              />
+              {task.conditional_trigger && (
+                <ViewRow
+                  label={t("detail.taskSheet.fields.conditionalTrigger")}
+                  value={t("detail.taskSheet.treasuryThresholdTrigger")}
+                />
+              )}
             </div>
 
-            {task.documentRequirementRef && (
-              <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
+            {/* US 15.23: an override row must show the Global Default values it replaces. */}
+            {task.inherited && (
+              <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.taskSheet.sections.documentLinkage")}
+                  {t("detail.taskSheet.sections.inheritedFromGlobalDefault")}
                 </p>
-                <div className="flex items-center gap-1.5 text-sm text-primary">
-                  <FileText size={14} />
-                  {task.documentRequirementRef}
-                </div>
+                <ViewRow
+                  label={t("detail.taskSheet.fields.taskName")}
+                  value={task.inherited.task_name ?? notApplicable}
+                />
+                <ViewRow
+                  label={t("detail.taskSheet.fields.mandatory")}
+                  value={
+                    task.inherited.is_mandatory === null
+                      ? notApplicable
+                      : t(
+                          task.inherited.is_mandatory
+                            ? "detail.taskSheet.mandatoryOptions.yes"
+                            : "detail.taskSheet.mandatoryOptions.no"
+                        )
+                  }
+                />
+                <ViewRow
+                  label={t("detail.taskSheet.fields.weight")}
+                  value={task.inherited.weight ?? notApplicable}
+                />
               </div>
             )}
           </div>
 
-          {canEdit && (
-            <SheetFooter>
-              <Button
-                type="button"
-                data-testid="task-definition-edit-button"
-                onClick={onRequestEdit}
-              >
-                {t("detail.taskSheet.editButton")}
-              </Button>
-            </SheetFooter>
-          )}
+          <SheetFooter>
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="task-sheet-close"
+              onClick={handleClose}
+            >
+              {t("detail.taskSheet.closeButton")}
+            </Button>
+            {canEdit && (
+              <>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  data-testid="task-sheet-remove"
+                  disabled={isPending}
+                  onClick={onRemove}
+                >
+                  {t("detail.taskSheet.removeButton")}
+                </Button>
+                <Button
+                  type="button"
+                  data-testid="task-sheet-edit"
+                  onClick={onRequestEdit}
+                >
+                  {t("detail.taskSheet.editButton")}
+                </Button>
+              </>
+            )}
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     )
@@ -295,236 +505,180 @@ function TaskDefinitionSheet({
 
   return (
     <Sheet open onOpenChange={o => !o && handleClose()}>
-      <SheetContent
-        data-testid="task-definition-edit-sheet"
-        className="sm:max-w-md"
-      >
+      <SheetContent data-testid="task-definition-form-sheet">
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-4 flex-1 overflow-y-auto"
+          className="flex flex-col h-full"
         >
           <SheetHeader>
             <SheetTitle>
-              {mode === "add"
-                ? t("detail.taskSheet.addTitle")
-                : t("detail.taskSheet.editTitle")}
+              {t(
+                isEdit
+                  ? "detail.taskSheet.editTitle"
+                  : "detail.taskSheet.addTitle"
+              )}
             </SheetTitle>
           </SheetHeader>
 
-          <div className="flex flex-col gap-4 px-4">
-            {mode === "add" && (
+          <div className="flex flex-col gap-4 px-4 overflow-y-auto flex-1">
+            {/* A product-specific catalogue chooses which of the three change types it is
+                authoring; a Global Default catalogue only ever authors `defined` entries. */}
+            {!isGlobalDefaultLayer && !isEdit && (
               <div>
                 <Label className="mb-2">
                   {t("detail.taskSheet.fields.type")}
                 </Label>
-                {isGlobalDefaultLayer ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("detail.taskDefinitions.types.global")}
+                <Controller
+                  control={control}
+                  name="layer_action"
+                  render={({ field }) => (
+                    <SelectField
+                      data-testid="task-sheet-layer-action"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS.map(o => ({
+                        value: o.value,
+                        label: t(o.labelKey),
+                      }))}
+                    />
+                  )}
+                />
+              </div>
+            )}
+
+            {isParentBacked ? (
+              <div>
+                <Label
+                  className="mb-2"
+                  error={!!errors.parent_task_id}
+                  htmlFor="task-sheet-parent"
+                >
+                  {t("detail.taskSheet.fields.parentTask")}
+                </Label>
+                {parentOptions.length === 0 ? (
+                  // Three distinct dead ends that must not share one message: the parent list
+                  // failed to load, or no Global Default catalogue exists for this entity type
+                  // at all, or one does and every task in it is already overridden/deactivated
+                  // here. The failed-load case must not claim the catalogue is absent — the
+                  // author would go create one that already exists.
+                  <p
+                    data-testid="task-sheet-no-parents"
+                    className={
+                      isParentLoadError
+                        ? "text-sm text-destructive"
+                        : "text-sm text-muted-foreground"
+                    }
+                  >
+                    {t(
+                      isParentLoadError
+                        ? "detail.taskSheet.parentsUnavailable"
+                        : (globalDefaultTasks ?? []).length === 0
+                          ? "detail.taskSheet.noGlobalDefaultTasks"
+                          : "detail.taskSheet.allParentsClaimed"
+                    )}
                   </p>
                 ) : (
                   <Controller
                     control={control}
-                    name="type"
+                    name="parent_task_id"
                     render={({ field }) => (
                       <SelectField
-                        data-testid="task-definition-type-select"
+                        id="task-sheet-parent"
+                        data-testid="task-sheet-parent-select"
                         value={field.value}
                         onValueChange={field.onChange}
-                        options={PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS.map(o => ({
-                          value: o.value,
-                          label: t(o.labelKey),
-                        }))}
+                        options={parentOptions}
+                        placeholder={t("detail.taskSheet.fields.parentTask")}
+                        error={!!errors.parent_task_id}
+                        disabled={isEdit}
                       />
                     )}
                   />
+                )}
+                {errors.parent_task_id && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {resolveMessage(errors.parent_task_id.message)}
+                  </p>
+                )}
+                {selectedParent && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {t("detail.taskSheet.inheritsFrom", {
+                      name: selectedParent.task_name ?? selectedParent.id,
+                    })}
+                  </p>
                 )}
               </div>
-            )}
-
-            {isLockedIdentity ? (
-              <>
-                <div>
-                  <Label
-                    htmlFor="task-parent-task"
-                    error={!!errors.parentTaskCode}
-                    className="mb-2"
-                  >
-                    {t("detail.taskSheet.fields.parentTask")}
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="parentTaskCode"
-                    render={({ field }) => (
-                      <SelectField
-                        id="task-parent-task"
-                        data-testid="task-definition-parent-task-select"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        options={[...PLACEHOLDER_PARENT_TASK_OPTIONS]}
-                        placeholder={t(
-                          "detail.taskSheet.parentTaskPlaceholder"
-                        )}
-                        error={!!errors.parentTaskCode}
-                      />
-                    )}
-                  />
-                  {errors.parentTaskCode && (
-                    <p className="mt-1 text-sm text-destructive">
-                      {resolveMessage(errors.parentTaskCode.message)}
-                    </p>
-                  )}
-                </div>
-
-                {parentTask && (
-                  <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
-                    <p className="text-xs text-muted-foreground">
-                      {t("detail.taskSheet.overrideInheritedNote")}
-                    </p>
-                    <ViewRow
-                      label={t("detail.taskSheet.fields.taskCode")}
-                      value={parentTask.value}
-                    />
-                    <ViewRow
-                      label={t("detail.taskSheet.fields.taskName")}
-                      value={parentTask.label.split(", ")[1]}
-                    />
-                  </div>
-                )}
-              </>
             ) : (
               <>
                 <div>
                   <Label
-                    htmlFor="task-code"
-                    error={!!errors.taskCode}
                     className="mb-2"
+                    error={!!errors.task_code}
+                    htmlFor="task-sheet-code"
                   >
                     {t("detail.taskSheet.fields.taskCode")}
                   </Label>
                   <Input
-                    id="task-code"
-                    data-testid="task-definition-code-input"
-                    error={!!errors.taskCode}
-                    {...register("taskCode")}
+                    id="task-sheet-code"
+                    data-testid="task-sheet-task-code"
+                    error={!!errors.task_code}
+                    disabled={isEdit}
+                    {...register("task_code")}
                   />
-                  {errors.taskCode && (
+                  {errors.task_code && (
                     <p className="mt-1 text-sm text-destructive">
-                      {resolveMessage(errors.taskCode.message)}
+                      {resolveMessage(errors.task_code.message)}
                     </p>
                   )}
                 </div>
                 <div>
                   <Label
-                    htmlFor="task-name"
-                    error={!!errors.taskName}
                     className="mb-2"
+                    error={!!errors.task_name}
+                    htmlFor="task-sheet-name"
                   >
                     {t("detail.taskSheet.fields.taskName")}
                   </Label>
                   <Input
-                    id="task-name"
-                    data-testid="task-definition-name-input"
-                    error={!!errors.taskName}
-                    {...register("taskName")}
+                    id="task-sheet-name"
+                    data-testid="task-sheet-task-name"
+                    error={!!errors.task_name}
+                    {...register("task_name")}
                   />
-                  {errors.taskName && (
+                  {errors.task_name && (
                     <p className="mt-1 text-sm text-destructive">
-                      {resolveMessage(errors.taskName.message)}
+                      {resolveMessage(errors.task_name.message)}
                     </p>
                   )}
                 </div>
                 <div>
                   <Label
-                    htmlFor="task-description"
-                    error={!!errors.description}
                     className="mb-2"
+                    error={!!errors.task_description}
+                    htmlFor="task-sheet-description"
                   >
                     {t("detail.taskSheet.fields.description")}
                   </Label>
                   <Textarea
-                    id="task-description"
-                    data-testid="task-definition-description-input"
+                    id="task-sheet-description"
+                    data-testid="task-sheet-task-description"
                     rows={3}
-                    aria-invalid={!!errors.description || undefined}
-                    {...register("description")}
+                    aria-invalid={!!errors.task_description}
+                    {...register("task_description")}
                   />
-                  {errors.description && (
+                  {errors.task_description && (
                     <p className="mt-1 text-sm text-destructive">
-                      {resolveMessage(errors.description.message)}
+                      {resolveMessage(errors.task_description.message)}
                     </p>
                   )}
-                </div>
-                <div>
-                  <Label className="mb-2">
-                    {t("detail.taskSheet.fields.category")}
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="category"
-                    render={({ field }) => (
-                      <SelectField
-                        data-testid="task-definition-category-select"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        options={TASK_CATEGORY_OPTIONS.map(o => ({
-                          value: o.value,
-                          label: t(o.labelKey),
-                        }))}
-                      />
-                    )}
-                  />
                 </div>
               </>
             )}
 
-            {selectedType !== TASK_DEFINITION_TYPE.DEACTIVATE && (
+            {/* A `deactivated` entry only switches its parent off, so none of the value fields
+                below apply to it. */}
+            {selectedAction !== LayerActionSchema.enum.deactivated && (
               <>
-                <div>
-                  <Label className="mb-2">
-                    {t("detail.taskSheet.fields.responsibleRole")}
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="responsibleRole"
-                    render={({ field }) => (
-                      <SelectField
-                        data-testid="task-definition-responsible-role-select"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        options={TASK_RESPONSIBLE_ROLE_OPTIONS.map(o => ({
-                          value: o.value,
-                          label: t(o.labelKey),
-                        }))}
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="task-weight" className="mb-2">
-                      {t("detail.taskSheet.fields.weight")}
-                    </Label>
-                    <Input
-                      id="task-weight"
-                      type="number"
-                      data-testid="task-definition-weight-input"
-                      {...register("weight")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="task-display-order" className="mb-2">
-                      {t("detail.taskSheet.fields.displayOrder")}
-                    </Label>
-                    <Input
-                      id="task-display-order"
-                      type="number"
-                      data-testid="task-definition-display-order-input"
-                      {...register("displayOrder")}
-                    />
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="mb-2">
@@ -532,10 +686,10 @@ function TaskDefinitionSheet({
                     </Label>
                     <Controller
                       control={control}
-                      name="mandatory"
+                      name="is_mandatory"
                       render={({ field }) => (
                         <SelectField
-                          data-testid="task-definition-mandatory-select"
+                          data-testid="task-sheet-mandatory"
                           value={field.value}
                           onValueChange={field.onChange}
                           options={[
@@ -548,113 +702,230 @@ function TaskDefinitionSheet({
                               label: t("detail.taskSheet.mandatoryOptions.no"),
                             },
                           ]}
+                          placeholder={t("detail.taskSheet.notSet")}
                         />
                       )}
                     />
                   </div>
+                  <div>
+                    <Label className="mb-2" htmlFor="task-sheet-weight">
+                      {t("detail.taskSheet.fields.weight")}
+                    </Label>
+                    <Input
+                      id="task-sheet-weight"
+                      data-testid="task-sheet-weight"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      {...register("weight")}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Category is inherited from the Global Default on an override, so the BE
+                      rejects it there — only a task that owns its values may set it. */}
+                  {!isParentBacked && (
+                    <div>
+                      <Label className="mb-2" error={!!errors.category}>
+                        {t("detail.taskSheet.fields.category")}
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="category"
+                        render={({ field }) => (
+                          <SelectField
+                            data-testid="task-sheet-category"
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            options={TASK_CATEGORY_OPTIONS.map(o => ({
+                              value: o.value,
+                              label: t(o.labelKey),
+                            }))}
+                            placeholder={t("detail.taskSheet.notSet")}
+                            error={!!errors.category}
+                          />
+                        )}
+                      />
+                      {errors.category && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {resolveMessage(errors.category.message)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div>
+                    <Label className="mb-2">
+                      {t("detail.taskSheet.fields.responsibleRole")}
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="responsible_role"
+                      render={({ field }) => (
+                        <SelectField
+                          data-testid="task-sheet-responsible-role"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          options={TASK_RESPONSIBLE_ROLE_OPTIONS.map(o => ({
+                            value: o.value,
+                            label: t(o.labelKey),
+                          }))}
+                          placeholder={t("detail.taskSheet.notSet")}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="mb-2">
                       {t("detail.taskSheet.fields.stage")}
                     </Label>
                     <Controller
                       control={control}
-                      name="stage"
+                      name="stage_categorization"
                       render={({ field }) => (
                         <SelectField
-                          data-testid="task-definition-stage-select"
+                          data-testid="task-sheet-stage"
                           value={field.value}
                           onValueChange={field.onChange}
                           options={TASK_STAGE_OPTIONS.map(o => ({
                             value: o.value,
                             label: t(o.labelKey),
                           }))}
+                          placeholder={t("detail.taskSheet.notSet")}
                         />
                       )}
                     />
                   </div>
+                  <div>
+                    <Label className="mb-2" htmlFor="task-sheet-display-order">
+                      {t("detail.taskSheet.fields.displayOrder")}
+                    </Label>
+                    <Input
+                      id="task-sheet-display-order"
+                      data-testid="task-sheet-display-order"
+                      type="number"
+                      min={0}
+                      step="1"
+                      {...register("display_order")}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="mb-0">
-                      {t("detail.taskSheet.fields.documentRequirementRef")}
-                    </Label>
-                  </div>
-                  <Controller
-                    control={control}
-                    name="documentRequirementRef"
-                    render={({ field }) => (
-                      <SelectField
-                        data-testid="task-definition-document-ref-select"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        options={[...PLACEHOLDER_DOCUMENT_REQUIREMENT_OPTIONS]}
-                        placeholder={t(
-                          "detail.taskSheet.documentRequirementPlaceholder"
+                {/* Process contexts and the Treasury trigger are inherited on an override, so
+                    the BE forbids sending them — they only appear for a task that owns its
+                    values. Required by AddTaskRequest's validator despite reading as optional
+                    in openapi.json. */}
+                {!isParentBacked && (
+                  <>
+                    <div>
+                      <Label
+                        className="mb-2"
+                        error={!!errors.applicable_process_contexts}
+                      >
+                        {t("detail.taskSheet.fields.processContexts")}
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="applicable_process_contexts"
+                        render={({ field }) => (
+                          <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-input p-2.5">
+                            {TaskProcessContextSchema.options.map(option => (
+                              <label
+                                key={option}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Checkbox
+                                  data-testid={`task-sheet-process-context-${option}`}
+                                  checked={field.value.includes(option)}
+                                  onCheckedChange={checked =>
+                                    field.onChange(
+                                      checked === true
+                                        ? [...field.value, option]
+                                        : field.value.filter(v => v !== option)
+                                    )
+                                  }
+                                />
+                                <span className="text-sm text-foreground">
+                                  {t(
+                                    `detail.taskSheet.processContexts.${option}`
+                                  )}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
                         )}
                       />
-                    )}
-                  />
-                </div>
+                      {errors.applicable_process_contexts && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {resolveMessage(
+                            errors.applicable_process_contexts.message
+                          )}
+                        </p>
+                      )}
+                    </div>
 
-                <div>
-                  <Label className="mb-2">
-                    {t("detail.taskSheet.fields.pinningBehavior")}
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="pinningBehavior"
-                    render={({ field }) => (
-                      <RadioGroup
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        className="flex items-center gap-4"
-                      >
-                        <label
-                          htmlFor="pin-by-version"
-                          className="flex items-center gap-2 text-sm cursor-pointer"
-                        >
-                          <RadioGroupItem
-                            id="pin-by-version"
-                            value={
-                              DOCUMENT_PINNING_BEHAVIOR.PIN_BY_VERSION satisfies DocumentPinningBehavior
-                            }
+                    {/* CR B8's authoring half: Contact Treasury is an ordinary checklist step
+                        raised when a financing exceeds the threshold. Nothing here contacts
+                        Treasury — the runtime surface that shows it is a separate,
+                        design-blocked unit (Q-040). */}
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <Controller
+                        control={control}
+                        name="treasury_threshold_trigger"
+                        render={({ field }) => (
+                          <Checkbox
+                            data-testid="task-sheet-treasury-trigger"
+                            checked={field.value}
+                            onCheckedChange={v => field.onChange(v === true)}
                           />
-                          {t("detail.taskSheet.fields.pinByVersion")}
-                        </label>
-                        <label
-                          htmlFor="pin-by-id"
-                          className="flex items-center gap-2 text-sm cursor-pointer"
-                        >
-                          <RadioGroupItem
-                            id="pin-by-id"
-                            value={
-                              DOCUMENT_PINNING_BEHAVIOR.PIN_BY_ID satisfies DocumentPinningBehavior
-                            }
-                          />
-                          {t("detail.taskSheet.fields.pinById")}
-                        </label>
-                      </RadioGroup>
-                    )}
-                  />
-                </div>
+                        )}
+                      />
+                      <span className="text-sm text-foreground leading-snug">
+                        {t("detail.taskSheet.treasuryThresholdTrigger")}
+                      </span>
+                    </label>
+                  </>
+                )}
               </>
             )}
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Controller
+                control={control}
+                name="is_active"
+                render={({ field }) => (
+                  <Checkbox
+                    data-testid="task-sheet-is-active"
+                    checked={field.value}
+                    onCheckedChange={v => field.onChange(v === true)}
+                  />
+                )}
+              />
+              <span className="text-sm text-foreground">
+                {t("detail.taskSheet.fields.active")}
+              </span>
+            </label>
           </div>
 
-          <SheetFooter className="flex-row justify-end gap-1.5 border-t">
+          <SheetFooter>
             <Button
               type="button"
               variant="outline"
-              data-testid="task-definition-cancel-button"
+              data-testid="task-sheet-cancel"
               onClick={handleClose}
+              disabled={isPending}
             >
               {t("detail.taskSheet.cancelButton")}
             </Button>
-            <Button type="submit" data-testid="task-definition-save-button">
-              {mode === "add"
-                ? t("detail.taskSheet.addButton")
-                : t("detail.taskSheet.saveButton")}
+            <Button
+              type="submit"
+              data-testid="task-sheet-submit"
+              disabled={isPending}
+            >
+              {t("detail.taskSheet.saveButton")}
             </Button>
           </SheetFooter>
         </form>

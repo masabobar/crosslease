@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
+  AddTaskRequestSchema,
+  AuditTrailResponseSchema,
+  CatalogDetailResponseSchema,
   CatalogEntityTypeSchema,
   CatalogLayerSchema,
   CatalogListItemSchema,
@@ -7,6 +10,8 @@ import {
   CatalogResponseSchema,
   CatalogStateSchema,
   CreateCatalogRequestSchema,
+  TaskDefinitionItemSchema,
+  UpdateTaskRequestSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 
 const CATALOG_UUID = "3f1c9a2e-0b7d-4c5e-8a11-9d2e6f4b7c80"
@@ -283,4 +288,271 @@ describe("CatalogResponseSchema", () => {
       })
     ).toThrow()
   })
+})
+
+// ─── Detail, audit trail and task authoring (PRD1042-1493 + US 15.3–15.6) ───
+
+const VERSION_UUID = "7c1e5a90-2b3d-4f8e-9a11-6d5c4b3a2e10"
+const TASK_UUID = "abcdefab-1234-4567-89ab-cdefabcdef12"
+const PARENT_UUID = "fedcbafe-4321-4765-8ba9-21fedcbafedc"
+
+// A `defined` row: the Global Default layer's own entry, so it carries real values.
+const validDefinedTask = {
+  id: TASK_UUID,
+  catalog_version_id: VERSION_UUID,
+  layer_action: "defined",
+  task_code: "LEG-001",
+  task_name: "Legal notice of assignment",
+  task_description: "Send the notice to the lessee.",
+  category: "legal",
+  responsible_role: "front_office",
+  is_mandatory: true,
+  weight: "2.50",
+  display_order: 10,
+  stage_categorization: "stage_1_review",
+  applicable_process_contexts: ["rr_submission"],
+  is_active: true,
+  parent_task_id: null,
+  doc_requirement_ref: null,
+  doc_requirement_pin_mode: null,
+  conditional_trigger: null,
+  created_by: USER_UUID,
+  created_at: "2026-07-30T12:00:00Z",
+  updated_at: "2026-07-30T12:00:00Z",
+}
+
+const validDetail = {
+  ...validCatalogResponse,
+  current_version_id: VERSION_UUID,
+  tasks: [validDefinedTask],
+}
+
+describe("TaskDefinitionItemSchema", () => {
+  it("accepts a fully populated defined task and coerces the decimal weight", () => {
+    const parsed = TaskDefinitionItemSchema.parse(validDefinedTask)
+    expect(parsed.weight).toBe(2.5)
+  })
+
+  // A deactivated entry only switches its parent off, so the BE legitimately returns null for
+  // every descriptive field. Modelling those as optional rather than nullable would reject it.
+  it("accepts a deactivated row whose descriptive fields are all null", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      layer_action: "deactivated",
+      task_code: null,
+      task_name: null,
+      task_description: null,
+      category: null,
+      responsible_role: null,
+      is_mandatory: null,
+      weight: null,
+      display_order: null,
+      stage_categorization: null,
+      applicable_process_contexts: null,
+      parent_task_id: PARENT_UUID,
+    })
+    expect(parsed.weight).toBeNull()
+    expect(parsed.task_name).toBeNull()
+  })
+
+  it("keeps a null weight null rather than coercing it to zero", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      weight: null,
+    })
+    expect(parsed.weight).not.toBe(0)
+    expect(parsed.weight).toBeNull()
+  })
+
+  it("accepts an override row carrying its inherited global default values", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      layer_action: "override",
+      parent_task_id: PARENT_UUID,
+      is_mandatory: false,
+      inherited: {
+        task_code: "LEG-001",
+        task_name: "Legal notice of assignment",
+        task_description: null,
+        category: "legal",
+        applicable_process_contexts: null,
+        is_mandatory: true,
+        weight: "2.50",
+        responsible_role: "front_office",
+        display_order: 10,
+        stage_categorization: "stage_1_review",
+        doc_requirement_ref: null,
+      },
+    })
+    expect(parsed.inherited?.is_mandatory).toBe(true)
+    expect(parsed.is_mandatory).toBe(false)
+    expect(parsed.inherited?.weight).toBe(2.5)
+  })
+
+  it("omits inherited entirely for a row with no parent", () => {
+    expect(
+      TaskDefinitionItemSchema.parse(validDefinedTask).inherited
+    ).toBeUndefined()
+  })
+
+  it("rejects a layer_action the wire does not define", () => {
+    // The pre-wiring shell used global/deactivate; the wire says defined/deactivated.
+    expect(() =>
+      TaskDefinitionItemSchema.parse({
+        ...validDefinedTask,
+        layer_action: "global",
+      })
+    ).toThrow()
+    expect(() =>
+      TaskDefinitionItemSchema.parse({
+        ...validDefinedTask,
+        layer_action: "deactivate",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a non-numeric weight rather than yielding NaN", () => {
+    expect(() =>
+      TaskDefinitionItemSchema.parse({ ...validDefinedTask, weight: "heavy" })
+    ).toThrow()
+  })
+})
+
+describe("CatalogDetailResponseSchema", () => {
+  it("accepts the documented shape", () => {
+    const parsed = CatalogDetailResponseSchema.parse(validDetail)
+    expect(parsed.tasks).toHaveLength(1)
+    expect(parsed.current_version_id).toBe(VERSION_UUID)
+  })
+
+  // Null means no active version, which makes every task mutation unbuildable — the UI must be
+  // able to see that state rather than have the parse reject it.
+  it("accepts a null current_version_id", () => {
+    const parsed = CatalogDetailResponseSchema.parse({
+      ...validDetail,
+      current_version_id: null,
+    })
+    expect(parsed.current_version_id).toBeNull()
+  })
+
+  it("accepts a catalogue with no tasks", () => {
+    expect(
+      CatalogDetailResponseSchema.parse({ ...validDetail, tasks: [] }).tasks
+    ).toEqual([])
+  })
+
+  it("rejects a payload missing current_version_id", () => {
+    const payload: Record<string, unknown> = { ...validDetail }
+    delete payload.current_version_id
+    expect(() => CatalogDetailResponseSchema.parse(payload)).toThrow()
+  })
+
+  it("rejects a payload missing tasks", () => {
+    const payload: Record<string, unknown> = { ...validDetail }
+    delete payload.tasks
+    expect(() => CatalogDetailResponseSchema.parse(payload)).toThrow()
+  })
+})
+
+describe("AuditTrailResponseSchema", () => {
+  const validEvent = {
+    id: CATALOG_UUID,
+    event_type: "WTC_CATALOG_CREATED",
+    action_type: "CREATE",
+    actor_id: "USR-00002",
+    actor_role_at_time: "bank_power_user",
+    actor_display: "Test BankPowerUser",
+    recorded_at: "2026-07-30T12:00:00Z",
+    entity_display: "Refinancing Rules",
+    old_data: null,
+    new_data: { catalog_name: "Refinancing Rules" },
+    changed_fields: ["catalog_name"],
+  }
+
+  it("accepts the cursor envelope", () => {
+    const parsed = AuditTrailResponseSchema.parse({
+      events: [validEvent],
+      next_cursor: "eyJpZCI6MX0",
+    })
+    expect(parsed.events).toHaveLength(1)
+    expect(parsed.next_cursor).toBe("eyJpZCI6MX0")
+  })
+
+  it("treats a missing next_cursor as the last page", () => {
+    expect(
+      AuditTrailResponseSchema.parse({ events: [] }).next_cursor
+    ).toBeUndefined()
+  })
+
+  // actor_id is a display code like USR-00002 on this endpoint, not a UUID.
+  it("accepts a non-uuid actor_id", () => {
+    expect(() =>
+      AuditTrailResponseSchema.parse({ events: [validEvent] })
+    ).not.toThrow()
+  })
+
+  it("rejects the items/total/page envelope the catalogue list uses", () => {
+    expect(() =>
+      AuditTrailResponseSchema.parse({
+        items: [validEvent],
+        total: 1,
+        page: 1,
+        per_page: 25,
+        total_pages: 1,
+      })
+    ).toThrow()
+  })
+})
+
+describe("AddTaskRequestSchema", () => {
+  it("accepts a payload carrying only layer_action", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({ layer_action: "deactivated" })
+    ).not.toThrow()
+  })
+
+  it("rejects a payload with no layer_action", () => {
+    expect(() => AddTaskRequestSchema.parse({ task_code: "LEG-001" })).toThrow()
+  })
+
+  it("rejects a negative weight", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({ layer_action: "defined", weight: -1 })
+    ).toThrow()
+  })
+
+  it("rejects a task_code over the 100-character wire limit", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({
+        layer_action: "defined",
+        task_code: "x".repeat(101),
+      })
+    ).toThrow()
+  })
+})
+
+describe("UpdateTaskRequestSchema", () => {
+  it("accepts an empty payload — a PATCH may change nothing", () => {
+    expect(() => UpdateTaskRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("accepts a single-field payload", () => {
+    expect(UpdateTaskRequestSchema.parse({ is_mandatory: false })).toEqual({
+      is_mandatory: false,
+    })
+  })
+
+  // layer_action, task_code and parent_task_id are immutable once created and are absent from
+  // UpdateTaskRequest — they must be stripped rather than smuggled through.
+  it.each(["layer_action", "task_code", "parent_task_id"])(
+    "strips the immutable field %s",
+    field => {
+      const parsed = UpdateTaskRequestSchema.parse({
+        task_name: "Renamed",
+        [field]: field === "layer_action" ? "override" : PARENT_UUID,
+      }) as Record<string, unknown>
+      expect(parsed[field]).toBeUndefined()
+      expect(parsed.task_name).toBe("Renamed")
+    }
+  )
 })
