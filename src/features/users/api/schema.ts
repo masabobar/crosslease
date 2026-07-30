@@ -77,6 +77,7 @@ export const InviteUserInputSchema = z.object({
   role: UserRoleSchema,
   tenant_id: z.string().nullable().optional(),
   access_valid_until: z.string().nullable().optional(),
+  lc_partner_id: z.string().nullable().optional(),
 })
 export type InviteUserInput = z.infer<typeof InviteUserInputSchema>
 

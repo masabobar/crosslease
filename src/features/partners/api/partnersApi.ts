@@ -56,6 +56,9 @@ export type PartnerListParams = {
   role?: PartnerRole[]
   country?: string[]
   ubo_status?: UboCompletenessStatus[]
+  /** Only confirmed partners that are the LC party of a non-terminated
+   * framework agreement — valid targets for a leasing_company_user invite. */
+  lc_eligible?: boolean
   limit?: number
   offset?: number
 }

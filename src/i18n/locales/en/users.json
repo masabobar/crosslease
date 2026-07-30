@@ -426,6 +426,7 @@
       "role": "Role",
       "tenant": "Tenant",
       "tenantScope": "Tenant scope",
+      "lcPartner": "Leasing company",
       "accessValidFrom": "Access valid from",
       "accessValidUntil": "Access valid until"
     },
@@ -434,12 +435,16 @@
       "lastName": "Last name",
       "email": "you@example.com",
       "role": "Select a role",
-      "tenant": "Select a tenant"
+      "tenant": "Select a tenant",
+      "lcPartner": "Select a leasing company",
+      "lcPartnerNoTenant": "Select a tenant first"
     },
     "hints": {
       "email": "Must be unique across the platform",
       "tenantAuditor": "Auditor access must be scoped to exactly one tenant",
       "tenantOperational": "Tenant-level operational users must belong to exactly one tenant",
+      "lcPartner": "The user will only see framework agreements of the selected leasing company",
+      "lcPartnerEmpty": "No eligible leasing companies — the partner must be confirmed and be the leasing company party of a framework agreement in this tenant",
       "accessDates": "Required for Auditor users only"
     },
     "fourEyes": {
