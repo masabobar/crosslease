@@ -146,7 +146,9 @@ export const PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS = [
   },
 ] as const
 
-export const TASK_CATEGORY = {
+// Not exported: consumed only by the *_OPTIONS arrays below. Their derived types
+// (TaskCategory, TaskResponsibleRole) are exported because components do use those.
+const TASK_CATEGORY = {
   LEGAL: "legal",
   COMPLIANCE: "compliance",
   CREDIT: "credit",
@@ -166,7 +168,7 @@ export const TASK_CATEGORY_OPTIONS = Object.values(TASK_CATEGORY).map(
 
 // Accountability only — runtime task assignment is owned by the Workflow Engine, per
 // PRD1042-1160. Deliberately separate from the auth UserRole enum (different domain).
-export const TASK_RESPONSIBLE_ROLE = {
+const TASK_RESPONSIBLE_ROLE = {
   FRONT_OFFICE: "front_office",
   BACK_OFFICE_RISK: "back_office_risk",
   COMPLIANCE: "compliance",
@@ -185,7 +187,7 @@ export const TASK_RESPONSIBLE_ROLE_OPTIONS = Object.values(
   labelKey: `detail.taskSheet.responsibleRoles.${value}` as const,
 }))
 
-export const TASK_STAGE = {
+const TASK_STAGE = {
   PRE_SUBMISSION: "pre_submission",
   STAGE_1_REVIEW: "stage_1_review",
   STAGE_2_REVIEW: "stage_2_review",
@@ -193,7 +195,7 @@ export const TASK_STAGE = {
   SERVICING: "servicing",
   REDEMPTION: "redemption",
 } as const
-export type TaskStage = (typeof TASK_STAGE)[keyof typeof TASK_STAGE]
+type TaskStage = (typeof TASK_STAGE)[keyof typeof TASK_STAGE]
 
 export const TASK_STAGE_OPTIONS = Object.values(TASK_STAGE).map(value => ({
   value,
@@ -338,15 +340,14 @@ export const PLACEHOLDER_PARENT_TASK_OPTIONS =
     label: `${task.taskCode}, ${task.taskName}`,
   }))
 
-export const AUDIT_ACTOR_TYPE = {
+const AUDIT_ACTOR_TYPE = {
   HUMAN_USER: "human_user",
   SYSTEM: "system",
   SCHEDULED_JOB: "scheduled_job",
 } as const
-export type AuditActorType =
-  (typeof AUDIT_ACTOR_TYPE)[keyof typeof AUDIT_ACTOR_TYPE]
+type AuditActorType = (typeof AUDIT_ACTOR_TYPE)[keyof typeof AUDIT_ACTOR_TYPE]
 
-export type PlaceholderAuditTrailEntry = {
+type PlaceholderAuditTrailEntry = {
   id: string
   timestamp: string
   actorName: string

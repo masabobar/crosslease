@@ -177,7 +177,6 @@
         "processContext": "Prozesskontext",
         "active": "Aktiv",
         "documentRequirementRef": "Dokumentanforderungsverweis",
-        "removeDocument": "Dokument entfernen",
         "pinningBehavior": "Pinning-Verhalten",
         "pinByVersion": "Nach Version fixieren",
         "pinById": "Nach ID fixieren",
