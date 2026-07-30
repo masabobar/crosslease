@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ChevronRight, Plus } from "lucide-react"
+import { ChevronRight, File, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table"
 import { TableEmptyState } from "@/components/ui/empty"
 import { TaskDefinitionSheet } from "@/features/workflowTaskCatalog/components/TaskDefinitionSheet"
+import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import { LayerActionSchema } from "@/features/workflowTaskCatalog/api/schema"
 import type {
   CatalogEntityType,
@@ -71,6 +72,9 @@ type Props = {
   versionId: string | null
   catalogLayer: CatalogLayer
   entityType: CatalogEntityType | null
+  // US 15.7: document requirements are resolved per tenant, which is the scope the BE validates
+  // a task's doc_requirement_ref against.
+  tenantId: string
   tasks: TaskDefinitionItem[]
   canEdit: boolean
 }
@@ -80,12 +84,24 @@ function TaskDefinitionsTab({
   versionId,
   catalogLayer,
   entityType,
+  tenantId,
   tasks,
   canEdit,
 }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
   const [sheetState, setSheetState] = useState<SheetState>(null)
   const notApplicable = t("detail.taskDefinitions.notApplicable")
+  // Shares one request with the sheet through the query cache — same key, same tenant.
+  const { data: documentRequirements } = useTenantDocumentRequirements(tenantId)
+
+  // A task carries only the requirement's UUID, so the code has to be resolved. An id outside the
+  // fetched page falls back to the raw UUID rather than rendering blank, so it stays diagnosable.
+  const requirementCodeById = new Map(
+    (documentRequirements ?? []).map(r => [r.id, r.requirement_code])
+  )
+  function documentRequirementCode(ref: string): string {
+    return requirementCodeById.get(ref) ?? ref
+  }
 
   const orderedTasks = [...tasks].sort(
     (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
@@ -140,6 +156,9 @@ function TaskDefinitionsTab({
               </TableHead>
               <TableHead>{t("detail.taskDefinitions.columns.role")}</TableHead>
               <TableHead>{t("detail.taskDefinitions.columns.stage")}</TableHead>
+              <TableHead>
+                {t("detail.taskDefinitions.columns.docRef")}
+              </TableHead>
               <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
@@ -199,6 +218,19 @@ function TaskDefinitionsTab({
                     ? t(`detail.taskSheet.stages.${task.stage_categorization}`)
                     : notApplicable}
                 </TableCell>
+                {/* US 15.7. The design renders the code as a link, but Epic 16 has no screen to
+                    navigate to, so it is plain text until one exists — a blue link that goes
+                    nowhere promises navigation this app cannot perform. */}
+                <TableCell>
+                  {task.doc_requirement_ref ? (
+                    <span className="flex items-center gap-1">
+                      <File size={16} className="text-muted-foreground" />
+                      {documentRequirementCode(task.doc_requirement_ref)}
+                    </span>
+                  ) : (
+                    notApplicable
+                  )}
+                </TableCell>
                 <TableCell>
                   <ChevronRight size={16} className="text-muted-foreground" />
                 </TableCell>
@@ -231,6 +263,7 @@ function TaskDefinitionsTab({
           versionId={versionId}
           catalogLayer={catalogLayer}
           entityType={entityType}
+          tenantId={tenantId}
           existingTasks={tasks}
           canEdit={canEdit}
           onOpenChange={open => !open && setSheetState(null)}

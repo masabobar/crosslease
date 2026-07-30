@@ -40,6 +40,14 @@ const AUDIT_FIELDS: Record<string, { labelKey: string; enumBlock?: string }> = {
   },
   is_active: { labelKey: "active" },
   conditional_trigger: { labelKey: "conditionalTrigger" },
+  // US 15.7 requires the ref + pinning delta to be auditable. The ref is a UUID with no name on
+  // the audit payload, so it renders as the raw id — the requirement code is only resolvable
+  // against the tenant's active set, which an audit row deliberately does not re-fetch.
+  doc_requirement_ref: { labelKey: "documentRequirement" },
+  doc_requirement_pin_mode: {
+    labelKey: "pinningBehavior",
+    enumBlock: "pinModes",
+  },
 }
 
 function FieldDelta({
