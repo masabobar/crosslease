@@ -6037,6 +6037,767 @@
         }
       }
     },
+    "/api/v1/workflow-task-catalogs": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "List Catalogs",
+        "operationId": "list_catalogs_api_v1_workflow_task_catalogs_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "description": "Substring match on task code / task name",
+              "title": "Search"
+            },
+            "description": "Substring match on task code / task name"
+          },
+          {
+            "name": "catalog_layer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CatalogLayer" }
+                },
+                { "type": "null" }
+              ],
+              "description": "Filter by catalog layer",
+              "title": "Catalog Layer"
+            },
+            "description": "Filter by catalog layer"
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CatalogEntityType" }
+                },
+                { "type": "null" }
+              ],
+              "description": "Filter by entity type",
+              "title": "Entity Type"
+            },
+            "description": "Filter by entity type"
+          },
+          {
+            "name": "product_template_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "type": "string", "format": "uuid" }
+                },
+                { "type": "null" }
+              ],
+              "description": "Filter by Applicable Product Template (product-specific catalogs only)",
+              "title": "Product Template Id"
+            },
+            "description": "Filter by Applicable Product Template (product-specific catalogs only)"
+          },
+          {
+            "name": "catalog_state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CatalogState" }
+                },
+                { "type": "null" }
+              ],
+              "description": "Filter by operational state",
+              "title": "Catalog State"
+            },
+            "description": "Filter by operational state"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Create Catalog",
+        "operationId": "create_catalog_api_v1_workflow_task_catalogs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Get Catalog Detail",
+        "description": "US 15.23 — Catalog Detail (Identity & Scope + Task Definitions).\n\nBPU + Support + Auditor (read). Not found / cross-tenant / non-authorized → 404.",
+        "operationId": "get_catalog_detail_api_v1_workflow_task_catalogs__catalog_id__get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/audit-trail": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Get Catalog Audit Trail",
+        "description": "US 15.23 — Audit Trail tab: append-only change log for this catalog.\n\nBPU + Support + Auditor (read). Cursor-paginated, newest first.",
+        "operationId": "get_catalog_audit_trail_api_v1_workflow_task_catalogs__catalog_id__audit_trail_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuditTrailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/versions/{version_id}/tasks": {
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Add Task",
+        "operationId": "add_task_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddTaskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponseWithWarnings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "List Tasks",
+        "operationId": "list_tasks_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TaskResponse" },
+                  "title": "Response List Tasks Api V1 Workflow Task Catalogs  Catalog Id  Versions  Version Id  Tasks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/versions/{version_id}/tasks/{task_id}": {
+      "patch": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Update Task",
+        "operationId": "update_task_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks__task_id__patch",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Task Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateTaskRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponseWithWarnings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Remove Task",
+        "operationId": "remove_task_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__tasks__task_id__delete",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Task Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{business_object_id}/checklist": {
+      "post": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Materialize Checklist",
+        "operationId": "materialize_checklist_api_v1_cases__business_object_id__checklist_post",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterializeChecklistRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChecklistItemResponse"
+                  },
+                  "title": "Response Materialize Checklist Api V1 Cases  Business Object Id  Checklist Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Get Checklist",
+        "operationId": "get_checklist_api_v1_cases__business_object_id__checklist_get",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChecklistItemResponse"
+                  },
+                  "title": "Response Get Checklist Api V1 Cases  Business Object Id  Checklist Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{business_object_id}/checklist/items/{item_id}": {
+      "patch": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Set Item Status",
+        "operationId": "set_item_status_api_v1_cases__business_object_id__checklist_items__item_id__patch",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetItemStatusRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{business_object_id}/checklist/required": {
+      "get": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Get Required Projection",
+        "operationId": "get_required_projection_api_v1_cases__business_object_id__checklist_required_get",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequiredProjectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{business_object_id}/phase-gates": {
+      "get": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Get Phase Gates",
+        "operationId": "get_phase_gates_api_v1_cases__business_object_id__phase_gates_get",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PhaseGateResponse" },
+                  "title": "Response Get Phase Gates Api V1 Cases  Business Object Id  Phase Gates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{business_object_id}/phase-gates/{phase}": {
+      "patch": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Set Phase Gate",
+        "operationId": "set_phase_gate_api_v1_cases__business_object_id__phase_gates__phase__patch",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "phase",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetPhaseGateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PhaseGateResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/vfe-rates": {
       "get": {
         "tags": ["VFE Rates"],
@@ -6180,7 +6941,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse"
+                }
               }
             }
           },
@@ -6216,7 +6979,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CatalogDetailResponse"
+                  "$ref": "#/components/schemas/app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse"
                 }
               }
             }
@@ -6253,7 +7016,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateCatalogRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest"
+              }
             }
           }
         },
@@ -6262,7 +7027,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse"
+                }
               }
             }
           },
@@ -6350,7 +7117,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CatalogListResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse"
+                }
               }
             }
           },
@@ -7171,7 +7940,9 @@
           },
           "stage_categorization": {
             "anyOf": [
-              { "$ref": "#/components/schemas/StageCategorization" },
+              {
+                "$ref": "#/components/schemas/app__modules__document_requirement_catalog__domain__enums__StageCategorization"
+              },
               { "type": "null" }
             ]
           },
@@ -7199,6 +7970,108 @@
           "applicable_process_contexts"
         ],
         "title": "AddRequirementRequest"
+      },
+      "AddTaskRequest": {
+        "properties": {
+          "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_code": {
+            "anyOf": [
+              { "type": "string", "maxLength": 100, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Task Code"
+          },
+          "task_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 300, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Task Name"
+          },
+          "task_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Description"
+          },
+          "category": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskCategory" },
+              { "type": "null" }
+            ]
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "is_mandatory": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Mandatory"
+          },
+          "weight": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Weight"
+          },
+          "display_order": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/TaskProcessContext" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "parent_task_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Parent Task Id"
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
+          },
+          "doc_requirement_pin_mode": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocRequirementPinMode" },
+              { "type": "null" }
+            ]
+          },
+          "conditional_trigger": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ConditionalTrigger" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["layer_action"],
+        "title": "AddTaskRequest"
       },
       "ApproveRejectRequest": {
         "properties": {
@@ -7592,6 +8465,83 @@
         ],
         "title": "AuditFilterOptionsResponse"
       },
+      "AuditTrailEventItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "action_type": { "type": "string", "title": "Action Type" },
+          "actor_id": { "type": "string", "title": "Actor Id" },
+          "actor_role_at_time": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Role At Time"
+          },
+          "actor_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Actor Display"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          },
+          "entity_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Entity Display"
+          },
+          "old_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Old Data"
+          },
+          "new_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "New Data"
+          },
+          "changed_fields": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Changed Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "action_type",
+          "actor_id",
+          "actor_role_at_time",
+          "actor_display",
+          "recorded_at",
+          "entity_display",
+          "old_data",
+          "new_data",
+          "changed_fields"
+        ],
+        "title": "AuditTrailEventItem"
+      },
+      "AuditTrailResponse": {
+        "properties": {
+          "events": {
+            "items": { "$ref": "#/components/schemas/AuditTrailEventItem" },
+            "type": "array",
+            "title": "Events"
+          },
+          "next_cursor": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": ["events"],
+        "title": "AuditTrailResponse"
+      },
       "AuditorPeriodUpdateReason": {
         "type": "string",
         "enum": [
@@ -7680,72 +8630,15 @@
         ],
         "title": "CandidateSummary"
       },
-      "CatalogDetailResponse": {
-        "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Applicable Process Contexts"
-          },
-          "product_template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Product Template Id"
-          },
-          "valid_from": {
-            "anyOf": [
-              { "type": "string", "format": "date" },
-              { "type": "null" }
-            ],
-            "title": "Valid From"
-          },
-          "valid_to": {
-            "anyOf": [
-              { "type": "string", "format": "date" },
-              { "type": "null" }
-            ],
-            "title": "Valid To"
-          },
-          "created_by": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Created By"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          },
-          "requirements": {
-            "items": { "$ref": "#/components/schemas/RequirementResponse" },
-            "type": "array",
-            "title": "Requirements"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "catalog_name",
-          "catalog_type",
-          "applicable_process_contexts",
-          "product_template_id",
-          "valid_from",
-          "valid_to",
-          "created_by",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "CatalogDetailResponse"
+      "CatalogEntityType": {
+        "type": "string",
+        "enum": ["refinancing_request", "financing", "redemption_request"],
+        "title": "CatalogEntityType"
+      },
+      "CatalogLayer": {
+        "type": "string",
+        "enum": ["global_default", "product_specific"],
+        "title": "CatalogLayer"
       },
       "CatalogListItem": {
         "properties": {
@@ -7797,83 +8690,61 @@
         ],
         "title": "CatalogListItem"
       },
-      "CatalogListResponse": {
-        "properties": {
-          "items": {
-            "items": { "$ref": "#/components/schemas/CatalogListItem" },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": { "type": "integer", "title": "Total" },
-          "page": { "type": "integer", "title": "Page" },
-          "per_page": { "type": "integer", "title": "Per Page" },
-          "total_pages": { "type": "integer", "title": "Total Pages" }
-        },
-        "type": "object",
-        "required": ["items", "total", "page", "per_page", "total_pages"],
-        "title": "CatalogListResponse"
-      },
-      "CatalogResponse": {
+      "CatalogListItemResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Applicable Process Contexts"
+          "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
+          "catalog_state": { "$ref": "#/components/schemas/CatalogState" },
+          "entity_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CatalogEntityType" },
+              { "type": "null" }
+            ]
           },
-          "product_template_id": {
+          "entity_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
               { "type": "null" }
             ],
-            "title": "Product Template Id"
+            "title": "Entity Id"
           },
           "valid_from": {
-            "anyOf": [
-              { "type": "string", "format": "date" },
-              { "type": "null" }
-            ],
+            "type": "string",
+            "format": "date",
             "title": "Valid From"
           },
-          "valid_to": {
+          "valid_until": {
             "anyOf": [
               { "type": "string", "format": "date" },
               { "type": "null" }
             ],
-            "title": "Valid To"
-          },
-          "created_by": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Created By"
+            "title": "Valid Until"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "id",
           "catalog_name",
-          "catalog_type",
-          "applicable_process_contexts",
-          "product_template_id",
+          "catalog_layer",
+          "catalog_state",
+          "entity_type",
+          "entity_id",
           "valid_from",
-          "valid_to",
-          "created_by",
-          "created_at",
-          "updated_at"
+          "valid_until",
+          "created_at"
         ],
-        "title": "CatalogResponse"
+        "title": "CatalogListItemResponse"
+      },
+      "CatalogState": {
+        "type": "string",
+        "enum": ["active", "archived"],
+        "title": "CatalogState"
       },
       "CatalogType": {
         "type": "string",
@@ -7891,6 +8762,79 @@
         "type": "object",
         "required": ["new_email"],
         "title": "ChangeEmailRequest"
+      },
+      "ChecklistItemResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "source_catalog_task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Catalog Task Id"
+          },
+          "task_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Code"
+          },
+          "task_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Name"
+          },
+          "is_mandatory": { "type": "boolean", "title": "Is Mandatory" },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Weight"
+          },
+          "status": { "$ref": "#/components/schemas/ChecklistItemStatus" },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          },
+          "checked_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Checked By"
+          },
+          "checked_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Checked At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "business_object_id",
+          "source_catalog_task_id",
+          "task_code",
+          "task_name",
+          "is_mandatory",
+          "weight",
+          "status",
+          "note",
+          "checked_by",
+          "checked_at"
+        ],
+        "title": "ChecklistItemResponse"
+      },
+      "ChecklistItemStatus": {
+        "type": "string",
+        "enum": ["open", "checked", "not_applicable"],
+        "title": "ChecklistItemStatus"
       },
       "CompleteReviewRequest": {
         "properties": {
@@ -7954,6 +8898,11 @@
         ],
         "title": "CompletenessResponse"
       },
+      "ConditionalTrigger": {
+        "type": "string",
+        "enum": ["financing_amount_over_threshold"],
+        "title": "ConditionalTrigger"
+      },
       "ConfirmationHistoryEntry": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -7990,51 +8939,6 @@
         "type": "object",
         "required": ["items", "next_cursor"],
         "title": "ConfirmationHistoryResponse"
-      },
-      "CreateCatalogRequest": {
-        "properties": {
-          "catalog_name": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
-            "title": "Catalog Name"
-          },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "minItems": 1,
-            "title": "Applicable Process Contexts"
-          },
-          "product_template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Product Template Id"
-          },
-          "valid_from": {
-            "anyOf": [
-              { "type": "string", "format": "date" },
-              { "type": "null" }
-            ],
-            "title": "Valid From"
-          },
-          "valid_to": {
-            "anyOf": [
-              { "type": "string", "format": "date" },
-              { "type": "null" }
-            ],
-            "title": "Valid To"
-          }
-        },
-        "type": "object",
-        "required": [
-          "catalog_name",
-          "catalog_type",
-          "applicable_process_contexts"
-        ],
-        "title": "CreateCatalogRequest"
       },
       "CreateFARequest": {
         "properties": {
@@ -8475,6 +9379,11 @@
         "type": "string",
         "enum": ["npv", "npv_ltv", "rv_only"],
         "title": "DisbursementDerivationRule"
+      },
+      "DocRequirementPinMode": {
+        "type": "string",
+        "enum": ["pin_by_id", "pin_by_version"],
+        "title": "DocRequirementPinMode"
       },
       "DocumentListItemResponse": {
         "properties": {
@@ -9947,6 +10856,87 @@
         "type": "object",
         "title": "ImpactSummary"
       },
+      "InheritedGDValues": {
+        "properties": {
+          "task_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Code"
+          },
+          "task_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Name"
+          },
+          "task_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Description"
+          },
+          "category": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskCategory" },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/TaskProcessContext" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "is_mandatory": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Mandatory"
+          },
+          "weight": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Weight"
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "display_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_code",
+          "task_name",
+          "task_description",
+          "category",
+          "applicable_process_contexts",
+          "is_mandatory",
+          "weight",
+          "responsible_role",
+          "display_order",
+          "stage_categorization",
+          "doc_requirement_ref"
+        ],
+        "title": "InheritedGDValues",
+        "description": "Global Default parent values shown alongside a PS override/deactivate row.\n\nRead-only display derived from the inheritance model (US 15.4). Inherited (immutable)\nattributes and the overridable attributes are both surfaced so the UI can render the\nGlobal Default value next to the override value."
+      },
       "InitiateRoleChangeRequest": {
         "properties": {
           "new_role": { "$ref": "#/components/schemas/UserRole" },
@@ -10254,6 +11244,11 @@
         "required": ["id", "template_name"],
         "title": "LCPortalProductTemplateItem"
       },
+      "LayerAction": {
+        "type": "string",
+        "enum": ["defined", "override", "deactivated", "supplement"],
+        "title": "LayerAction"
+      },
       "LegalEntityIdentityDetail": {
         "properties": {
           "partner_type": {
@@ -10466,6 +11461,32 @@
           "total"
         ],
         "title": "MaterializationResponse"
+      },
+      "MaterializeChecklistRequest": {
+        "properties": {
+          "entity_type": { "$ref": "#/components/schemas/CatalogEntityType" },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "amount_eur": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Amount Eur"
+          }
+        },
+        "type": "object",
+        "required": ["entity_type"],
+        "title": "MaterializeChecklistRequest"
       },
       "MaterializeRequest": {
         "properties": {
@@ -11362,6 +12383,40 @@
         ],
         "title": "PerRequirementStatusResponse"
       },
+      "PhaseGateResponse": {
+        "properties": {
+          "phase": {
+            "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+          },
+          "status": { "$ref": "#/components/schemas/PhaseGateStatus" },
+          "gate_approver": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Gate Approver"
+          },
+          "decided_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Decided At"
+          },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["phase", "status", "gate_approver", "decided_at", "note"],
+        "title": "PhaseGateResponse"
+      },
+      "PhaseGateStatus": {
+        "type": "string",
+        "enum": ["open", "in_review", "approved", "rejected"],
+        "title": "PhaseGateStatus"
+      },
       "PlatformModuleEntry": {
         "properties": {
           "key": { "type": "string", "title": "Key" },
@@ -11561,6 +12616,31 @@
         "title": "RegisteredAddressInput",
         "description": "Address as submitted by a client. All fields mandatory except state_region."
       },
+      "RequiredProjectionResponse": {
+        "properties": {
+          "business_object_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Business Object Id"
+          },
+          "all_required_done": {
+            "type": "boolean",
+            "title": "All Required Done"
+          },
+          "required_items": {
+            "items": { "$ref": "#/components/schemas/ChecklistItemResponse" },
+            "type": "array",
+            "title": "Required Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "business_object_id",
+          "all_required_done",
+          "required_items"
+        ],
+        "title": "RequiredProjectionResponse"
+      },
       "RequirementClassification": {
         "type": "string",
         "enum": ["mandatory", "optional", "conditional"],
@@ -11617,7 +12697,9 @@
           },
           "stage_categorization": {
             "anyOf": [
-              { "$ref": "#/components/schemas/StageCategorization" },
+              {
+                "$ref": "#/components/schemas/app__modules__document_requirement_catalog__domain__enums__StageCategorization"
+              },
               { "type": "null" }
             ]
           },
@@ -12116,6 +13198,18 @@
         "required": ["items"],
         "title": "SelectableTemplatesResponse"
       },
+      "SetItemStatusRequest": {
+        "properties": {
+          "status": { "$ref": "#/components/schemas/ChecklistItemStatus" },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "SetItemStatusRequest"
+      },
       "SetPasswordRequest": {
         "properties": {
           "token": {
@@ -12156,6 +13250,18 @@
         },
         "type": "object",
         "title": "SetPasswordResponse"
+      },
+      "SetPhaseGateRequest": {
+        "properties": {
+          "status": { "$ref": "#/components/schemas/PhaseGateStatus" },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "SetPhaseGateRequest"
       },
       "SoleProprietorIdentityDetail": {
         "properties": {
@@ -12240,11 +13346,6 @@
         "type": "string",
         "enum": ["default", "override", "supplement", "deactivated"],
         "title": "SourceLayer"
-      },
-      "StageCategorization": {
-        "type": "string",
-        "enum": ["submission", "approval", "disbursement_readiness"],
-        "title": "StageCategorization"
       },
       "SubjectType": {
         "type": "string",
@@ -12490,6 +13591,455 @@
         ],
         "title": "SuspensionReason"
       },
+      "TaskCategory": {
+        "type": "string",
+        "enum": [
+          "legal",
+          "compliance",
+          "credit",
+          "operations",
+          "treasury",
+          "documentation",
+          "other"
+        ],
+        "title": "TaskCategory"
+      },
+      "TaskDefinitionItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Version Id"
+          },
+          "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Code"
+          },
+          "task_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Name"
+          },
+          "task_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Description"
+          },
+          "category": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskCategory" },
+              { "type": "null" }
+            ]
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "is_mandatory": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Mandatory"
+          },
+          "weight": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Weight"
+          },
+          "display_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/TaskProcessContext" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "parent_task_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Parent Task Id"
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
+          },
+          "doc_requirement_pin_mode": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocRequirementPinMode" },
+              { "type": "null" }
+            ]
+          },
+          "conditional_trigger": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ConditionalTrigger" },
+              { "type": "null" }
+            ]
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "inherited": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/InheritedGDValues" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_version_id",
+          "layer_action",
+          "task_code",
+          "task_name",
+          "task_description",
+          "category",
+          "responsible_role",
+          "is_mandatory",
+          "weight",
+          "display_order",
+          "stage_categorization",
+          "applicable_process_contexts",
+          "is_active",
+          "parent_task_id",
+          "doc_requirement_ref",
+          "doc_requirement_pin_mode",
+          "conditional_trigger",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskDefinitionItem"
+      },
+      "TaskProcessContext": {
+        "type": "string",
+        "enum": [
+          "rr_submission",
+          "request_approval_readiness",
+          "financing_approval_readiness",
+          "disbursement_readiness",
+          "stage_1_review",
+          "stage_2_review",
+          "conditions_follow_up",
+          "servicing",
+          "redemption"
+        ],
+        "title": "TaskProcessContext"
+      },
+      "TaskResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Version Id"
+          },
+          "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Code"
+          },
+          "task_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Name"
+          },
+          "task_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Description"
+          },
+          "category": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskCategory" },
+              { "type": "null" }
+            ]
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "is_mandatory": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Mandatory"
+          },
+          "weight": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Weight"
+          },
+          "display_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/TaskProcessContext" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "parent_task_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Parent Task Id"
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
+          },
+          "doc_requirement_pin_mode": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocRequirementPinMode" },
+              { "type": "null" }
+            ]
+          },
+          "conditional_trigger": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ConditionalTrigger" },
+              { "type": "null" }
+            ]
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_version_id",
+          "layer_action",
+          "task_code",
+          "task_name",
+          "task_description",
+          "category",
+          "responsible_role",
+          "is_mandatory",
+          "weight",
+          "display_order",
+          "stage_categorization",
+          "applicable_process_contexts",
+          "is_active",
+          "parent_task_id",
+          "doc_requirement_ref",
+          "doc_requirement_pin_mode",
+          "conditional_trigger",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskResponse"
+      },
+      "TaskResponseWithWarnings": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Version Id"
+          },
+          "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Code"
+          },
+          "task_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Name"
+          },
+          "task_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Description"
+          },
+          "category": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskCategory" },
+              { "type": "null" }
+            ]
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "is_mandatory": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Mandatory"
+          },
+          "weight": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Weight"
+          },
+          "display_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/TaskProcessContext" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "parent_task_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Parent Task Id"
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
+          },
+          "doc_requirement_pin_mode": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocRequirementPinMode" },
+              { "type": "null" }
+            ]
+          },
+          "conditional_trigger": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ConditionalTrigger" },
+              { "type": "null" }
+            ]
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "warnings": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_version_id",
+          "layer_action",
+          "task_code",
+          "task_name",
+          "task_description",
+          "category",
+          "responsible_role",
+          "is_mandatory",
+          "weight",
+          "display_order",
+          "stage_categorization",
+          "applicable_process_contexts",
+          "is_active",
+          "parent_task_id",
+          "doc_requirement_ref",
+          "doc_requirement_pin_mode",
+          "conditional_trigger",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskResponseWithWarnings"
+      },
+      "TaskResponsibleRole": {
+        "type": "string",
+        "enum": [
+          "front_office",
+          "back_office_risk",
+          "compliance",
+          "legal",
+          "treasury",
+          "support",
+          "system"
+        ],
+        "title": "TaskResponsibleRole"
+      },
       "TemplateCurrentVersionSummary": {
         "properties": {
           "version_id": {
@@ -12603,6 +14153,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "template_code": { "type": "string", "title": "Template Code" },
+          "template_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Name"
+          },
           "current_version": {
             "anyOf": [
               { "$ref": "#/components/schemas/TemplateCurrentVersionSummary" },
@@ -12616,7 +14170,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "template_code", "current_version", "created_at"],
+        "required": [
+          "id",
+          "template_code",
+          "template_name",
+          "current_version",
+          "created_at"
+        ],
         "title": "TemplateListItem"
       },
       "TemplateListResponse": {
@@ -13313,7 +14873,9 @@
           },
           "stage_categorization": {
             "anyOf": [
-              { "$ref": "#/components/schemas/StageCategorization" },
+              {
+                "$ref": "#/components/schemas/app__modules__document_requirement_catalog__domain__enums__StageCategorization"
+              },
               { "type": "null" }
             ]
           },
@@ -13334,6 +14896,91 @@
         },
         "type": "object",
         "title": "UpdateRequirementRequest"
+      },
+      "UpdateTaskRequest": {
+        "properties": {
+          "task_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 300, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Task Name"
+          },
+          "task_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Task Description"
+          },
+          "category": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskCategory" },
+              { "type": "null" }
+            ]
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "is_mandatory": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Mandatory"
+          },
+          "weight": {
+            "anyOf": [{ "type": "number", "minimum": 0.0 }, { "type": "null" }],
+            "title": "Weight"
+          },
+          "display_order": {
+            "anyOf": [
+              { "type": "integer", "minimum": 0.0 },
+              { "type": "null" }
+            ],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "applicable_process_contexts": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/TaskProcessContext" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Applicable Process Contexts"
+          },
+          "is_active": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Active"
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
+          },
+          "doc_requirement_pin_mode": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocRequirementPinMode" },
+              { "type": "null" }
+            ]
+          },
+          "conditional_trigger": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ConditionalTrigger" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "UpdateTaskRequest"
       },
       "UpdateTemplateDraftRequest": {
         "properties": {
@@ -14236,6 +15883,201 @@
         "required": ["vfe_rate"],
         "title": "VfeRateUpdateRequest"
       },
+      "app__modules__document_requirement_catalog__domain__enums__StageCategorization": {
+        "type": "string",
+        "enum": ["submission", "approval", "disbursement_readiness"],
+        "title": "StageCategorization"
+      },
+      "app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "requirements": {
+            "items": { "$ref": "#/components/schemas/RequirementResponse" },
+            "type": "array",
+            "title": "Requirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogDetailResponse"
+      },
+      "app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/CatalogListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "CatalogListResponse"
+      },
+      "app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts",
+          "product_template_id",
+          "valid_from",
+          "valid_to",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogResponse"
+      },
+      "app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest": {
+        "properties": {
+          "catalog_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Catalog Name"
+          },
+          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Applicable Process Contexts"
+          },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_name",
+          "catalog_type",
+          "applicable_process_contexts"
+        ],
+        "title": "CreateCatalogRequest"
+      },
       "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -14253,6 +16095,252 @@
         "type": "object",
         "required": ["id", "name"],
         "title": "UserRef"
+      },
+      "app__modules__workflow_task_catalog__domain__enums__StageCategorization": {
+        "type": "string",
+        "enum": [
+          "pre_submission",
+          "stage_1_review",
+          "stage_2_review",
+          "pre_disbursement",
+          "servicing",
+          "redemption"
+        ],
+        "title": "StageCategorization"
+      },
+      "app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
+          "entity_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CatalogEntityType" },
+              { "type": "null" }
+            ]
+          },
+          "entity_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Entity Id"
+          },
+          "catalog_state": { "$ref": "#/components/schemas/CatalogState" },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "current_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Current Version Id"
+          },
+          "tasks": {
+            "items": { "$ref": "#/components/schemas/TaskDefinitionItem" },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "catalog_name",
+          "catalog_layer",
+          "entity_type",
+          "entity_id",
+          "catalog_state",
+          "valid_from",
+          "valid_until",
+          "description",
+          "created_by",
+          "created_at",
+          "updated_at",
+          "current_version_id",
+          "tasks"
+        ],
+        "title": "CatalogDetailResponse"
+      },
+      "app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/CatalogListItemResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "CatalogListResponse"
+      },
+      "app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tenant Id"
+          },
+          "catalog_name": { "type": "string", "title": "Catalog Name" },
+          "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
+          "catalog_state": { "$ref": "#/components/schemas/CatalogState" },
+          "entity_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CatalogEntityType" },
+              { "type": "null" }
+            ]
+          },
+          "entity_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Entity Id"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "current_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Current Version Id"
+          },
+          "warnings": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "catalog_name",
+          "catalog_layer",
+          "catalog_state",
+          "entity_type",
+          "entity_id",
+          "valid_from",
+          "valid_until",
+          "description",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CatalogResponse"
+      },
+      "app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest": {
+        "properties": {
+          "catalog_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Catalog Name"
+          },
+          "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "entity_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CatalogEntityType" },
+              { "type": "null" }
+            ]
+          },
+          "entity_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Entity Id"
+          }
+        },
+        "type": "object",
+        "required": ["catalog_name", "catalog_layer", "valid_from"],
+        "title": "CreateCatalogRequest"
       }
     }
   }
