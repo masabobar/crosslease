@@ -40,7 +40,8 @@
     "documentsEmptyState": "No documents attached yet",
     "downloadButton": "Download",
     "errors": {
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+      "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
     }
   }
 }
