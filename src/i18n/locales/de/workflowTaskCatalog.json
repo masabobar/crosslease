@@ -9,16 +9,7 @@
     "redemption_request": "Ablöseantrag"
   },
   "catalogStates": {
-    "draft": "Entwurf",
     "active": "Aktiv",
-    "deprecated": "Veraltet",
-    "archived": "Archiviert"
-  },
-  "versionStates": {
-    "draft": "Entwurf",
-    "published": "Veröffentlicht",
-    "active": "Aktiv",
-    "deprecated": "Veraltet",
     "archived": "Archiviert"
   },
   "list": {
@@ -27,14 +18,14 @@
     "createGlobalDefaultButton": "Globalen Standardkatalog erstellen",
     "createProductSpecificButton": "Produktspezifischen Katalog erstellen",
     "filters": {
-      "searchPlaceholder": "Suchen",
+      "searchPlaceholder": "Nach Aufgabencode oder -name suchen",
       "buttons": {
         "catalogLayer": "Katalogebene",
         "entityType": "Objekttyp",
         "productTemplate": "Produktvorlage",
-        "versionState": "Version",
         "catalogState": "Katalogstatus"
-      }
+      },
+      "noProductTemplates": "Keine Produktvorlagen verfügbar"
     },
     "table": {
       "columns": {
@@ -42,10 +33,10 @@
         "catalogLayer": "Katalogebene",
         "entityType": "Objekttyp",
         "productTemplate": "Produktvorlage",
-        "version": "Version",
-        "publishedAt": "Veröffentlicht am",
         "catalogState": "Katalogstatus",
-        "objectRefCount": "Anzahl Objektverweise"
+        "validFrom": "Gültig ab",
+        "validUntil": "Gültig bis",
+        "createdAt": "Erstellt am"
       },
       "catalogLayerShort": {
         "global_default": "Global",
@@ -54,13 +45,9 @@
       "openEnded": "Unbefristet",
       "actionsMenuLabel": "Zeilenaktionen",
       "actions": {
-        "openDetail": "Details öffnen",
-        "newDraftVersion": "Neuen Entwurf erstellen",
-        "versionHistory": "Versionshistorie anzeigen",
-        "migrationHistory": "Migrationshistorie anzeigen",
-        "deprecate": "Als veraltet markieren",
-        "archive": "Archivieren"
-      }
+        "openDetail": "Details öffnen"
+      },
+      "notApplicable": "—"
     },
     "emptyState": {
       "title": "Noch keine Workflow-Aufgabenkataloge",
@@ -93,30 +80,29 @@
       "productTemplateLockedHint": "Für diesen Katalogtyp festgelegt. Kann nicht geändert werden.",
       "productTemplatePlaceholder": "Auswählen",
       "productTemplateHint": "Nur aktive Produktvorlagen sind verfügbar.",
+      "productTemplateEmpty": "Es ist keine Produktvorlage mit einer aktiven veröffentlichten Version verfügbar, daher kann noch kein produktspezifischer Katalog erstellt werden.",
       "validFrom": "Gültig von",
       "validUntil": "Gültig bis",
       "optional": "(optional)"
     },
     "errors": {
-      "validUntilBeforeValidFrom": "\"Gültig bis\" muss am oder nach \"Gültig von\" liegen."
+      "validUntilBeforeValidFrom": "\"Gültig bis\" muss am oder nach \"Gültig von\" liegen.",
+      "validFromInPast": "Gültig ab darf nicht in der Vergangenheit liegen."
     },
     "actions": {
       "cancel": "Abbrechen",
       "submit": "Katalog erstellen"
-    }
+    },
+    "success": "Katalog erstellt."
   },
   "detail": {
     "tabs": {
       "identityAndTaskDefinitions": "Identität & Aufgabendefinitionen",
-      "versionHistory": "Versionshistorie",
-      "migrationHistory": "Migrationshistorie",
       "auditTrail": "Prüfprotokoll"
     },
     "header": {
       "tenant": "Mandant",
-      "entityType": "Objekttyp",
-      "previewEffectiveTasksButton": "Effektive Aufgaben ansehen",
-      "submitForActivationButton": "Zur Aktivierung einreichen"
+      "entityType": "Objekttyp"
     },
     "identity": {
       "sectionTitle": "Identität",
@@ -231,57 +217,6 @@
       "documentRequirementPlaceholder": "Auswählen",
       "parentTaskPlaceholder": "Auswählen"
     },
-    "versionHistory": {
-      "columns": {
-        "version": "Version",
-        "type": "Typ",
-        "activatedAt": "Aktiviert am",
-        "changeSummary": "Änderungszusammenfassung",
-        "objectRefs": "Objektverweise"
-      },
-      "archivable": "{{count}} archivierbar",
-      "drawer": {
-        "sections": {
-          "publication": "Veröffentlichung",
-          "changeSummary": "Änderungszusammenfassung"
-        },
-        "fields": {
-          "publishedAt": "Veröffentlicht am",
-          "publishedBy": "Veröffentlicht von",
-          "approvedAt": "Genehmigt am",
-          "approvedBy": "Genehmigt von",
-          "deprecatedAt": "Als veraltet markiert am",
-          "objectRefs": "Objektverweise"
-        }
-      }
-    },
-    "migrationHistory": {
-      "columns": {
-        "from": "Von",
-        "to": "Nach",
-        "scope": "Umfang",
-        "decisionAt": "Entscheidung am",
-        "dryRunReport": "Testlaufbericht"
-      },
-      "objectsInScope": "{{count}} Objekte",
-      "drawer": {
-        "title": "Migration {{from}} nach {{to}}",
-        "subtitle": "{{count}} Objekte im Umfang",
-        "sections": {
-          "governance": "Governance",
-          "dryRunReport": "Testlaufbericht",
-          "perObjectOutcome": "Ergebnis je Objekt"
-        },
-        "fields": {
-          "initiator": "Initiator",
-          "approver": "Genehmiger",
-          "decisionAt": "Entscheidung am",
-          "reconciledAutomatically": "Automatisch abgeglichen",
-          "requiredManualReview": "Manuelle Prüfung erforderlich"
-        }
-      },
-      "startMigrationButton": "Migration starten"
-    },
     "auditTrail": {
       "columns": {
         "timestamp": "Zeitstempel",
@@ -294,208 +229,15 @@
         "system": "System",
         "scheduled_job": "Geplanter Job"
       }
-    },
-    "effectiveTaskPreview": {
-      "title": "Vorschau effektive Aufgaben",
-      "subtitle": "{{active}} Aufgaben aktiv, {{suppressed}} unterdrückt",
-      "filters": {
-        "catalogVersion": "Katalogversion",
-        "productTemplate": "Produktvorlage",
-        "entityType": "Objekttyp"
-      },
-      "legend": {
-        "global": "Unverändert geerbt",
-        "override": "Geerbt mit Produktänderungen",
-        "supplement": "Nur produktspezifische Ergänzung"
-      },
-      "columns": {
-        "code": "Code",
-        "task": "Aufgabe",
-        "source": "Quelle",
-        "mandatory": "Pflicht",
-        "weight": "Gewichtung",
-        "role": "Rolle",
-        "stage": "Phase",
-        "docRef": "Dokumentverweis"
-      },
-      "suppressedNote": "KYC-003 (Basisbonitätsprüfung) ausgeschlossen - durch produktspezifische Regel deaktiviert"
-    },
-    "submitPrecheck": {
-      "title": "Zur Aktivierung einreichen",
-      "bannerTitle": "Veröffentlichungsprüfung fehlgeschlagen",
-      "bannerDescription": "3 Probleme müssen behoben werden, bevor dieser Entwurf zur Genehmigung eingereicht werden kann.",
-      "fixTaskLabel": "Aufgabe beheben",
-      "footerNote": "Einreichung erst möglich, wenn alle Probleme behoben sind",
-      "cancelButton": "Abbrechen",
-      "submitButton": "Zur Genehmigung einreichen"
     }
   },
-  "lifecycle": {
-    "deprecate": {
-      "title": "Katalogversion als veraltet markieren",
-      "subtitle": "Diese aktive Katalogversion zur Veraltungsmarkierung einreichen. Nach der Genehmigung steht sie für neue Geschäftsobjekte nicht mehr zur Verfügung.",
-      "justificationLabel": "Begründung für Veraltungsmarkierung"
-    },
-    "archive": {
-      "title": "Katalogversion archivieren",
-      "subtitle": "Diese veraltete Katalogversion zur Archivierung einreichen. Nach der Genehmigung steht sie für den operativen Einsatz nicht mehr zur Verfügung.",
-      "justificationLabel": "Begründung für Archivierung"
-    },
-    "fields": {
-      "catalogName": "Katalogname",
-      "version": "Version",
-      "status": "Status",
-      "objectRefCount": "Anzahl Objektverweise"
-    },
-    "minCharactersHint": "mind. {{count}} Zeichen",
-    "errors": {
-      "tooShort": "Geben Sie mindestens {{count}} Zeichen ein."
-    },
-    "actions": {
-      "cancel": "Abbrechen",
-      "submitForApproval": "Zur Genehmigung einreichen"
-    }
-  },
-  "migration": {
-    "pageTitle": "Objekte migrieren",
-    "steps": {
-      "dryRun": "Umfang festlegen & Testlauf",
-      "approval": "Genehmigung",
-      "execution": "Ausführung"
-    },
-    "defineScope": {
-      "title": "Umfang festlegen",
-      "subtitle": "Legen Sie die Quellversion, die Zielversion und die in dieser Migration enthaltenen Geschäftsobjekte fest.",
-      "miniSteps": {
-        "defineScope": "Umfang festlegen",
-        "dryRun": "Testlauf"
-      },
-      "fields": {
-        "fromVersion": "Von Version",
-        "fromVersionHint": "Wird durch den Versionsverlaufseintrag festgelegt, aus dem die Migration gestartet wurde. Kann nicht geändert werden.",
-        "toVersion": "Zu Version",
-        "toVersionPlaceholder": "Auswählen",
-        "scope": "Umfang",
-        "scopeHint": "Fügen Sie die Geschäftsobjekt-IDs hinzu, die in diese Migration einbezogen werden sollen. Drücken Sie nach jeder ID die Eingabetaste.",
-        "scopeInputPlaceholder": "Weitere ID hinzufügen...",
-        "scopeRemoveLabel": "{{id}} entfernen",
-        "justification": "Migrationsbegründung",
-        "justificationPlaceholder": "Beschreiben Sie den Grund für diese Migration...",
-        "justificationHint": "Pflichtfeld. Wird im Audit-Trail gespeichert."
-      },
-      "actions": {
-        "cancel": "Abbrechen",
-        "next": "Weiter"
-      }
-    },
-    "dryRunReport": {
-      "title": "Testlaufbericht",
-      "report": "Bericht",
-      "downloadButton": "Herunterladen",
-      "summary": {
-        "added": "Hinzugefügt",
-        "modified": "Geändert",
-        "deactivated": "Deaktiviert",
-        "newInstances": "Neue Instanzen",
-        "naInstances": "Nicht zutreffende Instanzen"
-      },
-      "table": {
-        "columns": {
-          "object": "Objekt",
-          "name": "Name",
-          "naInstances": "Nicht zutreffende Instanzen",
-          "mandatoryChanges": "Pflichtänderungen",
-          "newInstances": "Neue Instanzen"
-        }
-      },
-      "detailSheet": {
-        "titlePrefix": "Aufgabenänderungen",
-        "runtimeImpactSection": "Laufzeitauswirkung",
-        "taskDeltaSection": "Aufgabenänderungen"
-      },
-      "actions": {
-        "cancel": "Abbrechen",
-        "back": "Zurück",
-        "next": "Weiter"
-      }
-    },
-    "review": {
-      "title": "Prüfen & zur Genehmigung einreichen",
-      "sections": {
-        "migrationRequest": "Migrationsanfrage",
-        "dryRunReport": "Testlaufbericht"
-      },
-      "fields": {
-        "fromVersion": "Von Version",
-        "toVersion": "Zu Version",
-        "businessObjectsInScope": "Geschäftsobjekte im Umfang",
-        "justification": "Migrationsbegründung"
-      },
-      "approvalNotice": "Diese Migration erfordert die Genehmigung durch einen zweiten, unabhängigen Genehmiger, bevor sie fortgesetzt werden kann.",
-      "actions": {
-        "cancel": "Abbrechen",
-        "back": "Zurück",
-        "submit": "Zur Genehmigung einreichen"
-      }
-    },
-    "submitted": {
-      "title": "Migrationsanfrage eingereicht",
-      "description": "Diese Migration ist nun gesperrt und wurde an den zuständigen zweiten Genehmiger weitergeleitet. Es werden keine Geschäftsobjekte betroffen sein, bis die Migration geprüft und genehmigt wurde.",
-      "backButton": "Zurück zu den Katalogdetails"
-    },
-    "approval": {
-      "title": "Genehmigen oder ablehnen",
-      "subtitle": "Prüfen Sie den vom Initiator erstellten Testlaufbericht. Ihre Entscheidung ist endgültig und wird im Audit-Log erfasst.",
-      "actions": {
-        "cancel": "Abbrechen",
-        "submitDecision": "Entscheidung einreichen"
-      },
-      "decisionModal": {
-        "title": "Entscheidung einreichen",
-        "description": "Genehmigen oder lehnen Sie diese Migration ab. Eine Genehmigung löst die sofortige Ausführung aus. Ihre Entscheidung ist unwiderruflich.",
-        "summaryTitle": "Testlaufzusammenfassung",
-        "runtimeLabel": "Laufzeit",
-        "cancel": "Abbrechen",
-        "reject": "Ablehnen",
-        "approve": "Migration genehmigen"
-      },
-      "rejectionModal": {
-        "title": "Ablehnungsbestätigung",
-        "justificationLabel": "Ablehnungsbegründung",
-        "justificationPlaceholder": "Erläutern Sie, warum diese Migration abgelehnt wird...",
-        "justificationHint": "Pflichtfeld. Wird im Audit-Trail gespeichert.",
-        "cancel": "Abbrechen",
-        "confirm": "Ablehnung bestätigen"
-      },
-      "rejected": {
-        "title": "Migration abgelehnt",
-        "description": "Diese Migration wurde abgelehnt. Es wurden keine Geschäftsobjekte betroffen; sie verbleiben auf ihrer ursprünglichen Katalogversion.",
-        "justificationLabel": "Ablehnungsbegründung",
-        "backButton": "Zurück zu den Katalogdetails"
-      }
-    },
-    "execution": {
-      "title": "Ausführungsbericht",
-      "reconciledChip": "{{count}} abgeglichen",
-      "failedChip": "{{count}} fehlgeschlagen",
-      "generatedAtPrefix": "Erstellt",
-      "failureBanner": "{{count}} Objekte konnten nicht abgeglichen werden und verbleiben auf ihrer ursprünglichen Katalogversion. Prüfen Sie die Fehler unten und starten Sie einen begrenzten Wiederholungslauf.",
-      "table": {
-        "columns": {
-          "object": "Objekt",
-          "name": "Name",
-          "status": "Status",
-          "details": "Details"
-        }
-      },
-      "status": {
-        "reconciled": "Abgeglichen",
-        "failed": "Fehlgeschlagen"
-      },
-      "actions": {
-        "retryFailedObjects": "Fehlgeschlagene Objekte erneut versuchen",
-        "backToVersionHistory": "Zurück zum Versionsverlauf"
-      }
-    }
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "WTC_CATALOG_NOT_FOUND": "Dieser Katalog ist nicht verfügbar. Er wurde möglicherweise entfernt, oder das Modul Workflow-Aufgabenkatalog ist für Ihren Mandanten nicht aktiviert.",
+    "WTC_CATALOG_NAME_CONFLICT": "Ein Katalog mit diesem Namen existiert bereits in Ihrem Mandanten.",
+    "WTC_CATALOG_DUPLICATE_SCOPE": "Für diese Ebene, diesen Entitätstyp und diese Produktvorlage existiert bereits ein aktiver Katalog.",
+    "WTC_CATALOG_INVALID_VALID_FROM": "Gültig ab darf nicht in der Vergangenheit liegen.",
+    "WTC_CATALOG_INVALID_VALID_UNTIL": "Gültig bis muss am oder nach Gültig ab liegen.",
+    "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "Die ausgewählte Produktvorlage hat keine aktive veröffentlichte Version."
   }
 }

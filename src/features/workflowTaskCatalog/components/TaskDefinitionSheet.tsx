@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import {
-  CATALOG_LAYER,
   DOCUMENT_PINNING_BEHAVIOR,
   PLACEHOLDER_DOCUMENT_REQUIREMENT_OPTIONS,
   PLACEHOLDER_PARENT_TASK_OPTIONS,
@@ -29,11 +28,12 @@ import {
   TASK_STAGE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
 import type {
-  CatalogLayer,
   DocumentPinningBehavior,
   PlaceholderTaskDefinition,
   TaskDefinitionType,
 } from "@/features/workflowTaskCatalog/constants"
+import { CatalogLayerSchema } from "@/features/workflowTaskCatalog/api/schema"
+import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
 
 type SheetMode = "view" | "edit" | "add"
 
@@ -134,7 +134,8 @@ function TaskDefinitionSheet({
 }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
   const { t: tCommon } = useTranslation("common")
-  const isGlobalDefaultLayer = catalogLayer === CATALOG_LAYER.GLOBAL_DEFAULT
+  const isGlobalDefaultLayer =
+    catalogLayer === CatalogLayerSchema.enum.global_default
   const defaultAddType: TaskDefinitionType = isGlobalDefaultLayer
     ? TASK_DEFINITION_TYPE.GLOBAL
     : TASK_DEFINITION_TYPE.OVERRIDE

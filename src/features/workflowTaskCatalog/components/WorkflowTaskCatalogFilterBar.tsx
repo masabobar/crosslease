@@ -9,15 +9,8 @@ import {
   CATALOG_LAYER_OPTIONS,
   CATALOG_STATE_OPTIONS,
   ENTITY_TYPE_OPTIONS,
-  VERSION_STATE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
-import type {
-  CatalogLayer,
-  CatalogState,
-  EntityType,
-  VersionState,
-  WorkflowTaskCatalogFilterState,
-} from "@/features/workflowTaskCatalog/constants"
+import type { WorkflowTaskCatalogFilterState } from "@/features/workflowTaskCatalog/constants"
 
 type FilterKey = keyof WorkflowTaskCatalogFilterState
 
@@ -26,6 +19,7 @@ type Props = {
   onSearchChange: (value: string) => void
   filters: WorkflowTaskCatalogFilterState
   onFiltersChange: (update: Partial<WorkflowTaskCatalogFilterState>) => void
+  // { value: template UUID, label: template name } — the filter sends UUIDs on the wire.
   productTemplateOptions: { value: string; label: string }[]
 }
 
@@ -69,6 +63,9 @@ function FilterCheckboxRow({
   )
 }
 
+// Four filters, all backed by real query params on GET /workflow-task-catalogs. Version is
+// absent because versioning is not exposed on the wire at all, and US 15.22's November scope
+// note removes it.
 function WorkflowTaskCatalogFilterBar({
   search,
   onSearchChange,
@@ -82,7 +79,6 @@ function WorkflowTaskCatalogFilterBar({
     catalogLayer: t("list.filters.buttons.catalogLayer"),
     entityType: t("list.filters.buttons.entityType"),
     productTemplate: t("list.filters.buttons.productTemplate"),
-    versionState: t("list.filters.buttons.versionState"),
     catalogState: t("list.filters.buttons.catalogState"),
   }
 
@@ -103,30 +99,22 @@ function WorkflowTaskCatalogFilterBar({
           count={filters.catalogLayer.length}
           contentClassName="w-48"
         >
-          {CATALOG_LAYER_OPTIONS.map(option => {
-            const checked = filters.catalogLayer.includes(
-              option.value as CatalogLayer
-            )
-            return (
-              <FilterCheckboxRow
-                key={option.value}
-                checked={checked}
-                data-testid={`catalog-filter-option-catalogLayer-${option.value}`}
-                onClick={() =>
-                  onFiltersChange({
-                    catalogLayer: toggle(
-                      filters.catalogLayer,
-                      option.value as CatalogLayer
-                    ),
-                  })
-                }
-              >
-                <span className="text-sm text-foreground">
-                  {t(option.labelKey)}
-                </span>
-              </FilterCheckboxRow>
-            )
-          })}
+          {CATALOG_LAYER_OPTIONS.map(option => (
+            <FilterCheckboxRow
+              key={option.value}
+              checked={filters.catalogLayer.includes(option.value)}
+              data-testid={`catalog-filter-option-catalogLayer-${option.value}`}
+              onClick={() =>
+                onFiltersChange({
+                  catalogLayer: toggle(filters.catalogLayer, option.value),
+                })
+              }
+            >
+              <span className="text-sm text-foreground">
+                {t(option.labelKey)}
+              </span>
+            </FilterCheckboxRow>
+          ))}
         </FilterButton>
 
         <FilterButton
@@ -135,30 +123,22 @@ function WorkflowTaskCatalogFilterBar({
           count={filters.entityType.length}
           contentClassName="w-52"
         >
-          {ENTITY_TYPE_OPTIONS.map(option => {
-            const checked = filters.entityType.includes(
-              option.value as EntityType
-            )
-            return (
-              <FilterCheckboxRow
-                key={option.value}
-                checked={checked}
-                data-testid={`catalog-filter-option-entityType-${option.value}`}
-                onClick={() =>
-                  onFiltersChange({
-                    entityType: toggle(
-                      filters.entityType,
-                      option.value as EntityType
-                    ),
-                  })
-                }
-              >
-                <span className="text-sm text-foreground">
-                  {t(option.labelKey)}
-                </span>
-              </FilterCheckboxRow>
-            )
-          })}
+          {ENTITY_TYPE_OPTIONS.map(option => (
+            <FilterCheckboxRow
+              key={option.value}
+              checked={filters.entityType.includes(option.value)}
+              data-testid={`catalog-filter-option-entityType-${option.value}`}
+              onClick={() =>
+                onFiltersChange({
+                  entityType: toggle(filters.entityType, option.value),
+                })
+              }
+            >
+              <span className="text-sm text-foreground">
+                {t(option.labelKey)}
+              </span>
+            </FilterCheckboxRow>
+          ))}
         </FilterButton>
 
         <FilterButton
@@ -167,12 +147,15 @@ function WorkflowTaskCatalogFilterBar({
           count={filters.productTemplate.length}
           contentClassName="w-56 max-h-60 overflow-y-auto"
         >
-          {productTemplateOptions.map(option => {
-            const checked = filters.productTemplate.includes(option.value)
-            return (
+          {productTemplateOptions.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-muted-foreground">
+              {t("list.filters.noProductTemplates")}
+            </p>
+          ) : (
+            productTemplateOptions.map(option => (
               <FilterCheckboxRow
                 key={option.value}
-                checked={checked}
+                checked={filters.productTemplate.includes(option.value)}
                 data-testid={`catalog-filter-option-productTemplate-${option.value}`}
                 onClick={() =>
                   onFiltersChange({
@@ -185,40 +168,8 @@ function WorkflowTaskCatalogFilterBar({
               >
                 <span className="text-sm text-foreground">{option.label}</span>
               </FilterCheckboxRow>
-            )
-          })}
-        </FilterButton>
-
-        <FilterButton
-          data-testid="catalog-filter-versionState"
-          label={buttonLabels.versionState}
-          count={filters.versionState.length}
-          contentClassName="w-48"
-        >
-          {VERSION_STATE_OPTIONS.map(option => {
-            const checked = filters.versionState.includes(
-              option.value as VersionState
-            )
-            return (
-              <FilterCheckboxRow
-                key={option.value}
-                checked={checked}
-                data-testid={`catalog-filter-option-versionState-${option.value}`}
-                onClick={() =>
-                  onFiltersChange({
-                    versionState: toggle(
-                      filters.versionState,
-                      option.value as VersionState
-                    ),
-                  })
-                }
-              >
-                <span className="text-sm text-foreground">
-                  {t(option.labelKey)}
-                </span>
-              </FilterCheckboxRow>
-            )
-          })}
+            ))
+          )}
         </FilterButton>
 
         <FilterButton
@@ -227,30 +178,22 @@ function WorkflowTaskCatalogFilterBar({
           count={filters.catalogState.length}
           contentClassName="w-48"
         >
-          {CATALOG_STATE_OPTIONS.map(option => {
-            const checked = filters.catalogState.includes(
-              option.value as CatalogState
-            )
-            return (
-              <FilterCheckboxRow
-                key={option.value}
-                checked={checked}
-                data-testid={`catalog-filter-option-catalogState-${option.value}`}
-                onClick={() =>
-                  onFiltersChange({
-                    catalogState: toggle(
-                      filters.catalogState,
-                      option.value as CatalogState
-                    ),
-                  })
-                }
-              >
-                <span className="text-sm text-foreground">
-                  {t(option.labelKey)}
-                </span>
-              </FilterCheckboxRow>
-            )
-          })}
+          {CATALOG_STATE_OPTIONS.map(option => (
+            <FilterCheckboxRow
+              key={option.value}
+              checked={filters.catalogState.includes(option.value)}
+              data-testid={`catalog-filter-option-catalogState-${option.value}`}
+              onClick={() =>
+                onFiltersChange({
+                  catalogState: toggle(filters.catalogState, option.value),
+                })
+              }
+            >
+              <span className="text-sm text-foreground">
+                {t(option.labelKey)}
+              </span>
+            </FilterCheckboxRow>
+          ))}
         </FilterButton>
       </div>
     </div>

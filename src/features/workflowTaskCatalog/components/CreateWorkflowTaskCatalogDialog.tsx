@@ -1,7 +1,9 @@
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,20 +16,42 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import { ApiError } from "@/lib/api"
+import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
+import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
+import { ENTITY_TYPE_OPTIONS } from "@/features/workflowTaskCatalog/constants"
 import {
-  CATALOG_LAYER,
-  ENTITY_TYPE_OPTIONS,
-  PLACEHOLDER_PRODUCT_TEMPLATE_OPTIONS,
-} from "@/features/workflowTaskCatalog/constants"
-import type { CatalogLayer } from "@/features/workflowTaskCatalog/constants"
+  CatalogEntityTypeSchema,
+  CatalogLayerSchema,
+} from "@/features/workflowTaskCatalog/api/schema"
+import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
 
 // Two schemas rather than one shared shape with .extend()/.refine(): the only real
 // difference is that productTemplate is required for Product-Specific and unused for
-// Global Default (forced null per PRD1042-1158/1159) — duplicating the four shared
+// Global Default (entity_id must be null for that layer) — duplicating the four shared
 // fields keeps each schema readable without fighting zod's typing on refined objects.
 const VALID_UNTIL_REFINEMENT = {
   message: "validUntilBeforeValidFrom",
   path: ["validUntil"],
+}
+
+// The BE rejects a past valid_from outright (WTC_CATALOG_INVALID_VALID_FROM;
+// BACKDATING_TOLERANCE_DAYS is 0), so catch it here rather than spend a guaranteed 422.
+// Same shape as ProductTemplateWizardFormSchema's validFromInPast rule.
+function refineValidFrom(
+  data: { validFrom: string },
+  ctx: z.RefinementCtx
+): void {
+  if (
+    data.validFrom !== "" &&
+    data.validFrom < format(new Date(), "yyyy-MM-dd")
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "validFromInPast",
+      path: ["validFrom"],
+    })
+  }
 }
 
 // productTemplate/validUntil are plain (non-optional) z.string() in both schemas —
@@ -45,6 +69,7 @@ const globalDefaultCatalogSchema = z
     data => !data.validUntil || data.validUntil >= data.validFrom,
     VALID_UNTIL_REFINEMENT
   )
+  .superRefine(refineValidFrom)
 
 const productSpecificCatalogSchema = z
   .object({
@@ -58,6 +83,7 @@ const productSpecificCatalogSchema = z
     data => !data.validUntil || data.validUntil >= data.validFrom,
     VALID_UNTIL_REFINEMENT
   )
+  .superRefine(refineValidFrom)
 
 type CreateCatalogFormValues = {
   catalogName: string
@@ -80,13 +106,26 @@ type Props = {
   onOpenChange: (open: boolean) => void
 }
 
-// Static shell only — no backend exists yet for Epic 15 (see CLAUDE.md). Submitting
-// validates the form client-side, then only closes the dialog; it never simulates a
-// network call or shows a success toast.
 function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
   const { t: tCommon } = useTranslation("common")
-  const isGlobalDefault = layer === CATALOG_LAYER.GLOBAL_DEFAULT
+  const isGlobalDefault = layer === CatalogLayerSchema.enum.global_default
+
+  // Reused from the FA feature: GET /product-templates/selectable returns only templates
+  // with a published version valid today, which is what the catalog's entity_id must be
+  // (services.py _validate_product_template rejects anything else).
+  const {
+    data: templates,
+    isLoading: isLoadingTemplates,
+    isError: isTemplatesError,
+    error: templatesError,
+  } = useSelectableProductTemplates()
+  const createCatalog = useCreateWorkflowTaskCatalog()
+
+  const templateOptions = (templates?.items ?? []).map(item => ({
+    value: item.template_id,
+    label: `${item.template_name} (${item.version_number})`,
+  }))
 
   const {
     control,
@@ -116,8 +155,41 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
     reset()
   }
 
-  function onSubmit() {
-    handleClose()
+  function onSubmit(values: CreateCatalogFormValues) {
+    createCatalog.mutate(
+      {
+        catalog_name: values.catalogName.trim(),
+        catalog_layer: layer,
+        // Form fields are strings ("" = unset); parse at the form → wire boundary so an
+        // unexpected value throws here instead of travelling as a bad request param.
+        entity_type: CatalogEntityTypeSchema.parse(values.entityType),
+        // entity_id carries the Product Template UUID and must be null on Global Default.
+        entity_id: isGlobalDefault ? null : values.productTemplate,
+        valid_from: values.validFrom,
+        valid_until: values.validUntil || null,
+      },
+      {
+        onSuccess: response => {
+          toast.success(t("create.success"))
+          // The BE warns when a Product-Specific catalog is created with no Global Default
+          // for its Tenant × Entity Type — only Supplement tasks can be authored until one
+          // exists, so it must not be swallowed.
+          for (const warning of response.warnings) {
+            toast.warning(warning)
+          }
+          handleClose()
+        },
+        onError: err => {
+          toast.error(
+            err instanceof ApiError
+              ? t(`errors.${err.code}` as "errors.generic", {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")
+          )
+        },
+      }
+    )
   }
 
   return (
@@ -239,23 +311,45 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
               >
                 {t("create.fields.productTemplate")}
               </Label>
-              <Controller
-                control={control}
-                name="productTemplate"
-                render={({ field }) => (
-                  <SelectField
-                    id="create-catalog-product-template"
-                    data-testid="create-catalog-product-template-select"
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    options={PLACEHOLDER_PRODUCT_TEMPLATE_OPTIONS}
-                    placeholder={t("create.fields.productTemplatePlaceholder")}
-                    error={!!errors.productTemplate}
-                  />
-                )}
-              />
+              {/* entity_id is required for this layer, so a failed or empty template query
+                  is a dead end — say so rather than rendering an empty select. */}
+              {isTemplatesError ? (
+                <p
+                  data-testid="create-catalog-product-template-error"
+                  className="text-sm text-destructive"
+                >
+                  {templatesError instanceof ApiError
+                    ? t(`errors.${templatesError.code}` as "errors.generic", {
+                        defaultValue: t("errors.generic"),
+                      })
+                    : t("errors.generic")}
+                </p>
+              ) : (
+                <Controller
+                  control={control}
+                  name="productTemplate"
+                  render={({ field }) => (
+                    <SelectField
+                      id="create-catalog-product-template"
+                      data-testid="create-catalog-product-template-select"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      options={templateOptions}
+                      placeholder={t(
+                        "create.fields.productTemplatePlaceholder"
+                      )}
+                      error={!!errors.productTemplate}
+                      disabled={isLoadingTemplates}
+                    />
+                  )}
+                />
+              )}
               <p className="mt-2 text-sm text-muted-foreground opacity-80">
-                {t("create.fields.productTemplateHint")}
+                {!isTemplatesError &&
+                !isLoadingTemplates &&
+                templateOptions.length === 0
+                  ? t("create.fields.productTemplateEmpty")
+                  : t("create.fields.productTemplateHint")}
               </p>
               {errors.productTemplate && (
                 <p className="mt-1 text-sm text-destructive">
@@ -338,7 +432,11 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
           >
             {t("create.actions.cancel")}
           </Button>
-          <Button type="submit" data-testid="create-catalog-submit">
+          <Button
+            type="submit"
+            data-testid="create-catalog-submit"
+            disabled={createCatalog.isPending}
+          >
             {t("create.actions.submit")}
           </Button>
         </div>

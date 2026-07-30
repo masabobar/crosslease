@@ -9,16 +9,7 @@
     "redemption_request": "Redemption Request"
   },
   "catalogStates": {
-    "draft": "Draft",
     "active": "Active",
-    "deprecated": "Deprecated",
-    "archived": "Archived"
-  },
-  "versionStates": {
-    "draft": "Draft",
-    "published": "Published",
-    "active": "Active",
-    "deprecated": "Deprecated",
     "archived": "Archived"
   },
   "list": {
@@ -27,14 +18,14 @@
     "createGlobalDefaultButton": "Create global default catalog",
     "createProductSpecificButton": "Create product-specific catalog",
     "filters": {
-      "searchPlaceholder": "Search",
+      "searchPlaceholder": "Search by task code or name",
       "buttons": {
         "catalogLayer": "Catalog layer",
         "entityType": "Entity type",
         "productTemplate": "Product template",
-        "versionState": "Version",
         "catalogState": "Catalog state"
-      }
+      },
+      "noProductTemplates": "No product templates available"
     },
     "table": {
       "columns": {
@@ -42,10 +33,10 @@
         "catalogLayer": "Catalog layer",
         "entityType": "Entity type",
         "productTemplate": "Product template",
-        "version": "Version",
-        "publishedAt": "Published at",
         "catalogState": "Catalog state",
-        "objectRefCount": "Object ref count"
+        "validFrom": "Valid from",
+        "validUntil": "Valid until",
+        "createdAt": "Created at"
       },
       "catalogLayerShort": {
         "global_default": "Global",
@@ -54,13 +45,9 @@
       "openEnded": "Open ended",
       "actionsMenuLabel": "Row actions",
       "actions": {
-        "openDetail": "Open detail",
-        "newDraftVersion": "New draft version",
-        "versionHistory": "View version history",
-        "migrationHistory": "View migration history",
-        "deprecate": "Deprecate",
-        "archive": "Archive"
-      }
+        "openDetail": "Open detail"
+      },
+      "notApplicable": "—"
     },
     "emptyState": {
       "title": "No workflow task catalogs yet",
@@ -93,30 +80,29 @@
       "productTemplateLockedHint": "Fixed for this catalog type. Cannot be changed.",
       "productTemplatePlaceholder": "Select",
       "productTemplateHint": "Only active Product Templates are available.",
+      "productTemplateEmpty": "No product template with an active published version is available, so a product-specific catalog cannot be created yet.",
       "validFrom": "Valid from",
       "validUntil": "Valid until",
       "optional": "(optional)"
     },
     "errors": {
-      "validUntilBeforeValidFrom": "Valid until must be on or after valid from."
+      "validUntilBeforeValidFrom": "Valid until must be on or after valid from.",
+      "validFromInPast": "Valid from cannot be in the past."
     },
     "actions": {
       "cancel": "Cancel",
       "submit": "Create catalog"
-    }
+    },
+    "success": "Catalog created."
   },
   "detail": {
     "tabs": {
       "identityAndTaskDefinitions": "Identity & task definitions",
-      "versionHistory": "Version history",
-      "migrationHistory": "Migration history",
       "auditTrail": "Audit trail"
     },
     "header": {
       "tenant": "Tenant",
-      "entityType": "Entity type",
-      "previewEffectiveTasksButton": "Preview effective tasks",
-      "submitForActivationButton": "Submit for activation"
+      "entityType": "Entity type"
     },
     "identity": {
       "sectionTitle": "Identity",
@@ -231,57 +217,6 @@
       "documentRequirementPlaceholder": "Select",
       "parentTaskPlaceholder": "Select"
     },
-    "versionHistory": {
-      "columns": {
-        "version": "Version",
-        "type": "Type",
-        "activatedAt": "Activated at",
-        "changeSummary": "Change summary",
-        "objectRefs": "Object refs"
-      },
-      "archivable": "{{count}} archivable",
-      "drawer": {
-        "sections": {
-          "publication": "Publication",
-          "changeSummary": "Change summary"
-        },
-        "fields": {
-          "publishedAt": "Published at",
-          "publishedBy": "Published by",
-          "approvedAt": "Approved at",
-          "approvedBy": "Approved by",
-          "deprecatedAt": "Deprecated at",
-          "objectRefs": "Object refs"
-        }
-      }
-    },
-    "migrationHistory": {
-      "columns": {
-        "from": "From",
-        "to": "To",
-        "scope": "Scope",
-        "decisionAt": "Decision at",
-        "dryRunReport": "Dry run report"
-      },
-      "objectsInScope": "{{count}} objects",
-      "drawer": {
-        "title": "Migration {{from}} to {{to}}",
-        "subtitle": "{{count}} objects in scope",
-        "sections": {
-          "governance": "Governance",
-          "dryRunReport": "Dry run report",
-          "perObjectOutcome": "Per object outcome"
-        },
-        "fields": {
-          "initiator": "Initiator",
-          "approver": "Approver",
-          "decisionAt": "Decision at",
-          "reconciledAutomatically": "Reconciled automatically",
-          "requiredManualReview": "Required manual review"
-        }
-      },
-      "startMigrationButton": "Start migration"
-    },
     "auditTrail": {
       "columns": {
         "timestamp": "Timestamp",
@@ -294,208 +229,15 @@
         "system": "System",
         "scheduled_job": "Scheduled job"
       }
-    },
-    "effectiveTaskPreview": {
-      "title": "Effective task set preview",
-      "subtitle": "{{active}} tasks active, {{suppressed}} suppressed",
-      "filters": {
-        "catalogVersion": "Catalog version",
-        "productTemplate": "Product template",
-        "entityType": "Entity type"
-      },
-      "legend": {
-        "global": "Inherited unchanged",
-        "override": "Inherited with product changes",
-        "supplement": "Product-only addition"
-      },
-      "columns": {
-        "code": "Code",
-        "task": "Task",
-        "source": "Source",
-        "mandatory": "Mandatory",
-        "weight": "Weight",
-        "role": "Role",
-        "stage": "Stage",
-        "docRef": "Doc ref"
-      },
-      "suppressedNote": "KYC-003 (Basic credit check) excluded - deactivated by product specific rule"
-    },
-    "submitPrecheck": {
-      "title": "Submit for activation",
-      "bannerTitle": "Publication check failed",
-      "bannerDescription": "3 issues must be resolved before this draft can be submitted for approval.",
-      "fixTaskLabel": "Fix task",
-      "footerNote": "Submission unavailable until all issues are resolved",
-      "cancelButton": "Cancel",
-      "submitButton": "Submit for approval"
     }
   },
-  "lifecycle": {
-    "deprecate": {
-      "title": "Deprecate catalog version",
-      "subtitle": "Submit this active catalog version for deprecation. After approval, it will no longer be available for new business objects.",
-      "justificationLabel": "Deprecation justification"
-    },
-    "archive": {
-      "title": "Archive catalog version",
-      "subtitle": "Submit this deprecated catalog version for archival. After approval, it will no longer be available for operational use.",
-      "justificationLabel": "Archive justification"
-    },
-    "fields": {
-      "catalogName": "Catalog name",
-      "version": "Version",
-      "status": "Status",
-      "objectRefCount": "Object reference count"
-    },
-    "minCharactersHint": "min {{count}} characters",
-    "errors": {
-      "tooShort": "Enter at least {{count}} characters."
-    },
-    "actions": {
-      "cancel": "Cancel",
-      "submitForApproval": "Submit for approval"
-    }
-  },
-  "migration": {
-    "pageTitle": "Migrate objects",
-    "steps": {
-      "dryRun": "Define scope & dry run",
-      "approval": "Approval",
-      "execution": "Execution"
-    },
-    "defineScope": {
-      "title": "Define scope",
-      "subtitle": "Specify the source version, target version, and the business objects included in this migration.",
-      "miniSteps": {
-        "defineScope": "Define scope",
-        "dryRun": "Dry run"
-      },
-      "fields": {
-        "fromVersion": "From version",
-        "fromVersionHint": "Set from the version history entry you launched migration from. Cannot be changed.",
-        "toVersion": "To version",
-        "toVersionPlaceholder": "Select",
-        "scope": "Scope",
-        "scopeHint": "Add the business object IDs to include in this migration. Press Enter after each ID to add it.",
-        "scopeInputPlaceholder": "Add another ID...",
-        "scopeRemoveLabel": "Remove {{id}}",
-        "justification": "Migration justification",
-        "justificationPlaceholder": "Describe the reason for this migration...",
-        "justificationHint": "Mandatory. Stored in the audit trail."
-      },
-      "actions": {
-        "cancel": "Cancel",
-        "next": "Next"
-      }
-    },
-    "dryRunReport": {
-      "title": "Dry run report",
-      "report": "Report",
-      "downloadButton": "Download",
-      "summary": {
-        "added": "Added",
-        "modified": "Modified",
-        "deactivated": "Deactivated",
-        "newInstances": "New instances",
-        "naInstances": "NA instances"
-      },
-      "table": {
-        "columns": {
-          "object": "Object",
-          "name": "Name",
-          "naInstances": "NA instances",
-          "mandatoryChanges": "Mandatory changes",
-          "newInstances": "New instances"
-        }
-      },
-      "detailSheet": {
-        "titlePrefix": "Task delta",
-        "runtimeImpactSection": "Runtime impact",
-        "taskDeltaSection": "Task delta"
-      },
-      "actions": {
-        "cancel": "Cancel",
-        "back": "Back",
-        "next": "Next"
-      }
-    },
-    "review": {
-      "title": "Review & submit for approval",
-      "sections": {
-        "migrationRequest": "Migration request",
-        "dryRunReport": "Dry run report"
-      },
-      "fields": {
-        "fromVersion": "From version",
-        "toVersion": "To version",
-        "businessObjectsInScope": "Business objects in scope",
-        "justification": "Migration justification"
-      },
-      "approvalNotice": "This migration requires approval from a second, independent approver before it can proceed.",
-      "actions": {
-        "cancel": "Cancel",
-        "back": "Back",
-        "submit": "Submit for approval"
-      }
-    },
-    "submitted": {
-      "title": "Migration request submitted",
-      "description": "This migration is now locked and routed to the designated second approver. No business objects will be affected until it's reviewed and approved.",
-      "backButton": "Back to catalog details"
-    },
-    "approval": {
-      "title": "Approve or reject",
-      "subtitle": "Review the dry run report generated by the initiator. Your decision is final and recorded in the audit log.",
-      "actions": {
-        "cancel": "Cancel",
-        "submitDecision": "Submit decision"
-      },
-      "decisionModal": {
-        "title": "Submit decision",
-        "description": "Approve or reject this migration. Approve triggers immediate execution. Your decision is irreversible.",
-        "summaryTitle": "Dry run summary",
-        "runtimeLabel": "Runtime",
-        "cancel": "Cancel",
-        "reject": "Reject",
-        "approve": "Approve migration"
-      },
-      "rejectionModal": {
-        "title": "Rejection confirmation",
-        "justificationLabel": "Rejection justification",
-        "justificationPlaceholder": "Explain why this migration is being rejected...",
-        "justificationHint": "Mandatory. Stored in the audit trail.",
-        "cancel": "Cancel",
-        "confirm": "Confirm rejection"
-      },
-      "rejected": {
-        "title": "Migration rejected",
-        "description": "This migration was rejected. No business objects were affected; they remain on their original catalog version.",
-        "justificationLabel": "Rejection justification",
-        "backButton": "Back to catalog details"
-      }
-    },
-    "execution": {
-      "title": "Execution report",
-      "reconciledChip": "{{count}} reconciled",
-      "failedChip": "{{count}} failed",
-      "generatedAtPrefix": "Generated",
-      "failureBanner": "{{count}} objects failed to reconcile and retain their original catalog version. Review the errors below and initiate a scoped re-run to reconcile.",
-      "table": {
-        "columns": {
-          "object": "Object",
-          "name": "Name",
-          "status": "Status",
-          "details": "Details"
-        }
-      },
-      "status": {
-        "reconciled": "Reconciled",
-        "failed": "Failed"
-      },
-      "actions": {
-        "retryFailedObjects": "Retry failed objects",
-        "backToVersionHistory": "Back to version history"
-      }
-    }
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "WTC_CATALOG_NOT_FOUND": "This catalog is not available. It may have been removed, or the workflow task catalog module may not be enabled for your tenant.",
+    "WTC_CATALOG_NAME_CONFLICT": "A catalog with this name already exists in your tenant.",
+    "WTC_CATALOG_DUPLICATE_SCOPE": "An active catalog already exists for this layer, entity type and product template.",
+    "WTC_CATALOG_INVALID_VALID_FROM": "Valid from cannot be in the past.",
+    "WTC_CATALOG_INVALID_VALID_UNTIL": "Valid until must be on or after valid from.",
+    "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "The selected product template has no active published version."
   }
 }

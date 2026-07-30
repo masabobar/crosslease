@@ -18,8 +18,4 @@ export const WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES: readonly UserRole[] = [
 export type WorkflowTaskCatalogDetailTab =
   | "identity"
   | "taskDefinitions"
-  | "versionHistory"
-  | "migrationHistory"
   | "auditTrail"
-
-export type MigrationWizardStep = "dryRun" | "approval" | "execution"

@@ -1,26 +1,23 @@
 import { useTranslation } from "react-i18next"
-import { CATALOG_STATE } from "@/features/workflowTaskCatalog/constants"
-import type { CatalogState } from "@/features/workflowTaskCatalog/constants"
+import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
+import type { CatalogState } from "@/features/workflowTaskCatalog/api/schema"
 
 type Props = {
   state: CatalogState
 }
 
-// Soft pill for draft/active/deprecated — matches TemplateVersionStatusBadge's palette.
-// Archived renders as plain text with no pill background, per the Figma list view
-// (Archived rows show unstyled text, unlike the other three states).
+// Soft green pill for active — matches TemplateVersionStatusBadge's palette. Archived
+// renders as plain text with no pill background, per the Figma list view.
 const STATE_BADGE_CLASSES: Record<CatalogState, string> = {
-  [CATALOG_STATE.DRAFT]: "bg-sky-600/10 text-sky-600",
-  [CATALOG_STATE.ACTIVE]: "bg-green-600/10 text-green-600",
-  [CATALOG_STATE.DEPRECATED]: "bg-amber-600/10 text-amber-600",
-  [CATALOG_STATE.ARCHIVED]: "",
+  [CatalogStateSchema.enum.active]: "bg-green-600/10 text-green-600",
+  [CatalogStateSchema.enum.archived]: "",
 }
 
 function WorkflowTaskCatalogStateBadge({ state }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
-  const label = t(`catalogStates.${state}` as "catalogStates.draft")
+  const label = t(`catalogStates.${state}` as "catalogStates.active")
 
-  if (state === CATALOG_STATE.ARCHIVED) {
+  if (state === CatalogStateSchema.enum.archived) {
     return (
       <span
         data-testid={`catalog-state-badge-${state}`}
