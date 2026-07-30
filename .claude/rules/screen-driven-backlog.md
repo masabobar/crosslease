@@ -1,146 +1,124 @@
-# Screen-Driven Backlog (Web & Mobile)
+# Screen Scoping (Frontend Units)
 
-**MANDATORY: Web and mobile user stories are organized one-screen-per-story. Each story must list the API endpoints the screen consumes.**
+**Version:** 2.0
+**Last Updated:** 2026-07-30
+**Status:** Active
 
-This rule applies whenever a backlog phase is built or extended for a frontend (web SPA, web SSR, iOS, Android, React Native, Flutter, Expo). It governs _how stories are written_. Backend, infra, and shared-library stories are unaffected.
+**MANDATORY: one frontend unit = one screen (wizard excepted). Before implementation starts, the
+screen → endpoint mapping must be written out and verified.**
 
-It works alongside `.claude/rules/api-first.md` (which gates _when frontend implementation can start_ against API contract verification) and `.claude/rules/documentation-templates.md` §1.1 (the canonical user-story format).
+> **Scope of this rule.** Stories are authored in **Jira (PRD1042)** by the PO — this repo has no backlog
+> to write into. So this rule no longer governs how stories are _written_; it governs how a unit of
+> frontend work is **scoped and verified before it is built**. The filename is historical.
+
+Works with `.claude/rules/api-first.md` (which consumes the mapping from §3 to gate implementation) and
+`.claude/rules/design-first.md` (which gates on design fidelity per screen).
 
 ---
 
-## 1. The Rule (soft, with one explicit exception)
+## 1. The rule, and its one exception
 
-Default: **one frontend story = one screen** (or one modal, sheet, drawer, or full-page overlay that the user perceives as a discrete destination).
-
-Why "soft": strict 1:1 fragments velocity for cohesive flows. So we allow exactly one exception:
+Default: **one unit = one screen** — or one modal, sheet, drawer, or full-page overlay the user perceives
+as a discrete destination.
 
 ### Wizard exception
 
-A multi-step flow where each step has no standalone purpose — the user only ever moves through the steps as a unit (signup, onboarding, checkout, KYC) — may be **one story spanning all wizard steps**, provided:
+A multi-step flow whose steps have no standalone purpose — the user only ever moves through them as a unit
+(create wizard, onboarding, KYC) — may be **one unit spanning all steps**, provided:
 
-- The story explicitly enumerates every step/screen in its description
-- Each step has its own subtask in the story's task list
-- The wizard exits cleanly to a single defined screen (the resulting target after success/cancel)
-- Each step's API endpoints are listed (per §3 below)
+- Every step is enumerated by name in the plan
+- Each step is its own task in the TodoWrite breakdown
+- The wizard exits cleanly to one defined screen on both success and cancel
+- Every step's endpoints appear in the §3 mapping
 
-A "tabs" pattern is **not** a wizard — tabs are independent destinations and get separate stories.
+A **tabs** pattern is not a wizard. Tabs are independent destinations and get separate units — the
+Workflow Task Catalog detail page's five tabs are five surfaces, not one.
 
-If a story would naturally cover 2+ unrelated screens, **split it.** Don't bundle "Login + ForgotPassword + Signup" — those are three stories.
-
----
-
-## 2. Story Title & Identification
-
-Frontend story titles follow the `Screen — Action / Purpose` pattern:
-
-✅ Good:
-
-- `US-042: ProductDetail — display product info, gallery, related items`
-- `US-043: ProductDetail — add to cart interaction`
-- `US-044: Checkout wizard — address, payment, review (3 steps)`
-
-❌ Bad:
-
-- `US-042: Implement product detail page` (vague — what part?)
-- `US-043: Cart functionality` (multiple screens hidden inside)
-- `US-044: Make checkout work` (no screen, no scope)
-
-The first half (before `—`) names the screen exactly as it appears in the design / specification. Reuse the same screen name across all related stories so they're greppable.
+**If a Jira story covers 2+ unrelated screens, split the work into several units** and say so in the plan.
+Delivering a bundle because the ticket was written as a bundle is how scope drift hides.
 
 ---
 
-## 3. Required Story Fields (frontend stories only)
+## 2. Identifying the screen
 
-Frontend stories **extend** the base user-story format from `.claude/rules/documentation-templates.md` §1.1 — do not redefine those fields here. Apply the §1.1 template, then add the four mandatory fields below. The story title also follows the `ScreenName — Short Action` pattern (see §2 above).
+PRD1042's actual conventions (verified against the board):
 
-**Additional mandatory fields for frontend stories:**
+- **Story:** `US <epic>.<n> | <MODULE> | <title>` — e.g. `US 15.23 | WORKFLOW TASK CATALOG | Catalog Detail View — Authoring Surface`
+- **Sub-tasks:** prefixed `BE `, `FE `, `QA ` — the `FE ` one is the unit
+- **CR sub-tasks:** `FE CR Part 2 | <MODULE> | <title>` — and a CR **supersedes** the epic where they disagree
 
-- `**Type:** Frontend (Web / Mobile / Both)`
-- `**Screen:** ScreenName` _(or for a wizard: `ScreenName step 1 → step 2 → step 3`, with each step named)_
-- `**API Endpoints Used:**` — table with columns `Method | Path | Purpose | Doc reference`
-- `**API contract status:** ✅ Verified` _or_ `⚠️ Gaps (link to backend story or bug)`
-
-**Example of the API endpoints table:**
-
-```markdown
-**API Endpoints Used:**
-| Method | Path | Purpose | Doc reference |
-|--------|------|---------|---------------|
-| GET | /api/v1/products/:id | Load product detail | docs/api/products.md §GET /products/:id |
-| POST | /api/v1/cart/items | Add to cart | docs/api/cart.md §POST /cart/items |
-
-**API contract status:** ✅ Verified
-```
-
-Notes on the table:
-
-- **Method + Path** must match the documented endpoint exactly. No paraphrasing, no "or similar".
-- **Purpose** is one short phrase tied to the screen's behavior, not a re-description of the endpoint.
-- **Doc reference** is a path to the actual doc file + section anchor. If the project uses OpenAPI, link to the operation ID in `openapi.yaml`. If the doc doesn't exist yet, the row reads `⚠️ DOC MISSING — backend gap` and Phase A of `api-first.md` blocks the story.
-
-If a screen calls **zero** backend endpoints (rare — e.g., pure static info screen), the table is replaced with a single line: `**API Endpoints Used:** none — purely client-side.`
+Jira titles are not always screen-shaped. When a title is vague (`Catalog Reference Count Maintenance`),
+**name the screen yourself in the plan** and use that name consistently — in the plan, the component
+filenames, and the browser-verification report. A named screen is greppable; "the catalog work" is not.
 
 ---
 
-## 4. Mobile-Specific Discipline
+## 3. The screen → endpoint mapping (mandatory)
 
-For native and cross-platform mobile, screens are the unit of navigation, so the rule maps cleanly:
+Produced at plan time, consumed by `api-first.md` Phase A:
 
-- One stack screen → one story
-- One modal / bottom-sheet → one story (or fold into the parent if it's a trivial confirmation)
-- One tab in a tab bar → one story (each tab is a destination)
-- A wizard / onboarding flow → one story (per §1 wizard exception)
+| Method | Path                                    | Purpose             | Contract                           |
+| ------ | --------------------------------------- | ------------------- | ---------------------------------- |
+| GET    | `/api/v1/workflow-task-catalogs`        | List catalogs       | `openapi.json` → `List Catalogs`   |
+| PATCH  | `/api/v1/cases/{id}/checklist/items/{}` | Complete/waive task | `openapi.json` → `Set Item Status` |
 
-Pull-to-refresh, infinite scroll, and offline-cache behavior on a screen all live in the same story as the screen — they're not separate. They become separate only if they're cross-cutting (e.g., "implement offline cache strategy across app" — that's a backend/infra story, not a screen story).
+- **Method + path** must match the contract exactly — no paraphrasing, no "or similar".
+- **Purpose** is one phrase tied to this screen's behaviour, not a restatement of the endpoint.
+- **Contract** points at the `openapi.json` operation. For service-level detail (validation rules,
+  permission checks) read `../refinext-api/`. If no operation exists, the row reads
+  `⚠️ MISSING — backend gap` and Phase A **blocks** the unit.
 
----
+If a screen calls no backend endpoint — rare — replace the table with:
+`**Endpoints:** none — purely client-side.`
 
-## 5. Web-Specific Discipline
-
-For web, "screen" = "route" in the SPA / SSR sense. A route with multiple distinct view states (e.g., a dashboard with empty state vs populated state) is still **one story** — those are states of the same screen, not separate screens.
-
-A route that changes drastically based on path params (e.g., `/products` vs `/products/:id`) is **two stories** — list and detail are different screens, often using different endpoints.
-
-Modals, dialogs, and slide-over panels follow the same rule as mobile: own story unless trivial.
-
----
-
-## 6. Backlog Authoring Workflow
-
-When authoring or refining a frontend story from Jira requirements:
-
-1. **Identify all screens** in the design / specification first. Number or name them. This is the screen list.
-2. **One story per screen** (or per wizard, per §1).
-3. **For each story, list endpoints** per §3. If the corresponding backend endpoint does not yet exist or is not yet documented, **also create the backend story** in the appropriate backend phase, and mark the frontend story `Blocked by: US-YYY-backend`.
-4. **Cross-link** — the backend story should mention which frontend story consumes it, so changes to the contract trigger a review.
-
-This means a typical mobile project of N screens produces ≥ N frontend stories plus the backend stories they depend on. That's intentional. It maps cleanly onto velocity tracking and per-screen QA.
+Watch the partial case: a list endpoint existing does not mean the preview, diff, or export endpoint the
+design implies exists too. Map every call the screen makes, not the obvious one.
 
 ---
 
-## 7. When This Rule Does NOT Apply
+## 4. What counts as one screen (web / SPA)
 
-- Backend-only phases (Foundation, Core API, etc.)
-- Infrastructure / DevOps / migrations
-- Internal tooling, CLI utilities, scripts
-- Shared-library / design-system work that isn't a user-visible screen (e.g., "extract Button component" is not a screen story)
-- Bug fixes that don't add or restructure screens
+- **Screen = route.** A route with several view states — empty, loading, error, populated — is **one**
+  screen. Those are states, not screens.
+- **List and detail are two screens.** `/products` and `/products/:id` use different endpoints and get
+  separate units.
+- **Modals, dialogs, slide-overs** get their own unit unless they are a trivial confirmation, in which
+  case they fold into the parent screen.
+- **Cross-cutting behaviour** — a shared table primitive, a global error boundary — is not a screen unit.
 
-In every web/mobile feature phase, this rule applies.
-
----
-
-## 8. Why
-
-- A flat "implement product feature" story hides scope drift. A screen-shaped story makes scope visible at planning time.
-- Without the API endpoint table, integration gaps surface during implementation. With it, they surface during planning — when they're cheap to fix.
-- Per-screen QA / acceptance is feasible only if stories are screen-shaped. Bundled stories produce bundled bugs.
-- Designers and clients think in screens. Aligning the backlog to that mental model reduces translation overhead at every status check.
+This project is desktop-first (CLAUDE.md §Responsive design); there is no mobile target, so there is no
+per-platform variant of this rule.
 
 ---
 
-**Related:**
+## 5. When this rule does not apply
 
-- `.claude/rules/api-first.md` — uses the API endpoint table from §3 to gate frontend implementation start
-- `.claude/rules/documentation-templates.md` §1.1 — base user-story format that frontend stories extend
-- `.claude/commands/jira-sync.md` — briefs the Jira story these are derived from
+- Bug fixes that don't add or restructure a screen
+- Pure refactors with no rendered difference
+- Design-system / shared-primitive work that isn't a user-visible destination
+- Tooling, scripts, CI, and documentation changes
+
+---
+
+## 6. Why
+
+- A unit shaped like "implement the catalog feature" hides its own scope. A screen-shaped unit makes the
+  boundary visible at plan time, when changing it is free.
+- Without the §3 mapping, contract gaps surface during implementation — the most expensive moment. With
+  it, they surface during planning.
+- Per-screen QA handoff is only possible if units are screen-shaped. Bundled units produce bundled bugs.
+- Designers and the PO think in screens. Scoping the same way removes a translation step from every
+  status conversation.
+
+---
+
+## Related
+
+- `.claude/rules/api-first.md` — Phase A consumes the §3 mapping to gate implementation
+- `.claude/rules/design-first.md` — per-screen (Phase A) and per-component (Phase B) design gates
+- `.claude/commands/execute-work.md` — STEP 2 produces the mapping; STEP 4 verifies the screen renders
+- `.claude/commands/jira-sync.md` — pulls the Jira story this scoping works from
+
+---
+
+**Status:** ✅ Active

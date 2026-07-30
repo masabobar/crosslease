@@ -33,7 +33,7 @@ Navigable index of the rule files in `.claude/rules/`. Rules are loaded by Claud
 | [`security-and-auth.md`](security-and-auth.md)                   | FE security — token handling in the auth store, 401-refresh via `@/lib/api` only, RBAC wire values, XSS hygiene, `VITE_` env safety                                                        | Every change that touches auth, roles, or user data                                |
 | [`git.md`](git.md)                                               | Conventional commits, Jira ticket / `#no-ticket`, US-reference sourcing rules, NO AI credits (critical)                                                                                    | Every change ends in a commit                                                      |
 | [`documentation.md`](documentation.md)                           | Language rules (English-only), file-size limits (§2.1), writing style, quality checklist                                                                                                   | Applies to every doc and code comment the change produces                          |
-| [`documentation-templates.md`](documentation-templates.md)       | User-story / technical-task / bug-report / API-endpoint doc templates                                                                                                                      | Companion to `documentation.md`                                                    |
+| [`documentation-templates.md`](documentation-templates.md)       | Where each artifact lives — stories/bugs in Jira, contracts in `openapi.json`, questions in `open-questions.md`; almost nothing authored here                                              | Companion to `documentation.md`                                                    |
 | [`documentation-extras.md`](documentation-extras.md)             | Code-comment style, ASCII / Mermaid diagrams, validation tools, good vs bad doc examples                                                                                                   | Companion to `documentation.md`                                                    |
 | [`permissions.md`](permissions.md)                               | Settings file behavior — CRITICAL: NEVER auto-modify `settings.json`. Safety deny patterns, best practices, troubleshooting                                                                | Bypassing this rule destroys user-curated permissions                              |
 
@@ -46,7 +46,7 @@ Navigable index of the rule files in `.claude/rules/`. Rules are loaded by Claud
 | File                                                   | Topic                                                                                                                                                           | Trigger                                                       |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [`api-first.md`](api-first.md)                         | Phase A contract verification before any frontend code — endpoint must exist + be documented + match UI needs                                                   | Frontend story consuming an endpoint                          |
-| [`screen-driven-backlog.md`](screen-driven-backlog.md) | One frontend story = one screen (wizard exception); mandatory `**Screen:**` field + `**API Endpoints Used:**` table                                             | Authoring a web / mobile story                                |
+| [`screen-driven-backlog.md`](screen-driven-backlog.md) | One frontend unit = one screen (wizard exception); the screen → endpoint mapping `api-first.md` Phase A consumes                                                | Scoping a frontend unit before building it                    |
 | [`design-first.md`](design-first.md)                   | Phase A: screen-level Figma URL required before plan mode exits. Phase B: component-level Figma URL required before each new `.tsx` file. Hard block if missing | Any frontend story that creates a new screen or new component |
 
 ### When an API contract changes (BE-owned; consumed from here)
@@ -82,7 +82,7 @@ Every rule has a `## Related` section linking to its peers. Key connection nodes
 - **`api-error-display.md`** is the operative enforcement rule for error surfacing — `error-handling-and-logging.md` and `code-review.md` §5 defer to it
 - **`api-first.md`** is the gate every FE story passes before implementation — it consumes `openapi.json`
 - **`enums-and-constants.md`** is referenced by the API rules (error codes and status enums are `SCREAMING_SNAKE_CASE` on the wire)
-- **`git.md`** is the single source of truth for commit conventions — CLAUDE.md and `documentation-templates.md` §1.4 point to it
+- **`git.md`** is the single source of truth for commit conventions — CLAUDE.md and `documentation-templates.md` §2 point to it
 - **`anonymization.md`** is referenced by `error-handling-and-logging.md` (same no-PII principle applied at runtime)
 
 ---

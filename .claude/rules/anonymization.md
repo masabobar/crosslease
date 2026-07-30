@@ -171,7 +171,7 @@ Commands that already enforce this gate:
 ## Related
 
 - `.claude/rules/documentation.md` — core writing rules (language, style, file size, quality checklist)
-- `.claude/rules/documentation-templates.md` — artifact templates that consume anonymized content
+- `.claude/rules/documentation-templates.md` — where artifacts live; §4 covers anonymizing `open-questions.md` entries
 - `.claude/rules/error-handling-and-logging.md` — logs MUST NOT contain personal info (same anonymization principle applied to runtime logs)
 
 ---
