@@ -47,6 +47,11 @@ function resolveFieldName(
  * usable field, and for any field the form does not have, so the caller's toast still fires.
  * Silently swallowing an error the user cannot see would be worse than a generic toast.
  *
+ * The `fields` membership check is load-bearing, not defensive: **RHF's `setError` is a silent
+ * no-op when given a name the form has not registered.** Drop the check and an unmappable
+ * validation error would attach nowhere, return `true`, suppress the toast, and vanish — the
+ * user would see a rejected submit with no explanation at all. Keep every early return.
+ *
  * @example
  * onError: err => {
  *   if (applyApiFieldErrors({ error: err, fields: Object.keys(getValues()), setError }))
