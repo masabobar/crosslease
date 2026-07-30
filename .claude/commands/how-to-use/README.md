@@ -6,16 +6,14 @@
 
 ---
 
-## 💡 Current Structure: Modular Backlog + Live Dashboard
+## 💡 Current Structure: Jira for Scope, DASHBOARD for Decisions
 
-**For quick status checking:**
+Scope lives in **Jira (PRD1042)** — there is no local backlog and there are no phase files. Use
+`/jira-sync` to pull a briefing for an epic or story.
 
-- ✅ Open `.project-management/output/progress/DASHBOARD.md` (live view, no commands)
-- ✅ ~70% token savings — AI reads only the relevant phase file
-- ✅ Auto-updates during `/execute-work`
-
-Scope itself lives in **Jira (PRD1042)** — there is no local backlog mirror. Use `/jira-sync` to pull a
-briefing for an epic or story.
+`.project-management/output/progress/DASHBOARD.md` is the **decision journal** — what was done, why, and
+what it revealed. It is not a metrics report: statuses live in Jira, test counts in `pnpm test:run`, gaps
+in `input/open-questions.md`. `/execute-work` appends a prose entry to it, never a number.
 
 ---
 
@@ -28,7 +26,7 @@ START HERE
     │   └─→ /jira-sync              (read-only briefing from Jira)
     │
     ├─ Ready to implement work (feature or bug fix)?
-    │   └─→ /execute-work           [See: execute-work.md]
+    │   └─→ /execute-work <JIRA-KEY>  (one unit: FE sub-task, story, or bug)
     │
     ├─ Working through open Jira bugs end-to-end?
     │   └─→ /bug-sweep              (find → reproduce → fix → hand off)
@@ -57,13 +55,12 @@ START HERE
 
 ## 📚 Quick Guides in This Folder
 
-Only two commands have a quick guide — the two with enough surface area to need one.
+One command has a quick guide. `/execute-work`'s was retired on 2026-07-30 — the command itself is now
+short enough to read directly, and its two stage modules hold the detail.
 
-| Task                         | Command                                       | Guide                                          | Lines |
-| ---------------------------- | --------------------------------------------- | ---------------------------------------------- | ----- |
-| Execute phase / epic / story | `/execute-work [scope]`                       | [execute-work.md](./execute-work.md)           | 321   |
-| Execute bug fix              | `/execute-work bug BUG-XXX`                   | [execute-work.md](./execute-work.md)           | 321   |
-| Resolve deferred questions   | `/resolve-questions [--priority Px \| Q-NNN]` | [resolve-questions.md](./resolve-questions.md) | 69    |
+| Task                       | Command                                       | Guide                                          | Lines |
+| -------------------------- | --------------------------------------------- | ---------------------------------------------- | ----- |
+| Resolve deferred questions | `/resolve-questions [--priority Px \| Q-NNN]` | [resolve-questions.md](./resolve-questions.md) | 69    |
 
 ## 📗 Commands Without a Quick Guide
 
@@ -71,6 +68,7 @@ These are short enough to read directly. Full docs live in the parent folder (`.
 
 | Command            | Purpose                                                | Doc                                            | Lines |
 | ------------------ | ------------------------------------------------------ | ---------------------------------------------- | ----- |
+| `/execute-work`    | Implement one Jira unit end to end                     | [../execute-work.md](../execute-work.md)       | 194   |
 | `/jira-sync`       | Read-only briefing on a Jira epic / story              | [../jira-sync.md](../jira-sync.md)             | 193   |
 | `/jira-handoff`    | Transition this branch's ticket(s) to "QA ready"       | [../jira-handoff.md](../jira-handoff.md)       | 179   |
 | `/bug-sweep`       | Find, reproduce, fix, and hand off Jira bugs           | [../bug-sweep.md](../bug-sweep.md)             | 193   |
@@ -79,9 +77,10 @@ These are short enough to read directly. Full docs live in the parent folder (`.
 | `/pattern-audit`   | DRY / extraction / composition / over-engineering scan | [../pattern-audit.md](../pattern-audit.md)     | 372   |
 | `/list-skills`     | List every skill / command this repo defines           | [../list-skills.md](../list-skills.md)         | 61    |
 
-`/execute-work` and `/resolve-questions` each have a `*-reference.md` companion in the parent folder
-holding long-tail detail, and `/execute-work` loads its stage modules from `../modules/`. Neither is
-invoked directly.
+`/resolve-questions` has a `resolve-questions-reference.md` companion in the parent folder, and
+`/execute-work` loads two stage modules from `../modules/` (`-plan-mode`, `-quality-gates`).
+`../modules/interactive-clarifications.md` is shared, loaded by `/resolve-questions`. None are invoked
+directly.
 
 ---
 
@@ -90,10 +89,10 @@ invoked directly.
 **Token-efficient approach:**
 
 1. **Start here** — read this index (~100 lines)
-2. **If a quick guide exists** — read it (69–321 lines)
+2. **If a quick guide exists** — read it (69 lines)
 3. **Otherwise** — read the full command doc in `../` (61–372 lines)
 
-**Coverage:** 2 of the 9 invocable commands have quick guides. Run `/list-skills` for the authoritative
+**Coverage:** 1 of the 9 invocable commands has a quick guide. Run `/list-skills` for the authoritative
 inventory — it enumerates the files rather than trusting this table.
 
 ---
