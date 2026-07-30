@@ -1,5 +1,12 @@
 # Git Workflow & Commit Standards
 
+> **This file is canonical for commit format** — CLAUDE.md §Git commits defers to it explicitly.
+> If a local `.project-management/rules/project-rules.md` says anything narrower (an older copy
+> stated "no commit body, no newlines"), that copy is stale: bodies are permitted, `commitlint`
+> accepts them, and most commits in this repo have one. Note `.project-management/` is
+> **gitignored**, so those copies are per-developer and cannot be corrected centrally — which is
+> why the rule lives here instead.
+
 ## Commit Message Format
 
 Use **conventional commits** format:
