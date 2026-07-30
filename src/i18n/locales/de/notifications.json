@@ -34,6 +34,7 @@
     "frameworkAgreements": "Rahmenvereinbarungen"
   },
   "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

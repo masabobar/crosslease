@@ -26,6 +26,7 @@ import {
 import type { CreateGrantForm } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { cn } from "@/lib/utils"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
 import { SUPPORT_USERS_DROPDOWN_PAGE_SIZE } from "@/features/tenants/constants"
@@ -167,6 +168,8 @@ export function NewGrantDialog({
   const supportUsers = usersData?.users ?? []
 
   const {
+    setError,
+    getValues,
     control,
     register,
     handleSubmit,
@@ -218,6 +221,15 @@ export function NewGrantDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

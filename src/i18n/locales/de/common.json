@@ -6,7 +6,8 @@
   "validation": {
     "required": "Dieses Feld ist erforderlich.",
     "invalidFormat": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
-    "dateMustBeAfterFrom": "Das 'Bis'-Datum muss nach dem 'Von'-Datum liegen."
+    "dateMustBeAfterFrom": "Das 'Bis'-Datum muss nach dem 'Von'-Datum liegen.",
+    "rejectedByServer": "Der Server hat diesen Wert abgelehnt."
   },
   "nav": {
     "leasingPlatform": "Leasing Platform",
@@ -89,6 +90,7 @@
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "title": "Etwas ist schiefgelaufen",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

@@ -319,6 +319,7 @@
     "FA_DOC_IMMUTABLE": "Dokumente können nur im Entwurfsstatus angehängt oder entfernt werden.",
     "FA_RECONSTRUCTION_TIMESTAMP": "Dieser Zeitpunkt ist ungültig. Er muss in der Vergangenheit liegen, und die Vereinbarung muss zu diesem Zeitpunkt bereits bestanden haben.",
     "FA_EXPORT_REASON_REQUIRED": "Zum Exportieren dieses Prüfprotokolls ist ein Grund erforderlich.",
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

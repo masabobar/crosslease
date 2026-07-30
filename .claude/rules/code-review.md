@@ -91,7 +91,7 @@ type State =
 
 - [ ] React Hook Form + Zod resolver — no manual `onChange` state
 - [ ] Zod schema defined outside the component, exported, reused for the API schema where shapes match
-- [ ] Server-side field errors mapped to RHF `setError` — not swallowed into a generic toast
+- [ ] `VALIDATION_ERROR` field detail mapped onto the form via `applyApiFieldErrors()` before the toast — every **other** error code has no `field` to map (the BE's `create_error_response()` carries none), so those correctly stay toast-only. See `api-error-display.md` §2.1
 - [ ] Submit button is disabled while `isSubmitting` is true
 - [ ] All form fields have `data-testid` attributes
 
@@ -210,7 +210,7 @@ mutation.mutate(payload)
 - [ ] TypeScript: no `any`, explicit exported return types, `import type` used, Zod for API shapes
 - [ ] React 19: no `forwardRef`, no manual memoization, no `useEffect` for fetching
 - [ ] State: server state in React Query, client state in Zustand, no cross-contamination
-- [ ] Forms: RHF + Zod, server errors mapped via `setError`, submit gated on `isSubmitting`
+- [ ] Forms: RHF + Zod, `VALIDATION_ERROR` field detail applied via `applyApiFieldErrors()`, submit gated on `isSubmitting`
 - [ ] API: Zod `parse()` in `queryFn`, `ApiError.code` for error handling, no raw fetch, **every BE error code surfaced via toast / error state — no silent failures** (fix any missing `onError` or `isError` branch inline per `.claude/rules/api-error-display.md`)
 - [ ] i18n: all strings via `t()`, both locales updated, namespace registered
 - [ ] Security: role gates use correct wire values, no `console.*`, no unnecessary PII in state

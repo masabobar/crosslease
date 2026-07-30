@@ -11,6 +11,7 @@ import type {
   TenantModuleEntry,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 
 type Props = {
   open: boolean
@@ -29,6 +30,8 @@ export function DeactivateModuleDialog({
   const mutation = useDeactivateTenantModule(tenantId)
 
   const {
+    setError,
+    getValues,
     register,
     handleSubmit,
     reset,
@@ -63,6 +66,15 @@ export function DeactivateModuleDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })

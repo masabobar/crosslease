@@ -464,7 +464,8 @@
     "DUPLICATE_PENDING_ACTION": "Für diesen Benutzer existiert bereits eine ausstehende Aktion dieses Typs.",
     "USER_NOT_ACTIVE": "Für diese Operation ist ein aktives Benutzerkonto erforderlich.",
     "EXPORT_TOO_MANY_JOBS": "Sie haben zu viele laufende Exporte. Bitte warten Sie, bis einer abgeschlossen ist.",
-    "AUDITOR_PROVISIONING_NOT_ALLOWED": "Dieser Mandant erlaubt keine Auditor-Konten. Aktivieren Sie den Auditor-Zugriff für den Mandanten, bevor Sie diesen Benutzer einladen."
+    "AUDITOR_PROVISIONING_NOT_ALLOWED": "Dieser Mandant erlaubt keine Auditor-Konten. Aktivieren Sie den Auditor-Zugriff für den Mandanten, bevor Sie diesen Benutzer einladen.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   },
   "export": {
     "successTitle": "Export bereit",

@@ -709,6 +709,7 @@
     "GRANT_NOT_FOUND": "Diese Genehmigung existiert nicht mehr.",
     "GRANT_ALREADY_REVOKED": "Diese Genehmigung wurde bereits widerrufen.",
     "TENANT_LICENSE_LIMIT_REDUCTION": "Dieses Limit kann nicht unter die aktuelle aktive Anzahl gesenkt werden.",
-    "AUDITOR_ACCESS_EXPIRED": "Ihr Prüfungsauftrag ist abgelaufen. Sie haben keinen Zugriff mehr auf die Governance-Historie dieses Mandanten."
+    "AUDITOR_ACCESS_EXPIRED": "Ihr Prüfungsauftrag ist abgelaufen. Sie haben keinen Zugriff mehr auf die Governance-Historie dieses Mandanten.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

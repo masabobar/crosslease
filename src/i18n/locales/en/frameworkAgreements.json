@@ -319,6 +319,7 @@
     "FA_DOC_IMMUTABLE": "Documents can only be attached or removed while this agreement is in Draft status.",
     "FA_RECONSTRUCTION_TIMESTAMP": "This timestamp is invalid. It must be in the past and the agreement must have existed at that point in time.",
     "FA_EXPORT_REASON_REQUIRED": "A reason is required to export this audit history.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }

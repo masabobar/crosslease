@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useTerminateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useTerminateFrameworkAgreement"
 import { useFrameworkAgreementTerminationReadiness } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementTerminationReadiness"
 import { TerminateFARequestSchema } from "@/features/frameworkAgreements/api/schema"
@@ -82,6 +83,8 @@ function TerminateFrameworkAgreementDialog({
     reset,
     control,
     register,
+    setError,
+    getValues,
     formState: { errors },
   } = useForm<TerminateFARequest>({
     resolver: zodResolver(terminateFormSchema),
@@ -99,6 +102,15 @@ function TerminateFrameworkAgreementDialog({
       {
         onSuccess: () => handleClose(),
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

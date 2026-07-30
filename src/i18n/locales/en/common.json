@@ -6,7 +6,8 @@
   "validation": {
     "required": "This field is required.",
     "invalidFormat": "Please enter a valid email address.",
-    "dateMustBeAfterFrom": "The 'To' date must be after the 'From' date."
+    "dateMustBeAfterFrom": "The 'To' date must be after the 'From' date.",
+    "rejectedByServer": "The server rejected this value."
   },
   "nav": {
     "leasingPlatform": "Leasing Platform",
@@ -89,6 +90,7 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "title": "Something went wrong",
-    "retry": "Try again"
+    "retry": "Try again",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }

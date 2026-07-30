@@ -709,6 +709,7 @@
     "GRANT_NOT_FOUND": "This grant no longer exists.",
     "GRANT_ALREADY_REVOKED": "This grant has already been revoked.",
     "TENANT_LICENSE_LIMIT_REDUCTION": "Cannot reduce this limit below the current active count.",
-    "AUDITOR_ACCESS_EXPIRED": "Your auditor engagement has expired. You no longer have access to this tenant's governance history."
+    "AUDITOR_ACCESS_EXPIRED": "Your auditor engagement has expired. You no longer have access to this tenant's governance history.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }

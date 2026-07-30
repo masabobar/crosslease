@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useApproveAction } from "@/features/governed-actions/hooks/useApproveAction"
 import { useRejectAction } from "@/features/governed-actions/hooks/useRejectAction"
 import { ChangeSection } from "@/features/governed-actions/components/ChangeSection"
@@ -89,6 +90,7 @@ export function ReviewRequestModal({
     handleSubmit,
     reset,
     setError,
+    getValues,
     formState: { errors },
   } = useForm<ReviewCommentForm>({
     resolver: zodResolver(ReviewCommentFormSchema),
@@ -127,6 +129,15 @@ export function ReviewRequestModal({
           onApproveSuccess(action)
         },
         onError: (err: unknown) => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           setErrorCode(err instanceof ApiError ? err.code : "default")
         },
       }
@@ -152,6 +163,15 @@ export function ReviewRequestModal({
           onRejectSuccess(action)
         },
         onError: (err: unknown) => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           setErrorCode(err instanceof ApiError ? err.code : "default")
         },
       }

@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { frameworkAgreementDetail } from "@/router/paths"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { useFrameworkAgreementDetail } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDetail"
@@ -156,6 +157,15 @@ function EditWizardForm({
           navigate(detailPath)
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(form.getValues()),
+              setError: form.setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

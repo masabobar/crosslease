@@ -13,6 +13,7 @@ import type {
   TenantStatus,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 
 type Props = {
   open: boolean
@@ -42,6 +43,8 @@ export function ArchiveTenantDialog({
   const schema = createArchiveTenantFormSchema(hasActiveUsers)
 
   const {
+    setError,
+    getValues,
     register,
     handleSubmit,
     reset,
@@ -77,6 +80,15 @@ export function ArchiveTenantDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
