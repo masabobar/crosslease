@@ -51,7 +51,8 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 | `/list-skills`               | Full inventory of this repo's commands                  |
 
 **Decision journal:** `.project-management/output/progress/DASHBOARD.md` — prose only, never a metric.
-Statuses live in Jira, test counts in `pnpm test:run`, gaps in `input/open-questions.md`.
+Statuses live in Jira, test counts in `pnpm test:run`, gaps in
+`.project-management/input/open-questions.md`.
 
 ---
 

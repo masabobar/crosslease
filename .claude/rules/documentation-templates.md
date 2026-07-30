@@ -40,7 +40,7 @@ epic's scope, so search for them separately.
 | **Acceptance Criteria**                | What the unit actually has to do                       |
 | **Field Specification**                | Form fields, types, M/O/C, validation rules            |
 | `Architectural Notes → Backend → API:` | Endpoint paths → feeds the `api-first.md` Phase A gate |
-| `[OPEN QUESTION]` blocks               | Candidates for `input/open-questions.md`               |
+| `[OPEN QUESTION]` blocks               | Candidates for the register in §4                      |
 
 **Where a CR and its epic disagree, the CR wins** — it reflects the current committed scope; the epic is
 the original ambition. Never assume the epic is authoritative because it is larger.
@@ -68,7 +68,7 @@ file the gap, do not invent the shape.
 
 ---
 
-## 4. Open clarification questions → `input/open-questions.md`
+## 4. Open clarification questions → `.project-management/input/open-questions.md`
 
 The one artifact this repo does author. Its format lives in
 `.project-management/templates/open-questions-template.md` — follow that template rather than restating it

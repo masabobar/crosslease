@@ -41,7 +41,7 @@ Navigable index of the rule files in `.claude/rules/`. Rules are loaded by Claud
 
 ## Conditional Rules — Load When Trigger Fires
 
-### When a frontend (web / mobile) story is in scope
+### When a frontend story is in scope
 
 | File                                                   | Topic                                                                                                                                                           | Trigger                                                       |
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
