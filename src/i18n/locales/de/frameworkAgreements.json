@@ -40,9 +40,16 @@
     "side_letter": "Nebenabrede",
     "other": "Andere"
   },
+  "bankEntities": {
+    "sparkasse": "Sparkasse",
+    "landesbank_1": "Landesbank 1",
+    "landesbank_2": "Landesbank 2",
+    "other": "Sonstige"
+  },
   "fields": {
     "agreementName": "Vereinbarungsname",
     "leasingCompany": "Leasinggesellschaft",
+    "bankEntity": "Bankeinheit",
     "leasingCompanyNoResults": "Keine Leasinggesellschaften gefunden",
     "currency": "Währung",
     "maxVolumeEur": "Maximales Volumen",
@@ -127,6 +134,7 @@
       "confirm": "Entwurf verwerfen"
     },
     "incompleteDraft": "Füllen Sie die Pflichtfelder aus, bevor Sie als Entwurf speichern.",
+    "documentsPartiallyAttached": "{{count}} Dokument(e) konnten nicht angehängt werden ({{names}}). Die Vereinbarung wurde als Entwurf gespeichert — hängen Sie sie auf der Detailseite der Vereinbarung an.",
     "createdSuccess": {
       "title": "Vereinbarung als Entwurf gespeichert",
       "subtitle": "{{name}} wurde gespeichert. Prüfen Sie die Details und aktivieren Sie die Vereinbarung, wenn Sie bereit sind. Vor der Aktivierung muss mindestens ein unterzeichnetes Dokument angehängt werden.",
@@ -225,14 +233,24 @@
     }
   },
   "edit": {
-    "dialogTitle": "Rahmenvereinbarung bearbeiten",
-    "identitySection": "Identität der Vereinbarung",
+    "title": "{{name}} bearbeiten",
+    "reviewSubtitle": "Prüfen Sie alle Änderungen, bevor Sie speichern. Sie können zu jedem Schritt zurückkehren. Eine Begründung ist erforderlich und wird im Audit-Trail gespeichert.",
     "lockedFieldHint": "Gesperrt — kann nach Verlassen des Entwurfsstatus nicht mehr geändert werden.",
     "validUntilLockedHint": "Diese Vereinbarung hat kein Enddatum. Nach dem Entwurfsstatus kann kein Enddatum mehr eingeführt werden; ein bestehendes Enddatum kann nur noch verlängert werden.",
     "templateRemovalHint": "Das Entfernen einer Vorlage wird blockiert, wenn ein laufender Finanzierungsentwurf noch darauf verweist.",
     "justification": "Begründung",
     "justificationHint": "Pflichtfeld (mind. 30 Zeichen). Wird im Prüfprotokoll gespeichert.",
-    "confirmButton": "Änderungen speichern"
+    "confirmButton": "Änderungen speichern",
+    "loading": "Vereinbarung wird geladen…",
+    "saved": "Änderungen gespeichert.",
+    "incompleteForm": "Füllen Sie die erforderlichen Felder aus, bevor Sie speichern.",
+    "backToAgreement": "Zurück zur Vereinbarung",
+    "discardDialog": {
+      "title": "Änderungen verwerfen?",
+      "description": "Ihre Änderungen an dieser Vereinbarung gehen verloren. Die Vereinbarung selbst bleibt unverändert.",
+      "keep": "Weiter bearbeiten",
+      "confirm": "Änderungen verwerfen"
+    }
   },
   "auditHistory": {
     "viewEventLog": "Ereignisprotokoll",
@@ -282,6 +300,7 @@
   },
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
+    "rateRange": "Geben Sie einen Wert zwischen {{min}} und {{max}} % ein.",
     "validUntilBeforeFrom": "„Gültig bis“ muss nach „Gültig ab“ liegen",
     "FA_NOT_FOUND": "Diese Rahmenvereinbarung konnte nicht gefunden werden.",
     "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft existiert bereits eine Vereinbarung mit diesem Namen.",

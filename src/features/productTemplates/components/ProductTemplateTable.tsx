@@ -160,7 +160,10 @@ function ProductTemplateTable({
           >
             <div className={`${COL_PRODUCT} p-2`}>
               <p className="text-sm font-medium truncate text-foreground leading-tight">
-                {item.template_name || item.template_code}
+                {item.template_name || "—"}
+              </p>
+              <p className="text-xs truncate text-muted-foreground leading-tight">
+                {item.template_code || "—"}
               </p>
             </div>
             <div className={`${COL_FINANCING} p-2`}>

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
@@ -70,6 +70,9 @@ export default function CreateFrameworkAgreementWizardPage() {
     id: string
     agreementName: string
   } | null>(null)
+  // Holds the id of a draft that was already persisted on the backend, so a retry
+  // after a failed document upload reuses it instead of creating a second orphan.
+  const persistedDraftIdRef = useRef<string | null>(null)
 
   const createDraftMutation = useCreateFrameworkAgreementDraft()
   const attachDocumentMutation = useAttachFrameworkAgreementDocument()
@@ -147,43 +150,67 @@ export default function CreateFrameworkAgreementWizardPage() {
       return
     }
 
-    try {
-      const values = form.getValues()
-      const draft = await createDraftMutation.mutateAsync({
-        agreement_name: values.agreement_name,
-        lc_partner_id: values.lc_partner_id,
-        bank_entity: values.bank_entity,
-        max_volume_eur: values.max_volume_eur,
-        effective_rate: values.effective_rate,
-        vfe_rate: values.vfe_rate,
-        valid_from: values.valid_from,
-        valid_until: values.valid_until || undefined,
-        special_conditions: values.special_conditions || undefined,
-        product_template_ids: values.product_template_ids,
-      })
+    const values = form.getValues()
 
-      for (const doc of documents) {
+    let draftId = persistedDraftIdRef.current
+    if (!draftId) {
+      try {
+        const draft = await createDraftMutation.mutateAsync({
+          agreement_name: values.agreement_name,
+          lc_partner_id: values.lc_partner_id,
+          bank_entity: values.bank_entity,
+          max_volume_eur: values.max_volume_eur,
+          effective_rate: values.effective_rate,
+          vfe_rate: values.vfe_rate,
+          valid_from: values.valid_from,
+          valid_until: values.valid_until || undefined,
+          special_conditions: values.special_conditions || undefined,
+          product_template_ids: values.product_template_ids,
+        })
+        draftId = draft.id
+        persistedDraftIdRef.current = draft.id
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}` as "errors.generic", {
+                defaultValue: t("errors.generic"),
+              })
+            : t("errors.generic")
+        )
+        return
+      }
+    }
+
+    // The draft exists from here on. A document failure must not discard it —
+    // report the partial outcome and let the user attach the rest from the
+    // detail page, rather than leaving an orphan behind and creating another.
+    const failedDocuments: string[] = []
+    for (const doc of documents) {
+      try {
         await attachDocumentMutation.mutateAsync({
-          faId: draft.id,
+          faId: draftId,
           file: doc.file,
           documentType: doc.documentType || "other",
           documentLabel: doc.documentLabel || undefined,
         })
+      } catch {
+        failedDocuments.push(doc.documentLabel || doc.file.name)
       }
+    }
 
-      setCreatedAgreement({
-        id: draft.id,
-        agreementName: values.agreement_name,
-      })
-    } catch (err) {
+    if (failedDocuments.length > 0) {
       toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
+        t("wizard.documentsPartiallyAttached", {
+          count: failedDocuments.length,
+          names: failedDocuments.join(", "),
+        })
       )
     }
+
+    setCreatedAgreement({
+      id: draftId,
+      agreementName: values.agreement_name,
+    })
   }
 
   if (createdAgreement) {
@@ -255,7 +282,13 @@ export default function CreateFrameworkAgreementWizardPage() {
           {step === "validityTemplates" && (
             <ValidityTemplatesStep form={form} />
           )}
-          {step === "conditions" && <ConditionsStep form={form} />}
+          {step === "conditions" && (
+            <ConditionsStep
+              register={form.register}
+              errors={form.formState.errors}
+              testIdPrefix="fa-"
+            />
+          )}
           {step === "documents" && (
             <DocumentsStep
               documents={documents}

@@ -1,6 +1,12 @@
 import { useTranslation } from "react-i18next"
 import { ApiError } from "@/lib/api"
-import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
+import {
+  EFFECTIVE_RATE_MAX,
+  EFFECTIVE_RATE_MIN,
+  FALifecycleStatusSchema,
+  VFE_RATE_MAX,
+  VFE_RATE_MIN,
+} from "@/features/frameworkAgreements/api/schema"
 import type { FALifecycleStatus } from "@/features/frameworkAgreements/api/schema"
 
 export function isFrameworkAgreementNotFoundError(error: unknown): boolean {
@@ -44,9 +50,10 @@ export function isFrameworkAgreementExpiredByDate(
 
 // Shared Zod refine-error-code → i18n message resolver for the wizard/edit form
 // steps (IdentityStep, EnvelopePricingStep, ValidityTemplatesStep,
-// EditFrameworkAgreementFields). Handles every custom refine code used across those
+// the edit wizard's steps). Handles every custom refine code used across those
 // forms' Zod schemas (see api/schema.ts): "required", "validUntilBeforeFrom",
-// "atLeastOneTemplate". Unrecognized messages are returned as-is.
+// "atLeastOneTemplate", "effectiveRateRange", "vfeRateRange". Unrecognized messages
+// are returned as-is.
 export function useResolveFrameworkAgreementFieldError() {
   const { t } = useTranslation("frameworkAgreements")
   const { t: tCommon } = useTranslation("common")
@@ -58,6 +65,17 @@ export function useResolveFrameworkAgreementFieldError() {
     if (msg === "required") return tCommon("validation.required")
     if (msg === "validUntilBeforeFrom") return t("errors.validUntilBeforeFrom")
     if (msg === "atLeastOneTemplate") return t("errors.atLeastOneTemplate")
+    // Bounds come from the schema constants so the message can never drift from the
+    // range the BE actually enforces.
+    if (msg === "effectiveRateRange") {
+      return t("errors.rateRange", {
+        min: EFFECTIVE_RATE_MIN,
+        max: EFFECTIVE_RATE_MAX,
+      })
+    }
+    if (msg === "vfeRateRange") {
+      return t("errors.rateRange", { min: VFE_RATE_MIN, max: VFE_RATE_MAX })
+    }
     return msg
   }
 }

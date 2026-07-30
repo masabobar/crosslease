@@ -181,11 +181,6 @@ export function AuditTable({
               <span className="text-sm text-foreground truncate">
                 {event.entity_display ?? "—"}
               </span>
-              {event.entity_id && (
-                <span className="text-xs text-muted-foreground font-mono truncate">
-                  {event.entity_id}
-                </span>
-              )}
             </div>
 
             <div className={`${COL_ENTITY_TYPE} p-2 overflow-hidden`}>

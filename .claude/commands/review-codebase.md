@@ -1,3 +1,8 @@
+---
+name: review-codebase
+description: Full-codebase audit of src/ against all 11 sections of .claude/rules/code-review.md — the whole-tree sibling of /code-review
+---
+
 # /review-codebase
 
 Perform a comprehensive code review of the entire codebase (or a scoped subset) against

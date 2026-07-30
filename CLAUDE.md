@@ -12,10 +12,9 @@
 **Read priority order:**
 
 1. **Project Planning** (`.project-management/`)
-   - `input/scope.md`, `input/backlog/phase-*.md`
-   - `input/screens/screen-map.md`
-   - `output/docs/technical-spec.md`
-   - `output/phases/phase-N.md`
+   - `input/open-questions.md` — open BE/design gaps and resolved decisions
+   - `output/progress/DASHBOARD.md` — live status
+   - Scope itself lives in **Jira (PRD1042)** — pull with `/jira-sync`
 
 2. **Core Standards** (`CLAUDE.md` — this file)
 
@@ -30,7 +29,7 @@
 
    **Conditional:**
    - `api-first.md` — before any FE story: contract verification gate
-   - `screen-driven-backlog.md` — one screen per story
+   - `screen-driven-backlog.md` — one screen per unit; the screen → endpoint mapping
    - `anonymization.md` — when generating docs from client input
 
 4. **Project Rules** (`.project-management/rules/project-rules.md`) — ALWAYS read
@@ -42,18 +41,17 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 
 ## 🎯 COMMANDS
 
-| Command                      | When to use                                 |
-| ---------------------------- | ------------------------------------------- |
-| `/execute-work story US-XXX` | Implement a specific story                  |
-| `/execute-work phase N`      | Run all stories in a phase sequentially     |
-| `/project-status`            | Full written status report                  |
-| `/add-scope`                 | Add a new story to the backlog              |
-| `/add-bug`                   | File a bug                                  |
-| `/run-tests all`             | Run unit tests + type-check + lint manually |
-| `/promote-requirement`       | Move a future story to an active phase      |
-| `/resolve-questions`         | Answer open clarification questions         |
+| Command                      | When to use                                             |
+| ---------------------------- | ------------------------------------------------------- |
+| `/execute-work PRD1042-XXXX` | Implement one unit — an FE sub-task, story, or bug      |
+| `/jira-sync PRD1042-XXX`     | Read-only briefing on an epic or story (writes nothing) |
+| `/jira-handoff`              | Transition this branch's ticket(s) to `QA ready`        |
+| `/code-review`               | The per-commit diff gate                                |
+| `/resolve-questions`         | Answer open clarification questions                     |
+| `/list-skills`               | Full inventory of this repo's commands                  |
 
-**Live status:** open `.project-management/output/progress/DASHBOARD.md`
+**Decision journal:** `.project-management/output/progress/DASHBOARD.md` — prose only, never a metric.
+Statuses live in Jira, test counts in `pnpm test:run`, gaps in `input/open-questions.md`.
 
 ---
 
@@ -61,7 +59,7 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 
 **Before ANY code changes:**
 
-1. **Read the technical spec** — `output/docs/technical-spec.md`
+1. **Read the story** — the Jira issue for the unit (`/jira-sync` to mirror it locally)
 2. **Read existing code** — understand current patterns before modifying
 3. **Plan (MANDATORY)** — `/execute-work` auto-enters plan mode; for manual work use TodoWrite
 4. **API contract check** — read `../refinext-api/` source or `openapi.json` before touching any screen that calls the API (see API-first rule below)
@@ -156,10 +154,15 @@ Never start coding without plan approval.
 0. PLAN MODE → analyze, create plan, get approval
 1. IMPLEMENT → code changes following standards below
 2. TEST → pnpm test:run + pnpm type-check + pnpm lint
-3. VALIDATE → new schemas/stores/utils tested, i18n keys added, Zod schemas present
-4. ASK FOR JIRA TICKET → then commit (no AI credits)
-5. UPDATE → DASHBOARD.md auto-updates
+3. VALIDATE → git add <files>, then node scripts/check-project-invariants.js
+              (it reads the staged diff — a no-op before staging)
+4. REVIEW → /code-review on the diff; then verify in a real browser, naming the role
+5. ASK FOR JIRA TICKET → then commit (no AI credits)
+6. JOURNAL → append a prose entry to DASHBOARD.md; no counts, no percentages
 ```
+
+> `pre-push` also checks `openapi.json` against the dev API and rejects the push on drift —
+> `pnpm fetch:openapi` and re-check your contract assumptions if it fires.
 
 ---
 
@@ -495,7 +498,14 @@ docker compose up
 
 BuildKit must be enabled (`DOCKER_BUILDKIT=1`) for cache mounts to work.
 
-See `.project-management/docs/refinext-app-notes.md` for full rationale on Docker and CI/CD decisions.
+Constraints that are easy to break (learned the hard way — the notes file that recorded the full
+rationale was retired 2026-07-29):
+
+- `pnpm-workspace.yaml` must be copied **before** `pnpm install` in the Dockerfile
+- `--mount=type=cache` for the pnpm store requires BuildKit (above)
+- nginx needs the SPA-routing fallback and serves hashed assets with a 1-year cache
+- CI runs DinD with TLS **disabled**; the SSH deploy key must match `authorized_keys` on the server
+- Staging is set up; **production is not**
 
 ---
 
@@ -569,21 +579,25 @@ Generic: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `UNAUTHORIZED`, `BAD_REQU
 
 ### Known data shapes
 
-**User** (derive Zod schema from this when building the feature):
+**User** — the canonical shape is `UserResponseSchema` in `src/features/users/api/schema.ts`. Derive the type with `z.infer<typeof UserResponseSchema>`; never hand-write it, and treat the schema (not this block) as the source of truth:
 
 ```ts
 {
   id: string // UUID
   user_id: string // "USR-00001"
-  username: string
-  display_name: string
+  first_name: string
+  last_name: string
   email: string
-  role: UserRole | null
-  user_type: UserType | null
-  tenant_scope: string | null
+  role: UserRole
+  permissions: string[] // defaults to []
+  tenant_id: string | null
   status: UserStatus
-  access_valid_from: string | null // ISO datetime
+  phone_number?: string | null
+  profile_picture_url?: string | null
   access_valid_until: string | null // ISO datetime
+  invited_by: string | null // UUID
+  invited_at: string | null // ISO datetime
+  activated_at: string | null // ISO datetime
   last_login: string | null // ISO datetime
   created_at: string // ISO datetime
   updated_at: string // ISO datetime
@@ -592,9 +606,8 @@ Generic: `VALIDATION_ERROR`, `NOT_FOUND`, `FORBIDDEN`, `UNAUTHORIZED`, `BAD_REQU
 
 **Enums:**
 
-- `UserRole`: `system_admin` | `support_user` | `auditor` | `front_office` | `back_office` | `leasing_company_user`
-- `UserType`: `platform` | `bank_tenant` | `leasing_company`
-- `UserStatus`: `active` | `invited` | `suspended` | `expired` | `deactivated`
+- `UserRole`: `system_admin` | `support_user` | `auditor` | `bank_power_user` | `front_office` | `back_office` | `leasing_company_user`
+- `UserStatus`: `pending_approval` | `invited` | `active` | `suspended` | `deactivated` | `expired` | `rejected`
 
 ---
 

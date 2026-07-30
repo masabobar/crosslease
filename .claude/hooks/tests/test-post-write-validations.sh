@@ -10,25 +10,6 @@ trap 'cleanup_scratch "$SCRATCH"' EXIT
 
 echo "  [scratch: $SCRATCH]"
 
-# --- fixture: small backlog phase file (under 200 lines) ---
-mkdir -p "$SCRATCH/.project-management/input/backlog"
-small_phase="$SCRATCH/.project-management/input/backlog/phase-1-foundation.md"
-printf 'line\n%.0s' {1..50} > "$small_phase"
-
-# Expect: phase-edit reminder, no size warning
-out=$(stdin_write "$small_phase" | bash "$HOOK" 2>/dev/null)
-assert_contains "phase edit triggers README-sync reminder" "$out" "verify totals in input/backlog/README.md"
-assert_not_contains "no size warning for small phase file" "$out" "is 50 lines"
-
-# --- fixture: oversized backlog file (> 200 lines) ---
-big_phase="$SCRATCH/.project-management/input/backlog/phase-2-core.md"
-printf 'line\n%.0s' {1..250} > "$big_phase"
-
-out=$(stdin_write "$big_phase" | bash "$HOOK" 2>/dev/null)
-assert_contains "backlog > 200 lines warns" "$out" "250 lines"
-assert_contains "warning mentions limit 200" "$out" "limit: 200"
-assert_contains "still includes phase-edit reminder" "$out" "verify totals"
-
 # --- fixture: module at ideal-threshold (350 lines, > 300, < 600) ---
 mkdir -p "$SCRATCH/.claude/commands/modules"
 ideal_mod="$SCRATCH/.claude/commands/modules/ideal.md"

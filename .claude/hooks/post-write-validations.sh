@@ -23,22 +23,6 @@ lines=$(wc -l < "$f" 2>/dev/null || echo 0)
 # Collect warnings; emit one combined systemMessage so all rules render
 warnings=()
 
-# Rule 4: backlog phase-*.md edit → remind to sync README totals
-case "$f" in
-  */.project-management/input/backlog/phase-*.md)
-    warnings+=("ℹ️  Modified $(basename "$f") — verify totals in input/backlog/README.md still match (or use /add-scope which auto-updates).")
-    ;;
-esac
-
-# Rule 1: backlog files > 200 lines (documentation.md §2.1)
-case "$f" in
-  */.project-management/input/backlog/*.md)
-    if [ "$lines" -gt 200 ]; then
-      warnings+=("⚠️  $(basename "$f") is $lines lines (limit: 200 per documentation.md §2.1). Consider splitting into sub-phases or moving items to future.md.")
-    fi
-    ;;
-esac
-
 # Rule 2: modules — 300 ideal, 600 hard max
 case "$f" in
   */.claude/commands/modules/*.md)

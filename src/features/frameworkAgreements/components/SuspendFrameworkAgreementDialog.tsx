@@ -1,11 +1,10 @@
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { DatePicker } from "@/components/ui/date-picker"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
@@ -30,7 +29,6 @@ function SuspendFrameworkAgreementDialog({
   const {
     handleSubmit,
     reset,
-    control,
     register,
     formState: { errors },
   } = useForm<SuspendFARequest>({
@@ -44,8 +42,13 @@ function SuspendFrameworkAgreementDialog({
   }
 
   function onSubmit(values: SuspendFARequest) {
+    // Suspension is always immediate — no effective_from is sent, the API
+    // stamps suspended_at itself. Scheduled suspension is a future feature.
     mutation.mutate(
-      { id: frameworkAgreementId, body: values },
+      {
+        id: frameworkAgreementId,
+        body: { justification: values.justification },
+      },
       {
         onSuccess: () => handleClose(),
         onError: err => {
@@ -73,28 +76,6 @@ function SuspendFrameworkAgreementDialog({
         <Separator />
 
         <div className="flex flex-col gap-4 px-4 py-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="suspend-effective-from">
-              {t("suspend.effectiveFrom")}{" "}
-              <span className="font-normal text-muted-foreground">
-                {t("suspend.effectiveFromOptional")}
-              </span>
-            </Label>
-            <Controller
-              control={control}
-              name="effective_from"
-              render={({ field }) => (
-                <DatePicker
-                  id="suspend-effective-from"
-                  data-testid="suspend-effective-from"
-                  value={field.value ?? undefined}
-                  onChange={field.onChange}
-                  captionLayout="dropdown"
-                />
-              )}
-            />
-          </div>
-
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="suspend-justification">
               {t("suspend.justification")}

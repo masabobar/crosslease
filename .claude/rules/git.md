@@ -24,7 +24,7 @@ Optional body explaining WHY, not WHAT
 
 When a commit implements or fixes behavior covered by a user story, cite it in the body as `US-XX.XX` (e.g. `US-28.4`, `US-28.29`).
 
-- **Source it from the conversation, not by searching the backlog.** Use a `US-XX.XX` reference only if it was already mentioned somewhere in the current conversation (e.g. the user cited it, it appeared in a linked Jira ticket, or it came up in prior discussion). Do not independently grep `.project-management/input/backlog/` to find or infer a match.
+- **Source it from the conversation, not by searching the backlog.** Use a `US-XX.XX` reference only if it was already mentioned somewhere in the current conversation (e.g. the user cited it, it appeared in a linked Jira ticket, or it came up in prior discussion). Do not independently search for a match.
 - **If no US reference has come up in the conversation, ask the user for it** before finalizing the commit message, rather than guessing or omitting it silently.
 - **No reference given = no reference in the commit.** If the user says there isn't one (or the work has no associated story), the body still explains WHY — it just omits the `US-XX.XX` line rather than inventing one.
 - A commit can cite more than one story if the fix spans acceptance criteria from both, as long as each was actually surfaced in the conversation.

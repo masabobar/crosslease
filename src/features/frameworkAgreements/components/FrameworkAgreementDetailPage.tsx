@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Copy, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -13,14 +13,14 @@ import {
 import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementDialog"
 import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/SuspendFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
-import { EditFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/EditFrameworkAgreementDialog"
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
 import { AuditHistoryTab } from "@/features/frameworkAgreements/components/AuditHistoryTab"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
-import { formatDateTime } from "@/lib/formatters"
+import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { frameworkAgreementEdit } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
@@ -62,7 +62,7 @@ export default function FrameworkAgreementDetailPage() {
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const navigate = useNavigate()
 
   const { data, isLoading, isError, error } = useFrameworkAgreementDetail(
     id ?? ""
@@ -126,29 +126,45 @@ export default function FrameworkAgreementDetailPage() {
               <Button
                 variant="outline"
                 data-testid="edit-fa-button"
-                onClick={() => setEditDialogOpen(true)}
+                onClick={() => navigate(frameworkAgreementEdit(data.id))}
               >
                 {t("detail.actions.edit")}
               </Button>
             )}
-          {data.status === FALifecycleStatusSchema.enum.draft && (
-            <Button
-              variant="outline"
-              data-testid="activate-fa-button"
-              onClick={() => setActivateDialogOpen(true)}
-            >
-              {t("detail.actions.activate")}
-            </Button>
-          )}
-          {data.status === FALifecycleStatusSchema.enum.active && (
-            <>
+          {data.status === FALifecycleStatusSchema.enum.draft &&
+            canManageFrameworkAgreement && (
               <Button
                 variant="outline"
-                data-testid="suspend-fa-button"
-                onClick={() => setSuspendDialogOpen(true)}
+                data-testid="activate-fa-button"
+                onClick={() => setActivateDialogOpen(true)}
               >
-                {t("detail.actions.suspend")}
+                {t("detail.actions.activate")}
               </Button>
+            )}
+          {data.status === FALifecycleStatusSchema.enum.active &&
+            canManageFrameworkAgreement && (
+              <>
+                <Button
+                  variant="outline"
+                  data-testid="suspend-fa-button"
+                  onClick={() => setSuspendDialogOpen(true)}
+                >
+                  {t("detail.actions.suspend")}
+                </Button>
+                <Button
+                  variant="outline"
+                  data-testid="terminate-fa-button"
+                  onClick={() => setTerminateDialogOpen(true)}
+                >
+                  {t("detail.actions.terminate")}
+                </Button>
+              </>
+            )}
+          {/* Reactivation is hidden from the UI per PRD1042-1495 (B5) — MVP lifecycle
+              is CRUD + Suspend/Terminate only. ReactivateFrameworkAgreementDialog and
+              its hook are retained, unused, for when this is re-enabled. */}
+          {data.status === FALifecycleStatusSchema.enum.suspended &&
+            canManageFrameworkAgreement && (
               <Button
                 variant="outline"
                 data-testid="terminate-fa-button"
@@ -156,20 +172,7 @@ export default function FrameworkAgreementDetailPage() {
               >
                 {t("detail.actions.terminate")}
               </Button>
-            </>
-          )}
-          {/* Reactivation is hidden from the UI per PRD1042-1495 (B5) — MVP lifecycle
-              is CRUD + Suspend/Terminate only. ReactivateFrameworkAgreementDialog and
-              its hook are retained, unused, for when this is re-enabled. */}
-          {data.status === FALifecycleStatusSchema.enum.suspended && (
-            <Button
-              variant="outline"
-              data-testid="terminate-fa-button"
-              onClick={() => setTerminateDialogOpen(true)}
-            >
-              {t("detail.actions.terminate")}
-            </Button>
-          )}
+            )}
         </div>
       </div>
 
@@ -226,6 +229,16 @@ export default function FrameworkAgreementDetailPage() {
                   label={t("fields.leasingCompany")}
                   value={data.lc_partner_name ?? "—"}
                 />
+                <ReviewRow
+                  label={t("fields.bankEntity")}
+                  value={
+                    data.bank_entity
+                      ? t(
+                          `bankEntities.${data.bank_entity}` as "bankEntities.sparkasse"
+                        )
+                      : "—"
+                  }
+                />
                 <ReviewRow label={t("fields.currency")} value={data.currency} />
               </div>
             </div>
@@ -239,8 +252,9 @@ export default function FrameworkAgreementDetailPage() {
               <div className="p-4 flex flex-col gap-4">
                 <ReviewRow
                   label={t("fields.maxVolumeEur")}
-                  value={data.max_volume_eur}
+                  value={formatCurrency(data.max_volume_eur, data.currency)}
                 />
+                <ReviewRow label={t("fields.currency")} value={data.currency} />
               </div>
             </div>
 
@@ -349,7 +363,10 @@ export default function FrameworkAgreementDetailPage() {
         </TabsContent>
 
         <TabsContent value="utilization">
-          <UtilizationTab frameworkAgreementId={data.id} />
+          <UtilizationTab
+            frameworkAgreementId={data.id}
+            currency={data.currency}
+          />
         </TabsContent>
 
         <TabsContent value="financings">
@@ -370,6 +387,8 @@ export default function FrameworkAgreementDetailPage() {
         open={activateDialogOpen}
         onOpenChange={setActivateDialogOpen}
         frameworkAgreementId={data.id}
+        validFrom={data.valid_from}
+        validUntil={data.valid_until}
       />
       <SuspendFrameworkAgreementDialog
         open={suspendDialogOpen}
@@ -380,11 +399,6 @@ export default function FrameworkAgreementDetailPage() {
         open={terminateDialogOpen}
         onOpenChange={setTerminateDialogOpen}
         frameworkAgreementId={data.id}
-      />
-      <EditFrameworkAgreementDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        frameworkAgreement={data}
       />
     </div>
   )

@@ -20,14 +20,12 @@ Shell scripts invoked by Claude Code lifecycle events. Wired up in `.claude/sett
 
 Emits warnings (never blocks) when:
 
-| Condition                                                   | Severity       | Rule                                 |
-| ----------------------------------------------------------- | -------------- | ------------------------------------ |
-| `.project-management/input/backlog/*.md` > 200 lines        | ⚠️ warning     | documentation.md §2.1                |
-| `.claude/rules/*.md` > 200 lines                            | 🟡 budget      | rules/README.md file-size discipline |
-| `.claude/commands/modules/*.md` > 600 lines                 | 🔴 hard max    | documentation.md §2.1                |
-| `.claude/commands/modules/*.md` > 300 lines                 | 🟡 ideal       | documentation.md §2.1                |
-| `.claude/commands/*.md` (top level) > 300 lines             | 🟡 soft target | documentation.md §2.1                |
-| Edit touches `.project-management/input/backlog/phase-*.md` | ℹ️ reminder    | Verify README.md totals still match  |
+| Condition                                       | Severity       | Rule                                 |
+| ----------------------------------------------- | -------------- | ------------------------------------ |
+| `.claude/rules/*.md` > 200 lines                | 🟡 budget      | rules/README.md file-size discipline |
+| `.claude/commands/modules/*.md` > 600 lines     | 🔴 hard max    | documentation.md §2.1                |
+| `.claude/commands/modules/*.md` > 300 lines     | 🟡 ideal       | documentation.md §2.1                |
+| `.claude/commands/*.md` (top level) > 300 lines | 🟡 soft target | documentation.md §2.1                |
 
 > The former `stop-changelog-check.sh` (Stop-event CHANGELOG reminder) was removed 2026-07-05 — no `CHANGELOG.md` exists in this repo; conventional commits + GitLab MRs are the change history.
 
@@ -71,13 +69,11 @@ bash .claude/hooks/tests/run-tests.sh
 
 ```bash
 bash .claude/hooks/tests/run-tests.sh post-write
-bash .claude/hooks/tests/run-tests.sh audit-pm
 ```
 
 Coverage (v3.3):
 
 - `test-post-write-validations.sh` — 18 assertions: small file / oversize backlog (200-cap) / rule-file budget (200) / module ideal-vs-hardmax thresholds / command soft target / how-to-use exclusion / missing file / missing `file_path`.
-- `test-audit-pm.sh` — 13 assertions: clean repo, version mismatch, missing rule, broken link, code-fence exemption, oversize backlog, legacy command (active vs historical context).
 
 **Run before every change to `.claude/hooks/*.sh`** — each assertion is there because it caught a real bug (SIGPIPE, false-positive false-negatives, etc.).
 

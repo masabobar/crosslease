@@ -1,3 +1,8 @@
+---
+name: pattern-audit
+description: Audit the full src/ tree for DRY violations, extraction opportunities, inconsistent component patterns, and over-engineering
+---
+
 # /pattern-audit
 
 Deep structural analysis of `src/` focused on four dimensions that a standard diff-review misses:

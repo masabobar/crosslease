@@ -33,6 +33,7 @@ import {
   LC_ONLY_ROLES,
 } from "@/features/users/types"
 import { canAccessAuditTrail as hasAuditTrailAccess } from "@/features/audit/types"
+import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governed-actions/constants"
 import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"
@@ -82,6 +83,10 @@ export function Sidebar() {
   const location = useLocation()
   const { data: currentUser } = useCurrentUser()
   const { data: permissions } = useCurrentUserPermissions()
+  const canAccessPendingApprovals =
+    !!currentUser &&
+    GOVERNED_ACTION_LIST_ALLOWED_ROLES.includes(currentUser.role)
+
   const canAccessUserManagement =
     !!currentUser && USER_MANAGEMENT_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessAuditTrail = hasAuditTrailAccess(currentUser?.role)
@@ -97,10 +102,11 @@ export function Sidebar() {
   const canAccessProductTemplates =
     !!currentUser &&
     PRODUCT_TEMPLATE_READ_ALLOWED_ROLES.includes(currentUser.role)
-  // Users without a home tenant (system_admin, support_user) aren't gated on module
-  // activation here — /me/permissions only reflects always-on modules for them, since
-  // module activation is per-tenant and they operate across tenants. Enforcement for
-  // a specific tenant still happens at the API layer once one is selected.
+  // Users without a home tenant (auditor is the only such role left with FA read)
+  // aren't gated on module activation here — /me/permissions only reflects always-on
+  // modules for them, since module activation is per-tenant and they operate across
+  // tenants. Enforcement for a specific tenant still happens at the API layer once
+  // one is selected.
   const canAccessFrameworkAgreements =
     !!currentUser &&
     FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES.includes(currentUser.role) &&
@@ -509,7 +515,7 @@ export function Sidebar() {
                       isActive={isUserManagementActive}
                     />
                   )}
-                  {canAccessUserManagement && (
+                  {canAccessPendingApprovals && (
                     <SidebarNavLink
                       to={PATHS.PENDING_APPROVALS}
                       label={t("nav.pendingApprovals")}

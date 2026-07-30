@@ -133,7 +133,11 @@ function AlertDialogDescription({
     <AlertDialogPrimitive.Description
       data-slot="alert-dialog-description"
       className={cn(
-        "text-sm text-balance text-muted-foreground md:text-pretty *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        // wrap-anywhere, not break-words: descriptions interpolate user-supplied
+        // values (file names, partner names, emails) with no break opportunity, and
+        // the content grid sizes its track to their min-content width — overflowing
+        // the popup's max-width. Only overflow-wrap:anywhere shrinks min-content.
+        "text-sm text-balance wrap-anywhere text-muted-foreground md:text-pretty *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className
       )}
       {...props}

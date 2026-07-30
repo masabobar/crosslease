@@ -1,11 +1,15 @@
 import { useTranslation } from "react-i18next"
 import { useFrameworkAgreementUtilization } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementUtilization"
+import { formatCurrency } from "@/lib/formatters"
 
 type Props = {
   frameworkAgreementId: string
+  // The utilization response carries no currency of its own — it comes from the
+  // agreement so the same envelope reads identically on both tabs.
+  currency: string
 }
 
-function UtilizationTab({ frameworkAgreementId }: Props) {
+function UtilizationTab({ frameworkAgreementId, currency }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const { data, isLoading, isError } =
     useFrameworkAgreementUtilization(frameworkAgreementId)
@@ -35,7 +39,9 @@ function UtilizationTab({ frameworkAgreementId }: Props) {
           <p className="text-xs text-muted-foreground">
             {t("fields.maxVolumeEur")}
           </p>
-          <p className="text-sm text-foreground">{data.max_volume_eur}</p>
+          <p className="text-sm text-foreground">
+            {formatCurrency(data.max_volume_eur, currency)}
+          </p>
         </div>
       </div>
     </div>

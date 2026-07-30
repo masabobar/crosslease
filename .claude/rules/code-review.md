@@ -151,7 +151,7 @@ mutation.mutate(payload)
 
 ## 7. Security & RBAC
 
-- [ ] New gated elements use the correct role wire values: `system_admin`, `support_user`, `auditor`, `front_office`, `back_office`, `leasing_company_user` — no freehand strings
+- [ ] New gated elements use the correct role wire values: `system_admin`, `support_user`, `auditor`, `bank_power_user`, `front_office`, `back_office`, `leasing_company_user` — no freehand strings
 - [ ] No `console.log` / `console.warn` / `console.debug` (pre-commit blocks these)
 - [ ] No sensitive data (tokens, PII) in component state beyond the minimum render lifetime
 - [ ] Route/query params validated before use — no raw `params.id` passed to queries without guard

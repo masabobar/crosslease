@@ -137,13 +137,10 @@
       "cancel": "Cancel",
       "submitButton": "Submit for matching",
       "submitting": "Submitting…",
-      "fourEyesBadge": "Four-eyes",
-      "classificationHint": "Optional. Deal roles (lessee, guarantor, supplier) are derived from the contract process and cannot be assigned here.",
       "sections": {
         "basicIdentity": "BASIC IDENTITY",
         "registryIdentifiers": "REGISTRY IDENTIFIERS",
-        "address": "ADDRESS",
-        "classification": "CLASSIFICATION"
+        "address": "ADDRESS"
       },
       "fields": {
         "entityType": "Entity type"
@@ -153,16 +150,7 @@
         "taxIdMatching": "Used for deterministic matching where provided",
         "leiFormat": "ISO 17442 format"
       },
-      "roleDescriptions": {
-        "lessee": "The entity leasing the asset",
-        "guarantor": "Provides guarantee on financing",
-        "supplier": "Sold the asset being financed",
-        "leasing_company": "Requires counter-confirmation",
-        "bank_entity": "Requires counter-confirmation",
-        "ubo_related_person": "Requires counter-confirmation"
-      },
       "errors": {
-        "roleRequired": "Select at least one role.",
         "required": "This field is required.",
         "invalidCountry": "Select a country from the list.",
         "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442)."

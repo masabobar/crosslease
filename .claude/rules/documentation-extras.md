@@ -4,7 +4,7 @@
 **Last Updated:** 2026-05-10
 **Status:** Active
 
-Supplementary documentation conventions: code comment style, visual aids, validation tooling, and good/bad documentation examples. Companion to `.claude/rules/documentation.md` (core rules) and `.claude/rules/documentation-templates.md` (artifact templates).
+Supplementary documentation conventions: code comment style, visual aids, validation tooling, and good/bad documentation examples. Companion to `.claude/rules/documentation.md` (core rules) and `.claude/rules/documentation-templates.md` (where each artifact lives).
 
 ---
 
@@ -126,7 +126,7 @@ cspell "**/*.md"
 
 ```bash
 # Check file sizes
-wc -l .project-management/input/backlog/*.md
+wc -l .claude/rules/*.md
 ```
 
 ### 3.2 Pre-commit Hook (Optional)
@@ -136,7 +136,7 @@ wc -l .project-management/input/backlog/*.md
 # .git/hooks/pre-commit
 
 # Check documentation file sizes
-for file in .project-management/input/backlog/*.md; do
+for file in .claude/rules/*.md; do
   lines=$(wc -l < "$file")
   if [ "$lines" -gt 200 ]; then
     echo "ERROR: $file exceeds 200 lines ($lines lines)"
@@ -177,7 +177,7 @@ User bi trebalo da ga stavi u header nekako.
 ## Related
 
 - `.claude/rules/documentation.md` — core writing rules (language, style, file size, quality checklist)
-- `.claude/rules/documentation-templates.md` — artifact templates (user stories, tasks, bugs, API endpoints)
+- `.claude/rules/documentation-templates.md` — where each artifact lives (Jira, `openapi.json`, `open-questions.md`)
 - `.claude/rules/code-quality.md` — SOLID and DRY principles for the code itself
 
 ---

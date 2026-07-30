@@ -8,6 +8,7 @@ import {
   INTERNAL_BANK_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
+import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governed-actions/constants"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import {
@@ -130,6 +131,10 @@ const FrameworkAgreementListPage = lazy(
 const CreateFrameworkAgreementWizardPage = lazy(
   () =>
     import("@/features/frameworkAgreements/components/CreateFrameworkAgreementWizardPage")
+)
+const EditFrameworkAgreementWizardPage = lazy(
+  () =>
+    import("@/features/frameworkAgreements/components/EditFrameworkAgreementWizardPage")
 )
 const FrameworkAgreementDetailPage = lazy(
   () =>
@@ -254,7 +259,7 @@ export const router = createBrowserRouter([
         path: PATHS.PENDING_APPROVALS,
         element: (
           <Suspense fallback={null}>
-            <RoleGuard allowed={USER_MANAGEMENT_ALLOWED_ROLES}>
+            <RoleGuard allowed={GOVERNED_ACTION_LIST_ALLOWED_ROLES}>
               <PendingApprovalsPage />
             </RoleGuard>
           </Suspense>
@@ -454,6 +459,18 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES}>
               <FrameworkAgreementDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // MANAGE, not READ: the detail route above only requires READ, so without the
+        // narrower guard a reader could deep-link into an edit form the BE would 403.
+        path: PATHS.FRAMEWORK_AGREEMENT_EDIT,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES}>
+              <EditFrameworkAgreementWizardPage />
             </RoleGuard>
           </Suspense>
         ),

@@ -4,7 +4,7 @@
 
 This rule applies to web (browser SPA, SSR, MPA), mobile native (iOS, Android), and mobile cross-platform (React Native, Flutter, Expo) — anything that consumes a backend API to render a screen. It does **not** apply to backend-to-backend RPC, internal CLI tools, or pure infra work.
 
-It works alongside `.claude/rules/api-documentation.md` (which governs how backend endpoints are _documented_) and `.claude/rules/screen-driven-backlog.md` (which governs how frontend stories are _structured_). This file governs _when frontend implementation is allowed to start_.
+It works alongside `.claude/rules/screen-driven-backlog.md` (which scopes a frontend unit to one screen and produces the screen → endpoint mapping this file's Phase A consumes). This file governs _when frontend implementation is allowed to start_.
 
 ---
 
@@ -17,7 +17,7 @@ It works alongside `.claude/rules/api-documentation.md` (which governs how backe
 For each screen the story implements, list every API endpoint the screen will call. For each endpoint, verify:
 
 1. **Endpoint exists** in the backend code (or is explicitly committed in a backend story already in flight).
-2. **Documentation exists** per `.claude/rules/api-documentation.md` §2.3 — request body, response shape, status codes, auth requirements.
+2. **Documentation exists** in `openapi.json` or `../refinext-api/` — request body, response shape, status codes, auth requirements.
 3. **Request schema covers the data the screen sends** — every field the UI form / interaction produces is accepted by the endpoint, with correct type and required/optional flags.
 4. **Response shape covers the data the screen renders** — every field the UI displays, every list it iterates, every count/timestamp/state it shows is present in the response with the right shape.
 5. **Error states the UI must distinguish are exposed** — if the design shows different empty states, conflict states, validation messages, or rate-limit feedback, the API must return distinguishable status codes or `error.code` values for each.
@@ -68,7 +68,7 @@ Instead:
    **Impact if Unresolved:** US-042 cannot be implemented.
    ```
 
-3. **Open a backend story or bug** that closes the gap. If the project has a bug roadmap, file under `.project-management/output/bugs/bug-roadmap.md` with category `API contract gap`. If a backlog phase is appropriate, add a backend story via `/add-scope`.
+3. **Open a backend story or bug** that closes the gap. File it in Jira, and add a note to `input/open-questions.md` with category `api-contract`.
 
 4. **Mark the frontend story as Blocked** with the dependency reference (`Blocked by: BUG-XXX` or `Blocked by: US-YYY`). Do not partially implement.
 
@@ -84,7 +84,7 @@ For each frontend story, before exiting plan mode:
 
 - [ ] List every screen the story touches (1 unless wizard — see `.claude/rules/screen-driven-backlog.md`)
 - [ ] For each screen, list every API endpoint it calls (method + path)
-- [ ] For each endpoint, locate its doc block (`.claude/rules/documentation-templates.md` §2.1) or OpenAPI entry
+- [ ] For each endpoint, locate its operation in `openapi.json` (endpoint docs are not authored in this repo — see `.claude/rules/documentation-templates.md` §3)
 - [ ] Field-by-field check: every UI input → request schema; every UI output → response shape
 - [ ] Distinguishable error states → distinguishable status codes / error codes
 - [ ] Auth requirements match
@@ -141,7 +141,6 @@ In every other web/mobile story, this rule applies.
 
 **Related:**
 
-- `.claude/rules/api-documentation.md` — what a complete endpoint doc + schema looks like (this rule consumes that contract)
-- `.claude/rules/screen-driven-backlog.md` — how to structure web/mobile stories so the screen-to-endpoint mapping is explicit from the start
+- `.claude/rules/screen-driven-backlog.md` — scopes a frontend unit to one screen and produces the screen → endpoint mapping Phase A verifies
 - `.claude/rules/testing.md` — status-code matrix that documented endpoints must cover
 - `.claude/commands/execute-work.md` — plan-mode hook that enforces this gate
