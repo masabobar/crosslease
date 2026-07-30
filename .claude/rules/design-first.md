@@ -6,7 +6,7 @@
 
 **MANDATORY: Before implementing any new screen, a Figma design URL must be provided and reviewed. Before creating each new component file within that screen, a Figma design URL for that component must also be provided. Implementation is blocked until designs are supplied.**
 
-Works alongside `.claude/rules/api-first.md` (which gates implementation on API contract) and `.claude/rules/screen-driven-backlog.md` (which structures stories around screens). This rule gates implementation on design fidelity.
+Works alongside `.claude/rules/api-first.md` (which gates implementation on API contract) and `.claude/rules/screen-driven-backlog.md` (which scopes a frontend unit to one screen). This rule gates implementation on design fidelity.
 
 ---
 
@@ -159,7 +159,7 @@ In every other frontend story that creates a new screen or a new component, this
 **Related:**
 
 - `.claude/rules/api-first.md` — parallel gate for API contract; both Phase A gates must pass before implementation
-- `.claude/rules/screen-driven-backlog.md` — screen-level story structure that this rule extends
+- `.claude/rules/screen-driven-backlog.md` — the one-unit-one-screen scoping this rule gates per screen and per component
 - `.claude/rules/code-review.md` — post-implementation design fidelity check
 - `.claude/commands/execute-work.md` — plan-mode hook where Phase A fires
 

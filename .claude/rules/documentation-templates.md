@@ -1,161 +1,100 @@
-# Documentation Templates
+# Documentation Artifacts — Where Each One Lives
 
-**Version:** 1.0
-**Last Updated:** 2026-05-10
+**Version:** 2.0
+**Last Updated:** 2026-07-30
 **Status:** Active
 
-Templates for specific documentation artifacts (user stories, technical tasks, bug reports, API endpoints). Companion to `.claude/rules/documentation.md` (core writing rules) and `.claude/rules/documentation-extras.md` (code comments, diagrams, tooling).
+**This repo authors almost no artifact documentation.** Stories, tasks, and bugs live in Jira; API
+contracts live in `openapi.json` and `../refinext-api/`. This file records where each artifact lives and
+what shape to expect, so nothing gets re-invented locally.
+
+Companion to `.claude/rules/documentation.md` (writing rules — language, style, file size) and
+`.claude/rules/documentation-extras.md` (code comments, diagrams, tooling).
 
 ---
 
-## 1. Specific Document Types
+## 1. Stories, tasks, and bugs → Jira (PRD1042)
 
-### 1.1 User Stories (US-XXX)
+Do **not** author these as local markdown. Pull them with `/jira-sync <KEY>`, which extracts the parts
+that matter rather than dumping the description.
 
-**Format:**
+**Hierarchy:** `Epic` → `Story` → `Sub-task`. A story's sub-tasks carry its BE/FE/QA triplet, identified by
+summary prefix `BE ` / `FE ` / `QA `. CR Tasks are often **standalone** — no `parent` — yet still govern an
+epic's scope, so search for them separately.
 
-```markdown
-### US-001: Short Descriptive Title
+**Summary formats:**
 
-**Priority:** P0 | P1 | P2
-**Story:** As a [user type], I want to [action] so that [benefit].
+| Artifact    | Shape                                  |
+| ----------- | -------------------------------------- |
+| Epic        | `Epic 15: Workflow Task Catalog`       |
+| Story       | `US <epic>.<n> \| <MODULE> \| <title>` |
+| Sub-task    | `FE \| <title>` (also `BE `, `QA `)    |
+| CR sub-task | `FE CR Part 2 \| <MODULE> \| <title>`  |
 
-**Acceptance Criteria:**
+**Sections a story description reliably carries** — these are what make it worth reading in full:
 
-- [ ] Criterion 1 (testable)
-- [ ] Criterion 2 (testable)
-- [ ] Criterion 3 (testable)
+| Section                                | Why it matters                                         |
+| -------------------------------------- | ------------------------------------------------------ |
+| `[SCOPE]` tag                          | Whether the story is in the current release at all     |
+| **Permission Matrix**                  | Per-role ✓/✗/R table → the FE role gates               |
+| **Acceptance Criteria**                | What the unit actually has to do                       |
+| **Field Specification**                | Form fields, types, M/O/C, validation rules            |
+| `Architectural Notes → Backend → API:` | Endpoint paths → feeds the `api-first.md` Phase A gate |
+| `[OPEN QUESTION]` blocks               | Candidates for `input/open-questions.md`               |
 
-**Estimate:** X story points
-**Dependencies:** US-XXX, T-XXX
-**Status:** Todo | In Progress | Completed | Blocked
-```
-
-**Rules:**
-
-- Title: Max 50 characters
-- Story: Single sentence, clear user value
-- Acceptance criteria: 3-7 testable items
-- Each criterion starts with a verb
-- Use present tense
-
-> Frontend stories extend this format — see `.claude/rules/screen-driven-backlog.md` §3 for the additional mandatory fields (Type, Screen, API Endpoints Used, API contract status).
-
-### 1.2 Technical Tasks (T-XXX)
-
-**Format:**
-
-```markdown
-### T-001: Short Task Title
-
-**Priority:** P0 | P1 | P2
-**Description:** Brief explanation of what needs to be done.
-
-**Tasks:**
-
-- [ ] Subtask 1
-- [ ] Subtask 2
-- [ ] Subtask 3
-
-**Estimate:** X story points
-**Dependencies:** T-XXX, US-XXX
-**Status:** Todo | In Progress | Completed
-```
-
-### 1.3 Bug Reports (BUG-XXX)
-
-**Format:**
-
-```markdown
-### BUG-001: Short Bug Description
-
-**Priority:** P0 (Critical) | P1 (High) | P2 (Medium)
-**Reported:** YYYY-MM-DD
-**Reporter:** Name or user ID
-
-**Steps to Reproduce:**
-
-1. Step 1
-2. Step 2
-3. Step 3
-
-**Expected Result:** What should happen
-**Actual Result:** What actually happens
-**Environment:** OS, browser, version
-
-**Status:** Open | In Progress | Fixed | Cannot Reproduce
-**Fix ETA:** YYYY-MM-DD
-```
-
-### 1.4 Commit Messages
-
-See `.claude/rules/git.md` for the canonical commit message format, multi-line HEREDOC pattern, and the full list of conventional commit types.
-
-> **Important:** Per `.claude/rules/git.md`, AI attribution lines (`Generated with Claude Code`, `Co-Authored-By: Claude`) MUST NOT be included in commit messages.
+**Where a CR and its epic disagree, the CR wins** — it reflects the current committed scope; the epic is
+the original ambition. Never assume the epic is authoritative because it is larger.
 
 ---
 
-## 2. API Documentation
+## 2. Commit messages → `.claude/rules/git.md`
 
-### 2.1 Endpoint Documentation
+That file is canonical: conventional-commit format, the mandatory Jira ticket or `#no-ticket` suffix, the
+HEREDOC pattern for bodies, and the rule on citing `US-XX.XX` only when it came up in conversation.
 
-**Every public API endpoint MUST document:**
+> AI attribution lines (`Generated with Claude Code`, `Co-Authored-By: Claude`) **MUST NOT** appear in
+> commit messages.
 
-````markdown
-### POST /api/v1/users/signup
+---
 
-**Description:** Create a new user account.
+## 3. API endpoint contracts → `openapi.json`
 
-**Authentication:** None (public endpoint)
+Endpoint documentation is **not written in this repo.** The contract is `openapi.json` (refresh with
+`pnpm fetch:openapi`; `pre-push` rejects a push when it has drifted from the dev API). For service-level
+detail — validation rules, permission enforcement, error taxonomy — read `../refinext-api/`.
 
-**Request Body:**
+When an endpoint the UI needs is absent from `openapi.json`, that is an `api-first.md` Phase A failure:
+file the gap, do not invent the shape.
 
-```json
-{
-  "email": "user@example.com",
-  "password": "SecurePass123",
-  "name": "John Doe"
-}
-```
-````
+---
 
-**Response (201 Created):**
+## 4. Open clarification questions → `input/open-questions.md`
 
-```json
-{
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "name": "John Doe"
-  },
-  "token": "jwt_token_here"
-}
-```
+The one artifact this repo does author. Its format lives in
+`.project-management/templates/open-questions-template.md` — follow that template rather than restating it
+here. Entries carry `Status`, `Priority` (P0/P1/P2), `Category`, `Asked During`, the question, impact if
+unresolved, and a resolution block once answered.
 
-**Error Responses:**
+Free-text answers are anonymized per `.claude/rules/anonymization.md` before they are written down.
 
-- `400 Bad Request` - Invalid input (email format, weak password)
-- `409 Conflict` - Email already exists
-- `500 Internal Server Error` - Server error
+---
 
-**Rate Limiting:** 5 requests per 15 minutes per IP
+## 5. Local documentation we do write
 
-```
-
-**Required fields recap:** method + path, description, authentication, request body example, success response example, error responses (matrix from `.claude/rules/testing.md`), rate limiting note when applicable.
-
+Rule files (`.claude/rules/`), command files (`.claude/commands/`), `CLAUDE.md`, and the DASHBOARD journal.
+Style, language, and file-size limits for all of them: `.claude/rules/documentation.md` §2.1 and §3.
 
 ---
 
 ## Related
 
-- `.claude/rules/documentation.md` — language, style, file-size, quality checklist (core rules)
-- `.claude/rules/documentation-extras.md` — code comments, diagrams, tools, good/bad examples
-- `.claude/rules/testing.md` — HTTP status-code matrix that endpoint docs must cover
-- `.claude/rules/screen-driven-backlog.md` — frontend story format extending §1.1
-- `.claude/rules/git.md` — canonical commit message format
+- `.claude/rules/documentation.md` — language, style, file-size limits, quality checklist
+- `.claude/rules/documentation-extras.md` — code comments, diagrams, tooling
+- `.claude/rules/git.md` — canonical commit format (§2 defers to it)
+- `.claude/rules/screen-driven-backlog.md` — how a frontend unit is scoped from a Jira story
+- `.claude/rules/anonymization.md` — no personal names in anything committed here
+- `.claude/commands/jira-sync.md` — the read-only briefing that extracts §1's sections
 
 ---
 
 **Status:** ✅ Active
-```

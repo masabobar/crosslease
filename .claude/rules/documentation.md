@@ -6,7 +6,7 @@
 
 Core documentation rules: language, file-size limits, writing style, and the quality checklist. See companion files for templates and extras:
 
-- **`.claude/rules/documentation-templates.md`** — User Stories, Technical Tasks, Bug Reports, API Endpoint templates
+- **`.claude/rules/documentation-templates.md`** — where each artifact lives (Jira, `openapi.json`, `open-questions.md`) and what shape to expect
 - **`.claude/rules/documentation-extras.md`** — Code Comments, Diagrams, Tools, Good/Bad Examples
 
 ---

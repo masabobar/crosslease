@@ -29,7 +29,7 @@
 
    **Conditional:**
    - `api-first.md` — before any FE story: contract verification gate
-   - `screen-driven-backlog.md` — one screen per story
+   - `screen-driven-backlog.md` — one screen per unit; the screen → endpoint mapping
    - `anonymization.md` — when generating docs from client input
 
 4. **Project Rules** (`.project-management/rules/project-rules.md`) — ALWAYS read

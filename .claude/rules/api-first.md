@@ -4,7 +4,7 @@
 
 This rule applies to web (browser SPA, SSR, MPA), mobile native (iOS, Android), and mobile cross-platform (React Native, Flutter, Expo) — anything that consumes a backend API to render a screen. It does **not** apply to backend-to-backend RPC, internal CLI tools, or pure infra work.
 
-It works alongside `.claude/rules/screen-driven-backlog.md` (which governs how frontend stories are _structured_). This file governs _when frontend implementation is allowed to start_.
+It works alongside `.claude/rules/screen-driven-backlog.md` (which scopes a frontend unit to one screen and produces the screen → endpoint mapping this file's Phase A consumes). This file governs _when frontend implementation is allowed to start_.
 
 ---
 
@@ -84,7 +84,7 @@ For each frontend story, before exiting plan mode:
 
 - [ ] List every screen the story touches (1 unless wizard — see `.claude/rules/screen-driven-backlog.md`)
 - [ ] For each screen, list every API endpoint it calls (method + path)
-- [ ] For each endpoint, locate its doc block (`.claude/rules/documentation-templates.md` §2.1) or OpenAPI entry
+- [ ] For each endpoint, locate its operation in `openapi.json` (endpoint docs are not authored in this repo — see `.claude/rules/documentation-templates.md` §3)
 - [ ] Field-by-field check: every UI input → request schema; every UI output → response shape
 - [ ] Distinguishable error states → distinguishable status codes / error codes
 - [ ] Auth requirements match
@@ -141,6 +141,6 @@ In every other web/mobile story, this rule applies.
 
 **Related:**
 
-- `.claude/rules/screen-driven-backlog.md` — how to structure web/mobile stories so the screen-to-endpoint mapping is explicit from the start
+- `.claude/rules/screen-driven-backlog.md` — scopes a frontend unit to one screen and produces the screen → endpoint mapping Phase A verifies
 - `.claude/rules/testing.md` — status-code matrix that documented endpoints must cover
 - `.claude/commands/execute-work.md` — plan-mode hook that enforces this gate
