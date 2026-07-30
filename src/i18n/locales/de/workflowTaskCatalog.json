@@ -270,6 +270,7 @@
     "WTC_TASK_PARENT_CONFLICT": "Dieser Katalog überschreibt oder deaktiviert diese globale Standardaufgabe bereits.",
     "WTC_TASK_MANDATORY_FIELD_NULL": "Ein Pflichtfeld dieser Aufgabe kann nicht geleert werden.",
     "WTC_TASK_HAS_DEPENDENTS": "Diese globale Standardaufgabe kann nicht entfernt werden, solange produktspezifische Kataloge sie überschreiben oder deaktivieren.",
-    "WTC_DOC_REQUIREMENT_REF_INVALID": "Die referenzierte Dokumentenanforderung ist in diesem Mandanten nicht aktiv."
+    "WTC_DOC_REQUIREMENT_REF_INVALID": "Die referenzierte Dokumentenanforderung ist in diesem Mandanten nicht aktiv.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

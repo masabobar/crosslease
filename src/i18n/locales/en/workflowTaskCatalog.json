@@ -270,6 +270,7 @@
     "WTC_TASK_PARENT_CONFLICT": "This catalog already overrides or deactivates that global default task.",
     "WTC_TASK_MANDATORY_FIELD_NULL": "A required field cannot be cleared on this task.",
     "WTC_TASK_HAS_DEPENDENTS": "This global default task cannot be removed while product-specific catalogs still override or deactivate it.",
-    "WTC_DOC_REQUIREMENT_REF_INVALID": "The referenced document requirement is not active in this tenant."
+    "WTC_DOC_REQUIREMENT_REF_INVALID": "The referenced document requirement is not active in this tenant.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }
