@@ -21,6 +21,7 @@ import {
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
+import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
@@ -39,6 +40,7 @@ const formSchema = z
     email: z.string().min(1, "required").email("invalidFormat"),
     role: z.enum(USER_ROLES, { error: "required" }),
     tenant: z.string().optional(),
+    lcPartner: z.string().optional(),
     accessValidFrom: z.string().optional(),
     accessValidUntil: z.string().optional(),
   })
@@ -48,6 +50,13 @@ const formSchema = z
         code: z.ZodIssueCode.custom,
         message: "required",
         path: ["tenant"],
+      })
+    }
+    if (LC_ONLY_ROLES.includes(data.role) && !data.lcPartner) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "required",
+        path: ["lcPartner"],
       })
     }
     if (AUDITOR_DATE_RANGE_ROLES.includes(data.role)) {
@@ -103,6 +112,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       email: "",
       role: undefined,
       tenant: "",
+      lcPartner: "",
       accessValidFrom: "",
       accessValidUntil: "",
     },
@@ -115,6 +125,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
     .map(t => ({ value: t.id, label: t.name }))
 
   const selectedRole = useWatch({ control: form.control, name: "role" })
+  const selectedTenant = useWatch({ control: form.control, name: "tenant" })
   const accessValidFromValue = useWatch({
     control: form.control,
     name: "accessValidFrom",
@@ -130,6 +141,21 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
     !!selectedRole && AUDITOR_DATE_RANGE_ROLES.includes(selectedRole)
   const isFourEyes = !!selectedRole && FOUR_EYES_ROLES.includes(selectedRole)
   const isLeasingUser = !!selectedRole && LC_ONLY_ROLES.includes(selectedRole)
+
+  const { data: lcPartnersData, isLoading: isLcPartnersLoading } =
+    usePartnerList(isLeasingUser && selectedTenant ? selectedTenant : null, {
+      lc_eligible: true,
+      limit: 100,
+    })
+
+  const lcPartnerOptions: SelectOption[] = (lcPartnersData?.items ?? []).map(
+    p => ({ value: p.partner_id, label: p.display_name })
+  )
+  const noEligibleLcPartners =
+    isLeasingUser &&
+    !!selectedTenant &&
+    !isLcPartnersLoading &&
+    lcPartnerOptions.length === 0
 
   const tenantLabel = isLeasingUser
     ? t("modal.fields.tenantScope")
@@ -165,6 +191,10 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         access_valid_until:
           AUDITOR_DATE_RANGE_ROLES.includes(data.role) && data.accessValidUntil
             ? new Date(data.accessValidUntil).toISOString()
+            : undefined,
+        lc_partner_id:
+          LC_ONLY_ROLES.includes(data.role) && data.lcPartner
+            ? data.lcPartner
             : undefined,
       })
       form.reset()
@@ -292,6 +322,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                   field.onChange(val)
                   // Reset conditional fields when role changes
                   form.setValue("tenant", "")
+                  form.setValue("lcPartner", "")
                   form.setValue("accessValidFrom", "")
                   form.setValue("accessValidUntil", "")
                 }}
@@ -341,7 +372,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                   id="tenant"
                   data-testid="invite-tenant-select"
                   value={field.value ?? ""}
-                  onValueChange={field.onChange}
+                  onValueChange={val => {
+                    field.onChange(val)
+                    // Eligible LC partners depend on the tenant
+                    form.setValue("lcPartner", "")
+                  }}
                   options={tenantOptions}
                   placeholder={
                     isTenantsLoading
@@ -357,6 +392,51 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             {errors.tenant && (
               <p className="mt-1 text-sm text-destructive">
                 {resolveMsg(errors.tenant.message)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Leasing company partner (LC user only) */}
+        {isLeasingUser && (
+          <div>
+            <Label
+              htmlFor="lcPartner"
+              error={!!errors.lcPartner}
+              className="mb-1.5"
+            >
+              {t("modal.fields.lcPartner")}
+            </Label>
+            <Controller
+              control={form.control}
+              name="lcPartner"
+              render={({ field }) => (
+                <SelectField
+                  id="lcPartner"
+                  data-testid="invite-lc-partner-select"
+                  value={field.value ?? ""}
+                  onValueChange={field.onChange}
+                  options={lcPartnerOptions}
+                  placeholder={
+                    !selectedTenant
+                      ? t("modal.placeholders.lcPartnerNoTenant")
+                      : isLcPartnersLoading
+                        ? tCommon("loading")
+                        : t("modal.placeholders.lcPartner")
+                  }
+                  error={!!errors.lcPartner}
+                  disabled={!selectedTenant || isLcPartnersLoading}
+                />
+              )}
+            />
+            <p className="mt-1 text-sm text-muted-foreground">
+              {noEligibleLcPartners
+                ? t("modal.hints.lcPartnerEmpty")
+                : t("modal.hints.lcPartner")}
+            </p>
+            {errors.lcPartner && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMsg(errors.lcPartner.message)}
               </p>
             )}
           </div>

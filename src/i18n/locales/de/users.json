@@ -426,6 +426,7 @@
       "role": "Rolle",
       "tenant": "Mandant",
       "tenantScope": "Mandantenbereich",
+      "lcPartner": "Leasinggesellschaft",
       "accessValidFrom": "Zugang gültig ab",
       "accessValidUntil": "Zugang gültig bis"
     },
@@ -434,12 +435,16 @@
       "lastName": "Nachname",
       "email": "sie@beispiel.de",
       "role": "Rolle auswählen",
-      "tenant": "Mandant auswählen"
+      "tenant": "Mandant auswählen",
+      "lcPartner": "Leasinggesellschaft auswählen",
+      "lcPartnerNoTenant": "Zuerst einen Mandanten auswählen"
     },
     "hints": {
       "email": "Muss plattformweit eindeutig sein",
       "tenantAuditor": "Der Auditorzugang muss auf genau einen Mandanten beschränkt sein",
       "tenantOperational": "Operative Benutzer auf Mandantenebene müssen genau einem Mandanten zugehören",
+      "lcPartner": "Der Benutzer sieht nur Rahmenverträge der ausgewählten Leasinggesellschaft",
+      "lcPartnerEmpty": "Keine geeigneten Leasinggesellschaften — der Partner muss bestätigt und Leasinggesellschaft-Partei eines Rahmenvertrags in diesem Mandanten sein",
       "accessDates": "Nur für Auditor-Benutzer erforderlich"
     },
     "fourEyes": {
