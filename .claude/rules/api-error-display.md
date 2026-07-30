@@ -95,7 +95,7 @@ onError: err => {
 Why this does not reopen the drift the rest of this file prevents:
 
 - It branches on **one** code that means "field detail follows", not on a list of domain codes — so it never needs editing when the BE adds a code.
-- `applyApiFieldErrors` (`src/lib/apiFieldErrors.ts`) returns `false` unless it attached at least one error to a field the form actually has, so the toast still fires for unmappable payloads. It cannot silently swallow an error.
+- `applyApiFieldErrors` (`src/lib/apiFieldErrors.ts`) returns `false` unless it attached at least one error to a field the form actually has, so the toast still fires for unmappable payloads. It cannot silently swallow an error. **That field-existence check is not defensive padding — RHF's `setError` is a silent no-op on an unregistered field name**, so without it an unmappable validation error would attach nowhere, suppress the toast, and leave the user with a rejected submit and no explanation. TypeScript enforces the same thing at the boundary: `UseFormSetError<T>` is typed to the form's own field names, which is why the helper is generic over the form type rather than taking a loose `(name: string) => void`.
 - The attached message is `common:validation.rejectedByServer`, never the BE's own English prose (§6 of `code-review.md`).
 
 Add `errors.VALIDATION_ERROR` to a feature's namespace as the fallback for when no field resolves.
