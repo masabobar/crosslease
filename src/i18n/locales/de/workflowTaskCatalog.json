@@ -118,18 +118,14 @@
       "status": "Status",
       "createdAt": "Erstellt am",
       "createdBy": "Erstellt von",
-      "activeVersion": "Aktive Version",
-      "publishedAt": "Veröffentlicht am",
-      "publishedBy": "Veröffentlicht von",
       "validFrom": "Gültig von",
       "validUntil": "Gültig bis",
-      "openEnded": "Unbefristet",
-      "notPublished": "—"
+      "openEnded": "Unbefristet"
     },
     "taskDefinitions": {
       "title": "Aufgabendefinitionen",
-      "captionReadOnly": "Nur lesbar. Aufgabendefinitionen können nur im Entwurfsstatus des Katalogs bearbeitet werden.",
-      "captionEditable": "Bearbeitbar, solange sich dieser Katalog im Entwurfsstatus befindet.",
+      "captionReadOnly": "Nur Lesezugriff. Aufgabendefinitionen können nur von einem Bank-Admin in einem aktiven Katalog bearbeitet werden.",
+      "captionEditable": "Änderungen gelten direkt für diesen aktiven Katalog und werden protokolliert.",
       "addButton": "Aufgabe hinzufügen",
       "columns": {
         "type": "Typ",
@@ -137,31 +133,34 @@
         "mandatory": "Pflicht",
         "role": "Rolle",
         "stage": "Phase",
-        "docRef": "Dokumentverweis"
+        "weight": "Gewichtung"
       },
       "yes": "Ja",
       "no": "Nein",
       "notApplicable": "-",
       "inheritedSuffix": "geerbt",
       "types": {
-        "global": "Global",
-        "override": "Override",
-        "deactivate": "Deaktivieren",
+        "defined": "Global",
+        "override": "Überschreibung",
+        "deactivated": "Deaktivieren",
         "supplement": "Ergänzung"
+      },
+      "emptyState": {
+        "title": "Noch keine Aufgabendefinitionen",
+        "descriptionEditable": "Fügen Sie die erste Aufgabe zu diesem Katalog hinzu.",
+        "descriptionReadOnly": "Ein Bank-Admin hat diesem Katalog noch keine Aufgaben hinzugefügt."
       }
     },
     "taskSheet": {
-      "viewTitle": "Aufgabendetails",
       "addTitle": "Aufgabe hinzufügen",
       "editTitle": "Aufgabe bearbeiten",
       "editButton": "Aufgabe bearbeiten",
       "cancelButton": "Abbrechen",
       "saveButton": "Änderungen speichern",
-      "addButton": "Aufgabe hinzufügen",
       "sections": {
         "taskIdentity": "Aufgabenidentität",
         "behaviorAndGating": "Verhalten und Gating",
-        "documentLinkage": "Dokumentverknüpfung"
+        "inheritedFromGlobalDefault": "Vom globalen Standard geerbt"
       },
       "fields": {
         "type": "Typ",
@@ -174,15 +173,11 @@
         "displayOrder": "Anzeigereihenfolge",
         "mandatory": "Pflicht",
         "stage": "Phase",
-        "processContext": "Prozesskontext",
         "active": "Aktiv",
-        "documentRequirementRef": "Dokumentanforderungsverweis",
-        "pinningBehavior": "Pinning-Verhalten",
-        "pinByVersion": "Nach Version fixieren",
-        "pinById": "Nach ID fixieren",
-        "parentTask": "Übergeordnete Aufgabe"
+        "parentTask": "Übergeordnete Aufgabe",
+        "conditionalTrigger": "Bedingter Auslöser",
+        "processContexts": "Zutreffende Prozesskontexte"
       },
-      "overrideInheritedNote": "Vom globalen Standard geerbt, hier nicht bearbeitbar. Um Zweck oder Namen dieser Aufgabe zu ändern, deaktivieren Sie diesen Override und erstellen Sie stattdessen eine Ergänzung.",
       "mandatoryOptions": {
         "yes": "Ja",
         "no": "Nein"
@@ -213,8 +208,28 @@
         "servicing": "Servicing",
         "redemption": "Ablöse"
       },
-      "documentRequirementPlaceholder": "Auswählen",
-      "parentTaskPlaceholder": "Auswählen"
+      "closeButton": "Schließen",
+      "removeButton": "Aufgabe entfernen",
+      "notSet": "Nicht gesetzt",
+      "treasuryThresholdTrigger": "Diese Aufgabe nur auslösen, wenn eine Finanzierung den Treasury-Schwellenwert überschreitet. Sie wird von einer Person bearbeitet — es wird nichts an Treasury gesendet.",
+      "inheritsFrom": "Erbt von „{{name}}“",
+      "created": "Aufgabe hinzugefügt.",
+      "updated": "Aufgabe aktualisiert.",
+      "removed": "Aufgabe entfernt.",
+      "processContexts": {
+        "rr_submission": "Einreichung Refinanzierungsantrag",
+        "request_approval_readiness": "Antragsfreigabe-Bereitschaft",
+        "financing_approval_readiness": "Finanzierungsfreigabe-Bereitschaft",
+        "disbursement_readiness": "Auszahlungsbereitschaft",
+        "stage_1_review": "Prüfung Stufe 1",
+        "stage_2_review": "Prüfung Stufe 2",
+        "conditions_follow_up": "Nachverfolgung der Bedingungen",
+        "servicing": "Betreuung",
+        "redemption": "Ablösung"
+      },
+      "noGlobalDefaultTasks": "Für diesen Entitätstyp existiert noch kein globaler Standardkatalog mit Aufgaben. Erstellen Sie zuerst einen — eine Überschreibung oder Deaktivierung benötigt eine globale Standardaufgabe als Ziel.",
+      "parentsUnavailable": "Globale Standardaufgaben konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
+      "allParentsClaimed": "Alle globalen Standardaufgaben werden von diesem Katalog bereits überschrieben oder deaktiviert. Jede kann pro Katalog nur einmal geändert werden."
     },
     "auditTrail": {
       "columns": {
@@ -223,10 +238,19 @@
         "action": "Aktion",
         "fieldDelta": "Feldänderung"
       },
-      "actorTypes": {
-        "human_user": "Mensch",
-        "system": "System",
-        "scheduled_job": "Geplanter Job"
+      "noDelta": "—",
+      "loadMore": "Mehr laden",
+      "emptyState": {
+        "title": "Noch keine Prüfereignisse",
+        "description": "Änderungen an diesem Katalog und seinen Aufgaben erscheinen hier."
+      },
+      "eventTypes": {
+        "wtc_catalog": {
+          "created": "Katalog erstellt",
+          "task_added": "Aufgabe hinzugefügt",
+          "task_updated": "Aufgabe aktualisiert",
+          "task_removed": "Aufgabe entfernt"
+        }
       }
     }
   },
@@ -237,6 +261,16 @@
     "WTC_CATALOG_DUPLICATE_SCOPE": "Für diese Ebene, diesen Entitätstyp und diese Produktvorlage existiert bereits ein aktiver Katalog.",
     "WTC_CATALOG_INVALID_VALID_FROM": "Gültig ab darf nicht in der Vergangenheit liegen.",
     "WTC_CATALOG_INVALID_VALID_UNTIL": "Gültig bis muss am oder nach Gültig ab liegen.",
-    "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "Die ausgewählte Produktvorlage hat keine aktive veröffentlichte Version."
+    "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "Die ausgewählte Produktvorlage hat keine aktive veröffentlichte Version.",
+    "WTC_TASK_NOT_FOUND": "Diese Aufgabe existiert nicht mehr. Laden Sie den Katalog neu.",
+    "WTC_TASK_LAYER_MISMATCH": "Dieser Änderungstyp ist auf der Ebene dieses Katalogs nicht zulässig.",
+    "WTC_TASK_CODE_CONFLICT": "Eine Aufgabe mit diesem Code existiert bereits in diesem Katalog.",
+    "WTC_TASK_CODE_GLOBAL_CONFLICT": "Dieser Aufgabencode kollidiert mit einer globalen Standardaufgabe für denselben Entitätstyp.",
+    "WTC_TASK_PARENT_NOT_FOUND": "Die ausgewählte globale Standardaufgabe wurde in diesem Bereich nicht gefunden.",
+    "WTC_TASK_PARENT_CONFLICT": "Dieser Katalog überschreibt oder deaktiviert diese globale Standardaufgabe bereits.",
+    "WTC_TASK_MANDATORY_FIELD_NULL": "Ein Pflichtfeld dieser Aufgabe kann nicht geleert werden.",
+    "WTC_TASK_HAS_DEPENDENTS": "Diese globale Standardaufgabe kann nicht entfernt werden, solange produktspezifische Kataloge sie überschreiben oder deaktivieren.",
+    "WTC_DOC_REQUIREMENT_REF_INVALID": "Die referenzierte Dokumentenanforderung ist in diesem Mandanten nicht aktiv.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

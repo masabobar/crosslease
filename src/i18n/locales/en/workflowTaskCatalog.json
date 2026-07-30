@@ -118,18 +118,14 @@
       "status": "Status",
       "createdAt": "Created at",
       "createdBy": "Created by",
-      "activeVersion": "Active version",
-      "publishedAt": "Published at",
-      "publishedBy": "Published by",
       "validFrom": "Valid from",
       "validUntil": "Valid until",
-      "openEnded": "Open ended",
-      "notPublished": "—"
+      "openEnded": "Open ended"
     },
     "taskDefinitions": {
       "title": "Task definitions",
-      "captionReadOnly": "Read only. Task definitions can only be edited when the catalog is in draft state.",
-      "captionEditable": "Editable while this catalog is in draft state.",
+      "captionReadOnly": "Read only. Task definitions can only be edited by a Bank Admin on an active catalog.",
+      "captionEditable": "Edits apply directly to this active catalog and are audit-logged.",
       "addButton": "Add task",
       "columns": {
         "type": "Type",
@@ -137,31 +133,34 @@
         "mandatory": "Mandatory",
         "role": "Role",
         "stage": "Stage",
-        "docRef": "Doc ref"
+        "weight": "Weight"
       },
       "yes": "Yes",
       "no": "No",
       "notApplicable": "-",
       "inheritedSuffix": "inherited",
       "types": {
-        "global": "Global",
+        "defined": "Global",
         "override": "Override",
-        "deactivate": "Deactivate",
+        "deactivated": "Deactivate",
         "supplement": "Supplement"
+      },
+      "emptyState": {
+        "title": "No task definitions yet",
+        "descriptionEditable": "Add the first task to this catalog.",
+        "descriptionReadOnly": "A Bank Admin has not added any tasks to this catalog yet."
       }
     },
     "taskSheet": {
-      "viewTitle": "Task details",
       "addTitle": "Add task",
       "editTitle": "Edit task",
       "editButton": "Edit task",
       "cancelButton": "Cancel",
       "saveButton": "Save changes",
-      "addButton": "Add task",
       "sections": {
         "taskIdentity": "Task identity",
         "behaviorAndGating": "Behavior and gating",
-        "documentLinkage": "Document linkage"
+        "inheritedFromGlobalDefault": "Inherited from global default"
       },
       "fields": {
         "type": "Type",
@@ -174,15 +173,11 @@
         "displayOrder": "Display order",
         "mandatory": "Mandatory",
         "stage": "Stage",
-        "processContext": "Process context",
         "active": "Active",
-        "documentRequirementRef": "Document requirement ref",
-        "pinningBehavior": "Pinning behavior",
-        "pinByVersion": "Pin by version",
-        "pinById": "Pin by ID",
-        "parentTask": "Parent task"
+        "parentTask": "Parent task",
+        "conditionalTrigger": "Conditional trigger",
+        "processContexts": "Applicable process contexts"
       },
-      "overrideInheritedNote": "Inherited from global default, not editable here. To rename or change this task's purpose, deactivate this override and create a supplement instead.",
       "mandatoryOptions": {
         "yes": "Yes",
         "no": "No"
@@ -213,8 +208,28 @@
         "servicing": "Servicing",
         "redemption": "Redemption"
       },
-      "documentRequirementPlaceholder": "Select",
-      "parentTaskPlaceholder": "Select"
+      "closeButton": "Close",
+      "removeButton": "Remove task",
+      "notSet": "Not set",
+      "treasuryThresholdTrigger": "Only raise this task when a financing exceeds the treasury threshold. It is worked by a person — nothing is sent to Treasury.",
+      "inheritsFrom": "Inherits from “{{name}}”",
+      "created": "Task added.",
+      "updated": "Task updated.",
+      "removed": "Task removed.",
+      "processContexts": {
+        "rr_submission": "Refinancing request submission",
+        "request_approval_readiness": "Request approval readiness",
+        "financing_approval_readiness": "Financing approval readiness",
+        "disbursement_readiness": "Disbursement readiness",
+        "stage_1_review": "Stage 1 review",
+        "stage_2_review": "Stage 2 review",
+        "conditions_follow_up": "Conditions follow-up",
+        "servicing": "Servicing",
+        "redemption": "Redemption"
+      },
+      "noGlobalDefaultTasks": "No global default catalog with tasks exists for this entity type yet. Create one first — an override or deactivate entry needs a global default task to point at.",
+      "parentsUnavailable": "Global default tasks could not be loaded. Close this and try again.",
+      "allParentsClaimed": "Every global default task is already overridden or deactivated by this catalog. Each one can only be changed once per catalog."
     },
     "auditTrail": {
       "columns": {
@@ -223,10 +238,19 @@
         "action": "Action",
         "fieldDelta": "Field delta"
       },
-      "actorTypes": {
-        "human_user": "Human user",
-        "system": "System",
-        "scheduled_job": "Scheduled job"
+      "noDelta": "—",
+      "loadMore": "Load more",
+      "emptyState": {
+        "title": "No audit events yet",
+        "description": "Changes to this catalog and its tasks will appear here."
+      },
+      "eventTypes": {
+        "wtc_catalog": {
+          "created": "Catalog created",
+          "task_added": "Task added",
+          "task_updated": "Task updated",
+          "task_removed": "Task removed"
+        }
       }
     }
   },
@@ -237,6 +261,16 @@
     "WTC_CATALOG_DUPLICATE_SCOPE": "An active catalog already exists for this layer, entity type and product template.",
     "WTC_CATALOG_INVALID_VALID_FROM": "Valid from cannot be in the past.",
     "WTC_CATALOG_INVALID_VALID_UNTIL": "Valid until must be on or after valid from.",
-    "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "The selected product template has no active published version."
+    "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "The selected product template has no active published version.",
+    "WTC_TASK_NOT_FOUND": "This task no longer exists. Reload the catalog and try again.",
+    "WTC_TASK_LAYER_MISMATCH": "That change type is not allowed on this catalog's layer.",
+    "WTC_TASK_CODE_CONFLICT": "A task with this code already exists in this catalog.",
+    "WTC_TASK_CODE_GLOBAL_CONFLICT": "This task code collides with a global default task for the same entity type.",
+    "WTC_TASK_PARENT_NOT_FOUND": "The selected global default task could not be found in this scope.",
+    "WTC_TASK_PARENT_CONFLICT": "This catalog already overrides or deactivates that global default task.",
+    "WTC_TASK_MANDATORY_FIELD_NULL": "A required field cannot be cleared on this task.",
+    "WTC_TASK_HAS_DEPENDENTS": "This global default task cannot be removed while product-specific catalogs still override or deactivate it.",
+    "WTC_DOC_REQUIREMENT_REF_INVALID": "The referenced document requirement is not active in this tenant.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }
