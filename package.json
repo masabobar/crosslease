@@ -18,7 +18,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "generate:api": "openapi-zod-client openapi.json -o src/generated/api.ts",
-    "fetch:openapi": "curl -sf https://api.refinext-dev.projects.holycode.com/api/openapi.json -o openapi.json && pnpm generate:api"
+    "fetch:openapi": "curl -sf https://api.refinext-dev.projects.holycode.com/api/openapi.json -o openapi.json && prettier --write openapi.json && pnpm generate:api"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
