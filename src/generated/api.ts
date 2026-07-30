@@ -6502,6 +6502,11 @@ Requires &#x60;system_admin&#x60; role.`,
         schema: z.array(UboCompletenessStatus).optional().default([]),
       },
       {
+        name: "lc_eligible",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
         name: "limit",
         type: "Query",
         schema: z.number().int().gte(1).lte(100).optional().default(20),
