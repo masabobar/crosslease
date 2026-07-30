@@ -345,6 +345,13 @@ function UserDetailContent({ user }: { user: UserDetail }) {
     submitIdentityChanges(values, null)
   }
 
+  function reasonMessage(outcome: PromiseSettledResult<unknown>): string {
+    const reason = outcome.status === "rejected" ? outcome.reason : null
+    return reason instanceof ApiError
+      ? t(`errors.${reason.code}`, { defaultValue: t("errors.generic") })
+      : t("errors.generic")
+  }
+
   function submitIdentityChanges(
     values: IdentityFormValues,
     newEmail: string | null
@@ -380,10 +387,48 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         })
       : Promise.resolve(null)
 
-    void Promise.all([editPromise, emailPromise])
-      .then(() => {
+    // allSettled, not all: the two calls hit different endpoints, so one can
+    // persist while the other rejects. Promise.all discarded that distinction and
+    // reported a bare error even though the profile change had already been saved.
+    void Promise.allSettled([editPromise, emailPromise]).then(
+      ([editOutcome, emailOutcome]) => {
+        const editFailed =
+          (hasNameChanges || hasPhoneChange) &&
+          editOutcome.status === "rejected"
+        const emailFailed = !!newEmail && emailOutcome.status === "rejected"
+
+        if (editFailed && emailFailed) {
+          // Nothing persisted — keep the form open so the user can retry.
+          toast.error(reasonMessage(editOutcome))
+          return
+        }
+
         setIsEditingIdentity(false)
         setShowEmailConfirm(false)
+
+        if (editFailed) {
+          showToast({
+            variant: "warning",
+            title: t("detail.page.editIdentity.partial.emailOnly.title"),
+            message: t("detail.page.editIdentity.partial.emailOnly.message", {
+              newEmail,
+              reason: reasonMessage(editOutcome),
+            }),
+          })
+          return
+        }
+
+        if (emailFailed) {
+          showToast({
+            variant: "warning",
+            title: t("detail.page.editIdentity.partial.profileOnly.title"),
+            message: t("detail.page.editIdentity.partial.profileOnly.message", {
+              reason: reasonMessage(emailOutcome),
+            }),
+          })
+          return
+        }
+
         if (newEmail) {
           showToast({
             variant: "success",
@@ -400,14 +445,8 @@ function UserDetailContent({ user }: { user: UserDetail }) {
             message: t("detail.page.editIdentity.success.message"),
           })
         }
-      })
-      .catch((err: unknown) => {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
-      })
+      }
+    )
   }
 
   const isSaving = editUserMutation.isPending || changeEmailMutation.isPending

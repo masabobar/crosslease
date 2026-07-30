@@ -373,6 +373,16 @@
           "title": "Verifizierungs-E-Mail gesendet",
           "message": "Verifizierungs-E-Mail an {{newEmail}} gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer auf den Verifizierungslink klickt. Die vorherige Adresse {{oldEmail}} bleibt bis zur Verifizierung als Wiederherstellungsanker aktiv."
         },
+        "partial": {
+          "profileOnly": {
+            "title": "Profil gespeichert, E-Mail-Änderung fehlgeschlagen",
+            "message": "Die Namens- und Telefonänderungen wurden gespeichert. Die E-Mail-Änderung war nicht erfolgreich: {{reason}}. Öffnen Sie den Editor erneut, um die E-Mail-Änderung noch einmal zu versuchen."
+          },
+          "emailOnly": {
+            "title": "Bestätigungs-E-Mail gesendet, Profil nicht gespeichert",
+            "message": "Eine Bestätigungs-E-Mail wurde an {{newEmail}} gesendet. Die Namens- und Telefonänderungen wurden nicht gespeichert: {{reason}}. Öffnen Sie den Editor erneut, um es noch einmal zu versuchen."
+          }
+        },
         "emailResendSuccess": {
           "title": "Verifizierungs-E-Mail erneut gesendet",
           "message": "Verifizierungs-E-Mail erneut an {{newEmail}} gesendet. Die E-Mail wird erst aktualisiert, wenn der Benutzer auf den Verifizierungslink klickt. Die vorherige Adresse {{oldEmail}} bleibt bis zur Verifizierung als Wiederherstellungsanker aktiv."
@@ -482,18 +492,5 @@
     "hoursAgo": "Vor {{count}} Std.",
     "yesterday": "Gestern",
     "daysAgo": "Vor {{count}} Tagen"
-  },
-  "export": {
-    "successTitle": "Export bereit",
-    "successMessage": "Ihre Datei wurde heruntergeladen.",
-    "errorTitle": "Export fehlgeschlagen",
-    "errorMessage": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-    "expiredTitle": "Export abgelaufen",
-    "expiredMessage": "Der Export ist abgelaufen. Bitte versuchen Sie es erneut.",
-    "timeoutTitle": "Export-Zeitüberschreitung",
-    "timeoutMessage": "Der Export dauert länger als erwartet. Bitte versuchen Sie es erneut."
-  },
-  "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

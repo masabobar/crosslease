@@ -131,24 +131,40 @@ export default function FrameworkAgreementDetailPage() {
                 {t("detail.actions.edit")}
               </Button>
             )}
-          {data.status === FALifecycleStatusSchema.enum.draft && (
-            <Button
-              variant="outline"
-              data-testid="activate-fa-button"
-              onClick={() => setActivateDialogOpen(true)}
-            >
-              {t("detail.actions.activate")}
-            </Button>
-          )}
-          {data.status === FALifecycleStatusSchema.enum.active && (
-            <>
+          {data.status === FALifecycleStatusSchema.enum.draft &&
+            canManageFrameworkAgreement && (
               <Button
                 variant="outline"
-                data-testid="suspend-fa-button"
-                onClick={() => setSuspendDialogOpen(true)}
+                data-testid="activate-fa-button"
+                onClick={() => setActivateDialogOpen(true)}
               >
-                {t("detail.actions.suspend")}
+                {t("detail.actions.activate")}
               </Button>
+            )}
+          {data.status === FALifecycleStatusSchema.enum.active &&
+            canManageFrameworkAgreement && (
+              <>
+                <Button
+                  variant="outline"
+                  data-testid="suspend-fa-button"
+                  onClick={() => setSuspendDialogOpen(true)}
+                >
+                  {t("detail.actions.suspend")}
+                </Button>
+                <Button
+                  variant="outline"
+                  data-testid="terminate-fa-button"
+                  onClick={() => setTerminateDialogOpen(true)}
+                >
+                  {t("detail.actions.terminate")}
+                </Button>
+              </>
+            )}
+          {/* Reactivation is hidden from the UI per PRD1042-1495 (B5) — MVP lifecycle
+              is CRUD + Suspend/Terminate only. ReactivateFrameworkAgreementDialog and
+              its hook are retained, unused, for when this is re-enabled. */}
+          {data.status === FALifecycleStatusSchema.enum.suspended &&
+            canManageFrameworkAgreement && (
               <Button
                 variant="outline"
                 data-testid="terminate-fa-button"
@@ -156,20 +172,7 @@ export default function FrameworkAgreementDetailPage() {
               >
                 {t("detail.actions.terminate")}
               </Button>
-            </>
-          )}
-          {/* Reactivation is hidden from the UI per PRD1042-1495 (B5) — MVP lifecycle
-              is CRUD + Suspend/Terminate only. ReactivateFrameworkAgreementDialog and
-              its hook are retained, unused, for when this is re-enabled. */}
-          {data.status === FALifecycleStatusSchema.enum.suspended && (
-            <Button
-              variant="outline"
-              data-testid="terminate-fa-button"
-              onClick={() => setTerminateDialogOpen(true)}
-            >
-              {t("detail.actions.terminate")}
-            </Button>
-          )}
+            )}
         </div>
       </div>
 
