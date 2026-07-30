@@ -3,11 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { File } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Skeleton } from "@/components/ui/skeleton"
 import { SelectField } from "@/components/ui/select"
 import {
   Sheet,
@@ -20,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
+import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import { useAddCatalogTask } from "@/features/workflowTaskCatalog/hooks/useAddCatalogTask"
 import { useUpdateCatalogTask } from "@/features/workflowTaskCatalog/hooks/useUpdateCatalogTask"
 import { useRemoveCatalogTask } from "@/features/workflowTaskCatalog/hooks/useRemoveCatalogTask"
@@ -32,6 +35,7 @@ import {
 import {
   CatalogLayerSchema,
   ConditionalTriggerSchema,
+  DocRequirementPinModeSchema,
   LayerActionSchema,
   TaskProcessContextSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -51,6 +55,19 @@ type SheetMode = "view" | "edit" | "add"
 const PARENT_BACKED_ACTIONS: readonly LayerAction[] = [
   LayerActionSchema.enum.override,
   LayerActionSchema.enum.deactivated,
+]
+
+// US 15.7. Document linkage is authorable on three of the four change types — including override,
+// which may set its own linkage even though it inherits everything else. Note this is the OPPOSITE
+// of conditional_trigger, which override inherits and must not author
+// (`task_service._OVERRIDE_FORBIDDEN_ON_UPDATE`). Deactivate takes the parent and nothing else.
+// Wire values, taken from the schema rather than hand-listed.
+const PIN_MODE_OPTIONS = DocRequirementPinModeSchema.options
+
+const DOC_LINKABLE_ACTIONS: readonly LayerAction[] = [
+  LayerActionSchema.enum.defined,
+  LayerActionSchema.enum.supplement,
+  LayerActionSchema.enum.override,
 ]
 
 // Mirrors AddTaskRequest.validate_action_constraints: a defined/supplement task must carry all
@@ -82,8 +99,21 @@ const taskFormSchema = z
     applicable_process_contexts: z.array(TaskProcessContextSchema),
     is_active: z.boolean(),
     treasury_threshold_trigger: z.boolean(),
+    doc_requirement_ref: z.string(),
+    doc_requirement_pin_mode: z.string(),
   })
   .superRefine((data, ctx) => {
+    // US 15.7 field spec: Ref is optional (O), Pinning Behavior is conditional (C) — "mandatory
+    // when a Ref is present". The BE enforces the same symmetry: (ref is None) != (pin is None)
+    // is rejected. No default pin mode is chosen here because OQ-03 leaves it to tenant policy.
+    if (data.doc_requirement_ref && !data.doc_requirement_pin_mode) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["doc_requirement_pin_mode"],
+        message: "required",
+      })
+    }
+
     // Override and deactivate carry nothing but their parent — the values are inherited.
     if (PARENT_BACKED_ACTIONS.includes(data.layer_action)) {
       if (!data.parent_task_id) {
@@ -137,6 +167,8 @@ function toFormValues(
     applicable_process_contexts: task?.applicable_process_contexts ?? [],
     is_active: task?.is_active ?? true,
     treasury_threshold_trigger: Boolean(task && task.conditional_trigger),
+    doc_requirement_ref: task?.doc_requirement_ref ?? "",
+    doc_requirement_pin_mode: task?.doc_requirement_pin_mode ?? "",
   }
 }
 
@@ -156,6 +188,14 @@ function toWirePayload(
   const orUndefined = (value: string): string | undefined =>
     value === "" ? undefined : value
   const weight = values.weight === "" ? undefined : Number(values.weight)
+  // US 15.7: the pair travels together or not at all — the BE rejects one without the other.
+  const docLinkage = values.doc_requirement_ref
+    ? {
+        doc_requirement_ref: values.doc_requirement_ref,
+        doc_requirement_pin_mode:
+          values.doc_requirement_pin_mode as AddTaskRequest["doc_requirement_pin_mode"],
+      }
+    : {}
 
   // Deactivate: parent only. Every content field is forbidden.
   if (values.layer_action === LayerActionSchema.enum.deactivated) {
@@ -182,6 +222,7 @@ function toWirePayload(
         values.stage_categorization
       ) as AddTaskRequest["stage_categorization"],
       is_active: values.is_active,
+      ...docLinkage,
     }
   }
 
@@ -205,6 +246,7 @@ function toWirePayload(
     conditional_trigger: values.treasury_threshold_trigger
       ? ConditionalTriggerSchema.enum.financing_amount_over_threshold
       : undefined,
+    ...docLinkage,
   }
 }
 
@@ -224,6 +266,8 @@ type Props = {
   versionId: string
   catalogLayer: CatalogLayer
   entityType: CatalogEntityType | null
+  // US 15.7 — document requirements are tenant-scoped, matching the BE's validation scope.
+  tenantId: string
   // Used to hide Global Default parents this catalogue already overrides or deactivates — the
   // BE allows one product-specific entry per parent per version and rejects a second with
   // WTC_TASK_PARENT_CONFLICT.
@@ -240,6 +284,7 @@ function TaskDefinitionSheet({
   versionId,
   catalogLayer,
   entityType,
+  tenantId,
   existingTasks,
   canEdit,
   onOpenChange,
@@ -256,14 +301,23 @@ function TaskDefinitionSheet({
   const addTask = useAddCatalogTask()
   const updateTask = useUpdateCatalogTask()
   const removeTask = useRemoveCatalogTask()
-  const { data: globalDefaultTasks, isError: isParentLoadError } =
-    useGlobalDefaultTasks(isGlobalDefaultLayer ? null : entityType)
+  const {
+    data: globalDefaultTasks,
+    isError: isParentLoadError,
+    isPending: isParentLoading,
+  } = useGlobalDefaultTasks(isGlobalDefaultLayer ? null : entityType)
+  const {
+    data: documentRequirements,
+    isError: isDocRequirementsError,
+    isPending: isDocRequirementsLoading,
+  } = useTenantDocumentRequirements(tenantId)
 
   const {
     control,
     register,
     handleSubmit,
     setError,
+    setValue,
     getValues,
     formState: { errors },
   } = useForm<TaskFormValues>({
@@ -279,7 +333,9 @@ function TaskDefinitionSheet({
   // values on every call in a way the React Compiler cannot memoize safely.
   const selectedAction = useWatch({ control, name: "layer_action" })
   const selectedParentId = useWatch({ control, name: "parent_task_id" })
+  const watchedDocRef = useWatch({ control, name: "doc_requirement_ref" })
   const isParentBacked = PARENT_BACKED_ACTIONS.includes(selectedAction)
+  const isDocLinkable = DOC_LINKABLE_ACTIONS.includes(selectedAction)
   const isPending =
     addTask.isPending || updateTask.isPending || removeTask.isPending
   const isEdit = mode === "edit"
@@ -292,6 +348,17 @@ function TaskDefinitionSheet({
       .filter(other => other.parent_task_id && other.id !== task?.id)
       .map(other => other.parent_task_id as string)
   )
+  // "DOC-001, Signed lease agreement" mirrors the parent picker's "CODE, Name" label.
+  const documentRequirementOptions = (documentRequirements ?? []).map(
+    requirement => ({
+      value: requirement.id,
+      label: `${requirement.requirement_code}, ${requirement.document_type_name}`,
+    })
+  )
+  const linkedRequirement = (documentRequirements ?? []).find(
+    requirement => requirement.id === task?.doc_requirement_ref
+  )
+
   const parentOptions = (globalDefaultTasks ?? [])
     .filter(candidate => !claimedParentIds.has(candidate.id))
     .map(candidate => ({
@@ -439,6 +506,36 @@ function TaskDefinitionSheet({
               )}
             </div>
 
+            {/* US 15.7. The design shows the code in primary blue — i.e. as a link to the
+                Document Requirement Catalog — but Epic 16 has no screen to navigate to, so it
+                renders as plain text. Restore the link, don't restyle it, once E16 ships a route. */}
+            {task.doc_requirement_ref && (
+              <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                  {t("detail.taskSheet.sections.documentLinkage")}
+                </p>
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-1 text-foreground">
+                    <File size={16} className="text-muted-foreground" />
+                    {linkedRequirement?.requirement_code ??
+                      task.doc_requirement_ref}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {task.doc_requirement_pin_mode
+                      ? t(
+                          `detail.taskSheet.pinModes.${task.doc_requirement_pin_mode}` as "detail.taskSheet.pinModes.pin_by_id"
+                        )
+                      : notApplicable}
+                  </span>
+                </div>
+                {linkedRequirement && (
+                  <p className="text-xs text-muted-foreground">
+                    {linkedRequirement.document_type_name}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* US 15.23: an override row must show the Global Default values it replaces. */}
             {task.inherited && (
               <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
@@ -556,7 +653,9 @@ function TaskDefinitionSheet({
                 >
                   {t("detail.taskSheet.fields.parentTask")}
                 </Label>
-                {parentOptions.length === 0 ? (
+                {isParentLoading && !isParentLoadError ? (
+                  <Skeleton className="h-9 w-full" />
+                ) : parentOptions.length === 0 ? (
                   // Three distinct dead ends that must not share one message: the parent list
                   // failed to load, or no Global Default catalogue exists for this entity type
                   // at all, or one does and every task in it is already overridden/deactivated
@@ -891,6 +990,101 @@ function TaskDefinitionSheet({
                   </>
                 )}
               </>
+            )}
+
+            {/* US 15.7 — authorable on defined / supplement / override, never on deactivate. */}
+            {isDocLinkable && (
+              <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                  {t("detail.taskSheet.sections.documentLinkage")}
+                </p>
+
+                {isDocRequirementsError ? (
+                  <p
+                    data-testid="task-sheet-doc-requirements-error"
+                    className="text-sm text-destructive"
+                  >
+                    {t("detail.taskSheet.documentRequirementsUnavailable")}
+                  </p>
+                ) : isDocRequirementsLoading ? (
+                  <Skeleton className="h-9 w-full" />
+                ) : documentRequirementOptions.length === 0 ? (
+                  <p
+                    data-testid="task-sheet-no-doc-requirements"
+                    className="text-sm text-muted-foreground"
+                  >
+                    {t("detail.taskSheet.noDocumentRequirements")}
+                  </p>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="mb-2" htmlFor="task-sheet-doc-ref">
+                        {t("detail.taskSheet.fields.documentRequirement")}
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="doc_requirement_ref"
+                        render={({ field }) => (
+                          <SelectField
+                            id="task-sheet-doc-ref"
+                            data-testid="task-sheet-doc-ref-select"
+                            value={field.value}
+                            // Clearing the ref clears the pin mode with it — the BE rejects a
+                            // pin mode without a ref just as it rejects the reverse.
+                            onValueChange={value => {
+                              field.onChange(value)
+                              if (!value)
+                                setValue("doc_requirement_pin_mode", "")
+                            }}
+                            options={documentRequirementOptions}
+                            placeholder={t(
+                              "detail.taskSheet.documentRequirementNone"
+                            )}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <div>
+                      <Label
+                        className="mb-2"
+                        error={!!errors.doc_requirement_pin_mode}
+                        htmlFor="task-sheet-pin-mode"
+                      >
+                        {t("detail.taskSheet.fields.pinningBehavior")}
+                      </Label>
+                      <Controller
+                        control={control}
+                        name="doc_requirement_pin_mode"
+                        render={({ field }) => (
+                          <SelectField
+                            id="task-sheet-pin-mode"
+                            data-testid="task-sheet-pin-mode-select"
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            options={PIN_MODE_OPTIONS.map(option => ({
+                              value: option,
+                              label: t(
+                                `detail.taskSheet.pinModes.${option}` as "detail.taskSheet.pinModes.pin_by_id"
+                              ),
+                            }))}
+                            placeholder={t(
+                              "detail.taskSheet.fields.pinningBehavior"
+                            )}
+                            error={!!errors.doc_requirement_pin_mode}
+                            // Mandatory only once a ref is chosen (field spec: C), so it stays
+                            // inert until there is something to pin.
+                            disabled={!watchedDocRef}
+                          />
+                        )}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("detail.taskSheet.pinningBehaviorHint")}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
             <label className="flex items-center gap-2 cursor-pointer">

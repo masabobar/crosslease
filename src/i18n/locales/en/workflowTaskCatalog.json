@@ -133,7 +133,8 @@
         "mandatory": "Mandatory",
         "role": "Role",
         "stage": "Stage",
-        "weight": "Weight"
+        "weight": "Weight",
+        "docRef": "Doc ref"
       },
       "yes": "Yes",
       "no": "No",
@@ -160,7 +161,8 @@
       "sections": {
         "taskIdentity": "Task identity",
         "behaviorAndGating": "Behavior and gating",
-        "inheritedFromGlobalDefault": "Inherited from global default"
+        "inheritedFromGlobalDefault": "Inherited from global default",
+        "documentLinkage": "Document linkage"
       },
       "fields": {
         "type": "Type",
@@ -176,7 +178,9 @@
         "active": "Active",
         "parentTask": "Parent task",
         "conditionalTrigger": "Conditional trigger",
-        "processContexts": "Applicable process contexts"
+        "processContexts": "Applicable process contexts",
+        "documentRequirement": "Document requirement",
+        "pinningBehavior": "Pinning behavior"
       },
       "mandatoryOptions": {
         "yes": "Yes",
@@ -229,7 +233,15 @@
       },
       "noGlobalDefaultTasks": "No global default catalog with tasks exists for this entity type yet. Create one first — an override or deactivate entry needs a global default task to point at.",
       "parentsUnavailable": "Global default tasks could not be loaded. Close this and try again.",
-      "allParentsClaimed": "Every global default task is already overridden or deactivated by this catalog. Each one can only be changed once per catalog."
+      "allParentsClaimed": "Every global default task is already overridden or deactivated by this catalog. Each one can only be changed once per catalog.",
+      "pinModes": {
+        "pin_by_version": "Pin by version",
+        "pin_by_id": "Pin by ID"
+      },
+      "documentRequirementNone": "No document requirement",
+      "pinningBehaviorHint": "Pin by version keeps this task on the requirement version you pick. Pin by ID follows the requirement's active version automatically.",
+      "noDocumentRequirements": "No active document requirements exist for this tenant yet.",
+      "documentRequirementsUnavailable": "Document requirements could not be loaded. Close this and try again."
     },
     "auditTrail": {
       "columns": {

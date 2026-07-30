@@ -133,7 +133,8 @@
         "mandatory": "Pflicht",
         "role": "Rolle",
         "stage": "Phase",
-        "weight": "Gewichtung"
+        "weight": "Gewichtung",
+        "docRef": "Dok.-Ref."
       },
       "yes": "Ja",
       "no": "Nein",
@@ -160,7 +161,8 @@
       "sections": {
         "taskIdentity": "Aufgabenidentität",
         "behaviorAndGating": "Verhalten und Gating",
-        "inheritedFromGlobalDefault": "Vom globalen Standard geerbt"
+        "inheritedFromGlobalDefault": "Vom globalen Standard geerbt",
+        "documentLinkage": "Dokumentverknüpfung"
       },
       "fields": {
         "type": "Typ",
@@ -176,7 +178,9 @@
         "active": "Aktiv",
         "parentTask": "Übergeordnete Aufgabe",
         "conditionalTrigger": "Bedingter Auslöser",
-        "processContexts": "Zutreffende Prozesskontexte"
+        "processContexts": "Zutreffende Prozesskontexte",
+        "documentRequirement": "Dokumentanforderung",
+        "pinningBehavior": "Pinning-Verhalten"
       },
       "mandatoryOptions": {
         "yes": "Ja",
@@ -229,7 +233,15 @@
       },
       "noGlobalDefaultTasks": "Für diesen Entitätstyp existiert noch kein globaler Standardkatalog mit Aufgaben. Erstellen Sie zuerst einen — eine Überschreibung oder Deaktivierung benötigt eine globale Standardaufgabe als Ziel.",
       "parentsUnavailable": "Globale Standardaufgaben konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
-      "allParentsClaimed": "Alle globalen Standardaufgaben werden von diesem Katalog bereits überschrieben oder deaktiviert. Jede kann pro Katalog nur einmal geändert werden."
+      "allParentsClaimed": "Alle globalen Standardaufgaben werden von diesem Katalog bereits überschrieben oder deaktiviert. Jede kann pro Katalog nur einmal geändert werden.",
+      "pinModes": {
+        "pin_by_version": "Nach Version fixieren",
+        "pin_by_id": "Nach ID fixieren"
+      },
+      "documentRequirementNone": "Keine Dokumentanforderung",
+      "pinningBehaviorHint": "„Nach Version fixieren“ hält diese Aufgabe an der gewählten Anforderungsversion. „Nach ID fixieren“ folgt automatisch der aktiven Version der Anforderung.",
+      "noDocumentRequirements": "Für diesen Mandanten existieren noch keine aktiven Dokumentanforderungen.",
+      "documentRequirementsUnavailable": "Dokumentanforderungen konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut."
     },
     "auditTrail": {
       "columns": {
