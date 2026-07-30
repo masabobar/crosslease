@@ -1,299 +1,194 @@
 ---
 name: execute-work
-description: Execute a phase, epic, or story with automatic planning, implementation, testing, and progress tracking
+description: Implement one Jira unit (FE sub-task, story, or bug) end to end — plan mode, gated implementation, commit, journal entry
 ---
 
-# Execute Work Command
+# Execute Work
 
-**📖 Quick Start:** See [how-to-use/execute-work.md](./how-to-use/execute-work.md) for quick guide (~150 lines)
+Implement a single unit of work end to end: **resolve → plan → implement → gate → commit → journal.**
 
-Execute implementation of a phase, epic, or individual story with full automation.
+**Scope lives in Jira (PRD1042).** There is no local backlog and no phase files — `.project-management/`
+holds only `input/open-questions.md`, `output/progress/DASHBOARD.md`, and `rules/`. Pull requirement text
+with `/jira-sync`.
 
 ---
 
 ## Usage
 
 ```bash
-/execute-work phase N          # Execute entire Phase N
-/execute-work epic EPIC-X      # Execute Epic X
-/execute-work story US-XXX     # Execute single story US-XXX
-/execute-work bug BUG-XXX      # Execute bug fix for BUG-XXX
+/execute-work PRD1042-1556      # FE sub-task — the usual unit
+/execute-work PRD1042-1158      # Story — resolves to its `FE ` sub-task
+/execute-work PRD1042-1651      # Bug — takes the bug-fix branch at STEP 3
 ```
 
-**Optional:** pass mode preferences inline to skip the prompt (positional digits OR named flags; see STEP 0 for the full mapping):
-
-```bash
-/execute-work story US-MOB-023 1 2                              # Continuous + Complete
-/execute-work phase 1 --mode=continuous --tracking=phase-only   # named flags
-/execute-work epic EPIC-3 2                                     # Paused; will ask for tracking
-```
+Runs **in-line** and pauses once, for plan approval. There are no mode flags: one execution path, one
+progress artifact. To run several units, invoke once per unit and `/clear` between them — a fresh
+invocation is the context reset.
 
 ---
 
-## 📋 YOUR TASK — MANDATORY WORKFLOW
+## 🔧 CRITICAL RULES
 
-**🔧 CRITICAL RULES** — read before any implementation. Grouped by stage; conditional rules in italics:
+Read before implementing. The canonical index with triggers is `.claude/rules/README.md`; this is the
+per-stage subset.
 
-**Always (every story / bug):**
+**Always:**
 
+- `CLAUDE.md` — core standards, code conventions, the MUST NOT DO list
 - `.claude/rules/code-quality.md` — SOLID & DRY (mandatory)
-- `.claude/rules/testing.md` — Testing requirements, API status matrix (200/400/401/403/404/500), coverage targets
-- `.claude/rules/git.md` — Commit format (NO AI credits), conventional commits
-- `.claude/rules/stack-specific.md` — Middleware, response envelope, Zod env schema, performance patterns
-- `.claude/rules/documentation-templates.md` — Templates for user stories, tasks, bugs, endpoint docs
-- `CLAUDE.md` — Core standards and workflow
+- `.claude/rules/testing.md` — unit tests only; E2E is QA's; no coverage threshold
+- `.claude/rules/stack-specific.md` — React 19 + Vite patterns (no loaders, no manual memoization)
+- `.claude/rules/api-error-display.md` — every mutation has `onError`, every foreground query an `isError` branch (**fix-on-encounter**)
+- `.claude/rules/error-handling-and-logging.md` — `ApiError.code`, never swallow, no `console.*` / PII
+- `.claude/rules/code-review.md` — the gate STEP 4 runs
+- `.claude/rules/browser-verification.md` — exercise the change in a real browser before handoff
+- `.claude/rules/git.md` — conventional commits, Jira ticket, **NO AI credits**
 
-**For any handler / service / API change** (HTTP endpoint touched):
+**Frontend story (any new screen or component):**
 
-- `.claude/rules/error-handling-and-logging.md` — Canonical envelope (`detail.code`), `ApiError.code` handling, never-swallow, no `console.*` / PII / tokens
-- `.claude/rules/security-and-auth.md` — Token handling via auth store + `@/lib/api` interceptor only, RBAC wire values, XSS hygiene, `VITE_` env safety
+- `.claude/rules/api-first.md` — Phase A contract verification before any code; gaps block
+- `.claude/rules/design-first.md` — Figma URL required per screen (Phase A) and per new `.tsx` (Phase B)
+- `.claude/rules/screen-driven-backlog.md` — one screen per unit; wizard is the one exception
 
-**For enum / wire-format change:**
+**Conditional:**
 
-- `.claude/rules/enums-and-constants.md` — wire format across layers; one source of truth per enum (values themselves change in `../refinext-api/`)
-
-**For frontend (web/mobile) stories:**
-
-- `.claude/rules/api-first.md` — Phase A contract verification before any frontend code; gaps block & file backend work
-- `.claude/rules/screen-driven-backlog.md` — One screen per story (wizard exception), `**Screen:**` + `**API Endpoints Used:**` table mandatory
-
-**For any artifact that may carry input-document content** (PRD, scope, backlog, technical spec, status reports):
-
-- `.claude/rules/anonymization.md` — Personal names from input docs → role labels (`the PM`, `the client`, `the stakeholder`); never leak names into committed artifacts
+- `.claude/rules/security-and-auth.md` — touching auth, roles, or user data
+- `.claude/rules/enums-and-constants.md` — an enum-like value crosses the wire
+- `.claude/rules/anonymization.md` — writing an artifact that may carry input-document content
 
 ---
 
-### STEP 0 — Parse arguments & mode selection
+## STEP 1 — Resolve the unit
 
-**Parse the scope argument:**
+Fetch the issue and branch on `issuetype.name`:
 
-- `phase N` → all epics + stories in Phase N
-- `epic EPIC-X` → all stories in Epic X
-- `story US-XXX` → single story
-- `bug BUG-XXX` → bug fix flow
+| Type            | Action                                                                  |
+| --------------- | ----------------------------------------------------------------------- |
+| **Sub-task**    | The unit. Its parent holds the acceptance criteria — read both.         |
+| **Story**       | Resolve its `FE ` sub-task and use that; say which key you resolved to. |
+| **Bug**         | The unit. Take the bug-fix branch at STEP 3.                            |
+| **Epic / Task** | Too coarse. Run `/jira-sync <KEY>` and pick a child unit.               |
 
-**Parse optional inline mode arguments** — both formats are supported (and may be mixed):
-
-**Positional digits** (after the scope): `<execMode> <trackingMode>` where each digit is `1` or `2`.
-
-```
-/execute-work story US-MOB-023 1 2     # Continuous + Complete
-/execute-work phase 1 1                # Continuous; tracking missing → ask
-/execute-work epic EPIC-3 2 1          # Paused + Phase Only
-```
-
-**Named flags** (any position after the scope):
+**Check for a governing CR.** Standalone CR Tasks are not epic children and can silently supersede the
+epic's scope. Search before planning — and try both spellings of the module name:
 
 ```
-/execute-work story US-MOB-023 --mode=continuous --tracking=complete
-/execute-work phase 1 --mode=c                          # alias: c|continuous, p|paused
-/execute-work phase 1 --tracking=p                      # alias: p|phase-only, c|complete
-/execute-work story US-XXX --mode=paused --tracking=p   # mixed forms allowed
+project = PRD1042 AND summary ~ "CR Part 2" AND summary ~ "<MODULE>"
 ```
 
-**Mapping table** — values are organized by axis (the two axes are independent; the digit `1` means different things on each axis):
-
-| Axis                                                        | Resolves to | Accepted values                 |
-| ----------------------------------------------------------- | ----------- | ------------------------------- |
-| Execution Mode (`--mode=` flag, or 1st positional digit)    | Continuous  | `1`, `c`, `continuous`          |
-| Execution Mode                                              | Paused      | `2`, `p`, `paused`              |
-| Tracking Mode (`--tracking=` flag, or 2nd positional digit) | Phase Only  | `1`, `p`, `phase`, `phase-only` |
-| Tracking Mode                                               | Complete    | `2`, `c`, `complete`            |
-
-> **Positional disambiguation:** if exactly two trailing digits are present, the first is Execution Mode and the second is Tracking Mode. If only one trailing digit is present, treat it as Execution Mode (the more user-facing choice). Named flags always take precedence over positional values when both are supplied.
-
-> **Why `c` and `p` swap meaning per axis:** on Execution Mode, `c` = Continuous and `p` = Paused. On Tracking Mode, `c` = Complete and `p` = Phase Only. The aliases match the first letter of the resolved value on each axis. If you find this confusing, use the long form (`continuous`, `complete`) instead.
-
-**Edge-case rules** — when input violates the format, reject and re-prompt the menu (do NOT silently guess):
-
-| Input pattern                                         | Behavior                                                                          |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------- |
-| 3+ trailing digits (e.g. `1 2 1`)                     | Reject input, show usage, prompt the full menu.                                   |
-| Digit not in `{1, 2}` (e.g. `0`, `3`, `9`)            | Reject input, show usage, prompt the full menu.                                   |
-| `--mode=` (empty value)                               | Treat as not supplied; fall through to prompt for that mode only.                 |
-| `--tracking=` (empty value)                           | Treat as not supplied; fall through to prompt for that mode only.                 |
-| `--mode=foo` (unknown alias)                          | Reject input, list valid aliases for that flag, re-prompt the affected mode only. |
-| `--mode=1 1` (named + positional, same axis)          | Named flag wins; positional digit ignored. Echo notes the conflict.               |
-| `--mode=1 --mode=2` (duplicate named flag)            | Use the LAST occurrence; warn in echo.                                            |
-| Non-digit, non-flag trailing token (e.g. `--verbose`) | Ignore unknown flags silently — they are not part of this command.                |
-
-In all reject cases, the orchestrator surfaces the offending input verbatim so the user sees what was wrong:
-
-```
-⚠️  Invalid mode argument: "3"
-    Valid: 1 (Continuous) | 2 (Paused). Falling back to interactive prompt.
-```
-
-**Prompt only for what is missing.** If both modes were supplied (positional or named), proceed silently — do **not** show the menu. If one was supplied, ask only for the other. If none were supplied, show the full menu below.
-
-```
-Execution Mode:
-[1] Continuous (fresh sub-agent per story — clean context, auto-reset between stories)
-[2] Paused (in-line execution — wait for approval after each story; user controls context manually)
-
-Progress Tracking Mode:
-[1] Phase Only (faster — updates only phase file)
-[2] Complete (slower — updates all progress files)
-```
-
-After resolving both modes, **echo the resolved choices** so the user can spot a misparse:
-
-```
-Resolved modes:
-  Execution:  Continuous (sub-agent dispatch)
-  Tracking:   Complete
-```
-
-Store both choices. For trade-offs, see `execute-work-reference.md` → Execution Modes.
-
-**Why this matters:** Continuous mode dispatches each story into a fresh sub-agent so the orchestrator never accumulates story-by-story context. The orchestrator keeps only structured summaries. This is the recommended mode for any phase/epic with 3+ stories.
+Then sync per CLAUDE.md §WORKFLOW step -1: `git checkout develop && git pull origin develop`, create a
+`feat/*` or `fix/*` branch, and `git pull origin develop` in `../refinext-api` so source-level BE reads
+are current.
 
 ---
 
-### STEP 1 — Detect structure & enter plan mode (MANDATORY)
+## STEP 2 — Plan mode (MANDATORY)
 
-**1A. Detect backlog structure:**
+Full workflow: **`modules/execute-work-plan-mode.md`**. It covers the context read list, the two Phase A
+gates (`api-first.md` contract + `design-first.md` design), the plan template, and approval.
+
+No implementation before the plan is approved. If either Phase A gate fails, the unit is **Blocked** —
+file the gap in `.project-management/input/open-questions.md`, open the backend or design work in Jira,
+and do not exit plan mode for it. Never stub a screen against an imagined contract.
+
+---
+
+## STEP 3 — Implement
+
+Break the work down with **TodoWrite**, then per task: mark `in_progress` → **Read the existing files**
+(never skip) → implement → mark `completed`.
+
+Non-negotiables: follow the surrounding patterns; no over-engineering; no unrequested features; no
+speculative abstractions. Touch only what the unit requires — if you spot unrelated problems, **mention
+them, don't fix them silently**.
+
+Tests go in `src/__tests__/`, mirroring the source tree, using `@/` imports. New Zod schemas, store
+actions, and `src/lib/` utilities each need tests. Do not write component tests or Playwright specs.
+
+**i18n:** every user-visible string through `t()`, keys added to **both** `en/<feature>.json` and
+`de/<feature>.json`. A new namespace also needs registering in `i18n/types.d.ts` and `i18n/config.ts`.
+
+**Bug-fix branch:** reproduce first, find the root cause, then fix. Add a regression test that fails
+without the fix. Fix the cause, not the symptom.
+
+---
+
+## STEP 4 — Quality gates
+
+Full checklist and fix loop: **`modules/execute-work-quality-gates.md`**.
+
+In short — the unit is not done until `pnpm test:run`, `pnpm type-check`, `pnpm lint` and
+`node scripts/check-project-invariants.js` are clean, `/code-review` shows no outstanding Critical or
+High findings, and the change has been **exercised in a real browser** per `browser-verification.md`.
+
+---
+
+## STEP 5 — Commit
+
+**Ask for the Jira ticket number first — mandatory, every time:**
 
 ```
-# Scope lives in Jira (PRD1042). Resolve the unit from a Jira key:
-#   FE subtask (PRD1042-NNNN)  → the unit
-#   Story (PRD1042-NNN)        → resolve its `FE ` subtask (see /jira-handoff Step 2)
-#   Bug (PRD1042-NNNN)         → the unit
-# Pull the requirement text with /jira-sync if a local mirror is wanted.
+What is the Jira ticket number for this commit? (or reply #no-ticket)
 ```
 
-**1B. Read context files** — see `modules/execute-work-plan-mode.md` for the full read list per structure type.
+Stage explicitly — `git add <files>`. **Never `git add .` or `git add -A`** (CLAUDE.md MUST NOT DO).
 
-**1C. Analyze & plan** — create a detailed plan with estimates, risks, success criteria. Wait for user approval (`Yes / No / Revise`).
-
-**1D. API contract verification (frontend stories only)** — if the story is web or mobile per `.claude/rules/screen-driven-backlog.md`, run the Phase A checklist from `.claude/rules/api-first.md` §3 _before_ exiting plan mode:
-
-- List every screen the story touches (wizard = enumerate steps)
-- For each screen, list every API endpoint it calls (method + path)
-- For each endpoint, confirm doc exists, request schema covers UI inputs, response shape covers UI outputs, error states are distinguishable, auth matches
-- **Result:** ✅ contract complete (proceed to STEP 2) **OR** ⚠️ gaps documented → mark story `Blocked by: <backend story/bug>`, file the backend work in Jira and note it in `input/open-questions.md`, and **do not exit plan mode for this story**. Move on to other stories or return to user.
-
-**For bugs:** read the Jira bug ticket, analyze affected component, plan fix with root-cause analysis + regression-test requirements.
-
-**Output:** approved plan + detected `structure_type`.
-
----
-
-### STEP 2 — Exit plan mode → implementation
+The header is a single line, max 150 chars, ending in the ticket or `#no-ticket`:
 
 ```
-🚀 [EXITING PLAN MODE — ENTERING IMPLEMENTATION MODE]
-Execution Mode: [Continuous / Paused]
+fix: stop the FA wizard orphaning drafts when a document fails to attach #PRD1042-1651
 ```
 
----
+A body is optional and explains **why**, not what. Cite a `US-XX.XX` reference only if one actually came
+up in this conversation — per `.claude/rules/git.md`, ask rather than guess, and omit rather than invent.
+No test counts, no coverage, and **no AI attribution of any kind**.
 
-### STEP 3 — Implementation loop
-
-**Branch by execution mode** — the per-story workflow is the same; only the dispatch wrapper differs.
-
-#### STEP 3-A — Continuous mode (sub-agent dispatch, RECOMMENDED)
-
-For each unit (story or bug) in scope:
-
-1. **Display:** `🚀 Dispatching {{UNIT_ID}} in fresh sub-agent (clean context)...`
-2. **Auto-update `DASHBOARD.md`** → "Currently Working On" _(modular only — orchestrator does this BEFORE dispatch so DASHBOARD reflects current work even while sub-agent runs)_.
-3. **Dispatch via Agent tool** with `subagent_type="general-purpose"` and the per-unit prompt from `modules/execute-work-implementation-continuous.md` §1 (Sub-agent Prompt Template). Pass:
-   - Unit ID, title, type (story | bug), phase/epic (n/a for bugs)
-   - Absolute path to unit file:
-     - Stories → `output/progress/DASHBOARD.md`
-     - Bugs → the Jira ticket
-   - Tracking mode (Phase Only / Complete)
-   - Execution context (modular vs monolithic backlog)
-4. **Sub-agent executes the full per-unit workflow in its own clean context** — reads rules, implements, writes tests, runs tests (new schemas / stores / utils covered per `.claude/rules/testing.md`), verifies i18n + API docs + frontend contract, updates progress files, creates git commit. Returns a structured JSON summary.
-5. **Orchestrator processes the response** per `modules/execute-work-implementation-continuous.md` §2:
-   - Validate gate-evidence fields (`quality_gates_passed`, `frontend_contract`, `linter`, `required_tests`, `commit_hash`). Re-classify as `blocked` if validation fails.
-   - On validated `status: "completed"` → display unit summary block, log, proceed to next unit.
-   - On `status: "blocked"` (whether sub-agent returned it or orchestrator re-classified) → reconcile DASHBOARD per `execute-work-implementation-continuous.md` §2 step 5, display blocker reason and `recommended_next`, ask user `[Continue with next unit / Skip to next epic / Abort run]`. If `recommended_next` proposes filing backend work, the **orchestrator** files it in Jira after user confirmation — the sub-agent never files anything itself.
-6. **Dispatch failure handling** — if the `Agent` tool itself errors (unknown subagent_type, tool refused, sub-agent crashed without producing JSON): fall back to STEP 3-B (in-line) for this unit, per `modules/execute-work-implementation-continuous.md` §3. After two consecutive dispatch failures, fall back for the remainder of the run.
-7. **Orchestrator keeps ONLY the summary** (~1KB) — no unit-level work bleeds into the next dispatch. This is the auto-reset.
-
-When all units in scope are dispatched and summaries collected → STEP 4.
-
-**Event firing in Continuous mode** (clarifies who writes to DASHBOARD when):
-
-| Event                                | Fired by                                                                 | When                                           |
-| ------------------------------------ | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| EVENT 1 — Currently Working On       | Orchestrator (step 2 above)                                              | Before each dispatch                           |
-| EVENT 2 — Quality Metrics            | Sub-agent (continuous §1 STEP 7)                                         | After tests pass                               |
-| EVENT 3 — Story Completed            | Sub-agent (continuous §1 STEP 8)                                         | Only on `status:"completed"`                   |
-| EVENT 4 — Phase Completed            | Orchestrator                                                             | After last unit in scope, in STEP 4            |
-| EVENT 5 — Bug Fixed                  | Sub-agent (continuous §1 STEP 8)                                         | Only on `status:"completed"` for bugs          |
-| Reconciliation (revert "Working On") | Orchestrator (per `execute-work-implementation-continuous.md` §2 step 5) | On blocked / dispatch failure / malformed JSON |
-
-#### STEP 3-B — Paused mode (in-line execution, manual control)
-
-For each story/bug in scope, the orchestrator itself executes the per-story workflow (no sub-agent). This is the legacy behavior — the orchestrator's context accumulates, and the user can hit `/clear` manually between stories if needed.
-
-Workflow per story (detailed in `modules/execute-work-implementation-paused.md`):
-
-1. Break down with TodoWrite.
-2. Auto-update `DASHBOARD.md` → "Currently Working On" _(modular only)_.
-3. Read context (story or bug from its Jira ticket). Load all applicable rules per the CRITICAL RULES list above — `modules/execute-work-implementation-continuous.md` §1 STEP 1 enumerates the conditional reading list.
-4. **For frontend (web/mobile) stories:** before implementation, re-confirm Phase A from `.claude/rules/api-first.md` is still ✅ — endpoints exist, docs match, schema covers UI inputs/outputs, error states distinguishable. If any contract gap is detected now (backend changed, doc drifted), STOP, file backend gap, mark story Blocked. Do not stub the frontend.
-5. Implement following `.claude/rules/code-quality.md` (SOLID & DRY). For enum / wire-format work also apply `.claude/rules/enums-and-constants.md` (one source of truth per enum; wire values match `../refinext-api/`). For artifacts that may carry input-document content apply `.claude/rules/anonymization.md` (replace names with role labels).
-6. Write tests following `.claude/rules/testing.md` (unit tests for new Zod schemas, store logic, and utilities; for bugs, a regression test that fails without the fix).
-7. Verify i18n (if `.project-management/rules/I18N-RULES.md` exists).
-8. **If the story added/changed any HTTP endpoint:** run the complete API quality gate stack from `modules/execute-work-quality-gates.md`:
-   - `.claude/rules/error-handling-and-logging.md` — every new/changed error code surfaced in the UI with `errors.<CODE>` i18n keys (en + de) per `api-error-display.md`
-   - `.claude/rules/security-and-auth.md` — RBAC gates match BE enforcement, no tokens/PII in logs or fixtures (BE-side gates run in `../refinext-api/`)
-9. **Second-to-last step:** run tests (see `modules/execute-work-quality-gates.md`); auto-update DASHBOARD "Quality Metrics".
-10. **Final step:** git commit per `.claude/rules/git.md` (NO AI credits). Bug commits reference `BUG-XXX`.
-11. Update `DASHBOARD.md` per `modules/execute-work-dashboard-events.md`.
-12. Pause and ask user `[Yes / No / Skip to Epic X]`.
-
-#### Common quality gate (both modes)
-
-Tests pass (new schemas / stores / utils covered per `.claude/rules/testing.md`), type-check + lint clean, i18n complete, frontend contract verified (`api-first.md`). The same gate applies whether the work is done by orchestrator (Paused) or sub-agent (Continuous).
-
-**Auto-update triggers (modular only):** story started → Currently Working On; tests run → Quality Metrics; story completed → Today's Progress + Recently Completed + progress %; phase completed → Phase Breakdown.
-
-Full event mapping: `modules/execute-work-dashboard-events.md` + `modules/execute-work-dashboard-mechanics.md`.
+Pre-commit runs lint-staged, the forbidden-code scan, and type-check; commit-msg runs commitlint;
+pre-push runs the full suite. If a hook rejects the commit, fix the cause — never bypass it.
 
 ---
 
-### STEP 4 — Completion report
+## STEP 6 — Journal entry
 
-When all stories in scope are done, emit the standard completion block with:
+`DASHBOARD.md` is a **decision journal**, not a metrics report. Its own header is binding:
 
-- stories completed / total, points done / total, velocity
-- tests written / passing, coverage %
-- SOLID & DRY compliance, lint, git conventions (all ✅)
-- next steps (advance phase / continue epic / next story)
+> Never hand-copy a number into this file.
 
-Template and full field list: `execute-work-reference.md` → Completion Report Template.
+So: append prose to today's `## 📅 Today's Progress (YYYY-MM-DD)` section — what was done, why, and what
+it revealed. Update **Current focus** at the top, and **⚠️ Active Blockers** if this unit opened or closed
+one. Leave counts where they are computed: statuses in Jira, tests in `pnpm test:run`, gaps in
+`open-questions.md`, bugs in Jira.
 
----
-
-## 📚 Module References
-
-| Module                                              | Covers                                                              |
-| --------------------------------------------------- | ------------------------------------------------------------------- |
-| `modules/execute-work-plan-mode.md`                 | STEP 1 plan mode workflow                                           |
-| `modules/execute-work-implementation.md`            | Parent overview of both modes + section index                       |
-| `modules/execute-work-implementation-continuous.md` | Sub-agent prompt template + orchestrator handling (Continuous mode) |
-| `modules/execute-work-implementation-paused.md`     | In-line workflow §3.1–§3.10 (Paused mode)                           |
-| `modules/execute-work-quality-gates.md`             | Test + coverage validation (same gates for both modes)              |
-| `modules/execute-work-dashboard-events.md`          | DASHBOARD auto-update triggers                                      |
-| `modules/execute-work-dashboard-mechanics.md`       | DASHBOARD update internals                                          |
-| `execute-work-reference.md`                         | Modes, quality gates, error handling, examples                      |
+A DASHBOARD write failure never blocks the unit — note it and move on.
 
 ---
 
-## Mandatory Requirements (summary)
+## STEP 7 — Completion report
 
-1. Plan mode mandatory — no implementation without approval. 2. Tests mandatory — story is not done until tests pass. 3. New Zod schemas / store logic / utilities tested per `.claude/rules/testing.md`. 4. Every BE error code surfaced per `.claude/rules/api-error-display.md`. 5. i18n if `I18N-RULES.md` exists. 6. Git conventions — NO AI credits, conventional commits. 7. SOLID & DRY per `.claude/rules/code-quality.md`. 8. TodoWrite for task breakdown.
+Report what actually happened, in plain prose:
 
-Full quality-gate checklist + error handling: `execute-work-reference.md`. Auto-detects modular vs monolithic backlog (no user action) — see `execute-work-reference.md` → Backward Compatibility for trade-offs.
+- what shipped, and anything deliberately left out, with the reason
+- gate results as observed — the real test output, the browser check, and **the role you signed in as**
+- the commit hash and branch
+- anything that turned up for `open-questions.md` or a new Jira ticket
+- next action — usually `/jira-handoff` to move the ticket to `QA ready`
+
+Never report a pass you did not observe. "Could not verify — no local data for a suspended agreement" is
+a useful result; a fabricated ✅ is worse than no check at all.
 
 ---
 
-**Version:** 3.3.3
-**Created:** 2026-03-27
-**Updated:** 2026-05-11 (3.3.3 split implementation module into continuous + paused companions; CRITICAL RULES list expanded to cover v3.3 additions)
-**Command Type:** Implementation Automation
+## Related
+
+- `modules/execute-work-plan-mode.md` — STEP 2 in full (context, Phase A gates, plan template)
+- `modules/execute-work-quality-gates.md` — STEP 4 in full (checks, fix loop, review, browser)
+- `.claude/rules/README.md` — the rule index with per-task triggers
+- `/jira-sync` — read-only briefing on the unit · `/jira-handoff` — transition to `QA ready`
+- `/bug-sweep` — find and fix actionable Jira bugs · `/code-review` — the per-commit diff gate
+
+---
+
+**Version:** 4.0.0
+**Updated:** 2026-07-30 (4.0.0 — rewritten for the Jira-only, phase-file-free project: execution and
+tracking modes removed, sub-agent dispatch dropped, DASHBOARD reframed as a journal, `design-first` and
+invariants gates added, `git add .` and the un-ticketed commit template corrected)

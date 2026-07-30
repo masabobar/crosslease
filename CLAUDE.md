@@ -41,13 +41,17 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 
 ## 🎯 COMMANDS
 
-| Command                      | When to use                             |
-| ---------------------------- | --------------------------------------- |
-| `/execute-work story US-XXX` | Implement a specific story              |
-| `/execute-work phase N`      | Run all stories in a phase sequentially |
-| `/resolve-questions`         | Answer open clarification questions     |
+| Command                      | When to use                                             |
+| ---------------------------- | ------------------------------------------------------- |
+| `/execute-work PRD1042-XXXX` | Implement one unit — an FE sub-task, story, or bug      |
+| `/jira-sync PRD1042-XXX`     | Read-only briefing on an epic or story (writes nothing) |
+| `/jira-handoff`              | Transition this branch's ticket(s) to `QA ready`        |
+| `/code-review`               | The per-commit diff gate                                |
+| `/resolve-questions`         | Answer open clarification questions                     |
+| `/list-skills`               | Full inventory of this repo's commands                  |
 
-**Live status:** open `.project-management/output/progress/DASHBOARD.md`
+**Decision journal:** `.project-management/output/progress/DASHBOARD.md` — prose only, never a metric.
+Statuses live in Jira, test counts in `pnpm test:run`, gaps in `input/open-questions.md`.
 
 ---
 
@@ -150,10 +154,15 @@ Never start coding without plan approval.
 0. PLAN MODE → analyze, create plan, get approval
 1. IMPLEMENT → code changes following standards below
 2. TEST → pnpm test:run + pnpm type-check + pnpm lint
-3. VALIDATE → new schemas/stores/utils tested, i18n keys added, Zod schemas present
-4. ASK FOR JIRA TICKET → then commit (no AI credits)
-5. UPDATE → DASHBOARD.md auto-updates
+3. VALIDATE → git add <files>, then node scripts/check-project-invariants.js
+              (it reads the staged diff — a no-op before staging)
+4. REVIEW → /code-review on the diff; then verify in a real browser, naming the role
+5. ASK FOR JIRA TICKET → then commit (no AI credits)
+6. JOURNAL → append a prose entry to DASHBOARD.md; no counts, no percentages
 ```
+
+> `pre-push` also checks `openapi.json` against the dev API and rejects the push on drift —
+> `pnpm fetch:openapi` and re-check your contract assumptions if it fires.
 
 ---
 

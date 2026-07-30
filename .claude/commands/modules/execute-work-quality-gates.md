@@ -1,286 +1,170 @@
-# Execute Work - Quality Gates Module
+# Execute Work — Quality Gates
 
-**Referenced by:** `execute-work-implementation.md` Step 3.6 & 3.7
+**Referenced by:** `execute-work.md` STEP 4
 
----
-
-## Validation Gate (Step 3.7)
-
-**Triggered after:** Running all tests (Step 3.6)
+The unit is not complete until every gate below passes. They run in this order because each is blind to
+what the next one catches.
 
 ---
 
-### Validation Checks
-
-**IF ANY check failed — unit tests, type-check, lint, required tests missing (new schema / store / utility without tests), i18n missing, Zod schema missing, or data-testid missing on new interactive elements:**
-
-**Display:**
-
-```
-⚠️ VALIDATION FAILED for US-XXX
-
-Issues:
-- [List failed unit tests]
-- [Missing tests: new Zod schema / store action / utility without unit tests]
-- [Type check errors: ...]
-- [Lint errors: ...]
-- [Missing i18n translations: en/<feature>.json or de/<feature>.json]
-- [Missing Zod schema: API data consumed without schema in features/<name>/api/schema.ts]
-- [Missing data-testid: interactive element added without data-testid attribute]
-
-🔧 Fixing issues...
-```
-
----
-
-### Fix Loop
-
-**Execute these steps until validation passes:**
-
-1. **Analyze test failures**
-   - Read error messages
-   - Identify root cause
-   - Check related code
-
-2. **Fix bugs in code**
-   - Update implementation
-   - Follow SOLID & DRY principles
-   - Test locally
-
-3. **Add missing required tests**
-   - Every new Zod schema, store action, and `src/lib/` utility gets unit tests
-   - Cover edge cases and error scenarios (behavior-based per `.claude/rules/testing.md`)
-
-4. **Add missing i18n translations** (I18N-RULES.md is always active for this project)
-   - Find hardcoded text
-   - Add translation keys
-   - Update both `en/<feature>.json` and `de/<feature>.json`
-
-5. **Add missing Zod schemas** (if new API data consumed)
-   - Check `features/<name>/api/schema.ts` exists with Zod schema for every API response shape
-   - No raw `response.data as SomeType` — always parse through Zod
-
-6. **Add missing data-testid attributes** (if new interactive elements added)
-   - Buttons, form inputs, modals, and key interactive elements must have `data-testid`
-
-7. **Re-run all checks**
-   - `pnpm test:run` — unit tests
-   - `pnpm type-check` — TypeScript
-   - `pnpm lint` — ESLint
-
-8. **REPEAT** until ALL checks pass AND required tests present AND i18n complete AND Zod schemas present AND data-testid added
-
----
-
-### CRITICAL Rules
-
-**Story is NOT complete until:**
-
-- ✅ All unit tests passing (`pnpm test:run`)
-- ✅ Type check clean (`pnpm type-check`)
-- ✅ Lint clean (`pnpm lint`)
-- ✅ New Zod schemas, store logic, and utilities have tests
-- ✅ i18n translations present in both `en/<feature>.json` and `de/<feature>.json`
-- ✅ All API data consumed through Zod schemas (`features/<name>/api/schema.ts`)
-- ✅ New interactive elements have `data-testid` attributes
-- ✅ SOLID & DRY principles followed
-- ✅ `/code-review` run on the story diff — no Critical or High findings outstanding
-
----
-
-### Diff Review (after the mechanical checks pass)
-
-The checks above are mechanical — they prove the code compiles, lints, and tests green. They do not
-prove it follows the review checklist. Run the diff review as the last gate before the commit:
+## 4.1 Mechanical checks
 
 ```bash
-/code-review          # scope: the story's staged diff
+pnpm test:run      # Vitest, once
+pnpm type-check    # TypeScript, no emit
+pnpm lint          # ESLint
 ```
 
-Treat its findings as part of this gate:
+Then **stage the change** and run the invariants script — it reads `git diff --cached`, so it is a silent
+no-op on unstaged work:
 
-- **Critical** — blocks the story; fix and re-run
-- **High** — fix before the commit, unless the fix needs a coordinated multi-call-site change; then
-  state the scope rather than applying it half-way (non-breaking rule, `.claude/rules/code-review.md`)
-- **Medium / Low** — record in the story progress file; do not silently defer
+```bash
+git add <files>
+node scripts/check-project-invariants.js
+```
 
-`/code-review` applies its own fix-on-encounter fixes inline (missing `onError`, missing i18n keys) per
-`.claude/rules/api-error-display.md` §4 — re-run `pnpm test:run` after it touches anything.
+It enforces three things the other checks cannot see: **i18n locale parity** (en ⇄ de), **required-test
+parity** (a new schema / store / utility without tests), and **enum wire literals** (an inline
+`"system_admin"` where the schema enum should be referenced). All four commands also run in pre-commit,
+so a failure here is a failure you would hit at commit time anyway.
+
+---
+
+## 4.2 Fix loop
+
+On any failure, do not proceed and do not weaken the check. Repeat until clean:
+
+1. Read the full error — stack trace, rule name, or invariant message.
+2. Find the root cause; fix the cause, not the assertion.
+3. Add whatever the gate says is missing:
+   - **Missing required test** → cover the new Zod schema (accepts the documented shape, rejects wrong
+     types / missing fields / bad enum values), store action (state transition via `getState()`), or
+     `src/lib/` utility. Behaviour-based, per `.claude/rules/testing.md`.
+   - **Missing i18n key** → add to **both** `en/<feature>.json` and `de/<feature>.json`. A new namespace
+     also needs `i18n/types.d.ts` and `i18n/config.ts` (bundle en, add the de loader entry).
+   - **Missing Zod schema** → API data must be parsed in the `queryFn`; no `response.data as SomeType`.
+   - **Missing `data-testid`** → every new interactive element, for QA's E2E suite.
+   - **Enum literal** → import the schema enum (`UserRoleSchema.enum.system_admin`), never the raw string.
+4. Re-run all four commands.
+
+Never `.skip` or delete a test to get green. Never bypass a hook.
+
+---
+
+## 4.3 Diff review
+
+The checks above prove the code compiles, lints, and tests green. They do not prove it follows the review
+checklist. Run the diff review as the last gate before the commit:
+
+```bash
+/code-review          # scope: this unit's staged diff
+```
+
+- **Critical** — blocks the unit; fix and re-run
+- **High** — fix before the commit, unless the fix needs a coordinated change across many call-sites; then
+  state that scope explicitly rather than applying it half-way (non-breaking rule, `.claude/rules/code-review.md`)
+- **Medium / Low** — report them in STEP 7; do not silently defer
+
+`/code-review` applies its own fix-on-encounter repairs inline (a missing `onError`, a missing i18n key)
+per `.claude/rules/api-error-display.md` §4 — re-run `pnpm test:run` after it touches anything.
 
 **Do not** run `/review-codebase` here. It audits all of `src/`, so its findings are mostly unrelated to
-this story and mixing them into the story diff makes the MR unreviewable. Save it for the
-per-feature run when the feature lands.
+this unit and mixing them in makes the MR unreviewable.
 
 ---
 
-### Browser Verification (last gate before handoff)
+## 4.4 Browser verification
 
-Every gate above is blind to rendering — none of them draw a page. Before the story is complete, exercise
-the change in a real browser per **`.claude/rules/browser-verification.md`**:
+Every gate so far is blind to rendering — none of them draw a page. Exercise the change in a real browser
+per **`.claude/rules/browser-verification.md`**:
 
-- Dev server at `http://localhost:5173`, driven with the Playwright MCP
-- Walk the story's **acceptance criteria**, not a general smoke test
-- Read the browser console — an error there is a finding even when the UI looks correct
-- Check no raw i18n key is rendered (a key missing from **both** locales passes every automated gate)
-- **Name the role you signed in as**, and for role-gated screens check a role that should _not_ see the control
+- Dev server at `http://localhost:5173`, driven with the Playwright MCP. Reuse a running server; the BE's
+  `CORS_ORIGINS` allows only `:5173`, so a fallback to `:5174` fails every request.
+- Walk the unit's **acceptance criteria** — not a general smoke test.
+- Read `browser_console_messages`. An error there is a finding even when the UI looks right.
+- Confirm no raw i18n key renders. A key missing from **both** locales passes every automated gate.
+- **Name the role you signed in as.** For role-gated surfaces, also check a role that should _not_ see
+  the control.
 
-This adds no `.spec.ts` files — E2E specs remain QA's per `.claude/rules/testing.md`.
-
-Report what you exercised and observed. If something could not be reached locally (no test data, role
-unavailable), say so explicitly — never report a pass you did not observe.
+This adds no `.spec.ts` files — E2E specs stay QA's per `.claude/rules/testing.md`. If something cannot be
+reached locally (no seed data, role unavailable), **say so** rather than reporting a pass.
 
 ---
 
-### Validation Passed
+## 4.5 Checklist
 
-**IF ALL checks pass AND required tests present AND i18n OK AND Zod schemas present:**
+**Code**
 
-**Display:**
+- [ ] SOLID & DRY; no over-engineering; no orphaned imports or dead code left behind
+- [ ] `pnpm type-check` and `pnpm lint` clean
+- [ ] `/code-review` clean of Critical and High
+- [ ] No magic strings; enum values referenced from their schema, route paths from `router/paths.ts`
+
+**Testing**
+
+- [ ] `pnpm test:run` green
+- [ ] New Zod schemas, store actions, and `src/lib/` utilities tested, in `src/__tests__/` mirroring source
+- [ ] Bug fixes have a regression test that fails without the fix
+- [ ] No `.only`; no component tests; no Playwright specs
+
+**i18n** (always active — `I18N-RULES.md` is present in this repo)
+
+- [ ] No hardcoded user-visible strings; all via `t()`
+- [ ] Keys in both `en/` and `de/`; new namespace registered in `types.d.ts` and `config.ts`
+- [ ] Every BE error code the unit can hit has an `errors.<CODE>` key in both locales
+
+**Frontend** (any new screen or component)
+
+- [ ] Phase A contract verification passed at plan time and still holds
+- [ ] Phase B design check done per new `.tsx`
+- [ ] No invented response shapes, no stub masking a missing field
+- [ ] shadcn/ui primitive used wherever one exists; any raw element carries a `NOTE:` comment with a reason
+
+**API integration**
+
+- [ ] Every response shape parsed through a Zod schema in `features/<name>/api/schema.ts`
+- [ ] All calls via `api` from `@/lib/api` — no raw `fetch`/`axios` in components
+- [ ] Query keys are constants beside their query function
+- [ ] Every mutation has `onError`; every foreground query an `isError` branch
+- [ ] Errors branch on `ApiError.code`, never on `.message`
+- [ ] If the contract changed: `pnpm fetch:openapi`, then update feature schemas
+
+**Security**
+
+- [ ] Tokens live only in the Zustand auth store, whose `persist` middleware owns localStorage — nothing
+      else reads or writes them. Never in the React Query cache, a URL param, or component state.
+- [ ] The 401 → refresh → retry flow stays in the `@/lib/api` interceptor; feature code never implements it
+- [ ] Role gates use the wire values from `project-rules.md`, referenced via the schema enum
+- [ ] No secrets in `VITE_`-prefixed vars; base URL from `import.meta.env.VITE_API_URL`, never hardcoded
+- [ ] No tokens or PII in `console.*`, error messages, or test fixtures
+
+---
+
+## 4.6 Before pushing
+
+`pre-push` runs the full Vitest suite **and an OpenAPI drift check** against the dev API. If the backend
+has changed since `openapi.json` was refreshed, the push is rejected:
+
+```bash
+pnpm fetch:openapi && corepack pnpm exec prettier --write openapi.json
+git add openapi.json src/generated/api.ts
+```
+
+Drift is not a nuisance — it means the contract you planned against has moved. Re-check the Phase A
+findings for this unit before committing the refresh.
+
+---
+
+## 4.7 Passed
+
+Report the gates as observed, with real numbers from the real run — never a placeholder:
 
 ```
-✅ VALIDATION PASSED for US-XXX
-
-All checks completed:
-✅ Unit Tests: {{X}}/{{X}} passed
-✅ Type Check: clean
-✅ Lint: clean
-✅ Required Tests: new schemas / stores / utils covered
-✅ i18n: en + de translations present
-✅ Zod schemas: API data validated at query layer
-✅ data-testid: interactive elements annotated
-✅ Code Quality: SOLID & DRY compliant
-✅ Code Review: /code-review clean — no Critical/High findings
+✅ Gates — PRD1042-XXXX
+   tests            <X>/<X> passed          type-check  clean
+   lint             clean                   invariants  clean
+   /code-review     no Critical / High
+   browser          <what you exercised>, signed in as <role>
 ```
 
-**Mark "Run all tests" todo as completed**
-
-**Proceed to:** Git commit (Step 3.8)
-
----
-
-## Quality Gates Checklist
-
-**Before marking story complete:**
-
-### Code Quality
-
-- [ ] SOLID & DRY principles followed
-- [ ] No TypeScript/linting errors
-- [ ] Follows project conventions
-- [ ] No over-engineering
-- [ ] No unused code
-- [ ] `/code-review` run on the diff — no Critical or High findings
-
-### Testing
-
-- [ ] All unit tests passing (`pnpm test:run`)
-- [ ] Type check clean (`pnpm type-check`)
-- [ ] Lint clean (`pnpm lint`)
-- [ ] New Zod schemas, store actions, and utilities tested
-- [ ] Edge cases covered
-- [ ] Error scenarios tested (API error codes from `detail.code`, 401 redirect, empty states)
-
-### i18n (Conditional - if I18N-RULES.md exists)
-
-- [ ] No hardcoded user-facing text
-- [ ] All text uses translation keys
-- [ ] Translation files updated for all languages
-- [ ] Keys follow naming convention
-
-### Documentation
-
-- [ ] Tech spec consulted
-- [ ] README updated (if user-facing changes)
-- [ ] Comments added for complex logic
-
-### Frontend (Web/Mobile) Gate (Conditional — only if story is a frontend story)
-
-Refs: `.claude/rules/api-first.md`, `.claude/rules/screen-driven-backlog.md`
-
-- [ ] Story scoped to one screen (or wizard with all steps enumerated)
-- [ ] Story title follows `Screen — Action` pattern
-- [ ] **API Endpoints Used** table present (method + path + purpose + doc reference)
-- [ ] Phase A contract verification ✅ — every UI input maps to request schema, every UI output maps to response shape, error states distinguishable, auth matches
-- [ ] If gaps were found at plan time: backend story/bug filed, frontend resumed only after gap closed
-- [ ] No invented response shapes, no stubs masking missing fields
-
-### API Integration Gate (Conditional — only if new API data consumed)
-
-- [ ] New API response shapes have Zod schemas in `features/<name>/api/schema.ts`
-- [ ] No raw `response.data as SomeType` — always parse through Zod
-- [ ] If OpenAPI schema changed: run `pnpm fetch:openapi` to regenerate `src/generated/api.ts`, then update feature schemas accordingly
-- [ ] API errors handled by branching on `detail.code`, not `detail.message`
-
-### Security Gate (FE-specific)
-
-- [ ] Bearer token not stored in localStorage — handled by Axios interceptor only
-- [ ] No sensitive data (tokens, PII) logged to console in production paths
-- [ ] Role-based UI gating uses the correct role value from `project-rules.md` wire format
-- [ ] 401 response from API triggers session clear + redirect to login (via Axios interceptor)
-- [ ] No hardcoded API base URLs — uses env var (`VITE_API_BASE_URL`)
-
----
-
-## Error Handling Strategies
-
-### Test Failures
-
-**Common issues:**
-
-- **Import errors:** Check file paths, ensure modules exist
-- **Type errors:** Verify TypeScript types, check interfaces
-- **Assertion failures:** Review expected vs actual, update logic
-- **Timeout errors:** Increase timeout, optimize code, check async/await
-
-**Resolution:**
-
-1. Read full error stack trace
-2. Locate failing test and code
-3. Fix root cause
-4. Re-run specific test
-5. Run full suite when fixed
-
----
-
-### Missing Required Tests
-
-**Common issues:**
-
-- New Zod schema without rejection tests (wrong types, missing fields, bad enum values)
-- New store action without a state-transition test
-- New `src/lib/` utility without unit tests
-- Missing edge cases (null, undefined, empty arrays)
-
-**Resolution:**
-
-1. Diff the change: list every new schema / store action / utility
-2. Write behavior-based tests for each per `.claude/rules/testing.md`
-3. Focus on critical paths and error scenarios first
-4. Re-run `pnpm test:run`
-
----
-
-### Missing i18n
-
-**Common issues:**
-
-- Hardcoded strings in JSX: `<h1>Welcome</h1>`
-- Hardcoded strings in error messages
-- Missing translation keys in JSON files
-- Keys not synced across languages
-
-**Resolution:**
-
-1. Search for hardcoded text: `grep -r "\"[A-Z]" src/`
-2. Replace with `{t('key')}`
-3. Add key to all language files
-4. Follow naming convention: `section.subsection.key`
-5. Verify all languages have the key
-
----
-
-## Next Step
-
-**After validation passes:**
-
-- Return to `execute-work-implementation.md` Step 3.8 (Git Commit)
+**Next:** `execute-work.md` STEP 5 (commit).
