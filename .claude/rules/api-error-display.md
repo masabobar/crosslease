@@ -1,7 +1,7 @@
 # API Error Display — Exhaustive BE Error Handling
 
-**Version:** 1.0
-**Last Updated:** 2026-06-05
+**Version:** 1.1
+**Last Updated:** 2026-07-30
 **Status:** Active
 
 **MANDATORY: Every API mutation and every user-visible query error MUST be caught and surfaced to the user. Silent API failures are bugs. When reviewing or modifying code, FIX missing error handling immediately — do not flag for later.**

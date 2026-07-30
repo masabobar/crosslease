@@ -1,7 +1,7 @@
 # Code Review Guide — Senior Frontend Standards
 
-**Version:** 1.1
-**Last Updated:** 2026-06-05
+**Version:** 1.2
+**Last Updated:** 2026-07-30
 **Status:** Active
 
 **Run `/code-review` before every commit and push on this project.**

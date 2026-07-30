@@ -1,7 +1,7 @@
 # Error Handling & Logging (Frontend)
 
-**Version:** 2.0
-**Last Updated:** 2026-07-05
+**Version:** 2.1
+**Last Updated:** 2026-07-30
 **Status:** Active
 
 **MANDATORY: Every API failure is surfaced to the user. Programmatic handling uses `ApiError.code` — never message strings. Display goes through the dynamic i18n lookup with a generic fallback. Errors are never silently swallowed. No `console.*`, PII, or tokens in shipped code.**
