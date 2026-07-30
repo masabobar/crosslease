@@ -86,7 +86,7 @@ Feature: Framework Agreement Activation — Draft to Active (US 11.2 — PRD1042
     And a "Valid Until" field is present as optional alongside Effective From
     When I enter "Activating after legal review and document verification complete" in the "Activation justification" field
     And I check the confirmation "I confirm that all signed framework documents have been attached."
-    And I confirm the activation
+    And I confirm the activation by clicking on "Activate" button in the dialog
     Then the Framework Agreement "RV-SSKM-2026-001" transitions to Active state
     And a success alert "Framework agreement activated." is displayed
     And the alert body contains "RV-SSKM-2026-001 is now active."
@@ -121,7 +121,7 @@ Feature: Framework Agreement Activation — Draft to Active (US 11.2 — PRD1042
     Given a Framework Agreement "RV-SSKM-2026-001" exists in Draft state with a document attached
     When I click "Activate" on "RV-SSKM-2026-001"
     And I enter "<justification>" in the Justification field
-    And I click "Confirm Activation"
+    And I click "Activate" buttonm in the dialog
     Then I see a validation error on the Justification field
     And the Framework Agreement remains in Draft state
 
@@ -132,7 +132,7 @@ Feature: Framework Agreement Activation — Draft to Active (US 11.2 — PRD1042
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-14
-  # An already-Active or Suspended FA cannot be re-activated. The API returns
+  # An already-Active or Archived FA cannot be re-activated. The API returns
   # HTTP 409 referencing the current lifecycle state. This prevents accidental
   # double-activation by concurrent administrators.
   # ---------------------------------------------------------------------------

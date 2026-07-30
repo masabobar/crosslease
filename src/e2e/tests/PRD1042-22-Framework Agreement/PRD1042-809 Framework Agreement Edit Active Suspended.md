@@ -128,9 +128,9 @@ Per CR PRD1042-22 v10 A1/A4 (2026-07-27), the following fields are REMOVED from 
 
 ```gherkin
 @framework-agreement @us-11.10 @p0
-Feature: Framework Agreement Edit — Active & Suspended (US 11.10 — PRD1042-809)
+Feature: Framework Agreement Edit — Active (US 11.10 — PRD1042-809)
   As a Power User (Bank Admin)
-  I want to edit governed fields on an Active or Suspended Framework Agreement
+  I want to edit governed fields on an Active Framework Agreement
   So that I can adjust Max volume, pricing, Valid until, and Allowed product templates without recreating the agreement
 
   Background:

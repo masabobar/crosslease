@@ -142,7 +142,7 @@ Feature: Framework Agreement Detail View (US 11.4 — PRD1042-803)
     And the top-right action buttons "Edit", "Suspend", and "Terminate" should be visible
     And I should see exactly the following tabs in this order: "Agreement details", "Templates and documents", "Utilization", "Financings", "Audit history"
     And the "Agreement details" tab should be active by default
-    And the "Agreement details" tab should display sections: "IDENTITY", "LIFECYCLE", "CREDIT ENVELOPE", "PRICING", "SPECIAL CONDITIONS"
+    And the "Agreement details" tab should display sections: "IDENTITY", "LIFECYCLE", "CREDIT ENVELOPE", "PRICING", "SPECIAL CONDITIONS(optional)"
     And the "IDENTITY" section should show fields: Agreement ID, Agreement name, Leasing company, Currency
     And the "IDENTITY" section should NOT contain a "Bank entity" field (per CR PRD1042-1495 A4)
     And the "LIFECYCLE" section should show fields: Status, Created at, Created by, Activated at, Activated by, Valid from, Valid until

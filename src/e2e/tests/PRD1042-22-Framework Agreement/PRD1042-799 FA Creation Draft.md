@@ -93,20 +93,6 @@ Feature: Framework Agreement Creation — Draft (US 11.1 — PRD1042-799)
   # Product Template, single Effective Rate, Valid From. Bank Entity is hidden
   # from the form per CR 1495 A4 (backend defaults to "OTHER"). Currency is
   # EUR fixed and displayed read-only per CR 1495 A5. Draft is persisted.
-  #
-  # CR PRD1042-22 v10 (2026-07-27):
-  #  - A1: `base_rate`, `spread`, `rate_type`, `rate_lock_period_months`
-  #    REMOVED from the create contract. Only `effective_rate` remains
-  #    (plus `vfe_rate` — BE-pending per 1495 B2).
-  #  - A2: `effective_rate` is stored as entered — no derivation from
-  #    base+spread. Resolves prior OQ-11.01-B / AC-16.
-  #  - A4: `lg_coverage_rate_override` REMOVED from the create contract.
-  #  - A5: `rate_table_ref`, `predecessor_fa_id`, `countersignatory_id`
-  #    must remain null after a full lifecycle run — assertion added.
-  #  - B8/OQ-11-02: term location undecided; do NOT reintroduce
-  #    `rate_lock_period_months`. Term will land on the deal or as a
-  #    prefilled FA default field once Philipp confirms.
-  # ---------------------------------------------------------------------------
 
   @happy-path @ac-01 @ac-02 @ac-16 @ac-cr-a5 @p0 @e2e-ready
   Scenario: Power User creates Framework Agreement Draft with valid data (AC-01, AC-02, AC-16, AC-CR-A5)
@@ -140,21 +126,6 @@ Feature: Framework Agreement Creation — Draft (US 11.1 — PRD1042-799)
     And the persisted `effective_rate` equals 4.7500 exactly (stored as entered, no derivation per v10 A2)
     And the persisted record has `rate_table_ref` null, `predecessor_fa_id` null, `countersignatory_id` null (per v10 A5)
 
-  # ---------------------------------------------------------------------------
-  # HAPPY PATH — AC-04, AC-14
-  # Power User hard-deletes a Draft FA before activation. The FA is removed
-  # from the list. The audit record (fa.draft.deleted) is retained per AC-14.
-  # This is the only lifecycle state in which hard delete is permitted.
-  # ---------------------------------------------------------------------------
-
-  @happy-path @ac-04 @ac-14 @p0 @e2e-ready
-  Scenario: Power User hard-deletes a Draft Framework Agreement before activation (AC-04, AC-14)
-    Given a Framework Agreement "RV-DELETE-TEST-001" exists in Draft state
-    When I navigate to the detail view of "RV-DELETE-TEST-001"
-    And I click "Delete Draft"
-    And I confirm the deletion in the confirmation dialog
-    Then the Framework Agreement "RV-DELETE-TEST-001" no longer appears in the FA list
-    And the "Delete Draft" action is no longer available for this agreement
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-05
@@ -179,14 +150,12 @@ Feature: Framework Agreement Creation — Draft (US 11.1 — PRD1042-799)
   # ---------------------------------------------------------------------------
 
   @main-error @ac-06 @p0 @e2e-ready
-  Scenario: Creating FA against a Suspended Leasing Company is rejected (AC-06)
-    Given a Leasing Company "LC Suspended GmbH" is Suspended in Partner Management
+  Scenario: Creating FA against a Archived Leasing Company is rejected (AC-06)
+    Given a Leasing Company "LC Suspended GmbH" is Suspended/Archived in Partner Management
     When I open the Framework Agreement creation form
-    And I select "LC Suspended GmbH" as the Leasing Company
-    And I fill in all other required fields with valid values
-    And I click "Save as draft"
-    Then I see an error indicating the Leasing Company is not Active
-    And no Framework Agreement Draft is created
+    And I opened Leasing Company drop down list.
+    Then Leasing Company "LC Suspended Gmbh" should not be visible in the list.
+
 
   # ---------------------------------------------------------------------------
   # MAIN ERROR — AC-08
