@@ -27,8 +27,9 @@ model: sonnet
 - Screenshots go through `figma_images` (batched via `/v1/images`), never per-frame `get_screenshot` calls. One HTTP call returns signed S3 URLs for every requested node; download the images from S3 in parallel — S3 does not count against the Figma quota.
 - On HTTP 429, the helper reads the `X-Figma-Rate-Limit-Type` and `Retry-After` headers:
   - `Retry-After ≤ 300s` → wait and retry (short-term throttle)
-  - `Retry-After > 300s` → **plan quota exhausted** — the helper returns exit code 2 immediately instead of sleeping for hours. New unique fetches will fail until the Figma Professional plan's rolling budget window resets (can be several hours to several days).
-- When the plan quota is exhausted, the disk cache is the only source of design data. Design all Stage 2 runs to be cache-friendly from the start.
+  - `Retry-After > 300s` on primary `/v1/files` → **automatically fall back to `/v1/files/{key}/nodes`** (separate rate-limit bucket on the same token). The helper does this transparently and normalizes the response shape so downstream parsers do not need to change.
+  - `Retry-After > 300s` on BOTH primary and `/nodes` → **plan quota exhausted** — the helper returns exit code 2 immediately instead of sleeping for hours. New unique fetches will fail until the Figma Professional plan's rolling budget window resets (can be several hours to several days).
+- When the plan quota is exhausted on both endpoints, the disk cache is the only source of design data. Design all Stage 2 runs to be cache-friendly from the start.
 
 ## How to fetch Figma data
 
@@ -102,46 +103,113 @@ PY
     return 0
   fi
 
-  local URL="https://api.figma.com/v1/files/${FILE_KEY}?ids=${IDS_SORTED}&depth=${DEPTH}"
   local HDR=/tmp/figma-hdr.$$
-  local ATTEMPT=0 MAX=3
-  while [ "$ATTEMPT" -lt "$MAX" ]; do
-    local BODY=$(curl -sD "$HDR" -H "X-Figma-Token: $TOKEN" "$URL")
-    local STATUS=$(head -1 "$HDR" | awk '{print $2}')
-    if [ "$STATUS" = "200" ]; then
-      echo "$BODY" > "$CACHE_FILE"
+  local BODY=""
+
+  # _figma_try_endpoint: attempts one URL up to MAX times, respecting Retry-After ≤ 300s.
+  # On success, sets $BODY and returns 0. On short-term error, returns 1. On plan-quota
+  # exhaustion (Retry-After > 300s), returns 2. Called for both primary and /nodes.
+  _figma_try_endpoint() {
+    local URL="$1" LABEL="$2"
+    local ATTEMPT=0 MAX=3
+    while [ "$ATTEMPT" -lt "$MAX" ]; do
+      BODY=$(curl -sD "$HDR" -H "X-Figma-Token: $TOKEN" "$URL")
+      local STATUS=$(head -1 "$HDR" | awk '{print $2}')
+      if [ "$STATUS" = "200" ]; then
+        return 0
+      fi
+      if [ "$STATUS" = "429" ]; then
+        local WAIT=$(grep -i '^retry-after:' "$HDR" | awk '{print $2}' | tr -d '\r')
+        WAIT="${WAIT:-10}"
+        local TIER=$(grep -i '^x-figma-rate-limit-type:' "$HDR" | awk '{print $2}' | tr -d '\r')
+        if [ "$WAIT" -gt 300 ]; then
+          echo "figma_fetch: ${LABEL} plan quota exhausted (tier=${TIER:-unknown}, Retry-After=${WAIT}s ≈ $((WAIT/3600))h)" >&2
+          return 2
+        fi
+        echo "figma_fetch: ${LABEL} rate limited (attempt $((ATTEMPT+1))/$MAX), waiting ${WAIT}s" >&2
+        sleep "$WAIT"
+        ATTEMPT=$((ATTEMPT+1))
+        continue
+      fi
+      echo "figma_fetch: ${LABEL} HTTP $STATUS on $URL" >&2
+      echo "$BODY" >&2
+      return 1
+    done
+    echo "figma_fetch: ${LABEL} giving up after $MAX attempts" >&2
+    return 1
+  }
+
+  # 1. Try primary /v1/files (rich response, includes ancestor chain).
+  local PRIMARY_URL="https://api.figma.com/v1/files/${FILE_KEY}?ids=${IDS_SORTED}&depth=${DEPTH}"
+  _figma_try_endpoint "$PRIMARY_URL" "primary /v1/files"
+  local PRIMARY_RC=$?
+
+  if [ "$PRIMARY_RC" = "0" ]; then
+    echo "$BODY" > "$CACHE_FILE"
+    cat > "$META_FILE" <<EOF
+kind=nodes
+fileKey=$FILE_KEY
+ids=$IDS_SORTED
+depth=$DEPTH
+endpoint=files
+EOF
+    echo "$BODY"
+    rm -f "$HDR"
+    return 0
+  fi
+
+  # 2. Only fall back to /nodes when primary is plan-quota-exhausted. Short-term errors
+  #    (network glitch, malformed request) do not warrant burning /nodes budget.
+  if [ "$PRIMARY_RC" = "2" ]; then
+    echo "figma_fetch: falling back to /v1/files/${FILE_KEY}/nodes (separate rate-limit bucket)" >&2
+    local NODES_URL="https://api.figma.com/v1/files/${FILE_KEY}/nodes?ids=${IDS_SORTED}&depth=${DEPTH}"
+    _figma_try_endpoint "$NODES_URL" "fallback /nodes"
+    local NODES_RC=$?
+
+    if [ "$NODES_RC" = "0" ]; then
+      # /nodes returns { "nodes": { "<id>": { "document": {...}, ... } } }.
+      # Normalize into the primary shape { "document": { "children": [...] } } so downstream
+      # walkers (including the Typical usage snippets below) work unchanged.
+      local NORMALIZED
+      NORMALIZED=$(echo "$BODY" | python3 -c "
+import json, sys
+raw = json.loads(sys.stdin.read(), strict=False)
+docs = [n.get('document') for n in (raw.get('nodes') or {}).values() if n and n.get('document')]
+out = {
+    'document': {'id': 'synthetic-root', 'type': 'DOCUMENT', 'children': docs},
+    '_figma_source': 'nodes-fallback',
+}
+print(json.dumps(out, ensure_ascii=False))
+")
+      if [ -z "$NORMALIZED" ]; then
+        echo "figma_fetch: /nodes response could not be normalized" >&2
+        rm -f "$HDR"
+        return 1
+      fi
+      echo "$NORMALIZED" > "$CACHE_FILE"
       cat > "$META_FILE" <<EOF
 kind=nodes
 fileKey=$FILE_KEY
 ids=$IDS_SORTED
 depth=$DEPTH
+endpoint=nodes-fallback
 EOF
-      echo "$BODY"
+      echo "$NORMALIZED"
       rm -f "$HDR"
       return 0
     fi
-    if [ "$STATUS" = "429" ]; then
-      local WAIT=$(grep -i '^retry-after:' "$HDR" | awk '{print $2}' | tr -d '\r')
-      WAIT="${WAIT:-10}"
-      local TIER=$(grep -i '^x-figma-rate-limit-type:' "$HDR" | awk '{print $2}' | tr -d '\r')
-      # If Retry-After exceeds 5 minutes, the token has hit its rolling plan quota (not a
-      # short-term rate limit). Do NOT sleep for hours/days — surface the failure now.
-      if [ "$WAIT" -gt 300 ]; then
-        echo "figma_fetch: PLAN QUOTA EXHAUSTED (tier=${TIER:-unknown}, Retry-After=${WAIT}s ≈ $((WAIT/3600))h). Token is out of budget on the Professional plan — new unique fetches will fail until the rolling window resets. Rely on the disk cache for previously-fetched nodes." >&2
-        rm -f "$HDR"
-        return 2
-      fi
-      echo "figma_fetch: rate limited (attempt $((ATTEMPT+1))/$MAX), waiting ${WAIT}s" >&2
-      sleep "$WAIT"
-      ATTEMPT=$((ATTEMPT+1))
-      continue
+
+    if [ "$NODES_RC" = "2" ]; then
+      echo "figma_fetch: BOTH primary and /nodes are plan-quota-exhausted. Rely on the disk cache for previously-fetched nodes; new unique fetches will fail until Figma's rolling window resets." >&2
+      rm -f "$HDR"
+      return 2
     fi
-    echo "figma_fetch: HTTP $STATUS on $URL" >&2
-    echo "$BODY" >&2
+    # /nodes returned a short-term error — surface it and give up.
     rm -f "$HDR"
     return 1
-  done
-  echo "figma_fetch: giving up after $MAX attempts" >&2
+  fi
+
+  # Primary short-term error (non-429 or 429 with Retry-After ≤ 300s that ran out of attempts).
   rm -f "$HDR"
   return 1
 }
@@ -176,44 +244,72 @@ figma_images() {
     fi
   fi
 
-  local URL="https://api.figma.com/v1/images/${FILE_KEY}?ids=${IDS_SORTED}&scale=${SCALE}&format=${FORMAT}"
   local HDR=/tmp/figma-hdr.$$
-  local ATTEMPT=0 MAX=3
-  while [ "$ATTEMPT" -lt "$MAX" ]; do
-    local BODY=$(curl -sD "$HDR" -H "X-Figma-Token: $TOKEN" "$URL")
-    local STATUS=$(head -1 "$HDR" | awk '{print $2}')
-    if [ "$STATUS" = "200" ]; then
-      echo "$BODY" > "$CACHE_FILE"
-      cat > "$META_FILE" <<EOF
+  local BODY=""
+
+  # _figma_images_try_endpoint: attempts one URL up to MAX times, respecting Retry-After ≤ 300s.
+  # Mirrors _figma_try_endpoint in figma_fetch for structural consistency. NOTE: /v1/images
+  # has NO sibling REST endpoint to fall back to (verified: /v1/images/{key}/nodes → 404).
+  # Its rate-limit bucket is independent from /v1/files, but when this bucket is exhausted,
+  # the only recourse is the disk cache (short-lived S3 URLs) or waiting for the reset.
+  # On success, sets $BODY and returns 0. On short-term error, returns 1. On plan-quota
+  # exhaustion (Retry-After > 300s), returns 2.
+  _figma_images_try_endpoint() {
+    local URL="$1" LABEL="$2"
+    local ATTEMPT=0 MAX=3
+    while [ "$ATTEMPT" -lt "$MAX" ]; do
+      BODY=$(curl -sD "$HDR" -H "X-Figma-Token: $TOKEN" "$URL")
+      local STATUS=$(head -1 "$HDR" | awk '{print $2}')
+      if [ "$STATUS" = "200" ]; then
+        return 0
+      fi
+      if [ "$STATUS" = "429" ]; then
+        local WAIT=$(grep -i '^retry-after:' "$HDR" | awk '{print $2}' | tr -d '\r')
+        WAIT="${WAIT:-10}"
+        local TIER=$(grep -i '^x-figma-rate-limit-type:' "$HDR" | awk '{print $2}' | tr -d '\r')
+        if [ "$WAIT" -gt 300 ]; then
+          echo "figma_images: ${LABEL} plan quota exhausted (tier=${TIER:-unknown}, Retry-After=${WAIT}s ≈ $((WAIT/3600))h)" >&2
+          return 2
+        fi
+        echo "figma_images: ${LABEL} rate limited (attempt $((ATTEMPT+1))/$MAX), waiting ${WAIT}s" >&2
+        sleep "$WAIT"
+        ATTEMPT=$((ATTEMPT+1))
+        continue
+      fi
+      echo "figma_images: ${LABEL} HTTP $STATUS on $URL" >&2
+      echo "$BODY" >&2
+      return 1
+    done
+    echo "figma_images: ${LABEL} giving up after $MAX attempts" >&2
+    return 1
+  }
+
+  local PRIMARY_URL="https://api.figma.com/v1/images/${FILE_KEY}?ids=${IDS_SORTED}&scale=${SCALE}&format=${FORMAT}"
+  _figma_images_try_endpoint "$PRIMARY_URL" "/v1/images"
+  local RC=$?
+
+  if [ "$RC" = "0" ]; then
+    echo "$BODY" > "$CACHE_FILE"
+    cat > "$META_FILE" <<EOF
 kind=images
 fileKey=$FILE_KEY
 ids=$IDS_SORTED
 scale=$SCALE
 format=$FORMAT
+endpoint=images
 EOF
-      echo "$BODY"
-      rm -f "$HDR"
-      return 0
-    fi
-    if [ "$STATUS" = "429" ]; then
-      local WAIT=$(grep -i '^retry-after:' "$HDR" | awk '{print $2}' | tr -d '\r')
-      WAIT="${WAIT:-10}"
-      if [ "$WAIT" -gt 300 ]; then
-        echo "figma_images: PLAN QUOTA EXHAUSTED (Retry-After=${WAIT}s). Fall back to cached URLs or defer visual checks." >&2
-        rm -f "$HDR"
-        return 2
-      fi
-      echo "figma_images: rate limited (attempt $((ATTEMPT+1))/$MAX), waiting ${WAIT}s" >&2
-      sleep "$WAIT"
-      ATTEMPT=$((ATTEMPT+1))
-      continue
-    fi
-    echo "figma_images: HTTP $STATUS on $URL" >&2
-    echo "$BODY" >&2
+    echo "$BODY"
     rm -f "$HDR"
-    return 1
-  done
-  echo "figma_images: giving up after $MAX attempts" >&2
+    return 0
+  fi
+
+  if [ "$RC" = "2" ]; then
+    echo "figma_images: no REST fallback available for /v1/images. Rely on the disk cache (if fresh) or defer visual checks until the bucket resets." >&2
+    rm -f "$HDR"
+    return 2
+  fi
+
+  # Short-term error (non-429 or 429 with Retry-After ≤ 300s that ran out of attempts).
   rm -f "$HDR"
   return 1
 }
@@ -260,9 +356,15 @@ walk(data.get('document', {}))
 "
 ```
 
-### Fallback endpoint
+### Fallback endpoint (automatic)
 
-If `/v1/files/{key}?ids=...&depth=...` returns an unrecoverable error, fall back to `/v1/files/{key}/nodes?ids=<nodeId>&depth=8`. Same response shape under a `nodes[<nodeId>].document` key. Strict per-token rate limit — use sparingly.
+`figma_fetch` handles the `/v1/files/{key}/nodes` fallback transparently. When the primary `/v1/files` endpoint returns 429 with `Retry-After > 300s`, the helper automatically re-issues against `/nodes` (a separate rate-limit bucket on the same token) and normalizes the response.
+
+The raw `/nodes` response shape is `{ "nodes": { "<id>": { "document": {...} } } }`, but the helper rewrites it into the primary-compatible shape `{ "document": { "children": [ ...node.document ] }, "_figma_source": "nodes-fallback" }` before caching and emitting. Downstream walkers (including the "Typical usage" snippets above) work unchanged — check `data.get('_figma_source') == 'nodes-fallback'` if you need to know which endpoint served the request.
+
+Only when BOTH primary and `/nodes` are quota-exhausted does the helper return exit code 2. Do not call `/nodes` manually — the helper is the single entry point.
+
+**`figma_images` does NOT have an equivalent fallback.** `/v1/images` has no sibling REST endpoint (`/v1/images/{key}/nodes` returns 404). Its rate-limit bucket is independent from `/v1/files`, so it will often work when `figma_fetch` is throttled — but when it exhausts, `figma_images` returns exit code 2 with no alternative REST path. Fall back to the disk cache (S3 URLs are short-lived, TTL ~1h) or wait for the bucket reset. The internal try-endpoint helper mirrors `figma_fetch`'s structure only for consistent error semantics.
 
 ## What to extract
 

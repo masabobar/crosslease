@@ -618,7 +618,6 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
           </div>
         </CardContent>
       </Card>
-
     </form>
   )
 }
