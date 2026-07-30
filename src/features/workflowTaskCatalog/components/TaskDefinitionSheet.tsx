@@ -335,8 +335,9 @@ function TaskDefinitionSheet({
     const payload = toWirePayload(values)
 
     if (isEdit && task) {
-      // layer_action, task_code and parent_task_id are absent from UpdateTaskRequest — they are
-      // immutable once created, so they are never sent even though the form still holds them.
+      // layer_action, task_code and parent_task_id are absent from UpdateTaskRequest because they
+      // are immutable once created. This annotation only narrows the type — the payload still
+      // carries them at runtime, so the api layer strips them (see toUpdateTaskBody).
       const body: UpdateTaskRequest = payload
       updateTask.mutate(
         { catalogId, versionId, taskId: task.id, body },

@@ -1,4 +1,5 @@
 import { api } from "@/lib/api"
+import { toUpdateTaskBody } from "@/features/workflowTaskCatalog/utils"
 import {
   AuditTrailResponseSchema,
   CatalogDetailResponseSchema,
@@ -110,9 +111,10 @@ export async function updateCatalogTask(
   taskId: string,
   body: UpdateTaskRequest
 ): Promise<TaskResponseWithWarnings> {
+  // Strip the immutable fields the caller's shared payload still carries — see toUpdateTaskBody.
   const data = await api.patch(
     `/workflow-task-catalogs/${catalogId}/versions/${versionId}/tasks/${taskId}`,
-    body
+    toUpdateTaskBody(body)
   )
   return TaskResponseWithWarningsSchema.parse(data)
 }
