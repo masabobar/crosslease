@@ -12,9 +12,23 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if ! curl -sf --connect-timeout 5 "$OPENAPI_URL" -o "$TEMP_DIR/openapi.json" 2>/dev/null; then
-  echo "⚠️  Could not reach dev API — skipping schema drift check."
+# Fails CLOSED. This check used to `exit 0` when the API was unreachable, which meant a
+# green push proved nothing — a stale contract sat on develop unnoticed because one machine's
+# fetch happened to fail. If you are genuinely offline, skip it deliberately:
+#   SKIP_OPENAPI_DRIFT_CHECK=1 git push
+# and re-run `pnpm fetch:openapi` before opening the MR.
+if [ "$SKIP_OPENAPI_DRIFT_CHECK" = "1" ]; then
+  echo "⚠️  SKIP_OPENAPI_DRIFT_CHECK=1 — drift check deliberately skipped."
+  echo "   The contract is UNVERIFIED for this push. Re-run pnpm fetch:openapi before the MR."
   exit 0
+fi
+
+if ! curl -sf --connect-timeout 10 --retry 2 "$OPENAPI_URL" -o "$TEMP_DIR/openapi.json" 2>/dev/null; then
+  echo "❌ Could not reach the dev API, so schema drift could NOT be checked."
+  echo "   Not skipping: an unverified contract is how drift reaches develop unnoticed."
+  echo "   If you are offline and accept that risk, push with:"
+  echo "     SKIP_OPENAPI_DRIFT_CHECK=1 git push"
+  exit 1
 fi
 
 corepack pnpm exec prettier --write "$TEMP_DIR/openapi.json" 2>/dev/null
@@ -25,8 +39,8 @@ diff -q openapi.json "$TEMP_DIR/openapi.json" >/dev/null 2>&1 || DRIFT=1
 diff -q src/generated/api.ts "$TEMP_DIR/api.ts" >/dev/null 2>&1 || DRIFT=1
 
 if [ "$DRIFT" -eq 1 ]; then
-  echo "❌ OpenAPI schema drift detected — backend has new or changed endpoints."
-  echo "   Run: pnpm fetch:openapi && corepack pnpm exec prettier --write openapi.json"
+  echo "❌ OpenAPI schema drift detected — the backend contract has changed."
+  echo "   Run: pnpm fetch:openapi        (now formats openapi.json for you)"
   echo "   Then: git add openapi.json src/generated/api.ts && git commit"
   exit 1
 fi

@@ -174,7 +174,6 @@
         "mandatory": "Mandatory",
         "stage": "Stage",
         "active": "Active",
-        "removeDocument": "Remove document",
         "parentTask": "Parent task",
         "conditionalTrigger": "Conditional trigger",
         "processContexts": "Applicable process contexts"
