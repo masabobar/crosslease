@@ -1,8 +1,8 @@
-# API-First Contract Verification (Web & Mobile)
+# API-First Contract Verification
 
 **MANDATORY: Before writing any frontend code that consumes an HTTP/RPC backend, verify the API contract covers everything the screen needs. If anything is missing, BLOCK frontend implementation and open a backend story/bug instead.**
 
-This rule applies to web (browser SPA, SSR, MPA), mobile native (iOS, Android), and mobile cross-platform (React Native, Flutter, Expo) — anything that consumes a backend API to render a screen. It does **not** apply to backend-to-backend RPC, internal CLI tools, or pure infra work.
+This rule applies to every screen in this browser SPA that consumes the backend API to render. It does **not** apply to backend-to-backend RPC, internal CLI tools, or pure infra work.
 
 It works alongside `.claude/rules/screen-driven-backlog.md` (which scopes a frontend unit to one screen and produces the screen → endpoint mapping this file's Phase A consumes). This file governs _when frontend implementation is allowed to start_.
 
@@ -126,13 +126,13 @@ The contract check can be skipped only when:
 - The story does not call any backend API (pure UI refactor, animation tweak, asset swap, accessibility fix on existing components)
 - The story consumes a third-party API outside the project's backend (Stripe, Mapbox, etc.) — in which case substitute the third-party's published spec for the contract source
 
-In every other web/mobile story, this rule applies.
+In every other frontend story, this rule applies.
 
 ---
 
 ## 6. Why
 
-- Frontend built against an imagined contract is the single biggest source of late-stage rework in mobile/web projects.
+- Frontend built against an imagined contract is the single biggest source of late-stage rework.
 - Stub-and-fix-later produces double work: frontend assumes shape A, backend ships shape B, both must be reconciled at the worst possible time (during integration, with deadlines).
 - A 5-minute contract review at plan time prevents days of integration debugging.
 - The cost of saying "API needs X first" before frontend starts is hours; the cost of discovering it during frontend testing is days.

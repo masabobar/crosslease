@@ -86,8 +86,9 @@ design implies exists too. Map every call the screen makes, not the obvious one.
   case they fold into the parent screen.
 - **Cross-cutting behaviour** — a shared table primitive, a global error boundary — is not a screen unit.
 
-This project is desktop-first (CLAUDE.md §Responsive design); there is no mobile target, so there is no
-per-platform variant of this rule.
+This repo is a browser SPA — React 19 + Vite, with no native or cross-platform mobile build in
+`package.json` — so there is no per-platform variant of this rule. Viewport is a separate question:
+desktop-first and semi-responsive, per CLAUDE.md §Responsive design.
 
 ---
 
