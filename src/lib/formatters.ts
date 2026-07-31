@@ -46,10 +46,15 @@ export function formatDate(dateStr: string | null): string {
   })
 }
 
+// Rendered in the viewer's own timezone, so the zone label is not decoration. Audit and history
+// surfaces are read as evidence, and a bare "14:32" cannot be reconciled against a UTC record —
+// US 15.18 asks for "timestamp UTC" outright (Q-047). `timeZoneName: "short"` gives CET/CEST in
+// Europe and a GMT±N offset elsewhere: always unambiguous, never bare. It also explains the date
+// half, which is local too and can therefore sit a day either side of the UTC date.
 export function formatDateTime(dateStr: string | null): string {
   if (!dateStr) return "—"
   const date = new Date(dateStr)
-  return `${date.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString(DATE_LOCALE, { hour: "2-digit", minute: "2-digit" })}`
+  return `${date.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "short", year: "numeric" })}, ${date.toLocaleTimeString(DATE_LOCALE, { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}`
 }
 
 export function getInitials(firstName: string, lastName: string): string {
