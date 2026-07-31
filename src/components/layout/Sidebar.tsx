@@ -25,12 +25,14 @@ import {
   PATHS,
   PLATFORM_ADMINISTRATION_PREFIX,
   BUSINESS_CONFIGURATION_PREFIX,
+  tenantDetail,
 } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useCurrentUserPermissions } from "@/features/users/hooks/useCurrentUserPermissions"
 import {
   USER_MANAGEMENT_ALLOWED_ROLES,
   LC_ONLY_ROLES,
+  BANK_POWER_USER_ROLE,
 } from "@/features/users/types"
 import { canAccessAuditTrail as hasAuditTrailAccess } from "@/features/audit/types"
 import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governed-actions/constants"
@@ -95,6 +97,12 @@ export function Sidebar() {
     NOTIFICATION_CONFIG_ALLOWED_ROLES.includes(currentUser.role)
   const canAccessTenantManagement =
     !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
+  // A Bank Admin has no tenant list (US 29.3: ✗) but reads its own tenant (US 29.4:
+  // "R (own tenant)"), so it gets a direct link instead of a list to navigate from.
+  const ownTenantPath =
+    currentUser?.role === BANK_POWER_USER_ROLE && currentUser.tenant_id
+      ? tenantDetail(currentUser.tenant_id)
+      : null
   const canAccessPartnerRegistry =
     !!currentUser && PARTNER_VIEW_ALLOWED_ROLES.includes(currentUser.role)
   // Not gated on module activation — a tenant with the module inactive still sees the
@@ -564,6 +572,14 @@ export function Sidebar() {
                       to={PATHS.TENANT_MANAGEMENT}
                       label={t("nav.tenantManagement")}
                       testid="nav-tenant-management"
+                      isActive={isTenantManagementActive}
+                    />
+                  )}
+                  {ownTenantPath && (
+                    <SidebarNavLink
+                      to={ownTenantPath}
+                      label={t("nav.myTenant")}
+                      testid="nav-my-tenant"
                       isActive={isTenantManagementActive}
                     />
                   )}

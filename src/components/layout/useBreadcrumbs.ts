@@ -6,6 +6,7 @@ import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 export type BreadcrumbLabelKey =
@@ -138,12 +139,16 @@ export function useBreadcrumbs(): Crumb[] {
   }
 
   if (tenantDetailMatch) {
+    // The Bank Admin reaches its own tenant directly and has no tenant list (US 29.3),
+    // so the parent crumb is plain text for them — linking it would land on /403.
+    const canReachTenantList =
+      !!currentUser && TENANT_LIST_ALLOWED_ROLES.includes(currentUser.role)
     return [
       { labelKey: "breadcrumb.home" },
       { labelKey: "breadcrumb.platformAdministration" },
       {
         labelKey: "breadcrumb.tenantManagement",
-        path: PATHS.TENANT_MANAGEMENT,
+        ...(canReachTenantList && { path: PATHS.TENANT_MANAGEMENT }),
       },
       { label: detailTenant?.name ?? "…" },
     ]

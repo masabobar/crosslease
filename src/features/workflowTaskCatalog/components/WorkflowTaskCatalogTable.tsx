@@ -9,13 +9,16 @@ import type { CatalogListItem } from "@/features/workflowTaskCatalog/api/schema"
 // pattern used by other list tables in this codebase (ProductTemplateTable, PartnerTable,
 // TenantTable, UserTable); a full conversion to <Table>/<TableRow>/<TableCell> is out of
 // scope here.
+// Name is the only flexible column, so it absorbs whatever the fixed ones leave — widening a
+// fixed column narrows the name rather than overflowing the row. Layer fits "Catalog layer" on
+// one line; Created fits "30 Jul 2026, 15:40 CEST" on one line, the zone suffix added for Q-047.
 const COL_NAME = "flex-1 min-w-[160px]"
-const COL_LAYER = "w-[90px] shrink-0"
+const COL_LAYER = "w-[120px] shrink-0"
 const COL_ENTITY = "w-[140px] shrink-0"
 const COL_PRODUCT_TEMPLATE = "w-[150px] shrink-0"
 const COL_VALID_FROM = "w-[110px] shrink-0"
 const COL_VALID_UNTIL = "w-[110px] shrink-0"
-const COL_CREATED = "w-[150px] shrink-0"
+const COL_CREATED = "w-[190px] shrink-0"
 const COL_STATE = "w-[110px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5

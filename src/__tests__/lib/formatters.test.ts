@@ -78,6 +78,13 @@ describe("formatDateTime", () => {
     expect(result).toContain(",")
     expect(result.startsWith("20 Mar 2026,")).toBe(true)
   })
+
+  // The zone token itself is machine-dependent (CET, CEST, UTC, GMT+5:30 …) and TZ is not pinned
+  // for the suite, so this asserts the shape rather than a literal zone. What must never regress
+  // is that a time is emitted bare: an audit timestamp with no zone cannot be read as evidence.
+  it("labels the timezone so an audit timestamp is never ambiguous (Q-047)", () => {
+    expect(formatDateTime("2026-03-20T14:30:00Z")).toMatch(/\d{2}:\d{2} \S+$/)
+  })
 })
 
 describe("getInitials", () => {

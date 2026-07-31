@@ -44,6 +44,48 @@ export const USER_MANAGEMENT_ALLOWED_ROLES: readonly UserRole[] = [
 
 export const LC_ONLY_ROLES: readonly UserRole[] = ["leasing_company_user"]
 
+// The four constants below mirror the backend permission matrix for user administration
+// (`shared/permissions/matrix.py`). Per US-28.8, the Power User (Bank Admin) administers
+// onboarding for its own tenant; the backend scopes every one of these actions to the
+// caller's tenant and returns 404 for a target outside it.
+export const USER_INVITE_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "bank_power_user",
+]
+
+// Resend invitation, suspend, reactivate, deactivate, reset MFA.
+export const USER_LIFECYCLE_ACTION_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "bank_power_user",
+]
+
+export const USER_IDENTITY_EDIT_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "bank_power_user",
+]
+
+export const USER_EXPORT_ROLES: readonly UserRole[] = [
+  "system_admin",
+  "auditor",
+  "bank_power_user",
+]
+
+// Approving a pending invitation is Four-Eyes on platform roles only, so it stays
+// system_admin-only — a Bank Admin never sees a platform user in its tenant-scoped list.
+export const USER_APPROVE_ROLES: readonly UserRole[] = ["system_admin"]
+
+// Role change and auditor access-period update: the Bank Admin holds neither
+// `user:change_role` nor `user:update_access_period`.
+export const USER_ROLE_CHANGE_ROLES: readonly UserRole[] = ["system_admin"]
+
+// Roles a Bank Admin may invite. Platform roles and bank_power_user itself are
+// system_admin-only — the backend rejects them with 403 INVITE_ROLE_NOT_PERMITTED.
+export const BANK_ADMIN_INVITABLE_ROLES: readonly UserRole[] = [
+  "front_office",
+  "back_office",
+  "leasing_company_user",
+]
+
 // Roles that can use cross-tenant filters (Tenant + LG dropdowns).
 // Auditor is excluded: the backend scopes their results to their assigned tenant.
 export const TENANT_FILTER_VISIBLE_ROLES: readonly UserRole[] = [
@@ -134,6 +176,7 @@ export type UserModalActionType = Exclude<
 
 export const SYSTEM_ADMIN_ROLE = "system_admin" as const
 export const SUPPORT_USER_ROLE = "support_user" as const
+export const BANK_POWER_USER_ROLE = "bank_power_user" as const
 export const AUDITOR_ROLE = "auditor" as const
 export const FRONT_OFFICE_ROLE = "front_office" as const
 export const BACK_OFFICE_ROLE = "back_office" as const

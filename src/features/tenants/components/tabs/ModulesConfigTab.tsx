@@ -23,6 +23,12 @@ type ModulesConfigTabProps = {
   tenantId: string
   tenantName: string
   isAdmin: boolean
+  // US 29.4 restricts the full integration binding to System Admin; Support User sees it
+  // with the endpoint URL and credential scope redacted by the API. A Bank Admin is
+  // granted the Integration Active Flag only, which the API does not yet expose
+  // separately — so the whole section stays hidden for them rather than leaking the
+  // unredacted binding. See Q-049 in input/open-questions.md.
+  canViewIntegrationBinding: boolean
   tenantStatus: TenantStatus
 }
 
@@ -156,6 +162,7 @@ export function ModulesConfigTab({
   tenantId,
   tenantName,
   isAdmin,
+  canViewIntegrationBinding,
   tenantStatus,
 }: ModulesConfigTabProps) {
   const { t } = useTranslation("tenants")
@@ -252,18 +259,20 @@ export function ModulesConfigTab({
       </TenantInfoCard>
 
       {/* INTEGRATION BINDING */}
-      <div className="flex gap-6 items-start">
-        <div className="flex-1 min-w-0 max-w-xl">
-          <IntegrationBindingSection
-            tenantId={tenantId}
-            tenantName={tenantName}
-            isAdmin={isAdmin}
-            isArchived={isArchived}
-            dialogOpen={bindingDialogOpen}
-            onDialogOpenChange={setBindingDialogOpen}
-          />
+      {canViewIntegrationBinding && (
+        <div className="flex gap-6 items-start">
+          <div className="flex-1 min-w-0 max-w-xl">
+            <IntegrationBindingSection
+              tenantId={tenantId}
+              tenantName={tenantName}
+              isAdmin={isAdmin}
+              isArchived={isArchived}
+              dialogOpen={bindingDialogOpen}
+              onDialogOpenChange={setBindingDialogOpen}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -5,8 +5,9 @@ import {
   OPERATIONAL_TENANT_ROLES,
   PLATFORM_USER_ROLES,
   SENSITIVE_AUTH_RESTRICTED_ROLES,
-  SYSTEM_ADMIN_ROLE,
   TENANT_FILTER_VISIBLE_ROLES,
+  USER_APPROVE_ROLES,
+  USER_LIFECYCLE_ACTION_ROLES,
   USER_MANAGEMENT_ALLOWED_ROLES,
 } from "@/features/users/types"
 import type { UserRole, UserModalActionType } from "@/features/users/types"
@@ -121,21 +122,25 @@ export function getUserActionVisibility(
   role: UserRole,
   viewerRole: UserRole | null | undefined
 ): UserActionVisibility {
-  const isAdmin = viewerRole === SYSTEM_ADMIN_ROLE
   const canApprove =
-    isAdmin &&
+    !!viewerRole &&
+    USER_APPROVE_ROLES.includes(viewerRole) &&
     status === UserStatusSchema.enum.pending_approval &&
     FOUR_EYES_ROLES.includes(role)
+  const canRunLifecycleAction =
+    !!viewerRole && USER_LIFECYCLE_ACTION_ROLES.includes(viewerRole)
   const canResendInvitation =
-    isAdmin && status === UserStatusSchema.enum.invited
-  const canSuspend = isAdmin && status === UserStatusSchema.enum.active
-  const canReactivate = isAdmin && status === UserStatusSchema.enum.suspended
+    canRunLifecycleAction && status === UserStatusSchema.enum.invited
+  const canSuspend =
+    canRunLifecycleAction && status === UserStatusSchema.enum.active
+  const canReactivate =
+    canRunLifecycleAction && status === UserStatusSchema.enum.suspended
   const canDeactivate =
-    isAdmin &&
+    canRunLifecycleAction &&
     (status === UserStatusSchema.enum.active ||
       status === UserStatusSchema.enum.suspended)
   const canResetMfa =
-    isAdmin &&
+    canRunLifecycleAction &&
     (status === UserStatusSchema.enum.active ||
       status === UserStatusSchema.enum.suspended)
   return {

@@ -37,9 +37,9 @@ import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useExportUsers } from "@/features/users/hooks/useExportUsers"
 import {
-  AUDITOR_ROLE,
   EMPTY_FILTER_STATE,
-  SYSTEM_ADMIN_ROLE,
+  USER_EXPORT_ROLES,
+  USER_INVITE_ROLES,
 } from "@/features/users/types"
 import { formatDate } from "@/lib/formatters"
 import { buildPageNumbers } from "@/lib/pagination"
@@ -146,10 +146,10 @@ export default function UserManagementPage() {
   const { data: tenantsData } = useTenants(
     getUserFilterVisibility(currentUser?.role).tenant
   )
-  const canInvite = currentUser?.role === SYSTEM_ADMIN_ROLE
+  const canInvite =
+    !!currentUser && USER_INVITE_ROLES.includes(currentUser.role)
   const canExport =
-    currentUser?.role === SYSTEM_ADMIN_ROLE ||
-    currentUser?.role === AUDITOR_ROLE
+    !!currentUser && USER_EXPORT_ROLES.includes(currentUser.role)
   const { startExport, isExporting } = useExportUsers()
 
   const { data, isLoading, isError } = useUsers({

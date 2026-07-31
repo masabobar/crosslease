@@ -272,7 +272,10 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       label: t("detail.overview.tenantIdentity.defaultCurrency"),
       value: formatCurrency(tenant.default_currency),
     },
-    ...(fullTenant
+    // US 29.4 field spec: Tenant Description is "not visible to operational users", so
+    // it stays System Admin-only. (Support User never reaches it either way — the API
+    // omits it from their response shape.)
+    ...(fullTenant && isAdmin
       ? [
           {
             label: t("detail.overview.tenantIdentity.description"),
