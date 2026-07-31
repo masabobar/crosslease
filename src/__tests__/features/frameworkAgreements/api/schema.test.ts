@@ -15,17 +15,13 @@ import {
   FALinkedFinancingsResponseSchema,
   FAListItemSchema,
   FAListResponseSchema,
-  FAReactivatedResponseSchema,
   FAReconstructResponseSchema,
-  FASuspendedResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
   FieldDiffItemSchema,
   FrameworkAgreementWizardFormSchema,
-  ReactivateFARequestSchema,
   SelectableTemplateItemSchema,
   SelectableTemplatesResponseSchema,
-  SuspendFARequestSchema,
   TerminateFARequestSchema,
   TerminationReadinessResponseSchema,
   UpdateFARequestSchema,
@@ -722,61 +718,6 @@ describe("FrameworkAgreementWizardFormSchema", () => {
     expect(
       result.error!.issues.find(i => i.path[0] === "max_volume_eur")?.message
     ).toBe("required")
-  })
-})
-
-describe("SuspendFARequestSchema / FASuspendedResponseSchema", () => {
-  it("accepts a valid suspend request", () => {
-    expect(() =>
-      SuspendFARequestSchema.parse({
-        justification: "Suspending due to a covenant breach under review.",
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects a justification shorter than 20 characters", () => {
-    expect(() =>
-      SuspendFARequestSchema.parse({ justification: "too short" })
-    ).toThrow()
-  })
-
-  it("accepts a valid suspended response", () => {
-    expect(() =>
-      FASuspendedResponseSchema.parse({
-        id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
-        status: "suspended",
-        suspended_at: "2026-06-01T10:00:00Z",
-      })
-    ).not.toThrow()
-  })
-})
-
-describe("ReactivateFARequestSchema / FAReactivatedResponseSchema", () => {
-  it("accepts a valid reactivate request", () => {
-    expect(() =>
-      ReactivateFARequestSchema.parse({
-        justification: "Reactivating after covenant remediation confirmed.",
-        re_validation_confirmed: true,
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects a missing re_validation_confirmed", () => {
-    expect(() =>
-      ReactivateFARequestSchema.parse({
-        justification: "Reactivating after covenant remediation confirmed.",
-      })
-    ).toThrow()
-  })
-
-  it("accepts a valid reactivated response", () => {
-    expect(() =>
-      FAReactivatedResponseSchema.parse({
-        id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
-        status: "active",
-        reactivated_at: "2026-06-01T10:00:00Z",
-      })
-    ).not.toThrow()
   })
 })
 

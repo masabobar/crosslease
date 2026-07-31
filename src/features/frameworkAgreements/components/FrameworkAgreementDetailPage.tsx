@@ -11,7 +11,6 @@ import {
   getFrameworkAgreementDisplayStatus,
 } from "@/features/frameworkAgreements/utils"
 import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementDialog"
-import { SuspendFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/SuspendFrameworkAgreementDialog"
 import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
@@ -60,7 +59,6 @@ export default function FrameworkAgreementDetailPage() {
   const { t } = useTranslation("frameworkAgreements")
   const { id } = useParams<{ id: string }>()
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
-  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -142,28 +140,6 @@ export default function FrameworkAgreementDetailPage() {
               </Button>
             )}
           {data.status === FALifecycleStatusSchema.enum.active &&
-            canManageFrameworkAgreement && (
-              <>
-                <Button
-                  variant="outline"
-                  data-testid="suspend-fa-button"
-                  onClick={() => setSuspendDialogOpen(true)}
-                >
-                  {t("detail.actions.suspend")}
-                </Button>
-                <Button
-                  variant="outline"
-                  data-testid="terminate-fa-button"
-                  onClick={() => setTerminateDialogOpen(true)}
-                >
-                  {t("detail.actions.terminate")}
-                </Button>
-              </>
-            )}
-          {/* Reactivation is hidden from the UI per PRD1042-1495 (B5) — MVP lifecycle
-              is CRUD + Suspend/Terminate only. ReactivateFrameworkAgreementDialog and
-              its hook are retained, unused, for when this is re-enabled. */}
-          {data.status === FALifecycleStatusSchema.enum.suspended &&
             canManageFrameworkAgreement && (
               <Button
                 variant="outline"
@@ -336,12 +312,6 @@ export default function FrameworkAgreementDetailPage() {
                   label={t("fields.validUntil")}
                   value={data.valid_until ?? t("fields.openEnded")}
                 />
-                {data.suspended_at && (
-                  <ReviewRow
-                    label={t("detail.fields.suspendedAt")}
-                    value={formatDateTime(data.suspended_at)}
-                  />
-                )}
                 {data.terminated_at && (
                   <ReviewRow
                     label={t("detail.fields.terminatedAt")}
@@ -389,11 +359,6 @@ export default function FrameworkAgreementDetailPage() {
         frameworkAgreementId={data.id}
         validFrom={data.valid_from}
         validUntil={data.valid_until}
-      />
-      <SuspendFrameworkAgreementDialog
-        open={suspendDialogOpen}
-        onOpenChange={setSuspendDialogOpen}
-        frameworkAgreementId={data.id}
       />
       <TerminateFrameworkAgreementDialog
         open={terminateDialogOpen}

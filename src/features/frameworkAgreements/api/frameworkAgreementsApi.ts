@@ -9,9 +9,7 @@ import {
   FALCPartnersResponseSchema,
   FALinkedFinancingsResponseSchema,
   FAListResponseSchema,
-  FAReactivatedResponseSchema,
   FAReconstructResponseSchema,
-  FASuspendedResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
   SelectableTemplatesResponseSchema,
@@ -32,14 +30,10 @@ import type {
   FALifecycleStatus,
   FALinkedFinancingsResponse,
   FAListResponse,
-  FAReactivatedResponse,
   FAReconstructResponse,
-  FASuspendedResponse,
   FATerminatedResponse,
   FAUtilizationResponse,
-  ReactivateFARequest,
   SelectableTemplatesResponse,
-  SuspendFARequest,
   TerminateFARequest,
   TerminationReadinessResponse,
   UpdateFARequest,
@@ -174,22 +168,6 @@ export async function attachFrameworkAgreementDocument(
     { headers: { "Content-Type": "multipart/form-data" } }
   )
   return AttachDocumentResponseSchema.parse(data)
-}
-
-export async function suspendFrameworkAgreement(
-  id: string,
-  body: SuspendFARequest
-): Promise<FASuspendedResponse> {
-  const data = await api.post(`/framework-agreements/${id}/suspend`, body)
-  return FASuspendedResponseSchema.parse(data)
-}
-
-export async function reactivateFrameworkAgreement(
-  id: string,
-  body: ReactivateFARequest
-): Promise<FAReactivatedResponse> {
-  const data = await api.post(`/framework-agreements/${id}/reactivate`, body)
-  return FAReactivatedResponseSchema.parse(data)
 }
 
 export async function terminateFrameworkAgreement(

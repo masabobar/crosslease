@@ -165,14 +165,12 @@
       "createdAt": "Created at",
       "activatedBy": "Activated by",
       "activatedAt": "Activated at",
-      "suspendedAt": "Suspended at",
       "terminatedAt": "Terminated at"
     },
     "copied": "Copied",
     "actions": {
       "activate": "Activate",
       "edit": "Edit",
-      "suspend": "Suspend",
       "terminate": "Terminate"
     },
     "financingsEmptyState": "No financings yet",
@@ -187,21 +185,6 @@
     "effectiveFrom": "Effective from",
     "effectiveFromOptional": "Optional — defaults to now",
     "confirmButton": "Activate agreement"
-  },
-  "suspend": {
-    "dialogTitle": "Suspend framework agreement",
-    "justification": "Justification",
-    "justificationHint": "Mandatory. Stored in the audit trail.",
-    "effectiveFrom": "Effective from",
-    "effectiveFromOptional": "Optional — defaults to now",
-    "confirmButton": "Suspend agreement"
-  },
-  "reactivate": {
-    "dialogTitle": "Reactivate framework agreement",
-    "reValidationConfirmed": "I confirm the agreement's terms have been re-validated and remain accurate",
-    "justification": "Justification",
-    "justificationHint": "Mandatory. Stored in the audit trail.",
-    "confirmButton": "Reactivate agreement"
   },
   "terminate": {
     "dialogTitle": "Terminate framework agreement",

@@ -45,14 +45,11 @@ const activeAgreement: FADetailResponse = {
 }
 
 describe("isFrameworkAgreementDraft", () => {
-  it.each(["active", "suspended", "terminated"] as const)(
-    "is false for %s",
-    status => {
-      expect(isFrameworkAgreementDraft({ ...activeAgreement, status })).toBe(
-        false
-      )
-    }
-  )
+  it.each(["active", "terminated"] as const)("is false for %s", status => {
+    expect(isFrameworkAgreementDraft({ ...activeAgreement, status })).toBe(
+      false
+    )
+  })
 
   it("is true for draft", () => {
     expect(
