@@ -42,6 +42,7 @@ import type {
   DraftRef,
   ProductTemplateWizardStep,
 } from "@/features/productTemplates/types"
+import { WIZARD_STEP_FIELDS } from "@/features/productTemplates/types"
 import { WizardStepper } from "@/features/productTemplates/components/WizardStepper"
 import { IdentityStep } from "@/features/productTemplates/components/steps/IdentityStep"
 import { BehavioralSettingsStep } from "@/features/productTemplates/components/steps/BehavioralSettingsStep"
@@ -59,31 +60,6 @@ const ORDERED_STEPS: ProductTemplateWizardStep[] = [
   "eligibility",
   "review",
 ]
-
-const STEP_FIELDS: Record<
-  ProductTemplateWizardStep,
-  (keyof ProductTemplateWizardForm)[]
-> = {
-  identity: ["template_name"],
-  behavioral: [
-    "financing_type",
-    "legal_structure",
-    "payment_timing",
-    "rate_basis",
-    "calculation_model",
-    "first_installment_rule",
-    "disbursement_derivation_rule",
-  ],
-  eligibility: [
-    "allowed_asset_categories",
-    "min_term_months",
-    "max_term_months",
-    "max_ltv_ratio",
-    "valid_from",
-    "valid_until",
-  ],
-  review: [],
-}
 
 // Builds the update-shaped wire payload from form values, omitting an empty valid_until.
 function toUpdatePayload(
@@ -221,7 +197,7 @@ function WizardFormView({
   const isReviewStep = step === "review"
 
   async function handleNext() {
-    const fields = STEP_FIELDS[step]
+    const fields = WIZARD_STEP_FIELDS[step]
     const valid = await form.trigger(fields)
     if (!valid) return
     setStep(ORDERED_STEPS[currentIndex + 1])
@@ -262,7 +238,7 @@ function WizardFormView({
   }
 
   async function handleSaveDraft() {
-    const fields = STEP_FIELDS[step]
+    const fields = WIZARD_STEP_FIELDS[step]
     const valid = await form.trigger(fields)
     if (!valid) return
     try {
