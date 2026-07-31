@@ -48,7 +48,7 @@ English-only keeps the project collaboration-ready, AI/tooling-compatible, searc
 
 ### 2.1 Strict Limits
 
-**All documentation files MUST follow these limits:**
+**Every documentation file MUST follow these limits — except registers, which are exempt per §2.3:**
 
 | File Type           | Max Lines     | Target Lines | Rationale                        |
 | ------------------- | ------------- | ------------ | -------------------------------- |
@@ -58,7 +58,8 @@ English-only keeps the project collaboration-ready, AI/tooling-compatible, searc
 | Technical specs     | **600 lines** | 400-500      | Comprehensive but manageable     |
 | Architecture docs   | **600 lines** | 400-500      | Detailed but scannable           |
 | PRD (Product Req)   | **400 lines** | 300-350      | Complete but concise             |
-| Progress files      | **300 lines** | 200-250      | Status tracking                  |
+| Progress snapshots  | **300 lines** | 200-250      | A status at one point in time    |
+| Registers, journals | **no cap**    | —            | Grow by design — see §2.3        |
 | Templates           | **300 lines** | 200-250      | Reusable patterns                |
 
 ### 2.2 When to Split Files
@@ -78,16 +79,22 @@ English-only keeps the project collaboration-ready, AI/tooling-compatible, searc
    - Keep only essential overview
    - Link to detailed docs in separate files
 
-**Example:**
+### 2.3 Registers Are Exempt — Archive, Don't Compress
 
-```
-Before:
-- phase-2-core.md (350 lines) ❌ TOO LARGE
+A **register** is a document you land in rather than read through: `open-questions.md`, `DASHBOARD.md`,
+per-epic status files. They accumulate by design, so a line cap forces deleting history to make room for
+history. `open-questions.md` has run past 800 lines for months and is the most-used artefact in
+`.project-management/` — length was never what made it usable; structure was.
 
-After:
-- phase-2a-core-features.md (180 lines) ✅
-- phase-2b-integrations.md (170 lines) ✅
-```
+Registers are governed by structure instead:
+
+- Summary or index at the top, one entry per item below — the reader greps, never scrolls
+- Superseded / resolved / cancelled entries **move** to a `## Resolved` or `## Superseded` section, or to
+  `<name>-archive.md`. Never deleted, never summarised away
+- Split only on a real seam in meaning — status versus cross-cutting findings, say. **Never on line
+  count**: splitting a register by range just means grepping two files instead of one
+
+Compressing a register to hit a number is a defect, not housekeeping. If it feels lossy, it is.
 
 ---
 
