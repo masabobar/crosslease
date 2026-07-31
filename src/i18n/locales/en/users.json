@@ -465,6 +465,8 @@
     "USER_NOT_ACTIVE": "Operation requires an active user account.",
     "EXPORT_TOO_MANY_JOBS": "You have too many exports in progress. Please wait for one to finish.",
     "AUDITOR_PROVISIONING_NOT_ALLOWED": "This tenant does not allow auditor accounts. Enable auditor access for the tenant before inviting this user.",
+    "INVITE_ROLE_NOT_PERMITTED": "Your role does not allow inviting a user with this role, or into this tenant.",
+    "LAST_ACTIVE_ADMIN": "This is the last active administrator. Assign another one before performing this action.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   },
   "export": {

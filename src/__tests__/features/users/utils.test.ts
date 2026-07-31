@@ -10,7 +10,16 @@ import {
   getUserListColumnVisibility,
   getUserFilterVisibility,
 } from "@/features/users/utils"
-import { USER_ROLES } from "@/features/users/types"
+import {
+  BANK_ADMIN_INVITABLE_ROLES,
+  USER_APPROVE_ROLES,
+  USER_EXPORT_ROLES,
+  USER_IDENTITY_EDIT_ROLES,
+  USER_INVITE_ROLES,
+  USER_LIFECYCLE_ACTION_ROLES,
+  USER_ROLE_CHANGE_ROLES,
+  USER_ROLES,
+} from "@/features/users/types"
 
 // ---------------------------------------------------------------------------
 // formatLastLogin
@@ -206,6 +215,69 @@ describe("getUserActionVisibility — canResetMfa", () => {
 })
 
 // ---------------------------------------------------------------------------
+// getUserActionVisibility — bank_power_user (Bank Admin)
+//
+// Per US-28.8 the Bank Admin administers onboarding for its own tenant, and the
+// backend grants it user:suspend / :reactivate / :deactivate / :resend_invitation /
+// :mfa_reset (scoped to that tenant). Approving is Four-Eyes on platform roles only,
+// which the Bank Admin never holds.
+// ---------------------------------------------------------------------------
+describe("getUserActionVisibility — bank_power_user", () => {
+  it("allows suspend on an active tenant user", () => {
+    const result = getUserActionVisibility(
+      "active",
+      "front_office",
+      "bank_power_user"
+    )
+    expect(result.canSuspend).toBe(true)
+    expect(result.canDeactivate).toBe(true)
+    expect(result.canResetMfa).toBe(true)
+    expect(result.canReactivate).toBe(false)
+  })
+
+  it("allows reactivate on a suspended tenant user", () => {
+    const result = getUserActionVisibility(
+      "suspended",
+      "back_office",
+      "bank_power_user"
+    )
+    expect(result.canReactivate).toBe(true)
+    expect(result.canDeactivate).toBe(true)
+    expect(result.canSuspend).toBe(false)
+  })
+
+  it("allows resend invitation on an invited tenant user", () => {
+    const result = getUserActionVisibility(
+      "invited",
+      "leasing_company_user",
+      "bank_power_user"
+    )
+    expect(result.canResendInvitation).toBe(true)
+  })
+
+  it("never allows approve — Four-Eyes on platform roles is system_admin-only", () => {
+    expect(
+      getUserActionVisibility(
+        "pending_approval",
+        "system_admin",
+        "bank_power_user"
+      ).canApprove
+    ).toBe(false)
+    expect(
+      getUserActionVisibility("pending_approval", "auditor", "bank_power_user")
+        .canApprove
+    ).toBe(false)
+  })
+
+  it("offers no action on a deactivated user", () => {
+    expect(
+      getUserActionVisibility("deactivated", "front_office", "bank_power_user")
+        .hasAnyAction
+    ).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // getUserListColumnVisibility — per US-04 role-based column visibility
 // ---------------------------------------------------------------------------
 describe("getUserListColumnVisibility — system_admin", () => {
@@ -394,6 +466,66 @@ describe("USER_ROLES — filter dropdown source of truth", () => {
     expect(USER_ROLES).toContain("back_office")
     expect(USER_ROLES).toContain("leasing_company_user")
     expect(USER_ROLES.length).toBe(7)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// User administration role constants — must mirror the backend permission matrix
+// (refinext-api/src/app/shared/permissions/matrix.py). A role listed here without
+// the matching backend grant produces a control that always fails with 403/404.
+// ---------------------------------------------------------------------------
+describe("user administration role constants", () => {
+  it("grants invite, lifecycle actions, identity edit and export to the Bank Admin", () => {
+    expect(USER_INVITE_ROLES).toContain("bank_power_user")
+    expect(USER_LIFECYCLE_ACTION_ROLES).toContain("bank_power_user")
+    expect(USER_IDENTITY_EDIT_ROLES).toContain("bank_power_user")
+    expect(USER_EXPORT_ROLES).toContain("bank_power_user")
+  })
+
+  it("withholds role change and approve from the Bank Admin — it holds neither permission", () => {
+    expect(USER_ROLE_CHANGE_ROLES).not.toContain("bank_power_user")
+    expect(USER_APPROVE_ROLES).not.toContain("bank_power_user")
+    expect(USER_ROLE_CHANGE_ROLES).toEqual(["system_admin"])
+    expect(USER_APPROVE_ROLES).toEqual(["system_admin"])
+  })
+
+  it("withholds every administration action from read-only and operational roles", () => {
+    for (const role of [
+      "support_user",
+      "front_office",
+      "back_office",
+      "leasing_company_user",
+    ] as const) {
+      expect(USER_INVITE_ROLES).not.toContain(role)
+      expect(USER_LIFECYCLE_ACTION_ROLES).not.toContain(role)
+      expect(USER_IDENTITY_EDIT_ROLES).not.toContain(role)
+    }
+  })
+
+  it("exports the user list for auditor but nothing else", () => {
+    expect(USER_EXPORT_ROLES).toContain("auditor")
+    expect(USER_LIFECYCLE_ACTION_ROLES).not.toContain("auditor")
+    expect(USER_INVITE_ROLES).not.toContain("auditor")
+  })
+
+  it("lets the Bank Admin invite only tenant-operational roles", () => {
+    expect(BANK_ADMIN_INVITABLE_ROLES).toEqual([
+      "front_office",
+      "back_office",
+      "leasing_company_user",
+    ])
+    // Platform roles and bank_power_user itself are system_admin-only — the backend
+    // answers 403 INVITE_ROLE_NOT_PERMITTED.
+    expect(BANK_ADMIN_INVITABLE_ROLES).not.toContain("bank_power_user")
+    expect(BANK_ADMIN_INVITABLE_ROLES).not.toContain("system_admin")
+    expect(BANK_ADMIN_INVITABLE_ROLES).not.toContain("support_user")
+    expect(BANK_ADMIN_INVITABLE_ROLES).not.toContain("auditor")
+  })
+
+  it("keeps every invitable role inside USER_ROLES", () => {
+    for (const role of BANK_ADMIN_INVITABLE_ROLES) {
+      expect(USER_ROLES).toContain(role)
+    }
   })
 })
 

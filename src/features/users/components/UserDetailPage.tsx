@@ -67,7 +67,9 @@ import {
   AUDITOR_ROLE,
   READ_ONLY_VIEWER_ROLES,
   ROLE_TRANSITIONS,
-  SYSTEM_ADMIN_ROLE,
+  USER_IDENTITY_EDIT_ROLES,
+  USER_LIFECYCLE_ACTION_ROLES,
+  USER_ROLE_CHANGE_ROLES,
   type UserRole,
   type UserModalActionType,
 } from "@/features/users/types"
@@ -290,7 +292,12 @@ function UserDetailContent({ user }: { user: UserDetail }) {
   })
 
   const isOwnProfile = currentUser?.id === user.id
-  const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
+  const canRunLifecycleAction =
+    !!currentUser && USER_LIFECYCLE_ACTION_ROLES.includes(currentUser.role)
+  const canEditIdentity =
+    !!currentUser && USER_IDENTITY_EDIT_ROLES.includes(currentUser.role)
+  const canChangeRoleScope =
+    !!currentUser && USER_ROLE_CHANGE_ROLES.includes(currentUser.role)
   const isReadOnlyViewer =
     currentUser?.role !== null &&
     currentUser?.role !== undefined &&
@@ -570,7 +577,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
               </div>
             </div>
           </div>
-          {isAdmin && (
+          {canRunLifecycleAction && (
             <div className="flex items-center gap-[10px]">
               {canSuspend && (
                 <Button
@@ -682,7 +689,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
           <SectionCard
             title={t("detail.page.sections.identity")}
             headerActions={
-              (isAdmin || isOwnProfile) &&
+              (canEditIdentity || isOwnProfile) &&
               user.status !== UserStatusSchema.enum.deactivated ? (
                 isEditingIdentity ? (
                   <div className="flex items-center gap-2">
@@ -815,7 +822,8 @@ function UserDetailContent({ user }: { user: UserDetail }) {
         <SectionCard
           title={t("detail.page.sections.roleScope")}
           onEdit={
-            !isAdmin || user.status === UserStatusSchema.enum.deactivated
+            !canChangeRoleScope ||
+            user.status === UserStatusSchema.enum.deactivated
               ? undefined
               : user.role === AUDITOR_ROLE
                 ? () => setIsEditingAuditorPeriod(true)

@@ -27,6 +27,7 @@
     "partnerManagement": "Partnerverwaltung",
     "partnerDuplicates": "Duplikate & Zusammenführung",
     "tenantManagement": "Mandantenverwaltung",
+    "myTenant": "Mein Mandant",
     "coreBankingIntegration": "Core-Banking-Integration",
     "auditTrail": "Audit-Trail",
     "notificationConfiguration": "Benachrichtigungskonfiguration",

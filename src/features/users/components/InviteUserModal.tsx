@@ -13,6 +13,8 @@ import { DatePicker } from "@/components/ui/date-picker"
 import type { SelectOption } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import {
+  BANK_ADMIN_INVITABLE_ROLES,
+  BANK_POWER_USER_ROLE,
   LC_ONLY_ROLES,
   USER_ROLES,
   FOUR_EYES_ROLES,
@@ -20,6 +22,7 @@ import {
   AUDITOR_DATE_RANGE_ROLES,
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useInviteUser } from "@/features/users/hooks/useInviteUser"
 import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
@@ -94,7 +97,15 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { t } = useTranslation("users")
   const { t: tCommon } = useTranslation("common")
   const { mutateAsync: invite } = useInviteUser()
-  const { data: tenantsData, isLoading: isTenantsLoading } = useTenants()
+  const { data: currentUser } = useCurrentUser()
+  // A Bank Admin administers exactly one tenant and may only invite tenant-operational
+  // roles into it (US-28.8); the backend rejects anything else with 403
+  // INVITE_ROLE_NOT_PERMITTED. So the tenant is pinned to their own instead of being
+  // offered as a choice — and GET /tenants is not theirs to call (404).
+  const isBankAdminInvite = currentUser?.role === BANK_POWER_USER_ROLE
+  const pinnedTenantId = isBankAdminInvite ? (currentUser?.tenant_id ?? "") : ""
+  const { data: tenantsData, isLoading: isTenantsLoading } =
+    useTenants(!isBankAdminInvite)
 
   const resolveMsg = (msg: string | undefined) => {
     if (msg === "required") return tCommon("validation.required")
@@ -111,7 +122,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       lastName: "",
       email: "",
       role: undefined,
-      tenant: "",
+      tenant: pinnedTenantId,
       lcPartner: "",
       accessValidFrom: "",
       accessValidUntil: "",
@@ -165,7 +176,9 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
     ? t("modal.hints.tenantAuditor")
     : t("modal.hints.tenantOperational")
 
-  const roleOptions: SelectOption[] = USER_ROLES.map(role => ({
+  const roleOptions: SelectOption[] = (
+    isBankAdminInvite ? BANK_ADMIN_INVITABLE_ROLES : USER_ROLES
+  ).map(role => ({
     value: role,
     label: t(`roles.${role}`),
   }))
@@ -321,7 +334,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                 onValueChange={val => {
                   field.onChange(val)
                   // Reset conditional fields when role changes
-                  form.setValue("tenant", "")
+                  form.setValue("tenant", pinnedTenantId)
                   form.setValue("lcPartner", "")
                   form.setValue("accessValidFrom", "")
                   form.setValue("accessValidUntil", "")
@@ -358,8 +371,8 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           </div>
         )}
 
-        {/* Tenant / Tenant scope */}
-        {isTenantScoped && (
+        {/* Tenant / Tenant scope — pinned, so not offered, for a Bank Admin */}
+        {isTenantScoped && !isBankAdminInvite && (
           <div>
             <Label htmlFor="tenant" error={!!errors.tenant} className="mb-1.5">
               {tenantLabel}

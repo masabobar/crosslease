@@ -21,11 +21,9 @@ import { ReactivateTenantDialog } from "@/features/tenants/components/Reactivate
 import { ArchiveTenantDialog } from "@/features/tenants/components/ArchiveTenantDialog"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import {
-  SYSTEM_ADMIN_ROLE,
-  SUPPORT_USER_ROLE,
-  AUDITOR_ROLE,
-} from "@/features/users/types"
+import { SYSTEM_ADMIN_ROLE, SUPPORT_USER_ROLE } from "@/features/users/types"
+import { getTenantDetailTabVisibility } from "@/features/tenants/utils"
+import type { TenantDetailTabKey } from "@/features/tenants/utils"
 import type { TenantDetail } from "@/features/tenants/api/schema"
 import {
   isFullTenantResponse,
@@ -151,12 +149,7 @@ function TenantHighlightInfo({
   )
 }
 
-type TabKey =
-  | "overview"
-  | "modules"
-  | "governance"
-  | "grants"
-  | "licence_limits"
+type TabKey = TenantDetailTabKey
 
 function TenantDetailSkeleton() {
   return (
@@ -183,26 +176,14 @@ export default function TenantDetailPage() {
 
   const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
   const isSupportUser = currentUser?.role === SUPPORT_USER_ROLE
-  const isAuditor = currentUser?.role === AUDITOR_ROLE
-  const isAuditorEngaged =
-    isAuditor &&
-    !!currentUser?.tenant_id &&
-    currentUser.tenant_id === id &&
-    !!currentUser?.access_valid_until &&
-    new Date(currentUser.access_valid_until) > new Date()
-
-  function isTabVisible(key: TabKey): boolean {
-    switch (key) {
-      case "overview":
-      case "modules":
-        return isAdmin || isSupportUser
-      case "governance":
-        return isAdmin || isAuditorEngaged
-      case "grants":
-      case "licence_limits":
-        return isAdmin
-    }
-  }
+  const tabVisibility = getTenantDetailTabVisibility(
+    {
+      role: currentUser?.role,
+      tenantId: currentUser?.tenant_id ?? null,
+      accessValidUntil: currentUser?.access_valid_until ?? null,
+    },
+    id
+  )
 
   const tabs: { key: TabKey; labelKey: string; testId: string }[] = [
     {
@@ -224,7 +205,7 @@ export default function TenantDetailPage() {
     },
   ]
 
-  const visibleTabs = tabs.filter(tab => isTabVisible(tab.key))
+  const visibleTabs = tabs.filter(tab => tabVisibility[tab.key])
   const effectiveTab: TabKey = visibleTabs.some(t => t.key === activeTab)
     ? activeTab
     : (visibleTabs[0]?.key ?? "overview")
@@ -313,6 +294,7 @@ export default function TenantDetailPage() {
                   tenantId={id!}
                   tenantName={tenant.name}
                   isAdmin={isAdmin}
+                  canViewIntegrationBinding={isAdmin || isSupportUser}
                   tenantStatus={tenant.status}
                 />
               )}
