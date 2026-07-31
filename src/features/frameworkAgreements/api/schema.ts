@@ -2,12 +2,7 @@ import { z } from "zod"
 import { requiredEnum } from "@/lib/zodHelpers"
 
 // Wire enums — must match refinext-api src/app/modules/framework_agreements/domain/enums.py exactly
-export const FALifecycleStatusSchema = z.enum([
-  "draft",
-  "active",
-  "suspended",
-  "terminated",
-])
+export const FALifecycleStatusSchema = z.enum(["draft", "active", "terminated"])
 export type FALifecycleStatus = z.infer<typeof FALifecycleStatusSchema>
 
 export const BankEntitySchema = z.enum([
@@ -102,7 +97,7 @@ export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
 // RHF-facing form schema for EditFrameworkAgreementWizardPage and its steps.
 // Field constraints mirror UpdateFARequestSchema/FrameworkAgreementWizardFormSchema;
 // justification is required+min(30) here (client-side rule) even though the wire schema
-// keeps it optional (BE only requires it for active/suspended). expected_version is a
+// keeps it optional (BE only requires it for active). expected_version is a
 // hidden field seeded from FADetailResponse.edit_version_counter when the dialog opens.
 export const EditFrameworkAgreementFormSchema = z
   .object({
@@ -154,34 +149,6 @@ export const ActivateFARequestSchema = z.object({
   justification: z.string().min(20).max(1000),
 })
 export type ActivateFARequest = z.infer<typeof ActivateFARequestSchema>
-
-// POST /framework-agreements/{id}/suspend
-export const SuspendFARequestSchema = z.object({
-  justification: z.string().min(20).max(1000),
-  effective_from: z.string().nullable().optional(),
-})
-export type SuspendFARequest = z.infer<typeof SuspendFARequestSchema>
-
-export const FASuspendedResponseSchema = z.object({
-  id: z.string().uuid(),
-  status: FALifecycleStatusSchema,
-  suspended_at: z.string(),
-})
-export type FASuspendedResponse = z.infer<typeof FASuspendedResponseSchema>
-
-// POST /framework-agreements/{id}/reactivate
-export const ReactivateFARequestSchema = z.object({
-  justification: z.string().min(20).max(1000),
-  re_validation_confirmed: z.boolean(),
-})
-export type ReactivateFARequest = z.infer<typeof ReactivateFARequestSchema>
-
-export const FAReactivatedResponseSchema = z.object({
-  id: z.string().uuid(),
-  status: FALifecycleStatusSchema,
-  reactivated_at: z.string(),
-})
-export type FAReactivatedResponse = z.infer<typeof FAReactivatedResponseSchema>
 
 // POST /framework-agreements/{id}/terminate
 export const TerminateFARequestSchema = z.object({

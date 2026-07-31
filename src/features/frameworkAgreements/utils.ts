@@ -15,7 +15,7 @@ export function isFrameworkAgreementNotFoundError(error: unknown): boolean {
 
 // Display-only status: an Active agreement the BE reports as expired reads as
 // "expired" in the UI. Per CR PRD1042-1552 B2, this is presentation only —
-// FALifecycleStatus stays at 4 wire values; no new lifecycle state is added.
+// FALifecycleStatus stays at 3 wire values; no new lifecycle state is added.
 export type FADisplayStatus = FALifecycleStatus | "expired"
 
 export function getFrameworkAgreementDisplayStatus(

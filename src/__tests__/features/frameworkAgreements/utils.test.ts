@@ -13,7 +13,7 @@ describe("getFrameworkAgreementDisplayStatus", () => {
     expect(getFrameworkAgreementDisplayStatus("active", false)).toBe("active")
   })
 
-  it.each(["draft", "suspended", "terminated"] as const)(
+  it.each(["draft", "terminated"] as const)(
     "returns %s unchanged even when the BE reports it as expired",
     status => {
       expect(getFrameworkAgreementDisplayStatus(status, true)).toBe(status)

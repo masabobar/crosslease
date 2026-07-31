@@ -165,14 +165,12 @@
       "createdAt": "Erstellt am",
       "activatedBy": "Aktiviert von",
       "activatedAt": "Aktiviert am",
-      "suspendedAt": "Ausgesetzt am",
       "terminatedAt": "Beendet am"
     },
     "copied": "Kopiert",
     "actions": {
       "activate": "Aktivieren",
       "edit": "Bearbeiten",
-      "suspend": "Aussetzen",
       "terminate": "Beenden"
     },
     "financingsEmptyState": "Noch keine Finanzierungen",
@@ -187,21 +185,6 @@
     "effectiveFrom": "Gültig ab",
     "effectiveFromOptional": "Optional — Standard ist sofort",
     "confirmButton": "Vereinbarung aktivieren"
-  },
-  "suspend": {
-    "dialogTitle": "Rahmenvereinbarung aussetzen",
-    "justification": "Begründung",
-    "justificationHint": "Pflichtfeld. Wird im Prüfprotokoll gespeichert.",
-    "effectiveFrom": "Gültig ab",
-    "effectiveFromOptional": "Optional — Standard ist sofort",
-    "confirmButton": "Vereinbarung aussetzen"
-  },
-  "reactivate": {
-    "dialogTitle": "Rahmenvereinbarung reaktivieren",
-    "reValidationConfirmed": "Ich bestätige, dass die Bedingungen der Vereinbarung erneut geprüft wurden und weiterhin korrekt sind",
-    "justification": "Begründung",
-    "justificationHint": "Pflichtfeld. Wird im Prüfprotokoll gespeichert.",
-    "confirmButton": "Vereinbarung reaktivieren"
   },
   "terminate": {
     "dialogTitle": "Rahmenvereinbarung beenden",
