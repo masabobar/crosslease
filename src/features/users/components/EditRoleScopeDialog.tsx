@@ -2,7 +2,11 @@ import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { ShieldAlert } from "lucide-react"
+import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
+import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Dialog,
   DialogContent,
@@ -15,15 +19,25 @@ import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { ROLE_TRANSITIONS, type UserRole } from "@/features/users/types"
+import { UserRoleSchema } from "@/features/users/api/schema"
 
-type EditRoleFormValues = { new_role: UserRole; reason: string }
+const MIN_REASON_LENGTH = 10
+
+// Module-level so the resolver never captures a stale per-role enum: which roles are
+// offered is enforced by the select's options (ROLE_TRANSITIONS), not by the schema.
+const EditRoleFormSchema = z.object({
+  new_role: UserRoleSchema,
+  reason: z.string().min(MIN_REASON_LENGTH),
+})
+type EditRoleFormValues = z.infer<typeof EditRoleFormSchema>
 
 type Props = {
   open: boolean
   currentRole: UserRole
   isPending: boolean
   onClose: () => void
-  onSubmit: (values: EditRoleFormValues) => void
+  /** Rejections propagate here so field-level detail lands on the offending input. */
+  onSubmit: (values: EditRoleFormValues) => Promise<void>
 }
 
 export function EditRoleScopeDialog({
@@ -35,26 +49,11 @@ export function EditRoleScopeDialog({
 }: Props) {
   const { t } = useTranslation("users")
 
-  const configuredTransitions = ROLE_TRANSITIONS[currentRole]
-
-  if (open && (!configuredTransitions || configuredTransitions.length === 0)) {
-    throw new Error(
-      `EditRoleScopeDialog: no role transitions configured for role "${currentRole}"`
-    )
-  }
-
-  const allowedRoles = (configuredTransitions ?? []) as [
-    UserRole,
-    ...UserRole[],
-  ]
-
-  const schema = z.object({
-    new_role: z.enum(allowedRoles, { error: "required" }),
-    reason: z.string().min(10),
-  })
+  // Callers only open this dialog for a role that has configured transitions.
+  const allowedRoles = ROLE_TRANSITIONS[currentRole] ?? []
 
   const form = useForm<EditRoleFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(EditRoleFormSchema),
     defaultValues: { new_role: undefined, reason: "" },
   })
 
@@ -68,6 +67,27 @@ export function EditRoleScopeDialog({
   function handleClose() {
     form.reset()
     onClose()
+  }
+
+  async function handleSubmit(values: EditRoleFormValues) {
+    try {
+      await onSubmit(values)
+    } catch (err) {
+      if (
+        applyApiFieldErrors({
+          error: err,
+          fields: Object.keys(form.getValues()),
+          setError: form.setError,
+        })
+      )
+        return
+
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
+    }
   }
 
   return (
@@ -85,7 +105,7 @@ export function EditRoleScopeDialog({
           <DialogTitle>{t("detail.page.editRole.title")}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(values => onSubmit(values))}>
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* dialog-content: gap-6 between Fields and footer sections */}
           <div className="px-4 py-4 flex flex-col gap-6">
             {/* Fields section: gap-4 between current-role row and new-role select */}
@@ -143,7 +163,9 @@ export function EditRoleScopeDialog({
                     className="text-sm text-destructive"
                     data-testid="edit-role-reason-error"
                   >
-                    {t("detail.page.editRole.reasonMinLength")}
+                    {form.formState.errors.reason.type === "server"
+                      ? form.formState.errors.reason.message
+                      : t("detail.page.editRole.reasonMinLength")}
                   </span>
                 ) : (
                   <span className="text-sm text-amber-600/80">
@@ -153,20 +175,15 @@ export function EditRoleScopeDialog({
               </div>
 
               {/* Four-Eyes approval notice — amber alert box */}
-              <div className="rounded-xl bg-amber-500/10 px-[10px] py-2 flex items-start gap-2">
-                <ShieldAlert
-                  size={16}
-                  className="text-amber-600 mt-0.5 shrink-0"
-                />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium text-amber-600">
-                    {t("detail.page.editRole.fourEyes.title")}
-                  </span>
-                  <span className="text-sm text-amber-600/80">
-                    {t("detail.page.editRole.fourEyes.description")}
-                  </span>
-                </div>
-              </div>
+              <Alert variant="warning" className="rounded-xl px-[10px]">
+                <ShieldAlert />
+                <AlertTitle>
+                  {t("detail.page.editRole.fourEyes.title")}
+                </AlertTitle>
+                <AlertDescription>
+                  {t("detail.page.editRole.fourEyes.description")}
+                </AlertDescription>
+              </Alert>
             </div>
           </div>
 

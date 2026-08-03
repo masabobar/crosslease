@@ -5,7 +5,7 @@ import { useToastStore } from "@/store/toastStore"
 import { adminUserDetail, PATHS } from "@/router/paths"
 import { buildActionToastPayload } from "@/features/users/utils"
 import type { UserListItem, UserDetail } from "@/features/users/api/schema"
-import { INVITE_RESULT_TYPE } from "@/features/users/types"
+import { INVITE_RESULT_TYPE, USER_ACTION_TYPE } from "@/features/users/types"
 import type {
   UserActionType,
   UserModalActionType,
@@ -19,7 +19,20 @@ type ActiveAction = {
 
 type ResetMfaUser = { id: string; first_name: string; last_name: string }
 
-export function useUserManagementHandlers() {
+type UserManagementHandlers = {
+  selectedUserId: string | null
+  setSelectedUserId: (id: string | null) => void
+  activeAction: ActiveAction | null
+  setActiveAction: (action: ActiveAction | null) => void
+  resetMfaUser: ResetMfaUser | null
+  setResetMfaUser: (user: ResetMfaUser | null) => void
+  handleAction: (type: UserActionType, user: UserListItem) => void
+  handleDrawerAction: (type: UserActionType, user: UserDetail) => void
+  handleActionSuccess: () => void
+  handleInviteSuccess: (result: InviteSuccessResult) => void
+}
+
+export function useUserManagementHandlers(): UserManagementHandlers {
   const navigate = useNavigate()
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
@@ -29,11 +42,11 @@ export function useUserManagementHandlers() {
   const [resetMfaUser, setResetMfaUser] = useState<ResetMfaUser | null>(null)
 
   function handleAction(type: UserActionType, user: UserListItem) {
-    if (type === "approve") {
+    if (type === USER_ACTION_TYPE.APPROVE) {
       navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
       return
     }
-    if (type === "reset-mfa") {
+    if (type === USER_ACTION_TYPE.RESET_MFA) {
       setResetMfaUser({
         id: user.id,
         first_name: user.first_name,
@@ -58,11 +71,11 @@ export function useUserManagementHandlers() {
 
   function handleDrawerAction(type: UserActionType, user: UserDetail) {
     setSelectedUserId(null)
-    if (type === "approve") {
+    if (type === USER_ACTION_TYPE.APPROVE) {
       navigate(PATHS.PENDING_APPROVALS, { state: { highlightUserId: user.id } })
       return
     }
-    if (type === "reset-mfa") {
+    if (type === USER_ACTION_TYPE.RESET_MFA) {
       setResetMfaUser({
         id: user.id,
         first_name: user.first_name,
@@ -85,17 +98,6 @@ export function useUserManagementHandlers() {
     const name = `${activeAction.user.first_name} ${activeAction.user.last_name}`
     showToast(buildActionToastPayload(activeAction.type, name, t))
     setActiveAction(null)
-  }
-
-  function handleResetMfaSuccess() {
-    if (!resetMfaUser) return
-    const name = `${resetMfaUser.first_name} ${resetMfaUser.last_name}`
-    showToast({
-      variant: "success",
-      title: t("actions.resetMfa.success.title"),
-      message: t("actions.resetMfa.success.message", { name }),
-    })
-    setResetMfaUser(null)
   }
 
   function handleInviteSuccess(result: InviteSuccessResult) {
@@ -137,7 +139,6 @@ export function useUserManagementHandlers() {
     handleAction,
     handleDrawerAction,
     handleActionSuccess,
-    handleResetMfaSuccess,
     handleInviteSuccess,
   }
 }

@@ -1,6 +1,11 @@
 import { useState } from "react"
-import { UserPlus, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react"
-import { PaginationEllipsis } from "@/components/ui/pagination"
+import { UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@/components/ui/pagination"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,14 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
+import { ResetMfaConfirmDialog } from "@/features/users/components/ResetMfaConfirmDialog"
+import { useResetMfaWithToast } from "@/features/users/hooks/useResetMfaWithToast"
 import { InviteUserModal } from "@/features/users/components/InviteUserModal"
 import { UserActionModal } from "@/features/users/components/UserActionModal"
 import { UserDetailDrawer } from "@/features/users/components/UserDetailDrawer"
@@ -47,69 +46,6 @@ import { getUserFilterVisibility } from "@/features/users/utils"
 import { useUserManagementHandlers } from "@/features/users/hooks/useUserManagementHandlers"
 import { FilterPill } from "@/components/ui/filter-pill"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ApiError } from "@/lib/api"
-import { toast } from "sonner"
-
-type ResetMfaConfirmDialogProps = {
-  user: { id: string; first_name: string; last_name: string }
-  isPending: boolean
-  onClose: () => void
-  onConfirm: () => void
-}
-
-function ResetMfaConfirmDialog({
-  user,
-  isPending,
-  onClose,
-  onConfirm,
-}: ResetMfaConfirmDialogProps) {
-  const { t } = useTranslation("users")
-  const name = `${user.first_name} ${user.last_name}`
-
-  return (
-    <Dialog
-      open
-      onOpenChange={o => {
-        if (!o) onClose()
-      }}
-    >
-      <DialogContent
-        showCloseButton={false}
-        className="max-w-[420px] gap-0 p-0 overflow-hidden"
-      >
-        <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
-          <DialogTitle>{t("actions.resetMfa.title", { name })}</DialogTitle>
-        </DialogHeader>
-        <div className="px-4 py-4">
-          <div className="flex items-start gap-2 rounded-[10px] border border-amber-600 bg-amber-500/10 px-[10px] py-2">
-            <ShieldAlert size={16} className="text-amber-600 mt-0.5 shrink-0" />
-            <span className="text-sm text-amber-600/80">
-              {t("actions.resetMfa.description", { name })}
-            </span>
-          </div>
-        </div>
-        <DialogFooter className="mx-0 mb-0">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isPending}
-            data-testid="mfa-reset-cancel"
-          >
-            {t("modal.actions.cancel")}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isPending}
-            data-testid="mfa-reset-confirm"
-          >
-            {t("actions.resetMfa.confirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 export default function UserManagementPage() {
   const { t } = useTranslation("users")
@@ -125,10 +61,9 @@ export default function UserManagementPage() {
     handleAction,
     handleDrawerAction,
     handleActionSuccess,
-    handleResetMfaSuccess,
     handleInviteSuccess,
   } = useUserManagementHandlers()
-  const resetMfaMutation = useResetUserMfa()
+  const { resetMfa, isPending: isResettingMfa } = useResetMfaWithToast()
   const {
     page,
     perPage,
@@ -181,14 +116,14 @@ export default function UserManagementPage() {
   function removeRoleFilter(role: UserRole) {
     setAppliedFilters({
       ...appliedFilters,
-      role: appliedFilters.role.filter((r: UserRole) => r !== role),
+      role: appliedFilters.role.filter(r => r !== role),
     })
   }
 
-  function removeStatusFilter(status: string) {
+  function removeStatusFilter(status: UserStatus) {
     setAppliedFilters({
       ...appliedFilters,
-      status: appliedFilters.status.filter((s: string) => s !== status),
+      status: appliedFilters.status.filter(s => s !== status),
     })
   }
 
@@ -198,7 +133,6 @@ export default function UserManagementPage() {
     appliedFilters.role.length +
     appliedFilters.status.length +
     (filterVis.tenant && appliedFilters.tenant_id ? 1 : 0) +
-    (filterVis.mfa && appliedFilters.mfa_enabled ? 1 : 0) +
     (filterVis.lastLogin &&
     (appliedFilters.last_login_from || appliedFilters.last_login_to)
       ? 1
@@ -301,22 +235,6 @@ export default function UserManagementPage() {
                 setAppliedFilters({ ...appliedFilters, tenant_id: null })
               }
               data-testid="filter-pill-remove-tenant"
-            />
-          )}
-
-          {filterVis.mfa && appliedFilters.mfa_enabled && (
-            <FilterPill
-              label={t("page.filters.mfaPill", {
-                value: t(
-                  `filter.mfa.${appliedFilters.mfa_enabled}` as
-                    | "filter.mfa.enabled"
-                    | "filter.mfa.disabled"
-                ),
-              })}
-              onRemove={() =>
-                setAppliedFilters({ ...appliedFilters, mfa_enabled: null })
-              }
-              data-testid="filter-pill-remove-mfa"
             />
           )}
 
@@ -433,45 +351,57 @@ export default function UserManagementPage() {
             </Select>
           </div>
 
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              data-testid="pagination-prev-button"
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="h-8 gap-1.5 rounded-xl pl-1.5 pr-2.5 text-sm"
-            >
-              <ChevronLeft size={16} />
-              {t("page.pagination.previous")}
-            </Button>
-
-            {pageNumbers.map((item, idx) =>
-              item === "..." ? (
-                <PaginationEllipsis key={`ellipsis-${idx}`} />
-              ) : (
+          {/* NOTE: Button children rather than shadcn PaginationLink — PaginationLink
+              renders an <a>, and these controls change page state in place rather than
+              navigating, so an anchor would be a false affordance. The Pagination /
+              PaginationContent / PaginationItem wrappers still supply the nav + list
+              semantics. */}
+          <Pagination className="mx-0 w-auto justify-end">
+            <PaginationContent>
+              <PaginationItem>
                 <Button
-                  key={item}
-                  variant={item === page ? "outline" : "ghost"}
-                  data-testid={`pagination-page-${item}`}
-                  onClick={() => setPage(item)}
-                  className="size-8 rounded-xl p-0 text-sm"
+                  variant="ghost"
+                  data-testid="pagination-prev-button"
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="h-8 gap-1.5 rounded-xl pl-1.5 pr-2.5 text-sm"
                 >
-                  {item}
+                  <ChevronLeft size={16} />
+                  {t("page.pagination.previous")}
                 </Button>
-              )
-            )}
+              </PaginationItem>
 
-            <Button
-              variant="ghost"
-              data-testid="pagination-next-button"
-              onClick={() => setPage(Math.min(data.total_pages, page + 1))}
-              disabled={page === data.total_pages}
-              className="h-8 gap-1.5 rounded-xl pl-2.5 pr-1.5 text-sm"
-            >
-              {t("page.pagination.next")}
-              <ChevronRight size={16} />
-            </Button>
-          </div>
+              {pageNumbers.map((item, idx) => (
+                <PaginationItem key={item === "..." ? `ellipsis-${idx}` : item}>
+                  {item === "..." ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <Button
+                      variant={item === page ? "outline" : "ghost"}
+                      data-testid={`pagination-page-${item}`}
+                      onClick={() => setPage(item)}
+                      className="size-8 rounded-xl p-0 text-sm"
+                    >
+                      {item}
+                    </Button>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  data-testid="pagination-next-button"
+                  onClick={() => setPage(Math.min(data.total_pages, page + 1))}
+                  disabled={page === data.total_pages}
+                  className="h-8 gap-1.5 rounded-xl pl-2.5 pr-1.5 text-sm"
+                >
+                  {t("page.pagination.next")}
+                  <ChevronRight size={16} />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
 
@@ -502,23 +432,17 @@ export default function UserManagementPage() {
 
       {resetMfaUser && (
         <ResetMfaConfirmDialog
-          user={resetMfaUser}
-          isPending={resetMfaMutation.isPending}
+          open
+          name={`${resetMfaUser.first_name} ${resetMfaUser.last_name}`}
+          isPending={isResettingMfa}
           onClose={() => setResetMfaUser(null)}
-          onConfirm={() => {
-            resetMfaMutation.mutate(resetMfaUser.id, {
-              onSuccess: handleResetMfaSuccess,
-              onError: (err: unknown) => {
-                toast.error(
-                  err instanceof ApiError
-                    ? t(`errors.${err.code}`, {
-                        defaultValue: t("errors.generic"),
-                      })
-                    : t("errors.generic")
-                )
-              },
-            })
-          }}
+          onConfirm={() =>
+            resetMfa(
+              resetMfaUser.id,
+              `${resetMfaUser.first_name} ${resetMfaUser.last_name}`,
+              () => setResetMfaUser(null)
+            )
+          }
         />
       )}
 

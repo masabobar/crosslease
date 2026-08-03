@@ -9,12 +9,17 @@ import {
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import type { UserRole } from "@/features/users/types"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 type RoleBadgeProps = {
   role: UserRole
   className?: string
 }
+
+// Per-role brand colours from the Figma role-badge spec. These are literal hex values
+// rather than theme tokens because the palette is role identity, not surface styling —
+// which also means they do not yet have dark-mode counterparts.
 
 const ROLE_STYLES: Record<UserRole, string> = {
   system_admin: "border-[#7008e7] text-[#7008e7]",
@@ -41,16 +46,13 @@ function RoleBadge({ role, className }: RoleBadgeProps) {
   const Icon = ROLE_ICONS[role]
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border",
-        ROLE_STYLES[role],
-        className
-      )}
+    <Badge
+      variant="outline"
+      className={cn("rounded-md", ROLE_STYLES[role], className)}
     >
       <Icon size={12} />
       {t(`roles.${role}`)}
-    </span>
+    </Badge>
   )
 }
 

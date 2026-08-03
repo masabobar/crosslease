@@ -17,11 +17,13 @@ import {
   ChangeRoleRequestSchema,
   ChangeEmailRequestSchema,
   InviteUserInputSchema,
+  OptionalUserRoleSchema,
   SUSPENSION_REASONS,
   REACTIVATION_REASONS,
   DEACTIVATION_REASONS,
   RESEND_REASONS,
 } from "@/features/users/api/schema"
+import { USER_ROLES } from "@/features/users/types"
 
 const validUserListItem = {
   id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
@@ -386,6 +388,28 @@ describe("UpdateAccessPeriodRequestSchema", () => {
         new_access_valid_until: valid.new_access_valid_until,
       })
     ).toThrow()
+  })
+})
+
+describe("OptionalUserRoleSchema", () => {
+  it("decodes every known role to itself", () => {
+    for (const role of USER_ROLES) {
+      expect(OptionalUserRoleSchema.parse(role)).toBe(role)
+    }
+  })
+
+  it("decodes an empty string to null", () => {
+    // The BE emits "" when the governed-action snapshot it reads carries no role.
+    expect(OptionalUserRoleSchema.parse("")).toBeNull()
+  })
+
+  it("decodes an unrecognised role to null instead of throwing", () => {
+    expect(OptionalUserRoleSchema.parse("chief_of_vibes")).toBeNull()
+  })
+
+  it("still rejects a non-string", () => {
+    expect(() => OptionalUserRoleSchema.parse(42)).toThrow()
+    expect(() => OptionalUserRoleSchema.parse(null)).toThrow()
   })
 })
 

@@ -268,7 +268,8 @@
         "lastLogin": "Letzter Login",
         "lastActivity": "Letzte Aktivität",
         "lastSuspensionReason": "Letzter Sperrgrund",
-        "lastDeactivationReason": "Letzter Deaktivierungsgrund"
+        "lastDeactivationReason": "Letzter Deaktivierungsgrund",
+        "phoneNumberPlaceholder": "+49 151 1234567"
       },
       "roleClassification": {
         "platform": "Plattformrolle",
@@ -427,7 +428,6 @@
       "tenant": "Mandant",
       "tenantScope": "Mandantenbereich",
       "lcPartner": "Leasinggesellschaft",
-      "accessValidFrom": "Zugang gültig ab",
       "accessValidUntil": "Zugang gültig bis"
     },
     "placeholders": {

@@ -3,7 +3,7 @@ import type { UseMutationResult } from "@tanstack/react-query"
 import { changeUserRole } from "@/features/users/api/usersApi"
 import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
 import type { ChangeRoleInput } from "@/features/users/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 export function useChangeRole(): UseMutationResult<
   GovernedAction,

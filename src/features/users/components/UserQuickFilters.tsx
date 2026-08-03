@@ -19,15 +19,11 @@ import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
-import { RoleBadge } from "./RoleBadge"
-import { UserStatusBadge } from "./UserStatusBadge"
-import { FilterCheckboxRow } from "./FilterCheckboxRow"
+import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
+import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 
-export type QuickFilterKey = "role" | "tenant" | "mfa" | "status" | "lastLogin"
-
-const MFA_OPTIONS = [{ value: "enabled" }, { value: "disabled" }] as const
-
-type MfaOptionValue = (typeof MFA_OPTIONS)[number]["value"]
+export type QuickFilterKey = "role" | "tenant" | "status" | "lastLogin"
 
 type FilterButtonConfig = {
   key: QuickFilterKey
@@ -43,12 +39,6 @@ const FILTER_BUTTONS: FilterButtonConfig[] = [
     icon: "filter",
     visibilityKey: "tenant",
     contentClassName: "w-48 max-h-60 overflow-y-auto",
-  },
-  {
-    key: "mfa",
-    icon: "filter",
-    visibilityKey: "mfa",
-    contentClassName: "w-48",
   },
   { key: "status", icon: "filter", contentClassName: "w-48" },
   {
@@ -67,8 +57,6 @@ function getFilterCount(key: QuickFilterKey, filters: UserFilterState): number {
       return filters.status.length
     case "tenant":
       return filters.tenant_id ? 1 : 0
-    case "mfa":
-      return filters.mfa_enabled ? 1 : 0
     case "lastLogin":
       return [filters.last_login_from, filters.last_login_to].filter(Boolean)
         .length
@@ -104,7 +92,6 @@ export function UserQuickFilters({
   const buttonLabels: Record<QuickFilterKey, string> = {
     role: t("quickFilters.buttons.role"),
     tenant: t("quickFilters.buttons.tenant"),
-    mfa: t("quickFilters.buttons.mfa"),
     status: t("quickFilters.buttons.status"),
     lastLogin: t("quickFilters.buttons.lastLogin"),
   }
@@ -119,7 +106,7 @@ export function UserQuickFilters({
         return USER_ROLES.map((role: UserRole) => {
           const checked = appliedFilters.role.includes(role)
           return (
-            <FilterCheckboxRow
+            <FilterCheckboxOption
               key={role}
               checked={checked}
               data-testid={`filter-option-role-${role}`}
@@ -132,13 +119,13 @@ export function UserQuickFilters({
               }
             >
               <RoleBadge role={role} />
-            </FilterCheckboxRow>
+            </FilterCheckboxOption>
           )
         })
 
       case "tenant": {
         const tenants = (tenantsData?.tenants ?? []).filter(
-          t => t.status === TenantStatusSchema.enum.active
+          tenant => tenant.status === TenantStatusSchema.enum.active
         )
         if (tenants.length === 0) {
           return (
@@ -165,7 +152,9 @@ export function UserQuickFilters({
                   selected ? "bg-primary border-primary" : "border-border"
                 )}
               >
-                {selected && <span className="size-2 rounded-full bg-white" />}
+                {selected && (
+                  <span className="size-2 rounded-full bg-primary-foreground" />
+                )}
               </span>
               <span className="text-sm text-foreground truncate">
                 {tenant.name}
@@ -175,30 +164,11 @@ export function UserQuickFilters({
         })
       }
 
-      case "mfa":
-        return MFA_OPTIONS.map(opt => {
-          const checked = appliedFilters.mfa_enabled === opt.value
-          return (
-            <FilterCheckboxRow
-              key={opt.value}
-              checked={checked}
-              data-testid={`filter-option-mfa-${opt.value}`}
-              onClick={() =>
-                onFilterChange({ mfa_enabled: checked ? null : opt.value })
-              }
-            >
-              <span className="text-sm text-foreground">
-                {t(`filter.mfa.${opt.value}` as `filter.mfa.${MfaOptionValue}`)}
-              </span>
-            </FilterCheckboxRow>
-          )
-        })
-
       case "status":
         return USER_STATUSES.map((status: UserStatus) => {
           const checked = appliedFilters.status.includes(status)
           return (
-            <FilterCheckboxRow
+            <FilterCheckboxOption
               key={status}
               checked={checked}
               data-testid={`filter-option-status-${status}`}
@@ -211,7 +181,7 @@ export function UserQuickFilters({
               }
             >
               <UserStatusBadge status={status} />
-            </FilterCheckboxRow>
+            </FilterCheckboxOption>
           )
         })
 

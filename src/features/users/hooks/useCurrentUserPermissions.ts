@@ -1,12 +1,17 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
 import {
   fetchCurrentUserPermissions,
   USERS_QUERY_KEYS,
 } from "@/features/users/api/usersApi"
+import type { UserMePermissionsResponse } from "@/features/users/api/schema"
 import { useAuthStore } from "@/store/authStore"
 import { FIVE_MINUTES_MS } from "@/lib/constants"
 
-export function useCurrentUserPermissions() {
+export function useCurrentUserPermissions(): UseQueryResult<
+  UserMePermissionsResponse,
+  Error
+> {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
 
   return useQuery({

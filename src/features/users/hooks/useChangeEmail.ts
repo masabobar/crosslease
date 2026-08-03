@@ -5,7 +5,7 @@ import {
   USERS_QUERY_KEYS,
 } from "@/features/users/api/usersApi"
 import type { ChangeEmailInput } from "@/features/users/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 export function useChangeEmail(): UseMutationResult<
   GovernedAction,

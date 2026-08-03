@@ -16,7 +16,12 @@ type ExportState = "idle" | "initiating" | "polling" | "downloading"
 const POLL_INTERVAL_MS = 2000
 const MAX_POLL_ATTEMPTS = 150 // ~5 minutes at POLL_INTERVAL_MS intervals
 
-export function useExportUsers() {
+type UseExportUsers = {
+  startExport: (params: ExportParams) => Promise<void>
+  isExporting: boolean
+}
+
+export function useExportUsers(): UseExportUsers {
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
   const [state, setState] = useState<ExportState>("idle")

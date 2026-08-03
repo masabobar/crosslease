@@ -20,6 +20,7 @@ import {
   FOUR_EYES_ROLES,
   TENANT_SCOPED_ROLES,
   AUDITOR_DATE_RANGE_ROLES,
+  INVITE_RESULT_TYPE,
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -28,6 +29,7 @@ import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { InviteSuccessResult } from "@/features/users/types"
 
 type InviteUserModalProps = {
@@ -44,7 +46,6 @@ const formSchema = z
     role: z.enum(USER_ROLES, { error: "required" }),
     tenant: z.string().optional(),
     lcPartner: z.string().optional(),
-    accessValidFrom: z.string().optional(),
     accessValidUntil: z.string().optional(),
   })
   .superRefine((data, ctx) => {
@@ -62,32 +63,15 @@ const formSchema = z
         path: ["lcPartner"],
       })
     }
-    if (AUDITOR_DATE_RANGE_ROLES.includes(data.role)) {
-      if (!data.accessValidFrom) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "required",
-          path: ["accessValidFrom"],
-        })
-      }
-      if (!data.accessValidUntil) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "required",
-          path: ["accessValidUntil"],
-        })
-      }
-      if (
-        data.accessValidFrom &&
-        data.accessValidUntil &&
-        data.accessValidUntil <= data.accessValidFrom
-      ) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "mustBeAfterFrom",
-          path: ["accessValidUntil"],
-        })
-      }
+    if (
+      AUDITOR_DATE_RANGE_ROLES.includes(data.role) &&
+      !data.accessValidUntil
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "required",
+        path: ["accessValidUntil"],
+      })
     }
   })
 
@@ -107,12 +91,14 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { data: tenantsData, isLoading: isTenantsLoading } =
     useTenants(!isBankAdminInvite)
 
+  // Schema issues carry a bare message token so the schema stays outside the component;
+  // anything unmapped (a Zod built-in, or a server-attached message) falls back to the
+  // generic invalid-value string rather than rendering untranslated English.
   const resolveMsg = (msg: string | undefined) => {
     if (msg === "required") return tCommon("validation.required")
     if (msg === "invalidFormat") return tCommon("validation.invalidFormat")
-    if (msg === "mustBeAfterFrom")
-      return tCommon("validation.dateMustBeAfterFrom")
-    return msg
+    if (msg === tCommon("validation.rejectedByServer")) return msg
+    return tCommon("validation.invalidFormat")
   }
 
   const form = useForm<FormValues>({
@@ -124,7 +110,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       role: undefined,
       tenant: pinnedTenantId,
       lcPartner: "",
-      accessValidFrom: "",
       accessValidUntil: "",
     },
   })
@@ -132,19 +117,11 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { errors, isSubmitting } = form.formState
 
   const tenantOptions: SelectOption[] = (tenantsData?.tenants ?? [])
-    .filter(t => t.status === TenantStatusSchema.enum.active)
-    .map(t => ({ value: t.id, label: t.name }))
+    .filter(tenant => tenant.status === TenantStatusSchema.enum.active)
+    .map(tenant => ({ value: tenant.id, label: tenant.name }))
 
   const selectedRole = useWatch({ control: form.control, name: "role" })
   const selectedTenant = useWatch({ control: form.control, name: "tenant" })
-  const accessValidFromValue = useWatch({
-    control: form.control,
-    name: "accessValidFrom",
-  })
-  const accessValidUntilValue = useWatch({
-    control: form.control,
-    name: "accessValidUntil",
-  })
 
   const isTenantScoped =
     !!selectedRole && TENANT_SCOPED_ROLES.includes(selectedRole)
@@ -213,10 +190,13 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       form.reset()
       onClose()
       if ("user" in result) {
-        onSuccess?.({ type: "invited", user: result.user })
+        onSuccess?.({
+          type: INVITE_RESULT_TYPE.INVITED,
+          user: result.user,
+        })
       } else {
         onSuccess?.({
-          type: "pending_approval",
+          type: INVITE_RESULT_TYPE.PENDING_APPROVAL,
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
@@ -224,6 +204,15 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
         })
       }
     } catch (err) {
+      if (
+        applyApiFieldErrors({
+          error: err,
+          fields: Object.keys(form.getValues()),
+          setError: form.setError,
+        })
+      )
+        return
+
       toast.error(
         err instanceof ApiError
           ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
@@ -336,7 +325,6 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
                   // Reset conditional fields when role changes
                   form.setValue("tenant", pinnedTenantId)
                   form.setValue("lcPartner", "")
-                  form.setValue("accessValidFrom", "")
                   form.setValue("accessValidUntil", "")
                 }}
                 options={roleOptions}
@@ -455,77 +443,39 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
           </div>
         )}
 
-        {/* Access valid from / until (Auditor only) */}
+        {/* Access valid until (Auditor only). POST /users accepts access_valid_until
+            only — there is no access_valid_from on the contract, so no such input is
+            offered rather than collecting a value the request would drop. */}
         {isAuditorDateRange && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label
-                  htmlFor="accessValidFrom"
-                  error={!!errors.accessValidFrom}
-                  className="mb-1.5"
-                >
-                  {t("modal.fields.accessValidFrom")}
-                </Label>
-                <Controller
-                  control={form.control}
-                  name="accessValidFrom"
-                  render={({ field }) => (
-                    <DatePicker
-                      id="accessValidFrom"
-                      data-testid="invite-access-valid-from"
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={!!errors.accessValidFrom}
-                      maxDate={
-                        accessValidUntilValue
-                          ? new Date(accessValidUntilValue + "T00:00:00")
-                          : undefined
-                      }
-                      captionLayout="dropdown"
-                    />
-                  )}
-                />
-                {errors.accessValidFrom && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {resolveMsg(errors.accessValidFrom.message)}
-                  </p>
+            <div>
+              <Label
+                htmlFor="accessValidUntil"
+                error={!!errors.accessValidUntil}
+                className="mb-1.5"
+              >
+                {t("modal.fields.accessValidUntil")}
+              </Label>
+              <Controller
+                control={form.control}
+                name="accessValidUntil"
+                render={({ field }) => (
+                  <DatePicker
+                    id="accessValidUntil"
+                    data-testid="invite-access-valid-until"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.accessValidUntil}
+                    minDate={new Date()}
+                    captionLayout="dropdown"
+                  />
                 )}
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="accessValidUntil"
-                  error={!!errors.accessValidUntil}
-                  className="mb-1.5"
-                >
-                  {t("modal.fields.accessValidUntil")}
-                </Label>
-                <Controller
-                  control={form.control}
-                  name="accessValidUntil"
-                  render={({ field }) => (
-                    <DatePicker
-                      id="accessValidUntil"
-                      data-testid="invite-access-valid-until"
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={!!errors.accessValidUntil}
-                      minDate={
-                        accessValidFromValue
-                          ? new Date(accessValidFromValue + "T00:00:00")
-                          : undefined
-                      }
-                      captionLayout="dropdown"
-                    />
-                  )}
-                />
-                {errors.accessValidUntil && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {resolveMsg(errors.accessValidUntil.message)}
-                  </p>
-                )}
-              </div>
+              />
+              {errors.accessValidUntil && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMsg(errors.accessValidUntil.message)}
+                </p>
+              )}
             </div>
             <p className="text-sm text-muted-foreground text-right">
               {t("modal.hints.accessDates")}
