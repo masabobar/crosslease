@@ -1,10 +1,7 @@
-import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
 import { FilterButton } from "@/components/ui/filter-button"
-import { cn } from "@/lib/utils"
+import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import {
   CATALOG_LAYER_OPTIONS,
   CATALOG_STATE_OPTIONS,
@@ -25,42 +22,6 @@ type Props = {
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter(v => v !== value) : [...list, value]
-}
-
-// Local equivalent of the users feature's FilterCheckboxRow — not imported from there to
-// keep this feature's filter popovers self-contained (features own their own components).
-type FilterCheckboxRowProps = {
-  checked: boolean
-  onClick: () => void
-  children: ReactNode
-  "data-testid"?: string
-}
-
-function FilterCheckboxRow({
-  checked,
-  onClick,
-  children,
-  "data-testid": testId,
-}: FilterCheckboxRowProps) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      data-testid={testId}
-      onClick={onClick}
-      className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-    >
-      <span
-        className={cn(
-          "shrink-0 size-4 rounded border flex items-center justify-center transition-colors",
-          checked ? "bg-primary border-primary" : "border-border"
-        )}
-      >
-        {checked && <Check size={10} className="text-white" />}
-      </span>
-      {children}
-    </Button>
-  )
 }
 
 // Four filters, all backed by real query params on GET /workflow-task-catalogs. Version is
@@ -100,7 +61,7 @@ function WorkflowTaskCatalogFilterBar({
           contentClassName="w-48"
         >
           {CATALOG_LAYER_OPTIONS.map(option => (
-            <FilterCheckboxRow
+            <FilterCheckboxOption
               key={option.value}
               checked={filters.catalogLayer.includes(option.value)}
               data-testid={`catalog-filter-option-catalogLayer-${option.value}`}
@@ -113,7 +74,7 @@ function WorkflowTaskCatalogFilterBar({
               <span className="text-sm text-foreground">
                 {t(option.labelKey)}
               </span>
-            </FilterCheckboxRow>
+            </FilterCheckboxOption>
           ))}
         </FilterButton>
 
@@ -124,7 +85,7 @@ function WorkflowTaskCatalogFilterBar({
           contentClassName="w-52"
         >
           {ENTITY_TYPE_OPTIONS.map(option => (
-            <FilterCheckboxRow
+            <FilterCheckboxOption
               key={option.value}
               checked={filters.entityType.includes(option.value)}
               data-testid={`catalog-filter-option-entityType-${option.value}`}
@@ -137,7 +98,7 @@ function WorkflowTaskCatalogFilterBar({
               <span className="text-sm text-foreground">
                 {t(option.labelKey)}
               </span>
-            </FilterCheckboxRow>
+            </FilterCheckboxOption>
           ))}
         </FilterButton>
 
@@ -153,7 +114,7 @@ function WorkflowTaskCatalogFilterBar({
             </p>
           ) : (
             productTemplateOptions.map(option => (
-              <FilterCheckboxRow
+              <FilterCheckboxOption
                 key={option.value}
                 checked={filters.productTemplate.includes(option.value)}
                 data-testid={`catalog-filter-option-productTemplate-${option.value}`}
@@ -167,7 +128,7 @@ function WorkflowTaskCatalogFilterBar({
                 }
               >
                 <span className="text-sm text-foreground">{option.label}</span>
-              </FilterCheckboxRow>
+              </FilterCheckboxOption>
             ))
           )}
         </FilterButton>
@@ -179,7 +140,7 @@ function WorkflowTaskCatalogFilterBar({
           contentClassName="w-48"
         >
           {CATALOG_STATE_OPTIONS.map(option => (
-            <FilterCheckboxRow
+            <FilterCheckboxOption
               key={option.value}
               checked={filters.catalogState.includes(option.value)}
               data-testid={`catalog-filter-option-catalogState-${option.value}`}
@@ -192,7 +153,7 @@ function WorkflowTaskCatalogFilterBar({
               <span className="text-sm text-foreground">
                 {t(option.labelKey)}
               </span>
-            </FilterCheckboxRow>
+            </FilterCheckboxOption>
           ))}
         </FilterButton>
       </div>

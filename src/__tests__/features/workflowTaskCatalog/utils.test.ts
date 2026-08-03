@@ -24,8 +24,8 @@ function event(overrides: Partial<AuditTrailEventItem>): AuditTrailEventItem {
 
 describe("deriveFieldDelta", () => {
   it("returns only the fields whose value actually differs", () => {
-    // The shape the catalogue endpoint really sends for a task update: changed_fields is null
-    // and the payloads carry the touched fields, only one of which moved.
+    // The derive-from-payloads fallback, which the event types that still send a null
+    // changed_fields rely on: the payloads carry the touched fields, only one of which moved.
     const delta = deriveFieldDelta(
       event({
         old_data: { weight: 9.75, is_active: true, is_mandatory: null },

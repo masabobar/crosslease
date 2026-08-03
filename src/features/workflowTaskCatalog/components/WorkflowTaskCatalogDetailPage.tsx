@@ -22,7 +22,8 @@ import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
 // are resolved against the tenant's user list — the same join SupportGrantsTab uses for a
 // grant's "granted by". Generous page size because created_by may be any user in the tenant;
 // an id outside the page falls back to the raw UUID rather than rendering blank. The durable
-// fix is BE-side (see open-questions.md Q-042).
+// fix is BE-side (see open-questions.md Q-042 — the audit-trail half of that entry is now
+// fixed server-side, this detail-response half is not).
 const NAME_LOOKUP_PAGE_SIZE = 100
 
 // The "identity" and "taskDefinitions" tab values render as ONE combined tab trigger — the
@@ -113,12 +114,10 @@ export default function WorkflowTaskCatalogDetailPage() {
   }
 
   const users = usersData?.users ?? []
-  // One id→name map serves both consumers of the lookup: the identity card's created_by and
-  // the audit trail's per-event actor.
-  const userNamesById = Object.fromEntries(
-    users.map(u => [u.id, `${u.first_name} ${u.last_name}`])
-  )
-  const createdByName = userNamesById[catalog.created_by] ?? null
+  const createdBy = users.find(u => u.id === catalog.created_by)
+  const createdByName = createdBy
+    ? `${createdBy.first_name} ${createdBy.last_name}`
+    : null
   const tenantName = users.find(u => u.tenant_name)?.tenant_name ?? null
   const productTemplateName = catalog.entity_id
     ? ((templates?.items ?? []).find(i => i.template_id === catalog.entity_id)
@@ -214,7 +213,7 @@ export default function WorkflowTaskCatalogDetailPage() {
           </div>
         )}
         {displayTab === "auditTrail" && (
-          <AuditTrailTab catalogId={catalog.id} userNamesById={userNamesById} />
+          <AuditTrailTab catalogId={catalog.id} />
         )}
       </div>
     </div>

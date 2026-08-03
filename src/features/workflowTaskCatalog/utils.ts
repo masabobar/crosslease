@@ -46,11 +46,15 @@ function isSameValue(a: unknown, b: unknown): boolean {
 /**
  * Derive which fields an audit event actually changed.
  *
- * The catalogue audit endpoint returns `changed_fields: null` — only the user and tenant
- * lifecycle writers populate it — so the changed set is derived from the payloads the event
- * does carry. `changed_fields` is still honoured when present, but either way the result is
- * filtered to values that genuinely differ, so a declared-but-identical field is not rendered
- * as a change.
+ * `changed_fields` is honoured when present and derived from the payloads otherwise, because
+ * this endpoint populates it on some event types only: the task-update writer sets it, while
+ * catalogue-created, task-added and task-removed still send null. The endpoint also carries no
+ * `field_diffs` — that is computed on the *core* audit response model, not on this module's
+ * `AuditTrailEventItem` — so the before/after values are read from the payloads either way.
+ *
+ * The filter to genuinely-differing values is load-bearing in both cases: the writer sets
+ * `changed_fields` to the keys the PATCH *submitted*, not the ones whose value moved, so a
+ * re-submitted identical field would otherwise render as "5 → 5".
  *
  * A create carries no `old_data` and therefore no delta: nothing changed, something began,
  * which the event type already states.
