@@ -44,7 +44,12 @@
     "subtitle": "Produktvorlage",
     "viewVersionHistory": "Versionsverlauf anzeigen",
     "noPublishedVersion": "Diese Vorlage hat noch keine veröffentlichte Version. Öffnen Sie den Versionsverlauf, um ihren Entwurf zu sehen.",
-    "loading": "Details werden geladen…"
+    "loading": "Details werden geladen…",
+    "viewFullDetail": "Vollständige Details öffnen",
+    "page": {
+      "subtitle": "Version {{version}}",
+      "backToVersionHistory": "Zurück zur Versionshistorie"
+    }
   },
   "wizard": {
     "steps": {

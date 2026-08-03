@@ -9,8 +9,10 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { formatDateTime } from "@/lib/formatters"
-import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
+import {
+  DetailRow,
+  DetailSection,
+} from "@/features/productTemplates/components/ProductTemplateDetailPrimitives"
 import { ProductTemplatePublishedActions } from "@/features/productTemplates/components/ProductTemplatePublishedActions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
@@ -18,7 +20,10 @@ import type {
   TemplateCurrentVersionSummary,
   TemplateVersionDetail,
 } from "@/features/productTemplates/api/schema"
-import { productTemplateVersionHistory } from "@/router/paths"
+import {
+  productTemplateDetail,
+  productTemplateVersionHistory,
+} from "@/router/paths"
 
 type ProductTemplateDetailDrawerProps = {
   templateId: string | null
@@ -28,205 +33,59 @@ type ProductTemplateDetailDrawerProps = {
   onOpenChange: (open: boolean) => void
 }
 
-function DrawerSection({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="flex flex-col gap-2 border-t border-border py-4 first:border-t-0 first:pt-0">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {title}
-      </h3>
-      <div className="flex flex-col gap-2">{children}</div>
-    </section>
-  )
-}
-
-function DrawerRow({
-  label,
-  value,
-}: {
-  label: string
-  value: React.ReactNode
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm text-foreground text-right">{value}</span>
-    </div>
-  )
-}
-
-// Read-only detail body. Enum-to-label lookups intentionally mirror the wizard's
-// ReviewStep (2nd occurrence per the Rule of Three — noted, not yet extracted). The
-// Orchestration linkage section and the created-by/updated-by/updated-at/tenant metadata
-// rows are omitted (not stubbed) because the backend does not expose them — see
-// open-questions Q-028; do not add placeholder UI for them.
+// Key information only, per CR-BPT-06 on PRD1042-1798: the panel is a preview, and the full field
+// set lives on ProductTemplateDetailPage behind the link in the header.
+//
+// WHICH fields count as "key" is an interpretation — there is no Figma frame for a slim drawer, only
+// the original full-height 500 × 1916 one (see the provenance note on ProductTemplateDetailPage).
+// The choice here is identity plus the two fields that identify what the product *is* (financing
+// type, legal structure) plus validity, since those are what a reader scanning the list needs to
+// tell two templates apart. Everything else — the rest of the behavioural settings, eligibility and
+// metadata — is on the page.
+//
+// Orchestration linkage and the created-by/updated-by/updated-at/tenant metadata remain omitted
+// rather than stubbed, because the backend does not expose them (open-questions Q-028).
 function DetailBody({ detail }: { detail: TemplateVersionDetail }) {
   const { t } = useTranslation("productTemplates")
-  const npvFormula = NPV_FORMULA_OPTIONS.find(
-    o => o.ref === detail.npv_formula_ref
-  )
-  const assetCategories = detail.allowed_asset_categories ?? []
 
   return (
     <div className="flex flex-col px-4">
-      <DrawerSection title={t("sections.identity")}>
-        <DrawerRow
+      <DetailSection title={t("sections.identity")}>
+        <DetailRow
           label={t("fields.templateName")}
           value={detail.template_name}
         />
-        <DrawerRow
+        <DetailRow
           label={t("fields.templateDescription")}
           value={detail.template_description || "—"}
         />
-      </DrawerSection>
+      </DetailSection>
 
-      <DrawerSection title={t("sections.behavioralSettings")}>
-        <DrawerRow
+      <DetailSection title={t("sections.behavioralSettings")}>
+        <DetailRow
           label={t("fields.financingType")}
           value={t(
             `financingTypes.${detail.financing_type}` as "financingTypes.full_refinancing"
           )}
         />
-        <DrawerRow
+        <DetailRow
           label={t("fields.legalStructure")}
           value={t(
             `legalStructures.${detail.legal_structure}` as "legalStructures.loan_credit"
           )}
         />
-        <DrawerRow
-          label={t("fields.paymentTiming")}
-          value={t(
-            `paymentTimings.${detail.payment_timing}` as "paymentTimings.advance"
-          )}
-        />
-        <DrawerRow
-          label={t("fields.rateBasis")}
-          value={t(`rateBases.${detail.rate_basis}` as "rateBases.30_360")}
-        />
-        <DrawerRow
-          label={t("fields.calculationModel")}
-          value={t(
-            `calculationModels.${detail.calculation_model}` as "calculationModels.annuity"
-          )}
-        />
-        <DrawerRow
-          label={t("fields.rateType")}
-          value={
-            detail.rate_type
-              ? t(`rateTypes.${detail.rate_type}` as "rateTypes.fixed")
-              : "—"
-          }
-        />
-        <DrawerRow
-          label={t("fields.firstInstallmentRule")}
-          value={
-            detail.first_installment_rule
-              ? t(
-                  `firstInstallmentRules.${detail.first_installment_rule}` as "firstInstallmentRules.following_month"
-                )
-              : "—"
-          }
-        />
-        <DrawerRow
-          label={t("fields.disbursementDerivationRule")}
-          value={
-            detail.disbursement_derivation_rule
-              ? t(
-                  `disbursementDerivationRules.${detail.disbursement_derivation_rule}` as "disbursementDerivationRules.npv"
-                )
-              : "—"
-          }
-        />
-        <DrawerRow
-          label={t("sections.npvFormulaReference")}
-          value={
-            npvFormula
-              ? `${t(npvFormula.labelKey)} · ${npvFormula.code} ${npvFormula.version}`
-              : (detail.npv_formula_ref ?? "—")
-          }
-        />
-      </DrawerSection>
+      </DetailSection>
 
-      <DrawerSection title={t("sections.eligibility")}>
-        <DrawerRow
-          label={t("sections.allowedAssetCategories")}
-          value={
-            assetCategories.length > 0 ? (
-              <span className="flex flex-wrap justify-end gap-1.5">
-                {assetCategories.map(category => (
-                  <span
-                    key={category}
-                    className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-foreground"
-                  >
-                    {t(
-                      `assetCategories.${category}` as "assetCategories.machinery"
-                    )}
-                  </span>
-                ))}
-              </span>
-            ) : (
-              "—"
-            )
-          }
-        />
-        <DrawerRow
-          label={t("fields.minTermMonths")}
-          value={detail.min_term_months ?? "—"}
-        />
-        <DrawerRow
-          label={t("fields.maxTermMonths")}
-          value={detail.max_term_months ?? "—"}
-        />
-        <DrawerRow
-          label={t("fields.maxLtvRatio")}
-          value={
-            detail.max_ltv_ratio !== undefined && detail.max_ltv_ratio !== null
-              ? `${detail.max_ltv_ratio}%`
-              : "—"
-          }
-        />
-        <DrawerRow
-          label={t("fields.minVolumeEur")}
-          value={
-            detail.min_volume_eur !== undefined &&
-            detail.min_volume_eur !== null
-              ? `€ ${detail.min_volume_eur.toLocaleString()}`
-              : "—"
-          }
-        />
-        <DrawerRow
-          label={t("fields.maxVolumeEur")}
-          value={
-            detail.max_volume_eur !== undefined &&
-            detail.max_volume_eur !== null
-              ? `€ ${detail.max_volume_eur.toLocaleString()}`
-              : "—"
-          }
-        />
-      </DrawerSection>
-
-      <DrawerSection title={t("sections.validity")}>
-        <DrawerRow
+      <DetailSection title={t("sections.validity")}>
+        <DetailRow
           label={t("fields.validFrom")}
           value={detail.valid_from || "—"}
         />
-        <DrawerRow
+        <DetailRow
           label={t("fields.validUntil")}
           value={detail.valid_until || t("fields.openEnded")}
         />
-      </DrawerSection>
-
-      <DrawerSection title={t("sections.metadata")}>
-        <DrawerRow
-          label={t("fields.createdAt")}
-          value={detail.created_at ? formatDateTime(detail.created_at) : "—"}
-        />
-      </DrawerSection>
+      </DetailSection>
     </div>
   )
 }
@@ -264,14 +123,29 @@ export function ProductTemplateDetailDrawer({
               : t("detail.subtitle")}
           </SheetDescription>
           {templateId && (
-            <Link
-              to={productTemplateVersionHistory(templateId)}
-              data-testid="drawer-view-version-history"
-              className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-            >
-              {t("detail.viewVersionHistory")}
-              <ExternalLink size={14} />
-            </Link>
+            <div className="mt-1 flex flex-col items-start gap-1">
+              {/* CR-BPT-06's link through to the full field set. Only rendered when a version
+                  exists, because the detail page is version-scoped and has nothing to fetch
+                  without one — the same reason DetailBody is gated below. */}
+              {versionNumber && (
+                <Link
+                  to={productTemplateDetail(templateId, versionNumber)}
+                  data-testid="drawer-view-full-detail"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                >
+                  {t("detail.viewFullDetail")}
+                  <ExternalLink size={14} />
+                </Link>
+              )}
+              <Link
+                to={productTemplateVersionHistory(templateId)}
+                data-testid="drawer-view-version-history"
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              >
+                {t("detail.viewVersionHistory")}
+                <ExternalLink size={14} />
+              </Link>
+            </div>
           )}
         </SheetHeader>
 
