@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
-import { SectionCard } from "@/features/productTemplates/components/SectionCard"
+import { SectionCard } from "@/components/shared/SectionCard"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   AssetCategorySchema,

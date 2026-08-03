@@ -1,18 +1,26 @@
+import {
+  AUDITOR_ROLE,
+  BACK_OFFICE_ROLE,
+  BANK_POWER_USER_ROLE,
+  FRONT_OFFICE_ROLE,
+  SUPPORT_USER_ROLE,
+  SYSTEM_ADMIN_ROLE,
+} from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 export const PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES: readonly UserRole[] = [
-  "system_admin",
-  "bank_power_user",
+  SYSTEM_ADMIN_ROLE,
+  BANK_POWER_USER_ROLE,
 ]
 
 export const PRODUCT_TEMPLATE_READ_ALLOWED_ROLES: readonly UserRole[] = [
-  "system_admin",
-  "bank_power_user",
-  "front_office",
-  "back_office",
-  "support_user",
-  "auditor",
+  SYSTEM_ADMIN_ROLE,
+  BANK_POWER_USER_ROLE,
+  FRONT_OFFICE_ROLE,
+  BACK_OFFICE_ROLE,
+  SUPPORT_USER_ROLE,
+  AUDITOR_ROLE,
 ]
 
 export type ProductTemplateWizardStep =

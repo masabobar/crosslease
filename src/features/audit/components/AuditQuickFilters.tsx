@@ -206,6 +206,7 @@ export function AuditQuickFilters({
           <Button
             variant="ghost"
             size="sm"
+            data-testid="filter-actor-clear"
             onClick={() => {
               setActorInputValue("")
               onFilterChange({ actor_id: null })
@@ -215,6 +216,7 @@ export function AuditQuickFilters({
           </Button>
           <Button
             size="sm"
+            data-testid="filter-actor-apply"
             onClick={() =>
               onFilterChange({ actor_id: actorInputValue || null })
             }

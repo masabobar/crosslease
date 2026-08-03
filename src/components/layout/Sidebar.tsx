@@ -35,7 +35,7 @@ import {
   BANK_POWER_USER_ROLE,
 } from "@/features/users/types"
 import { canAccessAuditTrail as hasAuditTrailAccess } from "@/features/audit/types"
-import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governed-actions/constants"
+import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governedActions/constants"
 import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
 import { PARTNER_VIEW_ALLOWED_ROLES } from "@/features/partners/types"

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
 import type { SelectOption } from "@/components/ui/select"
-import { SectionCard } from "@/features/productTemplates/components/SectionCard"
+import { SectionCard } from "@/components/shared/SectionCard"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   CalculationModelSchema,
