@@ -171,6 +171,7 @@ function PartnerTable({
               onSubmitPartner && (
                 <Button
                   onClick={onSubmitPartner}
+                  data-testid="partner-empty-state-submit-button"
                   className="h-9 rounded-xl px-4 gap-1.5"
                 >
                   <Handshake size={16} />
@@ -204,7 +205,12 @@ function PartnerTable({
               ) : (
                 <span className="text-sm text-foreground">
                   {partner.roles
-                    .map(role => t(`role.${role}` as "role.lessee"))
+                    // roles is z.array(z.string()) on purpose — rows may carry
+                    // historical values dropped from PartnerRoleSchema, so fall
+                    // back to the raw value rather than render a bare i18n key.
+                    .map(role =>
+                      t(`role.${role}` as "role.lessee", { defaultValue: role })
+                    )
                     .join(", ")}
                 </span>
               )}

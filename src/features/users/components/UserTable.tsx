@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
+import { USER_ACTION_TYPE } from "@/features/users/types"
 import type { UserRole, UserActionType } from "@/features/users/types"
 import { formatLastLogin, formatDate, getInitials } from "@/lib/formatters"
 import {
@@ -133,7 +134,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
         {approveVisible && (
           <DropdownMenuItem
             data-testid="user-action-approve"
-            onClick={() => onAction?.("approve")}
+            onClick={() => onAction?.(USER_ACTION_TYPE.APPROVE)}
           >
             <UserCheck size={14} className="text-muted-foreground" />
             {t("table.actions.approve")}
@@ -142,7 +143,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
         {resendVisible && (
           <DropdownMenuItem
             data-testid="user-action-resend-invitation"
-            onClick={() => onAction?.("resend-invitation")}
+            onClick={() => onAction?.(USER_ACTION_TYPE.RESEND_INVITATION)}
           >
             <Mail size={14} className="text-muted-foreground" />
             {t("actions.resend-invitation.label")}
@@ -151,7 +152,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
         {suspendVisible && (
           <DropdownMenuItem
             data-testid="user-action-suspend"
-            onClick={() => onAction?.("suspend")}
+            onClick={() => onAction?.(USER_ACTION_TYPE.SUSPEND)}
           >
             <Ban size={14} className="text-muted-foreground" />
             {t("actions.suspend.label")}
@@ -160,7 +161,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
         {reactivateVisible && (
           <DropdownMenuItem
             data-testid="user-action-reactivate"
-            onClick={() => onAction?.("reactivate")}
+            onClick={() => onAction?.(USER_ACTION_TYPE.REACTIVATE)}
           >
             <RotateCcw size={14} className="text-muted-foreground" />
             {t("actions.reactivate.label")}
@@ -169,7 +170,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
         {deactivateVisible && (
           <DropdownMenuItem
             data-testid="user-action-deactivate"
-            onClick={() => onAction?.("deactivate")}
+            onClick={() => onAction?.(USER_ACTION_TYPE.DEACTIVATE)}
             variant="destructive"
           >
             <UserX size={14} />
@@ -179,7 +180,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
         {resetMfaVisible && (
           <DropdownMenuItem
             data-testid="user-action-reset-mfa"
-            onClick={() => onAction?.("reset-mfa")}
+            onClick={() => onAction?.(USER_ACTION_TYPE.RESET_MFA)}
           >
             <ShieldOff size={14} className="text-muted-foreground" />
             {t("actions.resetMfa.label")}

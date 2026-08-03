@@ -15,6 +15,11 @@ const VALID_STATUSES: readonly string[] = USER_STATUSES
 export const PAGE_SIZES = [10, 25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 
+const DEFAULT_PAGE_SIZE: PageSize = PAGE_SIZES[0]
+const DEFAULT_PAGE = 1
+const DESCENDING: UserSortOrder = "desc"
+const ASCENDING: UserSortOrder = "asc"
+
 type ParamUpdate = Record<string, string | readonly string[] | null>
 
 export type UserListParams = {
@@ -53,18 +58,20 @@ export function useUserListParams(): UserListParams {
     )
   }
 
-  const page = Math.max(1, Number(params.get("page") ?? "1") || 1)
-  const rawPerPage = Number(params.get("per_page") ?? "10")
+  const page = Math.max(
+    DEFAULT_PAGE,
+    Number(params.get("page") ?? String(DEFAULT_PAGE)) || DEFAULT_PAGE
+  )
+  const rawPerPage = Number(params.get("per_page") ?? String(DEFAULT_PAGE_SIZE))
   const perPage: PageSize = (PAGE_SIZES as readonly number[]).includes(
     rawPerPage
   )
     ? (rawPerPage as PageSize)
-    : 10
+    : DEFAULT_PAGE_SIZE
   const search = params.get("q") ?? ""
 
   const rawRoles = params.getAll("role")
   const rawStatuses = params.getAll("status")
-  const rawMfa = params.get("mfa_enabled")
   const appliedFilters: UserFilterState = {
     role: rawRoles.filter((v): v is UserRole =>
       USER_ROLES.includes(v as UserRole)
@@ -73,9 +80,6 @@ export function useUserListParams(): UserListParams {
       VALID_STATUSES.includes(v as UserStatus)
     ),
     tenant_id: params.get("tenant_id"),
-    // UI ready — not sent to API; persisted in URL for session continuity
-    mfa_enabled: rawMfa === "enabled" || rawMfa === "disabled" ? rawMfa : null,
-    lg_id: params.get("lg_id"),
     last_login_from: params.get("last_login_from"),
     last_login_to: params.get("last_login_to"),
   }
@@ -86,14 +90,17 @@ export function useUserListParams(): UserListParams {
       ? (rawSortKey as UserSortKey)
       : null
   const sortOrder: UserSortOrder =
-    params.get("sort_order") === "desc" ? "desc" : "asc"
+    params.get("sort_order") === DESCENDING ? DESCENDING : ASCENDING
 
   function setPage(p: number) {
-    update({ page: p === 1 ? null : String(p) })
+    update({ page: p === DEFAULT_PAGE ? null : String(p) })
   }
 
   function setPerPage(size: PageSize) {
-    update({ per_page: size === 10 ? null : String(size), page: null })
+    update({
+      per_page: size === DEFAULT_PAGE_SIZE ? null : String(size),
+      page: null,
+    })
   }
 
   function setSearch(q: string) {
@@ -105,8 +112,6 @@ export function useUserListParams(): UserListParams {
       role: filters.role,
       status: filters.status,
       tenant_id: filters.tenant_id,
-      mfa_enabled: filters.mfa_enabled,
-      lg_id: filters.lg_id,
       last_login_from: filters.last_login_from,
       last_login_to: filters.last_login_to,
       page: null,
@@ -116,7 +121,7 @@ export function useUserListParams(): UserListParams {
   function setSort(key: UserSortKey, order: UserSortOrder) {
     update({
       sort_by: key,
-      sort_order: order === "asc" ? null : order,
+      sort_order: order === ASCENDING ? null : order,
       page: null,
     })
   }

@@ -41,10 +41,10 @@ const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
 const MUTED_STATUSES: TenantStatus[] = [
-  "suspended",
-  "archived",
-  "rejected",
-  "expired",
+  TenantStatusSchema.enum.suspended,
+  TenantStatusSchema.enum.archived,
+  TenantStatusSchema.enum.rejected,
+  TenantStatusSchema.enum.expired,
 ]
 
 function isMuted(status: TenantStatus): boolean {
@@ -72,15 +72,15 @@ function TenantTable({
   const [selectedTenant, setSelectedTenant] = useState<TenantListItem | null>(
     null
   )
-  const [suspendOpen, setSuspendOpen] = useState(false)
-  const [reactivateOpen, setReactivateOpen] = useState(false)
-  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [isSuspendOpen, setIsSuspendOpen] = useState(false)
+  const [isReactivateOpen, setIsReactivateOpen] = useState(false)
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
 
   // List endpoint doesn't return the active-user count (only the detail
   // endpoint does), so fetch the detail record for the active-user
   // acknowledgement checkbox when the archive dialog is opened.
   const { data: selectedTenantDetail, isError: isSelectedTenantDetailError } =
-    useTenantDetail(archiveOpen && selectedTenant ? selectedTenant.id : null)
+    useTenantDetail(isArchiveOpen && selectedTenant ? selectedTenant.id : null)
   const selectedTenantActiveUserCount =
     selectedTenantDetail && isFullTenantResponse(selectedTenantDetail)
       ? selectedTenantDetail.bank_user_utilisation
@@ -92,21 +92,25 @@ function TenantTable({
     // dropdown menu's own close (triggered by the same item click) races
     // with the menu's outside-click/focus handling and can close the
     // dialog immediately after it opens.
-    setTimeout(() => setSuspendOpen(true), 0)
+    setTimeout(() => setIsSuspendOpen(true), 0)
   }
 
   function openReactivate(tenant: TenantListItem) {
     setSelectedTenant(tenant)
-    setTimeout(() => setReactivateOpen(true), 0)
+    setTimeout(() => setIsReactivateOpen(true), 0)
   }
 
   function openArchive(tenant: TenantListItem) {
     setSelectedTenant(tenant)
-    setTimeout(() => setArchiveOpen(true), 0)
+    setTimeout(() => setIsArchiveOpen(true), 0)
   }
 
   return (
     <>
+      {/* NOTE: flex-based grid rather than the shadcn <Table> primitive — the
+          column widths are shared with the header via the COL_* constants and
+          rows are clickable containers. This matches every other list table in
+          the app; converting them all is a separate, cross-cutting change. */}
       <div
         className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
         data-testid="tenant-table"
@@ -194,6 +198,7 @@ function TenantTable({
                 onCreateTenant && (
                   <Button
                     onClick={onCreateTenant}
+                    data-testid="tenant-empty-state-create-button"
                     className="h-9 rounded-xl px-4 gap-1.5"
                   >
                     <Building2 size={16} />
@@ -207,8 +212,8 @@ function TenantTable({
         {/* Data rows */}
         {!isLoading &&
           tenants.map(tenant => {
-            const muted = isMuted(tenant.status)
-            const textClass = muted
+            const isRowMuted = isMuted(tenant.status)
+            const textClass = isRowMuted
               ? "text-muted-foreground"
               : "text-foreground"
             const canSuspend =
@@ -232,7 +237,7 @@ function TenantTable({
 
                 <div className={`${COL_CODE} p-2 overflow-hidden`}>
                   <span
-                    className={`text-sm font-mono block truncate ${muted ? "text-muted-foreground" : "text-foreground"}`}
+                    className={`text-sm font-mono block truncate ${textClass}`}
                   >
                     {tenant.code}
                   </span>
@@ -338,22 +343,22 @@ function TenantTable({
       {selectedTenant && (
         <>
           <SuspendTenantDialog
-            open={suspendOpen}
-            onOpenChange={setSuspendOpen}
+            open={isSuspendOpen}
+            onOpenChange={setIsSuspendOpen}
             tenantId={selectedTenant.id}
             tenantName={selectedTenant.name}
             tenantStatus={selectedTenant.status}
           />
           <ReactivateTenantDialog
-            open={reactivateOpen}
-            onOpenChange={setReactivateOpen}
+            open={isReactivateOpen}
+            onOpenChange={setIsReactivateOpen}
             tenantId={selectedTenant.id}
             tenantName={selectedTenant.name}
             tenantStatus={selectedTenant.status}
           />
           <ArchiveTenantDialog
-            open={archiveOpen}
-            onOpenChange={setArchiveOpen}
+            open={isArchiveOpen}
+            onOpenChange={setIsArchiveOpen}
             tenantId={selectedTenant.id}
             tenantName={selectedTenant.name}
             tenantStatus={selectedTenant.status}

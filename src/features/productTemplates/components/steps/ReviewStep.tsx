@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { SectionCard } from "@/features/productTemplates/components/SectionCard"
+import { SectionCard } from "@/components/shared/SectionCard"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 type Props = {

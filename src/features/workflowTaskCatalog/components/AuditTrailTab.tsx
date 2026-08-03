@@ -80,13 +80,9 @@ function FieldDelta({
 
 type Props = {
   catalogId: string
-  // actor_display comes back null on this endpoint (the core audit routes enrich it, this one
-  // does not — Q-042), so actor names are resolved from the tenant user list the detail page
-  // already fetches for created_by rather than showing a bare UUID.
-  userNamesById: Record<string, string>
 }
 
-function AuditTrailTab({ catalogId, userNamesById }: Props) {
+function AuditTrailTab({ catalogId }: Props) {
   const { t } = useTranslation(["workflowTaskCatalog", "users"])
   const {
     data,
@@ -184,10 +180,12 @@ function AuditTrailTab({ catalogId, userNamesById }: Props) {
                     {formatDateTime(event.recorded_at)}
                   </TableCell>
                   <TableCell>
+                    {/* The route now fills actor_display server-side from the actor's current
+                        name. It stays null for an actor the resolver cannot look up — a
+                        non-UUID system actor, or a deleted user — so the raw id remains the
+                        fallback, same as the core audit table. */}
                     <p className="font-medium text-foreground">
-                      {event.actor_display ??
-                        userNamesById[event.actor_id] ??
-                        event.actor_id}
+                      {event.actor_display ?? event.actor_id}
                     </p>
                     {event.actor_role_at_time && (
                       <p className="text-xs text-muted-foreground">

@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Building2Icon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { SearchInput } from "@/components/ui/search-input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { FilterButton } from "@/components/ui/filter-button"
+import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import { FilterPill } from "@/components/ui/filter-pill"
 import { formatDate } from "@/lib/formatters"
 import { COUNTRIES, countryName } from "@/lib/countries"
@@ -20,6 +20,7 @@ import {
   TenantStatusSchema,
   TenantTypeSchema,
 } from "@/features/tenants/api/schema"
+import { ApiError } from "@/lib/api"
 import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
@@ -99,7 +100,7 @@ export default function TenantManagementPage() {
       : {}),
   }
 
-  const { data, isLoading, isError } = useTenantList(params)
+  const { data, isLoading, isError, error } = useTenantList(params)
 
   const tenants = data?.tenants ?? []
   const totalPages = data?.total_pages ?? 1
@@ -201,28 +202,18 @@ export default function TenantManagementPage() {
           count={statusFilters.length}
           contentClassName="w-44"
         >
-          {STATUS_OPTIONS.map(s => {
-            const checked = statusFilters.includes(s)
-            return (
-              <Button
-                key={s}
-                variant="ghost"
-                data-testid={`filter-status-${s}`}
-                onClick={() => toggleStatus(s)}
-                className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-              >
-                <Checkbox
-                  checked={checked}
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  className="shrink-0"
-                />
-                <span className="text-sm text-foreground">
-                  {t(`statuses.${s}` as "statuses.active")}
-                </span>
-              </Button>
-            )
-          })}
+          {STATUS_OPTIONS.map(s => (
+            <FilterCheckboxOption
+              key={s}
+              checked={statusFilters.includes(s)}
+              onClick={() => toggleStatus(s)}
+              data-testid={`filter-status-${s}`}
+            >
+              <span className="text-sm text-foreground">
+                {t(`statuses.${s}` as "statuses.active")}
+              </span>
+            </FilterCheckboxOption>
+          ))}
         </FilterButton>
 
         <FilterButton
@@ -231,28 +222,18 @@ export default function TenantManagementPage() {
           count={typeFilters.length}
           contentClassName="w-52"
         >
-          {TYPE_OPTIONS.map(type => {
-            const checked = typeFilters.includes(type)
-            return (
-              <Button
-                key={type}
-                variant="ghost"
-                data-testid={`filter-type-${type}`}
-                onClick={() => toggleType(type)}
-                className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-              >
-                <Checkbox
-                  checked={checked}
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  className="shrink-0"
-                />
-                <span className="text-sm text-foreground">
-                  {t(`tenantTypes.${type}` as "tenantTypes.bank")}
-                </span>
-              </Button>
-            )
-          })}
+          {TYPE_OPTIONS.map(type => (
+            <FilterCheckboxOption
+              key={type}
+              checked={typeFilters.includes(type)}
+              onClick={() => toggleType(type)}
+              data-testid={`filter-type-${type}`}
+            >
+              <span className="text-sm text-foreground">
+                {t(`tenantTypes.${type}` as "tenantTypes.bank")}
+              </span>
+            </FilterCheckboxOption>
+          ))}
         </FilterButton>
 
         <FilterButton
@@ -277,30 +258,23 @@ export default function TenantManagementPage() {
               </p>
             ) : (
               filteredCountries.map(({ code, name }) => {
-                const selected = countryFilter === code
+                const isSelected = countryFilter === code
                 return (
-                  <Button
+                  <FilterCheckboxOption
                     key={code}
-                    variant="ghost"
-                    data-testid={`filter-country-option-${code}`}
+                    checked={isSelected}
                     onClick={() => {
-                      setCountryFilter(selected ? null : code)
+                      setCountryFilter(isSelected ? null : code)
                       setCountrySearch("")
                       setPage(1)
                     }}
-                    className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
+                    data-testid={`filter-country-option-${code}`}
                   >
-                    <Checkbox
-                      checked={selected}
-                      tabIndex={-1}
-                      aria-hidden="true"
-                      className="shrink-0"
-                    />
                     <span className="text-sm text-foreground">{name}</span>
                     <span className="ml-auto text-xs text-muted-foreground shrink-0">
                       {code}
                     </span>
-                  </Button>
+                  </FilterCheckboxOption>
                 )
               })
             )}
@@ -351,49 +325,32 @@ export default function TenantManagementPage() {
           contentClassName="w-56"
         >
           <div className="max-h-52 overflow-y-auto overflow-x-hidden py-1">
-            {platformModules.map(module => {
-              const checked = moduleFilter?.key === module.key
-              return (
-                <Button
-                  key={module.key}
-                  variant="ghost"
-                  data-testid={`filter-module-${module.key}`}
-                  onClick={() => toggleModuleKey(module.key)}
-                  className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-                >
-                  <Checkbox
-                    checked={checked}
-                    tabIndex={-1}
-                    aria-hidden="true"
-                    className="shrink-0"
-                  />
-                  <span className="text-sm text-foreground text-left whitespace-normal">
-                    {module.display_name}
-                  </span>
-                </Button>
-              )
-            })}
+            {platformModules.map(module => (
+              <FilterCheckboxOption
+                key={module.key}
+                checked={moduleFilter?.key === module.key}
+                onClick={() => toggleModuleKey(module.key)}
+                data-testid={`filter-module-${module.key}`}
+              >
+                <span className="text-sm text-foreground text-left whitespace-normal">
+                  {module.display_name}
+                </span>
+              </FilterCheckboxOption>
+            ))}
           </div>
           <div className="border-t border-border py-1">
             {MODULE_STATUS_OPTIONS.map(({ isActive, key }) => (
-              <Button
+              <FilterCheckboxOption
                 key={key}
-                variant="ghost"
+                checked={moduleFilter?.isActive === isActive}
                 disabled={!moduleFilter}
-                data-testid={`filter-module-status-${key}`}
                 onClick={() => selectModuleStatus(isActive)}
-                className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal disabled:opacity-50"
+                data-testid={`filter-module-status-${key}`}
               >
-                <Checkbox
-                  checked={moduleFilter?.isActive === isActive}
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  className="shrink-0"
-                />
                 <span className="text-sm text-foreground">
                   {t(`list.filters.moduleStatus.${key}`)}
                 </span>
-              </Button>
+              </FilterCheckboxOption>
             ))}
             {!moduleFilter && (
               <p className="px-3 py-1 text-xs text-muted-foreground">
@@ -494,8 +451,13 @@ export default function TenantManagementPage() {
       {/* Table */}
       <div className="flex-1 overflow-auto px-8 pb-4">
         {isError ? (
-          <p className="text-sm text-destructive py-8 text-center">
-            {t("errors.generic")}
+          <p
+            className="text-sm text-destructive py-8 text-center"
+            data-testid="tenant-list-error"
+          >
+            {error instanceof ApiError
+              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+              : t("errors.generic")}
           </p>
         ) : (
           <TenantTable

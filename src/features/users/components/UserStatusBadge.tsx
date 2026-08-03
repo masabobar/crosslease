@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next"
 import type { UserStatus } from "@/features/users/api/schema"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 type UserStatusBadgeProps = {
   status: UserStatus
@@ -11,6 +13,9 @@ type StatusConfig = {
   text: string
 }
 
+// Per-status colours from the Figma status-badge spec. Literal hex rather than theme
+// tokens because the palette is status semantics, not surface styling — which also means
+// they do not yet have dark-mode counterparts.
 const STATUS_CONFIG: Record<UserStatus, StatusConfig> = {
   active: {
     container: "bg-[#d0fae5]",
@@ -54,12 +59,10 @@ function UserStatusBadge({ status }: UserStatusBadgeProps) {
   const config = STATUS_CONFIG[status]
 
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.container} ${config.text}`}
-    >
-      <span className={`size-1.5 rounded-full shrink-0 ${config.dot}`} />
+    <Badge className={cn(config.container, config.text)}>
+      <span className={cn("size-1.5 rounded-full shrink-0", config.dot)} />
       {t(`statuses.${status}` as `statuses.${UserStatus}`)}
-    </span>
+    </Badge>
   )
 }
 

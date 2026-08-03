@@ -10,8 +10,7 @@ import type {
   ModuleDeactivateForm,
   TenantModuleEntry,
 } from "@/features/tenants/api/schema"
-import { ApiError } from "@/lib/api"
-import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 
 type Props = {
   open: boolean
@@ -41,6 +40,8 @@ export function DeactivateModuleDialog({
     defaultValues: { justification: "" },
   })
 
+  const handleError = useTenantFormErrorHandler({ getValues, setError })
+
   function handleClose() {
     onOpenChange(false)
     reset()
@@ -65,22 +66,7 @@ export function DeactivateModuleDialog({
           )
           handleClose()
         },
-        onError: err => {
-          if (
-            applyApiFieldErrors({
-              error: err,
-              fields: Object.keys(getValues()),
-              setError,
-            })
-          )
-            return
-
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
-        },
+        onError: handleError,
       }
     )
   }

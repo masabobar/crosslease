@@ -6,11 +6,22 @@ import {
   getInitials,
 } from "@/lib/formatters"
 import {
+  buildActionToastPayload,
+  buildIdentityPatch,
+  getRoleClassificationKey,
   getUserActionVisibility,
   getUserListColumnVisibility,
   getUserFilterVisibility,
 } from "@/features/users/utils"
 import {
+  AUDITOR_ROLE,
+  BACK_OFFICE_ROLE,
+  BANK_POWER_USER_ROLE,
+  FRONT_OFFICE_ROLE,
+  LEASING_COMPANY_USER_ROLE,
+  PLATFORM_USER_ROLES,
+  SUPPORT_USER_ROLE,
+  SYSTEM_ADMIN_ROLE,
   BANK_ADMIN_INVITABLE_ROLES,
   USER_APPROVE_ROLES,
   USER_EXPORT_ROLES,
@@ -543,5 +554,170 @@ describe("getUserListColumnVisibility — null/undefined viewerRole", () => {
     expect(cols.tenant).toBe(true)
     expect(cols.mfa).toBe(true)
     expect(cols.lastLogin).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getRoleClassificationKey
+// ---------------------------------------------------------------------------
+
+describe("getRoleClassificationKey", () => {
+  it("classifies every platform role as platform", () => {
+    for (const role of PLATFORM_USER_ROLES) {
+      expect(getRoleClassificationKey(role)).toBe(
+        "detail.page.roleClassification.platform"
+      )
+    }
+  })
+
+  it("classifies system_admin, support_user and auditor as platform", () => {
+    expect(getRoleClassificationKey(SYSTEM_ADMIN_ROLE)).toBe(
+      "detail.page.roleClassification.platform"
+    )
+    expect(getRoleClassificationKey(SUPPORT_USER_ROLE)).toBe(
+      "detail.page.roleClassification.platform"
+    )
+    expect(getRoleClassificationKey(AUDITOR_ROLE)).toBe(
+      "detail.page.roleClassification.platform"
+    )
+  })
+
+  it("classifies tenant-operational roles as tenantOperational", () => {
+    for (const role of [
+      BANK_POWER_USER_ROLE,
+      FRONT_OFFICE_ROLE,
+      BACK_OFFICE_ROLE,
+      LEASING_COMPANY_USER_ROLE,
+    ]) {
+      expect(getRoleClassificationKey(role)).toBe(
+        "detail.page.roleClassification.tenantOperational"
+      )
+    }
+  })
+
+  it("returns one of exactly two keys for every role", () => {
+    const keys = new Set(USER_ROLES.map(getRoleClassificationKey))
+    expect(keys.size).toBe(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// buildActionToastPayload
+// ---------------------------------------------------------------------------
+
+describe("buildActionToastPayload", () => {
+  const echoT = (key: string, options?: Record<string, unknown>) =>
+    options?.name ? `${key}:${String(options.name)}` : key
+
+  it("uses the warning variant for suspend and deactivate", () => {
+    expect(buildActionToastPayload("suspend", "Ana B", echoT).variant).toBe(
+      "warning"
+    )
+    expect(buildActionToastPayload("deactivate", "Ana B", echoT).variant).toBe(
+      "warning"
+    )
+  })
+
+  it("uses the success variant for reactivate and resend-invitation", () => {
+    expect(buildActionToastPayload("reactivate", "Ana B", echoT).variant).toBe(
+      "success"
+    )
+    expect(
+      buildActionToastPayload("resend-invitation", "Ana B", echoT).variant
+    ).toBe("success")
+  })
+
+  it("keys the title off the action and interpolates the name into the message", () => {
+    const payload = buildActionToastPayload("suspend", "Ana B", echoT)
+    expect(payload.title).toBe("actions.suspend.success.title")
+    expect(payload.message).toBe("actions.suspend.success.message:Ana B")
+  })
+
+  it("returns a distinct title for each modal action", () => {
+    const titles = (
+      ["suspend", "reactivate", "deactivate", "resend-invitation"] as const
+    ).map(action => buildActionToastPayload(action, "Ana B", echoT).title)
+    expect(new Set(titles).size).toBe(titles.length)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// buildIdentityPatch
+// ---------------------------------------------------------------------------
+
+describe("buildIdentityPatch", () => {
+  const current = {
+    first_name: "Ana",
+    last_name: "Muller",
+    phone_number: "+49 151 1",
+  }
+
+  it("reports no changes when every field matches", () => {
+    const { hasChanges } = buildIdentityPatch(
+      { first_name: "Ana", last_name: "Muller", phone_number: "+49 151 1" },
+      current
+    )
+    expect(hasChanges).toBe(false)
+  })
+
+  it("detects a first-name change", () => {
+    const { patch, hasChanges } = buildIdentityPatch(
+      { first_name: "Anna", last_name: "Muller", phone_number: "+49 151 1" },
+      current
+    )
+    expect(hasChanges).toBe(true)
+    expect(patch.first_name).toBe("Anna")
+  })
+
+  it("omits phone_number when the phone did not change", () => {
+    const { patch } = buildIdentityPatch(
+      { first_name: "Anna", last_name: "Muller", phone_number: "+49 151 1" },
+      current
+    )
+    expect("phone_number" in patch).toBe(false)
+  })
+
+  it("sends null when the phone is cleared to an empty string", () => {
+    const { patch, hasChanges } = buildIdentityPatch(
+      { first_name: "Ana", last_name: "Muller", phone_number: "" },
+      current
+    )
+    expect(hasChanges).toBe(true)
+    expect(patch.phone_number).toBeNull()
+  })
+
+  it("sends the new phone when it changed", () => {
+    const { patch } = buildIdentityPatch(
+      { first_name: "Ana", last_name: "Muller", phone_number: "+49 151 2" },
+      current
+    )
+    expect(patch.phone_number).toBe("+49 151 2")
+  })
+
+  it("treats an absent input phone and a null current phone as unchanged", () => {
+    const { hasChanges, patch } = buildIdentityPatch(
+      { first_name: "Ana", last_name: "Muller" },
+      { first_name: "Ana", last_name: "Muller", phone_number: null }
+    )
+    expect(hasChanges).toBe(false)
+    expect("phone_number" in patch).toBe(false)
+  })
+
+  it("detects adding a phone where the current value is null", () => {
+    const { hasChanges, patch } = buildIdentityPatch(
+      { first_name: "Ana", last_name: "Muller", phone_number: "+49 151 9" },
+      { first_name: "Ana", last_name: "Muller", phone_number: null }
+    )
+    expect(hasChanges).toBe(true)
+    expect(patch.phone_number).toBe("+49 151 9")
+  })
+
+  it("always carries both name fields, even when only the phone changed", () => {
+    const { patch } = buildIdentityPatch(
+      { first_name: "Ana", last_name: "Muller", phone_number: "+49 151 2" },
+      current
+    )
+    expect(patch.first_name).toBe("Ana")
+    expect(patch.last_name).toBe("Muller")
   })
 })

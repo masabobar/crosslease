@@ -10,7 +10,13 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
+import {
+  TenantInfoCard,
+  CARD_ACTION_BUTTON_CLASS,
+} from "@/features/tenants/components/TenantInfoCard"
+import { InfoRows } from "@/features/tenants/components/InfoRows"
+import type { InfoRow } from "@/features/tenants/components/InfoRows"
+import { ToggleStatePill } from "@/features/tenants/components/ToggleStatePill"
 import { useTenantIntegrationBinding } from "@/features/tenants/hooks/useTenantIntegrationBinding"
 import { useUpsertIntegrationBinding } from "@/features/tenants/hooks/useUpsertIntegrationBinding"
 import { UpsertIntegrationBindingFormSchema } from "@/features/tenants/api/schema"
@@ -19,9 +25,8 @@ import type {
   IntegrationBindingResponse,
 } from "@/features/tenants/api/schema"
 import { ApiError } from "@/lib/api"
-import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 import { formatDateTime } from "@/lib/formatters"
-import { cn } from "@/lib/utils"
 
 type SectionProps = {
   tenantId: string
@@ -71,6 +76,8 @@ function ConfigureBindingDialog({
     },
   })
 
+  const handleError = useTenantFormErrorHandler({ getValues, setError })
+
   function handleClose() {
     onOpenChange(false)
     reset()
@@ -114,22 +121,7 @@ function ConfigureBindingDialog({
           )
           handleClose()
         },
-        onError: err => {
-          if (
-            applyApiFieldErrors({
-              error: err,
-              fields: Object.keys(getValues()),
-              setError,
-            })
-          )
-            return
-
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
-        },
+        onError: handleError,
       }
     )
   }
@@ -310,6 +302,76 @@ function ConfigureBindingDialog({
   )
 }
 
+// Rows are built as data so each optional field's condition is written once —
+// the label and value columns are rendered from the same array and cannot drift
+// out of alignment.
+function useBindingRows() {
+  const { t } = useTranslation("tenants")
+  return function bindingRows(binding: IntegrationBindingResponse): InfoRow[] {
+    const label = (key: string) =>
+      t(
+        `detail.overview.integrationBinding.view.${key}` as "detail.overview.integrationBinding.view.endpointUrl"
+      )
+    const masked = t("detail.overview.integrationBinding.view.masked")
+
+    const rows: InfoRow[] = [
+      {
+        label: label("integrationActive"),
+        value: (
+          <ToggleStatePill
+            isEnabled={!!binding.integration_active}
+            label={
+              binding.integration_active ? label("active") : label("inactive")
+            }
+          />
+        ),
+      },
+      {
+        label: label("endpointUrl"),
+        value: (
+          <span className="truncate">{binding.endpoint_url ?? masked}</span>
+        ),
+      },
+      {
+        label: label("credentialScope"),
+        value: (
+          <span className="truncate">
+            {binding.credential_scope_identifier ?? masked}
+          </span>
+        ),
+      },
+    ]
+
+    if (binding.disbursement_execution_boundary_note !== null) {
+      rows.push({
+        label: label("disbursementNote"),
+        value: binding.disbursement_execution_boundary_note || "—",
+      })
+    }
+
+    rows.push({
+      label: label("createdAt"),
+      value: formatDateTime(binding.created_at),
+    })
+
+    if (binding.updated_at && binding.updated_at !== binding.created_at) {
+      rows.push({
+        label: label("lastModifiedAt"),
+        value: formatDateTime(binding.updated_at),
+      })
+    }
+
+    if (binding.decommission_timestamp) {
+      rows.push({
+        label: label("decommissionedAt"),
+        value: formatDateTime(binding.decommission_timestamp),
+      })
+    }
+
+    return rows
+  }
+}
+
 export function IntegrationBindingSection({
   tenantId,
   tenantName,
@@ -319,6 +381,7 @@ export function IntegrationBindingSection({
   onDialogOpenChange,
 }: SectionProps) {
   const { t } = useTranslation("tenants")
+  const bindingRows = useBindingRows()
   const {
     data: binding,
     isLoading,
@@ -335,7 +398,7 @@ export function IntegrationBindingSection({
       <Button
         type="button"
         variant="outline"
-        className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
+        className={`gap-1 ${CARD_ACTION_BUTTON_CLASS}`}
         onClick={() => onDialogOpenChange(true)}
         data-testid="btn-edit-integration-binding"
       >
@@ -380,7 +443,7 @@ export function IntegrationBindingSection({
               <Button
                 type="button"
                 variant="outline"
-                className="h-auto rounded-[10px] px-[10px] py-[4px] text-sm"
+                className={CARD_ACTION_BUTTON_CLASS}
                 onClick={() => onDialogOpenChange(true)}
                 data-testid="btn-configure-integration-binding"
               >
@@ -389,87 +452,7 @@ export function IntegrationBindingSection({
             )}
           </div>
         ) : (
-          <div className="flex gap-16 text-sm">
-            <div className="flex flex-col gap-3 text-muted-foreground shrink-0">
-              <span className="leading-5">
-                {t("detail.overview.integrationBinding.view.integrationActive")}
-              </span>
-              <span className="leading-5">
-                {t("detail.overview.integrationBinding.view.endpointUrl")}
-              </span>
-              <span className="leading-5">
-                {t("detail.overview.integrationBinding.view.credentialScope")}
-              </span>
-              {binding.disbursement_execution_boundary_note !== null && (
-                <span className="leading-5">
-                  {t(
-                    "detail.overview.integrationBinding.view.disbursementNote"
-                  )}
-                </span>
-              )}
-              <span className="leading-5">
-                {t("detail.overview.integrationBinding.view.createdAt")}
-              </span>
-              {binding.updated_at &&
-                binding.updated_at !== binding.created_at && (
-                  <span className="leading-5">
-                    {t(
-                      "detail.overview.integrationBinding.view.lastModifiedAt"
-                    )}
-                  </span>
-                )}
-              {binding.decommission_timestamp && (
-                <span className="leading-5">
-                  {t(
-                    "detail.overview.integrationBinding.view.decommissionedAt"
-                  )}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-3 text-foreground min-w-0">
-              <span className="leading-5">
-                <span
-                  className={cn(
-                    "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium h-[18px]",
-                    binding.integration_active
-                      ? "bg-green-600/10 text-green-600"
-                      : "bg-slate-200 text-muted-foreground"
-                  )}
-                >
-                  {binding.integration_active
-                    ? t("detail.overview.integrationBinding.view.active")
-                    : t("detail.overview.integrationBinding.view.inactive")}
-                </span>
-              </span>
-              <span className="leading-5 truncate">
-                {binding.endpoint_url ??
-                  t("detail.overview.integrationBinding.view.masked")}
-              </span>
-              <span className="leading-5 truncate">
-                {binding.credential_scope_identifier ??
-                  t("detail.overview.integrationBinding.view.masked")}
-              </span>
-              {binding.disbursement_execution_boundary_note !== null && (
-                <span className="leading-5">
-                  {binding.disbursement_execution_boundary_note || "—"}
-                </span>
-              )}
-              <span className="leading-5">
-                {formatDateTime(binding.created_at)}
-              </span>
-              {binding.updated_at &&
-                binding.updated_at !== binding.created_at && (
-                  <span className="leading-5">
-                    {formatDateTime(binding.updated_at)}
-                  </span>
-                )}
-              {binding.decommission_timestamp && (
-                <span className="leading-5">
-                  {formatDateTime(binding.decommission_timestamp)}
-                </span>
-              )}
-            </div>
-          </div>
+          <InfoRows rows={bindingRows(binding)} />
         )}
       </TenantInfoCard>
     </>

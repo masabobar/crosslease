@@ -283,6 +283,96 @@
     "WTC_TASK_MANDATORY_FIELD_NULL": "Ein Pflichtfeld dieser Aufgabe kann nicht geleert werden.",
     "WTC_TASK_HAS_DEPENDENTS": "Diese globale Standardaufgabe kann nicht entfernt werden, solange produktspezifische Kataloge sie überschreiben oder deaktivieren.",
     "WTC_DOC_REQUIREMENT_REF_INVALID": "Die referenzierte Dokumentenanforderung ist in diesem Mandanten nicht aktiv.",
-    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder.",
+    "WTC_CHECKLIST_NOT_FOUND": "Für diesen Fall wurde noch keine Checkliste übertragen.",
+    "WTC_CHECKLIST_ALREADY_MATERIALIZED": "Für diesen Fall existiert bereits eine Checkliste mit einem anderen Geltungsbereich.",
+    "WTC_CHECKLIST_ITEM_NOT_FOUND": "Diese Aufgabe befindet sich nicht mehr auf der Fall-Checkliste. Bitte neu laden.",
+    "WTC_CHECKLIST_ITEM_IMMUTABLE": "Diese Aufgabe wurde bereits erledigt und kann nicht mehr geändert werden.",
+    "WTC_PHASE_GATE_INVALID_TRANSITION": "Dieses Phasen-Gate kann nicht in diesen Status wechseln. Ein genehmigtes Gate ist endgültig."
+  },
+  "caseChecklist": {
+    "title": "Fall-Checkliste",
+    "subtitle": "Aufgaben, die aus dem Workflow-Aufgabenkatalog auf diesen Fall übertragen wurden. Erst wenn alle Pflichtaufgaben erledigt sind, wird die Einreichung freigegeben.",
+    "notApplicable": "—",
+    "columns": {
+      "task": "Aufgabe",
+      "mandatory": "Erfordernis",
+      "status": "Status",
+      "checkedBy": "Erledigt von",
+      "checkedAt": "Erledigt am",
+      "note": "Notiz"
+    },
+    "mandatory": {
+      "required": "Pflicht",
+      "optional": "Optional"
+    },
+    "itemStatuses": {
+      "open": "Offen",
+      "checked": "Erledigt",
+      "not_applicable": "Erlassen"
+    },
+    "gateStatuses": {
+      "open": "Offen",
+      "in_review": "In Prüfung",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt"
+    },
+    "actions": {
+      "setStatus": "Erledigen oder erlassen"
+    },
+    "empty": {
+      "title": "Noch keine Checkliste zu diesem Fall",
+      "description": "Für diesen Fall wurde noch nichts übertragen. Eine Checkliste erscheint, sobald der zugehörige Prozess eine aus dem Katalog anfordert."
+    },
+    "blocked": {
+      "title": "Einreichung ist blockiert",
+      "description": "Diese Pflichtaufgaben sind noch offen. Es werden alle Pflichtaufgaben des Falls aufgeführt, da die Projektion sie noch nicht auf eine einzelne Phase einschränken kann."
+    },
+    "setItemStatus": {
+      "title": "Aufgabe erledigen oder erlassen",
+      "subtitle": "{{task}}",
+      "success": "Aufgabe aktualisiert.",
+      "fields": {
+        "status": "Ergebnis",
+        "statusPlaceholder": "Ergebnis auswählen",
+        "statusHint": "Dies kann nach dem Setzen nicht mehr geändert werden.",
+        "note": "Notiz",
+        "optional": "(optional)"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "submit": "Speichern"
+      }
+    },
+    "gates": {
+      "title": "Phasen-Gates",
+      "subtitle": "Ein Gate pro Phase. Eine Phase ohne Gate wurde noch nicht entschieden.",
+      "notSet": "Nicht gesetzt",
+      "columns": {
+        "phase": "Phase",
+        "status": "Status",
+        "approver": "Entschieden von",
+        "decidedAt": "Entschieden am",
+        "note": "Notiz"
+      },
+      "actions": {
+        "decide": "Entscheiden"
+      }
+    },
+    "setGate": {
+      "title": "Phasen-Gate entscheiden",
+      "subtitle": "{{phase}}",
+      "success": "Phasen-Gate aktualisiert.",
+      "fields": {
+        "status": "Entscheidung",
+        "statusPlaceholder": "Entscheidung auswählen",
+        "statusHint": "Ein genehmigtes Gate ist endgültig. Ein abgelehntes Gate kann wieder geöffnet werden.",
+        "note": "Notiz"
+      },
+      "actions": {
+        "cancel": "Abbrechen",
+        "submit": "Speichern"
+      }
+    }
   }
 }

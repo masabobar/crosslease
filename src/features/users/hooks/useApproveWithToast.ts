@@ -4,7 +4,12 @@ import { useToastStore } from "@/store/toastStore"
 import { toast } from "sonner"
 import { ApiError } from "@/lib/api"
 
-export function useApproveWithToast() {
+type UseApproveWithToast = {
+  handleApprove: (userId: string, onSuccess?: () => void) => Promise<void>
+  isPending: boolean
+}
+
+export function useApproveWithToast(): UseApproveWithToast {
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
   const { mutateAsync: approve, isPending } = useApproveUser()

@@ -1,10 +1,15 @@
+import {
+  AUDITOR_ROLE,
+  BANK_POWER_USER_ROLE,
+  SYSTEM_ADMIN_ROLE,
+} from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
 // Backend grants AUDIT_READ to system_admin, auditor, and bank_power_user; support_user is excluded
 export const AUDIT_TRAIL_ALLOWED_ROLES: readonly UserRole[] = [
-  "system_admin",
-  "auditor",
-  "bank_power_user",
+  SYSTEM_ADMIN_ROLE,
+  AUDITOR_ROLE,
+  BANK_POWER_USER_ROLE,
 ]
 
 export function canAccessAuditTrail(role: UserRole | undefined): boolean {

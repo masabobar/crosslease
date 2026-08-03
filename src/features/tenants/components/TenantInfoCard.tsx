@@ -1,5 +1,10 @@
 import type { ReactNode } from "react"
 
+// Shared sizing for the small outline buttons that sit in a card's header slot.
+// Append `gap-1` when the button carries a leading icon.
+export const CARD_ACTION_BUTTON_CLASS =
+  "h-auto rounded-[10px] px-[10px] py-[4px] text-sm"
+
 export function TenantInfoCard({
   title,
   editButton,

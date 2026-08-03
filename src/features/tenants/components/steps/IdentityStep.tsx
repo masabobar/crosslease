@@ -1,4 +1,4 @@
-import type { UseFormReturn } from "react-hook-form"
+import type { FieldError, UseFormReturn } from "react-hook-form"
 import { Controller, useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
@@ -17,13 +17,11 @@ import {
 } from "@/components/ui/combobox"
 import { selectOnFocus } from "@/lib/utils"
 import { COUNTRIES } from "@/lib/countries"
-import { TenantTypeSchema } from "@/features/tenants/api/schema"
+import {
+  DefaultCurrencySchema,
+  TenantTypeSchema,
+} from "@/features/tenants/api/schema"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
-
-const CURRENCY_OPTIONS: SelectOption[] = [
-  { value: "EUR", label: "Euro · EUR" },
-  { value: "USD", label: "US Dollar · USD" },
-]
 
 const COUNTRY_OPTIONS: SelectOption[] = COUNTRIES.map(({ code, name }) => ({
   value: code,
@@ -47,11 +45,24 @@ function IdentityStep({ form }: Props) {
     })
   )
 
-  function resolveMsg(msg: string | undefined) {
-    if (!msg) return undefined
-    if (msg === "Required") return tCommon("validation.required")
-    if (msg === "codeInvalidChars") return t("errors.codeInvalidChars")
-    return msg
+  const currencyOptions: SelectOption[] = DefaultCurrencySchema.options.map(
+    currency => ({
+      value: currency,
+      label: t(`currencies.${currency}`),
+    })
+  )
+
+  // Zod's built-in messages are untranslated English prose ("Too small: expected
+  // string to have >=2 characters") and are not a stable contract, so they are
+  // never rendered. Schema-authored keys (codeInvalidChars) are translated by
+  // name; everything else resolves through the issue code, which is stable.
+  function resolveMsg(error: FieldError | undefined) {
+    if (!error) return undefined
+    if (error.message === "codeInvalidChars")
+      return t("errors.codeInvalidChars")
+    if (error.type === "too_small") return tCommon("validation.tooShort")
+    if (error.type === "too_big") return tCommon("validation.tooLong")
+    return tCommon("validation.required")
   }
 
   return (
@@ -72,7 +83,7 @@ function IdentityStep({ form }: Props) {
         />
         {errors.name && (
           <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.name.message)}
+            {resolveMsg(errors.name)}
           </p>
         )}
       </div>
@@ -94,7 +105,7 @@ function IdentityStep({ form }: Props) {
         </p>
         {errors.code && (
           <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.code.message)}
+            {resolveMsg(errors.code)}
           </p>
         )}
       </div>
@@ -126,7 +137,7 @@ function IdentityStep({ form }: Props) {
           />
           {errors.tenant_type && (
             <p className="mt-1 text-sm text-destructive">
-              {resolveMsg(errors.tenant_type.message)}
+              {resolveMsg(errors.tenant_type)}
             </p>
           )}
         </div>
@@ -148,14 +159,14 @@ function IdentityStep({ form }: Props) {
                 data-testid="currency-select"
                 value={field.value}
                 onValueChange={field.onChange}
-                options={CURRENCY_OPTIONS}
+                options={currencyOptions}
                 error={!!errors.default_currency}
               />
             )}
           />
           {errors.default_currency && (
             <p className="mt-1 text-sm text-destructive">
-              {resolveMsg(errors.default_currency.message)}
+              {resolveMsg(errors.default_currency)}
             </p>
           )}
         </div>
@@ -178,7 +189,7 @@ function IdentityStep({ form }: Props) {
         />
         {errors.legal_entity_name && (
           <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.legal_entity_name.message)}
+            {resolveMsg(errors.legal_entity_name)}
           </p>
         )}
       </div>
@@ -228,7 +239,7 @@ function IdentityStep({ form }: Props) {
         />
         {errors.country && (
           <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.country.message)}
+            {resolveMsg(errors.country)}
           </p>
         )}
       </div>
@@ -257,7 +268,7 @@ function IdentityStep({ form }: Props) {
         </p>
         {errors.description && (
           <p className="mt-1 text-sm text-destructive">
-            {resolveMsg(errors.description.message)}
+            {resolveMsg(errors.description)}
           </p>
         )}
       </div>

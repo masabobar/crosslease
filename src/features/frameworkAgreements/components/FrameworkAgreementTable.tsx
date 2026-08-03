@@ -120,6 +120,7 @@ function FrameworkAgreementTable({
               onCreateAgreement && (
                 <Button
                   onClick={onCreateAgreement}
+                  data-testid="fa-empty-state-create-button"
                   className="h-9 rounded-xl px-4 gap-1.5"
                 >
                   {t("list.createButton")}

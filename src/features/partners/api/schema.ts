@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { OptionalUserRoleSchema } from "@/features/users/api/schema"
 
 // ── Enums ────────────────────────────────────────────────────────────────────
 
@@ -247,7 +248,7 @@ export type RoleAssignmentSummary = z.infer<typeof RoleAssignmentSummarySchema>
 export const RoleHistoryEntrySchema = z.object({
   role_assignment_id: z.string().uuid(),
   actor: ActorSummarySchema,
-  actor_role: z.string(),
+  actor_role: OptionalUserRoleSchema,
   description_key: z.string(),
   description_params: z.record(z.string(), z.unknown()),
   timestamp: z.string().datetime(),
@@ -361,7 +362,7 @@ export type DownstreamImpact = z.infer<typeof DownstreamImpactSchema>
 export const IdentityChangeActorSummarySchema = z.object({
   user_id: z.string(),
   display_name: z.string(),
-  role: z.string(),
+  role: OptionalUserRoleSchema,
 })
 export type IdentityChangeActorSummary = z.infer<
   typeof IdentityChangeActorSummarySchema
@@ -439,6 +440,18 @@ export const DuplicateCandidatePairStatusSchema = z.enum([
 ])
 export type DuplicateCandidatePairStatus = z.infer<
   typeof DuplicateCandidatePairStatusSchema
+>
+
+// The three pair statuses a reviewer can set directly. A strict subset of
+// DuplicateCandidatePairStatusSchema — merge_in_progress and merged are reached
+// only through the merge flow, never chosen in the resolve dialog.
+export const DuplicateResolutionDecisionSchema = z.enum([
+  "confirmed_duplicate",
+  "confirmed_distinct",
+  "deferred",
+])
+export type DuplicateResolutionDecision = z.infer<
+  typeof DuplicateResolutionDecisionSchema
 >
 
 export const DuplicateResolutionReasonCodeSchema = z.enum([

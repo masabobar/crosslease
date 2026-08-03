@@ -3,7 +3,6 @@ import { ShieldCheck } from "lucide-react"
 import { PartnerRoleBadge } from "@/features/partners/components/PartnerRoleBadge"
 import { SectionCard } from "@/features/partners/components/PartnerDetailPrimitives"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
-import type { UserRole } from "@/features/users/types"
 import { usePartnerRoles } from "@/features/partners/hooks/usePartnerRoles"
 import { formatDateTime } from "@/lib/formatters"
 import { RoleStatusSchema } from "@/features/partners/api/schema"
@@ -179,12 +178,17 @@ function RolesTab({ partnerId }: RolesTabProps) {
                     <span className="text-sm font-semibold text-foreground">
                       {entry.actor.display_name}
                     </span>
-                    <RoleBadge role={entry.actor_role as UserRole} />
+                    {entry.actor_role && <RoleBadge role={entry.actor_role} />}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {t(entry.description_key as "partner.role.assigned", {
+                      // description_key and description_params.role are bare strings on
+                      // the wire, so fall back rather than render a raw key if the BE
+                      // adds one the locales don't cover yet.
+                      defaultValue: t("partner.role.decision"),
                       role: t(
-                        `role.${String(entry.description_params.role)}` as "role.lessee"
+                        `role.${String(entry.description_params.role)}` as "role.lessee",
+                        { defaultValue: String(entry.description_params.role) }
                       ),
                     })}
                   </p>

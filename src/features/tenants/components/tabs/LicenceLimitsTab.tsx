@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { SquarePen } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ function LimitCard({
 }: {
   title: string
   description: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="flex-1 bg-muted border border-border rounded-[14px] py-4 flex flex-col gap-4 min-w-0 overflow-hidden">
@@ -55,7 +55,7 @@ type LicenceLimitsTabProps = {
 
 export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
   const { t } = useTranslation("tenants")
-  const [editOpen, setEditOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
   if (!isFullTenantResponse(tenant)) return null
 
@@ -96,7 +96,7 @@ export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
                 variant="outline"
                 className="h-auto gap-1.5 px-2.5 py-1 text-sm rounded-[10px] shrink-0"
                 data-testid="btn-edit-limits"
-                onClick={() => setEditOpen(true)}
+                onClick={() => setIsEditOpen(true)}
               >
                 <SquarePen size={14} />
                 {t("detail.licenceLimits.editLimits")}
@@ -156,8 +156,8 @@ export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
       </div>
 
       <EditLicenceLimitsDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
         tenantId={id}
         tenantName={name}
         maxLcCount={max_lc_count}

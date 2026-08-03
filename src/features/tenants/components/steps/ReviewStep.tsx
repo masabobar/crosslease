@@ -4,6 +4,7 @@ import { Lock, ShieldAlert } from "lucide-react"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
 import type {
   PlatformModule,
+  SeedPackage,
   SeedPackageEntry,
 } from "@/features/tenants/api/schema"
 
@@ -88,12 +89,9 @@ function ReviewStep({ values, modules, packages }: Props) {
     {
       label: t("wizard.review.package"),
       value: selectedPkg
-        ? t(
-            `seedPackages.${values.seed_package as "standard_retail_bank" | "minimal_sandbox"}`,
-            {
-              defaultValue: selectedPkg.display_name,
-            }
-          )
+        ? t(`seedPackages.${values.seed_package as SeedPackage}`, {
+            defaultValue: selectedPkg.display_name,
+          })
         : values.seed_package,
     },
     {

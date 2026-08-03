@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react"
 import { parseISO } from "date-fns"
-import { ChevronDown, Check, Calendar } from "lucide-react"
+import { ChevronDown, Check } from "lucide-react"
 import {
   Popover,
   PopoverTrigger,
@@ -19,12 +19,13 @@ import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 
+import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
+import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
+
 // i18n key casts for dynamic lookups
 type RolesKey = `roles.${UserRole}`
 type StatusesKey = `statuses.${UserStatus}`
-import { RoleBadge } from "./RoleBadge"
-import { UserStatusBadge } from "./UserStatusBadge"
-import { FilterCheckboxRow } from "./FilterCheckboxRow"
 
 type UserFilterPanelProps = {
   onClose: () => void
@@ -134,56 +135,18 @@ function MultiSelectDropdown<T extends string>({
         {options.map(option => {
           const checked = value.includes(option)
           return (
-            <FilterCheckboxRow
+            <FilterCheckboxOption
               key={option}
               checked={checked}
               data-testid={`filter-option-${option}`}
               onClick={() => toggle(option)}
             >
               {renderOption(option)}
-            </FilterCheckboxRow>
+            </FilterCheckboxOption>
           )
         })}
       </PopoverContent>
     </Popover>
-  )
-}
-
-// ─── Text toggle (MFA status, flags) ────────────────────────────────────────
-
-function TextToggle({
-  options,
-  value,
-  onChange,
-  disabled,
-}: {
-  options: { value: string; label: string }[]
-  value: string | null
-  onChange: (v: string | null) => void
-  disabled?: boolean
-}) {
-  return (
-    <div
-      className={cn("flex gap-2", disabled && "opacity-40 pointer-events-none")}
-    >
-      {options.map(opt => (
-        <Button
-          key={opt.value}
-          type="button"
-          variant="ghost"
-          data-testid={`filter-toggle-${opt.value}`}
-          onClick={() => onChange(value === opt.value ? null : opt.value)}
-          className={cn(
-            "h-auto px-3 py-1 text-sm rounded-full border font-normal",
-            value === opt.value
-              ? "border-primary text-primary bg-primary/5 hover:bg-primary/5 hover:text-primary"
-              : "border-border text-foreground hover:border-primary/40 hover:bg-transparent"
-          )}
-        >
-          {opt.label}
-        </Button>
-      ))}
-    </div>
   )
 }
 
@@ -258,31 +221,6 @@ function SingleSelectDropdown({
         ))}
       </PopoverContent>
     </Popover>
-  )
-}
-
-// ─── Disabled select placeholder ────────────────────────────────────────────
-
-function DisabledSelect({ placeholder }: { placeholder: string }) {
-  return (
-    <div className="w-full h-9 px-3 flex items-center justify-between border border-border rounded-lg bg-background opacity-40 pointer-events-none">
-      <span className="text-sm text-muted-foreground">{placeholder}</span>
-      <ChevronDown size={14} className="text-muted-foreground shrink-0" />
-    </div>
-  )
-}
-
-// ─── Disabled date field placeholder ────────────────────────────────────────
-
-function DisabledDateField({ placeholder }: { placeholder: string }) {
-  return (
-    <div className="w-full h-9 px-3 flex items-center gap-2 border border-border rounded-lg bg-background opacity-40 pointer-events-none">
-      <Calendar size={14} className="text-muted-foreground shrink-0" />
-      <span className="text-sm text-muted-foreground flex-1">
-        {placeholder}
-      </span>
-      <ChevronDown size={14} className="text-muted-foreground shrink-0" />
-    </div>
   )
 }
 
@@ -363,21 +301,6 @@ function UserFilterPanel({
               />
             </FilterField>
 
-            {/* MFA filter: UI ready — backend does not support mfa_enabled filter yet */}
-            {filterVis.mfa && (
-              <FilterField label={t("filter.fields.mfaStatus")}>
-                <TextToggle
-                  options={[
-                    { value: "enabled", label: t("filter.mfa.enabled") },
-                    { value: "disabled", label: t("filter.mfa.disabled") },
-                  ]}
-                  value={staged.mfa_enabled}
-                  onChange={v => setStaged(s => ({ ...s, mfa_enabled: v }))}
-                  disabled
-                />
-              </FilterField>
-            )}
-
             {filterVis.tenant && (
               <FilterField label={t("filter.fields.tenant")}>
                 <SingleSelectDropdown
@@ -386,15 +309,6 @@ function UserFilterPanel({
                   options={tenantOptions}
                   placeholder={t("filter.placeholders.tenant")}
                   data-testid="filter-tenant-select"
-                />
-              </FilterField>
-            )}
-
-            {/* LG filter: UI ready — backend does not support lg_id filter yet */}
-            {filterVis.lg && (
-              <FilterField label={t("filter.fields.leasingCompany")}>
-                <DisabledSelect
-                  placeholder={t("filter.placeholders.leasingCompany")}
                 />
               </FilterField>
             )}
@@ -440,88 +354,6 @@ function UserFilterPanel({
                     captionLayout="dropdown"
                   />
                 </div>
-              </FilterField>
-            )}
-            {/* access_expiry_from/to, created_from/to — backend does not support yet */}
-
-            <FilterField label={t("filter.fields.userCreationDate")}>
-              <DisabledDateField
-                placeholder={t("filter.placeholders.chooseDate")}
-              />
-            </FilterField>
-
-            {filterVis.accessExpiry && (
-              <FilterField label={t("filter.fields.accessExpiry")}>
-                <DisabledDateField
-                  placeholder={t("filter.placeholders.chooseDate")}
-                />
-              </FilterField>
-            )}
-
-            {/* ── GOVERNANCE & ACCOUNT ── */}
-            <SectionHeader>
-              {t("filter.sections.governanceAccount")}
-            </SectionHeader>
-
-            {/* Audit Engagement Status: system_admin + auditor only */}
-            {filterVis.auditEngagementStatus && (
-              <FilterField label={t("filter.fields.auditEngagementStatus")}>
-                <DisabledSelect placeholder={t("filter.placeholders.select")} />
-              </FilterField>
-            )}
-
-            {/* Last Role Change Date: system_admin + auditor only */}
-            {filterVis.lastRoleChangeDate && (
-              <FilterField label={t("filter.fields.lastRoleChangeDate")}>
-                <DisabledDateField
-                  placeholder={t("filter.placeholders.chooseDate")}
-                />
-              </FilterField>
-            )}
-
-            {/* Last Permission Change Date: system_admin + auditor only */}
-            {filterVis.lastPermissionChangeDate && (
-              <FilterField label={t("filter.fields.lastPermissionChangeDate")}>
-                <DisabledDateField
-                  placeholder={t("filter.placeholders.chooseDate")}
-                />
-              </FilterField>
-            )}
-
-            {/* Origin Type: system_admin + auditor + support_user */}
-            {filterVis.originType && (
-              <FilterField label={t("filter.fields.originType")}>
-                <DisabledSelect placeholder={t("filter.placeholders.select")} />
-              </FilterField>
-            )}
-
-            {/* System User Flag: system_admin + auditor only */}
-            {filterVis.systemUserFlag && (
-              <FilterField label={t("filter.fields.systemUserFlag")}>
-                <TextToggle
-                  options={[
-                    { value: "human", label: t("filter.flags.humanUser") },
-                    { value: "system", label: t("filter.flags.systemUser") },
-                  ]}
-                  value={null}
-                  onChange={() => {}}
-                  disabled
-                />
-              </FilterField>
-            )}
-
-            {/* Service Account Flag: system_admin + auditor only */}
-            {filterVis.serviceAccountFlag && (
-              <FilterField label={t("filter.fields.serviceAccountFlag")}>
-                <TextToggle
-                  options={[
-                    { value: "enabled", label: t("filter.flags.enabled") },
-                    { value: "disabled", label: t("filter.flags.disabled") },
-                  ]}
-                  value={null}
-                  onChange={() => {}}
-                  disabled
-                />
               </FilterField>
             )}
           </div>

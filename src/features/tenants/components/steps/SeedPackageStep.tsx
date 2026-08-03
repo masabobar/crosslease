@@ -4,7 +4,10 @@ import { useTranslation } from "react-i18next"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import type { CreateTenantForm } from "@/features/tenants/api/schema"
-import type { SeedPackageEntry } from "@/features/tenants/api/schema"
+import type {
+  SeedPackage,
+  SeedPackageEntry,
+} from "@/features/tenants/api/schema"
 
 type Props = {
   form: UseFormReturn<CreateTenantForm>
@@ -62,14 +65,13 @@ function SeedPackageStep({ form, packages, isLoading }: Props) {
                         isSelected ? "text-[#1d41a8]" : "text-foreground"
                       )}
                     >
-                      {t(
-                        `seedPackages.${pkg.key as "standard_retail_bank" | "minimal_sandbox"}`,
-                        { defaultValue: pkg.display_name }
-                      )}
+                      {t(`seedPackages.${pkg.key as SeedPackage}`, {
+                        defaultValue: pkg.display_name,
+                      })}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {t(
-                        `seedPackages.descriptions.${pkg.key as "standard_retail_bank" | "minimal_sandbox"}`,
+                        `seedPackages.descriptions.${pkg.key as SeedPackage}`,
                         { defaultValue: pkg.description }
                       )}
                     </p>

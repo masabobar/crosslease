@@ -160,6 +160,45 @@ export function getUserActionVisibility(
   }
 }
 
+export type IdentityPatch = {
+  first_name: string
+  last_name: string
+  phone_number?: string | null
+}
+
+/**
+ * Builds the PATCH body for an identity edit, and reports whether anything changed.
+ *
+ * `phone_number` is included only when it actually changed, because the endpoint treats
+ * a present-but-null value as "clear the number" — sending it unconditionally would wipe
+ * a phone the user never touched. An empty input string means "clear it" and becomes null.
+ */
+export function buildIdentityPatch(
+  values: { first_name: string; last_name: string; phone_number?: string },
+  current: {
+    first_name: string
+    last_name: string
+    phone_number?: string | null
+  }
+): { patch: IdentityPatch; hasChanges: boolean } {
+  const hasNameChanges =
+    values.first_name !== current.first_name ||
+    values.last_name !== current.last_name
+  const hasPhoneChange =
+    (values.phone_number ?? "") !== (current.phone_number ?? "")
+
+  const patch: IdentityPatch = {
+    first_name: values.first_name,
+    last_name: values.last_name,
+  }
+  if (hasPhoneChange) {
+    patch.phone_number =
+      values.phone_number === "" ? null : (values.phone_number ?? null)
+  }
+
+  return { patch, hasChanges: hasNameChanges || hasPhoneChange }
+}
+
 type ActionToastKey =
   | "actions.suspend.success.title"
   | "actions.suspend.success.message"

@@ -25,8 +25,9 @@ import {
 } from "@/features/tenants/api/schema"
 import type { CreateGrantForm } from "@/features/tenants/api/schema"
 import type { UserListItem } from "@/features/users/api/schema"
-import { ApiError } from "@/lib/api"
-import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
+import { formatDateTime, getInitials } from "@/lib/formatters"
+import { UserInitialsAvatar } from "@/features/tenants/components/UserInitialsAvatar"
 import { cn } from "@/lib/utils"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
 import { SUPPORT_USERS_DROPDOWN_PAGE_SIZE } from "@/features/tenants/constants"
@@ -44,10 +45,6 @@ function toISOFromDate(dateStr: string): string {
 function toISOUntilDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number)
   return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString()
-}
-
-function userInitials(user: UserListItem): string {
-  return `${user.first_name[0] ?? ""}${user.last_name[0] ?? ""}`.toUpperCase()
 }
 
 type GranteePickerProps = {
@@ -75,11 +72,9 @@ function GranteePicker({ value, onChange, users, error }: GranteePickerProps) {
       >
         {selected ? (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="size-8 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
-              <span className="text-xs text-muted-foreground">
-                {userInitials(selected)}
-              </span>
-            </div>
+            <UserInitialsAvatar
+              initials={getInitials(selected.first_name, selected.last_name)}
+            />
             <div className="flex flex-col min-w-0 text-left">
               <span className="text-sm font-medium text-foreground truncate">
                 {selected.first_name} {selected.last_name}
@@ -122,11 +117,9 @@ function GranteePicker({ value, onChange, users, error }: GranteePickerProps) {
               className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted transition-colors"
               data-testid={`grant-grantee-option-${user.id}`}
             >
-              <div className="size-8 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
-                <span className="text-xs text-muted-foreground">
-                  {userInitials(user)}
-                </span>
-              </div>
+              <UserInitialsAvatar
+                initials={getInitials(user.first_name, user.last_name)}
+              />
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-medium text-foreground truncate">
                   {user.first_name} {user.last_name}
@@ -186,9 +179,12 @@ export function NewGrantDialog({
     },
   })
 
+  const handleError = useTenantFormErrorHandler({ getValues, setError })
+
   const validFrom = useWatch({ control, name: "valid_from" })
   const accessReason = useWatch({ control, name: "access_reason" })
-  const isEmergency = accessReason === "emergency_incident_response"
+  const isEmergency =
+    accessReason === AccessReasonSchema.enum.emergency_incident_response
   const maxUntilDate = addDays(parseISO(validFrom || today), MAX_GRANT_DAYS)
 
   function handleClose() {
@@ -211,7 +207,7 @@ export function NewGrantDialog({
           const granteeName = grantee
             ? `${grantee.first_name} ${grantee.last_name}`
             : t("detail.grants.newGrantDialog.successToast.unknownGrantee")
-          const until = format(parseISO(grant.valid_until), "d MMM yyyy, HH:mm")
+          const until = formatDateTime(grant.valid_until)
           toast.success(t("detail.grants.newGrantDialog.successToast.title"), {
             description: t(
               "detail.grants.newGrantDialog.successToast.description",
@@ -220,22 +216,7 @@ export function NewGrantDialog({
           })
           handleClose()
         },
-        onError: err => {
-          if (
-            applyApiFieldErrors({
-              error: err,
-              fields: Object.keys(getValues()),
-              setError,
-            })
-          )
-            return
-
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
-        },
+        onError: handleError,
       }
     )
   }

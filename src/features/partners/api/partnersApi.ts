@@ -26,6 +26,7 @@ import type {
   ConfirmationHistoryResponse,
   DecisionHistoryResponse,
   DuplicatePairListResponse,
+  DuplicateResolutionDecision,
   DuplicateResolutionReasonCode,
   IdentityChangeDetailResponse,
   IdentityChangeProposeResponse,
@@ -173,7 +174,7 @@ export type ProposeIdentityChangeBody = {
 }
 
 export type ResolveDuplicateBody = {
-  decision: "confirmed_duplicate" | "confirmed_distinct" | "deferred"
+  decision: DuplicateResolutionDecision
   reason_code: DuplicateResolutionReasonCode
   note?: string | null
 }

@@ -5,7 +5,15 @@ import { ApiError } from "@/lib/api"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
 
-export function useProfilePicture(userId: string) {
+type UseProfilePicture = {
+  uploadMutation: ReturnType<typeof useUploadSelfPicture>
+  deleteMutation: ReturnType<typeof useDeleteSelfPicture>
+  handleFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleRemovePicture: () => void
+  isPending: boolean
+}
+
+export function useProfilePicture(userId: string): UseProfilePicture {
   const { t } = useTranslation("users")
   const showToast = useToastStore(s => s.showToast)
   const uploadMutation = useUploadSelfPicture(userId)

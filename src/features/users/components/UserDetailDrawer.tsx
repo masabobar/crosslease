@@ -8,31 +8,25 @@ import {
   UserCheck,
   Mail,
   ShieldOff,
-  ShieldAlert,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { ResetMfaConfirmDialog } from "@/features/users/components/ResetMfaConfirmDialog"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
-import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
+import { useResetMfaWithToast } from "@/features/users/hooks/useResetMfaWithToast"
 import { formatLastLogin, getInitials } from "@/lib/formatters"
 import { getUserActionVisibility } from "@/features/users/utils"
-import { useToastStore } from "@/store/toastStore"
-import { toast } from "sonner"
-import { ApiError } from "@/lib/api"
-import { PATHS } from "@/router/paths"
+import { adminUserDetail, PATHS } from "@/router/paths"
+import { USER_ACTION_TYPE } from "@/features/users/types"
 import type { UserActionType, UserRole } from "@/features/users/types"
 import type { UserDetail } from "@/features/users/api/schema"
+
+// Rows rendered per placeholder card, mirroring the identity / role-scope / status cards.
+const SKELETON_CARD_ROW_COUNTS = [4, 2, 2] as const
 
 type UserDetailDrawerProps = {
   userId: string | null
@@ -87,8 +81,7 @@ function DrawerContent({
 }) {
   const { t } = useTranslation("users")
   const navigate = useNavigate()
-  const showToast = useToastStore(s => s.showToast)
-  const resetMfaMutation = useResetUserMfa()
+  const { resetMfa, isPending: isResettingMfa } = useResetMfaWithToast()
   const [showMfaResetConfirm, setShowMfaResetConfirm] = useState(false)
 
   const initials = getInitials(user.first_name, user.last_name)
@@ -105,34 +98,15 @@ function DrawerContent({
   } = getUserActionVisibility(user.status, user.role, viewerRole)
 
   function handleMfaReset() {
-    void resetMfaMutation
-      .mutateAsync(user.id)
-      .then(() => {
-        setShowMfaResetConfirm(false)
-        onClose()
-        showToast({
-          variant: "success",
-          title: t("actions.resetMfa.success.title"),
-          message: t("actions.resetMfa.success.message", { name }),
-        })
-      })
-      .catch((err: unknown) => {
-        setShowMfaResetConfirm(false)
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
-      })
+    resetMfa(user.id, name, () => {
+      setShowMfaResetConfirm(false)
+      onClose()
+    })
   }
 
   function handleOpenFullProfile() {
     onClose()
-    navigate(
-      isSelf
-        ? PATHS.SETTINGS_PROFILE
-        : PATHS.USER_DETAIL.replace(":id", user.id)
-    )
+    navigate(isSelf ? PATHS.SETTINGS_PROFILE : adminUserDetail(user.id))
   }
 
   return (
@@ -179,7 +153,6 @@ function DrawerContent({
           <Row label={t("detail.drawer.fields.accountStatus")}>
             <UserStatusBadge status={user.status} />
           </Row>
-          <Row label={t("detail.drawer.fields.mfa")}>{"—"}</Row>
           <Row label={t("detail.drawer.fields.lastLogin")}>
             {formatLastLogin(user.last_login, t)}
           </Row>
@@ -201,7 +174,7 @@ function DrawerContent({
             variant="outline"
             data-testid="drawer-approve-button"
             className="w-full gap-1.5 text-sm"
-            onClick={() => onAction("approve", user)}
+            onClick={() => onAction(USER_ACTION_TYPE.APPROVE, user)}
           >
             <UserCheck size={14} />
             {t("table.actions.approve")}
@@ -212,7 +185,7 @@ function DrawerContent({
             variant="outline"
             data-testid="drawer-resend-invitation-button"
             className="w-full gap-1.5 text-sm"
-            onClick={() => onAction("resend-invitation", user)}
+            onClick={() => onAction(USER_ACTION_TYPE.RESEND_INVITATION, user)}
           >
             <Mail size={14} />
             {t("actions.resend-invitation.label")}
@@ -225,7 +198,7 @@ function DrawerContent({
                 variant="outline"
                 data-testid="drawer-suspend-button"
                 className="flex-1 gap-1.5 text-sm"
-                onClick={() => onAction("suspend", user)}
+                onClick={() => onAction(USER_ACTION_TYPE.SUSPEND, user)}
               >
                 <UserRoundX size={14} />
                 {t("detail.page.actions.suspendUser")}
@@ -236,7 +209,7 @@ function DrawerContent({
                 variant="outline"
                 data-testid="drawer-reactivate-button"
                 className="flex-1 gap-1.5 text-sm"
-                onClick={() => onAction("reactivate", user)}
+                onClick={() => onAction(USER_ACTION_TYPE.REACTIVATE, user)}
               >
                 <RotateCcw size={14} />
                 {t("actions.reactivate.label")}
@@ -247,7 +220,7 @@ function DrawerContent({
                 variant="outline"
                 data-testid="drawer-deactivate-button"
                 className="flex-1 gap-1.5 text-sm"
-                onClick={() => onAction("deactivate", user)}
+                onClick={() => onAction(USER_ACTION_TYPE.DEACTIVATE, user)}
               >
                 <Ban size={14} />
                 {t("detail.page.actions.deactivateUser")}
@@ -268,50 +241,14 @@ function DrawerContent({
         )}
       </div>
 
-      <Dialog
+      <ResetMfaConfirmDialog
         open={showMfaResetConfirm}
-        onOpenChange={o => {
-          if (!o) setShowMfaResetConfirm(false)
-        }}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-[420px] gap-0 p-0 overflow-hidden"
-        >
-          <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
-            <DialogTitle>{t("actions.resetMfa.title", { name })}</DialogTitle>
-          </DialogHeader>
-          <div className="px-4 py-4">
-            <div className="flex items-start gap-2 rounded-[10px] border border-amber-600 bg-amber-500/10 px-[10px] py-2">
-              <ShieldAlert
-                size={16}
-                className="text-amber-600 mt-0.5 shrink-0"
-              />
-              <span className="text-sm text-amber-600/80">
-                {t("actions.resetMfa.description", { name })}
-              </span>
-            </div>
-          </div>
-          <DialogFooter className="mx-0 mb-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowMfaResetConfirm(false)}
-              disabled={resetMfaMutation.isPending}
-              data-testid="drawer-mfa-reset-cancel"
-            >
-              {t("modal.actions.cancel")}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleMfaReset}
-              disabled={resetMfaMutation.isPending}
-              data-testid="drawer-mfa-reset-confirm"
-            >
-              {t("actions.resetMfa.confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        name={name}
+        isPending={isResettingMfa}
+        onClose={() => setShowMfaResetConfirm(false)}
+        onConfirm={handleMfaReset}
+        testIdPrefix="drawer-mfa-reset"
+      />
     </div>
   )
 }
@@ -349,18 +286,18 @@ function UserDetailDrawer({
               </div>
             </div>
             <div className="flex-1 p-3 flex flex-col gap-3">
-              {[120, 80, 100].map((_, i) => (
+              {SKELETON_CARD_ROW_COUNTS.map((rowCount, cardIndex) => (
                 <div
-                  key={i}
+                  key={cardIndex}
                   className="rounded-xl border border-border overflow-hidden"
                 >
                   <div className="bg-muted/70 h-9 animate-pulse" />
                   <div className="p-4 space-y-3">
-                    {[...Array(i === 0 ? 4 : i === 1 ? 2 : 3)].map((_, j) => (
+                    {Array.from({ length: rowCount }, (_, rowIndex) => (
                       <div
-                        key={j}
+                        key={rowIndex}
                         className="h-4 bg-muted rounded animate-pulse"
-                        style={{ width: `${55 + (j % 3) * 15}%` }}
+                        style={{ width: `${55 + (rowIndex % 3) * 15}%` }}
                       />
                     ))}
                   </div>

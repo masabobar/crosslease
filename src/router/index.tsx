@@ -8,7 +8,7 @@ import {
   INTERNAL_BANK_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
-import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governed-actions/constants"
+import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governedActions/constants"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import {
@@ -28,7 +28,10 @@ import {
   FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
   FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES,
 } from "@/features/frameworkAgreements/types"
-import { WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
+import {
+  CASE_CHECKLIST_READ_ALLOWED_ROLES,
+  WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES,
+} from "@/features/workflowTaskCatalog/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -73,7 +76,7 @@ const LcFrameworkAgreementsPage = lazy(
   () => import("@/features/lc/components/LcFrameworkAgreementsPage")
 )
 const PendingApprovalsPage = lazy(
-  () => import("@/features/governed-actions/components/PendingApprovalsPage")
+  () => import("@/features/governedActions/components/PendingApprovalsPage")
 )
 const SelfProfilePage = lazy(
   () => import("@/features/users/components/SelfProfilePage")
@@ -140,6 +143,9 @@ const FrameworkAgreementDetailPage = lazy(
 const WorkflowTaskCatalogListPage = lazy(
   () =>
     import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogListPage")
+)
+const CaseChecklistPage = lazy(
+  () => import("@/features/workflowTaskCatalog/components/CaseChecklistPage")
 )
 const WorkflowTaskCatalogDetailPage = lazy(
   () =>
@@ -484,6 +490,18 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES}>
               <WorkflowTaskCatalogDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // Guarded by the RUNTIME read set, not the catalog one: the case workers who work a
+        // checklist have no business on the catalogue authoring screens, and vice versa.
+        path: PATHS.CASE_CHECKLIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_CHECKLIST_READ_ALLOWED_ROLES}>
+              <CaseChecklistPage />
             </RoleGuard>
           </Suspense>
         ),

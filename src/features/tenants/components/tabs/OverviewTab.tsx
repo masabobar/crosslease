@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useState } from "react"
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
@@ -9,24 +9,26 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { ApiError } from "@/lib/api"
-import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
+import {
+  TenantInfoCard,
+  CARD_ACTION_BUTTON_CLASS,
+} from "@/features/tenants/components/TenantInfoCard"
+import { InfoRows } from "@/features/tenants/components/InfoRows"
+import type { InfoRow } from "@/features/tenants/components/InfoRows"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
-import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessPolicy"
+import { AccessPolicyCard } from "@/features/tenants/components/tabs/AccessPolicyCard"
 import { useUpdateTenant } from "@/features/tenants/hooks/useUpdateTenant"
-import { useUpdateAccessPolicy } from "@/features/tenants/hooks/useUpdateAccessPolicy"
 import {
   isFullTenantResponse,
   createUpdateTenantFormSchema,
-  UpdateAccessPolicyFormSchema,
   TenantStatusSchema,
 } from "@/features/tenants/api/schema"
 import type {
   TenantDetail,
   UpdateTenantForm,
-  UpdateAccessPolicyForm,
 } from "@/features/tenants/api/schema"
-import { formatDateTime, formatDate } from "@/lib/formatters"
-import { cn } from "@/lib/utils"
+import { formatDateTime } from "@/lib/formatters"
+import { countryName } from "@/lib/countries"
 
 type OverviewTabProps = {
   tenant: TenantDetail
@@ -34,52 +36,21 @@ type OverviewTabProps = {
   isAdmin: boolean
 }
 
-function formatCurrency(code: string): string {
+// Currency display name, not a monetary amount — distinct from
+// formatCurrency() in @/lib/formatters, which formats figures.
+function currencyLabel(code: string): string {
   const name = new Intl.DisplayNames(["en"], { type: "currency" }).of(code)
   return name ? `${name} (${code})` : code
 }
 
-function formatCountry(code: string): string {
-  return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code
-}
-
-type InfoRow = { label: string; value: ReactNode }
-
-function InfoRows({ rows }: { rows: InfoRow[] }) {
-  return (
-    <div className="flex gap-16 text-sm">
-      <div className="flex flex-col gap-3 text-muted-foreground shrink-0">
-        {rows.map(row => (
-          <div key={row.label} className="leading-5">
-            {row.label}
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-col gap-3 text-foreground min-w-0">
-        {rows.map(row => (
-          <div key={row.label} className="leading-5">
-            {row.value ?? "—"}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   const { t } = useTranslation("tenants")
-  const {
-    data: accessPolicy,
-    isError: isAccessPolicyError,
-    error: accessPolicyError,
-  } = useTenantAccessPolicy(isAdmin ? tenantId : null)
   const fullTenant = isFullTenantResponse(tenant) ? tenant : null
   const isArchived = tenant.status === TenantStatusSchema.enum.archived
   const isDraft = tenant.status === TenantStatusSchema.enum.draft
   const [isEditingIdentity, setIsEditingIdentity] = useState(false)
 
-  const updateTenantMutation = useUpdateTenant(tenant.id)
-  const updateAccessPolicyMutation = useUpdateAccessPolicy(tenantId)
+  const updateTenantMutation = useUpdateTenant(tenantId)
 
   const {
     register,
@@ -99,7 +70,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   })
 
   const watchedName = useWatch({ control, name: "name" })
-  const nameChanged =
+  const hasNameChanged =
     (watchedName ?? "").trim() !== (fullTenant?.name ?? "").trim()
 
   function startIdentityEdit() {
@@ -115,46 +86,9 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     setIsEditingIdentity(true)
   }
 
-  const [isEditingAccessPolicy, setIsEditingAccessPolicy] = useState(false)
-
-  const {
-    register: apRegister,
-    control: apControl,
-    handleSubmit: apHandleSubmit,
-    reset: apReset,
-    formState: { errors: apErrors, isSubmitting: apIsSubmitting },
-  } = useForm<UpdateAccessPolicyForm>({
-    resolver: zodResolver(UpdateAccessPolicyFormSchema),
-    defaultValues: {
-      support_read_only_access_allowed:
-        accessPolicy?.support_read_only_access?.enabled ?? false,
-      auditor_access_allowed: accessPolicy?.auditor_access?.enabled ?? false,
-      lc_portal_enabled: accessPolicy?.lc_portal?.enabled ?? false,
-      reason: "",
-    },
-  })
-
-  function startAccessPolicyEdit() {
-    if (accessPolicy) {
-      apReset({
-        support_read_only_access_allowed:
-          accessPolicy.support_read_only_access.enabled,
-        auditor_access_allowed: accessPolicy.auditor_access.enabled,
-        lc_portal_enabled: accessPolicy.lc_portal.enabled,
-        reason: "",
-      })
-    }
-    setIsEditingAccessPolicy(true)
-  }
-
   function cancelEdit() {
     setIsEditingIdentity(false)
     reset()
-  }
-
-  function cancelAccessPolicyEdit() {
-    setIsEditingAccessPolicy(false)
-    apReset()
   }
 
   async function onSubmit(data: UpdateTenantForm) {
@@ -182,34 +116,16 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     }
   }
 
-  async function onSubmitAccessPolicy(data: UpdateAccessPolicyForm) {
-    try {
-      await updateAccessPolicyMutation.mutateAsync({
-        support_read_only_access_allowed: data.support_read_only_access_allowed,
-        auditor_access_allowed: data.auditor_access_allowed,
-        lc_portal_enabled: data.lc_portal_enabled,
-        reason: data.reason,
-      })
-      toast.success(t("detail.overview.accessPolicy.successToast"))
-      setIsEditingAccessPolicy(false)
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
-    }
-  }
-
-  const newBusinessAllowed = tenant.status === TenantStatusSchema.enum.active
-  const operationalReady = tenant.status === TenantStatusSchema.enum.active
+  // Both readouts key off the same condition today: only an active tenant may
+  // take on new business and is operationally ready.
+  const isActive = tenant.status === TenantStatusSchema.enum.active
 
   const identityCardActions = isEditingIdentity ? (
     <div className="flex items-center gap-2">
       <Button
         type="button"
         variant="outline"
-        className="h-auto rounded-[10px] px-[10px] py-[4px] text-sm"
+        className={CARD_ACTION_BUTTON_CLASS}
         onClick={cancelEdit}
         disabled={isSubmitting}
         data-testid="btn-cancel-edit-identity"
@@ -219,7 +135,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       <Button
         type="submit"
         form="identity-edit-form"
-        className="h-auto rounded-[10px] px-[10px] py-[4px] text-sm"
+        className={CARD_ACTION_BUTTON_CLASS}
         disabled={isSubmitting}
         data-testid="btn-confirm-edit-identity"
       >
@@ -230,7 +146,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     <Button
       type="button"
       variant="outline"
-      className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
+      className={`gap-1 ${CARD_ACTION_BUTTON_CLASS}`}
       onClick={startIdentityEdit}
       data-testid="btn-edit-tenant-identity"
     >
@@ -266,11 +182,11 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       : []),
     {
       label: t("detail.overview.tenantIdentity.country"),
-      value: formatCountry(tenant.country),
+      value: countryName(tenant.country),
     },
     {
       label: t("detail.overview.tenantIdentity.defaultCurrency"),
-      value: formatCurrency(tenant.default_currency),
+      value: currencyLabel(tenant.default_currency),
     },
     // US 29.4 field spec: Tenant Description is "not visible to operational users", so
     // it stays System Admin-only. (Support User never reaches it either way — the API
@@ -326,13 +242,13 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
     },
     {
       label: t("detail.overview.lifecycleStatus.newBusinessAllowed"),
-      value: newBusinessAllowed
+      value: isActive
         ? t("detail.overview.lifecycleStatus.yes")
         : t("detail.overview.lifecycleStatus.no"),
     },
     {
       label: t("detail.overview.lifecycleStatus.operationalReadiness"),
-      value: operationalReady
+      value: isActive
         ? t("detail.overview.lifecycleStatus.ready")
         : t("detail.overview.lifecycleStatus.notReady"),
     },
@@ -347,59 +263,6 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
         ]
       : []),
   ]
-
-  const policyFlags = [
-    {
-      key: "supportReadOnly",
-      label: t("detail.overview.accessPolicy.supportReadOnlyAccess"),
-      flag: accessPolicy?.support_read_only_access,
-    },
-    {
-      key: "auditor",
-      label: t("detail.overview.accessPolicy.auditorAccess"),
-      flag: accessPolicy?.auditor_access,
-    },
-    {
-      key: "lcPortal",
-      label: t("detail.overview.accessPolicy.lcPortal"),
-      flag: accessPolicy?.lc_portal,
-    },
-  ]
-
-  const accessPolicyCardActions = isEditingAccessPolicy ? (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        className="h-auto rounded-[10px] px-[10px] py-[4px] text-sm"
-        onClick={cancelAccessPolicyEdit}
-        disabled={apIsSubmitting}
-        data-testid="btn-cancel-edit-access-policy"
-      >
-        {t("detail.overview.cancel")}
-      </Button>
-      <Button
-        type="submit"
-        form="access-policy-edit-form"
-        className="h-auto rounded-[10px] px-[10px] py-[4px] text-sm"
-        disabled={apIsSubmitting}
-        data-testid="btn-confirm-edit-access-policy"
-      >
-        {t("detail.overview.confirmChange")}
-      </Button>
-    </div>
-  ) : !isArchived && !isDraft ? (
-    <Button
-      type="button"
-      variant="outline"
-      className="h-auto gap-1 rounded-[10px] px-[10px] py-[4px] text-sm"
-      onClick={startAccessPolicyEdit}
-      data-testid="btn-edit-access-policy"
-    >
-      <SquarePen size={14} />
-      {t("detail.overview.edit")}
-    </Button>
-  ) : undefined
 
   return (
     <div className="flex flex-col gap-6" data-testid="tab-content-overview">
@@ -495,7 +358,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   </span>
                   <Input
                     disabled
-                    defaultValue={formatCountry(fullTenant.country)}
+                    defaultValue={countryName(fullTenant.country)}
                     className="h-8 text-sm"
                   />
 
@@ -505,7 +368,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   </span>
                   <Input
                     disabled
-                    defaultValue={formatCurrency(fullTenant.default_currency)}
+                    defaultValue={currencyLabel(fullTenant.default_currency)}
                     className="h-8 text-sm"
                   />
 
@@ -523,7 +386,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   {/* Justification for name change — required only when name is changed */}
                   <span className="flex items-start pt-1.5 text-muted-foreground">
                     {t("detail.overview.tenantIdentity.justification")}
-                    {nameChanged && (
+                    {hasNameChanged && (
                       <span className="text-destructive ml-0.5">*</span>
                     )}
                   </span>
@@ -586,157 +449,10 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
           </TenantInfoCard>
 
           {isAdmin && (
-            <TenantInfoCard
-              title={t("detail.overview.accessPolicy.title")}
-              editButton={accessPolicyCardActions}
-            >
-              {isAccessPolicyError ? (
-                <p
-                  data-testid="access-policy-error"
-                  className="text-sm text-destructive"
-                >
-                  {accessPolicyError instanceof ApiError
-                    ? t(`errors.${accessPolicyError.code}`, {
-                        defaultValue: t("errors.generic"),
-                      })
-                    : t("errors.generic")}
-                </p>
-              ) : isEditingAccessPolicy ? (
-                <form
-                  id="access-policy-edit-form"
-                  onSubmit={apHandleSubmit(onSubmitAccessPolicy)}
-                  noValidate
-                >
-                  <div className="flex flex-col gap-3 text-sm">
-                    {[
-                      {
-                        key: "support_read_only_access_allowed" as const,
-                        label: t(
-                          "detail.overview.accessPolicy.supportReadOnlyAccess"
-                        ),
-                        flag: accessPolicy?.support_read_only_access,
-                      },
-                      {
-                        key: "auditor_access_allowed" as const,
-                        label: t("detail.overview.accessPolicy.auditorAccess"),
-                        flag: accessPolicy?.auditor_access,
-                      },
-                      {
-                        key: "lc_portal_enabled" as const,
-                        label: t("detail.overview.accessPolicy.lcPortal"),
-                        flag: accessPolicy?.lc_portal,
-                      },
-                    ].map(item => (
-                      <div
-                        key={item.key}
-                        className="flex items-start justify-between gap-4"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-muted-foreground leading-5">
-                            {item.label}
-                          </span>
-                          {(item.flag?.modified_by ??
-                            item.flag?.modified_at) && (
-                            <span className="text-xs text-muted-foreground">
-                              {t("detail.overview.accessPolicy.modifiedBy", {
-                                name: item.flag?.modified_by ?? "",
-                                date: formatDate(
-                                  item.flag?.modified_at ?? null
-                                ),
-                              })}
-                            </span>
-                          )}
-                        </div>
-                        <Controller
-                          control={apControl}
-                          name={item.key}
-                          render={({ field }) => (
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              aria-label={item.label}
-                            />
-                          )}
-                        />
-                      </div>
-                    ))}
-
-                    <div className="flex flex-col gap-1 pt-1">
-                      <span className="text-muted-foreground">
-                        {t(
-                          "detail.overview.accessPolicy.governanceJustification"
-                        )}
-                        <span className="text-destructive ml-0.5">*</span>
-                      </span>
-                      <Textarea
-                        {...apRegister("reason")}
-                        className="resize-none text-sm"
-                        rows={2}
-                        data-testid="edit-access-policy-reason"
-                        aria-invalid={!!apErrors.reason}
-                      />
-                      {apErrors.reason && (
-                        <p className="text-xs text-destructive">
-                          {t(
-                            "detail.overview.accessPolicy.errors.reasonRequired"
-                          )}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </form>
-              ) : (
-                <div className="flex gap-16 text-sm">
-                  <div className="flex flex-col gap-3 text-muted-foreground shrink-0">
-                    {policyFlags.map(item => (
-                      <span
-                        key={item.key}
-                        className="min-h-[38px] flex items-start leading-5"
-                      >
-                        {item.label}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {policyFlags.map(({ key, flag }) => (
-                      <div
-                        key={key}
-                        className="flex flex-col gap-1 min-h-[38px]"
-                      >
-                        {flag !== undefined ? (
-                          <>
-                            <span
-                              className={cn(
-                                "self-start inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium h-[18px]",
-                                flag.enabled
-                                  ? "bg-green-600/10 text-green-600"
-                                  : "bg-slate-200 text-muted-foreground"
-                              )}
-                            >
-                              {flag.enabled
-                                ? t("detail.overview.accessPolicy.enabled")
-                                : t("detail.overview.accessPolicy.disabled")}
-                            </span>
-                            {(flag.modified_by ?? flag.modified_at) && (
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {t("detail.overview.accessPolicy.modifiedBy", {
-                                  name: flag.modified_by ?? "",
-                                  date: formatDate(flag.modified_at),
-                                })}
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground leading-5">
-                            —
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </TenantInfoCard>
+            <AccessPolicyCard
+              tenantId={tenantId}
+              isEditable={!isArchived && !isDraft}
+            />
           )}
         </div>
       </div>

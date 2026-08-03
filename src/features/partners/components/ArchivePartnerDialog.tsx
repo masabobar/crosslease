@@ -2,17 +2,13 @@ import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ShieldAlert, TriangleAlert } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
-import {
-  fetchArchiveEligibility,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
+import { usePartnerArchiveEligibility } from "@/features/partners/hooks/usePartnerArchiveEligibility"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
@@ -45,13 +41,15 @@ function ArchivePartnerDialog({
     data: eligibility,
     isLoading: isEligibilityLoading,
     isError: isEligibilityError,
-  } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.archiveEligibility(partnerId),
-    queryFn: () => fetchArchiveEligibility(partnerId),
-    enabled: open,
-  })
+  } = usePartnerArchiveEligibility(partnerId, open)
 
   const requiresFourEyes = eligibility?.requires_counter_confirmation ?? false
+  // The endpoint already knows whether this partner is archivable; without
+  // honouring it the dialog accepts a reason and an acknowledgement, then
+  // submits into a rejection the response had predicted. Treat an unloaded
+  // eligibility as blocking — submit is disabled while it is in flight anyway.
+  const canArchive = eligibility?.can_archive ?? false
+  const activeReferenceCount = eligibility?.active_references.length ?? 0
 
   const {
     register,
@@ -159,14 +157,33 @@ function ArchivePartnerDialog({
           </label>
 
           {requiresFourEyes && (
-            <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-amber-500/10">
-              <ShieldAlert
-                size={16}
-                className="text-amber-600 shrink-0 mt-0.5"
-              />
-              <p className="text-sm text-amber-600">
+            <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-warning/10">
+              <ShieldAlert size={16} className="text-warning shrink-0 mt-0.5" />
+              <p className="text-sm text-warning">
                 {t("archiveDialog.fourEyesNote")}
               </p>
+            </div>
+          )}
+
+          {eligibility && !canArchive && (
+            <div
+              className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-destructive/10"
+              data-testid="archive-blocked-notice"
+            >
+              <TriangleAlert
+                size={16}
+                className="text-destructive shrink-0 mt-0.5"
+              />
+              <div className="text-sm text-destructive/80">
+                <p className="font-medium">{t("archiveDialog.blockedTitle")}</p>
+                {activeReferenceCount > 0 && (
+                  <p>
+                    {t("archiveDialog.blockedActiveReferences", {
+                      count: activeReferenceCount,
+                    })}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -195,7 +212,10 @@ function ArchivePartnerDialog({
       }
       onCancel={handleClose}
       isActionDisabled={
-        mutation.isPending || isEligibilityLoading || isEligibilityError
+        mutation.isPending ||
+        isEligibilityLoading ||
+        isEligibilityError ||
+        !canArchive
       }
       isPending={mutation.isPending}
       cancelLabel={t("archiveDialog.cancel")}

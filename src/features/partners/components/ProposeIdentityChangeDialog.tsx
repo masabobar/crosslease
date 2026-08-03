@@ -21,6 +21,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
+import { IdentityChangeStatusSchema } from "@/features/partners/api/schema"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
 import { isCommercialRegisterApplicable } from "@/features/partners/utils"
@@ -135,9 +136,11 @@ function ProposeIdentityChangeDialog({
       },
       {
         onSuccess: result => {
-          toast[result.status === "committed" ? "success" : "info"](
+          const isCommitted =
+            result.status === IdentityChangeStatusSchema.enum.committed
+          toast[isCommitted ? "success" : "info"](
             t(
-              result.status === "committed"
+              isCommitted
                 ? "proposeIdentityChangeDialog.successCommitted"
                 : "proposeIdentityChangeDialog.successPendingApproval"
             )
@@ -289,18 +292,15 @@ function ProposeIdentityChangeDialog({
             />
           </div>
 
-          <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-amber-500/10">
-            <AlertTriangle
-              size={16}
-              className="text-amber-600 shrink-0 mt-0.5"
-            />
-            <p className="text-sm text-amber-600">
+          <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-warning/10">
+            <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
+            <p className="text-sm text-warning">
               {t("proposeIdentityChangeDialog.riskNote")}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
+        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-muted/40 rounded-b-2xl">
           <Button
             type="button"
             variant="outline"

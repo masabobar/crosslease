@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { partnerDetail, PATHS } from "@/router/paths"
 import { countryName } from "@/lib/countries"
 import { cn } from "@/lib/utils"
+import { formatAnchorLabel } from "@/features/partners/utils"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { PartnerMatchClassificationSchema } from "@/features/partners/api/schema"
 import type {
@@ -62,7 +63,7 @@ function MatchedCandidatesCard({
             <p className="text-xs text-muted-foreground">
               {t("submit.matchStep.matchedAnchors")}:{" "}
               <span className="font-semibold">
-                {c.matched_anchors.join(", ")}
+                {c.matched_anchors.map(a => formatAnchorLabel(t, a)).join(", ")}
               </span>
             </p>
           )}

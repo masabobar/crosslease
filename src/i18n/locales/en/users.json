@@ -268,7 +268,8 @@
         "lastLogin": "Last login",
         "lastActivity": "Last activity",
         "lastSuspensionReason": "Last suspension reason",
-        "lastDeactivationReason": "Last deactivation reason"
+        "lastDeactivationReason": "Last deactivation reason",
+        "phoneNumberPlaceholder": "+1 234 567 8900"
       },
       "roleClassification": {
         "platform": "Platform-level role",
@@ -427,7 +428,6 @@
       "tenant": "Tenant",
       "tenantScope": "Tenant scope",
       "lcPartner": "Leasing company",
-      "accessValidFrom": "Access valid from",
       "accessValidUntil": "Access valid until"
     },
     "placeholders": {

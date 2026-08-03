@@ -32,8 +32,8 @@ import type {
   UpdateAccessPeriodInput,
   UpdateSelfInput,
 } from "./schema"
-import { GovernedActionSchema } from "@/features/governed-actions/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+import { GovernedActionSchema } from "@/features/governedActions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 export const USERS_QUERY_KEYS = {
   lists: () => ["users", "list"] as const,

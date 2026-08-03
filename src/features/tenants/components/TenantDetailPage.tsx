@@ -30,10 +30,7 @@ import {
   TenantStatusSchema,
 } from "@/features/tenants/api/schema"
 import { formatDateTime } from "@/lib/formatters"
-
-function formatCountry(code: string): string {
-  return new Intl.DisplayNames(["en"], { type: "region" }).of(code) ?? code
-}
+import { countryName } from "@/lib/countries"
 
 function MetaItem({
   icon,
@@ -137,7 +134,7 @@ function TenantHighlightInfo({
         <MetaItem
           icon={<SquareCode size={16} />}
           label={t("detail.meta.country")}
-          value={formatCountry(tenant.country)}
+          value={countryName(tenant.country)}
         />
         <MetaItem
           icon={<SquareCode size={16} />}
@@ -170,9 +167,9 @@ export default function TenantDetailPage() {
   const { data: currentUser } = useCurrentUser()
   const { data: tenant, isLoading, isError } = useTenantDetail(id ?? null)
   const [activeTab, setActiveTab] = useState<TabKey>("overview")
-  const [suspendOpen, setSuspendOpen] = useState(false)
-  const [reactivateOpen, setReactivateOpen] = useState(false)
-  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [isSuspendOpen, setIsSuspendOpen] = useState(false)
+  const [isReactivateOpen, setIsReactivateOpen] = useState(false)
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false)
 
   const isAdmin = currentUser?.role === SYSTEM_ADMIN_ROLE
   const isSupportUser = currentUser?.role === SUPPORT_USER_ROLE
@@ -231,8 +228,8 @@ export default function TenantDetailPage() {
         <>
           {isAdmin && (
             <SuspendTenantDialog
-              open={suspendOpen}
-              onOpenChange={setSuspendOpen}
+              open={isSuspendOpen}
+              onOpenChange={setIsSuspendOpen}
               tenantId={id!}
               tenantName={tenant.name}
               tenantStatus={tenant.status}
@@ -240,8 +237,8 @@ export default function TenantDetailPage() {
           )}
           {isAdmin && (
             <ReactivateTenantDialog
-              open={reactivateOpen}
-              onOpenChange={setReactivateOpen}
+              open={isReactivateOpen}
+              onOpenChange={setIsReactivateOpen}
               tenantId={id!}
               tenantName={tenant.name}
               tenantStatus={tenant.status}
@@ -249,15 +246,19 @@ export default function TenantDetailPage() {
           )}
           {isAdmin && (
             <ArchiveTenantDialog
-              open={archiveOpen}
-              onOpenChange={setArchiveOpen}
+              open={isArchiveOpen}
+              onOpenChange={setIsArchiveOpen}
               tenantId={id!}
               tenantName={tenant.name}
               tenantStatus={tenant.status}
               activeUserCount={
                 isFullTenantResponse(tenant) ? tenant.bank_user_utilisation : 0
               }
-              activeUserCountUnknown={isError}
+              // A support-shaped response carries no utilisation figure, so the
+              // count is unknown rather than zero — the dialog must still force
+              // the active-user acknowledgement. (`isError` cannot be used here:
+              // this branch only renders once `tenant` has loaded.)
+              activeUserCountUnknown={!isFullTenantResponse(tenant)}
             />
           )}
           <div className="flex flex-col flex-1 overflow-hidden">
@@ -266,9 +267,9 @@ export default function TenantDetailPage() {
               <TenantHighlightInfo
                 tenant={tenant}
                 isAdmin={isAdmin}
-                onSuspendClick={() => setSuspendOpen(true)}
-                onReactivateClick={() => setReactivateOpen(true)}
-                onArchiveClick={() => setArchiveOpen(true)}
+                onSuspendClick={() => setIsSuspendOpen(true)}
+                onReactivateClick={() => setIsReactivateOpen(true)}
+                onArchiveClick={() => setIsArchiveOpen(true)}
               />
             </div>
 

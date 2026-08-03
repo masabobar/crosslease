@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
-import {
-  fetchResolutionCandidates,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
+import { ApiError } from "@/lib/api"
+import { formatAnchorLabel } from "@/features/partners/utils"
+import { useResolutionCandidates } from "@/features/partners/hooks/useResolutionCandidates"
+
+const SKELETON_COUNT = 3
 
 type ResolutionCandidatesTabProps = {
   partnerId: string
@@ -11,15 +11,29 @@ type ResolutionCandidatesTabProps = {
 
 function ResolutionCandidatesTab({ partnerId }: ResolutionCandidatesTabProps) {
   const { t } = useTranslation("partners")
-  const { data, isLoading, isError } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.resolutionCandidates(partnerId),
-    queryFn: () => fetchResolutionCandidates(partnerId),
-  })
+  const { data, isLoading, isError, error } = useResolutionCandidates(partnerId)
+
+  // classification and confidence are bare strings on the wire. The matching
+  // service emits "exact" | "ambiguous" | "no_match" and the same
+  // definite/probable/possible scale the duplicate queue uses, so both reuse
+  // those label groups and fall back to the raw value for anything new.
+  function classificationLabel(value: string): string {
+    return t(`matchClassification.${value}` as "matchClassification.exact", {
+      defaultValue: value,
+    })
+  }
+
+  function confidenceLabel(value: string): string {
+    return t(
+      `duplicates.confidence.${value}` as "duplicates.confidence.definite",
+      { defaultValue: value }
+    )
+  }
 
   if (isLoading) {
     return (
       <div className="py-8">
-        {Array.from({ length: 3 }, (_, i) => (
+        {Array.from({ length: SKELETON_COUNT }, (_, i) => (
           <div
             key={i}
             className="h-16 rounded-xl bg-muted animate-pulse mb-2"
@@ -32,7 +46,9 @@ function ResolutionCandidatesTab({ partnerId }: ResolutionCandidatesTabProps) {
   if (isError) {
     return (
       <p className="text-sm text-destructive py-8 text-center">
-        {t("errors.generic")}
+        {error instanceof ApiError
+          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")}
       </p>
     )
   }
@@ -50,14 +66,14 @@ function ResolutionCandidatesTab({ partnerId }: ResolutionCandidatesTabProps) {
             <span>
               {t("detail.resolutionCandidates.classification")}:{" "}
               <span className="text-foreground">
-                {data.resolution.classification}
+                {classificationLabel(data.resolution.classification)}
               </span>
             </span>
             {data.resolution.confidence && (
               <span>
                 {t("detail.resolutionCandidates.confidence")}:{" "}
                 <span className="text-foreground">
-                  {data.resolution.confidence}
+                  {confidenceLabel(data.resolution.confidence)}
                 </span>
               </span>
             )}
@@ -80,13 +96,13 @@ function ResolutionCandidatesTab({ partnerId }: ResolutionCandidatesTabProps) {
                 <p className="text-sm font-medium text-foreground">
                   {c.display_name}
                 </p>
-                <span className="text-xs text-muted-foreground capitalize">
-                  {c.confidence}
+                <span className="text-xs text-muted-foreground">
+                  {confidenceLabel(c.confidence)}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t("detail.resolutionCandidates.matchedAnchors")}:{" "}
-                {c.matched_anchors.join(", ")}
+                {c.matched_anchors.map(a => formatAnchorLabel(t, a)).join(", ")}
               </p>
             </div>
           ))}

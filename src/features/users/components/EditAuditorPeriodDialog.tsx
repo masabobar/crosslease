@@ -1,8 +1,11 @@
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { ShieldAlert } from "lucide-react"
+import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
+import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Dialog,
   DialogContent,
@@ -16,16 +19,12 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import {
   AUDITOR_PERIOD_UPDATE_REASONS,
+  AuditorPeriodFormSchema,
+  type AuditorPeriodFormValues,
   type AuditorPeriodUpdateReason,
 } from "@/features/users/api/schema"
 import { AUDITOR_ROLE } from "@/features/users/types"
 import { formatDate } from "@/lib/formatters"
-
-const AuditorPeriodFormSchema = z.object({
-  new_access_valid_until: z.string().min(1),
-  reason: z.enum(AUDITOR_PERIOD_UPDATE_REASONS, { error: "required" }),
-})
-type AuditorPeriodFormValues = z.infer<typeof AuditorPeriodFormSchema>
 
 type Props = {
   open: boolean
@@ -33,7 +32,8 @@ type Props = {
   activatedAt: string | null
   isPending: boolean
   onClose: () => void
-  onSubmit: (values: AuditorPeriodFormValues) => void
+  /** Rejections propagate here so field-level detail lands on the offending input. */
+  onSubmit: (values: AuditorPeriodFormValues) => Promise<void>
 }
 
 export function EditAuditorPeriodDialog({
@@ -76,6 +76,27 @@ export function EditAuditorPeriodDialog({
     onClose()
   }
 
+  async function handleSubmit(values: AuditorPeriodFormValues) {
+    try {
+      await onSubmit(values)
+    } catch (err) {
+      if (
+        applyApiFieldErrors({
+          error: err,
+          fields: Object.keys(form.getValues()),
+          setError: form.setError,
+        })
+      )
+        return
+
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")
+      )
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -91,7 +112,7 @@ export function EditAuditorPeriodDialog({
           <DialogTitle>{t("detail.page.editRole.title")}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(values => onSubmit(values))}>
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="px-4 py-4 flex flex-col gap-6">
             {/* Current role + separator + date section */}
             <div className="flex flex-col gap-4">
@@ -163,20 +184,15 @@ export function EditAuditorPeriodDialog({
               </div>
 
               {/* Four-Eyes approval notice */}
-              <div className="rounded-xl bg-amber-500/10 px-[10px] py-2 flex items-start gap-2">
-                <ShieldAlert
-                  size={16}
-                  className="text-amber-600 mt-0.5 shrink-0"
-                />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium text-amber-600">
-                    {t("detail.page.editRole.fourEyes.title")}
-                  </span>
-                  <span className="text-sm text-amber-600/80">
-                    {t("detail.page.editRole.fourEyes.description")}
-                  </span>
-                </div>
-              </div>
+              <Alert variant="warning" className="rounded-xl px-[10px]">
+                <ShieldAlert />
+                <AlertTitle>
+                  {t("detail.page.editRole.fourEyes.title")}
+                </AlertTitle>
+                <AlertDescription>
+                  {t("detail.page.editRole.fourEyes.description")}
+                </AlertDescription>
+              </Alert>
             </div>
           </div>
 

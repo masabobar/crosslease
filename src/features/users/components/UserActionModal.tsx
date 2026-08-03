@@ -28,6 +28,8 @@ import {
   useResendInvitation,
 } from "@/features/users/hooks/useUserActions"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { USER_ACTION_TYPE } from "@/features/users/types"
 import type { UserModalActionType } from "@/features/users/types"
 
 type ActionUser = {
@@ -44,27 +46,27 @@ type UserActionModalProps = {
 }
 
 const ACTION_CONFIG = {
-  suspend: {
+  [USER_ACTION_TYPE.SUSPEND]: {
     needsComment: true,
     needsEffectiveFrom: true,
     needsEffectiveUntil: true,
   },
-  reactivate: {
+  [USER_ACTION_TYPE.REACTIVATE]: {
     needsComment: true,
     needsEffectiveFrom: false,
     needsEffectiveUntil: false,
   },
-  deactivate: {
+  [USER_ACTION_TYPE.DEACTIVATE]: {
     needsComment: true,
     needsEffectiveFrom: true,
     needsEffectiveUntil: false,
   },
-  "resend-invitation": {
+  [USER_ACTION_TYPE.RESEND_INVITATION]: {
     needsComment: false,
     needsEffectiveFrom: false,
     needsEffectiveUntil: false,
   },
-} as const
+} as const satisfies Record<UserModalActionType, unknown>
 
 // Form schemas compose from the canonical API schemas. effective_from is overridden to optional
 // so the field can be empty mid-edit; superRefine adds the required-field UX error on submit.
@@ -123,18 +125,20 @@ type FormValues =
   | DeactivateFormValues
   | ResendFormValues
 
-function getActionSchema(action: UserModalActionType) {
-  switch (action) {
-    case "suspend":
-      return SUSPEND_SCHEMA
-    case "reactivate":
-      return REACTIVATE_SCHEMA
-    case "deactivate":
-      return DEACTIVATE_SCHEMA
-    case "resend-invitation":
-      return RESEND_SCHEMA
-  }
-}
+const ACTION_SCHEMAS = {
+  [USER_ACTION_TYPE.SUSPEND]: SUSPEND_SCHEMA,
+  [USER_ACTION_TYPE.REACTIVATE]: REACTIVATE_SCHEMA,
+  [USER_ACTION_TYPE.DEACTIVATE]: DEACTIVATE_SCHEMA,
+  [USER_ACTION_TYPE.RESEND_INVITATION]: RESEND_SCHEMA,
+} as const
+
+// Reason option lists, keyed by action so the four-branch switch collapses to a lookup.
+const ACTION_REASONS = {
+  [USER_ACTION_TYPE.SUSPEND]: SUSPENSION_REASONS,
+  [USER_ACTION_TYPE.REACTIVATE]: REACTIVATION_REASONS,
+  [USER_ACTION_TYPE.DEACTIVATE]: DEACTIVATION_REASONS,
+  [USER_ACTION_TYPE.RESEND_INVITATION]: RESEND_REASONS,
+} as const
 
 function UserActionModal({
   action,
@@ -157,7 +161,7 @@ function UserActionModal({
     msg === "required" ? tCommon("validation.required") : msg
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(getActionSchema(action)),
+    resolver: zodResolver(ACTION_SCHEMAS[action]),
     defaultValues: {
       reason: undefined,
       comment: "",
@@ -171,43 +175,19 @@ function UserActionModal({
   const name = `${user.first_name} ${user.last_name}`
 
   function getReasonOptions(): SelectOption[] {
-    switch (action) {
-      case "suspend":
-        return SUSPENSION_REASONS.map(r => ({
-          value: r,
-          label: t(
-            `actions.suspend.reasons.${r}` as "actions.suspend.reasons.other"
-          ),
-        }))
-      case "reactivate":
-        return REACTIVATION_REASONS.map(r => ({
-          value: r,
-          label: t(
-            `actions.reactivate.reasons.${r}` as "actions.reactivate.reasons.other"
-          ),
-        }))
-      case "deactivate":
-        return DEACTIVATION_REASONS.map(r => ({
-          value: r,
-          label: t(
-            `actions.deactivate.reasons.${r}` as "actions.deactivate.reasons.other"
-          ),
-        }))
-      case "resend-invitation":
-        return RESEND_REASONS.map(r => ({
-          value: r,
-          label: t(
-            `actions.resend-invitation.reasons.${r}` as "actions.resend-invitation.reasons.user_request"
-          ),
-        }))
-    }
+    return ACTION_REASONS[action].map(reason => ({
+      value: reason,
+      label: t(
+        `actions.${action}.reasons.${reason}` as "actions.suspend.reasons.other"
+      ),
+    }))
   }
 
   const onSubmit = form.handleSubmit(async data => {
     const userId = user.id
     try {
       switch (action) {
-        case "suspend": {
+        case USER_ACTION_TYPE.SUSPEND: {
           await suspend({
             userId,
             input: {
@@ -221,7 +201,7 @@ function UserActionModal({
           })
           break
         }
-        case "reactivate": {
+        case USER_ACTION_TYPE.REACTIVATE: {
           await reactivate({
             userId,
             input: {
@@ -231,7 +211,7 @@ function UserActionModal({
           })
           break
         }
-        case "deactivate": {
+        case USER_ACTION_TYPE.DEACTIVATE: {
           await deactivate({
             userId,
             input: {
@@ -242,7 +222,7 @@ function UserActionModal({
           })
           break
         }
-        case "resend-invitation": {
+        case USER_ACTION_TYPE.RESEND_INVITATION: {
           await resend({
             userId,
             input: { reason: data.reason as ResendFormValues["reason"] },
@@ -253,6 +233,15 @@ function UserActionModal({
       form.reset()
       onSuccess()
     } catch (err) {
+      if (
+        applyApiFieldErrors({
+          error: err,
+          fields: Object.keys(form.getValues()),
+          setError: form.setError,
+        })
+      )
+        return
+
       toast.error(
         err instanceof ApiError
           ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
@@ -268,32 +257,14 @@ function UserActionModal({
     }
   }
 
-  const title =
-    action === "suspend"
-      ? t("actions.suspend.title")
-      : action === "reactivate"
-        ? t("actions.reactivate.title")
-        : action === "deactivate"
-          ? t("actions.deactivate.title")
-          : t("actions.resend-invitation.title")
-
-  const subtitle =
-    action === "suspend"
-      ? t("actions.suspend.subtitle", { name })
-      : action === "reactivate"
-        ? t("actions.reactivate.subtitle", { name })
-        : action === "deactivate"
-          ? t("actions.deactivate.subtitle", { name })
-          : t("actions.resend-invitation.subtitle", { name })
-
-  const submitLabel =
-    action === "suspend"
-      ? t("actions.suspend.submit")
-      : action === "reactivate"
-        ? t("actions.reactivate.submit")
-        : action === "deactivate"
-          ? t("actions.deactivate.submit")
-          : t("actions.resend-invitation.submit")
+  const title = t(`actions.${action}.title` as "actions.suspend.title")
+  const subtitle = t(
+    `actions.${action}.subtitle` as "actions.suspend.subtitle",
+    {
+      name,
+    }
+  )
+  const submitLabel = t(`actions.${action}.submit` as "actions.suspend.submit")
 
   return (
     <DialogModal open onOpenChange={handleOpenChange}>
@@ -397,7 +368,7 @@ function UserActionModal({
               error={!!errors.comment}
               className="mb-1.5"
             >
-              {action === "deactivate" &&
+              {action === USER_ACTION_TYPE.DEACTIVATE &&
               watchedReason === DEACTIVATION_REASON_OTHER
                 ? t("actions.fields.commentRequired")
                 : t("actions.fields.comment")}
@@ -431,7 +402,9 @@ function UserActionModal({
           <Button
             type="submit"
             data-testid="action-submit-button"
-            variant={action === "deactivate" ? "destructive" : "default"}
+            variant={
+              action === USER_ACTION_TYPE.DEACTIVATE ? "destructive" : "default"
+            }
             disabled={isSubmitting}
           >
             {submitLabel}

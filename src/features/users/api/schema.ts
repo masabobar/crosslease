@@ -4,6 +4,17 @@ import type { UserRole } from "@/features/users/types"
 
 export const UserRoleSchema = z.enum(USER_ROLES)
 
+// Some endpoints type an actor's role as a bare string and fall back to "" when the
+// governed-action snapshot they read from carries no role (see partners' role-history
+// and identity-change responses). An unrecognised value there is a legitimate
+// response, not corrupt data, so decode it to null instead of failing the whole
+// parse — callers render the badge only when a role actually resolved.
+export const OptionalUserRoleSchema = z
+  .string()
+  .transform<UserRole | null>(value =>
+    UserRoleSchema.safeParse(value).success ? (value as UserRole) : null
+  )
+
 export const UserStatusSchema = z.enum([
   "pending_approval",
   "invited",
@@ -255,6 +266,22 @@ export const UpdateSelfInputSchema = z.object({
 })
 export type UpdateSelfInput = z.infer<typeof UpdateSelfInputSchema>
 
+// Identity form shapes. The self-service profile edits name + phone only; the admin
+// detail page adds email (which routes to the separate change-email endpoint), so it
+// extends this base rather than redeclaring the shared fields.
+// An empty phone string is accepted here and mapped to null when the patch is built.
+export const SelfIdentityFormSchema = z.object({
+  first_name: z.string().min(1).max(100),
+  last_name: z.string().min(1).max(100),
+  phone_number: phoneNumberSchema.or(z.literal("")).optional(),
+})
+export type SelfIdentityFormValues = z.infer<typeof SelfIdentityFormSchema>
+
+export const AdminIdentityFormSchema = SelfIdentityFormSchema.extend({
+  email: z.string().email(),
+})
+export type AdminIdentityFormValues = z.infer<typeof AdminIdentityFormSchema>
+
 export const ChangeEmailRequestSchema = z.object({
   new_email: z.string().email(),
 })
@@ -284,6 +311,11 @@ export const UpdateAccessPeriodRequestSchema = z.object({
 export type UpdateAccessPeriodInput = z.infer<
   typeof UpdateAccessPeriodRequestSchema
 >
+
+// Same fields as the request, but `new_access_valid_until` is still the picker's plain
+// calendar date here — the caller converts it to an ISO instant before submitting.
+export const AuditorPeriodFormSchema = UpdateAccessPeriodRequestSchema
+export type AuditorPeriodFormValues = z.infer<typeof AuditorPeriodFormSchema>
 
 export const ExportFormatSchema = z.enum(["csv", "xlsx"])
 export type ExportFormat = z.infer<typeof ExportFormatSchema>
