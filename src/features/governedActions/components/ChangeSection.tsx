@@ -16,9 +16,9 @@ import {
   PartnerIdentityChangeSnapshotSchema,
   PartnerMergeSnapshotSchema,
   ProductTemplateDeprecateSnapshotSchema,
-} from "@/features/governed-actions/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
-import { FieldRow } from "@/features/governed-actions/components/FieldRow"
+} from "@/features/governedActions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
+import { FieldRow } from "@/features/governedActions/components/FieldRow"
 
 export type ChangeSectionPrefix = "drawer" | "modal"
 

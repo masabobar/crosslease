@@ -7,26 +7,26 @@ import { SearchInput } from "@/components/ui/search-input"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { ApiError } from "@/lib/api"
-import { useGovernedActions } from "@/features/governed-actions/hooks/useGovernedActions"
-import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
-import { useReInitiateAction } from "@/features/governed-actions/hooks/useReInitiateAction"
-import { ActionRow } from "@/features/governed-actions/components/ActionRow"
-import { ReviewRequestModal } from "@/features/governed-actions/components/ReviewRequestModal"
-import { PendingApprovalDetailDrawer } from "@/features/governed-actions/components/PendingApprovalDetailDrawer"
+import { useGovernedActions } from "@/features/governedActions/hooks/useGovernedActions"
+import { useWithdrawAction } from "@/features/governedActions/hooks/useWithdrawAction"
+import { useReInitiateAction } from "@/features/governedActions/hooks/useReInitiateAction"
+import { ActionRow } from "@/features/governedActions/components/ActionRow"
+import { ReviewRequestModal } from "@/features/governedActions/components/ReviewRequestModal"
+import { PendingApprovalDetailDrawer } from "@/features/governedActions/components/PendingApprovalDetailDrawer"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import { PATHS } from "@/router/paths"
-import { canReviewGovernedAction } from "@/features/governed-actions/constants"
+import { canReviewGovernedAction } from "@/features/governedActions/constants"
 import { canAccessAuditTrail } from "@/features/audit/types"
 import {
   GovernedActionStatusSchema,
   initiatorSnapshot,
   platformInviteSnapshot,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 import type {
   GovernedAction,
   GovernedActionStatus,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 
 type Tab = "all" | GovernedActionStatus
 

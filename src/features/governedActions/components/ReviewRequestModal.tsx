@@ -11,11 +11,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
-import { useApproveAction } from "@/features/governed-actions/hooks/useApproveAction"
-import { useRejectAction } from "@/features/governed-actions/hooks/useRejectAction"
-import { ChangeSection } from "@/features/governed-actions/components/ChangeSection"
-import { FieldRow } from "@/features/governed-actions/components/FieldRow"
-import { ChainEntry } from "@/features/governed-actions/components/ChainEntry"
+import { useApproveAction } from "@/features/governedActions/hooks/useApproveAction"
+import { useRejectAction } from "@/features/governedActions/hooks/useRejectAction"
+import { ChangeSection } from "@/features/governedActions/components/ChangeSection"
+import { FieldRow } from "@/features/governedActions/components/FieldRow"
+import { ChainEntry } from "@/features/governedActions/components/ChainEntry"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { USER_ROLES } from "@/features/users/types"
 import { formatDateTime } from "@/lib/formatters"
@@ -24,16 +24,16 @@ import {
   getGovernedActionSubject,
   HAS_CHANGE_SECTION,
   type GovernedActionSubjectKind,
-} from "@/features/governed-actions/utils"
+} from "@/features/governedActions/utils"
 import {
   initiatorSnapshot,
   REVIEW_COMMENT_MIN_LENGTH,
   ReviewCommentFormSchema,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 import type {
   GovernedAction,
   ReviewCommentForm,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 
 type Props = {
   open: boolean
@@ -61,6 +61,11 @@ type AffectedEntityLabelKey =
   | "modal.affectedTemplate"
   | "modal.affectedTenant"
   | "modal.affectedModule"
+
+// Mirrors PendingApprovalDetailDrawer: the chain shows only the current action until the
+// correlation_id lookup lands (Q-002), so the displayed count tracks the single
+// <ChainEntry> rendered below rather than being inlined in the markup.
+const RENDERED_CHAIN_ENTRY_COUNT = 1
 
 const AFFECTED_ENTITY_LABEL_KEY: Record<
   GovernedActionSubjectKind,
@@ -307,10 +312,13 @@ export function ReviewRequestModal({
             <Button
               type="button"
               variant="ghost"
+              data-testid="modal-request-chain-toggle"
               onClick={() => setChainExpanded(v => !v)}
               className="h-auto p-0 gap-1 text-sm font-normal text-muted-foreground hover:text-foreground hover:bg-transparent"
             >
-              <span>1 {t("modal.request")}</span>
+              <span>
+                {RENDERED_CHAIN_ENTRY_COUNT} {t("modal.request")}
+              </span>
               {chainExpanded ? (
                 <ChevronUpIcon className="size-4" />
               ) : (

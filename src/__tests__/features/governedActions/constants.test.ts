@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   canReviewGovernedAction,
   GOVERNED_ACTION_LIST_ALLOWED_ROLES,
-} from "@/features/governed-actions/constants"
+} from "@/features/governedActions/constants"
 
 describe("canReviewGovernedAction", () => {
   it("allows back_office to review partner_confirm", () => {

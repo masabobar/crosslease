@@ -8,9 +8,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { ChangeSection } from "@/features/governed-actions/components/ChangeSection"
-import { FieldRow } from "@/features/governed-actions/components/FieldRow"
-import { ChainEntry } from "@/features/governed-actions/components/ChainEntry"
+import { ChangeSection } from "@/features/governedActions/components/ChangeSection"
+import { FieldRow } from "@/features/governedActions/components/FieldRow"
+import { ChainEntry } from "@/features/governedActions/components/ChainEntry"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
@@ -19,15 +19,15 @@ import {
   getGovernedActionSubject,
   HAS_CHANGE_SECTION,
   type GovernedActionSubjectKind,
-} from "@/features/governed-actions/utils"
+} from "@/features/governedActions/utils"
 import {
   initiatorSnapshot,
   approverSnapshot,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 import type {
   ActorSnapshot,
   GovernedAction,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 
 type Props = {
   open: boolean
@@ -106,6 +106,11 @@ type AffectedEntityLabelKey =
   | "drawer.affectedTemplate"
   | "drawer.affectedTenant"
   | "drawer.affectedModule"
+
+// The request chain renders only the current action until the correlation_id lookup
+// lands (see the TODO at the REQUEST CHAIN block below), so the count it displays is
+// pinned to the single <ChainEntry> rendered there rather than inlined in the markup.
+const RENDERED_CHAIN_ENTRY_COUNT = 1
 
 const AFFECTED_ENTITY_LABEL_KEY: Record<
   GovernedActionSubjectKind,
@@ -226,6 +231,7 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
                   type="button"
                   variant="ghost"
                   size="icon-xs"
+                  data-testid="drawer-justification-toggle"
                   onClick={() => setJustificationExpanded(v => !v)}
                   className="text-muted-foreground hover:text-foreground hover:bg-transparent"
                 >
@@ -256,10 +262,13 @@ export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {
               <Button
                 type="button"
                 variant="ghost"
+                data-testid="drawer-request-chain-toggle"
                 onClick={() => setChainExpanded(v => !v)}
                 className="h-auto p-0 gap-1 text-sm font-normal text-muted-foreground hover:text-foreground hover:bg-transparent"
               >
-                <span>1 {t("drawer.request")}</span>
+                <span>
+                  {RENDERED_CHAIN_ENTRY_COUNT} {t("drawer.request")}
+                </span>
                 {chainExpanded ? (
                   <ChevronUpIcon className="size-4" />
                 ) : (

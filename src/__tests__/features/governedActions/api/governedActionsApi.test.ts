@@ -5,7 +5,7 @@ import {
   fetchGovernedActions,
   approveGovernedAction,
   rejectGovernedAction,
-} from "@/features/governed-actions/api/governedActionsApi"
+} from "@/features/governedActions/api/governedActionsApi"
 
 vi.mock("@/lib/api", () => ({
   api: {

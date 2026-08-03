@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query"
 import {
   fetchGovernedActions,
   GOVERNED_ACTIONS_QUERY_KEYS,
-} from "@/features/governed-actions/api/governedActionsApi"
-import type { GovernedActionsQueryParams } from "@/features/governed-actions/api/governedActionsApi"
+} from "@/features/governedActions/api/governedActionsApi"
+import type { GovernedActionsQueryParams } from "@/features/governedActions/api/governedActionsApi"
 import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
 export function useGovernedActions(params: GovernedActionsQueryParams = {}) {

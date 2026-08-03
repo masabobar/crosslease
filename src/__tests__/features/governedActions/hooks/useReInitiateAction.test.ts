@@ -8,11 +8,11 @@ vi.mock("@tanstack/react-query", () => ({
       mutationFn,
       onSuccess,
     }: {
-      mutationFn: (vars: { id: string }) => Promise<unknown>
+      mutationFn: (vars: { id: string; reason?: string }) => Promise<unknown>
       onSuccess: () => void
     }) => ({
       mutate: (
-        vars: { id: string },
+        vars: { id: string; reason?: string },
         callbacks?: { onSuccess?: () => void }
       ) => {
         return mutationFn(vars).then(() => {
@@ -28,17 +28,17 @@ vi.mock("@tanstack/react-query", () => ({
   })),
 }))
 
-vi.mock("@/features/governed-actions/api/governedActionsApi", () => ({
-  withdrawGovernedAction: vi.fn(),
+vi.mock("@/features/governedActions/api/governedActionsApi", () => ({
+  reInitiateGovernedAction: vi.fn(),
   GOVERNED_ACTIONS_QUERY_KEYS: {
     lists: () => ["governed-actions", "list"],
   },
 }))
 
-import { useWithdrawAction } from "@/features/governed-actions/hooks/useWithdrawAction"
-import { withdrawGovernedAction } from "@/features/governed-actions/api/governedActionsApi"
+import { useReInitiateAction } from "@/features/governedActions/hooks/useReInitiateAction"
+import { reInitiateGovernedAction } from "@/features/governedActions/api/governedActionsApi"
 
-const mockWithdraw = withdrawGovernedAction as ReturnType<typeof vi.fn>
+const mockReInitiate = reInitiateGovernedAction as ReturnType<typeof vi.fn>
 
 const VALID_ACTION = {
   id: "550e8400-e29b-41d4-a716-446655440000",
@@ -46,7 +46,7 @@ const VALID_ACTION = {
   subject_type: "user",
   subject_id: "550e8400-e29b-41d4-a716-446655440001",
   tenant_id: null,
-  status: "withdrawn",
+  status: "pending",
   initiator_id: "550e8400-e29b-41d4-a716-446655440002",
   approver_id: null,
   display_snapshot: {},
@@ -64,18 +64,27 @@ const VALID_ACTION = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockWithdraw.mockResolvedValue(VALID_ACTION)
+  mockReInitiate.mockResolvedValue(VALID_ACTION)
 })
 
-describe("useWithdrawAction", () => {
-  it("calls withdrawGovernedAction with the correct id", async () => {
-    const { mutate } = useWithdrawAction()
+describe("useReInitiateAction", () => {
+  it("calls reInitiateGovernedAction with the correct id and no reason", async () => {
+    const { mutate } = useReInitiateAction()
     await mutate({ id: "action-abc" })
-    expect(mockWithdraw).toHaveBeenCalledWith("action-abc")
+    expect(mockReInitiate).toHaveBeenCalledWith("action-abc", undefined)
+  })
+
+  it("calls reInitiateGovernedAction with the correct id and reason when provided", async () => {
+    const { mutate } = useReInitiateAction()
+    await mutate({ id: "action-abc", reason: "Policy requires re-submission" })
+    expect(mockReInitiate).toHaveBeenCalledWith(
+      "action-abc",
+      "Policy requires re-submission"
+    )
   })
 
   it("invalidates governed-actions list queries on success", async () => {
-    const { mutate } = useWithdrawAction()
+    const { mutate } = useReInitiateAction()
     await mutate({ id: "action-abc" })
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: ["governed-actions", "list"],

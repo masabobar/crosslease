@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { getGovernedActionSubject } from "@/features/governed-actions/utils"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+import { getGovernedActionSubject } from "@/features/governedActions/utils"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 const BASE_ACTION = {
   id: "550e8400-e29b-41d4-a716-446655440000",

@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
-import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
-import { GOVERNED_ACTION_STATUS_DOT_COLOR } from "@/features/governed-actions/constants"
-import type { GovernedActionStatus } from "@/features/governed-actions/api/schema"
+import { ActionStatusBadge } from "@/features/governedActions/components/ActionStatusBadge"
+import { GOVERNED_ACTION_STATUS_DOT_COLOR } from "@/features/governedActions/constants"
+import type { GovernedActionStatus } from "@/features/governedActions/api/schema"
 
 export function ChainEntry({
   description,

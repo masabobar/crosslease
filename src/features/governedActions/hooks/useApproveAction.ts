@@ -1,5 +1,5 @@
-import { approveGovernedAction } from "@/features/governed-actions/api/governedActionsApi"
-import { makeGovernedActionMutation } from "@/features/governed-actions/hooks/createGovernedActionMutation"
+import { approveGovernedAction } from "@/features/governedActions/api/governedActionsApi"
+import { makeGovernedActionMutation } from "@/features/governedActions/hooks/createGovernedActionMutation"
 
 export const useApproveAction = makeGovernedActionMutation(
   ({

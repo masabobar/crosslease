@@ -1,9 +1,15 @@
-import { SYSTEM_ADMIN_ROLE, BACK_OFFICE_ROLE } from "@/features/users/types"
+import {
+  AUDITOR_ROLE,
+  BACK_OFFICE_ROLE,
+  BANK_POWER_USER_ROLE,
+  SUPPORT_USER_ROLE,
+  SYSTEM_ADMIN_ROLE,
+} from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import type {
   GovernedActionType,
   GovernedActionStatus,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 
 // Roles that hold `governed_action:list` in refinext-api's
 // `src/app/shared/permissions/matrix.py`. front_office holds NO governed_action:*
@@ -11,11 +17,11 @@ import type {
 // the screen (PRD1042-1496). Do not reuse USER_MANAGEMENT_ALLOWED_ROLES here: that
 // list includes front_office and is wider than the permission it fronts.
 export const GOVERNED_ACTION_LIST_ALLOWED_ROLES: readonly UserRole[] = [
-  "system_admin",
-  "support_user",
-  "auditor",
-  "bank_power_user",
-  "back_office",
+  SYSTEM_ADMIN_ROLE,
+  SUPPORT_USER_ROLE,
+  AUDITOR_ROLE,
+  BANK_POWER_USER_ROLE,
+  BACK_OFFICE_ROLE,
 ]
 
 // Mirrors ACTION_TYPE_POLICY.approve_roles in refinext-api's governed_actions/constants.py.

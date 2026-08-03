@@ -10,8 +10,8 @@ import {
   PartnerIdSnapshotSchema,
   PartnerMergeSnapshotSchema,
   TemplateNameSnapshotSchema,
-} from "@/features/governed-actions/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 export type GovernedActionSubjectKind =
   | "user"

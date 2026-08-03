@@ -12,8 +12,8 @@ import {
   emailChangeSnapshot,
   initiatorSnapshot,
   approverSnapshot,
-} from "@/features/governed-actions/api/schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 const VALID_ACTION = {
   id: "550e8400-e29b-41d4-a716-446655440000",

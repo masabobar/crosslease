@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
-import type { GovernedActionStatus } from "@/features/governed-actions/api/schema"
+import type { GovernedActionStatus } from "@/features/governedActions/api/schema"
 
 const STATUS_STYLES: Record<GovernedActionStatus, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",

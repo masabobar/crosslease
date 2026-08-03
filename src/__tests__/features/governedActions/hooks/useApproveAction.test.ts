@@ -36,15 +36,15 @@ vi.mock("@tanstack/react-query", () => ({
   })),
 }))
 
-vi.mock("@/features/governed-actions/api/governedActionsApi", () => ({
+vi.mock("@/features/governedActions/api/governedActionsApi", () => ({
   approveGovernedAction: vi.fn(),
   GOVERNED_ACTIONS_QUERY_KEYS: {
     lists: () => ["governed-actions", "list"],
   },
 }))
 
-import { useApproveAction } from "@/features/governed-actions/hooks/useApproveAction"
-import { approveGovernedAction } from "@/features/governed-actions/api/governedActionsApi"
+import { useApproveAction } from "@/features/governedActions/hooks/useApproveAction"
+import { approveGovernedAction } from "@/features/governedActions/api/governedActionsApi"
 
 const mockApprove = approveGovernedAction as ReturnType<typeof vi.fn>
 

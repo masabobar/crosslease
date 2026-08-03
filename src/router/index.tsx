@@ -8,7 +8,7 @@ import {
   INTERNAL_BANK_ROLES,
   LC_ONLY_ROLES,
 } from "@/features/users/types"
-import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governed-actions/constants"
+import { GOVERNED_ACTION_LIST_ALLOWED_ROLES } from "@/features/governedActions/constants"
 import { AUDIT_TRAIL_ALLOWED_ROLES } from "@/features/audit/types"
 import { NOTIFICATION_CONFIG_ALLOWED_ROLES } from "@/features/notifications/types"
 import {
@@ -73,7 +73,7 @@ const LcFrameworkAgreementsPage = lazy(
   () => import("@/features/lc/components/LcFrameworkAgreementsPage")
 )
 const PendingApprovalsPage = lazy(
-  () => import("@/features/governed-actions/components/PendingApprovalsPage")
+  () => import("@/features/governedActions/components/PendingApprovalsPage")
 )
 const SelfProfilePage = lazy(
   () => import("@/features/users/components/SelfProfilePage")

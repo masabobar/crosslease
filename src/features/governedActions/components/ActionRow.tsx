@@ -10,22 +10,22 @@ import {
 import { cn } from "@/lib/utils"
 import { HOUR_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
-import { ActionStatusBadge } from "@/features/governed-actions/components/ActionStatusBadge"
+import { ActionStatusBadge } from "@/features/governedActions/components/ActionStatusBadge"
 import { formatDateTime } from "@/lib/formatters"
 import {
   getGovernedActionSubject,
   type GovernedActionSubjectKind,
-} from "@/features/governed-actions/utils"
+} from "@/features/governedActions/utils"
 import {
   GovernedActionStatusSchema,
   initiatorSnapshot,
   approverSnapshot,
-} from "@/features/governed-actions/api/schema"
+} from "@/features/governedActions/api/schema"
 import type {
   GovernedAction,
   GovernedActionStatus,
-} from "@/features/governed-actions/api/schema"
-import { GOVERNED_ACTION_STATUS_DOT_COLOR } from "@/features/governed-actions/constants"
+} from "@/features/governedActions/api/schema"
+import { GOVERNED_ACTION_STATUS_DOT_COLOR } from "@/features/governedActions/constants"
 
 const BORDER_COLOR: Record<GovernedActionStatus, string> = {
   pending: "border-l-2 border-l-amber-400",
