@@ -17,7 +17,9 @@ function RolesList({ roles }: { roles: RoleAssignmentSummary[] }) {
   return roles.map((r, i) => (
     <span key={r.role_assignment_id}>
       <span className={r.is_risk_sensitive ? "text-warning" : undefined}>
-        {t(`role.${r.role}` as "role.lessee")}
+        {/* role is a plain string on the wire — history may carry values removed
+            from PartnerRoleSchema, so fall back to the raw value. */}
+        {t(`role.${r.role}` as "role.lessee", { defaultValue: r.role })}
       </span>
       {i < roles.length - 1 ? ", " : ""}
     </span>

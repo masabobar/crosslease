@@ -1,11 +1,7 @@
 import { useTranslation } from "react-i18next"
 import type { TFunction } from "i18next"
-import { useQuery } from "@tanstack/react-query"
 import { AlertTriangle } from "lucide-react"
-import {
-  fetchIdentityHistory,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
+import { usePartnerIdentityHistory } from "@/features/partners/hooks/usePartnerIdentityHistory"
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { formatDateTime } from "@/lib/formatters"
@@ -13,7 +9,6 @@ import type {
   IdentityChangeStatus,
   PartnerType,
 } from "@/features/partners/api/schema"
-import type { UserRole } from "@/features/users/types"
 
 const COL_FIELD = "w-[150px] shrink-0"
 const COL_STATUS = "w-[130px] shrink-0"
@@ -89,10 +84,7 @@ function IdentityChangesTab({
   partnerType,
 }: IdentityChangesTabProps) {
   const { t } = useTranslation("partners")
-  const { data, isLoading, isError } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.identityHistory(partnerId),
-    queryFn: () => fetchIdentityHistory(partnerId),
-  })
+  const { data, isLoading, isError } = usePartnerIdentityHistory(partnerId)
 
   if (isLoading) {
     return (
@@ -194,7 +186,7 @@ function IdentityChangesTab({
               <div className={`${COL_STATUS} px-2 flex flex-col gap-1`}>
                 <IdentityChangeStatusBadge status={item.status} />
                 {item.is_high_risk && (
-                  <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                  <span className="inline-flex items-center gap-1 text-xs text-warning">
                     <AlertTriangle size={12} />
                     {t("detail.identityChanges.fields.highRisk")}
                   </span>
@@ -221,7 +213,9 @@ function IdentityChangesTab({
                 <span className="text-sm text-foreground truncate">
                   {item.proposed_by.display_name}
                 </span>
-                <RoleBadge role={item.proposed_by.role as UserRole} />
+                {item.proposed_by.role && (
+                  <RoleBadge role={item.proposed_by.role} />
+                )}
               </div>
               <div className={`${COL_COUNTER_BY} px-2 flex flex-col gap-1`}>
                 {item.counter_confirmed_by ? (
@@ -229,9 +223,9 @@ function IdentityChangesTab({
                     <span className="text-sm text-foreground truncate">
                       {item.counter_confirmed_by.display_name}
                     </span>
-                    <RoleBadge
-                      role={item.counter_confirmed_by.role as UserRole}
-                    />
+                    {item.counter_confirmed_by.role && (
+                      <RoleBadge role={item.counter_confirmed_by.role} />
+                    )}
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">—</span>

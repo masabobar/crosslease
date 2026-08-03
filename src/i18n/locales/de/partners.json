@@ -43,6 +43,14 @@
     "partial": "Partial",
     "complete": "Complete"
   },
+  "matchClassification": {
+    "exact": "Exakte Übereinstimmung",
+    "ambiguous": "Mehrdeutig",
+    "no_match": "Keine Übereinstimmung"
+  },
+  "ownershipType": {
+    "direct": "Direkt"
+  },
   "identityChangeStatus": {
     "pending_four_eyes": "Pending approval",
     "committed": "Committed",
@@ -336,7 +344,9 @@
     "submit": "Archive",
     "submitting": "Archiving…",
     "successImmediate": "Partner archived.",
-    "successPendingApproval": "Archive request sent for approval."
+    "successPendingApproval": "Archive request sent for approval.",
+    "blockedTitle": "Dieser Partner kann nicht archiviert werden",
+    "blockedActiveReferences": "Es bestehen noch {{count}} aktive Referenz(en). Bitte zuerst auflösen."
   },
   "proposeIdentityChangeDialog": {
     "triggerButton": "Propose identity change",

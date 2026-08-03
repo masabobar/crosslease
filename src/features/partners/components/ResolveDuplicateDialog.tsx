@@ -15,21 +15,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { DuplicateResolutionReasonCodeSchema } from "@/features/partners/api/schema"
+import {
+  DuplicateResolutionDecisionSchema,
+  DuplicateResolutionReasonCodeSchema,
+} from "@/features/partners/api/schema"
 import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants"
 import { useResolveDuplicatePair } from "@/features/partners/hooks/useResolveDuplicatePair"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { DuplicateCandidatePairResponse } from "@/features/partners/api/schema"
 
-const DECISION_OPTIONS = [
-  "confirmed_duplicate",
-  "confirmed_distinct",
-  "deferred",
-] as const
+const DECISION_OPTIONS = DuplicateResolutionDecisionSchema.options
 
 const resolveSchema = z.object({
-  decision: z.enum(DECISION_OPTIONS),
+  decision: DuplicateResolutionDecisionSchema,
   reason_code: DuplicateResolutionReasonCodeSchema,
   note: z.string().max(2000).optional(),
 })
@@ -230,7 +229,7 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
+        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-muted/40 rounded-b-2xl">
           <Button
             type="button"
             variant="outline"

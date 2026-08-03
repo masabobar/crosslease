@@ -1,10 +1,6 @@
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
 import { ArrowRight, Info } from "lucide-react"
-import {
-  fetchMergeHistory,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
+import { usePartnerMergeHistory } from "@/features/partners/hooks/usePartnerMergeHistory"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
@@ -119,10 +115,7 @@ type MergeHistoryTabProps = {
 
 function MergeHistoryTab({ partnerId }: MergeHistoryTabProps) {
   const { t } = useTranslation("partners")
-  const { data, isLoading, isError } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.mergeHistory(partnerId),
-    queryFn: () => fetchMergeHistory(partnerId),
-  })
+  const { data, isLoading, isError } = usePartnerMergeHistory(partnerId)
 
   if (isLoading) {
     return (

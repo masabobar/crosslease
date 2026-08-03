@@ -64,6 +64,17 @@ export const ANCHOR_FIELDS: Record<PartnerType, AnchorField[]> = {
   ],
 }
 
+// Flat anchor-key → label-key lookup derived from ANCHOR_FIELDS above, for the
+// read paths that receive a bare anchor key with no partner type to scope it
+// (e.g. resolution candidates' matched_anchors). Keys shared across partner
+// types resolve to the same label, so collapsing the per-type lists is safe.
+export const ANCHOR_LABEL_KEY_BY_FIELD: Record<string, string> =
+  Object.fromEntries(
+    Object.values(ANCHOR_FIELDS).flatMap(fields =>
+      fields.map(field => [field.key, field.labelKey])
+    )
+  )
+
 // Shared between ResolveDuplicateDialog (US-13.8-9-FE) and the Duplication &
 // merge queue's resolution history so both agree on the reason code list.
 export const DUPLICATE_RESOLUTION_REASON_CODES: DuplicateResolutionReasonCode[] =

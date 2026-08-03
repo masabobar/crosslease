@@ -19,6 +19,7 @@ import {
   PartnerSubmitResponseSchema,
   ResolutionCandidatesResponseSchema,
   PartnerRolesResponseSchema,
+  IdentityChangeActorSummarySchema,
   PartnerUboResponseSchema,
   ConfirmationHistoryResponseSchema,
   DecisionHistoryResponseSchema,
@@ -29,6 +30,7 @@ import {
   MergeHistoryResponseSchema,
   DuplicateConfidenceSchema,
   DuplicateCandidatePairStatusSchema,
+  DuplicateResolutionDecisionSchema,
   DuplicateResolutionReasonCodeSchema,
   MergeReasonCodeSchema,
   MatchingEvidenceItemSchema,
@@ -549,6 +551,19 @@ describe("ResolutionCandidatesResponseSchema", () => {
 // ── Roles response ────────────────────────────────────────────────────────────
 
 describe("PartnerRolesResponseSchema", () => {
+  const historyEntry = {
+    role_assignment_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    actor: {
+      user_id: "USR-00001",
+      display_name: "Anna Müller",
+      email: "anna.mueller@example.com",
+    },
+    actor_role: "front_office",
+    description_key: "partner.role.assigned",
+    description_params: { role: "lessee" },
+    timestamp: "2026-05-20T10:00:00Z",
+  }
+
   it("accepts empty roles and history", () => {
     expect(() =>
       PartnerRolesResponseSchema.parse({
@@ -557,6 +572,49 @@ describe("PartnerRolesResponseSchema", () => {
         history: [],
       })
     ).not.toThrow()
+  })
+
+  it("keeps a known actor_role", () => {
+    const parsed = PartnerRolesResponseSchema.parse({
+      partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      roles: [],
+      history: [historyEntry],
+    })
+    expect(parsed.history[0].actor_role).toBe("front_office")
+  })
+
+  it("decodes an unrecognised actor_role to null rather than failing the response", () => {
+    // RoleBadge indexes a Record by this value, so an unknown role must not reach it —
+    // but the whole role-history response must still parse.
+    const parsed = PartnerRolesResponseSchema.parse({
+      partner_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      roles: [],
+      history: [{ ...historyEntry, actor_role: "deputy_underwriter" }],
+    })
+    expect(parsed.history[0].actor_role).toBeNull()
+  })
+})
+
+describe("IdentityChangeActorSummarySchema", () => {
+  it("keeps a known role", () => {
+    expect(
+      IdentityChangeActorSummarySchema.parse({
+        user_id: "USR-00001",
+        display_name: "Anna Müller",
+        role: "back_office",
+      }).role
+    ).toBe("back_office")
+  })
+
+  it("decodes the BE's empty-role fallback to null", () => {
+    // _actor_from_snapshot() emits role: "" when the snapshot carries no role.
+    expect(
+      IdentityChangeActorSummarySchema.parse({
+        user_id: "USR-00001",
+        display_name: "Anna Müller",
+        role: "",
+      }).role
+    ).toBeNull()
   })
 })
 
@@ -896,5 +954,32 @@ describe("MergeInitiateResponseSchema", () => {
         status: "pending",
       })
     ).toThrow()
+  })
+})
+
+describe("DuplicateResolutionDecisionSchema", () => {
+  it("accepts the three reviewer-settable decisions", () => {
+    for (const v of [
+      "confirmed_duplicate",
+      "confirmed_distinct",
+      "deferred",
+    ] as const) {
+      expect(() => DuplicateResolutionDecisionSchema.parse(v)).not.toThrow()
+    }
+  })
+
+  it("rejects statuses reachable only through the merge flow", () => {
+    // A strict subset of DuplicateCandidatePairStatusSchema — these two are set
+    // by the merge flow, never chosen in the resolve dialog.
+    expect(() =>
+      DuplicateResolutionDecisionSchema.parse("merge_in_progress")
+    ).toThrow()
+    expect(() => DuplicateResolutionDecisionSchema.parse("merged")).toThrow()
+  })
+
+  it("stays a subset of the pair-status enum", () => {
+    for (const v of DuplicateResolutionDecisionSchema.options) {
+      expect(DuplicateCandidatePairStatusSchema.options).toContain(v)
+    }
   })
 })

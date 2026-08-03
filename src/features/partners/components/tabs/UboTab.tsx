@@ -1,12 +1,8 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useQuery } from "@tanstack/react-query"
 import { Plus, CircleAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  fetchPartnerUbo,
-  PARTNERS_QUERY_KEYS,
-} from "@/features/partners/api/partnersApi"
+import { usePartnerUbo } from "@/features/partners/hooks/usePartnerUbo"
 import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
 import { CaptureUboDialog } from "@/features/partners/components/CaptureUboDialog"
 import { initialsFromName } from "@/features/partners/utils"
@@ -26,10 +22,7 @@ type UboTabProps = {
 function UboTab({ partnerId, canCaptureUbo }: UboTabProps) {
   const { t } = useTranslation("partners")
   const [captureOpen, setCaptureOpen] = useState(false)
-  const { data, isLoading, isError } = useQuery({
-    queryKey: PARTNERS_QUERY_KEYS.ubo(partnerId),
-    queryFn: () => fetchPartnerUbo(partnerId),
-  })
+  const { data, isLoading, isError } = usePartnerUbo(partnerId)
 
   if (isLoading) {
     return (
@@ -133,10 +126,11 @@ function UboTab({ partnerId, canCaptureUbo }: UboTabProps) {
               <div className={`${COL_OWNERSHIP} px-2 text-sm text-foreground`}>
                 {record.ownership_percentage}%
               </div>
-              <div
-                className={`${COL_TYPE} px-2 text-sm text-muted-foreground capitalize`}
-              >
-                {record.ownership_type}
+              <div className={`${COL_TYPE} px-2 text-sm text-muted-foreground`}>
+                {t(
+                  `ownershipType.${record.ownership_type}` as "ownershipType.direct",
+                  { defaultValue: record.ownership_type }
+                )}
               </div>
               <div
                 className={`${COL_CAPTURED_BY} px-2 flex items-center gap-2`}

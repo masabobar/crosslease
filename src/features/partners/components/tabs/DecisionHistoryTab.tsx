@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button"
 import { ApiError } from "@/lib/api"
 import { usePartnerDecisionHistory } from "@/features/partners/hooks/usePartnerDecisionHistory"
 import { initialsFromName } from "@/features/partners/utils"
-import { formatDateTime } from "@/lib/formatters"
+import {
+  formatActionType,
+  formatDateTime,
+  formatEventType,
+} from "@/lib/formatters"
 import type { DecisionHistoryEntry } from "@/features/partners/api/schema"
 
 const DECISION_HISTORY_PAGE_SIZE = 50
-
-function formatLabel(value: string): string {
-  return value.replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
-}
 
 function formatDiffValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—"
@@ -46,7 +46,7 @@ function EntryDiff({ entry }: { entry: DecisionHistoryEntry }) {
       {keys.map(key => (
         <div key={key} className="flex items-center gap-2 text-xs">
           <span className="font-medium text-foreground shrink-0">
-            {formatLabel(key)}:
+            {formatActionType(key)}:
           </span>
           <span className="text-muted-foreground">
             {formatDiffValue(entry.old_data?.[key])}
@@ -69,10 +69,10 @@ function DecisionHistoryEntryRow({ entry }: { entry: DecisionHistoryEntry }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-medium text-foreground truncate">
-            {formatLabel(entry.event_type)}
+            {formatEventType(entry.event_type)}
           </span>
           <span className="text-xs text-muted-foreground">
-            · {formatLabel(entry.action_type)}
+            · {formatActionType(entry.action_type)}
           </span>
         </div>
         <span className="text-xs text-muted-foreground shrink-0">
@@ -93,7 +93,7 @@ function DecisionHistoryEntryRow({ entry }: { entry: DecisionHistoryEntry }) {
         </span>
         {entry.trigger_source && (
           <span className="text-xs text-muted-foreground/70">
-            · {formatLabel(entry.trigger_source)}
+            · {formatActionType(entry.trigger_source)}
           </span>
         )}
       </div>

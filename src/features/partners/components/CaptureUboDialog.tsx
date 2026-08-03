@@ -218,7 +218,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
+        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-muted/40 rounded-b-2xl">
           <Button
             type="button"
             variant="outline"
