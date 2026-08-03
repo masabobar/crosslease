@@ -1556,7 +1556,7 @@ const CreateFARequest = z
     product_template_ids: z.array(z.string().uuid()).min(1),
   })
   .passthrough()
-const FALifecycleStatus = z.enum(["draft", "active", "suspended", "terminated"])
+const FALifecycleStatus = z.enum(["draft", "active", "terminated"])
 const FADraftResponse = z
   .object({
     id: z.string().uuid(),
@@ -1659,39 +1659,6 @@ const ActivateFARequest = z
     documents_confirmed: z.boolean(),
     effective_from: z.union([z.string(), z.null()]).optional(),
     justification: z.string().min(20).max(1000),
-  })
-  .passthrough()
-const SuspensionReadinessResponse = z
-  .object({
-    can_suspend: z.boolean(),
-    blocking_financing_count: z.number().int(),
-    blocking_financings: z.array(z.object({}).partial().passthrough()),
-  })
-  .passthrough()
-const SuspendFARequest = z
-  .object({
-    justification: z.string().min(20).max(1000),
-    effective_from: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const FASuspendedResponse = z
-  .object({
-    id: z.string().uuid(),
-    status: z.string(),
-    suspended_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
-const ReactivateFARequest = z
-  .object({
-    justification: z.string().min(20).max(1000),
-    re_validation_confirmed: z.boolean(),
-  })
-  .passthrough()
-const FAReactivatedResponse = z
-  .object({
-    id: z.string().uuid(),
-    status: z.string(),
-    reactivated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
 const TerminationReadinessResponse = z
@@ -2761,11 +2728,6 @@ export const schemas = {
   UpdateFARequest,
   FADetailResponse,
   ActivateFARequest,
-  SuspensionReadinessResponse,
-  SuspendFARequest,
-  FASuspendedResponse,
-  ReactivateFARequest,
-  FAReactivatedResponse,
   TerminationReadinessResponse,
   TerminateFARequest,
   FATerminatedResponse,
@@ -4408,32 +4370,6 @@ and invalidates all active sessions.`,
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/framework-agreements/:id/reactivate",
-    alias: "reactivate_fa_api_v1_framework_agreements__id__reactivate_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: ReactivateFARequest,
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FAReactivatedResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "get",
     path: "/api/v1/framework-agreements/:id/reconstruct",
     alias: "reconstruct_fa_api_v1_framework_agreements__id__reconstruct_get",
@@ -4451,54 +4387,6 @@ and invalidates all active sessions.`,
       },
     ],
     response: FAReconstructResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/framework-agreements/:id/suspend",
-    alias: "suspend_fa_api_v1_framework_agreements__id__suspend_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: SuspendFARequest,
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FASuspendedResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/framework-agreements/:id/suspension-readiness",
-    alias:
-      "get_suspension_readiness_api_v1_framework_agreements__id__suspension_readiness_get",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: SuspensionReadinessResponse,
     errors: [
       {
         status: 422,

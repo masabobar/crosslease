@@ -5194,125 +5194,6 @@
         }
       }
     },
-    "/api/v1/framework-agreements/{id}/suspension-readiness": {
-      "get": {
-        "tags": ["Framework Agreements"],
-        "summary": "Get Suspension Readiness",
-        "operationId": "get_suspension_readiness_api_v1_framework_agreements__id__suspension_readiness_get",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuspensionReadinessResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/framework-agreements/{id}/suspend": {
-      "post": {
-        "tags": ["Framework Agreements"],
-        "summary": "Suspend Fa",
-        "operationId": "suspend_fa_api_v1_framework_agreements__id__suspend_post",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/SuspendFARequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/FASuspendedResponse" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/framework-agreements/{id}/reactivate": {
-      "post": {
-        "tags": ["Framework Agreements"],
-        "summary": "Reactivate Fa",
-        "operationId": "reactivate_fa_api_v1_framework_agreements__id__reactivate_post",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Id" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ReactivateFARequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FAReactivatedResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/framework-agreements/{id}/termination-readiness": {
       "get": {
         "tags": ["Framework Agreements"],
@@ -10055,7 +9936,7 @@
       },
       "FALifecycleStatus": {
         "type": "string",
-        "enum": ["draft", "active", "suspended", "terminated"],
+        "enum": ["draft", "active", "terminated"],
         "title": "FALifecycleStatus"
       },
       "FALinkedFinancingsResponse": {
@@ -10170,20 +10051,6 @@
         "title": "FAPricingSnapshotResponse",
         "description": "Pricing snapshot returned to consuming epics (US 11.11).\n\nEpic 3 (Financing) uses edit_version_counter as the audit anchor\nto reconstruct which FA pricing snapshot was applied at Stage 2 approval."
       },
-      "FAReactivatedResponse": {
-        "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "status": { "type": "string", "title": "Status" },
-          "reactivated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Reactivated At"
-          }
-        },
-        "type": "object",
-        "required": ["id", "status", "reactivated_at"],
-        "title": "FAReactivatedResponse"
-      },
       "FAReconstructResponse": {
         "properties": {
           "fa_id": { "type": "string", "format": "uuid", "title": "Fa Id" },
@@ -10202,20 +10069,6 @@
         "type": "object",
         "required": ["fa_id", "as_of", "events_replayed", "state"],
         "title": "FAReconstructResponse"
-      },
-      "FASuspendedResponse": {
-        "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "status": { "type": "string", "title": "Status" },
-          "suspended_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Suspended At"
-          }
-        },
-        "type": "object",
-        "required": ["id", "status", "suspended_at"],
-        "title": "FASuspendedResponse"
       },
       "FATerminatedResponse": {
         "properties": {
@@ -12527,23 +12380,6 @@
         "type": "object",
         "title": "ReInitiateRequest"
       },
-      "ReactivateFARequest": {
-        "properties": {
-          "justification": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 20,
-            "title": "Justification"
-          },
-          "re_validation_confirmed": {
-            "type": "boolean",
-            "title": "Re Validation Confirmed"
-          }
-        },
-        "type": "object",
-        "required": ["justification", "re_validation_confirmed"],
-        "title": "ReactivateFARequest"
-      },
       "ReactivateTenantRequest": {
         "properties": {
           "justification": {
@@ -13503,26 +13339,6 @@
         ],
         "title": "SupportGrantResponse"
       },
-      "SuspendFARequest": {
-        "properties": {
-          "justification": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 20,
-            "title": "Justification"
-          },
-          "effective_from": {
-            "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
-            ],
-            "title": "Effective From"
-          }
-        },
-        "type": "object",
-        "required": ["justification"],
-        "title": "SuspendFARequest"
-      },
       "SuspendTenantRequest": {
         "properties": {
           "justification": {
@@ -13569,27 +13385,6 @@
         "type": "object",
         "required": ["reason", "effective_from"],
         "title": "SuspendUserRequest"
-      },
-      "SuspensionReadinessResponse": {
-        "properties": {
-          "can_suspend": { "type": "boolean", "title": "Can Suspend" },
-          "blocking_financing_count": {
-            "type": "integer",
-            "title": "Blocking Financing Count"
-          },
-          "blocking_financings": {
-            "items": { "additionalProperties": true, "type": "object" },
-            "type": "array",
-            "title": "Blocking Financings"
-          }
-        },
-        "type": "object",
-        "required": [
-          "can_suspend",
-          "blocking_financing_count",
-          "blocking_financings"
-        ],
-        "title": "SuspensionReadinessResponse"
       },
       "SuspensionReason": {
         "type": "string",
