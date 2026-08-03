@@ -283,6 +283,96 @@
     "WTC_TASK_MANDATORY_FIELD_NULL": "A required field cannot be cleared on this task.",
     "WTC_TASK_HAS_DEPENDENTS": "This global default task cannot be removed while product-specific catalogs still override or deactivate it.",
     "WTC_DOC_REQUIREMENT_REF_INVALID": "The referenced document requirement is not active in this tenant.",
-    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields.",
+    "WTC_CHECKLIST_NOT_FOUND": "No checklist has been materialized for this case yet.",
+    "WTC_CHECKLIST_ALREADY_MATERIALIZED": "A checklist already exists on this case for a different scope.",
+    "WTC_CHECKLIST_ITEM_NOT_FOUND": "This task is no longer on the case checklist. Reload and try again.",
+    "WTC_CHECKLIST_ITEM_IMMUTABLE": "This task has already been settled and cannot be changed.",
+    "WTC_PHASE_GATE_INVALID_TRANSITION": "This phase gate cannot move to that state. An approved gate is final."
+  },
+  "caseChecklist": {
+    "title": "Case checklist",
+    "subtitle": "Tasks materialized onto this case from the workflow task catalog. Settling every required task is what releases the submission gate.",
+    "notApplicable": "—",
+    "columns": {
+      "task": "Task",
+      "mandatory": "Requirement",
+      "status": "Status",
+      "checkedBy": "Settled by",
+      "checkedAt": "Settled at",
+      "note": "Note"
+    },
+    "mandatory": {
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "itemStatuses": {
+      "open": "Open",
+      "checked": "Completed",
+      "not_applicable": "Waived"
+    },
+    "gateStatuses": {
+      "open": "Open",
+      "in_review": "In review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "actions": {
+      "setStatus": "Complete or waive"
+    },
+    "empty": {
+      "title": "No checklist on this case yet",
+      "description": "Nothing has been materialized for this case. A checklist appears once the process that owns the case requests one from the catalog."
+    },
+    "blocked": {
+      "title": "Submission is blocked",
+      "description": "These required tasks are still outstanding. Every required task on the case is listed, because the projection cannot yet narrow them to a single phase."
+    },
+    "setItemStatus": {
+      "title": "Complete or waive task",
+      "subtitle": "{{task}}",
+      "success": "Task updated.",
+      "fields": {
+        "status": "Outcome",
+        "statusPlaceholder": "Select an outcome",
+        "statusHint": "This cannot be changed once set.",
+        "note": "Note",
+        "optional": "(optional)"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "submit": "Save"
+      }
+    },
+    "gates": {
+      "title": "Phase gates",
+      "subtitle": "One gate per phase. A phase with no gate has not been decided yet.",
+      "notSet": "Not set",
+      "columns": {
+        "phase": "Phase",
+        "status": "Status",
+        "approver": "Decided by",
+        "decidedAt": "Decided at",
+        "note": "Note"
+      },
+      "actions": {
+        "decide": "Decide"
+      }
+    },
+    "setGate": {
+      "title": "Decide phase gate",
+      "subtitle": "{{phase}}",
+      "success": "Phase gate updated.",
+      "fields": {
+        "status": "Decision",
+        "statusPlaceholder": "Select a decision",
+        "statusHint": "An approved gate is final. A rejected gate can be reopened.",
+        "note": "Note"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "submit": "Save"
+      }
+    }
   }
 }

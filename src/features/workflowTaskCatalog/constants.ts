@@ -12,6 +12,10 @@ import {
   TaskCategorySchema,
   TaskResponsibleRoleSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
+import {
+  PhaseGateStatusSchema,
+  SettableChecklistItemStatusSchema,
+} from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import type {
   CatalogEntityType,
   CatalogLayer,
@@ -99,3 +103,29 @@ export const TASK_STAGE_OPTIONS = StageCategorizationSchema.options.map(
     labelKey: `detail.taskSheet.stages.${value}` as const,
   })
 )
+
+// --- Runtime: case checklist + phase gates ---
+
+// What a case worker can set an OPEN item to. `open` is absent because it is not settable — the
+// service rejects it with WTC_CHECKLIST_ITEM_IMMUTABLE along with any other re-set, so offering it
+// would be offering an action the backend refuses.
+export const SETTABLE_CHECKLIST_ITEM_STATUS_OPTIONS =
+  SettableChecklistItemStatusSchema.options.map(value => ({
+    value,
+    labelKey: `caseChecklist.itemStatuses.${value}` as const,
+  }))
+
+// Every gate status is settable; the service's only rule is that `approved` is terminal and
+// `rejected` may be reopened, which is enforced per-gate at the call site rather than by trimming
+// this list.
+export const PHASE_GATE_STATUS_OPTIONS = PhaseGateStatusSchema.options.map(
+  value => ({
+    value,
+    labelKey: `caseChecklist.gateStatuses.${value}` as const,
+  })
+)
+
+// The six phases a gate can exist on, in process order. Rendered as the panel's rows so a phase
+// with no gate is still visible — the wire enum is a closed set (StageCategorization), and
+// `.options` preserves the declaration order, which is the process order.
+export const CASE_PHASE_ORDER = StageCategorizationSchema.options
