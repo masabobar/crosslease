@@ -30,7 +30,6 @@
   "statuses": {
     "draft": "Draft",
     "active": "Active",
-    "suspended": "Suspended",
     "terminated": "Terminated",
     "expired": "Expired"
   },
@@ -98,7 +97,9 @@
       "validityWindowSection": "Validity window",
       "templatesSection": "Allowed products templates",
       "templatesHint": "Only published templates within your tenant are shown. Select at least one.",
-      "templatesEmpty": "No product templates are available yet. Only templates with a published version that is valid today can be selected."
+      "templatesEmpty": "No product templates are available yet. Only templates with a published version that is valid today can be selected.",
+      "templatesSearchPlaceholder": "Search by template name or code",
+      "templatesNoMatches": "No product template matches your search."
     },
     "conditions": {
       "title": "Special conditions",
