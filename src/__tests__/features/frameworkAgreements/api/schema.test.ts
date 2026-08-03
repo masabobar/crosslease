@@ -429,6 +429,7 @@ describe("FAListItemSchema / FAListResponseSchema", () => {
 describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () => {
   const validItem = {
     template_id: "b3e1c9a0-1111-4a2b-8c3d-000000000002",
+    template_code: "FIN-00001",
     template_name: "Test Refinancing Template",
     version_number: "0.1",
   }
@@ -441,6 +442,7 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
     expect(() =>
       SelectableTemplateItemSchema.parse({
         id: "b3e1c9a0-1111-4a2b-8c3d-000000000002",
+        template_code: validItem.template_code,
         template_name: validItem.template_name,
         version_number: validItem.version_number,
       })
@@ -451,6 +453,19 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
     expect(() =>
       SelectableTemplateItemSchema.parse({
         template_id: validItem.template_id,
+        template_code: validItem.template_code,
+        version_number: validItem.version_number,
+      })
+    ).toThrow()
+  })
+
+  // Required on the wire and relied on by the picker's search (CR PRD1042-1799 CR-FA-05),
+  // so a response that drops it must fail at the query layer rather than render "undefined".
+  it("rejects a missing template_code", () => {
+    expect(() =>
+      SelectableTemplateItemSchema.parse({
+        template_id: validItem.template_id,
+        template_name: validItem.template_name,
         version_number: validItem.version_number,
       })
     ).toThrow()
@@ -460,6 +475,7 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
     expect(() =>
       SelectableTemplateItemSchema.parse({
         template_id: validItem.template_id,
+        template_code: validItem.template_code,
         template_name: validItem.template_name,
       })
     ).toThrow()

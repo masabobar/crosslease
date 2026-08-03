@@ -30,7 +30,6 @@
   "statuses": {
     "draft": "Entwurf",
     "active": "Aktiv",
-    "suspended": "Ausgesetzt",
     "terminated": "Beendet",
     "expired": "Abgelaufen"
   },
@@ -98,7 +97,9 @@
       "validityWindowSection": "Gültigkeitszeitraum",
       "templatesSection": "Zulässige Produktvorlagen",
       "templatesHint": "Es werden nur veröffentlichte Vorlagen innerhalb Ihres Mandanten angezeigt. Wählen Sie mindestens eine aus.",
-      "templatesEmpty": "Es sind noch keine Produktvorlagen verfügbar. Nur Vorlagen mit einer veröffentlichten Version, die heute gültig ist, können ausgewählt werden."
+      "templatesEmpty": "Es sind noch keine Produktvorlagen verfügbar. Nur Vorlagen mit einer veröffentlichten Version, die heute gültig ist, können ausgewählt werden.",
+      "templatesSearchPlaceholder": "Suche nach Vorlagenname oder -code",
+      "templatesNoMatches": "Keine Produktvorlage entspricht Ihrer Suche."
     },
     "conditions": {
       "title": "Sonderbedingungen",

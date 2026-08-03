@@ -351,6 +351,10 @@ export type FAReconstructResponse = z.infer<typeof FAReconstructResponseSchema>
 // GET /product-templates/selectable — reused from the Bank Product Template epic
 export const SelectableTemplateItemSchema = z.object({
   template_id: z.string().uuid(),
+  // Required on SelectableTemplateItem in openapi.json. Carried because the picker's
+  // search matches it as well as the name — a Bank Admin looking through 20-30 templates
+  // may know either (CR PRD1042-1799 CR-FA-05).
+  template_code: z.string(),
   template_name: z.string(),
   version_number: z.string(),
 })

@@ -7,7 +7,10 @@ import {
   VFE_RATE_MAX,
   VFE_RATE_MIN,
 } from "@/features/frameworkAgreements/api/schema"
-import type { FALifecycleStatus } from "@/features/frameworkAgreements/api/schema"
+import type {
+  FALifecycleStatus,
+  SelectableTemplateItem,
+} from "@/features/frameworkAgreements/api/schema"
 
 export function isFrameworkAgreementNotFoundError(error: unknown): boolean {
   return error instanceof ApiError && error.code === "FA_NOT_FOUND"
@@ -46,6 +49,24 @@ export function isFrameworkAgreementExpiredByDate(
     String(today.getDate()).padStart(2, "0"),
   ].join("-")
   return validUntil < localToday
+}
+
+// Narrows the allowed-templates picker by a free-text query, matching template name or
+// template code case-insensitively. Per CR PRD1042-1799 CR-FA-05 the picker keeps the full
+// published list — no filtering derived from earlier wizard steps and no "smart" version
+// pre-selection — so search is the only narrowing, and it happens client-side because
+// GET /product-templates/selectable returns every option in one unpaginated response.
+export function filterSelectableTemplates(
+  options: readonly SelectableTemplateItem[],
+  query: string
+): readonly SelectableTemplateItem[] {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return options
+  return options.filter(
+    option =>
+      option.template_name.toLowerCase().includes(needle) ||
+      option.template_code.toLowerCase().includes(needle)
+  )
 }
 
 // Shared Zod refine-error-code → i18n message resolver for the wizard/edit form

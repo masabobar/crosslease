@@ -38,10 +38,13 @@ function ConditionsStep<T extends ConditionsFormFields>({
           {t("fields.optional")}
         </span>
       </Label>
+      {/* Vertically resizable, not fixed: users treat this as a running log and append
+          dated entries over time (CR PRD1042-1799 CR-FA-06), so the field has to be able
+          to grow past five rows. Horizontal resize stays off — it would break the layout. */}
       <Textarea
         id={`${idPrefix}special_conditions`}
         data-testid={`${testIdPrefix}special-conditions-textarea`}
-        className="min-h-[120px] resize-none"
+        className="min-h-[120px] resize-y"
         rows={5}
         {...typedRegister("special_conditions")}
       />
