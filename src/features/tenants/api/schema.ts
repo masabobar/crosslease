@@ -355,7 +355,14 @@ export const ArchiveTenantFormSchema = z.object({
 })
 export type ArchiveTenantForm = z.infer<typeof ArchiveTenantFormSchema>
 
-export function createArchiveTenantFormSchema(hasActiveUsers: boolean) {
+// Both generics are supplied on purpose. zod v4's ZodType is
+// `ZodType<out Output = unknown, out Input = unknown, …>`, so `z.ZodType<ArchiveTenantForm>` alone
+// leaves Input as `unknown` — and zodResolver requires Input to be assignable to RHF's FieldValues,
+// which `unknown` is not. These schemas are plain objects plus a superRefine, with no transform, so
+// input and output are the same shape.
+export function createArchiveTenantFormSchema(
+  hasActiveUsers: boolean
+): z.ZodType<ArchiveTenantForm, ArchiveTenantForm> {
   if (!hasActiveUsers) return ArchiveTenantFormSchema
   return ArchiveTenantFormSchema.superRefine((data, ctx) => {
     if (!data.active_user_acknowledgement) {
@@ -368,7 +375,10 @@ export function createArchiveTenantFormSchema(hasActiveUsers: boolean) {
   })
 }
 
-export function createUpdateTenantFormSchema(originalName: string) {
+// Same reason as createArchiveTenantFormSchema above — Input must be stated, not defaulted.
+export function createUpdateTenantFormSchema(
+  originalName: string
+): z.ZodType<UpdateTenantForm, UpdateTenantForm> {
   return UpdateTenantFormSchema.superRefine((data, ctx) => {
     if (data.name.trim() !== originalName.trim()) {
       if (!data.justification || data.justification.trim().length < 20) {

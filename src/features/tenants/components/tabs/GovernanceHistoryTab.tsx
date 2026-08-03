@@ -3,13 +3,14 @@ import { ArrowRight } from "lucide-react"
 import { parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { SearchInput } from "@/components/ui/search-input"
 import { FilterButton } from "@/components/ui/filter-button"
+import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import { FilterPill } from "@/components/ui/filter-pill"
 import { DatePicker } from "@/components/ui/date-picker"
 import { TenantInfoCard } from "@/features/tenants/components/TenantInfoCard"
-import { StatusPill } from "@/features/tenants/components/StatusPill"
+import { SoftBadge } from "@/features/tenants/components/SoftBadge"
+import type { SoftBadgeTone } from "@/features/tenants/components/SoftBadge"
 import { useTenantGovernanceHistory } from "@/features/tenants/hooks/useTenantGovernanceHistory"
 import { formatDate, formatDateTime } from "@/lib/formatters"
 import { ApiError } from "@/lib/api"
@@ -60,42 +61,35 @@ const INDICATOR_CLASSES: Record<IndicatorColor, string> = {
 }
 
 function getIndicatorColor(eventType: string): IndicatorColor {
-  const t = eventType.toLowerCase()
+  const type = eventType.toLowerCase()
   if (
-    t.includes("blocked") ||
-    t.includes("denied") ||
-    t.includes("security") ||
-    t.includes("rejected")
+    type.includes("blocked") ||
+    type.includes("denied") ||
+    type.includes("security") ||
+    type.includes("rejected")
   )
     return "danger"
-  if (t.includes("grant") || t.includes("suspended")) return "warning"
+  if (type.includes("grant") || type.includes("suspended")) return "warning"
   if (
-    t.includes("activated") ||
-    t.includes("modified") ||
-    t.includes("approved") ||
-    t.includes("enabled") ||
-    t.includes("permitted")
+    type.includes("activated") ||
+    type.includes("modified") ||
+    type.includes("approved") ||
+    type.includes("enabled") ||
+    type.includes("permitted")
   )
     return "success"
   if (
-    t.includes("created") ||
-    t.includes("requested") ||
-    t.includes("deactivated")
+    type.includes("created") ||
+    type.includes("requested") ||
+    type.includes("deactivated")
   )
     return "neutral"
   return "primary"
 }
 
-type BadgeVariant = "neutral" | "success" | "info" | "danger"
-
-const BADGE_STYLES: Record<BadgeVariant, { bg: string; text: string }> = {
-  neutral: { bg: "bg-[rgba(244,244,245,0.6)]", text: "text-foreground" },
-  success: { bg: "bg-[rgba(22,163,74,0.1)]", text: "text-[#16a34a]" },
-  info: { bg: "bg-[rgba(2,132,199,0.1)]", text: "text-[#0284c7]" },
-  danger: { bg: "bg-[rgba(224,52,52,0.1)]", text: "text-[#e6000a]" },
-}
-
-const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
+// Keyed on free-form values lifted out of the event's old_data/new_data payload,
+// not on a wire enum — hence the string index and the neutral default.
+const STATUS_BADGE_TONE: Record<string, SoftBadgeTone> = {
   active: "success",
   enabled: "success",
   approved: "success",
@@ -108,11 +102,8 @@ const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
   suspended: "danger",
 }
 
-function SoftBadge({ label }: { label: string }) {
-  const variant: BadgeVariant =
-    STATUS_BADGE_VARIANT[label.toLowerCase()] ?? "neutral"
-  const { bg, text } = BADGE_STYLES[variant]
-  return <StatusPill colorClassName={`${bg} ${text}`}>{label}</StatusPill>
+function stateTone(label: string): SoftBadgeTone {
+  return STATUS_BADGE_TONE[label.toLowerCase()] ?? "neutral"
 }
 
 function extractStatusValue(
@@ -126,19 +117,17 @@ function extractStatusValue(
   return null
 }
 
-function getCategoryBadge(
-  eventType: string
-): { label: string; variant: BadgeVariant } | null {
-  const t = eventType.toLowerCase()
-  if (t.includes("blocked") || t.includes("security") || t.includes("denied"))
-    return { label: "Security event", variant: "danger" }
-  return null
+function isSecurityEvent(eventType: string): boolean {
+  const type = eventType.toLowerCase()
+  return (
+    type.includes("blocked") ||
+    type.includes("security") ||
+    type.includes("denied")
+  )
 }
 
 function formatEventTitle(event: GovernanceHistoryEvent): string {
-  const base = event.event_type
-    .replace(/[._]/g, " ")
-    .replace(/\b\w/g, c => c.toUpperCase())
+  const base = formatEventTypeLabel(event.event_type)
   const entityName =
     (event.new_data?.["name"] as string | undefined) ??
     (event.new_data?.["display_name"] as string | undefined) ??
@@ -154,12 +143,11 @@ function EventRow({
   event: GovernanceHistoryEvent
   isLast: boolean
 }) {
+  const { t } = useTranslation("tenants")
   const indicatorClass = INDICATOR_CLASSES[getIndicatorColor(event.event_type)]
-  const categoryBadge = getCategoryBadge(event.event_type)
 
   const oldValue = extractStatusValue(event.old_data)
   const newValue = extractStatusValue(event.new_data)
-  const hasStateChange = oldValue !== null && newValue !== null
 
   const title = formatEventTitle(event)
   const actorLine = [event.actor_display, formatDateTime(event.recorded_at)]
@@ -183,7 +171,12 @@ function EventRow({
           <span className="text-sm font-semibold text-foreground leading-5">
             {title}
           </span>
-          {categoryBadge && <SoftBadge label={categoryBadge.label} />}
+          {isSecurityEvent(event.event_type) && (
+            <SoftBadge
+              label={t("detail.governance.securityEvent")}
+              tone="danger"
+            />
+          )}
         </div>
 
         {actorLine && (
@@ -192,11 +185,11 @@ function EventRow({
           </span>
         )}
 
-        {hasStateChange && (
+        {oldValue !== null && newValue !== null && (
           <div className="flex items-center gap-2.5">
-            <SoftBadge label={oldValue!} />
+            <SoftBadge label={oldValue} tone={stateTone(oldValue)} />
             <ArrowRight size={16} className="text-muted-foreground shrink-0" />
-            <SoftBadge label={newValue!} />
+            <SoftBadge label={newValue} tone={stateTone(newValue)} />
           </div>
         )}
 
@@ -275,6 +268,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
       {/* Search + filters */}
       <div className="flex items-center gap-6">
         <SearchInput
+          data-testid="governance-search"
           placeholder={t("detail.governance.searchPlaceholder")}
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -288,28 +282,18 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
             data-testid="filter-event-type"
           >
             <div className="max-h-72 overflow-y-auto py-1">
-              {GOVERNANCE_EVENT_TYPES.map(type => {
-                const checked = eventTypeFilters.includes(type)
-                return (
-                  <Button
-                    key={type}
-                    variant="ghost"
-                    onClick={() => toggleEventType(type)}
-                    className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-                    data-testid={`filter-event-type-${type}`}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      tabIndex={-1}
-                      aria-hidden="true"
-                      className="shrink-0"
-                    />
-                    <span className="text-sm text-foreground">
-                      {formatEventTypeLabel(type)}
-                    </span>
-                  </Button>
-                )
-              })}
+              {GOVERNANCE_EVENT_TYPES.map(type => (
+                <FilterCheckboxOption
+                  key={type}
+                  checked={eventTypeFilters.includes(type)}
+                  onClick={() => toggleEventType(type)}
+                  data-testid={`filter-event-type-${type}`}
+                >
+                  <span className="text-sm text-foreground">
+                    {formatEventTypeLabel(type)}
+                  </span>
+                </FilterCheckboxOption>
+              ))}
             </div>
           </FilterButton>
 
@@ -393,37 +377,47 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
           </p>
         )}
 
+        {/* Search narrows only the pages fetched so far, so an empty result with
+            more pages available is reported differently from a truly empty history. */}
         {!isLoading && !isError && filteredEvents.length === 0 && (
-          <p className="text-sm text-muted-foreground py-4 text-center">
-            {t("detail.governance.noEvents")}
-          </p>
+          <div className="py-4 flex flex-col items-center gap-1">
+            <p className="text-sm text-muted-foreground">
+              {events.length > 0
+                ? t("detail.governance.noSearchMatches")
+                : t("detail.governance.noEvents")}
+            </p>
+            {events.length > 0 && hasNextPage && (
+              <p className="text-xs text-muted-foreground">
+                {t("detail.governance.searchMoreHint")}
+              </p>
+            )}
+          </div>
         )}
 
-        {!isLoading && !isError && filteredEvents.length > 0 && (
-          <>
-            {filteredEvents.map((event, i) => (
-              <EventRow
-                key={event.id}
-                event={event}
-                isLast={i === filteredEvents.length - 1 && !hasNextPage}
-              />
-            ))}
-            {hasNextPage && (
-              <div className="pt-3 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  data-testid="governance-load-more"
-                >
-                  {isFetchingNextPage
-                    ? t("detail.governance.loadingMore")
-                    : t("detail.governance.loadMore")}
-                </Button>
-              </div>
-            )}
-          </>
+        {!isLoading &&
+          !isError &&
+          filteredEvents.map((event, i) => (
+            <EventRow
+              key={event.id}
+              event={event}
+              isLast={i === filteredEvents.length - 1 && !hasNextPage}
+            />
+          ))}
+
+        {!isLoading && !isError && hasNextPage && (
+          <div className="pt-3 flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              data-testid="governance-load-more"
+            >
+              {isFetchingNextPage
+                ? t("detail.governance.loadingMore")
+                : t("detail.governance.loadMore")}
+            </Button>
+          </div>
         )}
       </TenantInfoCard>
     </div>

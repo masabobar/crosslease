@@ -26,8 +26,8 @@ import type {
   SupportGrant,
   AccessReason,
 } from "./schema"
-import type { GovernedAction } from "@/features/governed-actions/api/schema"
-import { GovernedActionSchema } from "@/features/governed-actions/api/schema"
+import type { GovernedAction } from "@/features/governedActions/api/schema"
+import { GovernedActionSchema } from "@/features/governedActions/api/schema"
 
 export type TenantListParams = {
   page?: number

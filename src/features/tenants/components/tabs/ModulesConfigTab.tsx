@@ -19,6 +19,8 @@ import {
   TenantStatusSchema,
 } from "@/features/tenants/api/schema"
 
+const MODULE_COLUMN_COUNT = 3
+
 type ModulesConfigTabProps = {
   tenantId: string
   tenantName: string
@@ -36,14 +38,15 @@ function ModuleEntry({
   module,
   isFirst,
   isLast,
-  isAdmin,
+  canEdit,
   onActivate,
   onDeactivate,
 }: {
   module: TenantModuleEntry
   isFirst: boolean
   isLast: boolean
-  isAdmin: boolean
+  /** Admin *and* the tenant is in a state that allows module changes. */
+  canEdit: boolean
   onActivate: (module: TenantModuleEntry) => void
   onDeactivate: (module: TenantModuleEntry) => void
 }) {
@@ -58,7 +61,7 @@ function ModuleEntry({
     (module.status === MS.active ||
       module.status === MS.pending_activation ||
       module.status === MS.pending_enforcement)
-  const hasButton = isAdmin && (showActivate || showDeactivate)
+  const hasButton = canEdit && (showActivate || showDeactivate)
 
   const description = t(
     `wizard.modules.descriptions.${module.key}` as "wizard.modules.descriptions.identity_access",
@@ -103,7 +106,7 @@ function ModuleEntry({
         }`}
       >
         <ModuleStatusBadge status={module.status} />
-        {isAdmin && showActivate && (
+        {canEdit && showActivate && (
           <Button
             variant="outline"
             size="sm"
@@ -114,7 +117,7 @@ function ModuleEntry({
             {t("detail.modules.activate")}
           </Button>
         )}
-        {isAdmin && showDeactivate && (
+        {canEdit && showDeactivate && (
           <Button
             variant="outline"
             size="sm"
@@ -132,12 +135,12 @@ function ModuleEntry({
 
 function ModuleColumn({
   modules,
-  isAdmin,
+  canEdit,
   onActivate,
   onDeactivate,
 }: {
   modules: TenantModuleEntry[]
-  isAdmin: boolean
+  canEdit: boolean
   onActivate: (module: TenantModuleEntry) => void
   onDeactivate: (module: TenantModuleEntry) => void
 }) {
@@ -149,7 +152,7 @@ function ModuleColumn({
           module={module}
           isFirst={i === 0}
           isLast={i === modules.length - 1}
-          isAdmin={isAdmin}
+          canEdit={canEdit}
           onActivate={onActivate}
           onDeactivate={onDeactivate}
         />
@@ -176,12 +179,12 @@ export function ModulesConfigTab({
     useState<TenantModuleEntry | null>(null)
   const [deactivatingModule, setDeactivatingModule] =
     useState<TenantModuleEntry | null>(null)
-  const [bindingDialogOpen, setBindingDialogOpen] = useState(false)
+  const [isBindingDialogOpen, setIsBindingDialogOpen] = useState(false)
 
   const canEdit = isAdmin && tenantStatus === TenantStatusSchema.enum.active
   const isArchived = tenantStatus === TenantStatusSchema.enum.archived
   const modules = modulesData?.modules ?? []
-  const colSize = Math.max(1, Math.ceil(modules.length / 3))
+  const colSize = Math.max(1, Math.ceil(modules.length / MODULE_COLUMN_COUNT))
   const col1 = modules.slice(0, colSize)
   const col2 = modules.slice(colSize, colSize * 2)
   const col3 = modules.slice(colSize * 2)
@@ -228,7 +231,7 @@ export function ModulesConfigTab({
           <div className="flex items-start">
             <ModuleColumn
               modules={col1}
-              isAdmin={canEdit}
+              canEdit={canEdit}
               onActivate={setActivatingModule}
               onDeactivate={setDeactivatingModule}
             />
@@ -237,7 +240,7 @@ export function ModulesConfigTab({
                 <div className="w-px bg-border shrink-0 mx-3" />
                 <ModuleColumn
                   modules={col2}
-                  isAdmin={canEdit}
+                  canEdit={canEdit}
                   onActivate={setActivatingModule}
                   onDeactivate={setDeactivatingModule}
                 />
@@ -248,7 +251,7 @@ export function ModulesConfigTab({
                 <div className="w-px bg-border shrink-0 mx-3" />
                 <ModuleColumn
                   modules={col3}
-                  isAdmin={canEdit}
+                  canEdit={canEdit}
                   onActivate={setActivatingModule}
                   onDeactivate={setDeactivatingModule}
                 />
@@ -267,8 +270,8 @@ export function ModulesConfigTab({
               tenantName={tenantName}
               isAdmin={isAdmin}
               isArchived={isArchived}
-              dialogOpen={bindingDialogOpen}
-              onDialogOpenChange={setBindingDialogOpen}
+              dialogOpen={isBindingDialogOpen}
+              onDialogOpenChange={setIsBindingDialogOpen}
             />
           </div>
         </div>

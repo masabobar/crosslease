@@ -1,35 +1,15 @@
 import { useTranslation } from "react-i18next"
 import type { TenantModuleStatus } from "@/features/tenants/api/schema"
 import { StatusPill } from "@/features/tenants/components/StatusPill"
-
-type StatusConfig = { container: string; dot: string; text: string }
+import { STATUS_TONES } from "@/features/tenants/components/statusPalette"
+import type { StatusConfig } from "@/features/tenants/components/statusPalette"
 
 const MODULE_STATUS_CONFIG: Record<TenantModuleStatus, StatusConfig> = {
-  active: {
-    container: "bg-[#d0fae5]",
-    dot: "bg-[#22c55e]",
-    text: "text-[#166534]",
-  },
-  inactive: {
-    container: "bg-[#f1f5f9]",
-    dot: "bg-[#94a3b8]",
-    text: "text-[#374151]",
-  },
-  pending_activation: {
-    container: "bg-[#dbeafe]",
-    dot: "bg-[#3b82f6]",
-    text: "text-[#1d4ed8]",
-  },
-  pending_enforcement: {
-    container: "bg-[#ffedd4]",
-    dot: "bg-[#f97316]",
-    text: "text-[#9a3412]",
-  },
-  pending_deactivation: {
-    container: "bg-[#ffedd4]",
-    dot: "bg-[#f97316]",
-    text: "text-[#9a3412]",
-  },
+  active: STATUS_TONES.green,
+  inactive: STATUS_TONES.slate,
+  pending_activation: STATUS_TONES.blue,
+  pending_enforcement: STATUS_TONES.orange,
+  pending_deactivation: STATUS_TONES.orange,
 }
 
 type Props = {

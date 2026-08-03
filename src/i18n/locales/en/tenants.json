@@ -187,6 +187,10 @@
     "bank_entity": "Bank entity",
     "bank_branch_group": "Bank branch group"
   },
+  "currencies": {
+    "EUR": "Euro · EUR",
+    "USD": "US Dollar · USD"
+  },
   "seedPackages": {
     "standard_retail_bank": "Default",
     "minimal_sandbox": "Sandbox",
@@ -568,6 +572,9 @@
       "filterDateRange": "Date range",
       "sectionTitle": "GOVERNANCE HISTORY",
       "noEvents": "No events found.",
+      "securityEvent": "Security event",
+      "noSearchMatches": "No loaded events match your search.",
+      "searchMoreHint": "Load more events to widen the search.",
       "clearAll": "Clear all",
       "loadMore": "Load more",
       "loadingMore": "Loading..."

@@ -187,6 +187,10 @@
     "bank_entity": "Bankeinheit",
     "bank_branch_group": "Bankfilialgruppe"
   },
+  "currencies": {
+    "EUR": "Euro · EUR",
+    "USD": "US-Dollar · USD"
+  },
   "seedPackages": {
     "standard_retail_bank": "Standard",
     "minimal_sandbox": "Sandbox",
@@ -568,6 +572,9 @@
       "filterDateRange": "Datumsbereich",
       "sectionTitle": "GOVERNANCE-VERLAUF",
       "noEvents": "Keine Ereignisse gefunden.",
+      "securityEvent": "Sicherheitsereignis",
+      "noSearchMatches": "Keine geladenen Ereignisse entsprechen Ihrer Suche.",
+      "searchMoreHint": "Laden Sie weitere Ereignisse, um die Suche zu erweitern.",
       "clearAll": "Alle zurücksetzen",
       "loadMore": "Mehr laden",
       "loadingMore": "Wird geladen..."

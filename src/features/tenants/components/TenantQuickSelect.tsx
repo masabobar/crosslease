@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/select"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
+import { ApiError } from "@/lib/api"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 
 export function TenantQuickSelect() {
   const { t } = useTranslation("tenants")
-  const { data, isLoading, isError } = useTenants()
+  const { data, isLoading, isError, error } = useTenants()
   const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
   const setSelectedTenantId = useTenantSelectionStore(
     s => s.setSelectedTenantId
@@ -23,7 +24,13 @@ export function TenantQuickSelect() {
   )
 
   if (isError) {
-    return <p className="text-sm text-destructive">{t("errors.generic")}</p>
+    return (
+      <p className="text-sm text-destructive" data-testid="tenant-select-error">
+        {error instanceof ApiError
+          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")}
+      </p>
+    )
   }
 
   return (

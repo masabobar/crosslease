@@ -55,7 +55,7 @@ export default function CreateTenantPage() {
   const navigate = useNavigate()
 
   const [step, setStep] = useState<FullStep>("identity")
-  const [restoreDismissed, setRestoreDismissed] = useState(false)
+  const [isRestoreDismissed, setIsRestoreDismissed] = useState(false)
 
   const { data: currentUser } = useCurrentUser()
   const userId = currentUser?.id
@@ -92,9 +92,16 @@ export default function CreateTenantPage() {
   const modules = modulesData?.modules ?? []
   const packages = packagesData?.packages ?? []
 
-  const hasDraft = userId ? Boolean(loadWizardDraft(userId)) : false
+  // Probed once per user rather than on every render: loadWizardDraft touches
+  // localStorage and runs a JSON + schema parse.
+  const [probedUserId, setProbedUserId] = useState<string | null>(null)
+  const [hasDraft, setHasDraft] = useState(false)
+  if (userId && probedUserId !== userId) {
+    setProbedUserId(userId)
+    setHasDraft(Boolean(loadWizardDraft(userId)))
+  }
 
-  const restoreOpen = hasDraft && !restoreDismissed
+  const isRestoreOpen = hasDraft && !isRestoreDismissed
 
   function handleRestore() {
     if (!userId) return
@@ -102,12 +109,12 @@ export default function CreateTenantPage() {
     if (!draft) return
     form.reset(draft.formValues)
     setStep(draft.step)
-    setRestoreDismissed(true)
+    setIsRestoreDismissed(true)
   }
 
   function handleStartFresh() {
     if (userId) clearWizardDraft(userId)
-    setRestoreDismissed(true)
+    setIsRestoreDismissed(true)
   }
 
   async function handleNext() {
@@ -168,8 +175,7 @@ export default function CreateTenantPage() {
     control: form.control,
     name: ["name", "code", "tenant_type", "legal_entity_name", "country"],
   })
-  const tenantName = watchedName
-  const identityComplete = Boolean(
+  const isIdentityComplete = Boolean(
     watchedName &&
     watchedCode &&
     watchedTenantType &&
@@ -201,7 +207,7 @@ export default function CreateTenantPage() {
                 {t("wizard.success.title")}
               </h2>
               <p className="text-sm text-muted-foreground">
-                <span className="font-semibold">{tenantName}</span>{" "}
+                <span className="font-semibold">{watchedName}</span>{" "}
                 {t("wizard.success.subtitle")}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -335,7 +341,7 @@ export default function CreateTenantPage() {
             type="button"
             data-testid="wizard-next-button"
             onClick={handleNext}
-            disabled={isPending || (step === "identity" && !identityComplete)}
+            disabled={isPending || (step === "identity" && !isIdentityComplete)}
           >
             {isReviewStep
               ? t("wizard.review.submitButton")
@@ -345,7 +351,7 @@ export default function CreateTenantPage() {
         </div>
       </div>
 
-      <AlertDialog open={restoreOpen}>
+      <AlertDialog open={isRestoreOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>

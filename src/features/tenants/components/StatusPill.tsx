@@ -5,6 +5,7 @@ type StatusPillProps = {
   colorClassName: string
   dotClassName?: string
   shrink?: boolean
+  className?: string
   children: ReactNode
 }
 
@@ -16,6 +17,7 @@ function StatusPill({
   colorClassName,
   dotClassName,
   shrink,
+  className,
   children,
 }: StatusPillProps) {
   return (
@@ -24,7 +26,8 @@ function StatusPill({
         "inline-flex items-center rounded-full text-xs font-medium",
         dotClassName ? "gap-1 px-2 py-0.5" : "h-[18px] px-1.5 py-0.5",
         shrink && "shrink-0",
-        colorClassName
+        colorClassName,
+        className
       )}
     >
       {dotClassName && (
