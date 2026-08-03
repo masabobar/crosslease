@@ -44,7 +44,12 @@
     "subtitle": "Product template",
     "viewVersionHistory": "View version history",
     "noPublishedVersion": "This template has no published version yet. Open version history to see its draft.",
-    "loading": "Loading details…"
+    "loading": "Loading details…",
+    "viewFullDetail": "Open full detail",
+    "page": {
+      "subtitle": "Version {{version}}",
+      "backToVersionHistory": "Back to version history"
+    }
   },
   "wizard": {
     "steps": {

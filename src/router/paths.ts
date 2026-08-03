@@ -38,6 +38,11 @@ export const PATHS = {
   PRODUCT_TEMPLATE_CREATE: "/business-configuration/product-templates/new",
   PRODUCT_TEMPLATE_VERSION_HISTORY:
     "/business-configuration/product-templates/:templateId/version-history",
+  // Version-scoped, mirroring PRODUCT_TEMPLATE_NEW_VERSION below: the underlying endpoint is
+  // per-version, and CR-BPT-04 makes non-current versions first-class, so a version-agnostic URL
+  // would have to invent a rule for which version it shows.
+  PRODUCT_TEMPLATE_DETAIL:
+    "/business-configuration/product-templates/:templateId/versions/:versionNumber",
   PRODUCT_TEMPLATE_NEW_VERSION:
     "/business-configuration/product-templates/:templateId/versions/:versionNumber/edit",
   FRAMEWORK_AGREEMENT_LIST: "/business-configuration/framework-agreements",
@@ -88,6 +93,16 @@ export function productTemplateNewVersionEdit(
   versionNumber: string
 ): string {
   return PATHS.PRODUCT_TEMPLATE_NEW_VERSION.replace(
+    ":templateId",
+    templateId
+  ).replace(":versionNumber", versionNumber)
+}
+
+export function productTemplateDetail(
+  templateId: string,
+  versionNumber: string
+): string {
+  return PATHS.PRODUCT_TEMPLATE_DETAIL.replace(
     ":templateId",
     templateId
   ).replace(":versionNumber", versionNumber)

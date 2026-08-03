@@ -124,6 +124,10 @@ const CreateProductTemplateWizardPage = lazy(
 const VersionHistoryPage = lazy(
   () => import("@/features/productTemplates/components/VersionHistoryPage")
 )
+const ProductTemplateDetailPage = lazy(
+  () =>
+    import("@/features/productTemplates/components/ProductTemplateDetailPage")
+)
 const FrameworkAgreementListPage = lazy(
   () =>
     import("@/features/frameworkAgreements/components/FrameworkAgreementListPage")
@@ -418,6 +422,19 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={PRODUCT_TEMPLATE_READ_ALLOWED_ROLES}>
               <VersionHistoryPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // Read-only, so the READ role set — unlike NEW_VERSION below, which authors a draft and
+        // therefore takes the CREATE set. Both live under `:templateId/versions/:versionNumber`;
+        // React Router ranks by specificity, so the longer `/edit` path still wins for edit URLs.
+        path: PATHS.PRODUCT_TEMPLATE_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={PRODUCT_TEMPLATE_READ_ALLOWED_ROLES}>
+              <ProductTemplateDetailPage />
             </RoleGuard>
           </Suspense>
         ),
