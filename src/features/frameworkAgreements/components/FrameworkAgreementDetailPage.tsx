@@ -238,7 +238,7 @@ export default function FrameworkAgreementDetailPage() {
               </div>
             </div>
 
-            {data.effective_rate !== null && (
+            {data.vfe_amount_eur !== null && (
               <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
                 <div className="bg-muted px-4 py-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
@@ -247,15 +247,9 @@ export default function FrameworkAgreementDetailPage() {
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-4">
                   <ReviewRow
-                    label={t("fields.effectiveRate")}
-                    value={`${data.effective_rate}%`}
+                    label={t("fields.vfeAmountEur")}
+                    value={formatCurrency(data.vfe_amount_eur, data.currency)}
                   />
-                  {data.vfe_rate !== null && (
-                    <ReviewRow
-                      label={t("fields.vfeRate")}
-                      value={`${data.vfe_rate}%`}
-                    />
-                  )}
                 </div>
               </div>
             )}

@@ -43,7 +43,7 @@ const STEP_FIELDS: Record<
   (keyof FrameworkAgreementWizardForm)[]
 > = {
   identity: ["agreement_name", "lc_partner_id"],
-  envelopePricing: ["max_volume_eur", "effective_rate"],
+  envelopePricing: ["max_volume_eur", "vfe_amount_eur"],
   validityTemplates: ["valid_from", "valid_until", "product_template_ids"],
   conditions: ["special_conditions"],
   documents: [],
@@ -160,8 +160,7 @@ export default function CreateFrameworkAgreementWizardPage() {
           lc_partner_id: values.lc_partner_id,
           bank_entity: values.bank_entity,
           max_volume_eur: values.max_volume_eur,
-          effective_rate: values.effective_rate,
-          vfe_rate: values.vfe_rate,
+          vfe_amount_eur: values.vfe_amount_eur,
           valid_from: values.valid_from,
           valid_until: values.valid_until || undefined,
           special_conditions: values.special_conditions || undefined,

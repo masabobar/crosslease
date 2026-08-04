@@ -32,7 +32,6 @@ const validCreateRequest = {
   lc_partner_id: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
   bank_entity: "sparkasse",
   max_volume_eur: 25000000,
-  effective_rate: 4.75,
   valid_from: "2026-06-01",
   product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
 }
@@ -46,37 +45,41 @@ describe("CreateFARequestSchema", () => {
     expect(() =>
       CreateFARequestSchema.parse({
         ...validCreateRequest,
-        vfe_rate: 2.5,
+        vfe_amount_eur: 2500,
         valid_until: "2028-06-01",
         special_conditions: "Pending credit review",
       })
     ).not.toThrow()
   })
 
-  it("rejects vfe_rate outside 0-100", () => {
-    expect(() =>
-      CreateFARequestSchema.parse({ ...validCreateRequest, vfe_rate: 150 })
-    ).toThrow()
-  })
-
-  // CreateFARequest declares effective_rate = Field(ge=0, le=25) — the FE bound must
-  // match, or an out-of-range rate only fails at the API as a 422.
-  it.each([-0.1, 25.1, 100])("rejects effective_rate %s", rate => {
+  it("rejects a negative vfe_amount_eur", () => {
     expect(() =>
       CreateFARequestSchema.parse({
         ...validCreateRequest,
-        effective_rate: rate,
+        vfe_amount_eur: -1,
       })
     ).toThrow()
   })
 
-  it.each([0, 25])("accepts effective_rate at the %s bound", rate => {
+  // CR-FA-02 made the penalty an absolute amount, so there is no upper bound to enforce —
+  // the old vfe_rate was capped at 100 only because it was a percentage.
+  it("accepts a vfe_amount_eur far above the old percentage cap", () => {
     expect(() =>
       CreateFARequestSchema.parse({
         ...validCreateRequest,
-        effective_rate: rate,
+        vfe_amount_eur: 250000,
       })
     ).not.toThrow()
+  })
+
+  // CR-FA-01 took the rate off the agreement. A stale caller still sending it must not
+  // have it forwarded — the BE does not accept the field at all any more.
+  it("strips effective_rate — the rate left the agreement (CR-FA-01)", () => {
+    const parsed = CreateFARequestSchema.parse({
+      ...validCreateRequest,
+      effective_rate: 4.75,
+    }) as Record<string, unknown>
+    expect(parsed.effective_rate).toBeUndefined()
   })
 
   it("strips lg_coverage_rate_override — not in v9's field list (CR PRD1042-1552 A4)", () => {
@@ -92,7 +95,6 @@ describe("CreateFARequestSchema", () => {
     "lc_partner_id",
     "bank_entity",
     "max_volume_eur",
-    "effective_rate",
     "valid_from",
     "product_template_ids",
   ])("rejects a payload missing required field %s", field => {
@@ -107,7 +109,7 @@ describe("CreateFARequestSchema", () => {
     ).toThrow()
   })
 
-  it("strips base_rate/spread/rate_type/rate_lock_period_months — create takes one hand-entered rate (CR PRD1042-1552 A1-A2)", () => {
+  it("strips base_rate/spread/rate_type/rate_lock_period_months — none survive on create (CR PRD1042-1552 A1-A2)", () => {
     const parsed = CreateFARequestSchema.parse({
       ...validCreateRequest,
       base_rate: 4.25,
@@ -119,7 +121,6 @@ describe("CreateFARequestSchema", () => {
     expect(parsed.spread).toBeUndefined()
     expect(parsed.rate_type).toBeUndefined()
     expect(parsed.rate_lock_period_months).toBeUndefined()
-    expect(parsed.effective_rate).toBe(4.75)
   })
 
   it("rejects an empty product_template_ids array", () => {
@@ -150,8 +151,7 @@ describe("FADraftResponseSchema", () => {
     currency: "EUR",
     status: "draft",
     max_volume_eur: 25000000,
-    effective_rate: 4.75,
-    vfe_rate: null,
+    vfe_amount_eur: null,
     valid_from: "2026-06-01",
     valid_until: null,
     special_conditions: null,
@@ -201,7 +201,7 @@ describe("UpdateFARequestSchema", () => {
       UpdateFARequestSchema.parse({
         agreement_name: "RV-SSKM-2026-002",
         max_volume_eur: 30000000,
-        effective_rate: 5.1,
+        vfe_amount_eur: 2000,
         valid_from: "2026-06-01",
         valid_until: "2029-06-01",
         special_conditions: "Reviewed annually",
@@ -222,15 +222,11 @@ describe("UpdateFARequestSchema", () => {
     expect(() => UpdateFARequestSchema.parse({})).not.toThrow()
   })
 
-  it.each([
-    { effective_rate: 25.1 },
-    { effective_rate: -1 },
-    { vfe_rate: 100.5 },
-  ])("rejects an out-of-range rate: %o", payload => {
-    expect(() => UpdateFARequestSchema.parse(payload)).toThrow()
+  it("rejects a negative vfe_amount_eur", () => {
+    expect(() => UpdateFARequestSchema.parse({ vfe_amount_eur: -1 })).toThrow()
   })
 
-  it("strips rate_type — pricing trimmed to effective_rate only (CR PRD1042-1552 A1-A3)", () => {
+  it("strips rate_type — pricing on the agreement is the VFE amount alone (CR-FA-01)", () => {
     const parsed = UpdateFARequestSchema.parse({
       rate_type: "unknown_rate",
     }) as Record<string, unknown>
@@ -276,7 +272,7 @@ describe("EditFrameworkAgreementFormSchema", () => {
   const validEditForm = {
     agreement_name: "RV-SSKM-2026-002",
     max_volume_eur: 30000000,
-    effective_rate: 5.1,
+    vfe_amount_eur: 2000,
     valid_from: "2026-06-01",
     product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
     justification: "Adjusting envelope after annual credit review",
@@ -342,22 +338,21 @@ describe("EditFrameworkAgreementFormSchema", () => {
     ).toThrow()
   })
 
-  // Same i18n contract as the wizard: an out-of-range rate must carry a message code
+  // Same i18n contract as the wizard: an out-of-range amount must carry a message code
   // the resolver translates, not Zod's untranslated default.
-  it.each([
-    { field: "effective_rate", value: 26, code: "effectiveRateRange" },
-    { field: "effective_rate", value: -1, code: "effectiveRateRange" },
-    { field: "vfe_rate", value: 101, code: "vfeRateRange" },
-  ])("reports '$code' when $field is $value", ({ field, value, code }) => {
-    const result = EditFrameworkAgreementFormSchema.safeParse({
-      ...validEditForm,
-      [field]: value,
-    })
-    expect(result.success).toBe(false)
-    expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
-      code
-    )
-  })
+  it.each([{ field: "vfe_amount_eur", value: -1, code: "vfeAmountMin" }])(
+    "reports '$code' when $field is $value",
+    ({ field, value, code }) => {
+      const result = EditFrameworkAgreementFormSchema.safeParse({
+        ...validEditForm,
+        [field]: value,
+      })
+      expect(result.success).toBe(false)
+      expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
+        code
+      )
+    }
+  )
 })
 
 describe("ActivateFARequestSchema", () => {
@@ -573,8 +568,7 @@ describe("FADetailResponseSchema", () => {
     limit_available: null,
     limit_breach: null,
     bank_entity: null,
-    effective_rate: null,
-    vfe_rate: null,
+    vfe_amount_eur: null,
     special_conditions: null,
     effective_from: null,
     activated_at: null,
@@ -598,20 +592,21 @@ describe("FADetailResponseSchema", () => {
       FADetailResponseSchema.parse({
         ...baseDetail,
         bank_entity: "sparkasse",
-        effective_rate: 4.75,
-        vfe_rate: "1.5000",
+        vfe_amount_eur: "1500.0000",
         created_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
         created_by_name: "Vincent Brooke",
       })
     ).not.toThrow()
   })
 
-  it("coerces a numeric-string vfe_rate and accepts null", () => {
+  it("coerces a numeric-string vfe_amount_eur and accepts null", () => {
     expect(
-      FADetailResponseSchema.parse({ ...baseDetail, vfe_rate: "2.5000" })
-        .vfe_rate
-    ).toBe(2.5)
-    expect(FADetailResponseSchema.parse(baseDetail).vfe_rate).toBeNull()
+      FADetailResponseSchema.parse({
+        ...baseDetail,
+        vfe_amount_eur: "2500.0000",
+      }).vfe_amount_eur
+    ).toBe(2500)
+    expect(FADetailResponseSchema.parse(baseDetail).vfe_amount_eur).toBeNull()
   })
 
   it("rejects a missing required id", () => {
@@ -620,7 +615,7 @@ describe("FADetailResponseSchema", () => {
     expect(() => FADetailResponseSchema.parse(rest)).toThrow()
   })
 
-  it("strips base_rate/spread/rate_type/rate_lock_period_months/lg_coverage_rate_override — trimmed to effective_rate + vfe_rate (CR PRD1042-1552 A1-A4)", () => {
+  it("strips base_rate/spread/rate_type/rate_lock_period_months/lg_coverage_rate_override — the detail response carries the VFE amount alone (CR-FA-01/CR-FA-02)", () => {
     const parsed = FADetailResponseSchema.parse({
       ...baseDetail,
       base_rate: 4.25,
@@ -699,7 +694,7 @@ describe("FrameworkAgreementWizardFormSchema", () => {
   // Guards the i18n contract: resolveFrameworkAgreementFieldError only translates
   // known message codes and returns anything else verbatim, so an untranslated Zod
   // default here would be rendered to the user (PRD1042-1653).
-  it.each(["max_volume_eur", "effective_rate"])(
+  it.each(["max_volume_eur"])(
     "reports a translatable 'required' message when %s is missing",
     field => {
       const payload = { ...validForm } as Record<string, unknown>
@@ -711,19 +706,19 @@ describe("FrameworkAgreementWizardFormSchema", () => {
     }
   )
 
-  it.each([
-    { field: "effective_rate", value: 26, code: "effectiveRateRange" },
-    { field: "vfe_rate", value: 101, code: "vfeRateRange" },
-  ])("reports '$code' when $field is $value", ({ field, value, code }) => {
-    const result = FrameworkAgreementWizardFormSchema.safeParse({
-      ...validForm,
-      [field]: value,
-    })
-    expect(result.success).toBe(false)
-    expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
-      code
-    )
-  })
+  it.each([{ field: "vfe_amount_eur", value: -1, code: "vfeAmountMin" }])(
+    "reports '$code' when $field is $value",
+    ({ field, value, code }) => {
+      const result = FrameworkAgreementWizardFormSchema.safeParse({
+        ...validForm,
+        [field]: value,
+      })
+      expect(result.success).toBe(false)
+      expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
+        code
+      )
+    }
+  )
 
   it("reports 'required' for an empty number input coerced to NaN", () => {
     const result = FrameworkAgreementWizardFormSchema.safeParse({

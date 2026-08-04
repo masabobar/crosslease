@@ -57,7 +57,7 @@ const STEP_FIELDS: Record<
   (keyof EditFrameworkAgreementFormValues)[]
 > = {
   identity: ["agreement_name", "valid_from"],
-  envelopePricing: ["max_volume_eur", "effective_rate", "vfe_rate"],
+  envelopePricing: ["max_volume_eur", "vfe_amount_eur"],
   validityTemplates: ["valid_until", "product_template_ids"],
   conditions: ["special_conditions"],
   review: ["justification"],

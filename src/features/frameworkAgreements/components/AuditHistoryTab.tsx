@@ -33,8 +33,12 @@ type AuditView = "eventLog" | "reconstruct"
 const RECONSTRUCT_PRIMARY_FIELDS = [
   { key: "max_volume_eur", labelKey: "fields.maxVolumeEur" as const },
   { key: "valid_until", labelKey: "fields.validUntil" as const },
+  // base_rate and effective_rate are retained deliberately: they no longer exist on the
+  // agreement (CR-FA-01), but a reconstruct to a past date still returns them, and
+  // vfe_rate-era events predate CR-FA-02's switch to an amount.
   { key: "base_rate", labelKey: "fields.baseRate" as const },
   { key: "effective_rate", labelKey: "fields.effectiveRate" as const },
+  { key: "vfe_amount_eur", labelKey: "fields.vfeAmountEur" as const },
 ]
 
 function formatDiffValue(value: unknown): string {
@@ -203,8 +207,14 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         defaultValue: value,
       })
     }
-    if ((key === "base_rate" || key === "effective_rate") && value !== null) {
+    if (
+      (key === "base_rate" || key === "effective_rate" || key === "vfe_rate") &&
+      value !== null
+    ) {
       return `${formatDiffValue(value)}%`
+    }
+    if (key === "vfe_amount_eur" && value !== null) {
+      return `${formatDiffValue(value)} EUR`
     }
     if (key === "valid_until" && value === null) {
       return t("fields.openEnded")

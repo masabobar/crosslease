@@ -5272,6 +5272,217 @@
         }
       }
     },
+    "/api/v1/framework-agreements/{id}/versions": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Create New Fa Version",
+        "operationId": "create_new_fa_version_api_v1_framework_agreements__id__versions_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAVersionDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "List Fa Versions",
+        "operationId": "list_fa_versions_api_v1_framework_agreements__id__versions_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAVersionListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/versions/{version_id}/activate": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Activate Fa Version",
+        "operationId": "activate_fa_version_api_v1_framework_agreements__id__versions__version_id__activate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateVersionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAVersionDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/diff": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Diff Fa Versions",
+        "operationId": "diff_fa_versions_api_v1_framework_agreements__id__diff_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "from_version",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "From Version" }
+          },
+          {
+            "name": "to_version",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "To Version" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAVersionDiffResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/versions/{version_number}": {
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Fa Version",
+        "operationId": "get_fa_version_api_v1_framework_agreements__id__versions__version_number__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FAVersionDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/framework-agreements/lc-partners": {
       "get": {
         "tags": ["Framework Agreements"],
@@ -7778,6 +7989,19 @@
         "required": ["documents_confirmed", "justification"],
         "title": "ActivateFARequest"
       },
+      "ActivateVersionRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "ActivateVersionRequest"
+      },
       "ActorSummary": {
         "properties": {
           "user_id": { "type": "string", "title": "User Id" },
@@ -7852,6 +8076,17 @@
             "type": "integer",
             "title": "Sort Order",
             "default": 0
+          },
+          "applicability": {
+            "$ref": "#/components/schemas/RequirementApplicability",
+            "default": "always"
+          },
+          "condition": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Condition"
           }
         },
         "type": "object",
@@ -8856,16 +9091,6 @@
             ],
             "title": "Max Volume Eur"
           },
-          "effective_rate": {
-            "anyOf": [
-              { "type": "number", "maximum": 25.0, "minimum": 0.0 },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              }
-            ],
-            "title": "Effective Rate"
-          },
           "valid_from": {
             "type": "string",
             "format": "date",
@@ -8882,16 +9107,16 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
-          "vfe_rate": {
+          "vfe_amount_eur": {
             "anyOf": [
-              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "number", "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               },
               { "type": "null" }
             ],
-            "title": "Vfe Rate"
+            "title": "Vfe Amount Eur"
           },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
@@ -8906,7 +9131,6 @@
           "lc_partner_id",
           "bank_entity",
           "max_volume_eur",
-          "effective_rate",
           "valid_from",
           "product_template_ids"
         ],
@@ -9482,6 +9706,12 @@
         "type": "object",
         "title": "EditUserRequest"
       },
+      "FAAgreementLifecycle": {
+        "type": "string",
+        "enum": ["draft", "active", "terminated", "expired"],
+        "title": "FAAgreementLifecycle",
+        "description": "The *derived* agreement-level lifecycle (CR-FA-04 / §0b). Computed from the current version +\ntermination stamp + validity — never stored. `EXPIRED` is a past `valid_until` on an otherwise-active\nagreement; `TERMINATED` is the terminal, agreement-level end."
+      },
       "FAAuditEventResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -9587,6 +9817,16 @@
             "title": "Lc Partner Name"
           },
           "status": { "$ref": "#/components/schemas/FALifecycleStatus" },
+          "agreement_lifecycle": {
+            "$ref": "#/components/schemas/FAAgreementLifecycle"
+          },
+          "current_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Current Version Id"
+          },
           "currency": { "type": "string", "title": "Currency" },
           "max_volume_eur": {
             "type": "string",
@@ -9648,7 +9888,7 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Bank Entity"
           },
-          "effective_rate": {
+          "vfe_amount_eur": {
             "anyOf": [
               {
                 "type": "string",
@@ -9656,17 +9896,7 @@
               },
               { "type": "null" }
             ],
-            "title": "Effective Rate"
-          },
-          "vfe_rate": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Vfe Rate"
+            "title": "Vfe Amount Eur"
           },
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9754,6 +9984,8 @@
           "lc_partner_id",
           "lc_partner_name",
           "status",
+          "agreement_lifecycle",
+          "current_version_id",
           "currency",
           "max_volume_eur",
           "valid_from",
@@ -9767,8 +9999,7 @@
           "limit_available",
           "limit_breach",
           "bank_entity",
-          "effective_rate",
-          "vfe_rate",
+          "vfe_amount_eur",
           "special_conditions",
           "effective_from",
           "activated_at",
@@ -9807,11 +10038,6 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Max Volume Eur"
           },
-          "effective_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Effective Rate"
-          },
           "valid_from": {
             "type": "string",
             "format": "date",
@@ -9828,7 +10054,7 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
-          "vfe_rate": {
+          "vfe_amount_eur": {
             "anyOf": [
               {
                 "type": "string",
@@ -9836,7 +10062,7 @@
               },
               { "type": "null" }
             ],
-            "title": "Vfe Rate"
+            "title": "Vfe Amount Eur"
           },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
@@ -9872,11 +10098,10 @@
           "currency",
           "status",
           "max_volume_eur",
-          "effective_rate",
           "valid_from",
           "valid_until",
           "special_conditions",
-          "vfe_rate",
+          "vfe_amount_eur",
           "product_template_ids",
           "edit_version_counter",
           "created_by",
@@ -9967,6 +10192,9 @@
             ]
           },
           "status": { "$ref": "#/components/schemas/FALifecycleStatus" },
+          "agreement_lifecycle": {
+            "$ref": "#/components/schemas/FAAgreementLifecycle"
+          },
           "valid_from": {
             "type": "string",
             "format": "date",
@@ -10003,6 +10231,7 @@
           "lc_partner_name",
           "bank_entity",
           "status",
+          "agreement_lifecycle",
           "valid_from",
           "valid_until",
           "is_expired",
@@ -10035,10 +10264,22 @@
             "type": "integer",
             "title": "Edit Version Counter"
           },
-          "effective_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Effective Rate"
+          "vfe_amount_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Amount Eur"
+          },
+          "current_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Current Version Id"
           }
         },
         "type": "object",
@@ -10046,7 +10287,8 @@
           "fa_id",
           "agreement_name",
           "edit_version_counter",
-          "effective_rate"
+          "vfe_amount_eur",
+          "current_version_id"
         ],
         "title": "FAPricingSnapshotResponse",
         "description": "Pricing snapshot returned to consuming epics (US 11.11).\n\nEpic 3 (Financing) uses edit_version_counter as the audit anchor\nto reconstruct which FA pricing snapshot was applied at Stage 2 approval."
@@ -10170,6 +10412,182 @@
         "type": "object",
         "required": ["max_volume_eur"],
         "title": "FAUtilizationResponse"
+      },
+      "FAVersionDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "bank_entity": { "type": "string", "title": "Bank Entity" },
+          "currency": { "type": "string", "title": "Currency" },
+          "max_volume_eur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Volume Eur"
+          },
+          "effective_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
+          },
+          "vfe_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Rate"
+          },
+          "vfe_amount_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Amount Eur"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "special_conditions": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Conditions"
+          },
+          "activated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Activated At"
+          },
+          "activated_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Activated By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version_number",
+          "version_status",
+          "agreement_name",
+          "bank_entity",
+          "currency",
+          "max_volume_eur",
+          "effective_rate",
+          "vfe_rate",
+          "vfe_amount_eur",
+          "valid_from",
+          "valid_until",
+          "special_conditions",
+          "activated_at",
+          "activated_by",
+          "created_at"
+        ],
+        "title": "FAVersionDetailResponse"
+      },
+      "FAVersionDiffResponse": {
+        "properties": {
+          "from_version": { "type": "string", "title": "From Version" },
+          "to_version": { "type": "string", "title": "To Version" },
+          "diffs": {
+            "items": { "$ref": "#/components/schemas/FieldDiffItem" },
+            "type": "array",
+            "title": "Diffs"
+          }
+        },
+        "type": "object",
+        "required": ["from_version", "to_version", "diffs"],
+        "title": "FAVersionDiffResponse"
+      },
+      "FAVersionListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FAVersionSummaryResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "FAVersionListResponse"
+      },
+      "FAVersionSummaryResponse": {
+        "properties": {
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "max_volume_eur": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Volume Eur"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
+          },
+          "activated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Activated At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_number",
+          "version_status",
+          "agreement_name",
+          "max_volume_eur",
+          "valid_from",
+          "valid_until",
+          "activated_at",
+          "created_at"
+        ],
+        "title": "FAVersionSummaryResponse"
       },
       "FieldDiffItem": {
         "properties": {
@@ -12489,6 +12907,11 @@
         ],
         "title": "RequiredProjectionResponse"
       },
+      "RequirementApplicability": {
+        "type": "string",
+        "enum": ["always", "conditional_rule", "conditional_manual"],
+        "title": "RequirementApplicability"
+      },
       "RequirementClassification": {
         "type": "string",
         "enum": ["mandatory", "optional", "conditional"],
@@ -12558,6 +12981,16 @@
           "document_origin": { "$ref": "#/components/schemas/DocumentOrigin" },
           "is_active": { "type": "boolean", "title": "Is Active" },
           "sort_order": { "type": "integer", "title": "Sort Order" },
+          "applicability": {
+            "$ref": "#/components/schemas/RequirementApplicability"
+          },
+          "condition": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Condition"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -12586,6 +13019,8 @@
           "document_origin",
           "is_active",
           "sort_order",
+          "applicability",
+          "condition",
           "created_at",
           "updated_at"
         ],
@@ -14515,17 +14950,6 @@
             ],
             "title": "Max Volume Eur"
           },
-          "effective_rate": {
-            "anyOf": [
-              { "type": "number", "maximum": 25.0, "minimum": 0.0 },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Effective Rate"
-          },
           "valid_from": {
             "anyOf": [
               { "type": "string", "format": "date" },
@@ -14544,16 +14968,16 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
-          "vfe_rate": {
+          "vfe_amount_eur": {
             "anyOf": [
-              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "number", "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               },
               { "type": "null" }
             ],
-            "title": "Vfe Rate"
+            "title": "Vfe Amount Eur"
           },
           "product_template_ids": {
             "anyOf": [
@@ -14699,6 +15123,19 @@
           "sort_order": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Sort Order"
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RequirementApplicability" },
+              { "type": "null" }
+            ]
+          },
+          "condition": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Condition"
           }
         },
         "type": "object",
@@ -15600,19 +16037,19 @@
             "format": "uuid",
             "title": "Lc Partner Id"
           },
-          "vfe_rate": {
+          "vfe_amount_eur": {
             "anyOf": [
-              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "number", "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Vfe Rate"
+            "title": "Vfe Amount Eur"
           }
         },
         "type": "object",
-        "required": ["lc_partner_id", "vfe_rate"],
+        "required": ["lc_partner_id", "vfe_amount_eur"],
         "title": "VfeRateCreateRequest"
       },
       "VfeRateListResponse": {
@@ -15640,10 +16077,15 @@
             "format": "uuid",
             "title": "Lc Partner Id"
           },
-          "vfe_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Vfe Rate"
+          "vfe_amount_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Amount Eur"
           },
           "created_by": {
             "type": "string",
@@ -15666,7 +16108,7 @@
           "id",
           "tenant_id",
           "lc_partner_id",
-          "vfe_rate",
+          "vfe_amount_eur",
           "created_by",
           "created_at",
           "updated_at"
@@ -15675,19 +16117,19 @@
       },
       "VfeRateUpdateRequest": {
         "properties": {
-          "vfe_rate": {
+          "vfe_amount_eur": {
             "anyOf": [
-              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              { "type": "number", "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
-            "title": "Vfe Rate"
+            "title": "Vfe Amount Eur"
           }
         },
         "type": "object",
-        "required": ["vfe_rate"],
+        "required": ["vfe_amount_eur"],
         "title": "VfeRateUpdateRequest"
       },
       "app__modules__document_requirement_catalog__domain__enums__StageCategorization": {

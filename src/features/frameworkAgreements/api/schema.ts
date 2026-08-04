@@ -21,14 +21,17 @@ export const FADocumentTypeSchema = z.enum([
 ])
 export type FADocumentType = z.infer<typeof FADocumentTypeSchema>
 
-// Rate bounds mirror refinext-api fa_schemas.py exactly:
-// effective_rate = Field(ge=0, le=25), vfe_rate = Field(ge=0, le=100).
-// Both columns are Numeric(8, 4), so fractional rates are valid — the inputs must not
-// restrict entry to whole numbers.
-export const EFFECTIVE_RATE_MIN = 0
-export const EFFECTIVE_RATE_MAX = 25
-export const VFE_RATE_MIN = 0
-export const VFE_RATE_MAX = 100
+// The early-repayment penalty is an absolute EUR amount, not a percentage — CR-FA-02 on
+// PRD1042-1799, landed on the wire as `vfe_amount_eur` with no upper bound (the old
+// `vfe_rate` was capped at 100 because it was a percent).
+export const VFE_AMOUNT_MIN = 0
+
+// `effective_rate` is deliberately absent from every schema below. CR-FA-01 removed it from
+// the agreement and the backend has already dropped it from create, update, the detail and
+// draft responses and the pricing snapshot. CR-BPT-02 moves it to the Bank Product Template,
+// which does **not** carry it yet — so the rate currently exists nowhere in the contract.
+// Historical values survive on FAVersionDetailResponse, which still carries `effective_rate`
+// and `vfe_rate` for versions created before the change.
 
 // POST /framework-agreements — matches CreateFARequest in refinext-api fa_schemas.py exactly
 export const CreateFARequestSchema = z.object({
@@ -36,12 +39,9 @@ export const CreateFARequestSchema = z.object({
   lc_partner_id: z.string().uuid(),
   bank_entity: BankEntitySchema,
   max_volume_eur: z.number().gt(0),
-  // The single hand-entered interest rate (CR PRD1042-1552 A1/A2) — required on create
-  // since the BE stopped deriving it from base_rate + spread.
-  effective_rate: z.number().min(EFFECTIVE_RATE_MIN).max(EFFECTIVE_RATE_MAX),
-  // VFE (early-repayment penalty) flat rate — optional override; BE prefills from the
-  // per-LC default on create (CR PRD1042-1495 B2). Matches CreateFARequest.vfe_rate.
-  vfe_rate: z.number().min(VFE_RATE_MIN).max(VFE_RATE_MAX).optional(),
+  // VFE (early-repayment penalty) amount in EUR — optional; the BE prefills from the
+  // per-LC default on create. Matches CreateFARequest.vfe_amount_eur.
+  vfe_amount_eur: z.number().min(VFE_AMOUNT_MIN).optional(),
   valid_from: z.string().min(1),
   valid_until: z.string().optional(),
   special_conditions: z.string().optional(),
@@ -57,8 +57,7 @@ export const FADraftResponseSchema = z.object({
   currency: z.string(),
   status: FALifecycleStatusSchema,
   max_volume_eur: z.coerce.number(),
-  effective_rate: z.coerce.number(),
-  vfe_rate: z.coerce.number().nullable(),
+  vfe_amount_eur: z.coerce.number().nullable(),
   valid_from: z.string(),
   valid_until: z.string().nullable(),
   special_conditions: z.string().nullable(),
@@ -79,12 +78,7 @@ export type FADraftResponse = z.infer<typeof FADraftResponseSchema>
 export const UpdateFARequestSchema = z.object({
   agreement_name: z.string().min(1).max(200).optional(),
   max_volume_eur: z.number().gt(0).optional(),
-  effective_rate: z
-    .number()
-    .min(EFFECTIVE_RATE_MIN)
-    .max(EFFECTIVE_RATE_MAX)
-    .optional(),
-  vfe_rate: z.number().min(VFE_RATE_MIN).max(VFE_RATE_MAX).optional(),
+  vfe_amount_eur: z.number().min(VFE_AMOUNT_MIN).optional(),
   valid_from: z.string().min(1).optional(),
   valid_until: z.string().optional(),
   special_conditions: z.string().optional(),
@@ -106,15 +100,7 @@ export const EditFrameworkAgreementFormSchema = z
     // registered with valueAsNumber yields NaN, and without this Zod's untranslated
     // default ("Invalid input: expected number, received NaN") reaches the UI.
     max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
-    effective_rate: z
-      .number({ error: "required" })
-      .min(EFFECTIVE_RATE_MIN, "effectiveRateRange")
-      .max(EFFECTIVE_RATE_MAX, "effectiveRateRange"),
-    vfe_rate: z
-      .number()
-      .min(VFE_RATE_MIN, "vfeRateRange")
-      .max(VFE_RATE_MAX, "vfeRateRange")
-      .optional(),
+    vfe_amount_eur: z.number().min(VFE_AMOUNT_MIN, "vfeAmountMin").optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
     special_conditions: z.string().max(1000).optional(),
@@ -254,8 +240,7 @@ export const FADetailResponseSchema = z.object({
   limit_available: z.coerce.number().nullable(),
   limit_breach: z.boolean().nullable(),
   bank_entity: BankEntitySchema.nullable(),
-  effective_rate: z.coerce.number().nullable(),
-  vfe_rate: z.coerce.number().nullable(),
+  vfe_amount_eur: z.coerce.number().nullable(),
   special_conditions: z.string().nullable(),
   effective_from: z.string().nullable(),
   activated_at: z.string().nullable(),
@@ -417,15 +402,7 @@ export const FrameworkAgreementWizardFormSchema = z
     // See EditFrameworkAgreementFormSchema — `{ error: "required" }` keeps Zod's
     // untranslated NaN/undefined message out of the UI for empty number inputs.
     max_volume_eur: z.number({ error: "required" }).gt(0, "required"),
-    effective_rate: z
-      .number({ error: "required" })
-      .min(EFFECTIVE_RATE_MIN, "effectiveRateRange")
-      .max(EFFECTIVE_RATE_MAX, "effectiveRateRange"),
-    vfe_rate: z
-      .number()
-      .min(VFE_RATE_MIN, "vfeRateRange")
-      .max(VFE_RATE_MAX, "vfeRateRange")
-      .optional(),
+    vfe_amount_eur: z.number().min(VFE_AMOUNT_MIN, "vfeAmountMin").optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
     special_conditions: z.string().max(1000).optional(),

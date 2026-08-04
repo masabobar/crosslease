@@ -60,7 +60,8 @@
     "specialConditions": "Sonderbedingungen",
     "allowedProductTemplates": "Zulässige Produktvorlagen",
     "optional": "(optional)",
-    "openEnded": "Unbefristet"
+    "openEnded": "Unbefristet",
+    "vfeAmountEur": "Vorfälligkeitsentschädigung (VFE)"
   },
   "units": {
     "eur": "EUR",
@@ -89,7 +90,8 @@
       "creditEnvelopeSection": "Kreditrahmen",
       "pricingSection": "Preisgestaltung (von Finanzierungen übernommen)",
       "maxVolumeHint": "Feste Obergrenze für das gesamte auszahlbare Volumen unter dieser Vereinbarung.",
-      "vfeRateHint": "Pauschale Vorfälligkeitsentschädigung für diese Leasinggesellschaft. Wird aus dem Standardwert der Leasinggesellschaft vorbelegt; pro Vereinbarung überschreibbar."
+      "vfeRateHint": "Pauschale Vorfälligkeitsentschädigung für diese Leasinggesellschaft. Wird aus dem Standardwert der Leasinggesellschaft vorbelegt; pro Vereinbarung überschreibbar.",
+      "vfeAmountHint": "Absoluter Betrag, der bei einer vorzeitigen Rückzahlung hinzukommt."
     },
     "validityTemplates": {
       "title": "Gültigkeit & Produktvorlagen",
@@ -284,7 +286,6 @@
   },
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
-    "rateRange": "Geben Sie einen Wert zwischen {{min}} und {{max}} % ein.",
     "validUntilBeforeFrom": "„Gültig bis“ muss nach „Gültig ab“ liegen",
     "FA_NOT_FOUND": "Diese Rahmenvereinbarung konnte nicht gefunden werden.",
     "FA_NAME_CONFLICT": "Für diese Leasinggesellschaft existiert bereits eine Vereinbarung mit diesem Namen.",
@@ -304,6 +305,7 @@
     "FA_RECONSTRUCTION_TIMESTAMP": "Dieser Zeitpunkt ist ungültig. Er muss in der Vergangenheit liegen, und die Vereinbarung muss zu diesem Zeitpunkt bereits bestanden haben.",
     "FA_EXPORT_REASON_REQUIRED": "Zum Exportieren dieses Prüfprotokolls ist ein Grund erforderlich.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder.",
+    "vfeAmountMin": "Muss mindestens {{min}} EUR betragen."
   }
 }
