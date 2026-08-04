@@ -1,4 +1,5 @@
 import { useForm, Controller, useWatch } from "react-hook-form"
+import { parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
@@ -172,6 +173,10 @@ function UserActionModal({
 
   const { errors, isSubmitting } = form.formState
   const watchedReason = useWatch({ control: form.control, name: "reason" })
+  const effectiveFrom = useWatch({
+    control: form.control,
+    name: "effective_from",
+  })
   const name = `${user.first_name} ${user.last_name}`
 
   function getReasonOptions(): SelectOption[] {
@@ -351,6 +356,12 @@ function UserActionModal({
                       data-testid="action-effective-until"
                       value={field.value}
                       onChange={field.onChange}
+                      // Floor is the chosen start, not today: an access period that ends
+                      // before it begins is not a period. Its sibling above already floors
+                      // at today; this one was left open.
+                      minDate={
+                        effectiveFrom ? parseISO(effectiveFrom) : new Date()
+                      }
                       captionLayout="dropdown"
                     />
                   )}
