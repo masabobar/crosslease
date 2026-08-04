@@ -28,8 +28,7 @@ const activeAgreement: FADetailResponse = {
   limit_available: null,
   limit_breach: null,
   bank_entity: "sparkasse",
-  effective_rate: 4.75,
-  vfe_rate: 1.5,
+  vfe_amount_eur: 1500,
   special_conditions: "Reviewed annually",
   effective_from: null,
   activated_at: null,
@@ -63,8 +62,7 @@ describe("toEditFormDefaults", () => {
     expect(toEditFormDefaults(activeAgreement)).toEqual({
       agreement_name: "RV-SSKM-2026-001",
       max_volume_eur: 25000000,
-      effective_rate: 4.75,
-      vfe_rate: 1.5,
+      vfe_amount_eur: 1500,
       valid_from: "2026-06-01",
       valid_until: "",
       special_conditions: "Reviewed annually",
@@ -81,13 +79,11 @@ describe("toEditFormDefaults", () => {
       ...activeAgreement,
       valid_until: null,
       special_conditions: null,
-      vfe_rate: null,
-      effective_rate: null,
+      vfe_amount_eur: null,
     })
     expect(defaults.valid_until).toBe("")
     expect(defaults.special_conditions).toBe("")
-    expect(defaults.vfe_rate).toBeUndefined()
-    expect(defaults.effective_rate).toBe(0)
+    expect(defaults.vfe_amount_eur).toBeUndefined()
   })
 
   // Seeds the optimistic-concurrency field the BE checks to raise FA_VERSION_CONFLICT.
@@ -103,8 +99,7 @@ describe("buildUpdateFAPayload", () => {
   const values: EditFrameworkAgreementFormValues = {
     agreement_name: "RV-SSKM-2026-002",
     max_volume_eur: 30000000,
-    effective_rate: 5.1,
-    vfe_rate: 2,
+    vfe_amount_eur: 2000,
     valid_from: "2026-07-01",
     valid_until: "2029-06-01",
     special_conditions: "Reviewed annually",
@@ -131,8 +126,7 @@ describe("buildUpdateFAPayload", () => {
     const body = buildUpdateFAPayload(values, false)
     expect(body).toMatchObject({
       max_volume_eur: 30000000,
-      effective_rate: 5.1,
-      vfe_rate: 2,
+      vfe_amount_eur: 2000,
       special_conditions: "Reviewed annually",
       product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
       justification: "Adjusting envelope after annual credit review",

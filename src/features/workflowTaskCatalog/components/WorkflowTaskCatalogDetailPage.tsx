@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { ApiError } from "@/lib/api"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
 import { IdentityScopeTab } from "@/features/workflowTaskCatalog/components/IdentityScopeTab"
 import { TaskDefinitionsTab } from "@/features/workflowTaskCatalog/components/TaskDefinitionsTab"
@@ -51,7 +52,8 @@ function isDetailTab(
 
 export default function WorkflowTaskCatalogDetailPage() {
   const { t } = useTranslation("workflowTaskCatalog")
-  const { id } = useParams<{ id: string }>()
+  const { id: idParam } = useParams<{ id: string }>()
+  const id = isUuidRouteParam(idParam) ? idParam : undefined
   const [searchParams] = useSearchParams()
   const { data: currentUser } = useCurrentUser()
 

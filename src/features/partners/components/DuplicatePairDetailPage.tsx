@@ -24,6 +24,7 @@ import {
 import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants"
 import { PATHS, partnerDetail } from "@/router/paths"
 import { formatDate } from "@/lib/formatters"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import { DuplicateCandidatePairStatusSchema } from "@/features/partners/api/schema"
 import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 
@@ -127,7 +128,8 @@ function ConfirmedDuplicateSection({
 export default function DuplicatePairDetailPage() {
   const { t } = useTranslation("partners")
   const navigate = useNavigate()
-  const { pairId } = useParams<{ pairId: string }>()
+  const { pairId: pairIdParam } = useParams<{ pairId: string }>()
+  const pairId = isUuidRouteParam(pairIdParam) ? pairIdParam : undefined
   const { data: currentUser } = useCurrentUser()
   const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
   const tenantId =

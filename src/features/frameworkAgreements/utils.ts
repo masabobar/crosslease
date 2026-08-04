@@ -1,11 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { ApiError } from "@/lib/api"
 import {
-  EFFECTIVE_RATE_MAX,
-  EFFECTIVE_RATE_MIN,
   FALifecycleStatusSchema,
-  VFE_RATE_MAX,
-  VFE_RATE_MIN,
+  VFE_AMOUNT_MIN,
 } from "@/features/frameworkAgreements/api/schema"
 import type {
   FALifecycleStatus,
@@ -73,7 +70,7 @@ export function filterSelectableTemplates(
 // steps (IdentityStep, EnvelopePricingStep, ValidityTemplatesStep,
 // the edit wizard's steps). Handles every custom refine code used across those
 // forms' Zod schemas (see api/schema.ts): "required", "validUntilBeforeFrom",
-// "atLeastOneTemplate", "effectiveRateRange", "vfeRateRange". Unrecognized messages
+// "atLeastOneTemplate", "vfeAmountMin". Unrecognized messages
 // are returned as-is.
 export function useResolveFrameworkAgreementFieldError() {
   const { t } = useTranslation("frameworkAgreements")
@@ -86,16 +83,10 @@ export function useResolveFrameworkAgreementFieldError() {
     if (msg === "required") return tCommon("validation.required")
     if (msg === "validUntilBeforeFrom") return t("errors.validUntilBeforeFrom")
     if (msg === "atLeastOneTemplate") return t("errors.atLeastOneTemplate")
-    // Bounds come from the schema constants so the message can never drift from the
-    // range the BE actually enforces.
-    if (msg === "effectiveRateRange") {
-      return t("errors.rateRange", {
-        min: EFFECTIVE_RATE_MIN,
-        max: EFFECTIVE_RATE_MAX,
-      })
-    }
-    if (msg === "vfeRateRange") {
-      return t("errors.rateRange", { min: VFE_RATE_MIN, max: VFE_RATE_MAX })
+    // The bound comes from the schema constant so the message can never drift from what
+    // the BE enforces.
+    if (msg === "vfeAmountMin") {
+      return t("errors.vfeAmountMin", { min: VFE_AMOUNT_MIN })
     }
     return msg
   }

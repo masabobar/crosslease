@@ -22,6 +22,8 @@ import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPer
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { PATHS } from "@/router/paths"
 import { getInitials } from "@/lib/formatters"
+import { isUuidRouteParam } from "@/lib/routeParams"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { buildActionToastPayload } from "@/features/users/utils"
 import { useToastStore } from "@/store/toastStore"
 import { useQueryClient } from "@tanstack/react-query"
@@ -235,13 +237,21 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 }
 
 export default function UserDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id: idParam } = useParams<{ id: string }>()
+  const id = isUuidRouteParam(idParam) ? idParam : undefined
   const { t } = useTranslation("users")
   const { data: user, isLoading, isError } = useUserDetail(id ?? null)
   const { data: currentUser, isError: isCurrentUserError } = useCurrentUser()
 
   if (currentUser && id && currentUser.id === id) {
     return <Navigate to={PATHS.SETTINGS_PROFILE} replace />
+  }
+
+  // A param that is not a UUID can never identify a record. These pages render their
+  // loading and error states inline, so a disabled query would leave an empty shell —
+  // the explicit not-found return is what the user sees instead.
+  if (id === undefined) {
+    return <NotFoundPage />
   }
 
   return (

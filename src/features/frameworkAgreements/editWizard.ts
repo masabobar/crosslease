@@ -17,8 +17,7 @@ export function toEditFormDefaults(
     max_volume_eur: frameworkAgreement.max_volume_eur,
     // Null for roles the BE hides pricing from; those roles cannot reach this screen
     // (edit is bank_power_user-only), so 0 is only ever a type-level fallback.
-    effective_rate: frameworkAgreement.effective_rate ?? 0,
-    vfe_rate: frameworkAgreement.vfe_rate ?? undefined,
+    vfe_amount_eur: frameworkAgreement.vfe_amount_eur ?? undefined,
     valid_from: frameworkAgreement.valid_from,
     valid_until: frameworkAgreement.valid_until ?? "",
     special_conditions: frameworkAgreement.special_conditions ?? "",

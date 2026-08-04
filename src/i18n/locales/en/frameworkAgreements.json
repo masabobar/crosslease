@@ -60,7 +60,8 @@
     "specialConditions": "Special conditions",
     "allowedProductTemplates": "Allowed product templates",
     "optional": "(optional)",
-    "openEnded": "Open ended"
+    "openEnded": "Open ended",
+    "vfeAmountEur": "Early repayment penalty (VFE)"
   },
   "units": {
     "eur": "EUR",
@@ -89,7 +90,8 @@
       "creditEnvelopeSection": "Credit envelope",
       "pricingSection": "Pricing (inherited by financings)",
       "maxVolumeHint": "Hard ceiling on total disbursable amount under this agreement.",
-      "vfeRateHint": "Flat early-repayment penalty rate for this leasing company. Prefilled from the leasing company default; override per agreement."
+      "vfeRateHint": "Flat early-repayment penalty rate for this leasing company. Prefilled from the leasing company default; override per agreement.",
+      "vfeAmountHint": "Absolute amount added when an early repayment is calculated."
     },
     "validityTemplates": {
       "title": "Validity & product templates",
@@ -284,7 +286,6 @@
   },
   "errors": {
     "atLeastOneTemplate": "Select at least one Product Template",
-    "rateRange": "Enter a value between {{min}} and {{max}} %.",
     "validUntilBeforeFrom": "Valid Until must be after Valid From",
     "FA_NOT_FOUND": "This framework agreement could not be found.",
     "FA_NAME_CONFLICT": "An agreement with this name already exists for this leasing company.",
@@ -304,6 +305,7 @@
     "FA_RECONSTRUCTION_TIMESTAMP": "This timestamp is invalid. It must be in the past and the agreement must have existed at that point in time.",
     "FA_EXPORT_REASON_REQUIRED": "A reason is required to export this audit history.",
     "generic": "Something went wrong. Please try again.",
-    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields.",
+    "vfeAmountMin": "Must be {{min}} EUR or more."
   }
 }

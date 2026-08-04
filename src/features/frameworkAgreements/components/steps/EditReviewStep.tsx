@@ -64,19 +64,11 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
             }
           />
           <ReviewRow
-            label={t("fields.effectiveRate")}
+            label={t("fields.vfeAmountEur")}
             value={
-              values.effective_rate !== undefined &&
-              !Number.isNaN(values.effective_rate)
-                ? `${values.effective_rate}%`
-                : "—"
-            }
-          />
-          <ReviewRow
-            label={t("fields.vfeRate")}
-            value={
-              values.vfe_rate !== undefined && !Number.isNaN(values.vfe_rate)
-                ? `${values.vfe_rate}%`
+              values.vfe_amount_eur !== undefined &&
+              !Number.isNaN(values.vfe_amount_eur)
+                ? `${values.vfe_amount_eur.toLocaleString()} EUR`
                 : "—"
             }
           />
@@ -136,7 +128,7 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
         <Textarea
           id="edit_justification"
           data-testid="edit-justification-textarea"
-          className="min-h-[100px] resize-none"
+          className="min-h-[100px] resize-y"
           rows={4}
           aria-invalid={!!errors.justification}
           {...register("justification")}

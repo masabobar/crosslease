@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import { frameworkAgreementDetail } from "@/router/paths"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { useFrameworkAgreementDetail } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDetail"
@@ -56,7 +57,7 @@ const STEP_FIELDS: Record<
   (keyof EditFrameworkAgreementFormValues)[]
 > = {
   identity: ["agreement_name", "valid_from"],
-  envelopePricing: ["max_volume_eur", "effective_rate", "vfe_rate"],
+  envelopePricing: ["max_volume_eur", "vfe_amount_eur"],
   validityTemplates: ["valid_until", "product_template_ids"],
   conditions: ["special_conditions"],
   review: ["justification"],
@@ -319,11 +320,12 @@ function EditWizardForm({
 export default function EditFrameworkAgreementWizardPage() {
   const { t } = useTranslation("frameworkAgreements")
   const { id } = useParams<{ id: string }>()
+  const agreementId = isUuidRouteParam(id) ? id : undefined
   const { data, isLoading, isError, error } = useFrameworkAgreementDetail(
-    id ?? ""
+    agreementId ?? ""
   )
 
-  if (isFrameworkAgreementNotFoundError(error)) {
+  if (agreementId === undefined || isFrameworkAgreementNotFoundError(error)) {
     return <NotFoundPage />
   }
 

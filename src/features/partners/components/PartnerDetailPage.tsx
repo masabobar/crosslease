@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { PartnerTypeBadge } from "@/features/partners/components/PartnerTypeBadge"
 import {
@@ -55,7 +56,8 @@ type TabKey =
 
 export default function PartnerDetailPage() {
   const { t } = useTranslation("partners")
-  const { id } = useParams<{ id: string }>()
+  const { id: idParam } = useParams<{ id: string }>()
+  const id = isUuidRouteParam(idParam) ? idParam : undefined
   const { data: partner, isLoading, isError } = usePartnerDetail(id ?? null)
   const { data: currentUser } = useCurrentUser()
   const { data: rolesData, isError: isRolesError } = usePartnerRoles(

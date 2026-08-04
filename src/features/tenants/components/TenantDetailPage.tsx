@@ -31,6 +31,8 @@ import {
 } from "@/features/tenants/api/schema"
 import { formatDateTime } from "@/lib/formatters"
 import { countryName } from "@/lib/countries"
+import { isUuidRouteParam } from "@/lib/routeParams"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 
 function MetaItem({
   icon,
@@ -162,7 +164,8 @@ function TenantDetailSkeleton() {
 }
 
 export default function TenantDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id: idParam } = useParams<{ id: string }>()
+  const id = isUuidRouteParam(idParam) ? idParam : undefined
   const { t } = useTranslation("tenants")
   const { data: currentUser } = useCurrentUser()
   const { data: tenant, isLoading, isError } = useTenantDetail(id ?? null)
@@ -206,6 +209,13 @@ export default function TenantDetailPage() {
   const effectiveTab: TabKey = visibleTabs.some(t => t.key === activeTab)
     ? activeTab
     : (visibleTabs[0]?.key ?? "overview")
+
+  // A param that is not a UUID can never identify a record. These pages render their
+  // loading and error states inline, so a disabled query would leave an empty shell —
+  // the explicit not-found return is what the user sees instead.
+  if (id === undefined) {
+    return <NotFoundPage />
+  }
 
   return (
     <div className="flex flex-col h-full" data-testid="tenant-detail-page">

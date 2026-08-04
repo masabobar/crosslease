@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/lib/api"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUsers } from "@/features/users/hooks/useUsers"
 import { CaseChecklistTable } from "@/features/workflowTaskCatalog/components/CaseChecklistTable"
@@ -49,7 +50,12 @@ import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/ru
  */
 export default function CaseChecklistPage() {
   const { t } = useTranslation("workflowTaskCatalog")
-  const { businessObjectId } = useParams<{ businessObjectId: string }>()
+  const { businessObjectId: businessObjectIdParam } = useParams<{
+    businessObjectId: string
+  }>()
+  const businessObjectId = isUuidRouteParam(businessObjectIdParam)
+    ? businessObjectIdParam
+    : undefined
   const { data: currentUser } = useCurrentUser()
 
   const {
