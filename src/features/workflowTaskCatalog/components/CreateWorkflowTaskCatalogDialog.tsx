@@ -1,7 +1,7 @@
-import { useForm, Controller } from "react-hook-form"
+import { useForm, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { format } from "date-fns"
+import { format, parseISO, startOfToday } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Lock } from "lucide-react"
@@ -141,6 +141,15 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
     ),
     defaultValues: EMPTY_FORM_VALUES,
   })
+
+  // Calendar floors, matched to the schema rules above so the two can never disagree:
+  // refineValidFrom rejects a validFrom before today, and VALID_UNTIL_REFINEMENT accepts
+  // validUntil >= validFrom — equal dates are legal here, so the end floor is the chosen
+  // start itself rather than the day after it. Both schemas share these two fields, so one
+  // pair of floors covers Global Default and Product-Specific alike.
+  const validFrom = useWatch({ control, name: "validFrom" })
+  const today = startOfToday()
+  const validUntilMin = validFrom ? parseISO(validFrom) : today
 
   function resolveMessage(message: string | undefined): string | undefined {
     if (!message) return undefined
@@ -378,6 +387,7 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
                     value={field.value}
                     onChange={field.onChange}
                     error={!!errors.validFrom}
+                    minDate={today}
                     captionLayout="dropdown"
                   />
                 )}
@@ -410,6 +420,7 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
                     value={field.value}
                     onChange={field.onChange}
                     error={!!errors.validUntil}
+                    minDate={validUntilMin}
                     captionLayout="dropdown"
                   />
                 )}

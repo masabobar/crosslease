@@ -1,7 +1,7 @@
 # Specialized Rules — Index
 
-**Version:** 3.6.0
-**Last Updated:** 2026-07-05
+**Version:** 3.7.0
+**Last Updated:** 2026-08-04
 **Status:** Active
 
 Navigable index of the rule files in `.claude/rules/`. Rules are loaded by Claude during `/execute-work` and other commands; the load list is conditional — only the rules whose trigger fires for a given task are required reading. See `CLAUDE.md` §3 for the same grouping in narrative form, and `execute-work.md` "CRITICAL RULES" for which rules each story type pulls.
@@ -53,6 +53,12 @@ Navigable index of the rule files in `.claude/rules/`. Rules are loaded by Claud
 
 | File | Topic | Trigger |
 | ---- | ----- | ------- |
+
+### When a screen has a date input
+
+| File                               | Topic                                                                                                                                                                                               | Trigger                                                |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [`date-inputs.md`](date-inputs.md) | Calendar bounds **and** Zod validation, both required; the floor derived from the same decision as the schema rule; a paired end picker watched, not static; the create / edit / filter distinction | Any form, dialog or filter containing a `<DatePicker>` |
 
 ### When an enum-like value crosses a layer boundary
 
