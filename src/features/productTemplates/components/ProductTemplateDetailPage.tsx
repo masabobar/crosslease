@@ -5,6 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { SectionCard } from "@/components/shared/SectionCard"
 import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
+import { isUuidRouteParam, isVersionNumberRouteParam } from "@/lib/routeParams"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import { DetailRow } from "@/features/productTemplates/components/ProductTemplateDetailPrimitives"
 import { ProductTemplatePublishedActions } from "@/features/productTemplates/components/ProductTemplatePublishedActions"
@@ -46,16 +48,29 @@ import { productTemplateVersionHistory } from "@/router/paths"
  */
 export default function ProductTemplateDetailPage() {
   const { t } = useTranslation("productTemplates")
-  const { templateId, versionNumber } = useParams<{
-    templateId: string
-    versionNumber: string
-  }>()
+  const { templateId: templateIdParam, versionNumber: versionNumberParam } =
+    useParams<{
+      templateId: string
+      versionNumber: string
+    }>()
+  // Validated then reused under the same names, so the usages below are unchanged. A
+  // malformed link resolves to null and the not-found branch fires before any request.
+  const templateId = isUuidRouteParam(templateIdParam)
+    ? templateIdParam
+    : undefined
+  const versionNumber = isVersionNumberRouteParam(versionNumberParam)
+    ? versionNumberParam
+    : undefined
   const { data: currentUser } = useCurrentUser()
 
   const { data, isLoading, isError, error } = useTemplateVersionDetail(
     templateId ?? "",
     versionNumber ?? null
   )
+
+  if (templateId === undefined || versionNumber === undefined) {
+    return <NotFoundPage />
+  }
 
   const canManageDraft = Boolean(
     currentUser?.role &&

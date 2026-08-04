@@ -30,6 +30,7 @@ import type {
 } from "@/features/productTemplates/api/schema"
 import { PATHS, productTemplateNewVersionEdit } from "@/router/paths"
 import { formatDateTime } from "@/lib/formatters"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import {
   isProductTemplateNotFoundError,
   showApiError,
@@ -59,7 +60,13 @@ function auditTrailLink(templateId: string): string {
 export default function VersionHistoryPage() {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
-  const { templateId } = useParams<{ templateId: string }>()
+  // Validated before use, then reused under the same name so every downstream
+  // `templateId ?? ""` keeps working: a non-UUID param resolves to undefined and
+  // the not-found branch below fires before any request is made.
+  const { templateId: templateIdParam } = useParams<{ templateId: string }>()
+  const templateId = isUuidRouteParam(templateIdParam)
+    ? templateIdParam
+    : undefined
   const navigate = useNavigate()
 
   const [discardTarget, setDiscardTarget] =
@@ -101,7 +108,10 @@ export default function VersionHistoryPage() {
     }),
   }))
 
-  if (isProductTemplateNotFoundError(versionsError)) {
+  if (
+    templateId === undefined ||
+    isProductTemplateNotFoundError(versionsError)
+  ) {
     return <NotFoundPage />
   }
 

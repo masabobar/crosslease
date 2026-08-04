@@ -136,7 +136,7 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
         <Textarea
           id="edit_justification"
           data-testid="edit-justification-textarea"
-          className="min-h-[100px] resize-none"
+          className="min-h-[100px] resize-y"
           rows={4}
           aria-invalid={!!errors.justification}
           {...register("justification")}

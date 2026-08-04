@@ -19,6 +19,7 @@ import { AuditHistoryTab } from "@/features/frameworkAgreements/components/Audit
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { isUuidRouteParam } from "@/lib/routeParams"
 import { frameworkAgreementEdit } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
@@ -58,12 +59,15 @@ function CopyButton({ text }: { text: string }) {
 export default function FrameworkAgreementDetailPage() {
   const { t } = useTranslation("frameworkAgreements")
   const { id } = useParams<{ id: string }>()
+  // `/framework-agreements/create` — a mistyped `/new` — matches this route's `:id`, so a
+  // param that is not a UUID reads as not-found rather than a 422 behind a generic message.
+  const agreementId = isUuidRouteParam(id) ? id : undefined
   const [activateDialogOpen, setActivateDialogOpen] = useState(false)
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
   const navigate = useNavigate()
 
   const { data, isLoading, isError, error } = useFrameworkAgreementDetail(
-    id ?? ""
+    agreementId ?? ""
   )
   const { data: currentUser } = useCurrentUser()
   const canManageFrameworkAgreement = Boolean(
@@ -75,7 +79,7 @@ export default function FrameworkAgreementDetailPage() {
     FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES.includes(currentUser.role)
   )
 
-  if (isFrameworkAgreementNotFoundError(error)) {
+  if (agreementId === undefined || isFrameworkAgreementNotFoundError(error)) {
     return <NotFoundPage />
   }
 

@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useNavigate, useParams } from "react-router-dom"
+import { isUuidRouteParam, isVersionNumberRouteParam } from "@/lib/routeParams"
 import { useTranslation } from "react-i18next"
 import { ArrowRight, ArrowLeft, Check } from "lucide-react"
 import { toast } from "sonner"
@@ -452,8 +453,14 @@ export default function CreateProductTemplateWizardPage() {
     templateId?: string
     versionNumber?: string
   }>()
+  // Both params absent is the create path and stays valid. Present-but-malformed is a bad
+  // link — it must read as not-found rather than resolve to a request the API rejects.
+  const hasRouteRef = templateId !== undefined || versionNumber !== undefined
   const draftRefFromRoute =
-    templateId && versionNumber ? { templateId, versionNumber } : null
+    isUuidRouteParam(templateId) && isVersionNumberRouteParam(versionNumber)
+      ? { templateId, versionNumber }
+      : null
+  const isRouteRefMalformed = hasRouteRef && draftRefFromRoute === null
 
   const [isPublished, setIsPublished] = useState(false)
 
@@ -484,7 +491,10 @@ export default function CreateProductTemplateWizardPage() {
     )
   }
 
-  if (draftRefFromRoute && isProductTemplateNotFoundError(error)) {
+  if (
+    isRouteRefMalformed ||
+    (draftRefFromRoute && isProductTemplateNotFoundError(error))
+  ) {
     return <NotFoundPage />
   }
 

@@ -11,6 +11,8 @@ import {
   formatDateTime,
 } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { isUuidRouteParam } from "@/lib/routeParams"
+import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import type { AuditEvent } from "@/features/audit/api/schema"
 import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
@@ -534,7 +536,8 @@ function DetailSkeleton() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AuditEventDetailPage() {
-  const { eventId } = useParams<{ eventId: string }>()
+  const { eventId: eventIdParam } = useParams<{ eventId: string }>()
+  const eventId = isUuidRouteParam(eventIdParam) ? eventIdParam : undefined
   const { t } = useTranslation("audit")
   const [activeTab, setActiveTab] = useState<Tab>("overview")
 
@@ -562,6 +565,13 @@ export default function AuditEventDetailPage() {
       testId: "audit-detail-tab-payload",
     },
   ]
+
+  // A param that is not a UUID can never identify a record. These pages render their
+  // loading and error states inline, so a disabled query would leave an empty shell —
+  // the explicit not-found return is what the user sees instead.
+  if (eventId === undefined) {
+    return <NotFoundPage />
+  }
 
   return (
     <div className="p-8" data-testid="audit-event-detail-page">

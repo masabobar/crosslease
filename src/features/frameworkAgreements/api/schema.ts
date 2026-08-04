@@ -238,7 +238,9 @@ export const FADetailResponseSchema = z.object({
   lc_partner_name: z.string().nullable(),
   status: FALifecycleStatusSchema,
   // Derived server-side from valid_until (CR PRD1042-1552 B2) — see is_fa_expired() in
-  // refinext-api. FALifecycleStatus still has four values; expiry is never a wire status.
+  // refinext-api. Expiry is never a wire status: FALifecycleStatus holds the three values
+  // declared at the top of this file, down from four since CR PRD1042-1799 CR-FA-07
+  // removed Suspend. Its Wave 1 acceptance criterion still says "four" and is stale.
   is_expired: z.boolean(),
   currency: z.string(),
   max_volume_eur: z.coerce.number(),
