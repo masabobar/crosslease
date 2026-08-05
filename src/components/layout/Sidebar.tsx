@@ -43,6 +43,7 @@ import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates
 import { FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 import { FRAMEWORK_AGREEMENT_MODULE_KEY } from "@/features/frameworkAgreements/constants"
 import { WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
+import { DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES } from "@/features/documentRequirements/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 type SidebarNavLinkProps = {
@@ -125,6 +126,10 @@ export function Sidebar() {
   const canAccessWorkflowTaskCatalog =
     !!currentUser &&
     WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES.includes(currentUser.role)
+  // Not gated on module activation — same reasoning as Workflow Task Catalog above.
+  const canAccessDocumentRequirementCatalog =
+    !!currentUser &&
+    DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -169,6 +174,9 @@ export function Sidebar() {
   )
   const isWorkflowTaskCatalogListActive = location.pathname.startsWith(
     PATHS.WORKFLOW_TASK_CATALOG_LIST
+  )
+  const isDocumentRequirementCatalogListActive = location.pathname.startsWith(
+    PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST
   )
 
   return (
@@ -461,6 +469,14 @@ export function Sidebar() {
                       label={t("nav.workflowTaskCatalogs")}
                       testid="nav-workflow-task-catalogs"
                       isActive={isWorkflowTaskCatalogListActive}
+                    />
+                  )}
+                  {canAccessDocumentRequirementCatalog && (
+                    <SidebarNavLink
+                      to={PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST}
+                      label={t("nav.documentRequirementCatalogs")}
+                      testid="nav-document-requirement-catalogs"
+                      isActive={isDocumentRequirementCatalogListActive}
                     />
                   )}
                 </CollapsibleContent>

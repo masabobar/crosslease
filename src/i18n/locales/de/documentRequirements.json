@@ -1,0 +1,192 @@
+{
+  "catalogTypes": {
+    "global_default": "Globaler Standard",
+    "product_specific": "Produktspezifisch"
+  },
+  "processContexts": {
+    "refinancing_request": "Refinanzierungsanfrage",
+    "lease_contract": "Leasingvertrag",
+    "financing": "Finanzierung",
+    "disbursement": "Auszahlung"
+  },
+  "list": {
+    "title": "Dokumentenanforderungskatalog",
+    "subtitle": "Verwalten Sie die Dokumentenanforderungskataloge Ihres Mandanten.",
+    "createButton": "Katalog erstellen",
+    "filters": {
+      "searchPlaceholder": "Nach Katalogname suchen",
+      "allCatalogTypes": "Alle Katalogtypen",
+      "allProcessContexts": "Alle Prozesskontexte"
+    },
+    "table": {
+      "columns": {
+        "catalogName": "Katalogname",
+        "catalogType": "Katalogtyp",
+        "processContexts": "Prozesskontexte",
+        "productTemplate": "Produktvorlage",
+        "validFrom": "Gültig von",
+        "validTo": "Gültig bis",
+        "createdAt": "Erstellt am"
+      },
+      "notApplicable": "—",
+      "openEnded": "Unbefristet"
+    },
+    "emptyState": {
+      "title": "Noch keine Dokumentenanforderungskataloge",
+      "description": "Erstellen Sie einen Katalog, um zu beginnen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Kataloge entsprechen Ihren Filtern",
+      "description": "Passen Sie Ihre Suche oder Filter an."
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "create": {
+    "title": "Dokumentenanforderungskatalog erstellen",
+    "subtitle": "Einen neuen Dokumentenanforderungskatalog erstellen.",
+    "fields": {
+      "catalogName": "Katalogname",
+      "catalogType": "Katalogtyp",
+      "catalogTypePlaceholder": "Auswählen",
+      "productTemplate": "Zutreffende Produktvorlage",
+      "productTemplatePlaceholder": "Auswählen",
+      "processContexts": "Zutreffende Prozesskontexte",
+      "validFrom": "Gültig von",
+      "validTo": "Gültig bis",
+      "optional": "(optional)"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "submit": "Erstellen"
+    },
+    "success": "Katalog erstellt.",
+    "errors": {
+      "validToBeforeValidFrom": "Gültig bis muss am oder nach Gültig von liegen.",
+      "validFromInPast": "Gültig von darf nicht in der Vergangenheit liegen."
+    }
+  },
+  "detail": {
+    "header": {
+      "productTemplate": "Produktvorlage",
+      "processContexts": "Prozesskontexte"
+    },
+    "tabs": {
+      "identity": "Identität",
+      "requirements": "Anforderungen",
+      "sourceLayer": "Quellebene",
+      "audit": "Audit"
+    },
+    "identity": {
+      "title": "Katalogidentität",
+      "editButton": "Bearbeiten",
+      "catalogName": "Katalogname",
+      "catalogType": "Katalogtyp",
+      "productTemplate": "Produktvorlage",
+      "processContexts": "Prozesskontexte",
+      "validFrom": "Gültig von",
+      "validTo": "Gültig bis",
+      "createdBy": "Erstellt von",
+      "createdAt": "Erstellt am",
+      "updatedAt": "Aktualisiert am",
+      "notApplicable": "—",
+      "openEnded": "Unbefristet",
+      "editTitle": "Katalogidentität bearbeiten",
+      "editSubtitle": "Katalogtyp und Produktvorlage können nach der Erstellung nicht geändert werden.",
+      "editSubmit": "Speichern",
+      "editSuccess": "Katalog aktualisiert."
+    }
+  },
+  "requirement": {
+    "actionsMenuLabel": "Zeilenaktionen",
+    "actions": {
+      "edit": "Bearbeiten",
+      "deactivate": "Deaktivieren"
+    },
+    "table": {
+      "columns": {
+        "requirementCode": "Anforderungscode",
+        "documentTypeName": "Dokumenttyp",
+        "classification": "Klassifizierung",
+        "sourceLayer": "Quellebene",
+        "status": "Status"
+      }
+    },
+    "emptyState": {
+      "title": "Noch keine Anforderungen",
+      "description": "Fügen Sie eine Anforderung hinzu, um zu beginnen."
+    },
+    "emptyFiltered": {
+      "title": "Keine inaktiven Anforderungen",
+      "description": "Alle Anforderungen in diesem Katalog sind aktiv."
+    },
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "showInactive": "Inaktive anzeigen",
+    "addButton": "Anforderung hinzufügen",
+    "addTitle": "Anforderung hinzufügen",
+    "editTitle": "Anforderung bearbeiten",
+    "addSubmit": "Hinzufügen",
+    "editSubmit": "Speichern",
+    "addSuccess": "Anforderung hinzugefügt.",
+    "editSuccess": "Anforderung aktualisiert.",
+    "deactivateSuccess": "Anforderung deaktiviert.",
+    "yes": "Ja",
+    "no": "Nein",
+    "fields": {
+      "requirementCode": "Anforderungscode",
+      "documentTypeCode": "Dokumenttypcode",
+      "documentTypeName": "Dokumenttypname",
+      "description": "Beschreibung",
+      "classification": "Klassifizierung",
+      "governanceClassification": "Governance-Klassifizierung",
+      "processContexts": "Prozesskontexte",
+      "stageCategorization": "Phasenkategorisierung",
+      "stageNone": "Keine",
+      "blocksSubmission": "Blockiert Einreichung",
+      "documentOrigin": "Dokumentherkunft",
+      "predicatePostMvpNote": "Die Prädikatserstellung ist noch nicht verfügbar — diese Anforderung wird zur Laufzeit als optional behandelt, bis in einer zukünftigen Version ein Prädikat hinzugefügt wird."
+    },
+    "classifications": {
+      "mandatory": "Pflicht",
+      "optional": "Optional",
+      "conditional": "Bedingt"
+    },
+    "governance": {
+      "operational": "Operativ",
+      "compliance_sensitive": "Compliance-sensibel",
+      "regulatory_critical": "Regulatorisch kritisch"
+    },
+    "sourceLayers": {
+      "default": "Standard",
+      "override": "Überschreibung",
+      "supplement": "Ergänzung",
+      "deactivated": "Deaktiviert"
+    },
+    "stages": {
+      "submission": "Einreichung",
+      "approval": "Genehmigung",
+      "disbursement_readiness": "Auszahlungsbereitschaft"
+    },
+    "documentOrigins": {
+      "uploaded": "Hochgeladen",
+      "generated": "Generiert"
+    }
+  },
+  "preview": {
+    "title": "Vorschau des effektiven Anforderungssatzes",
+    "diagnosticBadge": "Diagnose · nur lesend · wird nie gespeichert",
+    "selectProcessContext": "Prozesskontext auswählen",
+    "previewButton": "Vorschau",
+    "emptyState": "Keine aktiven Anforderungen entsprechen diesem Prozesskontext."
+  },
+  "sourceLayer": {
+    "emptyGroup": "Keine Anforderungen in dieser Ebene."
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}
