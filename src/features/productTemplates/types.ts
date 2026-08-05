@@ -4,18 +4,19 @@ import {
   BANK_POWER_USER_ROLE,
   FRONT_OFFICE_ROLE,
   SUPPORT_USER_ROLE,
-  SYSTEM_ADMIN_ROLE,
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
+// system_admin is deliberately absent from both lists below: PRD1042-1703 #1 excludes the
+// platform operator from every product_template:* permission (including the four-eyes
+// approver role), matching the FA module's existing exclusion — see the same note in
+// frameworkAgreements/types.ts.
 export const PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES: readonly UserRole[] = [
-  SYSTEM_ADMIN_ROLE,
   BANK_POWER_USER_ROLE,
 ]
 
 export const PRODUCT_TEMPLATE_READ_ALLOWED_ROLES: readonly UserRole[] = [
-  SYSTEM_ADMIN_ROLE,
   BANK_POWER_USER_ROLE,
   FRONT_OFFICE_ROLE,
   BACK_OFFICE_ROLE,
