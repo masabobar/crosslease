@@ -32,6 +32,7 @@ import {
   CASE_CHECKLIST_READ_ALLOWED_ROLES,
   WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES,
 } from "@/features/workflowTaskCatalog/types"
+import { DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES } from "@/features/documentRequirements/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -154,6 +155,10 @@ const CaseChecklistPage = lazy(
 const WorkflowTaskCatalogDetailPage = lazy(
   () =>
     import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogDetailPage")
+)
+const DocumentRequirementCatalogListPage = lazy(
+  () =>
+    import("@/features/documentRequirements/components/DocumentRequirementCatalogListPage")
 )
 
 export const router = createBrowserRouter([
@@ -507,6 +512,18 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES}>
               <WorkflowTaskCatalogDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard
+              allowed={DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES}
+            >
+              <DocumentRequirementCatalogListPage />
             </RoleGuard>
           </Suspense>
         ),

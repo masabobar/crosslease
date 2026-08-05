@@ -1,0 +1,75 @@
+{
+  "catalogTypes": {
+    "global_default": "Globaler Standard",
+    "product_specific": "Produktspezifisch"
+  },
+  "processContexts": {
+    "refinancing_request": "Refinanzierungsanfrage",
+    "lease_contract": "Leasingvertrag",
+    "financing": "Finanzierung",
+    "disbursement": "Auszahlung"
+  },
+  "list": {
+    "title": "Dokumentenanforderungskatalog",
+    "subtitle": "Verwalten Sie die Dokumentenanforderungskataloge Ihres Mandanten.",
+    "createButton": "Katalog erstellen",
+    "filters": {
+      "searchPlaceholder": "Nach Katalogname suchen",
+      "allCatalogTypes": "Alle Katalogtypen",
+      "allProcessContexts": "Alle Prozesskontexte"
+    },
+    "table": {
+      "columns": {
+        "catalogName": "Katalogname",
+        "catalogType": "Katalogtyp",
+        "processContexts": "Prozesskontexte",
+        "productTemplate": "Produktvorlage",
+        "validFrom": "Gültig von",
+        "validTo": "Gültig bis",
+        "createdAt": "Erstellt am"
+      },
+      "notApplicable": "—",
+      "openEnded": "Unbefristet"
+    },
+    "emptyState": {
+      "title": "Noch keine Dokumentenanforderungskataloge",
+      "description": "Erstellen Sie einen Katalog, um zu beginnen."
+    },
+    "emptyFiltered": {
+      "title": "Keine Kataloge entsprechen Ihren Filtern",
+      "description": "Passen Sie Ihre Suche oder Filter an."
+    },
+    "pagination": {
+      "rowsPerPage": "Zeilen pro Seite",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "create": {
+    "title": "Dokumentenanforderungskatalog erstellen",
+    "subtitle": "Einen neuen Dokumentenanforderungskatalog erstellen.",
+    "fields": {
+      "catalogName": "Katalogname",
+      "catalogType": "Katalogtyp",
+      "catalogTypePlaceholder": "Auswählen",
+      "productTemplate": "Zutreffende Produktvorlage",
+      "productTemplatePlaceholder": "Auswählen",
+      "processContexts": "Zutreffende Prozesskontexte",
+      "validFrom": "Gültig von",
+      "validTo": "Gültig bis",
+      "optional": "(optional)"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "submit": "Erstellen"
+    },
+    "success": "Katalog erstellt.",
+    "errors": {
+      "validToBeforeValidFrom": "Gültig bis muss am oder nach Gültig von liegen.",
+      "validFromInPast": "Gültig von darf nicht in der Vergangenheit liegen."
+    }
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

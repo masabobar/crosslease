@@ -1,11 +1,11 @@
 import { z } from "zod"
 
 /**
- * Read-only slice of the Document Requirement Catalog (Epic 16).
+ * Document Requirement Catalog (Epic 16) — wire schemas.
  *
- * Only the fields the Workflow Task Catalog needs to render and pick a document requirement are
- * modelled — Zod strips the rest at `parse()`. E16 has no other FE presence yet; when it gains its
- * own screens they will own the full shapes and this can be folded into them.
+ * `DocumentRequirementSchema` below predates the catalog's own screens and is kept as the
+ * read-only slice the Workflow Task Catalog picker needs (see its doc comment). Everything else
+ * in this file backs the catalog's own list/create screens (US 16.19, 16.1).
  */
 
 // Same two-layer model as the workflow task catalogue.
@@ -25,6 +25,7 @@ export const DocumentRequirementCatalogListItemSchema = z.object({
   product_template_id: z.string().uuid().nullable(),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
+  created_at: z.string(),
 })
 export type DocumentRequirementCatalogListItem = z.infer<
   typeof DocumentRequirementCatalogListItemSchema
@@ -41,6 +42,45 @@ export type DocumentRequirementCatalogListResponse = z.infer<
   typeof DocumentRequirementCatalogListResponseSchema
 >
 
+// POST /tenants/{tenant_id}/document-requirement-catalogs — mirrors CreateCatalogRequest.
+// product_template_id is required for product_specific and must be absent for global_default;
+// enforced by the two create-dialog schemas (see CreateDocumentRequirementCatalogDialog), not
+// here — the BE itself has no such cross-field check beyond product_template_id being nullable.
+export const CreateDocumentRequirementCatalogRequestSchema = z.object({
+  catalog_name: z.string().min(1).max(200),
+  catalog_type: DocumentRequirementCatalogTypeSchema,
+  applicable_process_contexts: z.array(z.string()).min(1),
+  product_template_id: z.string().uuid().nullable(),
+  valid_from: z.string().nullable(),
+  valid_to: z.string().nullable(),
+})
+export type CreateDocumentRequirementCatalogRequest = z.infer<
+  typeof CreateDocumentRequirementCatalogRequestSchema
+>
+
+// 201 from the create endpoint — mirrors CatalogResponse. No `catalog_state`/`operational_state`
+// field exists on the wire (US 16.1: a catalog is Active on creation, no separate publish step),
+// so there is nothing to parse for one — see open-questions.md for the list-column gap this
+// causes.
+export const DocumentRequirementCatalogResponseSchema = z.object({
+  id: z.string().uuid(),
+  catalog_name: z.string(),
+  catalog_type: DocumentRequirementCatalogTypeSchema,
+  applicable_process_contexts: z.array(z.string()),
+  product_template_id: z.string().uuid().nullable(),
+  valid_from: z.string().nullable(),
+  valid_to: z.string().nullable(),
+  created_by: z.string().uuid(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+export type DocumentRequirementCatalogResponse = z.infer<
+  typeof DocumentRequirementCatalogResponseSchema
+>
+
+// GET /document-requirement-catalogs/{catalog_id}/requirements — read-only slice consumed by the
+// Workflow Task Catalog's document-requirement picker (US 15.7). Predates this catalog's own
+// screens.
 export const DocumentRequirementSchema = z.object({
   id: z.string().uuid(),
   catalog_id: z.string().uuid(),

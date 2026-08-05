@@ -1,0 +1,75 @@
+{
+  "catalogTypes": {
+    "global_default": "Global default",
+    "product_specific": "Product-specific"
+  },
+  "processContexts": {
+    "refinancing_request": "Refinancing Request",
+    "lease_contract": "Lease Contract",
+    "financing": "Financing",
+    "disbursement": "Disbursement"
+  },
+  "list": {
+    "title": "Document requirement catalog",
+    "subtitle": "Manage document requirement catalogs used across your tenant.",
+    "createButton": "Create catalog",
+    "filters": {
+      "searchPlaceholder": "Search by catalog name",
+      "allCatalogTypes": "All catalog types",
+      "allProcessContexts": "All process contexts"
+    },
+    "table": {
+      "columns": {
+        "catalogName": "Catalog name",
+        "catalogType": "Catalog type",
+        "processContexts": "Process contexts",
+        "productTemplate": "Product template",
+        "validFrom": "Valid from",
+        "validTo": "Valid to",
+        "createdAt": "Created at"
+      },
+      "notApplicable": "—",
+      "openEnded": "Open ended"
+    },
+    "emptyState": {
+      "title": "No document requirement catalogs yet",
+      "description": "Create a catalog to get started."
+    },
+    "emptyFiltered": {
+      "title": "No catalogs match your filters",
+      "description": "Try adjusting your search or filters."
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "create": {
+    "title": "Create document requirement catalog",
+    "subtitle": "Create a new document requirement catalog.",
+    "fields": {
+      "catalogName": "Catalog name",
+      "catalogType": "Catalog type",
+      "catalogTypePlaceholder": "Select",
+      "productTemplate": "Applicable product template",
+      "productTemplatePlaceholder": "Select",
+      "processContexts": "Applicable process contexts",
+      "validFrom": "Valid from",
+      "validTo": "Valid to",
+      "optional": "(optional)"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submit": "Create"
+    },
+    "success": "Catalog created.",
+    "errors": {
+      "validToBeforeValidFrom": "Valid to must be on or after valid from.",
+      "validFromInPast": "Valid from cannot be in the past."
+    }
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  }
+}

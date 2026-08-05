@@ -55,6 +55,8 @@ export const PATHS = {
   WORKFLOW_TASK_CATALOG_LIST: "/business-configuration/workflow-task-catalogs",
   WORKFLOW_TASK_CATALOG_DETAIL:
     "/business-configuration/workflow-task-catalogs/:id",
+  DOCUMENT_REQUIREMENT_CATALOG_LIST:
+    "/business-configuration/document-requirement-catalogs",
   // Case work, not business configuration — hence the separate prefix. No case module exists yet
   // to link here, so this is the interim entry point for the runtime checklist; see the design
   // provenance note on CaseChecklistPage.tsx.
