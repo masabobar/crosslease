@@ -16,6 +16,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useUpdateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useUpdateDocumentRequirementCatalog"
 import { PROCESS_CONTEXT_OPTIONS } from "@/features/documentRequirements/constants"
 import type { DocumentRequirementCatalogDetailResponse } from "@/features/documentRequirements/api/schema"
@@ -62,6 +63,8 @@ function EditDocumentRequirementCatalogDialog({
     control,
     register,
     handleSubmit,
+    getValues,
+    setError,
     formState: { errors },
   } = useForm<EditCatalogFormValues>({
     resolver: zodResolver(editCatalogSchema),
@@ -102,6 +105,15 @@ function EditDocumentRequirementCatalogDialog({
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

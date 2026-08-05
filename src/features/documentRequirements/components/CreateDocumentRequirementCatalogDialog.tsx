@@ -17,6 +17,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useCreateDocumentRequirementCatalog"
@@ -116,6 +117,8 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
     register,
     handleSubmit,
     reset,
+    getValues,
+    setError,
     formState: { errors },
   } = useForm<CreateCatalogFormValues>({
     resolver: zodResolver(createCatalogSchema),
@@ -164,6 +167,15 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
           handleClose()
         },
         onError: err => {
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

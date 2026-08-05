@@ -19,6 +19,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useAddRequirement } from "@/features/documentRequirements/hooks/useAddRequirement"
 import { useUpdateRequirement } from "@/features/documentRequirements/hooks/useUpdateRequirement"
 import { PROCESS_CONTEXT_OPTIONS } from "@/features/documentRequirements/constants"
@@ -131,6 +132,8 @@ function RequirementSheet({
     control,
     register,
     handleSubmit,
+    getValues,
+    setError,
     formState: { errors },
   } = useForm<RequirementFormValues>({
     resolver: zodResolver(requirementFieldsSchema),
@@ -170,6 +173,15 @@ function RequirementSheet({
     }
 
     const onError = (err: unknown) => {
+      if (
+        applyApiFieldErrors({
+          error: err,
+          fields: Object.keys(getValues()),
+          setError,
+        })
+      )
+        return
+
       toast.error(
         err instanceof ApiError
           ? t(`errors.${err.code}` as "errors.generic", {
