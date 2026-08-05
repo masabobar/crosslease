@@ -1294,23 +1294,24 @@ const VersionDetailResponse = z
     max_ltv_ratio: z.union([z.string(), z.null()]),
     min_volume_eur: z.union([z.string(), z.null()]),
     max_volume_eur: z.union([z.string(), z.null()]),
+    effective_rate: z.union([z.string(), z.null()]),
     predecessor_version_id: z.union([z.string(), z.null()]),
     snapshot_source_version_id: z.union([z.string(), z.null()]),
-    published_at: z.union([z.string(), z.null()]),
-    published_by: z
+    activated_at: z.union([z.string(), z.null()]),
+    activated_by: z
       .union([
         app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
         z.null(),
       ])
       .optional(),
-    deprecated_at: z.union([z.string(), z.null()]),
-    deprecated_by: z
+    terminated_at: z.union([z.string(), z.null()]),
+    terminated_by: z
       .union([
         app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
         z.null(),
       ])
       .optional(),
-    deprecation_justification: z.union([z.string(), z.null()]),
+    termination_justification: z.union([z.string(), z.null()]),
     bindings_count: z.number().int().optional().default(0),
     created_at: z.string().datetime({ offset: true }),
   })
@@ -1337,6 +1338,7 @@ const UpdateTemplateDraftRequest = z
     max_ltv_ratio: z.union([z.number(), z.string(), z.null()]),
     min_volume_eur: z.union([z.number(), z.string(), z.null()]),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]),
+    effective_rate: z.union([z.number(), z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -1374,8 +1376,8 @@ const PublishTemplateDraftResponse = z
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    published_at: z.string().datetime({ offset: true }),
-    published_by: z.string().uuid(),
+    activated_at: z.string().datetime({ offset: true }),
+    activated_by: z.string().uuid(),
   })
   .passthrough()
 const NewVersionCreatedResponse = z
@@ -1392,15 +1394,15 @@ const TemplateVersionSummary = z
     id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    published_at: z.union([z.string(), z.null()]).optional(),
-    deprecated_at: z.union([z.string(), z.null()]).optional(),
-    published_by: z
+    activated_at: z.union([z.string(), z.null()]).optional(),
+    terminated_at: z.union([z.string(), z.null()]).optional(),
+    activated_by: z
       .union([
         app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
         z.null(),
       ])
       .optional(),
-    deprecated_by: z
+    terminated_by: z
       .union([
         app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
         z.null(),
@@ -1415,32 +1417,16 @@ const TemplateVersionSummary = z
 const VersionHistoryResponse = z
   .object({ versions: z.array(TemplateVersionSummary) })
   .passthrough()
-const DeprecateVersionRequest = z
+const TerminateVersionRequest = z
   .object({ justification: z.string().min(10).max(2000) })
   .passthrough()
-const ImpactSummary = z
-  .object({
-    rr_count: z.number().int().default(0),
-    financing_count: z.number().int().default(0),
-    contract_count: z.number().int().default(0),
-    framework_agreement_count: z.number().int().default(0),
-  })
-  .partial()
-  .passthrough()
-const DeprecateVersionResponse = z
+const TerminateVersionResponse = z
   .object({
     version_id: z.string().uuid(),
     version_status: z.string(),
-    deprecated_at: z.string().datetime({ offset: true }),
-    deprecated_by: z.string().uuid(),
-    impact_summary: ImpactSummary.optional(),
+    terminated_at: z.string().datetime({ offset: true }),
+    terminated_by: z.string().uuid(),
   })
-  .passthrough()
-const SubmitForActivationRequest = z
-  .object({ justification: z.string().min(20).max(2000) })
-  .passthrough()
-const SubmitDeprecationRequest = z
-  .object({ justification: z.string().min(10).max(2000) })
   .passthrough()
 const VersionDiffResponse = z
   .object({
@@ -1454,10 +1440,11 @@ const VersionDiffResponse = z
   .passthrough()
 const TemplateStatus = z.enum([
   "draft",
-  "awaiting_activation_countersignature",
-  "awaiting_deprecation_countersignature",
-  "published",
-  "deprecated",
+  "scheduled",
+  "active",
+  "superseded",
+  "expired",
+  "terminated",
   "discarded",
 ])
 const status = z.union([TemplateStatus, z.null()]).optional()
@@ -1473,13 +1460,13 @@ const TemplateCurrentVersionSummary = z
     max_ltv_ratio: z.union([z.string(), z.null()]).optional(),
     min_term_months: z.union([z.number(), z.null()]).optional(),
     max_term_months: z.union([z.number(), z.null()]).optional(),
-    published_by: z
+    activated_by: z
       .union([
         app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
         z.null(),
       ])
       .optional(),
-    published_at: z.union([z.string(), z.null()]).optional(),
+    activated_at: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const TemplateListItem = z
@@ -1525,6 +1512,7 @@ const CreateTemplateDraftRequest = z
     max_ltv_ratio: z.union([z.number(), z.string(), z.null()]).optional(),
     min_volume_eur: z.union([z.number(), z.string(), z.null()]).optional(),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]).optional(),
+    effective_rate: z.union([z.number(), z.string(), z.null()]).optional(),
   })
   .passthrough()
 const TemplateDraftCreatedResponse = z
@@ -1662,7 +1650,6 @@ const FADetailResponse = z
 const ActivateFARequest = z
   .object({
     documents_confirmed: z.boolean(),
-    effective_from: z.union([z.string(), z.null()]).optional(),
     justification: z.string().min(20).max(1000),
   })
   .passthrough()
@@ -2770,11 +2757,8 @@ export const schemas = {
   NewVersionCreatedResponse,
   TemplateVersionSummary,
   VersionHistoryResponse,
-  DeprecateVersionRequest,
-  ImpactSummary,
-  DeprecateVersionResponse,
-  SubmitForActivationRequest,
-  SubmitDeprecationRequest,
+  TerminateVersionRequest,
+  TerminateVersionResponse,
   VersionDiffResponse,
   TemplateStatus,
   status,
@@ -5638,40 +5622,6 @@ Accessible to all authenticated users.`,
   },
   {
     method: "post",
-    path: "/api/v1/product-templates/:template_id/versions/:version_number/deprecate",
-    alias:
-      "deprecate_template_version_api_v1_product_templates__template_id__versions__version_number__deprecate_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z
-          .object({ justification: z.string().min(10).max(2000) })
-          .passthrough(),
-      },
-      {
-        name: "template_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "version_number",
-        type: "Path",
-        schema: z.string(),
-      },
-    ],
-    response: DeprecateVersionResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
     path: "/api/v1/product-templates/:template_id/versions/:version_number/discard",
     alias:
       "discard_template_draft_api_v1_product_templates__template_id__versions__version_number__discard_post",
@@ -5763,9 +5713,9 @@ Accessible to all authenticated users.`,
   },
   {
     method: "post",
-    path: "/api/v1/product-templates/:template_id/versions/:version_number/submit-deprecation",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/terminate",
     alias:
-      "submit_deprecation_api_v1_product_templates__template_id__versions__version_number__submit_deprecation_post",
+      "terminate_template_version_api_v1_product_templates__template_id__versions__version_number__terminate_post",
     requestFormat: "json",
     parameters: [
       {
@@ -5786,41 +5736,7 @@ Accessible to all authenticated users.`,
         schema: z.string(),
       },
     ],
-    response: GovernedActionResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/product-templates/:template_id/versions/:version_number/submit-for-activation",
-    alias:
-      "submit_for_activation_api_v1_product_templates__template_id__versions__version_number__submit_for_activation_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z
-          .object({ justification: z.string().min(20).max(2000) })
-          .passthrough(),
-      },
-      {
-        name: "template_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "version_number",
-        type: "Path",
-        schema: z.string(),
-      },
-    ],
-    response: GovernedActionResponse,
+    response: TerminateVersionResponse,
     errors: [
       {
         status: 422,

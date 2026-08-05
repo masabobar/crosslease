@@ -4545,11 +4545,11 @@
         }
       }
     },
-    "/api/v1/product-templates/{template_id}/versions/{version_number}/deprecate": {
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/terminate": {
       "post": {
         "tags": ["Product Templates"],
-        "summary": "Deprecate Template Version",
-        "operationId": "deprecate_template_version_api_v1_product_templates__template_id__versions__version_number__deprecate_post",
+        "summary": "Terminate Template Version",
+        "operationId": "terminate_template_version_api_v1_product_templates__template_id__versions__version_number__terminate_post",
         "parameters": [
           {
             "name": "template_id",
@@ -4573,7 +4573,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeprecateVersionRequest"
+                "$ref": "#/components/schemas/TerminateVersionRequest"
               }
             }
           }
@@ -4584,117 +4584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeprecateVersionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/product-templates/{template_id}/versions/{version_number}/submit-for-activation": {
-      "post": {
-        "tags": ["Product Templates"],
-        "summary": "Submit For Activation",
-        "operationId": "submit_for_activation_api_v1_product_templates__template_id__versions__version_number__submit_for_activation_post",
-        "parameters": [
-          {
-            "name": "template_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Template Id"
-            }
-          },
-          {
-            "name": "version_number",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Version Number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitForActivationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GovernedActionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/product-templates/{template_id}/versions/{version_number}/submit-deprecation": {
-      "post": {
-        "tags": ["Product Templates"],
-        "summary": "Submit Deprecation",
-        "operationId": "submit_deprecation_api_v1_product_templates__template_id__versions__version_number__submit_deprecation_post",
-        "parameters": [
-          {
-            "name": "template_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Template Id"
-            }
-          },
-          {
-            "name": "version_number",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string", "title": "Version Number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitDeprecationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GovernedActionResponse"
+                  "$ref": "#/components/schemas/TerminateVersionResponse"
                 }
               }
             }
@@ -7971,13 +7861,6 @@
             "type": "boolean",
             "title": "Documents Confirmed"
           },
-          "effective_from": {
-            "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
-            ],
-            "title": "Effective From"
-          },
           "justification": {
             "type": "string",
             "maxLength": 1000,
@@ -9256,6 +9139,17 @@
               { "type": "null" }
             ],
             "title": "Max Volume Eur"
+          },
+          "effective_rate": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
           }
         },
         "type": "object",
@@ -9441,56 +9335,6 @@
         "type": "string",
         "enum": ["EUR", "USD"],
         "title": "DefaultCurrency"
-      },
-      "DeprecateVersionRequest": {
-        "properties": {
-          "justification": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 10,
-            "title": "Justification"
-          }
-        },
-        "type": "object",
-        "required": ["justification"],
-        "title": "DeprecateVersionRequest"
-      },
-      "DeprecateVersionResponse": {
-        "properties": {
-          "version_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Version Id"
-          },
-          "version_status": { "type": "string", "title": "Version Status" },
-          "deprecated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Deprecated At"
-          },
-          "deprecated_by": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Deprecated By"
-          },
-          "impact_summary": {
-            "$ref": "#/components/schemas/ImpactSummary",
-            "default": {
-              "rr_count": 0,
-              "financing_count": 0,
-              "contract_count": 0,
-              "framework_agreement_count": 0
-            }
-          }
-        },
-        "type": "object",
-        "required": [
-          "version_id",
-          "version_status",
-          "deprecated_at",
-          "deprecated_by"
-        ],
-        "title": "DeprecateVersionResponse"
       },
       "DisbursementDerivationRule": {
         "type": "string",
@@ -11117,28 +10961,6 @@
         "required": ["partner_id", "items"],
         "title": "IdentityHistoryResponse"
       },
-      "ImpactSummary": {
-        "properties": {
-          "rr_count": { "type": "integer", "title": "Rr Count", "default": 0 },
-          "financing_count": {
-            "type": "integer",
-            "title": "Financing Count",
-            "default": 0
-          },
-          "contract_count": {
-            "type": "integer",
-            "title": "Contract Count",
-            "default": 0
-          },
-          "framework_agreement_count": {
-            "type": "integer",
-            "title": "Framework Agreement Count",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "ImpactSummary"
-      },
       "InheritedGDValues": {
         "properties": {
           "task_code": {
@@ -12753,15 +12575,15 @@
           },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "published_at": {
+          "activated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Published At"
+            "title": "Activated At"
           },
-          "published_by": {
+          "activated_by": {
             "type": "string",
             "format": "uuid",
-            "title": "Published By"
+            "title": "Activated By"
           }
         },
         "type": "object",
@@ -12769,8 +12591,8 @@
           "version_id",
           "version_number",
           "version_status",
-          "published_at",
-          "published_by"
+          "activated_at",
+          "activated_by"
         ],
         "title": "PublishTemplateDraftResponse"
       },
@@ -13635,32 +13457,6 @@
         "enum": ["USER", "TENANT", "PARTNER", "PRODUCT_TEMPLATE_VERSION"],
         "title": "SubjectType"
       },
-      "SubmitDeprecationRequest": {
-        "properties": {
-          "justification": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 10,
-            "title": "Justification"
-          }
-        },
-        "type": "object",
-        "required": ["justification"],
-        "title": "SubmitDeprecationRequest"
-      },
-      "SubmitForActivationRequest": {
-        "properties": {
-          "justification": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 20,
-            "title": "Justification"
-          }
-        },
-        "type": "object",
-        "required": ["justification"],
-        "title": "SubmitForActivationRequest"
-      },
       "SupportGrantResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -14315,7 +14111,7 @@
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Max Term Months"
           },
-          "published_by": {
+          "activated_by": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
@@ -14323,12 +14119,12 @@
               { "type": "null" }
             ]
           },
-          "published_at": {
+          "activated_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Published At"
+            "title": "Activated At"
           }
         },
         "type": "object",
@@ -14441,10 +14237,11 @@
         "type": "string",
         "enum": [
           "draft",
-          "awaiting_activation_countersignature",
-          "awaiting_deprecation_countersignature",
-          "published",
-          "deprecated",
+          "scheduled",
+          "active",
+          "superseded",
+          "expired",
+          "terminated",
           "discarded"
         ],
         "title": "TemplateStatus"
@@ -14454,21 +14251,21 @@
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "published_at": {
+          "activated_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Published At"
+            "title": "Activated At"
           },
-          "deprecated_at": {
+          "terminated_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Deprecated At"
+            "title": "Terminated At"
           },
-          "published_by": {
+          "activated_by": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
@@ -14476,7 +14273,7 @@
               { "type": "null" }
             ]
           },
-          "deprecated_by": {
+          "terminated_by": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
@@ -14743,6 +14540,47 @@
         "type": "object",
         "required": ["justification", "irreversibility_confirmed"],
         "title": "TerminateFARequest"
+      },
+      "TerminateVersionRequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "TerminateVersionRequest"
+      },
+      "TerminateVersionResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "terminated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Terminated At"
+          },
+          "terminated_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Terminated By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "version_status",
+          "terminated_at",
+          "terminated_by"
+        ],
+        "title": "TerminateVersionResponse"
       },
       "TerminationReadinessResponse": {
         "properties": {
@@ -15342,6 +15180,17 @@
               { "type": "null" }
             ],
             "title": "Max Volume Eur"
+          },
+          "effective_rate": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
           }
         },
         "type": "object",
@@ -15887,6 +15736,16 @@
             ],
             "title": "Max Volume Eur"
           },
+          "effective_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Effective Rate"
+          },
           "predecessor_version_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -15901,14 +15760,14 @@
             ],
             "title": "Snapshot Source Version Id"
           },
-          "published_at": {
+          "activated_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Published At"
+            "title": "Activated At"
           },
-          "published_by": {
+          "activated_by": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
@@ -15916,14 +15775,14 @@
               { "type": "null" }
             ]
           },
-          "deprecated_at": {
+          "terminated_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Deprecated At"
+            "title": "Terminated At"
           },
-          "deprecated_by": {
+          "terminated_by": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/app__modules__product_templates__interfaces__http__schemas__product_template__UserRef"
@@ -15931,9 +15790,9 @@
               { "type": "null" }
             ]
           },
-          "deprecation_justification": {
+          "termination_justification": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Deprecation Justification"
+            "title": "Termination Justification"
           },
           "bindings_count": {
             "type": "integer",
@@ -15972,11 +15831,12 @@
           "max_ltv_ratio",
           "min_volume_eur",
           "max_volume_eur",
+          "effective_rate",
           "predecessor_version_id",
           "snapshot_source_version_id",
-          "published_at",
-          "deprecated_at",
-          "deprecation_justification",
+          "activated_at",
+          "terminated_at",
+          "termination_justification",
           "created_at"
         ],
         "title": "VersionDetailResponse"
