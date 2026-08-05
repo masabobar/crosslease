@@ -185,8 +185,6 @@
     "documentsConfirmed": "I confirm the required framework documents are attached",
     "justification": "Justification",
     "justificationHint": "Mandatory. Stored in the audit trail.",
-    "effectiveFrom": "Effective from",
-    "effectiveFromOptional": "Optional — defaults to now",
     "confirmButton": "Activate agreement"
   },
   "terminate": {

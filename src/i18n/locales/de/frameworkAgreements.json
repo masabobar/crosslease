@@ -185,8 +185,6 @@
     "documentsConfirmed": "Ich bestätige, dass die erforderlichen Rahmendokumente vorliegen",
     "justification": "Begründung",
     "justificationHint": "Pflichtfeld. Wird im Prüfprotokoll gespeichert.",
-    "effectiveFrom": "Gültig ab",
-    "effectiveFromOptional": "Optional — Standard ist sofort",
     "confirmButton": "Vereinbarung aktivieren"
   },
   "terminate": {

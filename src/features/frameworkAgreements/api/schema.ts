@@ -129,9 +129,10 @@ export type EditFrameworkAgreementFormValues = z.infer<
 >
 
 // POST /framework-agreements/{id}/activate
+// PRD1042-1703 #4: activation is immediate, mirroring the Bank Product Template publish
+// flow — no effective_from input, no scheduled job. The BE dropped the field entirely.
 export const ActivateFARequestSchema = z.object({
   documents_confirmed: z.boolean(),
-  effective_from: z.string().optional(),
   justification: z.string().min(20).max(1000),
 })
 export type ActivateFARequest = z.infer<typeof ActivateFARequestSchema>
