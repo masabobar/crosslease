@@ -18,6 +18,10 @@ import {
   FAReconstructResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
+  FAVersionDetailResponseSchema,
+  FAVersionDiffResponseSchema,
+  FAVersionListResponseSchema,
+  FAVersionStatusSchema,
   FieldDiffItemSchema,
   FrameworkAgreementWizardFormSchema,
   SelectableTemplateItemSchema,
@@ -1061,5 +1065,139 @@ describe("FAEventTypeFilterSchema", () => {
 
   it("rejects an unknown event type", () => {
     expect(() => FAEventTypeFilterSchema.parse("unknown_event")).toThrow()
+  })
+})
+
+describe("FAVersionStatusSchema", () => {
+  it.each(["draft", "active", "superseded", "discarded"])(
+    "accepts the documented status %s",
+    value => {
+      expect(() => FAVersionStatusSchema.parse(value)).not.toThrow()
+    }
+  )
+
+  it("rejects an unknown status", () => {
+    expect(() => FAVersionStatusSchema.parse("terminated")).toThrow()
+  })
+})
+
+describe("FAVersionListResponseSchema", () => {
+  const validSummary = {
+    version_number: "1",
+    version_status: "active",
+    agreement_name: "RV-SSKM-2026-001",
+    max_volume_eur: "25000000.00",
+    valid_from: "2026-06-01",
+    valid_until: null,
+    activated_at: "2026-06-01T09:00:00Z",
+    created_at: "2026-06-01T09:00:00Z",
+  }
+
+  it("accepts a valid version list", () => {
+    expect(() =>
+      FAVersionListResponseSchema.parse({ items: [validSummary] })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty list", () => {
+    expect(() => FAVersionListResponseSchema.parse({ items: [] })).not.toThrow()
+  })
+
+  it("coerces max_volume_eur from a numeric string", () => {
+    const parsed = FAVersionListResponseSchema.parse({
+      items: [validSummary],
+    })
+    expect(parsed.items[0].max_volume_eur).toBe(25000000)
+  })
+
+  it("rejects a missing version_status", () => {
+    const rest = { ...validSummary } as Record<string, unknown>
+    delete rest.version_status
+    expect(() => FAVersionListResponseSchema.parse({ items: [rest] })).toThrow()
+  })
+
+  it("rejects an unknown version_status", () => {
+    expect(() =>
+      FAVersionListResponseSchema.parse({
+        items: [{ ...validSummary, version_status: "banana" }],
+      })
+    ).toThrow()
+  })
+})
+
+describe("FAVersionDetailResponseSchema", () => {
+  const validDetail = {
+    id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
+    version_number: "2",
+    version_status: "superseded",
+    agreement_name: "RV-SSKM-2026-001",
+    bank_entity: "sparkasse",
+    currency: "EUR",
+    max_volume_eur: "25000000.00",
+    effective_rate: null,
+    vfe_rate: null,
+    vfe_amount_eur: "5000.00",
+    valid_from: "2026-06-01",
+    valid_until: null,
+    special_conditions: "Line one.\nLine two.",
+    activated_at: "2026-06-01T09:00:00Z",
+    activated_by: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
+    created_at: "2026-06-01T09:00:00Z",
+  }
+
+  it("accepts a fully populated version detail", () => {
+    expect(() => FAVersionDetailResponseSchema.parse(validDetail)).not.toThrow()
+  })
+
+  it("preserves multi-line special_conditions verbatim", () => {
+    const parsed = FAVersionDetailResponseSchema.parse(validDetail)
+    expect(parsed.special_conditions).toBe("Line one.\nLine two.")
+  })
+
+  it("accepts null activated_by (never-activated draft)", () => {
+    expect(() =>
+      FAVersionDetailResponseSchema.parse({
+        ...validDetail,
+        activated_at: null,
+        activated_by: null,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing id", () => {
+    const rest = { ...validDetail } as Record<string, unknown>
+    delete rest.id
+    expect(() => FAVersionDetailResponseSchema.parse(rest)).toThrow()
+  })
+})
+
+describe("FAVersionDiffResponseSchema", () => {
+  const validDiff = {
+    from_version: "1",
+    to_version: "2",
+    diffs: [
+      {
+        field: "max_volume_eur",
+        old_value: "20000000.00",
+        new_value: "25000000.00",
+      },
+      { field: "special_conditions", old_value: null, new_value: "New note." },
+    ],
+  }
+
+  it("accepts a valid diff response", () => {
+    expect(() => FAVersionDiffResponseSchema.parse(validDiff)).not.toThrow()
+  })
+
+  it("accepts an empty diffs array", () => {
+    expect(() =>
+      FAVersionDiffResponseSchema.parse({ ...validDiff, diffs: [] })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing from_version", () => {
+    const rest = { ...validDiff } as Record<string, unknown>
+    delete rest.from_version
+    expect(() => FAVersionDiffResponseSchema.parse(rest)).toThrow()
   })
 })

@@ -61,7 +61,8 @@
     "allowedProductTemplates": "Allowed product templates",
     "optional": "(optional)",
     "openEnded": "Open ended",
-    "vfeAmountEur": "Early repayment penalty (VFE)"
+    "vfeAmountEur": "Early repayment penalty (VFE)",
+    "selectPlaceholder": "Select"
   },
   "units": {
     "eur": "EUR",
@@ -174,11 +175,35 @@
     "actions": {
       "activate": "Activate",
       "edit": "Edit",
-      "terminate": "Terminate"
+      "terminate": "Terminate",
+      "viewVersionHistory": "View version history"
     },
     "financingsEmptyState": "No financings yet",
     "tabComingSoon": "This tab isn't available yet",
     "loadError": "Something went wrong loading this agreement."
+  },
+  "versionHistory": {
+    "title": "Version history",
+    "backToAgreement": "Back to agreement",
+    "activatedAt": "Activated {{date}}",
+    "statuses": {
+      "draft": "Draft",
+      "active": "Active",
+      "superseded": "Superseded",
+      "discarded": "Discarded"
+    },
+    "compare": {
+      "compareLabel": "Compare",
+      "withLabel": "with",
+      "compareButton": "Compare versions",
+      "modalTitle": "Comparing {{from}} with {{to}}",
+      "versionOptionLabel": "v{{version}} - {{status}}",
+      "fieldColumn": "Field",
+      "fields": {
+        "effectiveRate": "Effective rate (historical)",
+        "vfeRate": "VFE rate (historical)"
+      }
+    }
   },
   "activate": {
     "dialogTitle": "Activate framework agreement",
@@ -292,6 +317,7 @@
     "FA_TEMPLATE_NOT_PUBLISHED": "One of the selected product templates is not published.",
     "FA_EDIT_JUSTIFICATION_REQUIRED": "A justification is required to edit this agreement.",
     "FA_NOT_EDITABLE": "This agreement cannot be edited in its current status.",
+    "FA_OVERLAPPING_ACTIVE_AGREEMENT": "This leasing company already has an active agreement whose validity overlaps. Shorten the active agreement's validity or move this agreement's start date.",
     "FA_NO_CHANGES": "No changes were made to save.",
     "FA_VERSION_CONFLICT": "This agreement has changed since you opened this dialog. Reload and try again.",
     "FA_VALID_UNTIL_SHORTENING": "Valid until can only be extended, not shortened.",

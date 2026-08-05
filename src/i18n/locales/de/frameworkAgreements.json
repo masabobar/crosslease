@@ -61,7 +61,8 @@
     "allowedProductTemplates": "Zulässige Produktvorlagen",
     "optional": "(optional)",
     "openEnded": "Unbefristet",
-    "vfeAmountEur": "Vorfälligkeitsentschädigung (VFE)"
+    "vfeAmountEur": "Vorfälligkeitsentschädigung (VFE)",
+    "selectPlaceholder": "Auswählen"
   },
   "units": {
     "eur": "EUR",
@@ -174,11 +175,35 @@
     "actions": {
       "activate": "Aktivieren",
       "edit": "Bearbeiten",
-      "terminate": "Beenden"
+      "terminate": "Beenden",
+      "viewVersionHistory": "Versionsverlauf anzeigen"
     },
     "financingsEmptyState": "Noch keine Finanzierungen",
     "tabComingSoon": "Dieser Tab ist noch nicht verfügbar",
     "loadError": "Beim Laden dieser Vereinbarung ist ein Fehler aufgetreten."
+  },
+  "versionHistory": {
+    "title": "Versionsverlauf",
+    "backToAgreement": "Zurück zur Vereinbarung",
+    "activatedAt": "Aktiviert am {{date}}",
+    "statuses": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "superseded": "Abgelöst",
+      "discarded": "Verworfen"
+    },
+    "compare": {
+      "compareLabel": "Vergleichen",
+      "withLabel": "mit",
+      "compareButton": "Versionen vergleichen",
+      "modalTitle": "Vergleich von {{from}} mit {{to}}",
+      "versionOptionLabel": "v{{version}} - {{status}}",
+      "fieldColumn": "Feld",
+      "fields": {
+        "effectiveRate": "Effektiver Zinssatz (historisch)",
+        "vfeRate": "VFE-Satz (historisch)"
+      }
+    }
   },
   "activate": {
     "dialogTitle": "Rahmenvereinbarung aktivieren",
@@ -292,6 +317,7 @@
     "FA_TEMPLATE_NOT_PUBLISHED": "Eine der ausgewählten Produktvorlagen ist nicht veröffentlicht.",
     "FA_EDIT_JUSTIFICATION_REQUIRED": "Zum Bearbeiten dieser Vereinbarung ist eine Begründung erforderlich.",
     "FA_NOT_EDITABLE": "Diese Vereinbarung kann in ihrem aktuellen Status nicht bearbeitet werden.",
+    "FA_OVERLAPPING_ACTIVE_AGREEMENT": "Diese Leasinggesellschaft hat bereits eine aktive Vereinbarung mit überlappender Gültigkeit. Verkürzen Sie die Gültigkeit der aktiven Vereinbarung oder verschieben Sie das Startdatum dieser Vereinbarung.",
     "FA_NO_CHANGES": "Es wurden keine Änderungen zum Speichern vorgenommen.",
     "FA_VERSION_CONFLICT": "Diese Vereinbarung wurde geändert, seit Sie diesen Dialog geöffnet haben. Laden Sie neu und versuchen Sie es erneut.",
     "FA_VALID_UNTIL_SHORTENING": "„Gültig bis“ kann nur verlängert, nicht verkürzt werden.",
