@@ -9,3 +9,11 @@ export const DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES: readonly UserRol
 // system_admin, and leasing_company_user have no access at all (bank-internal).
 export const DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES: readonly UserRole[] =
   ["bank_power_user", "support_user", "auditor"]
+
+// UI-only enum, never crosses the wire — a plain type guard is enough (no Zod schema needed
+// per .claude/rules/enums-and-constants.md §3).
+export type DocumentRequirementCatalogDetailTab =
+  | "identity"
+  | "requirements"
+  | "sourceLayer"
+  | "audit"

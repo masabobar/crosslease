@@ -1,0 +1,268 @@
+import { useForm, Controller, useWatch } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { parseISO } from "date-fns"
+import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DatePicker } from "@/components/ui/date-picker"
+import {
+  DialogModal,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { ApiError } from "@/lib/api"
+import { useUpdateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useUpdateDocumentRequirementCatalog"
+import { PROCESS_CONTEXT_OPTIONS } from "@/features/documentRequirements/constants"
+import type { DocumentRequirementCatalogDetailResponse } from "@/features/documentRequirements/api/schema"
+
+// Editing an existing catalog does NOT floor Valid From at today — unlike creation, an existing
+// record may legitimately have a start date in the past (date-inputs.md §4). Valid To must still
+// be >= Valid From when both are present.
+const editCatalogSchema = z
+  .object({
+    catalogName: z.string().trim().min(1, "required").max(200),
+    processContexts: z.array(z.string()).min(1, "required"),
+    validFrom: z.string(),
+    validTo: z.string(),
+  })
+  .refine(
+    data => !data.validTo || !data.validFrom || data.validTo >= data.validFrom,
+    {
+      message: "validToBeforeValidFrom",
+      path: ["validTo"],
+    }
+  )
+
+type EditCatalogFormValues = {
+  catalogName: string
+  processContexts: string[]
+  validFrom: string
+  validTo: string
+}
+
+type Props = {
+  catalog: DocumentRequirementCatalogDetailResponse
+  onOpenChange: (open: boolean) => void
+}
+
+function EditDocumentRequirementCatalogDialog({
+  catalog,
+  onOpenChange,
+}: Props) {
+  const { t } = useTranslation("documentRequirements")
+  const { t: tCommon } = useTranslation("common")
+  const updateCatalog = useUpdateDocumentRequirementCatalog(catalog.id)
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<EditCatalogFormValues>({
+    resolver: zodResolver(editCatalogSchema),
+    defaultValues: {
+      catalogName: catalog.catalog_name,
+      processContexts: catalog.applicable_process_contexts,
+      validFrom: catalog.valid_from ?? "",
+      validTo: catalog.valid_to ?? "",
+    },
+  })
+
+  const validFrom = useWatch({ control, name: "validFrom" })
+  const validToMin = validFrom ? parseISO(validFrom) : undefined
+
+  function resolveMessage(message: string | undefined): string | undefined {
+    if (!message) return undefined
+    if (message === "required") return tCommon("validation.required")
+    return t(
+      `create.errors.${message}` as "create.errors.validToBeforeValidFrom"
+    )
+  }
+
+  function handleClose() {
+    onOpenChange(false)
+  }
+
+  function onSubmit(values: EditCatalogFormValues) {
+    updateCatalog.mutate(
+      {
+        catalog_name: values.catalogName.trim(),
+        applicable_process_contexts: values.processContexts,
+        valid_from: values.validFrom || null,
+        valid_to: values.validTo || null,
+      },
+      {
+        onSuccess: () => {
+          toast.success(t("detail.identity.editSuccess"))
+          handleClose()
+        },
+        onError: err => {
+          toast.error(
+            err instanceof ApiError
+              ? t(`errors.${err.code}` as "errors.generic", {
+                  defaultValue: t("errors.generic"),
+                })
+              : t("errors.generic")
+          )
+        },
+      }
+    )
+  }
+
+  return (
+    <DialogModal open onOpenChange={o => !o && handleClose()}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="px-4 py-4">
+          <DialogHeader>
+            <DialogTitle>{t("detail.identity.editTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("detail.identity.editSubtitle")}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <div className="flex flex-col gap-4 px-4 py-4 max-h-[60vh] overflow-y-auto">
+          <div>
+            <Label
+              htmlFor="edit-catalog-name"
+              error={!!errors.catalogName}
+              className="mb-2"
+            >
+              {t("create.fields.catalogName")}
+            </Label>
+            <Input
+              id="edit-catalog-name"
+              data-testid="edit-catalog-name-input"
+              error={!!errors.catalogName}
+              {...register("catalogName")}
+            />
+            {errors.catalogName && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMessage(errors.catalogName.message)}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label className="mb-2" error={!!errors.processContexts}>
+              {t("create.fields.processContexts")}
+            </Label>
+            <Controller
+              control={control}
+              name="processContexts"
+              render={({ field }) => (
+                <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-input p-2.5">
+                  {PROCESS_CONTEXT_OPTIONS.map(option => (
+                    <label
+                      key={option.value}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Checkbox
+                        data-testid={`edit-catalog-process-context-${option.value}`}
+                        checked={field.value.includes(option.value)}
+                        onCheckedChange={checked =>
+                          field.onChange(
+                            checked === true
+                              ? [...field.value, option.value]
+                              : field.value.filter(v => v !== option.value)
+                          )
+                        }
+                      />
+                      <span className="text-sm text-foreground">
+                        {t(option.labelKey)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            />
+            {errors.processContexts && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMessage(errors.processContexts.message)}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="edit-catalog-valid-from" className="mb-2">
+                {t("create.fields.validFrom")}{" "}
+                <span className="font-normal text-muted-foreground">
+                  {t("create.fields.optional")}
+                </span>
+              </Label>
+              <Controller
+                control={control}
+                name="validFrom"
+                render={({ field }) => (
+                  <DatePicker
+                    id="edit-catalog-valid-from"
+                    data-testid="edit-catalog-valid-from-datepicker"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.validFrom}
+                    captionLayout="dropdown"
+                  />
+                )}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-catalog-valid-to" className="mb-2">
+                {t("create.fields.validTo")}{" "}
+                <span className="font-normal text-muted-foreground">
+                  {t("create.fields.optional")}
+                </span>
+              </Label>
+              <Controller
+                control={control}
+                name="validTo"
+                render={({ field }) => (
+                  <DatePicker
+                    id="edit-catalog-valid-to"
+                    data-testid="edit-catalog-valid-to-datepicker"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.validTo}
+                    minDate={validToMin}
+                    captionLayout="dropdown"
+                  />
+                )}
+              />
+              {errors.validTo && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.validTo.message)}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="edit-catalog-cancel"
+            onClick={handleClose}
+          >
+            {t("create.actions.cancel")}
+          </Button>
+          <Button
+            type="submit"
+            data-testid="edit-catalog-submit"
+            disabled={updateCatalog.isPending}
+          >
+            {t("detail.identity.editSubmit")}
+          </Button>
+        </div>
+      </form>
+    </DialogModal>
+  )
+}
+
+export { EditDocumentRequirementCatalogDialog }

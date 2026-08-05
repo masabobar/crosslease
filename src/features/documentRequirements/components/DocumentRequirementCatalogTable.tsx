@@ -5,8 +5,7 @@ import type { DocumentRequirementCatalogListItem } from "@/features/documentRequ
 
 // NOTE: raw <div> grid instead of shadcn Table — matches the pre-existing div-grid pattern used
 // by other list tables in this codebase (ProductTemplateTable, PartnerTable, WorkflowTaskCatalogTable).
-// Name is the only flexible column. No row-action column: US 16.20 (Open Detail's target) is a
-// separate, not-yet-built unit — wiring the click lands with that page, not before.
+// Name is the only flexible column.
 const COL_NAME = "flex-1 min-w-[160px]"
 const COL_TYPE = "w-[130px] shrink-0"
 const COL_PROCESS_CONTEXTS = "w-[220px] shrink-0"
@@ -44,6 +43,7 @@ type Props = {
   // covers templates with a published version valid today; a superseded template falls back to
   // its id, same convention as the Workflow Task Catalog's table.
   templateNames: Map<string, string>
+  onRowClick: (catalogId: string) => void
 }
 
 function DocumentRequirementCatalogTable({
@@ -51,6 +51,7 @@ function DocumentRequirementCatalogTable({
   isLoading,
   hasActiveFilters,
   templateNames,
+  onRowClick,
 }: Props) {
   const { t } = useTranslation("documentRequirements")
 
@@ -106,7 +107,8 @@ function DocumentRequirementCatalogTable({
           <div
             key={row.id}
             data-testid={`document-requirement-catalog-row-${row.id}`}
-            className={`flex border-b border-border last:border-b-0 ${ROW_H} items-center`}
+            className={`flex border-b border-border last:border-b-0 ${ROW_H} items-center hover:bg-muted/40 transition-colors cursor-pointer`}
+            onClick={() => onRowClick(row.id)}
           >
             <div className={`${COL_NAME} p-2`}>
               <p className="text-sm font-medium truncate text-foreground leading-tight">

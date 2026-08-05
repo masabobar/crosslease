@@ -69,6 +69,123 @@
       "validFromInPast": "Valid from cannot be in the past."
     }
   },
+  "detail": {
+    "header": {
+      "productTemplate": "Product template",
+      "processContexts": "Process contexts"
+    },
+    "tabs": {
+      "identity": "Identity",
+      "requirements": "Requirements",
+      "sourceLayer": "Source layer",
+      "audit": "Audit"
+    },
+    "identity": {
+      "title": "Catalog identity",
+      "editButton": "Edit",
+      "catalogName": "Catalog name",
+      "catalogType": "Catalog type",
+      "productTemplate": "Product template",
+      "processContexts": "Process contexts",
+      "validFrom": "Valid from",
+      "validTo": "Valid to",
+      "createdBy": "Created by",
+      "createdAt": "Created at",
+      "updatedAt": "Updated at",
+      "notApplicable": "—",
+      "openEnded": "Open ended",
+      "editTitle": "Edit catalog identity",
+      "editSubtitle": "Catalog type and product template cannot be changed after creation.",
+      "editSubmit": "Save",
+      "editSuccess": "Catalog updated."
+    }
+  },
+  "requirement": {
+    "actionsMenuLabel": "Row actions",
+    "actions": {
+      "edit": "Edit",
+      "deactivate": "Deactivate"
+    },
+    "table": {
+      "columns": {
+        "requirementCode": "Requirement code",
+        "documentTypeName": "Document type",
+        "classification": "Classification",
+        "sourceLayer": "Source layer",
+        "status": "Status"
+      }
+    },
+    "emptyState": {
+      "title": "No requirements yet",
+      "description": "Add a requirement to get started."
+    },
+    "emptyFiltered": {
+      "title": "No inactive requirements",
+      "description": "Every requirement in this catalog is active."
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "showInactive": "Show inactive",
+    "addButton": "Add requirement",
+    "addTitle": "Add requirement",
+    "editTitle": "Edit requirement",
+    "addSubmit": "Add",
+    "editSubmit": "Save",
+    "addSuccess": "Requirement added.",
+    "editSuccess": "Requirement updated.",
+    "deactivateSuccess": "Requirement deactivated.",
+    "yes": "Yes",
+    "no": "No",
+    "fields": {
+      "requirementCode": "Requirement code",
+      "documentTypeCode": "Document type code",
+      "documentTypeName": "Document type name",
+      "description": "Description",
+      "classification": "Classification",
+      "governanceClassification": "Governance classification",
+      "processContexts": "Process contexts",
+      "stageCategorization": "Stage categorization",
+      "stageNone": "None",
+      "blocksSubmission": "Blocks submission",
+      "documentOrigin": "Document origin",
+      "predicatePostMvpNote": "Predicate authoring is not available yet — this requirement will be treated as optional at runtime until a predicate is added in a future release."
+    },
+    "classifications": {
+      "mandatory": "Mandatory",
+      "optional": "Optional",
+      "conditional": "Conditional"
+    },
+    "governance": {
+      "operational": "Operational",
+      "compliance_sensitive": "Compliance-sensitive",
+      "regulatory_critical": "Regulatory-critical"
+    },
+    "sourceLayers": {
+      "default": "Default",
+      "override": "Override",
+      "supplement": "Supplement",
+      "deactivated": "Deactivated"
+    },
+    "stages": {
+      "submission": "Submission",
+      "approval": "Approval",
+      "disbursement_readiness": "Disbursement readiness"
+    },
+    "documentOrigins": {
+      "uploaded": "Uploaded",
+      "generated": "Generated"
+    }
+  },
+  "preview": {
+    "title": "Effective requirement set preview",
+    "diagnosticBadge": "Diagnostic · read only · never persists",
+    "selectProcessContext": "Select a process context",
+    "previewButton": "Preview",
+    "emptyState": "No active requirements match this process context."
+  },
+  "sourceLayer": {
+    "emptyGroup": "No requirements in this layer."
+  },
   "errors": {
     "generic": "Something went wrong. Please try again."
   }

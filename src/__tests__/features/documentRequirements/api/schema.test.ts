@@ -1,10 +1,16 @@
 import { describe, it, expect } from "vitest"
 import {
+  AddRequirementRequestSchema,
   CreateDocumentRequirementCatalogRequestSchema,
+  DocumentRequirementCatalogDetailResponseSchema,
   DocumentRequirementCatalogListResponseSchema,
   DocumentRequirementCatalogResponseSchema,
   DocumentRequirementListResponseSchema,
   DocumentRequirementSchema,
+  MaterializationResponseSchema,
+  RequirementResponseSchema,
+  UpdateDocumentRequirementCatalogRequestSchema,
+  UpdateRequirementRequestSchema,
 } from "@/features/documentRequirements/api/schema"
 
 const CATALOG_UUID = "5c2d8b10-6a4f-4e9b-8c31-7d0a1f2b3c44"
@@ -258,6 +264,277 @@ describe("DocumentRequirementListResponseSchema", () => {
         page: 1,
         per_page: 50,
         total_pages: 1,
+      })
+    ).toThrow()
+  })
+})
+
+const validFullRequirement = {
+  id: REQUIREMENT_UUID,
+  catalog_id: CATALOG_UUID,
+  requirement_code: "DOC-FHA-001",
+  document_type_code: "ASSET_REG_CONF",
+  document_type_name: "Asset registration confirmation",
+  description: "Registry confirmation of the true-sale asset transfer.",
+  classification: "mandatory",
+  governance_classification: "compliance_sensitive",
+  source_layer: "default",
+  applicable_process_contexts: ["disbursement_readiness"],
+  stage_categorization: "submission",
+  blocks_submission: true,
+  document_origin: "uploaded",
+  is_active: true,
+  sort_order: 10,
+  applicability: "always",
+  condition: null,
+  created_at: "2026-06-13T10:00:00Z",
+  updated_at: "2026-06-13T10:00:00Z",
+}
+
+const validAddRequirementRequest = {
+  requirement_code: "DOC-FHA-001",
+  document_type_code: "ASSET_REG_CONF",
+  document_type_name: "Asset registration confirmation",
+  description: null,
+  classification: "mandatory",
+  governance_classification: "compliance_sensitive",
+  applicable_process_contexts: ["disbursement_readiness"],
+  stage_categorization: null,
+  blocks_submission: true,
+  document_origin: "uploaded",
+  sort_order: 0,
+  applicability: "always",
+  condition: null,
+}
+
+describe("RequirementResponseSchema", () => {
+  it("accepts the documented shape", () => {
+    expect(RequirementResponseSchema.parse(validFullRequirement)).toEqual(
+      validFullRequirement
+    )
+  })
+
+  it("accepts every documented source_layer value", () => {
+    for (const source_layer of [
+      "default",
+      "override",
+      "supplement",
+      "deactivated",
+    ]) {
+      expect(() =>
+        RequirementResponseSchema.parse({
+          ...validFullRequirement,
+          source_layer,
+        })
+      ).not.toThrow()
+    }
+  })
+
+  it("rejects an unknown classification", () => {
+    expect(() =>
+      RequirementResponseSchema.parse({
+        ...validFullRequirement,
+        classification: "critical",
+      })
+    ).toThrow()
+  })
+
+  it("accepts a null condition alongside applicability=always", () => {
+    const parsed = RequirementResponseSchema.parse(validFullRequirement)
+    expect(parsed.condition).toBeNull()
+  })
+
+  it("accepts a populated condition for a conditional_rule requirement", () => {
+    const parsed = RequirementResponseSchema.parse({
+      ...validFullRequirement,
+      applicability: "conditional_rule",
+      condition: { attribute: "aml_risk_band", equals: "high" },
+    })
+    expect(parsed.condition).toEqual({
+      attribute: "aml_risk_band",
+      equals: "high",
+    })
+  })
+})
+
+describe("AddRequirementRequestSchema", () => {
+  it("accepts the documented shape", () => {
+    expect(
+      AddRequirementRequestSchema.parse(validAddRequirementRequest)
+    ).toEqual(validAddRequirementRequest)
+  })
+
+  it("applies documented defaults when optional fields are omitted", () => {
+    const minimal = {
+      requirement_code: "DOC-FHA-002",
+      document_type_code: "LOAN_OFFER",
+      document_type_name: "Loan offer",
+      governance_classification: "operational",
+      applicable_process_contexts: ["financing"],
+    }
+    const parsed = AddRequirementRequestSchema.parse(minimal)
+    expect(parsed.classification).toBe("mandatory")
+    expect(parsed.blocks_submission).toBe(true)
+    expect(parsed.document_origin).toBe("uploaded")
+    expect(parsed.applicability).toBe("always")
+  })
+
+  it("rejects condition present without applicability=conditional_rule", () => {
+    expect(() =>
+      AddRequirementRequestSchema.parse({
+        ...validAddRequirementRequest,
+        applicability: "always",
+        condition: { attribute: "aml_risk_band", equals: "high" },
+      })
+    ).toThrow()
+  })
+
+  it("rejects applicability=conditional_rule with no condition", () => {
+    expect(() =>
+      AddRequirementRequestSchema.parse({
+        ...validAddRequirementRequest,
+        applicability: "conditional_rule",
+        condition: null,
+      })
+    ).toThrow()
+  })
+
+  it("accepts applicability=conditional_rule with a condition", () => {
+    expect(() =>
+      AddRequirementRequestSchema.parse({
+        ...validAddRequirementRequest,
+        applicability: "conditional_rule",
+        condition: { attribute: "jurisdiction", equals: "DE" },
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects an empty applicable_process_contexts array", () => {
+    expect(() =>
+      AddRequirementRequestSchema.parse({
+        ...validAddRequirementRequest,
+        applicable_process_contexts: [],
+      })
+    ).toThrow()
+  })
+})
+
+describe("UpdateRequirementRequestSchema", () => {
+  it("accepts a single-field partial update", () => {
+    const parsed = UpdateRequirementRequestSchema.parse({
+      description: "Updated description.",
+    })
+    expect(parsed.description).toBe("Updated description.")
+  })
+
+  it("accepts an empty object — every field is optional", () => {
+    expect(() => UpdateRequirementRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("has no requirement_code, document_type_code or source_layer field", () => {
+    const parsed = UpdateRequirementRequestSchema.parse({
+      requirement_code: "should-be-stripped",
+      document_type_code: "should-be-stripped",
+      source_layer: "override",
+    }) as Record<string, unknown>
+    expect(parsed.requirement_code).toBeUndefined()
+    expect(parsed.document_type_code).toBeUndefined()
+    expect(parsed.source_layer).toBeUndefined()
+  })
+})
+
+describe("UpdateDocumentRequirementCatalogRequestSchema", () => {
+  it("accepts a single-field partial update", () => {
+    const parsed = UpdateDocumentRequirementCatalogRequestSchema.parse({
+      catalog_name: "Renamed catalog",
+    })
+    expect(parsed.catalog_name).toBe("Renamed catalog")
+  })
+
+  it("has no catalog_type or product_template_id field — neither is mutable", () => {
+    const parsed = UpdateDocumentRequirementCatalogRequestSchema.parse({
+      catalog_type: "global_default",
+      product_template_id: TEMPLATE_UUID,
+    }) as Record<string, unknown>
+    expect(parsed.catalog_type).toBeUndefined()
+    expect(parsed.product_template_id).toBeUndefined()
+  })
+
+  it("rejects an empty applicable_process_contexts array when provided", () => {
+    expect(() =>
+      UpdateDocumentRequirementCatalogRequestSchema.parse({
+        applicable_process_contexts: [],
+      })
+    ).toThrow()
+  })
+})
+
+describe("DocumentRequirementCatalogDetailResponseSchema", () => {
+  it("accepts a catalog with embedded requirements", () => {
+    const parsed = DocumentRequirementCatalogDetailResponseSchema.parse({
+      ...validCatalogResponse,
+      requirements: [validFullRequirement],
+    })
+    expect(parsed.requirements).toHaveLength(1)
+    expect(parsed.requirements[0].requirement_code).toBe("DOC-FHA-001")
+  })
+
+  it("accepts a catalog with no requirements yet", () => {
+    const parsed = DocumentRequirementCatalogDetailResponseSchema.parse({
+      ...validCatalogResponse,
+      requirements: [],
+    })
+    expect(parsed.requirements).toEqual([])
+  })
+
+  it("rejects a missing requirements field", () => {
+    expect(() =>
+      DocumentRequirementCatalogDetailResponseSchema.parse(validCatalogResponse)
+    ).toThrow()
+  })
+})
+
+describe("MaterializationResponseSchema", () => {
+  it("accepts the documented shape", () => {
+    const response = {
+      catalog_id: CATALOG_UUID,
+      process_context: "disbursement_readiness",
+      effective_requirements: [
+        {
+          requirement_definition_id: REQUIREMENT_UUID,
+          requirement_code: "DOC-FHA-001",
+          document_type_code: "ASSET_REG_CONF",
+          document_type_name: "Asset registration confirmation",
+          classification: "mandatory",
+          governance_classification: "compliance_sensitive",
+          source_layer: "default",
+          stage_categorization: "submission",
+          applicable_process_contexts: ["disbursement_readiness"],
+          blocks_submission: true,
+          document_origin: "uploaded",
+        },
+      ],
+      total: 1,
+    }
+    expect(MaterializationResponseSchema.parse(response)).toEqual(response)
+  })
+
+  it("accepts an empty effective set", () => {
+    const parsed = MaterializationResponseSchema.parse({
+      catalog_id: CATALOG_UUID,
+      process_context: "financing",
+      effective_requirements: [],
+      total: 0,
+    })
+    expect(parsed.effective_requirements).toEqual([])
+  })
+
+  it("rejects a missing total field", () => {
+    expect(() =>
+      MaterializationResponseSchema.parse({
+        catalog_id: CATALOG_UUID,
+        process_context: "financing",
+        effective_requirements: [],
       })
     ).toThrow()
   })

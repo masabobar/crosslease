@@ -160,6 +160,10 @@ const DocumentRequirementCatalogListPage = lazy(
   () =>
     import("@/features/documentRequirements/components/DocumentRequirementCatalogListPage")
 )
+const DocumentRequirementCatalogDetailPage = lazy(
+  () =>
+    import("@/features/documentRequirements/components/DocumentRequirementCatalogDetailPage")
+)
 
 export const router = createBrowserRouter([
   {
@@ -524,6 +528,18 @@ export const router = createBrowserRouter([
               allowed={DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES}
             >
               <DocumentRequirementCatalogListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.DOCUMENT_REQUIREMENT_CATALOG_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard
+              allowed={DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES}
+            >
+              <DocumentRequirementCatalogDetailPage />
             </RoleGuard>
           </Suspense>
         ),

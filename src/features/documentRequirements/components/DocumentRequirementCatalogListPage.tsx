@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import { buildPageNumbers } from "@/lib/pagination"
 import { ApiError } from "@/lib/api"
+import { documentRequirementCatalogDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/documentRequirements/types"
@@ -27,6 +29,7 @@ import type { PageSize } from "@/features/documentRequirements/hooks/useDocument
 
 export default function DocumentRequirementCatalogListPage() {
   const { t } = useTranslation("documentRequirements")
+  const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
   const tenantId = currentUser?.tenant_id ?? undefined
 
@@ -124,6 +127,7 @@ export default function DocumentRequirementCatalogListPage() {
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
             templateNames={templateNames}
+            onRowClick={id => navigate(documentRequirementCatalogDetail(id))}
           />
         )}
       </div>
