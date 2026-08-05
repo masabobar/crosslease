@@ -5,6 +5,18 @@ import { requiredEnum } from "@/lib/zodHelpers"
 export const FALifecycleStatusSchema = z.enum(["draft", "active", "terminated"])
 export type FALifecycleStatus = z.infer<typeof FALifecycleStatusSchema>
 
+// Per-version status (CR-FA-04 on PRD1042-1799) — distinct from FALifecycleStatus above,
+// which is the agreement-level status. `discarded` is a real wire value (an abandoned
+// draft) but must never be shown on the frontend per the client's own note on PRD1042-1798 —
+// screens rendering this enum filter it out rather than relying on it never arriving.
+export const FAVersionStatusSchema = z.enum([
+  "draft",
+  "active",
+  "superseded",
+  "discarded",
+])
+export type FAVersionStatus = z.infer<typeof FAVersionStatusSchema>
+
 export const BankEntitySchema = z.enum([
   "sparkasse",
   "landesbank_1",
@@ -335,6 +347,61 @@ export const FAReconstructResponseSchema = z.object({
   state: z.record(z.string(), z.unknown()),
 })
 export type FAReconstructResponse = z.infer<typeof FAReconstructResponseSchema>
+
+// FA versioning (CR-FA-04 on PRD1042-1799) — GET /framework-agreements/{id}/versions
+export const FAVersionSummaryResponseSchema = z.object({
+  version_number: z.string(),
+  version_status: FAVersionStatusSchema,
+  agreement_name: z.string(),
+  max_volume_eur: z.coerce.number(),
+  valid_from: z.string(),
+  valid_until: z.string().nullable(),
+  activated_at: z.string().nullable(),
+  created_at: z.string(),
+})
+export type FAVersionSummaryResponse = z.infer<
+  typeof FAVersionSummaryResponseSchema
+>
+
+export const FAVersionListResponseSchema = z.object({
+  items: z.array(FAVersionSummaryResponseSchema),
+})
+export type FAVersionListResponse = z.infer<typeof FAVersionListResponseSchema>
+
+// GET /framework-agreements/{id}/versions/{version_number} — activated_by is a bare UUID
+// on this response, unlike the Bank Product Template equivalent (UserRef with a display
+// name); there is no enrichment endpoint to resolve it against, so it is not rendered.
+export const FAVersionDetailResponseSchema = z.object({
+  id: z.string().uuid(),
+  version_number: z.string(),
+  version_status: FAVersionStatusSchema,
+  agreement_name: z.string(),
+  bank_entity: z.string(),
+  currency: z.string(),
+  max_volume_eur: z.coerce.number(),
+  effective_rate: z.coerce.number().nullable(),
+  vfe_rate: z.coerce.number().nullable(),
+  vfe_amount_eur: z.coerce.number().nullable(),
+  valid_from: z.string(),
+  valid_until: z.string().nullable(),
+  special_conditions: z.string().nullable(),
+  activated_at: z.string().nullable(),
+  activated_by: z.string().uuid().nullable(),
+  created_at: z.string(),
+})
+export type FAVersionDetailResponse = z.infer<
+  typeof FAVersionDetailResponseSchema
+>
+
+// GET /framework-agreements/{id}/diff — one flat list, unlike the Bank Product Template
+// diff's three sections (behavioral/eligibility/orchestration); FA has no orchestration
+// linkage to compare.
+export const FAVersionDiffResponseSchema = z.object({
+  from_version: z.string(),
+  to_version: z.string(),
+  diffs: z.array(FieldDiffItemSchema),
+})
+export type FAVersionDiffResponse = z.infer<typeof FAVersionDiffResponseSchema>
 
 // GET /product-templates/selectable — reused from the Bank Product Template epic
 export const SelectableTemplateItemSchema = z.object({

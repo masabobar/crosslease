@@ -52,6 +52,8 @@ export const PATHS = {
     "/business-configuration/framework-agreements/:id",
   FRAMEWORK_AGREEMENT_EDIT:
     "/business-configuration/framework-agreements/:id/edit",
+  FRAMEWORK_AGREEMENT_VERSION_HISTORY:
+    "/business-configuration/framework-agreements/:id/version-history",
   WORKFLOW_TASK_CATALOG_LIST: "/business-configuration/workflow-task-catalogs",
   WORKFLOW_TASK_CATALOG_DETAIL:
     "/business-configuration/workflow-task-catalogs/:id",
@@ -83,6 +85,10 @@ export function partnerDetail(id: string): string {
 
 export function partnerDuplicateDetail(pairId: string): string {
   return PATHS.PARTNER_DUPLICATE_DETAIL.replace(":pairId", pairId)
+}
+
+export function frameworkAgreementVersionHistory(id: string): string {
+  return PATHS.FRAMEWORK_AGREEMENT_VERSION_HISTORY.replace(":id", id)
 }
 
 export function productTemplateVersionHistory(templateId: string): string {

@@ -10,8 +10,8 @@ import {
   isFrameworkAgreementNotFoundError,
   getFrameworkAgreementDisplayStatus,
 } from "@/features/frameworkAgreements/utils"
-import { ActivateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementDialog"
-import { TerminateFrameworkAgreementDialog } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementDialog"
+import { ActivateFrameworkAgreementPanel } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementPanel"
+import { TerminateFrameworkAgreementPanel } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementPanel"
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
 import { UtilizationTab } from "@/features/frameworkAgreements/components/UtilizationTab"
 import { FinancingsTab } from "@/features/frameworkAgreements/components/FinancingsTab"
@@ -20,7 +20,10 @@ import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { isUuidRouteParam } from "@/lib/routeParams"
-import { frameworkAgreementEdit } from "@/router/paths"
+import {
+  frameworkAgreementEdit,
+  frameworkAgreementVersionHistory,
+} from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
@@ -62,8 +65,11 @@ export default function FrameworkAgreementDetailPage() {
   // `/framework-agreements/create` — a mistyped `/new` — matches this route's `:id`, so a
   // param that is not a UUID reads as not-found rather than a 422 behind a generic message.
   const agreementId = isUuidRouteParam(id) ? id : undefined
-  const [activateDialogOpen, setActivateDialogOpen] = useState(false)
-  const [terminateDialogOpen, setTerminateDialogOpen] = useState(false)
+  // Mutually exclusive — a draft can only be activated, an active agreement only
+  // terminated, so there is never a reason for both panels to be open at once.
+  const [openPanel, setOpenPanel] = useState<"activate" | "terminate" | null>(
+    null
+  )
   const navigate = useNavigate()
 
   const { data, isLoading, isError, error } = useFrameworkAgreementDetail(
@@ -123,6 +129,13 @@ export default function FrameworkAgreementDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            data-testid="fa-view-version-history-button"
+            onClick={() => navigate(frameworkAgreementVersionHistory(data.id))}
+          >
+            {t("detail.actions.viewVersionHistory")}
+          </Button>
           {data.status !== FALifecycleStatusSchema.enum.terminated &&
             canManageFrameworkAgreement && (
               <Button
@@ -134,27 +147,44 @@ export default function FrameworkAgreementDetailPage() {
               </Button>
             )}
           {data.status === FALifecycleStatusSchema.enum.draft &&
-            canManageFrameworkAgreement && (
+            canManageFrameworkAgreement &&
+            openPanel !== "activate" && (
               <Button
                 variant="outline"
                 data-testid="activate-fa-button"
-                onClick={() => setActivateDialogOpen(true)}
+                onClick={() => setOpenPanel("activate")}
               >
                 {t("detail.actions.activate")}
               </Button>
             )}
           {data.status === FALifecycleStatusSchema.enum.active &&
-            canManageFrameworkAgreement && (
+            canManageFrameworkAgreement &&
+            openPanel !== "terminate" && (
               <Button
                 variant="outline"
                 data-testid="terminate-fa-button"
-                onClick={() => setTerminateDialogOpen(true)}
+                onClick={() => setOpenPanel("terminate")}
               >
                 {t("detail.actions.terminate")}
               </Button>
             )}
         </div>
       </div>
+
+      {openPanel === "activate" && (
+        <ActivateFrameworkAgreementPanel
+          frameworkAgreementId={data.id}
+          onCancel={() => setOpenPanel(null)}
+          onActivated={() => setOpenPanel(null)}
+        />
+      )}
+      {openPanel === "terminate" && (
+        <TerminateFrameworkAgreementPanel
+          frameworkAgreementId={data.id}
+          onCancel={() => setOpenPanel(null)}
+          onTerminated={() => setOpenPanel(null)}
+        />
+      )}
 
       <Tabs defaultValue="agreementDetails">
         <TabsList>
@@ -350,17 +380,6 @@ export default function FrameworkAgreementDetailPage() {
           </TabsContent>
         )}
       </Tabs>
-
-      <ActivateFrameworkAgreementDialog
-        open={activateDialogOpen}
-        onOpenChange={setActivateDialogOpen}
-        frameworkAgreementId={data.id}
-      />
-      <TerminateFrameworkAgreementDialog
-        open={terminateDialogOpen}
-        onOpenChange={setTerminateDialogOpen}
-        frameworkAgreementId={data.id}
-      />
     </div>
   )
 }
