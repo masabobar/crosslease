@@ -15,6 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
+import { formatCurrency } from "@/lib/formatters"
 import { useFrameworkAgreementVersionDiff } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementVersionDiff"
 import type { FieldDiffItem } from "@/features/frameworkAgreements/api/schema"
 
@@ -98,7 +100,9 @@ function renderFieldValue(
         : "—"
   } else if (DECIMAL_FIELDS.has(field)) {
     text =
-      typeof value === "string" ? `€ ${Number(value).toLocaleString()}` : "—"
+      typeof value === "string"
+        ? formatCurrency(Number(value), EUR_CURRENCY_CODE)
+        : "—"
   } else if (PERCENT_FIELDS.has(field)) {
     text = typeof value === "string" ? `${value}%` : "—"
   } else if (typeof value === "string" || typeof value === "number") {

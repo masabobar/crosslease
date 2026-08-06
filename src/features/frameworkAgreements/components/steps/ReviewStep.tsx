@@ -1,6 +1,8 @@
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
+import { formatCurrency } from "@/lib/formatters"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
@@ -46,8 +48,9 @@ function ReviewStep({ form, documents }: Props) {
           <ReviewRow
             label={t("fields.maxVolumeEur")}
             value={
-              values.max_volume_eur !== undefined
-                ? `${values.max_volume_eur.toLocaleString()} EUR`
+              values.max_volume_eur !== undefined &&
+              !Number.isNaN(values.max_volume_eur)
+                ? formatCurrency(values.max_volume_eur, EUR_CURRENCY_CODE)
                 : "—"
             }
           />
@@ -56,7 +59,7 @@ function ReviewStep({ form, documents }: Props) {
             value={
               values.vfe_amount_eur !== undefined &&
               !Number.isNaN(values.vfe_amount_eur)
-                ? `${values.vfe_amount_eur.toLocaleString()} EUR`
+                ? formatCurrency(values.vfe_amount_eur, EUR_CURRENCY_CODE)
                 : "—"
             }
           />

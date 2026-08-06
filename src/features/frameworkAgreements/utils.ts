@@ -69,9 +69,9 @@ export function filterSelectableTemplates(
 // Shared Zod refine-error-code → i18n message resolver for the wizard/edit form
 // steps (IdentityStep, EnvelopePricingStep, ValidityTemplatesStep,
 // the edit wizard's steps). Handles every custom refine code used across those
-// forms' Zod schemas (see api/schema.ts): "required", "validUntilBeforeFrom",
-// "atLeastOneTemplate", "vfeAmountMin". Unrecognized messages
-// are returned as-is.
+// forms' Zod schemas (see api/schema.ts): "required", "mustBePositive",
+// "validUntilBeforeFrom", "atLeastOneTemplate", "vfeAmountMin". Unrecognized
+// messages are returned as-is.
 export function useResolveFrameworkAgreementFieldError() {
   const { t } = useTranslation("frameworkAgreements")
   const { t: tCommon } = useTranslation("common")
@@ -81,6 +81,7 @@ export function useResolveFrameworkAgreementFieldError() {
   ): string | undefined {
     if (!msg) return undefined
     if (msg === "required") return tCommon("validation.required")
+    if (msg === "mustBePositive") return tCommon("validation.mustBePositive")
     if (msg === "validUntilBeforeFrom") return t("errors.validUntilBeforeFrom")
     if (msg === "atLeastOneTemplate") return t("errors.atLeastOneTemplate")
     // The bound comes from the schema constant so the message can never drift from what

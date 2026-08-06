@@ -3,6 +3,7 @@ import { useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { formatCurrency } from "@/lib/formatters"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
@@ -59,7 +60,10 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
             value={
               values.max_volume_eur !== undefined &&
               !Number.isNaN(values.max_volume_eur)
-                ? `${values.max_volume_eur.toLocaleString()} EUR`
+                ? formatCurrency(
+                    values.max_volume_eur,
+                    frameworkAgreement.currency
+                  )
                 : "—"
             }
           />
@@ -68,7 +72,10 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
             value={
               values.vfe_amount_eur !== undefined &&
               !Number.isNaN(values.vfe_amount_eur)
-                ? `${values.vfe_amount_eur.toLocaleString()} EUR`
+                ? formatCurrency(
+                    values.vfe_amount_eur,
+                    frameworkAgreement.currency
+                  )
                 : "—"
             }
           />
