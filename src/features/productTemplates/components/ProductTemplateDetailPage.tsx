@@ -111,8 +111,7 @@ export default function ProductTemplateDetailPage() {
     o => o.ref === data.npv_formula_ref
   )
   const assetCategories = data.allowed_asset_categories ?? []
-  const isPublished =
-    data.version_status === TemplateStatusSchema.enum.published
+  const isActive = data.version_status === TemplateStatusSchema.enum.active
   const notSet = "—"
 
   return (
@@ -297,9 +296,9 @@ export default function ProductTemplateDetailPage() {
         />
       </SectionCard>
 
-      {/* Same gate the drawer footer uses: published versions only, and only for a role that may
+      {/* Same gate the drawer footer uses: active versions only, and only for a role that may
           author a draft. Kept identical so the two surfaces cannot disagree about what is offered. */}
-      {isPublished && canManageDraft && templateId && (
+      {isActive && canManageDraft && templateId && (
         <div className="flex justify-end border-t border-border pt-4">
           <ProductTemplatePublishedActions
             templateId={templateId}

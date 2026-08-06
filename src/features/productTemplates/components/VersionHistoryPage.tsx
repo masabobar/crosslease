@@ -42,11 +42,12 @@ import NotFoundPage from "@/features/errors/components/NotFoundPage"
 // colored pill with no dot, matching the Figma "steps" rail + "Soft Badge" split.
 const TIMELINE_DOT_CLASSES: Record<TemplateStatus, string> = {
   draft: "bg-primary",
-  published: "bg-green-600",
-  deprecated: "bg-amber-600",
+  scheduled: "bg-indigo-600",
+  active: "bg-green-600",
+  superseded: "bg-slate-500",
+  expired: "bg-purple-600",
+  terminated: "bg-red-600",
   discarded: "bg-slate-300",
-  awaiting_activation_countersignature: "bg-amber-600",
-  awaiting_deprecation_countersignature: "bg-amber-600",
 }
 
 // Audit events for a product template are recorded by the backend against the
@@ -240,20 +241,20 @@ export default function VersionHistoryPage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {version.published_by
-                          ? t("versionHistory.publishedBy", {
-                              name: version.published_by.display_name,
+                        {version.activated_by
+                          ? t("versionHistory.activatedBy", {
+                              name: version.activated_by.display_name,
                               date: formatDateTime(
-                                version.published_at ?? null
+                                version.activated_at ?? null
                               ),
                             })
                           : formatDateTime(version.created_at)}
                       </p>
-                      {version.deprecated_by && (
+                      {version.terminated_by && (
                         <p className="text-xs text-muted-foreground">
-                          {t("versionHistory.deprecatedBy", {
-                            name: version.deprecated_by.display_name,
-                            date: formatDateTime(version.deprecated_at ?? null),
+                          {t("versionHistory.terminatedBy", {
+                            name: version.terminated_by.display_name,
+                            date: formatDateTime(version.terminated_at ?? null),
                           })}
                         </p>
                       )}

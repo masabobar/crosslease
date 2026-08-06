@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { format } from "date-fns"
-import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
+import { TERMINATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
 import { requiredEnum } from "@/lib/zodHelpers"
 
 // Wire enums — must match refinext-api src/app/modules/product_templates/domain/enums.py exactly
@@ -135,8 +135,8 @@ export const PublishTemplateDraftResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
   version_status: z.string(),
-  published_at: z.string(),
-  published_by: z.string().uuid(),
+  activated_at: z.string(),
+  activated_by: z.string().uuid(),
 })
 export type PublishTemplateDraftResponse = z.infer<
   typeof PublishTemplateDraftResponseSchema
@@ -157,36 +157,24 @@ export type NewVersionCreatedResponse = z.infer<
   typeof NewVersionCreatedResponseSchema
 >
 
-// Wire request/response for POST .../deprecate (deprecate_version) in refinext-api.
-export const DeprecateTemplateVersionRequestSchema = z.object({
-  justification: z.string().min(DEPRECATION_JUSTIFICATION_MIN_LENGTH).max(2000),
+// Wire request/response for POST .../terminate (terminate_template_version) in refinext-api.
+// Renamed from deprecate/deprecated_at/by by the bpt1803v2 migration (2026-08-05); the
+// response no longer carries an impact summary (ImpactSummarySchema was removed with it).
+export const TerminateTemplateVersionRequestSchema = z.object({
+  justification: z.string().min(TERMINATION_JUSTIFICATION_MIN_LENGTH).max(2000),
 })
-export type DeprecateTemplateVersionRequest = z.infer<
-  typeof DeprecateTemplateVersionRequestSchema
+export type TerminateTemplateVersionRequest = z.infer<
+  typeof TerminateTemplateVersionRequestSchema
 >
 
-// framework_agreement_count was added under CR PRD1042-1546 B3, which is also what made
-// the summary worth parsing — deprecate_version populates it for real now. The other three
-// counts stay at their 0 default until E1/E2/E3 deliver back-reference tracking.
-export const ImpactSummarySchema = z.object({
-  rr_count: z.number().int().default(0),
-  financing_count: z.number().int().default(0),
-  contract_count: z.number().int().default(0),
-  framework_agreement_count: z.number().int().default(0),
-})
-export type ImpactSummary = z.infer<typeof ImpactSummarySchema>
-
-export const DeprecateTemplateVersionResponseSchema = z.object({
+export const TerminateTemplateVersionResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_status: z.string(),
-  deprecated_at: z.string(),
-  deprecated_by: z.string().uuid(),
-  // Optional to match the BE default — the field carries a default, so it is absent
-  // from the endpoint's required list even though the response always serializes it.
-  impact_summary: ImpactSummarySchema.optional(),
+  terminated_at: z.string(),
+  terminated_by: z.string().uuid(),
 })
-export type DeprecateTemplateVersionResponse = z.infer<
-  typeof DeprecateTemplateVersionResponseSchema
+export type TerminateTemplateVersionResponse = z.infer<
+  typeof TerminateTemplateVersionResponseSchema
 >
 
 // RHF-facing form schema — stricter than the wire schema, mirroring the PRD's Field Specification
@@ -282,14 +270,16 @@ export type ProductTemplateWizardForm = z.infer<
 
 // Version history — matches VersionHistoryResponse / TemplateVersionSummary in
 // refinext-api interfaces/http/schemas/product_template.py. TemplateStatus mirrors
-// domain/enums.py TemplateStatus exactly (6 values, including the Four-Eyes awaiting states
-// which the FE badge must still render even though the Four-Eyes flow itself isn't built yet).
+// domain/enums.py TemplateStatus exactly (7 values). The bpt1803v2 migration (2026-08-05)
+// replaced the old draft/awaiting_*_countersignature/published/deprecated/discarded model
+// with this one — the Four-Eyes awaiting states were folded back into draft.
 export const TemplateStatusSchema = z.enum([
   "draft",
-  "awaiting_activation_countersignature",
-  "awaiting_deprecation_countersignature",
-  "published",
-  "deprecated",
+  "scheduled",
+  "active",
+  "superseded",
+  "expired",
+  "terminated",
   "discarded",
 ])
 export type TemplateStatus = z.infer<typeof TemplateStatusSchema>
@@ -304,10 +294,10 @@ export const TemplateVersionSummarySchema = z.object({
   id: z.string().uuid(),
   version_number: z.string(),
   version_status: TemplateStatusSchema,
-  published_at: z.string().nullable().optional(),
-  deprecated_at: z.string().nullable().optional(),
-  published_by: UserRefSchema.nullable().optional(),
-  deprecated_by: UserRefSchema.nullable().optional(),
+  activated_at: z.string().nullable().optional(),
+  terminated_at: z.string().nullable().optional(),
+  activated_by: UserRefSchema.nullable().optional(),
+  terminated_by: UserRefSchema.nullable().optional(),
   predecessor_version_id: z.string().uuid().nullable().optional(),
   superseding_version_id: z.string().uuid().nullable().optional(),
   bindings_count: z.number().int(),
@@ -397,8 +387,8 @@ export const TemplateCurrentVersionSummarySchema = z.object({
   max_ltv_ratio: z.coerce.number().nullable().optional(),
   min_term_months: z.number().int().nullable().optional(),
   max_term_months: z.number().int().nullable().optional(),
-  published_by: UserRefSchema.nullable().optional(),
-  published_at: z.string().nullable().optional(),
+  activated_by: UserRefSchema.nullable().optional(),
+  activated_at: z.string().nullable().optional(),
 })
 export type TemplateCurrentVersionSummary = z.infer<
   typeof TemplateCurrentVersionSummarySchema

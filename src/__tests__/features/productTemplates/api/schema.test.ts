@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest"
 import { addDays, format } from "date-fns"
 import {
   CreateProductTemplateDraftRequestSchema,
-  DeprecateTemplateVersionRequestSchema,
-  DeprecateTemplateVersionResponseSchema,
   NewVersionCreatedResponseSchema,
   ProductTemplateWizardFormSchema,
   PublishTemplateDraftRequestSchema,
@@ -13,11 +11,12 @@ import {
   TemplateDraftDiscardedResponseSchema,
   TemplateDraftUpdatedResponseSchema,
   FieldDiffItemSchema,
-  ImpactSummarySchema,
   TemplateListItemSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
   TemplateVersionSummarySchema,
+  TerminateTemplateVersionRequestSchema,
+  TerminateTemplateVersionResponseSchema,
   UpdateProductTemplateDraftRequestSchema,
   VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
@@ -207,9 +206,9 @@ describe("PublishTemplateDraftResponseSchema", () => {
   const validPublishResponse = {
     version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     version_number: "1.0",
-    version_status: "published",
-    published_at: "2026-07-13T09:00:00Z",
-    published_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    version_status: "active",
+    activated_at: "2026-07-13T09:00:00Z",
+    activated_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   }
 
   it("accepts a valid publish response", () => {
@@ -222,19 +221,19 @@ describe("PublishTemplateDraftResponseSchema", () => {
     "version_id",
     "version_number",
     "version_status",
-    "published_at",
-    "published_by",
+    "activated_at",
+    "activated_by",
   ])("rejects a payload missing required field %s", field => {
     const rest = { ...validPublishResponse } as Record<string, unknown>
     delete rest[field]
     expect(() => PublishTemplateDraftResponseSchema.parse(rest)).toThrow()
   })
 
-  it("rejects a non-UUID published_by", () => {
+  it("rejects a non-UUID activated_by", () => {
     expect(() =>
       PublishTemplateDraftResponseSchema.parse({
         ...validPublishResponse,
-        published_by: "not-a-uuid",
+        activated_by: "not-a-uuid",
       })
     ).toThrow()
   })
@@ -396,7 +395,7 @@ describe("ProductTemplateWizardFormSchema", () => {
 const validVersionSummary = {
   id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   version_number: "1.0",
-  version_status: "published",
+  version_status: "active",
   bindings_count: 3,
   created_at: "2026-05-22T14:30:00Z",
 }
@@ -414,10 +413,11 @@ describe("TemplateVersionSummarySchema", () => {
 
   it.each([
     "draft",
-    "awaiting_activation_countersignature",
-    "awaiting_deprecation_countersignature",
-    "published",
-    "deprecated",
+    "scheduled",
+    "active",
+    "superseded",
+    "expired",
+    "terminated",
     "discarded",
   ])("accepts version_status %s", status => {
     expect(() =>
@@ -428,12 +428,12 @@ describe("TemplateVersionSummarySchema", () => {
     ).not.toThrow()
   })
 
-  it("accepts a published version with published_by", () => {
+  it("accepts an active version with activated_by", () => {
     expect(() =>
       TemplateVersionSummarySchema.parse({
         ...validVersionSummary,
-        published_at: "2026-05-22T14:30:00Z",
-        published_by: {
+        activated_at: "2026-05-22T14:30:00Z",
+        activated_by: {
           id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
           display_name: "Anna Kowalski",
         },
@@ -441,20 +441,20 @@ describe("TemplateVersionSummarySchema", () => {
     ).not.toThrow()
   })
 
-  it("accepts a deprecated version with published_by and deprecated_by", () => {
+  it("accepts a terminated version with activated_by and terminated_by", () => {
     expect(() =>
       TemplateVersionSummarySchema.parse({
         ...validVersionSummary,
-        version_status: "deprecated",
-        published_by: {
+        version_status: "terminated",
+        activated_by: {
           id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
           display_name: "Anna Kowalski",
         },
-        deprecated_by: {
+        terminated_by: {
           id: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
           display_name: "Bruce Wayne",
         },
-        deprecated_at: "2026-07-14T11:23:00Z",
+        terminated_at: "2026-07-14T11:23:00Z",
       })
     ).not.toThrow()
   })
@@ -590,7 +590,7 @@ describe("VersionDiffResponseSchema", () => {
 describe("TemplateVersionDetailSchema", () => {
   const validDetail = {
     version_number: "1.0",
-    version_status: "published",
+    version_status: "active",
     template_name: "Full refinancing standard",
     financing_type: "full_refinancing",
     legal_structure: "loan_credit",
@@ -693,10 +693,10 @@ describe("NewVersionCreatedResponseSchema", () => {
   })
 })
 
-describe("DeprecateTemplateVersionRequestSchema / DeprecateTemplateVersionResponseSchema", () => {
+describe("TerminateTemplateVersionRequestSchema / TerminateTemplateVersionResponseSchema", () => {
   it("accepts a justification at the minimum length", () => {
     expect(() =>
-      DeprecateTemplateVersionRequestSchema.parse({
+      TerminateTemplateVersionRequestSchema.parse({
         justification: "1234567890",
       })
     ).not.toThrow()
@@ -704,7 +704,7 @@ describe("DeprecateTemplateVersionRequestSchema / DeprecateTemplateVersionRespon
 
   it("rejects a justification under 10 characters", () => {
     expect(() =>
-      DeprecateTemplateVersionRequestSchema.parse({
+      TerminateTemplateVersionRequestSchema.parse({
         justification: "too short",
       })
     ).toThrow()
@@ -712,67 +712,31 @@ describe("DeprecateTemplateVersionRequestSchema / DeprecateTemplateVersionRespon
 
   it("rejects a justification over 2000 characters", () => {
     expect(() =>
-      DeprecateTemplateVersionRequestSchema.parse({
+      TerminateTemplateVersionRequestSchema.parse({
         justification: "a".repeat(2001),
       })
     ).toThrow()
   })
 
-  const validDeprecateResponse = {
+  const validTerminateResponse = {
     version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-    version_status: "deprecated",
-    deprecated_at: "2026-07-14T11:23:00Z",
-    deprecated_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    version_status: "terminated",
+    terminated_at: "2026-07-14T11:23:00Z",
+    terminated_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   }
 
-  it("accepts a valid deprecate response", () => {
+  it("accepts a valid terminate response", () => {
     expect(() =>
-      DeprecateTemplateVersionResponseSchema.parse(validDeprecateResponse)
+      TerminateTemplateVersionResponseSchema.parse(validTerminateResponse)
     ).not.toThrow()
   })
 
-  it("rejects a non-UUID deprecated_by", () => {
+  it("rejects a non-UUID terminated_by", () => {
     expect(() =>
-      DeprecateTemplateVersionResponseSchema.parse({
-        ...validDeprecateResponse,
-        deprecated_by: "not-a-uuid",
+      TerminateTemplateVersionResponseSchema.parse({
+        ...validTerminateResponse,
+        terminated_by: "not-a-uuid",
       })
-    ).toThrow()
-  })
-
-  it("parses the impact summary when the response carries one", () => {
-    const parsed = DeprecateTemplateVersionResponseSchema.parse({
-      ...validDeprecateResponse,
-      impact_summary: {
-        rr_count: 0,
-        financing_count: 2,
-        contract_count: 0,
-        framework_agreement_count: 3,
-      },
-    })
-    expect(parsed.impact_summary?.framework_agreement_count).toBe(3)
-    expect(parsed.impact_summary?.financing_count).toBe(2)
-  })
-
-  it("leaves impact_summary undefined when the response omits it", () => {
-    expect(
-      DeprecateTemplateVersionResponseSchema.parse(validDeprecateResponse)
-        .impact_summary
-    ).toBeUndefined()
-  })
-
-  it("defaults every impact count to zero", () => {
-    expect(ImpactSummarySchema.parse({})).toEqual({
-      rr_count: 0,
-      financing_count: 0,
-      contract_count: 0,
-      framework_agreement_count: 0,
-    })
-  })
-
-  it("rejects a non-integer framework_agreement_count", () => {
-    expect(() =>
-      ImpactSummarySchema.parse({ framework_agreement_count: 1.5 })
     ).toThrow()
   })
 })
@@ -781,7 +745,7 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
   const validCurrentVersion = {
     version_id: "f7a5c6b8-cdae-4f55-af6e-5d6e7f8a9b01",
     version_number: "1.0",
-    version_status: "published",
+    version_status: "active",
     financing_type: "full_refinancing",
     legal_structure: "loan_credit",
     calculation_model: "annuity",
@@ -801,11 +765,11 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
         max_ltv_ratio: 85,
         min_term_months: 12,
         max_term_months: 84,
-        published_by: {
+        activated_by: {
           id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
           display_name: "Anna Kowalski",
         },
-        published_at: "2026-05-22T14:30:00Z",
+        activated_at: "2026-05-22T14:30:00Z",
       })
     ).not.toThrow()
   })

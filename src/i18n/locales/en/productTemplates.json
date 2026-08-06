@@ -194,16 +194,17 @@
   },
   "versionStatuses": {
     "draft": "Draft",
-    "published": "Published",
-    "deprecated": "Deprecated",
-    "discarded": "Discarded",
-    "awaiting_activation_countersignature": "Awaiting activation",
-    "awaiting_deprecation_countersignature": "Awaiting deprecation"
+    "scheduled": "Scheduled",
+    "active": "Active",
+    "superseded": "Superseded",
+    "expired": "Expired",
+    "terminated": "Terminated",
+    "discarded": "Discarded"
   },
   "versionHistory": {
     "title": "Version history",
-    "publishedBy": "Published by {{name}} · {{date}}",
-    "deprecatedBy": "Deprecated by {{name}} · {{date}}",
+    "activatedBy": "Activated by {{name}} · {{date}}",
+    "terminatedBy": "Terminated by {{name}} · {{date}}",
     "bindingsCount": "{{count}} bindings",
     "viewAuditTrail": "View audit trail",
     "discard": "Discard",
@@ -221,14 +222,14 @@
       "keep": "Cancel",
       "confirm": "Create draft"
     },
-    "deprecate": "Deprecate",
-    "deprecateDialog": {
-      "title": "Deprecate template version",
+    "terminate": "Terminate",
+    "terminateDialog": {
+      "title": "Terminate template version",
       "description": "This version will be removed from all operational selectors immediately. Existing financings and requests bound to this version will continue to operate unaffected.",
-      "justificationLabel": "Deprecation justification",
+      "justificationLabel": "Termination justification",
       "justificationHint": "Mandatory. Minimum 10 characters.",
       "keep": "Cancel",
-      "confirm": "Deprecate version"
+      "confirm": "Terminate version"
     },
     "compare": {
       "compareLabel": "Compare",
@@ -266,11 +267,12 @@
     "BPT_MODULE_NOT_ACTIVE": "Product templates are not available for your tenant.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "This product template could not be found.",
     "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "This template version could not be found.",
-    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
+    "IMMUTABILITY_VIOLATION": "This version's current state doesn't allow that action anymore.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "This template can't be published until its orchestration references are valid.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "A draft version already exists for this template. Discard or publish it before creating a new one.",
     "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Select two different versions to compare.",
-    "PRODUCT_TEMPLATE_IN_USE_BY_FRAMEWORK_AGREEMENT": "This version can't be deprecated while active framework agreements reference it — they would be left without a published product.",
+    "PRODUCT_TEMPLATE_IN_USE_BY_FRAMEWORK_AGREEMENT": "This version can't be terminated while active framework agreements reference it — they would be left without an active product.",
+    "PRODUCT_TEMPLATE_NOT_TERMINATABLE": "Only active template versions can be terminated.",
     "generic": "Something went wrong. Please try again.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }

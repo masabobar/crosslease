@@ -105,8 +105,7 @@ export function ProductTemplateDetailDrawer({
     versionNumber
   )
 
-  const isPublished =
-    data?.version_status === TemplateStatusSchema.enum.published
+  const isActive = data?.version_status === TemplateStatusSchema.enum.active
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -171,7 +170,7 @@ export function ProductTemplateDetailDrawer({
           {data && <DetailBody detail={data} />}
         </div>
 
-        {data && isPublished && canManageDraft && templateId && (
+        {data && isActive && canManageDraft && templateId && (
           <SheetFooter className="border-t border-border">
             <ProductTemplatePublishedActions
               templateId={templateId}

@@ -14,9 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DEPRECATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
+import { TERMINATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
-import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
+import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
 import { showApiError } from "@/features/productTemplates/utils"
 import { productTemplateNewVersionEdit } from "@/router/paths"
 
@@ -25,7 +25,7 @@ type ProductTemplatePublishedActionsProps = {
   versionNumber: string
 }
 
-// Deprecate + Author-new-version actions for a Published template version. Extracted from
+// Terminate + Author-new-version actions for an Active template version. Extracted from
 // VersionHistoryPage so the detail drawer (US-10.8) and any future surface share one
 // implementation. Per the design these live on the detail drawer, not on Version History.
 export function ProductTemplatePublishedActions({
@@ -36,13 +36,13 @@ export function ProductTemplatePublishedActions({
   const navigate = useNavigate()
 
   const [isAuthorDialogOpen, setIsAuthorDialogOpen] = useState(false)
-  const [isDeprecateDialogOpen, setIsDeprecateDialogOpen] = useState(false)
-  const [deprecationJustification, setDeprecationJustification] = useState("")
+  const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false)
+  const [terminationJustification, setTerminationJustification] = useState("")
 
   const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
     useCreateNewProductTemplateVersion()
-  const { mutateAsync: deprecateVersion, isPending: isDeprecating } =
-    useDeprecateProductTemplateVersion()
+  const { mutateAsync: terminateVersion, isPending: isTerminating } =
+    useTerminateProductTemplateVersion()
 
   async function handleConfirmAuthorNewVersion() {
     try {
@@ -54,15 +54,15 @@ export function ProductTemplatePublishedActions({
     }
   }
 
-  async function handleConfirmDeprecate() {
+  async function handleConfirmTerminate() {
     try {
-      await deprecateVersion({
+      await terminateVersion({
         templateId,
         versionNumber,
-        body: { justification: deprecationJustification },
+        body: { justification: terminationJustification },
       })
-      setIsDeprecateDialogOpen(false)
-      setDeprecationJustification("")
+      setIsTerminateDialogOpen(false)
+      setTerminationJustification("")
     } catch (err) {
       showApiError(err, t)
     }
@@ -75,11 +75,11 @@ export function ProductTemplatePublishedActions({
           type="button"
           variant="outline"
           size="sm"
-          data-testid="deprecate-version-button"
+          data-testid="terminate-version-button"
           className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => setIsDeprecateDialogOpen(true)}
+          onClick={() => setIsTerminateDialogOpen(true)}
         >
-          {t("versionHistory.deprecate")}
+          {t("versionHistory.terminate")}
         </Button>
         <Button
           type="button"
@@ -120,50 +120,50 @@ export function ProductTemplatePublishedActions({
       </AlertDialog>
 
       <AlertDialog
-        open={isDeprecateDialogOpen}
+        open={isTerminateDialogOpen}
         onOpenChange={open => {
-          setIsDeprecateDialogOpen(open)
-          if (!open) setDeprecationJustification("")
+          setIsTerminateDialogOpen(open)
+          if (!open) setTerminationJustification("")
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("versionHistory.deprecateDialog.title")}
+              {t("versionHistory.terminateDialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("versionHistory.deprecateDialog.description")}
+              {t("versionHistory.terminateDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-2 px-1">
-            <Label htmlFor="deprecate-justification">
-              {t("versionHistory.deprecateDialog.justificationLabel")}
+            <Label htmlFor="terminate-justification">
+              {t("versionHistory.terminateDialog.justificationLabel")}
             </Label>
             <Textarea
-              id="deprecate-justification"
-              data-testid="deprecate-justification-input"
+              id="terminate-justification"
+              data-testid="terminate-justification-input"
               rows={3}
-              value={deprecationJustification}
-              onChange={e => setDeprecationJustification(e.target.value)}
+              value={terminationJustification}
+              onChange={e => setTerminationJustification(e.target.value)}
             />
             <p className="text-sm text-muted-foreground opacity-80">
-              {t("versionHistory.deprecateDialog.justificationHint")}
+              {t("versionHistory.terminateDialog.justificationHint")}
             </p>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-deprecate-dialog-keep">
-              {t("versionHistory.deprecateDialog.keep")}
+            <AlertDialogCancel data-testid="version-terminate-dialog-keep">
+              {t("versionHistory.terminateDialog.keep")}
             </AlertDialogCancel>
             <AlertDialogAction
-              data-testid="version-deprecate-dialog-confirm"
-              onClick={handleConfirmDeprecate}
+              data-testid="version-terminate-dialog-confirm"
+              onClick={handleConfirmTerminate}
               disabled={
-                isDeprecating ||
-                deprecationJustification.trim().length <
-                  DEPRECATION_JUSTIFICATION_MIN_LENGTH
+                isTerminating ||
+                terminationJustification.trim().length <
+                  TERMINATION_JUSTIFICATION_MIN_LENGTH
               }
             >
-              {t("versionHistory.deprecateDialog.confirm")}
+              {t("versionHistory.terminateDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
