@@ -18,6 +18,8 @@ function ProductTemplateMultiSelect({ value, onChange, error }: Props) {
   const { data, isLoading, isError } = useSelectableProductTemplates()
   const [search, setSearch] = useState("")
 
+  // Already collapsed to one row per template by the hook's select — see
+  // useSelectableProductTemplates. Options here are safe to key on template_id.
   const options = data?.items ?? []
   const visibleOptions = filterSelectableTemplates(options, search)
 

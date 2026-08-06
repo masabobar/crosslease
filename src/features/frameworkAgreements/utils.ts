@@ -53,6 +53,32 @@ export function isFrameworkAgreementExpiredByDate(
 // published list — no filtering derived from earlier wizard steps and no "smart" version
 // pre-selection — so search is the only narrowing, and it happens client-side because
 // GET /product-templates/selectable returns every option in one unpaginated response.
+// GET /product-templates/selectable is version-scoped — it returns one row per selectable
+// version (ACTIVE *and* in-window SUPERSEDED, see get_selectable_versions in
+// ../refinext-api/), so a template with an active v2 and a superseded v1 arrives twice under
+// one template_id. Consumers bind the *template* (an FA's product_template_ids are
+// ProductTemplate.id; the BE resolves the version at binding time), so those rows must be
+// collapsed. Applied once in useSelectableProductTemplates' select — that hook's comment
+// records which surfaces broke and how.
+//
+// The surviving row keeps the highest version_number: the response carries no version_status,
+// so "latest" is the only available stand-in for "the one that will actually be bound".
+export function dedupeSelectableTemplates(
+  options: readonly SelectableTemplateItem[]
+): readonly SelectableTemplateItem[] {
+  const byTemplate = new Map<string, SelectableTemplateItem>()
+  for (const option of options) {
+    const current = byTemplate.get(option.template_id)
+    if (
+      !current ||
+      Number(option.version_number) > Number(current.version_number)
+    ) {
+      byTemplate.set(option.template_id, option)
+    }
+  }
+  return [...byTemplate.values()]
+}
+
 export function filterSelectableTemplates(
   options: readonly SelectableTemplateItem[],
   query: string
