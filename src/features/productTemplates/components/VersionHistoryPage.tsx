@@ -116,6 +116,18 @@ export default function VersionHistoryPage() {
     return <NotFoundPage />
   }
 
+  // "Keep editing" is offered from the version list, not from the editor, so merely
+  // dismissing the dialog would leave the user on the same list having achieved nothing —
+  // which reads as a dead button. It resumes the draft in the editor instead, matching the
+  // "Continue editing" action on the same row. The wizard's copy of this dialog correctly
+  // only closes: there, the user is already in the editor.
+  function handleKeepEditing() {
+    if (!discardTarget || !templateId) return
+    navigate(
+      productTemplateNewVersionEdit(templateId, discardTarget.version_number)
+    )
+  }
+
   async function handleConfirmDiscard() {
     if (!discardTarget || !templateId) return
     try {
@@ -330,7 +342,10 @@ export default function VersionHistoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="version-discard-dialog-keep">
+            <AlertDialogCancel
+              data-testid="version-discard-dialog-keep"
+              onClick={handleKeepEditing}
+            >
               {t("versionHistory.discardDialog.keep")}
             </AlertDialogCancel>
             <AlertDialogAction
