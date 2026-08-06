@@ -4,7 +4,8 @@ import { ArrowLeft } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionCard } from "@/components/shared/SectionCard"
 import { ApiError } from "@/lib/api"
-import { formatDateTime } from "@/lib/formatters"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
+import { formatCurrency, formatDateTime } from "@/lib/formatters"
 import { isUuidRouteParam, isVersionNumberRouteParam } from "@/lib/routeParams"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
@@ -264,7 +265,7 @@ export default function ProductTemplateDetailPage() {
           label={t("fields.minVolumeEur")}
           value={
             data.min_volume_eur !== undefined && data.min_volume_eur !== null
-              ? `€ ${data.min_volume_eur.toLocaleString()}`
+              ? formatCurrency(data.min_volume_eur, EUR_CURRENCY_CODE)
               : notSet
           }
         />
@@ -272,7 +273,7 @@ export default function ProductTemplateDetailPage() {
           label={t("fields.maxVolumeEur")}
           value={
             data.max_volume_eur !== undefined && data.max_volume_eur !== null
-              ? `€ ${data.max_volume_eur.toLocaleString()}`
+              ? formatCurrency(data.max_volume_eur, EUR_CURRENCY_CODE)
               : notSet
           }
         />

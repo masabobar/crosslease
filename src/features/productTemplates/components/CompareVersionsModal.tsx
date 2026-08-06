@@ -15,6 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
+import { formatCurrency } from "@/lib/formatters"
 import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
 import { useTemplateVersionDiff } from "@/features/productTemplates/hooks/useTemplateVersionDiff"
 import type { FieldDiffItem } from "@/features/productTemplates/api/schema"
@@ -195,7 +197,7 @@ function renderFieldValue(
     text = ltv !== null ? `${ltv}%` : "—"
   } else if (field === "min_volume_eur" || field === "max_volume_eur") {
     const volume = asDecimalNumber(value)
-    text = volume !== null ? `€ ${volume.toLocaleString()}` : "—"
+    text = volume !== null ? formatCurrency(volume, EUR_CURRENCY_CODE) : "—"
   } else if (field === "min_term_months" || field === "max_term_months") {
     text = typeof value === "number" ? value : "—"
   } else if (ENUM_FIELD_NAMESPACES[field]) {

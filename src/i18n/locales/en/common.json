@@ -5,6 +5,7 @@
   "loading": "Loading...",
   "validation": {
     "required": "This field is required.",
+    "mustBePositive": "Enter an amount greater than zero.",
     "tooShort": "This value is too short.",
     "tooLong": "This value is too long.",
     "invalidFormat": "Please enter a valid email address.",

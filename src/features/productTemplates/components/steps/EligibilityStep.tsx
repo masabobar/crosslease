@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SectionCard } from "@/components/shared/SectionCard"
+import { optionalNumber } from "@/lib/utils"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   AssetCategorySchema,
@@ -15,12 +16,6 @@ import {
 
 type Props = {
   form: UseFormReturn<ProductTemplateWizardForm>
-}
-
-// react-hook-form's valueAsNumber turns an emptied input into NaN, not undefined,
-// which fails these optional fields' zod validation. Coerce blank to undefined instead.
-function optionalNumber(value: string): number | undefined {
-  return value === "" ? undefined : Number(value)
 }
 
 function EligibilityStep({ form }: Props) {

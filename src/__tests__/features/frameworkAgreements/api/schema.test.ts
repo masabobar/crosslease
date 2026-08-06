@@ -734,6 +734,22 @@ describe("FrameworkAgreementWizardFormSchema", () => {
       result.error!.issues.find(i => i.path[0] === "max_volume_eur")?.message
     ).toBe("required")
   })
+
+  // A typed negative or zero is a distinct mistake from a blank field, so it must not
+  // reuse "required" — that rendered "This field is required" over a filled-in "-3".
+  it.each([-3, 0])(
+    "reports 'mustBePositive' rather than 'required' for %s",
+    value => {
+      const result = FrameworkAgreementWizardFormSchema.safeParse({
+        ...validForm,
+        max_volume_eur: value,
+      })
+      expect(result.success).toBe(false)
+      expect(
+        result.error!.issues.find(i => i.path[0] === "max_volume_eur")?.message
+      ).toBe("mustBePositive")
+    }
+  )
 })
 
 describe("TerminateFARequestSchema / FATerminatedResponseSchema", () => {

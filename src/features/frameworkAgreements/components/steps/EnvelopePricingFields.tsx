@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
+import { optionalNumber } from "@/lib/utils"
 import { VFE_AMOUNT_MIN } from "@/features/frameworkAgreements/api/schema"
 
 // Pricing on the agreement is now the early-repayment penalty alone, and it is an EUR
@@ -95,7 +96,7 @@ function EnvelopePricingFields<T extends EnvelopePricingFormFields>({
               </span>
             }
             {...typedRegister("vfe_amount_eur", {
-              setValueAs: v => (v === "" ? undefined : Number(v)),
+              setValueAs: optionalNumber,
             })}
           />
           <p className="mt-1 text-xs text-muted-foreground">
