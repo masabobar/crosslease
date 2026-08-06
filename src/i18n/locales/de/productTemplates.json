@@ -194,16 +194,17 @@
   },
   "versionStatuses": {
     "draft": "Entwurf",
-    "published": "Veröffentlicht",
-    "deprecated": "Veraltet",
-    "discarded": "Verworfen",
-    "awaiting_activation_countersignature": "Wartet auf Aktivierung",
-    "awaiting_deprecation_countersignature": "Wartet auf Außerkraftsetzung"
+    "scheduled": "Geplant",
+    "active": "Aktiv",
+    "superseded": "Abgelöst",
+    "expired": "Abgelaufen",
+    "terminated": "Beendet",
+    "discarded": "Verworfen"
   },
   "versionHistory": {
     "title": "Versionsverlauf",
-    "publishedBy": "Veröffentlicht von {{name}} · {{date}}",
-    "deprecatedBy": "Außer Kraft gesetzt von {{name}} · {{date}}",
+    "activatedBy": "Aktiviert von {{name}} · {{date}}",
+    "terminatedBy": "Beendet von {{name}} · {{date}}",
     "bindingsCount": "{{count}} Bindungen",
     "viewAuditTrail": "Audit-Trail anzeigen",
     "discard": "Verwerfen",
@@ -221,14 +222,14 @@
       "keep": "Abbrechen",
       "confirm": "Entwurf erstellen"
     },
-    "deprecate": "Außer Kraft setzen",
-    "deprecateDialog": {
-      "title": "Vorlagenversion außer Kraft setzen",
+    "terminate": "Beenden",
+    "terminateDialog": {
+      "title": "Vorlagenversion beenden",
       "description": "Diese Version wird sofort aus allen operativen Auswahllisten entfernt. Bestehende Finanzierungen und Anfragen, die an diese Version gebunden sind, laufen unverändert weiter.",
-      "justificationLabel": "Begründung der Außerkraftsetzung",
+      "justificationLabel": "Begründung der Beendigung",
       "justificationHint": "Erforderlich. Mindestens 10 Zeichen.",
       "keep": "Abbrechen",
-      "confirm": "Version außer Kraft setzen"
+      "confirm": "Version beenden"
     },
     "compare": {
       "compareLabel": "Vergleichen",
@@ -266,11 +267,12 @@
     "BPT_MODULE_NOT_ACTIVE": "Produktvorlagen sind für Ihren Mandanten nicht verfügbar.",
     "PRODUCT_TEMPLATE_NOT_FOUND": "Diese Produktvorlage konnte nicht gefunden werden.",
     "PRODUCT_TEMPLATE_VERSION_NOT_FOUND": "Diese Vorlagenversion konnte nicht gefunden werden.",
-    "PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",
+    "IMMUTABILITY_VIOLATION": "Der aktuelle Status dieser Version lässt diese Aktion nicht mehr zu.",
     "PRODUCT_TEMPLATE_REFERENCE_CHECK_FAILED": "Diese Vorlage kann erst veröffentlicht werden, wenn ihre Orchestrierungsverknüpfungen gültig sind.",
     "PRODUCT_TEMPLATE_DRAFT_EXISTS": "Für diese Vorlage existiert bereits ein Entwurf. Verwerfen oder veröffentlichen Sie ihn, bevor Sie einen neuen erstellen.",
     "PRODUCT_TEMPLATE_DIFF_SAME_VERSION": "Wählen Sie zwei unterschiedliche Versionen zum Vergleich aus.",
-    "PRODUCT_TEMPLATE_IN_USE_BY_FRAMEWORK_AGREEMENT": "Diese Version kann nicht außer Kraft gesetzt werden, solange aktive Rahmenverträge auf sie verweisen – diese hätten dann kein veröffentlichtes Produkt mehr.",
+    "PRODUCT_TEMPLATE_IN_USE_BY_FRAMEWORK_AGREEMENT": "Diese Version kann nicht beendet werden, solange aktive Rahmenverträge auf sie verweisen – diese hätten dann kein aktives Produkt mehr.",
+    "PRODUCT_TEMPLATE_NOT_TERMINATABLE": "Nur aktive Vorlagenversionen können beendet werden.",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }

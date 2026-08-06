@@ -34,7 +34,7 @@ vi.mock("@/features/productTemplates/api/productTemplatesApi", () => ({
   discardProductTemplateDraft: vi.fn(),
   publishProductTemplate: vi.fn(),
   createNewProductTemplateVersion: vi.fn(),
-  deprecateProductTemplateVersion: vi.fn(),
+  terminateProductTemplateVersion: vi.fn(),
   PRODUCT_TEMPLATES_QUERY_KEYS: {
     all: ["product-templates"],
   },
@@ -45,14 +45,14 @@ import { useUpdateProductTemplateDraft } from "@/features/productTemplates/hooks
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft"
 import { usePublishProductTemplate } from "@/features/productTemplates/hooks/usePublishProductTemplate"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
-import { useDeprecateProductTemplateVersion } from "@/features/productTemplates/hooks/useDeprecateProductTemplateVersion"
+import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
 import {
   createProductTemplateDraft,
   updateProductTemplateDraft,
   discardProductTemplateDraft,
   publishProductTemplate,
   createNewProductTemplateVersion,
-  deprecateProductTemplateVersion,
+  terminateProductTemplateVersion,
 } from "@/features/productTemplates/api/productTemplatesApi"
 
 const mockCreateDraft = createProductTemplateDraft as ReturnType<typeof vi.fn>
@@ -62,7 +62,7 @@ const mockPublish = publishProductTemplate as ReturnType<typeof vi.fn>
 const mockCreateNewVersion = createNewProductTemplateVersion as ReturnType<
   typeof vi.fn
 >
-const mockDeprecate = deprecateProductTemplateVersion as ReturnType<
+const mockTerminate = terminateProductTemplateVersion as ReturnType<
   typeof vi.fn
 >
 
@@ -77,7 +77,7 @@ beforeEach(() => {
   mockDiscardDraft.mockResolvedValue({})
   mockPublish.mockResolvedValue({})
   mockCreateNewVersion.mockResolvedValue({ version_number: "2" })
-  mockDeprecate.mockResolvedValue({})
+  mockTerminate.mockResolvedValue({})
 })
 
 describe("useCreateProductTemplateDraft", () => {
@@ -193,17 +193,17 @@ describe("useCreateNewProductTemplateVersion", () => {
   })
 })
 
-describe("useDeprecateProductTemplateVersion", () => {
+describe("useTerminateProductTemplateVersion", () => {
   const body = { justification: "No longer offered to new customers" }
 
-  it("calls deprecateProductTemplateVersion with the correct ids and body", async () => {
-    const { mutate } = useDeprecateProductTemplateVersion()
+  it("calls terminateProductTemplateVersion with the correct ids and body", async () => {
+    const { mutate } = useTerminateProductTemplateVersion()
     await mutate({
       templateId: TEMPLATE_ID,
       versionNumber: VERSION_NUMBER,
       body,
     })
-    expect(mockDeprecate).toHaveBeenCalledWith(
+    expect(mockTerminate).toHaveBeenCalledWith(
       TEMPLATE_ID,
       VERSION_NUMBER,
       body
@@ -211,7 +211,7 @@ describe("useDeprecateProductTemplateVersion", () => {
   })
 
   it("invalidates the whole feature on success", async () => {
-    const { mutate } = useDeprecateProductTemplateVersion()
+    const { mutate } = useTerminateProductTemplateVersion()
     await mutate({
       templateId: TEMPLATE_ID,
       versionNumber: VERSION_NUMBER,

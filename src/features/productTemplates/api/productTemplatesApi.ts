@@ -1,6 +1,5 @@
 import { api } from "@/lib/api"
 import {
-  DeprecateTemplateVersionResponseSchema,
   NewVersionCreatedResponseSchema,
   PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
@@ -8,13 +7,12 @@ import {
   TemplateDraftUpdatedResponseSchema,
   TemplateListResponseSchema,
   TemplateVersionDetailSchema,
+  TerminateTemplateVersionResponseSchema,
   VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 import type {
   CreateProductTemplateDraftRequest,
-  DeprecateTemplateVersionRequest,
-  DeprecateTemplateVersionResponse,
   NewVersionCreatedResponse,
   PublishTemplateDraftRequest,
   PublishTemplateDraftResponse,
@@ -24,6 +22,8 @@ import type {
   TemplateListResponse,
   TemplateStatus,
   TemplateVersionDetail,
+  TerminateTemplateVersionRequest,
+  TerminateTemplateVersionResponse,
   UpdateProductTemplateDraftRequest,
   VersionDiffResponse,
   VersionHistoryResponse,
@@ -141,14 +141,14 @@ export async function createNewProductTemplateVersion(
   return NewVersionCreatedResponseSchema.parse(data)
 }
 
-export async function deprecateProductTemplateVersion(
+export async function terminateProductTemplateVersion(
   templateId: string,
   versionNumber: string,
-  body: DeprecateTemplateVersionRequest
-): Promise<DeprecateTemplateVersionResponse> {
+  body: TerminateTemplateVersionRequest
+): Promise<TerminateTemplateVersionResponse> {
   const data = await api.post(
-    `/product-templates/${templateId}/versions/${versionNumber}/deprecate`,
+    `/product-templates/${templateId}/versions/${versionNumber}/terminate`,
     body
   )
-  return DeprecateTemplateVersionResponseSchema.parse(data)
+  return TerminateTemplateVersionResponseSchema.parse(data)
 }

@@ -92,6 +92,33 @@ describe("api response interceptor", () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })
 
+  it("surfaces the real BE error code on 401 while not authenticated (e.g. login failure)", async () => {
+    useAuthStore.setState({ isAuthenticated: false })
+
+    const error = {
+      response: {
+        status: 401,
+        data: {
+          detail: {
+            code: "INVALID_CREDENTIALS",
+            message: "Invalid email or password.",
+          },
+        },
+      },
+      config: { _retry: false, headers: {} },
+    }
+
+    if (!capturedHandlers.responseError)
+      throw new Error("Interceptor not registered")
+
+    await expect(capturedHandlers.responseError(error)).rejects.toMatchObject({
+      code: "INVALID_CREDENTIALS",
+      message: "Invalid email or password.",
+    })
+    // No refresh attempt should be made when there is no session to refresh.
+    expect(vi.mocked(axios.post)).not.toHaveBeenCalled()
+  })
+
   it("does not attempt refresh when _retry is already true", async () => {
     const error = {
       response: { status: 401, data: {} },

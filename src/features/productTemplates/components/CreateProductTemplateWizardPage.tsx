@@ -509,7 +509,7 @@ export default function CreateProductTemplateWizardPage() {
         data-testid="wizard-immutable-version"
       >
         <p className="text-sm text-muted-foreground">
-          {t("errors.PRODUCT_TEMPLATE_IMMUTABILITY_VIOLATION")}
+          {t("errors.IMMUTABILITY_VIOLATION")}
         </p>
         <Link
           to={productTemplateVersionHistory(draftRefFromRoute.templateId)}

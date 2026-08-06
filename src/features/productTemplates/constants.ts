@@ -27,7 +27,7 @@ export const NPV_FORMULA_OPTIONS = [
 // Wire value for the platform module key, per `../refinext-api/src/app/core/platform/modules.py`.
 export const BANK_PRODUCT_TEMPLATE_MODULE_KEY = "bank_product_template"
 
-// Single source of truth for the deprecation justification's minimum length — shared by the
-// Zod request schema (api/schema.ts) and the VersionHistoryPage UI gating logic, so the two
-// never drift apart.
-export const DEPRECATION_JUSTIFICATION_MIN_LENGTH = 10
+// Single source of truth for the termination justification's minimum length — shared by the
+// Zod request schema (api/schema.ts) and the ProductTemplatePublishedActions UI gating logic,
+// so the two never drift apart.
+export const TERMINATION_JUSTIFICATION_MIN_LENGTH = 10

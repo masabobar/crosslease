@@ -1,22 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
-  deprecateProductTemplateVersion,
+  terminateProductTemplateVersion,
   PRODUCT_TEMPLATES_QUERY_KEYS,
 } from "@/features/productTemplates/api/productTemplatesApi"
-import type { DeprecateTemplateVersionRequest } from "@/features/productTemplates/api/schema"
+import type { TerminateTemplateVersionRequest } from "@/features/productTemplates/api/schema"
 
-type DeprecateVersionInput = {
+type TerminateVersionInput = {
   templateId: string
   versionNumber: string
-  body: DeprecateTemplateVersionRequest
+  body: TerminateTemplateVersionRequest
 }
 
-export function useDeprecateProductTemplateVersion() {
+export function useTerminateProductTemplateVersion() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ templateId, versionNumber, body }: DeprecateVersionInput) =>
-      deprecateProductTemplateVersion(templateId, versionNumber, body),
+    mutationFn: ({ templateId, versionNumber, body }: TerminateVersionInput) =>
+      terminateProductTemplateVersion(templateId, versionNumber, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.all,
