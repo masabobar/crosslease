@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
+  dedupeSelectableTemplates,
   filterSelectableTemplates,
   getFrameworkAgreementDisplayStatus,
   isFrameworkAgreementExpiredByDate,
@@ -63,6 +64,83 @@ describe("isFrameworkAgreementExpiredByDate", () => {
     expect(
       isFrameworkAgreementExpiredByDate(null, new Date("2030-01-01T12:00:00"))
     ).toBe(false)
+  })
+})
+
+describe("dedupeSelectableTemplates", () => {
+  const TEMPLATE_A = "11111111-1111-4111-8111-111111111111"
+  const TEMPLATE_B = "22222222-2222-4222-8222-222222222222"
+
+  function item(
+    templateId: string,
+    versionNumber: string,
+    code = "FIN-00001"
+  ): SelectableTemplateItem {
+    return {
+      template_id: templateId,
+      template_code: code,
+      template_name: "Standard Amortising",
+      version_number: versionNumber,
+    }
+  }
+
+  it("collapses several versions of one template into a single option", () => {
+    const result = dedupeSelectableTemplates([
+      item(TEMPLATE_A, "3"),
+      item(TEMPLATE_A, "1"),
+    ])
+    expect(result).toHaveLength(1)
+    expect(result[0].template_id).toBe(TEMPLATE_A)
+  })
+
+  it("keeps the highest version regardless of arrival order", () => {
+    expect(
+      dedupeSelectableTemplates([
+        item(TEMPLATE_A, "1"),
+        item(TEMPLATE_A, "3"),
+      ])[0].version_number
+    ).toBe("3")
+    expect(
+      dedupeSelectableTemplates([
+        item(TEMPLATE_A, "3"),
+        item(TEMPLATE_A, "1"),
+      ])[0].version_number
+    ).toBe("3")
+  })
+
+  it("compares versions numerically, not lexicographically", () => {
+    // "10" < "9" as strings — the bug this guards against.
+    const result = dedupeSelectableTemplates([
+      item(TEMPLATE_A, "9"),
+      item(TEMPLATE_A, "10"),
+    ])
+    expect(result[0].version_number).toBe("10")
+  })
+
+  it("keeps distinct templates apart", () => {
+    const result = dedupeSelectableTemplates([
+      item(TEMPLATE_A, "1"),
+      item(TEMPLATE_B, "1", "LEA-00042"),
+    ])
+    expect(result.map(o => o.template_id)).toEqual([TEMPLATE_A, TEMPLATE_B])
+  })
+
+  it("preserves first-seen template order", () => {
+    const result = dedupeSelectableTemplates([
+      item(TEMPLATE_B, "1", "LEA-00042"),
+      item(TEMPLATE_A, "1"),
+      item(TEMPLATE_B, "2", "LEA-00042"),
+    ])
+    expect(result.map(o => o.template_id)).toEqual([TEMPLATE_B, TEMPLATE_A])
+  })
+
+  it("returns an empty list for no options", () => {
+    expect(dedupeSelectableTemplates([])).toEqual([])
+  })
+
+  it("leaves an already-unique list unchanged", () => {
+    const options = [item(TEMPLATE_A, "1"), item(TEMPLATE_B, "2", "LEA-00042")]
+    expect(dedupeSelectableTemplates(options)).toEqual(options)
   })
 })
 
