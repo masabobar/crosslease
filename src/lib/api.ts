@@ -46,35 +46,35 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401 && !original._retry) {
-      original._retry = true
-
       const { isAuthenticated, clearAuth } = useAuthStore.getState()
 
-      // Skip refresh when the user is already logged out (e.g. in-flight requests
-      // that complete after an explicit logout should not trigger a refresh attempt).
-      if (!isAuthenticated) {
-        throw new ApiError("UNAUTHORIZED", "Not authenticated")
-      }
+      // Only an already-authenticated session's 401 means "try a refresh". A 401 from
+      // login itself (or any other unauthenticated call) is a real domain error — e.g.
+      // INVALID_CREDENTIALS — and must fall through to the envelope parsing below rather
+      // than being masked with a fabricated code.
+      if (isAuthenticated) {
+        original._retry = true
 
-      if (!refreshPromise) {
-        refreshPromise = (async () => {
-          try {
-            await axios.post(
-              `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
-              {},
-              { withCredentials: true }
-            )
-          } catch {
-            clearAuth()
-            throw new ApiError("INVALID_TOKEN", "Session expired")
-          }
-        })().finally(() => {
-          refreshPromise = null
-        })
-      }
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            try {
+              await axios.post(
+                `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+                {},
+                { withCredentials: true }
+              )
+            } catch {
+              clearAuth()
+              throw new ApiError("INVALID_TOKEN", "Session expired")
+            }
+          })().finally(() => {
+            refreshPromise = null
+          })
+        }
 
-      await refreshPromise
-      return api(original)
+        await refreshPromise
+        return api(original)
+      }
     }
 
     const envelope = ApiErrorEnvelopeSchema.safeParse(error.response?.data)
