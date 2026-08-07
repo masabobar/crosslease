@@ -1,5 +1,8 @@
 import { z } from "zod"
-import { StageCategorizationSchema } from "@/features/workflowTaskCatalog/api/schema"
+import {
+  StageCategorizationSchema,
+  TaskResponsibleRoleSchema,
+} from "@/features/workflowTaskCatalog/api/schema"
 
 // Runtime half of the Workflow Task Catalog — the checklist that sits on a case, and the phase
 // gates over it. Wire enums must match refinext-api
@@ -26,15 +29,19 @@ export type PhaseGateStatus = z.infer<typeof PhaseGateStatusSchema>
 
 // GET/POST /cases/{business_object_id}/checklist — mirrors ChecklistItemResponse.
 //
-// All eleven keys are REQUIRED on the wire, most of them nullable, so `.nullable()` on a required
-// key throughout and never `.optional()` — the same discipline the authoring schemas document.
+// The original eleven keys are REQUIRED on the wire, most of them nullable, so `.nullable()` on a
+// required key throughout and never `.optional()` — the same discipline the authoring schemas document.
 //
-// Two fields the CR asks for are deliberately absent because the backend does not send them:
-// `responsible_role` and `display_order`. `materialize_checklist()` copies only task_code,
-// task_name, is_mandatory and weight off the catalogue task (CR PRD1042-1790 B7), so a case item
-// cannot say whose task it is and carries no order of its own — `runtime_repo.list_items()` sorts
-// by created_at. Do not add either field here speculatively; it would parse as undefined and read
-// as though the data existed. Tracked in open-questions.md Q-052.
+// `responsible_role` and `display_order` arrived 2026-08-07 with the PRD1042-1790 model changes, and
+// close what was tracked as Q-052 — a case item can finally say whose task it is and carry its own
+// order. They are modelled `.nullish()`, not `.nullable()`, deliberately: the contract's `required`
+// array still lists only the original eleven, so these two are optional keys that are additionally
+// nullable. Treat a missing value the same as an explicit null.
+//
+// `responsible_role` is `TaskResponsibleRole`, imported rather than redeclared — the same enum the
+// catalogue task uses. Note it is **not** `UserRole`: the two overlap only on `front_office`, so any
+// role-scoped gate over a case item needs a deliberate mapping between the two vocabularies rather
+// than a direct comparison.
 export const ChecklistItemResponseSchema = z.object({
   id: z.string().uuid(),
   business_object_id: z.string().uuid(),
@@ -44,6 +51,8 @@ export const ChecklistItemResponseSchema = z.object({
   is_mandatory: z.boolean(),
   // Decimal on the BE, so it arrives as a string.
   weight: z.coerce.number().nullable(),
+  responsible_role: TaskResponsibleRoleSchema.nullish(),
+  display_order: z.number().int().nullish(),
   status: ChecklistItemStatusSchema,
   note: z.string().nullable(),
   checked_by: z.string().uuid().nullable(),
