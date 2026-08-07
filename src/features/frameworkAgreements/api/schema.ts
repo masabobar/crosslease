@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { requiredEnum, requiredNumber } from "@/lib/zodHelpers"
+import { FieldDiffItemSchema } from "@/types/api"
 
 // Wire enums — must match refinext-api src/app/modules/framework_agreements/domain/enums.py exactly
 export const FALifecycleStatusSchema = z.enum(["draft", "active", "terminated"])
@@ -107,7 +108,7 @@ export type UpdateFARequest = z.infer<typeof UpdateFARequestSchema>
 // hidden field seeded from FADetailResponse.edit_version_counter when the dialog opens.
 export const EditFrameworkAgreementFormSchema = z
   .object({
-    agreement_name: z.string().min(1, "required").max(200),
+    agreement_name: z.string().min(1, "required").max(200, "tooLong"),
     // requiredNumber() covers the missing/NaN case — an empty number input registered
     // with valueAsNumber yields NaN, and a bare z.number() would put Zod's untranslated
     // default ("Invalid input: expected number, received NaN") in front of the user.
@@ -116,9 +117,9 @@ export const EditFrameworkAgreementFormSchema = z
     vfe_amount_eur: z.number().min(VFE_AMOUNT_MIN, "vfeAmountMin").optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
-    special_conditions: z.string().max(1000).optional(),
+    special_conditions: z.string().max(1000, "tooLong").optional(),
     product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
-    justification: z.string().min(30, "required").max(1000),
+    justification: z.string().min(30, "required").max(1000, "tooLong"),
     expected_version: z.number().int(),
   })
   .superRefine((data, ctx) => {
@@ -144,15 +145,20 @@ export type EditFrameworkAgreementFormValues = z.infer<
 // POST /framework-agreements/{id}/activate
 // PRD1042-1703 #4: activation is immediate, mirroring the Bank Product Template publish
 // flow — no effective_from input, no scheduled job. The BE dropped the field entirely.
+// The justification bounds carry message codes because this schema doubles as the
+// activation panel's form schema — without them Zod's untranslated "Too small: expected
+// string to have >=20 characters" reaches the user (see lib/formMessages.ts).
 export const ActivateFARequestSchema = z.object({
   documents_confirmed: z.boolean(),
-  justification: z.string().min(20).max(1000),
+  justification: z.string().min(20, "tooShort").max(1000, "tooLong"),
 })
 export type ActivateFARequest = z.infer<typeof ActivateFARequestSchema>
 
 // POST /framework-agreements/{id}/terminate
+// Message codes for the same reason as ActivateFARequestSchema above — this is also the
+// termination panel's form schema.
 export const TerminateFARequestSchema = z.object({
-  justification: z.string().min(30).max(1000),
+  justification: z.string().min(30, "tooShort").max(1000, "tooLong"),
   irreversibility_confirmed: z.boolean(),
 })
 export type TerminateFARequest = z.infer<typeof TerminateFARequestSchema>
@@ -307,12 +313,10 @@ export const FAEventTypeFilterSchema = z.enum([
 ])
 export type FAEventTypeFilter = z.infer<typeof FAEventTypeFilterSchema>
 
-export const FieldDiffItemSchema = z.object({
-  field: z.string(),
-  old_value: z.unknown().nullable(),
-  new_value: z.unknown().nullable(),
-})
-export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+// Shared with audit's and productTemplates' diff responses — defined once in @/types/api,
+// re-exported here so existing import paths keep working.
+export { FieldDiffItemSchema }
+export type { FieldDiffItem } from "@/types/api"
 
 // GET /framework-agreements/{id}/audit-history — cursor-paginated event timeline.
 export const FAAuditEventResponseSchema = z.object({
@@ -464,7 +468,7 @@ export type DownloadURLResponse = z.infer<typeof DownloadURLResponseSchema>
 // concept, unlike the Bank Product Template wizard).
 export const FrameworkAgreementWizardFormSchema = z
   .object({
-    agreement_name: z.string().min(1, "required").max(200),
+    agreement_name: z.string().min(1, "required").max(200, "tooLong"),
     lc_partner_id: z.string().min(1, "required"),
     lc_partner_name: z.string().optional(),
     bank_entity: requiredEnum(BankEntitySchema.options),
@@ -474,7 +478,7 @@ export const FrameworkAgreementWizardFormSchema = z
     vfe_amount_eur: z.number().min(VFE_AMOUNT_MIN, "vfeAmountMin").optional(),
     valid_from: z.string().min(1, "required"),
     valid_until: z.string().optional(),
-    special_conditions: z.string().max(1000).optional(),
+    special_conditions: z.string().max(1000, "tooLong").optional(),
     product_template_ids: z.array(z.string()).min(1, "atLeastOneTemplate"),
   })
   .superRefine((data, ctx) => {

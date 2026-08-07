@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { ApiError } from "@/lib/api"
+import { resolveFormMessage } from "@/lib/formMessages"
 import {
   FALifecycleStatusSchema,
   VFE_AMOUNT_MIN,
@@ -92,29 +93,26 @@ export function filterSelectableTemplates(
   )
 }
 
-// Shared Zod refine-error-code → i18n message resolver for the wizard/edit form
-// steps (IdentityStep, EnvelopePricingStep, ValidityTemplatesStep,
-// the edit wizard's steps). Handles every custom refine code used across those
-// forms' Zod schemas (see api/schema.ts): "required", "mustBePositive",
-// "validUntilBeforeFrom", "atLeastOneTemplate", "vfeAmountMin". Unrecognized
-// messages are returned as-is.
-export function useResolveFrameworkAgreementFieldError() {
+// Zod message-code → i18n resolver for every FA form surface: the create and edit wizard
+// steps, plus the activate / terminate / attach-document panels. Delegates to the shared
+// resolveFormMessage, which takes shared codes ("required", "mustBePositive", "tooShort",
+// "tooLong") from common:validation.*, feature codes ("validUntilBeforeFrom",
+// "atLeastOneTemplate") from frameworkAgreements:errors.*, and passes an already-translated
+// server message through untouched.
+//
+// "vfeAmountMin" stays here because it is the one code that interpolates: the bound comes
+// from the schema constant so the message can never drift from what the BE enforces.
+export function useResolveFrameworkAgreementFieldError(): (
+  msg: string | undefined
+) => string | undefined {
   const { t } = useTranslation("frameworkAgreements")
-  const { t: tCommon } = useTranslation("common")
 
   return function resolveFrameworkAgreementFieldError(
     msg: string | undefined
   ): string | undefined {
-    if (!msg) return undefined
-    if (msg === "required") return tCommon("validation.required")
-    if (msg === "mustBePositive") return tCommon("validation.mustBePositive")
-    if (msg === "validUntilBeforeFrom") return t("errors.validUntilBeforeFrom")
-    if (msg === "atLeastOneTemplate") return t("errors.atLeastOneTemplate")
-    // The bound comes from the schema constant so the message can never drift from what
-    // the BE enforces.
     if (msg === "vfeAmountMin") {
       return t("errors.vfeAmountMin", { min: VFE_AMOUNT_MIN })
     }
-    return msg
+    return resolveFormMessage(msg, t, "errors")
   }
 }

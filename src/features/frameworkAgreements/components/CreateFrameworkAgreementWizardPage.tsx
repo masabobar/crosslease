@@ -20,7 +20,12 @@ import { ApiError } from "@/lib/api"
 import { PATHS, frameworkAgreementDetail } from "@/router/paths"
 import { useCreateFrameworkAgreementDraft } from "@/features/frameworkAgreements/hooks/useCreateFrameworkAgreementDraft"
 import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
-import { FrameworkAgreementWizardFormSchema } from "@/features/frameworkAgreements/api/schema"
+import { useDeleteFrameworkAgreementDraft } from "@/features/frameworkAgreements/hooks/useDeleteFrameworkAgreementDraft"
+import {
+  BankEntitySchema,
+  FADocumentTypeSchema,
+  FrameworkAgreementWizardFormSchema,
+} from "@/features/frameworkAgreements/api/schema"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import { FRAMEWORK_AGREEMENT_WIZARD_STEPS } from "@/features/frameworkAgreements/types"
 import type {
@@ -76,6 +81,7 @@ export default function CreateFrameworkAgreementWizardPage() {
 
   const createDraftMutation = useCreateFrameworkAgreementDraft()
   const attachDocumentMutation = useAttachFrameworkAgreementDocument()
+  const deleteDraftMutation = useDeleteFrameworkAgreementDraft()
   const isSaving =
     createDraftMutation.isPending || attachDocumentMutation.isPending
 
@@ -87,7 +93,7 @@ export default function CreateFrameworkAgreementWizardPage() {
       lc_partner_name: "",
       // Bank entity is hidden from the UI per PRD1042-1495 (A4) — only relevant for
       // syndication, out of MVP scope. Defaults to "other" like the BE column default.
-      bank_entity: "other",
+      bank_entity: BankEntitySchema.enum.other,
       product_template_ids: [],
       special_conditions: "",
       valid_from: "",
@@ -120,8 +126,25 @@ export default function CreateFrameworkAgreementWizardPage() {
     setDiscardDialogOpen(true)
   }
 
-  function handleConfirmDiscard() {
+  async function handleConfirmDiscard() {
     setDiscardDialogOpen(false)
+    // "Save as draft" persists the agreement, so a later discard has to delete it — closing
+    // the wizard alone left an orphaned draft in the tenant's list. Navigation happens
+    // either way: the user asked to leave, and a failed delete is reported, not swallowed.
+    const draftId = persistedDraftIdRef.current
+    if (draftId) {
+      try {
+        await deleteDraftMutation.mutateAsync(draftId)
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError
+            ? t(`errors.${err.code}` as "errors.generic", {
+                defaultValue: t("errors.generic"),
+              })
+            : t("errors.generic")
+        )
+      }
+    }
     navigate(-1)
   }
 
@@ -189,7 +212,7 @@ export default function CreateFrameworkAgreementWizardPage() {
         await attachDocumentMutation.mutateAsync({
           faId: draftId,
           file: doc.file,
-          documentType: doc.documentType || "other",
+          documentType: doc.documentType || FADocumentTypeSchema.enum.other,
           documentLabel: doc.documentLabel || undefined,
         })
       } catch {

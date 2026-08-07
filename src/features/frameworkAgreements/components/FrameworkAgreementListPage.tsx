@@ -5,6 +5,8 @@ import { toast } from "sonner"
 import { ApiError } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import {
   Select,
@@ -14,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { buildPageNumbers } from "@/lib/pagination"
+import { downloadBlob } from "@/lib/download"
 import { FrameworkAgreementTable } from "@/features/frameworkAgreements/components/FrameworkAgreementTable"
 import { useFrameworkAgreementList } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementList"
 import { useFrameworkAgreementLcPartners } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementLcPartners"
@@ -33,6 +36,7 @@ import { FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES } from "@/features/frameworkAg
 import { PATHS, frameworkAgreementDetail } from "@/router/paths"
 
 const ALL_VALUE = "all"
+const EXPORT_FILE_NAME = "framework-agreements.csv"
 
 export default function FrameworkAgreementListPage() {
   const { t } = useTranslation("frameworkAgreements")
@@ -51,10 +55,14 @@ export default function FrameworkAgreementListPage() {
     setLcPartnerId,
   } = useFrameworkAgreementListParams()
 
+  // Debounced before it reaches the query key: the field re-renders on every keystroke, but
+  // only the settled value is worth a request.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
+
   const { data, isLoading, isError } = useFrameworkAgreementList({
     page,
     per_page: perPage,
-    ...(search.trim() ? { q: search.trim() } : {}),
+    ...(debouncedSearch.trim() ? { q: debouncedSearch.trim() } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
   })
@@ -89,14 +97,7 @@ export default function FrameworkAgreementListPage() {
         ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
       },
       {
-        onSuccess: blob => {
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement("a")
-          link.href = url
-          link.download = "framework-agreements.csv"
-          link.click()
-          URL.revokeObjectURL(url)
-        },
+        onSuccess: blob => downloadBlob(blob, EXPORT_FILE_NAME),
         onError: err => {
           toast.error(
             err instanceof ApiError

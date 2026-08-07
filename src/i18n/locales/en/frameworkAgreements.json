@@ -145,7 +145,8 @@
       "backToAgreements": "Back to agreements",
       "viewAgreement": "View agreement"
     },
-    "loadingDraft": "Loading draft…"
+    "loadingDraft": "Loading draft…",
+    "templateNamesUnavailable": "Product template names could not be loaded, so the ids are shown instead."
   },
   "detail": {
     "tabs": {
@@ -172,6 +173,7 @@
       "terminatedAt": "Terminated at"
     },
     "copied": "Copied",
+    "copyFailed": "Could not copy to clipboard. Please copy it manually.",
     "actions": {
       "activate": "Activate",
       "edit": "Edit",

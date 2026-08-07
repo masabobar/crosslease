@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { FATerminatedResponse } from "@/features/frameworkAgreements/api/schema"
 import {
   terminateFrameworkAgreement,
   FRAMEWORK_AGREEMENTS_QUERY_KEYS,
@@ -10,7 +12,11 @@ type TerminateInput = {
   body: TerminateFARequest
 }
 
-export function useTerminateFrameworkAgreement() {
+export function useTerminateFrameworkAgreement(): UseMutationResult<
+  FATerminatedResponse,
+  Error,
+  TerminateInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

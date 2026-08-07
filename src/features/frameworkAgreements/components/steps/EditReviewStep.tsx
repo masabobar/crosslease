@@ -3,6 +3,7 @@ import { useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ApiError } from "@/lib/api"
 import { formatCurrency } from "@/lib/formatters"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
@@ -24,7 +25,11 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
   const { errors } = useFormState({ control })
   const values = useWatch({ control })
   const resolveMsg = useResolveFrameworkAgreementFieldError()
-  const { data: templatesData } = useSelectableProductTemplates()
+  const {
+    data: templatesData,
+    isError: isTemplatesError,
+    error: templatesError,
+  } = useSelectableProductTemplates()
 
   const selectedTemplates = (values.product_template_ids ?? []).map(id => {
     const option = templatesData?.items.find(o => o.template_id === id)
@@ -97,15 +102,32 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
           label={t("fields.allowedProductTemplates")}
           value={
             selectedTemplates.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedTemplates.map(template => (
-                  <span
-                    key={template.id}
-                    className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-foreground"
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedTemplates.map(template => (
+                    <span
+                      key={template.id}
+                      className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-foreground"
+                    >
+                      {template.label}
+                    </span>
+                  ))}
+                </div>
+                {/* The selection itself comes from form state and is intact; only the
+                    name lookup failed, so each chip falls back to a raw id above. */}
+                {isTemplatesError && (
+                  <p
+                    data-testid="edit-fa-review-template-names-error"
+                    className="text-xs text-destructive"
                   >
-                    {template.label}
-                  </span>
-                ))}
+                    {t("wizard.templateNamesUnavailable")}{" "}
+                    {templatesError instanceof ApiError
+                      ? t(`errors.${templatesError.code}` as "errors.generic", {
+                          defaultValue: t("errors.generic"),
+                        })
+                      : t("errors.generic")}
+                  </p>
+                )}
               </div>
             ) : (
               "—"

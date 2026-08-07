@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { Copy, Check } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,7 +19,8 @@ import { FinancingsTab } from "@/features/frameworkAgreements/components/Financi
 import { AuditHistoryTab } from "@/features/frameworkAgreements/components/AuditHistoryTab"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { formatDateTime, formatCurrency } from "@/lib/formatters"
-import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { Skeleton } from "@/components/ui/skeleton"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import {
   frameworkAgreementEdit,
@@ -35,13 +37,14 @@ import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useTranslation("frameworkAgreements")
-  const [copied, setCopied] = useState(false)
+  const { isCopied, copy } = useCopyToClipboard()
 
-  function handleCopy() {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
-    })
+  async function handleCopy() {
+    // The hook returns false rather than toasting itself, so a refused clipboard
+    // write has to be surfaced here — otherwise the icon never flips and nothing
+    // tells the user why.
+    const didCopy = await copy(text)
+    if (!didCopy) toast.error(t("detail.copyFailed"))
   }
 
   return (
@@ -52,9 +55,9 @@ function CopyButton({ text }: { text: string }) {
       data-testid="copy-agreement-id-button"
       onClick={handleCopy}
       className="text-muted-foreground hover:text-foreground"
-      title={copied ? t("detail.copied") : undefined}
+      title={isCopied ? t("detail.copied") : undefined}
     >
-      {copied ? <Check size={14} /> : <Copy size={14} />}
+      {isCopied ? <Check size={14} /> : <Copy size={14} />}
     </Button>
   )
 }
@@ -90,7 +93,13 @@ export default function FrameworkAgreementDetailPage() {
   }
 
   if (isLoading) {
-    return null
+    return (
+      <div className="p-8 flex flex-col gap-4" data-testid="fa-detail-loading">
+        <Skeleton className="h-8 w-72" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
   }
 
   if (isError || !data) {

@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useActivateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useActivateFrameworkAgreement"
+import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import { ActivateFARequestSchema } from "@/features/frameworkAgreements/api/schema"
 import type { ActivateFARequest } from "@/features/frameworkAgreements/api/schema"
 
@@ -36,6 +37,7 @@ function ActivateFrameworkAgreementPanel({
 }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useActivateFrameworkAgreement()
+  const resolveMsg = useResolveFrameworkAgreementFieldError()
 
   const {
     setError,
@@ -107,7 +109,7 @@ function ActivateFrameworkAgreementPanel({
         </label>
         {errors.documents_confirmed && (
           <p className="text-xs text-destructive">
-            {errors.documents_confirmed.message}
+            {resolveMsg(errors.documents_confirmed.message)}
           </p>
         )}
 
@@ -127,7 +129,7 @@ function ActivateFrameworkAgreementPanel({
           </p>
           {errors.justification && (
             <p className="text-xs text-destructive">
-              {errors.justification.message}
+              {resolveMsg(errors.justification.message)}
             </p>
           )}
         </div>

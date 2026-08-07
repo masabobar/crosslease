@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useTerminateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useTerminateFrameworkAgreement"
 import { useFrameworkAgreementTerminationReadiness } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementTerminationReadiness"
+import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import { TerminateFARequestSchema } from "@/features/frameworkAgreements/api/schema"
 import type { TerminateFARequest } from "@/features/frameworkAgreements/api/schema"
 
@@ -72,6 +73,7 @@ function TerminateFrameworkAgreementPanel({
 }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useTerminateFrameworkAgreement()
+  const resolveMsg = useResolveFrameworkAgreementFieldError()
   const {
     data: readiness,
     isLoading: isReadinessLoading,
@@ -178,7 +180,7 @@ function TerminateFrameworkAgreementPanel({
         </label>
         {errors.irreversibility_confirmed && (
           <p className="text-xs text-destructive">
-            {errors.irreversibility_confirmed.message}
+            {resolveMsg(errors.irreversibility_confirmed.message)}
           </p>
         )}
 
@@ -198,7 +200,7 @@ function TerminateFrameworkAgreementPanel({
           </p>
           {errors.justification && (
             <p className="text-xs text-destructive">
-              {errors.justification.message}
+              {resolveMsg(errors.justification.message)}
             </p>
           )}
         </div>

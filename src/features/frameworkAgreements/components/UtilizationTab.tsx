@@ -11,11 +11,14 @@ type Props = {
 
 function UtilizationTab({ frameworkAgreementId, currency }: Props) {
   const { t } = useTranslation("frameworkAgreements")
+  const { t: tCommon } = useTranslation("common")
   const { data, isLoading, isError } =
     useFrameworkAgreementUtilization(frameworkAgreementId)
 
   if (isLoading) {
-    return null
+    return (
+      <p className="mt-4 text-sm text-muted-foreground">{tCommon("loading")}</p>
+    )
   }
 
   if (isError || !data) {

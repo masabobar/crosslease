@@ -1,11 +1,12 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Check } from "lucide-react"
+import { format, parseISO } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SearchInput } from "@/components/ui/search-input"
 import { FilterButton } from "@/components/ui/filter-button"
+import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import { FilterPill } from "@/components/ui/filter-pill"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
@@ -18,11 +19,16 @@ import type {
   FAEventTypeFilter,
 } from "@/features/frameworkAgreements/api/schema"
 import { ApiError } from "@/lib/api"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
+import { downloadBlob } from "@/lib/download"
 import { formatDateTime } from "@/lib/formatters"
 import { BACK_OFFICE_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
 const AUDIT_HISTORY_PAGE_SIZE = 50
+// `datetime-local` reads and writes wall-clock time, so its `max` must be built from local
+// parts — toISOString() would cap the picker at the user's UTC offset instead of now.
+const DATETIME_LOCAL_FORMAT = "yyyy-MM-dd'T'HH:mm"
 
 type AuditView = "eventLog" | "reconstruct"
 
@@ -112,6 +118,7 @@ type Props = {
 
 function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
   const { t } = useTranslation("frameworkAgreements")
+  const { t: tCommon } = useTranslation("common")
   const [activeView, setActiveView] = useState<AuditView>("eventLog")
   const [search, setSearch] = useState("")
   const [eventTypeFilters, setEventTypeFilters] = useState<FAEventTypeFilter[]>(
@@ -178,14 +185,8 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         },
       },
       {
-        onSuccess: blob => {
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement("a")
-          link.href = url
-          link.download = `fa-audit-${frameworkAgreementId}.csv`
-          link.click()
-          URL.revokeObjectURL(url)
-        },
+        onSuccess: blob =>
+          downloadBlob(blob, `fa-audit-${frameworkAgreementId}.csv`),
         onError: err => {
           toast.error(
             err instanceof ApiError
@@ -214,7 +215,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
       return `${formatDiffValue(value)}%`
     }
     if (key === "vfe_amount_eur" && value !== null) {
-      return `${formatDiffValue(value)} EUR`
+      return `${formatDiffValue(value)} ${EUR_CURRENCY_CODE}`
     }
     if (key === "valid_until" && value === null) {
       return t("fields.openEnded")
@@ -260,7 +261,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
               type="datetime-local"
               value={asOfInput}
               onChange={e => setAsOfInput(e.target.value)}
-              max={new Date().toISOString().slice(0, 16)}
+              max={format(new Date(), DATETIME_LOCAL_FORMAT)}
               className="w-56"
               data-testid="audit-reconstruct-as-of"
             />
@@ -276,7 +277,9 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
           </div>
 
           {reconstructQuery.isFetching && (
-            <p className="text-sm text-muted-foreground">…</p>
+            <p className="text-sm text-muted-foreground">
+              {tCommon("loading")}
+            </p>
           )}
           {reconstructQuery.isError && (
             <p className="text-sm text-destructive">
@@ -362,6 +365,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         <>
           <div className="flex items-center gap-6 flex-wrap">
             <SearchInput
+              data-testid="audit-filter-search"
               placeholder={t("auditHistory.searchPlaceholder")}
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -375,36 +379,21 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
                 data-testid="audit-filter-event-type"
               >
                 <div className="max-h-72 overflow-y-auto py-1">
-                  {FAEventTypeFilterSchema.options.map(type => {
-                    const checked = eventTypeFilters.includes(type)
-                    return (
-                      <Button
-                        key={type}
-                        variant="ghost"
-                        onClick={() => toggleEventType(type)}
-                        className="w-full justify-start gap-2.5 px-3 py-2 h-auto rounded-none font-normal"
-                        data-testid={`audit-filter-event-type-${type}`}
-                      >
-                        <span
-                          className={`shrink-0 size-4 rounded border flex items-center justify-center transition-colors ${
-                            checked
-                              ? "bg-primary border-primary"
-                              : "border-border"
-                          }`}
-                        >
-                          {checked && (
-                            <Check size={10} className="text-white" />
-                          )}
-                        </span>
-                        <span className="text-sm text-foreground">
-                          {t(
-                            `auditHistory.eventTypes.${type}` as "auditHistory.eventTypes.edited",
-                            { defaultValue: type }
-                          )}
-                        </span>
-                      </Button>
-                    )
-                  })}
+                  {FAEventTypeFilterSchema.options.map(type => (
+                    <FilterCheckboxOption
+                      key={type}
+                      checked={eventTypeFilters.includes(type)}
+                      onClick={() => toggleEventType(type)}
+                      data-testid={`audit-filter-event-type-${type}`}
+                    >
+                      <span className="text-sm text-foreground">
+                        {t(
+                          `auditHistory.eventTypes.${type}` as "auditHistory.eventTypes.edited",
+                          { defaultValue: type }
+                        )}
+                      </span>
+                    </FilterCheckboxOption>
+                  ))}
                 </div>
               </FilterButton>
 
@@ -416,20 +405,26 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
                 data-testid="audit-filter-date-range"
               >
                 <div className="p-3">
+                  {/* Both bounds are capped at today — audit history only looks backwards —
+                      and the pair is kept in sync so a `to` before its own `from` cannot be
+                      picked. Neither is floored at today: this is a filter, not a create form. */}
                   <div className="flex gap-2">
                     <DatePicker
                       value={fromDate ?? undefined}
                       onChange={v => setFromDate(v)}
                       placeholder={t("auditHistory.from")}
-                      maxDate={new Date()}
+                      maxDate={toDate ? parseISO(toDate) : new Date()}
                       captionLayout="dropdown"
+                      data-testid="audit-filter-date-from"
                     />
                     <DatePicker
                       value={toDate ?? undefined}
                       onChange={v => setToDate(v)}
                       placeholder={t("auditHistory.to")}
+                      minDate={fromDate ? parseISO(fromDate) : undefined}
                       maxDate={new Date()}
                       captionLayout="dropdown"
+                      data-testid="audit-filter-date-to"
                     />
                   </div>
                 </div>
