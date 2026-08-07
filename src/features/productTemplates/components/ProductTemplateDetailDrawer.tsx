@@ -15,6 +15,7 @@ import {
 } from "@/features/productTemplates/components/ProductTemplateDetailPrimitives"
 import { ProductTemplatePublishedActions } from "@/features/productTemplates/components/ProductTemplatePublishedActions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
+import { resolveApiErrorMessage } from "@/features/productTemplates/utils"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
   TemplateCurrentVersionSummary,
@@ -100,7 +101,7 @@ export function ProductTemplateDetailDrawer({
   const { t } = useTranslation("productTemplates")
   const versionNumber = currentVersion?.version_number ?? null
 
-  const { data, isLoading, isError } = useTemplateVersionDetail(
+  const { data, isLoading, isError, error } = useTemplateVersionDetail(
     templateId ?? "",
     versionNumber
   )
@@ -164,7 +165,7 @@ export function ProductTemplateDetailDrawer({
               data-testid="drawer-error"
               className="px-4 text-sm text-destructive"
             >
-              {t("errors.generic")}
+              {resolveApiErrorMessage(error, t)}
             </p>
           )}
           {data && <DetailBody detail={data} />}

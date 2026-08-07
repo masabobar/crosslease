@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { NewVersionCreatedResponse } from "@/features/productTemplates/api/schema"
 import {
   createNewProductTemplateVersion,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -8,7 +10,11 @@ type CreateNewVersionInput = {
   templateId: string
 }
 
-export function useCreateNewProductTemplateVersion() {
+export function useCreateNewProductTemplateVersion(): UseMutationResult<
+  NewVersionCreatedResponse,
+  Error,
+  CreateNewVersionInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

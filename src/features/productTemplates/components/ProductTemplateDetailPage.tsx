@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next"
 import { ArrowLeft } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SectionCard } from "@/components/shared/SectionCard"
-import { ApiError } from "@/lib/api"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { formatCurrency, formatDateTime } from "@/lib/formatters"
 import { isUuidRouteParam, isVersionNumberRouteParam } from "@/lib/routeParams"
@@ -16,6 +15,7 @@ import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useT
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
+import { resolveApiErrorMessage } from "@/features/productTemplates/utils"
 import { productTemplateVersionHistory } from "@/router/paths"
 
 /**
@@ -98,11 +98,7 @@ export default function ProductTemplateDetailPage() {
           data-testid="product-template-detail-error"
           className="text-sm text-destructive py-8 text-center"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       </div>
     )

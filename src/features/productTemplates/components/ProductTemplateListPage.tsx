@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import { PaginationEllipsis } from "@/components/ui/pagination"
 import {
   Select,
@@ -35,10 +37,10 @@ import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import {
   isProductTemplateNotFoundError,
   isModuleNotActiveError,
+  resolveApiErrorMessage,
 } from "@/features/productTemplates/utils"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { TableEmptyState } from "@/components/ui/empty"
-import { ApiError } from "@/lib/api"
 
 const ALL_STATUSES_VALUE = "all"
 
@@ -69,10 +71,14 @@ export default function ProductTemplateListPage() {
     setStatusFilter,
   } = useProductTemplateListParams()
 
+  // Debounced before it reaches the query key: the field re-renders on every keystroke, but
+  // only the settled value is worth a request.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
+
   const { data, isLoading, isError, error } = useProductTemplateList(tenantId, {
     page,
     per_page: perPage,
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
   })
 
@@ -197,11 +203,7 @@ export default function ProductTemplateListPage() {
       <div className="mt-4">
         {isError && !isLoading && (
           <p className="text-sm text-destructive py-8 text-center">
-            {error instanceof ApiError
-              ? t(`errors.${error.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
         {!isError && (

@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { TemplateDraftDiscardedResponse } from "@/features/productTemplates/api/schema"
 import {
   discardProductTemplateDraft,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -9,7 +11,11 @@ type DiscardDraftInput = {
   versionNumber: string
 }
 
-export function useDiscardProductTemplateDraft() {
+export function useDiscardProductTemplateDraft(): UseMutationResult<
+  TemplateDraftDiscardedResponse,
+  Error,
+  DiscardDraftInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

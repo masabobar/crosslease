@@ -66,10 +66,10 @@ function EligibilityStep({ form }: Props) {
               {AssetCategorySchema.options.map(category => {
                 const checked = (field.value ?? []).includes(category)
                 return (
-                  <label
+                  <Label
                     key={category}
                     htmlFor={`asset-category-${category}`}
-                    className="flex items-center gap-2 cursor-pointer"
+                    className="cursor-pointer"
                   >
                     <Checkbox
                       id={`asset-category-${category}`}
@@ -87,7 +87,7 @@ function EligibilityStep({ form }: Props) {
                     <span className="text-sm text-foreground">
                       {t(`assetCategories.${category}`)}
                     </span>
-                  </label>
+                  </Label>
                 )
               })}
             </div>

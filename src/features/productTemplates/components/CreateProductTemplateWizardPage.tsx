@@ -24,6 +24,7 @@ import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import {
   isProductTemplateNotFoundError,
+  resolveApiErrorMessage,
   showApiError,
 } from "@/features/productTemplates/utils"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
@@ -239,8 +240,12 @@ function WizardFormView({
   }
 
   async function handleSaveDraft() {
+    // The review step declares no fields of its own, so `trigger([])` there validated
+    // nothing and let a draft carrying invalid values from earlier steps reach the API.
+    // With no step-specific list, validate the whole form instead.
     const fields = WIZARD_STEP_FIELDS[step]
-    const valid = await form.trigger(fields)
+    const valid =
+      fields.length > 0 ? await form.trigger(fields) : await form.trigger()
     if (!valid) return
     try {
       const ref = await saveDraft()
@@ -527,7 +532,9 @@ export default function CreateProductTemplateWizardPage() {
         className="flex flex-col h-full items-center justify-center"
         data-testid="wizard-load-error"
       >
-        <p className="text-sm text-muted-foreground">{t("errors.generic")}</p>
+        <p className="text-sm text-muted-foreground">
+          {resolveApiErrorMessage(error, t)}
+        </p>
       </div>
     )
   }

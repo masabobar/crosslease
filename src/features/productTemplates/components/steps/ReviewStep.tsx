@@ -5,6 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SectionCard } from "@/components/shared/SectionCard"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
+import { formatCurrency } from "@/lib/formatters"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
 type Props = {
@@ -170,11 +172,21 @@ function ReviewStep({
           />
           <ReviewRow
             label={t("fields.minVolumeEur")}
-            value={values.min_volume_eur ?? "—"}
+            value={
+              values.min_volume_eur !== undefined &&
+              values.min_volume_eur !== null
+                ? formatCurrency(values.min_volume_eur, EUR_CURRENCY_CODE)
+                : "—"
+            }
           />
           <ReviewRow
             label={t("fields.maxVolumeEur")}
-            value={values.max_volume_eur ?? "—"}
+            value={
+              values.max_volume_eur !== undefined &&
+              values.max_volume_eur !== null
+                ? formatCurrency(values.max_volume_eur, EUR_CURRENCY_CODE)
+                : "—"
+            }
           />
         </div>
       </SectionCard>
@@ -209,10 +221,7 @@ function ReviewStep({
         />
       </div>
 
-      <label
-        htmlFor="confirm-publication"
-        className="flex items-center gap-2 cursor-pointer"
-      >
+      <Label htmlFor="confirm-publication" className="cursor-pointer">
         <Checkbox
           id="confirm-publication"
           data-testid="confirm-publication-checkbox"
@@ -222,7 +231,7 @@ function ReviewStep({
         <span className="text-sm text-foreground">
           {t("fields.confirmPublication")}
         </span>
-      </label>
+      </Label>
     </div>
   )
 }

@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { TemplateListResponse } from "@/features/productTemplates/api/schema"
 import {
   fetchProductTemplates,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -10,7 +12,7 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
 export function useProductTemplateList(
   tenantId: string | null,
   params: ProductTemplateListParams
-) {
+): UseQueryResult<TemplateListResponse, Error> {
   const normalizedParams: ProductTemplateListParams = {
     ...params,
     search:

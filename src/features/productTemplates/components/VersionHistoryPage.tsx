@@ -33,8 +33,11 @@ import { formatDateTime } from "@/lib/formatters"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import {
   isProductTemplateNotFoundError,
+  latestVersionNumber,
+  resolveApiErrorMessage,
   showApiError,
 } from "@/features/productTemplates/utils"
+import { PRODUCT_TEMPLATE_AUDIT_ENTITY_TYPE } from "@/features/productTemplates/constants"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 
 // Timeline-rail dot color per status — the colored dot sits on the left rail
@@ -55,7 +58,7 @@ const TIMELINE_DOT_CLASSES: Record<TemplateStatus, string> = {
 // so the drill-down must filter by templateId — filtering by a version id
 // returns no rows. The audit list endpoint has no per-version filter param.
 function auditTrailLink(templateId: string): string {
-  return `${PATHS.AUDIT_TRAIL}?entity_type=product_template&entity_id=${templateId}`
+  return `${PATHS.AUDIT_TRAIL}?entity_type=${PRODUCT_TEMPLATE_AUDIT_ENTITY_TYPE}&entity_id=${encodeURIComponent(templateId)}`
 }
 
 export default function VersionHistoryPage() {
@@ -90,11 +93,14 @@ export default function VersionHistoryPage() {
     error: versionsError,
   } = useTemplateVersions(templateId ?? "")
 
-  const latestVersionNumber = history?.versions[0]?.version_number ?? null
-  const { data: header, isError: isHeaderError } = useTemplateVersionDetail(
-    templateId ?? "",
-    latestVersionNumber
-  )
+  // Highest version rather than versions[0]: the response's order is not part of the
+  // contract, and picking the wrong row here mislabels the page header.
+  const latestVersion = latestVersionNumber(history?.versions ?? [])
+  const {
+    data: header,
+    isError: isHeaderError,
+    error: headerError,
+  } = useTemplateVersionDetail(templateId ?? "", latestVersion)
 
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
@@ -137,6 +143,9 @@ export default function VersionHistoryPage() {
       })
       setDiscardTarget(null)
     } catch (err) {
+      // Close on failure too: the toast carries the reason, and leaving the dialog up made
+      // it look like the confirmation had not registered.
+      setDiscardTarget(null)
       showApiError(err, t)
     }
   }
@@ -154,7 +163,7 @@ export default function VersionHistoryPage() {
         )}
         {!header && isHeaderError && (
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("errors.generic")}
+            {resolveApiErrorMessage(headerError, t)}
           </p>
         )}
       </div>
@@ -206,7 +215,9 @@ export default function VersionHistoryPage() {
           data-testid="version-history-error"
           className="flex items-center justify-center flex-1"
         >
-          <p className="text-sm text-muted-foreground">{t("errors.generic")}</p>
+          <p className="text-sm text-muted-foreground">
+            {resolveApiErrorMessage(versionsError, t)}
+          </p>
         </div>
       )}
 
