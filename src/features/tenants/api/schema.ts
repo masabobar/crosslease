@@ -1,4 +1,11 @@
 import { z } from "zod"
+import {
+  differenceInCalendarDays,
+  format,
+  parseISO,
+  startOfToday,
+} from "date-fns"
+import { DATE_FORMAT, MAX_GRANT_DAYS } from "@/features/tenants/constants"
 
 export const TenantStatusSchema = z.enum([
   "draft",
@@ -159,8 +166,46 @@ export type TenantDetailModulesResponse = z.infer<
   typeof TenantDetailModulesResponseSchema
 >
 
+// The governance event types the UI offers as filter options. Kept here rather than
+// in the component so the wire values have one source of truth, per
+// `.claude/rules/enums-and-constants.md` §3. Read `.options` for the filter list and
+// `t('detail.governance.eventTypes.<value>')` for the label — the value itself is a
+// machine identifier and is never rendered raw (§5).
+export const GovernanceEventTypeSchema = z.enum([
+  "tenant.creation_requested",
+  "tenant.activated",
+  "tenant.create_rejected",
+  "tenant.create_expired",
+  "tenant.create_reinitiated",
+  "tenant.modified",
+  "tenant.mfa_policy_changed",
+  "tenant.access_policy_modified",
+  "tenant.suspend_requested",
+  "tenant.suspended",
+  "tenant.reactivate_requested",
+  "tenant.reactivated",
+  "tenant.archive_requested",
+  "tenant.archived",
+  "tenant.module_activation_requested",
+  "tenant.module_activated",
+  "tenant.module_deactivated",
+  "support_grant.created",
+  "support_grant.revoked",
+  "support_grant.expired",
+  "support_grant.emergency_review_completed",
+  "security.permission_denied",
+  "security.cross_tenant_attempt",
+  "security.cross_tenant_access_permitted",
+  "security.cross_tenant_access_blocked",
+])
+export type GovernanceEventType = z.infer<typeof GovernanceEventTypeSchema>
+
 export const GovernanceHistoryEventSchema = z.object({
   id: z.string().uuid(),
+  // Deliberately `z.string()`, not GovernanceEventTypeSchema: the backend owns this
+  // taxonomy and adds to it, so parsing against a closed enum would throw on a valid
+  // response. The enum above scopes the filter UI only; rendering falls back to a
+  // humanised label for a type it does not know.
   event_type: z.string(),
   actor_display: z.string().nullable(),
   old_data: z.record(z.string(), z.unknown()).nullable(),
@@ -217,14 +262,60 @@ export const SupportGrantSchema = z.object({
 })
 export type SupportGrant = z.infer<typeof SupportGrantSchema>
 
-export const CreateGrantFormSchema = z.object({
+const CreateGrantFieldsSchema = z.object({
   grantee_id: z.string().uuid("required"),
   access_reason: AccessReasonSchema,
   valid_from: z.string().min(1, "required"),
   valid_until: z.string().min(1, "required"),
   additional_context: z.string().max(500).nullable().optional(),
 })
-export type CreateGrantForm = z.infer<typeof CreateGrantFormSchema>
+export type CreateGrantForm = z.infer<typeof CreateGrantFieldsSchema>
+
+// The grant window rules live here as well as on the calendar, per
+// `.claude/rules/date-inputs.md` §1: NewGrantDialog's <DatePicker> only greys out
+// days, it never clears a value already chosen, so changing valid_from after
+// valid_until is set would otherwise submit an inverted range.
+//
+// Both bounds are derived from the same decision as the calendar's, so the two
+// cannot disagree (§2): the end picker's maxDate is addDays(from, MAX_GRANT_DAYS),
+// which is a difference of exactly MAX_GRANT_DAYS calendar days, and its minDate is
+// parseISO(from) — equal dates are a legal one-day grant.
+//
+// Values are "yyyy-MM-dd", so string comparison is date comparison.
+export const CreateGrantFormSchema = CreateGrantFieldsSchema.superRefine(
+  (data, ctx) => {
+    if (!data.valid_from || !data.valid_until) return
+
+    if (data.valid_from < format(startOfToday(), DATE_FORMAT)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["valid_from"],
+        message: "validFromInPast",
+      })
+    }
+
+    if (data.valid_until < data.valid_from) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["valid_until"],
+        message: "validUntilBeforeValidFrom",
+      })
+      return
+    }
+
+    const spanDays = differenceInCalendarDays(
+      parseISO(data.valid_until),
+      parseISO(data.valid_from)
+    )
+    if (spanDays > MAX_GRANT_DAYS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["valid_until"],
+        message: "grantDurationExceeded",
+      })
+    }
+  }
+)
 
 export const RevokeGrantFormSchema = z.object({
   revocation_reason: z.string().min(10, "tooShort"),

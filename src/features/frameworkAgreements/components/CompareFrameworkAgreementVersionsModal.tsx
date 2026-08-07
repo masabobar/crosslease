@@ -56,10 +56,6 @@ function fieldLabel(
   return key ? t(key as "fields.agreementName") : field
 }
 
-function valuesDiffer(a: unknown, b: unknown): boolean {
-  return a !== b
-}
-
 function diffPillClasses(side: "old" | "new"): string {
   return side === "old"
     ? "bg-red-600/10 text-red-600"
@@ -119,7 +115,7 @@ function DiffTableRow({
   t: TFunction<"frameworkAgreements">
   item: FieldDiffItem
 }) {
-  const changed = valuesDiffer(item.old_value, item.new_value)
+  const changed = item.old_value !== item.new_value
   return (
     <TableRow data-testid={`fa-diff-row-${item.field}`}>
       <TableCell className="w-2/5 whitespace-normal text-muted-foreground">

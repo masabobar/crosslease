@@ -1,3 +1,7 @@
+import {
+  DuplicateResolutionReasonCodeSchema,
+  MergeReasonCodeSchema,
+} from "@/features/partners/api/schema"
 import type {
   DuplicateResolutionReasonCode,
   MergeReasonCode,
@@ -77,24 +81,12 @@ export const ANCHOR_LABEL_KEY_BY_FIELD: Record<string, string> =
 
 // Shared between ResolveDuplicateDialog (US-13.8-9-FE) and the Duplication &
 // merge queue's resolution history so both agree on the reason code list.
-export const DUPLICATE_RESOLUTION_REASON_CODES: DuplicateResolutionReasonCode[] =
-  [
-    "identical_registry_identifiers",
-    "same_legal_entity_different_name",
-    "data_entry_error",
-    "system_import_error",
-    "legal_restructuring",
-    "confirmed_different_entities",
-    "subsidiary_not_duplicate",
-    "insufficient_evidence",
-  ]
+// Derived from the wire schema rather than re-listed, so a code added on the BE
+// reaches the dialog without a second edit (.claude/rules/enums-and-constants.md §3).
+export const DUPLICATE_RESOLUTION_REASON_CODES: readonly DuplicateResolutionReasonCode[] =
+  DuplicateResolutionReasonCodeSchema.options
 
 // Shared between InitiateMergeDialog (US-13.10-FE) and MergeHistoryTab so both
 // agree on the reason code list.
-export const MERGE_REASON_CODES: MergeReasonCode[] = [
-  "same_legal_entity_different_name",
-  "identical_registry_identifiers",
-  "data_entry_error",
-  "system_import_error",
-  "legal_restructuring",
-]
+export const MERGE_REASON_CODES: readonly MergeReasonCode[] =
+  MergeReasonCodeSchema.options

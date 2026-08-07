@@ -11,11 +11,14 @@ import {
   isFrameworkAgreementExpiredByDate,
   getFrameworkAgreementDisplayStatus,
 } from "@/features/frameworkAgreements/utils"
-import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
+import {
+  FA_DOCUMENT_BYTES_PER_MB,
+  FA_STATUS_BADGE_VARIANT,
+} from "@/features/frameworkAgreements/constants"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
+import { formatCurrency } from "@/lib/formatters"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import type { LCPortalFAListItem } from "@/features/lc/api/schema"
-
-const BYTES_PER_MB = 1024 * 1024
 
 function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
   const { t } = useTranslation("lc")
@@ -48,7 +51,9 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
             <p className="text-xs text-muted-foreground">
               {t("frameworkAgreements.fields.maxVolumeEur")}
             </p>
-            <p className="text-sm text-foreground">{fa.max_volume_eur}</p>
+            <p className="text-sm text-foreground">
+              {formatCurrency(fa.max_volume_eur, EUR_CURRENCY_CODE)}
+            </p>
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">
@@ -113,7 +118,8 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
                     )}
                   </Badge>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {Math.round(doc.file_size_bytes / BYTES_PER_MB)} MB
+                    {Math.round(doc.file_size_bytes / FA_DOCUMENT_BYTES_PER_MB)}{" "}
+                    MB
                   </span>
                   {/* NOTE: raw <a> — shadcn Button's `render` prop can only
                       compose onto a non-<button> element with

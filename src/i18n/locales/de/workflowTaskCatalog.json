@@ -328,6 +328,10 @@
       "title": "Einreichung ist blockiert",
       "description": "Diese Pflichtaufgaben sind noch offen. Es werden alle Pflichtaufgaben des Falls aufgeführt, da die Projektion sie noch nicht auf eine einzelne Phase einschränken kann."
     },
+    "projectionError": {
+      "title": "Offene Pflichtaufgaben konnten nicht geprüft werden",
+      "description": "Ob dieser Fall für die Einreichung blockiert ist, ist unbekannt. Behandeln Sie die untenstehende Checkliste als unvollständig, bis dies geladen wurde."
+    },
     "setItemStatus": {
       "title": "Aufgabe erledigen oder erlassen",
       "subtitle": "{{task}}",

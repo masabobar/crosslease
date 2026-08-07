@@ -1,11 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
 import {
   updateAccessPolicy,
   TENANTS_QUERY_KEYS,
 } from "@/features/tenants/api/tenantsApi"
 import type { UpdateAccessPolicyPayload } from "@/features/tenants/api/tenantsApi"
 
-export function useUpdateAccessPolicy(tenantId: string) {
+export function useUpdateAccessPolicy(
+  tenantId: string
+): UseMutationResult<void, Error, UpdateAccessPolicyPayload> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: UpdateAccessPolicyPayload) =>

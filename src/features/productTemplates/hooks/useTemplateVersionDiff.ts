@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { VersionDiffResponse } from "@/features/productTemplates/api/schema"
 import {
   fetchTemplateVersionDiff,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -9,7 +11,7 @@ export function useTemplateVersionDiff(
   templateId: string,
   fromVersion: string | null,
   toVersion: string | null
-) {
+): UseQueryResult<VersionDiffResponse, Error> {
   return useQuery({
     queryKey: PRODUCT_TEMPLATES_QUERY_KEYS.diff(
       templateId,

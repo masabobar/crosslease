@@ -10,6 +10,7 @@
       "searchPill": "Suche: \"{{value}}\"",
       "eventTypePill": "Ereignis: {{value}}",
       "entityTypePill": "Entität: {{value}}",
+      "entityIdPill": "Entitäts-ID: {{value}}",
       "actionTypePill": "Aktion: {{value}}",
       "triggerSourcePill": "Quelle: {{value}}",
       "datePill": "Datum: {{range}}",
@@ -140,5 +141,8 @@
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
+  },
+  "clipboard": {
+    "copyFailed": "Kopieren in die Zwischenablage nicht möglich."
   }
 }

@@ -357,6 +357,24 @@ describe("EditFrameworkAgreementFormSchema", () => {
       )
     }
   )
+
+  it.each([
+    { field: "agreement_name", value: "x".repeat(201) },
+    { field: "special_conditions", value: "x".repeat(1001) },
+    { field: "justification", value: "x".repeat(1001) },
+  ])(
+    "reports 'tooLong' when $field exceeds its maximum",
+    ({ field, value }) => {
+      const result = EditFrameworkAgreementFormSchema.safeParse({
+        ...validEditForm,
+        [field]: value,
+      })
+      expect(result.success).toBe(false)
+      expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
+        "tooLong"
+      )
+    }
+  )
 })
 
 describe("ActivateFARequestSchema", () => {
@@ -384,6 +402,23 @@ describe("ActivateFARequestSchema", () => {
         justification: "All framework documents attached and reviewed",
       })
     ).toThrow()
+  })
+
+  // This schema doubles as ActivateFrameworkAgreementPanel's form schema, so its bounds
+  // must carry message codes — the panel used to render Zod's untranslated "Too small:
+  // expected string to have >=20 characters" straight to the user.
+  it.each([
+    { label: "too short", value: "too short", code: "tooShort" },
+    { label: "too long", value: "x".repeat(1001), code: "tooLong" },
+  ])("reports '$code' when the justification is $label", ({ value, code }) => {
+    const result = ActivateFARequestSchema.safeParse({
+      documents_confirmed: true,
+      justification: value,
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error!.issues.find(i => i.path[0] === "justification")?.message
+    ).toBe(code)
   })
 })
 
@@ -750,6 +785,26 @@ describe("FrameworkAgreementWizardFormSchema", () => {
       ).toBe("mustBePositive")
     }
   )
+
+  // Same i18n contract as the bounds above: an over-length value used to fall through
+  // resolveFormMessage's verbatim branch and render Zod's English "Too big: expected
+  // string to have <=200 characters" to the user.
+  it.each([
+    { field: "agreement_name", value: "x".repeat(201) },
+    { field: "special_conditions", value: "x".repeat(1001) },
+  ])(
+    "reports 'tooLong' when $field exceeds its maximum",
+    ({ field, value }) => {
+      const result = FrameworkAgreementWizardFormSchema.safeParse({
+        ...validForm,
+        [field]: value,
+      })
+      expect(result.success).toBe(false)
+      expect(result.error!.issues.find(i => i.path[0] === field)?.message).toBe(
+        "tooLong"
+      )
+    }
+  )
 })
 
 describe("TerminateFARequestSchema / FATerminatedResponseSchema", () => {
@@ -779,6 +834,26 @@ describe("TerminateFARequestSchema / FATerminatedResponseSchema", () => {
           "Terminating at the leasing company's request, confirmed by legal.",
       })
     ).toThrow()
+  })
+
+  // Doubles as TerminateFrameworkAgreementPanel's form schema — see the equivalent
+  // assertion on ActivateFARequestSchema.
+  it.each([
+    {
+      label: "too short",
+      value: "Too short for termination",
+      code: "tooShort",
+    },
+    { label: "too long", value: "x".repeat(1001), code: "tooLong" },
+  ])("reports '$code' when the justification is $label", ({ value, code }) => {
+    const result = TerminateFARequestSchema.safeParse({
+      justification: value,
+      irreversibility_confirmed: true,
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error!.issues.find(i => i.path[0] === "justification")?.message
+    ).toBe(code)
   })
 
   it("accepts a valid terminated response", () => {

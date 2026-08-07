@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -24,7 +25,10 @@ import {
 import { IdentityChangeStatusSchema } from "@/features/partners/api/schema"
 import { useProposeIdentityChange } from "@/features/partners/hooks/useProposeIdentityChange"
 import { ANCHOR_FIELDS } from "@/features/partners/constants"
-import { isCommercialRegisterApplicable } from "@/features/partners/utils"
+import {
+  isCommercialRegisterApplicable,
+  isNotFutureDate,
+} from "@/features/partners/utils"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { COUNTRIES } from "@/lib/countries"
@@ -32,6 +36,11 @@ import { selectOnFocus } from "@/lib/utils"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
 
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
+
+// Anchors whose proposed value is a date, not free text — these render a
+// DatePicker and carry the same not-in-the-future rule the submit form applies
+// (.claude/rules/date-inputs.md §1: the calendar bound alone is not enough).
+const DATE_ANCHOR_KEYS = new Set(["date_of_birth"])
 
 // Target anchors + proposed values are a dynamic keyed map (the available
 // anchors depend on identity.partner_type — see ANCHOR_FIELDS): at least one
@@ -50,6 +59,13 @@ const proposeIdentityChangeSchema = z
     message: "reasonRequired",
     path: ["reason"],
   })
+  .refine(
+    data =>
+      Object.entries(data.values).every(
+        ([key, value]) => !DATE_ANCHOR_KEYS.has(key) || isNotFutureDate(value)
+      ),
+    { message: "dateInvalid", path: ["values"] }
+  )
 type ProposeIdentityChangeForm = z.infer<typeof proposeIdentityChangeSchema>
 
 type Props = {
@@ -76,7 +92,7 @@ function ProposeIdentityChangeDialog({
     getValues,
     setValue,
     reset,
-    formState: { isValid },
+    formState: { errors, isValid },
   } = useForm<ProposeIdentityChangeForm>({
     resolver: zodResolver(proposeIdentityChangeSchema),
     mode: "onChange",
@@ -259,6 +275,22 @@ function ProposeIdentityChangeDialog({
                           )
                         }}
                       />
+                    ) : DATE_ANCHOR_KEYS.has(anchor.key) ? (
+                      <Controller
+                        control={control}
+                        name={
+                          `values.${anchor.key}` as Path<ProposeIdentityChangeForm>
+                        }
+                        render={({ field }) => (
+                          <DatePicker
+                            data-testid={`propose-value-${anchor.key}`}
+                            value={field.value as string}
+                            onChange={field.onChange}
+                            maxDate={new Date()}
+                            captionLayout="dropdown"
+                          />
+                        )}
+                      />
                     ) : (
                       <Controller
                         control={control}
@@ -278,6 +310,16 @@ function ProposeIdentityChangeDialog({
                 )}
               </div>
             ))}
+            {errors.values?.message && (
+              <p
+                className="text-xs text-destructive"
+                data-testid="propose-values-error"
+              >
+                {t(
+                  `proposeIdentityChangeDialog.errors.${errors.values.message}` as "proposeIdentityChangeDialog.errors.targetAnchorRequired"
+                )}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -288,8 +330,19 @@ function ProposeIdentityChangeDialog({
               id="propose-reason"
               data-testid="propose-reason"
               rows={3}
+              aria-invalid={!!errors.reason}
               {...register("reason")}
             />
+            {errors.reason?.message && (
+              <p
+                className="text-xs text-destructive"
+                data-testid="propose-reason-error"
+              >
+                {t(
+                  `proposeIdentityChangeDialog.errors.${errors.reason.message}` as "proposeIdentityChangeDialog.errors.reasonRequired"
+                )}
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-warning/10">

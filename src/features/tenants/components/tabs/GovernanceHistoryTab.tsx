@@ -2,6 +2,7 @@ import { useState } from "react"
 import { ArrowRight } from "lucide-react"
 import { parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
+import type { TFunction } from "i18next"
 import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
 import { FilterButton } from "@/components/ui/filter-button"
@@ -15,39 +16,35 @@ import { useTenantGovernanceHistory } from "@/features/tenants/hooks/useTenantGo
 import { formatDate, formatDateTime } from "@/lib/formatters"
 import { ApiError } from "@/lib/api"
 import type { GovernanceHistoryEvent } from "@/features/tenants/api/schema"
+import { GovernanceEventTypeSchema } from "@/features/tenants/api/schema"
 
 const GOVERNANCE_HISTORY_PAGE_SIZE = 50
 
-const GOVERNANCE_EVENT_TYPES = [
-  "tenant.creation_requested",
-  "tenant.activated",
-  "tenant.create_rejected",
-  "tenant.create_expired",
-  "tenant.create_reinitiated",
-  "tenant.modified",
-  "tenant.mfa_policy_changed",
-  "tenant.access_policy_modified",
-  "tenant.suspend_requested",
-  "tenant.suspended",
-  "tenant.reactivate_requested",
-  "tenant.reactivated",
-  "tenant.archive_requested",
-  "tenant.archived",
-  "tenant.module_activation_requested",
-  "tenant.module_activated",
-  "tenant.module_deactivated",
-  "support_grant.created",
-  "support_grant.revoked",
-  "support_grant.expired",
-  "support_grant.emergency_review_completed",
-  "security.permission_denied",
-  "security.cross_tenant_attempt",
-  "security.cross_tenant_access_permitted",
-  "security.cross_tenant_access_blocked",
-] as const
+const GOVERNANCE_EVENT_TYPES = GovernanceEventTypeSchema.options
 
-function formatEventTypeLabel(eventType: string): string {
+// Fallback only. The backend owns the event taxonomy and adds to it, so a type this
+// build has no i18n key for still needs to render as something readable rather than
+// as a raw wire value. Known types go through `eventTypeLabel` below.
+function humaniseEventType(eventType: string): string {
   return eventType.replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// The wire value's dots line up with i18next's key separator, so
+// "tenant.suspend_requested" resolves at detail.governance.eventTypes.tenant.suspend_requested.
+function eventTypeLabel(t: TFunction<"tenants">, eventType: string): string {
+  return t(
+    `detail.governance.eventTypes.${eventType}` as "detail.governance.eventTypes.tenant.activated",
+    { defaultValue: humaniseEventType(eventType) }
+  )
+}
+
+// old_data/new_data are free-form payloads, so the extracted token may be anything;
+// an unknown one falls back to its humanised form rather than rendering raw.
+function stateLabel(t: TFunction<"tenants">, token: string): string {
+  return t(
+    `detail.governance.stateLabels.${token}` as "detail.governance.stateLabels.active",
+    { defaultValue: humaniseEventType(token) }
+  )
 }
 
 type IndicatorColor = "success" | "danger" | "warning" | "primary" | "neutral"
@@ -106,13 +103,15 @@ function stateTone(label: string): SoftBadgeTone {
   return STATUS_BADGE_TONE[label.toLowerCase()] ?? "neutral"
 }
 
+// Returns the state *token* (a machine value), never a display string — the caller
+// translates it via stateLabel(). See .claude/rules/enums-and-constants.md §5.
 function extractStatusValue(
   data: Record<string, unknown> | null
 ): string | null {
   if (!data) return null
   if (typeof data.status === "string") return data.status
   if (typeof data.enabled === "boolean")
-    return data.enabled ? "Enabled" : "Disabled"
+    return data.enabled ? "enabled" : "disabled"
   if (typeof data.state === "string") return data.state
   return null
 }
@@ -126,8 +125,11 @@ function isSecurityEvent(eventType: string): boolean {
   )
 }
 
-function formatEventTitle(event: GovernanceHistoryEvent): string {
-  const base = formatEventTypeLabel(event.event_type)
+function formatEventTitle(
+  t: TFunction<"tenants">,
+  event: GovernanceHistoryEvent
+): string {
+  const base = eventTypeLabel(t, event.event_type)
   const entityName =
     (event.new_data?.["name"] as string | undefined) ??
     (event.new_data?.["display_name"] as string | undefined) ??
@@ -149,7 +151,7 @@ function EventRow({
   const oldValue = extractStatusValue(event.old_data)
   const newValue = extractStatusValue(event.new_data)
 
-  const title = formatEventTitle(event)
+  const title = formatEventTitle(t, event)
   const actorLine = [event.actor_display, formatDateTime(event.recorded_at)]
     .filter(Boolean)
     .join(" · ")
@@ -187,9 +189,15 @@ function EventRow({
 
         {oldValue !== null && newValue !== null && (
           <div className="flex items-center gap-2.5">
-            <SoftBadge label={oldValue} tone={stateTone(oldValue)} />
+            <SoftBadge
+              label={stateLabel(t, oldValue)}
+              tone={stateTone(oldValue)}
+            />
             <ArrowRight size={16} className="text-muted-foreground shrink-0" />
-            <SoftBadge label={newValue} tone={stateTone(newValue)} />
+            <SoftBadge
+              label={stateLabel(t, newValue)}
+              tone={stateTone(newValue)}
+            />
           </div>
         )}
 
@@ -235,7 +243,8 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
     ? events.filter(event => {
         const q = search.toLowerCase()
         return (
-          formatEventTypeLabel(event.event_type).toLowerCase().includes(q) ||
+          // Matches the label the user can actually see, not the wire value.
+          eventTypeLabel(t, event.event_type).toLowerCase().includes(q) ||
           (event.actor_display?.toLowerCase().includes(q) ?? false) ||
           (event.reason?.toLowerCase().includes(q) ?? false)
         )
@@ -290,7 +299,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
                   data-testid={`filter-event-type-${type}`}
                 >
                   <span className="text-sm text-foreground">
-                    {formatEventTypeLabel(type)}
+                    {eventTypeLabel(t, type)}
                   </span>
                 </FilterCheckboxOption>
               ))}
@@ -317,6 +326,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
                   placeholder={t("list.filters.from")}
                   maxDate={new Date()}
                   captionLayout="dropdown"
+                  data-testid="governance-filter-from-date"
                 />
                 <DatePicker
                   value={toDate ?? undefined}
@@ -325,6 +335,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
                   maxDate={new Date()}
                   minDate={fromDate ? parseISO(fromDate) : undefined}
                   captionLayout="dropdown"
+                  data-testid="governance-filter-to-date"
                 />
               </div>
             </div>
@@ -338,7 +349,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
           {eventTypeFilters.map(type => (
             <FilterPill
               key={type}
-              label={formatEventTypeLabel(type)}
+              label={eventTypeLabel(t, type)}
               onRemove={() => toggleEventType(type)}
               data-testid={`filter-pill-remove-event-type-${type}`}
             />

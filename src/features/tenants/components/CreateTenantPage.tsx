@@ -27,8 +27,8 @@ import {
   clearWizardDraft,
 } from "@/features/tenants/hooks/useTenantWizardDraft"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 import { ApiError } from "@/lib/api"
-import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,25 +96,42 @@ export default function CreateTenantPage() {
   // localStorage and runs a JSON + schema parse.
   const [probedUserId, setProbedUserId] = useState<string | null>(null)
   const [hasDraft, setHasDraft] = useState(false)
+  const [wasDraftUnreadable, setWasDraftUnreadable] = useState(false)
   if (userId && probedUserId !== userId) {
+    const probe = loadWizardDraft(userId)
     setProbedUserId(userId)
-    setHasDraft(Boolean(loadWizardDraft(userId)))
+    setHasDraft(probe.status === "loaded")
+    setWasDraftUnreadable(probe.status === "unreadable")
   }
+
+  const handleError = useTenantFormErrorHandler({
+    getValues: form.getValues,
+    setError: form.setError,
+  })
 
   const isRestoreOpen = hasDraft && !isRestoreDismissed
 
   function handleRestore() {
     if (!userId) return
-    const draft = loadWizardDraft(userId)
-    if (!draft) return
-    form.reset(draft.formValues)
-    setStep(draft.step)
+    const result = loadWizardDraft(userId)
+    if (result.status !== "loaded") return
+    form.reset(result.draft.formValues)
+    setStep(result.draft.step)
     setIsRestoreDismissed(true)
   }
 
   function handleStartFresh() {
     if (userId) clearWizardDraft(userId)
     setIsRestoreDismissed(true)
+  }
+
+  // Which step to land on when validation fails: the first one that owns a failing field,
+  // so the message the user has to act on is actually on screen.
+  function firstStepWithError(): WizardStep | undefined {
+    const { errors } = form.formState
+    return ORDERED_WIZARD_STEPS.find(wizardStep =>
+      STEP_FIELDS[wizardStep].some(field => errors[field])
+    )
   }
 
   async function handleNext() {
@@ -129,17 +146,27 @@ export default function CreateTenantPage() {
     const currentIndex = ORDERED_WIZARD_STEPS.indexOf(step as WizardStep)
 
     if (step === "review") {
+      // The review step declares no fields of its own, so up to this point nothing had
+      // validated the form as a whole — a required field skipped on a step whose
+      // STEP_FIELDS list is empty reached the API and came back as a server rejection.
+      const isWholeFormValid = await form.trigger()
+      if (!isWholeFormValid) {
+        setStep(firstStepWithError() ?? "identity")
+        return
+      }
+
       const data = form.getValues()
       try {
         await createTenant(data)
         if (userId) clearWizardDraft(userId)
         setStep("success")
       } catch (err) {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
+        // Field-level VALIDATION_ERROR detail lands on the identity fields, which
+        // live on an earlier step — send the user back so the highlighted field is
+        // actually on screen.
+        handleError(err)
+        const errorStep = firstStepWithError()
+        if (errorStep) setStep(errorStep)
       }
       return
     }
@@ -299,6 +326,18 @@ export default function CreateTenantPage() {
               modules={modules}
               packages={packages}
             />
+          )}
+
+          {/* A draft existed but could not be read back — say so rather than silently
+              offering no restore prompt to someone who came back to resume. */}
+          {wasDraftUnreadable && (
+            <p
+              role="status"
+              className="mt-4 text-sm text-muted-foreground"
+              data-testid="wizard-draft-unreadable"
+            >
+              {t("wizard.restoreDialog.unreadableDraft")}
+            </p>
           )}
 
           {/* Root form error */}

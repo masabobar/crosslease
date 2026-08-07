@@ -1,17 +1,14 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Shield, AlertCircle, Copy, Check } from "lucide-react"
+import { Shield, AlertCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { mfaEnroll, mfaActivate } from "../api/mfaApi"
 import { TOTP_CODE_LENGTH } from "../api/mfaSchema"
-import type { MfaEnrollResponse } from "../api/mfaSchema"
 import { AUTH_QUERY_KEYS } from "@/features/auth/api/queryKeys"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
-import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,6 +19,7 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
+import { RecoveryCodesCard } from "./RecoveryCodesCard"
 
 type LocationState = { mfa_token: string } | null
 type PageStep = "enroll" | "recovery"
@@ -30,26 +28,27 @@ export default function MfaEnrollPage() {
   const { t } = useTranslation("auth")
   const navigate = useNavigate()
   const location = useLocation()
-  const { setAuthenticated } = useAuthStore()
+  const setAuthenticated = useAuthStore(s => s.setAuthenticated)
 
   const state = (location.state as LocationState) ?? null
   const initialToken = state?.mfa_token ?? ""
 
   const [step, setStep] = useState<PageStep>("enroll")
-  const [enrollData, setEnrollData] = useState<MfaEnrollResponse | null>(null)
   const [code, setCode] = useState("")
   const [isActivating, setIsActivating] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([])
-  const [copied, setCopied] = useState(false)
 
-  const { isLoading: isEnrolling, error: enrollError } = useQuery({
+  // Read straight off the query. Mirroring the payload into component state from inside the
+  // queryFn meant a remount served from cache never re-ran the fetch, left the mirror empty,
+  // and rendered the error branch on a successful enrollment.
+  const {
+    data: enrollData,
+    isLoading: isEnrolling,
+    error: enrollError,
+  } = useQuery({
     queryKey: AUTH_QUERY_KEYS.mfaEnroll(initialToken),
-    queryFn: async () => {
-      const data = await mfaEnroll(initialToken)
-      setEnrollData(data)
-      return data
-    },
+    queryFn: () => mfaEnroll(initialToken),
     enabled: !!initialToken,
     retry: false,
     staleTime: Infinity,
@@ -130,67 +129,20 @@ export default function MfaEnrollPage() {
     }
   }
 
-  const handleCopyCodes = async () => {
-    try {
-      await navigator.clipboard.writeText(recoveryCodes.join("\n"))
-      setCopied(true)
-      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
-    } catch {
-      toast.error(t("clipboard.copyFailed"))
-    }
-  }
-
   if (step === "recovery") {
     return (
       <AuthPageLayout>
-        <AuthCard>
-          <AuthCardHeader>
-            <div className="p-3 bg-amber-100 rounded-[14px] w-fit mb-4">
-              <Shield size={24} className="text-amber-600" />
-            </div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {t("mfaEnroll.recovery.title")}
-            </h1>
-            <p className="mt-2 text-base text-muted-foreground">
-              {t("mfaEnroll.recovery.subtitle")}
-            </p>
-          </AuthCardHeader>
-
-          <AuthCardBody>
-            <div
-              data-testid="mfa-recovery-codes"
-              className="bg-muted rounded-lg p-4 font-mono text-sm grid grid-cols-2 gap-2"
-            >
-              {recoveryCodes.map(c => (
-                <span key={c} className="text-foreground">
-                  {c}
-                </span>
-              ))}
-            </div>
-          </AuthCardBody>
-
-          <AuthCardFooter>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="mfa-copy-recovery-codes-button"
-              onClick={handleCopyCodes}
-              className="gap-2"
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied
-                ? t("mfaEnroll.recovery.copied")
-                : t("mfaEnroll.recovery.copy")}
-            </Button>
-            <Button
-              type="button"
-              data-testid="mfa-recovery-continue-button"
-              onClick={() => navigate(PATHS.DASHBOARD)}
-            >
-              {t("mfaEnroll.recovery.continue")}
-            </Button>
-          </AuthCardFooter>
-        </AuthCard>
+        <RecoveryCodesCard
+          title={t("mfaEnroll.recovery.title")}
+          subtitle={t("mfaEnroll.recovery.subtitle")}
+          codes={recoveryCodes}
+          onContinue={() => navigate(PATHS.DASHBOARD)}
+          testIds={{
+            container: "mfa-recovery-codes",
+            copyButton: "mfa-copy-recovery-codes-button",
+            continueButton: "mfa-recovery-continue-button",
+          }}
+        />
       </AuthPageLayout>
     )
   }

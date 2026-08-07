@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { DocumentRequirementCatalogResponse } from "@/features/documentRequirements/api/schema"
 import {
   createDocumentRequirementCatalog,
   DOCUMENT_REQUIREMENT_QUERY_KEYS,
@@ -7,7 +9,11 @@ import type { CreateDocumentRequirementCatalogRequest } from "@/features/documen
 
 export function useCreateDocumentRequirementCatalog(
   tenantId: string | undefined
-) {
+): UseMutationResult<
+  DocumentRequirementCatalogResponse,
+  Error,
+  CreateDocumentRequirementCatalogRequest
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

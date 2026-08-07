@@ -21,7 +21,19 @@ function readEnum<T extends string>(
     : null
 }
 
-export function useDocumentRequirementCatalogListParams() {
+type DocumentRequirementCatalogListParams = {
+  page: number
+  perPage: PageSize
+  search: string
+  filters: DocumentRequirementCatalogFilterState
+  hasActiveFilters: boolean
+  setPage: (p: number) => void
+  setPerPage: (size: PageSize) => void
+  setSearch: (q: string) => void
+  setFilters: (changes: Partial<DocumentRequirementCatalogFilterState>) => void
+}
+
+export function useDocumentRequirementCatalogListParams(): DocumentRequirementCatalogListParams {
   const [params, setParams] = useSearchParams()
 
   function update(changes: ParamUpdate) {

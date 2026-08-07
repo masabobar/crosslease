@@ -18,12 +18,14 @@ import type {
 
 type UserActionVariables<TInput> = { userId: string; input: TInput }
 
-function createUserActionMutation<TInput>(
-  mutationFn: (userId: string, input: TInput) => Promise<unknown>,
+// Generic over the response too, so callers keep the `UserActionResponse` the api layer
+// already parsed instead of an erased `unknown`.
+function createUserActionMutation<TInput, TResponse>(
+  mutationFn: (userId: string, input: TInput) => Promise<TResponse>,
   invalidateDetail = true
 ) {
   return function (): UseMutationResult<
-    unknown,
+    TResponse,
     Error,
     UserActionVariables<TInput>
   > {
@@ -43,14 +45,22 @@ function createUserActionMutation<TInput>(
   }
 }
 
-export const useSuspendUser =
-  createUserActionMutation<SuspendUserInput>(suspendUser)
-export const useReactivateUser =
-  createUserActionMutation<ReactivateUserInput>(reactivateUser)
-export const useDeactivateUser =
-  createUserActionMutation<DeactivateUserInput>(deactivateUser)
-export const useResendInvitation =
-  createUserActionMutation<ResendInvitationInput>(resendInvitation, false)
+export const useSuspendUser = createUserActionMutation<
+  SuspendUserInput,
+  UserActionResponse
+>(suspendUser)
+export const useReactivateUser = createUserActionMutation<
+  ReactivateUserInput,
+  UserActionResponse
+>(reactivateUser)
+export const useDeactivateUser = createUserActionMutation<
+  DeactivateUserInput,
+  UserActionResponse
+>(deactivateUser)
+export const useResendInvitation = createUserActionMutation<
+  ResendInvitationInput,
+  UserActionResponse
+>(resendInvitation, false)
 
 export function useResetUserMfa(): UseMutationResult<
   UserActionResponse,

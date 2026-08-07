@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
+import { ApiError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
@@ -234,7 +235,11 @@ function UserFilterPanel({
 }: UserFilterPanelProps) {
   const { t } = useTranslation("users")
   const filterVis = getUserFilterVisibility(viewerRole)
-  const { data: tenantsData } = useTenants(filterVis.tenant)
+  const {
+    data: tenantsData,
+    isError: isTenantsError,
+    error: tenantsError,
+  } = useTenants(filterVis.tenant)
 
   const tenantOptions = (tenantsData?.tenants ?? [])
     .filter(ten => ten.status === TenantStatusSchema.enum.active)
@@ -303,13 +308,26 @@ function UserFilterPanel({
 
             {filterVis.tenant && (
               <FilterField label={t("filter.fields.tenant")}>
-                <SingleSelectDropdown
-                  value={staged.tenant_id}
-                  onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
-                  options={tenantOptions}
-                  placeholder={t("filter.placeholders.tenant")}
-                  data-testid="filter-tenant-select"
-                />
+                {isTenantsError ? (
+                  <p
+                    data-testid="filter-tenant-error"
+                    className="text-sm text-destructive"
+                  >
+                    {tenantsError instanceof ApiError
+                      ? t(`errors.${tenantsError.code}`, {
+                          defaultValue: t("errors.generic"),
+                        })
+                      : t("errors.generic")}
+                  </p>
+                ) : (
+                  <SingleSelectDropdown
+                    value={staged.tenant_id}
+                    onChange={id => setStaged(s => ({ ...s, tenant_id: id }))}
+                    options={tenantOptions}
+                    placeholder={t("filter.placeholders.tenant")}
+                    data-testid="filter-tenant-select"
+                  />
+                )}
               </FilterField>
             )}
 

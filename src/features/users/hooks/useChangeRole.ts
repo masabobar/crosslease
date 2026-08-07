@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { UseMutationResult } from "@tanstack/react-query"
 import { changeUserRole } from "@/features/users/api/usersApi"
-import { USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
+import { invalidateGovernedUserQueries } from "@/features/users/hooks/invalidateGovernedUserQueries"
 import type { ChangeRoleInput } from "@/features/users/api/schema"
 import type { GovernedAction } from "@/features/governedActions/api/schema"
 
@@ -20,9 +20,7 @@ export function useChangeRole(): UseMutationResult<
       input: ChangeRoleInput
     }) => changeUserRole(userId, input),
     onSuccess: (_, { userId }) => {
-      void queryClient.invalidateQueries({
-        queryKey: USERS_QUERY_KEYS.detail(userId),
-      })
+      invalidateGovernedUserQueries(queryClient, userId)
     },
   })
 }

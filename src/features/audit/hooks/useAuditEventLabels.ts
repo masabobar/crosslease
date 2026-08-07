@@ -16,7 +16,20 @@ const NOT_AVAILABLE = "—"
  * payload, and `auditSeq` formatting: `#${n}` on the page vs `String(n)` in the
  * drawer) — those stay local to each file.
  */
-export function useAuditEventLabels(event: AuditEvent) {
+type AuditEventLabels = {
+  eventTypeLabel: string
+  actionTypeLabel: string
+  recordedAtLabel: string
+  sensitiveLabel: string
+  triggerSourceLabel: string
+  actorTypeLabel: string
+  roleAtTimeLabel: string
+  changedFieldsLabel: string | null
+  reasonLabel: string
+  commentLabel: string
+}
+
+export function useAuditEventLabels(event: AuditEvent): AuditEventLabels {
   const { t } = useTranslation("audit")
 
   return {

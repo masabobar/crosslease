@@ -64,7 +64,11 @@ export default function CaseChecklistPage() {
     isError,
     error,
   } = useCaseChecklist(businessObjectId)
-  const { data: projection } = useCaseRequiredProjection(businessObjectId)
+  const {
+    data: projection,
+    isError: isProjectionError,
+    error: projectionError,
+  } = useCaseRequiredProjection(businessObjectId)
   const {
     data: gates,
     isError: isGatesError,
@@ -141,6 +145,8 @@ export default function CaseChecklistPage() {
   const outstandingRequired = (projection?.required_items ?? []).filter(
     item => item.status === ChecklistItemStatusSchema.enum.open
   )
+  // Absent projection data must not read as "not blocked": the query sets retry:false, so a single
+  // failure would otherwise hide the notice below and make a blocked case look clear.
   const isBlocked = projection ? !projection.all_required_done : false
 
   return (
@@ -154,23 +160,42 @@ export default function CaseChecklistPage() {
         </p>
       </div>
 
-      {isBlocked && (
-        <Alert variant="destructive" data-testid="case-checklist-blocked">
-          <AlertTitle>{t("caseChecklist.blocked.title")}</AlertTitle>
+      {isProjectionError ? (
+        <Alert
+          variant="destructive"
+          data-testid="case-checklist-projection-error"
+        >
+          <AlertTitle>{t("caseChecklist.projectionError.title")}</AlertTitle>
           <AlertDescription>
-            <p>{t("caseChecklist.blocked.description")}</p>
-            <ul className="mt-2 list-disc pl-4">
-              {outstandingRequired.map(item => (
-                <li
-                  key={item.id}
-                  data-testid={`case-checklist-outstanding-${item.id}`}
-                >
-                  {item.task_name ?? item.task_code ?? item.id}
-                </li>
-              ))}
-            </ul>
+            <p>{t("caseChecklist.projectionError.description")}</p>
+            <p className="mt-2">
+              {projectionError instanceof ApiError
+                ? t(`errors.${projectionError.code}` as "errors.generic", {
+                    defaultValue: t("errors.generic"),
+                  })
+                : t("errors.generic")}
+            </p>
           </AlertDescription>
         </Alert>
+      ) : (
+        isBlocked && (
+          <Alert variant="destructive" data-testid="case-checklist-blocked">
+            <AlertTitle>{t("caseChecklist.blocked.title")}</AlertTitle>
+            <AlertDescription>
+              <p>{t("caseChecklist.blocked.description")}</p>
+              <ul className="mt-2 list-disc pl-4">
+                {outstandingRequired.map(item => (
+                  <li
+                    key={item.id}
+                    data-testid={`case-checklist-outstanding-${item.id}`}
+                  >
+                    {item.task_name ?? item.task_code ?? item.id}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )
       )}
 
       <CaseChecklistTable

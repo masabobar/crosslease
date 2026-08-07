@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
 import { formatDate, formatDateTime } from "@/lib/formatters"
+import { DetailRow as SharedDetailRow } from "@/components/shared/DetailRow"
 import type { CatalogDetailResponse } from "@/features/workflowTaskCatalog/api/schema"
 
 type Props = {
@@ -20,10 +21,9 @@ function DetailRow({
   value: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
-    </div>
+    <SharedDetailRow label={label} variant="emphasized">
+      {value}
+    </SharedDetailRow>
   )
 }
 

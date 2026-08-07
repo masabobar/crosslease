@@ -170,10 +170,11 @@ export function SupportGrantsTab({
     per_page: GRANTOR_LOOKUP_PAGE_SIZE,
   })
 
-  // Fail closed: an unknown/error policy state must not allow grant creation.
-  const isSupportAccessEnabled = isAccessPolicyError
-    ? false
-    : (accessPolicy?.support_read_only_access.enabled ?? true)
+  // Fail closed: an unknown policy state must not allow grant creation. That covers the
+  // loading window too — `?? true` opened the New grant action before the policy that
+  // governs it had been read.
+  const isSupportAccessEnabled =
+    !isAccessPolicyError && !!accessPolicy?.support_read_only_access.enabled
 
   const userMap = new Map<string, UserListItem>(
     [...(usersData?.users ?? []), ...(grantorsData?.users ?? [])].map(u => [
@@ -252,12 +253,17 @@ export function SupportGrantsTab({
 
       {isAdmin && (
         <>
-          <NewGrantDialog
-            open={isNewGrantOpen}
-            onOpenChange={setIsNewGrantOpen}
-            tenantId={tenantId}
-            tenantName={tenantName}
-          />
+          {/* Mounted per open so `valid_from` is recomputed: the dialog used to keep the
+              date captured when the tab first rendered, which pre-filled yesterday for any
+              session that crossed midnight — a date its own schema then rejects. */}
+          {isNewGrantOpen && (
+            <NewGrantDialog
+              open={isNewGrantOpen}
+              onOpenChange={setIsNewGrantOpen}
+              tenantId={tenantId}
+              tenantName={tenantName}
+            />
+          )}
           {grantToRevoke && (
             <RevokeGrantDialog
               open={!!grantToRevoke}

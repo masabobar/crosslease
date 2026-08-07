@@ -26,7 +26,11 @@ export type AuditFilterState = {
   sensitive: boolean | null
   from_dt: string | null
   to_dt: string | null
-  // UI ready — no tenant_id param in the audit API; system_admin only
+  // Read from the URL and carried in filter state, but deliberately NOT passed to
+  // `useAuditEvents`: GET /audit/events accepts no tenant_id (verified against
+  // openapi.json). Sending it through the hook only changed the query key, so the filter
+  // appeared to work while the request went out unscoped. system_admin only, once the
+  // backend supports it.
   tenant_id: string | null
 }
 

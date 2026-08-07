@@ -18,9 +18,8 @@ import {
   FA_DOCUMENT_BYTES_PER_MB,
   FA_DOCUMENT_MAX_FILE_SIZE_BYTES,
 } from "@/features/frameworkAgreements/constants"
+import { FA_DOCUMENT_MAX_COUNT } from "@/features/frameworkAgreements/constants"
 import type { FrameworkAgreementDocumentDraft } from "@/features/frameworkAgreements/types"
-
-const MAX_FILES = 10
 
 type Props = {
   documents: FrameworkAgreementDocumentDraft[]
@@ -52,8 +51,9 @@ function DocumentDropzone({ documents, onChange }: Props) {
       // Defaults to "other" (uncategorized) — per PRD1042-1495 (A6), categorizing
       // a framework document is not mandatory to the user.
       .map(file => ({
+        id: crypto.randomUUID(),
         file,
-        documentType: "other" as const,
+        documentType: FADocumentTypeSchema.enum.other,
         documentLabel: "",
       }))
 
@@ -68,7 +68,7 @@ function DocumentDropzone({ documents, onChange }: Props) {
       )
     }
 
-    onChange([...documents, ...valid].slice(0, MAX_FILES))
+    onChange([...documents, ...valid].slice(0, FA_DOCUMENT_MAX_COUNT))
   }
 
   function removeDocument(index: number) {
@@ -138,7 +138,7 @@ function DocumentDropzone({ documents, onChange }: Props) {
 
       {documents.map((doc, index) => (
         <div
-          key={`${doc.file.name}-${index}`}
+          key={doc.id}
           className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5"
           data-testid={`document-file-${index}`}
         >

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
+import type { DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
@@ -19,7 +20,12 @@ import {
 } from "@/components/ui/combobox"
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
-import { isCommercialRegisterApplicable } from "@/features/partners/utils"
+import {
+  blankToUndefined,
+  isCommercialRegisterApplicable,
+  isNotFutureDate,
+  isValidLei,
+} from "@/features/partners/utils"
 import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import type { PartnerType } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
@@ -50,34 +56,13 @@ const countryCodeSchema = z
     message: "invalidCountry",
   })
 
-// Mirrors LegalEntityIdentityInput.validate_lei in refinext-api's partner_schemas.py —
-// ISO 17442 mod-97: move first 4 chars to end, convert letters to digits, check mod 97 == 1.
-function isValidLei(raw: string): boolean {
-  const lei = raw.trim().toUpperCase()
-  if (!/^[A-Z0-9]{20}$/.test(lei)) return false
-  const rearranged = lei.slice(4) + lei.slice(0, 4)
-  let remainder = 0
-  for (const char of rearranged) {
-    const digits = /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char
-    for (const digit of digits) {
-      remainder = (remainder * 10 + Number(digit)) % 97
-    }
-  }
-  return remainder === 1
-}
-
-// RHF returns "" (not undefined) for optional text inputs the user never touched.
-// refinext-api's optional-field validators (e.g. validate_lei) only skip on None —
-// an explicit "" still fails their format checks — so blank fields must be omitted.
-function blankToUndefined(
-  obj: Record<string, unknown>
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(obj)) {
-    result[key] = value === "" ? undefined : value
-  }
-  return result
-}
+// A date of birth is historical, so the calendar is capped at today rather than
+// floored (.claude/rules/date-inputs.md §4) — and the same rule is enforced here so
+// an autofilled or programmatically-set future date cannot slip past the calendar.
+const dateOfBirthSchema = z
+  .string()
+  .min(1, "required")
+  .refine(isNotFutureDate, { message: "dateOfBirthInFuture" })
 
 // registered_address.country is not collected as a separate field — the form
 // reuses the top-level `country` value at submit time (see onValid) rather
@@ -91,7 +76,7 @@ const addressSchema = z.object({
 })
 
 const legalEntitySchema = z.object({
-  partner_type: z.literal("legal_entity"),
+  partner_type: z.literal(PartnerTypeSchema.enum.legal_entity),
   legal_name: z.string().min(1, "required"),
   legal_form: z.string().min(1, "required"),
   country: countryCodeSchema,
@@ -107,9 +92,9 @@ const legalEntitySchema = z.object({
 })
 
 const naturalPersonSchema = z.object({
-  partner_type: z.literal("natural_person"),
+  partner_type: z.literal(PartnerTypeSchema.enum.natural_person),
   full_name: z.string().min(1, "required"),
-  date_of_birth: z.string().min(1, "required"),
+  date_of_birth: dateOfBirthSchema,
   place_of_birth: z.string().min(1, "required"),
   country: countryCodeSchema,
   birth_name: z.string().optional(),
@@ -118,9 +103,9 @@ const naturalPersonSchema = z.object({
 })
 
 const soleProprietorSchema = z.object({
-  partner_type: z.literal("sole_proprietor"),
+  partner_type: z.literal(PartnerTypeSchema.enum.sole_proprietor),
   full_name: z.string().min(1, "required"),
-  date_of_birth: z.string().min(1, "required"),
+  date_of_birth: dateOfBirthSchema,
   country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
@@ -133,21 +118,47 @@ type SoleProprietorForm = z.infer<typeof soleProprietorSchema>
 type IdentityForm = LegalEntityForm | NaturalPersonForm | SoleProprietorForm
 
 function schemaForType(type: PartnerType) {
-  if (type === "natural_person") return naturalPersonSchema
-  if (type === "sole_proprietor") return soleProprietorSchema
+  if (type === PartnerTypeSchema.enum.natural_person) return naturalPersonSchema
+  if (type === PartnerTypeSchema.enum.sole_proprietor)
+    return soleProprietorSchema
   return legalEntitySchema
 }
 
-type SubmitResult = { identity: PartnerIdentityInput }
+// `reset` takes a deep-partial (DefaultValues), which is exactly what a blank form
+// is — typing it that way avoids casting an incomplete object to the full union.
+function blankFormFor(type: PartnerType): DefaultValues<IdentityForm> {
+  return {
+    partner_type: type,
+    registered_address: BLANK_ADDRESS,
+  } as DefaultValues<IdentityForm>
+}
+
+// What the user typed, kept by the parent so returning to the form — after a failed match
+// or after cancelling the review — restores the input instead of a blank slate. The form
+// unmounts while the review is on screen, so its own state cannot survive that.
+type PartnerSubmitFormDraft = DefaultValues<IdentityForm>
+
+type SubmitResult = {
+  identity: PartnerIdentityInput
+  draft: PartnerSubmitFormDraft
+}
 
 type PartnerSubmitFormProps = {
   formId: string
   onSubmit: (result: SubmitResult) => void
+  initialDraft?: PartnerSubmitFormDraft | null
 }
 
-function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
+function PartnerSubmitForm({
+  formId,
+  onSubmit,
+  initialDraft,
+}: PartnerSubmitFormProps) {
   const { t } = useTranslation("partners")
-  const [partnerType, setPartnerType] = useState<PartnerType>("legal_entity")
+  const [partnerType, setPartnerType] = useState<PartnerType>(
+    (initialDraft?.partner_type as PartnerType | undefined) ??
+      PartnerTypeSchema.enum.legal_entity
+  )
 
   const {
     register,
@@ -158,7 +169,8 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
   } = useForm<IdentityForm>({
     resolver: (values, context, options) =>
       zodResolver(schemaForType(partnerType))(values, context, options),
-    defaultValues: { partner_type: "legal_entity" } as IdentityForm,
+    defaultValues:
+      initialDraft ?? blankFormFor(PartnerTypeSchema.enum.legal_entity),
   })
 
   const country = useWatch({
@@ -182,15 +194,15 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
       setPartnerType(type)
       // Full reset rather than carrying values forward — switching entity
       // type starts the form over from a clean slate.
-      reset({
-        partner_type: type,
-        registered_address: BLANK_ADDRESS,
-      } as unknown as IdentityForm)
+      reset(blankFormFor(type))
     }, 0)
   }
 
   function onValid(values: IdentityForm) {
     const { registered_address, ...rest } = values
+    // No reset here: the parent swaps this form out for the matching review, and on the way
+    // back it hands the same values in as `initialDraft`. Clearing them made a failed match
+    // — or a cancelled review — look like the whole entry had to be retyped.
     onSubmit({
       identity: {
         ...blankToUndefined(rest),
@@ -199,15 +211,11 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
           country: rest.country,
         }),
       } as PartnerIdentityInput,
+      draft: values as PartnerSubmitFormDraft,
     })
-    setPartnerType("legal_entity")
-    reset({
-      partner_type: "legal_entity",
-      registered_address: BLANK_ADDRESS,
-    } as unknown as IdentityForm)
   }
 
-  const isLegalEntity = partnerType === "legal_entity"
+  const isLegalEntity = partnerType === PartnerTypeSchema.enum.legal_entity
 
   const entityTypeField = (
     <div className="flex flex-col gap-1.5">
@@ -313,7 +321,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                   </p>
                 )}
               </div>
-              {partnerType === "natural_person" && (
+              {partnerType === PartnerTypeSchema.enum.natural_person && (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="birth_name">
                     {t("submit.identityStep.fields.birthName")}
@@ -353,7 +361,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             {entityTypeField}
           </div>
 
-          {partnerType === "natural_person" && (
+          {partnerType === PartnerTypeSchema.enum.natural_person && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="place_of_birth">
                 {t("submit.identityStep.fields.placeOfBirth")}
@@ -436,7 +444,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
                 </p>
               )}
             </div>
-            {partnerType === "natural_person" ? (
+            {partnerType === PartnerTypeSchema.enum.natural_person ? (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="national_id">
                   {t("submit.identityStep.fields.nationalId")}{" "}
@@ -512,7 +520,7 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
             </div>
           )}
 
-          {partnerType === "sole_proprietor" && (
+          {partnerType === PartnerTypeSchema.enum.sole_proprietor && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="tax_id_vat">
                 {t("submit.identityStep.fields.taxIdVat")}{" "}
@@ -623,4 +631,4 @@ function PartnerSubmitForm({ formId, onSubmit }: PartnerSubmitFormProps) {
 }
 
 export { PartnerSubmitForm }
-export type { SubmitResult }
+export type { SubmitResult, PartnerSubmitFormDraft }

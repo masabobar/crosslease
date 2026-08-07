@@ -120,8 +120,8 @@
       "description": "Fügen Sie eine Anforderung hinzu, um zu beginnen."
     },
     "emptyFiltered": {
-      "title": "Keine inaktiven Anforderungen",
-      "description": "Alle Anforderungen in diesem Katalog sind aktiv."
+      "title": "Keine aktiven Anforderungen",
+      "description": "Alle Anforderungen in diesem Katalog sind deaktiviert. Aktivieren Sie \"Inaktive anzeigen\", um sie zu sehen."
     },
     "active": "Aktiv",
     "inactive": "Inaktiv",
@@ -187,6 +187,7 @@
     "emptyGroup": "Keine Anforderungen in dieser Ebene."
   },
   "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "VALIDATION_ERROR": "Einige der eingegebenen Werte wurden abgelehnt. Bitte überprüfen Sie das Formular und versuchen Sie es erneut."
   }
 }

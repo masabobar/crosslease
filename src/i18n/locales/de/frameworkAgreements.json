@@ -145,7 +145,8 @@
       "backToAgreements": "Zurück zu den Vereinbarungen",
       "viewAgreement": "Vereinbarung ansehen"
     },
-    "loadingDraft": "Entwurf wird geladen…"
+    "loadingDraft": "Entwurf wird geladen…",
+    "templateNamesUnavailable": "Produktvorlagennamen konnten nicht geladen werden, daher werden die IDs angezeigt."
   },
   "detail": {
     "tabs": {
@@ -172,6 +173,7 @@
       "terminatedAt": "Beendet am"
     },
     "copied": "Kopiert",
+    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen. Bitte manuell kopieren.",
     "actions": {
       "activate": "Aktivieren",
       "edit": "Bearbeiten",

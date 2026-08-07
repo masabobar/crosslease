@@ -1,11 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 import {
   rejectPartner,
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
 import type { RejectPartnerBody } from "@/features/partners/api/partnersApi"
 
-export function useRejectPartner(partnerId: string) {
+export function useRejectPartner(
+  partnerId: string
+): UseMutationResult<PartnerDetailResponse, Error, RejectPartnerBody> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body: RejectPartnerBody) => rejectPartner(partnerId, body),

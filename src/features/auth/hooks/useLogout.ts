@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -8,7 +9,7 @@ import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 
-export function useLogout() {
+export function useLogout(): UseMutationResult<void, Error, void> {
   const { t } = useTranslation("auth")
   const clearAuth = useAuthStore(s => s.clearAuth)
   const setSelectedTenantId = useTenantSelectionStore(

@@ -28,7 +28,10 @@ export const FA_VERSION_STATUS_BADGE_VARIANT: Record<
 }
 
 // Shared document-upload constraints for FA document attach flows
-// (AttachFrameworkAgreementDocumentDialog, DocumentDropzone).
+// (AttachFrameworkAgreementDocumentDialog, DocumentDropzone, TemplatesAndDocumentsTab).
 export const FA_DOCUMENT_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
 export const FA_DOCUMENT_BYTES_PER_MB = 1024 * 1024
 export const FA_DOCUMENT_ACCEPTED_MIME = "application/pdf"
+// Per-agreement document cap enforced by the BE — the wizard dropzone truncates to it and
+// the detail tab disables Attach at it, so both must read the same number.
+export const FA_DOCUMENT_MAX_COUNT = 10

@@ -16,16 +16,17 @@ import { useRejectAction } from "@/features/governedActions/hooks/useRejectActio
 import { ChangeSection } from "@/features/governedActions/components/ChangeSection"
 import { FieldRow } from "@/features/governedActions/components/FieldRow"
 import { ChainEntry } from "@/features/governedActions/components/ChainEntry"
-import { RoleBadge } from "@/features/users/components/RoleBadge"
-import { USER_ROLES } from "@/features/users/types"
+import { ActorRole } from "@/features/governedActions/components/ActorRole"
 import { formatDateTime } from "@/lib/formatters"
-import type { UserRole } from "@/features/users/types"
+import { RENDERED_CHAIN_ENTRY_COUNT } from "@/features/governedActions/constants"
 import {
+  formatActorName,
   getGovernedActionSubject,
   HAS_CHANGE_SECTION,
   type GovernedActionSubjectKind,
 } from "@/features/governedActions/utils"
 import {
+  GovernedActionTypeSchema,
   initiatorSnapshot,
   REVIEW_COMMENT_MIN_LENGTH,
   ReviewCommentFormSchema,
@@ -62,11 +63,6 @@ type AffectedEntityLabelKey =
   | "modal.affectedTenant"
   | "modal.affectedModule"
 
-// Mirrors PendingApprovalDetailDrawer: the chain shows only the current action until the
-// correlation_id lookup lands (Q-002), so the displayed count tracks the single
-// <ChainEntry> rendered below rather than being inlined in the markup.
-const RENDERED_CHAIN_ENTRY_COUNT = 1
-
 const AFFECTED_ENTITY_LABEL_KEY: Record<
   GovernedActionSubjectKind,
   AffectedEntityLabelKey
@@ -86,9 +82,29 @@ export function ReviewRequestModal({
   onRejectSuccess,
 }: Props) {
   const { t } = useTranslation("pendingApprovals")
+  const { t: tCommon } = useTranslation("common")
   const [errorCode, setErrorCode] = useState<string | null>(null)
   const [chainExpanded, setChainExpanded] = useState(true)
   const [conflictAcknowledged, setConflictAcknowledged] = useState(false)
+
+  // Field errors reach this form from two sources with different message conventions:
+  // the Zod resolver attaches a bare i18n key suffix ("justificationTooShort"), while
+  // applyApiFieldErrors attaches an already-translated sentence. Prefixing the latter
+  // with "modal." produced a missing key, and i18next renders a missing key verbatim —
+  // so the user saw "modal.The server rejected this value." on screen. Same guard as
+  // InviteUserModal's resolveMsg.
+  function resolveFieldMessage(
+    message: string | undefined
+  ): string | undefined {
+    if (!message) return undefined
+    if (message === tCommon("validation.rejectedByServer")) return message
+    return t(
+      `modal.${message}` as
+        | "modal.justificationRequired"
+        | "modal.justificationTooShort",
+      { min: REVIEW_COMMENT_MIN_LENGTH }
+    )
+  }
 
   const {
     register,
@@ -119,7 +135,8 @@ export function ReviewRequestModal({
     if (!action) return
     const trimmed = values.comment.trim()
     setErrorCode(null)
-    const isMergeConflictGate = action.action_type === "partner_merge"
+    const isMergeConflictGate =
+      action.action_type === GovernedActionTypeSchema.enum.partner_merge
     approveAction.mutate(
       {
         id: action.id,
@@ -186,11 +203,10 @@ export function ReviewRequestModal({
   if (!action) return null
 
   const initiator = initiatorSnapshot(action)
-  const initiatorName = initiator?.first_name
-    ? `${initiator.first_name} ${initiator.last_name}`
-    : "—"
+  const initiatorName = formatActorName(initiator)
   const subject = getGovernedActionSubject(action)
-  const isMergeConflictGate = action.action_type === "partner_merge"
+  const isMergeConflictGate =
+    action.action_type === GovernedActionTypeSchema.enum.partner_merge
   const canApprove = !isMergeConflictGate || conflictAcknowledged
 
   return (
@@ -269,14 +285,7 @@ export function ReviewRequestModal({
               <span className="font-semibold">{initiatorName}</span>
             </FieldRow>
             <FieldRow label={t("modal.roleAtTime")}>
-              {initiator?.role &&
-              USER_ROLES.includes(initiator.role as UserRole) ? (
-                <RoleBadge role={initiator.role as UserRole} />
-              ) : initiator?.role ? (
-                <span>{initiator.role}</span>
-              ) : (
-                <span>—</span>
-              )}
+              <ActorRole role={initiator?.role} />
             </FieldRow>
             <FieldRow label={t("modal.tenantAtTime")}>
               <span>{initiator?.tenant_id ?? "—"}</span>
@@ -360,12 +369,7 @@ export function ReviewRequestModal({
           </div>
           {errors.comment ? (
             <p className="text-xs text-destructive">
-              {t(
-                `modal.${errors.comment.message}` as
-                  | "modal.justificationRequired"
-                  | "modal.justificationTooShort",
-                { min: REVIEW_COMMENT_MIN_LENGTH }
-              )}
+              {resolveFieldMessage(errors.comment.message)}
             </p>
           ) : errorCode ? (
             <p className="text-xs text-destructive" data-testid="modal-error">

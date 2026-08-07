@@ -8,7 +8,18 @@ export const DEFAULT_PAGE_SIZE: PageSize = 25
 
 type ParamUpdate = Record<string, string | null>
 
-export function useProductTemplateListParams() {
+type ProductTemplateListParams = {
+  page: number
+  perPage: PageSize
+  search: string
+  statusFilter: TemplateStatus | null
+  setPage: (p: number) => void
+  setPerPage: (size: PageSize) => void
+  setSearch: (q: string) => void
+  setStatusFilter: (status: TemplateStatus | null) => void
+}
+
+export function useProductTemplateListParams(): ProductTemplateListParams {
   const [params, setParams] = useSearchParams()
 
   function update(changes: ParamUpdate) {
@@ -62,10 +73,6 @@ export function useProductTemplateListParams() {
     update({ status, page: null })
   }
 
-  function clearAllFilters() {
-    update({ q: null, status: null, page: null })
-  }
-
   return {
     page,
     perPage,
@@ -75,6 +82,5 @@ export function useProductTemplateListParams() {
     setPerPage,
     setSearch,
     setStatusFilter,
-    clearAllFilters,
   }
 }

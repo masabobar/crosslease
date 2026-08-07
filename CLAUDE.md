@@ -527,15 +527,19 @@ Vite exposes env vars prefixed with `VITE_` to the client. Key ones:
 
 ### Authentication
 
-JWT Bearer tokens. Send the access token in every authenticated request:
-
-```
-Authorization: Bearer <access_token>
-```
+JWT tokens carried in **cookies**, not in an `Authorization` header. The `api` client sets
+`withCredentials: true` and the browser attaches the cookies; nothing in the frontend reads,
+stores, or sends a token value, and `useAuthStore` holds only an `isAuthenticated` flag.
 
 - Access token expires in 30 minutes
 - Refresh token expires in 7 days
-- On 401, use the refresh token to get a new access token, then retry the request
+- On 401 for an already-authenticated session, `@/lib/api` POSTs an empty body to
+  `/auth/refresh-token` (the refresh token rides along as a cookie) and retries the original
+  request once. Concurrent 401s share one in-flight refresh.
+
+Because auth is cookie-borne, a plain browser navigation — `<a href>` or `window.open` to an
+API URL — **is** authenticated. That is what makes the LC portal's direct document-download
+link work against an endpoint the backend guards with `require_permission`.
 
 ### Response envelope
 

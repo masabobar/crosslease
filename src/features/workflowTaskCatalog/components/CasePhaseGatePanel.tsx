@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatDateTime } from "@/lib/formatters"
+import { resolveUserDisplayName } from "@/features/users/utils"
 import { CasePhaseGateStatusBadge } from "@/features/workflowTaskCatalog/components/CaseChecklistStatusBadge"
 import { SetPhaseGateDialog } from "@/features/workflowTaskCatalog/components/SetPhaseGateDialog"
 import { CASE_PHASE_ORDER } from "@/features/workflowTaskCatalog/constants"
@@ -36,12 +37,6 @@ function CasePhaseGatePanel({
     null
   )
   const notApplicable = t("caseChecklist.notApplicable")
-
-  function resolveActor(userId: string | null): string {
-    if (!userId) return notApplicable
-    const user = users.find(u => u.id === userId)
-    return user ? `${user.first_name} ${user.last_name}` : userId
-  }
 
   return (
     <>
@@ -104,7 +99,11 @@ function CasePhaseGatePanel({
                     )}
                   </TableCell>
                   <TableCell>
-                    {resolveActor(gate?.gate_approver ?? null)}
+                    {resolveUserDisplayName(
+                      users,
+                      gate?.gate_approver ?? null,
+                      notApplicable
+                    )}
                   </TableCell>
                   <TableCell>
                     {gate?.decided_at

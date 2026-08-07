@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { Shield, AlertCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { mfaVerify } from "../api/mfaApi"
-import { RECOVERY_CODE_LENGTH, TOTP_CODE_LENGTH } from "../api/mfaSchema"
+import { isAcceptedMfaCode, normalizeMfaCodeInput } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
@@ -17,6 +17,7 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
+import { RecoveryCodesCard } from "./RecoveryCodesCard"
 
 type LocationState = { mfa_token: string; email?: string } | null
 
@@ -24,7 +25,7 @@ export default function MfaVerifyPage() {
   const { t } = useTranslation("auth")
   const navigate = useNavigate()
   const location = useLocation()
-  const { setAuthenticated } = useAuthStore()
+  const setAuthenticated = useAuthStore(s => s.setAuthenticated)
 
   const state = (location.state as LocationState) ?? null
   const mfaToken = state?.mfa_token ?? ""
@@ -32,6 +33,9 @@ export default function MfaVerifyPage() {
   const [code, setCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [newRecoveryCodes, setNewRecoveryCodes] = useState<string[] | null>(
+    null
+  )
 
   if (!mfaToken) {
     return (
@@ -53,10 +57,7 @@ export default function MfaVerifyPage() {
     )
   }
 
-  const isRecoveryCode =
-    code.length === RECOVERY_CODE_LENGTH && /^[0-9a-f]+$/.test(code)
-  const isTotpCode = code.length === TOTP_CODE_LENGTH && /^\d+$/.test(code)
-  const isValid = isRecoveryCode || isTotpCode
+  const isValid = isAcceptedMfaCode(code)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,8 +65,15 @@ export default function MfaVerifyPage() {
     setIsSubmitting(true)
     setServerError(null)
     try {
-      await mfaVerify(mfaToken, code)
+      const result = await mfaVerify(mfaToken, code)
       setAuthenticated(true)
+      // Spending a recovery code invalidates it and the BE issues a fresh set in the same
+      // response. They are shown exactly once, here — skipping this step leaves an account
+      // with no way back in once the authenticator device is gone.
+      if (result.new_recovery_codes?.length) {
+        setNewRecoveryCodes(result.new_recovery_codes)
+        return
+      }
       navigate(PATHS.DASHBOARD)
     } catch (err) {
       setServerError(
@@ -76,6 +84,24 @@ export default function MfaVerifyPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (newRecoveryCodes) {
+    return (
+      <AuthPageLayout>
+        <RecoveryCodesCard
+          title={t("mfaVerify.newCodes.title")}
+          subtitle={t("mfaVerify.newCodes.subtitle")}
+          codes={newRecoveryCodes}
+          onContinue={() => navigate(PATHS.DASHBOARD)}
+          testIds={{
+            container: "mfa-verify-new-recovery-codes",
+            copyButton: "mfa-verify-copy-codes-button",
+            continueButton: "mfa-verify-continue-button",
+          }}
+        />
+      </AuthPageLayout>
+    )
   }
 
   return (
@@ -116,12 +142,11 @@ export default function MfaVerifyPage() {
               <Input
                 id="mfa-code"
                 type="text"
-                inputMode="numeric"
                 autoComplete="one-time-code"
                 autoFocus
                 data-testid="mfa-code-input"
                 value={code}
-                onChange={e => setCode(e.target.value.trim())}
+                onChange={e => setCode(normalizeMfaCodeInput(e.target.value))}
                 placeholder={t("mfaVerify.codePlaceholder")}
                 className="text-sm"
               />

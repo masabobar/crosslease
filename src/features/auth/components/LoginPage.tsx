@@ -1,67 +1,35 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Navigate, useNavigate } from "react-router-dom"
-import { useState, type FormEvent } from "react"
-import {
-  Lock,
-  Mail,
-  User,
-  AlertCircle,
-  Shield,
-  TrendingUp,
-  CircleAlert,
-  CircleCheckBig,
-  Loader2,
-  Eye,
-  EyeOff,
-} from "lucide-react"
+import { useState } from "react"
+import { Lock, User, AlertCircle, TrendingUp, Eye, EyeOff } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { login, verifyOtp, resendOtp } from "../api/loginApi"
+import { login } from "../api/loginApi"
 import { LoginInputSchema, REQUIRED_FIELD_MESSAGE } from "../api/schema"
 import type { LoginInput } from "../api/schema"
-import { TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp"
-import { AppLogo } from "./AppLogo"
-import { SUCCESS_REDIRECT_DELAY_MS } from "@/lib/constants"
+import { LoginBrandingPanel } from "./LoginBrandingPanel"
+import { LoginOtpStep } from "./LoginOtpStep"
 
-type OtpHelper =
-  | { type: "none" }
-  | { type: "error"; message: string }
-  | { type: "success"; message: string }
-
-function maskEmail(email: string): string {
-  const atIndex = email.indexOf("@")
-  if (atIndex <= 1) return email
-  return `${email[0]}${"*".repeat(Math.min(atIndex - 1, 6))}${email.slice(atIndex)}`
-}
+type LoginStep =
+  | { name: "credentials" }
+  | { name: "otp"; verificationToken: string; email: string }
 
 export default function LoginPage() {
   const { t } = useTranslation("auth")
   const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
-  const { setAuthenticated } = useAuthStore()
+  const setAuthenticated = useAuthStore(s => s.setAuthenticated)
 
-  const [step, setStep] = useState<"credentials" | "otp">("credentials")
+  const [step, setStep] = useState<LoginStep>({ name: "credentials" })
   const [showPassword, setShowPassword] = useState(false)
-  const [verificationToken, setVerificationToken] = useState("")
-  const [emailForOtp, setEmailForOtp] = useState("")
   const [serverError, setServerError] = useState<string | null>(null)
-
-  const [otpValue, setOtpValue] = useState("")
-  const [otpHelper, setOtpHelper] = useState<OtpHelper>({ type: "none" })
-  const [isOtpSubmitting, setIsOtpSubmitting] = useState(false)
-  const [isResending, setIsResending] = useState(false)
 
   const resolveMsg = (msg: string | undefined) =>
     msg === REQUIRED_FIELD_MESSAGE ? tCommon("validation.required") : msg
@@ -71,7 +39,10 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   })
 
-  if (isAuthenticated) {
+  // Bounces an already-signed-in visitor away from /login — but not mid-OTP: the OTP step
+  // sets the auth flag itself and then holds a success state briefly before redirecting.
+  // Without the step check, that re-render unmounts the step and the confirmation is never seen.
+  if (isAuthenticated && step.name !== "otp") {
     return <Navigate to={PATHS.DASHBOARD} replace />
   }
 
@@ -85,9 +56,11 @@ export default function LoginPage() {
         return
       }
       if (result.next_step === "otp") {
-        setVerificationToken(result.token ?? "")
-        setEmailForOtp(data.email)
-        setStep("otp")
+        setStep({
+          name: "otp",
+          verificationToken: result.token ?? "",
+          email: data.email,
+        })
         return
       }
       if (result.next_step === "mfa") {
@@ -111,300 +84,26 @@ export default function LoginPage() {
     }
   })
 
-  const handleOtpSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (otpValue.length !== TOTP_CODE_LENGTH || isOtpSubmitting) return
-    setIsOtpSubmitting(true)
-    setOtpHelper({ type: "none" })
-    try {
-      await verifyOtp({
-        verification_token: verificationToken,
-        code: otpValue,
-      })
-      setOtpHelper({ type: "success", message: t("login.otp.success") })
-      setAuthenticated(true)
-      setTimeout(() => navigate(PATHS.DASHBOARD), SUCCESS_REDIRECT_DELAY_MS)
-    } catch (err) {
-      const message =
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      setOtpHelper({ type: "error", message })
-      setIsOtpSubmitting(false)
-    }
-  }
-
-  const handleResend = async () => {
-    if (isResending) return
-    setIsResending(true)
-    setOtpHelper({ type: "none" })
-    try {
-      await resendOtp({ verification_token: verificationToken })
-      setOtpValue("")
-    } catch (err) {
-      setOtpHelper({
-        type: "error",
-        message:
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic"),
-      })
-    } finally {
-      setIsResending(false)
-    }
-  }
-
   const handleBackToCredentials = () => {
-    setStep("credentials")
-    setVerificationToken("")
-    setEmailForOtp("")
-    setOtpValue("")
-    setOtpHelper({ type: "none" })
+    setStep({ name: "credentials" })
     setServerError(null)
     credentialsForm.reset()
   }
 
-  if (step === "otp") {
-    const isSuccess = otpHelper.type === "success"
-
+  if (step.name === "otp") {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <div className="flex justify-center pt-8">
-          <AppLogo />
-        </div>
-
-        <div className="flex-1 flex items-center justify-center px-4 pb-24">
-          <div className="w-full max-w-[416px] bg-card rounded-[14px] shadow-xl overflow-hidden">
-            <form onSubmit={handleOtpSubmit} data-testid="otp-form">
-              <div className="flex flex-col gap-6 p-4">
-                <div className="p-3 bg-primary/10 rounded-[14px] w-fit">
-                  <Mail size={24} className="text-primary" />
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <h2 className="text-xl font-semibold text-foreground leading-7">
-                    {t("login.otp.title")}
-                  </h2>
-                  <p className="text-base text-muted-foreground leading-6">
-                    {t("login.otp.subtitle", { email: maskEmail(emailForOtp) })}
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <InputOTP
-                    maxLength={TOTP_CODE_LENGTH}
-                    value={otpValue}
-                    onChange={setOtpValue}
-                    hasError={otpHelper.type === "error"}
-                    disabled={isOtpSubmitting || isSuccess}
-                    autoFocus
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-
-                  {otpHelper.type !== "none" && (
-                    <div
-                      className="flex items-center gap-1.5"
-                      data-testid="otp-helper-text"
-                    >
-                      {otpHelper.type === "error" ? (
-                        <CircleAlert
-                          size={16}
-                          className="text-destructive shrink-0"
-                        />
-                      ) : (
-                        <CircleCheckBig
-                          size={16}
-                          className="text-green-600 shrink-0"
-                        />
-                      )}
-                      <span
-                        className={
-                          otpHelper.type === "error"
-                            ? "text-sm text-destructive"
-                            : "text-base text-green-600"
-                        }
-                      >
-                        {otpHelper.message}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <p className="text-base text-muted-foreground leading-6">
-                  {t("login.otp.didntReceive")}{" "}
-                  <Button
-                    type="button"
-                    variant="link"
-                    data-testid="otp-resend-button"
-                    disabled={isResending || isSuccess}
-                    onClick={handleResend}
-                    className="h-auto p-0 underline underline-offset-2 hover:text-primary/80 font-normal"
-                  >
-                    {isResending
-                      ? t("login.otp.resending")
-                      : t("login.otp.resend")}
-                  </Button>
-                </p>
-              </div>
-
-              <div className="border-t p-4 flex items-center justify-end gap-1.5 bg-slate-50/80">
-                <Button
-                  type="button"
-                  variant="outline"
-                  data-testid="otp-back-button"
-                  disabled={isOtpSubmitting || isSuccess}
-                  onClick={handleBackToCredentials}
-                >
-                  {t("login.otp.back")}
-                </Button>
-                <Button
-                  type="submit"
-                  data-testid="otp-submit-button"
-                  disabled={
-                    otpValue.length !== TOTP_CODE_LENGTH ||
-                    isOtpSubmitting ||
-                    isSuccess
-                  }
-                >
-                  {isSuccess ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      {t("login.otp.redirecting")}
-                    </>
-                  ) : isOtpSubmitting ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      {t("login.otp.submitting")}
-                    </>
-                  ) : (
-                    t("login.otp.submit")
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      <LoginOtpStep
+        email={step.email}
+        verificationToken={step.verificationToken}
+        onBack={handleBackToCredentials}
+      />
     )
   }
 
   return (
     <div className="min-h-screen flex">
-      {/* Left — Branding */}
-      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-primary/5 to-primary/10 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-3xl opacity-30" />
-          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-3xl opacity-25" />
-          <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-primary/30 rounded-full blur-3xl opacity-20" />
+      <LoginBrandingPanel />
 
-          <svg
-            className="absolute inset-0 w-full h-full opacity-[0.12] text-primary"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M-100 200 Q 150 100, 400 200 T 900 200"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-            />
-            <path
-              d="M-100 350 Q 200 250, 450 350 T 1000 350"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-            />
-            <path
-              d="M-100 500 Q 180 400, 420 500 T 950 500"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-            />
-            <path
-              d="M-100 650 Q 220 550, 480 650 T 1000 650"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="none"
-            />
-          </svg>
-
-          <div
-            className="absolute inset-0 opacity-[0.05]"
-            style={{
-              backgroundImage: `linear-gradient(var(--primary) 1px, transparent 1px), linear-gradient(90deg, var(--primary) 1px, transparent 1px)`,
-              backgroundSize: "50px 50px",
-            }}
-          />
-
-          <div className="absolute top-20 right-20 w-32 h-32 border border-primary/30 rounded-2xl rotate-12 backdrop-blur-sm" />
-          <div className="absolute bottom-32 left-32 w-24 h-24 border border-primary/30 rounded-full backdrop-blur-sm" />
-          <div className="absolute top-40 right-40 w-3 h-3 bg-primary/50 rounded-full shadow-md shadow-primary/30" />
-          <div className="absolute top-60 right-60 w-2 h-2 bg-primary/40 rounded-full shadow-md shadow-primary/30" />
-          <div className="absolute bottom-40 left-40 w-3 h-3 bg-primary/40 rounded-full shadow-md shadow-primary/30" />
-          <div className="absolute bottom-60 right-1/3 w-2 h-2 bg-primary/40 rounded-full shadow-md shadow-primary/30" />
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-primary/15 to-transparent rounded-full blur-2xl" />
-        </div>
-
-        <div className="relative z-10 flex flex-col justify-center px-20 py-24 text-gray-900">
-          <div className="mb-16">
-            <div className="w-20 h-20 bg-primary/15 backdrop-blur-md rounded-3xl flex items-center justify-center mb-8 shadow-xl">
-              <TrendingUp
-                size={40}
-                className="text-primary"
-                strokeWidth={2.5}
-              />
-            </div>
-
-            <h1 className="text-6xl font-bold mb-6 leading-tight tracking-tight">
-              {t("login.headline")}
-              <br />
-              {t("login.headline2")}
-            </h1>
-            <p className="text-2xl text-gray-700 leading-relaxed font-light max-w-lg">
-              {t("login.subtitle")}
-            </p>
-
-            <div className="mt-12 flex gap-12 opacity-90">
-              <div>
-                <div className="text-4xl font-bold mb-1">50+</div>
-                <div className="text-gray-600 text-sm font-medium">
-                  {t("login.stats.institutions")}
-                </div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold mb-1">€2.5B+</div>
-                <div className="text-gray-600 text-sm font-medium">
-                  {t("login.stats.volume")}
-                </div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold mb-1">99.9%</div>
-                <div className="text-gray-600 text-sm font-medium">
-                  {t("login.stats.uptime")}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8">
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-primary/10 backdrop-blur-md rounded-full shadow-sm">
-                <Shield size={20} className="text-primary" />
-                <span className="text-gray-700 font-medium">
-                  {t("login.trust")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right — Form */}
       <div className="flex-1 lg:w-[55%] bg-muted flex items-center justify-center p-8">
         <div className="w-full max-w-xl">
           {/* Mobile logo */}

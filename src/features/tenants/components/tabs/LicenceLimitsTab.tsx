@@ -155,18 +155,23 @@ export function LicenceLimitsTab({ tenant }: LicenceLimitsTabProps) {
         </div>
       </div>
 
-      <EditLicenceLimitsDialog
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        tenantId={id}
-        tenantName={name}
-        maxLcCount={max_lc_count}
-        maxBankUserCount={max_bank_user_count}
-        maxUsersPerLc={max_users_per_lc}
-        lcUtilisation={lc_utilisation}
-        bankUserUtilisation={bank_user_utilisation}
-        lcUserHighestActive={lc_user_highest_active}
-      />
+      {/* Mounted per open (like RevokeGrantDialog) so the form's defaults come from the
+          current limits — a dialog left mounted keeps the values it was first built with,
+          and a refetch in between would silently reopen with the old numbers. */}
+      {isEditOpen && (
+        <EditLicenceLimitsDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          tenantId={id}
+          tenantName={name}
+          maxLcCount={max_lc_count}
+          maxBankUserCount={max_bank_user_count}
+          maxUsersPerLc={max_users_per_lc}
+          lcUtilisation={lc_utilisation}
+          bankUserUtilisation={bank_user_utilisation}
+          lcUserHighestActive={lc_user_highest_active}
+        />
+      )}
     </>
   )
 }

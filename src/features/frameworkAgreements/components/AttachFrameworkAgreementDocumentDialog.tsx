@@ -21,6 +21,7 @@ import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
+import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import { FADocumentTypeSchema } from "@/features/frameworkAgreements/api/schema"
 import {
   FA_DOCUMENT_ACCEPTED_MIME,
@@ -30,7 +31,7 @@ import {
 
 const attachDocumentFormSchema = z.object({
   document_type: FADocumentTypeSchema,
-  document_label: z.string().max(200).optional(),
+  document_label: z.string().max(200, "tooLong").optional(),
   file: z
     .custom<File>(v => v instanceof File, { message: "required" })
     .refine(f => f.type === FA_DOCUMENT_ACCEPTED_MIME, "invalidMime")
@@ -51,6 +52,7 @@ function AttachFrameworkAgreementDocumentDialog({
 }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const mutation = useAttachFrameworkAgreementDocument()
+  const resolveMsg = useResolveFrameworkAgreementFieldError()
   const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -66,7 +68,10 @@ function AttachFrameworkAgreementDocumentDialog({
     resolver: zodResolver(attachDocumentFormSchema),
     // Defaults to "other" (uncategorized) — per PRD1042-1495 (A6), categorizing a
     // framework document is not mandatory to the user.
-    defaultValues: { document_type: "other", document_label: "" },
+    defaultValues: {
+      document_type: FADocumentTypeSchema.enum.other,
+      document_label: "",
+    },
   })
 
   function handleClose() {
@@ -160,8 +165,14 @@ function AttachFrameworkAgreementDocumentDialog({
             <Input
               id="attach_document_label"
               data-testid="attach-document-dialog-label-input"
+              error={!!errors.document_label}
               {...register("document_label")}
             />
+            {errors.document_label && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMsg(errors.document_label.message)}
+              </p>
+            )}
           </div>
 
           <div>
@@ -253,7 +264,7 @@ function AttachFrameworkAgreementDocumentDialog({
                   ? t("errors.FA_DOC_INVALID_MIME")
                   : errors.file.message === "fileTooLarge"
                     ? t("errors.FA_DOC_FILE_TOO_LARGE")
-                    : errors.file.message}
+                    : resolveMsg(errors.file.message)}
               </p>
             )}
           </div>

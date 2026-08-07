@@ -64,6 +64,10 @@ export const FRAMEWORK_AGREEMENT_EDIT_STEPS: readonly FrameworkAgreementEditStep
   ["identity", "envelopePricing", "validityTemplates", "conditions", "review"]
 
 export type FrameworkAgreementDocumentDraft = {
+  // Client-side identity for React keys only — the draft has no server id until the wizard
+  // POSTs it. Two picks of the same file would otherwise collide on any natural key, and the
+  // list supports removal, so the position in the array is not stable either.
+  id: string
   file: File
   documentType: FADocumentType | ""
   documentLabel: string

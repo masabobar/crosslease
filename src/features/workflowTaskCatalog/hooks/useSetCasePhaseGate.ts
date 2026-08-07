@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { PhaseGateResponse } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import {
   CASE_CHECKLIST_QUERY_KEYS,
   setCasePhaseGate,
@@ -12,7 +14,11 @@ type SetCasePhaseGateInput = {
   body: SetPhaseGateRequest
 }
 
-export function useSetCasePhaseGate() {
+export function useSetCasePhaseGate(): UseMutationResult<
+  PhaseGateResponse,
+  Error,
+  SetCasePhaseGateInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

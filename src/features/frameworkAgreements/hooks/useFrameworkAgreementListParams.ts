@@ -5,9 +5,26 @@ import type { FALifecycleStatus } from "@/features/frameworkAgreements/api/schem
 export const PAGE_SIZES = [10, 25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 
+// Kept out of the URL when it is the active size, so a default list view has a clean query
+// string — hence the same constant gates both the parse fallback and the setter.
+export const DEFAULT_PAGE_SIZE: PageSize = 25
+
 type ParamUpdate = Record<string, string | null>
 
-export function useFrameworkAgreementListParams() {
+type FrameworkAgreementListParams = {
+  page: number
+  perPage: PageSize
+  search: string
+  statusFilter: FALifecycleStatus | null
+  lcPartnerId: string | null
+  setPage: (p: number) => void
+  setPerPage: (size: PageSize) => void
+  setSearch: (q: string) => void
+  setStatusFilter: (status: FALifecycleStatus | null) => void
+  setLcPartnerId: (id: string | null) => void
+}
+
+export function useFrameworkAgreementListParams(): FrameworkAgreementListParams {
   const [params, setParams] = useSearchParams()
 
   function update(changes: ParamUpdate) {
@@ -28,12 +45,12 @@ export function useFrameworkAgreementListParams() {
   }
 
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1)
-  const rawPerPage = Number(params.get("per_page") ?? "25")
+  const rawPerPage = Number(params.get("per_page") ?? String(DEFAULT_PAGE_SIZE))
   const perPage: PageSize = (PAGE_SIZES as readonly number[]).includes(
     rawPerPage
   )
     ? (rawPerPage as PageSize)
-    : 25
+    : DEFAULT_PAGE_SIZE
   const search = params.get("q") ?? ""
   const rawStatus = params.get("status")
   const statusFilter: FALifecycleStatus | null =
@@ -48,7 +65,10 @@ export function useFrameworkAgreementListParams() {
   }
 
   function setPerPage(size: PageSize) {
-    update({ per_page: size === 25 ? null : String(size), page: null })
+    update({
+      per_page: size === DEFAULT_PAGE_SIZE ? null : String(size),
+      page: null,
+    })
   }
 
   function setSearch(q: string) {

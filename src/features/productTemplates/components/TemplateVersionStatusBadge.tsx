@@ -21,6 +21,11 @@ function TemplateVersionStatusBadge({ status }: Props) {
   const { t } = useTranslation("productTemplates")
 
   return (
+    // NOTE: raw <span> rather than shadcn <Badge> — the soft-tint pill carries its own
+    // per-status background/text pair and none of Badge's variants, and this matches every
+    // sibling status badge in the codebase (TenantStatusBadge, PartnerStatusBadge,
+    // WorkflowTaskCatalogStateBadge, ActionStatusBadge). Converting one in isolation would
+    // make the set inconsistent; that is a repo-wide decision, not a per-feature one.
     <span
       data-testid={`version-status-badge-${status}`}
       className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE_CLASSES[status]}`}

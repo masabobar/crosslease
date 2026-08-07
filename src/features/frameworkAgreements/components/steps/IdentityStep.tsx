@@ -13,6 +13,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import { useLcPartnerOptions } from "@/features/frameworkAgreements/hooks/useLcPartnerOptions"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -137,7 +138,7 @@ function IdentityStep({ form }: Props) {
         </Label>
         <Input
           id="currency"
-          value="EUR"
+          value={EUR_CURRENCY_CODE}
           disabled
           data-testid="currency-input"
         />

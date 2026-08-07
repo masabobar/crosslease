@@ -157,7 +157,6 @@ export default function AuditTrailPage() {
     sensitive: appliedFilters.sensitive ?? undefined,
     from_dt: appliedFilters.from_dt ?? undefined,
     to_dt: appliedFilters.to_dt ?? undefined,
-    tenant_id: appliedFilters.tenant_id ?? undefined,
   })
 
   const activeFilterCount =
@@ -167,7 +166,11 @@ export default function AuditTrailPage() {
     (appliedFilters.trigger_source ? 1 : 0) +
     (appliedFilters.actor_id ? 1 : 0) +
     (appliedFilters.from_dt || appliedFilters.to_dt ? 1 : 0) +
-    (appliedFilters.sensitive ? 1 : 0)
+    (appliedFilters.sensitive ? 1 : 0) +
+    // Only ever set by a deep link from an entity's own page. Counting it is what makes the
+    // pill row (and its Clear all) appear at all, so without this the filter was applied
+    // with nothing on screen saying so and no way to drop it.
+    (appliedFilters.entity_id ? 1 : 0)
 
   const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
 
@@ -284,6 +287,18 @@ export default function AuditTrailPage() {
             />
           )}
 
+          {appliedFilters.entity_id && (
+            <FilterPill
+              label={t("page.filters.entityIdPill", {
+                value: appliedFilters.entity_id.slice(0, 8) + "…",
+              })}
+              onRemove={() =>
+                setAppliedFilters({ ...appliedFilters, entity_id: null })
+              }
+              data-testid="filter-pill-remove-entity-id"
+            />
+          )}
+
           {appliedFilters.actor_id && (
             <FilterPill
               label={t("page.filters.performedByPill", {
@@ -320,7 +335,10 @@ export default function AuditTrailPage() {
               : t("errors.generic")}
           </p>
         )}
-        {!isError && (
+        {/* Rendered whenever there is data, error or not: hiding the table on a failed
+            background refetch threw away rows the user was already reading. Only a first
+            load with nothing cached leaves the error message on its own. */}
+        {(!isError || !!data) && (
           <AuditTable
             events={data?.events ?? []}
             isLoading={isLoading}

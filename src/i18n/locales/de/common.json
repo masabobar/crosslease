@@ -9,7 +9,10 @@
     "tooShort": "Dieser Wert ist zu kurz.",
     "tooLong": "Dieser Wert ist zu lang.",
     "invalidFormat": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "invalid": "Bitte geben Sie einen gültigen Wert ein.",
+    "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein.",
     "dateMustBeAfterFrom": "Das 'Bis'-Datum muss nach dem 'Von'-Datum liegen.",
+    "dateNotInPast": "Dieses Datum darf nicht in der Vergangenheit liegen.",
     "rejectedByServer": "Der Server hat diesen Wert abgelehnt."
   },
   "nav": {
@@ -96,6 +99,7 @@
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "title": "Etwas ist schiefgelaufen",
     "retry": "Erneut versuchen",
-    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder.",
+    "NETWORK_ERROR": "Der Server ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
   }
 }

@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { TemplateDraftUpdatedResponse } from "@/features/productTemplates/api/schema"
 import {
   updateProductTemplateDraft,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -11,7 +13,11 @@ type UpdateDraftInput = {
   body: UpdateProductTemplateDraftRequest
 }
 
-export function useUpdateProductTemplateDraft() {
+export function useUpdateProductTemplateDraft(): UseMutationResult<
+  TemplateDraftUpdatedResponse,
+  Error,
+  UpdateDraftInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

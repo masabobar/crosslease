@@ -123,7 +123,8 @@
       "description": "Versuchen Sie, die Filter anzupassen oder zu löschen."
     },
     "actions": {
-      "approve": "Genehmigen"
+      "approve": "Genehmigen",
+      "menuLabel": "Aktionen"
     }
   },
   "actions": {
@@ -300,6 +301,7 @@
       },
       "editRole": {
         "title": "Rolle & Umfang bearbeiten",
+        "accessPeriodTitle": "Zugriffszeitraum bearbeiten",
         "currentRole": "Aktuelle Rolle",
         "newRole": "Neue Rolle",
         "reasonLabel": "Grund für die Änderung",

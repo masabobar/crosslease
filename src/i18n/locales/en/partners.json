@@ -161,7 +161,8 @@
       "errors": {
         "required": "This field is required.",
         "invalidCountry": "Select a country from the list.",
-        "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442)."
+        "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442).",
+        "dateOfBirthInFuture": "Date of birth cannot be in the future."
       }
     },
     "matchStep": {
@@ -337,6 +338,7 @@
       }
     },
     "errors": {
+      "acknowledgementRequired": "You must acknowledge that archiving is irreversible.",
       "reasonTooShort": "Reason must be at least 20 characters."
     },
     "fourEyesNote": "This partner has risk-sensitive roles. Archiving will require back-office counter-confirmation.",
@@ -349,18 +351,23 @@
     "blockedActiveReferences": "It still has {{count}} active reference(s). Resolve them before archiving."
   },
   "proposeIdentityChangeDialog": {
-    "triggerButton": "Propose identity change",
-    "title": "Propose identity change",
+    "cancel": "Cancel",
+    "errors": {
+      "targetAnchorRequired": "Select at least one field to change.",
+      "reasonRequired": "A reason for the change is required.",
+      "dateInvalid": "Enter a valid date that is not in the future."
+    },
     "fields": {
       "targetAnchors": "Fields to change",
       "reason": "Reason for change"
     },
     "riskNote": "High-risk changes may require back-office counter-confirmation before taking effect.",
-    "cancel": "Cancel",
     "submit": "Submit proposal",
     "submitting": "Submitting…",
     "successCommitted": "Identity change committed.",
-    "successPendingApproval": "Identity change submitted for back-office review."
+    "successPendingApproval": "Identity change submitted for back-office review.",
+    "title": "Propose identity change",
+    "triggerButton": "Propose identity change"
   },
   "captureUboDialog": {
     "title": "Add UBO",

@@ -24,10 +24,15 @@ export const NPV_FORMULA_OPTIONS = [
   },
 ] as const
 
-// Wire value for the platform module key, per `../refinext-api/src/app/core/platform/modules.py`.
-export const BANK_PRODUCT_TEMPLATE_MODULE_KEY = "bank_product_template"
-
-// Single source of truth for the termination justification's minimum length — shared by the
+// Single source of truth for the termination justification's length bounds — shared by the
 // Zod request schema (api/schema.ts) and the ProductTemplatePublishedActions UI gating logic,
-// so the two never drift apart.
+// so the two never drift apart. The max is enforced in the textarea as well as the schema:
+// without it an over-long justification is only rejected after a round-trip to the backend.
 export const TERMINATION_JUSTIFICATION_MIN_LENGTH = 10
+export const TERMINATION_JUSTIFICATION_MAX_LENGTH = 2000
+
+// Wire value of the audit log's `entity_type` for a product template, per
+// `../refinext-api/` — used to build the audit-trail drill-down query. The audit feature
+// itself has no FE constant for these: it renders whatever `entity_types` the filter-options
+// endpoint returns, so the one place that hardcodes a specific type needs its own constant.
+export const PRODUCT_TEMPLATE_AUDIT_ENTITY_TYPE = "product_template"

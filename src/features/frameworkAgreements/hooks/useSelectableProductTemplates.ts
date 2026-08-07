@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
 import {
   fetchSelectableProductTemplates,
   FRAMEWORK_AGREEMENTS_QUERY_KEYS,
@@ -25,7 +26,10 @@ export function selectUniqueTemplates(
   return { items: [...dedupeSelectableTemplates(data.items)] }
 }
 
-export function useSelectableProductTemplates() {
+export function useSelectableProductTemplates(): UseQueryResult<
+  SelectableTemplatesResponse,
+  Error
+> {
   return useQuery({
     queryKey: FRAMEWORK_AGREEMENTS_QUERY_KEYS.selectableTemplates(),
     queryFn: fetchSelectableProductTemplates,

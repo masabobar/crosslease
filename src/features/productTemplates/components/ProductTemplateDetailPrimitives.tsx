@@ -1,15 +1,13 @@
 import type { ReactNode } from "react"
+import { DetailRow as SharedDetailRow } from "@/components/shared/DetailRow"
 
 // Label/value readout shared by the detail drawer and the full detail page, so the two surfaces
 // cannot drift apart. Lifted out of ProductTemplateDetailDrawer, where it was a local `DrawerRow`,
 // when CR-BPT-06 split the drawer into a slim panel plus a page.
 //
-// Feature-local on purpose, mirroring users/components/UserDetailPrimitives.tsx. This repo already
-// carries four label/value implementations — components/shared/SectionCard.tsx,
-// UserDetailPrimitives.tsx (which exports its own colliding `SectionCard`),
-// tenants/components/InfoRows.tsx, and the drawer's former local pair. Adding a fifth global variant
-// would be worse than reusing this within the one feature; consolidating those four is a repo-wide
-// refactor and deliberately out of scope for PRD1042-1804.
+// The repo-wide consolidation this comment previously deferred has since happened: the markup now
+// lives in components/shared/DetailRow.tsx and this stays as a thin wrapper so the feature's
+// `value`-prop call sites are untouched.
 
 export function DetailRow({
   label,
@@ -19,10 +17,9 @@ export function DetailRow({
   value: ReactNode
 }) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm text-foreground text-right">{value}</span>
-    </div>
+    <SharedDetailRow label={label} variant="spaceBetween">
+      {value}
+    </SharedDetailRow>
   )
 }
 

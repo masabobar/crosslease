@@ -19,6 +19,7 @@ import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreement
 import { FA_VERSION_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 import { FAVersionStatusSchema } from "@/features/frameworkAgreements/api/schema"
 import type { FAVersionSummaryResponse } from "@/features/frameworkAgreements/api/schema"
+import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { frameworkAgreementDetail } from "@/router/paths"
@@ -110,7 +111,7 @@ function VersionRow({
           </div>
           <div className="flex flex-col items-end gap-0.5 text-xs text-muted-foreground">
             <span>
-              {formatCurrency(version.max_volume_eur, "EUR")} ·{" "}
+              {formatCurrency(version.max_volume_eur, EUR_CURRENCY_CODE)} ·{" "}
               {version.valid_from} –{" "}
               {version.valid_until ?? t("fields.openEnded")}
             </span>

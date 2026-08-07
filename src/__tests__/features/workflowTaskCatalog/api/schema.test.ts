@@ -11,6 +11,7 @@ import {
   CatalogStateSchema,
   CreateCatalogRequestSchema,
   TaskDefinitionItemSchema,
+  TaskResponseWithWarningsSchema,
   UpdateTaskRequestSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 
@@ -555,4 +556,50 @@ describe("UpdateTaskRequestSchema", () => {
       expect(parsed.task_name).toBe("Renamed")
     }
   )
+})
+
+describe("TaskResponseWithWarningsSchema", () => {
+  // The parse target for all three task mutations. Its `warnings` default is load-bearing:
+  // TaskDefinitionSheet iterates `response.warnings` on create, which throws if the key is
+  // absent and the default does not apply.
+  it("defaults warnings to an empty array when the BE omits the key", () => {
+    const parsed = TaskResponseWithWarningsSchema.parse(validDefinedTask)
+    expect(parsed.warnings).toEqual([])
+  })
+
+  it("keeps the warnings the BE returns", () => {
+    const parsed = TaskResponseWithWarningsSchema.parse({
+      ...validDefinedTask,
+      warnings: ["Weight exceeds the catalogue total."],
+    })
+    expect(parsed.warnings).toHaveLength(1)
+  })
+
+  // `inherited` is omitted from this shape — a mutation response never carries the parent's
+  // values, only the task the caller just wrote.
+  it("strips inherited rather than echoing it back", () => {
+    const parsed = TaskResponseWithWarningsSchema.parse({
+      ...validDefinedTask,
+      inherited: { task_name: "Global default name" },
+    }) as Record<string, unknown>
+    expect(parsed.inherited).toBeUndefined()
+  })
+
+  it("rejects a non-array warnings value", () => {
+    expect(() =>
+      TaskResponseWithWarningsSchema.parse({
+        ...validDefinedTask,
+        warnings: "weight exceeds total",
+      })
+    ).toThrow()
+  })
+
+  it("still enforces the underlying task shape", () => {
+    expect(() =>
+      TaskResponseWithWarningsSchema.parse({
+        ...validDefinedTask,
+        layer_action: "banana",
+      })
+    ).toThrow()
+  })
 })

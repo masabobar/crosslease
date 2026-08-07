@@ -7,7 +7,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SelectField } from "@/components/ui/select"
 import {
@@ -18,14 +17,17 @@ import {
 } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { resolveFormMessage } from "@/lib/formMessages"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useCreateDocumentRequirementCatalog"
-import {
-  CATALOG_TYPE_OPTIONS,
-  PROCESS_CONTEXT_OPTIONS,
-} from "@/features/documentRequirements/constants"
+import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
+import { CATALOG_TYPE_OPTIONS } from "@/features/documentRequirements/constants"
 import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequirements/api/schema"
+
+// Every rule carries a message *code*, never bare prose: an unannotated `.max()` would surface
+// Zod's own English text to the user (see resolveFormMessage).
+const CATALOG_NAME_MAX_LENGTH = 200
 
 // Cross-field rules per US 16.1: Product Template is mandatory only for Product-Specific
 // catalogs (null/absent for Global Default), and Valid To must be >= Valid From when both are
@@ -33,7 +35,11 @@ import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequire
 // equivalent where Valid From is required.
 const createCatalogSchema = z
   .object({
-    catalogName: z.string().trim().min(1, "required").max(200),
+    catalogName: z
+      .string()
+      .trim()
+      .min(1, "required")
+      .max(CATALOG_NAME_MAX_LENGTH, "tooLong"),
     catalogType: z.string().min(1, "required"),
     productTemplate: z.string(),
     processContexts: z.array(z.string()).min(1, "required"),
@@ -95,7 +101,6 @@ type Props = {
 
 function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
   const { t } = useTranslation("documentRequirements")
-  const { t: tCommon } = useTranslation("common")
   const { data: currentUser } = useCurrentUser()
   const tenantId = currentUser?.tenant_id ?? undefined
 
@@ -137,11 +142,7 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
   const validToMin = validFrom ? parseISO(validFrom) : today
 
   function resolveMessage(message: string | undefined): string | undefined {
-    if (!message) return undefined
-    if (message === "required") return tCommon("validation.required")
-    return t(
-      `create.errors.${message}` as "create.errors.validToBeforeValidFrom"
-    )
+    return resolveFormMessage(message, t, "create.errors")
   }
 
   function handleClose() {
@@ -309,29 +310,11 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
               control={control}
               name="processContexts"
               render={({ field }) => (
-                <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-input p-2.5">
-                  {PROCESS_CONTEXT_OPTIONS.map(option => (
-                    <label
-                      key={option.value}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <Checkbox
-                        data-testid={`create-catalog-process-context-${option.value}`}
-                        checked={field.value.includes(option.value)}
-                        onCheckedChange={checked =>
-                          field.onChange(
-                            checked === true
-                              ? [...field.value, option.value]
-                              : field.value.filter(v => v !== option.value)
-                          )
-                        }
-                      />
-                      <span className="text-sm text-foreground">
-                        {t(option.labelKey)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <ProcessContextCheckboxGroup
+                  value={field.value}
+                  onChange={field.onChange}
+                  testIdPrefix="create-catalog"
+                />
               )}
             />
             {errors.processContexts && (

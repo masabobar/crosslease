@@ -9,7 +9,11 @@
       "email": "E-Mail",
       "template": "Vorlage"
     },
-    "assignTemplate": "Vorlage zuweisen"
+    "assignTemplate": "Vorlage zuweisen",
+    "emptyState": {
+      "title": "Keine Benachrichtigungstypen",
+      "description": "Es sind noch keine Benachrichtigungstypen registriert."
+    }
   },
   "eventType": {
     "taskAssigned": "Aufgabe zugewiesen",
@@ -34,7 +38,6 @@
     "frameworkAgreements": "Rahmenvereinbarungen"
   },
   "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
   }
 }

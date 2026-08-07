@@ -40,6 +40,16 @@ export function EditLicenceLimitsDialog({
   const { t } = useTranslation("tenants")
   const mutation = useUpdateLicenceLimits(tenantId)
 
+  // Clearing a `valueAsNumber` input yields NaN, which Zod reports as an
+  // invalid_type rather than a range failure — "Minimum value is 1" would be a
+  // confusing thing to say about an empty box.
+  function limitErrorMessage(error: { type?: string | number } | undefined) {
+    if (!error) return null
+    return error.type === "invalid_type"
+      ? t("detail.licenceLimits.editDialog.errors.required")
+      : t("detail.licenceLimits.editDialog.errors.minValue")
+  }
+
   const {
     setError,
     getValues,
@@ -112,7 +122,7 @@ export function EditLicenceLimitsDialog({
             />
             {errors.max_lc_count && (
               <p className="text-sm text-destructive" role="alert">
-                {t("detail.licenceLimits.editDialog.errors.minValue")}
+                {limitErrorMessage(errors.max_lc_count)}
               </p>
             )}
           </div>
@@ -140,7 +150,7 @@ export function EditLicenceLimitsDialog({
             />
             {errors.max_bank_user_count && (
               <p className="text-sm text-destructive" role="alert">
-                {t("detail.licenceLimits.editDialog.errors.minValue")}
+                {limitErrorMessage(errors.max_bank_user_count)}
               </p>
             )}
           </div>
@@ -165,7 +175,7 @@ export function EditLicenceLimitsDialog({
             />
             {errors.max_users_per_lc && (
               <p className="text-sm text-destructive" role="alert">
-                {t("detail.licenceLimits.editDialog.errors.minValue")}
+                {limitErrorMessage(errors.max_users_per_lc)}
               </p>
             )}
           </div>

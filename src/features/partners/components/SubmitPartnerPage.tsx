@@ -5,7 +5,10 @@ import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PartnerSubmitForm } from "@/features/partners/components/PartnerSubmitForm"
-import type { SubmitResult } from "@/features/partners/components/PartnerSubmitForm"
+import type {
+  PartnerSubmitFormDraft,
+  SubmitResult,
+} from "@/features/partners/components/PartnerSubmitForm"
 import { MatchingReview } from "@/features/partners/components/MatchingReview"
 import {
   matchPartner,
@@ -22,7 +25,7 @@ import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
-import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
+import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
 
 type View = "form" | "matching"
 
@@ -32,15 +35,15 @@ export default function SubmitPartnerPage() {
   const { t } = useTranslation("partners")
   const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
-  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
-  const tenantId =
-    currentUser?.tenant_id ??
-    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const tenantId = useResolvedTenantId()
 
   const [view, setView] = useState<View>("form")
   const [pending, setPending] = useState<{
     identity: PartnerIdentityInput
   } | null>(null)
+  // Outlives `pending` on purpose: the form is unmounted while the review is on screen, so
+  // this is what restores the user's entry when the match fails or they cancel out.
+  const [draft, setDraft] = useState<PartnerSubmitFormDraft | null>(null)
   const [matchResult, setMatchResult] = useState<PartnerMatchResponse | null>(
     null
   )
@@ -77,8 +80,9 @@ export default function SubmitPartnerPage() {
     },
   })
 
-  async function handleFormSubmit({ identity }: SubmitResult) {
+  async function handleFormSubmit({ identity, draft: values }: SubmitResult) {
     if (!tenantId) return
+    setDraft(values)
     setPending({ identity })
     setMatchResult(null)
     setView("matching")
@@ -134,6 +138,7 @@ export default function SubmitPartnerPage() {
               <PartnerSubmitForm
                 formId={SUBMIT_FORM_ID}
                 onSubmit={handleFormSubmit}
+                initialDraft={draft}
               />
             </div>
           </div>

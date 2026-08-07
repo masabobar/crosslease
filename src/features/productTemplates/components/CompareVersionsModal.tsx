@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
+import { resolveApiErrorMessage } from "@/features/productTemplates/utils"
 import { useTemplateVersionDiff } from "@/features/productTemplates/hooks/useTemplateVersionDiff"
 import type { FieldDiffItem } from "@/features/productTemplates/api/schema"
 
@@ -132,6 +133,43 @@ function DiffPill({
   )
 }
 
+// Display text for the scalar fields — everything whose value is a single string, number or
+// null, as opposed to the list- and status-shaped fields handled in renderFieldValue below.
+// Each branch mirrors how the same field is formatted on the detail page, so the compare
+// modal and the detail surfaces never disagree about units or currency.
+function scalarFieldText(
+  t: TFunction<"productTemplates">,
+  field: string,
+  value: unknown
+): React.ReactNode {
+  if (field === "npv_formula_ref") {
+    const npvFormula = NPV_FORMULA_OPTIONS.find(o => o.ref === value)
+    return npvFormula
+      ? `${t(npvFormula.labelKey)} · ${npvFormula.code} ${npvFormula.version}`
+      : ((value as string | null) ?? "—")
+  }
+  if (field === "max_ltv_ratio") {
+    const ltv = asDecimalNumber(value)
+    return ltv !== null ? `${ltv}%` : "—"
+  }
+  if (field === "min_volume_eur" || field === "max_volume_eur") {
+    const volume = asDecimalNumber(value)
+    return volume !== null ? formatCurrency(volume, EUR_CURRENCY_CODE) : "—"
+  }
+  if (field === "min_term_months" || field === "max_term_months") {
+    return typeof value === "number" ? value : "—"
+  }
+  if (ENUM_FIELD_NAMESPACES[field]) {
+    return typeof value === "string"
+      ? t(`${ENUM_FIELD_NAMESPACES[field]}.${value}` as "rateTypes.fixed")
+      : "—"
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value)
+  }
+  return "—"
+}
+
 // Renders one side (old or new) of a field's value. `changed` (computed once per row)
 // decides whether this side gets the red/old or green/new highlight pill, matching the
 // Figma compare modal — unchanged rows render as plain text, exactly like every other
@@ -186,29 +224,7 @@ function renderFieldValue(
     return changed ? <DiffPill side={side}>{text}</DiffPill> : text
   }
 
-  let text: React.ReactNode = "—"
-  if (field === "npv_formula_ref") {
-    const npvFormula = NPV_FORMULA_OPTIONS.find(o => o.ref === value)
-    text = npvFormula
-      ? `${t(npvFormula.labelKey)} · ${npvFormula.code} ${npvFormula.version}`
-      : ((value as string | null) ?? "—")
-  } else if (field === "max_ltv_ratio") {
-    const ltv = asDecimalNumber(value)
-    text = ltv !== null ? `${ltv}%` : "—"
-  } else if (field === "min_volume_eur" || field === "max_volume_eur") {
-    const volume = asDecimalNumber(value)
-    text = volume !== null ? formatCurrency(volume, EUR_CURRENCY_CODE) : "—"
-  } else if (field === "min_term_months" || field === "max_term_months") {
-    text = typeof value === "number" ? value : "—"
-  } else if (ENUM_FIELD_NAMESPACES[field]) {
-    text =
-      typeof value === "string"
-        ? t(`${ENUM_FIELD_NAMESPACES[field]}.${value}` as "rateTypes.fixed")
-        : "—"
-  } else if (typeof value === "string" || typeof value === "number") {
-    text = String(value)
-  }
-
+  const text = scalarFieldText(t, field, value)
   return changed ? <DiffPill side={side}>{text}</DiffPill> : text
 }
 
@@ -284,7 +300,7 @@ function CompareVersionsModal({
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
 
-  const { data, isLoading, isError } = useTemplateVersionDiff(
+  const { data, isLoading, isError, error } = useTemplateVersionDiff(
     templateId,
     open ? fromVersion : null,
     open ? toVersion : null
@@ -314,7 +330,7 @@ function CompareVersionsModal({
             data-testid="compare-versions-error"
             className="text-sm text-destructive"
           >
-            {t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
 

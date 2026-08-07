@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
 import {
   fetchWorkflowTaskCatalogDetail,
   fetchWorkflowTaskCatalogs,
@@ -27,7 +28,9 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
  * and expected: the BE itself warns about it when a product-specific catalogue is created first,
  * and the caller turns it into "Override/Deactivate unavailable" rather than a failure.
  */
-export function useGlobalDefaultTasks(entityType: CatalogEntityType | null) {
+export function useGlobalDefaultTasks(
+  entityType: CatalogEntityType | null
+): UseQueryResult<TaskDefinitionItem[], Error> {
   return useQuery({
     queryKey: WORKFLOW_TASK_CATALOG_QUERY_KEYS.globalDefaultTasks(entityType),
     queryFn: async (): Promise<TaskDefinitionItem[]> => {

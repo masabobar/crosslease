@@ -21,6 +21,10 @@ import {
   VersionDiffResponseSchema,
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
+import {
+  TERMINATION_JUSTIFICATION_MAX_LENGTH,
+  TERMINATION_JUSTIFICATION_MIN_LENGTH,
+} from "@/features/productTemplates/constants"
 
 const validCreateRequest = {
   template_name: "Full refinancing standard",
@@ -154,6 +158,15 @@ describe("TemplateDraftCreatedResponseSchema", () => {
     delete rest.template_code
     expect(() => TemplateDraftCreatedResponseSchema.parse(rest)).toThrow()
   })
+
+  it("rejects a version_status outside TemplateStatus", () => {
+    expect(() =>
+      TemplateDraftCreatedResponseSchema.parse({
+        ...validDraftCreatedResponse,
+        version_status: "published",
+      })
+    ).toThrow()
+  })
 })
 
 describe("TemplateDraftUpdatedResponseSchema / TemplateDraftDiscardedResponseSchema", () => {
@@ -173,6 +186,12 @@ describe("TemplateDraftUpdatedResponseSchema / TemplateDraftDiscardedResponseSch
         version_status: "discarded",
       })
     ).not.toThrow()
+  })
+
+  it("rejects a version_status outside TemplateStatus on either response", () => {
+    const bad = { ...valid, version_status: "deprecated" }
+    expect(() => TemplateDraftUpdatedResponseSchema.parse(bad)).toThrow()
+    expect(() => TemplateDraftDiscardedResponseSchema.parse(bad)).toThrow()
   })
 })
 
@@ -234,6 +253,15 @@ describe("PublishTemplateDraftResponseSchema", () => {
       PublishTemplateDraftResponseSchema.parse({
         ...validPublishResponse,
         activated_by: "not-a-uuid",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a version_status outside TemplateStatus", () => {
+    expect(() =>
+      PublishTemplateDraftResponseSchema.parse({
+        ...validPublishResponse,
+        version_status: "published",
       })
     ).toThrow()
   })
@@ -691,29 +719,48 @@ describe("NewVersionCreatedResponseSchema", () => {
     delete rest.version_id
     expect(() => NewVersionCreatedResponseSchema.parse(rest)).toThrow()
   })
+
+  it("rejects a version_status outside TemplateStatus", () => {
+    expect(() =>
+      NewVersionCreatedResponseSchema.parse({
+        ...validNewVersionResponse,
+        version_status: "awaiting_countersignature",
+      })
+    ).toThrow()
+  })
 })
 
 describe("TerminateTemplateVersionRequestSchema / TerminateTemplateVersionResponseSchema", () => {
+  // Bounds are asserted against the shared constants, not repeated literals, so the schema
+  // and the textarea's maxLength can never drift from what these tests claim.
   it("accepts a justification at the minimum length", () => {
     expect(() =>
       TerminateTemplateVersionRequestSchema.parse({
-        justification: "1234567890",
+        justification: "a".repeat(TERMINATION_JUSTIFICATION_MIN_LENGTH),
       })
     ).not.toThrow()
   })
 
-  it("rejects a justification under 10 characters", () => {
+  it("rejects a justification one character under the minimum", () => {
     expect(() =>
       TerminateTemplateVersionRequestSchema.parse({
-        justification: "too short",
+        justification: "a".repeat(TERMINATION_JUSTIFICATION_MIN_LENGTH - 1),
       })
     ).toThrow()
   })
 
-  it("rejects a justification over 2000 characters", () => {
+  it("accepts a justification at the maximum length", () => {
     expect(() =>
       TerminateTemplateVersionRequestSchema.parse({
-        justification: "a".repeat(2001),
+        justification: "a".repeat(TERMINATION_JUSTIFICATION_MAX_LENGTH),
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a justification one character over the maximum", () => {
+    expect(() =>
+      TerminateTemplateVersionRequestSchema.parse({
+        justification: "a".repeat(TERMINATION_JUSTIFICATION_MAX_LENGTH + 1),
       })
     ).toThrow()
   })
@@ -736,6 +783,15 @@ describe("TerminateTemplateVersionRequestSchema / TerminateTemplateVersionRespon
       TerminateTemplateVersionResponseSchema.parse({
         ...validTerminateResponse,
         terminated_by: "not-a-uuid",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a version_status outside TemplateStatus", () => {
+    expect(() =>
+      TerminateTemplateVersionResponseSchema.parse({
+        ...validTerminateResponse,
+        version_status: "deprecated",
       })
     ).toThrow()
   })

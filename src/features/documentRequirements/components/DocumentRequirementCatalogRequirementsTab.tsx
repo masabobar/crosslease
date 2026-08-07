@@ -38,6 +38,11 @@ function DocumentRequirementCatalogRequirementsTab({
     ? catalog.requirements
     : catalog.requirements.filter(r => r.is_active)
 
+  // An empty table reads two different ways, and only this tells them apart: the active-only
+  // view (toggle OFF) can hide rows that do exist, whereas a catalog with nothing in it is empty
+  // under either setting. Keying the empty state off the toggle alone gets both cases wrong.
+  const isHidingInactive = !showInactive && catalog.requirements.length > 0
+
   function handleDeactivate(requirement: RequirementResponse) {
     deactivateRequirement.mutate(requirement.id, {
       onSuccess: () => {
@@ -82,7 +87,7 @@ function DocumentRequirementCatalogRequirementsTab({
 
       <RequirementTable
         requirements={requirements}
-        hasActiveFilters={showInactive}
+        hasActiveFilters={isHidingInactive}
         canManage={canManage}
         onRowClick={requirement => setSheetState({ mode: "view", requirement })}
         onEdit={requirement => setSheetState({ mode: "edit", requirement })}

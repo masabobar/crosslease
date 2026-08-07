@@ -16,6 +16,7 @@ import { EmailChangeConfirmDialog } from "@/features/users/components/EmailChang
 import { useChangeEmail } from "@/features/users/hooks/useChangeEmail"
 import { useEditUser } from "@/features/users/hooks/useEditUser"
 import { buildIdentityPatch } from "@/features/users/utils"
+import { FieldMessage } from "@/features/users/components/FieldMessage"
 import { useToastStore } from "@/store/toastStore"
 import {
   AdminIdentityFormSchema,
@@ -244,47 +245,65 @@ export function UserIdentityCard({
           </DetailRow>
           <DetailRow label={t("detail.page.fields.firstName")}>
             {isEditing ? (
-              <Input
-                {...form.register("first_name")}
-                data-testid="identity-first-name-input"
-                className="h-[28px] py-0 text-sm rounded-[8px]"
-                error={!!form.formState.errors.first_name}
-              />
+              <>
+                <Input
+                  {...form.register("first_name")}
+                  data-testid="identity-first-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!form.formState.errors.first_name}
+                />
+                <FieldMessage
+                  error={form.formState.errors.first_name}
+                  data-testid="identity-first-name-error"
+                />
+              </>
             ) : (
               user.first_name
             )}
           </DetailRow>
           <DetailRow label={t("detail.page.fields.lastName")}>
             {isEditing ? (
-              <Input
-                {...form.register("last_name")}
-                data-testid="identity-last-name-input"
-                className="h-[28px] py-0 text-sm rounded-[8px]"
-                error={!!form.formState.errors.last_name}
-              />
+              <>
+                <Input
+                  {...form.register("last_name")}
+                  data-testid="identity-last-name-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!form.formState.errors.last_name}
+                />
+                <FieldMessage
+                  error={form.formState.errors.last_name}
+                  data-testid="identity-last-name-error"
+                />
+              </>
             ) : (
               user.last_name
             )}
           </DetailRow>
           <DetailRow label={t("detail.page.fields.email")}>
             {isEditing ? (
-              <Input
-                {...form.register("email")}
-                type="email"
-                data-testid="identity-email-input"
-                className="h-[28px] py-0 text-sm rounded-[8px]"
-                error={!!form.formState.errors.email}
-                disabled={isEmailLocked}
-                title={
-                  user.pending_email
-                    ? t(
-                        "detail.page.editIdentity.emailDisabledVerificationInProgress"
-                      )
-                    : isEmailLocked
-                      ? t("detail.page.editIdentity.emailDisabledPending")
-                      : undefined
-                }
-              />
+              <>
+                <Input
+                  {...form.register("email")}
+                  type="email"
+                  data-testid="identity-email-input"
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!form.formState.errors.email}
+                  disabled={isEmailLocked}
+                  title={
+                    user.pending_email
+                      ? t(
+                          "detail.page.editIdentity.emailDisabledVerificationInProgress"
+                        )
+                      : isEmailLocked
+                        ? t("detail.page.editIdentity.emailDisabledPending")
+                        : undefined
+                  }
+                />
+                <FieldMessage
+                  error={form.formState.errors.email}
+                  data-testid="identity-email-error"
+                />
+              </>
             ) : user.pending_email ? (
               <div className="flex items-end gap-[10px] min-w-0">
                 <div className="flex flex-col gap-1 min-w-0">
@@ -301,13 +320,19 @@ export function UserIdentityCard({
           </DetailRow>
           <DetailRow label={t("detail.page.fields.phoneNumber")}>
             {isEditing ? (
-              <Input
-                {...form.register("phone_number")}
-                data-testid="phone-number-input"
-                placeholder={t("detail.page.fields.phoneNumberPlaceholder")}
-                className="h-[28px] py-0 text-sm rounded-[8px]"
-                error={!!form.formState.errors.phone_number}
-              />
+              <>
+                <Input
+                  {...form.register("phone_number")}
+                  data-testid="phone-number-input"
+                  placeholder={t("detail.page.fields.phoneNumberPlaceholder")}
+                  className="h-[28px] py-0 text-sm rounded-[8px]"
+                  error={!!form.formState.errors.phone_number}
+                />
+                <FieldMessage
+                  error={form.formState.errors.phone_number}
+                  data-testid="phone-number-error"
+                />
+              </>
             ) : (
               (user.phone_number ?? "—")
             )}

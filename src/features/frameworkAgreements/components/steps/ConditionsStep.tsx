@@ -2,6 +2,7 @@ import type { FieldErrors, UseFormRegister } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 
 // Shared by the create wizard and the edit wizard — same field, same copy, only the
 // element ids differ. Generic over the form type like EnvelopePricingFields.
@@ -23,6 +24,9 @@ function ConditionsStep<T extends ConditionsFormFields>({
   testIdPrefix = "",
 }: Props<T>) {
   const { t } = useTranslation("frameworkAgreements")
+  // Resolved here rather than passed in like EnvelopePricingFields' `resolveMsg`: this step
+  // has a single error to render and both wizards would otherwise thread the same hook through.
+  const resolveMsg = useResolveFrameworkAgreementFieldError()
   const typedRegister =
     register as unknown as UseFormRegister<ConditionsFormFields>
   const typedErrors = errors as unknown as FieldErrors<ConditionsFormFields>
@@ -53,7 +57,7 @@ function ConditionsStep<T extends ConditionsFormFields>({
       </p>
       {typedErrors.special_conditions && (
         <p className="mt-1 text-sm text-destructive">
-          {typedErrors.special_conditions.message}
+          {resolveMsg(typedErrors.special_conditions.message)}
         </p>
       )}
     </div>

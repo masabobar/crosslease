@@ -1,88 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
-  ActivateAccountInputSchema,
   SetPasswordResponseSchema,
   decodeTokenEmail,
 } from "@/features/auth/api/activationSchema"
-
-const VALID = "Abcdef1!"
-
-describe("ActivateAccountInputSchema", () => {
-  it("accepts matching valid passwords", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: VALID,
-        passwordConfirm: VALID,
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects mismatched passwords", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: VALID,
-        passwordConfirm: "Different1!",
-      })
-    ).toThrow()
-  })
-
-  it("puts the mismatch error on the passwordConfirm path", () => {
-    const result = ActivateAccountInputSchema.safeParse({
-      password: VALID,
-      passwordConfirm: "Wrong1!",
-    })
-    expect(result.success).toBe(false)
-    if (!result.success) {
-      const paths = result.error.issues.map(i => i.path.join("."))
-      expect(paths).toContain("passwordConfirm")
-    }
-  })
-
-  it("rejects password shorter than 8 characters", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: "Ab1!",
-        passwordConfirm: "Ab1!",
-      })
-    ).toThrow()
-  })
-
-  it("rejects password without uppercase", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: "abcdef1!",
-        passwordConfirm: "abcdef1!",
-      })
-    ).toThrow()
-  })
-
-  it("rejects password without lowercase", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: "ABCDEF1!",
-        passwordConfirm: "ABCDEF1!",
-      })
-    ).toThrow()
-  })
-
-  it("rejects password without number", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: "Abcdefg!",
-        passwordConfirm: "Abcdefg!",
-      })
-    ).toThrow()
-  })
-
-  it("rejects password without symbol", () => {
-    expect(() =>
-      ActivateAccountInputSchema.parse({
-        password: "Abcdef12",
-        passwordConfirm: "Abcdef12",
-      })
-    ).toThrow()
-  })
-})
 
 describe("SetPasswordResponseSchema", () => {
   it("accepts mfa_enrollment_required=false", () => {

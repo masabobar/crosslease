@@ -7,6 +7,12 @@ import { i18n } from "@/i18n/config"
 // refinext-api/src/app/shared/errors/handlers.py.
 export const VALIDATION_ERROR_CODE = "VALIDATION_ERROR"
 
+/**
+ * RHF error `type` this module stamps on a server-attached field error. Callers that need
+ * to tell a server rejection apart from a client-side rule compare against this.
+ */
+export const SERVER_ERROR_TYPE = "server"
+
 type ApplyApiFieldErrorsArgs<T extends FieldValues> = {
   error: unknown
   /** The form's registered field names — pass `Object.keys(getValues())`. */
@@ -79,7 +85,10 @@ export function applyApiFieldErrors<T extends FieldValues>({
     // `name` was just proved to be one of the form's own registered fields, which is the
     // check TypeScript cannot make from a wire string — so the narrowing to Path<T> is
     // sound. Casting here keeps it to one guarded place instead of 20-odd call sites.
-    setError(name as Path<T>, { type: "server", message: attachedMessage })
+    setError(name as Path<T>, {
+      type: SERVER_ERROR_TYPE,
+      message: attachedMessage,
+    })
     attached = true
   }
 

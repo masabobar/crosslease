@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { FADraftResponse } from "@/features/frameworkAgreements/api/schema"
 import {
   updateFrameworkAgreement,
   FRAMEWORK_AGREEMENTS_QUERY_KEYS,
@@ -10,7 +12,11 @@ type UpdateInput = {
   body: UpdateFARequest
 }
 
-export function useUpdateFrameworkAgreement() {
+export function useUpdateFrameworkAgreement(): UseMutationResult<
+  FADraftResponse,
+  Error,
+  UpdateInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

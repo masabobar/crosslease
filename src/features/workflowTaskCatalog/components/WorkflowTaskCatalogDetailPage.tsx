@@ -13,6 +13,7 @@ import { TaskDefinitionsTab } from "@/features/workflowTaskCatalog/components/Ta
 import { AuditTrailTab } from "@/features/workflowTaskCatalog/components/AuditTrailTab"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUsers } from "@/features/users/hooks/useUsers"
+import { resolveUserDisplayName } from "@/features/users/utils"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useWorkflowTaskCatalogDetail } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogDetail"
 import { WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
@@ -116,11 +117,19 @@ export default function WorkflowTaskCatalogDetailPage() {
   }
 
   const users = usersData?.users ?? []
-  const createdBy = users.find(u => u.id === catalog.created_by)
-  const createdByName = createdBy
-    ? `${createdBy.first_name} ${createdBy.last_name}`
-    : null
-  const tenantName = users.find(u => u.tenant_name)?.tenant_name ?? null
+  // Resolves to the raw UUID when created_by is outside the fetched page — the same fallback
+  // IdentityScopeTab applies for a null name, so the rendered value is unchanged.
+  const createdByName = resolveUserDisplayName(
+    users,
+    catalog.created_by,
+    catalog.created_by
+  )
+  // Taken from a user *of this catalogue's tenant* rather than the first user in the page
+  // that happens to carry a name. GET /tenants/{id} is not used because it is admin/support
+  // scoped, while this screen is also read by tenant-level roles — a lookup there would 403.
+  const tenantName =
+    users.find(u => u.tenant_id === catalog.tenant_id && u.tenant_name)
+      ?.tenant_name ?? null
   const productTemplateName = catalog.entity_id
     ? ((templates?.items ?? []).find(i => i.template_id === catalog.entity_id)
         ?.template_name ?? null)

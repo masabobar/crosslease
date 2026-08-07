@@ -1,6 +1,26 @@
 import { z } from "zod"
+import { format } from "date-fns"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
+
+// The shape `<DatePicker>` emits and every date-only form field carries, so a plain
+// string comparison against it is a valid calendar-date comparison (date-picker.tsx).
+export const CALENDAR_DATE_FORMAT = "yyyy-MM-dd"
+
+/** Today as a calendar date in the viewer's local timezone — never UTC. */
+export function todayCalendarDate(): string {
+  return format(new Date(), CALENDAR_DATE_FORMAT)
+}
+
+/**
+ * Turns a `yyyy-MM-dd` field value into the instant the backend expects, pinned to UTC
+ * midnight. `new Date("2026-01-15").toISOString()` reads the bare date as *local* midnight,
+ * so an admin in UTC+2 sends the 14th and one in UTC-8 sends the 15th at 08:00 — the same
+ * picked day becomes a different effective day per browser timezone.
+ */
+export function calendarDateToUtcInstant(calendarDate: string): string {
+  return new Date(`${calendarDate}T00:00:00.000Z`).toISOString()
+}
 
 export const UserRoleSchema = z.enum(USER_ROLES)
 
@@ -132,7 +152,14 @@ export type UserSortKey = z.infer<typeof UserSortKeySchema>
 
 export const USER_SORT_KEYS = UserSortKeySchema.options
 
-export type UserSortOrder = "asc" | "desc"
+// Const object rather than a bare union so call sites reference the value instead of
+// repeating the literal (.claude/rules/enums-and-constants.md §3).
+export const USER_SORT_ORDER = {
+  ASC: "asc",
+  DESC: "desc",
+} as const
+export type UserSortOrder =
+  (typeof USER_SORT_ORDER)[keyof typeof USER_SORT_ORDER]
 
 export type UsersQueryParams = {
   page?: number
@@ -143,12 +170,13 @@ export type UsersQueryParams = {
   tenant_id?: string
   sort_by?: UserSortKey
   sort_order?: UserSortOrder
+  // Accepted by GET /api/v1/users and sent by `fetchUsers`.
+  last_login_from?: string | null
+  last_login_to?: string | null
   // UI ready — backend GET /api/v1/users does not support these filter params yet;
   // params are defined here for type-completeness but are NOT sent to the API
   mfa_enabled?: boolean | null
   lg_id?: string | null
-  last_login_from?: string | null
-  last_login_to?: string | null
   // Not yet supported by backend:
   access_expiry_from?: string | null
   access_expiry_to?: string | null
@@ -248,9 +276,11 @@ export const UserDetailResponseSchema = z.object({
 
 export type UserDetail = z.infer<typeof UserDetailResponseSchema>
 
+// Message is a bare code, not prose — the form resolves it through
+// `common:validation.*` (see resolveFieldMessage in features/users/utils.ts).
 export const phoneNumberSchema = z
   .string()
-  .regex(/^\+?[0-9\s\-() ]{7,30}$/, "Invalid phone number")
+  .regex(/^\+?[0-9\s\-() ]{7,30}$/, "invalidPhone")
 
 export const EditUserRequestSchema = z.object({
   first_name: z.string().min(1).max(100).nullable().optional(),
@@ -271,14 +301,14 @@ export type UpdateSelfInput = z.infer<typeof UpdateSelfInputSchema>
 // extends this base rather than redeclaring the shared fields.
 // An empty phone string is accepted here and mapped to null when the patch is built.
 export const SelfIdentityFormSchema = z.object({
-  first_name: z.string().min(1).max(100),
-  last_name: z.string().min(1).max(100),
+  first_name: z.string().min(1, "required").max(100, "tooLong"),
+  last_name: z.string().min(1, "required").max(100, "tooLong"),
   phone_number: phoneNumberSchema.or(z.literal("")).optional(),
 })
 export type SelfIdentityFormValues = z.infer<typeof SelfIdentityFormSchema>
 
 export const AdminIdentityFormSchema = SelfIdentityFormSchema.extend({
-  email: z.string().email(),
+  email: z.string().min(1, "required").email("invalidFormat"),
 })
 export type AdminIdentityFormValues = z.infer<typeof AdminIdentityFormSchema>
 
@@ -287,9 +317,12 @@ export const ChangeEmailRequestSchema = z.object({
 })
 export type ChangeEmailInput = z.infer<typeof ChangeEmailRequestSchema>
 
+/** Minimum justification length the backend enforces on a role change. */
+export const MIN_ROLE_CHANGE_REASON_LENGTH = 10
+
 export const ChangeRoleRequestSchema = z.object({
   new_role: UserRoleSchema,
-  reason: z.string().min(10).nullable().optional(),
+  reason: z.string().min(MIN_ROLE_CHANGE_REASON_LENGTH).nullable().optional(),
 })
 export type ChangeRoleInput = z.infer<typeof ChangeRoleRequestSchema>
 
@@ -314,7 +347,21 @@ export type UpdateAccessPeriodInput = z.infer<
 
 // Same fields as the request, but `new_access_valid_until` is still the picker's plain
 // calendar date here — the caller converts it to an ISO instant before submitting.
-export const AuditorPeriodFormSchema = UpdateAccessPeriodRequestSchema
+//
+// Declared separately rather than aliasing the request schema: the calendar-date form
+// carries a not-in-the-past rule that must NOT apply to the wire schema, which receives
+// an already-converted ISO instant and is also parsed for existing records.
+// The floor is inclusive (today is a legal value) and mirrors the picker's `minDate` —
+// per .claude/rules/date-inputs.md §2 the two must agree exactly.
+export const AuditorPeriodFormSchema = z.object({
+  new_access_valid_until: z
+    .string()
+    .min(1, "required")
+    .refine(value => value >= todayCalendarDate(), {
+      message: "dateNotInPast",
+    }),
+  reason: z.enum(AUDITOR_PERIOD_UPDATE_REASONS, { error: "required" }),
+})
 export type AuditorPeriodFormValues = z.infer<typeof AuditorPeriodFormSchema>
 
 export const ExportFormatSchema = z.enum(["csv", "xlsx"])

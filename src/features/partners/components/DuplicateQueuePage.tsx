@@ -13,7 +13,7 @@ import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
 import { usePartnersByIds } from "@/features/partners/hooks/usePartnersByIds"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
+import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import {
   PARTNER_DUPLICATE_RESOLVE_ALLOWED_ROLES,
@@ -40,10 +40,7 @@ export default function DuplicateQueuePage() {
   const { t } = useTranslation("partners")
   const navigate = useNavigate()
   const { data: currentUser } = useCurrentUser()
-  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
-  const tenantId =
-    currentUser?.tenant_id ??
-    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const tenantId = useResolvedTenantId()
 
   const canResolve =
     !!currentUser &&

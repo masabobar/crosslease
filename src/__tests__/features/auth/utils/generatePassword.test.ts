@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { generatePassword } from "@/features/auth/utils/generatePassword"
-import { ResetPasswordInputSchema } from "@/features/auth/api/forgotPasswordSchema"
+import { PasswordPolicySchema } from "@/features/auth/api/passwordPolicy"
 
 describe("generatePassword", () => {
   it("returns exactly 16 characters", () => {
@@ -24,9 +24,7 @@ describe("generatePassword", () => {
   })
 
   it("passes the password policy Zod schema", () => {
-    expect(() =>
-      ResetPasswordInputSchema.shape.password.parse(generatePassword())
-    ).not.toThrow()
+    expect(() => PasswordPolicySchema.parse(generatePassword())).not.toThrow()
   })
 
   it("produces different values on consecutive calls", () => {

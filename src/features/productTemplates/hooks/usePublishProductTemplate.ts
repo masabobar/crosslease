@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { PublishTemplateDraftResponse } from "@/features/productTemplates/api/schema"
 import {
   publishProductTemplate,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -11,7 +13,11 @@ type PublishDraftInput = {
   body: PublishTemplateDraftRequest
 }
 
-export function usePublishProductTemplate() {
+export function usePublishProductTemplate(): UseMutationResult<
+  PublishTemplateDraftResponse,
+  Error,
+  PublishDraftInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

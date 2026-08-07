@@ -27,9 +27,10 @@ import type {
   AttachDocumentResponse,
   FALifecycleStatus,
 } from "@/features/frameworkAgreements/api/schema"
-
-const MAX_FA_DOCUMENTS = 10
-const BYTES_PER_MB = 1024 * 1024
+import {
+  FA_DOCUMENT_BYTES_PER_MB,
+  FA_DOCUMENT_MAX_COUNT,
+} from "@/features/frameworkAgreements/constants"
 
 type Props = {
   frameworkAgreementId: string
@@ -45,6 +46,7 @@ function TemplatesAndDocumentsTab({
   canManageFrameworkAgreement,
 }: Props) {
   const { t } = useTranslation("frameworkAgreements")
+  const { t: tCommon } = useTranslation("common")
   const [attachDialogOpen, setAttachDialogOpen] = useState(false)
   const [detachTarget, setDetachTarget] =
     useState<AttachDocumentResponse | null>(null)
@@ -58,7 +60,7 @@ function TemplatesAndDocumentsTab({
     canManageFrameworkAgreement &&
     frameworkAgreementStatus === FALifecycleStatusSchema.enum.draft
   const documentsAtLimit =
-    (documentsQuery.data?.length ?? 0) >= MAX_FA_DOCUMENTS
+    (documentsQuery.data?.length ?? 0) >= FA_DOCUMENT_MAX_COUNT
 
   function handleDownload(docId: string) {
     downloadMutation.mutate(
@@ -109,7 +111,7 @@ function TemplatesAndDocumentsTab({
     >
       <SectionCard title={t("fields.allowedProductTemplates")}>
         {templatesQuery.isLoading && (
-          <p className="text-sm text-muted-foreground">…</p>
+          <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
         )}
         {templatesQuery.isError && (
           <p className="text-sm text-destructive">{t("errors.generic")}</p>
@@ -174,7 +176,9 @@ function TemplatesAndDocumentsTab({
           )}
 
           {documentsQuery.isLoading && (
-            <p className="text-sm text-muted-foreground">…</p>
+            <p className="text-sm text-muted-foreground">
+              {tCommon("loading")}
+            </p>
           )}
           {documentsQuery.isError && (
             <p className="text-sm text-destructive">{t("errors.generic")}</p>
@@ -208,7 +212,7 @@ function TemplatesAndDocumentsTab({
                 {t(`documentTypes.${doc.document_type}`)}
               </Badge>
               <span className="shrink-0 text-xs text-muted-foreground">
-                {Math.round(doc.file_size_bytes / BYTES_PER_MB)} MB
+                {Math.round(doc.file_size_bytes / FA_DOCUMENT_BYTES_PER_MB)} MB
               </span>
               <span className="shrink-0 text-xs text-muted-foreground">
                 {formatDateTime(doc.uploaded_at)}

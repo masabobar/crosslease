@@ -27,6 +27,7 @@ import type {
   FAAuditHistoryResponse,
   FADetailResponse,
   FADocumentListResponse,
+  FADocumentType,
   FADraftResponse,
   FAEventTypeFilter,
   FALCPartnersResponse,
@@ -170,7 +171,7 @@ export async function fetchSelectableProductTemplates(): Promise<SelectableTempl
 export async function attachFrameworkAgreementDocument(
   faId: string,
   file: File,
-  documentType: string,
+  documentType: FADocumentType,
   documentLabel?: string
 ): Promise<AttachDocumentResponse> {
   const formData = new FormData()
@@ -241,6 +242,15 @@ export async function fetchFrameworkAgreementDocumentDownloadUrl(
     `/framework-agreements/${faId}/documents/${docId}/download-url`
   )
   return DownloadURLResponseSchema.parse(data)
+}
+
+/**
+ * DELETE /framework-agreements/{id} — "Delete Fa Draft". Used when the create wizard's
+ * discard is confirmed after a draft has already been persisted, so the discard the dialog
+ * promises actually happens instead of leaving the record behind.
+ */
+export async function deleteFrameworkAgreementDraft(id: string): Promise<void> {
+  await api.delete(`/framework-agreements/${id}`)
 }
 
 export async function detachFrameworkAgreementDocument(

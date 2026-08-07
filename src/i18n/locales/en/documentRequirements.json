@@ -120,8 +120,8 @@
       "description": "Add a requirement to get started."
     },
     "emptyFiltered": {
-      "title": "No inactive requirements",
-      "description": "Every requirement in this catalog is active."
+      "title": "No active requirements",
+      "description": "Every requirement in this catalog is deactivated. Turn on \"Show inactive\" to see them."
     },
     "active": "Active",
     "inactive": "Inactive",
@@ -187,6 +187,7 @@
     "emptyGroup": "No requirements in this layer."
   },
   "errors": {
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "VALIDATION_ERROR": "Some of the values entered were rejected. Please review the form and try again."
   }
 }

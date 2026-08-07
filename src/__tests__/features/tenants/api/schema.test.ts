@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
+import { addDays, format, startOfToday } from "date-fns"
+import { MAX_GRANT_DAYS } from "@/features/tenants/constants"
 import {
+  GovernanceEventTypeSchema,
   CreateTenantFormSchema,
   PlatformModulesResponseSchema,
   SeedPackagesResponseSchema,
@@ -841,11 +844,16 @@ describe("createArchiveTenantFormSchema", () => {
   })
 })
 
+// CreateGrantFormSchema floors valid_from at today, so the window has to be
+// expressed relative to the run date rather than pinned to fixed dates.
+const dayOffset = (days: number) =>
+  format(addDays(startOfToday(), days), "yyyy-MM-dd")
+
 const validCreateGrantForm = {
   grantee_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   access_reason: "user_access_issue",
-  valid_from: "2026-01-01",
-  valid_until: "2026-01-15",
+  valid_from: dayOffset(0),
+  valid_until: dayOffset(14),
   additional_context: null,
 }
 
@@ -884,6 +892,91 @@ describe("CreateGrantFormSchema", () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { additional_context, ...rest } = validCreateGrantForm
     expect(() => CreateGrantFormSchema.parse(rest)).not.toThrow()
+  })
+
+  // The calendar disables these days, but it never clears a value already chosen —
+  // moving valid_from past an existing valid_until is the case the schema has to
+  // catch. See .claude/rules/date-inputs.md §1.
+  it("rejects valid_until before valid_from", () => {
+    const result = CreateGrantFormSchema.safeParse({
+      ...validCreateGrantForm,
+      valid_from: dayOffset(10),
+      valid_until: dayOffset(5),
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["valid_until"],
+      message: "validUntilBeforeValidFrom",
+    })
+  })
+
+  it("accepts a same-day grant", () => {
+    expect(() =>
+      CreateGrantFormSchema.parse({
+        ...validCreateGrantForm,
+        valid_from: dayOffset(3),
+        valid_until: dayOffset(3),
+      })
+    ).not.toThrow()
+  })
+
+  it(`accepts a window of exactly ${MAX_GRANT_DAYS} days`, () => {
+    expect(() =>
+      CreateGrantFormSchema.parse({
+        ...validCreateGrantForm,
+        valid_from: dayOffset(0),
+        valid_until: dayOffset(MAX_GRANT_DAYS),
+      })
+    ).not.toThrow()
+  })
+
+  it(`rejects a window longer than ${MAX_GRANT_DAYS} days`, () => {
+    const result = CreateGrantFormSchema.safeParse({
+      ...validCreateGrantForm,
+      valid_from: dayOffset(0),
+      valid_until: dayOffset(MAX_GRANT_DAYS + 1),
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["valid_until"],
+      message: "grantDurationExceeded",
+    })
+  })
+
+  it("rejects a valid_from in the past", () => {
+    const result = CreateGrantFormSchema.safeParse({
+      ...validCreateGrantForm,
+      valid_from: dayOffset(-1),
+      valid_until: dayOffset(5),
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ["valid_from"],
+      message: "validFromInPast",
+    })
+  })
+})
+
+describe("GovernanceEventTypeSchema", () => {
+  it("accepts a known event type", () => {
+    expect(() =>
+      GovernanceEventTypeSchema.parse("tenant.suspend_requested")
+    ).not.toThrow()
+  })
+
+  it("rejects an unknown event type", () => {
+    expect(() => GovernanceEventTypeSchema.parse("tenant.exploded")).toThrow()
+  })
+
+  // The response schema stays open on purpose — the backend owns this taxonomy and
+  // adds to it, so a closed enum there would reject a valid response.
+  it("does not constrain the event_type on a history response", () => {
+    expect(() =>
+      GovernanceHistoryEventSchema.parse({
+        ...validGovernanceEvent,
+        event_type: "tenant.some_type_shipped_after_this_build",
+      })
+    ).not.toThrow()
   })
 })
 

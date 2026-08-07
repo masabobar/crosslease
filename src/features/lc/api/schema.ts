@@ -4,8 +4,10 @@ import {
   FALifecycleStatusSchema,
 } from "@/features/frameworkAgreements/api/schema"
 
-// GET /lc-portal/framework-agreements/{fa_id}/documents/{doc_id} — matches
-// LCPortalDocumentItem in refinext-api lc_portal_schemas.py exactly.
+// An entry of `documents[]` on the list response below — matches
+// LCPortalDocumentItem in refinext-api lc_portal_schemas.py exactly. The download
+// endpoint returns a 302 to a presigned URL and no JSON body, so this shape is
+// only ever received as part of the list.
 export const LCPortalDocumentItemSchema = z.object({
   id: z.string().uuid(),
   file_name: z.string(),

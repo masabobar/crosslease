@@ -1,7 +1,16 @@
-// Select-option labels for the Workflow Task Catalog — nothing else.
+// Select-option labels for the Workflow Task Catalog, plus the one shared status-pill class
+// string its badges have in common.
 // Every wire enum lives in api/schema.ts as the single source of truth per
 // .claude/rules/enums-and-constants.md §3; this file only maps those values to i18n label keys
 // so a dropdown can render them. No placeholder data remains: both screens read the API.
+
+// Shared by this feature's three tinted status pills — the catalogue state badge, the task
+// type badge, and the two case-checklist badges. Extracted per code-review.md §10 (a Tailwind
+// string repeated across 3+ components). Deliberately NOT shadcn's <Badge>: its base sets
+// h-5 / rounded-4xl / border / px-2, so adopting it would change the rendered pill.
+// Per-status colour tints stay with each badge; only the geometry is shared.
+export const STATUS_PILL_CLASSES =
+  "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium"
 
 import {
   CatalogEntityTypeSchema,

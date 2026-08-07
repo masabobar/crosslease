@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { safeImageUrl } from "@/lib/utils"
 
 type AvatarUploadMenuProps = {
   name: string
@@ -27,6 +28,9 @@ function AvatarUploadMenu({
 }: AvatarUploadMenuProps) {
   const { t } = useTranslation("users")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // The stored URL is user-influenced; anything but http(s) or an own-origin path is dropped
+  // rather than handed to `src` (.claude/rules/security-and-auth.md §4).
+  const pictureUrl = safeImageUrl(profilePictureUrl)
 
   return (
     <>
@@ -45,9 +49,9 @@ function AvatarUploadMenu({
           disabled={isPending}
           className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {profilePictureUrl ? (
+          {pictureUrl ? (
             <img
-              src={profilePictureUrl}
+              src={pictureUrl}
               alt={name}
               className="size-full object-cover"
             />

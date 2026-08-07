@@ -13,12 +13,13 @@ import {
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
-import { USER_STATUSES } from "@/features/users/api/schema"
+import { ExportFormatSchema, USER_STATUSES } from "@/features/users/api/schema"
 import type { ExportFormat, UserStatus } from "@/features/users/api/schema"
 import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
+import { ApiError } from "@/lib/api"
 import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
@@ -87,7 +88,11 @@ export function UserQuickFilters({
   className,
 }: UserQuickFiltersProps) {
   const { t } = useTranslation("users")
-  const { data: tenantsData } = useTenants(filterVisibility.tenant)
+  const {
+    data: tenantsData,
+    isError: isTenantsError,
+    error: tenantsError,
+  } = useTenants(filterVisibility.tenant)
 
   const buttonLabels: Record<QuickFilterKey, string> = {
     role: t("quickFilters.buttons.role"),
@@ -124,6 +129,22 @@ export function UserQuickFilters({
         })
 
       case "tenant": {
+        // A failed load is not the same as "no tenants" — the empty state below would
+        // otherwise report an API failure as an accurate, empty result.
+        if (isTenantsError) {
+          return (
+            <p
+              data-testid="quick-filter-tenant-error"
+              className="px-3 py-2 text-sm text-destructive"
+            >
+              {tenantsError instanceof ApiError
+                ? t(`errors.${tenantsError.code}`, {
+                    defaultValue: t("errors.generic"),
+                  })
+                : t("errors.generic")}
+            </p>
+          )
+        }
         const tenants = (tenantsData?.tenants ?? []).filter(
           tenant => tenant.status === TenantStatusSchema.enum.active
         )
@@ -285,13 +306,13 @@ export function UserQuickFilters({
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               data-testid="export-csv-option"
-              onClick={() => onExport("csv")}
+              onClick={() => onExport(ExportFormatSchema.enum.csv)}
             >
               {t("quickFilters.exportCsv")}
             </DropdownMenuItem>
             <DropdownMenuItem
               data-testid="export-xlsx-option"
-              onClick={() => onExport("xlsx")}
+              onClick={() => onExport(ExportFormatSchema.enum.xlsx)}
             >
               {t("quickFilters.exportXlsx")}
             </DropdownMenuItem>

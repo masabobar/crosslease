@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { FAVersionDiffResponse } from "@/features/frameworkAgreements/api/schema"
 import {
   fetchFrameworkAgreementVersionDiff,
   FRAMEWORK_AGREEMENTS_QUERY_KEYS,
@@ -9,7 +11,7 @@ export function useFrameworkAgreementVersionDiff(
   fromVersion: string,
   toVersion: string,
   enabled: boolean
-) {
+): UseQueryResult<FAVersionDiffResponse, Error> {
   return useQuery({
     queryKey: FRAMEWORK_AGREEMENTS_QUERY_KEYS.versionDiff(
       id,

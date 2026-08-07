@@ -156,7 +156,23 @@ function ProductTemplateTable({
             key={item.id}
             data-testid={`product-template-row-${item.id}`}
             onClick={() => onRowClick?.(item)}
-            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+            // A clickable row needs to be reachable without a mouse. NOTE: no
+            // shadcn primitive covers "row that opens a drawer" — role/tabIndex/key
+            // handling is applied by hand, and only when the row is clickable.
+            // Same shape as PartnerTable's rows.
+            role={onRowClick ? "button" : undefined}
+            tabIndex={onRowClick ? 0 : undefined}
+            onKeyDown={
+              onRowClick
+                ? e => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onRowClick(item)
+                    }
+                  }
+                : undefined
+            }
+            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${onRowClick ? "cursor-pointer" : ""}`}
           >
             <div className={`${COL_PRODUCT} p-2`}>
               <p className="text-sm font-medium truncate text-foreground leading-tight">

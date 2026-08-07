@@ -1,7 +1,11 @@
 import { useSearchParams } from "react-router-dom"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
-import { USER_STATUSES, USER_SORT_KEYS } from "@/features/users/api/schema"
+import {
+  USER_STATUSES,
+  USER_SORT_KEYS,
+  USER_SORT_ORDER,
+} from "@/features/users/api/schema"
 import type {
   UserStatus,
   UserSortKey,
@@ -17,8 +21,7 @@ export type PageSize = (typeof PAGE_SIZES)[number]
 
 const DEFAULT_PAGE_SIZE: PageSize = PAGE_SIZES[0]
 const DEFAULT_PAGE = 1
-const DESCENDING: UserSortOrder = "desc"
-const ASCENDING: UserSortOrder = "asc"
+const { ASC: ASCENDING, DESC: DESCENDING } = USER_SORT_ORDER
 
 type ParamUpdate = Record<string, string | readonly string[] | null>
 

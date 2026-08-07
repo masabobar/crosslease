@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { TerminateTemplateVersionResponse } from "@/features/productTemplates/api/schema"
 import {
   terminateProductTemplateVersion,
   PRODUCT_TEMPLATES_QUERY_KEYS,
@@ -11,7 +13,11 @@ type TerminateVersionInput = {
   body: TerminateTemplateVersionRequest
 }
 
-export function useTerminateProductTemplateVersion() {
+export function useTerminateProductTemplateVersion(): UseMutationResult<
+  TerminateTemplateVersionResponse,
+  Error,
+  TerminateVersionInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

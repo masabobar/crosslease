@@ -14,7 +14,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { TERMINATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
+import {
+  TERMINATION_JUSTIFICATION_MAX_LENGTH,
+  TERMINATION_JUSTIFICATION_MIN_LENGTH,
+} from "@/features/productTemplates/constants"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
 import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
 import { showApiError } from "@/features/productTemplates/utils"
@@ -143,6 +146,7 @@ export function ProductTemplatePublishedActions({
               id="terminate-justification"
               data-testid="terminate-justification-input"
               rows={3}
+              maxLength={TERMINATION_JUSTIFICATION_MAX_LENGTH}
               value={terminationJustification}
               onChange={e => setTerminationJustification(e.target.value)}
             />

@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { isUuidRouteParam } from "@/lib/routeParams"
+import { ApiError } from "@/lib/api"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { PartnerTypeBadge } from "@/features/partners/components/PartnerTypeBadge"
 import {
@@ -58,7 +59,12 @@ export default function PartnerDetailPage() {
   const { t } = useTranslation("partners")
   const { id: idParam } = useParams<{ id: string }>()
   const id = isUuidRouteParam(idParam) ? idParam : undefined
-  const { data: partner, isLoading, isError } = usePartnerDetail(id ?? null)
+  const {
+    data: partner,
+    isLoading,
+    isError,
+    error,
+  } = usePartnerDetail(id ?? null)
   const { data: currentUser } = useCurrentUser()
   const { data: rolesData, isError: isRolesError } = usePartnerRoles(
     partner?.partner_id ?? null
@@ -105,7 +111,22 @@ export default function PartnerDetailPage() {
     )
   }
 
-  if (isError || !partner) {
+  // A 403 or a 500 is not a missing partner. Reporting every failure as "not found" sent
+  // users hunting for a record that is there but unreadable to them.
+  if (isError) {
+    return (
+      <p
+        className="text-sm text-destructive p-8"
+        data-testid="partner-load-error"
+      >
+        {error instanceof ApiError
+          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")}
+      </p>
+    )
+  }
+
+  if (!partner) {
     return (
       <p className="text-sm text-destructive p-8">{t("errors.NOT_FOUND")}</p>
     )

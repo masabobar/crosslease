@@ -46,18 +46,55 @@ export function resolveFieldErrorMessage(
   return errorMessages[msg] ?? msg
 }
 
-// Shared mutation-error toast for this feature: any BE error code translates via
-// errors.<CODE>, falling back to the generic message for unknown codes and non-ApiError
-// throws (network down, timeout) — see .claude/rules/error-handling-and-logging.md §2.
+// Display string for a failed request: any BE error code translates via errors.<CODE>,
+// falling back to the generic message for unknown codes and non-ApiError throws (network
+// down, timeout) — see .claude/rules/error-handling-and-logging.md §2. Shared by the toast
+// below and by every query `isError` branch in this feature, so a code that has an i18n key
+// reaches the user whichever surface the request failed on.
+export function resolveApiErrorMessage(
+  err: unknown,
+  t: TFunction<"productTemplates">
+): string {
+  return err instanceof ApiError
+    ? t(`errors.${err.code}` as "errors.generic", {
+        defaultValue: t("errors.generic"),
+      })
+    : t("errors.generic")
+}
+
+// Shared mutation-error toast for this feature.
 export function showApiError(
   err: unknown,
   t: TFunction<"productTemplates">
 ): void {
-  toast.error(
-    err instanceof ApiError
-      ? t(`errors.${err.code}` as "errors.generic", {
-          defaultValue: t("errors.generic"),
-        })
-      : t("errors.generic")
-  )
+  toast.error(resolveApiErrorMessage(err, t))
+}
+
+/**
+ * Orders the BE's dotted version strings ("0.1", "1.0", "2") by segment so the caller can
+ * pick the highest without relying on the list's arrival order — which is not part of the
+ * contract. Segment-wise rather than `Number(v)`, because parsing "1.10" as a decimal ranks
+ * it below "1.9".
+ */
+export function compareVersionNumbers(a: string, b: string): number {
+  const aParts = a.split(".").map(Number)
+  const bParts = b.split(".").map(Number)
+  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    const diff = (aParts[i] ?? 0) - (bParts[i] ?? 0)
+    if (diff !== 0) return diff
+  }
+  return 0
+}
+
+/** The highest version number in the list, or null when there are none. */
+export function latestVersionNumber(
+  versions: readonly { version_number: string }[]
+): string | null {
+  return versions.length
+    ? versions.reduce((latest, v) =>
+        compareVersionNumbers(v.version_number, latest.version_number) > 0
+          ? v
+          : latest
+      ).version_number
+    : null
 }

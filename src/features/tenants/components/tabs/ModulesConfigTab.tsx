@@ -182,7 +182,6 @@ export function ModulesConfigTab({
   const [isBindingDialogOpen, setIsBindingDialogOpen] = useState(false)
 
   const canEdit = isAdmin && tenantStatus === TenantStatusSchema.enum.active
-  const isArchived = tenantStatus === TenantStatusSchema.enum.archived
   const modules = modulesData?.modules ?? []
   const colSize = Math.max(1, Math.ceil(modules.length / MODULE_COLUMN_COUNT))
   const col1 = modules.slice(0, colSize)
@@ -269,7 +268,7 @@ export function ModulesConfigTab({
               tenantId={tenantId}
               tenantName={tenantName}
               isAdmin={isAdmin}
-              isArchived={isArchived}
+              canEdit={canEdit}
               dialogOpen={isBindingDialogOpen}
               onDialogOpenChange={setIsBindingDialogOpen}
             />

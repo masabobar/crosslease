@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { SelectField } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { FieldMessage } from "@/features/users/components/FieldMessage"
 import {
   AUDITOR_PERIOD_UPDATE_REASONS,
   AuditorPeriodFormSchema,
@@ -109,7 +110,9 @@ export function EditAuditorPeriodDialog({
         className="max-w-[480px] sm:max-w-[480px] gap-0 p-0 overflow-hidden"
       >
         <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
-          <DialogTitle>{t("detail.page.editRole.title")}</DialogTitle>
+          <DialogTitle>
+            {t("detail.page.editRole.accessPeriodTitle")}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -155,6 +158,10 @@ export function EditAuditorPeriodDialog({
                   error={!!form.formState.errors.new_access_valid_until}
                   captionLayout="dropdown"
                 />
+                <FieldMessage
+                  error={form.formState.errors.new_access_valid_until}
+                  data-testid="edit-auditor-period-date-error"
+                />
               </div>
             </div>
 
@@ -178,9 +185,17 @@ export function EditAuditorPeriodDialog({
                   error={!!form.formState.errors.reason}
                   className="bg-card"
                 />
-                <span className="text-sm text-amber-600/80">
-                  {t("detail.page.editRole.reasonMandatory")}
-                </span>
+                {/* Error replaces the standing hint, matching EditRoleScopeDialog. */}
+                {form.formState.errors.reason ? (
+                  <FieldMessage
+                    error={form.formState.errors.reason}
+                    data-testid="edit-auditor-period-reason-error"
+                  />
+                ) : (
+                  <span className="text-sm text-amber-600/80">
+                    {t("detail.page.editRole.reasonMandatory")}
+                  </span>
+                )}
               </div>
 
               {/* Four-Eyes approval notice */}

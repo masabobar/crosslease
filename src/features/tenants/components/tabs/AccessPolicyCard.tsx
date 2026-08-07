@@ -16,6 +16,7 @@ import {
 import { ToggleStatePill } from "@/features/tenants/components/ToggleStatePill"
 import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessPolicy"
 import { useUpdateAccessPolicy } from "@/features/tenants/hooks/useUpdateAccessPolicy"
+import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 import { UpdateAccessPolicyFormSchema } from "@/features/tenants/api/schema"
 import type {
   AccessPolicyFlagRecord,
@@ -61,6 +62,8 @@ export function AccessPolicyCard({
   const [isEditing, setIsEditing] = useState(false)
 
   const {
+    setError,
+    getValues,
     register,
     control,
     handleSubmit,
@@ -77,35 +80,40 @@ export function AccessPolicyCard({
     },
   })
 
-  function startEdit() {
-    if (accessPolicy) {
-      reset({
-        support_read_only_access_allowed:
-          accessPolicy.support_read_only_access.enabled,
-        auditor_access_allowed: accessPolicy.auditor_access.enabled,
-        lc_portal_enabled: accessPolicy.lc_portal.enabled,
-        reason: "",
-      })
+  const handleError = useTenantFormErrorHandler({ getValues, setError })
+
+  // The form is built before the policy query resolves, so its `defaultValues` are all
+  // false. Both entering and leaving edit mode reset from the loaded policy instead —
+  // a bare `reset()` would restore those pre-load falses.
+  function policyFormValues() {
+    return {
+      support_read_only_access_allowed:
+        accessPolicy?.support_read_only_access.enabled ?? false,
+      auditor_access_allowed: accessPolicy?.auditor_access.enabled ?? false,
+      lc_portal_enabled: accessPolicy?.lc_portal.enabled ?? false,
+      reason: "",
     }
+  }
+
+  function startEdit() {
+    reset(policyFormValues())
     setIsEditing(true)
   }
 
   function cancelEdit() {
     setIsEditing(false)
-    reset()
+    reset(policyFormValues())
   }
 
+  // mutateAsync rather than mutate so `isSubmitting` stays true for the whole
+  // round-trip and keeps the footer buttons disabled.
   async function onSubmit(data: UpdateAccessPolicyForm) {
     try {
       await mutation.mutateAsync(data)
       toast.success(t("detail.overview.accessPolicy.successToast"))
       setIsEditing(false)
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      handleError(err)
     }
   }
 

@@ -123,7 +123,8 @@
       "description": "Try adjusting or clearing them."
     },
     "actions": {
-      "approve": "Approve"
+      "approve": "Approve",
+      "menuLabel": "Actions"
     }
   },
   "actions": {
@@ -300,6 +301,7 @@
       },
       "editRole": {
         "title": "Edit role & scope",
+        "accessPeriodTitle": "Edit access period",
         "currentRole": "Current role",
         "newRole": "New role",
         "reasonLabel": "Reason for change",

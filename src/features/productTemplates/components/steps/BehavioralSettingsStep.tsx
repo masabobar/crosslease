@@ -26,17 +26,11 @@ function BehavioralSettingsStep({ form }: Props) {
   const { t: tCommon } = useTranslation("common")
   const { control } = form
 
-  // No custom (non-"required") message codes on this step's fields today — the
-  // map is declared explicitly, matching IdentityStep's pattern, so the next
-  // custom code added to one of these Zod fields has an obvious place to go
-  // instead of silently falling through to an untranslated raw code string.
-  const errorMessages: Record<string, string> = {}
+  // Every field on this step carries only the "required" message code, so no per-code map is
+  // needed — same two-argument call as IdentityStep. Add a third argument here if one of these
+  // Zod fields ever gains a custom code, or it will render as the raw code string.
   function resolveMsg(msg: string | undefined) {
-    return resolveFieldErrorMessage(
-      msg,
-      tCommon("validation.required"),
-      errorMessages
-    )
+    return resolveFieldErrorMessage(msg, tCommon("validation.required"))
   }
 
   // Building option lists generically across several enums means the translation key is

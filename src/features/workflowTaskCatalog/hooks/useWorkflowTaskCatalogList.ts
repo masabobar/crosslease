@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { CatalogListResponse } from "@/features/workflowTaskCatalog/api/schema"
 import {
   fetchWorkflowTaskCatalogs,
   WORKFLOW_TASK_CATALOG_QUERY_KEYS,
@@ -9,7 +11,7 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
 
 export function useWorkflowTaskCatalogList(
   params: WorkflowTaskCatalogListParams
-) {
+): UseQueryResult<CatalogListResponse, Error> {
   const normalizedParams: WorkflowTaskCatalogListParams = {
     ...params,
     search:

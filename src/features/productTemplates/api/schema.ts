@@ -1,7 +1,11 @@
 import { z } from "zod"
 import { format } from "date-fns"
-import { TERMINATION_JUSTIFICATION_MIN_LENGTH } from "@/features/productTemplates/constants"
+import {
+  TERMINATION_JUSTIFICATION_MAX_LENGTH,
+  TERMINATION_JUSTIFICATION_MIN_LENGTH,
+} from "@/features/productTemplates/constants"
 import { requiredEnum } from "@/lib/zodHelpers"
+import { FieldDiffItemSchema } from "@/types/api"
 
 // Wire enums — must match refinext-api src/app/modules/product_templates/domain/enums.py exactly
 export const FinancingTypeSchema = z.enum([
@@ -60,6 +64,23 @@ export const AssetCategorySchema = z.enum([
 ])
 export type AssetCategory = z.infer<typeof AssetCategorySchema>
 
+// TemplateStatus mirrors domain/enums.py TemplateStatus exactly (7 values). The bpt1803v2
+// migration (2026-08-05) replaced the old draft/awaiting_*_countersignature/published/
+// deprecated/discarded model with this one — the Four-Eyes awaiting states were folded back
+// into draft. Declared here, above the first response schema that references it, rather than
+// down with the version-history shapes: every `version_status` field below is this enum, and
+// a `const` referenced before its initializer throws at module load.
+export const TemplateStatusSchema = z.enum([
+  "draft",
+  "scheduled",
+  "active",
+  "superseded",
+  "expired",
+  "terminated",
+  "discarded",
+])
+export type TemplateStatus = z.infer<typeof TemplateStatusSchema>
+
 // Wire request/response schemas — match CreateTemplateDraftRequest / UpdateTemplateDraftRequest
 // in refinext-api interfaces/http/schemas/product_template.py. Only financing_type, legal_structure,
 // payment_timing, rate_basis, calculation_model are hard-required at create time (see plan Gap 2) —
@@ -102,7 +123,7 @@ export const TemplateDraftCreatedResponseSchema = z.object({
   template_code: z.string(),
   version_id: z.string().uuid(),
   version_number: z.string(),
-  version_status: z.string(),
+  version_status: TemplateStatusSchema,
 })
 export type TemplateDraftCreatedResponse = z.infer<
   typeof TemplateDraftCreatedResponseSchema
@@ -110,7 +131,7 @@ export type TemplateDraftCreatedResponse = z.infer<
 
 export const TemplateDraftUpdatedResponseSchema = z.object({
   version_id: z.string().uuid(),
-  version_status: z.string(),
+  version_status: TemplateStatusSchema,
 })
 export type TemplateDraftUpdatedResponse = z.infer<
   typeof TemplateDraftUpdatedResponseSchema
@@ -118,7 +139,7 @@ export type TemplateDraftUpdatedResponse = z.infer<
 
 export const TemplateDraftDiscardedResponseSchema = z.object({
   version_id: z.string().uuid(),
-  version_status: z.string(),
+  version_status: TemplateStatusSchema,
 })
 export type TemplateDraftDiscardedResponse = z.infer<
   typeof TemplateDraftDiscardedResponseSchema
@@ -134,7 +155,7 @@ export type PublishTemplateDraftRequest = z.infer<
 export const PublishTemplateDraftResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
-  version_status: z.string(),
+  version_status: TemplateStatusSchema,
   activated_at: z.string(),
   activated_by: z.string().uuid(),
 })
@@ -149,7 +170,7 @@ export type PublishTemplateDraftResponse = z.infer<
 export const NewVersionCreatedResponseSchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
-  version_status: z.string(),
+  version_status: TemplateStatusSchema,
   predecessor_version_id: z.string().uuid().nullable(),
   snapshot_source_version_id: z.string().uuid().nullable(),
 })
@@ -161,7 +182,10 @@ export type NewVersionCreatedResponse = z.infer<
 // Renamed from deprecate/deprecated_at/by by the bpt1803v2 migration (2026-08-05); the
 // response no longer carries an impact summary (ImpactSummarySchema was removed with it).
 export const TerminateTemplateVersionRequestSchema = z.object({
-  justification: z.string().min(TERMINATION_JUSTIFICATION_MIN_LENGTH).max(2000),
+  justification: z
+    .string()
+    .min(TERMINATION_JUSTIFICATION_MIN_LENGTH)
+    .max(TERMINATION_JUSTIFICATION_MAX_LENGTH),
 })
 export type TerminateTemplateVersionRequest = z.infer<
   typeof TerminateTemplateVersionRequestSchema
@@ -169,7 +193,7 @@ export type TerminateTemplateVersionRequest = z.infer<
 
 export const TerminateTemplateVersionResponseSchema = z.object({
   version_id: z.string().uuid(),
-  version_status: z.string(),
+  version_status: TemplateStatusSchema,
   terminated_at: z.string(),
   terminated_by: z.string().uuid(),
 })
@@ -269,21 +293,8 @@ export type ProductTemplateWizardForm = z.infer<
 >
 
 // Version history — matches VersionHistoryResponse / TemplateVersionSummary in
-// refinext-api interfaces/http/schemas/product_template.py. TemplateStatus mirrors
-// domain/enums.py TemplateStatus exactly (7 values). The bpt1803v2 migration (2026-08-05)
-// replaced the old draft/awaiting_*_countersignature/published/deprecated/discarded model
-// with this one — the Four-Eyes awaiting states were folded back into draft.
-export const TemplateStatusSchema = z.enum([
-  "draft",
-  "scheduled",
-  "active",
-  "superseded",
-  "expired",
-  "terminated",
-  "discarded",
-])
-export type TemplateStatus = z.infer<typeof TemplateStatusSchema>
-
+// refinext-api interfaces/http/schemas/product_template.py. TemplateStatusSchema itself is
+// declared above, next to the other wire enums.
 export const UserRefSchema = z.object({
   id: z.string().uuid(),
   display_name: z.string(),
@@ -350,17 +361,11 @@ export const TemplateVersionDetailSchema = z.object({
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
 
-// Wire shape for GET /product-templates/{id}/diff (US 10.8 "Compare versions").
-// Identical to audit's FieldDiffItem (src/features/audit/api/schema.ts) and
-// frameworkAgreements' (src/features/frameworkAgreements/api/schema.ts) — 3rd
-// occurrence per the Rule of Three, noted rather than extracted since it would mean
-// touching two unrelated, already-shipped features for this story.
-export const FieldDiffItemSchema = z.object({
-  field: z.string(),
-  old_value: z.unknown().nullable(),
-  new_value: z.unknown().nullable(),
-})
-export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+// Wire shape for GET /product-templates/{id}/diff (US 10.8 "Compare versions"). The item
+// shape is shared with audit's and frameworkAgreements' diff responses, so it is defined once
+// in @/types/api and re-exported here for the call sites that already import it from this file.
+export { FieldDiffItemSchema }
+export type { FieldDiffItem } from "@/types/api"
 
 // Every compared field is returned, changed or not — the compare modal renders
 // unchanged rows too and derives its highlight from old_value !== new_value client-side.
