@@ -37,6 +37,25 @@ export const api = axios.create({
 
 let refreshPromise: Promise<void> | null = null
 
+/**
+ * A `responseType: "blob"` request (the export downloads) receives its *error* envelope as a
+ * Blob too, so the JSON has to be read out of it before `detail.code` can be recovered —
+ * otherwise every failed download reports the generic fallback instead of what went wrong.
+ */
+async function parseErrorDetail(error: AxiosError) {
+  const raw = error.response?.data
+  let data: unknown = raw
+  if (raw instanceof Blob) {
+    try {
+      data = JSON.parse(await raw.text())
+    } catch {
+      data = undefined
+    }
+  }
+  const envelope = ApiErrorEnvelopeSchema.safeParse(data)
+  return envelope.success ? envelope.data.detail : undefined
+}
+
 api.interceptors.response.use(
   response =>
     response.data?.data !== undefined ? response.data.data : response.data,
@@ -77,11 +96,15 @@ api.interceptors.response.use(
       }
     }
 
-    const envelope = ApiErrorEnvelopeSchema.safeParse(error.response?.data)
-    const detail = envelope.success ? envelope.data.detail : undefined
+    const detail = await parseErrorDetail(error)
+
+    // `error.response` is absent when the request never reached the server — connectivity
+    // loss, timeout, CORS rejection. Reporting that as BAD_REQUEST blames the payload for a
+    // transport failure and sends the UI looking up a code the backend never issues.
+    const fallbackCode = error.response ? "BAD_REQUEST" : "NETWORK_ERROR"
 
     throw new ApiError(
-      detail?.code ?? "BAD_REQUEST",
+      detail?.code ?? fallbackCode,
       detail?.message ?? "Something went wrong",
       detail?.field,
       detail?.errors

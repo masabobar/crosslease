@@ -9,7 +9,10 @@
     "tooShort": "This value is too short.",
     "tooLong": "This value is too long.",
     "invalidFormat": "Please enter a valid email address.",
+    "invalid": "Please enter a valid value.",
+    "invalidPhone": "Please enter a valid phone number.",
     "dateMustBeAfterFrom": "The 'To' date must be after the 'From' date.",
+    "dateNotInPast": "This date cannot be in the past.",
     "rejectedByServer": "The server rejected this value."
   },
   "nav": {
@@ -96,6 +99,7 @@
     "generic": "Something went wrong. Please try again.",
     "title": "Something went wrong",
     "retry": "Try again",
-    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields.",
+    "NETWORK_ERROR": "Cannot reach the server. Check your connection and try again."
   }
 }
