@@ -3,6 +3,7 @@ import { addDays, format } from "date-fns"
 import {
   CreateProductTemplateDraftRequestSchema,
   NewVersionCreatedResponseSchema,
+  ProductTemplatePublishFormSchema,
   ProductTemplateWizardFormSchema,
   PublishTemplateDraftRequestSchema,
   PublishTemplateDraftResponseSchema,
@@ -101,6 +102,32 @@ describe("CreateProductTemplateDraftRequestSchema", () => {
       CreateProductTemplateDraftRequestSchema.parse({
         ...validCreateRequest,
         max_ltv_ratio: "not-a-number",
+      })
+    ).toThrow()
+  })
+
+  // CR-BPT-02 on PRD1042-1798 — the refinancing rate moved from the Framework Agreement
+  // onto the product template.
+  it("accepts effective_rate", () => {
+    expect(() =>
+      CreateProductTemplateDraftRequestSchema.parse({
+        ...validCreateRequest,
+        effective_rate: 4.25,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts a request with no effective_rate — it is optional on the wire", () => {
+    expect(() =>
+      CreateProductTemplateDraftRequestSchema.parse(validCreateRequest)
+    ).not.toThrow()
+  })
+
+  it("rejects effective_rate as a string", () => {
+    expect(() =>
+      CreateProductTemplateDraftRequestSchema.parse({
+        ...validCreateRequest,
+        effective_rate: "4.25",
       })
     ).toThrow()
   })
@@ -383,13 +410,24 @@ describe("ProductTemplateWizardFormSchema", () => {
     ).not.toThrow()
   })
 
-  it("rejects a valid_from in the past", () => {
+  // CR-BPT-08 on PRD1042-1798, as corrected by the client on 6/8/2026: the effective date
+  // is mandatory and must not be in the past **at publication**, not at creation. A draft
+  // legitimately has no date yet, so the draft schema must accept both cases.
+  it("accepts a draft with no valid_from — the date is only mandatory at publish", () => {
+    const noDate = { ...validForm } as Record<string, unknown>
+    delete noDate.valid_from
+    expect(() => ProductTemplateWizardFormSchema.parse(noDate)).not.toThrow()
+  })
+
+  it("accepts a draft whose valid_from has gone into the past", () => {
+    // The draft was saved when the date was still in the future; nothing about saving it
+    // again should fail. The publish gate is what catches the stale date.
     expect(() =>
       ProductTemplateWizardFormSchema.parse({
         ...validForm,
         valid_from: YESTERDAY,
       })
-    ).toThrow()
+    ).not.toThrow()
   })
 
   it("accepts a valid_from of today", () => {
@@ -398,8 +436,97 @@ describe("ProductTemplateWizardFormSchema", () => {
     ).not.toThrow()
   })
 
+  it("accepts an effective rate", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        effective_rate: 4.25,
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts a negative effective rate — negative refinancing rates are a real EUR case", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        effective_rate: -0.5,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a non-numeric effective rate", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        effective_rate: "4.25",
+      })
+    ).toThrow()
+  })
+
+  it("accepts an open-ended valid_until", () => {
+    expect(() =>
+      ProductTemplateWizardFormSchema.parse({
+        ...validForm,
+        valid_until: undefined,
+      })
+    ).not.toThrow()
+  })
+})
+
+describe("ProductTemplatePublishFormSchema", () => {
+  const isoDateOffsetByDays = (days: number) =>
+    format(addDays(new Date(), days), "yyyy-MM-dd")
+  const TODAY = isoDateOffsetByDays(0)
+  const YESTERDAY = isoDateOffsetByDays(-1)
+  const NEXT_MONTH = isoDateOffsetByDays(30)
+
+  const validForm = {
+    template_name: "Full refinancing standard",
+    financing_type: "full_refinancing",
+    legal_structure: "loan_credit",
+    payment_timing: "advance",
+    rate_basis: "30_360",
+    calculation_model: "annuity",
+    first_installment_rule: "following_month",
+    disbursement_derivation_rule: "npv",
+    allowed_asset_categories: ["machinery"],
+    min_term_months: 12,
+    max_term_months: 84,
+    max_ltv_ratio: 85,
+    valid_from: TODAY,
+  }
+
+  it("accepts a form that is ready to publish", () => {
+    expect(() =>
+      ProductTemplatePublishFormSchema.parse(validForm)
+    ).not.toThrow()
+  })
+
+  it("rejects a valid_from in the past — the Draft → Scheduled check", () => {
+    const result = ProductTemplatePublishFormSchema.safeParse({
+      ...validForm,
+      valid_from: YESTERDAY,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map(issue => issue.message)).toContain(
+      "validFromInPast"
+    )
+  })
+
+  it("requires valid_from", () => {
+    const noDate = { ...validForm } as Record<string, unknown>
+    delete noDate.valid_from
+    const result = ProductTemplatePublishFormSchema.safeParse(noDate)
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues
+        .filter(issue => issue.path[0] === "valid_from")
+        .map(issue => issue.message)
+    ).toEqual(["required"])
+  })
+
   it("reports only 'required' for a blank valid_from, not also validFromInPast", () => {
-    const result = ProductTemplateWizardFormSchema.safeParse({
+    const result = ProductTemplatePublishFormSchema.safeParse({
       ...validForm,
       valid_from: "",
     })
@@ -410,13 +537,26 @@ describe("ProductTemplateWizardFormSchema", () => {
     expect(validFromMessages).toEqual(["required"])
   })
 
-  it("accepts an open-ended valid_until", () => {
+  it("still enforces the draft range rules", () => {
+    const result = ProductTemplatePublishFormSchema.safeParse({
+      ...validForm,
+      min_term_months: 90,
+      max_term_months: 84,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.map(issue => issue.message)).toContain(
+      "minTermExceedsMax"
+    )
+  })
+
+  it("still enforces valid_until after valid_from", () => {
     expect(() =>
-      ProductTemplateWizardFormSchema.parse({
+      ProductTemplatePublishFormSchema.parse({
         ...validForm,
-        valid_until: undefined,
+        valid_from: NEXT_MONTH,
+        valid_until: TODAY,
       })
-    ).not.toThrow()
+    ).toThrow()
   })
 })
 
@@ -629,6 +769,23 @@ describe("TemplateVersionDetailSchema", () => {
 
   it("accepts a minimal header-shaped payload", () => {
     expect(() => TemplateVersionDetailSchema.parse(validDetail)).not.toThrow()
+  })
+
+  // CR-BPT-02 — the rate is serialized as a decimal string, like max_ltv_ratio.
+  it("coerces effective_rate from its decimal-string wire form", () => {
+    const parsed = TemplateVersionDetailSchema.parse({
+      ...validDetail,
+      effective_rate: "4.25",
+    })
+    expect(parsed.effective_rate).toBe(4.25)
+  })
+
+  it("accepts a null effective_rate", () => {
+    const parsed = TemplateVersionDetailSchema.parse({
+      ...validDetail,
+      effective_rate: null,
+    })
+    expect(parsed.effective_rate).toBeNull()
   })
 
   it("accepts a fully populated payload with string-wire decimal fields", () => {

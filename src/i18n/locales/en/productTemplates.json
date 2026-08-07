@@ -122,6 +122,8 @@
     "rateType": "Rate type",
     "firstInstallmentRule": "First installment rule",
     "disbursementDerivationRule": "Disbursement derivation rule",
+    "effectiveRate": "Effective rate",
+    "effectiveRateHint": "Refinancing rate for this product. Overridable per deal on the framework agreement.",
     "allowedAssetCategoriesHint": "Select at least one.",
     "minTermMonths": "Min term (months)",
     "maxTermMonths": "Max term (months)",
@@ -129,6 +131,7 @@
     "minVolumeEur": "Min volume (EUR)",
     "maxVolumeEur": "Max volume (EUR)",
     "validFrom": "Valid from",
+    "validFromHint": "Required to publish. A draft can be saved without it.",
     "validUntil": "Valid until",
     "validUntilHint": "Leave empty for open ended.",
     "openEnded": "Open ended",
@@ -136,6 +139,9 @@
     "publicationJustificationPlaceholder": "Add a note about this publication…",
     "confirmPublication": "I confirm this template is ready for publication.",
     "createdAt": "Created at"
+  },
+  "units": {
+    "percent": "%"
   },
   "financingTypes": {
     "full_refinancing": "Full refinancing",

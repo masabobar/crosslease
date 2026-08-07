@@ -6,7 +6,29 @@ import {
   SUPPORT_USER_ROLE,
 } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
-import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
+import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
+import type {
+  ProductTemplateWizardForm,
+  TemplateStatus,
+} from "@/features/productTemplates/api/schema"
+
+// Statuses a user may filter the template list by. `discarded` is deliberately excluded:
+// per CR-BPT-05 on PRD1042-1798 it exists on the backend only, because a draft can be
+// discarded, and "discarded items should not be visible on frontend at all". Offering it in
+// the filter both names a status the user is not meant to know about and guarantees an
+// empty result set. Derived from the schema enum rather than retyped, so a status the
+// backend adds shows up here on its own — see .claude/rules/enums-and-constants.md §3.
+//
+// The Framework Agreement side already drops it in FrameworkAgreementVersionHistoryPage;
+// this keeps the two modules consistent.
+//
+// Lives here rather than in constants.ts because constants.ts is imported *by* api/schema.ts
+// (for the termination-justification bounds), so reading the schema enum from there would
+// close an initialization cycle.
+export const FILTERABLE_TEMPLATE_STATUSES: readonly TemplateStatus[] =
+  TemplateStatusSchema.options.filter(
+    status => status !== TemplateStatusSchema.enum.discarded
+  )
 
 // system_admin is deliberately absent from both lists below: PRD1042-1703 #1 excludes the
 // platform operator from every product_template:* permission (including the four-eyes
@@ -52,6 +74,7 @@ export const WIZARD_STEP_FIELDS: Record<
     "calculation_model",
     "first_installment_rule",
     "disbursement_derivation_rule",
+    "effective_rate",
   ],
   eligibility: [
     "allowed_asset_categories",

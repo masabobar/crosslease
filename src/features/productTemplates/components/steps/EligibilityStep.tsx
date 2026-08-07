@@ -27,6 +27,12 @@ function EligibilityStep({ form }: Props) {
 
   // Mirrors the schema's date rules in the pickers themselves: validity cannot start in
   // the past, and the end date must fall strictly after the start date.
+  //
+  // `minDate={today}` stays on the start picker even though the past-date *rejection* moved
+  // to publish (CR-BPT-08, see ProductTemplatePublishFormSchema). The two are not in
+  // conflict: there is never a reason to pick a past date here, so the calendar keeps
+  // offering only valid ones, while the schema no longer blocks saving a draft that has no
+  // date yet. A draft saved today and published next week is caught by the publish gate.
   const today = new Date()
   const validUntilMinDate = validFrom
     ? addDays(parseISO(validFrom), 1)
@@ -256,6 +262,9 @@ function EligibilityStep({ form }: Props) {
                 />
               )}
             />
+            <p className="mt-2 text-sm text-muted-foreground opacity-80">
+              {t("fields.validFromHint")}
+            </p>
             {errors.valid_from && (
               <p className="mt-1 text-sm text-destructive">
                 {resolveMsg(errors.valid_from.message)}

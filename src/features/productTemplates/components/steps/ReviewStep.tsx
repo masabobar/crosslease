@@ -127,6 +127,15 @@ function ReviewStep({
                 : "—"
             }
           />
+          <ReviewRow
+            label={t("fields.effectiveRate")}
+            value={
+              values.effective_rate !== undefined &&
+              values.effective_rate !== null
+                ? `${values.effective_rate}%`
+                : "—"
+            }
+          />
         </div>
       </SectionCard>
 

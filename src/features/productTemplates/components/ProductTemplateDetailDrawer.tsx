@@ -75,6 +75,18 @@ function DetailBody({ detail }: { detail: TemplateVersionDetail }) {
             `legalStructures.${detail.legal_structure}` as "legalStructures.loan_credit"
           )}
         />
+        {/* Counts as key information since CR-BPT-02 put the refinancing rate on the
+            product: two templates sharing a financing type and legal structure are now
+            told apart precisely by their rate, which is what this panel exists to do. */}
+        <DetailRow
+          label={t("fields.effectiveRate")}
+          value={
+            detail.effective_rate !== undefined &&
+            detail.effective_rate !== null
+              ? `${detail.effective_rate}%`
+              : "—"
+          }
+        />
       </DetailSection>
 
       <DetailSection title={t("sections.validity")}>
