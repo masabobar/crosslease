@@ -11,10 +11,7 @@
 
 **Read priority order:**
 
-1. **Project Planning** (`.project-management/`)
-   - `input/open-questions.md` — open BE/design gaps and resolved decisions
-   - `output/progress/DASHBOARD.md` — live status
-   - Scope itself lives in **Jira (PRD1042)** — pull with `/jira-sync`
+1. **Scope** — lives in **Jira (PRD1042)**; pull with `/jira-sync`
 
 2. **Core Standards** (`CLAUDE.md` — this file)
 
@@ -32,9 +29,7 @@
    - `screen-driven-backlog.md` — one screen per unit; the screen → endpoint mapping
    - `anonymization.md` — when generating docs from client input
 
-4. **Project Rules** (`.project-management/rules/project-rules.md`) — ALWAYS read
-
-**Conflicts:** Project rules > Core standards (this file) > Specialized rules.
+**Conflicts:** Core standards (this file) > Specialized rules.
 Where a specialized rule contradicts this file's Code standards, **this file wins** — flag the drift instead of following the rule file.
 
 ---
@@ -50,9 +45,7 @@ Where a specialized rule contradicts this file's Code standards, **this file win
 | `/resolve-questions`         | Answer open clarification questions                     |
 | `/list-skills`               | Full inventory of this repo's commands                  |
 
-**Decision journal:** `.project-management/output/progress/DASHBOARD.md` — prose only, never a metric.
-Statuses live in Jira, test counts in `pnpm test:run`, gaps in
-`.project-management/input/open-questions.md`.
+Statuses live in Jira, test counts in `pnpm test:run`.
 
 ---
 
@@ -777,7 +770,5 @@ Examples:
 
 ## Related docs
 
-- `.project-management/rules/project-rules.md` — domain rules, roles, session rules, API conventions
-- `.project-management/rules/I18N-RULES.md` — i18n completion checklist
 - `.claude/rules/` — coding, testing, git, screen-driven backlog rules
-- `.project-management/output/progress/DASHBOARD.md` — live project status
+- `handover-*.md` (repo root) — dated continuity briefs: in-flight work, live blockers, decisions not to undo. Read the newest
