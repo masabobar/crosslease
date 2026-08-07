@@ -32,14 +32,25 @@ function draftKey(userId: string): string {
   return `tenant_wizard_draft_${userId}`
 }
 
-export function loadWizardDraft(userId: string): WizardDraft | null {
+/**
+ * `unreadable` is reported separately from `none` so the wizard can say a saved draft was
+ * dropped. Expiry is deliberately *not* unreadable: a draft ageing out after the TTL is
+ * expected and needs no explanation, whereas corrupt or shape-changed data is a surprise
+ * to the user who came back specifically to resume.
+ */
+export type LoadWizardDraftResult =
+  | { status: "none" }
+  | { status: "loaded"; draft: WizardDraft }
+  | { status: "unreadable" }
+
+export function loadWizardDraft(userId: string): LoadWizardDraftResult {
   try {
     const raw = localStorage.getItem(draftKey(userId))
-    if (!raw) return null
+    if (!raw) return { status: "none" }
     const parsed = WizardDraftSchema.safeParse(JSON.parse(raw))
     if (!parsed.success) {
       localStorage.removeItem(draftKey(userId))
-      return null
+      return { status: "unreadable" }
     }
     const draft = {
       step: parsed.data.step,
@@ -48,11 +59,11 @@ export function loadWizardDraft(userId: string): WizardDraft | null {
     }
     if (Date.now() - new Date(draft.savedAt).getTime() > DRAFT_TTL_MS) {
       localStorage.removeItem(draftKey(userId))
-      return null
+      return { status: "none" }
     }
-    return draft
+    return { status: "loaded", draft }
   } catch {
-    return null
+    return { status: "unreadable" }
   }
 }
 

@@ -71,7 +71,11 @@ export default function TenantManagementPage() {
   // is also sent, so a status can never exist without a module.
   const [moduleFilter, setModuleFilter] = useState<ModuleFilter | null>(null)
 
-  const { data: platformModulesData } = usePlatformModules()
+  const {
+    data: platformModulesData,
+    isError: isPlatformModulesError,
+    error: platformModulesError,
+  } = usePlatformModules()
   // Always-on modules are active for every provisioned tenant and cannot be
   // toggled, so filtering by their status has no meaning.
   const platformModules = (platformModulesData?.modules ?? []).filter(
@@ -302,6 +306,7 @@ export default function TenantManagementPage() {
                 placeholder={t("list.filters.from")}
                 maxDate={new Date()}
                 captionLayout="dropdown"
+                data-testid="filter-created-from-date"
               />
               <DatePicker
                 value={toDate ?? undefined}
@@ -313,6 +318,7 @@ export default function TenantManagementPage() {
                 maxDate={new Date()}
                 minDate={fromDate ? parseISO(fromDate) : undefined}
                 captionLayout="dropdown"
+                data-testid="filter-created-to-date"
               />
             </div>
           </div>
@@ -325,18 +331,33 @@ export default function TenantManagementPage() {
           contentClassName="w-56"
         >
           <div className="max-h-52 overflow-y-auto overflow-x-hidden py-1">
-            {platformModules.map(module => (
-              <FilterCheckboxOption
-                key={module.key}
-                checked={moduleFilter?.key === module.key}
-                onClick={() => toggleModuleKey(module.key)}
-                data-testid={`filter-module-${module.key}`}
+            {/* Without this the popover renders empty on failure, which reads as
+                "this tenant set has no filterable modules". */}
+            {isPlatformModulesError ? (
+              <p
+                data-testid="filter-module-error"
+                className="px-3 py-2 text-sm text-destructive"
               >
-                <span className="text-sm text-foreground text-left whitespace-normal">
-                  {module.display_name}
-                </span>
-              </FilterCheckboxOption>
-            ))}
+                {platformModulesError instanceof ApiError
+                  ? t(`errors.${platformModulesError.code}`, {
+                      defaultValue: t("errors.generic"),
+                    })
+                  : t("errors.generic")}
+              </p>
+            ) : (
+              platformModules.map(module => (
+                <FilterCheckboxOption
+                  key={module.key}
+                  checked={moduleFilter?.key === module.key}
+                  onClick={() => toggleModuleKey(module.key)}
+                  data-testid={`filter-module-${module.key}`}
+                >
+                  <span className="text-sm text-foreground text-left whitespace-normal">
+                    {module.display_name}
+                  </span>
+                </FilterCheckboxOption>
+              ))
+            )}
           </div>
           <div className="border-t border-border py-1">
             {MODULE_STATUS_OPTIONS.map(({ isActive, key }) => (

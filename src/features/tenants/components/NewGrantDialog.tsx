@@ -19,6 +19,7 @@ import {
 import { SelectField } from "@/components/ui/select"
 import { useCreateGrant } from "@/features/tenants/hooks/useCreateGrant"
 import { useUsers } from "@/features/users/hooks/useUsers"
+import { ApiError } from "@/lib/api"
 import {
   AccessReasonSchema,
   CreateGrantFormSchema,
@@ -30,9 +31,11 @@ import { formatDateTime, getInitials } from "@/lib/formatters"
 import { UserInitialsAvatar } from "@/features/tenants/components/UserInitialsAvatar"
 import { cn } from "@/lib/utils"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
-import { SUPPORT_USERS_DROPDOWN_PAGE_SIZE } from "@/features/tenants/constants"
-
-const MAX_GRANT_DAYS = 30
+import {
+  DATE_FORMAT,
+  MAX_GRANT_DAYS,
+  SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
+} from "@/features/tenants/constants"
 
 function toISOFromDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number)
@@ -152,9 +155,13 @@ export function NewGrantDialog({
   const { t } = useTranslation("tenants")
   const mutation = useCreateGrant(tenantId)
 
-  const today = format(new Date(), "yyyy-MM-dd")
+  const today = format(new Date(), DATE_FORMAT)
 
-  const { data: usersData } = useUsers({
+  const {
+    data: usersData,
+    isError: isUsersError,
+    error: usersError,
+  } = useUsers({
     role: [SUPPORT_USER_ROLE],
     per_page: SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
   })
@@ -162,6 +169,7 @@ export function NewGrantDialog({
 
   const {
     setError,
+    setValue,
     getValues,
     control,
     register,
@@ -185,7 +193,11 @@ export function NewGrantDialog({
   const accessReason = useWatch({ control, name: "access_reason" })
   const isEmergency =
     accessReason === AccessReasonSchema.enum.emergency_incident_response
-  const maxUntilDate = addDays(parseISO(validFrom || today), MAX_GRANT_DAYS)
+  // Both bounds fall back to `today` for the same reason (date-inputs.md §3): before a
+  // start is chosen the end picker must not offer the past, and the two must agree on
+  // the anchor they use — floor at the start, ceiling MAX_GRANT_DAYS after it.
+  const minUntilDate = parseISO(validFrom || today)
+  const maxUntilDate = addDays(minUntilDate, MAX_GRANT_DAYS)
 
   function handleClose() {
     onOpenChange(false)
@@ -246,18 +258,38 @@ export function NewGrantDialog({
                 {t("detail.grants.newGrantDialog.fields.granteeHint")}
               </span>
             </div>
-            <Controller
-              control={control}
-              name="grantee_id"
-              render={({ field }) => (
-                <GranteePicker
-                  value={field.value}
-                  onChange={field.onChange}
-                  users={supportUsers}
-                  error={!!errors.grantee_id}
-                />
-              )}
-            />
+            {/* grantee_id is required, so a failed support-user query is a dead end —
+                say so rather than rendering an empty picker. */}
+            {isUsersError ? (
+              <p
+                data-testid="new-grant-grantee-error"
+                className="text-sm text-destructive"
+              >
+                {usersError instanceof ApiError
+                  ? t(`errors.${usersError.code}`, {
+                      defaultValue: t("errors.generic"),
+                    })
+                  : t("errors.generic")}
+              </p>
+            ) : (
+              <Controller
+                control={control}
+                name="grantee_id"
+                render={({ field }) => (
+                  <GranteePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    users={supportUsers}
+                    error={!!errors.grantee_id}
+                  />
+                )}
+              />
+            )}
+            {errors.grantee_id && !isUsersError && (
+              <p className="text-xs text-destructive" role="alert">
+                {t("detail.grants.newGrantDialog.errors.required")}
+              </p>
+            )}
           </div>
 
           {/* Access reason */}
@@ -288,6 +320,11 @@ export function NewGrantDialog({
                 />
               )}
             />
+            {errors.access_reason && (
+              <p className="text-xs text-destructive" role="alert">
+                {t("detail.grants.newGrantDialog.errors.required")}
+              </p>
+            )}
           </div>
 
           {/* Valid period */}
@@ -302,7 +339,14 @@ export function NewGrantDialog({
                 render={({ field }) => (
                   <DatePicker
                     value={field.value}
-                    onChange={field.onChange}
+                    onChange={next => {
+                      field.onChange(next)
+                      // The end picker's floor moves with this value, but the
+                      // calendar cannot clear a date already chosen — drop an end
+                      // date the new start has overtaken, as the list filters do.
+                      const until = getValues("valid_until")
+                      if (until && until < next) setValue("valid_until", "")
+                    }}
                     placeholder={t("list.filters.from")}
                     minDate={parseISO(today)}
                     error={!!errors.valid_from}
@@ -319,7 +363,7 @@ export function NewGrantDialog({
                     value={field.value}
                     onChange={field.onChange}
                     placeholder={t("list.filters.to")}
-                    minDate={validFrom ? parseISO(validFrom) : undefined}
+                    minDate={minUntilDate}
                     maxDate={maxUntilDate}
                     error={!!errors.valid_until}
                     captionLayout="dropdown"
@@ -328,11 +372,29 @@ export function NewGrantDialog({
                 )}
               />
             </div>
-            <p className="text-xs text-muted-foreground/80">
-              {t("detail.grants.newGrantDialog.fields.validPeriodHint", {
-                days: MAX_GRANT_DAYS,
-              })}
-            </p>
+            {errors.valid_from || errors.valid_until ? (
+              <p className="text-xs text-destructive" role="alert">
+                {t(
+                  `detail.grants.newGrantDialog.errors.${
+                    errors.valid_from?.message ??
+                    errors.valid_until?.message ??
+                    "required"
+                  }` as "detail.grants.newGrantDialog.errors.required",
+                  {
+                    defaultValue: t(
+                      "detail.grants.newGrantDialog.errors.required"
+                    ),
+                    days: MAX_GRANT_DAYS,
+                  }
+                )}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground/80">
+                {t("detail.grants.newGrantDialog.fields.validPeriodHint", {
+                  days: MAX_GRANT_DAYS,
+                })}
+              </p>
+            )}
           </div>
 
           {/* Additional context */}

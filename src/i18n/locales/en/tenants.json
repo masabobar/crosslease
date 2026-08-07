@@ -155,7 +155,8 @@
       "title": "Continue where you left off?",
       "description": "You have an unfinished tenant creation. Would you like to pick up from where you left off?",
       "continue": "Continue",
-      "startFresh": "Start fresh"
+      "startFresh": "Start fresh",
+      "unreadableDraft": "A saved draft was found but could not be restored, so it has been discarded. Please re-enter the tenant details."
     },
     "leaveDialog": {
       "title": "Leave wizard?",
@@ -488,7 +489,8 @@
           "description": "Limits for {{tenantName}} have been updated."
         },
         "errors": {
-          "minValue": "Minimum value is 1"
+          "minValue": "Minimum value is 1",
+          "required": "This field is required."
         }
       }
     },
@@ -540,7 +542,13 @@
           "description": "{{granteeName}} has access to {{tenantName}} until {{until}}.",
           "unknownGrantee": "Support user"
         },
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "errors": {
+          "required": "This field is required.",
+          "validFromInPast": "The start date cannot be in the past.",
+          "validUntilBeforeValidFrom": "The end date cannot be before the start date.",
+          "grantDurationExceeded": "The grant period cannot exceed {{days}} days."
+        }
       },
       "revokeDialog": {
         "title": "Revoke access grant",
@@ -577,7 +585,54 @@
       "searchMoreHint": "Load more events to widen the search.",
       "clearAll": "Clear all",
       "loadMore": "Load more",
-      "loadingMore": "Loading..."
+      "loadingMore": "Loading...",
+      "eventTypes": {
+        "tenant": {
+          "creation_requested": "Tenant creation requested",
+          "activated": "Tenant activated",
+          "create_rejected": "Tenant creation rejected",
+          "create_expired": "Tenant creation expired",
+          "create_reinitiated": "Tenant creation reinitiated",
+          "modified": "Tenant modified",
+          "mfa_policy_changed": "MFA policy changed",
+          "access_policy_modified": "Access policy modified",
+          "suspend_requested": "Suspension requested",
+          "suspended": "Tenant suspended",
+          "reactivate_requested": "Reactivation requested",
+          "reactivated": "Tenant reactivated",
+          "archive_requested": "Archiving requested",
+          "archived": "Tenant archived",
+          "module_activation_requested": "Module activation requested",
+          "module_activated": "Module activated",
+          "module_deactivated": "Module deactivated"
+        },
+        "support_grant": {
+          "created": "Support grant created",
+          "revoked": "Support grant revoked",
+          "expired": "Support grant expired",
+          "emergency_review_completed": "Emergency grant review completed"
+        },
+        "security": {
+          "permission_denied": "Permission denied",
+          "cross_tenant_attempt": "Cross-tenant access attempt",
+          "cross_tenant_access_permitted": "Cross-tenant access permitted",
+          "cross_tenant_access_blocked": "Cross-tenant access blocked"
+        }
+      },
+      "stateLabels": {
+        "active": "Active",
+        "enabled": "Enabled",
+        "approved": "Approved",
+        "draft": "Draft",
+        "pending": "Pending",
+        "inactive": "Inactive",
+        "disabled": "Disabled",
+        "revoked": "Revoked",
+        "rejected": "Rejected",
+        "suspended": "Suspended",
+        "archived": "Archived",
+        "expired": "Expired"
+      }
     },
     "overview": {
       "edit": "Edit",

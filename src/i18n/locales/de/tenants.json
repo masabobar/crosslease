@@ -155,7 +155,8 @@
       "title": "Dort weitermachen, wo Sie aufgehört haben?",
       "description": "Sie haben eine unfertige Mandantenerstellung. Möchten Sie dort weitermachen, wo Sie aufgehört haben?",
       "continue": "Weiterfahren",
-      "startFresh": "Neu beginnen"
+      "startFresh": "Neu beginnen",
+      "unreadableDraft": "Ein gespeicherter Entwurf wurde gefunden, konnte aber nicht wiederhergestellt werden und wurde verworfen. Bitte geben Sie die Mandantendaten erneut ein."
     },
     "leaveDialog": {
       "title": "Assistenten verlassen?",
@@ -488,7 +489,8 @@
           "description": "Die Limits für {{tenantName}} wurden aktualisiert."
         },
         "errors": {
-          "minValue": "Mindestwert ist 1"
+          "minValue": "Mindestwert ist 1",
+          "required": "Dieses Feld ist erforderlich."
         }
       }
     },
@@ -540,7 +542,13 @@
           "description": "{{granteeName}} hat bis {{until}} Zugriff auf {{tenantName}}.",
           "unknownGrantee": "Support-Benutzer"
         },
-        "cancel": "Abbrechen"
+        "cancel": "Abbrechen",
+        "errors": {
+          "required": "Dieses Feld ist erforderlich.",
+          "validFromInPast": "Das Startdatum darf nicht in der Vergangenheit liegen.",
+          "validUntilBeforeValidFrom": "Das Enddatum darf nicht vor dem Startdatum liegen.",
+          "grantDurationExceeded": "Der Zugriffszeitraum darf {{days}} Tage nicht überschreiten."
+        }
       },
       "revokeDialog": {
         "title": "Zugriffsberechtigung widerrufen",
@@ -577,7 +585,54 @@
       "searchMoreHint": "Laden Sie weitere Ereignisse, um die Suche zu erweitern.",
       "clearAll": "Alle zurücksetzen",
       "loadMore": "Mehr laden",
-      "loadingMore": "Wird geladen..."
+      "loadingMore": "Wird geladen...",
+      "eventTypes": {
+        "tenant": {
+          "creation_requested": "Mandantenerstellung beantragt",
+          "activated": "Mandant aktiviert",
+          "create_rejected": "Mandantenerstellung abgelehnt",
+          "create_expired": "Mandantenerstellung abgelaufen",
+          "create_reinitiated": "Mandantenerstellung erneut gestartet",
+          "modified": "Mandant geändert",
+          "mfa_policy_changed": "MFA-Richtlinie geändert",
+          "access_policy_modified": "Zugriffsrichtlinie geändert",
+          "suspend_requested": "Sperrung beantragt",
+          "suspended": "Mandant gesperrt",
+          "reactivate_requested": "Reaktivierung beantragt",
+          "reactivated": "Mandant reaktiviert",
+          "archive_requested": "Archivierung beantragt",
+          "archived": "Mandant archiviert",
+          "module_activation_requested": "Modulaktivierung beantragt",
+          "module_activated": "Modul aktiviert",
+          "module_deactivated": "Modul deaktiviert"
+        },
+        "support_grant": {
+          "created": "Support-Zugriff erteilt",
+          "revoked": "Support-Zugriff widerrufen",
+          "expired": "Support-Zugriff abgelaufen",
+          "emergency_review_completed": "Prüfung des Notfallzugriffs abgeschlossen"
+        },
+        "security": {
+          "permission_denied": "Zugriff verweigert",
+          "cross_tenant_attempt": "Mandantenübergreifender Zugriffsversuch",
+          "cross_tenant_access_permitted": "Mandantenübergreifender Zugriff zugelassen",
+          "cross_tenant_access_blocked": "Mandantenübergreifender Zugriff blockiert"
+        }
+      },
+      "stateLabels": {
+        "active": "Aktiv",
+        "enabled": "Aktiviert",
+        "approved": "Genehmigt",
+        "draft": "Entwurf",
+        "pending": "Ausstehend",
+        "inactive": "Inaktiv",
+        "disabled": "Deaktiviert",
+        "revoked": "Widerrufen",
+        "rejected": "Abgelehnt",
+        "suspended": "Gesperrt",
+        "archived": "Archiviert",
+        "expired": "Abgelaufen"
+      }
     },
     "overview": {
       "edit": "Bearbeiten",

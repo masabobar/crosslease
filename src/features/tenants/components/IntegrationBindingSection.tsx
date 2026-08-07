@@ -32,7 +32,12 @@ type SectionProps = {
   tenantId: string
   tenantName: string
   isAdmin: boolean
-  isArchived: boolean
+  /**
+   * Whether the binding may be changed. Passed in rather than derived from `isAdmin` so it
+   * matches the module toggles exactly — those require an *active* tenant, and this section
+   * used to settle for "not archived", leaving the binding editable on a suspended tenant.
+   */
+  canEdit: boolean
   dialogOpen: boolean
   onDialogOpenChange: (open: boolean) => void
 }
@@ -376,7 +381,7 @@ export function IntegrationBindingSection({
   tenantId,
   tenantName,
   isAdmin,
-  isArchived,
+  canEdit,
   dialogOpen,
   onDialogOpenChange,
 }: SectionProps) {
@@ -393,19 +398,18 @@ export function IntegrationBindingSection({
 
   // Only ever rendered via `hasBinding ? editButton : undefined` below, so
   // this is always the "edit" (not "configure") state.
-  const editButton =
-    isAdmin && !isArchived ? (
-      <Button
-        type="button"
-        variant="outline"
-        className={`gap-1 ${CARD_ACTION_BUTTON_CLASS}`}
-        onClick={() => onDialogOpenChange(true)}
-        data-testid="btn-edit-integration-binding"
-      >
-        <SquarePen size={14} />
-        {t("detail.overview.integrationBinding.editButton")}
-      </Button>
-    ) : undefined
+  const editButton = canEdit ? (
+    <Button
+      type="button"
+      variant="outline"
+      className={`gap-1 ${CARD_ACTION_BUTTON_CLASS}`}
+      onClick={() => onDialogOpenChange(true)}
+      data-testid="btn-edit-integration-binding"
+    >
+      <SquarePen size={14} />
+      {t("detail.overview.integrationBinding.editButton")}
+    </Button>
+  ) : undefined
 
   return (
     <>
@@ -439,7 +443,7 @@ export function IntegrationBindingSection({
             <p className="text-sm text-muted-foreground text-center">
               {t("detail.overview.integrationBinding.emptyState")}
             </p>
-            {isAdmin && !isArchived && (
+            {canEdit && (
               <Button
                 type="button"
                 variant="outline"

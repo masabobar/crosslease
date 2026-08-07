@@ -240,7 +240,7 @@ export default function TenantDetailPage() {
             <SuspendTenantDialog
               open={isSuspendOpen}
               onOpenChange={setIsSuspendOpen}
-              tenantId={id!}
+              tenantId={id}
               tenantName={tenant.name}
               tenantStatus={tenant.status}
             />
@@ -249,7 +249,7 @@ export default function TenantDetailPage() {
             <ReactivateTenantDialog
               open={isReactivateOpen}
               onOpenChange={setIsReactivateOpen}
-              tenantId={id!}
+              tenantId={id}
               tenantName={tenant.name}
               tenantStatus={tenant.status}
             />
@@ -258,7 +258,7 @@ export default function TenantDetailPage() {
             <ArchiveTenantDialog
               open={isArchiveOpen}
               onOpenChange={setIsArchiveOpen}
-              tenantId={id!}
+              tenantId={id}
               tenantName={tenant.name}
               tenantStatus={tenant.status}
               activeUserCount={
@@ -298,11 +298,11 @@ export default function TenantDetailPage() {
             {/* Tab content */}
             <div className="flex-1 overflow-auto px-8 py-6">
               {effectiveTab === "overview" && (
-                <OverviewTab tenant={tenant} tenantId={id!} isAdmin={isAdmin} />
+                <OverviewTab tenant={tenant} tenantId={id} isAdmin={isAdmin} />
               )}
               {effectiveTab === "modules" && (
                 <ModulesConfigTab
-                  tenantId={id!}
+                  tenantId={id}
                   tenantName={tenant.name}
                   isAdmin={isAdmin}
                   canViewIntegrationBinding={isAdmin || isSupportUser}
@@ -310,11 +310,11 @@ export default function TenantDetailPage() {
                 />
               )}
               {effectiveTab === "governance" && (
-                <GovernanceHistoryTab tenantId={id!} />
+                <GovernanceHistoryTab tenantId={id} />
               )}
               {effectiveTab === "grants" && isAdmin && (
                 <SupportGrantsTab
-                  tenantId={id!}
+                  tenantId={id}
                   tenantName={tenant.name}
                   tenantStatus={tenant.status}
                   isAdmin={isAdmin}

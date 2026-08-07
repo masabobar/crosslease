@@ -38,7 +38,13 @@ vi.mock("@/features/tenants/api/tenantsApi", () => ({
   upsertIntegrationBinding: vi.fn(),
   updateAccessPolicy: vi.fn(),
   TENANTS_QUERY_KEYS: {
-    list: () => ["tenants", "list"],
+    // Mirrors the real factory exactly. An earlier version of this mock had
+    // `list()` return a two-element array, which is what the hooks *should*
+    // invalidate but not what the real `list()` produced — so these assertions
+    // passed against a key that never matched in the browser. Keep the two
+    // shapes distinct here; tenantsApi.test.ts asserts the real ones.
+    lists: () => ["tenants", "list"],
+    list: (params?: unknown) => ["tenants", "list", params],
     detail: (id: string) => ["tenants", "detail", id],
     modules: (id: string) => ["tenants", "modules", id],
     grants: (id: string) => ["tenants", "grants", id],

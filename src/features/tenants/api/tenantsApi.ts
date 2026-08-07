@@ -43,6 +43,11 @@ export type TenantListParams = {
 }
 
 export const TENANTS_QUERY_KEYS = {
+  // Invalidation prefix for every list query. It must stay two elements long:
+  // `list()` with no argument yields `["tenants","list",undefined]`, and React
+  // Query's partial match compares the params slot, so `undefined` there does
+  // NOT match a `list(params)` key. Invalidating `lists()` matches both.
+  lists: () => ["tenants", "list"] as const,
   list: (params?: TenantListParams) => ["tenants", "list", params] as const,
   detail: (id: string) => ["tenants", "detail", id] as const,
   modules: (id: string) => ["tenants", "modules", id] as const,

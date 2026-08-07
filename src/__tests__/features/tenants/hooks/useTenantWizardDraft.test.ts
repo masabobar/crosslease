@@ -44,15 +44,17 @@ describe("useTenantWizardDraft", () => {
     vi.useRealTimers()
   })
 
-  it("returns null when no draft is stored", () => {
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+  it("reports no draft when nothing is stored", () => {
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "none" })
   })
 
   it("round-trips a saved draft", () => {
     saveWizardDraft(USER_ID, "modules", formValues)
-    const draft = loadWizardDraft(USER_ID)
-    expect(draft?.step).toBe("modules")
-    expect(draft?.formValues.name).toBe("Acme Bank")
+    const result = loadWizardDraft(USER_ID)
+    expect(result.status).toBe("loaded")
+    if (result.status !== "loaded") return
+    expect(result.draft.step).toBe("modules")
+    expect(result.draft.formValues.name).toBe("Acme Bank")
   })
 
   it("keeps a half-filled draft — min-length rules must not reject work in progress", () => {
@@ -61,10 +63,13 @@ describe("useTenantWizardDraft", () => {
       name: "",
       code: "",
     })
-    expect(loadWizardDraft(USER_ID)?.formValues.name).toBe("")
+    const result = loadWizardDraft(USER_ID)
+    expect(result.status === "loaded" && result.draft.formValues.name).toBe("")
   })
 
-  it("discards a draft whose step is not a known wizard step", () => {
+  // The distinction matters: `unreadable` is what the wizard tells the user about, while an
+  // absent or expired draft is silent because neither is a surprise.
+  it("reports an unknown step as unreadable and clears it", () => {
     // An earlier deploy's step name would otherwise reach ORDERED_STEPS.indexOf()
     // and silently yield -1.
     writeRaw({
@@ -72,26 +77,26 @@ describe("useTenantWizardDraft", () => {
       formValues,
       savedAt: new Date().toISOString(),
     })
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "unreadable" })
     expect(localStorage.getItem(DRAFT_KEY)).toBeNull()
   })
 
-  it("discards a draft with a missing step", () => {
+  it("reports a missing step as unreadable", () => {
     writeRaw({ formValues, savedAt: new Date().toISOString() })
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "unreadable" })
   })
 
-  it("discards a draft with a non-ISO savedAt", () => {
+  it("reports a non-ISO savedAt as unreadable", () => {
     writeRaw({ step: "identity", formValues, savedAt: "last tuesday" })
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "unreadable" })
   })
 
-  it("discards a draft with malformed JSON", () => {
+  it("reports malformed JSON as unreadable", () => {
     localStorage.setItem(DRAFT_KEY, "{not json")
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "unreadable" })
   })
 
-  it("discards a draft older than the 7-day TTL", () => {
+  it("treats a draft older than the 7-day TTL as absent, not unreadable", () => {
     writeRaw({
       step: "identity",
       formValues,
@@ -99,7 +104,7 @@ describe("useTenantWizardDraft", () => {
     })
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-07-20T00:00:00.000Z"))
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "none" })
     expect(localStorage.getItem(DRAFT_KEY)).toBeNull()
   })
 
@@ -111,17 +116,18 @@ describe("useTenantWizardDraft", () => {
     })
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-07-20T00:00:00.000Z"))
-    expect(loadWizardDraft(USER_ID)?.step).toBe("review")
+    const result = loadWizardDraft(USER_ID)
+    expect(result.status === "loaded" && result.draft.step).toBe("review")
   })
 
   it("scopes drafts per user", () => {
     saveWizardDraft(USER_ID, "identity", formValues)
-    expect(loadWizardDraft("someone-else")).toBeNull()
+    expect(loadWizardDraft("someone-else")).toEqual({ status: "none" })
   })
 
   it("clearWizardDraft removes the stored draft", () => {
     saveWizardDraft(USER_ID, "identity", formValues)
     clearWizardDraft(USER_ID)
-    expect(loadWizardDraft(USER_ID)).toBeNull()
+    expect(loadWizardDraft(USER_ID)).toEqual({ status: "none" })
   })
 })

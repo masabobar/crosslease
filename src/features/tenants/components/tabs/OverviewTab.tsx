@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { ApiError } from "@/lib/api"
 import {
   TenantInfoCard,
   CARD_ACTION_BUTTON_CLASS,
@@ -18,6 +17,7 @@ import type { InfoRow } from "@/features/tenants/components/InfoRows"
 import { TenantStatusBadge } from "@/features/tenants/components/TenantStatusBadge"
 import { AccessPolicyCard } from "@/features/tenants/components/tabs/AccessPolicyCard"
 import { useUpdateTenant } from "@/features/tenants/hooks/useUpdateTenant"
+import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 import {
   isFullTenantResponse,
   createUpdateTenantFormSchema,
@@ -53,6 +53,8 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
   const updateTenantMutation = useUpdateTenant(tenantId)
 
   const {
+    setError,
+    getValues,
     register,
     control,
     handleSubmit,
@@ -68,6 +70,8 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       justification: "",
     },
   })
+
+  const handleError = useTenantFormErrorHandler({ getValues, setError })
 
   const watchedName = useWatch({ control, name: "name" })
   const hasNameChanged =
@@ -106,13 +110,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
       toast.success(t("detail.overview.editDialog.successToast"))
       setIsEditingIdentity(false)
     } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, {
-              defaultValue: t("detail.overview.editDialog.errors.generic"),
-            })
-          : t("detail.overview.editDialog.errors.generic")
-      )
+      handleError(err)
     }
   }
 
@@ -287,6 +285,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   <Input
                     disabled
                     defaultValue={fullTenant.tenant_id}
+                    data-testid="view-tenant-id"
                     className="h-8 text-sm"
                   />
 
@@ -317,6 +316,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   <Input
                     disabled
                     defaultValue={fullTenant.code}
+                    data-testid="view-tenant-code"
                     className="h-8 text-sm"
                   />
 
@@ -329,6 +329,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                     defaultValue={t(
                       `tenantTypes.${fullTenant.tenant_type}` as "tenantTypes.bank"
                     )}
+                    data-testid="view-tenant-type"
                     className="h-8 text-sm"
                   />
 
@@ -359,6 +360,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   <Input
                     disabled
                     defaultValue={countryName(fullTenant.country)}
+                    data-testid="view-country"
                     className="h-8 text-sm"
                   />
 
@@ -369,6 +371,7 @@ export function OverviewTab({ tenant, tenantId, isAdmin }: OverviewTabProps) {
                   <Input
                     disabled
                     defaultValue={currencyLabel(fullTenant.default_currency)}
+                    data-testid="view-default-currency"
                     className="h-8 text-sm"
                   />
 
