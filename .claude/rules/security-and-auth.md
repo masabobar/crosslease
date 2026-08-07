@@ -4,18 +4,19 @@
 **Last Updated:** 2026-07-05
 **Status:** Active
 
-**MANDATORY: Tokens live only in the auth store and never leak into logs, URLs, or server-state caches. Role gating uses the exact wire values. FE checks are presentation-layer UX — the security boundary is the backend. XSS-risk APIs are forbidden without sanitization. Secrets never enter git or `VITE_`-prefixed vars.**
+**MANDATORY: Tokens are cookie-borne and never read, stored, or forwarded by frontend code. Role gating uses the exact wire values. FE checks are presentation-layer UX — the security boundary is the backend. XSS-risk APIs are forbidden without sanitization. Secrets never enter git or `VITE_`-prefixed vars.**
 
 > **FE-only repo.** Server-side auth (session handling, password hashing, rate limiting, resource-level checks) is implemented and ruled in `../refinext-api/`. This file covers what the frontend must do.
 
 ---
 
-## 1. Token Handling (JWT Bearer)
+## 1. Token Handling (cookie-borne JWT)
 
 - Access token expires in 30 minutes; refresh token in 7 days (see CLAUDE.md §API integration).
-- Tokens are **client state** → Zustand auth store only. Never in React Query cache, never in component state beyond the store, never in URL params or `localStorage` unless the store's persistence layer explicitly owns it.
-- The 401 → refresh → retry flow is handled **centrally** in the `@/lib/api` interceptor. Components and feature code never implement refresh logic or read tokens directly — they call `api.*` and get either data or an `ApiError`.
-- Logout clears all tokens from the store (`clearTokens()` — covered by store tests per `.claude/rules/testing.md`).
+- **Tokens live in cookies set by the backend — no token value ever exists in frontend state.** `api` is created with `withCredentials: true`; there is no request interceptor and no `Authorization` header anywhere in `src/lib/api.ts`. Never add one, and never copy a token into the store, the React Query cache, a URL param, or `localStorage`.
+- `useAuthStore` persists exactly one field — `isAuthenticated` — to `localStorage`. It is a UI flag for route guards and for deciding whether a 401 means "attempt refresh", **not** a credential. `clearAuth()` resets it; the cookies themselves are cleared by the backend on logout.
+- The 401 → refresh → retry flow is handled **centrally** in the `@/lib/api` interceptor. Components and feature code never implement refresh logic — they call `api.*` and get either data or an `ApiError`.
+- A consequence worth knowing: because credentials are cookies, a top-level browser navigation to an API URL (`<a href>`, `window.open`) is authenticated. This is a legitimate pattern for endpoints that 302 to a presigned file URL — see `features/lc/api/lcPortalApi.ts`. It is also why an API URL must never be pasted anywhere it could leak to a third party.
 - Never log a token, include one in an error message, or send one to any third-party service.
 
 ## 2. Role-Based Gating (RBAC)
