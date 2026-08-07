@@ -10,7 +10,8 @@ import {
   formatActionType,
   formatDateTime,
 } from "@/lib/formatters"
-import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { toast } from "sonner"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
@@ -23,16 +24,13 @@ type Tab = "overview" | "actor" | "payload"
 
 function CopyButton({ text, testId }: { text: string; testId: string }) {
   const { t } = useTranslation("audit")
-  const [copied, setCopied] = useState(false)
+  // Shared hook rather than a local timer: it also reports a refused write, which the
+  // previous `.catch(() => {})` swallowed — leaving a button that looked inert.
+  const { isCopied, copy } = useCopyToClipboard()
 
-  function handleCopy() {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
-      })
-      .catch(() => {})
+  async function handleCopy() {
+    const didCopy = await copy(text)
+    if (!didCopy) toast.error(t("clipboard.copyFailed"))
   }
 
   return (
@@ -42,9 +40,9 @@ function CopyButton({ text, testId }: { text: string; testId: string }) {
       data-testid={testId}
       onClick={handleCopy}
       className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-      title={copied ? t("drawer.copied") : undefined}
+      title={isCopied ? t("drawer.copied") : undefined}
     >
-      {copied ? <Check size={14} /> : <Copy size={14} />}
+      {isCopied ? <Check size={14} /> : <Copy size={14} />}
     </button>
   )
 }

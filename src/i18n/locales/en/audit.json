@@ -10,6 +10,7 @@
       "searchPill": "Search: \"{{value}}\"",
       "eventTypePill": "Event: {{value}}",
       "entityTypePill": "Entity: {{value}}",
+      "entityIdPill": "Entity ID: {{value}}",
       "actionTypePill": "Action: {{value}}",
       "triggerSourcePill": "Source: {{value}}",
       "datePill": "Date: {{range}}",
@@ -140,5 +141,8 @@
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
+  },
+  "clipboard": {
+    "copyFailed": "Could not copy to the clipboard."
   }
 }

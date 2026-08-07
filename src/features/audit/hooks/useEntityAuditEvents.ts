@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { PaginatedAuditEvents } from "@/features/audit/api/schema"
 import {
   fetchEntityAuditEvents,
   AUDIT_QUERY_KEYS,
@@ -10,7 +12,7 @@ export function useEntityAuditEvents(
   entityId: string,
   page: number,
   perPage: number
-) {
+): UseQueryResult<PaginatedAuditEvents, Error> {
   return useQuery({
     queryKey: AUDIT_QUERY_KEYS.entityList(entityType, entityId, {
       page,

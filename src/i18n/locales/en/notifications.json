@@ -9,7 +9,11 @@
       "email": "Email",
       "template": "Template"
     },
-    "assignTemplate": "Assign template"
+    "assignTemplate": "Assign template",
+    "emptyState": {
+      "title": "No notification types",
+      "description": "No notification types are registered yet."
+    }
   },
   "eventType": {
     "taskAssigned": "Task assigned",
@@ -34,7 +38,6 @@
     "frameworkAgreements": "Framework agreements"
   },
   "errors": {
-    "generic": "Something went wrong. Please try again.",
-    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
+    "generic": "Something went wrong. Please try again."
   }
 }

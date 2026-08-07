@@ -2,14 +2,7 @@ import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { FileText, BarChart2, FolderOpen, Send, Landmark } from "lucide-react"
 import { PATHS } from "@/router/paths"
-
-type WorkspaceSection = {
-  key: string
-  label: string
-  path: string
-  icon: typeof FileText
-  comingSoon?: boolean
-}
+import type { WorkspaceSection } from "@/features/lc/types"
 
 export default function LeasingCompanyWorkspacePage() {
   const { t } = useTranslation("lc")

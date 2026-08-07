@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { FieldDiffItemSchema } from "@/types/api"
 
 export const AuditEventListItemSchema = z.object({
   id: z.string().uuid(),
@@ -19,12 +20,10 @@ export const AuditEventListItemSchema = z.object({
 })
 export type AuditEventListItem = z.infer<typeof AuditEventListItemSchema>
 
-export const FieldDiffItemSchema = z.object({
-  field: z.string(),
-  old_value: z.unknown().nullable(),
-  new_value: z.unknown().nullable(),
-})
-export type FieldDiffItem = z.infer<typeof FieldDiffItemSchema>
+// Shared with frameworkAgreements' and productTemplates' diff responses — defined once in
+// @/types/api, re-exported here so existing import paths keep working.
+export { FieldDiffItemSchema }
+export type { FieldDiffItem } from "@/types/api"
 
 export const AuditEventSchema = z.object({
   id: z.string().uuid(),
@@ -147,7 +146,6 @@ export type AuditQueryParams = {
   action_type?: string | null
   trigger_source?: string | null
   sensitive?: boolean | null
-  tenant_id?: string | null
   from_dt?: string | null
   to_dt?: string | null
   page?: number
