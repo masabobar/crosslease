@@ -1,10 +1,12 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller } from "react-hook-form"
+import { Controller, useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
 import type { SelectOption } from "@/components/ui/select"
 import { SectionCard } from "@/components/shared/SectionCard"
+import { optionalNumber } from "@/lib/utils"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
   CalculationModelSchema,
@@ -24,7 +26,8 @@ type Props = {
 function BehavioralSettingsStep({ form }: Props) {
   const { t } = useTranslation("productTemplates")
   const { t: tCommon } = useTranslation("common")
-  const { control } = form
+  const { control, register } = form
+  const { errors } = useFormState({ control })
 
   // Every field on this step carries only the "required" message code, so no per-code map is
   // needed — same two-argument call as IdentityStep. Add a third argument here if one of these
@@ -157,6 +160,46 @@ function BehavioralSettingsStep({ form }: Props) {
             "fields.disbursementDerivationRule",
             disbursementDerivationRuleOptions
           )}
+
+          {/* CR-BPT-02 on PRD1042-1798: the refinancing rate moved off the Framework
+              Agreement and onto the product, because refinancing is calculated at product
+              level. It sits beside rate basis and calculation model — the fields it is read
+              together with. Optional, matching the wire; CR-BPT-01 has not yet settled
+              which min/max/default parameters a version should carry. */}
+          <div>
+            <Label
+              htmlFor="effective_rate"
+              error={!!errors.effective_rate}
+              className="mb-2"
+            >
+              {t("fields.effectiveRate")}{" "}
+              <span className="font-normal text-muted-foreground">
+                {t("fields.optional")}
+              </span>
+            </Label>
+            <Input
+              id="effective_rate"
+              type="number"
+              // Without this the input's implicit step of 1 rejects fractional rates.
+              step="any"
+              data-testid="effective-rate-input"
+              error={!!errors.effective_rate}
+              endAction={
+                <span className="text-sm text-muted-foreground">
+                  {t("units.percent")}
+                </span>
+              }
+              {...register("effective_rate", { setValueAs: optionalNumber })}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("fields.effectiveRateHint")}
+            </p>
+            {errors.effective_rate && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMsg(errors.effective_rate.message)}
+              </p>
+            )}
+          </div>
         </div>
       </SectionCard>
     </div>

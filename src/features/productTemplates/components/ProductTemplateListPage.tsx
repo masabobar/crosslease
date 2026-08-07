@@ -23,8 +23,10 @@ import {
   PAGE_SIZES,
 } from "@/features/productTemplates/hooks/useProductTemplateListParams"
 import type { PageSize } from "@/features/productTemplates/hooks/useProductTemplateListParams"
-import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
-import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
+import {
+  FILTERABLE_TEMPLATE_STATUSES,
+  PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES,
+} from "@/features/productTemplates/types"
 import type {
   TemplateListItem,
   TemplateStatus,
@@ -190,7 +192,7 @@ export default function ProductTemplateListPage() {
             <SelectItem value={ALL_STATUSES_VALUE}>
               {t("list.filters.allStatuses")}
             </SelectItem>
-            {TemplateStatusSchema.options.map(status => (
+            {FILTERABLE_TEMPLATE_STATUSES.map(status => (
               <SelectItem key={status} value={status}>
                 {t(`versionStatuses.${status}` as "versionStatuses.draft")}
               </SelectItem>

@@ -122,6 +122,8 @@
     "rateType": "Zinstyp",
     "firstInstallmentRule": "Regel für erste Rate",
     "disbursementDerivationRule": "Auszahlungsableitungsregel",
+    "effectiveRate": "Effektivzins",
+    "effectiveRateHint": "Refinanzierungszins für dieses Produkt. Pro Geschäft im Rahmenvertrag überschreibbar.",
     "allowedAssetCategoriesHint": "Wählen Sie mindestens eine aus.",
     "minTermMonths": "Min. Laufzeit (Monate)",
     "maxTermMonths": "Max. Laufzeit (Monate)",
@@ -129,6 +131,7 @@
     "minVolumeEur": "Min. Volumen (EUR)",
     "maxVolumeEur": "Max. Volumen (EUR)",
     "validFrom": "Gültig ab",
+    "validFromHint": "Zum Veröffentlichen erforderlich. Ein Entwurf kann ohne Angabe gespeichert werden.",
     "validUntil": "Gültig bis",
     "validUntilHint": "Leer lassen für unbefristet.",
     "openEnded": "Unbefristet",
@@ -136,6 +139,9 @@
     "publicationJustificationPlaceholder": "Fügen Sie eine Anmerkung zu dieser Veröffentlichung hinzu…",
     "confirmPublication": "Ich bestätige, dass diese Vorlage bereit zur Veröffentlichung ist.",
     "createdAt": "Erstellt am"
+  },
+  "units": {
+    "percent": "%"
   },
   "financingTypes": {
     "full_refinancing": "Vollrefinanzierung",

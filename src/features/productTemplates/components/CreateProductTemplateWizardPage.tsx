@@ -31,6 +31,7 @@ import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import {
   DisbursementDerivationRuleSchema,
   FirstInstallmentRuleSchema,
+  ProductTemplatePublishFormSchema,
   ProductTemplateWizardFormSchema,
   TemplateStatusSchema,
 } from "@/features/productTemplates/api/schema"
@@ -83,7 +84,8 @@ function toUpdatePayload(
     max_ltv_ratio: values.max_ltv_ratio,
     min_volume_eur: values.min_volume_eur,
     max_volume_eur: values.max_volume_eur,
-    valid_from: values.valid_from,
+    effective_rate: values.effective_rate,
+    valid_from: values.valid_from || undefined,
     valid_until: values.valid_until || undefined,
   }
 }
@@ -111,6 +113,7 @@ function toNewVersionFormDefaults(
     max_ltv_ratio: detail.max_ltv_ratio ?? undefined,
     min_volume_eur: detail.min_volume_eur ?? undefined,
     max_volume_eur: detail.max_volume_eur ?? undefined,
+    effective_rate: detail.effective_rate ?? undefined,
     valid_from: detail.valid_from ?? "",
     valid_until: detail.valid_until ?? "",
   }
@@ -257,6 +260,34 @@ function WizardFormView({
   }
 
   async function handlePublish() {
+    // The publish-only gate — CR-BPT-08 on PRD1042-1798. The resolver enforces the draft
+    // rules; the effective date only becomes mandatory, and only becomes checkable against
+    // "today", at this transition. Running it here rather than in the resolver also means a
+    // draft saved last week is re-checked at the moment it is published, which is the case
+    // the old create-time check missed entirely.
+    const publishCheck = ProductTemplatePublishFormSchema.safeParse(
+      form.getValues()
+    )
+    if (!publishCheck.success) {
+      for (const issue of publishCheck.error.issues) {
+        const field = issue.path[0]
+        if (typeof field === "string") {
+          form.setError(field as keyof ProductTemplateWizardForm, {
+            message: issue.message,
+          })
+        }
+      }
+      // The offending fields live on earlier steps, so send the user back to the first one
+      // that has an error — otherwise the messages render on a step nobody is looking at.
+      const firstBadStep = ORDERED_STEPS.find(s =>
+        WIZARD_STEP_FIELDS[s].some(field =>
+          publishCheck.error.issues.some(issue => issue.path[0] === field)
+        )
+      )
+      if (firstBadStep) setStep(firstBadStep)
+      return
+    }
+
     try {
       const ref = await saveDraft()
       if (!ref) return

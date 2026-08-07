@@ -96,6 +96,13 @@ export const CreateProductTemplateDraftRequestSchema = z.object({
   template_description: z.string().max(1000).optional(),
   valid_from: z.string().optional(),
   valid_until: z.string().optional(),
+  // The refinancing rate, moved off the Framework Agreement and onto the product by
+  // CR-BPT-02 on PRD1042-1798 — refinancing is calculated at product level, so the rate
+  // sits with the product. Optional because the wire has it optional on create and update;
+  // the min/max/default parameter set is still open under CR-BPT-01, so the FE must not
+  // invent a bound the BE does not enforce. Unbounded for the same reason the FA's
+  // `effective_rate` was: a negative refinancing rate is a real EUR-market case.
+  effective_rate: z.number().optional(),
   // rate_type and npv_formula_ref are deliberately absent: the BE dropped both from the
   // create/edit requests under CR PRD1042-1546 B9/B10 (pricing belongs to the deal, and the
   // NPV formula resolves server-side to one method). Both stay on the detail response.
@@ -201,96 +208,131 @@ export type TerminateTemplateVersionResponse = z.infer<
   typeof TerminateTemplateVersionResponseSchema
 >
 
-// RHF-facing form schema — stricter than the wire schema, mirroring the PRD's Field Specification
+// RHF-facing form fields — stricter than the wire schema, mirroring the PRD's Field Specification
 // table (every Mandatory field required) for inline per-field validation. The actual POST/PATCH
 // payload sent to the API is the looser wire schema above.
-export const ProductTemplateWizardFormSchema = z
-  .object({
-    template_name: z.string().min(1, "required").max(200),
-    template_description: z.string().max(1000).optional(),
-    financing_type: requiredEnum(FinancingTypeSchema.options),
-    legal_structure: requiredEnum(LegalStructureSchema.options),
-    payment_timing: requiredEnum(PaymentTimingSchema.options),
-    rate_basis: requiredEnum(RateBasisSchema.options),
-    calculation_model: requiredEnum(CalculationModelSchema.options),
-    first_installment_rule: requiredEnum(FirstInstallmentRuleSchema.options),
-    disbursement_derivation_rule: requiredEnum(
-      DisbursementDerivationRuleSchema.options
-    ),
-    allowed_asset_categories: z.array(AssetCategorySchema).min(1, "atLeastOne"),
-    min_term_months: z
-      .number()
-      .int()
-      .min(1, "termBelowMin")
-      .max(600, "termAboveMax")
-      .optional(),
-    max_term_months: z
-      .number()
-      .int()
-      .min(1, "termBelowMin")
-      .max(600, "termAboveMax")
-      .optional(),
-    max_ltv_ratio: z
-      .number()
-      .min(0, "ltvBelowMin")
-      .max(100, "ltvAboveMax")
-      .optional(),
-    min_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
-    max_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
-    valid_from: z.string({ error: "required" }).min(1, "required"),
-    valid_until: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.min_term_months !== undefined &&
-      data.max_term_months !== undefined &&
-      data.min_term_months > data.max_term_months
-    ) {
+//
+// Two schemas are derived from this one object, because the CR draws the line between them:
+// ProductTemplateWizardFormSchema holds the rules a *draft* must satisfy, and
+// ProductTemplatePublishFormSchema adds the ones that only bite at Draft → Scheduled.
+const WizardFormFieldsSchema = z.object({
+  template_name: z.string().min(1, "required").max(200),
+  template_description: z.string().max(1000).optional(),
+  financing_type: requiredEnum(FinancingTypeSchema.options),
+  legal_structure: requiredEnum(LegalStructureSchema.options),
+  payment_timing: requiredEnum(PaymentTimingSchema.options),
+  rate_basis: requiredEnum(RateBasisSchema.options),
+  calculation_model: requiredEnum(CalculationModelSchema.options),
+  first_installment_rule: requiredEnum(FirstInstallmentRuleSchema.options),
+  disbursement_derivation_rule: requiredEnum(
+    DisbursementDerivationRuleSchema.options
+  ),
+  allowed_asset_categories: z.array(AssetCategorySchema).min(1, "atLeastOne"),
+  min_term_months: z
+    .number()
+    .int()
+    .min(1, "termBelowMin")
+    .max(600, "termAboveMax")
+    .optional(),
+  max_term_months: z
+    .number()
+    .int()
+    .min(1, "termBelowMin")
+    .max(600, "termAboveMax")
+    .optional(),
+  max_ltv_ratio: z
+    .number()
+    .min(0, "ltvBelowMin")
+    .max(100, "ltvAboveMax")
+    .optional(),
+  min_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
+  max_volume_eur: z.number().min(0, "volumeBelowMin").optional(),
+  effective_rate: z.number().optional(),
+  // Optional on the draft: per CR-BPT-08 as corrected 6/8/2026, "a draft carries no
+  // effective date; the date becomes mandatory at publish". Required-ness lives in
+  // ProductTemplatePublishFormSchema below, not here.
+  valid_from: z.string().optional(),
+  valid_until: z.string().optional(),
+})
+
+type WizardFormFields = z.infer<typeof WizardFormFieldsSchema>
+
+// Range rules that hold for a draft exactly as they hold for a published version — a
+// min above its max is wrong whether or not the version has been published yet.
+function addRangeIssues(data: WizardFormFields, ctx: z.RefinementCtx): void {
+  if (
+    data.min_term_months !== undefined &&
+    data.max_term_months !== undefined &&
+    data.min_term_months > data.max_term_months
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "minTermExceedsMax",
+      path: ["min_term_months"],
+    })
+  }
+  if (
+    data.min_volume_eur !== undefined &&
+    data.max_volume_eur !== undefined &&
+    data.min_volume_eur > data.max_volume_eur
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "minVolumeExceedsMax",
+      path: ["min_volume_eur"],
+    })
+  }
+  // Both dates are wire-formatted yyyy-MM-dd, so lexicographic comparison is chronological.
+  // Only meaningful once both are set — an end date alone has no start to fall after.
+  if (
+    data.valid_until &&
+    data.valid_from &&
+    data.valid_until <= data.valid_from
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "validUntilNotAfterFrom",
+      path: ["valid_until"],
+    })
+  }
+}
+
+// What a draft must satisfy. Drives the RHF resolver, so it is what per-step `trigger()`
+// and Save-as-draft enforce.
+export const ProductTemplateWizardFormSchema =
+  WizardFormFieldsSchema.superRefine(addRangeIssues)
+export type ProductTemplateWizardForm = z.infer<
+  typeof ProductTemplateWizardFormSchema
+>
+
+// What publishing additionally requires — CR-BPT-08 on PRD1042-1798, as corrected by the
+// client on 6/8/2026: the effective date is mandatory and must not be in the past **at the
+// Draft → Scheduled transition, not at creation**. Checking it earlier is the bug this
+// split fixes: it blocked saving a draft that had every right to exist without a date yet,
+// and it let a draft saved days ago go stale into the past unnoticed, because nothing
+// re-checked the date at the moment it actually starts mattering.
+//
+// Not wired into the resolver — the wizard runs it explicitly in handlePublish so the two
+// gates cannot be confused with one another.
+export const ProductTemplatePublishFormSchema =
+  WizardFormFieldsSchema.superRefine((data, ctx) => {
+    addRangeIssues(data, ctx)
+    // `else if`, so a blank date reports "required" alone rather than also claiming to be
+    // in the past — two messages on one empty field read as two separate problems.
+    if (!data.valid_from) {
       ctx.addIssue({
         code: "custom",
-        message: "minTermExceedsMax",
-        path: ["min_term_months"],
+        message: "required",
+        path: ["valid_from"],
       })
-    }
-    if (
-      data.min_volume_eur !== undefined &&
-      data.max_volume_eur !== undefined &&
-      data.min_volume_eur > data.max_volume_eur
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        message: "minVolumeExceedsMax",
-        path: ["min_volume_eur"],
-      })
-    }
-    // Both dates are wire-formatted yyyy-MM-dd, so lexicographic comparison is
-    // chronological. valid_from is guarded against "" so a blank field reports only
-    // its own "required" issue rather than also claiming to be in the past.
-    if (
-      data.valid_from !== "" &&
-      data.valid_from < format(new Date(), "yyyy-MM-dd")
-    ) {
+    } else if (data.valid_from < format(new Date(), "yyyy-MM-dd")) {
       ctx.addIssue({
         code: "custom",
         message: "validFromInPast",
         path: ["valid_from"],
       })
     }
-    if (
-      data.valid_until !== undefined &&
-      data.valid_until !== "" &&
-      data.valid_until <= data.valid_from
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        message: "validUntilNotAfterFrom",
-        path: ["valid_until"],
-      })
-    }
   })
-export type ProductTemplateWizardForm = z.infer<
-  typeof ProductTemplateWizardFormSchema
->
 
 // Version history — matches VersionHistoryResponse / TemplateVersionSummary in
 // refinext-api interfaces/http/schemas/product_template.py. TemplateStatusSchema itself is
@@ -351,6 +393,9 @@ export const TemplateVersionDetailSchema = z.object({
   max_ltv_ratio: z.coerce.number().nullable().optional(),
   min_volume_eur: z.coerce.number().nullable().optional(),
   max_volume_eur: z.coerce.number().nullable().optional(),
+  // Serialized as a decimal string, like max_ltv_ratio — coerced for the same reason.
+  // CR-BPT-02: the rate lives on the product template version now, not on the agreement.
+  effective_rate: z.coerce.number().nullable().optional(),
   valid_from: z.string().nullable().optional(),
   valid_until: z.string().nullable().optional(),
   // On the wire but previously stripped — surfaced for the detail drawer's Metadata

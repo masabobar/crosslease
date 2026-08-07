@@ -206,6 +206,15 @@ export default function ProductTemplateDetailPage() {
               : notSet
           }
         />
+        {/* CR-BPT-02 on PRD1042-1798 — the refinancing rate belongs to the product now. */}
+        <DetailRow
+          label={t("fields.effectiveRate")}
+          value={
+            data.effective_rate !== undefined && data.effective_rate !== null
+              ? `${data.effective_rate}%`
+              : notSet
+          }
+        />
         <DetailRow
           label={t("sections.npvFormulaReference")}
           value={

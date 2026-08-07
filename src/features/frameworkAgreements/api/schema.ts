@@ -41,8 +41,10 @@ export const VFE_AMOUNT_MIN = 0
 
 // `effective_rate` is deliberately absent from every schema below. CR-FA-01 removed it from
 // the agreement and the backend has already dropped it from create, update, the detail and
-// draft responses and the pricing snapshot. CR-BPT-02 moves it to the Bank Product Template,
-// which does **not** carry it yet — so the rate currently exists nowhere in the contract.
+// draft responses and the pricing snapshot. CR-BPT-02 moved it to the Bank Product Template,
+// which now carries it on create, update and the version detail response — see
+// `effective_rate` in features/productTemplates/api/schema.ts. Do not reintroduce it here:
+// the rate is a product-level parameter that the agreement reads through its template.
 // Historical values survive on FAVersionDetailResponse, which still carries `effective_rate`
 // and `vfe_rate` for versions created before the change.
 
