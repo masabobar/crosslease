@@ -3,6 +3,12 @@
     "title": "Pending approvals",
     "subtitle": "Review and act on requests submitted by other administrators under the four-eyes policy.",
     "loadError": "Failed to load pending approvals. Please try again.",
+    "retry": "Try again",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "rowsPerPage": "Rows per page"
+    },
     "breadcrumb": {
       "home": "Home",
       "pendingApprovals": "Pending approvals"
@@ -65,7 +71,8 @@
     "submittedDaysAgo": "{{count}}d ago ({{absolute}})",
     "expiryExpired": "0h",
     "expiryHours": "{{count}}h",
-    "expiryDays": "{{count}}d"
+    "expiryDays": "{{count}}d",
+    "viewDetails": "View details for {{action}}"
   },
   "modal": {
     "action": "ACTION",
@@ -162,7 +169,8 @@
     },
     "filtered": {
       "title": "No requests found",
-      "subtitle": "Switch to All to see the full history."
+      "subtitle": "Switch to All to see the full history.",
+      "searchSubtitle": "No requests on this page match your search. Search covers the page you are viewing — try another page, or switch to All to widen the result set."
     },
     "viewAuditLog": "View audit log"
   },

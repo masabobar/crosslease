@@ -1,9 +1,23 @@
 import { useState, useRef, useEffect } from "react"
 import { useLocation, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Activity, Check } from "lucide-react"
+import { Activity, Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@/components/ui/pagination"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { buildPageNumbers } from "@/lib/pagination"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { ApiError } from "@/lib/api"
@@ -16,10 +30,16 @@ import { PendingApprovalDetailDrawer } from "@/features/governedActions/componen
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useToastStore } from "@/store/toastStore"
 import { PATHS } from "@/router/paths"
-import { canReviewGovernedAction } from "@/features/governedActions/constants"
+import {
+  canReviewGovernedAction,
+  PAGE_SIZES,
+} from "@/features/governedActions/constants"
+import type { PageSize } from "@/features/governedActions/constants"
+import { formatActorName } from "@/features/governedActions/utils"
 import { canAccessAuditTrail } from "@/features/audit/types"
 import {
   GovernedActionStatusSchema,
+  GovernedActionTypeSchema,
   initiatorSnapshot,
   platformInviteSnapshot,
 } from "@/features/governedActions/api/schema"
@@ -29,6 +49,9 @@ import type {
 } from "@/features/governedActions/api/schema"
 
 type Tab = "all" | GovernedActionStatus
+
+const FIRST_PAGE = 1
+const DEFAULT_PAGE_SIZE: PageSize = PAGE_SIZES[1]
 
 const TABS: Tab[] = [
   "all",
@@ -50,6 +73,8 @@ export default function PendingApprovalsPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>("all")
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(FIRST_PAGE)
+  const [perPage, setPerPage] = useState<PageSize>(DEFAULT_PAGE_SIZE)
   const highlightRowRef = useRef<HTMLDivElement | null>(null)
   const [reviewAction, setReviewAction] = useState<GovernedAction | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -60,8 +85,12 @@ export default function PendingApprovalsPage() {
   const statusFilter =
     activeTab === "all" ? undefined : ([activeTab] as GovernedActionStatus[])
 
-  const { data, isLoading, isError } = useGovernedActions({
+  // `per_page` is sent explicitly: the endpoint's own default is 20, and without a
+  // pagination control that silently capped the screen at the first 20 actions.
+  const { data, isLoading, isError, refetch, isFetching } = useGovernedActions({
     status: statusFilter,
+    page,
+    per_page: perPage,
   })
 
   const withdrawAction = useWithdrawAction()
@@ -100,6 +129,23 @@ export default function PendingApprovalsPage() {
         )
       })
     : actions
+
+  // Both reset to page 1: the current page number is meaningless against a different
+  // result set, and landing on a page that no longer exists renders an empty list.
+  function handleTabChange(tab: Tab) {
+    setActiveTab(tab)
+    setPage(FIRST_PAGE)
+  }
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(FIRST_PAGE)
+  }
+
+  function handlePerPageChange(size: PageSize) {
+    setPerPage(size)
+    setPage(FIRST_PAGE)
+  }
 
   function handleReview(action: GovernedAction) {
     setReviewAction(action)
@@ -159,12 +205,13 @@ export default function PendingApprovalsPage() {
   }
 
   function resolvePersonName(action: GovernedAction): string {
-    if (action.action_type === "user_platform_invite") {
+    if (
+      action.action_type === GovernedActionTypeSchema.enum.user_platform_invite
+    ) {
       const display = platformInviteSnapshot(action)
       if (display.full_name) return display.full_name
     }
-    const { first_name, last_name } = initiatorSnapshot(action)
-    return first_name ? `${first_name} ${last_name}` : "—"
+    return formatActorName(initiatorSnapshot(action))
   }
 
   function handleApproveSuccess(action: GovernedAction) {
@@ -205,7 +252,7 @@ export default function PendingApprovalsPage() {
         <SearchInput
           placeholder={t("search.placeholder")}
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => handleSearchChange(e.target.value)}
           className="w-[288px]"
           data-testid="search-input"
         />
@@ -221,7 +268,7 @@ export default function PendingApprovalsPage() {
                 key={tab}
                 type="button"
                 variant="ghost"
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={cn(
                   "h-full rounded-none px-2.5 text-sm whitespace-nowrap",
                   activeTab === tab
@@ -243,10 +290,19 @@ export default function PendingApprovalsPage() {
       <div className="flex flex-col gap-2">
         {isError && !isLoading && (
           <div
-            className="py-12 text-center text-sm text-muted-foreground"
+            className="flex flex-col items-center gap-3 py-12 text-center text-sm text-muted-foreground"
             data-testid="actions-load-error"
           >
             {t("page.loadError")}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+              data-testid="actions-load-retry"
+            >
+              {t("page.retry")}
+            </Button>
           </div>
         )}
 
@@ -281,7 +337,14 @@ export default function PendingApprovalsPage() {
                   {t("empty.filtered.title")}
                 </p>
                 <p className="text-sm text-muted-foreground max-w-[364px]">
-                  {t("empty.filtered.subtitle")}
+                  {/* Search is client-side over the loaded page — GET /governed-actions
+                      exposes no search parameter (only status / action_type /
+                      subject_type / initiator_id / page / per_page), so a match on
+                      another page cannot be found from here. The copy says so rather
+                      than implying the request does not exist. */}
+                  {search.trim()
+                    ? t("empty.filtered.searchSubtitle")
+                    : t("empty.filtered.subtitle")}
                 </p>
               </div>
             )}
@@ -325,6 +388,88 @@ export default function PendingApprovalsPage() {
             />
           ))}
       </div>
+
+      {/* Pagination — shown whenever a page loaded, so the row-count control stays
+          reachable even on a single-page result set */}
+      {data && !isError && (
+        <div className="flex items-center justify-end gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">
+              {t("page.pagination.rowsPerPage")}
+            </span>
+            <Select
+              value={String(perPage)}
+              onValueChange={v => handlePerPageChange(Number(v) as PageSize)}
+            >
+              <SelectTrigger
+                data-testid="pagination-page-size-select"
+                className="h-8 rounded-xl px-2 text-xs w-auto gap-1"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map(size => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* NOTE: Button children rather than shadcn PaginationLink — PaginationLink
+              renders an <a>, and these controls change page state in place rather than
+              navigating, so an anchor would be a false affordance. The Pagination /
+              PaginationContent / PaginationItem wrappers still supply the nav + list
+              semantics. Same reasoning as UserManagementPage. */}
+          <Pagination className="mx-0 w-auto justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  data-testid="pagination-prev-button"
+                  onClick={() => setPage(Math.max(FIRST_PAGE, page - 1))}
+                  disabled={page === FIRST_PAGE}
+                  className="h-8 gap-1.5 rounded-xl pl-1.5 pr-2.5 text-sm"
+                >
+                  <ChevronLeft size={16} />
+                  {t("page.pagination.previous")}
+                </Button>
+              </PaginationItem>
+
+              {buildPageNumbers(page, data.total_pages).map((item, idx) => (
+                <PaginationItem key={item === "..." ? `ellipsis-${idx}` : item}>
+                  {item === "..." ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <Button
+                      variant={item === page ? "outline" : "ghost"}
+                      data-testid={`pagination-page-${item}`}
+                      onClick={() => setPage(item)}
+                      className="size-8 rounded-xl p-0 text-sm"
+                    >
+                      {item}
+                    </Button>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <Button
+                  variant="ghost"
+                  data-testid="pagination-next-button"
+                  onClick={() => setPage(Math.min(data.total_pages, page + 1))}
+                  disabled={page >= data.total_pages}
+                  className="h-8 gap-1.5 rounded-xl pl-2.5 pr-1.5 text-sm"
+                >
+                  {t("page.pagination.next")}
+                  <ChevronRight size={16} />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Details drawer */}
       <PendingApprovalDetailDrawer

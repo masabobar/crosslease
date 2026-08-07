@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button"
 import { ChangeSection } from "@/features/governedActions/components/ChangeSection"
 import { FieldRow } from "@/features/governedActions/components/FieldRow"
 import { ChainEntry } from "@/features/governedActions/components/ChainEntry"
-import { RoleBadge } from "@/features/users/components/RoleBadge"
-import { USER_ROLES } from "@/features/users/types"
-import type { UserRole } from "@/features/users/types"
+import { ActorRole } from "@/features/governedActions/components/ActorRole"
 import { formatDateTime } from "@/lib/formatters"
+import { RENDERED_CHAIN_ENTRY_COUNT } from "@/features/governedActions/constants"
 import {
+  formatActorName,
   getGovernedActionSubject,
   HAS_CHANGE_SECTION,
   type GovernedActionSubjectKind,
@@ -73,24 +73,15 @@ function ActorCard({
   date: string | null | undefined
 }) {
   const { t } = useTranslation("pendingApprovals")
-  const name = snapshot.first_name
-    ? `${snapshot.first_name} ${snapshot.last_name}`
-    : "—"
 
   return (
     <InfoCard title={title}>
       <div className="flex flex-col gap-3">
         <FieldRow label={t("drawer.name")}>
-          <span className="font-semibold">{name}</span>
+          <span className="font-semibold">{formatActorName(snapshot)}</span>
         </FieldRow>
         <FieldRow label={t("drawer.roleAtTime")}>
-          {snapshot.role && USER_ROLES.includes(snapshot.role as UserRole) ? (
-            <RoleBadge role={snapshot.role as UserRole} />
-          ) : snapshot.role ? (
-            <span className="text-sm">{snapshot.role}</span>
-          ) : (
-            <span>—</span>
-          )}
+          <ActorRole role={snapshot.role} />
         </FieldRow>
         <FieldRow label={dateLabel}>
           <span>{date ? formatDateTime(date) : "—"}</span>
@@ -106,11 +97,6 @@ type AffectedEntityLabelKey =
   | "drawer.affectedTemplate"
   | "drawer.affectedTenant"
   | "drawer.affectedModule"
-
-// The request chain renders only the current action until the correlation_id lookup
-// lands (see the TODO at the REQUEST CHAIN block below), so the count it displays is
-// pinned to the single <ChainEntry> rendered there rather than inlined in the markup.
-const RENDERED_CHAIN_ENTRY_COUNT = 1
 
 const AFFECTED_ENTITY_LABEL_KEY: Record<
   GovernedActionSubjectKind,

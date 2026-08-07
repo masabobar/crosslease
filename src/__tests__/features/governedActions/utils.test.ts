@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest"
-import { getGovernedActionSubject } from "@/features/governedActions/utils"
+import {
+  formatActorName,
+  getGovernedActionSubject,
+  HAS_CHANGE_SECTION,
+} from "@/features/governedActions/utils"
 import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 const BASE_ACTION = {
@@ -133,5 +137,47 @@ describe("getGovernedActionSubject", () => {
   it("returns a null value when the expected field is absent", () => {
     const subject = getGovernedActionSubject(actionWith("user_role_change", {}))
     expect(subject).toEqual({ kind: "user", value: null })
+  })
+})
+
+describe("formatActorName", () => {
+  it("joins first and last name", () => {
+    expect(formatActorName({ first_name: "Jane", last_name: "Doe" })).toBe(
+      "Jane Doe"
+    )
+  })
+
+  // The regression this helper exists for: every snapshot field is optional, and the
+  // five call sites previously interpolated both names directly, rendering
+  // "Jane undefined" whenever the BE omitted last_name.
+  it("omits an absent last name instead of rendering 'undefined'", () => {
+    expect(formatActorName({ first_name: "Jane" })).toBe("Jane")
+  })
+
+  it("falls back to the last name when only it is present", () => {
+    expect(formatActorName({ last_name: "Doe" })).toBe("Doe")
+  })
+
+  it("returns the placeholder for an empty, null or undefined snapshot", () => {
+    expect(formatActorName({})).toBe("—")
+    expect(formatActorName(null)).toBe("—")
+    expect(formatActorName(undefined)).toBe("—")
+  })
+
+  it("treats whitespace-only names as absent", () => {
+    expect(formatActorName({ first_name: "   ", last_name: "  " })).toBe("—")
+  })
+})
+
+describe("HAS_CHANGE_SECTION", () => {
+  it("gates the action types whose CHANGE section renders", () => {
+    expect(HAS_CHANGE_SECTION.has("user_role_change")).toBe(true)
+    expect(HAS_CHANGE_SECTION.has("partner_merge")).toBe(true)
+  })
+
+  // partner_confirm snapshots carry only a partner id and ChangeSection has no branch
+  // for it, so gating it in would render an empty card.
+  it("excludes partner_confirm", () => {
+    expect(HAS_CHANGE_SECTION.has("partner_confirm")).toBe(false)
   })
 })

@@ -57,6 +57,18 @@ export function canReviewGovernedAction(
   return !!role && GOVERNED_ACTION_APPROVE_ROLES[actionType] === role
 }
 
+// Page sizes offered by the pending-approvals list. Capped at 100 because that is
+// `per_page`'s maximum on GET /governed-actions (openapi.json); the endpoint's own
+// default is 20, which is why the list must send the value explicitly.
+export const PAGE_SIZES = [10, 25, 50, 100] as const
+export type PageSize = (typeof PAGE_SIZES)[number]
+
+// The request chain renders only the current action until the correlation_id lookup
+// lands (Q-002 backend gap), so the count both hosts display is pinned to the single
+// <ChainEntry> each renders. Shared so the two cannot drift apart, and so the
+// eventual real count has one place to replace.
+export const RENDERED_CHAIN_ENTRY_COUNT = 1
+
 // Shared status → dot-color mapping, used by ActionRow's status indicator and
 // by ChainEntry's request-chain dots. Previously defined independently in
 // three places with drifted values for withdrawn/expired (gray-400 vs

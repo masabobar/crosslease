@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { ActionStatusBadge } from "@/features/governedActions/components/ActionStatusBadge"
 import { formatDateTime } from "@/lib/formatters"
 import {
+  formatActorName,
   getGovernedActionSubject,
   type GovernedActionSubjectKind,
 } from "@/features/governedActions/utils"
@@ -80,19 +81,6 @@ const SUBJECT_LABEL_KEY: Record<GovernedActionSubjectKind, SubjectLabelKey> = {
   module: "row.module",
 }
 
-function getInitiatorName(action: GovernedAction): string {
-  const snap = initiatorSnapshot(action)
-  if (!snap?.first_name) return "—"
-  return `${snap.first_name} ${snap.last_name}`
-}
-
-function getApproverName(action: GovernedAction): string {
-  if (!action.approver_snapshot) return "—"
-  const snap = approverSnapshot(action)
-  if (!snap?.first_name) return "—"
-  return `${snap.first_name} ${snap.last_name}`
-}
-
 type Props = {
   action: GovernedAction
   currentUserId: string
@@ -137,7 +125,7 @@ export function ActionRow({
       <span className="font-medium text-foreground/80">
         {t("row.by")}:
       </span>{" "}
-      {getInitiatorName(action)}
+      {formatActorName(initiatorSnapshot(action))}
     </span>,
     ...(isPending && action.created_at
       ? [
@@ -168,7 +156,7 @@ export function ActionRow({
             <span className="font-medium text-foreground/80">
               {t("row.approvedBy")}:
             </span>{" "}
-            {getApproverName(action)}
+            {formatActorName(approverSnapshot(action))}
           </span>,
         ]
       : []),
@@ -179,7 +167,7 @@ export function ActionRow({
             <span className="font-medium text-foreground/80">
               {t("row.rejectedBy")}:
             </span>{" "}
-            {getApproverName(action)}
+            {formatActorName(approverSnapshot(action))}
           </span>,
         ]
       : []),
@@ -211,11 +199,19 @@ export function ActionRow({
     // is invalid and breaks keyboard/screen-reader navigation. The onClick
     // here only handles "click anywhere in the row" to view details; each
     // nested Button calls stopPropagation so its own click isn't swallowed
-    // by this row-level handler. Keyboard users tab directly to the buttons.
+    // by this row-level handler.
+    //
+    // `tabIndex` + `onKeyDown` give the same "open details" affordance to the
+    // keyboard, because tabbing to the nested buttons is NOT equivalent: those
+    // are Review / Withdraw / Re-initiate, and a resolved row (approved,
+    // rejected, withdrawn) or a pending row the viewer cannot review renders no
+    // button at all — leaving the drawer mouse-only. Deliberately no
+    // role="button": that would recreate the invalid ARIA nesting described
+    // above, so the row stays a focusable container with an accessible name.
     <div
       ref={ref}
       className={cn(
-        "w-full text-left flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors",
+        "w-full text-left flex items-center justify-between px-4 py-4 bg-white rounded-lg border border-border cursor-pointer hover:bg-slate-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         BORDER_COLOR[action.status]
       )}
       style={
@@ -224,7 +220,20 @@ export function ActionRow({
           : undefined
       }
       data-testid={`approval-row-${action.id}`}
+      tabIndex={0}
+      aria-label={t("row.viewDetails", {
+        action: t(`actionTypes.${action.action_type}`),
+      })}
       onClick={() => onViewDetails(action)}
+      onKeyDown={e => {
+        // Only when the row itself has focus — otherwise Enter/Space typed on a
+        // nested Button would also open the drawer behind it.
+        if (e.target !== e.currentTarget) return
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onViewDetails(action)
+        }
+      }}
     >
       {/* Left: info */}
       <div className="flex flex-col gap-2 min-w-0">

@@ -7,6 +7,7 @@ import {
   emailChangeSnapshot,
   platformInviteSnapshot,
   displaySnapshot,
+  GovernedActionTypeSchema,
   AuditorPeriodUpdateSnapshotSchema,
   TenantCreateSnapshotSchema,
   TenantIdSnapshotSchema,
@@ -21,6 +22,8 @@ import type { GovernedAction } from "@/features/governedActions/api/schema"
 import { FieldRow } from "@/features/governedActions/components/FieldRow"
 
 export type ChangeSectionPrefix = "drawer" | "modal"
+
+const ACTION_TYPE = GovernedActionTypeSchema.enum
 
 // The two hosts use different copy for the role-diff boxes (drawer: "PREVIOUS"
 // / "CURRENT", modal: "CURRENT" / "PROPOSED") — not just a namespace prefix —
@@ -106,7 +109,7 @@ export function ChangeSection({
   const { t } = useTranslation("pendingApprovals")
   const p = keyPrefix
 
-  if (action.action_type === "user_role_change") {
+  if (action.action_type === ACTION_TYPE.user_role_change) {
     const s = roleChangeSnapshot(action)
     return (
       <div className="flex items-center gap-2">
@@ -125,7 +128,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "user_email_change") {
+  if (action.action_type === ACTION_TYPE.user_email_change) {
     const s = emailChangeSnapshot(action)
     return (
       <div className="flex items-center gap-2">
@@ -140,7 +143,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "user_auditor_period_update") {
+  if (action.action_type === ACTION_TYPE.user_auditor_period_update) {
     const s = displaySnapshot(action, AuditorPeriodUpdateSnapshotSchema)
     return (
       <div className="flex items-center gap-2">
@@ -159,7 +162,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "tenant_create") {
+  if (action.action_type === ACTION_TYPE.tenant_create) {
     const s = displaySnapshot(action, TenantCreateSnapshotSchema)
     return (
       <div className="flex flex-col gap-3">
@@ -180,9 +183,9 @@ export function ChangeSection({
   }
 
   if (
-    action.action_type === "tenant_suspend" ||
-    action.action_type === "tenant_reactivate" ||
-    action.action_type === "tenant_archive"
+    action.action_type === ACTION_TYPE.tenant_suspend ||
+    action.action_type === ACTION_TYPE.tenant_reactivate ||
+    action.action_type === ACTION_TYPE.tenant_archive
   ) {
     const s = displaySnapshot(action, TenantIdSnapshotSchema)
     return (
@@ -192,7 +195,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "module_activate") {
+  if (action.action_type === ACTION_TYPE.module_activate) {
     const s = displaySnapshot(action, ModuleActivateSnapshotSchema)
     return (
       <div className="flex flex-col gap-3">
@@ -209,7 +212,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "user_platform_invite") {
+  if (action.action_type === ACTION_TYPE.user_platform_invite) {
     const s = platformInviteSnapshot(action)
     return (
       <div className="flex flex-col gap-3">
@@ -227,7 +230,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "partner_archive") {
+  if (action.action_type === ACTION_TYPE.partner_archive) {
     const s = displaySnapshot(action, PartnerArchiveSnapshotSchema)
     return (
       <FieldRow label={t(prefixedKey(p, "archiveReason"))}>
@@ -236,7 +239,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "partner_role_assign") {
+  if (action.action_type === ACTION_TYPE.partner_role_assign) {
     const s = displaySnapshot(action, PartnerRoleAssignSnapshotSchema)
     return (
       <FieldRow label={t(prefixedKey(p, "roleToAssign"))}>
@@ -247,7 +250,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "partner_identity_change") {
+  if (action.action_type === ACTION_TYPE.partner_identity_change) {
     const s = displaySnapshot(action, PartnerIdentityChangeSnapshotSchema)
     return (
       <div className="flex flex-col gap-3">
@@ -268,7 +271,7 @@ export function ChangeSection({
     )
   }
 
-  if (action.action_type === "partner_merge") {
+  if (action.action_type === ACTION_TYPE.partner_merge) {
     const s = displaySnapshot(action, PartnerMergeSnapshotSchema)
     return (
       <div className="flex flex-col gap-3">
@@ -286,8 +289,8 @@ export function ChangeSection({
   }
 
   if (
-    action.action_type === "product_template_activate" ||
-    action.action_type === "product_template_deprecate"
+    action.action_type === ACTION_TYPE.product_template_activate ||
+    action.action_type === ACTION_TYPE.product_template_deprecate
   ) {
     const s = displaySnapshot(action, ProductTemplateDeprecateSnapshotSchema)
     return (
@@ -298,7 +301,7 @@ export function ChangeSection({
         <FieldRow label={t(prefixedKey(p, "versionNumber"))}>
           <span>{s.version_number ?? "—"}</span>
         </FieldRow>
-        {action.action_type === "product_template_deprecate" && (
+        {action.action_type === ACTION_TYPE.product_template_deprecate && (
           <FieldRow label={t(prefixedKey(p, "justification"))}>
             <span>{s.justification ?? "—"}</span>
           </FieldRow>
