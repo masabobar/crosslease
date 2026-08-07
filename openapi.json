@@ -8048,6 +8048,18 @@
             ],
             "title": "Applicable Process Contexts"
           },
+          "task_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskType" },
+              { "type": "null" }
+            ]
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskApplicability" },
+              { "type": "null" }
+            ]
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
@@ -8641,6 +8653,20 @@
         ],
         "title": "CandidateSummary"
       },
+      "CaseType": {
+        "type": "string",
+        "enum": [
+          "main_process",
+          "package_redemption",
+          "single_redemption",
+          "lessee_change",
+          "object_swap",
+          "extension",
+          "asset_event"
+        ],
+        "title": "CaseType",
+        "description": "PRD1042-1790 item 1 — the process a case runs, distinct from the object it runs on\n(``CatalogEntityType``). Seven case types exist; only the two ``*_typed`` ones carry a\nchecklist in the November MVP. The other five run without a catalogue and nothing is built\nto give them one (ticket: *out of scope*). The Financing is deliberately **not** a case type —\nit has actions, not a workflow, and cannot own a catalogue."
+      },
       "CatalogEntityType": {
         "type": "string",
         "enum": ["refinancing_request", "financing", "redemption_request"],
@@ -8719,6 +8745,12 @@
               { "type": "null" }
             ],
             "title": "Entity Id"
+          },
+          "case_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CaseType" },
+              { "type": "null" }
+            ]
           },
           "valid_from": {
             "type": "string",
@@ -8805,6 +8837,43 @@
               { "type": "null" }
             ],
             "title": "Weight"
+          },
+          "display_order": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Display Order"
+          },
+          "stage_categorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
+              },
+              { "type": "null" }
+            ]
+          },
+          "task_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskType" },
+              { "type": "null" }
+            ]
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskApplicability" },
+              { "type": "null" }
+            ]
+          },
+          "responsible_role": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskResponsibleRole" },
+              { "type": "null" }
+            ]
+          },
+          "doc_requirement_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Doc Requirement Ref"
           },
           "status": { "$ref": "#/components/schemas/ChecklistItemStatus" },
           "note": {
@@ -11569,7 +11638,7 @@
       },
       "MaterializeChecklistRequest": {
         "properties": {
-          "entity_type": { "$ref": "#/components/schemas/CatalogEntityType" },
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
           "product_template_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -11590,7 +11659,7 @@
           }
         },
         "type": "object",
-        "required": ["entity_type"],
+        "required": ["case_type"],
         "title": "MaterializeChecklistRequest"
       },
       "MaterializeRequest": {
@@ -13629,6 +13698,12 @@
         ],
         "title": "SuspensionReason"
       },
+      "TaskApplicability": {
+        "type": "string",
+        "enum": ["always", "rule", "person"],
+        "title": "TaskApplicability",
+        "description": "PRD1042-1790 item 4/11 — when a task applies. ``rule`` is evaluated continuously (recorded\nwith the value read and the rule applied); ``person`` is resolved by a case worker as not\nrequired / not available. Both the continuous evaluation and the person resolution are\ncase-runtime; this enum is the authoring-side attribute."
+      },
       "TaskCategory": {
         "type": "string",
         "enum": [
@@ -13732,6 +13807,18 @@
               { "type": "null" }
             ]
           },
+          "task_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskType" },
+              { "type": "null" }
+            ]
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskApplicability" },
+              { "type": "null" }
+            ]
+          },
           "created_by": {
             "type": "string",
             "format": "uuid",
@@ -13774,6 +13861,8 @@
           "doc_requirement_ref",
           "doc_requirement_pin_mode",
           "conditional_trigger",
+          "task_type",
+          "applicability",
           "created_by",
           "created_at",
           "updated_at"
@@ -13885,6 +13974,18 @@
               { "type": "null" }
             ]
           },
+          "task_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskType" },
+              { "type": "null" }
+            ]
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskApplicability" },
+              { "type": "null" }
+            ]
+          },
           "created_by": {
             "type": "string",
             "format": "uuid",
@@ -13921,6 +14022,8 @@
           "doc_requirement_ref",
           "doc_requirement_pin_mode",
           "conditional_trigger",
+          "task_type",
+          "applicability",
           "created_by",
           "created_at",
           "updated_at"
@@ -14017,6 +14120,18 @@
               { "type": "null" }
             ]
           },
+          "task_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskType" },
+              { "type": "null" }
+            ]
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskApplicability" },
+              { "type": "null" }
+            ]
+          },
           "created_by": {
             "type": "string",
             "format": "uuid",
@@ -14059,6 +14174,8 @@
           "doc_requirement_ref",
           "doc_requirement_pin_mode",
           "conditional_trigger",
+          "task_type",
+          "applicability",
           "created_by",
           "created_at",
           "updated_at"
@@ -14077,6 +14194,21 @@
           "system"
         ],
         "title": "TaskResponsibleRole"
+      },
+      "TaskType": {
+        "type": "string",
+        "enum": [
+          "checkbox",
+          "four_eyes_sign_off",
+          "typed_upload",
+          "generated_document",
+          "calculation",
+          "external_handover",
+          "field_capture",
+          "state_transition"
+        ],
+        "title": "TaskType",
+        "description": "PRD1042-1790 item 3/4 — what a task *demands*, distinct from ``TaskCategory`` (a subject-area\nclassification). The type decides what opens for the worker and how the task closes. The exact\neight values are the client's set (ticket \"Task type → Correction 1\"), NOT our internal process\ndoc's six.\n\nClosing rule (item 3, corrected): ``checkbox`` and ``four_eyes_sign_off`` both close on a logged\nhuman action (sign-off is additionally checked against the four-eyes exclusion set); the other\nsix close automatically when their own work happened and carry no button. Closing behaviour is\ncase-runtime (item 12) — this enum is the authoring-side attribute."
       },
       "TemplateCurrentVersionSummary": {
         "properties": {
@@ -15057,6 +15189,18 @@
           "conditional_trigger": {
             "anyOf": [
               { "$ref": "#/components/schemas/ConditionalTrigger" },
+              { "type": "null" }
+            ]
+          },
+          "task_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskType" },
+              { "type": "null" }
+            ]
+          },
+          "applicability": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TaskApplicability" },
               { "type": "null" }
             ]
           }
@@ -16345,6 +16489,12 @@
             ],
             "title": "Entity Id"
           },
+          "case_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CaseType" },
+              { "type": "null" }
+            ]
+          },
           "valid_from": {
             "type": "string",
             "format": "date",
@@ -16433,22 +16583,22 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Description"
           },
-          "entity_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/CatalogEntityType" },
-              { "type": "null" }
-            ]
-          },
           "entity_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
               { "type": "null" }
             ],
             "title": "Entity Id"
-          }
+          },
+          "case_type": { "$ref": "#/components/schemas/CaseType" }
         },
         "type": "object",
-        "required": ["catalog_name", "catalog_layer", "valid_from"],
+        "required": [
+          "catalog_name",
+          "catalog_layer",
+          "valid_from",
+          "case_type"
+        ],
         "title": "CreateCatalogRequest"
       }
     }

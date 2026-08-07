@@ -1901,6 +1901,15 @@ const product_template_id = z
   .optional()
 const CatalogState = z.enum(["active", "archived"])
 const catalog_state = z.union([z.array(CatalogState), z.null()]).optional()
+const CaseType = z.enum([
+  "main_process",
+  "package_redemption",
+  "single_redemption",
+  "lessee_change",
+  "object_swap",
+  "extension",
+  "asset_event",
+])
 const CatalogListItemResponse = z
   .object({
     id: z.string().uuid(),
@@ -1909,6 +1918,7 @@ const CatalogListItemResponse = z
     catalog_state: CatalogState,
     entity_type: z.union([CatalogEntityType, z.null()]),
     entity_id: z.union([z.string(), z.null()]),
+    case_type: z.union([CaseType, z.null()]).optional(),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
@@ -1932,8 +1942,8 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
       valid_from: z.string(),
       valid_until: z.union([z.string(), z.null()]).optional(),
       description: z.union([z.string(), z.null()]).optional(),
-      entity_type: z.union([CatalogEntityType, z.null()]).optional(),
       entity_id: z.union([z.string(), z.null()]).optional(),
+      case_type: CaseType,
     })
     .passthrough()
 const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse =
@@ -1946,6 +1956,7 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
       catalog_state: CatalogState,
       entity_type: z.union([CatalogEntityType, z.null()]),
       entity_id: z.union([z.string(), z.null()]),
+      case_type: z.union([CaseType, z.null()]).optional(),
       valid_from: z.string(),
       valid_until: z.union([z.string(), z.null()]),
       description: z.union([z.string(), z.null()]),
@@ -1997,6 +2008,17 @@ const TaskProcessContext = z.enum([
 ])
 const DocRequirementPinMode = z.enum(["pin_by_id", "pin_by_version"])
 const ConditionalTrigger = z.literal("financing_amount_over_threshold")
+const TaskType = z.enum([
+  "checkbox",
+  "four_eyes_sign_off",
+  "typed_upload",
+  "generated_document",
+  "calculation",
+  "external_handover",
+  "field_capture",
+  "state_transition",
+])
+const TaskApplicability = z.enum(["always", "rule", "person"])
 const InheritedGDValues = z
   .object({
     task_code: z.union([z.string(), z.null()]),
@@ -2044,6 +2066,8 @@ const TaskDefinitionItem = z
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    task_type: z.union([TaskType, z.null()]),
+    applicability: z.union([TaskApplicability, z.null()]),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
@@ -2111,6 +2135,8 @@ const AddTaskRequest = z
     applicable_process_contexts: z
       .union([z.array(TaskProcessContext), z.null()])
       .optional(),
+    task_type: z.union([TaskType, z.null()]).optional(),
+    applicability: z.union([TaskApplicability, z.null()]).optional(),
     is_active: z.boolean().optional().default(true),
     parent_task_id: z.union([z.string(), z.null()]).optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
@@ -2146,6 +2172,8 @@ const TaskResponseWithWarnings = z
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    task_type: z.union([TaskType, z.null()]),
+    applicability: z.union([TaskApplicability, z.null()]),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
@@ -2178,6 +2206,8 @@ const TaskResponse = z
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    task_type: z.union([TaskType, z.null()]),
+    applicability: z.union([TaskApplicability, z.null()]),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
@@ -2204,12 +2234,14 @@ const UpdateTaskRequest = z
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
+    task_type: z.union([TaskType, z.null()]),
+    applicability: z.union([TaskApplicability, z.null()]),
   })
   .partial()
   .passthrough()
 const MaterializeChecklistRequest = z
   .object({
-    entity_type: CatalogEntityType,
+    case_type: CaseType,
     product_template_id: z.union([z.string(), z.null()]).optional(),
     amount_eur: z.union([z.number(), z.string(), z.null()]).optional(),
   })
@@ -2224,6 +2256,17 @@ const ChecklistItemResponse = z
     task_name: z.union([z.string(), z.null()]),
     is_mandatory: z.boolean(),
     weight: z.union([z.string(), z.null()]),
+    display_order: z.union([z.number(), z.null()]).optional(),
+    stage_categorization: z
+      .union([
+        app__modules__workflow_task_catalog__domain__enums__StageCategorization,
+        z.null(),
+      ])
+      .optional(),
+    task_type: z.union([TaskType, z.null()]).optional(),
+    applicability: z.union([TaskApplicability, z.null()]).optional(),
+    responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
+    doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
     status: ChecklistItemStatus,
     note: z.union([z.string(), z.null()]),
     checked_by: z.union([z.string(), z.null()]),
@@ -2810,6 +2853,7 @@ export const schemas = {
   product_template_id,
   CatalogState,
   catalog_state,
+  CaseType,
   CatalogListItemResponse,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
@@ -2821,6 +2865,8 @@ export const schemas = {
   TaskProcessContext,
   DocRequirementPinMode,
   ConditionalTrigger,
+  TaskType,
+  TaskApplicability,
   InheritedGDValues,
   TaskDefinitionItem,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
