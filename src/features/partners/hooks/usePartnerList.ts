@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { PartnerListResponse } from "@/features/partners/api/schema"
 import {
   fetchPartners,
   PARTNERS_QUERY_KEYS,
@@ -9,7 +11,7 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
 export function usePartnerList(
   tenantId: string | null,
   params: PartnerListParams
-) {
+): UseQueryResult<PartnerListResponse, Error> {
   const normalizedParams: PartnerListParams = {
     ...params,
     search:

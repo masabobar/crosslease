@@ -1,11 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { MergeInitiateResponse } from "@/features/partners/api/schema"
 import {
   initiateMerge,
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
 import type { InitiateMergeBody } from "@/features/partners/api/partnersApi"
 
-export function useInitiateMerge(tenantId: string | null) {
+export function useInitiateMerge(
+  tenantId: string | null
+): UseMutationResult<MergeInitiateResponse, Error, InitiateMergeBody> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body: InitiateMergeBody) => initiateMerge(body),

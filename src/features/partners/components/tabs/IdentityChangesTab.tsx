@@ -10,6 +10,11 @@ import type {
   PartnerType,
 } from "@/features/partners/api/schema"
 
+// NOTE: this table is a flex/div grid rather than shadcn <Table>. The columns
+// below mix fixed widths with flex-grow so every partners table lines up
+// column-for-column across tabs; <table>'s own sizing algorithm does not honour
+// those constraints. Converting is tracked as a follow-up and needs per-screen
+// visual verification, so it is deliberately not a drop-in change.
 const COL_FIELD = "w-[150px] shrink-0"
 const COL_STATUS = "w-[130px] shrink-0"
 const COL_PREV = "flex-1 min-w-[160px]"

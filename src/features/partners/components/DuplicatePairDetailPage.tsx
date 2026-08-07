@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Check, ExternalLink, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { DuplicateConfidenceBadge } from "@/features/partners/components/DuplicateConfidenceBadge"
 import { DuplicatePairStatusBadge } from "@/features/partners/components/DuplicatePairStatusBadge"
@@ -15,8 +16,9 @@ import { InitiateMergeDialog } from "@/features/partners/components/InitiateMerg
 import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
 import { usePartnersByIds } from "@/features/partners/hooks/usePartnersByIds"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
+import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
 import {
   PARTNER_DUPLICATE_RESOLVE_ALLOWED_ROLES,
   PARTNER_MERGE_INITIATE_ALLOWED_ROLES,
@@ -25,6 +27,7 @@ import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants
 import { PATHS, partnerDetail } from "@/router/paths"
 import { formatDate } from "@/lib/formatters"
 import { isUuidRouteParam } from "@/lib/routeParams"
+import { ApiError } from "@/lib/api"
 import { DuplicateCandidatePairStatusSchema } from "@/features/partners/api/schema"
 import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 
@@ -80,9 +83,9 @@ function ConfirmedDuplicateSection({
           className="flex-1 gap-2"
         >
           {candidates.map(partner => (
-            <label
+            <Label
               key={partner.partner_id}
-              className="flex items-start gap-3 rounded-xl border border-border px-3 py-3 cursor-pointer has-data-checked:border-primary has-data-checked:bg-primary/5"
+              className="flex items-start gap-3 rounded-xl border border-border px-3 py-3 cursor-pointer font-normal has-data-checked:border-primary has-data-checked:bg-primary/5"
               data-testid={`duplicate-detail-survivor-${partner.partner_id}`}
             >
               <RadioGroupItem value={partner.partner_id} className="mt-1" />
@@ -98,7 +101,7 @@ function ConfirmedDuplicateSection({
                   <PartnerStatusBadge status={partner.status} />
                 </div>
               </div>
-            </label>
+            </Label>
           ))}
         </RadioGroup>
 
@@ -131,10 +134,7 @@ export default function DuplicatePairDetailPage() {
   const { pairId: pairIdParam } = useParams<{ pairId: string }>()
   const pairId = isUuidRouteParam(pairIdParam) ? pairIdParam : undefined
   const { data: currentUser } = useCurrentUser()
-  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
-  const tenantId =
-    currentUser?.tenant_id ??
-    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const tenantId = useResolvedTenantId()
 
   const canResolve =
     !!currentUser &&
@@ -147,7 +147,7 @@ export default function DuplicatePairDetailPage() {
   const [mergeOpen, setMergeOpen] = useState(false)
   const [survivorId, setSurvivorId] = useState<string | null>(null)
 
-  const { data, isLoading, isError } = useDuplicatePairs(tenantId)
+  const { data, isLoading, isError, error } = useDuplicatePairs(tenantId)
   const pair = data?.items.find(p => p.pair_id === pairId)
   const { partnersById, isError: isPartnersError } = usePartnersByIds(
     pair ? [pair.partner_a_id, pair.partner_b_id] : []
@@ -165,6 +165,19 @@ export default function DuplicatePairDetailPage() {
     !!code &&
     (DUPLICATE_RESOLUTION_REASON_CODES as readonly string[]).includes(code)
 
+  // The pair query is tenant-scoped and stays disabled without a tenant, so without this
+  // gate a System Admin arriving on a deep link falls through to "not found" — the pair
+  // exists, they just have no tenant in scope yet (same gate as the queue and registry).
+  if (currentUser && !tenantId) {
+    return (
+      <TenantScopeGate
+        isSystemAdmin={currentUser.role === SYSTEM_ADMIN_ROLE}
+        selectTenantPrompt={t("list.selectTenantPrompt")}
+        tenantRequiredMessage={t("list.tenantRequired")}
+      />
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="p-8 space-y-6">
@@ -174,7 +187,22 @@ export default function DuplicatePairDetailPage() {
     )
   }
 
-  if (isError || !pair) {
+  // Same split as the partner detail page: a failed fetch reports what failed, and only a
+  // successfully loaded queue that has no such pair reports "not found".
+  if (isError) {
+    return (
+      <p
+        className="text-sm text-destructive p-8"
+        data-testid="duplicate-pair-load-error"
+      >
+        {error instanceof ApiError
+          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
+          : t("errors.generic")}
+      </p>
+    )
+  }
+
+  if (!pair) {
     return (
       <p className="text-sm text-destructive p-8">
         {t("duplicates.detail.notFound")}

@@ -15,7 +15,25 @@ export type PageSize = (typeof PAGE_SIZES)[number]
 
 type ParamUpdate = Record<string, string | readonly string[] | null>
 
-export function usePartnerListParams() {
+type PartnerListParams = {
+  page: number
+  perPage: PageSize
+  search: string
+  statusFilters: PartnerStatus[]
+  roleFilters: PartnerRole[]
+  countryFilter: string | null
+  uboFilters: UboCompletenessStatus[]
+  setPage: (p: number) => void
+  setPerPage: (size: PageSize) => void
+  setSearch: (q: string) => void
+  setStatusFilters: (statuses: PartnerStatus[]) => void
+  setRoleFilters: (roles: PartnerRole[]) => void
+  setCountryFilter: (country: string | null) => void
+  setUboFilters: (statuses: UboCompletenessStatus[]) => void
+  clearAllFilters: () => void
+}
+
+export function usePartnerListParams(): PartnerListParams {
   const [params, setParams] = useSearchParams()
 
   function update(changes: ParamUpdate) {

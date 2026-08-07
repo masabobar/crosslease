@@ -21,8 +21,13 @@ import {
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCaptureUboOwnership } from "@/features/partners/hooks/useCaptureUboOwnership"
 import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
-import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { PartnerTypeSchema } from "@/features/partners/api/schema"
+import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
+import {
+  PartnerStatusSchema,
+  PartnerTypeSchema,
+} from "@/features/partners/api/schema"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { selectOnFocus } from "@/lib/utils"
@@ -43,16 +48,20 @@ type Props = {
 function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
   const { t } = useTranslation("partners")
   const mutation = useCaptureUboOwnership(partnerId)
-  const { data: currentUser } = useCurrentUser()
+  const tenantId = useResolvedTenantId()
   const [search, setSearch] = useState("")
+  // The combobox fires this on every keystroke; debounced so typing a partner name costs one
+  // request after the pause rather than one per character.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
-  const { data: partnersData } = usePartnerList(
-    currentUser?.tenant_id ?? null,
-    {
-      status: ["confirmed"],
-      search: search || undefined,
-    }
-  )
+  const {
+    data: partnersData,
+    isError: isPartnersError,
+    error: partnersError,
+  } = usePartnerList(tenantId, {
+    status: [PartnerStatusSchema.enum.confirmed],
+    search: debouncedSearch || undefined,
+  })
 
   const partnerOptions = (partnersData?.items ?? [])
     .filter(
@@ -129,51 +138,66 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
             <Label htmlFor="ubo-partner-combobox">
               {t("detail.ubo.fields.uboPartner")}
             </Label>
-            <Controller
-              control={control}
-              name="ubo_partner_id"
-              render={({ field }) => {
-                const selectedPartner =
-                  partnerOptions.find(o => o.value === field.value) ?? null
-                return (
-                  <Combobox
-                    items={partnerOptions}
-                    filter={null}
-                    value={selectedPartner}
-                    onValueChange={option =>
-                      field.onChange(option?.value ?? "")
-                    }
-                    inputValue={search}
-                    onInputValueChange={setSearch}
-                  >
-                    <ComboboxInput
-                      id="ubo-partner-combobox"
-                      data-testid="capture-ubo-partner"
-                      placeholder={t(
-                        "captureUboDialog.fields.uboPartnerPlaceholder"
-                      )}
-                      showClear
-                      aria-invalid={!!errors.ubo_partner_id}
-                      onFocus={selectOnFocus}
-                    />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        <ComboboxEmpty>
-                          {t("captureUboDialog.fields.uboPartnerNoResults")}
-                        </ComboboxEmpty>
-                        <ComboboxCollection>
-                          {(opt: { value: string; label: string }) => (
-                            <ComboboxItem key={opt.value} value={opt}>
-                              {opt.label}
-                            </ComboboxItem>
-                          )}
-                        </ComboboxCollection>
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                )
-              }}
-            />
+            {/* ubo_partner_id is required, so a failed partner query is a dead end —
+                say so rather than rendering an empty combobox. */}
+            {isPartnersError ? (
+              <p
+                data-testid="capture-ubo-partner-error"
+                className="text-sm text-destructive"
+              >
+                {partnersError instanceof ApiError
+                  ? t(`errors.${partnersError.code}`, {
+                      defaultValue: t("errors.generic"),
+                    })
+                  : t("errors.generic")}
+              </p>
+            ) : (
+              <Controller
+                control={control}
+                name="ubo_partner_id"
+                render={({ field }) => {
+                  const selectedPartner =
+                    partnerOptions.find(o => o.value === field.value) ?? null
+                  return (
+                    <Combobox
+                      items={partnerOptions}
+                      filter={null}
+                      value={selectedPartner}
+                      onValueChange={option =>
+                        field.onChange(option?.value ?? "")
+                      }
+                      inputValue={search}
+                      onInputValueChange={setSearch}
+                    >
+                      <ComboboxInput
+                        id="ubo-partner-combobox"
+                        data-testid="capture-ubo-partner"
+                        placeholder={t(
+                          "captureUboDialog.fields.uboPartnerPlaceholder"
+                        )}
+                        showClear
+                        aria-invalid={!!errors.ubo_partner_id}
+                        onFocus={selectOnFocus}
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          <ComboboxEmpty>
+                            {t("captureUboDialog.fields.uboPartnerNoResults")}
+                          </ComboboxEmpty>
+                          <ComboboxCollection>
+                            {(opt: { value: string; label: string }) => (
+                              <ComboboxItem key={opt.value} value={opt}>
+                                {opt.label}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxCollection>
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  )
+                }}
+              />
+            )}
             {errors.ubo_partner_id && (
               <p className="text-xs text-destructive">
                 {t("captureUboDialog.errors.uboPartnerRequired")}

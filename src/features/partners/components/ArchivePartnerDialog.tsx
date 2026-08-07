@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { ShieldAlert, TriangleAlert } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
@@ -15,7 +16,9 @@ import type { PartnerStatus } from "@/features/partners/api/schema"
 
 const archiveSchema = z.object({
   reason: z.string().min(20),
-  irreversibility_acknowledgement: z.boolean().refine(v => v === true),
+  irreversibility_acknowledgement: z
+    .boolean()
+    .refine(v => v === true, { message: "acknowledgementRequired" }),
 })
 type ArchiveForm = z.infer<typeof archiveSchema>
 
@@ -135,26 +138,37 @@ function ArchivePartnerDialog({
       justificationRows={4}
       extraContent={
         <>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Controller
-              control={control}
-              name="irreversibility_acknowledgement"
-              render={({ field }) => (
-                <Checkbox
-                  data-testid="archive-irreversibility-ack"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-            <span className="text-sm text-foreground leading-snug">
-              {t("archiveDialog.fields.irreversibilityAck.prefix")}
-              <strong>
-                {t("archiveDialog.fields.irreversibilityAck.emphasis")}
-              </strong>
-              {t("archiveDialog.fields.irreversibilityAck.suffix")}
-            </span>
-          </label>
+          <div className="flex flex-col gap-1.5">
+            <Label className="flex items-center gap-2 cursor-pointer font-normal">
+              <Controller
+                control={control}
+                name="irreversibility_acknowledgement"
+                render={({ field }) => (
+                  <Checkbox
+                    data-testid="archive-irreversibility-ack"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-invalid={!!errors.irreversibility_acknowledgement}
+                  />
+                )}
+              />
+              <span className="text-sm text-foreground leading-snug">
+                {t("archiveDialog.fields.irreversibilityAck.prefix")}
+                <strong>
+                  {t("archiveDialog.fields.irreversibilityAck.emphasis")}
+                </strong>
+                {t("archiveDialog.fields.irreversibilityAck.suffix")}
+              </span>
+            </Label>
+            {errors.irreversibility_acknowledgement && (
+              <p
+                className="text-xs text-destructive"
+                data-testid="archive-ack-error"
+              >
+                {t("archiveDialog.errors.acknowledgementRequired")}
+              </p>
+            )}
+          </div>
 
           {requiresFourEyes && (
             <div className="flex gap-2 items-start px-2.5 py-2 rounded-xl bg-warning/10">

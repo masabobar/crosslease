@@ -17,6 +17,11 @@ import {
 import type { PartnerListItem } from "@/features/partners/api/schema"
 import type { PartnerActionType } from "@/features/partners/types"
 
+// NOTE: this table is a flex/div grid rather than shadcn <Table>. The columns
+// below mix fixed widths with flex-grow so every partners table lines up
+// column-for-column across tabs; <table>'s own sizing algorithm does not honour
+// those constraints. Converting is tracked as a follow-up and needs per-screen
+// visual verification, so it is deliberately not a drop-in change.
 const COL_NAME = "flex-1 min-w-[200px] max-w-[320px]"
 const COL_ROLES = "w-[200px] shrink-0"
 const COL_COUNTRY = "w-[90px] shrink-0"
@@ -189,7 +194,22 @@ function PartnerTable({
             key={partner.partner_id}
             data-testid={`partner-row-${partner.partner_id}`}
             onClick={() => onRowClick?.(partner)}
-            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+            // A clickable row needs to be reachable without a mouse. NOTE: no
+            // shadcn primitive covers "row that navigates" — role/tabIndex/key
+            // handling is applied by hand, and only when the row is clickable.
+            role={onRowClick ? "button" : undefined}
+            tabIndex={onRowClick ? 0 : undefined}
+            onKeyDown={
+              onRowClick
+                ? e => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onRowClick(partner)
+                    }
+                  }
+                : undefined
+            }
+            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${onRowClick ? "cursor-pointer" : ""}`}
           >
             <div className={`${COL_NAME} p-2`}>
               <p className="text-sm font-medium truncate text-foreground leading-tight">

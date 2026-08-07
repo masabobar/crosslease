@@ -34,11 +34,14 @@ const resolveSchema = z.object({
 })
 type ResolveForm = z.infer<typeof resolveSchema>
 
-const SUCCESS_TOAST_KEY: Record<ResolveForm["decision"], string> = {
+// `as const` keeps the values as key literals so `t()` accepts them directly —
+// typing them as plain `string` is what previously forced an `as never` at the
+// call site, which silently opted the keys out of i18n type checking.
+const SUCCESS_TOAST_KEY = {
   confirmed_duplicate: "duplicates.resolveDialog.success.confirmedDuplicate",
   confirmed_distinct: "duplicates.resolveDialog.success.confirmedDistinct",
   deferred: "duplicates.resolveDialog.success.deferred",
-}
+} as const satisfies Record<ResolveForm["decision"], string>
 
 // Matches the alert style shown per decision in the Figma design (node 50:6749,
 // "Resolve duplicate - ALERTS"): confirmed_duplicate is a warning-toned alert,
@@ -93,7 +96,7 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
       {
         onSuccess: () => {
           toast[TOAST_VARIANT[values.decision]](
-            t(SUCCESS_TOAST_KEY[values.decision] as never)
+            t(SUCCESS_TOAST_KEY[values.decision])
           )
           handleClose()
         },

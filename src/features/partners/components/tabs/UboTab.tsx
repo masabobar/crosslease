@@ -8,6 +8,11 @@ import { CaptureUboDialog } from "@/features/partners/components/CaptureUboDialo
 import { initialsFromName } from "@/features/partners/utils"
 import { formatDateTime } from "@/lib/formatters"
 
+// NOTE: this table is a flex/div grid rather than shadcn <Table>. The columns
+// below mix fixed widths with flex-grow so every partners table lines up
+// column-for-column across tabs; <table>'s own sizing algorithm does not honour
+// those constraints. Converting is tracked as a follow-up and needs per-screen
+// visual verification, so it is deliberately not a drop-in change.
 const COL_PARTNER = "flex-1 min-w-[220px]"
 const COL_OWNERSHIP = "w-[140px] shrink-0"
 const COL_TYPE = "w-[140px] shrink-0"

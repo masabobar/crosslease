@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { PartnerUboResponse } from "@/features/partners/api/schema"
 import {
   fetchPartnerUbo,
   PARTNERS_QUERY_KEYS,
 } from "@/features/partners/api/partnersApi"
 
-export function usePartnerUbo(partnerId: string) {
+export function usePartnerUbo(
+  partnerId: string
+): UseQueryResult<PartnerUboResponse, Error> {
   return useQuery({
     queryKey: PARTNERS_QUERY_KEYS.ubo(partnerId),
     queryFn: () => fetchPartnerUbo(partnerId),

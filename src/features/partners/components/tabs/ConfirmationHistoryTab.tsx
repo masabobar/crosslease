@@ -8,6 +8,11 @@ import { PartnerStatusSchema } from "@/features/partners/api/schema"
 
 const CONFIRMATION_HISTORY_PAGE_SIZE = 50
 
+// NOTE: this table is a flex/div grid rather than shadcn <Table>. The columns
+// below mix fixed widths with flex-grow so every partners table lines up
+// column-for-column across tabs; <table>'s own sizing algorithm does not honour
+// those constraints. Converting is tracked as a follow-up and needs per-screen
+// visual verification, so it is deliberately not a drop-in change.
 const COL_STATUS = "w-[140px] shrink-0"
 const COL_CAPTURED_BY = "flex-1 min-w-[220px]"
 const COL_CAPTURED_ON = "w-[160px] shrink-0"

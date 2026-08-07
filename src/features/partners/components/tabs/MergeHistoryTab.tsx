@@ -27,11 +27,14 @@ function ReferenceManifestNote({
   manifest: Record<string, unknown>
 }) {
   const { t } = useTranslation("partners")
-  if (typeof manifest.note !== "string") return null
+  // The note carries the re-pointing detail when the BE has produced it. The condition used
+  // to be inverted, so a record that *had* a note was labelled "not yet available" and one
+  // without it showed nothing at all.
+  const note = typeof manifest.note === "string" ? manifest.note : null
   return (
     <div className="flex items-center gap-2 px-3 py-3 bg-muted text-xs text-muted-foreground">
       <Info size={14} className="shrink-0" />
-      {t("detail.mergeHistory.referenceManifestUnavailable")}
+      {note ?? t("detail.mergeHistory.referenceManifestUnavailable")}
     </div>
   )
 }

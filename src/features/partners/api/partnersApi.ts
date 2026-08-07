@@ -41,7 +41,6 @@ import type {
   PartnerRolesResponse,
   PartnerStatus,
   PartnerSubmitResponse,
-  PartnerType,
   PartnerUboResponse,
   ResolutionCandidatesResponse,
   ResolveDuplicatePairResponse,
@@ -342,7 +341,3 @@ export async function initiateMerge(
   const data = await api.post(`/partners/merge`, body)
   return MergeInitiateResponseSchema.parse(data)
 }
-
-// ── Type re-exports for convenience ──────────────────────────────────────────
-
-export type { PartnerType, PartnerStatus, PartnerRole, UboCompletenessStatus }

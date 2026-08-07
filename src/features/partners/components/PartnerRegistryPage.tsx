@@ -30,6 +30,7 @@ import {
 import type { PageSize } from "@/features/partners/hooks/usePartnerListParams"
 import {
   PartnerRoleSchema,
+  PartnerStatusSchema,
   UboCompletenessStatusSchema,
 } from "@/features/partners/api/schema"
 import type {
@@ -42,16 +43,16 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { PARTNER_SUBMIT_ALLOWED_ROLES } from "@/features/partners/types"
 import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
-import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
+import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 
-const STATUS_OPTIONS: PartnerStatus[] = [
-  "draft",
-  "pending_confirmation",
-  "confirmed",
-  "rejected",
-  "archived",
-  "pending_archive",
-]
+// Deliberately every status except `merged`: a merged partner is absorbed into
+// its survivor and never listed, so offering it as a filter would only ever
+// return nothing. Derived from the schema so a newly added status shows up here.
+const STATUS_OPTIONS: PartnerStatus[] = PartnerStatusSchema.options.filter(
+  s => s !== PartnerStatusSchema.enum.merged
+)
 
 const ROLE_OPTIONS: PartnerRole[] = PartnerRoleSchema.options
 
@@ -63,10 +64,7 @@ export default function PartnerRegistryPage() {
   const { data: currentUser } = useCurrentUser()
   const canSubmit =
     !!currentUser && PARTNER_SUBMIT_ALLOWED_ROLES.includes(currentUser.role)
-  const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
-  const tenantId =
-    currentUser?.tenant_id ??
-    (currentUser?.role === SYSTEM_ADMIN_ROLE ? selectedTenantId : null)
+  const tenantId = useResolvedTenantId()
 
   const [countrySearch, setCountrySearch] = useState("")
   const [activeDialog, setActiveDialog] = useState<PartnerActionType | null>(
@@ -103,6 +101,10 @@ export default function PartnerRegistryPage() {
     clearAllFilters,
   } = usePartnerListParams()
 
+  // Debounced before it reaches the query key: the field re-renders on every keystroke, but
+  // only the settled value is worth a request.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
+
   const filteredCountries = countrySearch.trim()
     ? COUNTRIES.filter(
         c =>
@@ -114,7 +116,7 @@ export default function PartnerRegistryPage() {
   const { data, isLoading, isError } = usePartnerList(tenantId, {
     limit: perPage,
     offset: (page - 1) * perPage,
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
     ...(statusFilters.length > 0 ? { status: statusFilters } : {}),
     ...(roleFilters.length > 0 ? { role: roleFilters } : {}),
     ...(countryFilter ? { country: [countryFilter] } : {}),
