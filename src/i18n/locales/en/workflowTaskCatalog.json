@@ -328,6 +328,10 @@
       "title": "Submission is blocked",
       "description": "These required tasks are still outstanding. Every required task on the case is listed, because the projection cannot yet narrow them to a single phase."
     },
+    "projectionError": {
+      "title": "Outstanding required tasks could not be checked",
+      "description": "Whether this case is blocked from submission is unknown. Treat the checklist below as incomplete until this loads."
+    },
     "setItemStatus": {
       "title": "Complete or waive task",
       "subtitle": "{{task}}",

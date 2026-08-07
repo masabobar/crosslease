@@ -1,4 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
+import type {
+  InfiniteData,
+  UseInfiniteQueryResult,
+} from "@tanstack/react-query"
+import type { AuditTrailResponse } from "@/features/workflowTaskCatalog/api/schema"
 import {
   fetchWorkflowTaskCatalogAuditTrail,
   WORKFLOW_TASK_CATALOG_QUERY_KEYS,
@@ -12,7 +17,10 @@ export const AUDIT_TRAIL_PAGE_SIZE = 25
 // list's paging.
 export function useWorkflowTaskCatalogAuditTrail(
   catalogId: string | undefined
-) {
+): UseInfiniteQueryResult<
+  InfiniteData<AuditTrailResponse, string | null>,
+  Error
+> {
   return useInfiniteQuery({
     queryKey: WORKFLOW_TASK_CATALOG_QUERY_KEYS.auditTrail(catalogId ?? ""),
     queryFn: ({ pageParam }) =>

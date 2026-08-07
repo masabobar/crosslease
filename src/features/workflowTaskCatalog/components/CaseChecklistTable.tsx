@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatDateTime } from "@/lib/formatters"
+import { resolveUserDisplayName } from "@/features/users/utils"
 import { CaseChecklistItemStatusBadge } from "@/features/workflowTaskCatalog/components/CaseChecklistStatusBadge"
 import { SetChecklistItemStatusDialog } from "@/features/workflowTaskCatalog/components/SetChecklistItemStatusDialog"
 import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
@@ -34,16 +35,6 @@ function CaseChecklistTable({
     null
   )
   const notApplicable = t("caseChecklist.notApplicable")
-
-  // `checked_by` is a bare UUID with no display name on the wire, so it is joined against the
-  // tenant's user list — the same client-side join the catalogue detail page uses for
-  // `created_by`, and the same underlying gap (Q-042). Falls back to the raw id rather than
-  // rendering blank when the actor is outside the fetched page.
-  function resolveActor(userId: string | null): string {
-    if (!userId) return notApplicable
-    const user = users.find(u => u.id === userId)
-    return user ? `${user.first_name} ${user.last_name}` : userId
-  }
 
   return (
     <>
@@ -90,7 +81,15 @@ function CaseChecklistTable({
                   <TableCell>
                     <CaseChecklistItemStatusBadge status={item.status} />
                   </TableCell>
-                  <TableCell>{resolveActor(item.checked_by)}</TableCell>
+                  <TableCell>
+                    {/* `checked_by` is a bare UUID with no display name on the wire (Q-042),
+                        so it is joined against the user page the screen already holds. */}
+                    {resolveUserDisplayName(
+                      users,
+                      item.checked_by,
+                      notApplicable
+                    )}
+                  </TableCell>
                   <TableCell>
                     {item.checked_at
                       ? formatDateTime(item.checked_at)

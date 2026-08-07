@@ -15,6 +15,8 @@ import { buildPageNumbers } from "@/lib/pagination"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import { workflowTaskCatalogDetail } from "@/router/paths"
 import { WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import { WorkflowTaskCatalogFilterBar } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogFilterBar"
@@ -51,6 +53,10 @@ export default function WorkflowTaskCatalogListPage() {
     setFilters,
   } = useWorkflowTaskCatalogListParams()
 
+  // Debounced before it reaches the query key: the field re-renders on every keystroke, but
+  // only the settled value is worth a request.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
+
   const [createDialogLayer, setCreateDialogLayer] =
     useState<CatalogLayer | null>(null)
 
@@ -70,7 +76,7 @@ export default function WorkflowTaskCatalogListPage() {
   const { data, isLoading, isError, error } = useWorkflowTaskCatalogList({
     page,
     per_page: perPage,
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
     ...(filters.catalogLayer.length
       ? { catalog_layer: filters.catalogLayer }
       : {}),

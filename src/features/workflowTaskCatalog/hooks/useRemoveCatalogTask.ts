@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
 import {
   removeCatalogTask,
   WORKFLOW_TASK_CATALOG_QUERY_KEYS,
@@ -10,7 +11,11 @@ type RemoveCatalogTaskInput = {
   taskId: string
 }
 
-export function useRemoveCatalogTask() {
+export function useRemoveCatalogTask(): UseMutationResult<
+  void,
+  Error,
+  RemoveCatalogTaskInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

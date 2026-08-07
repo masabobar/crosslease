@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { TaskResponseWithWarnings } from "@/features/workflowTaskCatalog/api/schema"
 import {
   updateCatalogTask,
   WORKFLOW_TASK_CATALOG_QUERY_KEYS,
@@ -12,7 +14,11 @@ type UpdateCatalogTaskInput = {
   body: UpdateTaskRequest
 }
 
-export function useUpdateCatalogTask() {
+export function useUpdateCatalogTask(): UseMutationResult<
+  TaskResponseWithWarnings,
+  Error,
+  UpdateCatalogTaskInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({

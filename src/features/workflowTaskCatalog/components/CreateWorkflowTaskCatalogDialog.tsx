@@ -17,6 +17,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
+import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
 import { ENTITY_TYPE_OPTIONS } from "@/features/workflowTaskCatalog/constants"
@@ -132,6 +133,8 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
     register,
     handleSubmit,
     reset,
+    getValues,
+    setError,
     formState: { errors },
   } = useForm<CreateCatalogFormValues>({
     resolver: zodResolver(
@@ -189,6 +192,18 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
           handleClose()
         },
         onError: err => {
+          // A VALIDATION_ERROR names the offending wire fields; the helper camel-cases them
+          // (catalog_name → catalogName) so they land on this form's own fields rather than
+          // being flattened into a generic toast. Falls through when nothing maps.
+          if (
+            applyApiFieldErrors({
+              error: err,
+              fields: Object.keys(getValues()),
+              setError,
+            })
+          )
+            return
+
           toast.error(
             err instanceof ApiError
               ? t(`errors.${err.code}` as "errors.generic", {

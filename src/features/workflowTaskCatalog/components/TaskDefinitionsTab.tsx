@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableEmptyState } from "@/components/ui/empty"
+import { cn } from "@/lib/utils"
+import { STATUS_PILL_CLASSES } from "@/features/workflowTaskCatalog/constants"
 import { TaskDefinitionSheet } from "@/features/workflowTaskCatalog/components/TaskDefinitionSheet"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import { LayerActionSchema } from "@/features/workflowTaskCatalog/api/schema"
@@ -31,9 +33,7 @@ const TYPE_BADGE_CLASSES: Record<LayerAction, string> = {
 function TypeBadge({ layerAction }: { layerAction: LayerAction }) {
   const { t } = useTranslation("workflowTaskCatalog")
   return (
-    <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${TYPE_BADGE_CLASSES[layerAction]}`}
-    >
+    <span className={cn(STATUS_PILL_CLASSES, TYPE_BADGE_CLASSES[layerAction])}>
       {t(`detail.taskDefinitions.types.${layerAction}`)}
     </span>
   )
@@ -169,6 +169,16 @@ function TaskDefinitionsTab({
                 data-testid={`task-definition-row-${task.id}`}
                 className="cursor-pointer"
                 onClick={() => setSheetState({ mode: "view", task })}
+                // The row is the only way into the task sheet, so it has to be reachable
+                // without a mouse. Deliberately no role="button" — that would override the
+                // implicit `row` role and break the table's semantics for screen readers.
+                tabIndex={0}
+                onKeyDown={event => {
+                  if (event.key !== "Enter" && event.key !== " ") return
+                  // Space scrolls the page by default.
+                  event.preventDefault()
+                  setSheetState({ mode: "view", task })
+                }}
               >
                 <TableCell>
                   <TypeBadge layerAction={task.layer_action} />

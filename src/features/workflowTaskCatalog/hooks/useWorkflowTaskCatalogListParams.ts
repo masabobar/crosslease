@@ -30,7 +30,19 @@ function readEnumList<T extends string>(
   )
 }
 
-export function useWorkflowTaskCatalogListParams() {
+type WorkflowTaskCatalogListParams = {
+  page: number
+  perPage: PageSize
+  search: string
+  filters: WorkflowTaskCatalogFilterState
+  hasActiveFilters: boolean
+  setPage: (p: number) => void
+  setPerPage: (size: PageSize) => void
+  setSearch: (q: string) => void
+  setFilters: (changes: Partial<WorkflowTaskCatalogFilterState>) => void
+}
+
+export function useWorkflowTaskCatalogListParams(): WorkflowTaskCatalogListParams {
   const [params, setParams] = useSearchParams()
 
   function update(changes: ParamUpdate) {

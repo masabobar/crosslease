@@ -1,15 +1,20 @@
 import { useForm, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { File } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TaskDefinitionViewPanel } from "@/features/workflowTaskCatalog/components/TaskDefinitionViewPanel"
+import { TaskDocumentLinkageFields } from "@/features/workflowTaskCatalog/components/TaskDocumentLinkageFields"
+import {
+  PARENT_BACKED_ACTIONS,
+  taskFormSchema,
+} from "@/features/workflowTaskCatalog/taskFormSchema"
+import type { TaskFormValues } from "@/features/workflowTaskCatalog/taskFormSchema"
 import { SelectField } from "@/components/ui/select"
 import {
   Sheet,
@@ -18,7 +23,6 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet"
-import { Badge } from "@/components/ui/badge"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
@@ -35,7 +39,6 @@ import {
 import {
   CatalogLayerSchema,
   ConditionalTriggerSchema,
-  DocRequirementPinModeSchema,
   LayerActionSchema,
   TaskProcessContextSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -50,101 +53,15 @@ import type {
 
 type SheetMode = "view" | "edit" | "add"
 
-// Identity fields belong to the task itself for `defined` and `supplement`; for `override` and
-// `deactivated` they come from the Global Default parent, so the form requires a parent instead.
-const PARENT_BACKED_ACTIONS: readonly LayerAction[] = [
-  LayerActionSchema.enum.override,
-  LayerActionSchema.enum.deactivated,
-]
-
 // US 15.7. Document linkage is authorable on three of the four change types — including override,
 // which may set its own linkage even though it inherits everything else. Note this is the OPPOSITE
 // of conditional_trigger, which override inherits and must not author
 // (`task_service._OVERRIDE_FORBIDDEN_ON_UPDATE`). Deactivate takes the parent and nothing else.
-// Wire values, taken from the schema rather than hand-listed.
-const PIN_MODE_OPTIONS = DocRequirementPinModeSchema.options
-
 const DOC_LINKABLE_ACTIONS: readonly LayerAction[] = [
   LayerActionSchema.enum.defined,
   LayerActionSchema.enum.supplement,
   LayerActionSchema.enum.override,
 ]
-
-// Mirrors AddTaskRequest.validate_action_constraints: a defined/supplement task must carry all
-// of these. `openapi.json` marks them optional — the requirement lives in the Pydantic model
-// validator, not the schema, so the FE has to encode it or every submit 422s.
-const REQUIRED_FOR_OWN_TASK = [
-  "task_name",
-  "task_description",
-  "category",
-  "responsible_role",
-  "is_mandatory",
-  "display_order",
-  "stage_categorization",
-] as const
-
-const taskFormSchema = z
-  .object({
-    layer_action: LayerActionSchema,
-    parent_task_id: z.string(),
-    task_code: z.string(),
-    task_name: z.string(),
-    task_description: z.string(),
-    category: z.string(),
-    responsible_role: z.string(),
-    weight: z.string(),
-    display_order: z.string(),
-    is_mandatory: z.string(),
-    stage_categorization: z.string(),
-    applicable_process_contexts: z.array(TaskProcessContextSchema),
-    is_active: z.boolean(),
-    treasury_threshold_trigger: z.boolean(),
-    doc_requirement_ref: z.string(),
-    doc_requirement_pin_mode: z.string(),
-  })
-  .superRefine((data, ctx) => {
-    // US 15.7 field spec: Ref is optional (O), Pinning Behavior is conditional (C) — "mandatory
-    // when a Ref is present". The BE enforces the same symmetry: (ref is None) != (pin is None)
-    // is rejected. No default pin mode is chosen here because OQ-03 leaves it to tenant policy.
-    if (data.doc_requirement_ref && !data.doc_requirement_pin_mode) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["doc_requirement_pin_mode"],
-        message: "required",
-      })
-    }
-
-    // Override and deactivate carry nothing but their parent — the values are inherited.
-    if (PARENT_BACKED_ACTIONS.includes(data.layer_action)) {
-      if (!data.parent_task_id) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["parent_task_id"],
-          message: "required",
-        })
-      }
-      return
-    }
-
-    if (!data.task_code.trim()) {
-      ctx.addIssue({ code: "custom", path: ["task_code"], message: "required" })
-    }
-    for (const field of REQUIRED_FOR_OWN_TASK) {
-      if (!data[field].trim()) {
-        ctx.addIssue({ code: "custom", path: [field], message: "required" })
-      }
-    }
-    // Required by the BE too, and easy to miss because it is a multi-select rather than a field.
-    if (data.applicable_process_contexts.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["applicable_process_contexts"],
-        message: "required",
-      })
-    }
-  })
-
-type TaskFormValues = z.infer<typeof taskFormSchema>
 
 function toFormValues(
   task: TaskDefinitionItem | null,
@@ -250,15 +167,6 @@ function toWirePayload(
   }
 }
 
-function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-foreground font-medium">{value}</span>
-    </div>
-  )
-}
-
 type Props = {
   mode: SheetMode
   task: TaskDefinitionItem | null
@@ -339,7 +247,6 @@ function TaskDefinitionSheet({
   const isPending =
     addTask.isPending || updateTask.isPending || removeTask.isPending
   const isEdit = mode === "edit"
-  const notApplicable = t("detail.taskDefinitions.notApplicable")
 
   // Already-claimed parents are excluded so a guaranteed 409 is never sent — except the one
   // this task itself points at, which must stay selectable while editing it.
@@ -452,152 +359,16 @@ function TaskDefinitionSheet({
 
   if (mode === "view" && task) {
     return (
-      <Sheet open onOpenChange={o => !o && handleClose()}>
-        <SheetContent data-testid="task-definition-view-sheet">
-          <SheetHeader>
-            <SheetTitle>
-              {task.task_name ?? task.inherited?.task_name ?? task.id}
-            </SheetTitle>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span>{task.task_code ?? task.inherited?.task_code ?? "—"}</span>
-              <Badge variant="outline">
-                {t(`catalogLayers.${catalogLayer}`)}
-              </Badge>
-              <Badge variant="secondary">
-                {t(`detail.taskDefinitions.types.${task.layer_action}`)}
-              </Badge>
-            </div>
-          </SheetHeader>
-
-          <div className="flex flex-col gap-4 px-4 overflow-y-auto">
-            {task.task_description && (
-              <p className="text-sm text-foreground">{task.task_description}</p>
-            )}
-
-            <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                {t("detail.taskSheet.sections.behaviorAndGating")}
-              </p>
-              <ViewRow
-                label={t("detail.taskSheet.fields.mandatory")}
-                value={
-                  task.is_mandatory === null
-                    ? notApplicable
-                    : t(
-                        task.is_mandatory
-                          ? "detail.taskSheet.mandatoryOptions.yes"
-                          : "detail.taskSheet.mandatoryOptions.no"
-                      )
-                }
-              />
-              <ViewRow
-                label={t("detail.taskSheet.fields.weight")}
-                value={task.weight ?? notApplicable}
-              />
-              <ViewRow
-                label={t("detail.taskSheet.fields.displayOrder")}
-                value={task.display_order ?? notApplicable}
-              />
-              {task.conditional_trigger && (
-                <ViewRow
-                  label={t("detail.taskSheet.fields.conditionalTrigger")}
-                  value={t("detail.taskSheet.treasuryThresholdTrigger")}
-                />
-              )}
-            </div>
-
-            {/* US 15.7. The design shows the code in primary blue — i.e. as a link to the
-                Document Requirement Catalog — but Epic 16 has no screen to navigate to, so it
-                renders as plain text. Restore the link, don't restyle it, once E16 ships a route. */}
-            {task.doc_requirement_ref && (
-              <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.taskSheet.sections.documentLinkage")}
-                </p>
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="flex items-center gap-1 text-foreground">
-                    <File size={16} className="text-muted-foreground" />
-                    {linkedRequirement?.requirement_code ??
-                      task.doc_requirement_ref}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {task.doc_requirement_pin_mode
-                      ? t(
-                          `detail.taskSheet.pinModes.${task.doc_requirement_pin_mode}` as "detail.taskSheet.pinModes.pin_by_id"
-                        )
-                      : notApplicable}
-                  </span>
-                </div>
-                {linkedRequirement && (
-                  <p className="text-xs text-muted-foreground">
-                    {linkedRequirement.document_type_name}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* US 15.23: an override row must show the Global Default values it replaces. */}
-            {task.inherited && (
-              <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.taskSheet.sections.inheritedFromGlobalDefault")}
-                </p>
-                <ViewRow
-                  label={t("detail.taskSheet.fields.taskName")}
-                  value={task.inherited.task_name ?? notApplicable}
-                />
-                <ViewRow
-                  label={t("detail.taskSheet.fields.mandatory")}
-                  value={
-                    task.inherited.is_mandatory === null
-                      ? notApplicable
-                      : t(
-                          task.inherited.is_mandatory
-                            ? "detail.taskSheet.mandatoryOptions.yes"
-                            : "detail.taskSheet.mandatoryOptions.no"
-                        )
-                  }
-                />
-                <ViewRow
-                  label={t("detail.taskSheet.fields.weight")}
-                  value={task.inherited.weight ?? notApplicable}
-                />
-              </div>
-            )}
-          </div>
-
-          <SheetFooter>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="task-sheet-close"
-              onClick={handleClose}
-            >
-              {t("detail.taskSheet.closeButton")}
-            </Button>
-            {canEdit && (
-              <>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  data-testid="task-sheet-remove"
-                  disabled={isPending}
-                  onClick={onRemove}
-                >
-                  {t("detail.taskSheet.removeButton")}
-                </Button>
-                <Button
-                  type="button"
-                  data-testid="task-sheet-edit"
-                  onClick={onRequestEdit}
-                >
-                  {t("detail.taskSheet.editButton")}
-                </Button>
-              </>
-            )}
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <TaskDefinitionViewPanel
+        task={task}
+        catalogLayer={catalogLayer}
+        linkedRequirement={linkedRequirement}
+        canEdit={canEdit}
+        isPending={isPending}
+        onClose={handleClose}
+        onRemove={onRemove}
+        onRequestEdit={onRequestEdit}
+      />
     )
   }
 
@@ -781,7 +552,7 @@ function TaskDefinitionSheet({
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="mb-2">
+                    <Label className="mb-2" error={!!errors.is_mandatory}>
                       {t("detail.taskSheet.fields.mandatory")}
                     </Label>
                     <Controller
@@ -803,9 +574,15 @@ function TaskDefinitionSheet({
                             },
                           ]}
                           placeholder={t("detail.taskSheet.notSet")}
+                          error={!!errors.is_mandatory}
                         />
                       )}
                     />
+                    {errors.is_mandatory && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {resolveMessage(errors.is_mandatory.message)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label className="mb-2" htmlFor="task-sheet-weight">
@@ -855,7 +632,7 @@ function TaskDefinitionSheet({
                     </div>
                   )}
                   <div>
-                    <Label className="mb-2">
+                    <Label className="mb-2" error={!!errors.responsible_role}>
                       {t("detail.taskSheet.fields.responsibleRole")}
                     </Label>
                     <Controller
@@ -871,15 +648,24 @@ function TaskDefinitionSheet({
                             label: t(o.labelKey),
                           }))}
                           placeholder={t("detail.taskSheet.notSet")}
+                          error={!!errors.responsible_role}
                         />
                       )}
                     />
+                    {errors.responsible_role && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {resolveMessage(errors.responsible_role.message)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="mb-2">
+                    <Label
+                      className="mb-2"
+                      error={!!errors.stage_categorization}
+                    >
                       {t("detail.taskSheet.fields.stage")}
                     </Label>
                     <Controller
@@ -895,12 +681,22 @@ function TaskDefinitionSheet({
                             label: t(o.labelKey),
                           }))}
                           placeholder={t("detail.taskSheet.notSet")}
+                          error={!!errors.stage_categorization}
                         />
                       )}
                     />
+                    {errors.stage_categorization && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {resolveMessage(errors.stage_categorization.message)}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <Label className="mb-2" htmlFor="task-sheet-display-order">
+                    <Label
+                      className="mb-2"
+                      error={!!errors.display_order}
+                      htmlFor="task-sheet-display-order"
+                    >
                       {t("detail.taskSheet.fields.displayOrder")}
                     </Label>
                     <Input
@@ -909,8 +705,14 @@ function TaskDefinitionSheet({
                       type="number"
                       min={0}
                       step="1"
+                      error={!!errors.display_order}
                       {...register("display_order")}
                     />
+                    {errors.display_order && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {resolveMessage(errors.display_order.message)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -994,97 +796,15 @@ function TaskDefinitionSheet({
 
             {/* US 15.7 — authorable on defined / supplement / override, never on deactivate. */}
             {isDocLinkable && (
-              <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.taskSheet.sections.documentLinkage")}
-                </p>
-
-                {isDocRequirementsError ? (
-                  <p
-                    data-testid="task-sheet-doc-requirements-error"
-                    className="text-sm text-destructive"
-                  >
-                    {t("detail.taskSheet.documentRequirementsUnavailable")}
-                  </p>
-                ) : isDocRequirementsLoading ? (
-                  <Skeleton className="h-9 w-full" />
-                ) : documentRequirementOptions.length === 0 ? (
-                  <p
-                    data-testid="task-sheet-no-doc-requirements"
-                    className="text-sm text-muted-foreground"
-                  >
-                    {t("detail.taskSheet.noDocumentRequirements")}
-                  </p>
-                ) : (
-                  <>
-                    <div>
-                      <Label className="mb-2" htmlFor="task-sheet-doc-ref">
-                        {t("detail.taskSheet.fields.documentRequirement")}
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="doc_requirement_ref"
-                        render={({ field }) => (
-                          <SelectField
-                            id="task-sheet-doc-ref"
-                            data-testid="task-sheet-doc-ref-select"
-                            value={field.value}
-                            // Clearing the ref clears the pin mode with it — the BE rejects a
-                            // pin mode without a ref just as it rejects the reverse.
-                            onValueChange={value => {
-                              field.onChange(value)
-                              if (!value)
-                                setValue("doc_requirement_pin_mode", "")
-                            }}
-                            options={documentRequirementOptions}
-                            placeholder={t(
-                              "detail.taskSheet.documentRequirementNone"
-                            )}
-                          />
-                        )}
-                      />
-                    </div>
-
-                    <div>
-                      <Label
-                        className="mb-2"
-                        error={!!errors.doc_requirement_pin_mode}
-                        htmlFor="task-sheet-pin-mode"
-                      >
-                        {t("detail.taskSheet.fields.pinningBehavior")}
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="doc_requirement_pin_mode"
-                        render={({ field }) => (
-                          <SelectField
-                            id="task-sheet-pin-mode"
-                            data-testid="task-sheet-pin-mode-select"
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            options={PIN_MODE_OPTIONS.map(option => ({
-                              value: option,
-                              label: t(
-                                `detail.taskSheet.pinModes.${option}` as "detail.taskSheet.pinModes.pin_by_id"
-                              ),
-                            }))}
-                            placeholder={t(
-                              "detail.taskSheet.fields.pinningBehavior"
-                            )}
-                            error={!!errors.doc_requirement_pin_mode}
-                            // Mandatory only once a ref is chosen (field spec: C), so it stays
-                            // inert until there is something to pin.
-                            disabled={!watchedDocRef}
-                          />
-                        )}
-                      />
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t("detail.taskSheet.pinningBehaviorHint")}
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
+              <TaskDocumentLinkageFields
+                control={control}
+                errors={errors}
+                setValue={setValue}
+                options={documentRequirementOptions}
+                isLoading={isDocRequirementsLoading}
+                isError={isDocRequirementsError}
+                selectedRef={watchedDocRef}
+              />
             )}
 
             <label className="flex items-center gap-2 cursor-pointer">

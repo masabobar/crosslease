@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next"
+import { cn } from "@/lib/utils"
+import { STATUS_PILL_CLASSES } from "@/features/workflowTaskCatalog/constants"
 import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogState } from "@/features/workflowTaskCatalog/api/schema"
 
@@ -31,7 +33,7 @@ function WorkflowTaskCatalogStateBadge({ state }: Props) {
   return (
     <span
       data-testid={`catalog-state-badge-${state}`}
-      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${STATE_BADGE_CLASSES[state]}`}
+      className={cn(STATUS_PILL_CLASSES, STATE_BADGE_CLASSES[state])}
     >
       {label}
     </span>

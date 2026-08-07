@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { ChecklistItemResponse } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import {
   CASE_CHECKLIST_QUERY_KEYS,
   setChecklistItemStatus,
@@ -11,7 +13,11 @@ type SetChecklistItemStatusInput = {
   body: SetItemStatusRequest
 }
 
-export function useSetChecklistItemStatus() {
+export function useSetChecklistItemStatus(): UseMutationResult<
+  ChecklistItemResponse,
+  Error,
+  SetChecklistItemStatusInput
+> {
   const queryClient = useQueryClient()
 
   return useMutation({
