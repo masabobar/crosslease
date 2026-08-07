@@ -98,6 +98,52 @@ describe("ChecklistItemResponseSchema", () => {
     expect(parsed.weight).toBeNull()
   })
 
+  // responsible_role and display_order arrived 2026-08-07 (PRD1042-1790) and closed Q-052. They are
+  // absent from the contract's `required` array, so a missing key is as valid as an explicit null.
+  it("reads responsible_role and display_order when the wire sends them", () => {
+    const parsed = ChecklistItemResponseSchema.parse({
+      ...validItem,
+      responsible_role: "back_office_risk",
+      display_order: 3,
+    })
+    expect(parsed.responsible_role).toBe("back_office_risk")
+    expect(parsed.display_order).toBe(3)
+  })
+
+  it("accepts both omitted, since neither is required on the wire", () => {
+    const parsed = ChecklistItemResponseSchema.parse(validItem)
+    expect(parsed.responsible_role).toBeUndefined()
+    expect(parsed.display_order).toBeUndefined()
+  })
+
+  it("accepts an explicit null for both", () => {
+    const parsed = ChecklistItemResponseSchema.parse({
+      ...validItem,
+      responsible_role: null,
+      display_order: null,
+    })
+    expect(parsed.responsible_role).toBeNull()
+    expect(parsed.display_order).toBeNull()
+  })
+
+  // TaskResponsibleRole is not UserRole — they overlap only on front_office. A UserRole value that
+  // is not a task role must not slip through, or a role-scoped gate would silently compare across
+  // two vocabularies.
+  it("rejects a UserRole value that is not a TaskResponsibleRole", () => {
+    expect(() =>
+      ChecklistItemResponseSchema.parse({
+        ...validItem,
+        responsible_role: "bank_power_user",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a non-integer display_order", () => {
+    expect(() =>
+      ChecklistItemResponseSchema.parse({ ...validItem, display_order: 1.5 })
+    ).toThrow()
+  })
+
   it("accepts a settled item with actor and timestamp", () => {
     const parsed = ChecklistItemResponseSchema.parse({
       ...validItem,
