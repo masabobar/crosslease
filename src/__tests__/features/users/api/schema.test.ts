@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
+  calendarDateToUtcInstant,
   EditUserRequestSchema,
   ExportFormatSchema,
   ExportJobSchema,
@@ -908,5 +909,27 @@ describe("InviteUserInputSchema", () => {
       Object.entries(valid).filter(([k]) => k !== "last_name")
     )
     expect(() => InviteUserInputSchema.parse(rest)).toThrow()
+  })
+})
+
+describe("calendarDateToUtcInstant", () => {
+  it("pins a calendar date to UTC midnight", () => {
+    expect(calendarDateToUtcInstant("2026-01-15")).toBe(
+      "2026-01-15T00:00:00.000Z"
+    )
+  })
+
+  // The bug this exists for: `new Date("2026-01-15").toISOString()` reads the bare date as
+  // *local* midnight, so the same picked day became a different UTC day per timezone. The
+  // calendar day must survive the conversion whatever the runner's offset is.
+  it("keeps the calendar day regardless of the local timezone offset", () => {
+    const instant = calendarDateToUtcInstant("2026-03-01")
+    expect(instant.slice(0, 10)).toBe("2026-03-01")
+  })
+
+  it("handles a leap day", () => {
+    expect(calendarDateToUtcInstant("2028-02-29")).toBe(
+      "2028-02-29T00:00:00.000Z"
+    )
   })
 })

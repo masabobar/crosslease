@@ -18,16 +18,20 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
+import { FieldMessage } from "@/features/users/components/FieldMessage"
 import { ROLE_TRANSITIONS, type UserRole } from "@/features/users/types"
-import { UserRoleSchema } from "@/features/users/api/schema"
-
-const MIN_REASON_LENGTH = 10
+import {
+  MIN_ROLE_CHANGE_REASON_LENGTH,
+  UserRoleSchema,
+} from "@/features/users/api/schema"
+import { SERVER_ERROR_TYPE } from "@/lib/apiFieldErrors"
 
 // Module-level so the resolver never captures a stale per-role enum: which roles are
 // offered is enforced by the select's options (ROLE_TRANSITIONS), not by the schema.
+// The reason floor comes from the API schema so the two cannot drift.
 const EditRoleFormSchema = z.object({
   new_role: UserRoleSchema,
-  reason: z.string().min(MIN_REASON_LENGTH),
+  reason: z.string().min(MIN_ROLE_CHANGE_REASON_LENGTH),
 })
 type EditRoleFormValues = z.infer<typeof EditRoleFormSchema>
 
@@ -141,6 +145,10 @@ export function EditRoleScopeDialog({
                     <RoleBadge role={opt.value as UserRole} />
                   )}
                 />
+                <FieldMessage
+                  error={form.formState.errors.new_role}
+                  data-testid="edit-role-new-role-error"
+                />
               </div>
             </div>
 
@@ -163,7 +171,7 @@ export function EditRoleScopeDialog({
                     className="text-sm text-destructive"
                     data-testid="edit-role-reason-error"
                   >
-                    {form.formState.errors.reason.type === "server"
+                    {form.formState.errors.reason.type === SERVER_ERROR_TYPE
                       ? form.formState.errors.reason.message
                       : t("detail.page.editRole.reasonMinLength")}
                   </span>

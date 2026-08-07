@@ -29,6 +29,7 @@ import {
   PAGE_SIZES,
 } from "@/features/users/hooks/useUserListParams"
 import type { PageSize } from "@/features/users/hooks/useUserListParams"
+import { USER_SORT_ORDER } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
 import type { UserSortKey } from "@/features/users/api/schema"
 import type { UserRole, UserFilterState } from "@/features/users/types"
@@ -78,9 +79,8 @@ export default function UserManagementPage() {
     setSort,
   } = useUserListParams()
   const { data: currentUser, isError: isCurrentUserError } = useCurrentUser()
-  const { data: tenantsData } = useTenants(
-    getUserFilterVisibility(currentUser?.role).tenant
-  )
+  const filterVis = getUserFilterVisibility(currentUser?.role)
+  const { data: tenantsData } = useTenants(filterVis.tenant)
   const canInvite =
     !!currentUser && USER_INVITE_ROLES.includes(currentUser.role)
   const canExport =
@@ -103,9 +103,14 @@ export default function UserManagementPage() {
 
   function handleSort(key: UserSortKey) {
     if (sortKey === key) {
-      setSort(key, sortOrder === "asc" ? "desc" : "asc")
+      setSort(
+        key,
+        sortOrder === USER_SORT_ORDER.ASC
+          ? USER_SORT_ORDER.DESC
+          : USER_SORT_ORDER.ASC
+      )
     } else {
-      setSort(key, "asc")
+      setSort(key, USER_SORT_ORDER.ASC)
     }
   }
 
@@ -127,7 +132,6 @@ export default function UserManagementPage() {
     })
   }
 
-  const filterVis = getUserFilterVisibility(currentUser?.role)
   const pageNumbers = data ? buildPageNumbers(page, data.total_pages) : []
   const activeFilterCount =
     appliedFilters.role.length +

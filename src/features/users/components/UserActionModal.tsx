@@ -1,5 +1,9 @@
 import { useForm, Controller, useWatch } from "react-hook-form"
 import { parseISO } from "date-fns"
+import {
+  calendarDateToUtcInstant,
+  todayCalendarDate,
+} from "@/features/users/api/schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
@@ -32,6 +36,7 @@ import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { USER_ACTION_TYPE } from "@/features/users/types"
 import type { UserModalActionType } from "@/features/users/types"
+import { resolveFieldMessage } from "@/features/users/utils"
 
 type ActionUser = {
   id: string
@@ -72,15 +77,34 @@ const ACTION_CONFIG = {
 // Form schemas compose from the canonical API schemas. effective_from is overridden to optional
 // so the field can be empty mid-edit; superRefine adds the required-field UX error on submit.
 // REACTIVATE and RESEND include the date fields solely to keep the FormValues union type uniform.
+// Both date rules mirror the pickers below exactly, per .claude/rules/date-inputs.md §1:
+// a calendar bound with no schema rule is only a suggestion, since a value can still
+// arrive from a default, a reset or a programmatic setValue.
 const SUSPEND_SCHEMA = SuspendUserInputSchema.extend({
   reason: z.enum(SUSPENSION_REASONS, { error: "required" }),
   effective_from: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (!data.effective_from)
+  if (!data.effective_from) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "required",
       path: ["effective_from"],
+    })
+    return
+  }
+  // Inclusive floor — today is a legal start, matching `minDate={new Date()}`.
+  if (data.effective_from < todayCalendarDate())
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "dateNotInPast",
+      path: ["effective_from"],
+    })
+  // A suspension that lifts before it starts is not a period.
+  if (data.effective_until && data.effective_until < data.effective_from)
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "dateMustBeAfterFrom",
+      path: ["effective_until"],
     })
 })
 
@@ -95,12 +119,19 @@ const DEACTIVATE_SCHEMA = DeactivateUserInputSchema.extend({
   effective_from: z.string().optional(),
   effective_until: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (!data.effective_from)
+  if (!data.effective_from) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "required",
       path: ["effective_from"],
     })
+  } else if (data.effective_from < todayCalendarDate()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "dateNotInPast",
+      path: ["effective_from"],
+    })
+  }
   if (data.reason === DEACTIVATION_REASON_OTHER && !data.comment?.trim())
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -156,10 +187,13 @@ function UserActionModal({
   const { mutateAsync: resend } = useResendInvitation()
 
   const config = ACTION_CONFIG[action]
-  const today = new Date().toISOString().split("T")[0]
+  // Local calendar date, not `toISOString()`. In any UTC+ timezone the UTC date is a day
+  // behind local between midnight and the offset, which pre-filled this form with a date
+  // the `minDate` below greys out and submitted a past `effective_from`.
+  const today = todayCalendarDate()
 
   const resolveMsg = (msg: string | undefined) =>
-    msg === "required" ? tCommon("validation.required") : msg
+    resolveFieldMessage(msg, tCommon)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(ACTION_SCHEMAS[action]),
@@ -198,9 +232,9 @@ function UserActionModal({
             input: {
               reason: data.reason as SuspendFormValues["reason"],
               comment: data.comment?.trim() || undefined,
-              effective_from: new Date(data.effective_from!).toISOString(),
+              effective_from: calendarDateToUtcInstant(data.effective_from!),
               effective_until: data.effective_until
-                ? new Date(data.effective_until).toISOString()
+                ? calendarDateToUtcInstant(data.effective_until)
                 : undefined,
             },
           })
@@ -222,7 +256,7 @@ function UserActionModal({
             input: {
               reason: data.reason as DeactivateFormValues["reason"],
               comment: data.comment?.trim() || undefined,
-              effective_from: new Date(data.effective_from!).toISOString(),
+              effective_from: calendarDateToUtcInstant(data.effective_from!),
             },
           })
           break
@@ -344,7 +378,11 @@ function UserActionModal({
             </div>
             {config.needsEffectiveUntil && (
               <div>
-                <Label htmlFor="effective_until" className="mb-1.5">
+                <Label
+                  htmlFor="effective_until"
+                  error={!!errors.effective_until}
+                  className="mb-1.5"
+                >
                   {t("actions.fields.effective_until")}
                 </Label>
                 <Controller
@@ -358,7 +396,9 @@ function UserActionModal({
                       onChange={field.onChange}
                       // Floor is the chosen start, not today: an access period that ends
                       // before it begins is not a period. Its sibling above already floors
-                      // at today; this one was left open.
+                      // at today; this one tracks the watched start value instead.
+                      // Inclusive, matching the schema's `effective_until < effective_from`.
+                      error={!!errors.effective_until}
                       minDate={
                         effectiveFrom ? parseISO(effectiveFrom) : new Date()
                       }
@@ -366,6 +406,11 @@ function UserActionModal({
                     />
                   )}
                 />
+                {errors.effective_until && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {resolveMsg(errors.effective_until.message)}
+                  </p>
+                )}
               </div>
             )}
           </div>

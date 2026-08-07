@@ -12,7 +12,9 @@ import {
   getUserActionVisibility,
   getUserListColumnVisibility,
   getUserFilterVisibility,
+  resolveFieldMessage,
 } from "@/features/users/utils"
+import type { TFunction } from "i18next"
 import {
   AUDITOR_ROLE,
   BACK_OFFICE_ROLE,
@@ -719,5 +721,62 @@ describe("buildIdentityPatch", () => {
     )
     expect(patch.first_name).toBe("Ana")
     expect(patch.last_name).toBe("Muller")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// resolveFieldMessage
+// ---------------------------------------------------------------------------
+
+describe("resolveFieldMessage", () => {
+  // Stands in for `useTranslation("common").t` — echoes the key so the assertions show
+  // which key was looked up rather than a translated string.
+  const tCommon = ((key: string) =>
+    `t:${key}`) as unknown as TFunction<"common">
+
+  it("returns undefined for no message", () => {
+    expect(resolveFieldMessage(undefined, tCommon)).toBeUndefined()
+  })
+
+  it("returns undefined for an empty message", () => {
+    expect(resolveFieldMessage("", tCommon)).toBeUndefined()
+  })
+
+  it("translates every code the feature's schemas emit", () => {
+    const codes = [
+      "required",
+      "tooShort",
+      "tooLong",
+      "invalidFormat",
+      "invalidPhone",
+      "mustBePositive",
+      "dateMustBeAfterFrom",
+      "dateNotInPast",
+    ]
+    for (const code of codes) {
+      expect(resolveFieldMessage(code, tCommon)).toBe(`t:validation.${code}`)
+    }
+  })
+
+  it("passes an already-translated server message through verbatim", () => {
+    // What applyApiFieldErrors attaches: the resolved string, not the code. Re-translating
+    // it as a key would render a mangled key path.
+    const attached = "t:validation.rejectedByServer"
+    expect(resolveFieldMessage(attached, tCommon)).toBe(attached)
+  })
+
+  it("maps Zod's own English prose to the generic key, never rendering it raw", () => {
+    expect(
+      resolveFieldMessage(
+        "Too big: expected string to have <=100 characters",
+        tCommon
+      )
+    ).toBe("t:validation.invalid")
+  })
+
+  it("maps an unrecognised code to the generic key", () => {
+    expect(resolveFieldMessage("someFutureCode", tCommon)).toBe(
+      "t:validation.invalid"
+    )
   })
 })

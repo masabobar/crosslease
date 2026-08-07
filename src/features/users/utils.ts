@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next"
 import {
   ACCESS_EXPIRY_VISIBLE_ROLES,
   FOUR_EYES_ROLES,
@@ -7,12 +8,87 @@ import {
   SENSITIVE_AUTH_RESTRICTED_ROLES,
   TENANT_FILTER_VISIBLE_ROLES,
   USER_APPROVE_ROLES,
+  USER_ACTION_TYPE,
   USER_LIFECYCLE_ACTION_ROLES,
   USER_MANAGEMENT_ALLOWED_ROLES,
 } from "@/features/users/types"
 import type { UserRole, UserModalActionType } from "@/features/users/types"
 import { UserStatusSchema } from "@/features/users/api/schema"
 import type { UserStatus } from "@/features/users/api/schema"
+
+// Message codes this feature's Zod schemas emit, all resolvable from `common:validation`.
+// A schema carrying a code outside this list is a bug in the schema, not in the resolver.
+const COMMON_VALIDATION_CODES = [
+  "required",
+  "tooShort",
+  "tooLong",
+  "invalidFormat",
+  "invalidPhone",
+  "mustBePositive",
+  "dateMustBeAfterFrom",
+  "dateNotInPast",
+  "rejectedByServer",
+] as const
+
+type CommonValidationCode = (typeof COMMON_VALIDATION_CODES)[number]
+
+/**
+ * Resolves a React Hook Form error message for display.
+ *
+ * Schemas in this feature carry a bare *code* (`"required"`, `"dateNotInPast"`) rather than
+ * prose, so the code is translated from `common:validation.*`. Two inputs are deliberately
+ * not codes:
+ *
+ * 1. The already-translated string `applyApiFieldErrors` attaches for a server
+ *    `VALIDATION_ERROR` — returned verbatim, because re-translating it as a key would render
+ *    a mangled key path (i18next splits on its own `:` and `.` separators).
+ * 2. Zod's own English text for a rule declared without a message — mapped to the generic
+ *    `validation.invalid` so untranslated English can never reach the user. If you see
+ *    "Please enter a valid value" where something more specific belongs, give the schema
+ *    rule a message code; do not widen this function.
+ */
+export function resolveFieldMessage(
+  message: string | undefined,
+  tCommon: TFunction<"common">
+): string | undefined {
+  if (!message) return undefined
+
+  if ((COMMON_VALIDATION_CODES as readonly string[]).includes(message)) {
+    return tCommon(`validation.${message as CommonValidationCode}`)
+  }
+
+  if (message === tCommon("validation.rejectedByServer")) return message
+
+  return tCommon("validation.invalid")
+}
+
+/** The only fields name resolution needs — structural, so any user-shaped row satisfies it. */
+type NamedUser = {
+  id: string
+  first_name: string
+  last_name: string
+}
+
+/**
+ * Resolves a bare user UUID to a display name against an already-fetched user list.
+ *
+ * Several endpoints return actor ids with no accompanying display name (`created_by`,
+ * `checked_by`, `gate_approver` — see open-questions.md Q-042), so the join happens
+ * client-side against whatever page of users the screen already holds.
+ *
+ * Falls back to the **raw id** when the actor is outside that page rather than rendering
+ * blank, so an unresolvable actor stays diagnosable. `emptyFallback` covers the separate
+ * case of no actor at all — typically the caller's "n/a" label.
+ */
+export function resolveUserDisplayName(
+  users: readonly NamedUser[],
+  userId: string | null,
+  emptyFallback: string
+): string {
+  if (!userId) return emptyFallback
+  const user = users.find(candidate => candidate.id === userId)
+  return user ? `${user.first_name} ${user.last_name}` : userId
+}
 
 export function getRoleClassificationKey(
   role: UserRole
@@ -223,22 +299,22 @@ export function buildActionToastPayload(
     UserModalActionType,
     { variant: "success" | "warning"; title: string; message: string }
   > = {
-    suspend: {
+    [USER_ACTION_TYPE.SUSPEND]: {
       variant: "warning",
       title: t("actions.suspend.success.title"),
       message: t("actions.suspend.success.message", { name }),
     },
-    reactivate: {
+    [USER_ACTION_TYPE.REACTIVATE]: {
       variant: "success",
       title: t("actions.reactivate.success.title"),
       message: t("actions.reactivate.success.message", { name }),
     },
-    deactivate: {
+    [USER_ACTION_TYPE.DEACTIVATE]: {
       variant: "warning",
       title: t("actions.deactivate.success.title"),
       message: t("actions.deactivate.success.message", { name }),
     },
-    "resend-invitation": {
+    [USER_ACTION_TYPE.RESEND_INVITATION]: {
       variant: "success",
       title: t("actions.resend-invitation.success.title"),
       message: t("actions.resend-invitation.success.message", { name }),

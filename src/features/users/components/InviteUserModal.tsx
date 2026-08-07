@@ -28,6 +28,11 @@ import { useInviteUser } from "@/features/users/hooks/useInviteUser"
 import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
+import {
+  calendarDateToUtcInstant,
+  todayCalendarDate,
+} from "@/features/users/api/schema"
+import { resolveFieldMessage } from "@/features/users/utils"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { InviteSuccessResult } from "@/features/users/types"
@@ -63,15 +68,22 @@ const formSchema = z
         path: ["lcPartner"],
       })
     }
-    if (
-      AUDITOR_DATE_RANGE_ROLES.includes(data.role) &&
-      !data.accessValidUntil
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "required",
-        path: ["accessValidUntil"],
-      })
+    if (AUDITOR_DATE_RANGE_ROLES.includes(data.role)) {
+      if (!data.accessValidUntil) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "required",
+          path: ["accessValidUntil"],
+        })
+      } else if (data.accessValidUntil < todayCalendarDate()) {
+        // Mirrors `minDate={new Date()}` on the picker, inclusive on today — a calendar
+        // bound alone is only a suggestion (.claude/rules/date-inputs.md §1).
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "dateNotInPast",
+          path: ["accessValidUntil"],
+        })
+      }
     }
   })
 
@@ -91,15 +103,10 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const { data: tenantsData, isLoading: isTenantsLoading } =
     useTenants(!isBankAdminInvite)
 
-  // Schema issues carry a bare message token so the schema stays outside the component;
-  // anything unmapped (a Zod built-in, or a server-attached message) falls back to the
-  // generic invalid-value string rather than rendering untranslated English.
-  const resolveMsg = (msg: string | undefined) => {
-    if (msg === "required") return tCommon("validation.required")
-    if (msg === "invalidFormat") return tCommon("validation.invalidFormat")
-    if (msg === tCommon("validation.rejectedByServer")) return msg
-    return tCommon("validation.invalidFormat")
-  }
+  // Schema issues carry a bare message code so the schema stays outside the component;
+  // see resolveFieldMessage for how unmapped and server-attached messages are handled.
+  const resolveMsg = (msg: string | undefined) =>
+    resolveFieldMessage(msg, tCommon)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -180,7 +187,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
             : undefined,
         access_valid_until:
           AUDITOR_DATE_RANGE_ROLES.includes(data.role) && data.accessValidUntil
-            ? new Date(data.accessValidUntil).toISOString()
+            ? calendarDateToUtcInstant(data.accessValidUntil)
             : undefined,
         lc_partner_id:
           LC_ONLY_ROLES.includes(data.role) && data.lcPartner

@@ -26,9 +26,14 @@ export function useExportUsers(): UseExportUsers {
   const showToast = useToastStore(s => s.showToast)
   const [state, setState] = useState<ExportState>("idle")
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Clearing the timeout alone does not stop a poll that is already awaiting the network:
+  // that continuation would still fire a browser download and a toast on whatever screen
+  // the user moved to. Both are checked against this flag.
+  const isMountedRef = useRef(true)
 
   useEffect(
     () => () => {
+      isMountedRef.current = false
       if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current)
     },
     []
@@ -62,10 +67,12 @@ export function useExportUsers(): UseExportUsers {
 
     try {
       const { status } = await getExportJobStatus(jobId)
+      if (!isMountedRef.current) return
 
       if (status === ExportJobStatusValueSchema.enum.ready) {
         setState("downloading")
         const blob = await downloadExportFile(jobId)
+        if (!isMountedRef.current) return
 
         // 202 re-generating case: blob contains JSON, not a file
         if (blob.type.includes("application/json")) {
@@ -104,6 +111,7 @@ export function useExportUsers(): UseExportUsers {
         POLL_INTERVAL_MS
       )
     } catch (err) {
+      if (!isMountedRef.current) return
       toast.error(
         err instanceof ApiError
           ? t(`errors.${err.code}`, { defaultValue: t("export.errorMessage") })
@@ -119,6 +127,7 @@ export function useExportUsers(): UseExportUsers {
     setState("initiating")
     try {
       const job = await initiateExport(params)
+      if (!isMountedRef.current) return
       setState("polling")
       void pollAndDownload(job.job_id, params.format)
     } catch (err) {

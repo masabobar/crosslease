@@ -22,6 +22,7 @@ import { useUpdateAccessPeriod } from "@/features/users/hooks/useUpdateAccessPer
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { PATHS } from "@/router/paths"
 import { getInitials } from "@/lib/formatters"
+import { safeImageUrl } from "@/lib/utils"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { buildActionToastPayload } from "@/features/users/utils"
@@ -32,7 +33,10 @@ import type {
   AuditorPeriodFormValues,
   UserDetail,
 } from "@/features/users/api/schema"
-import { UserStatusSchema } from "@/features/users/api/schema"
+import {
+  calendarDateToUtcInstant,
+  UserStatusSchema,
+} from "@/features/users/api/schema"
 import {
   AUDITOR_ROLE,
   READ_ONLY_VIEWER_ROLES,
@@ -76,6 +80,9 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
   const initials = getInitials(user.first_name, user.last_name)
   const name = `${user.first_name} ${user.last_name}`
+  // Stored URL is user-influenced — only http(s) or an own-origin path reaches `src`
+  // (.claude/rules/security-and-auth.md §4).
+  const pictureUrl = safeImageUrl(user.profile_picture_url)
 
   function handleActionSuccess() {
     if (!activeAction) return
@@ -103,9 +110,7 @@ function UserDetailContent({ user }: { user: UserDetail }) {
 
   async function handleAuditorPeriodSubmit(values: AuditorPeriodFormValues) {
     // The picker yields a plain calendar date; the endpoint expects an ISO instant.
-    const isoDate = new Date(
-      `${values.new_access_valid_until}T00:00:00.000Z`
-    ).toISOString()
+    const isoDate = calendarDateToUtcInstant(values.new_access_valid_until)
     await updateAccessPeriodMutation.mutateAsync({
       userId: user.id,
       input: { ...values, new_access_valid_until: isoDate },
@@ -157,9 +162,9 @@ function UserDetailContent({ user }: { user: UserDetail }) {
             />
           ) : (
             <div className="size-14 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden">
-              {user.profile_picture_url ? (
+              {pictureUrl ? (
                 <img
-                  src={user.profile_picture_url}
+                  src={pictureUrl}
                   alt={name}
                   className="size-full object-cover"
                 />

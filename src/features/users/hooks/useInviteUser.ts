@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { UseMutationResult } from "@tanstack/react-query"
-import { inviteUser, USERS_QUERY_KEYS } from "@/features/users/api/usersApi"
+import { inviteUser } from "@/features/users/api/usersApi"
+import { invalidateGovernedUserQueries } from "@/features/users/hooks/invalidateGovernedUserQueries"
 import type {
   InviteUserInput,
   InviteUserResponse,
@@ -16,7 +17,7 @@ export function useInviteUser(): UseMutationResult<
   return useMutation({
     mutationFn: inviteUser,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEYS.lists() })
+      invalidateGovernedUserQueries(queryClient)
     },
   })
 }

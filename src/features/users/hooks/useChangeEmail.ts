@@ -1,9 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { UseMutationResult } from "@tanstack/react-query"
-import {
-  changeUserEmail,
-  USERS_QUERY_KEYS,
-} from "@/features/users/api/usersApi"
+import { changeUserEmail } from "@/features/users/api/usersApi"
+import { invalidateGovernedUserQueries } from "@/features/users/hooks/invalidateGovernedUserQueries"
 import type { ChangeEmailInput } from "@/features/users/api/schema"
 import type { GovernedAction } from "@/features/governedActions/api/schema"
 
@@ -22,9 +20,7 @@ export function useChangeEmail(): UseMutationResult<
       input: ChangeEmailInput
     }) => changeUserEmail(userId, input),
     onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({
-        queryKey: USERS_QUERY_KEYS.detail(variables.userId),
-      })
+      invalidateGovernedUserQueries(queryClient, variables.userId)
     },
   })
 }

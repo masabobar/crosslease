@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { USER_SORT_ORDER } from "@/features/users/api/schema"
 import type {
   UserListItem,
   UserSortKey,
@@ -30,6 +31,7 @@ import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
 import { USER_ACTION_TYPE } from "@/features/users/types"
 import type { UserRole, UserActionType } from "@/features/users/types"
 import { formatLastLogin, formatDate, getInitials } from "@/lib/formatters"
+import { safeImageUrl } from "@/lib/utils"
 import {
   getUserActionVisibility,
   getUserListColumnVisibility,
@@ -79,7 +81,7 @@ function SortableHeader({
           size={12}
           className="text-muted-foreground/40 shrink-0"
         />
-      ) : sort.dir === "asc" ? (
+      ) : sort.dir === USER_SORT_ORDER.ASC ? (
         <ChevronUp size={12} className="shrink-0" />
       ) : (
         <ChevronDown size={12} className="shrink-0" />
@@ -125,7 +127,7 @@ function KebabMenu({ user, viewerRole, onAction, isSelf }: KebabMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         data-testid={`user-row-menu-${user.id}`}
-        aria-label="Actions"
+        aria-label={t("table.actions.menuLabel")}
         className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         <MoreHorizontal size={16} />
@@ -334,108 +336,113 @@ function UserTable({
 
       {/* Data rows */}
       {!isLoading &&
-        users.map(user => (
-          <div
-            key={user.id}
-            data-testid={`user-row-${user.id}`}
-            className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted transition-colors cursor-pointer`}
-            onClick={() => onRowClick?.(user)}
-          >
-            {/* User cell */}
-            <div className="flex-1 min-w-0 p-2 flex items-center gap-2">
-              <div className="size-8 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden">
-                {user.profile_picture_url ? (
-                  <img
-                    src={user.profile_picture_url}
-                    alt={`${user.first_name} ${user.last_name}`}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm text-muted-foreground text-center leading-none">
-                    {getInitials(user.first_name, user.last_name)}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate leading-5">
-                  {user.first_name} {user.last_name}
-                </p>
-                <p className="text-xs text-muted-foreground truncate leading-4">
-                  {user.email}
-                </p>
-              </div>
-            </div>
-
-            {/* Role cell */}
-            <div className={`${COL_NAME} p-2`}>
-              <RoleBadge role={user.role} />
-            </div>
-
-            {/* Tenant cell */}
-            {cols.tenant && (
-              <div className={`${COL_NAME} p-2`}>
-                <span className="text-sm text-foreground">
-                  {user.tenant_name ?? "—"}
-                </span>
-              </div>
-            )}
-
-            {/* MFA cell */}
-            {cols.mfa && (
-              <div className={`${COL_NARROW} p-2`}>
-                {user.mfa_enabled === true ? (
-                  <span className="flex items-center gap-1.5 text-sm text-foreground">
-                    <span className="size-2 rounded-full bg-green-500 shrink-0" />
-                    {t("detail.page.values.on")}
-                  </span>
-                ) : user.mfa_enabled === false ? (
-                  <span className="flex items-center gap-1.5 text-sm text-foreground">
-                    <span className="size-2 rounded-full bg-red-500 shrink-0" />
-                    {t("detail.page.values.off")}
-                  </span>
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
-                )}
-              </div>
-            )}
-
-            {/* Status cell */}
-            <div className={`${COL_NARROW} p-2`}>
-              <UserStatusBadge status={user.status} />
-            </div>
-
-            {/* Last login cell */}
-            {cols.lastLogin && (
-              <div className={`${COL_NARROW} p-2`}>
-                <span className="text-sm text-muted-foreground">
-                  {formatLastLogin(user.last_login, t)}
-                </span>
-              </div>
-            )}
-
-            {/* Access expiry cell */}
-            {cols.accessExpiry && (
-              <div className={`${COL_NARROW} p-2`}>
-                <span className="text-sm text-muted-foreground">
-                  {formatDate(user.access_valid_until)}
-                </span>
-              </div>
-            )}
-
-            {/* Actions cell */}
+        users.map(user => {
+          // Stored URL is user-influenced — only http(s) or an own-origin path reaches
+          // `src` (.claude/rules/security-and-auth.md §4).
+          const pictureUrl = safeImageUrl(user.profile_picture_url)
+          return (
             <div
-              className="shrink-0 p-2 flex items-center justify-center"
-              onClick={e => e.stopPropagation()}
+              key={user.id}
+              data-testid={`user-row-${user.id}`}
+              className={`flex border-b border-border ${ROW_H} items-center hover:bg-muted transition-colors cursor-pointer`}
+              onClick={() => onRowClick?.(user)}
             >
-              <KebabMenu
-                user={user}
-                viewerRole={viewerRole}
-                onAction={type => onAction?.(type, user)}
-                isSelf={user.id === currentUserId}
-              />
+              {/* User cell */}
+              <div className="flex-1 min-w-0 p-2 flex items-center gap-2">
+                <div className="size-8 bg-muted border border-border rounded-full shrink-0 flex items-center justify-center overflow-hidden">
+                  {pictureUrl ? (
+                    <img
+                      src={pictureUrl}
+                      alt={`${user.first_name} ${user.last_name}`}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground text-center leading-none">
+                      {getInitials(user.first_name, user.last_name)}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate leading-5">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate leading-4">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+
+              {/* Role cell */}
+              <div className={`${COL_NAME} p-2`}>
+                <RoleBadge role={user.role} />
+              </div>
+
+              {/* Tenant cell */}
+              {cols.tenant && (
+                <div className={`${COL_NAME} p-2`}>
+                  <span className="text-sm text-foreground">
+                    {user.tenant_name ?? "—"}
+                  </span>
+                </div>
+              )}
+
+              {/* MFA cell */}
+              {cols.mfa && (
+                <div className={`${COL_NARROW} p-2`}>
+                  {user.mfa_enabled === true ? (
+                    <span className="flex items-center gap-1.5 text-sm text-foreground">
+                      <span className="size-2 rounded-full bg-green-500 shrink-0" />
+                      {t("detail.page.values.on")}
+                    </span>
+                  ) : user.mfa_enabled === false ? (
+                    <span className="flex items-center gap-1.5 text-sm text-foreground">
+                      <span className="size-2 rounded-full bg-red-500 shrink-0" />
+                      {t("detail.page.values.off")}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
+                </div>
+              )}
+
+              {/* Status cell */}
+              <div className={`${COL_NARROW} p-2`}>
+                <UserStatusBadge status={user.status} />
+              </div>
+
+              {/* Last login cell */}
+              {cols.lastLogin && (
+                <div className={`${COL_NARROW} p-2`}>
+                  <span className="text-sm text-muted-foreground">
+                    {formatLastLogin(user.last_login, t)}
+                  </span>
+                </div>
+              )}
+
+              {/* Access expiry cell */}
+              {cols.accessExpiry && (
+                <div className={`${COL_NARROW} p-2`}>
+                  <span className="text-sm text-muted-foreground">
+                    {formatDate(user.access_valid_until)}
+                  </span>
+                </div>
+              )}
+
+              {/* Actions cell */}
+              <div
+                className="shrink-0 p-2 flex items-center justify-center"
+                onClick={e => e.stopPropagation()}
+              >
+                <KebabMenu
+                  user={user}
+                  viewerRole={viewerRole}
+                  onAction={type => onAction?.(type, user)}
+                  isSelf={user.id === currentUserId}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
     </div>
   )
 }

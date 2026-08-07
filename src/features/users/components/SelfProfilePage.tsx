@@ -19,6 +19,7 @@ import type { UserDetail } from "@/features/users/api/schema"
 import { SelfIdentityFormSchema } from "@/features/users/api/schema"
 import type { SelfIdentityFormValues } from "@/features/users/api/schema"
 import { buildIdentityPatch } from "@/features/users/utils"
+import { FieldMessage } from "@/features/users/components/FieldMessage"
 import {
   DetailRow,
   SectionCard,
@@ -154,24 +155,36 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
             </DetailRow>
             <DetailRow label={t("detail.page.fields.firstName")}>
               {isEditing ? (
-                <Input
-                  {...identityForm.register("first_name")}
-                  data-testid="identity-first-name-input"
-                  className="h-[28px] py-0 text-sm rounded-[8px]"
-                  error={!!identityForm.formState.errors.first_name}
-                />
+                <>
+                  <Input
+                    {...identityForm.register("first_name")}
+                    data-testid="identity-first-name-input"
+                    className="h-[28px] py-0 text-sm rounded-[8px]"
+                    error={!!identityForm.formState.errors.first_name}
+                  />
+                  <FieldMessage
+                    error={identityForm.formState.errors.first_name}
+                    data-testid="identity-first-name-error"
+                  />
+                </>
               ) : (
                 user.first_name
               )}
             </DetailRow>
             <DetailRow label={t("detail.page.fields.lastName")}>
               {isEditing ? (
-                <Input
-                  {...identityForm.register("last_name")}
-                  data-testid="identity-last-name-input"
-                  className="h-[28px] py-0 text-sm rounded-[8px]"
-                  error={!!identityForm.formState.errors.last_name}
-                />
+                <>
+                  <Input
+                    {...identityForm.register("last_name")}
+                    data-testid="identity-last-name-input"
+                    className="h-[28px] py-0 text-sm rounded-[8px]"
+                    error={!!identityForm.formState.errors.last_name}
+                  />
+                  <FieldMessage
+                    error={identityForm.formState.errors.last_name}
+                    data-testid="identity-last-name-error"
+                  />
+                </>
               ) : (
                 user.last_name
               )}
@@ -192,13 +205,19 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
             </DetailRow>
             <DetailRow label={t("detail.page.fields.phoneNumber")}>
               {isEditing ? (
-                <Input
-                  {...identityForm.register("phone_number")}
-                  data-testid="phone-number-input"
-                  placeholder={t("detail.page.fields.phoneNumberPlaceholder")}
-                  className="h-[28px] py-0 text-sm rounded-[8px]"
-                  error={!!identityForm.formState.errors.phone_number}
-                />
+                <>
+                  <Input
+                    {...identityForm.register("phone_number")}
+                    data-testid="phone-number-input"
+                    placeholder={t("detail.page.fields.phoneNumberPlaceholder")}
+                    className="h-[28px] py-0 text-sm rounded-[8px]"
+                    error={!!identityForm.formState.errors.phone_number}
+                  />
+                  <FieldMessage
+                    error={identityForm.formState.errors.phone_number}
+                    data-testid="phone-number-error"
+                  />
+                </>
               ) : (
                 (user.phone_number ?? "—")
               )}
