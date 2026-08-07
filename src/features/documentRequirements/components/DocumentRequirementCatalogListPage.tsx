@@ -16,6 +16,8 @@ import { ApiError } from "@/lib/api"
 import { documentRequirementCatalogDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import { DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/documentRequirements/types"
 import { DocumentRequirementCatalogFilterBar } from "@/features/documentRequirements/components/DocumentRequirementCatalogFilterBar"
 import { DocumentRequirementCatalogTable } from "@/features/documentRequirements/components/DocumentRequirementCatalogTable"
@@ -50,6 +52,10 @@ export default function DocumentRequirementCatalogListPage() {
     setFilters,
   } = useDocumentRequirementCatalogListParams()
 
+  // Debounced before it reaches the query key: the field re-renders on every keystroke, but
+  // only the settled value is worth a request.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
+
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   // Product Template names are not on the list response — only product_template_id — so the
@@ -65,7 +71,7 @@ export default function DocumentRequirementCatalogListPage() {
     {
       page,
       per_page: perPage,
-      ...(search.trim() ? { search: search.trim() } : {}),
+      ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
       ...(filters.catalogType ? { catalog_type: filters.catalogType } : {}),
       ...(filters.processContext
         ? { process_context: filters.processContext }

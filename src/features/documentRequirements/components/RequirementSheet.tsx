@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { SelectField } from "@/components/ui/select"
@@ -20,13 +19,15 @@ import {
 } from "@/components/ui/sheet"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { resolveFormMessage } from "@/lib/formMessages"
 import { useAddRequirement } from "@/features/documentRequirements/hooks/useAddRequirement"
 import { useUpdateRequirement } from "@/features/documentRequirements/hooks/useUpdateRequirement"
-import { PROCESS_CONTEXT_OPTIONS } from "@/features/documentRequirements/constants"
+import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import {
   DocumentOriginSchema,
   DocumentRequirementCatalogTypeSchema,
   GovernanceClassificationSchema,
+  RequirementApplicabilitySchema,
   RequirementClassificationSchema,
   SourceLayerSchema,
   StageCategorizationSchema,
@@ -69,10 +70,31 @@ const DOCUMENT_ORIGIN_OPTIONS = DocumentOriginSchema.options.map(value => ({
 // has neither field), so the edit form hides them — but the resolver stays a single schema
 // (rather than an edit-mode variant that omits them) so useForm's generic type doesn't have to
 // vary by mode. Pre-filled and hidden, they always validate trivially in edit mode.
+// Mirrors AddRequirementRequest's own Field(max_length=…) bounds. Every rule carries a message
+// *code*, never bare prose: an unannotated `.max()` would surface Zod's own English text to the
+// user (see resolveFormMessage).
+const CODE_MAX_LENGTH = 100
+const DOCUMENT_TYPE_NAME_MAX_LENGTH = 255
+
+// Manual ordering is not part of this screen; the backend defaults to the same value.
+const DEFAULT_SORT_ORDER = 0
+
 const requirementFieldsSchema = z.object({
-  requirementCode: z.string().trim().min(1, "required").max(100),
-  documentTypeCode: z.string().trim().min(1, "required").max(100),
-  documentTypeName: z.string().trim().min(1, "required").max(255),
+  requirementCode: z
+    .string()
+    .trim()
+    .min(1, "required")
+    .max(CODE_MAX_LENGTH, "tooLong"),
+  documentTypeCode: z
+    .string()
+    .trim()
+    .min(1, "required")
+    .max(CODE_MAX_LENGTH, "tooLong"),
+  documentTypeName: z
+    .string()
+    .trim()
+    .min(1, "required")
+    .max(DOCUMENT_TYPE_NAME_MAX_LENGTH, "tooLong"),
   description: z.string(),
   classification: z.string().min(1, "required"),
   governanceClassification: z.string().min(1, "required"),
@@ -120,7 +142,6 @@ function RequirementSheet({
   onOpenChange,
 }: Props) {
   const { t } = useTranslation("documentRequirements")
-  const { t: tCommon } = useTranslation("common")
   const isEdit = mode === "edit"
   const isProductSpecific =
     catalogType === DocumentRequirementCatalogTypeSchema.enum.product_specific
@@ -145,9 +166,7 @@ function RequirementSheet({
     classification === RequirementClassificationSchema.enum.conditional
 
   function resolveMessage(message: string | undefined): string | undefined {
-    if (!message) return undefined
-    if (message === "required") return tCommon("validation.required")
-    return message
+    return resolveFormMessage(message, t, "requirement.errors")
   }
 
   function handleClose() {
@@ -216,8 +235,10 @@ function RequirementSheet({
         source_layer: isProductSpecific
           ? SourceLayerSchema.enum.supplement
           : undefined,
-        sort_order: 0,
-        applicability: "always",
+        sort_order: DEFAULT_SORT_ORDER,
+        // The predicate authoring UI is post-MVP (US 16.4), so nothing here can produce a
+        // conditional requirement — `condition` is never sent and applicability stays `always`.
+        applicability: RequirementApplicabilitySchema.enum.always,
         ...shared,
       },
       {
@@ -426,6 +447,11 @@ function RequirementSheet({
                 rows={3}
                 {...register("description")}
               />
+              {errors.description && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.description.message)}
+                </p>
+              )}
             </div>
 
             <div>
@@ -453,6 +479,11 @@ function RequirementSheet({
                   />
                 )}
               />
+              {errors.classification && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.classification.message)}
+                </p>
+              )}
               {isConditional && (
                 <p
                   data-testid="requirement-predicate-placeholder"
@@ -504,29 +535,11 @@ function RequirementSheet({
                 control={control}
                 name="processContexts"
                 render={({ field }) => (
-                  <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-input p-2.5">
-                    {PROCESS_CONTEXT_OPTIONS.map(option => (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <Checkbox
-                          data-testid={`requirement-process-context-${option.value}`}
-                          checked={field.value.includes(option.value)}
-                          onCheckedChange={checked =>
-                            field.onChange(
-                              checked === true
-                                ? [...field.value, option.value]
-                                : field.value.filter(v => v !== option.value)
-                            )
-                          }
-                        />
-                        <span className="text-sm text-foreground">
-                          {t(option.labelKey)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+                  <ProcessContextCheckboxGroup
+                    value={field.value}
+                    onChange={field.onChange}
+                    testIdPrefix="requirement"
+                  />
                 )}
               />
               {errors.processContexts && (
@@ -556,13 +569,23 @@ function RequirementSheet({
                       value: o.value,
                       label: t(o.labelKey),
                     }))}
+                    error={!!errors.stageCategorization}
                   />
                 )}
               />
+              {errors.stageCategorization && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.stageCategorization.message)}
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="requirement-document-origin" className="mb-2">
+              <Label
+                htmlFor="requirement-document-origin"
+                error={!!errors.documentOrigin}
+                className="mb-2"
+              >
                 {t("requirement.fields.documentOrigin")}
               </Label>
               <Controller
@@ -578,27 +601,43 @@ function RequirementSheet({
                       value: o.value,
                       label: t(o.labelKey),
                     }))}
+                    error={!!errors.documentOrigin}
                   />
                 )}
               />
+              {errors.documentOrigin && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.documentOrigin.message)}
+                </p>
+              )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="requirement-blocks-submission">
-                {t("requirement.fields.blocksSubmission")}
-              </Label>
-              <Controller
-                control={control}
-                name="blocksSubmission"
-                render={({ field }) => (
-                  <Switch
-                    id="requirement-blocks-submission"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    data-testid="requirement-blocks-submission-switch"
-                  />
-                )}
-              />
+            <div>
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="requirement-blocks-submission"
+                  error={!!errors.blocksSubmission}
+                >
+                  {t("requirement.fields.blocksSubmission")}
+                </Label>
+                <Controller
+                  control={control}
+                  name="blocksSubmission"
+                  render={({ field }) => (
+                    <Switch
+                      id="requirement-blocks-submission"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      data-testid="requirement-blocks-submission-switch"
+                    />
+                  )}
+                />
+              </div>
+              {errors.blocksSubmission && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.blocksSubmission.message)}
+                </p>
+              )}
             </div>
           </div>
 

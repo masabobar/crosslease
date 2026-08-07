@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
+import type { DocumentRequirementCatalogListResponse } from "@/features/documentRequirements/api/schema"
 import {
   DOCUMENT_REQUIREMENT_QUERY_KEYS,
   fetchDocumentRequirementCatalogs,
@@ -10,7 +12,7 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
 export function useDocumentRequirementCatalogList(
   tenantId: string | undefined,
   params: DocumentRequirementCatalogListParams
-) {
+): UseQueryResult<DocumentRequirementCatalogListResponse, Error> {
   const normalizedParams: DocumentRequirementCatalogListParams = {
     ...params,
     search:

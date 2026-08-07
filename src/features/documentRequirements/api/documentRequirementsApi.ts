@@ -43,6 +43,11 @@ export const DOCUMENT_REQUIREMENT_QUERY_KEYS = {
   // the scope the BE validates a task's doc_requirement_ref against.
   tenantRequirements: (tenantId: string) =>
     ["document-requirements", "requirements", tenantId] as const,
+  // Prefix over every tenant's set. Requirement mutations are scoped by catalogue and never
+  // learn the tenant id, so this is what they can invalidate; refetching another tenant's
+  // set costs one request and is preferable to leaving the task picker stale.
+  allTenantRequirements: () =>
+    ["document-requirements", "requirements"] as const,
   detail: (catalogId: string) =>
     ["document-requirements", "catalogs", "detail", catalogId] as const,
   // Diagnostic only (US 16.21) — never persists, so a short staleTime on the query hook is

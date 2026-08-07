@@ -7,7 +7,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
   DialogModal,
@@ -17,16 +16,25 @@ import {
 } from "@/components/ui/dialog"
 import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { resolveFormMessage } from "@/lib/formMessages"
 import { useUpdateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useUpdateDocumentRequirementCatalog"
-import { PROCESS_CONTEXT_OPTIONS } from "@/features/documentRequirements/constants"
+import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import type { DocumentRequirementCatalogDetailResponse } from "@/features/documentRequirements/api/schema"
+
+// Every rule carries a message *code*, never bare prose: an unannotated `.max()` would surface
+// Zod's own English text to the user (see resolveFormMessage).
+const CATALOG_NAME_MAX_LENGTH = 200
 
 // Editing an existing catalog does NOT floor Valid From at today — unlike creation, an existing
 // record may legitimately have a start date in the past (date-inputs.md §4). Valid To must still
 // be >= Valid From when both are present.
 const editCatalogSchema = z
   .object({
-    catalogName: z.string().trim().min(1, "required").max(200),
+    catalogName: z
+      .string()
+      .trim()
+      .min(1, "required")
+      .max(CATALOG_NAME_MAX_LENGTH, "tooLong"),
     processContexts: z.array(z.string()).min(1, "required"),
     validFrom: z.string(),
     validTo: z.string(),
@@ -56,7 +64,6 @@ function EditDocumentRequirementCatalogDialog({
   onOpenChange,
 }: Props) {
   const { t } = useTranslation("documentRequirements")
-  const { t: tCommon } = useTranslation("common")
   const updateCatalog = useUpdateDocumentRequirementCatalog(catalog.id)
 
   const {
@@ -80,11 +87,7 @@ function EditDocumentRequirementCatalogDialog({
   const validToMin = validFrom ? parseISO(validFrom) : undefined
 
   function resolveMessage(message: string | undefined): string | undefined {
-    if (!message) return undefined
-    if (message === "required") return tCommon("validation.required")
-    return t(
-      `create.errors.${message}` as "create.errors.validToBeforeValidFrom"
-    )
+    return resolveFormMessage(message, t, "create.errors")
   }
 
   function handleClose() {
@@ -168,29 +171,11 @@ function EditDocumentRequirementCatalogDialog({
               control={control}
               name="processContexts"
               render={({ field }) => (
-                <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-input p-2.5">
-                  {PROCESS_CONTEXT_OPTIONS.map(option => (
-                    <label
-                      key={option.value}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <Checkbox
-                        data-testid={`edit-catalog-process-context-${option.value}`}
-                        checked={field.value.includes(option.value)}
-                        onCheckedChange={checked =>
-                          field.onChange(
-                            checked === true
-                              ? [...field.value, option.value]
-                              : field.value.filter(v => v !== option.value)
-                          )
-                        }
-                      />
-                      <span className="text-sm text-foreground">
-                        {t(option.labelKey)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <ProcessContextCheckboxGroup
+                  value={field.value}
+                  onChange={field.onChange}
+                  testIdPrefix="edit-catalog"
+                />
               )}
             />
             {errors.processContexts && (
@@ -222,6 +207,11 @@ function EditDocumentRequirementCatalogDialog({
                   />
                 )}
               />
+              {errors.validFrom && (
+                <p className="mt-1 text-sm text-destructive">
+                  {resolveMessage(errors.validFrom.message)}
+                </p>
+              )}
             </div>
 
             <div>

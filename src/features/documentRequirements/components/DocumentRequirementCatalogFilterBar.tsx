@@ -6,7 +6,7 @@ import {
   PROCESS_CONTEXT_OPTIONS,
 } from "@/features/documentRequirements/constants"
 import type { DocumentRequirementCatalogFilterState } from "@/features/documentRequirements/constants"
-import type { DocumentRequirementCatalogType } from "@/features/documentRequirements/api/schema"
+import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequirements/api/schema"
 
 type Props = {
   search: string
@@ -57,9 +57,12 @@ function DocumentRequirementCatalogFilterBar({
         <SelectField
           data-testid="document-requirement-catalog-filter-catalogType"
           value={filters.catalogType ?? ""}
+          // "" is the All option; anything else is narrowed through the wire enum rather than
+          // cast, so a stale option value cannot reach the query params unvalidated.
           onValueChange={v =>
             onFiltersChange({
-              catalogType: v ? (v as DocumentRequirementCatalogType) : null,
+              catalogType:
+                DocumentRequirementCatalogTypeSchema.safeParse(v).data ?? null,
             })
           }
           options={catalogTypeOptions}

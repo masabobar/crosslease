@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import type { UseQueryResult } from "@tanstack/react-query"
 import {
   DOCUMENT_REQUIREMENT_QUERY_KEYS,
   fetchDocumentRequirements,
@@ -22,8 +23,17 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
  *
  * Used for display as well as authoring: a task carries only `doc_requirement_ref` as a UUID, so
  * rendering its code means resolving the id against this set.
+ *
+ * **Bounded, not exhaustive:** both underlying calls request one page of
+ * `DOCUMENT_REQUIREMENT_PAGE_SIZE` and ignore `total_pages`, so a tenant past that many
+ * catalogues — or a catalogue past that many requirements — is silently truncated here. That is
+ * the widest page the endpoint serves and comfortably above current volumes; paging through
+ * every catalogue would turn one picker render into an unbounded request fan-out. Revisit if a
+ * tenant approaches the cap.
  */
-export function useTenantDocumentRequirements(tenantId: string | undefined) {
+export function useTenantDocumentRequirements(
+  tenantId: string | undefined
+): UseQueryResult<DocumentRequirement[], Error> {
   return useQuery({
     queryKey: DOCUMENT_REQUIREMENT_QUERY_KEYS.tenantRequirements(
       tenantId ?? ""
