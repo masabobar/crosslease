@@ -12,13 +12,15 @@ export function useCountdownRedirect(
   const navigate = useNavigate()
   const [countdown, setCountdown] = useState(seconds)
 
+  // Stops itself at zero — otherwise the counter runs negative and the redirect effect
+  // below re-fires `navigate` on every subsequent tick.
   useEffect(() => {
-    if (!isActive) return
+    if (!isActive || countdown <= 0) return
     const id = setInterval(() => {
       setCountdown(c => c - 1)
     }, ONE_SECOND_MS)
     return () => clearInterval(id)
-  }, [isActive])
+  }, [isActive, countdown])
 
   useEffect(() => {
     if (isActive && countdown <= 0) navigate(destination)

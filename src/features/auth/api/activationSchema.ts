@@ -1,7 +1,4 @@
 import { z } from "zod"
-import { PasswordPolicySchema } from "./passwordPolicy"
-
-export { getPasswordRequirements } from "./forgotPasswordSchema"
 
 export const SetPasswordResponseSchema = z.object({
   mfa_enrollment_required: z.boolean(),
@@ -9,18 +6,6 @@ export const SetPasswordResponseSchema = z.object({
 })
 
 export type SetPasswordResponse = z.infer<typeof SetPasswordResponseSchema>
-
-export const ActivateAccountInputSchema = z
-  .object({
-    password: PasswordPolicySchema,
-    passwordConfirm: z.string(),
-  })
-  .refine(data => data.password === data.passwordConfirm, {
-    message: "passwords_mismatch",
-    path: ["passwordConfirm"],
-  })
-
-export type ActivateAccountInput = z.infer<typeof ActivateAccountInputSchema>
 
 export function decodeTokenEmail(token: string): string | null {
   try {

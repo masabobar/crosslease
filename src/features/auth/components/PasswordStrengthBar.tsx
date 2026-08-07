@@ -1,18 +1,16 @@
 import { Info } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { getPasswordRequirements } from "../api/forgotPasswordSchema"
+import { getPasswordRequirements } from "../api/passwordPolicy"
+import type { StrengthLevel, StrengthConfig } from "../types"
 import { cn } from "@/lib/utils"
 
-type StrengthLevel = 0 | 1 | 2 | 3 | 4
+/** Total meter segments — must match the highest `bars` value in STRENGTH_CONFIG. */
+const STRENGTH_BAR_COUNT = 4
 
-interface StrengthConfig {
-  bars: number
-  barColor: string
-  labelColor: string
-  hintBg: string
-  hintTextColor: string
-  hintIconColor: string
-}
+/** Requirement counts that promote a password to the next strength level. */
+const WEAK_MAX_REQUIREMENTS_MET = 2
+const FAIR_REQUIREMENTS_MET = 3
+const GOOD_REQUIREMENTS_MET = 4
 
 const STRENGTH_CONFIG: Record<StrengthLevel, StrengthConfig> = {
   0: {
@@ -61,9 +59,9 @@ function getStrengthLevel(password: string): StrengthLevel {
   if (!password) return 0
   const reqs = getPasswordRequirements(password)
   const met = Object.values(reqs).filter(Boolean).length
-  if (met <= 2) return 1
-  if (met === 3) return 2
-  if (met === 4) return 3
+  if (met <= WEAK_MAX_REQUIREMENTS_MET) return 1
+  if (met === FAIR_REQUIREMENTS_MET) return 2
+  if (met === GOOD_REQUIREMENTS_MET) return 3
   return 4
 }
 
@@ -112,7 +110,7 @@ export function PasswordStrengthBar({ password }: { password: string }) {
         </span>
       </div>
       <div className="flex items-center gap-1.5">
-        {Array.from({ length: 4 }, (_, i) => (
+        {Array.from({ length: STRENGTH_BAR_COUNT }, (_, i) => (
           <div
             key={i}
             className={cn(

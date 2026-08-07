@@ -15,11 +15,9 @@ import {
   Mail,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import {
-  ActivateAccountInputSchema,
-  decodeTokenEmail,
-} from "../api/activationSchema"
-import type { ActivateAccountInput } from "../api/activationSchema"
+import { decodeTokenEmail } from "../api/activationSchema"
+import { SetPasswordFormSchema } from "../api/passwordPolicy"
+import type { SetPasswordFormInput } from "../api/passwordPolicy"
 import {
   validateActivationToken,
   activateSetPassword,
@@ -43,6 +41,8 @@ import {
 } from "./AuthCard"
 import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { PasswordStrengthBar } from "./PasswordStrengthBar"
+import { FieldError } from "./FieldError"
+import { SUPPORT_MAILTO } from "@/lib/constants"
 
 type PageState =
   | "loading"
@@ -97,12 +97,12 @@ export default function ActivateAccountPage() {
       : null
   })()
 
-  const form = useForm<ActivateAccountInput>({
-    resolver: zodResolver(ActivateAccountInputSchema),
+  const form = useForm<SetPasswordFormInput>({
+    resolver: zodResolver(SetPasswordFormSchema),
     defaultValues: { password: "", passwordConfirm: "" },
   })
 
-  const { isSubmitting } = form.formState
+  const { isSubmitting, errors } = form.formState
   const password = useWatch({
     control: form.control,
     name: "password",
@@ -177,7 +177,7 @@ export default function ActivateAccountPage() {
               {t("activateAccount.blockedLink.contactSupportPrompt")}{" "}
               {/* NOTE: raw <a> — inline mailto link inside body text; shadcn Button doesn't compose as inline text */}
               <a
-                href="mailto:support@crosslease.com"
+                href={SUPPORT_MAILTO}
                 className="text-primary underline underline-offset-2 hover:opacity-80"
               >
                 {t("activateAccount.blockedLink.contactSupportLink")}
@@ -223,7 +223,7 @@ export default function ActivateAccountPage() {
             data-testid="activate-account-contact-admin-button"
             className="w-full h-9 justify-start gap-2 rounded-[12px] text-sm text-muted-foreground"
             onClick={() => {
-              window.location.href = "mailto:support@crosslease.com"
+              window.location.href = SUPPORT_MAILTO
             }}
           >
             <Mail size={16} className="shrink-0" />
@@ -316,6 +316,7 @@ export default function ActivateAccountPage() {
                   value={email}
                   disabled
                   readOnly
+                  data-testid="activate-email-input"
                   startIcon={<User size={16} />}
                   className="pl-9 text-sm"
                 />
@@ -332,7 +333,13 @@ export default function ActivateAccountPage() {
                   <GeneratePasswordButton
                     onGenerate={pwd => {
                       form.setValue("password", pwd, { shouldValidate: true })
+                      // Fill and reveal the confirmation too — a generated password the user
+                      // never saw is impossible to retype into a masked second field.
+                      form.setValue("passwordConfirm", pwd, {
+                        shouldValidate: true,
+                      })
                       setShowPassword(true)
+                      setShowPasswordConfirm(true)
                     }}
                   />
                 </div>
@@ -342,6 +349,7 @@ export default function ActivateAccountPage() {
                   autoComplete="new-password"
                   autoFocus
                   data-testid="activate-password-input"
+                  error={!!errors.password}
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
@@ -363,6 +371,10 @@ export default function ActivateAccountPage() {
                   }
                   {...form.register("password")}
                 />
+                <FieldError
+                  code={errors.password?.message}
+                  testId="activate-password-error"
+                />
 
                 <div className="mt-3">
                   <PasswordStrengthBar password={password} />
@@ -378,6 +390,7 @@ export default function ActivateAccountPage() {
                   type={showPasswordConfirm ? "text" : "password"}
                   autoComplete="new-password"
                   data-testid="activate-password-confirm-input"
+                  error={!!errors.passwordConfirm}
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
@@ -399,11 +412,10 @@ export default function ActivateAccountPage() {
                   }
                   {...form.register("passwordConfirm")}
                 />
-                {form.formState.errors.passwordConfirm && (
-                  <p className="mt-1.5 text-sm text-destructive">
-                    {t("activateAccount.errors.passwords_mismatch")}
-                  </p>
-                )}
+                <FieldError
+                  code={errors.passwordConfirm?.message}
+                  testId="activate-password-confirm-error"
+                />
               </div>
             </div>
           </form>

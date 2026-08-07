@@ -4,7 +4,43 @@ import {
   MfaActivateResponseSchema,
   MfaVerifyResponseSchema,
   ResetVerifyResponseSchema,
+  RECOVERY_CODE_LENGTH,
+  TOTP_CODE_LENGTH,
+  isAcceptedMfaCode,
+  normalizeMfaCodeInput,
 } from "@/features/auth/api/mfaSchema"
+
+describe("isAcceptedMfaCode", () => {
+  const totp = "1".repeat(TOTP_CODE_LENGTH)
+  const recovery = "a1b2c3d4e5".repeat(RECOVERY_CODE_LENGTH / 10)
+
+  it("accepts a 6-digit TOTP code", () => {
+    expect(isAcceptedMfaCode(totp)).toBe(true)
+  })
+
+  it("accepts a 20-character lowercase hex recovery code", () => {
+    expect(recovery).toHaveLength(RECOVERY_CODE_LENGTH)
+    expect(isAcceptedMfaCode(recovery)).toBe(true)
+  })
+
+  it("rejects a code of the wrong length", () => {
+    expect(isAcceptedMfaCode("12345")).toBe(false)
+    expect(isAcceptedMfaCode("1234567")).toBe(false)
+    expect(isAcceptedMfaCode("")).toBe(false)
+  })
+
+  it("rejects a non-numeric TOTP code", () => {
+    expect(isAcceptedMfaCode("12345a")).toBe(false)
+  })
+
+  it("rejects a recovery code with non-hex characters", () => {
+    expect(isAcceptedMfaCode("z".repeat(RECOVERY_CODE_LENGTH))).toBe(false)
+  })
+
+  it("rejects an uppercase recovery code — the wire format is lowercase hex", () => {
+    expect(isAcceptedMfaCode(recovery.toUpperCase())).toBe(false)
+  })
+})
 
 const validUser = {
   id: "00000000-0000-0000-0000-000000000000",
@@ -140,5 +176,25 @@ describe("ResetVerifyResponseSchema", () => {
 
   it("rejects missing user", () => {
     expect(() => ResetVerifyResponseSchema.parse({})).toThrow()
+  })
+})
+
+describe("normalizeMfaCodeInput", () => {
+  const recovery = "a1b2c3d4e5".repeat(RECOVERY_CODE_LENGTH / 10)
+
+  it("trims surrounding whitespace", () => {
+    expect(normalizeMfaCodeInput("  123456  ")).toBe("123456")
+  })
+
+  // A mobile keyboard auto-capitalizes and some mail clients upper-case on copy; without
+  // folding the case the submit button stayed disabled with nothing explaining why.
+  it("lowercases so an auto-capitalized recovery code still validates", () => {
+    const shouted = recovery.toUpperCase()
+    expect(isAcceptedMfaCode(shouted)).toBe(false)
+    expect(isAcceptedMfaCode(normalizeMfaCodeInput(shouted))).toBe(true)
+  })
+
+  it("leaves a digit-only TOTP code untouched", () => {
+    expect(normalizeMfaCodeInput("123456")).toBe("123456")
   })
 })

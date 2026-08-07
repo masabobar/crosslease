@@ -1,14 +1,12 @@
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Shield, AlertCircle, Check, Copy } from "lucide-react"
+import { Shield, AlertCircle, Check } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { resetPasswordVerify } from "../api/mfaApi"
-import { RECOVERY_CODE_LENGTH, TOTP_CODE_LENGTH } from "../api/mfaSchema"
+import { isAcceptedMfaCode, normalizeMfaCodeInput } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
 import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
-import { COPIED_RESET_DELAY_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +17,7 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
+import { RecoveryCodesCard } from "./RecoveryCodesCard"
 
 type LocationState = { mfa_token: string } | null
 type PageStep = "verify" | "recovery" | "success"
@@ -27,7 +26,7 @@ export default function ResetPasswordVerifyPage() {
   const { t } = useTranslation("auth")
   const navigate = useNavigate()
   const location = useLocation()
-  const { setAuthenticated } = useAuthStore()
+  const setAuthenticated = useAuthStore(s => s.setAuthenticated)
 
   const state = (location.state as LocationState) ?? null
   const mfaToken = state?.mfa_token ?? ""
@@ -39,7 +38,6 @@ export default function ResetPasswordVerifyPage() {
   const [newRecoveryCodes, setNewRecoveryCodes] = useState<string[] | null>(
     null
   )
-  const [copied, setCopied] = useState(false)
 
   if (!mfaToken) {
     return (
@@ -61,10 +59,7 @@ export default function ResetPasswordVerifyPage() {
     )
   }
 
-  const isRecoveryCode =
-    code.length === RECOVERY_CODE_LENGTH && /^[0-9a-f]+$/.test(code)
-  const isTotpCode = code.length === TOTP_CODE_LENGTH && /^\d+$/.test(code)
-  const isValid = isRecoveryCode || isTotpCode
+  const isValid = isAcceptedMfaCode(code)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,17 +83,6 @@ export default function ResetPasswordVerifyPage() {
       )
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleCopyCodes = async () => {
-    if (!newRecoveryCodes) return
-    try {
-      await navigator.clipboard.writeText(newRecoveryCodes.join("\n"))
-      setCopied(true)
-      setTimeout(() => setCopied(false), COPIED_RESET_DELAY_MS)
-    } catch {
-      toast.error(t("clipboard.copyFailed"))
     }
   }
 
@@ -134,54 +118,17 @@ export default function ResetPasswordVerifyPage() {
   if (step === "recovery" && newRecoveryCodes) {
     return (
       <AuthPageLayout>
-        <AuthCard>
-          <AuthCardHeader>
-            <div className="p-3 bg-amber-100 rounded-[14px] w-fit mb-4">
-              <Shield size={24} className="text-amber-600" />
-            </div>
-            <h1 className="text-xl font-semibold text-foreground">
-              {t("resetPasswordVerify.newCodes.title")}
-            </h1>
-            <p className="mt-2 text-base text-muted-foreground">
-              {t("resetPasswordVerify.newCodes.subtitle")}
-            </p>
-          </AuthCardHeader>
-
-          <AuthCardBody>
-            <div
-              data-testid="reset-password-verify-new-recovery-codes"
-              className="bg-muted rounded-lg p-4 font-mono text-sm grid grid-cols-2 gap-2"
-            >
-              {newRecoveryCodes.map(c => (
-                <span key={c} className="text-foreground">
-                  {c}
-                </span>
-              ))}
-            </div>
-          </AuthCardBody>
-
-          <AuthCardFooter>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="reset-password-verify-copy-codes-button"
-              onClick={handleCopyCodes}
-              className="gap-2"
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied
-                ? t("resetPasswordVerify.newCodes.copied")
-                : t("resetPasswordVerify.newCodes.copy")}
-            </Button>
-            <Button
-              type="button"
-              data-testid="reset-password-verify-continue-button"
-              onClick={() => navigate(PATHS.DASHBOARD)}
-            >
-              {t("resetPasswordVerify.newCodes.continue")}
-            </Button>
-          </AuthCardFooter>
-        </AuthCard>
+        <RecoveryCodesCard
+          title={t("resetPasswordVerify.newCodes.title")}
+          subtitle={t("resetPasswordVerify.newCodes.subtitle")}
+          codes={newRecoveryCodes}
+          onContinue={() => navigate(PATHS.DASHBOARD)}
+          testIds={{
+            container: "reset-password-verify-new-recovery-codes",
+            copyButton: "reset-password-verify-copy-codes-button",
+            continueButton: "reset-password-verify-continue-button",
+          }}
+        />
       </AuthPageLayout>
     )
   }
@@ -224,12 +171,11 @@ export default function ResetPasswordVerifyPage() {
               <Input
                 id="rpv-code"
                 type="text"
-                inputMode="numeric"
                 autoComplete="one-time-code"
                 autoFocus
                 data-testid="reset-password-verify-code-input"
                 value={code}
-                onChange={e => setCode(e.target.value.trim())}
+                onChange={e => setCode(normalizeMfaCodeInput(e.target.value))}
                 placeholder={t("resetPasswordVerify.codePlaceholder")}
                 className="text-sm"
               />

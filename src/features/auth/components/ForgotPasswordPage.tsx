@@ -2,9 +2,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
-import { z } from "zod"
 import { User } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { ForgotPasswordInputSchema } from "../api/forgotPasswordSchema"
 import type { ForgotPasswordInput } from "../api/forgotPasswordSchema"
 import { requestPasswordReset } from "../api/forgotPasswordApi"
 import { ApiError } from "@/lib/api"
@@ -20,12 +20,12 @@ import {
   AuthCardBody,
   AuthCardFooter,
 } from "./AuthCard"
+import { FieldError } from "./FieldError"
 
 type Step = "enter-email" | "check-email"
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation("auth")
-  const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
   const showToast = useToastStore(s => s.showToast)
   const [step, setStep] = useState<Step>("enter-email")
@@ -33,15 +33,8 @@ export default function ForgotPasswordPage() {
   const [isResending, setIsResending] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
-  const formSchema = z.object({
-    email: z
-      .string()
-      .min(1, tCommon("validation.required"))
-      .email(t("forgotPassword.enterEmail.errors.emailInvalid")),
-  })
-
   const form = useForm<ForgotPasswordInput>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(ForgotPasswordInputSchema),
     defaultValues: { email: "" },
   })
 
@@ -126,15 +119,10 @@ export default function ForgotPasswordPage() {
                   className="text-sm"
                   {...form.register("email")}
                 />
-                {errors.email && (
-                  <p
-                    data-testid="forgot-password-email-error"
-                    className="mt-1.5 text-xs text-destructive"
-                  >
-                    {errors.email.message ??
-                      t("forgotPassword.enterEmail.errors.emailInvalid")}
-                  </p>
-                )}
+                <FieldError
+                  code={errors.email?.message}
+                  testId="forgot-password-email-error"
+                />
               </div>
             </form>
           </AuthCardBody>

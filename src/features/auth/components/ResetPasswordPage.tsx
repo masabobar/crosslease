@@ -5,11 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Eye, EyeOff, Check, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import {
-  ResetPasswordInputSchema,
-  PASSWORDS_DO_NOT_MATCH,
-} from "../api/forgotPasswordSchema"
-import type { ResetPasswordInput } from "../api/forgotPasswordSchema"
+import { SetPasswordFormSchema } from "../api/passwordPolicy"
+import type { SetPasswordFormInput } from "../api/passwordPolicy"
 import { validateResetToken, resetPassword } from "../api/forgotPasswordApi"
 import { AUTH_QUERY_KEYS } from "../api/queryKeys"
 import { ApiError } from "@/lib/api"
@@ -26,6 +23,7 @@ import {
 } from "./AuthCard"
 import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { PasswordStrengthBar } from "./PasswordStrengthBar"
+import { FieldError } from "./FieldError"
 
 type PageState = "loading" | "valid" | "blocked" | "success"
 
@@ -59,9 +57,9 @@ export default function ResetPasswordPage() {
     return "valid"
   })()
 
-  const form = useForm<ResetPasswordInput>({
-    resolver: zodResolver(ResetPasswordInputSchema),
-    defaultValues: { password: "", password_confirm: "" },
+  const form = useForm<SetPasswordFormInput>({
+    resolver: zodResolver(SetPasswordFormSchema),
+    defaultValues: { password: "", passwordConfirm: "" },
   })
 
   const { isSubmitting, errors } = form.formState
@@ -77,7 +75,7 @@ export default function ResetPasswordPage() {
       const result = await resetPassword(
         token,
         data.password,
-        data.password_confirm
+        data.passwordConfirm
       )
       if (result.mfa_required) {
         navigate(PATHS.RESET_PASSWORD_VERIFY, {
@@ -199,7 +197,7 @@ export default function ResetPasswordPage() {
                   <GeneratePasswordButton
                     onGenerate={pwd => {
                       form.setValue("password", pwd, { shouldValidate: true })
-                      form.setValue("password_confirm", pwd, {
+                      form.setValue("passwordConfirm", pwd, {
                         shouldValidate: true,
                       })
                       setShowPassword(true)
@@ -211,6 +209,7 @@ export default function ResetPasswordPage() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   data-testid="reset-password-input"
+                  error={!!errors.password}
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
@@ -232,6 +231,10 @@ export default function ResetPasswordPage() {
                   }
                   {...form.register("password")}
                 />
+                <FieldError
+                  code={errors.password?.message}
+                  testId="reset-password-error"
+                />
 
                 <div className="mt-3">
                   <PasswordStrengthBar password={password} />
@@ -247,7 +250,7 @@ export default function ResetPasswordPage() {
                   type={showConfirm ? "text" : "password"}
                   autoComplete="new-password"
                   data-testid="reset-password-confirm-input"
-                  error={!!errors.password_confirm}
+                  error={!!errors.passwordConfirm}
                   startIcon={<Lock size={16} />}
                   className="pl-9 text-sm"
                   endAction={
@@ -267,20 +270,12 @@ export default function ResetPasswordPage() {
                       {showConfirm ? <EyeOff /> : <Eye />}
                     </Button>
                   }
-                  {...form.register("password_confirm")}
+                  {...form.register("passwordConfirm")}
                 />
-                {errors.password_confirm && (
-                  <p
-                    data-testid="reset-password-confirm-error"
-                    className="mt-1.5 text-xs text-destructive"
-                  >
-                    {errors.password_confirm.message === PASSWORDS_DO_NOT_MATCH
-                      ? t(
-                          "resetPassword.setPassword.errors.PASSWORDS_DO_NOT_MATCH"
-                        )
-                      : errors.password_confirm.message}
-                  </p>
-                )}
+                <FieldError
+                  code={errors.passwordConfirm?.message}
+                  testId="reset-password-confirm-error"
+                />
               </div>
             </div>
           </form>
