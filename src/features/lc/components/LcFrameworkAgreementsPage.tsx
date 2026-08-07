@@ -9,7 +9,7 @@ import { getLcPortalDocumentDownloadUrl } from "@/features/lc/api/lcPortalApi"
 import {
   isFrameworkAgreementNotFoundError,
   isFrameworkAgreementExpiredByDate,
-  getFrameworkAgreementDisplayStatus,
+  getLcPortalAgreementLifecycle,
 } from "@/features/frameworkAgreements/utils"
 import {
   FA_DOCUMENT_BYTES_PER_MB,
@@ -26,7 +26,7 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
   // LCPortalFAListItem carries no `is_expired` (unlike the bank-side list and detail
   // responses), so it is derived here — otherwise the same agreement would read
   // "Active" here and "Expired" in the bank portal. See Q-033.
-  const displayStatus = getFrameworkAgreementDisplayStatus(
+  const displayStatus = getLcPortalAgreementLifecycle(
     fa.status,
     isFrameworkAgreementExpiredByDate(fa.valid_until)
   )

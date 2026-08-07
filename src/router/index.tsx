@@ -145,10 +145,6 @@ const FrameworkAgreementDetailPage = lazy(
   () =>
     import("@/features/frameworkAgreements/components/FrameworkAgreementDetailPage")
 )
-const FrameworkAgreementVersionHistoryPage = lazy(
-  () =>
-    import("@/features/frameworkAgreements/components/FrameworkAgreementVersionHistoryPage")
-)
 const WorkflowTaskCatalogListPage = lazy(
   () =>
     import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogListPage")
@@ -500,16 +496,6 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES}>
               <EditFrameworkAgreementWizardPage />
-            </RoleGuard>
-          </Suspense>
-        ),
-      },
-      {
-        path: PATHS.FRAMEWORK_AGREEMENT_VERSION_HISTORY,
-        element: (
-          <Suspense fallback={null}>
-            <RoleGuard allowed={FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES}>
-              <FrameworkAgreementVersionHistoryPage />
             </RoleGuard>
           </Suspense>
         ),

@@ -6,17 +6,28 @@ import { FieldDiffItemSchema } from "@/types/api"
 export const FALifecycleStatusSchema = z.enum(["draft", "active", "terminated"])
 export type FALifecycleStatus = z.infer<typeof FALifecycleStatusSchema>
 
-// Per-version status (CR-FA-04 on PRD1042-1799) — distinct from FALifecycleStatus above,
-// which is the agreement-level status. `discarded` is a real wire value (an abandoned
-// draft) but must never be shown on the frontend per the client's own note on PRD1042-1798 —
-// screens rendering this enum filter it out rather than relying on it never arriving.
-export const FAVersionStatusSchema = z.enum([
+// The agreement's displayable lifecycle — CR-FA-07 on PRD1042-1799 as revised 6/8/2026:
+// Draft (discardable), Active, Expired, Terminated. No Superseded, because CR-FA-04 was
+// withdrawn and the agreement is not versioned; no Scheduled, which the CR leaves open and
+// the wire does not offer (see open-questions Q-075).
+//
+// Distinct from FALifecycleStatus above, and the two are not interchangeable:
+//
+//   FALifecycleStatus  — the *stored* status, and the only thing the list endpoint's
+//                        `status` filter accepts. Gates which actions are offered.
+//   FAAgreementLifecycle — the *displayed* state, computed server-side by folding
+//                        `is_expired` into the stored status. Never sent back to the API.
+//
+// So an expired agreement is `expired` here and still `active` there, which is why the
+// action gates on the detail page continue to read `status` — an expired agreement can
+// still be terminated.
+export const FAAgreementLifecycleSchema = z.enum([
   "draft",
   "active",
-  "superseded",
-  "discarded",
+  "terminated",
+  "expired",
 ])
-export type FAVersionStatus = z.infer<typeof FAVersionStatusSchema>
+export type FAAgreementLifecycle = z.infer<typeof FAAgreementLifecycleSchema>
 
 export const BankEntitySchema = z.enum([
   "sparkasse",
@@ -45,8 +56,9 @@ export const VFE_AMOUNT_MIN = 0
 // which now carries it on create, update and the version detail response — see
 // `effective_rate` in features/productTemplates/api/schema.ts. Do not reintroduce it here:
 // the rate is a product-level parameter that the agreement reads through its template.
-// Historical values survive on FAVersionDetailResponse, which still carries `effective_rate`
-// and `vfe_rate` for versions created before the change.
+// Historical values used to survive on FAVersionDetailResponse; that schema went with
+// CR-FA-04's withdrawal (see the note further down), so the audit-history reconstruct path
+// is now the only place pre-change `effective_rate` / `vfe_rate` values surface.
 
 // POST /framework-agreements — matches CreateFARequest in refinext-api fa_schemas.py exactly
 export const CreateFARequestSchema = z.object({
@@ -210,6 +222,9 @@ export const FAListItemSchema = z.object({
   bank_entity: BankEntitySchema.nullable(),
   status: FALifecycleStatusSchema,
   is_expired: z.boolean(),
+  // What the status column renders (CR-FA-07). Kept alongside `status`, which the list
+  // filter still round-trips — the filter cannot express `expired`, see Q-076.
+  agreement_lifecycle: FAAgreementLifecycleSchema,
   valid_from: z.string(),
   valid_until: z.string().nullable(),
   utilization_pct: z.coerce.number().nullable(),
@@ -246,10 +261,12 @@ export const FADetailResponseSchema = z.object({
   lc_partner_name: z.string().nullable(),
   status: FALifecycleStatusSchema,
   // Derived server-side from valid_until (CR PRD1042-1552 B2) — see is_fa_expired() in
-  // refinext-api. Expiry is never a wire status: FALifecycleStatus holds the three values
-  // declared at the top of this file, down from four since CR PRD1042-1799 CR-FA-07
-  // removed Suspend. Its Wave 1 acceptance criterion still says "four" and is stale.
+  // refinext-api. Retained because the LC portal still needs the raw flag; on this response
+  // it is already folded into `agreement_lifecycle` below, which is what the UI renders.
   is_expired: z.boolean(),
+  // CR-FA-07 as revised 6/8/2026 — the agreement's four-state displayable lifecycle. The
+  // frontend used to recompute this from status + is_expired; the server owns the rule.
+  agreement_lifecycle: FAAgreementLifecycleSchema,
   currency: z.string(),
   max_volume_eur: z.coerce.number(),
   valid_from: z.string(),
@@ -355,60 +372,20 @@ export const FAReconstructResponseSchema = z.object({
 })
 export type FAReconstructResponse = z.infer<typeof FAReconstructResponseSchema>
 
-// FA versioning (CR-FA-04 on PRD1042-1799) — GET /framework-agreements/{id}/versions
-export const FAVersionSummaryResponseSchema = z.object({
-  version_number: z.string(),
-  version_status: FAVersionStatusSchema,
-  agreement_name: z.string(),
-  max_volume_eur: z.coerce.number(),
-  valid_from: z.string(),
-  valid_until: z.string().nullable(),
-  activated_at: z.string().nullable(),
-  created_at: z.string(),
-})
-export type FAVersionSummaryResponse = z.infer<
-  typeof FAVersionSummaryResponseSchema
->
-
-export const FAVersionListResponseSchema = z.object({
-  items: z.array(FAVersionSummaryResponseSchema),
-})
-export type FAVersionListResponse = z.infer<typeof FAVersionListResponseSchema>
-
-// GET /framework-agreements/{id}/versions/{version_number} — activated_by is a bare UUID
-// on this response, unlike the Bank Product Template equivalent (UserRef with a display
-// name); there is no enrichment endpoint to resolve it against, so it is not rendered.
-export const FAVersionDetailResponseSchema = z.object({
-  id: z.string().uuid(),
-  version_number: z.string(),
-  version_status: FAVersionStatusSchema,
-  agreement_name: z.string(),
-  bank_entity: z.string(),
-  currency: z.string(),
-  max_volume_eur: z.coerce.number(),
-  effective_rate: z.coerce.number().nullable(),
-  vfe_rate: z.coerce.number().nullable(),
-  vfe_amount_eur: z.coerce.number().nullable(),
-  valid_from: z.string(),
-  valid_until: z.string().nullable(),
-  special_conditions: z.string().nullable(),
-  activated_at: z.string().nullable(),
-  activated_by: z.string().uuid().nullable(),
-  created_at: z.string(),
-})
-export type FAVersionDetailResponse = z.infer<
-  typeof FAVersionDetailResponseSchema
->
-
-// GET /framework-agreements/{id}/diff — one flat list, unlike the Bank Product Template
-// diff's three sections (behavioral/eligibility/orchestration); FA has no orchestration
-// linkage to compare.
-export const FAVersionDiffResponseSchema = z.object({
-  from_version: z.string(),
-  to_version: z.string(),
-  diffs: z.array(FieldDiffItemSchema),
-})
-export type FAVersionDiffResponse = z.infer<typeof FAVersionDiffResponseSchema>
+// FA versioning schemas (FAVersionSummaryResponse / FAVersionListResponse /
+// FAVersionDetailResponse / FAVersionDiffResponse) were removed here: CR-FA-04 on
+// PRD1042-1799 was **withdrawn by the client on 6/8/2026** — "The Framework Agreement is
+// not versioned. When an agreement ends, a successor record is created, and the overlap
+// lock in CR-FA-10 enforces one active agreement per leasing company."
+//
+// The backend still exposes /versions, /versions/{id}/activate and /diff; they are
+// deliberately unconsumed rather than wrapped (see open-questions Q-072). Two things the
+// CR says must survive the removal, and did: the agreement's own lifecycle
+// (FAAgreementLifecycleSchema, CR-FA-07) and the pinned product template version
+// (CR-FA-05, still backend-blocked — Q-063/Q-068).
+//
+// `effective_rate` and `vfe_rate` historical values lived only on FAVersionDetailResponse
+// and are gone with it; the audit-history reconstruct path still surfaces them.
 
 // GET /product-templates/selectable — reused from the Bank Product Template epic
 export const SelectableTemplateItemSchema = z.object({

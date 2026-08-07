@@ -18,7 +18,6 @@
     "status": {
       "draft": "Entwurf",
       "active": "Aktiv",
-      "suspended": "Ausgesetzt",
       "terminated": "Beendet",
       "expired": "Abgelaufen"
     },

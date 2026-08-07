@@ -16,6 +16,7 @@ const activeAgreement: FADetailResponse = {
   lc_partner_name: "Example Leasing GmbH",
   status: "active",
   is_expired: false,
+  agreement_lifecycle: "active",
   currency: "EUR",
   max_volume_eur: 25000000,
   valid_from: "2026-06-01",

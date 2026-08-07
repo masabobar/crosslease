@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { FAListItem } from "@/features/frameworkAgreements/api/schema"
 import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
-import { getFrameworkAgreementDisplayStatus } from "@/features/frameworkAgreements/utils"
 
 // Widths mirror the FA list design (Figma node 1:9673, table frame 1:9695): Agreement
 // 200, Leasing company 284, Status 130, Valid from 120, Valid until 120, row action 32.
@@ -132,10 +131,6 @@ function FrameworkAgreementTable({
 
       {!isLoading &&
         agreements.map(item => {
-          const displayStatus = getFrameworkAgreementDisplayStatus(
-            item.status,
-            item.is_expired
-          )
           return (
             <div
               key={item.id}
@@ -154,8 +149,10 @@ function FrameworkAgreementTable({
                 </span>
               </div>
               <div className={`${COL_STATUS} p-2`}>
-                <Badge variant={FA_STATUS_BADGE_VARIANT[displayStatus]}>
-                  {t(`statuses.${displayStatus}`)}
+                <Badge
+                  variant={FA_STATUS_BADGE_VARIANT[item.agreement_lifecycle]}
+                >
+                  {t(`statuses.${item.agreement_lifecycle}`)}
                 </Badge>
               </div>
               <div className={`${COL_VALID_FROM} p-2`}>

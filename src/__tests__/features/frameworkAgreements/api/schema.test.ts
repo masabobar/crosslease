@@ -9,7 +9,9 @@ import {
   FADetailResponseSchema,
   FADocumentListResponseSchema,
   FADraftResponseSchema,
+  FAAgreementLifecycleSchema,
   FAEventTypeFilterSchema,
+  FALifecycleStatusSchema,
   FALCPartnerItemSchema,
   FALCPartnersResponseSchema,
   FALinkedFinancingsResponseSchema,
@@ -18,10 +20,6 @@ import {
   FAReconstructResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
-  FAVersionDetailResponseSchema,
-  FAVersionDiffResponseSchema,
-  FAVersionListResponseSchema,
-  FAVersionStatusSchema,
   FieldDiffItemSchema,
   FrameworkAgreementWizardFormSchema,
   SelectableTemplateItemSchema,
@@ -422,6 +420,33 @@ describe("ActivateFARequestSchema", () => {
   })
 })
 
+// CR-FA-07 on PRD1042-1799, revised 6/8/2026. Deliberately NOT the same set as
+// FALifecycleStatus: `expired` is displayable only and is never sent back to the API.
+describe("FAAgreementLifecycleSchema", () => {
+  it.each(["draft", "active", "terminated", "expired"])(
+    "accepts the documented lifecycle %s",
+    value => {
+      expect(() => FAAgreementLifecycleSchema.parse(value)).not.toThrow()
+    }
+  )
+
+  it("rejects superseded — the agreement is not versioned (CR-FA-04 withdrawn)", () => {
+    expect(() => FAAgreementLifecycleSchema.parse("superseded")).toThrow()
+  })
+
+  it("rejects scheduled — not offered by the wire; see Q-075", () => {
+    expect(() => FAAgreementLifecycleSchema.parse("scheduled")).toThrow()
+  })
+
+  it("carries one more value than the stored status it is derived from", () => {
+    // Guards the asymmetry the list filter depends on: `status` is what the API accepts
+    // as a filter, `agreement_lifecycle` is only ever rendered.
+    expect(FAAgreementLifecycleSchema.options).toHaveLength(
+      FALifecycleStatusSchema.options.length + 1
+    )
+  })
+})
+
 describe("FAListItemSchema / FAListResponseSchema", () => {
   const validItem = {
     id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
@@ -431,6 +456,7 @@ describe("FAListItemSchema / FAListResponseSchema", () => {
     bank_entity: "sparkasse",
     status: "active",
     is_expired: false,
+    agreement_lifecycle: "active",
     valid_from: "2026-06-01",
     valid_until: null,
     utilization_pct: null,
@@ -595,6 +621,7 @@ describe("FADetailResponseSchema", () => {
     lc_partner_name: "New Group Trade",
     status: "active",
     is_expired: false,
+    agreement_lifecycle: "active",
     currency: "EUR",
     max_volume_eur: 25000000,
     valid_from: "2026-06-01",
@@ -1156,139 +1183,5 @@ describe("FAEventTypeFilterSchema", () => {
 
   it("rejects an unknown event type", () => {
     expect(() => FAEventTypeFilterSchema.parse("unknown_event")).toThrow()
-  })
-})
-
-describe("FAVersionStatusSchema", () => {
-  it.each(["draft", "active", "superseded", "discarded"])(
-    "accepts the documented status %s",
-    value => {
-      expect(() => FAVersionStatusSchema.parse(value)).not.toThrow()
-    }
-  )
-
-  it("rejects an unknown status", () => {
-    expect(() => FAVersionStatusSchema.parse("terminated")).toThrow()
-  })
-})
-
-describe("FAVersionListResponseSchema", () => {
-  const validSummary = {
-    version_number: "1",
-    version_status: "active",
-    agreement_name: "RV-SSKM-2026-001",
-    max_volume_eur: "25000000.00",
-    valid_from: "2026-06-01",
-    valid_until: null,
-    activated_at: "2026-06-01T09:00:00Z",
-    created_at: "2026-06-01T09:00:00Z",
-  }
-
-  it("accepts a valid version list", () => {
-    expect(() =>
-      FAVersionListResponseSchema.parse({ items: [validSummary] })
-    ).not.toThrow()
-  })
-
-  it("accepts an empty list", () => {
-    expect(() => FAVersionListResponseSchema.parse({ items: [] })).not.toThrow()
-  })
-
-  it("coerces max_volume_eur from a numeric string", () => {
-    const parsed = FAVersionListResponseSchema.parse({
-      items: [validSummary],
-    })
-    expect(parsed.items[0].max_volume_eur).toBe(25000000)
-  })
-
-  it("rejects a missing version_status", () => {
-    const rest = { ...validSummary } as Record<string, unknown>
-    delete rest.version_status
-    expect(() => FAVersionListResponseSchema.parse({ items: [rest] })).toThrow()
-  })
-
-  it("rejects an unknown version_status", () => {
-    expect(() =>
-      FAVersionListResponseSchema.parse({
-        items: [{ ...validSummary, version_status: "banana" }],
-      })
-    ).toThrow()
-  })
-})
-
-describe("FAVersionDetailResponseSchema", () => {
-  const validDetail = {
-    id: "b3e1c9a0-1111-4a2b-8c3d-000000000003",
-    version_number: "2",
-    version_status: "superseded",
-    agreement_name: "RV-SSKM-2026-001",
-    bank_entity: "sparkasse",
-    currency: "EUR",
-    max_volume_eur: "25000000.00",
-    effective_rate: null,
-    vfe_rate: null,
-    vfe_amount_eur: "5000.00",
-    valid_from: "2026-06-01",
-    valid_until: null,
-    special_conditions: "Line one.\nLine two.",
-    activated_at: "2026-06-01T09:00:00Z",
-    activated_by: "b3e1c9a0-1111-4a2b-8c3d-000000000001",
-    created_at: "2026-06-01T09:00:00Z",
-  }
-
-  it("accepts a fully populated version detail", () => {
-    expect(() => FAVersionDetailResponseSchema.parse(validDetail)).not.toThrow()
-  })
-
-  it("preserves multi-line special_conditions verbatim", () => {
-    const parsed = FAVersionDetailResponseSchema.parse(validDetail)
-    expect(parsed.special_conditions).toBe("Line one.\nLine two.")
-  })
-
-  it("accepts null activated_by (never-activated draft)", () => {
-    expect(() =>
-      FAVersionDetailResponseSchema.parse({
-        ...validDetail,
-        activated_at: null,
-        activated_by: null,
-      })
-    ).not.toThrow()
-  })
-
-  it("rejects a missing id", () => {
-    const rest = { ...validDetail } as Record<string, unknown>
-    delete rest.id
-    expect(() => FAVersionDetailResponseSchema.parse(rest)).toThrow()
-  })
-})
-
-describe("FAVersionDiffResponseSchema", () => {
-  const validDiff = {
-    from_version: "1",
-    to_version: "2",
-    diffs: [
-      {
-        field: "max_volume_eur",
-        old_value: "20000000.00",
-        new_value: "25000000.00",
-      },
-      { field: "special_conditions", old_value: null, new_value: "New note." },
-    ],
-  }
-
-  it("accepts a valid diff response", () => {
-    expect(() => FAVersionDiffResponseSchema.parse(validDiff)).not.toThrow()
-  })
-
-  it("accepts an empty diffs array", () => {
-    expect(() =>
-      FAVersionDiffResponseSchema.parse({ ...validDiff, diffs: [] })
-    ).not.toThrow()
-  })
-
-  it("rejects a missing from_version", () => {
-    const rest = { ...validDiff } as Record<string, unknown>
-    delete rest.from_version
-    expect(() => FAVersionDiffResponseSchema.parse(rest)).toThrow()
   })
 })
