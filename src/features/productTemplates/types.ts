@@ -19,8 +19,9 @@ import type {
 // empty result set. Derived from the schema enum rather than retyped, so a status the
 // backend adds shows up here on its own — see .claude/rules/enums-and-constants.md §3.
 //
-// The Framework Agreement side already drops it in FrameworkAgreementVersionHistoryPage;
-// this keeps the two modules consistent.
+// (The Framework Agreement side used to make the same exclusion in its version-history
+// screen; that screen is gone with CR-FA-04's withdrawal on PRD1042-1799, so this is now
+// the only place the rule is applied.)
 //
 // Lives here rather than in constants.ts because constants.ts is imported *by* api/schema.ts
 // (for the termination-justification bounds), so reading the schema enum from there would

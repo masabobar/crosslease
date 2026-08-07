@@ -7,10 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useFrameworkAgreementDetail } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDetail"
-import {
-  isFrameworkAgreementNotFoundError,
-  getFrameworkAgreementDisplayStatus,
-} from "@/features/frameworkAgreements/utils"
+import { isFrameworkAgreementNotFoundError } from "@/features/frameworkAgreements/utils"
 import { ActivateFrameworkAgreementPanel } from "@/features/frameworkAgreements/components/ActivateFrameworkAgreementPanel"
 import { TerminateFrameworkAgreementPanel } from "@/features/frameworkAgreements/components/TerminateFrameworkAgreementPanel"
 import { TemplatesAndDocumentsTab } from "@/features/frameworkAgreements/components/TemplatesAndDocumentsTab"
@@ -22,10 +19,7 @@ import { formatDateTime, formatCurrency } from "@/lib/formatters"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isUuidRouteParam } from "@/lib/routeParams"
-import {
-  frameworkAgreementEdit,
-  frameworkAgreementVersionHistory,
-} from "@/router/paths"
+import { frameworkAgreementEdit } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
@@ -110,11 +104,6 @@ export default function FrameworkAgreementDetailPage() {
     )
   }
 
-  const displayStatus = getFrameworkAgreementDisplayStatus(
-    data.status,
-    data.is_expired
-  )
-
   return (
     <div className="p-8 flex flex-col gap-6">
       <div className="flex items-start justify-between">
@@ -123,8 +112,8 @@ export default function FrameworkAgreementDetailPage() {
             <h1 className="text-2xl font-semibold text-foreground">
               {data.agreement_name}
             </h1>
-            <Badge variant={FA_STATUS_BADGE_VARIANT[displayStatus]}>
-              {t(`statuses.${displayStatus}`)}
+            <Badge variant={FA_STATUS_BADGE_VARIANT[data.agreement_lifecycle]}>
+              {t(`statuses.${data.agreement_lifecycle}`)}
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -138,13 +127,6 @@ export default function FrameworkAgreementDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            data-testid="fa-view-version-history-button"
-            onClick={() => navigate(frameworkAgreementVersionHistory(data.id))}
-          >
-            {t("detail.actions.viewVersionHistory")}
-          </Button>
           {data.status !== FALifecycleStatusSchema.enum.terminated &&
             canManageFrameworkAgreement && (
               <Button
@@ -317,7 +299,7 @@ export default function FrameworkAgreementDetailPage() {
               <div className="p-4 grid grid-cols-2 gap-4">
                 <ReviewRow
                   label={t("detail.fields.status")}
-                  value={t(`statuses.${displayStatus}`)}
+                  value={t(`statuses.${data.agreement_lifecycle}`)}
                 />
                 {data.created_by_name && (
                   <ReviewRow

@@ -177,35 +177,11 @@
     "actions": {
       "activate": "Aktivieren",
       "edit": "Bearbeiten",
-      "terminate": "Beenden",
-      "viewVersionHistory": "Versionsverlauf anzeigen"
+      "terminate": "Beenden"
     },
     "financingsEmptyState": "Noch keine Finanzierungen",
     "tabComingSoon": "Dieser Tab ist noch nicht verfügbar",
     "loadError": "Beim Laden dieser Vereinbarung ist ein Fehler aufgetreten."
-  },
-  "versionHistory": {
-    "title": "Versionsverlauf",
-    "backToAgreement": "Zurück zur Vereinbarung",
-    "activatedAt": "Aktiviert am {{date}}",
-    "statuses": {
-      "draft": "Entwurf",
-      "active": "Aktiv",
-      "superseded": "Abgelöst",
-      "discarded": "Verworfen"
-    },
-    "compare": {
-      "compareLabel": "Vergleichen",
-      "withLabel": "mit",
-      "compareButton": "Versionen vergleichen",
-      "modalTitle": "Vergleich von {{from}} mit {{to}}",
-      "versionOptionLabel": "v{{version}} - {{status}}",
-      "fieldColumn": "Feld",
-      "fields": {
-        "effectiveRate": "Effektiver Zinssatz (historisch)",
-        "vfeRate": "VFE-Satz (historisch)"
-      }
-    }
   },
   "activate": {
     "dialogTitle": "Rahmenvereinbarung aktivieren",

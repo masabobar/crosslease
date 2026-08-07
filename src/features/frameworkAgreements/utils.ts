@@ -2,10 +2,12 @@ import { useTranslation } from "react-i18next"
 import { ApiError } from "@/lib/api"
 import { resolveFormMessage } from "@/lib/formMessages"
 import {
+  FAAgreementLifecycleSchema,
   FALifecycleStatusSchema,
   VFE_AMOUNT_MIN,
 } from "@/features/frameworkAgreements/api/schema"
 import type {
+  FAAgreementLifecycle,
   FALifecycleStatus,
   SelectableTemplateItem,
 } from "@/features/frameworkAgreements/api/schema"
@@ -14,17 +16,29 @@ export function isFrameworkAgreementNotFoundError(error: unknown): boolean {
   return error instanceof ApiError && error.code === "FA_NOT_FOUND"
 }
 
-// Display-only status: an Active agreement the BE reports as expired reads as
-// "expired" in the UI. Per CR PRD1042-1552 B2, this is presentation only —
-// FALifecycleStatus stays at 3 wire values; no new lifecycle state is added.
-export type FADisplayStatus = FALifecycleStatus | "expired"
-
-export function getFrameworkAgreementDisplayStatus(
+/**
+ * LC-portal-only fallback for the agreement's displayable lifecycle.
+ *
+ * The bank-side list and detail responses carry `agreement_lifecycle` from the server
+ * (CR-FA-07 on PRD1042-1799, revised 6/8/2026) and those screens read it directly — this
+ * used to be `getFrameworkAgreementDisplayStatus`, applied on both sides, re-deriving a
+ * rule the backend owns.
+ *
+ * `LCPortalFAListItem` is the one FA response carrying neither `agreement_lifecycle` nor
+ * `is_expired`, so the portal still has to fold expiry in itself or the same agreement
+ * would read "Active" to the leasing company and "Expired" to the bank. Deliberately named
+ * for its one caller: it is a gap-filler, not a general helper. Delete it, and the
+ * date-comparison helper below, once the BE adds the field to that response — see Q-033.
+ *
+ * Returns the same `FAAgreementLifecycle` the server sends, so both sides feed one badge
+ * map and one set of i18n keys.
+ */
+export function getLcPortalAgreementLifecycle(
   status: FALifecycleStatus,
   isExpired: boolean
-): FADisplayStatus {
+): FAAgreementLifecycle {
   if (status === FALifecycleStatusSchema.enum.active && isExpired) {
-    return "expired"
+    return FAAgreementLifecycleSchema.enum.expired
   }
   return status
 }

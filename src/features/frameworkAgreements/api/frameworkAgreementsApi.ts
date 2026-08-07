@@ -12,9 +12,6 @@ import {
   FAReconstructResponseSchema,
   FATerminatedResponseSchema,
   FAUtilizationResponseSchema,
-  FAVersionDetailResponseSchema,
-  FAVersionDiffResponseSchema,
-  FAVersionListResponseSchema,
   SelectableTemplatesResponseSchema,
   TerminationReadinessResponseSchema,
 } from "@/features/frameworkAgreements/api/schema"
@@ -37,9 +34,6 @@ import type {
   FAReconstructResponse,
   FATerminatedResponse,
   FAUtilizationResponse,
-  FAVersionDetailResponse,
-  FAVersionDiffResponse,
-  FAVersionListResponse,
   SelectableTemplatesResponse,
   TerminateFARequest,
   TerminationReadinessResponse,
@@ -104,17 +98,6 @@ export const FRAMEWORK_AGREEMENTS_QUERY_KEYS = {
   ) => ["framework-agreements", "audit-history", id, params] as const,
   reconstruct: (id: string, asOf: string) =>
     ["framework-agreements", "reconstruct", id, asOf] as const,
-  versions: (id: string) => ["framework-agreements", "versions", id] as const,
-  versionDetail: (id: string, versionNumber: string) =>
-    ["framework-agreements", "version-detail", id, versionNumber] as const,
-  versionDiff: (id: string, fromVersion: string, toVersion: string) =>
-    [
-      "framework-agreements",
-      "version-diff",
-      id,
-      fromVersion,
-      toVersion,
-    ] as const,
 } as const
 
 export async function fetchFrameworkAgreements(
@@ -290,35 +273,7 @@ export async function exportFrameworkAgreementAuditHistoryCsv(
   })
 }
 
-// FA versioning (CR-FA-04 on PRD1042-1799) — view-only for now. `create_new_version` and
-// `activate_version` are deliberately not wired here: the backend has no way to edit a new
-// draft version's fields before activating it (no version-scoped PATCH, unlike the Bank
-// Product Template equivalent), so an authoring flow would only ever produce a byte-for-byte
-// clone of the current version. See open-questions Q-064.
-export async function fetchFrameworkAgreementVersions(
-  id: string
-): Promise<FAVersionListResponse> {
-  const data = await api.get(`/framework-agreements/${id}/versions`)
-  return FAVersionListResponseSchema.parse(data)
-}
-
-export async function fetchFrameworkAgreementVersionDetail(
-  id: string,
-  versionNumber: string
-): Promise<FAVersionDetailResponse> {
-  const data = await api.get(
-    `/framework-agreements/${id}/versions/${versionNumber}`
-  )
-  return FAVersionDetailResponseSchema.parse(data)
-}
-
-export async function fetchFrameworkAgreementVersionDiff(
-  id: string,
-  fromVersion: string,
-  toVersion: string
-): Promise<FAVersionDiffResponse> {
-  const data = await api.get(`/framework-agreements/${id}/diff`, {
-    params: { from_version: fromVersion, to_version: toVersion },
-  })
-  return FAVersionDiffResponseSchema.parse(data)
-}
+// FA versioning fetchers were removed here — CR-FA-04 on PRD1042-1799 was withdrawn by the
+// client on 6/8/2026: the Framework Agreement is not versioned. The backend still serves
+// /versions, /versions/{id}/activate and /diff; leaving them unwrapped is deliberate, so
+// nothing in the UI can grow back onto a retracted concept (open-questions Q-072).

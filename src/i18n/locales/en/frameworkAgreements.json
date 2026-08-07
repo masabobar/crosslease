@@ -177,35 +177,11 @@
     "actions": {
       "activate": "Activate",
       "edit": "Edit",
-      "terminate": "Terminate",
-      "viewVersionHistory": "View version history"
+      "terminate": "Terminate"
     },
     "financingsEmptyState": "No financings yet",
     "tabComingSoon": "This tab isn't available yet",
     "loadError": "Something went wrong loading this agreement."
-  },
-  "versionHistory": {
-    "title": "Version history",
-    "backToAgreement": "Back to agreement",
-    "activatedAt": "Activated {{date}}",
-    "statuses": {
-      "draft": "Draft",
-      "active": "Active",
-      "superseded": "Superseded",
-      "discarded": "Discarded"
-    },
-    "compare": {
-      "compareLabel": "Compare",
-      "withLabel": "with",
-      "compareButton": "Compare versions",
-      "modalTitle": "Comparing {{from}} with {{to}}",
-      "versionOptionLabel": "v{{version}} - {{status}}",
-      "fieldColumn": "Field",
-      "fields": {
-        "effectiveRate": "Effective rate (historical)",
-        "vfeRate": "VFE rate (historical)"
-      }
-    }
   },
   "activate": {
     "dialogTitle": "Activate framework agreement",

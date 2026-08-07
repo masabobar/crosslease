@@ -1,11 +1,12 @@
-import type { FADisplayStatus } from "@/features/frameworkAgreements/utils"
-import type { FAVersionStatus } from "@/features/frameworkAgreements/api/schema"
+import type { FAAgreementLifecycle } from "@/features/frameworkAgreements/api/schema"
 
 // Wire value for the platform module key, per `../refinext-api/src/app/core/platform/modules.py`.
 export const FRAMEWORK_AGREEMENT_MODULE_KEY = "framework_agreement"
 
+// Keyed by the wire lifecycle (CR-FA-07) rather than the old client-derived FADisplayStatus,
+// so a state the backend adds fails type-check here instead of rendering an undefined variant.
 export const FA_STATUS_BADGE_VARIANT: Record<
-  FADisplayStatus,
+  FAAgreementLifecycle,
   "default" | "secondary" | "outline"
 > = {
   draft: "outline",
@@ -14,18 +15,8 @@ export const FA_STATUS_BADGE_VARIANT: Record<
   expired: "secondary",
 }
 
-// Per-version status (CR-FA-04) — a distinct enum from the agreement-level status above.
-// `discarded` is never rendered (see FAVersionStatusSchema) but the Record must still cover
-// it for type completeness.
-export const FA_VERSION_STATUS_BADGE_VARIANT: Record<
-  FAVersionStatus,
-  "default" | "secondary" | "outline"
-> = {
-  draft: "outline",
-  active: "default",
-  superseded: "secondary",
-  discarded: "outline",
-}
+// FA_VERSION_STATUS_BADGE_VARIANT was removed with CR-FA-04's withdrawal (6/8/2026) —
+// the agreement is not versioned, so there is no per-version badge to style.
 
 // Shared document-upload constraints for FA document attach flows
 // (AttachFrameworkAgreementDocumentDialog, DocumentDropzone, TemplatesAndDocumentsTab).

@@ -2,24 +2,27 @@ import { describe, it, expect } from "vitest"
 import {
   dedupeSelectableTemplates,
   filterSelectableTemplates,
-  getFrameworkAgreementDisplayStatus,
+  getLcPortalAgreementLifecycle,
   isFrameworkAgreementExpiredByDate,
 } from "@/features/frameworkAgreements/utils"
 import type { SelectableTemplateItem } from "@/features/frameworkAgreements/api/schema"
 
-describe("getFrameworkAgreementDisplayStatus", () => {
-  it("returns expired for an active agreement the BE reports as expired", () => {
-    expect(getFrameworkAgreementDisplayStatus("active", true)).toBe("expired")
+// LC-portal-only since CR-FA-07: the bank-side screens read `agreement_lifecycle` off the
+// wire instead of folding expiry in themselves. This helper survives solely because
+// LCPortalFAListItem carries neither field (Q-033).
+describe("getLcPortalAgreementLifecycle", () => {
+  it("returns expired for an active agreement whose validity has passed", () => {
+    expect(getLcPortalAgreementLifecycle("active", true)).toBe("expired")
   })
 
-  it("returns active when the BE does not report it as expired", () => {
-    expect(getFrameworkAgreementDisplayStatus("active", false)).toBe("active")
+  it("returns active when it has not expired", () => {
+    expect(getLcPortalAgreementLifecycle("active", false)).toBe("active")
   })
 
   it.each(["draft", "terminated"] as const)(
-    "returns %s unchanged even when the BE reports it as expired",
+    "returns %s unchanged even when the validity date has passed",
     status => {
-      expect(getFrameworkAgreementDisplayStatus(status, true)).toBe(status)
+      expect(getLcPortalAgreementLifecycle(status, true)).toBe(status)
     }
   )
 })
