@@ -109,6 +109,7 @@ export default function ProductTemplateDetailPage() {
   )
   const assetCategories = data.allowed_asset_categories ?? []
   const isActive = data.version_status === TemplateStatusSchema.enum.active
+  const isDraft = data?.version_status === TemplateStatusSchema.enum.draft
   const notSet = "—"
 
   return (
@@ -304,11 +305,12 @@ export default function ProductTemplateDetailPage() {
 
       {/* Same gate the drawer footer uses: active versions only, and only for a role that may
           author a draft. Kept identical so the two surfaces cannot disagree about what is offered. */}
-      {isActive && canManageDraft && templateId && (
+      {(isActive || isDraft) && canManageDraft && templateId && (
         <div className="flex justify-end border-t border-border pt-4">
           <ProductTemplatePublishedActions
             templateId={templateId}
             versionNumber={data.version_number}
+            isDraft={isDraft}
           />
         </div>
       )}

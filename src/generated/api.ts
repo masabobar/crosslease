@@ -1530,12 +1530,15 @@ const BankEntity = z.enum([
   "landesbank_2",
   "other",
 ])
+const RefiLoanValueDateRule = z.enum(["first_of_month", "variable"])
 const CreateFARequest = z
   .object({
     agreement_name: z.string().max(200),
     lc_partner_id: z.string().uuid(),
     bank_entity: BankEntity,
     max_volume_eur: z.union([z.number(), z.string()]),
+    refi_loan_value_date: z.union([RefiLoanValueDateRule, z.null()]).optional(),
+    refi_instalment_due_date: z.union([z.number(), z.null()]).optional(),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]).optional(),
     special_conditions: z.union([z.string(), z.null()]).optional(),
@@ -1553,6 +1556,8 @@ const FADraftResponse = z
     currency: z.string(),
     status: FALifecycleStatus,
     max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    refi_loan_value_date: z.union([RefiLoanValueDateRule, z.null()]),
+    refi_instalment_due_date: z.union([z.number(), z.null()]),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
@@ -1599,6 +1604,8 @@ const UpdateFARequest = z
   .object({
     agreement_name: z.union([z.string(), z.null()]),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]),
+    refi_loan_value_date: z.union([RefiLoanValueDateRule, z.null()]),
+    refi_instalment_due_date: z.union([z.number(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
@@ -1617,9 +1624,10 @@ const FADetailResponse = z
     lc_partner_name: z.union([z.string(), z.null()]),
     status: FALifecycleStatus,
     agreement_lifecycle: FAAgreementLifecycle,
-    current_version_id: z.union([z.string(), z.null()]),
     currency: z.string(),
     max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    refi_loan_value_date: z.union([RefiLoanValueDateRule, z.null()]),
+    refi_instalment_due_date: z.union([z.number(), z.null()]),
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     is_expired: z.boolean(),
@@ -1673,51 +1681,6 @@ const FATerminatedResponse = z
     terminated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const FAVersionDetailResponse = z
-  .object({
-    id: z.string().uuid(),
-    version_number: z.string(),
-    version_status: z.string(),
-    agreement_name: z.string(),
-    bank_entity: z.string(),
-    currency: z.string(),
-    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    effective_rate: z.union([z.string(), z.null()]),
-    vfe_rate: z.union([z.string(), z.null()]),
-    vfe_amount_eur: z.union([z.string(), z.null()]),
-    valid_from: z.string(),
-    valid_until: z.union([z.string(), z.null()]),
-    special_conditions: z.union([z.string(), z.null()]),
-    activated_at: z.union([z.string(), z.null()]),
-    activated_by: z.union([z.string(), z.null()]),
-    created_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
-const FAVersionSummaryResponse = z
-  .object({
-    version_number: z.string(),
-    version_status: z.string(),
-    agreement_name: z.string(),
-    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    valid_from: z.string(),
-    valid_until: z.union([z.string(), z.null()]),
-    activated_at: z.union([z.string(), z.null()]),
-    created_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
-const FAVersionListResponse = z
-  .object({ items: z.array(FAVersionSummaryResponse) })
-  .passthrough()
-const ActivateVersionRequest = z
-  .object({ justification: z.string().min(20).max(1000) })
-  .passthrough()
-const FAVersionDiffResponse = z
-  .object({
-    from_version: z.string(),
-    to_version: z.string(),
-    diffs: z.array(FieldDiffItem),
-  })
-  .passthrough()
 const FALCPartnerItem = z
   .object({ id: z.string().uuid(), legal_name: z.string() })
   .passthrough()
@@ -1749,7 +1712,6 @@ const FAPricingSnapshotResponse = z
     agreement_name: z.string(),
     edit_version_counter: z.number().int(),
     vfe_amount_eur: z.union([z.string(), z.null()]),
-    current_version_id: z.union([z.string(), z.null()]),
   })
   .passthrough()
 const FAEventTypeFilter = z.enum([
@@ -2811,6 +2773,7 @@ export const schemas = {
   CreateTemplateDraftRequest,
   TemplateDraftCreatedResponse,
   BankEntity,
+  RefiLoanValueDateRule,
   CreateFARequest,
   FALifecycleStatus,
   FADraftResponse,
@@ -2823,11 +2786,6 @@ export const schemas = {
   TerminationReadinessResponse,
   TerminateFARequest,
   FATerminatedResponse,
-  FAVersionDetailResponse,
-  FAVersionSummaryResponse,
-  FAVersionListResponse,
-  ActivateVersionRequest,
-  FAVersionDiffResponse,
   FALCPartnerItem,
   FALCPartnersResponse,
   FAUtilizationResponse,
@@ -4326,37 +4284,6 @@ and invalidates all active sessions.`,
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/framework-agreements/:id/diff",
-    alias: "diff_fa_versions_api_v1_framework_agreements__id__diff_get",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "from_version",
-        type: "Query",
-        schema: z.string(),
-      },
-      {
-        name: "to_version",
-        type: "Query",
-        schema: z.string(),
-      },
-    ],
-    response: FAVersionDiffResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "post",
     path: "/api/v1/framework-agreements/:id/documents",
     alias: "attach_document_api_v1_framework_agreements__id__documents_post",
@@ -4589,110 +4516,6 @@ and invalidates all active sessions.`,
       },
     ],
     response: FAUtilizationResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/framework-agreements/:id/versions",
-    alias:
-      "create_new_fa_version_api_v1_framework_agreements__id__versions_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FAVersionDetailResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/framework-agreements/:id/versions",
-    alias: "list_fa_versions_api_v1_framework_agreements__id__versions_get",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FAVersionListResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/framework-agreements/:id/versions/:version_id/activate",
-    alias:
-      "activate_fa_version_api_v1_framework_agreements__id__versions__version_id__activate_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z
-          .object({ justification: z.string().min(20).max(1000) })
-          .passthrough(),
-      },
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "version_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FAVersionDetailResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/framework-agreements/:id/versions/:version_number",
-    alias:
-      "get_fa_version_api_v1_framework_agreements__id__versions__version_number__get",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "version_number",
-        type: "Path",
-        schema: z.string(),
-      },
-    ],
-    response: FAVersionDetailResponse,
     errors: [
       {
         status: 422,
