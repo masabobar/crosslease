@@ -221,12 +221,19 @@
       "confirm": "Entwurf verwerfen"
     },
     "continueEditing": "Weiter bearbeiten",
+    "editDraft": "Entwurf bearbeiten",
     "authorNewVersion": "Neue Version erstellen",
     "authorNewVersionDialog": {
       "title": "Neue Version erstellen?",
       "description": "Es wird ein neuer Entwurf mit den aktuellen Werten dieser Version erstellt.",
       "keep": "Abbrechen",
       "confirm": "Entwurf erstellen"
+    },
+    "discardDraftDialog": {
+      "title": "Entwurf verwerfen",
+      "description": "Diese Aktion löscht diesen Entwurf und kann nicht rückgängig gemacht werden. Möchten Sie wirklich fortfahren?",
+      "keep": "Abbrechen",
+      "confirm": "Entwurf verwerfen"
     },
     "terminate": "Beenden",
     "terminateDialog": {

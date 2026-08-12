@@ -22,10 +22,12 @@ import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/
 import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
 import { showApiError } from "@/features/productTemplates/utils"
 import { productTemplateNewVersionEdit } from "@/router/paths"
+import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft.ts"
 
 type ProductTemplatePublishedActionsProps = {
   templateId: string
   versionNumber: string
+  isDraft: boolean
 }
 
 // Terminate + Author-new-version actions for an Active template version. Extracted from
@@ -34,18 +36,24 @@ type ProductTemplatePublishedActionsProps = {
 export function ProductTemplatePublishedActions({
   templateId,
   versionNumber,
+  isDraft,
 }: ProductTemplatePublishedActionsProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
 
   const [isAuthorDialogOpen, setIsAuthorDialogOpen] = useState(false)
   const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false)
+  const [isDiscardDraftDialogOpen, setIsDiscardDraftDialogOpen] =
+    useState(false)
+  const [isEditDraftDialogOpen, setIsEditDraftDialogOpen] = useState(false)
   const [terminationJustification, setTerminationJustification] = useState("")
 
   const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
     useCreateNewProductTemplateVersion()
   const { mutateAsync: terminateVersion, isPending: isTerminating } =
     useTerminateProductTemplateVersion()
+  const { mutateAsync: discardDraft, isPending: isDiscarding } =
+    useDiscardProductTemplateDraft()
 
   async function handleConfirmAuthorNewVersion() {
     try {
@@ -55,6 +63,11 @@ export function ProductTemplatePublishedActions({
     } catch (err) {
       showApiError(err, t)
     }
+  }
+
+  async function handleEditDraft() {
+    setIsEditDraftDialogOpen(false)
+    navigate(productTemplateNewVersionEdit(templateId, versionNumber))
   }
 
   async function handleConfirmTerminate() {
@@ -71,8 +84,45 @@ export function ProductTemplatePublishedActions({
     }
   }
 
-  return (
-    <>
+  async function handleDraftDiscard() {
+    try {
+      await discardDraft({
+        templateId,
+        versionNumber,
+      })
+      setIsDiscardDraftDialogOpen(false)
+    } catch (err) {
+      showApiError(err, t)
+    }
+  }
+
+  function getDraftActions() {
+    return (
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="terminate-version-button"
+          className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setIsDiscardDraftDialogOpen(true)}
+        >
+          {t("versionHistory.discard")}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          data-testid="author-new-version-button"
+          onClick={() => setIsEditDraftDialogOpen(true)}
+        >
+          {t("versionHistory.editDraft")}
+        </Button>
+      </div>
+    )
+  }
+
+  function getRegularActions() {
+    return (
       <div className="flex justify-end gap-2">
         <Button
           type="button"
@@ -93,7 +143,47 @@ export function ProductTemplatePublishedActions({
           {t("versionHistory.authorNewVersion")}
         </Button>
       </div>
+    )
+  }
 
+  function getActions() {
+    return isDraft ? getDraftActions() : getRegularActions()
+  }
+
+  function getDiscardDraftConfirmationDialog() {
+    return (
+      <AlertDialog
+        open={isDiscardDraftDialogOpen}
+        onOpenChange={setIsDiscardDraftDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.discardDraftDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.discardDraftDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-new-dialog-keep">
+              {t("versionHistory.discardDraftDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-new-dialog-confirm"
+              onClick={handleDraftDiscard}
+              disabled={isDiscarding}
+            >
+              {t("versionHistory.discardDraftDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+
+  function getAuthorNewTemplateConfirmationDialog() {
+    return (
       <AlertDialog
         open={isAuthorDialogOpen}
         onOpenChange={setIsAuthorDialogOpen}
@@ -121,7 +211,11 @@ export function ProductTemplatePublishedActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    )
+  }
 
+  function getTerminateTemplateConfirmationDialog() {
+    return (
       <AlertDialog
         open={isTerminateDialogOpen}
         onOpenChange={open => {
@@ -172,6 +266,47 @@ export function ProductTemplatePublishedActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    )
+  }
+
+  function getEditDraftConfirmationDialog() {
+    return (
+      <AlertDialog
+        open={isEditDraftDialogOpen}
+        onOpenChange={setIsEditDraftDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.authorNewVersionDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.authorNewVersionDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-new-dialog-keep">
+              {t("versionHistory.authorNewVersionDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-new-dialog-confirm"
+              onClick={handleEditDraft}
+            >
+              {t("versionHistory.authorNewVersionDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+
+  return (
+    <>
+      {getActions()}
+      {getAuthorNewTemplateConfirmationDialog()}
+      {getTerminateTemplateConfirmationDialog()}
+      {getDiscardDraftConfirmationDialog()}
+      {getEditDraftConfirmationDialog()}
     </>
   )
 }

@@ -221,12 +221,19 @@
       "confirm": "Discard draft"
     },
     "continueEditing": "Continue editing",
+    "editDraft": "Edit draft",
     "authorNewVersion": "Author new version",
     "authorNewVersionDialog": {
       "title": "Author a new version?",
       "description": "A new draft version will be created from this version's current values.",
       "keep": "Cancel",
       "confirm": "Create draft"
+    },
+    "discardDraftDialog": {
+      "title": "Discard draft",
+      "description": "This action will remove this draft and cannot be undone. Are you sure you want to continue?",
+      "keep": "Cancel",
+      "confirm": "Discard draft"
     },
     "terminate": "Terminate",
     "terminateDialog": {
