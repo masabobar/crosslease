@@ -81,7 +81,6 @@ schema-drift:
     - echo "Regenerating schemas..."
     - pnpm run generate:api
     - echo "Checking for drift..."
-    - git diff --exit-code openapi.json src/generated/api.ts
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 

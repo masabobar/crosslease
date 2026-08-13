@@ -35,6 +35,7 @@ import {
   TASK_CATEGORY_OPTIONS,
   TASK_RESPONSIBLE_ROLE_OPTIONS,
   TASK_STAGE_OPTIONS,
+  TASK_TYPE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
 import {
   CatalogLayerSchema,
@@ -74,6 +75,7 @@ function toFormValues(
     task_name: task?.task_name ?? "",
     task_description: task?.task_description ?? "",
     category: task?.category ?? "",
+    task_type: task?.task_type ?? "",
     responsible_role: task?.responsible_role ?? "",
     weight: task && task.weight !== null ? String(task.weight) : "",
     display_order:
@@ -149,6 +151,7 @@ function toWirePayload(
     task_name: values.task_name.trim(),
     task_description: values.task_description.trim(),
     category: orUndefined(values.category) as AddTaskRequest["category"],
+    task_type: orUndefined(values.task_type) as AddTaskRequest["task_type"],
     responsible_role: orUndefined(
       values.responsible_role
     ) as AddTaskRequest["responsible_role"],
@@ -540,6 +543,33 @@ function TaskDefinitionSheet({
                   {errors.task_description && (
                     <p className="mt-1 text-sm text-destructive">
                       {resolveMessage(errors.task_description.message)}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="mb-2" error={!!errors.task_type}>
+                    {t("detail.taskSheet.fields.taskType")}
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="task_type"
+                    render={({ field }) => (
+                      <SelectField
+                        data-testid="task-sheet-task-type"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={TASK_TYPE_OPTIONS.map(o => ({
+                          value: o.value,
+                          label: t(o.labelKey),
+                        }))}
+                        placeholder={t("detail.taskSheet.notSet")}
+                        error={!!errors.task_type}
+                      />
+                    )}
+                  />
+                  {errors.task_type && (
+                    <p className="mt-1 text-sm text-destructive">
+                      {resolveMessage(errors.task_type.message)}
                     </p>
                   )}
                 </div>

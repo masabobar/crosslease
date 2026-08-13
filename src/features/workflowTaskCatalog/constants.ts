@@ -20,6 +20,7 @@ import {
   StageCategorizationSchema,
   TaskCategorySchema,
   TaskResponsibleRoleSchema,
+  TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import {
   PhaseGateStatusSchema,
@@ -97,6 +98,14 @@ export const PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS = [
 export const TASK_CATEGORY_OPTIONS = TaskCategorySchema.options.map(value => ({
   value,
   labelKey: `detail.taskSheet.categories.${value}` as const,
+}))
+
+// Required for defined/supplement, forbidden on override/deactivated — same authorability
+// class as category (task_service._OVERRIDE_FORBIDDEN_ON_UPDATE /
+// _DEACTIVATE_FORBIDDEN_ON_UPDATE both include task_type in ../refinext-api).
+export const TASK_TYPE_OPTIONS = TaskTypeSchema.options.map(value => ({
+  value,
+  labelKey: `detail.taskSheet.taskTypes.${value}` as const,
 }))
 
 // Accountability only — runtime task assignment is owned by the Workflow Engine.

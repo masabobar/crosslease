@@ -179,6 +179,7 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
         entity_id: isGlobalDefault ? null : values.productTemplate,
         valid_from: values.validFrom,
         valid_until: values.validUntil || null,
+        case_type: isGlobalDefault ? "package_redemption" : "main_process",
       },
       {
         onSuccess: response => {

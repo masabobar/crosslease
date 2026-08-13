@@ -170,6 +170,7 @@
         "taskName": "Aufgabenname",
         "description": "Beschreibung",
         "category": "Kategorie",
+        "taskType": "Aufgabentyp",
         "responsibleRole": "Verantwortliche Rolle",
         "weight": "Gewichtung",
         "displayOrder": "Anzeigereihenfolge",
@@ -211,6 +212,16 @@
         "pre_disbursement": "Vor Auszahlung",
         "servicing": "Servicing",
         "redemption": "Ablöse"
+      },
+      "taskTypes": {
+        "checkbox": "Checkbox",
+        "four_eyes_sign_off": "Vier-Augen-Freigabe",
+        "typed_upload": "Typisierter Upload",
+        "generated_document": "Generiertes Dokument",
+        "calculation": "Berechnung",
+        "external_handover": "Externe Übergabe",
+        "field_capture": "Felderfassung",
+        "state_transition": "Statusübergang"
       },
       "closeButton": "Schließen",
       "removeButton": "Aufgabe entfernen",
