@@ -278,8 +278,6 @@ const GovernedActionType = z.enum([
   "partner_role_assign",
   "partner_identity_change",
   "partner_merge",
-  "product_template_activate",
-  "product_template_deprecate",
 ])
 const GovernedActionStatus = z.enum([
   "pending",
@@ -637,12 +635,7 @@ const UpdateAuditorAccessPeriodRequest = z
     reason: AuditorPeriodUpdateReason,
   })
   .passthrough()
-const SubjectType = z.enum([
-  "USER",
-  "TENANT",
-  "PARTNER",
-  "PRODUCT_TEMPLATE_VERSION",
-])
+const SubjectType = z.enum(["USER", "TENANT", "PARTNER"])
 const subject_type = z.union([z.array(SubjectType), z.null()]).optional()
 const PaginatedGovernedActionsResponse = z
   .object({
@@ -783,7 +776,7 @@ const MergeInitiateResponse = z
 const PartnerType = z.enum([
   "legal_entity",
   "natural_person",
-  "sole_proprietor",
+  "registered_sole_trader",
 ])
 const RegisteredAddress = z
   .object({
@@ -931,6 +924,59 @@ const PartnerUboResponse = z
   .object({
     ubo_completeness_status: z.string(),
     records: z.array(UboOwnershipRecordResponse),
+  })
+  .passthrough()
+const LcNumberResponse = z
+  .object({
+    id: z.string(),
+    partner_id: z.string(),
+    lc_number: z.string(),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const LcNumberListResponse = z
+  .object({ partner_id: z.string(), items: z.array(LcNumberResponse) })
+  .passthrough()
+const LcNumberCreateRequest = z
+  .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
+  .passthrough()
+const BankAccountResponse = z
+  .object({
+    id: z.string(),
+    partner_id: z.string(),
+    iban: z.string(),
+    account_number: z.union([z.string(), z.null()]),
+    holder_name: z.union([z.string(), z.null()]),
+    bank_name: z.union([z.string(), z.null()]),
+    bic: z.union([z.string(), z.null()]),
+    status: z.string(),
+    created_at: z.string().datetime({ offset: true }),
+    closed_at: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const BankAccountListResponse = z
+  .object({ partner_id: z.string(), items: z.array(BankAccountResponse) })
+  .passthrough()
+const BankAccountCreateRequest = z
+  .object({
+    iban: z.string(),
+    account_number: z.union([z.string(), z.null()]).optional(),
+    holder_name: z.union([z.string(), z.null()]).optional(),
+    bank_name: z.union([z.string(), z.null()]).optional(),
+    bic: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const AffectedAgreementItem = z
+  .object({
+    framework_agreement_id: z.string(),
+    agreement_name: z.string(),
+    functions: z.array(z.string()),
+  })
+  .passthrough()
+const BankAccountCloseResponse = z
+  .object({
+    account: BankAccountResponse,
+    affected_agreements: z.array(AffectedAgreementItem),
   })
   .passthrough()
 const ConfirmationHistoryEntry = z
@@ -1218,15 +1264,8 @@ const DuplicatePairListResponse = z
     total: z.number().int(),
   })
   .passthrough()
-const FinancingType = z.enum([
-  "full_refinancing",
-  "partial_refinancing",
-  "residual_value_financing",
-  "true_sale_forfaiting",
-  "refinancing_credit_line",
-  "structured_portfolio",
-])
-const financing_type = z.union([FinancingType, z.null()]).optional()
+const RefinancingForm = z.enum(["annuity", "fixed_principal", "bullet"])
+const refinancing_form = z.union([RefinancingForm, z.null()]).optional()
 const SelectableTemplateItem = z
   .object({
     template_id: z.string().uuid(),
@@ -1234,7 +1273,7 @@ const SelectableTemplateItem = z
     template_name: z.string(),
     version_id: z.string().uuid(),
     version_number: z.string(),
-    financing_type: z.string(),
+    refinancing_form: z.string(),
     legal_structure: z.string(),
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
@@ -1248,7 +1287,6 @@ const LegalStructure = z.enum(["loan_credit", "true_sale"])
 const PaymentTiming = z.enum(["advance", "arrears"])
 const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
 const RateType = z.enum(["fixed", "floating", "euribor_spread"])
-const CalculationModel = z.enum(["annuity", "bullet", "irregular"])
 const FirstInstallmentRule = z.enum([
   "submission_month",
   "following_month",
@@ -1276,12 +1314,11 @@ const VersionDetailResponse = z
     template_description: z.union([z.string(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
-    financing_type: FinancingType,
+    refinancing_form: RefinancingForm,
     legal_structure: LegalStructure,
     payment_timing: PaymentTiming,
     rate_basis: RateBasis,
     rate_type: z.union([RateType, z.null()]),
-    calculation_model: CalculationModel,
     npv_formula_ref: z.union([z.string(), z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
     disbursement_derivation_rule: z.union([
@@ -1322,11 +1359,10 @@ const UpdateTemplateDraftRequest = z
     template_description: z.union([z.string(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
-    financing_type: z.union([FinancingType, z.null()]),
+    refinancing_form: z.union([RefinancingForm, z.null()]),
     legal_structure: z.union([LegalStructure, z.null()]),
     payment_timing: z.union([PaymentTiming, z.null()]),
     rate_basis: z.union([RateBasis, z.null()]),
-    calculation_model: z.union([CalculationModel, z.null()]),
     first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
     disbursement_derivation_rule: z.union([
       DisbursementDerivationRule,
@@ -1412,6 +1448,10 @@ const TemplateVersionSummary = z
     superseding_version_id: z.union([z.string(), z.null()]).optional(),
     bindings_count: z.number().int().optional().default(0),
     created_at: z.string().datetime({ offset: true }),
+    selectable: z.boolean().optional().default(false),
+    is_current: z.boolean().optional().default(false),
+    valid_from: z.union([z.string(), z.null()]).optional(),
+    valid_until: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const VersionHistoryResponse = z
@@ -1426,7 +1466,42 @@ const TerminateVersionResponse = z
     version_status: z.string(),
     terminated_at: z.string().datetime({ offset: true }),
     terminated_by: z.string().uuid(),
+    affected_framework_agreements: z.array(z.string()).optional().default([]),
   })
+  .passthrough()
+const DeactivateProductRequest = z
+  .object({ reason: z.string().min(10).max(2000) })
+  .passthrough()
+const ProductStatusResponse = z
+  .object({
+    template_id: z.string().uuid(),
+    product_status: z.string(),
+    affected_framework_agreements: z.array(z.string()).optional().default([]),
+  })
+  .passthrough()
+const SetEffectiveDateRequest = z
+  .object({ valid_from: z.string() })
+  .passthrough()
+const SetEffectiveDateResponse = z
+  .object({
+    version_id: z.string().uuid(),
+    version_number: z.string(),
+    version_status: z.string(),
+    valid_from: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const VersionUsageAgreement = z
+  .object({ id: z.string().uuid(), name: z.string(), status: z.string() })
+  .passthrough()
+const VersionUsageItem = z
+  .object({
+    version_id: z.string().uuid(),
+    version_number: z.union([z.string(), z.null()]),
+    agreements: z.array(VersionUsageAgreement),
+  })
+  .passthrough()
+const VersionUsageResponse = z
+  .object({ items: z.array(VersionUsageItem) })
   .passthrough()
 const VersionDiffResponse = z
   .object({
@@ -1441,9 +1516,8 @@ const VersionDiffResponse = z
 const TemplateStatus = z.enum([
   "draft",
   "scheduled",
-  "active",
+  "effective",
   "superseded",
-  "expired",
   "terminated",
   "discarded",
 ])
@@ -1453,9 +1527,8 @@ const TemplateCurrentVersionSummary = z
     version_id: z.string().uuid(),
     version_number: z.string(),
     version_status: z.string(),
-    financing_type: FinancingType,
+    refinancing_form: RefinancingForm,
     legal_structure: LegalStructure,
-    calculation_model: CalculationModel,
     payment_timing: PaymentTiming,
     max_ltv_ratio: z.union([z.string(), z.null()]).optional(),
     min_term_months: z.union([z.number(), z.null()]).optional(),
@@ -1476,6 +1549,7 @@ const TemplateListItem = z
     template_name: z.union([z.string(), z.null()]),
     current_version: z.union([TemplateCurrentVersionSummary, z.null()]),
     created_at: z.string().datetime({ offset: true }),
+    product_status: z.string().optional().default("active"),
   })
   .passthrough()
 const TemplateListResponse = z
@@ -1490,11 +1564,10 @@ const TemplateListResponse = z
 const CreateTemplateDraftRequest = z
   .object({
     template_name: z.string(),
-    financing_type: FinancingType,
+    refinancing_form: RefinancingForm,
     legal_structure: LegalStructure,
     payment_timing: PaymentTiming,
     rate_basis: RateBasis,
-    calculation_model: CalculationModel,
     template_description: z.union([z.string(), z.null()]).optional(),
     valid_from: z.union([z.string(), z.null()]).optional(),
     valid_until: z.union([z.string(), z.null()]).optional(),
@@ -1543,7 +1616,12 @@ const CreateFARequest = z
     valid_until: z.union([z.string(), z.null()]).optional(),
     special_conditions: z.union([z.string(), z.null()]).optional(),
     vfe_amount_eur: z.union([z.number(), z.string(), z.null()]).optional(),
+    payout_account_id: z.union([z.string(), z.null()]).optional(),
+    collection_account_id: z.union([z.string(), z.null()]).optional(),
     product_template_ids: z.array(z.string().uuid()).min(1),
+    product_template_version_pins: z
+      .union([z.record(z.string(), z.string().uuid()), z.null()])
+      .optional(),
   })
   .passthrough()
 const FALifecycleStatus = z.enum(["draft", "active", "terminated"])
@@ -1562,6 +1640,8 @@ const FADraftResponse = z
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     vfe_amount_eur: z.union([z.string(), z.null()]),
+    payout_account_id: z.union([z.string(), z.null()]),
+    collection_account_id: z.union([z.string(), z.null()]),
     product_template_ids: z.array(z.string().uuid()),
     edit_version_counter: z.number().int(),
     created_by: z.string().uuid(),
@@ -1610,7 +1690,13 @@ const UpdateFARequest = z
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     vfe_amount_eur: z.union([z.number(), z.string(), z.null()]),
+    payout_account_id: z.union([z.string(), z.null()]),
+    collection_account_id: z.union([z.string(), z.null()]),
     product_template_ids: z.union([z.array(z.string().uuid()), z.null()]),
+    product_template_version_pins: z.union([
+      z.record(z.string(), z.string().uuid()),
+      z.null(),
+    ]),
     justification: z.union([z.string(), z.null()]),
     expected_version: z.union([z.number(), z.null()]),
   })
@@ -1633,6 +1719,10 @@ const FADetailResponse = z
     is_expired: z.boolean(),
     edit_version_counter: z.number().int(),
     product_template_ids: z.array(z.string().uuid()),
+    product_template_version_pins: z.record(
+      z.string(),
+      z.union([z.string(), z.null()])
+    ),
     document_count: z.number().int(),
     linked_financings_count: z.number().int(),
     utilization_pct: z.union([z.string(), z.null()]),
@@ -1640,6 +1730,8 @@ const FADetailResponse = z
     limit_breach: z.union([z.boolean(), z.null()]),
     bank_entity: z.union([z.string(), z.null()]),
     vfe_amount_eur: z.union([z.string(), z.null()]),
+    payout_account_id: z.union([z.string(), z.null()]),
+    collection_account_id: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     effective_from: z.union([z.string(), z.null()]),
     activated_at: z.union([z.string(), z.null()]),
@@ -2703,6 +2795,14 @@ export const schemas = {
   UboOwnershipRequest,
   UboOwnershipRecordResponse,
   PartnerUboResponse,
+  LcNumberResponse,
+  LcNumberListResponse,
+  LcNumberCreateRequest,
+  BankAccountResponse,
+  BankAccountListResponse,
+  BankAccountCreateRequest,
+  AffectedAgreementItem,
+  BankAccountCloseResponse,
   ConfirmationHistoryEntry,
   ConfirmationHistoryResponse,
   DecisionHistoryEntry,
@@ -2737,15 +2837,14 @@ export const schemas = {
   MatchingEvidenceItem,
   DuplicateCandidatePairResponse,
   DuplicatePairListResponse,
-  FinancingType,
-  financing_type,
+  RefinancingForm,
+  refinancing_form,
   SelectableTemplateItem,
   SelectableTemplatesResponse,
   LegalStructure,
   PaymentTiming,
   RateBasis,
   RateType,
-  CalculationModel,
   FirstInstallmentRule,
   DisbursementDerivationRule,
   AssetCategory,
@@ -2764,6 +2863,13 @@ export const schemas = {
   VersionHistoryResponse,
   TerminateVersionRequest,
   TerminateVersionResponse,
+  DeactivateProductRequest,
+  ProductStatusResponse,
+  SetEffectiveDateRequest,
+  SetEffectiveDateResponse,
+  VersionUsageAgreement,
+  VersionUsageItem,
+  VersionUsageResponse,
   VersionDiffResponse,
   TemplateStatus,
   status,
@@ -4984,6 +5090,80 @@ Post-November: this endpoint will reflect live channel configuration.`,
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/partners/:id/bank-accounts",
+    alias: "list_bank_accounts_api_v1_partners__id__bank_accounts_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: BankAccountListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/bank-accounts",
+    alias: "add_bank_account_api_v1_partners__id__bank_accounts_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: BankAccountCreateRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: BankAccountResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/bank-accounts/:account_id/close",
+    alias:
+      "close_bank_account_api_v1_partners__id__bank_accounts__account_id__close_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "account_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: BankAccountCloseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/partners/:id/confirm",
     alias: "confirm_partner_api_v1_partners__id__confirm_post",
@@ -5141,6 +5321,81 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       },
     ],
     response: IdentityChangeDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/lc-numbers",
+    alias: "list_lc_numbers_api_v1_partners__id__lc_numbers_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LcNumberListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/lc-numbers",
+    alias: "add_lc_number_api_v1_partners__id__lc_numbers_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
+          .passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LcNumberResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/partners/:id/lc-numbers/:lc_id",
+    alias: "delete_lc_number_api_v1_partners__id__lc_numbers__lc_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "lc_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
     errors: [
       {
         status: 422,
@@ -5355,6 +5610,35 @@ Accessible to all authenticated users.`,
     response: SeedPackagesResponse,
   },
   {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/deactivate",
+    alias:
+      "deactivate_product_api_v1_product_templates__template_id__deactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ reason: z.string().min(10).max(2000) })
+          .passthrough(),
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ProductStatusResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/product-templates/:template_id/diff",
     alias:
@@ -5378,6 +5662,50 @@ Accessible to all authenticated users.`,
       },
     ],
     response: VersionDiffResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/product-templates/:template_id/reactivate",
+    alias:
+      "reactivate_product_api_v1_product_templates__template_id__reactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ProductStatusResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/product-templates/:template_id/version-usage",
+    alias:
+      "get_version_usage_api_v1_product_templates__template_id__version_usage_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: VersionUsageResponse,
     errors: [
       {
         status: 422,
@@ -5518,6 +5846,38 @@ Accessible to all authenticated users.`,
   },
   {
     method: "patch",
+    path: "/api/v1/product-templates/:template_id/versions/:version_number/effective-date",
+    alias:
+      "set_version_effective_date_api_v1_product_templates__template_id__versions__version_number__effective_date_patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ valid_from: z.string() }).passthrough(),
+      },
+      {
+        name: "template_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_number",
+        type: "Path",
+        schema: z.string(),
+      },
+    ],
+    response: SetEffectiveDateResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
     path: "/api/v1/product-templates/:template_id/versions/:version_number/orchestration",
     alias:
       "update_orchestration_api_v1_product_templates__template_id__versions__version_number__orchestration_patch",
@@ -5621,9 +5981,9 @@ Accessible to all authenticated users.`,
     requestFormat: "json",
     parameters: [
       {
-        name: "financing_type",
+        name: "refinancing_form",
         type: "Query",
-        schema: financing_type,
+        schema: refinancing_form,
       },
       {
         name: "framework_agreement_id",

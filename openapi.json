@@ -2452,10 +2452,10 @@
                 },
                 { "type": "null" }
               ],
-              "description": "Filter by subject type, e.g. ?subject_type=PRODUCT_TEMPLATE_VERSION",
+              "description": "Filter by subject type, e.g. ?subject_type=TENANT",
               "title": "Subject Type"
             },
-            "description": "Filter by subject type, e.g. ?subject_type=PRODUCT_TEMPLATE_VERSION"
+            "description": "Filter by subject type, e.g. ?subject_type=TENANT"
           },
           {
             "name": "initiator_id",
@@ -3461,6 +3461,233 @@
         }
       }
     },
+    "/api/v1/partners/{id}/lc-numbers": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Lc Numbers",
+        "operationId": "list_lc_numbers_api_v1_partners__id__lc_numbers_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LcNumberListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Add Lc Number",
+        "operationId": "add_lc_number_api_v1_partners__id__lc_numbers_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LcNumberCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LcNumberResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/lc-numbers/{lc_id}": {
+      "delete": {
+        "tags": ["Partners"],
+        "summary": "Delete Lc Number",
+        "operationId": "delete_lc_number_api_v1_partners__id__lc_numbers__lc_id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "lc_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Lc Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/bank-accounts": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Bank Accounts",
+        "operationId": "list_bank_accounts_api_v1_partners__id__bank_accounts_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Add Bank Account",
+        "operationId": "add_bank_account_api_v1_partners__id__bank_accounts_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankAccountCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BankAccountResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/bank-accounts/{account_id}/close": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Close Bank Account",
+        "operationId": "close_bank_account_api_v1_partners__id__bank_accounts__account_id__close_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankAccountCloseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/{id}/confirmation-history": {
       "get": {
         "tags": ["Partners"],
@@ -4170,15 +4397,15 @@
         "operationId": "get_selectable_templates_api_v1_product_templates_selectable_get",
         "parameters": [
           {
-            "name": "financing_type",
+            "name": "refinancing_form",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
-                { "$ref": "#/components/schemas/FinancingType" },
+                { "$ref": "#/components/schemas/RefinancingForm" },
                 { "type": "null" }
               ],
-              "title": "Financing Type"
+              "title": "Refinancing Form"
             }
           },
           {
@@ -4585,6 +4812,188 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TerminateVersionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/deactivate": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Deactivate Product",
+        "operationId": "deactivate_product_api_v1_product_templates__template_id__deactivate_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeactivateProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/reactivate": {
+      "post": {
+        "tags": ["Product Templates"],
+        "summary": "Reactivate Product",
+        "operationId": "reactivate_product_api_v1_product_templates__template_id__reactivate_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/versions/{version_number}/effective-date": {
+      "patch": {
+        "tags": ["Product Templates"],
+        "summary": "Set Version Effective Date",
+        "operationId": "set_version_effective_date_api_v1_product_templates__template_id__versions__version_number__effective_date_patch",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "version_number",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Version Number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetEffectiveDateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetEffectiveDateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/product-templates/{template_id}/version-usage": {
+      "get": {
+        "tags": ["Product Templates"],
+        "summary": "Get Version Usage",
+        "operationId": "get_version_usage_api_v1_product_templates__template_id__version_usage_get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionUsageResponse"
                 }
               }
             }
@@ -7872,6 +8281,24 @@
         "required": ["layer_action"],
         "title": "AddTaskRequest"
       },
+      "AffectedAgreementItem": {
+        "properties": {
+          "framework_agreement_id": {
+            "type": "string",
+            "title": "Framework Agreement Id"
+          },
+          "agreement_name": { "type": "string", "title": "Agreement Name" },
+          "functions": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Functions"
+          }
+        },
+        "type": "object",
+        "required": ["framework_agreement_id", "agreement_name", "functions"],
+        "title": "AffectedAgreementItem",
+        "description": "A framework agreement that designated the closed account, and for which function(s)."
+      },
       "ApproveRejectRequest": {
         "properties": {
           "comment": {
@@ -8353,6 +8780,115 @@
         ],
         "title": "AuditorPeriodUpdateReason"
       },
+      "BankAccountCloseResponse": {
+        "properties": {
+          "account": { "$ref": "#/components/schemas/BankAccountResponse" },
+          "affected_agreements": {
+            "items": { "$ref": "#/components/schemas/AffectedAgreementItem" },
+            "type": "array",
+            "title": "Affected Agreements"
+          }
+        },
+        "type": "object",
+        "required": ["account", "affected_agreements"],
+        "title": "BankAccountCloseResponse"
+      },
+      "BankAccountCreateRequest": {
+        "properties": {
+          "iban": { "type": "string", "title": "Iban" },
+          "account_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Account Number"
+          },
+          "holder_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Holder Name"
+          },
+          "bank_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Bank Name"
+          },
+          "bic": {
+            "anyOf": [
+              { "type": "string", "maxLength": 11 },
+              { "type": "null" }
+            ],
+            "title": "Bic"
+          }
+        },
+        "type": "object",
+        "required": ["iban"],
+        "title": "BankAccountCreateRequest"
+      },
+      "BankAccountListResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/BankAccountResponse" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "BankAccountListResponse"
+      },
+      "BankAccountResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "iban": { "type": "string", "title": "Iban" },
+          "account_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Account Number"
+          },
+          "holder_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Holder Name"
+          },
+          "bank_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Bank Name"
+          },
+          "bic": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Bic"
+          },
+          "status": { "type": "string", "title": "Status" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "closed_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Closed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "partner_id",
+          "iban",
+          "account_number",
+          "holder_name",
+          "bank_name",
+          "bic",
+          "status",
+          "created_at",
+          "closed_at"
+        ],
+        "title": "BankAccountResponse"
+      },
       "BankEntity": {
         "type": "string",
         "enum": ["sparkasse", "landesbank_1", "landesbank_2", "other"],
@@ -8399,11 +8935,6 @@
         "type": "object",
         "required": ["file"],
         "title": "Body_upload_picture_api_v1_users_me_picture_post"
-      },
-      "CalculationModel": {
-        "type": "string",
-        "enum": ["annuity", "bullet", "irregular"],
-        "title": "CalculationModel"
       },
       "CandidateSummary": {
         "properties": {
@@ -8859,11 +9390,36 @@
             ],
             "title": "Vfe Amount Eur"
           },
+          "payout_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Payout Account Id"
+          },
+          "collection_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Collection Account Id"
+          },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
             "type": "array",
             "minItems": 1,
             "title": "Product Template Ids"
+          },
+          "product_template_version_pins": {
+            "anyOf": [
+              {
+                "additionalProperties": { "type": "string", "format": "uuid" },
+                "propertyNames": { "format": "uuid" },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Product Template Version Pins"
           }
         },
         "type": "object",
@@ -8910,13 +9466,12 @@
       "CreateTemplateDraftRequest": {
         "properties": {
           "template_name": { "type": "string", "title": "Template Name" },
-          "financing_type": { "$ref": "#/components/schemas/FinancingType" },
+          "refinancing_form": {
+            "$ref": "#/components/schemas/RefinancingForm"
+          },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
           "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
-          "calculation_model": {
-            "$ref": "#/components/schemas/CalculationModel"
-          },
           "template_description": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Template Description"
@@ -9013,11 +9568,10 @@
         "type": "object",
         "required": [
           "template_name",
-          "financing_type",
+          "refinancing_form",
           "legal_structure",
           "payment_timing",
-          "rate_basis",
-          "calculation_model"
+          "rate_basis"
         ],
         "title": "CreateTemplateDraftRequest"
       },
@@ -9087,6 +9641,19 @@
           "tenant_type"
         ],
         "title": "CreateTenantRequest"
+      },
+      "DeactivateProductRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": ["reason"],
+        "title": "DeactivateProductRequest"
       },
       "DeactivateUserRequest": {
         "properties": {
@@ -9560,6 +10127,17 @@
             "type": "array",
             "title": "Product Template Ids"
           },
+          "product_template_version_pins": {
+            "additionalProperties": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ]
+            },
+            "propertyNames": { "format": "uuid" },
+            "type": "object",
+            "title": "Product Template Version Pins"
+          },
           "document_count": { "type": "integer", "title": "Document Count" },
           "linked_financings_count": {
             "type": "integer",
@@ -9602,6 +10180,20 @@
               { "type": "null" }
             ],
             "title": "Vfe Amount Eur"
+          },
+          "payout_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Payout Account Id"
+          },
+          "collection_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Collection Account Id"
           },
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9699,6 +10291,7 @@
           "is_expired",
           "edit_version_counter",
           "product_template_ids",
+          "product_template_version_pins",
           "document_count",
           "linked_financings_count",
           "utilization_pct",
@@ -9706,6 +10299,8 @@
           "limit_breach",
           "bank_entity",
           "vfe_amount_eur",
+          "payout_account_id",
+          "collection_account_id",
           "special_conditions",
           "effective_from",
           "activated_at",
@@ -9780,6 +10375,20 @@
             ],
             "title": "Vfe Amount Eur"
           },
+          "payout_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Payout Account Id"
+          },
+          "collection_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Collection Account Id"
+          },
           "product_template_ids": {
             "items": { "type": "string", "format": "uuid" },
             "type": "array",
@@ -9820,6 +10429,8 @@
           "valid_until",
           "special_conditions",
           "vfe_amount_eur",
+          "payout_account_id",
+          "collection_account_id",
           "product_template_ids",
           "edit_version_counter",
           "created_by",
@@ -10139,18 +10750,6 @@
         "required": ["field", "old_value", "new_value"],
         "title": "FieldDiffItem"
       },
-      "FinancingType": {
-        "type": "string",
-        "enum": [
-          "full_refinancing",
-          "partial_refinancing",
-          "residual_value_financing",
-          "true_sale_forfaiting",
-          "refinancing_credit_line",
-          "structured_portfolio"
-        ],
-        "title": "FinancingType"
-      },
       "FirstInstallmentRule": {
         "type": "string",
         "enum": ["submission_month", "following_month", "configurable_offset"],
@@ -10428,9 +11027,7 @@
           "partner_confirm",
           "partner_role_assign",
           "partner_identity_change",
-          "partner_merge",
-          "product_template_activate",
-          "product_template_deprecate"
+          "partner_merge"
         ],
         "title": "GovernedActionType"
       },
@@ -11043,6 +11640,46 @@
         "type": "string",
         "enum": ["defined", "override", "deactivated", "supplement"],
         "title": "LayerAction"
+      },
+      "LcNumberCreateRequest": {
+        "properties": {
+          "lc_number": {
+            "type": "string",
+            "pattern": "^[0-9]{4}$",
+            "title": "Lc Number"
+          }
+        },
+        "type": "object",
+        "required": ["lc_number"],
+        "title": "LcNumberCreateRequest"
+      },
+      "LcNumberListResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/LcNumberResponse" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "LcNumberListResponse"
+      },
+      "LcNumberResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "lc_number": { "type": "string", "title": "Lc Number" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "partner_id", "lc_number", "created_at"],
+        "title": "LcNumberResponse"
       },
       "LegalEntityIdentityDetail": {
         "properties": {
@@ -11895,7 +12532,7 @@
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityDetail",
                 "natural_person": "#/components/schemas/NaturalPersonIdentityDetail",
-                "sole_proprietor": "#/components/schemas/SoleProprietorIdentityDetail"
+                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityDetail"
               }
             }
           },
@@ -11984,7 +12621,7 @@
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
                 "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                "sole_proprietor": "#/components/schemas/SoleProprietorIdentityInput"
+                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
               }
             }
           }
@@ -12084,7 +12721,7 @@
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
                 "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                "sole_proprietor": "#/components/schemas/SoleProprietorIdentityInput"
+                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
               }
             }
           }
@@ -12132,7 +12769,7 @@
       },
       "PartnerType": {
         "type": "string",
-        "enum": ["legal_entity", "natural_person", "sole_proprietor"],
+        "enum": ["legal_entity", "natural_person", "registered_sole_trader"],
         "title": "PartnerType"
       },
       "PartnerUboResponse": {
@@ -12246,6 +12883,26 @@
         "required": ["modules"],
         "title": "PlatformModulesResponse"
       },
+      "ProductStatusResponse": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "product_status": { "type": "string", "title": "Product Status" },
+          "affected_framework_agreements": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Affected Framework Agreements",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["template_id", "product_status"],
+        "title": "ProductStatusResponse",
+        "description": "PRD1042-1815 B1 — product-level active/deactivated result."
+      },
       "PublishTemplateDraftRequest": {
         "properties": {
           "justification": {
@@ -12352,6 +13009,12 @@
         "enum": ["first_of_month", "variable"],
         "title": "RefiLoanValueDateRule",
         "description": "PRD1042-1799 CR-FA-01 (10 Aug 2026) — the Refi Loan Value Date (Valuta Refi-Darlehen) is a\n*value-date rule*, not a currency. Confirmed values: ``first_of_month`` (\"zum 01. des Monats\",\n5 of 7 leasing companies) and ``variable`` (\"variabel\", 1)."
+      },
+      "RefinancingForm": {
+        "type": "string",
+        "enum": ["annuity", "fixed_principal", "bullet"],
+        "title": "RefinancingForm",
+        "description": "CR-BPT-08 item 7: how the bank's own refinancing loan is repaid. The single §3 box\n(replaces the former 6-value FinancingType and the redundant CalculationModel)."
       },
       "RegisteredAddress": {
         "properties": {
@@ -12948,7 +13611,7 @@
             "title": "Version Id"
           },
           "version_number": { "type": "string", "title": "Version Number" },
-          "financing_type": { "type": "string", "title": "Financing Type" },
+          "refinancing_form": { "type": "string", "title": "Refinancing Form" },
           "legal_structure": { "type": "string", "title": "Legal Structure" },
           "valid_from": {
             "anyOf": [
@@ -12979,7 +13642,7 @@
           "template_name",
           "version_id",
           "version_number",
-          "financing_type",
+          "refinancing_form",
           "legal_structure",
           "valid_from",
           "valid_until",
@@ -12998,6 +13661,44 @@
         "type": "object",
         "required": ["items"],
         "title": "SelectableTemplatesResponse"
+      },
+      "SetEffectiveDateRequest": {
+        "properties": {
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid From"
+          }
+        },
+        "type": "object",
+        "required": ["valid_from"],
+        "title": "SetEffectiveDateRequest"
+      },
+      "SetEffectiveDateResponse": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": { "type": "string", "title": "Version Number" },
+          "version_status": { "type": "string", "title": "Version Status" },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version_id",
+          "version_number",
+          "version_status",
+          "valid_from"
+        ],
+        "title": "SetEffectiveDateResponse"
       },
       "SetItemStatusRequest": {
         "properties": {
@@ -13068,7 +13769,7 @@
         "properties": {
           "partner_type": {
             "type": "string",
-            "const": "sole_proprietor",
+            "const": "registered_sole_trader",
             "title": "Partner Type"
           },
           "full_name": { "type": "string", "title": "Full Name" },
@@ -13109,7 +13810,7 @@
         "properties": {
           "partner_type": {
             "type": "string",
-            "const": "sole_proprietor",
+            "const": "registered_sole_trader",
             "title": "Partner Type"
           },
           "full_name": { "type": "string", "title": "Full Name" },
@@ -13150,7 +13851,7 @@
       },
       "SubjectType": {
         "type": "string",
-        "enum": ["USER", "TENANT", "PARTNER", "PRODUCT_TEMPLATE_VERSION"],
+        "enum": ["USER", "TENANT", "PARTNER"],
         "title": "SubjectType"
       },
       "SupportGrantResponse": {
@@ -13846,11 +14547,10 @@
           },
           "version_number": { "type": "string", "title": "Version Number" },
           "version_status": { "type": "string", "title": "Version Status" },
-          "financing_type": { "$ref": "#/components/schemas/FinancingType" },
-          "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
-          "calculation_model": {
-            "$ref": "#/components/schemas/CalculationModel"
+          "refinancing_form": {
+            "$ref": "#/components/schemas/RefinancingForm"
           },
+          "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
           "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
           "max_ltv_ratio": {
             "anyOf": [
@@ -13891,9 +14591,8 @@
           "version_id",
           "version_number",
           "version_status",
-          "financing_type",
+          "refinancing_form",
           "legal_structure",
-          "calculation_model",
           "payment_timing"
         ],
         "title": "TemplateCurrentVersionSummary"
@@ -13964,6 +14663,11 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "product_status": {
+            "type": "string",
+            "title": "Product Status",
+            "default": "active"
           }
         },
         "type": "object",
@@ -13997,9 +14701,8 @@
         "enum": [
           "draft",
           "scheduled",
-          "active",
+          "effective",
           "superseded",
-          "expired",
           "terminated",
           "discarded"
         ],
@@ -14063,6 +14766,30 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "selectable": {
+            "type": "boolean",
+            "title": "Selectable",
+            "default": false
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current",
+            "default": false
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid Until"
           }
         },
         "type": "object",
@@ -14330,6 +15057,12 @@
             "type": "string",
             "format": "uuid",
             "title": "Terminated By"
+          },
+          "affected_framework_agreements": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Affected Framework Agreements",
+            "default": []
           }
         },
         "type": "object",
@@ -14589,6 +15322,20 @@
             ],
             "title": "Vfe Amount Eur"
           },
+          "payout_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Payout Account Id"
+          },
+          "collection_account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Collection Account Id"
+          },
           "product_template_ids": {
             "anyOf": [
               {
@@ -14599,6 +15346,17 @@
               { "type": "null" }
             ],
             "title": "Product Template Ids"
+          },
+          "product_template_version_pins": {
+            "anyOf": [
+              {
+                "additionalProperties": { "type": "string", "format": "uuid" },
+                "propertyNames": { "format": "uuid" },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Product Template Version Pins"
           },
           "justification": {
             "anyOf": [
@@ -14872,9 +15630,9 @@
             ],
             "title": "Valid Until"
           },
-          "financing_type": {
+          "refinancing_form": {
             "anyOf": [
-              { "$ref": "#/components/schemas/FinancingType" },
+              { "$ref": "#/components/schemas/RefinancingForm" },
               { "type": "null" }
             ]
           },
@@ -14893,12 +15651,6 @@
           "rate_basis": {
             "anyOf": [
               { "$ref": "#/components/schemas/RateBasis" },
-              { "type": "null" }
-            ]
-          },
-          "calculation_model": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/CalculationModel" },
               { "type": "null" }
             ]
           },
@@ -15443,7 +16195,9 @@
             ],
             "title": "Valid Until"
           },
-          "financing_type": { "$ref": "#/components/schemas/FinancingType" },
+          "refinancing_form": {
+            "$ref": "#/components/schemas/RefinancingForm"
+          },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
           "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
@@ -15452,9 +16206,6 @@
               { "$ref": "#/components/schemas/RateType" },
               { "type": "null" }
             ]
-          },
-          "calculation_model": {
-            "$ref": "#/components/schemas/CalculationModel"
           },
           "npv_formula_ref": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -15600,12 +16351,11 @@
           "template_description",
           "valid_from",
           "valid_until",
-          "financing_type",
+          "refinancing_form",
           "legal_structure",
           "payment_timing",
           "rate_basis",
           "rate_type",
-          "calculation_model",
           "npv_formula_ref",
           "first_installment_rule",
           "disbursement_derivation_rule",
@@ -15673,6 +16423,49 @@
         "type": "object",
         "required": ["versions"],
         "title": "VersionHistoryResponse"
+      },
+      "VersionUsageAgreement": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": ["id", "name", "status"],
+        "title": "VersionUsageAgreement"
+      },
+      "VersionUsageItem": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Version Id"
+          },
+          "version_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Version Number"
+          },
+          "agreements": {
+            "items": { "$ref": "#/components/schemas/VersionUsageAgreement" },
+            "type": "array",
+            "title": "Agreements"
+          }
+        },
+        "type": "object",
+        "required": ["version_id", "version_number", "agreements"],
+        "title": "VersionUsageItem"
+      },
+      "VersionUsageResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/VersionUsageItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "VersionUsageResponse"
       },
       "VfeRateCreateRequest": {
         "properties": {

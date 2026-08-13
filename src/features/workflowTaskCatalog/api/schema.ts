@@ -86,6 +86,20 @@ export const ConditionalTriggerSchema = z.enum([
 ])
 export type ConditionalTrigger = z.infer<typeof ConditionalTriggerSchema>
 
+// What the task demands from the worker, distinct from TaskCategory (a subject-area
+// classification) — decides what opens for the worker and how the task closes.
+export const TaskTypeSchema = z.enum([
+  "checkbox",
+  "four_eyes_sign_off",
+  "typed_upload",
+  "generated_document",
+  "calculation",
+  "external_handover",
+  "field_capture",
+  "state_transition",
+])
+export type TaskType = z.infer<typeof TaskTypeSchema>
+
 // GET /workflow-task-catalogs — mirrors CatalogListItemResponse.
 // Deliberately thin: no version label, no published-at, no reference count and no product
 // template name. entity_id is the Product Template UUID for product_specific rows
@@ -123,6 +137,7 @@ export const CreateCatalogRequestSchema = z.object({
   description: z.string().nullable().optional(),
   entity_type: CatalogEntityTypeSchema.nullable().optional(),
   entity_id: z.string().uuid().nullable().optional(),
+  case_type: z.string(),
 })
 export type CreateCatalogRequest = z.infer<typeof CreateCatalogRequestSchema>
 
@@ -191,6 +206,7 @@ export const TaskDefinitionItemSchema = z.object({
   doc_requirement_ref: z.string().uuid().nullable(),
   doc_requirement_pin_mode: DocRequirementPinModeSchema.nullable(),
   conditional_trigger: ConditionalTriggerSchema.nullable(),
+  task_type: TaskTypeSchema.nullable(),
   created_by: z.string().uuid(),
   created_at: z.string(),
   updated_at: z.string(),
@@ -266,6 +282,7 @@ export const AddTaskRequestSchema = z.object({
   doc_requirement_ref: z.string().uuid().optional(),
   doc_requirement_pin_mode: DocRequirementPinModeSchema.optional(),
   conditional_trigger: ConditionalTriggerSchema.optional(),
+  task_type: TaskTypeSchema.optional(),
 })
 export type AddTaskRequest = z.infer<typeof AddTaskRequestSchema>
 

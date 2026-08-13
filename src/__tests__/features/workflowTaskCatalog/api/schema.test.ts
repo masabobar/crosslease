@@ -196,6 +196,7 @@ describe("CreateCatalogRequestSchema", () => {
         entity_id: TEMPLATE_UUID,
         valid_from: "2026-08-01",
         valid_until: null,
+        case_type: "main_process",
       })
     ).not.toThrow()
   })
@@ -209,6 +210,7 @@ describe("CreateCatalogRequestSchema", () => {
         entity_id: null,
         valid_from: "2026-08-01",
         valid_until: null,
+        case_type: "main_process",
       })
     ).not.toThrow()
   })
@@ -317,6 +319,7 @@ const validDefinedTask = {
   doc_requirement_ref: null,
   doc_requirement_pin_mode: null,
   conditional_trigger: null,
+  task_type: "checkbox",
   created_by: USER_UUID,
   created_at: "2026-07-30T12:00:00Z",
   updated_at: "2026-07-30T12:00:00Z",

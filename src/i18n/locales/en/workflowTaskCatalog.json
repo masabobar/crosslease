@@ -170,6 +170,7 @@
         "taskName": "Task name",
         "description": "Description",
         "category": "Category",
+        "taskType": "Task type",
         "responsibleRole": "Responsible role",
         "weight": "Weight",
         "displayOrder": "Display order",
@@ -211,6 +212,16 @@
         "pre_disbursement": "Pre disbursement",
         "servicing": "Servicing",
         "redemption": "Redemption"
+      },
+      "taskTypes": {
+        "checkbox": "Checkbox",
+        "four_eyes_sign_off": "Four-eyes sign-off",
+        "typed_upload": "Typed upload",
+        "generated_document": "Generated document",
+        "calculation": "Calculation",
+        "external_handover": "External handover",
+        "field_capture": "Field capture",
+        "state_transition": "State transition"
       },
       "closeButton": "Close",
       "removeButton": "Remove task",

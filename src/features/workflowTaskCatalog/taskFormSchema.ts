@@ -27,6 +27,7 @@ const REQUIRED_FOR_OWN_TASK = [
   "is_mandatory",
   "display_order",
   "stage_categorization",
+  "task_type",
 ] as const
 
 export const taskFormSchema = z
@@ -37,6 +38,7 @@ export const taskFormSchema = z
     task_name: z.string(),
     task_description: z.string(),
     category: z.string(),
+    task_type: z.string(),
     responsible_role: z.string(),
     weight: z.string(),
     display_order: z.string(),
