@@ -18,7 +18,7 @@ import { THIRTY_SECONDS_MS } from "@/lib/constants"
 // whichever version the response happened to order first or last. Collapsing here fixes
 // all of them at the one seam they share.
 //
-// A future version-level consumer (Financing, which the endpoint's `financing_type` param
+// A future version-level consumer (Financing, which the endpoint's `refinancing_form` param
 // exists for) must call fetchSelectableProductTemplates directly rather than widen this.
 export function selectUniqueTemplates(
   data: SelectableTemplatesResponse

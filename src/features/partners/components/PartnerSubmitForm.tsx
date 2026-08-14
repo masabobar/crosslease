@@ -103,7 +103,7 @@ const naturalPersonSchema = z.object({
 })
 
 const soleProprietorSchema = z.object({
-  partner_type: z.literal(PartnerTypeSchema.enum.sole_proprietor),
+  partner_type: z.literal(PartnerTypeSchema.enum.registered_sole_trader),
   full_name: z.string().min(1, "required"),
   date_of_birth: dateOfBirthSchema,
   country: countryCodeSchema,
@@ -119,7 +119,7 @@ type IdentityForm = LegalEntityForm | NaturalPersonForm | SoleProprietorForm
 
 function schemaForType(type: PartnerType) {
   if (type === PartnerTypeSchema.enum.natural_person) return naturalPersonSchema
-  if (type === PartnerTypeSchema.enum.sole_proprietor)
+  if (type === PartnerTypeSchema.enum.registered_sole_trader)
     return soleProprietorSchema
   return legalEntitySchema
 }
@@ -520,7 +520,7 @@ function PartnerSubmitForm({
             </div>
           )}
 
-          {partnerType === PartnerTypeSchema.enum.sole_proprietor && (
+          {partnerType === PartnerTypeSchema.enum.registered_sole_trader && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="tax_id_vat">
                 {t("submit.identityStep.fields.taxIdVat")}{" "}

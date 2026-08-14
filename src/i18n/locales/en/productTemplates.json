@@ -8,8 +8,6 @@
     "table": {
       "columns": {
         "product": "Product",
-        "financingType": "Financing type",
-        "calculation": "Calculation",
         "ltvTerm": "LTV & term",
         "status": "Status",
         "version": "Version"
@@ -114,11 +112,10 @@
     "templateDescriptionHint": "Max 1000 characters.",
     "optional": "(optional)",
     "selectPlaceholder": "Select",
-    "financingType": "Financing type",
+    "refinancingForm": "Refinancing form",
     "legalStructure": "Legal structure",
     "paymentTiming": "Payment timing",
     "rateBasis": "Rate basis",
-    "calculationModel": "Calculation model",
     "rateType": "Rate type",
     "firstInstallmentRule": "First installment rule",
     "disbursementDerivationRule": "Disbursement derivation rule",
@@ -143,13 +140,10 @@
   "units": {
     "percent": "%"
   },
-  "financingTypes": {
-    "full_refinancing": "Full refinancing",
-    "partial_refinancing": "Partial refinancing",
-    "residual_value_financing": "Residual value financing",
-    "true_sale_forfaiting": "True sale / Forfaiting",
-    "refinancing_credit_line": "Refinancing credit line",
-    "structured_portfolio": "Structured portfolio"
+  "refinancingForms": {
+    "annuity": "Annuity",
+    "fixed_principal": "Fixed principal",
+    "bullet": "Bullet"
   },
   "legalStructures": {
     "loan_credit": "Loan / Credit",
@@ -164,11 +158,6 @@
     "act_360": "Act/360",
     "act_365": "Act/365",
     "act_act": "Act/Act"
-  },
-  "calculationModels": {
-    "annuity": "Annuity",
-    "bullet": "Bullet",
-    "irregular": "Irregular"
   },
   "rateTypes": {
     "fixed": "Fixed",
@@ -201,9 +190,8 @@
   "versionStatuses": {
     "draft": "Draft",
     "scheduled": "Scheduled",
-    "active": "Active",
+    "effective": "Effective",
     "superseded": "Superseded",
-    "expired": "Expired",
     "terminated": "Terminated",
     "discarded": "Discarded"
   },

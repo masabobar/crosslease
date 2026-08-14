@@ -29,11 +29,10 @@ import {
 
 const validCreateRequest = {
   template_name: "Full refinancing standard",
-  financing_type: "full_refinancing",
+  refinancing_form: "annuity",
   legal_structure: "loan_credit",
   payment_timing: "advance",
   rate_basis: "30_360",
-  calculation_model: "annuity",
 }
 
 describe("CreateProductTemplateDraftRequestSchema", () => {
@@ -77,22 +76,21 @@ describe("CreateProductTemplateDraftRequestSchema", () => {
 
   it.each([
     "template_name",
-    "financing_type",
+    "refinancing_form",
     "legal_structure",
     "payment_timing",
     "rate_basis",
-    "calculation_model",
   ])("rejects a payload missing required field %s", field => {
     const rest = { ...validCreateRequest } as Record<string, unknown>
     delete rest[field]
     expect(() => CreateProductTemplateDraftRequestSchema.parse(rest)).toThrow()
   })
 
-  it("rejects an unknown financing_type", () => {
+  it("rejects an unknown refinancing_form", () => {
     expect(() =>
       CreateProductTemplateDraftRequestSchema.parse({
         ...validCreateRequest,
-        financing_type: "unknown_type",
+        refinancing_form: "unknown_type",
       })
     ).toThrow()
   })
@@ -252,7 +250,7 @@ describe("PublishTemplateDraftResponseSchema", () => {
   const validPublishResponse = {
     version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     version_number: "1.0",
-    version_status: "active",
+    version_status: "effective",
     activated_at: "2026-07-13T09:00:00Z",
     activated_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   }
@@ -306,11 +304,10 @@ describe("ProductTemplateWizardFormSchema", () => {
 
   const validForm = {
     template_name: "Full refinancing standard",
-    financing_type: "full_refinancing",
+    refinancing_form: "annuity",
     legal_structure: "loan_credit",
     payment_timing: "advance",
     rate_basis: "30_360",
-    calculation_model: "annuity",
     first_installment_rule: "following_month",
     disbursement_derivation_rule: "npv",
     allowed_asset_categories: ["machinery"],
@@ -482,11 +479,10 @@ describe("ProductTemplatePublishFormSchema", () => {
 
   const validForm = {
     template_name: "Full refinancing standard",
-    financing_type: "full_refinancing",
+    refinancing_form: "annuity",
     legal_structure: "loan_credit",
     payment_timing: "advance",
     rate_basis: "30_360",
-    calculation_model: "annuity",
     first_installment_rule: "following_month",
     disbursement_derivation_rule: "npv",
     allowed_asset_categories: ["machinery"],
@@ -563,7 +559,7 @@ describe("ProductTemplatePublishFormSchema", () => {
 const validVersionSummary = {
   id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   version_number: "1.0",
-  version_status: "active",
+  version_status: "effective",
   bindings_count: 3,
   created_at: "2026-05-22T14:30:00Z",
 }
@@ -582,9 +578,8 @@ describe("TemplateVersionSummarySchema", () => {
   it.each([
     "draft",
     "scheduled",
-    "active",
+    "effective",
     "superseded",
-    "expired",
     "terminated",
     "discarded",
   ])("accepts version_status %s", status => {
@@ -596,7 +591,7 @@ describe("TemplateVersionSummarySchema", () => {
     ).not.toThrow()
   })
 
-  it("accepts an active version with activated_by", () => {
+  it("accepts an effective version with activated_by", () => {
     expect(() =>
       TemplateVersionSummarySchema.parse({
         ...validVersionSummary,
@@ -758,13 +753,12 @@ describe("VersionDiffResponseSchema", () => {
 describe("TemplateVersionDetailSchema", () => {
   const validDetail = {
     version_number: "1.0",
-    version_status: "active",
+    version_status: "effective",
     template_name: "Full refinancing standard",
-    financing_type: "full_refinancing",
+    refinancing_form: "annuity",
     legal_structure: "loan_credit",
     payment_timing: "advance",
     rate_basis: "30_360",
-    calculation_model: "annuity",
   }
 
   it("accepts a minimal header-shaped payload", () => {
@@ -836,11 +830,11 @@ describe("TemplateVersionDetailSchema", () => {
     expect(() => TemplateVersionDetailSchema.parse(rest)).toThrow()
   })
 
-  it("rejects an unknown financing_type", () => {
+  it("rejects an unknown refinancing_form", () => {
     expect(() =>
       TemplateVersionDetailSchema.parse({
         ...validDetail,
-        financing_type: "unknown_type",
+        refinancing_form: "unknown_type",
       })
     ).toThrow()
   })
@@ -958,10 +952,9 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
   const validCurrentVersion = {
     version_id: "f7a5c6b8-cdae-4f55-af6e-5d6e7f8a9b01",
     version_number: "1.0",
-    version_status: "active",
-    financing_type: "full_refinancing",
+    version_status: "effective",
+    refinancing_form: "annuity",
     legal_structure: "loan_credit",
-    calculation_model: "annuity",
     payment_timing: "advance",
   }
 
@@ -996,6 +989,17 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
     ).toThrow()
   })
 
+  // refinancing_form replaced the former financing_type + calculation_model pair on this
+  // summary only (CR-BPT-08 item 7) — three values, not the old six.
+  it("rejects a financing_type value that predates refinancing_form", () => {
+    expect(() =>
+      TemplateCurrentVersionSummarySchema.parse({
+        ...validCurrentVersion,
+        refinancing_form: "full_refinancing",
+      })
+    ).toThrow()
+  })
+
   const validListItem = {
     id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     template_code: "REFI-FULL-STD",
@@ -1012,6 +1016,21 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
     expect(() =>
       TemplateListItemSchema.parse({ ...validListItem, current_version: null })
     ).not.toThrow()
+  })
+
+  it("defaults product_status to active when the BE omits it", () => {
+    expect(TemplateListItemSchema.parse(validListItem).product_status).toBe(
+      "active"
+    )
+  })
+
+  it("keeps the product_status the BE returns", () => {
+    expect(
+      TemplateListItemSchema.parse({
+        ...validListItem,
+        product_status: "deactivated",
+      }).product_status
+    ).toBe("deactivated")
   })
 
   it("accepts a list item carrying a template_name", () => {

@@ -108,7 +108,7 @@ export default function ProductTemplateDetailPage() {
     o => o.ref === data.npv_formula_ref
   )
   const assetCategories = data.allowed_asset_categories ?? []
-  const isActive = data.version_status === TemplateStatusSchema.enum.active
+  const isActive = data.version_status === TemplateStatusSchema.enum.effective
   const isDraft = data?.version_status === TemplateStatusSchema.enum.draft
   const notSet = "—"
 
@@ -152,9 +152,9 @@ export default function ProductTemplateDetailPage() {
         testIdPrefix="detail-page-"
       >
         <DetailRow
-          label={t("fields.financingType")}
+          label={t("fields.refinancingForm")}
           value={t(
-            `financingTypes.${data.financing_type}` as "financingTypes.full_refinancing"
+            `refinancingForms.${data.refinancing_form}` as "refinancingForms.annuity"
           )}
         />
         <DetailRow
@@ -172,12 +172,6 @@ export default function ProductTemplateDetailPage() {
         <DetailRow
           label={t("fields.rateBasis")}
           value={t(`rateBases.${data.rate_basis}` as "rateBases.30_360")}
-        />
-        <DetailRow
-          label={t("fields.calculationModel")}
-          value={t(
-            `calculationModels.${data.calculation_model}` as "calculationModels.annuity"
-          )}
         />
         <DetailRow
           label={t("fields.rateType")}

@@ -60,11 +60,11 @@ function ReviewStep({
       <SectionCard title={t("sections.behavioralSettings")}>
         <div className="grid grid-cols-2 gap-4">
           <ReviewRow
-            label={t("fields.financingType")}
+            label={t("fields.refinancingForm")}
             value={
-              values.financing_type
+              values.refinancing_form
                 ? t(
-                    `financingTypes.${values.financing_type}` as "financingTypes.full_refinancing"
+                    `refinancingForms.${values.refinancing_form}` as "refinancingForms.annuity"
                   )
                 : "—"
             }
@@ -94,16 +94,6 @@ function ReviewStep({
             value={
               values.rate_basis
                 ? t(`rateBases.${values.rate_basis}` as "rateBases.30_360")
-                : "—"
-            }
-          />
-          <ReviewRow
-            label={t("fields.calculationModel")}
-            value={
-              values.calculation_model
-                ? t(
-                    `calculationModels.${values.calculation_model}` as "calculationModels.annuity"
-                  )
                 : "—"
             }
           />

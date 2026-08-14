@@ -68,11 +68,10 @@ export const WIZARD_STEP_FIELDS: Record<
 > = {
   identity: ["template_name"],
   behavioral: [
-    "financing_type",
+    "refinancing_form",
     "legal_structure",
     "payment_timing",
     "rate_basis",
-    "calculation_model",
     "first_installment_rule",
     "disbursement_derivation_rule",
     "effective_rate",

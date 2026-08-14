@@ -10,7 +10,7 @@ const TYPE_CONFIG: Record<PartnerType, { container: string; text: string }> = {
     container: "bg-[#dbeafe]",
     text: "text-[#1d4ed8]",
   },
-  sole_proprietor: {
+  registered_sole_trader: {
     container: "bg-[#d1fae5]",
     text: "text-[#065f46]",
   },

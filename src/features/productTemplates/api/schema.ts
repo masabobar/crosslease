@@ -8,15 +8,15 @@ import { requiredEnum } from "@/lib/zodHelpers"
 import { FieldDiffItemSchema } from "@/types/api"
 
 // Wire enums — must match refinext-api src/app/modules/product_templates/domain/enums.py exactly
-export const FinancingTypeSchema = z.enum([
-  "full_refinancing",
-  "partial_refinancing",
-  "residual_value_financing",
-  "true_sale_forfaiting",
-  "refinancing_credit_line",
-  "structured_portfolio",
+// CR-BPT-08 item 7: how the bank's own refinancing loan is repaid — the single field that
+// replaced the former 6-value FinancingType and the redundant 3-value CalculationModel
+// everywhere on the wire (create/update requests, version detail, current-version summary).
+export const RefinancingFormSchema = z.enum([
+  "annuity",
+  "fixed_principal",
+  "bullet",
 ])
-export type FinancingType = z.infer<typeof FinancingTypeSchema>
+export type RefinancingForm = z.infer<typeof RefinancingFormSchema>
 
 export const LegalStructureSchema = z.enum(["loan_credit", "true_sale"])
 export type LegalStructure = z.infer<typeof LegalStructureSchema>
@@ -31,9 +31,6 @@ export const RateBasisSchema = z.enum([
   "act_act",
 ])
 export type RateBasis = z.infer<typeof RateBasisSchema>
-
-export const CalculationModelSchema = z.enum(["annuity", "bullet", "irregular"])
-export type CalculationModel = z.infer<typeof CalculationModelSchema>
 
 export const RateTypeSchema = z.enum(["fixed", "floating", "euribor_spread"])
 export type RateType = z.infer<typeof RateTypeSchema>
@@ -64,35 +61,36 @@ export const AssetCategorySchema = z.enum([
 ])
 export type AssetCategory = z.infer<typeof AssetCategorySchema>
 
-// TemplateStatus mirrors domain/enums.py TemplateStatus exactly (7 values). The bpt1803v2
+// TemplateStatus mirrors domain/enums.py TemplateStatus exactly (6 values). The bpt1803v2
 // migration (2026-08-05) replaced the old draft/awaiting_*_countersignature/published/
 // deprecated/discarded model with this one — the Four-Eyes awaiting states were folded back
-// into draft. Declared here, above the first response schema that references it, rather than
-// down with the version-history shapes: every `version_status` field below is this enum, and
-// a `const` referenced before its initializer throws at module load.
+// into draft. "active" was renamed to "effective" in the same migration wave, and there is no
+// "expired" value on this enum — unlike a Framework Agreement, a product template version has
+// no computed is_expired flag either, so there is nothing to derive it from. Declared here,
+// above the first response schema that references it, rather than down with the
+// version-history shapes: every `version_status` field below is this enum, and a `const`
+// referenced before its initializer throws at module load.
 export const TemplateStatusSchema = z.enum([
   "draft",
   "scheduled",
-  "active",
+  "effective",
   "superseded",
-  "expired",
   "terminated",
   "discarded",
 ])
 export type TemplateStatus = z.infer<typeof TemplateStatusSchema>
 
 // Wire request/response schemas — match CreateTemplateDraftRequest / UpdateTemplateDraftRequest
-// in refinext-api interfaces/http/schemas/product_template.py. Only financing_type, legal_structure,
-// payment_timing, rate_basis, calculation_model are hard-required at create time (see plan Gap 2) —
+// in refinext-api interfaces/http/schemas/product_template.py. Only refinancing_form, legal_structure,
+// payment_timing, rate_basis are hard-required at create time (see plan Gap 2) —
 // every other field is optional at the wire level even though the PRD marks most of them Mandatory
 // (full validation is deferred to publish, per the PRD's own Validation Rules section).
 export const CreateProductTemplateDraftRequestSchema = z.object({
   template_name: z.string().min(1).max(200),
-  financing_type: FinancingTypeSchema,
+  refinancing_form: RefinancingFormSchema,
   legal_structure: LegalStructureSchema,
   payment_timing: PaymentTimingSchema,
   rate_basis: RateBasisSchema,
-  calculation_model: CalculationModelSchema,
   template_description: z.string().max(1000).optional(),
   valid_from: z.string().optional(),
   valid_until: z.string().optional(),
@@ -218,11 +216,10 @@ export type TerminateTemplateVersionResponse = z.infer<
 const WizardFormFieldsSchema = z.object({
   template_name: z.string().min(1, "required").max(200),
   template_description: z.string().max(1000).optional(),
-  financing_type: requiredEnum(FinancingTypeSchema.options),
+  refinancing_form: requiredEnum(RefinancingFormSchema.options),
   legal_structure: requiredEnum(LegalStructureSchema.options),
   payment_timing: requiredEnum(PaymentTimingSchema.options),
   rate_basis: requiredEnum(RateBasisSchema.options),
-  calculation_model: requiredEnum(CalculationModelSchema.options),
   first_installment_rule: requiredEnum(FirstInstallmentRuleSchema.options),
   disbursement_derivation_rule: requiredEnum(
     DisbursementDerivationRuleSchema.options
@@ -377,11 +374,10 @@ export const TemplateVersionDetailSchema = z.object({
   version_status: TemplateStatusSchema,
   template_name: z.string(),
   template_description: z.string().nullable().optional(),
-  financing_type: FinancingTypeSchema,
+  refinancing_form: RefinancingFormSchema,
   legal_structure: LegalStructureSchema,
   payment_timing: PaymentTimingSchema,
   rate_basis: RateBasisSchema,
-  calculation_model: CalculationModelSchema,
   rate_type: RateTypeSchema.nullable().optional(),
   npv_formula_ref: z.string().nullable().optional(),
   first_installment_rule: FirstInstallmentRuleSchema.nullable().optional(),
@@ -430,9 +426,8 @@ export const TemplateCurrentVersionSummarySchema = z.object({
   version_id: z.string().uuid(),
   version_number: z.string(),
   version_status: TemplateStatusSchema,
-  financing_type: FinancingTypeSchema,
+  refinancing_form: RefinancingFormSchema,
   legal_structure: LegalStructureSchema,
-  calculation_model: CalculationModelSchema,
   payment_timing: PaymentTimingSchema,
   max_ltv_ratio: z.coerce.number().nullable().optional(),
   min_term_months: z.number().int().nullable().optional(),
@@ -452,6 +447,7 @@ export const TemplateListItemSchema = z.object({
   template_name: z.string().nullable(),
   current_version: TemplateCurrentVersionSummarySchema.nullable(),
   created_at: z.string(),
+  product_status: z.string().default("active"),
 })
 export type TemplateListItem = z.infer<typeof TemplateListItemSchema>
 

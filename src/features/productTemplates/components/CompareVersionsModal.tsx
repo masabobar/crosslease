@@ -35,11 +35,10 @@ type Props = {
 // surfaces. New keys (versionHistory.compare.fields.*) cover orchestration-linkage
 // fields that only exist on this diff response.
 const FIELD_LABEL_KEYS: Record<string, string> = {
-  financing_type: "fields.financingType",
+  refinancing_form: "fields.refinancingForm",
   legal_structure: "fields.legalStructure",
   payment_timing: "fields.paymentTiming",
   rate_basis: "fields.rateBasis",
-  calculation_model: "fields.calculationModel",
   rate_type: "fields.rateType",
   first_installment_rule: "fields.firstInstallmentRule",
   disbursement_derivation_rule: "fields.disbursementDerivationRule",
@@ -58,11 +57,10 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
 }
 
 const ENUM_FIELD_NAMESPACES: Record<string, string> = {
-  financing_type: "financingTypes",
+  refinancing_form: "refinancingForms",
   legal_structure: "legalStructures",
   payment_timing: "paymentTimings",
   rate_basis: "rateBases",
-  calculation_model: "calculationModels",
   rate_type: "rateTypes",
   first_installment_rule: "firstInstallmentRules",
   disbursement_derivation_rule: "disbursementDerivationRules",
