@@ -108,7 +108,7 @@ export default function ProductTemplateDetailPage() {
     o => o.ref === data.npv_formula_ref
   )
   const assetCategories = data.allowed_asset_categories ?? []
-  const isActive = data.version_status === TemplateStatusSchema.enum.effective
+  const isActive = data.version_status === TemplateStatusSchema.enum.active
   const isDraft = data?.version_status === TemplateStatusSchema.enum.draft
   const notSet = "—"
 
