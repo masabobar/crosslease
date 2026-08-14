@@ -8,7 +8,7 @@ type Props = {
 const STATUS_BADGE_CLASSES: Record<TemplateStatus, string> = {
   draft: "bg-sky-600/10 text-sky-600",
   scheduled: "bg-indigo-600/10 text-indigo-600",
-  effective: "bg-green-600/10 text-green-600",
+  active: "bg-green-600/10 text-green-600",
   superseded: "bg-slate-600/10 text-slate-600",
   terminated: "bg-red-600/10 text-red-600",
   discarded: "bg-muted text-foreground",

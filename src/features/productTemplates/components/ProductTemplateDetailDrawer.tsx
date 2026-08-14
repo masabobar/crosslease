@@ -118,7 +118,7 @@ export function ProductTemplateDetailDrawer({
     versionNumber
   )
 
-  const isActive = data?.version_status === TemplateStatusSchema.enum.effective
+  const isActive = data?.version_status === TemplateStatusSchema.enum.active
   const isDraft = data?.version_status === TemplateStatusSchema.enum.draft
 
   return (

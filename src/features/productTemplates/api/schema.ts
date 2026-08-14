@@ -64,16 +64,15 @@ export type AssetCategory = z.infer<typeof AssetCategorySchema>
 // TemplateStatus mirrors domain/enums.py TemplateStatus exactly (6 values). The bpt1803v2
 // migration (2026-08-05) replaced the old draft/awaiting_*_countersignature/published/
 // deprecated/discarded model with this one — the Four-Eyes awaiting states were folded back
-// into draft. "active" was renamed to "effective" in the same migration wave, and there is no
-// "expired" value on this enum — unlike a Framework Agreement, a product template version has
-// no computed is_expired flag either, so there is nothing to derive it from. Declared here,
-// above the first response schema that references it, rather than down with the
-// version-history shapes: every `version_status` field below is this enum, and a `const`
-// referenced before its initializer throws at module load.
+// into draft. There is no "expired" value on this enum — unlike a Framework Agreement, a
+// product template version has no computed is_expired flag either, so there is nothing to
+// derive it from. Declared here, above the first response schema that references it, rather
+// than down with the version-history shapes: every `version_status` field below is this enum,
+// and a `const` referenced before its initializer throws at module load.
 export const TemplateStatusSchema = z.enum([
   "draft",
   "scheduled",
-  "effective",
+  "active",
   "superseded",
   "terminated",
   "discarded",

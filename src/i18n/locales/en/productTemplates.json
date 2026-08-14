@@ -190,7 +190,7 @@
   "versionStatuses": {
     "draft": "Draft",
     "scheduled": "Scheduled",
-    "effective": "Effective",
+    "active": "Active",
     "superseded": "Superseded",
     "terminated": "Terminated",
     "discarded": "Discarded"

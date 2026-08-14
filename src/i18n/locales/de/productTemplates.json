@@ -190,7 +190,7 @@
   "versionStatuses": {
     "draft": "Entwurf",
     "scheduled": "Geplant",
-    "effective": "Wirksam",
+    "active": "Aktiv",
     "superseded": "Abgelöst",
     "terminated": "Beendet",
     "discarded": "Verworfen"

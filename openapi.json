@@ -14701,7 +14701,7 @@
         "enum": [
           "draft",
           "scheduled",
-          "effective",
+          "active",
           "superseded",
           "terminated",
           "discarded"
