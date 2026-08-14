@@ -15,11 +15,10 @@ const isoDateOffsetByDays = (days: number) =>
 
 const validForm = {
   template_name: "Full refinancing standard",
-  financing_type: "full_refinancing",
+  refinancing_form: "annuity",
   legal_structure: "loan_credit",
   payment_timing: "advance",
   rate_basis: "30_360",
-  calculation_model: "annuity",
   first_installment_rule: "following_month",
   disbursement_derivation_rule: "npv",
   allowed_asset_categories: ["machinery"],

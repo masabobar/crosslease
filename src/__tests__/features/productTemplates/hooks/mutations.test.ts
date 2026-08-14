@@ -83,11 +83,10 @@ beforeEach(() => {
 describe("useCreateProductTemplateDraft", () => {
   const body = {
     template_name: "Template 1",
-    financing_type: "full_refinancing" as const,
+    refinancing_form: "annuity" as const,
     legal_structure: "loan_credit" as const,
     payment_timing: "advance" as const,
     rate_basis: "act_360" as const,
-    calculation_model: "annuity" as const,
   }
 
   it("calls createProductTemplateDraft with the correct tenantId and body", async () => {

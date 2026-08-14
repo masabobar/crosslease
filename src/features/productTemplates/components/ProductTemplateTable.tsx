@@ -9,8 +9,6 @@ import type {
 } from "@/features/productTemplates/api/schema"
 
 const COL_PRODUCT = "flex-1 min-w-[180px]"
-const COL_FINANCING = "w-[170px] shrink-0"
-const COL_CALCULATION = "w-[120px] shrink-0"
 const COL_LTV_TERM = "w-[150px] shrink-0"
 const COL_STATUS = "w-[110px] shrink-0"
 const COL_VERSION = "w-[70px] shrink-0"
@@ -19,8 +17,6 @@ const SKELETON_COUNT = 5
 
 const HEADER_COLUMNS = [
   { width: COL_PRODUCT, labelKey: "list.table.columns.product" },
-  { width: COL_FINANCING, labelKey: "list.table.columns.financingType" },
-  { width: COL_CALCULATION, labelKey: "list.table.columns.calculation" },
   { width: COL_LTV_TERM, labelKey: "list.table.columns.ltvTerm" },
   { width: COL_STATUS, labelKey: "list.table.columns.status" },
   { width: COL_VERSION, labelKey: "list.table.columns.version" },
@@ -102,12 +98,6 @@ function ProductTemplateTable({
               <div className={`${COL_PRODUCT} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-32" />
               </div>
-              <div className={`${COL_FINANCING} p-2`}>
-                <div className="bg-muted rounded h-4 animate-pulse w-28" />
-              </div>
-              <div className={`${COL_CALCULATION} p-2`}>
-                <div className="bg-muted rounded h-4 animate-pulse w-16" />
-              </div>
               <div className={`${COL_LTV_TERM} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-24" />
               </div>
@@ -181,24 +171,6 @@ function ProductTemplateTable({
               <p className="text-xs truncate text-muted-foreground leading-tight">
                 {item.template_code || "—"}
               </p>
-            </div>
-            <div className={`${COL_FINANCING} p-2`}>
-              <span className="text-sm text-foreground">
-                {item.current_version
-                  ? t(
-                      `financingTypes.${item.current_version.financing_type}` as "financingTypes.full_refinancing"
-                    )
-                  : "—"}
-              </span>
-            </div>
-            <div className={`${COL_CALCULATION} p-2`}>
-              <span className="text-sm text-foreground">
-                {item.current_version
-                  ? t(
-                      `calculationModels.${item.current_version.calculation_model}` as "calculationModels.annuity"
-                    )
-                  : "—"}
-              </span>
             </div>
             <div className={`${COL_LTV_TERM} p-2`}>
               <span className="text-sm text-foreground">

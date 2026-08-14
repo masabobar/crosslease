@@ -71,11 +71,10 @@ function toUpdatePayload(
   return {
     template_name: values.template_name,
     template_description: values.template_description,
-    financing_type: values.financing_type,
+    refinancing_form: values.refinancing_form,
     legal_structure: values.legal_structure,
     payment_timing: values.payment_timing,
     rate_basis: values.rate_basis,
-    calculation_model: values.calculation_model,
     first_installment_rule: values.first_installment_rule,
     disbursement_derivation_rule: values.disbursement_derivation_rule,
     allowed_asset_categories: values.allowed_asset_categories,
@@ -96,11 +95,10 @@ function toNewVersionFormDefaults(
   return {
     template_name: detail.template_name,
     template_description: detail.template_description ?? "",
-    financing_type: detail.financing_type,
+    refinancing_form: detail.refinancing_form,
     legal_structure: detail.legal_structure,
     payment_timing: detail.payment_timing,
     rate_basis: detail.rate_basis,
-    calculation_model: detail.calculation_model,
     first_installment_rule:
       detail.first_installment_rule ??
       FirstInstallmentRuleSchema.enum.following_month,
@@ -168,33 +166,30 @@ function WizardFormView({
 
   const [
     watchedName,
-    watchedFinancingType,
+    watchedRefinancingForm,
     watchedLegalStructure,
     watchedPaymentTiming,
     watchedRateBasis,
-    watchedCalculationModel,
   ] = useWatch({
     control: form.control,
     name: [
       "template_name",
-      "financing_type",
+      "refinancing_form",
       "legal_structure",
       "payment_timing",
       "rate_basis",
-      "calculation_model",
     ],
   })
 
-  // Gap 2 (see plan): the create endpoint hard-requires these 6 fields even though the
+  // Gap 2 (see plan): the create endpoint hard-requires these 5 fields even though the
   // PRD narrative says draft creation needs only name. Save-as-draft only becomes
-  // clickable once all 6 are present, not the full per-step form validity.
+  // clickable once all 5 are present, not the full per-step form validity.
   const canSaveDraft = Boolean(
     watchedName &&
-    watchedFinancingType &&
+    watchedRefinancingForm &&
     watchedLegalStructure &&
     watchedPaymentTiming &&
-    watchedRateBasis &&
-    watchedCalculationModel
+    watchedRateBasis
   )
 
   const currentIndex = ORDERED_STEPS.indexOf(step)
@@ -223,7 +218,7 @@ function WizardFormView({
     let ref = draftRef
     if (!ref) {
       if (!tenantId) return null
-      // canSaveDraft (gating the button that calls this) guarantees the 6 wire-required
+      // canSaveDraft (gating the button that calls this) guarantees the 5 wire-required
       // fields are present, which TS can't infer from the looser wizard-form type.
       const result = await createDraft({
         tenantId,
@@ -294,7 +289,7 @@ function WizardFormView({
       await publishDraft({
         templateId: ref.templateId,
         versionNumber: ref.versionNumber,
-        body: { justification: justification.trim() || null },
+        body: { justification: justification.trim() || '' },
       })
       onPublished()
     } catch (err) {

@@ -9,13 +9,12 @@ import { SectionCard } from "@/components/shared/SectionCard"
 import { optionalNumber } from "@/lib/utils"
 import { resolveFieldErrorMessage } from "@/features/productTemplates/utils"
 import {
-  CalculationModelSchema,
   DisbursementDerivationRuleSchema,
-  FinancingTypeSchema,
   FirstInstallmentRuleSchema,
   LegalStructureSchema,
   PaymentTimingSchema,
   RateBasisSchema,
+  RefinancingFormSchema,
 } from "@/features/productTemplates/api/schema"
 import type { ProductTemplateWizardForm } from "@/features/productTemplates/api/schema"
 
@@ -49,9 +48,9 @@ function BehavioralSettingsStep({ form }: Props) {
     }))
   }
 
-  const financingTypeOptions = optionsFor(
-    FinancingTypeSchema.options,
-    "financingTypes"
+  const refinancingFormOptions = optionsFor(
+    RefinancingFormSchema.options,
+    "refinancingForms"
   )
   const legalStructureOptions = optionsFor(
     LegalStructureSchema.options,
@@ -62,10 +61,6 @@ function BehavioralSettingsStep({ form }: Props) {
     "paymentTimings"
   )
   const rateBasisOptions = optionsFor(RateBasisSchema.options, "rateBases")
-  const calculationModelOptions = optionsFor(
-    CalculationModelSchema.options,
-    "calculationModels"
-  )
   const firstInstallmentRuleOptions = optionsFor(
     FirstInstallmentRuleSchema.options,
     "firstInstallmentRules"
@@ -77,11 +72,10 @@ function BehavioralSettingsStep({ form }: Props) {
 
   function renderSelectField(
     name:
-      | "financing_type"
+      | "refinancing_form"
       | "legal_structure"
       | "payment_timing"
       | "rate_basis"
-      | "calculation_model"
       | "first_installment_rule"
       | "disbursement_derivation_rule",
     labelKey: string,
@@ -126,9 +120,9 @@ function BehavioralSettingsStep({ form }: Props) {
       <SectionCard title={t("sections.settings")}>
         <div className="grid grid-cols-2 gap-4">
           {renderSelectField(
-            "financing_type",
-            "fields.financingType",
-            financingTypeOptions
+            "refinancing_form",
+            "fields.refinancingForm",
+            refinancingFormOptions
           )}
           {renderSelectField(
             "legal_structure",
@@ -146,11 +140,6 @@ function BehavioralSettingsStep({ form }: Props) {
             rateBasisOptions
           )}
           {renderSelectField(
-            "calculation_model",
-            "fields.calculationModel",
-            calculationModelOptions
-          )}
-          {renderSelectField(
             "first_installment_rule",
             "fields.firstInstallmentRule",
             firstInstallmentRuleOptions
@@ -163,9 +152,9 @@ function BehavioralSettingsStep({ form }: Props) {
 
           {/* CR-BPT-02 on PRD1042-1798: the refinancing rate moved off the Framework
               Agreement and onto the product, because refinancing is calculated at product
-              level. It sits beside rate basis and calculation model — the fields it is read
-              together with. Optional, matching the wire; CR-BPT-01 has not yet settled
-              which min/max/default parameters a version should carry. */}
+              level. It sits beside rate basis — the field it is read together with.
+              Optional, matching the wire; CR-BPT-01 has not yet settled which
+              min/max/default parameters a version should carry. */}
           <div>
             <Label
               htmlFor="effective_rate"

@@ -52,8 +52,10 @@ describe("isCommercialRegisterApplicable", () => {
     expect(isCommercialRegisterApplicable("legal_entity", "DE")).toBe(true)
   })
 
-  it("allows sole_proprietor partners registered in DE", () => {
-    expect(isCommercialRegisterApplicable("sole_proprietor", "DE")).toBe(true)
+  it("allows registered_sole_trader partners registered in DE", () => {
+    expect(
+      isCommercialRegisterApplicable("registered_sole_trader", "DE")
+    ).toBe(true)
   })
 
   it("is case-insensitive on the country code", () => {
@@ -64,8 +66,10 @@ describe("isCommercialRegisterApplicable", () => {
     expect(isCommercialRegisterApplicable("legal_entity", "FR")).toBe(false)
   })
 
-  it("rejects sole_proprietor partners registered outside DE", () => {
-    expect(isCommercialRegisterApplicable("sole_proprietor", "FR")).toBe(false)
+  it("rejects registered_sole_trader partners registered outside DE", () => {
+    expect(
+      isCommercialRegisterApplicable("registered_sole_trader", "FR")
+    ).toBe(false)
   })
 
   it("rejects natural_person regardless of country", () => {

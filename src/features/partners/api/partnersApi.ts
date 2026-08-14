@@ -122,7 +122,7 @@ export type NaturalPersonIdentityInput = {
 }
 
 export type SoleProprietorIdentityInput = {
-  partner_type: "sole_proprietor"
+  partner_type: "registered_sole_trader"
   full_name: string
   date_of_birth: string
   country: string

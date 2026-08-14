@@ -47,7 +47,7 @@ describe("PartnerTypeSchema", () => {
     for (const v of [
       "legal_entity",
       "natural_person",
-      "sole_proprietor",
+      "registered_sole_trader",
     ] as const) {
       expect(() => PartnerTypeSchema.parse(v)).not.toThrow()
     }
@@ -191,8 +191,16 @@ describe("RegisteredAddressSchema", () => {
     ).not.toThrow()
   })
 
-  it("rejects missing required fields", () => {
-    expect(() => RegisteredAddressSchema.parse({ city: "Berlin" })).toThrow()
+  // Lenient on the wire (RegisteredAddress in refinext-api) — legacy rows may be
+  // incomplete, so every key may be entirely absent, not just null.
+  it("accepts a partial address with keys entirely absent", () => {
+    expect(() =>
+      RegisteredAddressSchema.parse({ city: "Berlin" })
+    ).not.toThrow()
+  })
+
+  it("accepts an empty address", () => {
+    expect(() => RegisteredAddressSchema.parse({})).not.toThrow()
   })
 })
 
@@ -287,7 +295,7 @@ describe("NaturalPersonIdentityDetailSchema", () => {
 
 describe("SoleProprietorIdentityDetailSchema", () => {
   const valid = {
-    partner_type: "sole_proprietor",
+    partner_type: "registered_sole_trader",
     full_name: "Hans Meier",
     date_of_birth: "1970-06-01",
     country: "DE",

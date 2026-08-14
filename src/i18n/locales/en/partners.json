@@ -22,7 +22,7 @@
   "type": {
     "legal_entity": "Legal entity",
     "natural_person": "Natural person",
-    "sole_proprietor": "Sole proprietor"
+    "registered_sole_trader": "Sole proprietor"
   },
   "role": {
     "lessee": "Lessee",

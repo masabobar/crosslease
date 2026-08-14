@@ -64,9 +64,9 @@ function DetailBody({ detail }: { detail: TemplateVersionDetail }) {
 
       <DetailSection title={t("sections.behavioralSettings")}>
         <DetailRow
-          label={t("fields.financingType")}
+          label={t("fields.refinancingForm")}
           value={t(
-            `financingTypes.${detail.financing_type}` as "financingTypes.full_refinancing"
+            `refinancingForms.${detail.refinancing_form}` as "refinancingForms.annuity"
           )}
         />
         <DetailRow
@@ -76,7 +76,7 @@ function DetailBody({ detail }: { detail: TemplateVersionDetail }) {
           )}
         />
         {/* Counts as key information since CR-BPT-02 put the refinancing rate on the
-            product: two templates sharing a financing type and legal structure are now
+            product: two templates sharing a refinancing form and legal structure are now
             told apart precisely by their rate, which is what this panel exists to do. */}
         <DetailRow
           label={t("fields.effectiveRate")}
@@ -118,7 +118,7 @@ export function ProductTemplateDetailDrawer({
     versionNumber
   )
 
-  const isActive = data?.version_status === TemplateStatusSchema.enum.active
+  const isActive = data?.version_status === TemplateStatusSchema.enum.effective
   const isDraft = data?.version_status === TemplateStatusSchema.enum.draft
 
   return (

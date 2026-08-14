@@ -6,7 +6,7 @@ import { OptionalUserRoleSchema } from "@/features/users/api/schema"
 export const PartnerTypeSchema = z.enum([
   "legal_entity",
   "natural_person",
-  "sole_proprietor",
+  "registered_sole_trader",
 ])
 export type PartnerType = z.infer<typeof PartnerTypeSchema>
 
@@ -55,12 +55,14 @@ export type IdentityChangeStatus = z.infer<typeof IdentityChangeStatusSchema>
 
 // ── Shared sub-schemas ────────────────────────────────────────────────────────
 
+// Lenient on the wire (RegisteredAddress in refinext-api) — legacy rows may be
+// incomplete, so every key may be absent entirely, not just null.
 export const RegisteredAddressSchema = z.object({
-  street: z.string().nullable(),
-  city: z.string().nullable(),
-  postal_code: z.string().nullable(),
-  country: z.string().nullable(),
-  state_region: z.string().nullable(),
+  street: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  postal_code: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  state_region: z.string().nullable().optional(),
 })
 export type RegisteredAddress = z.infer<typeof RegisteredAddressSchema>
 
@@ -96,7 +98,7 @@ export type NaturalPersonIdentityDetail = z.infer<
 >
 
 export const SoleProprietorIdentityDetailSchema = z.object({
-  partner_type: z.literal("sole_proprietor"),
+  partner_type: z.literal("registered_sole_trader"),
   full_name: z.string(),
   date_of_birth: z.string(),
   country: z.string(),
@@ -154,6 +156,10 @@ export const PartnerSubmitResponseSchema = z.object({
   partner_type: PartnerTypeSchema,
   status: PartnerStatusSchema,
   is_new: z.boolean(),
+  governed_action_id: z.string().uuid().nullable().optional(),
+  country: z.string().nullable().optional(),
+  tax_id_vat: z.string().nullable().optional(),
+  commercial_register_no: z.string().nullable().optional(),
 })
 export type PartnerSubmitResponse = z.infer<typeof PartnerSubmitResponseSchema>
 

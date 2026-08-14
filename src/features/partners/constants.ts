@@ -53,7 +53,7 @@ export const ANCHOR_FIELDS: Record<PartnerType, AnchorField[]> = {
     { key: "birth_name", labelKey: "submit.identityStep.fields.birthName" },
     { key: "national_id", labelKey: "submit.identityStep.fields.nationalId" },
   ],
-  sole_proprietor: [
+  registered_sole_trader: [
     { key: "full_name", labelKey: "submit.identityStep.fields.fullName" },
     {
       key: "date_of_birth",
