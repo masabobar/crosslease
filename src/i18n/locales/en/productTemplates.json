@@ -244,6 +244,13 @@
       "keep": "Cancel",
       "confirm": "Deactivate template"
     },
+    "activate": "Activate",
+    "activateDialog": {
+      "title": "Activate product template",
+      "description": "This product will become available again for new financing and agreement creation.",
+      "keep": "Cancel",
+      "confirm": "Activate template"
+    },
     "compare": {
       "compareLabel": "Compare",
       "withLabel": "with",

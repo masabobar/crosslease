@@ -8964,9 +8964,7 @@
           "responsible_roles": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TaskResponsibleFunction"
-                },
+                "items": { "$ref": "#/components/schemas/UserRole" },
                 "type": "array",
                 "minItems": 1
               },
@@ -10097,9 +10095,7 @@
           "responsible_roles": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TaskResponsibleFunction"
-                },
+                "items": { "$ref": "#/components/schemas/UserRole" },
                 "type": "array"
               },
               { "type": "null" }
@@ -15365,9 +15361,7 @@
           "responsible_roles": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TaskResponsibleFunction"
-                },
+                "items": { "$ref": "#/components/schemas/UserRole" },
                 "type": "array"
               },
               { "type": "null" }
@@ -15619,9 +15613,7 @@
           "responsible_roles": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TaskResponsibleFunction"
-                },
+                "items": { "$ref": "#/components/schemas/UserRole" },
                 "type": "array"
               },
               { "type": "null" }
@@ -15852,9 +15844,7 @@
           "responsible_roles": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TaskResponsibleFunction"
-                },
+                "items": { "$ref": "#/components/schemas/UserRole" },
                 "type": "array"
               },
               { "type": "null" }
@@ -16051,12 +16041,6 @@
         ],
         "title": "TaskResponseWithWarnings"
       },
-      "TaskResponsibleFunction": {
-        "type": "string",
-        "enum": ["clerk", "approver"],
-        "title": "TaskResponsibleFunction",
-        "description": "PRD1042-1894 Block 4 (AC §5) — the responsible role is a set of {clerk, approver}. The clerk\nprepares, the approver releases; the administrator (Bank Admin) is never offered (maintaining\ncatalogues is configuration, not case work)."
-      },
       "TaskResponsibleRole": {
         "type": "string",
         "enum": [
@@ -16069,7 +16053,7 @@
           "system"
         ],
         "title": "TaskResponsibleRole",
-        "description": "Legacy single-value responsible role (US 15.x). Superseded by ``TaskResponsibleFunction``\n(PRD1042-1894 Block 4). Kept for reading historical rows; new authoring uses ``responsible_roles``."
+        "description": "Legacy single-value responsible role (US 15.x). Retired: new authoring uses the\n``responsible_roles`` SET of platform ``UserRole`` values (PRD1042-1892 item 13). Kept only for\nreading historical rows."
       },
       "TaskType": {
         "type": "string",
@@ -17090,9 +17074,7 @@
           "responsible_roles": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TaskResponsibleFunction"
-                },
+                "items": { "$ref": "#/components/schemas/UserRole" },
                 "type": "array",
                 "minItems": 1
               },
@@ -17989,6 +17971,11 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "product_status": {
+            "type": "string",
+            "title": "Product Status",
+            "default": "active"
           }
         },
         "type": "object",

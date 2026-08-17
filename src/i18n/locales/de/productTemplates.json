@@ -244,6 +244,13 @@
       "keep": "Abbrechen",
       "confirm": "Vorlage deaktivieren"
     },
+    "activate": "Aktivieren",
+    "activateDialog": {
+      "title": "Produktvorlage aktivieren",
+      "description": "Dieses Produkt wird wieder für neue Finanzierungen und Vertragsabschlüsse verfügbar.",
+      "keep": "Abbrechen",
+      "confirm": "Vorlage aktivieren"
+    },
     "compare": {
       "compareLabel": "Vergleichen",
       "withLabel": "mit",

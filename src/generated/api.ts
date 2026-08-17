@@ -1351,6 +1351,7 @@ const VersionDetailResponse = z
     termination_justification: z.union([z.string(), z.null()]),
     bindings_count: z.number().int().optional().default(0),
     created_at: z.string().datetime({ offset: true }),
+    product_status: z.string().optional().default("active"),
   })
   .passthrough()
 const UpdateTemplateDraftRequest = z
@@ -2073,7 +2074,6 @@ const TaskResponsibleRole = z.enum([
   "support",
   "system",
 ])
-const TaskResponsibleFunction = z.enum(["clerk", "approver"])
 const app__modules__workflow_task_catalog__domain__enums__StageCategorization =
   z.enum([
     "pre_submission",
@@ -2167,7 +2167,7 @@ const TaskDefinitionItem = z
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
-    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
+    responsible_roles: z.union([z.array(UserRole), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2252,9 +2252,7 @@ const AddTaskRequest = z
     task_description: z.union([z.string(), z.null()]).optional(),
     category: z.union([TaskCategory, z.null()]).optional(),
     responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
-    responsible_roles: z
-      .union([z.array(TaskResponsibleFunction), z.null()])
-      .optional(),
+    responsible_roles: z.union([z.array(UserRole), z.null()]).optional(),
     is_mandatory: z.union([z.boolean(), z.null()]).optional(),
     weight: z.union([z.number(), z.null()]).optional(),
     display_order: z.union([z.number(), z.null()]).optional(),
@@ -2304,7 +2302,7 @@ const TaskResponseWithWarnings = z
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
-    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
+    responsible_roles: z.union([z.array(UserRole), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2351,7 +2349,7 @@ const TaskResponse = z
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
-    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
+    responsible_roles: z.union([z.array(UserRole), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2392,7 +2390,7 @@ const UpdateTaskRequest = z
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
-    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
+    responsible_roles: z.union([z.array(UserRole), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2498,9 +2496,7 @@ const ChecklistItemResponse = z
     task_type: z.union([TaskType, z.null()]).optional(),
     applicability: z.union([TaskApplicability, z.null()]).optional(),
     responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
-    responsible_roles: z
-      .union([z.array(TaskResponsibleFunction), z.null()])
-      .optional(),
+    responsible_roles: z.union([z.array(UserRole), z.null()]).optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
     four_eyes: z.boolean().optional().default(false),
     status: ChecklistItemStatus,
@@ -3135,7 +3131,6 @@ export const schemas = {
   LayerAction,
   TaskCategory,
   TaskResponsibleRole,
-  TaskResponsibleFunction,
   app__modules__workflow_task_catalog__domain__enums__StageCategorization,
   TaskProcessContext,
   StateTransitionOutcome,

@@ -301,6 +301,7 @@ export default function ProductTemplateDetailPage() {
             templateId={templateId}
             versionNumber={data.version_number}
             isDraft={isDraft}
+            productStatus={data.product_status}
           />
         </div>
       )}
