@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest"
 import { addDays, format } from "date-fns"
 import {
   CreateProductTemplateDraftRequestSchema,
+  DeactivateProductTemplateRequestSchema,
   NewVersionCreatedResponseSchema,
+  ProductStatusResponseSchema,
   ProductTemplatePublishFormSchema,
   ProductTemplateWizardFormSchema,
   PublishTemplateDraftRequestSchema,
@@ -23,6 +25,8 @@ import {
   VersionHistoryResponseSchema,
 } from "@/features/productTemplates/api/schema"
 import {
+  DEACTIVATION_REASON_MAX_LENGTH,
+  DEACTIVATION_REASON_MIN_LENGTH,
   TERMINATION_JUSTIFICATION_MAX_LENGTH,
   TERMINATION_JUSTIFICATION_MIN_LENGTH,
 } from "@/features/productTemplates/constants"
@@ -300,7 +304,6 @@ describe("ProductTemplateWizardFormSchema", () => {
     format(addDays(new Date(), days), "yyyy-MM-dd")
   const TODAY = isoDateOffsetByDays(0)
   const YESTERDAY = isoDateOffsetByDays(-1)
-  const NEXT_MONTH = isoDateOffsetByDays(30)
 
   const validForm = {
     template_name: "Full refinancing standard",
@@ -377,36 +380,6 @@ describe("ProductTemplateWizardFormSchema", () => {
     ).toThrow()
   })
 
-  it("rejects valid_until before valid_from", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        valid_from: NEXT_MONTH,
-        valid_until: TODAY,
-      })
-    ).toThrow()
-  })
-
-  it("rejects valid_until equal to valid_from — the period must be at least a day", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        valid_from: TODAY,
-        valid_until: TODAY,
-      })
-    ).toThrow()
-  })
-
-  it("accepts valid_until after valid_from", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        valid_from: TODAY,
-        valid_until: NEXT_MONTH,
-      })
-    ).not.toThrow()
-  })
-
   // CR-BPT-08 on PRD1042-1798, as corrected by the client on 6/8/2026: the effective date
   // is mandatory and must not be in the past **at publication**, not at creation. A draft
   // legitimately has no date yet, so the draft schema must accept both cases.
@@ -460,14 +433,6 @@ describe("ProductTemplateWizardFormSchema", () => {
     ).toThrow()
   })
 
-  it("accepts an open-ended valid_until", () => {
-    expect(() =>
-      ProductTemplateWizardFormSchema.parse({
-        ...validForm,
-        valid_until: undefined,
-      })
-    ).not.toThrow()
-  })
 })
 
 describe("ProductTemplatePublishFormSchema", () => {
@@ -475,7 +440,6 @@ describe("ProductTemplatePublishFormSchema", () => {
     format(addDays(new Date(), days), "yyyy-MM-dd")
   const TODAY = isoDateOffsetByDays(0)
   const YESTERDAY = isoDateOffsetByDays(-1)
-  const NEXT_MONTH = isoDateOffsetByDays(30)
 
   const validForm = {
     template_name: "Full refinancing standard",
@@ -545,15 +509,6 @@ describe("ProductTemplatePublishFormSchema", () => {
     )
   })
 
-  it("still enforces valid_until after valid_from", () => {
-    expect(() =>
-      ProductTemplatePublishFormSchema.parse({
-        ...validForm,
-        valid_from: NEXT_MONTH,
-        valid_until: TODAY,
-      })
-    ).toThrow()
-  })
 })
 
 const validVersionSummary = {
@@ -943,6 +898,78 @@ describe("TerminateTemplateVersionRequestSchema / TerminateTemplateVersionRespon
       TerminateTemplateVersionResponseSchema.parse({
         ...validTerminateResponse,
         version_status: "deprecated",
+      })
+    ).toThrow()
+  })
+})
+
+describe("DeactivateProductTemplateRequestSchema / ProductStatusResponseSchema", () => {
+  // Bounds are asserted against the shared constants, not repeated literals, so the schema
+  // and the textarea's maxLength can never drift from what these tests claim.
+  it("accepts a reason at the minimum length", () => {
+    expect(() =>
+      DeactivateProductTemplateRequestSchema.parse({
+        reason: "a".repeat(DEACTIVATION_REASON_MIN_LENGTH),
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a reason one character under the minimum", () => {
+    expect(() =>
+      DeactivateProductTemplateRequestSchema.parse({
+        reason: "a".repeat(DEACTIVATION_REASON_MIN_LENGTH - 1),
+      })
+    ).toThrow()
+  })
+
+  it("accepts a reason at the maximum length", () => {
+    expect(() =>
+      DeactivateProductTemplateRequestSchema.parse({
+        reason: "a".repeat(DEACTIVATION_REASON_MAX_LENGTH),
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a reason one character over the maximum", () => {
+    expect(() =>
+      DeactivateProductTemplateRequestSchema.parse({
+        reason: "a".repeat(DEACTIVATION_REASON_MAX_LENGTH + 1),
+      })
+    ).toThrow()
+  })
+
+  const validProductStatusResponse = {
+    template_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    product_status: "deactivated",
+  }
+
+  it("accepts a valid product status response", () => {
+    expect(() =>
+      ProductStatusResponseSchema.parse(validProductStatusResponse)
+    ).not.toThrow()
+  })
+
+  it("defaults affected_framework_agreements to an empty array when omitted", () => {
+    expect(
+      ProductStatusResponseSchema.parse(validProductStatusResponse)
+        .affected_framework_agreements
+    ).toEqual([])
+  })
+
+  it("keeps the affected_framework_agreements the BE returns", () => {
+    expect(
+      ProductStatusResponseSchema.parse({
+        ...validProductStatusResponse,
+        affected_framework_agreements: ["FA-00042"],
+      }).affected_framework_agreements
+    ).toEqual(["FA-00042"])
+  })
+
+  it("rejects a non-UUID template_id", () => {
+    expect(() =>
+      ProductStatusResponseSchema.parse({
+        ...validProductStatusResponse,
+        template_id: "not-a-uuid",
       })
     ).toThrow()
   })

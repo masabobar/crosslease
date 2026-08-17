@@ -31,6 +31,21 @@ export const NPV_FORMULA_OPTIONS = [
 export const TERMINATION_JUSTIFICATION_MIN_LENGTH = 10
 export const TERMINATION_JUSTIFICATION_MAX_LENGTH = 2000
 
+// Same treatment for the product-level deactivation reason — shared by the Zod request
+// schema (api/schema.ts) and the ProductTemplatePublishedActions UI gating logic. Bounds
+// happen to match the termination justification's, but this is a distinct wire field
+// (DeactivateProductRequest.reason) on a distinct endpoint, so it gets its own constants
+// rather than reusing the termination ones.
+export const DEACTIVATION_REASON_MIN_LENGTH = 10
+export const DEACTIVATION_REASON_MAX_LENGTH = 2000
+
+// `product_status` is a plain string on the wire (no enum — see TemplateListItemSchema and
+// ProductStatusResponseSchema in api/schema.ts), and "active" is its documented default. Every
+// other value is a deactivated state (currently only ever "deactivated", set via
+// deactivateProductTemplate) — treated as "not active" rather than matched against a second
+// literal, so a new deactivated-ish value the BE adds still renders correctly.
+export const PRODUCT_STATUS_ACTIVE = "active"
+
 // Wire value of the audit log's `entity_type` for a product template, per
 // `../refinext-api/` — used to build the audit-trail drill-down query. The audit feature
 // itself has no FE constant for these: it renders whatever `entity_types` the filter-options

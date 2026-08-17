@@ -1,6 +1,9 @@
 import { z } from "zod"
 import { format } from "date-fns"
 import {
+  DEACTIVATION_REASON_MAX_LENGTH,
+  DEACTIVATION_REASON_MIN_LENGTH,
+  PRODUCT_STATUS_ACTIVE,
   TERMINATION_JUSTIFICATION_MAX_LENGTH,
   TERMINATION_JUSTIFICATION_MIN_LENGTH,
 } from "@/features/productTemplates/constants"
@@ -205,6 +208,29 @@ export type TerminateTemplateVersionResponse = z.infer<
   typeof TerminateTemplateVersionResponseSchema
 >
 
+// Wire request/response for POST /product-templates/{id}/deactivate (deactivate_product) in
+// refinext-api. Product-level, not version-level: it hides the whole template from new
+// financing/agreement creation regardless of which version is current. Existing bindings are
+// unaffected — affected_framework_agreements is informational only.
+export const DeactivateProductTemplateRequestSchema = z.object({
+  reason: z
+    .string()
+    .min(DEACTIVATION_REASON_MIN_LENGTH)
+    .max(DEACTIVATION_REASON_MAX_LENGTH),
+})
+export type DeactivateProductTemplateRequest = z.infer<
+  typeof DeactivateProductTemplateRequestSchema
+>
+
+// product_status is a plain string on the wire (no enum) — see TemplateListItemSchema's
+// product_status for the same looseness.
+export const ProductStatusResponseSchema = z.object({
+  template_id: z.string().uuid(),
+  product_status: z.string(),
+  affected_framework_agreements: z.array(z.string()).default([]),
+})
+export type ProductStatusResponse = z.infer<typeof ProductStatusResponseSchema>
+
 // RHF-facing form fields — stricter than the wire schema, mirroring the PRD's Field Specification
 // table (every Mandatory field required) for inline per-field validation. The actual POST/PATCH
 // payload sent to the API is the looser wire schema above.
@@ -248,7 +274,6 @@ const WizardFormFieldsSchema = z.object({
   // effective date; the date becomes mandatory at publish". Required-ness lives in
   // ProductTemplatePublishFormSchema below, not here.
   valid_from: z.string().optional(),
-  valid_until: z.string().optional(),
 })
 
 type WizardFormFields = z.infer<typeof WizardFormFieldsSchema>
@@ -276,19 +301,6 @@ function addRangeIssues(data: WizardFormFields, ctx: z.RefinementCtx): void {
       code: "custom",
       message: "minVolumeExceedsMax",
       path: ["min_volume_eur"],
-    })
-  }
-  // Both dates are wire-formatted yyyy-MM-dd, so lexicographic comparison is chronological.
-  // Only meaningful once both are set — an end date alone has no start to fall after.
-  if (
-    data.valid_until &&
-    data.valid_from &&
-    data.valid_until <= data.valid_from
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "validUntilNotAfterFrom",
-      path: ["valid_until"],
     })
   }
 }
@@ -446,7 +458,7 @@ export const TemplateListItemSchema = z.object({
   template_name: z.string().nullable(),
   current_version: TemplateCurrentVersionSummarySchema.nullable(),
   created_at: z.string(),
-  product_status: z.string().default("active"),
+  product_status: z.string().default(PRODUCT_STATUS_ACTIVE),
 })
 export type TemplateListItem = z.infer<typeof TemplateListItemSchema>
 

@@ -284,10 +284,6 @@ export default function ProductTemplateDetailPage() {
           label={t("fields.validFrom")}
           value={data.valid_from || notSet}
         />
-        <DetailRow
-          label={t("fields.validUntil")}
-          value={data.valid_until || t("fields.openEnded")}
-        />
       </SectionCard>
 
       <SectionCard title={t("sections.metadata")} testIdPrefix="detail-page-">

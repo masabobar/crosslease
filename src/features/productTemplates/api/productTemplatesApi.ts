@@ -1,6 +1,7 @@
 import { api } from "@/lib/api"
 import {
   NewVersionCreatedResponseSchema,
+  ProductStatusResponseSchema,
   PublishTemplateDraftResponseSchema,
   TemplateDraftCreatedResponseSchema,
   TemplateDraftDiscardedResponseSchema,
@@ -13,7 +14,9 @@ import {
 } from "@/features/productTemplates/api/schema"
 import type {
   CreateProductTemplateDraftRequest,
+  DeactivateProductTemplateRequest,
   NewVersionCreatedResponse,
+  ProductStatusResponse,
   PublishTemplateDraftRequest,
   PublishTemplateDraftResponse,
   TemplateDraftCreatedResponse,
@@ -151,4 +154,15 @@ export async function terminateProductTemplateVersion(
     body
   )
   return TerminateTemplateVersionResponseSchema.parse(data)
+}
+
+export async function deactivateProductTemplate(
+  templateId: string,
+  body: DeactivateProductTemplateRequest
+): Promise<ProductStatusResponse> {
+  const data = await api.post(
+    `/product-templates/${templateId}/deactivate`,
+    body
+  )
+  return ProductStatusResponseSchema.parse(data)
 }

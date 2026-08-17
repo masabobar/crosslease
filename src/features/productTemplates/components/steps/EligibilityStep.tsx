@@ -1,7 +1,6 @@
 import type { UseFormReturn } from "react-hook-form"
-import { Controller, useFormState, useWatch } from "react-hook-form"
+import { Controller, useFormState } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { addDays, parseISO } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -23,10 +22,8 @@ function EligibilityStep({ form }: Props) {
   const { t: tCommon } = useTranslation("common")
   const { register, control } = form
   const { errors } = useFormState({ control })
-  const validFrom = useWatch({ control, name: "valid_from" })
 
-  // Mirrors the schema's date rules in the pickers themselves: validity cannot start in
-  // the past, and the end date must fall strictly after the start date.
+  // Mirrors the schema's date rule in the picker itself: validity cannot start in the past.
   //
   // `minDate={today}` stays on the start picker even though the past-date *rejection* moved
   // to publish (CR-BPT-08, see ProductTemplatePublishFormSchema). The two are not in
@@ -34,16 +31,12 @@ function EligibilityStep({ form }: Props) {
   // offering only valid ones, while the schema no longer blocks saving a draft that has no
   // date yet. A draft saved today and published next week is caught by the publish gate.
   const today = new Date()
-  const validUntilMinDate = validFrom
-    ? addDays(parseISO(validFrom), 1)
-    : addDays(today, 1)
 
   const errorMessages = {
     atLeastOne: t("errors.atLeastOneAssetCategory"),
     minTermExceedsMax: t("errors.minTermExceedsMax"),
     minVolumeExceedsMax: t("errors.minVolumeExceedsMax"),
     validFromInPast: t("errors.validFromInPast"),
-    validUntilNotAfterFrom: t("errors.validUntilNotAfterFrom"),
     termBelowMin: t("errors.termBelowMin"),
     termAboveMax: t("errors.termAboveMax"),
     ltvBelowMin: t("errors.ltvBelowMin"),
@@ -268,42 +261,6 @@ function EligibilityStep({ form }: Props) {
             {errors.valid_from && (
               <p className="mt-1 text-sm text-destructive">
                 {resolveMsg(errors.valid_from.message)}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label
-              htmlFor="valid_until"
-              error={!!errors.valid_until}
-              className="mb-2"
-            >
-              {t("fields.validUntil")}{" "}
-              <span className="font-normal text-muted-foreground">
-                {t("fields.optional")}
-              </span>
-            </Label>
-            <Controller
-              control={control}
-              name="valid_until"
-              render={({ field }) => (
-                <DatePicker
-                  id="valid_until"
-                  data-testid="valid-until-datepicker"
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={!!errors.valid_until}
-                  minDate={validUntilMinDate}
-                  captionLayout="dropdown"
-                />
-              )}
-            />
-            <p className="mt-2 text-sm text-muted-foreground opacity-80">
-              {t("fields.validUntilHint")}
-            </p>
-            {errors.valid_until && (
-              <p className="mt-1 text-sm text-destructive">
-                {resolveMsg(errors.valid_until.message)}
               </p>
             )}
           </div>

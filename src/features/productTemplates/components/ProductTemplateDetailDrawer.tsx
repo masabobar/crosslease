@@ -94,10 +94,6 @@ function DetailBody({ detail }: { detail: TemplateVersionDetail }) {
           label={t("fields.validFrom")}
           value={detail.valid_from || "—"}
         />
-        <DetailRow
-          label={t("fields.validUntil")}
-          value={detail.valid_until || t("fields.openEnded")}
-        />
       </DetailSection>
     </div>
   )

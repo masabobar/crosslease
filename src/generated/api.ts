@@ -1747,6 +1747,22 @@ const FADetailResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const DocumentOverrideKind = z.enum(["additionally_required", "not_required"])
+const DocumentOverrideItem = z
+  .object({
+    document_type_code: z.string().min(1).max(100),
+    override_kind: DocumentOverrideKind,
+  })
+  .passthrough()
+const SetDocumentOverridesRequest = z
+  .object({ overrides: z.array(DocumentOverrideItem) })
+  .passthrough()
+const DocumentOverridesResponse = z
+  .object({
+    framework_agreement_id: z.string().uuid(),
+    overrides: z.array(DocumentOverrideItem),
+  })
+  .passthrough()
 const ActivateFARequest = z
   .object({
     documents_confirmed: z.boolean(),
@@ -1953,7 +1969,7 @@ const entity_type = z.union([z.array(CatalogEntityType), z.null()]).optional()
 const product_template_id = z
   .union([z.array(z.string().uuid()), z.null()])
   .optional()
-const CatalogState = z.enum(["active", "archived"])
+const CatalogState = z.enum(["draft", "active", "suspended", "archived"])
 const catalog_state = z.union([z.array(CatalogState), z.null()]).optional()
 const CaseType = z.enum([
   "main_process",
@@ -1991,7 +2007,7 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
 const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest =
   z
     .object({
-      catalog_name: z.string().min(1).max(200),
+      catalog_name: z.string().min(1).max(120),
       catalog_layer: CatalogLayer,
       valid_from: z.string(),
       valid_until: z.union([z.string(), z.null()]).optional(),
@@ -2021,6 +2037,23 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
       warnings: z.array(z.string()).optional().default([]),
     })
     .passthrough()
+const SuspendCatalogResponse = z
+  .object({
+    catalog_id: z.string().uuid(),
+    catalog_state: z.string(),
+    product_template_id: z.union([z.string(), z.null()]),
+    affected_case_ids: z.array(z.string().uuid()),
+  })
+  .passthrough()
+const FieldRegistryItem = z
+  .object({
+    id: z.string().uuid(),
+    field_key: z.string(),
+    field_type: z.string(),
+    label: z.string(),
+    data_available: z.boolean(),
+  })
+  .passthrough()
 const LayerAction = z.enum(["defined", "override", "deactivated", "supplement"])
 const TaskCategory = z.enum([
   "legal",
@@ -2040,6 +2073,7 @@ const TaskResponsibleRole = z.enum([
   "support",
   "system",
 ])
+const TaskResponsibleFunction = z.enum(["clerk", "approver"])
 const app__modules__workflow_task_catalog__domain__enums__StageCategorization =
   z.enum([
     "pre_submission",
@@ -2060,11 +2094,38 @@ const TaskProcessContext = z.enum([
   "servicing",
   "redemption",
 ])
+const StateTransitionOutcome = z.enum([
+  "committed",
+  "rejected",
+  "missing_information",
+  "rework",
+])
+const DocumentCheckItem = z
+  .object({
+    document_ref: z.string().uuid(),
+    position: z.number().int().gte(0),
+  })
+  .passthrough()
+const ConditionOperator = z.enum([
+  "is",
+  "is_not",
+  "greater_than",
+  "less_than",
+  "at_least",
+  "at_most",
+])
+const ConditionRowItem = z
+  .object({
+    field_registry_id: z.string().uuid(),
+    operator: ConditionOperator,
+    value_raw: z.union([z.string(), z.null()]).optional(),
+    value_config_ref: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const DocRequirementPinMode = z.enum(["pin_by_id", "pin_by_version"])
 const ConditionalTrigger = z.literal("financing_amount_over_threshold")
 const TaskType = z.enum([
   "checkbox",
-  "four_eyes_sign_off",
   "typed_upload",
   "generated_document",
   "calculation",
@@ -2086,6 +2147,7 @@ const InheritedGDValues = z
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    responsible_roles: z.union([z.array(z.string()), z.null()]),
     display_order: z.union([z.number(), z.null()]),
     stage_categorization: z.union([
       app__modules__workflow_task_catalog__domain__enums__StageCategorization,
@@ -2099,11 +2161,13 @@ const TaskDefinitionItem = z
     id: z.string().uuid(),
     catalog_version_id: z.string().uuid(),
     layer_action: LayerAction,
+    task_number: z.union([z.number(), z.null()]),
     task_code: z.union([z.string(), z.null()]),
     task_name: z.union([z.string(), z.null()]),
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2117,6 +2181,17 @@ const TaskDefinitionItem = z
     ]),
     is_active: z.boolean(),
     parent_task_id: z.union([z.string(), z.null()]),
+    phase_id: z.union([z.string(), z.null()]),
+    four_eyes: z.boolean(),
+    exclusion_task_ids: z.array(z.string().uuid()),
+    four_eyes_exclusion_wide: z.boolean(),
+    generated_document_ref: z.union([z.string(), z.null()]),
+    trigger_event: z.union([z.string(), z.null()]),
+    permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
+    lifecycle_entity: z.union([z.string(), z.null()]),
+    capture_section_name: z.union([z.string(), z.null()]),
+    document_checks: z.array(DocumentCheckItem),
+    condition_rows: z.array(ConditionRowItem),
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
@@ -2177,6 +2252,9 @@ const AddTaskRequest = z
     task_description: z.union([z.string(), z.null()]).optional(),
     category: z.union([TaskCategory, z.null()]).optional(),
     responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
+    responsible_roles: z
+      .union([z.array(TaskResponsibleFunction), z.null()])
+      .optional(),
     is_mandatory: z.union([z.boolean(), z.null()]).optional(),
     weight: z.union([z.number(), z.null()]).optional(),
     display_order: z.union([z.number(), z.null()]).optional(),
@@ -2191,8 +2269,23 @@ const AddTaskRequest = z
       .optional(),
     task_type: z.union([TaskType, z.null()]).optional(),
     applicability: z.union([TaskApplicability, z.null()]).optional(),
+    generated_document_ref: z.union([z.string(), z.null()]).optional(),
+    trigger_event: z.union([z.string(), z.null()]).optional(),
+    permitted_outcomes: z
+      .union([z.array(StateTransitionOutcome), z.null()])
+      .optional(),
+    lifecycle_entity: z.union([z.string(), z.null()]).optional(),
+    capture_section_name: z.union([z.string(), z.null()]).optional(),
+    document_checks: z.union([z.array(DocumentCheckItem), z.null()]).optional(),
+    condition_rows: z.union([z.array(ConditionRowItem), z.null()]).optional(),
     is_active: z.boolean().optional().default(true),
     parent_task_id: z.union([z.string(), z.null()]).optional(),
+    four_eyes: z.boolean().optional().default(false),
+    exclusion_task_ids: z
+      .union([z.array(z.string().uuid()), z.null()])
+      .optional(),
+    four_eyes_exclusion_wide: z.boolean().optional().default(false),
+    phase_id: z.union([z.string(), z.null()]).optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
     doc_requirement_pin_mode: z
       .union([DocRequirementPinMode, z.null()])
@@ -2205,11 +2298,13 @@ const TaskResponseWithWarnings = z
     id: z.string().uuid(),
     catalog_version_id: z.string().uuid(),
     layer_action: LayerAction,
+    task_number: z.union([z.number(), z.null()]),
     task_code: z.union([z.string(), z.null()]),
     task_name: z.union([z.string(), z.null()]),
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2223,6 +2318,17 @@ const TaskResponseWithWarnings = z
     ]),
     is_active: z.boolean(),
     parent_task_id: z.union([z.string(), z.null()]),
+    phase_id: z.union([z.string(), z.null()]),
+    four_eyes: z.boolean(),
+    exclusion_task_ids: z.array(z.string().uuid()),
+    four_eyes_exclusion_wide: z.boolean(),
+    generated_document_ref: z.union([z.string(), z.null()]),
+    trigger_event: z.union([z.string(), z.null()]),
+    permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
+    lifecycle_entity: z.union([z.string(), z.null()]),
+    capture_section_name: z.union([z.string(), z.null()]),
+    document_checks: z.array(DocumentCheckItem),
+    condition_rows: z.array(ConditionRowItem),
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
@@ -2239,11 +2345,13 @@ const TaskResponse = z
     id: z.string().uuid(),
     catalog_version_id: z.string().uuid(),
     layer_action: LayerAction,
+    task_number: z.union([z.number(), z.null()]),
     task_code: z.union([z.string(), z.null()]),
     task_name: z.union([z.string(), z.null()]),
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2257,6 +2365,17 @@ const TaskResponse = z
     ]),
     is_active: z.boolean(),
     parent_task_id: z.union([z.string(), z.null()]),
+    phase_id: z.union([z.string(), z.null()]),
+    four_eyes: z.boolean(),
+    exclusion_task_ids: z.array(z.string().uuid()),
+    four_eyes_exclusion_wide: z.boolean(),
+    generated_document_ref: z.union([z.string(), z.null()]),
+    trigger_event: z.union([z.string(), z.null()]),
+    permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
+    lifecycle_entity: z.union([z.string(), z.null()]),
+    capture_section_name: z.union([z.string(), z.null()]),
+    document_checks: z.array(DocumentCheckItem),
+    condition_rows: z.array(ConditionRowItem),
     doc_requirement_ref: z.union([z.string(), z.null()]),
     doc_requirement_pin_mode: z.union([DocRequirementPinMode, z.null()]),
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
@@ -2273,6 +2392,7 @@ const UpdateTaskRequest = z
     task_description: z.union([z.string(), z.null()]),
     category: z.union([TaskCategory, z.null()]),
     responsible_role: z.union([TaskResponsibleRole, z.null()]),
+    responsible_roles: z.union([z.array(TaskResponsibleFunction), z.null()]),
     is_mandatory: z.union([z.boolean(), z.null()]),
     weight: z.union([z.number(), z.null()]),
     display_order: z.union([z.number(), z.null()]),
@@ -2290,8 +2410,52 @@ const UpdateTaskRequest = z
     conditional_trigger: z.union([ConditionalTrigger, z.null()]),
     task_type: z.union([TaskType, z.null()]),
     applicability: z.union([TaskApplicability, z.null()]),
+    phase_id: z.union([z.string(), z.null()]),
+    four_eyes: z.union([z.boolean(), z.null()]),
+    exclusion_task_ids: z.union([z.array(z.string().uuid()), z.null()]),
+    four_eyes_exclusion_wide: z.union([z.boolean(), z.null()]),
+    generated_document_ref: z.union([z.string(), z.null()]),
+    trigger_event: z.union([z.string(), z.null()]),
+    permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
+    lifecycle_entity: z.union([z.string(), z.null()]),
+    capture_section_name: z.union([z.string(), z.null()]),
+    document_checks: z.union([z.array(DocumentCheckItem), z.null()]),
+    condition_rows: z.union([z.array(ConditionRowItem), z.null()]),
   })
   .partial()
+  .passthrough()
+const CreatePhaseRequest = z
+  .object({
+    name: z.string().min(1).max(80),
+    position: z.union([z.number(), z.null()]).optional(),
+  })
+  .passthrough()
+const PhaseResponse = z
+  .object({
+    id: z.string().uuid(),
+    catalog_version_id: z.string().uuid(),
+    name: z.string(),
+    position: z.number().int(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const ReorderPhasesRequest = z
+  .object({ ordered_phase_ids: z.array(z.string().uuid()).min(1) })
+  .passthrough()
+const UpdatePhaseRequest = z
+  .object({
+    name: z.union([z.string(), z.null()]),
+    position: z.union([z.number(), z.null()]),
+  })
+  .partial()
+  .passthrough()
+const RemovePhaseResponse = z
+  .object({
+    phase_id: z.string().uuid(),
+    tasks_in_phase: z.number().int(),
+    removed: z.boolean(),
+  })
   .passthrough()
 const MaterializeChecklistRequest = z
   .object({
@@ -2301,6 +2465,20 @@ const MaterializeChecklistRequest = z
   })
   .passthrough()
 const ChecklistItemStatus = z.enum(["open", "checked", "not_applicable"])
+const ChecklistCloseActor = z.enum(["person", "system"])
+const DocumentCheckMark = z.enum(["in_order", "not_in_order", "not_applicable"])
+const ChecklistItemCheckResponse = z
+  .object({
+    id: z.string().uuid(),
+    source_document_check_id: z.string().uuid(),
+    document_ref: z.string().uuid(),
+    position: z.number().int(),
+    mark: z.union([DocumentCheckMark, z.null()]),
+    note: z.union([z.string(), z.null()]),
+    marked_by: z.union([z.string(), z.null()]),
+    marked_at: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
 const ChecklistItemResponse = z
   .object({
     id: z.string().uuid(),
@@ -2320,16 +2498,28 @@ const ChecklistItemResponse = z
     task_type: z.union([TaskType, z.null()]).optional(),
     applicability: z.union([TaskApplicability, z.null()]).optional(),
     responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
+    responsible_roles: z
+      .union([z.array(TaskResponsibleFunction), z.null()])
+      .optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
+    four_eyes: z.boolean().optional().default(false),
     status: ChecklistItemStatus,
     note: z.union([z.string(), z.null()]),
     checked_by: z.union([z.string(), z.null()]),
+    checked_by_type: z.union([ChecklistCloseActor, z.null()]).optional(),
     checked_at: z.union([z.string(), z.null()]),
+    checks: z.array(ChecklistItemCheckResponse).optional().default([]),
   })
   .passthrough()
 const SetItemStatusRequest = z
   .object({
     status: ChecklistItemStatus,
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const SetItemCheckMarkRequest = z
+  .object({
+    mark: DocumentCheckMark,
     note: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
@@ -2419,11 +2609,6 @@ const SourceLayer = z.enum(["default", "override", "supplement", "deactivated"])
 const app__modules__document_requirement_catalog__domain__enums__StageCategorization =
   z.enum(["submission", "approval", "disbursement_readiness"])
 const DocumentOrigin = z.enum(["uploaded", "generated"])
-const RequirementApplicability = z.enum([
-  "always",
-  "conditional_rule",
-  "conditional_manual",
-])
 const RequirementResponse = z
   .object({
     id: z.string().uuid(),
@@ -2440,12 +2625,9 @@ const RequirementResponse = z
       app__modules__document_requirement_catalog__domain__enums__StageCategorization,
       z.null(),
     ]),
-    blocks_submission: z.boolean(),
     document_origin: DocumentOrigin,
     is_active: z.boolean(),
     sort_order: z.number().int(),
-    applicability: RequirementApplicability,
-    condition: z.union([z.object({}).partial().passthrough(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
   })
@@ -2516,13 +2698,8 @@ const AddRequirementRequest = z
         z.null(),
       ])
       .optional(),
-    blocks_submission: z.boolean().optional().default(true),
     document_origin: DocumentOrigin.optional(),
     sort_order: z.number().int().optional().default(0),
-    applicability: RequirementApplicability.optional(),
-    condition: z
-      .union([z.object({}).partial().passthrough(), z.null()])
-      .optional(),
   })
   .passthrough()
 const RequirementListResponse = z
@@ -2545,11 +2722,8 @@ const UpdateRequirementRequest = z
       app__modules__document_requirement_catalog__domain__enums__StageCategorization,
       z.null(),
     ]),
-    blocks_submission: z.union([z.boolean(), z.null()]),
     document_origin: z.union([DocumentOrigin, z.null()]),
     sort_order: z.union([z.number(), z.null()]),
-    applicability: z.union([RequirementApplicability, z.null()]),
-    condition: z.union([z.object({}).partial().passthrough(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -2563,7 +2737,6 @@ const RuntimeRequirementItem = z
     stage_categorization: z.union([z.string(), z.null()]),
     fulfilment_status: z.string(),
     is_blocking: z.boolean(),
-    blocks_submission: z.boolean(),
     document_origin: z.string(),
   })
   .passthrough()
@@ -2577,11 +2750,14 @@ const RuntimeRequirementSurfaceResponse = z
   })
   .passthrough()
 const MaterializeRequest = z
-  .object({ process_context: z.string() })
+  .object({
+    process_context: z.string(),
+    framework_agreement_id: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const MaterializedRequirementResponse = z
   .object({
-    requirement_definition_id: z.string().uuid(),
+    requirement_definition_id: z.union([z.string(), z.null()]),
     requirement_code: z.string(),
     document_type_code: z.string(),
     document_type_name: z.string(),
@@ -2590,7 +2766,6 @@ const MaterializedRequirementResponse = z
     source_layer: z.string(),
     stage_categorization: z.union([z.string(), z.null()]),
     applicable_process_contexts: z.array(z.string()),
-    blocks_submission: z.boolean(),
     document_origin: z.string(),
   })
   .passthrough()
@@ -2669,6 +2844,35 @@ const CompletenessResponse = z
     mandatory_missing: z.number().int(),
     per_requirement: z.array(PerRequirementStatusResponse),
   })
+  .passthrough()
+const DocumentRoleScope = z.enum(["lessee", "guarantor", "case"])
+const DocumentTypeOrigin = z.enum(["requested", "generated"])
+const CreateDocumentTypeRequest = z
+  .object({
+    type_code: z.string().min(1).max(100),
+    type_name: z.string().min(1).max(255),
+    role_scope: DocumentRoleScope,
+    origin: DocumentTypeOrigin.optional(),
+    note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const DocumentTypeResponse = z
+  .object({
+    id: z.string().uuid(),
+    type_code: z.string(),
+    type_name: z.string(),
+    role_scope: DocumentRoleScope,
+    origin: DocumentTypeOrigin,
+    note: z.union([z.string(), z.null()]),
+    is_active: z.boolean(),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const origin = z.union([DocumentTypeOrigin, z.null()]).optional()
+const role_scope = z.union([DocumentRoleScope, z.null()]).optional()
+const DocumentTypeListResponse = z
+  .object({ items: z.array(DocumentTypeResponse), total: z.number().int() })
   .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
@@ -2888,6 +3092,10 @@ export const schemas = {
   FAListResponse,
   UpdateFARequest,
   FADetailResponse,
+  DocumentOverrideKind,
+  DocumentOverrideItem,
+  SetDocumentOverridesRequest,
+  DocumentOverridesResponse,
   ActivateFARequest,
   TerminationReadinessResponse,
   TerminateFARequest,
@@ -2922,11 +3130,18 @@ export const schemas = {
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
+  SuspendCatalogResponse,
+  FieldRegistryItem,
   LayerAction,
   TaskCategory,
   TaskResponsibleRole,
+  TaskResponsibleFunction,
   app__modules__workflow_task_catalog__domain__enums__StageCategorization,
   TaskProcessContext,
+  StateTransitionOutcome,
+  DocumentCheckItem,
+  ConditionOperator,
+  ConditionRowItem,
   DocRequirementPinMode,
   ConditionalTrigger,
   TaskType,
@@ -2940,10 +3155,19 @@ export const schemas = {
   TaskResponseWithWarnings,
   TaskResponse,
   UpdateTaskRequest,
+  CreatePhaseRequest,
+  PhaseResponse,
+  ReorderPhasesRequest,
+  UpdatePhaseRequest,
+  RemovePhaseResponse,
   MaterializeChecklistRequest,
   ChecklistItemStatus,
+  ChecklistCloseActor,
+  DocumentCheckMark,
+  ChecklistItemCheckResponse,
   ChecklistItemResponse,
   SetItemStatusRequest,
+  SetItemCheckMarkRequest,
   RequiredProjectionResponse,
   PhaseGateStatus,
   PhaseGateResponse,
@@ -2960,7 +3184,6 @@ export const schemas = {
   SourceLayer,
   app__modules__document_requirement_catalog__domain__enums__StageCategorization,
   DocumentOrigin,
-  RequirementApplicability,
   RequirementResponse,
   app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
   app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
@@ -2982,6 +3205,13 @@ export const schemas = {
   TransitionStatusRequest,
   PerRequirementStatusResponse,
   CompletenessResponse,
+  DocumentRoleScope,
+  DocumentTypeOrigin,
+  CreateDocumentTypeRequest,
+  DocumentTypeResponse,
+  origin,
+  role_scope,
+  DocumentTypeListResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -3692,6 +3922,44 @@ and invalidates all active sessions.`,
     ],
   },
   {
+    method: "patch",
+    path: "/api/v1/cases/:business_object_id/checklist/items/:item_id/checks/:check_id",
+    alias:
+      "set_item_check_mark_api_v1_cases__business_object_id__checklist_items__item_id__checks__check_id__patch",
+    description: `PRD1042-1892 items 11/12 — record the mark on one document check of a checklist item.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SetItemCheckMarkRequest,
+      },
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "item_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "check_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ChecklistItemCheckResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/cases/:business_object_id/checklist/required",
     alias:
@@ -3925,7 +4193,7 @@ and invalidates all active sessions.`,
       {
         name: "body",
         type: "Body",
-        schema: z.object({ process_context: z.string() }).passthrough(),
+        schema: MaterializeRequest,
       },
       {
         name: "catalog_id",
@@ -4381,6 +4649,55 @@ and invalidates all active sessions.`,
       },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/framework-agreements/:id/document-overrides",
+    alias:
+      "set_fa_document_overrides_api_v1_framework_agreements__id__document_overrides_put",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SetDocumentOverridesRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentOverridesResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/framework-agreements/:id/document-overrides",
+    alias:
+      "get_fa_document_overrides_api_v1_framework_agreements__id__document_overrides_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentOverridesResponse,
     errors: [
       {
         status: 422,
@@ -6587,6 +6904,91 @@ No existing sessions are invalidated immediately.
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/document-types",
+    alias:
+      "create_document_type_api_v1_tenants__tenant_id__document_types_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreateDocumentTypeRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentTypeResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/document-types",
+    alias: "list_document_types_api_v1_tenants__tenant_id__document_types_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "origin",
+        type: "Query",
+        schema: origin,
+      },
+      {
+        name: "role_scope",
+        type: "Query",
+        schema: role_scope,
+      },
+      {
+        name: "include_inactive",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+    ],
+    response: DocumentTypeListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/document-types/seed-generated",
+    alias:
+      "seed_generated_document_types_api_v1_tenants__tenant_id__document_types_seed_generated_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentTypeListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/tenants/:tenant_id/modules",
     alias: "get_tenant_modules_api_v1_tenants__tenant_id__modules_get",
@@ -7659,6 +8061,31 @@ BPU + Support + Auditor (read). Not found / cross-tenant / non-authorized → 40
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/activate",
+    alias:
+      "activate_catalog_api_v1_workflow_task_catalogs__catalog_id__activate_post",
+    description: `PRD1042-1894 Block 8 (AC §7) — activate a draft. Runs the validator; on failure returns 422
+with the named reasons and leaves the catalogue a draft.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/workflow-task-catalogs/:catalog_id/audit-trail",
     alias:
@@ -7685,6 +8112,245 @@ BPU + Support + Auditor (read). Cursor-paginated, newest first.`,
       },
     ],
     response: AuditTrailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/audit-trail/export-csv",
+    alias:
+      "export_catalog_audit_trail_api_v1_workflow_task_catalogs__catalog_id__audit_trail_export_csv_get",
+    description: `PRD1042-1894 Block 10 — the auditor (and Bank Admin) exports the full change log as CSV.
+
+No version history in the MVP → this append-only log is the history. BPU + Support + Auditor;
+others/cross-tenant → 404. The export access is itself audited (WTC_AUDIT_TRAIL_EXPORTED).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/reactivate",
+    alias:
+      "reactivate_catalog_api_v1_workflow_task_catalogs__catalog_id__reactivate_post",
+    description: `PRD1042-1894 Block 8 (AC §7) — reactivate a suspended catalogue (back to resolving for new cases).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/suspend",
+    alias:
+      "suspend_catalog_api_v1_workflow_task_catalogs__catalog_id__suspend_post",
+    description: `PRD1042-1894 Block 8 (AC §7) — suspend an active catalogue. Not silent: returns the affected
+cases + product, then proceeds (never blocked).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: SuspendCatalogResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/phases",
+    alias:
+      "add_phase_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CreatePhaseRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PhaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/phases",
+    alias:
+      "list_phases_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(PhaseResponse),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/phases/:phase_id",
+    alias:
+      "update_phase_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases__phase_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdatePhaseRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "phase_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PhaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/phases/:phase_id",
+    alias:
+      "remove_phase_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases__phase_id__delete",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "phase_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "confirm",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+    ],
+    response: RemovePhaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/workflow-task-catalogs/:catalog_id/versions/:version_id/phases/reorder",
+    alias:
+      "reorder_phases_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases_reorder_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: ReorderPhasesRequest,
+      },
+      {
+        name: "catalog_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "version_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.array(PhaseResponse),
     errors: [
       {
         status: 422,
@@ -7820,6 +8486,16 @@ BPU + Support + Auditor (read). Cursor-paginated, newest first.`,
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/field-registry",
+    alias:
+      "list_field_registry_api_v1_workflow_task_catalogs_field_registry_get",
+    description: `PRD1042-1894 Block 7 (AC §6) — the registered fields a display condition may reference. Declared
+before &#x60;/{catalog_id}&#x60; so the literal path wins over the UUID route.`,
+    requestFormat: "json",
+    response: z.array(FieldRegistryItem),
   },
   {
     method: "get",

@@ -13,6 +13,9 @@
         "version": "Version"
       }
     },
+    "productStatus": {
+      "deactivated": "Deaktiviert"
+    },
     "emptyState": {
       "title": "Noch keine Produktvorlagen",
       "description": "Erstellen Sie Ihre erste Vorlage, um zu beginnen."
@@ -231,6 +234,15 @@
       "justificationHint": "Erforderlich. Mindestens 10 Zeichen.",
       "keep": "Abbrechen",
       "confirm": "Version beenden"
+    },
+    "deactivate": "Deaktivieren",
+    "deactivateDialog": {
+      "title": "Produktvorlage deaktivieren",
+      "description": "Dieses Produkt wird für neue Finanzierungen und Vertragsabschlüsse ausgeblendet. Bestehende Bindungen sind davon nicht betroffen.",
+      "reasonLabel": "Grund der Deaktivierung",
+      "reasonHint": "Erforderlich. Mindestens 10 Zeichen.",
+      "keep": "Abbrechen",
+      "confirm": "Vorlage deaktivieren"
     },
     "compare": {
       "compareLabel": "Vergleichen",
