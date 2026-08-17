@@ -166,3 +166,11 @@ export async function deactivateProductTemplate(
   )
   return ProductStatusResponseSchema.parse(data)
 }
+
+// No request body — reversing a deactivation carries no reason, unlike deactivating itself.
+export async function reactivateProductTemplate(
+  templateId: string
+): Promise<ProductStatusResponse> {
+  const data = await api.post(`/product-templates/${templateId}/reactivate`)
+  return ProductStatusResponseSchema.parse(data)
+}

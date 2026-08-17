@@ -785,6 +785,24 @@ describe("TemplateVersionDetailSchema", () => {
     expect(() => TemplateVersionDetailSchema.parse(rest)).toThrow()
   })
 
+  // Product-level, not version-level — same field TemplateListItemSchema carries, now also
+  // on the version detail response so ProductTemplatePublishedActions can offer
+  // Deactivate/Activate without a second fetch.
+  it("defaults product_status to active when the BE omits it", () => {
+    expect(TemplateVersionDetailSchema.parse(validDetail).product_status).toBe(
+      "active"
+    )
+  })
+
+  it("keeps the product_status the BE returns", () => {
+    expect(
+      TemplateVersionDetailSchema.parse({
+        ...validDetail,
+        product_status: "deactivated",
+      }).product_status
+    ).toBe("deactivated")
+  })
+
   it("rejects an unknown refinancing_form", () => {
     expect(() =>
       TemplateVersionDetailSchema.parse({

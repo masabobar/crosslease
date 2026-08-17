@@ -410,6 +410,10 @@ export const TemplateVersionDetailSchema = z.object({
   // never break if it's absent. created_by / updated_by / updated_at / tenant name are
   // NOT provided by the backend (see open-questions Q-028).
   created_at: z.string().nullable().optional(),
+  // Product-level, not version-level — same field TemplateListItemSchema carries, now also
+  // returned on the version detail response so ProductTemplatePublishedActions can decide
+  // between offering Deactivate and Activate without a second fetch.
+  product_status: z.string().default(PRODUCT_STATUS_ACTIVE),
 })
 export type TemplateVersionDetail = z.infer<typeof TemplateVersionDetailSchema>
 

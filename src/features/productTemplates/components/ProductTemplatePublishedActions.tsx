@@ -17,12 +17,14 @@ import {
 import {
   DEACTIVATION_REASON_MAX_LENGTH,
   DEACTIVATION_REASON_MIN_LENGTH,
+  PRODUCT_STATUS_ACTIVE,
   TERMINATION_JUSTIFICATION_MAX_LENGTH,
   TERMINATION_JUSTIFICATION_MIN_LENGTH,
 } from "@/features/productTemplates/constants"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
 import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
 import { useDeactivateProductTemplate } from "@/features/productTemplates/hooks/useDeactivateProductTemplate"
+import { useReactivateProductTemplate } from "@/features/productTemplates/hooks/useReactivateProductTemplate"
 import { showApiError } from "@/features/productTemplates/utils"
 import { productTemplateNewVersionEdit } from "@/router/paths"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft.ts"
@@ -31,6 +33,12 @@ type ProductTemplatePublishedActionsProps = {
   templateId: string
   versionNumber: string
   isDraft: boolean
+  // Product-level (TemplateVersionDetail.product_status / TemplateListItem.product_status),
+  // not the version's own lifecycle status — decides whether this renders Deactivate or
+  // Activate. Passed in rather than fetched here: both call sites (ProductTemplateDetailPage,
+  // ProductTemplateDetailDrawer via ProductTemplateListPage) already have it from their own
+  // version-detail fetch.
+  productStatus: string
 }
 
 // Terminate + Author-new-version actions for an Active template version. Extracted from
@@ -40,13 +48,16 @@ export function ProductTemplatePublishedActions({
   templateId,
   versionNumber,
   isDraft,
+  productStatus,
 }: ProductTemplatePublishedActionsProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
+  const isDeactivated = productStatus !== PRODUCT_STATUS_ACTIVE
 
   const [isAuthorDialogOpen, setIsAuthorDialogOpen] = useState(false)
   const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false)
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false)
+  const [isActivateDialogOpen, setIsActivateDialogOpen] = useState(false)
   const [isDiscardDraftDialogOpen, setIsDiscardDraftDialogOpen] =
     useState(false)
   const [isEditDraftDialogOpen, setIsEditDraftDialogOpen] = useState(false)
@@ -59,6 +70,8 @@ export function ProductTemplatePublishedActions({
     useTerminateProductTemplateVersion()
   const { mutateAsync: deactivateTemplate, isPending: isDeactivating } =
     useDeactivateProductTemplate()
+  const { mutateAsync: reactivateTemplate, isPending: isReactivating } =
+    useReactivateProductTemplate()
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
 
@@ -104,6 +117,15 @@ export function ProductTemplatePublishedActions({
     }
   }
 
+  async function handleConfirmActivate() {
+    try {
+      await reactivateTemplate(templateId)
+      setIsActivateDialogOpen(false)
+    } catch (err) {
+      showApiError(err, t)
+    }
+  }
+
   async function handleDraftDiscard() {
     try {
       await discardDraft({
@@ -116,9 +138,38 @@ export function ProductTemplatePublishedActions({
     }
   }
 
+  // Product-level, so available regardless of whether the current version is a draft or
+  // published — shown on both action sets with the same isDeactivated branch.
+  function getActivateDeactivateButton() {
+    return isDeactivated ? (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="activate-template-button"
+        className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+        onClick={() => setIsActivateDialogOpen(true)}
+      >
+        {t("versionHistory.activate")}
+      </Button>
+    ) : (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="deactivate-template-button"
+        className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+        onClick={() => setIsDeactivateDialogOpen(true)}
+      >
+        {t("versionHistory.deactivate")}
+      </Button>
+    )
+  }
+
   function getDraftActions() {
     return (
       <div className="flex justify-end gap-2">
+        {getActivateDeactivateButton()}
         <Button
           type="button"
           variant="outline"
@@ -144,16 +195,7 @@ export function ProductTemplatePublishedActions({
   function getRegularActions() {
     return (
       <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-testid="deactivate-template-button"
-          className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => setIsDeactivateDialogOpen(true)}
-        >
-          {t("versionHistory.deactivate")}
-        </Button>
+        {getActivateDeactivateButton()}
         <Button
           type="button"
           variant="outline"
@@ -353,6 +395,39 @@ export function ProductTemplatePublishedActions({
     )
   }
 
+  // No reason field — reactivate_product takes no request body, unlike deactivate.
+  function getActivateTemplateConfirmationDialog() {
+    return (
+      <AlertDialog
+        open={isActivateDialogOpen}
+        onOpenChange={setIsActivateDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.activateDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.activateDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-activate-dialog-keep">
+              {t("versionHistory.activateDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-activate-dialog-confirm"
+              onClick={handleConfirmActivate}
+              disabled={isReactivating}
+            >
+              {t("versionHistory.activateDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+
   function getEditDraftConfirmationDialog() {
     return (
       <AlertDialog
@@ -390,6 +465,7 @@ export function ProductTemplatePublishedActions({
       {getAuthorNewTemplateConfirmationDialog()}
       {getTerminateTemplateConfirmationDialog()}
       {getDeactivateTemplateConfirmationDialog()}
+      {getActivateTemplateConfirmationDialog()}
       {getDiscardDraftConfirmationDialog()}
       {getEditDraftConfirmationDialog()}
     </>

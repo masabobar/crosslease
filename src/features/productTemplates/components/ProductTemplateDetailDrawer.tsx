@@ -186,6 +186,7 @@ export function ProductTemplateDetailDrawer({
               templateId={templateId}
               versionNumber={data.version_number}
               isDraft={isDraft}
+              productStatus={data.product_status}
             />
           </SheetFooter>
         )}
