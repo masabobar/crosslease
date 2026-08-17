@@ -84,7 +84,6 @@ export const WIZARD_STEP_FIELDS: Record<
     "min_volume_eur",
     "max_volume_eur",
     "valid_from",
-    "valid_until",
   ],
   review: [],
 }

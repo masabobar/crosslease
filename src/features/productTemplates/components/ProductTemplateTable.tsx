@@ -2,7 +2,9 @@ import { useTranslation } from "react-i18next"
 import { ChevronRight } from "lucide-react"
 import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
+import { PRODUCT_STATUS_ACTIVE } from "@/features/productTemplates/constants"
 import type {
   TemplateListItem,
   TemplateCurrentVersionSummary,
@@ -178,7 +180,16 @@ function ProductTemplateTable({
               </span>
             </div>
             <div className={`${COL_STATUS} p-2`}>
-              {item.current_version ? (
+              {item.product_status !== PRODUCT_STATUS_ACTIVE ? (
+                <Badge
+                  variant="destructive"
+                  data-testid={`product-status-badge-${item.id}`}
+                >
+                  {t("list.productStatus.deactivated", {
+                    defaultValue: item.product_status,
+                  })}
+                </Badge>
+              ) : item.current_version ? (
                 <TemplateVersionStatusBadge
                   status={item.current_version.version_status}
                 />

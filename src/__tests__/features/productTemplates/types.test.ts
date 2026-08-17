@@ -54,11 +54,6 @@ describe("WIZARD_STEP_FIELDS", () => {
       { ...validForm, min_volume_eur: 5_000_000, max_volume_eur: 50_000 },
       { ...validForm, valid_from: isoDateOffsetByDays(-1) },
       { ...validForm, valid_from: undefined },
-      {
-        ...validForm,
-        valid_from: isoDateOffsetByDays(30),
-        valid_until: isoDateOffsetByDays(0),
-      },
     ]
 
     const reportedPaths = new Set<string>()
@@ -91,7 +86,6 @@ describe("WIZARD_STEP_FIELDS", () => {
     formKeys.add("min_volume_eur")
     formKeys.add("max_volume_eur")
     formKeys.add("effective_rate")
-    formKeys.add("valid_until")
     for (const field of ALL_VALIDATED_FIELDS) {
       expect(formKeys).toContain(field)
     }

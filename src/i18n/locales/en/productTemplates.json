@@ -13,6 +13,9 @@
         "version": "Version"
       }
     },
+    "productStatus": {
+      "deactivated": "Deactivated"
+    },
     "emptyState": {
       "title": "No product templates yet",
       "description": "Create your first template to get started."
@@ -231,6 +234,15 @@
       "justificationHint": "Mandatory. Minimum 10 characters.",
       "keep": "Cancel",
       "confirm": "Terminate version"
+    },
+    "deactivate": "Deactivate",
+    "deactivateDialog": {
+      "title": "Deactivate product template",
+      "description": "This product will be hidden from new financing and agreement creation. Existing bindings are unaffected.",
+      "reasonLabel": "Deactivation reason",
+      "reasonHint": "Mandatory. Minimum 10 characters.",
+      "keep": "Cancel",
+      "confirm": "Deactivate template"
     },
     "compare": {
       "compareLabel": "Compare",

@@ -15,11 +15,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
+  DEACTIVATION_REASON_MAX_LENGTH,
+  DEACTIVATION_REASON_MIN_LENGTH,
   TERMINATION_JUSTIFICATION_MAX_LENGTH,
   TERMINATION_JUSTIFICATION_MIN_LENGTH,
 } from "@/features/productTemplates/constants"
 import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/hooks/useCreateNewProductTemplateVersion"
 import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
+import { useDeactivateProductTemplate } from "@/features/productTemplates/hooks/useDeactivateProductTemplate"
 import { showApiError } from "@/features/productTemplates/utils"
 import { productTemplateNewVersionEdit } from "@/router/paths"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft.ts"
@@ -43,15 +46,19 @@ export function ProductTemplatePublishedActions({
 
   const [isAuthorDialogOpen, setIsAuthorDialogOpen] = useState(false)
   const [isTerminateDialogOpen, setIsTerminateDialogOpen] = useState(false)
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false)
   const [isDiscardDraftDialogOpen, setIsDiscardDraftDialogOpen] =
     useState(false)
   const [isEditDraftDialogOpen, setIsEditDraftDialogOpen] = useState(false)
   const [terminationJustification, setTerminationJustification] = useState("")
+  const [deactivationReason, setDeactivationReason] = useState("")
 
   const { mutateAsync: createNewVersion, isPending: isCreatingNewVersion } =
     useCreateNewProductTemplateVersion()
   const { mutateAsync: terminateVersion, isPending: isTerminating } =
     useTerminateProductTemplateVersion()
+  const { mutateAsync: deactivateTemplate, isPending: isDeactivating } =
+    useDeactivateProductTemplate()
   const { mutateAsync: discardDraft, isPending: isDiscarding } =
     useDiscardProductTemplateDraft()
 
@@ -79,6 +86,19 @@ export function ProductTemplatePublishedActions({
       })
       setIsTerminateDialogOpen(false)
       setTerminationJustification("")
+    } catch (err) {
+      showApiError(err, t)
+    }
+  }
+
+  async function handleConfirmDeactivate() {
+    try {
+      await deactivateTemplate({
+        templateId,
+        body: { reason: deactivationReason },
+      })
+      setIsDeactivateDialogOpen(false)
+      setDeactivationReason("")
     } catch (err) {
       showApiError(err, t)
     }
@@ -124,6 +144,16 @@ export function ProductTemplatePublishedActions({
   function getRegularActions() {
     return (
       <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="deactivate-template-button"
+          className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setIsDeactivateDialogOpen(true)}
+        >
+          {t("versionHistory.deactivate")}
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -269,6 +299,60 @@ export function ProductTemplatePublishedActions({
     )
   }
 
+  function getDeactivateTemplateConfirmationDialog() {
+    return (
+      <AlertDialog
+        open={isDeactivateDialogOpen}
+        onOpenChange={open => {
+          setIsDeactivateDialogOpen(open)
+          if (!open) setDeactivationReason("")
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("versionHistory.deactivateDialog.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("versionHistory.deactivateDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 px-1">
+            <Label htmlFor="deactivate-reason">
+              {t("versionHistory.deactivateDialog.reasonLabel")}
+            </Label>
+            <Textarea
+              id="deactivate-reason"
+              data-testid="deactivate-reason-input"
+              rows={3}
+              maxLength={DEACTIVATION_REASON_MAX_LENGTH}
+              value={deactivationReason}
+              onChange={e => setDeactivationReason(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground opacity-80">
+              {t("versionHistory.deactivateDialog.reasonHint")}
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="version-deactivate-dialog-keep">
+              {t("versionHistory.deactivateDialog.keep")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="version-deactivate-dialog-confirm"
+              onClick={handleConfirmDeactivate}
+              disabled={
+                isDeactivating ||
+                deactivationReason.trim().length < DEACTIVATION_REASON_MIN_LENGTH
+              }
+            >
+              {t("versionHistory.deactivateDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )
+  }
+
   function getEditDraftConfirmationDialog() {
     return (
       <AlertDialog
@@ -305,6 +389,7 @@ export function ProductTemplatePublishedActions({
       {getActions()}
       {getAuthorNewTemplateConfirmationDialog()}
       {getTerminateTemplateConfirmationDialog()}
+      {getDeactivateTemplateConfirmationDialog()}
       {getDiscardDraftConfirmationDialog()}
       {getEditDraftConfirmationDialog()}
     </>

@@ -5452,6 +5452,84 @@
         }
       }
     },
+    "/api/v1/framework-agreements/{id}/document-overrides": {
+      "put": {
+        "tags": ["Framework Agreements"],
+        "summary": "Set Fa Document Overrides",
+        "operationId": "set_fa_document_overrides_api_v1_framework_agreements__id__document_overrides_put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDocumentOverridesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOverridesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Framework Agreements"],
+        "summary": "Get Fa Document Overrides",
+        "operationId": "get_fa_document_overrides_api_v1_framework_agreements__id__document_overrides_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOverridesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/framework-agreements/{id}/activate": {
       "post": {
         "tags": ["Framework Agreements"],
@@ -6398,6 +6476,148 @@
         }
       }
     },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/activate": {
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Activate Catalog",
+        "description": "PRD1042-1894 Block 8 (AC §7) — activate a draft. Runs the validator; on failure returns 422\nwith the named reasons and leaves the catalogue a draft.",
+        "operationId": "activate_catalog_api_v1_workflow_task_catalogs__catalog_id__activate_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/suspend": {
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Suspend Catalog",
+        "description": "PRD1042-1894 Block 8 (AC §7) — suspend an active catalogue. Not silent: returns the affected\ncases + product, then proceeds (never blocked).",
+        "operationId": "suspend_catalog_api_v1_workflow_task_catalogs__catalog_id__suspend_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuspendCatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/reactivate": {
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Reactivate Catalog",
+        "description": "PRD1042-1894 Block 8 (AC §7) — reactivate a suspended catalogue (back to resolving for new cases).",
+        "operationId": "reactivate_catalog_api_v1_workflow_task_catalogs__catalog_id__reactivate_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/field-registry": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "List Field Registry",
+        "description": "PRD1042-1894 Block 7 (AC §6) — the registered fields a display condition may reference. Declared\nbefore `/{catalog_id}` so the literal path wins over the UUID route.",
+        "operationId": "list_field_registry_api_v1_workflow_task_catalogs_field_registry_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/FieldRegistryItem" },
+                  "type": "array",
+                  "title": "Response List Field Registry Api V1 Workflow Task Catalogs Field Registry Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workflow-task-catalogs/{catalog_id}": {
       "get": {
         "tags": ["Workflow Task Catalog"],
@@ -6485,6 +6705,40 @@
                 "schema": { "$ref": "#/components/schemas/AuditTrailResponse" }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/audit-trail/export-csv": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Export Catalog Audit Trail",
+        "description": "PRD1042-1894 Block 10 — the auditor (and Bank Admin) exports the full change log as CSV.\n\nNo version history in the MVP → this append-only log is the history. BPU + Support + Auditor;\nothers/cross-tenant → 404. The export access is itself audited (WTC_AUDIT_TRAIL_EXPORTED).",
+        "operationId": "export_catalog_audit_trail_api_v1_workflow_task_catalogs__catalog_id__audit_trail_export_csv_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -6710,6 +6964,301 @@
         }
       }
     },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/versions/{version_id}/phases": {
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Add Phase",
+        "operationId": "add_phase_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePhaseRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PhaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "List Phases",
+        "operationId": "list_phases_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases_get",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PhaseResponse" },
+                  "title": "Response List Phases Api V1 Workflow Task Catalogs  Catalog Id  Versions  Version Id  Phases Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/versions/{version_id}/phases/reorder": {
+      "post": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Reorder Phases",
+        "operationId": "reorder_phases_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases_reorder_post",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReorderPhasesRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PhaseResponse" },
+                  "title": "Response Reorder Phases Api V1 Workflow Task Catalogs  Catalog Id  Versions  Version Id  Phases Reorder Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-task-catalogs/{catalog_id}/versions/{version_id}/phases/{phase_id}": {
+      "patch": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Update Phase",
+        "operationId": "update_phase_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases__phase_id__patch",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "phase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Phase Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePhaseRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PhaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "Remove Phase",
+        "operationId": "remove_phase_api_v1_workflow_task_catalogs__catalog_id__versions__version_id__phases__phase_id__delete",
+        "parameters": [
+          {
+            "name": "catalog_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Catalog Id"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id"
+            }
+          },
+          {
+            "name": "phase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Phase Id"
+            }
+          },
+          {
+            "name": "confirm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Confirm removal of a phase that holds tasks",
+              "default": false,
+              "title": "Confirm"
+            },
+            "description": "Confirm removal of a phase that holds tasks"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RemovePhaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{business_object_id}/checklist": {
       "post": {
         "tags": ["Workflow Task Catalog — Runtime"],
@@ -6842,6 +7391,72 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{business_object_id}/checklist/items/{item_id}/checks/{check_id}": {
+      "patch": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Set Item Check Mark",
+        "description": "PRD1042-1892 items 11/12 — record the mark on one document check of a checklist item.",
+        "operationId": "set_item_check_mark_api_v1_cases__business_object_id__checklist_items__item_id__checks__check_id__patch",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          },
+          {
+            "name": "check_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Check Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetItemCheckMarkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemCheckResponse"
                 }
               }
             }
@@ -7892,6 +8507,165 @@
         }
       }
     },
+    "/api/v1/tenants/{tenant_id}/document-types": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Create Document Type",
+        "operationId": "create_document_type_api_v1_tenants__tenant_id__document_types_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTypeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "List Document Types",
+        "operationId": "list_document_types_api_v1_tenants__tenant_id__document_types_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/DocumentTypeOrigin" },
+                { "type": "null" }
+              ],
+              "title": "Origin"
+            }
+          },
+          {
+            "name": "role_scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/DocumentRoleScope" },
+                { "type": "null" }
+              ],
+              "title": "Role Scope"
+            }
+          },
+          {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Inactive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTypeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/document-types/seed-generated": {
+      "post": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Seed Generated Document Types",
+        "operationId": "seed_generated_document_types_api_v1_tenants__tenant_id__document_types_seed_generated_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTypeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -8131,11 +8905,6 @@
               { "type": "null" }
             ]
           },
-          "blocks_submission": {
-            "type": "boolean",
-            "title": "Blocks Submission",
-            "default": true
-          },
           "document_origin": {
             "$ref": "#/components/schemas/DocumentOrigin",
             "default": "uploaded"
@@ -8144,17 +8913,6 @@
             "type": "integer",
             "title": "Sort Order",
             "default": 0
-          },
-          "applicability": {
-            "$ref": "#/components/schemas/RequirementApplicability",
-            "default": "always"
-          },
-          "condition": {
-            "anyOf": [
-              { "additionalProperties": true, "type": "object" },
-              { "type": "null" }
-            ],
-            "title": "Condition"
           }
         },
         "type": "object",
@@ -8179,13 +8937,16 @@
           },
           "task_name": {
             "anyOf": [
-              { "type": "string", "maxLength": 300, "minLength": 1 },
+              { "type": "string", "maxLength": 200, "minLength": 1 },
               { "type": "null" }
             ],
             "title": "Task Name"
           },
           "task_description": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Task Description"
           },
           "category": {
@@ -8199,6 +8960,19 @@
               { "$ref": "#/components/schemas/TaskResponsibleRole" },
               { "type": "null" }
             ]
+          },
+          "responsible_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TaskResponsibleFunction"
+                },
+                "type": "array",
+                "minItems": 1
+              },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
           },
           "is_mandatory": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -8245,6 +9019,66 @@
               { "type": "null" }
             ]
           },
+          "generated_document_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Generated Document Ref"
+          },
+          "trigger_event": {
+            "anyOf": [
+              { "type": "string", "maxLength": 50 },
+              { "type": "null" }
+            ],
+            "title": "Trigger Event"
+          },
+          "permitted_outcomes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StateTransitionOutcome"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Permitted Outcomes"
+          },
+          "lifecycle_entity": {
+            "anyOf": [
+              { "type": "string", "maxLength": 50 },
+              { "type": "null" }
+            ],
+            "title": "Lifecycle Entity"
+          },
+          "capture_section_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 100 },
+              { "type": "null" }
+            ],
+            "title": "Capture Section Name"
+          },
+          "document_checks": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/DocumentCheckItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Document Checks"
+          },
+          "condition_rows": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/ConditionRowItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Condition Rows"
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
@@ -8256,6 +9090,33 @@
               { "type": "null" }
             ],
             "title": "Parent Task Id"
+          },
+          "four_eyes": {
+            "type": "boolean",
+            "title": "Four Eyes",
+            "default": false
+          },
+          "exclusion_task_ids": {
+            "anyOf": [
+              {
+                "items": { "type": "string", "format": "uuid" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Exclusion Task Ids"
+          },
+          "four_eyes_exclusion_wide": {
+            "type": "boolean",
+            "title": "Four Eyes Exclusion Wide",
+            "default": false
+          },
+          "phase_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Phase Id"
           },
           "doc_requirement_ref": {
             "anyOf": [
@@ -9093,8 +9954,9 @@
       },
       "CatalogState": {
         "type": "string",
-        "enum": ["active", "archived"],
-        "title": "CatalogState"
+        "enum": ["draft", "active", "suspended", "archived"],
+        "title": "CatalogState",
+        "description": "PRD1042-1894 Block 8 (AC §7) — the catalogue lifecycle: Draft → Active → Suspended.\n\nA new catalogue starts DRAFT (never resolved by a case). Activation runs the validator and, on\nsuccess, makes it the one resolved for its case type + product. An Active catalogue can be\nsuspended (stops resolving for new cases; nothing deleted) and reactivated. Editing is in place on\nany state — the audit trail is the history (no version flow). ARCHIVED is a reserved post-MVP\nterminal (not reachable through this flow)."
       },
       "CatalogType": {
         "type": "string",
@@ -9112,6 +9974,63 @@
         "type": "object",
         "required": ["new_email"],
         "title": "ChangeEmailRequest"
+      },
+      "ChecklistCloseActor": {
+        "type": "string",
+        "enum": ["person", "system"],
+        "title": "ChecklistCloseActor"
+      },
+      "ChecklistItemCheckResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "source_document_check_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Document Check Id"
+          },
+          "document_ref": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Ref"
+          },
+          "position": { "type": "integer", "title": "Position" },
+          "mark": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocumentCheckMark" },
+              { "type": "null" }
+            ]
+          },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          },
+          "marked_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Marked By"
+          },
+          "marked_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Marked At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_document_check_id",
+          "document_ref",
+          "position",
+          "mark",
+          "note",
+          "marked_by",
+          "marked_at"
+        ],
+        "title": "ChecklistItemCheckResponse"
       },
       "ChecklistItemResponse": {
         "properties": {
@@ -9175,12 +10094,29 @@
               { "type": "null" }
             ]
           },
+          "responsible_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TaskResponsibleFunction"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
+          },
           "doc_requirement_ref": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
               { "type": "null" }
             ],
             "title": "Doc Requirement Ref"
+          },
+          "four_eyes": {
+            "type": "boolean",
+            "title": "Four Eyes",
+            "default": false
           },
           "status": { "$ref": "#/components/schemas/ChecklistItemStatus" },
           "note": {
@@ -9194,12 +10130,26 @@
             ],
             "title": "Checked By"
           },
+          "checked_by_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ChecklistCloseActor" },
+              { "type": "null" }
+            ]
+          },
           "checked_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
             "title": "Checked At"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItemCheckResponse"
+            },
+            "type": "array",
+            "title": "Checks",
+            "default": []
           }
         },
         "type": "object",
@@ -9285,6 +10235,46 @@
         ],
         "title": "CompletenessResponse"
       },
+      "ConditionOperator": {
+        "type": "string",
+        "enum": [
+          "is",
+          "is_not",
+          "greater_than",
+          "less_than",
+          "at_least",
+          "at_most"
+        ],
+        "title": "ConditionOperator",
+        "description": "PRD1042-1894 Block 7 (AC §6) — the six operators a display-condition row may use. The offered\nset follows the field type (enforced at the FE; not restricted server-side in this store-only slice)."
+      },
+      "ConditionRowItem": {
+        "properties": {
+          "field_registry_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Field Registry Id"
+          },
+          "operator": { "$ref": "#/components/schemas/ConditionOperator" },
+          "value_raw": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Value Raw"
+          },
+          "value_config_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Value Config Ref"
+          }
+        },
+        "type": "object",
+        "required": ["field_registry_id", "operator"],
+        "title": "ConditionRowItem"
+      },
       "ConditionalTrigger": {
         "type": "string",
         "enum": ["financing_amount_over_threshold"],
@@ -9326,6 +10316,34 @@
         "type": "object",
         "required": ["items", "next_cursor"],
         "title": "ConfirmationHistoryResponse"
+      },
+      "CreateDocumentTypeRequest": {
+        "properties": {
+          "type_code": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Type Code"
+          },
+          "type_name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Type Name"
+          },
+          "role_scope": { "$ref": "#/components/schemas/DocumentRoleScope" },
+          "origin": {
+            "$ref": "#/components/schemas/DocumentTypeOrigin",
+            "default": "requested"
+          },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["type_code", "type_name", "role_scope"],
+        "title": "CreateDocumentTypeRequest"
       },
       "CreateFARequest": {
         "properties": {
@@ -9462,6 +10480,26 @@
         "type": "object",
         "required": ["grantee_id", "access_reason", "valid_until"],
         "title": "CreateGrantRequest"
+      },
+      "CreatePhaseRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "position": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1.0 },
+              { "type": "null" }
+            ],
+            "title": "Position"
+          }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "CreatePhaseRequest"
       },
       "CreateTemplateDraftRequest": {
         "properties": {
@@ -9771,6 +10809,25 @@
         "enum": ["pin_by_id", "pin_by_version"],
         "title": "DocRequirementPinMode"
       },
+      "DocumentCheckItem": {
+        "properties": {
+          "document_ref": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Ref"
+          },
+          "position": { "type": "integer", "minimum": 0.0, "title": "Position" }
+        },
+        "type": "object",
+        "required": ["document_ref", "position"],
+        "title": "DocumentCheckItem"
+      },
+      "DocumentCheckMark": {
+        "type": "string",
+        "enum": ["in_order", "not_in_order", "not_applicable"],
+        "title": "DocumentCheckMark",
+        "description": "PRD1042-1894 Block 6 (AC §5, Laurence 12 Aug) — the single mark set, the same for every check\non every step (nothing to configure per check). Recorded per check at runtime; the catalogue only\ndefines the checks. Two paper-form values fall away deliberately (vorhanden dropped; nicht\nvorhanden + fehlt merge into NOT_IN_ORDER)."
+      },
       "DocumentListItemResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -9823,6 +10880,107 @@
         "type": "string",
         "enum": ["uploaded", "generated"],
         "title": "DocumentOrigin"
+      },
+      "DocumentOverrideItem": {
+        "properties": {
+          "document_type_code": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Document Type Code"
+          },
+          "override_kind": {
+            "$ref": "#/components/schemas/DocumentOverrideKind"
+          }
+        },
+        "type": "object",
+        "required": ["document_type_code", "override_kind"],
+        "title": "DocumentOverrideItem"
+      },
+      "DocumentOverrideKind": {
+        "type": "string",
+        "enum": ["additionally_required", "not_required"],
+        "title": "DocumentOverrideKind",
+        "description": "CR PRD1042-1794 A3 — the per-leasing-company override, held on the Framework Agreement as two\nsets. `ADDITIONALLY_REQUIRED` adds a document type to the resolved set for that LC;\n`NOT_REQUIRED` removes one from it. The standard set is never stored on the FA — reading the FA\nalone gives only the deviation."
+      },
+      "DocumentOverridesResponse": {
+        "properties": {
+          "framework_agreement_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Framework Agreement Id"
+          },
+          "overrides": {
+            "items": { "$ref": "#/components/schemas/DocumentOverrideItem" },
+            "type": "array",
+            "title": "Overrides"
+          }
+        },
+        "type": "object",
+        "required": ["framework_agreement_id", "overrides"],
+        "title": "DocumentOverridesResponse"
+      },
+      "DocumentRoleScope": {
+        "type": "string",
+        "enum": ["lessee", "guarantor", "case"],
+        "title": "DocumentRoleScope",
+        "description": "Which party a document concerns (13 Aug: every registry type carries one)."
+      },
+      "DocumentTypeListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/DocumentTypeResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": ["items", "total"],
+        "title": "DocumentTypeListResponse"
+      },
+      "DocumentTypeOrigin": {
+        "type": "string",
+        "enum": ["requested", "generated"],
+        "title": "DocumentTypeOrigin",
+        "description": "Registry mark (B9/B10): the 32 catalogue types are all `requested`; the 7 named documents the\nplatform produces are `generated`. Drives the B10 compatibility rule — an upload task may reference\nonly a `requested` type, a generate task only a `generated` type."
+      },
+      "DocumentTypeResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "type_code": { "type": "string", "title": "Type Code" },
+          "type_name": { "type": "string", "title": "Type Name" },
+          "role_scope": { "$ref": "#/components/schemas/DocumentRoleScope" },
+          "origin": { "$ref": "#/components/schemas/DocumentTypeOrigin" },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type_code",
+          "type_name",
+          "role_scope",
+          "origin",
+          "note",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DocumentTypeResponse"
       },
       "DownloadURLResponse": {
         "properties": {
@@ -10750,6 +11908,24 @@
         "required": ["field", "old_value", "new_value"],
         "title": "FieldDiffItem"
       },
+      "FieldRegistryItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "field_key": { "type": "string", "title": "Field Key" },
+          "field_type": { "type": "string", "title": "Field Type" },
+          "label": { "type": "string", "title": "Label" },
+          "data_available": { "type": "boolean", "title": "Data Available" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "field_key",
+          "field_type",
+          "label",
+          "data_available"
+        ],
+        "title": "FieldRegistryItem"
+      },
       "FirstInstallmentRule": {
         "type": "string",
         "enum": ["submission_month", "following_month", "configurable_offset"],
@@ -11292,6 +12468,13 @@
               { "type": "null" }
             ]
           },
+          "responsible_roles": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
+          },
           "display_order": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Display Order"
@@ -11322,6 +12505,7 @@
           "is_mandatory",
           "weight",
           "responsible_role",
+          "responsible_roles",
           "display_order",
           "stage_categorization",
           "doc_requirement_ref"
@@ -11922,7 +13106,14 @@
       },
       "MaterializeRequest": {
         "properties": {
-          "process_context": { "type": "string", "title": "Process Context" }
+          "process_context": { "type": "string", "title": "Process Context" },
+          "framework_agreement_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Framework Agreement Id"
+          }
         },
         "type": "object",
         "required": ["process_context"],
@@ -11931,8 +13122,10 @@
       "MaterializedRequirementResponse": {
         "properties": {
           "requirement_definition_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
             "title": "Requirement Definition Id"
           },
           "requirement_code": { "type": "string", "title": "Requirement Code" },
@@ -11959,10 +13152,6 @@
             "type": "array",
             "title": "Applicable Process Contexts"
           },
-          "blocks_submission": {
-            "type": "boolean",
-            "title": "Blocks Submission"
-          },
           "document_origin": { "type": "string", "title": "Document Origin" }
         },
         "type": "object",
@@ -11976,7 +13165,6 @@
           "source_layer",
           "stage_categorization",
           "applicable_process_contexts",
-          "blocks_submission",
           "document_origin"
         ],
         "title": "MaterializedRequirementResponse"
@@ -12849,6 +14037,38 @@
         "enum": ["open", "in_review", "approved", "rejected"],
         "title": "PhaseGateStatus"
       },
+      "PhaseResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "catalog_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Version Id"
+          },
+          "name": { "type": "string", "title": "Name" },
+          "position": { "type": "integer", "title": "Position" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "catalog_version_id",
+          "name",
+          "position",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PhaseResponse"
+      },
       "PlatformModuleEntry": {
         "properties": {
           "key": { "type": "string", "title": "Key" },
@@ -13063,6 +14283,33 @@
         "title": "RegisteredAddressInput",
         "description": "Address as submitted by a client. All fields mandatory except state_region."
       },
+      "RemovePhaseResponse": {
+        "properties": {
+          "phase_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Phase Id"
+          },
+          "tasks_in_phase": { "type": "integer", "title": "Tasks In Phase" },
+          "removed": { "type": "boolean", "title": "Removed" }
+        },
+        "type": "object",
+        "required": ["phase_id", "tasks_in_phase", "removed"],
+        "title": "RemovePhaseResponse"
+      },
+      "ReorderPhasesRequest": {
+        "properties": {
+          "ordered_phase_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "minItems": 1,
+            "title": "Ordered Phase Ids"
+          }
+        },
+        "type": "object",
+        "required": ["ordered_phase_ids"],
+        "title": "ReorderPhasesRequest"
+      },
       "RequiredProjectionResponse": {
         "properties": {
           "business_object_id": {
@@ -13087,11 +14334,6 @@
           "required_items"
         ],
         "title": "RequiredProjectionResponse"
-      },
-      "RequirementApplicability": {
-        "type": "string",
-        "enum": ["always", "conditional_rule", "conditional_manual"],
-        "title": "RequirementApplicability"
       },
       "RequirementClassification": {
         "type": "string",
@@ -13155,23 +14397,9 @@
               { "type": "null" }
             ]
           },
-          "blocks_submission": {
-            "type": "boolean",
-            "title": "Blocks Submission"
-          },
           "document_origin": { "$ref": "#/components/schemas/DocumentOrigin" },
           "is_active": { "type": "boolean", "title": "Is Active" },
           "sort_order": { "type": "integer", "title": "Sort Order" },
-          "applicability": {
-            "$ref": "#/components/schemas/RequirementApplicability"
-          },
-          "condition": {
-            "anyOf": [
-              { "additionalProperties": true, "type": "object" },
-              { "type": "null" }
-            ],
-            "title": "Condition"
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -13196,12 +14424,9 @@
           "source_layer",
           "applicable_process_contexts",
           "stage_categorization",
-          "blocks_submission",
           "document_origin",
           "is_active",
           "sort_order",
-          "applicability",
-          "condition",
           "created_at",
           "updated_at"
         ],
@@ -13503,10 +14728,6 @@
             "title": "Fulfilment Status"
           },
           "is_blocking": { "type": "boolean", "title": "Is Blocking" },
-          "blocks_submission": {
-            "type": "boolean",
-            "title": "Blocks Submission"
-          },
           "document_origin": { "type": "string", "title": "Document Origin" }
         },
         "type": "object",
@@ -13519,7 +14740,6 @@
           "stage_categorization",
           "fulfilment_status",
           "is_blocking",
-          "blocks_submission",
           "document_origin"
         ],
         "title": "RuntimeRequirementItem"
@@ -13662,6 +14882,18 @@
         "required": ["items"],
         "title": "SelectableTemplatesResponse"
       },
+      "SetDocumentOverridesRequest": {
+        "properties": {
+          "overrides": {
+            "items": { "$ref": "#/components/schemas/DocumentOverrideItem" },
+            "type": "array",
+            "title": "Overrides"
+          }
+        },
+        "type": "object",
+        "required": ["overrides"],
+        "title": "SetDocumentOverridesRequest"
+      },
       "SetEffectiveDateRequest": {
         "properties": {
           "valid_from": {
@@ -13699,6 +14931,18 @@
           "valid_from"
         ],
         "title": "SetEffectiveDateResponse"
+      },
+      "SetItemCheckMarkRequest": {
+        "properties": {
+          "mark": { "$ref": "#/components/schemas/DocumentCheckMark" },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": ["mark"],
+        "title": "SetItemCheckMarkRequest"
       },
       "SetItemStatusRequest": {
         "properties": {
@@ -13849,6 +15093,12 @@
         "enum": ["default", "override", "supplement", "deactivated"],
         "title": "SourceLayer"
       },
+      "StateTransitionOutcome": {
+        "type": "string",
+        "enum": ["committed", "rejected", "missing_information", "rework"],
+        "title": "StateTransitionOutcome",
+        "description": "PRD1042-1894 Block 5 (AC §5) — permitted outcomes of a state_transition task. Per-task set\n(Laurence-confirmed), not a value set of the type. Main process step 4 carries all four; package\nredemption step 4's set is seed-only (OP-3, unnamed) and does not affect this schema."
+      },
       "SubjectType": {
         "type": "string",
         "enum": ["USER", "TENANT", "PARTNER"],
@@ -13967,6 +15217,36 @@
         ],
         "title": "SupportGrantResponse"
       },
+      "SuspendCatalogResponse": {
+        "properties": {
+          "catalog_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catalog Id"
+          },
+          "catalog_state": { "type": "string", "title": "Catalog State" },
+          "product_template_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Product Template Id"
+          },
+          "affected_case_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Affected Case Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_id",
+          "catalog_state",
+          "product_template_id",
+          "affected_case_ids"
+        ],
+        "title": "SuspendCatalogResponse"
+      },
       "SuspendTenantRequest": {
         "properties": {
           "justification": {
@@ -14054,6 +15334,10 @@
             "title": "Catalog Version Id"
           },
           "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_number": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Task Number"
+          },
           "task_code": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Task Code"
@@ -14077,6 +15361,18 @@
               { "$ref": "#/components/schemas/TaskResponsibleRole" },
               { "type": "null" }
             ]
+          },
+          "responsible_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TaskResponsibleFunction"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
           },
           "is_mandatory": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -14115,6 +15411,64 @@
               { "type": "null" }
             ],
             "title": "Parent Task Id"
+          },
+          "phase_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Phase Id"
+          },
+          "four_eyes": { "type": "boolean", "title": "Four Eyes" },
+          "exclusion_task_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Exclusion Task Ids"
+          },
+          "four_eyes_exclusion_wide": {
+            "type": "boolean",
+            "title": "Four Eyes Exclusion Wide"
+          },
+          "generated_document_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Generated Document Ref"
+          },
+          "trigger_event": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Trigger Event"
+          },
+          "permitted_outcomes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StateTransitionOutcome"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Permitted Outcomes"
+          },
+          "lifecycle_entity": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lifecycle Entity"
+          },
+          "capture_section_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Capture Section Name"
+          },
+          "document_checks": {
+            "items": { "$ref": "#/components/schemas/DocumentCheckItem" },
+            "type": "array",
+            "title": "Document Checks"
+          },
+          "condition_rows": {
+            "items": { "$ref": "#/components/schemas/ConditionRowItem" },
+            "type": "array",
+            "title": "Condition Rows"
           },
           "doc_requirement_ref": {
             "anyOf": [
@@ -14174,11 +15528,13 @@
           "id",
           "catalog_version_id",
           "layer_action",
+          "task_number",
           "task_code",
           "task_name",
           "task_description",
           "category",
           "responsible_role",
+          "responsible_roles",
           "is_mandatory",
           "weight",
           "display_order",
@@ -14186,6 +15542,17 @@
           "applicable_process_contexts",
           "is_active",
           "parent_task_id",
+          "phase_id",
+          "four_eyes",
+          "exclusion_task_ids",
+          "four_eyes_exclusion_wide",
+          "generated_document_ref",
+          "trigger_event",
+          "permitted_outcomes",
+          "lifecycle_entity",
+          "capture_section_name",
+          "document_checks",
+          "condition_rows",
           "doc_requirement_ref",
           "doc_requirement_pin_mode",
           "conditional_trigger",
@@ -14221,6 +15588,10 @@
             "title": "Catalog Version Id"
           },
           "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_number": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Task Number"
+          },
           "task_code": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Task Code"
@@ -14244,6 +15615,18 @@
               { "$ref": "#/components/schemas/TaskResponsibleRole" },
               { "type": "null" }
             ]
+          },
+          "responsible_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TaskResponsibleFunction"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
           },
           "is_mandatory": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -14282,6 +15665,64 @@
               { "type": "null" }
             ],
             "title": "Parent Task Id"
+          },
+          "phase_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Phase Id"
+          },
+          "four_eyes": { "type": "boolean", "title": "Four Eyes" },
+          "exclusion_task_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Exclusion Task Ids"
+          },
+          "four_eyes_exclusion_wide": {
+            "type": "boolean",
+            "title": "Four Eyes Exclusion Wide"
+          },
+          "generated_document_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Generated Document Ref"
+          },
+          "trigger_event": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Trigger Event"
+          },
+          "permitted_outcomes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StateTransitionOutcome"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Permitted Outcomes"
+          },
+          "lifecycle_entity": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lifecycle Entity"
+          },
+          "capture_section_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Capture Section Name"
+          },
+          "document_checks": {
+            "items": { "$ref": "#/components/schemas/DocumentCheckItem" },
+            "type": "array",
+            "title": "Document Checks"
+          },
+          "condition_rows": {
+            "items": { "$ref": "#/components/schemas/ConditionRowItem" },
+            "type": "array",
+            "title": "Condition Rows"
           },
           "doc_requirement_ref": {
             "anyOf": [
@@ -14335,11 +15776,13 @@
           "id",
           "catalog_version_id",
           "layer_action",
+          "task_number",
           "task_code",
           "task_name",
           "task_description",
           "category",
           "responsible_role",
+          "responsible_roles",
           "is_mandatory",
           "weight",
           "display_order",
@@ -14347,6 +15790,17 @@
           "applicable_process_contexts",
           "is_active",
           "parent_task_id",
+          "phase_id",
+          "four_eyes",
+          "exclusion_task_ids",
+          "four_eyes_exclusion_wide",
+          "generated_document_ref",
+          "trigger_event",
+          "permitted_outcomes",
+          "lifecycle_entity",
+          "capture_section_name",
+          "document_checks",
+          "condition_rows",
           "doc_requirement_ref",
           "doc_requirement_pin_mode",
           "conditional_trigger",
@@ -14367,6 +15821,10 @@
             "title": "Catalog Version Id"
           },
           "layer_action": { "$ref": "#/components/schemas/LayerAction" },
+          "task_number": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Task Number"
+          },
           "task_code": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Task Code"
@@ -14390,6 +15848,18 @@
               { "$ref": "#/components/schemas/TaskResponsibleRole" },
               { "type": "null" }
             ]
+          },
+          "responsible_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TaskResponsibleFunction"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
           },
           "is_mandatory": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -14428,6 +15898,64 @@
               { "type": "null" }
             ],
             "title": "Parent Task Id"
+          },
+          "phase_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Phase Id"
+          },
+          "four_eyes": { "type": "boolean", "title": "Four Eyes" },
+          "exclusion_task_ids": {
+            "items": { "type": "string", "format": "uuid" },
+            "type": "array",
+            "title": "Exclusion Task Ids"
+          },
+          "four_eyes_exclusion_wide": {
+            "type": "boolean",
+            "title": "Four Eyes Exclusion Wide"
+          },
+          "generated_document_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Generated Document Ref"
+          },
+          "trigger_event": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Trigger Event"
+          },
+          "permitted_outcomes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StateTransitionOutcome"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Permitted Outcomes"
+          },
+          "lifecycle_entity": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lifecycle Entity"
+          },
+          "capture_section_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Capture Section Name"
+          },
+          "document_checks": {
+            "items": { "$ref": "#/components/schemas/DocumentCheckItem" },
+            "type": "array",
+            "title": "Document Checks"
+          },
+          "condition_rows": {
+            "items": { "$ref": "#/components/schemas/ConditionRowItem" },
+            "type": "array",
+            "title": "Condition Rows"
           },
           "doc_requirement_ref": {
             "anyOf": [
@@ -14487,11 +16015,13 @@
           "id",
           "catalog_version_id",
           "layer_action",
+          "task_number",
           "task_code",
           "task_name",
           "task_description",
           "category",
           "responsible_role",
+          "responsible_roles",
           "is_mandatory",
           "weight",
           "display_order",
@@ -14499,6 +16029,17 @@
           "applicable_process_contexts",
           "is_active",
           "parent_task_id",
+          "phase_id",
+          "four_eyes",
+          "exclusion_task_ids",
+          "four_eyes_exclusion_wide",
+          "generated_document_ref",
+          "trigger_event",
+          "permitted_outcomes",
+          "lifecycle_entity",
+          "capture_section_name",
+          "document_checks",
+          "condition_rows",
           "doc_requirement_ref",
           "doc_requirement_pin_mode",
           "conditional_trigger",
@@ -14509,6 +16050,12 @@
           "updated_at"
         ],
         "title": "TaskResponseWithWarnings"
+      },
+      "TaskResponsibleFunction": {
+        "type": "string",
+        "enum": ["clerk", "approver"],
+        "title": "TaskResponsibleFunction",
+        "description": "PRD1042-1894 Block 4 (AC §5) — the responsible role is a set of {clerk, approver}. The clerk\nprepares, the approver releases; the administrator (Bank Admin) is never offered (maintaining\ncatalogues is configuration, not case work)."
       },
       "TaskResponsibleRole": {
         "type": "string",
@@ -14521,13 +16068,13 @@
           "support",
           "system"
         ],
-        "title": "TaskResponsibleRole"
+        "title": "TaskResponsibleRole",
+        "description": "Legacy single-value responsible role (US 15.x). Superseded by ``TaskResponsibleFunction``\n(PRD1042-1894 Block 4). Kept for reading historical rows; new authoring uses ``responsible_roles``."
       },
       "TaskType": {
         "type": "string",
         "enum": [
           "checkbox",
-          "four_eyes_sign_off",
           "typed_upload",
           "generated_document",
           "calculation",
@@ -14536,7 +16083,7 @@
           "state_transition"
         ],
         "title": "TaskType",
-        "description": "PRD1042-1790 item 3/4 — what a task *demands*, distinct from ``TaskCategory`` (a subject-area\nclassification). The type decides what opens for the worker and how the task closes. The exact\neight values are the client's set (ticket \"Task type → Correction 1\"), NOT our internal process\ndoc's six.\n\nClosing rule (item 3, corrected): ``checkbox`` and ``four_eyes_sign_off`` both close on a logged\nhuman action (sign-off is additionally checked against the four-eyes exclusion set); the other\nsix close automatically when their own work happened and carry no button. Closing behaviour is\ncase-runtime (item 12) — this enum is the authoring-side attribute."
+        "description": "What a task *demands*, distinct from ``TaskCategory`` (a subject-area classification). The type\ndecides what opens for the worker and how the task closes.\n\nPRD1042-1894 Block 3 (AC §5, Laurence 12 Aug): **SEVEN types**. ``four_eyes_sign_off`` was removed\n— four eyes is a **flag on the task** (``four_eyes``) plus its exclusion set, NOT a kind of work\n(eleven of the twelve four-eyes steps are a tick by a second person, one is a state transition)."
       },
       "TemplateCurrentVersionSummary": {
         "properties": {
@@ -15438,6 +16985,26 @@
         ],
         "title": "UpdateOrchestrationRequest"
       },
+      "UpdatePhaseRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 80, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Name"
+          },
+          "position": {
+            "anyOf": [
+              { "type": "integer", "minimum": 1.0 },
+              { "type": "null" }
+            ],
+            "title": "Position"
+          }
+        },
+        "type": "object",
+        "title": "UpdatePhaseRequest"
+      },
       "UpdateRequirementRequest": {
         "properties": {
           "document_type_name": {
@@ -15478,10 +17045,6 @@
               { "type": "null" }
             ]
           },
-          "blocks_submission": {
-            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
-            "title": "Blocks Submission"
-          },
           "document_origin": {
             "anyOf": [
               { "$ref": "#/components/schemas/DocumentOrigin" },
@@ -15491,19 +17054,6 @@
           "sort_order": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Sort Order"
-          },
-          "applicability": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/RequirementApplicability" },
-              { "type": "null" }
-            ]
-          },
-          "condition": {
-            "anyOf": [
-              { "additionalProperties": true, "type": "object" },
-              { "type": "null" }
-            ],
-            "title": "Condition"
           }
         },
         "type": "object",
@@ -15513,13 +17063,16 @@
         "properties": {
           "task_name": {
             "anyOf": [
-              { "type": "string", "maxLength": 300, "minLength": 1 },
+              { "type": "string", "maxLength": 200, "minLength": 1 },
               { "type": "null" }
             ],
             "title": "Task Name"
           },
           "task_description": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Task Description"
           },
           "category": {
@@ -15533,6 +17086,19 @@
               { "$ref": "#/components/schemas/TaskResponsibleRole" },
               { "type": "null" }
             ]
+          },
+          "responsible_roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TaskResponsibleFunction"
+                },
+                "type": "array",
+                "minItems": 1
+              },
+              { "type": "null" }
+            ],
+            "title": "Responsible Roles"
           },
           "is_mandatory": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -15601,6 +17167,91 @@
               { "$ref": "#/components/schemas/TaskApplicability" },
               { "type": "null" }
             ]
+          },
+          "phase_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Phase Id"
+          },
+          "four_eyes": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Four Eyes"
+          },
+          "exclusion_task_ids": {
+            "anyOf": [
+              {
+                "items": { "type": "string", "format": "uuid" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Exclusion Task Ids"
+          },
+          "four_eyes_exclusion_wide": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Four Eyes Exclusion Wide"
+          },
+          "generated_document_ref": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Generated Document Ref"
+          },
+          "trigger_event": {
+            "anyOf": [
+              { "type": "string", "maxLength": 50 },
+              { "type": "null" }
+            ],
+            "title": "Trigger Event"
+          },
+          "permitted_outcomes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StateTransitionOutcome"
+                },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Permitted Outcomes"
+          },
+          "lifecycle_entity": {
+            "anyOf": [
+              { "type": "string", "maxLength": 50 },
+              { "type": "null" }
+            ],
+            "title": "Lifecycle Entity"
+          },
+          "capture_section_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 100 },
+              { "type": "null" }
+            ],
+            "title": "Capture Section Name"
+          },
+          "document_checks": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/DocumentCheckItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Document Checks"
+          },
+          "condition_rows": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/ConditionRowItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Condition Rows"
           }
         },
         "type": "object",
@@ -16995,7 +18646,7 @@
         "properties": {
           "catalog_name": {
             "type": "string",
-            "maxLength": 200,
+            "maxLength": 120,
             "minLength": 1,
             "title": "Catalog Name"
           },

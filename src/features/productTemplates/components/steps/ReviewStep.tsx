@@ -196,10 +196,6 @@ function ReviewStep({
             label={t("fields.validFrom")}
             value={values.valid_from || "—"}
           />
-          <ReviewRow
-            label={t("fields.validUntil")}
-            value={values.valid_until || t("fields.openEnded")}
-          />
         </div>
       </SectionCard>
 

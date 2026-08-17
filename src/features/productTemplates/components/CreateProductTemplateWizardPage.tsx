@@ -64,7 +64,7 @@ const ORDERED_STEPS: ProductTemplateWizardStep[] = [
   "review",
 ]
 
-// Builds the update-shaped wire payload from form values, omitting an empty valid_until.
+// Builds the update-shaped wire payload from form values, omitting an empty valid_from.
 function toUpdatePayload(
   values: ProductTemplateWizardForm
 ): UpdateProductTemplateDraftRequest {
@@ -85,7 +85,6 @@ function toUpdatePayload(
     max_volume_eur: values.max_volume_eur,
     effective_rate: values.effective_rate,
     valid_from: values.valid_from || undefined,
-    valid_until: values.valid_until || undefined,
   }
 }
 
@@ -113,7 +112,6 @@ function toNewVersionFormDefaults(
     max_volume_eur: detail.max_volume_eur ?? undefined,
     effective_rate: detail.effective_rate ?? undefined,
     valid_from: detail.valid_from ?? "",
-    valid_until: detail.valid_until ?? "",
   }
 }
 
