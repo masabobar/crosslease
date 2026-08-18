@@ -97,7 +97,7 @@ export type NaturalPersonIdentityDetail = z.infer<
   typeof NaturalPersonIdentityDetailSchema
 >
 
-export const SoleProprietorIdentityDetailSchema = z.object({
+export const RegisteredSoleTraderIdentityDetailSchema = z.object({
   partner_type: z.literal("registered_sole_trader"),
   full_name: z.string(),
   date_of_birth: z.string(),
@@ -106,8 +106,8 @@ export const SoleProprietorIdentityDetailSchema = z.object({
   commercial_register_no: z.string().nullable(),
   registered_address: RegisteredAddressSchema.nullable(),
 })
-export type SoleProprietorIdentityDetail = z.infer<
-  typeof SoleProprietorIdentityDetailSchema
+export type RegisteredSoleTraderIdentityDetail = z.infer<
+  typeof RegisteredSoleTraderIdentityDetailSchema
 >
 
 export const PartnerIdentityDetailSchema = z.discriminatedUnion(
@@ -115,7 +115,7 @@ export const PartnerIdentityDetailSchema = z.discriminatedUnion(
   [
     LegalEntityIdentityDetailSchema,
     NaturalPersonIdentityDetailSchema,
-    SoleProprietorIdentityDetailSchema,
+    RegisteredSoleTraderIdentityDetailSchema,
   ]
 )
 export type PartnerIdentityDetail = z.infer<typeof PartnerIdentityDetailSchema>

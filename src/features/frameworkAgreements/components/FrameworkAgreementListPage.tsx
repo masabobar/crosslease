@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight, Download, Plus } from "lucide-react"
@@ -18,6 +19,7 @@ import {
 import { buildPageNumbers } from "@/lib/pagination"
 import { downloadBlob } from "@/lib/download"
 import { FrameworkAgreementTable } from "@/features/frameworkAgreements/components/FrameworkAgreementTable"
+import { FrameworkAgreementDetailDrawer } from "@/features/frameworkAgreements/components/FrameworkAgreementDetailDrawer"
 import { useFrameworkAgreementList } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementList"
 import { useFrameworkAgreementLcPartners } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementLcPartners"
 import { useExportFrameworkAgreementsCsv } from "@/features/frameworkAgreements/hooks/useExportFrameworkAgreementsCsv"
@@ -33,7 +35,7 @@ import type {
 } from "@/features/frameworkAgreements/api/schema"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
-import { PATHS, frameworkAgreementDetail } from "@/router/paths"
+import { PATHS } from "@/router/paths"
 
 const ALL_VALUE = "all"
 const EXPORT_FILE_NAME = "framework-agreements.csv"
@@ -41,6 +43,10 @@ const EXPORT_FILE_NAME = "framework-agreements.csv"
 export default function FrameworkAgreementListPage() {
   const { t } = useTranslation("frameworkAgreements")
   const navigate = useNavigate()
+  const [selectedAgreement, setSelectedAgreement] = useState<FAListItem | null>(
+    null
+  )
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   const {
     page,
@@ -82,7 +88,8 @@ export default function FrameworkAgreementListPage() {
   const hasActiveFilters = !!search.trim() || !!statusFilter || !!lcPartnerId
 
   function handleRowClick(agreement: FAListItem) {
-    navigate(frameworkAgreementDetail(agreement.id))
+    setSelectedAgreement(agreement)
+    setIsDrawerOpen(true)
   }
 
   function handleCreateAgreement() {
@@ -298,6 +305,12 @@ export default function FrameworkAgreementListPage() {
           </div>
         </div>
       )}
+
+      <FrameworkAgreementDetailDrawer
+        agreement={selectedAgreement}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+      />
     </div>
   )
 }

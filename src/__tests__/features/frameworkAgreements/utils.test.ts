@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest"
 import {
+  canonicalVersionByTemplate,
   dedupeSelectableTemplates,
   filterSelectableTemplates,
+  filterTemplatesEffectiveBy,
   getLcPortalAgreementLifecycle,
+  groupByTemplateId,
   isFrameworkAgreementExpiredByDate,
+  splitGroupsIntoColumns,
 } from "@/features/frameworkAgreements/utils"
 import type { SelectableTemplateItem } from "@/features/frameworkAgreements/api/schema"
 
@@ -84,57 +88,21 @@ describe("dedupeSelectableTemplates", () => {
       template_code: code,
       template_name: "Standard Amortising",
       version_number: versionNumber,
+      valid_from: null,
     }
   }
 
-  it("collapses several versions of one template into a single option", () => {
-    const result = dedupeSelectableTemplates([
-      item(TEMPLATE_A, "3"),
-      item(TEMPLATE_A, "1"),
-    ])
-    expect(result).toHaveLength(1)
-    expect(result[0].template_id).toBe(TEMPLATE_A)
+  // No-op since CR PRD1042-1798 — version-scoped rows are kept separate on purpose;
+  // grouping/canonicalization now happens downstream via groupByTemplateId and
+  // canonicalVersionByTemplate (see the comment above this function in utils.ts).
+  it("keeps every version row of one template, in arrival order", () => {
+    const options = [item(TEMPLATE_A, "3"), item(TEMPLATE_A, "1")]
+    expect(dedupeSelectableTemplates(options)).toEqual(options)
   })
 
-  it("keeps the highest version regardless of arrival order", () => {
-    expect(
-      dedupeSelectableTemplates([
-        item(TEMPLATE_A, "1"),
-        item(TEMPLATE_A, "3"),
-      ])[0].version_number
-    ).toBe("3")
-    expect(
-      dedupeSelectableTemplates([
-        item(TEMPLATE_A, "3"),
-        item(TEMPLATE_A, "1"),
-      ])[0].version_number
-    ).toBe("3")
-  })
-
-  it("compares versions numerically, not lexicographically", () => {
-    // "10" < "9" as strings — the bug this guards against.
-    const result = dedupeSelectableTemplates([
-      item(TEMPLATE_A, "9"),
-      item(TEMPLATE_A, "10"),
-    ])
-    expect(result[0].version_number).toBe("10")
-  })
-
-  it("keeps distinct templates apart", () => {
-    const result = dedupeSelectableTemplates([
-      item(TEMPLATE_A, "1"),
-      item(TEMPLATE_B, "1", "LEA-00042"),
-    ])
-    expect(result.map(o => o.template_id)).toEqual([TEMPLATE_A, TEMPLATE_B])
-  })
-
-  it("preserves first-seen template order", () => {
-    const result = dedupeSelectableTemplates([
-      item(TEMPLATE_B, "1", "LEA-00042"),
-      item(TEMPLATE_A, "1"),
-      item(TEMPLATE_B, "2", "LEA-00042"),
-    ])
-    expect(result.map(o => o.template_id)).toEqual([TEMPLATE_B, TEMPLATE_A])
+  it("keeps distinct templates apart, in arrival order", () => {
+    const options = [item(TEMPLATE_A, "1"), item(TEMPLATE_B, "1", "LEA-00042")]
+    expect(dedupeSelectableTemplates(options)).toEqual(options)
   })
 
   it("returns an empty list for no options", () => {
@@ -154,12 +122,14 @@ describe("filterSelectableTemplates", () => {
       template_code: "FIN-00001",
       template_name: "Standard Amortising",
       version_number: "3",
+      valid_from: null,
     },
     {
       template_id: "22222222-2222-4222-8222-222222222222",
       template_code: "LEA-00042",
       template_name: "Balloon Lease",
       version_number: "1",
+      valid_from: null,
     },
   ]
 
@@ -195,5 +165,230 @@ describe("filterSelectableTemplates", () => {
 
   it("returns an empty list when nothing matches", () => {
     expect(filterSelectableTemplates(templates, "zzz")).toEqual([])
+  })
+})
+
+// Create-wizard-only eligibility filter (supersedes CR-FA-05 for Create — see the comment
+// above this function in utils.ts). Edit's picker never calls this.
+describe("filterTemplatesEffectiveBy", () => {
+  const early: SelectableTemplateItem = {
+    template_id: "11111111-1111-4111-8111-111111111111",
+    template_code: "FIN-00001",
+    template_name: "Early Template",
+    version_number: "1",
+    valid_from: "2026-01-01",
+  }
+  const sameDay: SelectableTemplateItem = {
+    template_id: "22222222-2222-4222-8222-222222222222",
+    template_code: "FIN-00002",
+    template_name: "Same Day Template",
+    version_number: "1",
+    valid_from: "2026-06-01",
+  }
+  const late: SelectableTemplateItem = {
+    template_id: "33333333-3333-4333-8333-333333333333",
+    template_code: "FIN-00003",
+    template_name: "Late Template",
+    version_number: "1",
+    valid_from: "2026-12-31",
+  }
+  const noValidFrom: SelectableTemplateItem = {
+    template_id: "44444444-4444-4444-8444-444444444444",
+    template_code: "FIN-00004",
+    template_name: "Unset Template",
+    version_number: "1",
+    valid_from: null,
+  }
+  const templates = [early, sameDay, late, noValidFrom]
+
+  it("returns every option when the agreement has no valid_from yet", () => {
+    expect(filterTemplatesEffectiveBy(templates, "")).toEqual(templates)
+  })
+
+  it("keeps templates whose valid_from is before the agreement's", () => {
+    expect(filterTemplatesEffectiveBy(templates, "2026-06-01")).toContain(early)
+  })
+
+  it("keeps a template whose valid_from equals the agreement's (inclusive)", () => {
+    expect(filterTemplatesEffectiveBy(templates, "2026-06-01")).toContain(
+      sameDay
+    )
+  })
+
+  it("excludes templates whose valid_from is after the agreement's", () => {
+    expect(filterTemplatesEffectiveBy(templates, "2026-06-01")).not.toContain(
+      late
+    )
+  })
+
+  it("never excludes a template with no valid_from set", () => {
+    expect(filterTemplatesEffectiveBy(templates, "2026-06-01")).toContain(
+      noValidFrom
+    )
+  })
+})
+
+// The default assumed version for a template_id that's already selected but has no
+// remembered version yet (initial render, or a value populated from an existing agreement).
+describe("canonicalVersionByTemplate", () => {
+  const TEMPLATE_A = "11111111-1111-4111-8111-111111111111"
+  const TEMPLATE_B = "22222222-2222-4222-8222-222222222222"
+
+  function item(
+    templateId: string,
+    versionNumber: string
+  ): SelectableTemplateItem {
+    return {
+      template_id: templateId,
+      template_code: "FIN-00001",
+      template_name: "Standard Amortising",
+      version_number: versionNumber,
+      valid_from: null,
+    }
+  }
+
+  it("picks the highest version regardless of arrival order", () => {
+    expect(
+      canonicalVersionByTemplate([
+        item(TEMPLATE_A, "1"),
+        item(TEMPLATE_A, "3"),
+      ]).get(TEMPLATE_A)
+    ).toBe("3")
+    expect(
+      canonicalVersionByTemplate([
+        item(TEMPLATE_A, "3"),
+        item(TEMPLATE_A, "1"),
+      ]).get(TEMPLATE_A)
+    ).toBe("3")
+  })
+
+  it("compares versions numerically, not lexicographically", () => {
+    // "10" < "9" as strings — the bug this guards against.
+    expect(
+      canonicalVersionByTemplate([
+        item(TEMPLATE_A, "9"),
+        item(TEMPLATE_A, "10"),
+      ]).get(TEMPLATE_A)
+    ).toBe("10")
+  })
+
+  it("tracks distinct templates independently", () => {
+    const result = canonicalVersionByTemplate([
+      item(TEMPLATE_A, "2"),
+      item(TEMPLATE_B, "1"),
+    ])
+    expect(result.get(TEMPLATE_A)).toBe("2")
+    expect(result.get(TEMPLATE_B)).toBe("1")
+  })
+
+  it("returns an empty map for no options", () => {
+    expect(canonicalVersionByTemplate([]).size).toBe(0)
+  })
+})
+
+describe("groupByTemplateId", () => {
+  const TEMPLATE_A = "11111111-1111-4111-8111-111111111111"
+  const TEMPLATE_B = "22222222-2222-4222-8222-222222222222"
+  const TEMPLATE_C = "33333333-3333-4333-8333-333333333333"
+
+  function item(
+    templateId: string,
+    versionNumber: string
+  ): SelectableTemplateItem {
+    return {
+      template_id: templateId,
+      template_code: "FIN-00001",
+      template_name: "Standard Amortising",
+      version_number: versionNumber,
+      valid_from: null,
+    }
+  }
+
+  it("groups a later duplicate into its template's own array", () => {
+    const b1 = item(TEMPLATE_B, "1")
+    const a1 = item(TEMPLATE_A, "1")
+    const b2 = item(TEMPLATE_B, "2")
+    expect(groupByTemplateId([b1, a1, b2])).toEqual([[b1, b2], [a1]])
+  })
+
+  it("preserves the order of first appearance across distinct templates", () => {
+    const c1 = item(TEMPLATE_C, "1")
+    const a1 = item(TEMPLATE_A, "1")
+    const b1 = item(TEMPLATE_B, "1")
+    expect(
+      groupByTemplateId([c1, a1, b1]).map(group => group[0].template_id)
+    ).toEqual([TEMPLATE_C, TEMPLATE_A, TEMPLATE_B])
+  })
+
+  it("wraps an already-unique list in one-item groups", () => {
+    const a1 = item(TEMPLATE_A, "1")
+    const b1 = item(TEMPLATE_B, "1")
+    expect(groupByTemplateId([a1, b1])).toEqual([[a1], [b1]])
+  })
+
+  it("returns an empty list for no options", () => {
+    expect(groupByTemplateId([])).toEqual([])
+  })
+})
+
+describe("splitGroupsIntoColumns", () => {
+  const TEMPLATE_A = "11111111-1111-4111-8111-111111111111"
+  const TEMPLATE_B = "22222222-2222-4222-8222-222222222222"
+  const TEMPLATE_C = "33333333-3333-4333-8333-333333333333"
+  const TEMPLATE_D = "44444444-4444-4444-8444-444444444444"
+
+  function item(
+    templateId: string,
+    versionNumber: string
+  ): SelectableTemplateItem {
+    return {
+      template_id: templateId,
+      template_code: "FIN-00001",
+      template_name: "Standard Amortising",
+      version_number: versionNumber,
+      valid_from: null,
+    }
+  }
+
+  it("alternates single-row groups evenly between columns", () => {
+    const groups = [
+      [item(TEMPLATE_A, "1")],
+      [item(TEMPLATE_B, "1")],
+      [item(TEMPLATE_C, "1")],
+      [item(TEMPLATE_D, "1")],
+    ]
+    const [left, right] = splitGroupsIntoColumns(groups)
+    expect(left).toEqual([groups[0], groups[2]])
+    expect(right).toEqual([groups[1], groups[3]])
+  })
+
+  it("never splits a single template's versions across columns", () => {
+    const multiVersionGroup = [item(TEMPLATE_A, "1"), item(TEMPLATE_A, "2")]
+    const groups = [multiVersionGroup, [item(TEMPLATE_B, "1")]]
+    const [left, right] = splitGroupsIntoColumns(groups)
+    expect(left).toEqual([multiVersionGroup])
+    expect(right).toEqual([[item(TEMPLATE_B, "1")]])
+  })
+
+  it("sends the next group to whichever column has fewer rows so far", () => {
+    // A has 2 rows (left), B has 1 row — B should land in right, not left, even
+    // though a pure group-count alternation would still put it wherever's next.
+    const groupA = [item(TEMPLATE_A, "1"), item(TEMPLATE_A, "2")]
+    const groupB = [item(TEMPLATE_B, "1")]
+    const groupC = [item(TEMPLATE_C, "1")]
+    const [left, right] = splitGroupsIntoColumns([groupA, groupB, groupC])
+    expect(left).toEqual([groupA])
+    expect(right).toEqual([groupB, groupC])
+  })
+
+  it("breaks ties in favor of the left column", () => {
+    const groupA = [item(TEMPLATE_A, "1")]
+    const [left, right] = splitGroupsIntoColumns([groupA])
+    expect(left).toEqual([groupA])
+    expect(right).toEqual([])
+  })
+
+  it("returns two empty columns for no groups", () => {
+    expect(splitGroupsIntoColumns([])).toEqual([[], []])
   })
 })

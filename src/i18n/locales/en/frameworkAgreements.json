@@ -102,7 +102,8 @@
       "templatesHint": "Only published templates within your tenant are shown. Select at least one.",
       "templatesEmpty": "No product templates are available yet. Only templates with a published version that is valid today can be selected.",
       "templatesSearchPlaceholder": "Search by template name or code",
-      "templatesNoMatches": "No product template matches your search."
+      "templatesNoMatches": "No product template matches your search.",
+      "templateVersionDisabled": "Template unable to be selected because another version of the template is already selected. Deselect the other version and try again."
     },
     "conditions": {
       "title": "Special conditions",
@@ -149,6 +150,7 @@
     "templateNamesUnavailable": "Product template names could not be loaded, so the ids are shown instead."
   },
   "detail": {
+    "viewFullDetail": "Open full detail",
     "tabs": {
       "agreementDetails": "Agreement details",
       "templatesAndDocuments": "Templates and documents",

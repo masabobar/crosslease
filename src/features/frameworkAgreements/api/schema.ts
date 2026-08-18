@@ -396,6 +396,10 @@ export const SelectableTemplateItemSchema = z.object({
   template_code: z.string(),
   template_name: z.string(),
   version_number: z.string(),
+  // Required on the wire (SelectableTemplateItem in openapi.json), value nullable. Drives the
+  // Create wizard's eligibility filter in ProductTemplateMultiSelect — see
+  // filterTemplatesEffectiveBy in utils.ts.
+  valid_from: z.string().nullable(),
 })
 export type SelectableTemplateItem = z.infer<
   typeof SelectableTemplateItemSchema

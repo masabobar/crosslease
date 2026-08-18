@@ -302,6 +302,7 @@ export default function ProductTemplateDetailPage() {
             versionNumber={data.version_number}
             isDraft={isDraft}
             productStatus={data.product_status}
+            versionStatus={data.version_status}
           />
         </div>
       )}

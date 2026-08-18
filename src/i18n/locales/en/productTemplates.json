@@ -32,6 +32,7 @@
       "searchPlaceholder": "Search by code or name…",
       "allStatuses": "All statuses"
     },
+    "effectiveStatusLabel": "Effective",
     "pagination": {
       "rowsPerPage": "Rows per page",
       "previous": "Previous",

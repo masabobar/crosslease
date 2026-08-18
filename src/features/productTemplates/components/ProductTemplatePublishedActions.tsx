@@ -28,6 +28,8 @@ import { useReactivateProductTemplate } from "@/features/productTemplates/hooks/
 import { showApiError } from "@/features/productTemplates/utils"
 import { productTemplateNewVersionEdit } from "@/router/paths"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft.ts"
+import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
+import type { TemplateStatus } from "@/features/productTemplates/api/schema"
 
 type ProductTemplatePublishedActionsProps = {
   templateId: string
@@ -39,6 +41,7 @@ type ProductTemplatePublishedActionsProps = {
   // ProductTemplateDetailDrawer via ProductTemplateListPage) already have it from their own
   // version-detail fetch.
   productStatus: string
+  versionStatus: TemplateStatus
 }
 
 // Terminate + Author-new-version actions for an Active template version. Extracted from
@@ -49,6 +52,7 @@ export function ProductTemplatePublishedActions({
   versionNumber,
   isDraft,
   productStatus,
+  versionStatus,
 }: ProductTemplatePublishedActionsProps) {
   const { t } = useTranslation("productTemplates")
   const navigate = useNavigate()
@@ -193,19 +197,25 @@ export function ProductTemplatePublishedActions({
   }
 
   function getRegularActions() {
+    const canTerminate =
+      versionStatus !== TemplateStatusSchema.enum.terminated &&
+      versionStatus !== TemplateStatusSchema.enum.discarded
+
     return (
       <div className="flex justify-end gap-2">
         {getActivateDeactivateButton()}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-testid="terminate-version-button"
-          className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => setIsTerminateDialogOpen(true)}
-        >
-          {t("versionHistory.terminate")}
-        </Button>
+        {canTerminate && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="terminate-version-button"
+            className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setIsTerminateDialogOpen(true)}
+          >
+            {t("versionHistory.terminate")}
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"

@@ -27,6 +27,7 @@ import {
   FILTERABLE_TEMPLATE_STATUSES,
   PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES,
 } from "@/features/productTemplates/types"
+import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
   TemplateListItem,
   TemplateStatus,
@@ -89,6 +90,15 @@ export default function ProductTemplateListPage() {
   const totalPages = Math.max(1, Math.ceil(total / perPage))
   const pageNumbers = data ? buildPageNumbers(page, totalPages) : []
   const hasActiveFilters = !!search.trim() || !!statusFilter
+
+  // "Active" reads as "Effective" on this page's status filter, matching the table's
+  // status badge — a page-local override, not a change to the shared `versionStatuses.*`
+  // keys other product-template surfaces still render as "Active".
+  function statusFilterLabel(status: TemplateStatus): string {
+    return status === TemplateStatusSchema.enum.active
+      ? t("list.effectiveStatusLabel")
+      : t(`versionStatuses.${status}` as "versionStatuses.draft")
+  }
 
   function handleRowClick(template: TemplateListItem) {
     setSelectedTemplate(template)
@@ -182,9 +192,7 @@ export default function ProductTemplateListPage() {
           >
             <SelectValue>
               {statusFilter
-                ? t(
-                    `versionStatuses.${statusFilter}` as "versionStatuses.draft"
-                  )
+                ? statusFilterLabel(statusFilter)
                 : t("list.filters.allStatuses")}
             </SelectValue>
           </SelectTrigger>
@@ -194,7 +202,7 @@ export default function ProductTemplateListPage() {
             </SelectItem>
             {FILTERABLE_TEMPLATE_STATUSES.map(status => (
               <SelectItem key={status} value={status}>
-                {t(`versionStatuses.${status}` as "versionStatuses.draft")}
+                {statusFilterLabel(status)}
               </SelectItem>
             ))}
           </SelectContent>

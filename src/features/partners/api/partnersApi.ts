@@ -131,7 +131,7 @@ export type NaturalPersonIdentityInput = {
   registered_address?: RegisteredAddressInput | null
 }
 
-export type SoleProprietorIdentityInput = {
+export type RegisteredSoleTraderIdentityInput = {
   partner_type: "registered_sole_trader"
   full_name: string
   date_of_birth: string
@@ -144,7 +144,7 @@ export type SoleProprietorIdentityInput = {
 export type PartnerIdentityInput =
   | LegalEntityIdentityInput
   | NaturalPersonIdentityInput
-  | SoleProprietorIdentityInput
+  | RegisteredSoleTraderIdentityInput
 
 export type MatchPartnerBody = {
   identity: PartnerIdentityInput
