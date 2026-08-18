@@ -1,29 +1,20 @@
-import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
+import { useFrameworkAgreementLcPartners } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementLcPartners"
 
-// Any confirmed legal-entity partner can become a leasing company by signing a
-// Framework Agreement — counterparty status is derived from the FA itself, not
-// from a partner role (PRD1042-1453). The old "leasing_company" role filter no
-// longer exists on the backend.
+// GET /framework-agreements/lc-partners is the BE's own eligibility list for this dropdown —
+// it returns exactly the confirmed legal-entity partners a Framework Agreement can be signed
+// with, so the FE no longer derives eligibility itself via a filtered partner search.
 type LcPartnerOptions = {
   options: { value: string; label: string }[]
   isLoading: boolean
 }
 
-export function useLcPartnerOptions(
-  tenantId: string | null,
-  search: string
-): LcPartnerOptions {
-  const { data, isLoading } = usePartnerList(tenantId, {
-    status: ["confirmed"],
-    search: search || undefined,
-  })
+export function useLcPartnerOptions(): LcPartnerOptions {
+  const { data, isLoading } = useFrameworkAgreementLcPartners()
 
   return {
-    // No partner-type restriction (PRD1042-1453 AC): LCs are expected to be
-    // legal entities in practice but this must not be enforced.
     options: (data?.items ?? []).map(p => ({
-      value: p.partner_id,
-      label: p.display_name,
+      value: p.id,
+      label: p.legal_name,
     })),
     isLoading,
   }

@@ -38,6 +38,10 @@ import {
   DuplicatePairListResponseSchema,
   ResolveDuplicatePairResponseSchema,
   MergeInitiateResponseSchema,
+  LcNumberResponseSchema,
+  LcNumberListResponseSchema,
+  BankAccountResponseSchema,
+  BankAccountListResponseSchema,
 } from "@/features/partners/api/schema"
 
 // ── Enum schemas ──────────────────────────────────────────────────────────────
@@ -989,5 +993,114 @@ describe("DuplicateResolutionDecisionSchema", () => {
     for (const v of DuplicateResolutionDecisionSchema.options) {
       expect(DuplicateCandidatePairStatusSchema.options).toContain(v)
     }
+  })
+})
+
+describe("LcNumberResponseSchema", () => {
+  const validLcNumber = {
+    id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    lc_number: "1234",
+    created_at: "2026-08-18T10:00:00Z",
+  }
+
+  it("accepts a valid LC number response", () => {
+    expect(() => LcNumberResponseSchema.parse(validLcNumber)).not.toThrow()
+  })
+
+  it("rejects a missing lc_number", () => {
+    const withoutLcNumber: Record<string, unknown> = { ...validLcNumber }
+    delete withoutLcNumber.lc_number
+    expect(() => LcNumberResponseSchema.parse(withoutLcNumber)).toThrow()
+  })
+
+  it("rejects a non-datetime created_at", () => {
+    expect(() =>
+      LcNumberResponseSchema.parse({ ...validLcNumber, created_at: "not-a-date" })
+    ).toThrow()
+  })
+
+  it("list schema accepts an empty items array", () => {
+    expect(() =>
+      LcNumberListResponseSchema.parse({
+        partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        items: [],
+      })
+    ).not.toThrow()
+  })
+
+  it("list schema rejects a malformed item", () => {
+    expect(() =>
+      LcNumberListResponseSchema.parse({
+        partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        items: [{ ...validLcNumber, lc_number: undefined }],
+      })
+    ).toThrow()
+  })
+})
+
+describe("BankAccountResponseSchema", () => {
+  const validBankAccount = {
+    id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    iban: "DE89370400440532013000",
+    account_number: "0532013000",
+    holder_name: "Jane Doe",
+    bank_name: "Commerzbank",
+    bic: "COBADEFFXXX",
+    status: "active",
+    created_at: "2026-08-18T10:00:00Z",
+    closed_at: null,
+  }
+
+  it("accepts a valid bank account response", () => {
+    expect(() =>
+      BankAccountResponseSchema.parse(validBankAccount)
+    ).not.toThrow()
+  })
+
+  it("accepts null for the optional fields", () => {
+    expect(() =>
+      BankAccountResponseSchema.parse({
+        ...validBankAccount,
+        account_number: null,
+        holder_name: null,
+        bank_name: null,
+        bic: null,
+      })
+    ).not.toThrow()
+  })
+
+  it("rejects a missing iban", () => {
+    const withoutIban: Record<string, unknown> = { ...validBankAccount }
+    delete withoutIban.iban
+    expect(() => BankAccountResponseSchema.parse(withoutIban)).toThrow()
+  })
+
+  it("rejects a non-datetime created_at", () => {
+    expect(() =>
+      BankAccountResponseSchema.parse({
+        ...validBankAccount,
+        created_at: "not-a-date",
+      })
+    ).toThrow()
+  })
+
+  it("list schema accepts an empty items array", () => {
+    expect(() =>
+      BankAccountListResponseSchema.parse({
+        partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        items: [],
+      })
+    ).not.toThrow()
+  })
+
+  it("list schema rejects a malformed item", () => {
+    expect(() =>
+      BankAccountListResponseSchema.parse({
+        partner_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+        items: [{ ...validBankAccount, iban: undefined }],
+      })
+    ).toThrow()
   })
 })

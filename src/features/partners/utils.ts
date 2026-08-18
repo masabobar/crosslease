@@ -73,6 +73,13 @@ export function blankToUndefined(
   return result
 }
 
+// Mirrors LcNumberCreateRequest.lc_number in refinext-api — exactly 4 digits.
+const LC_NUMBER_REGEX = /^[0-9]{4}$/
+
+export function isValidLcNumber(raw: string): boolean {
+  return LC_NUMBER_REGEX.test(raw.trim())
+}
+
 // A date of birth cannot be in the future. The submit form's calendar already caps
 // at today, but a value can still arrive from browser autofill, a form reset, or a
 // programmatic setValue — so the rule has to exist in the schema too

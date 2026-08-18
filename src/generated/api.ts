@@ -1616,6 +1616,7 @@ const CreateFARequest = z
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]).optional(),
     special_conditions: z.union([z.string(), z.null()]).optional(),
+    special_bank_settlement: z.union([z.string(), z.null()]).optional(),
     vfe_amount_eur: z.union([z.number(), z.string(), z.null()]).optional(),
     payout_account_id: z.union([z.string(), z.null()]).optional(),
     collection_account_id: z.union([z.string(), z.null()]).optional(),
@@ -1626,6 +1627,16 @@ const CreateFARequest = z
   })
   .passthrough()
 const FALifecycleStatus = z.enum(["draft", "active", "terminated"])
+const FAPinnedVersionChangeImpact = z
+  .object({
+    template_id: z.string().uuid(),
+    from_version_id: z.union([z.string(), z.null()]),
+    to_version_id: z.string().uuid(),
+    affected_active_financings: z.number().int().optional().default(0),
+    affected_documents: z.number().int().optional().default(0),
+    warning: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const FADraftResponse = z
   .object({
     id: z.string().uuid(),
@@ -1640,6 +1651,7 @@ const FADraftResponse = z
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    special_bank_settlement: z.union([z.string(), z.null()]),
     vfe_amount_eur: z.union([z.string(), z.null()]),
     payout_account_id: z.union([z.string(), z.null()]),
     collection_account_id: z.union([z.string(), z.null()]),
@@ -1648,6 +1660,7 @@ const FADraftResponse = z
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
+    pin_changes: z.array(FAPinnedVersionChangeImpact).optional().default([]),
   })
   .passthrough()
 const FAAgreementLifecycle = z.enum([
@@ -1690,6 +1703,7 @@ const UpdateFARequest = z
     valid_from: z.union([z.string(), z.null()]),
     valid_until: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    special_bank_settlement: z.union([z.string(), z.null()]),
     vfe_amount_eur: z.union([z.number(), z.string(), z.null()]),
     payout_account_id: z.union([z.string(), z.null()]),
     collection_account_id: z.union([z.string(), z.null()]),
@@ -1720,10 +1734,7 @@ const FADetailResponse = z
     is_expired: z.boolean(),
     edit_version_counter: z.number().int(),
     product_template_ids: z.array(z.string().uuid()),
-    product_template_version_pins: z.record(
-      z.string(),
-      z.union([z.string(), z.null()])
-    ),
+    product_template_version_pins: z.record(z.string(), z.union([z.string(), z.null()])),
     document_count: z.number().int(),
     linked_financings_count: z.number().int(),
     utilization_pct: z.union([z.string(), z.null()]),
@@ -1734,6 +1745,7 @@ const FADetailResponse = z
     payout_account_id: z.union([z.string(), z.null()]),
     collection_account_id: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
+    special_bank_settlement: z.union([z.string(), z.null()]),
     effective_from: z.union([z.string(), z.null()]),
     activated_at: z.union([z.string(), z.null()]),
     activated_by: z.union([z.string(), z.null()]),
@@ -3082,6 +3094,7 @@ export const schemas = {
   RefiLoanValueDateRule,
   CreateFARequest,
   FALifecycleStatus,
+  FAPinnedVersionChangeImpact,
   FADraftResponse,
   FAAgreementLifecycle,
   FAListItemResponse,

@@ -6,6 +6,7 @@ import {
   initialsFromName,
   isCommercialRegisterApplicable,
   isNotFutureDate,
+  isValidLcNumber,
   isValidLei,
 } from "@/features/partners/utils"
 import { ANCHOR_LABEL_KEY_BY_FIELD } from "@/features/partners/constants"
@@ -113,6 +114,32 @@ describe("isValidLei", () => {
   it("currently rejects real LEIs (mirrors the BE's rearrangement bug — Q-065)", () => {
     expect(isValidLei("7LTWFZYICNSX8D621K86")).toBe(false)
     expect(isValidLei("5493001KJTIIGC8Y1R12")).toBe(false)
+  })
+})
+
+describe("isValidLcNumber", () => {
+  it("accepts exactly 4 digits", () => {
+    expect(isValidLcNumber("1234")).toBe(true)
+    expect(isValidLcNumber("0000")).toBe(true)
+  })
+
+  it("trims surrounding whitespace before checking", () => {
+    expect(isValidLcNumber("  1234  ")).toBe(true)
+  })
+
+  it("rejects fewer or more than 4 digits", () => {
+    expect(isValidLcNumber("123")).toBe(false)
+    expect(isValidLcNumber("12345")).toBe(false)
+  })
+
+  it("rejects non-digit characters", () => {
+    expect(isValidLcNumber("12a4")).toBe(false)
+    expect(isValidLcNumber("abcd")).toBe(false)
+  })
+
+  it("rejects an empty string", () => {
+    expect(isValidLcNumber("")).toBe(false)
+    expect(isValidLcNumber("   ")).toBe(false)
   })
 })
 

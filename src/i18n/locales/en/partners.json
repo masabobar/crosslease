@@ -145,10 +145,30 @@
       "cancel": "Cancel",
       "submitButton": "Submit for matching",
       "submitting": "Submitting…",
+      "addDealerNumberButton": "Add new dealer number",
+      "addAccountButton": "Add new account",
+      "entriesColumn": "Entries",
+      "dealerNumberPlaceholder": "Enter dealer number",
+      "accountsEmptyHint": "No accounts added yet.",
+      "accountDialog": {
+        "addTitle": "Add account",
+        "editTitle": "Edit account",
+        "save": "Save",
+        "edit": "Edit",
+        "fields": {
+          "iban": "IBAN",
+          "accountNumber": "Account number",
+          "holderName": "Account holder name",
+          "bankName": "Bank name",
+          "bic": "BIC"
+        }
+      },
       "sections": {
         "basicIdentity": "BASIC IDENTITY",
         "registryIdentifiers": "REGISTRY IDENTIFIERS",
-        "address": "ADDRESS"
+        "address": "ADDRESS",
+        "dealerNumber": "DEALER NUMBER",
+        "accounts": "ACCOUNTS"
       },
       "fields": {
         "entityType": "Entity type"
@@ -162,7 +182,8 @@
         "required": "This field is required.",
         "invalidCountry": "Select a country from the list.",
         "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442).",
-        "dateOfBirthInFuture": "Date of birth cannot be in the future."
+        "dateOfBirthInFuture": "Date of birth cannot be in the future.",
+        "invalidDealerNumber": "Enter exactly 4 digits."
       }
     },
     "matchStep": {
@@ -186,7 +207,9 @@
     },
     "errors": {
       "matchFailed": "Failed to check for duplicates. Please try again.",
-      "submitFailed": "Failed to submit partner. Please try again."
+      "submitFailed": "Failed to submit partner. Please try again.",
+      "lcNumberAddFailed": "Failed to add dealer number {{number}}.",
+      "bankAccountAddFailed": "Failed to add bank account {{iban}}."
     }
   },
   "detail": {
@@ -208,6 +231,10 @@
       "identitySectionTitle": "Identity",
       "classificationSectionTitle": "Classification",
       "complianceSectionTitle": "Compliance status",
+      "dealerNumbersSectionTitle": "Dealer numbers",
+      "accountsSectionTitle": "Accounts",
+      "dealerNumbersEmpty": "No dealer numbers on file",
+      "accountsEmpty": "No accounts on file",
       "fields": {
         "entityType": "Entity type",
         "partnerId": "Partner ID",

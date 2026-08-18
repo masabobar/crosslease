@@ -4,8 +4,10 @@ import type { DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
+import { Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { SelectField } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -24,11 +26,15 @@ import {
   blankToUndefined,
   isCommercialRegisterApplicable,
   isNotFutureDate,
+  isValidLcNumber,
   isValidLei,
 } from "@/features/partners/utils"
 import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import type { PartnerType } from "@/features/partners/api/schema"
 import type { PartnerIdentityInput } from "@/features/partners/api/partnersApi"
+import { AccountsSection } from "@/features/partners/components/AccountsSection"
+import type { Account } from "@/features/partners/components/AccountsSection"
+import type { AccountFormValues } from "@/features/partners/components/AccountFormDialog"
 
 // RHF's reset() only clears top-level fields omitted from the new values —
 // nested paths like registered_address.street are left untouched unless
@@ -141,12 +147,131 @@ type PartnerSubmitFormDraft = DefaultValues<IdentityForm>
 type SubmitResult = {
   identity: PartnerIdentityInput
   draft: PartnerSubmitFormDraft
+  dealerNumbers: string[]
+  bankAccounts: AccountFormValues[]
 }
 
 type PartnerSubmitFormProps = {
   formId: string
   onSubmit: (result: SubmitResult) => void
   initialDraft?: PartnerSubmitFormDraft | null
+}
+
+// Backs the Dealer number section below — not a wire field on any identity shape yet (see
+// api/schema.ts), so it's local UI state rather than on the RHF form, kept out of the
+// match/submit payload beyond the non-empty values threaded through onValid. The list starts
+// with one blank entry; "Add new …" appends another. Keyed by a generated id, not array
+// index, since entries are only ever appended.
+type EditableEntry = { id: string; value: string }
+
+// Enforced client-side against LcNumberCreateRequest.lc_number's backend regex — blank
+// entries are dropped on submit (see onValid below), so only a non-blank, malformed
+// value counts as invalid.
+function isDealerNumberInvalid(value: string): boolean {
+  return value.trim() !== "" && !isValidLcNumber(value)
+}
+
+function useEditableEntryList(): {
+  entries: EditableEntry[]
+  handleChange: (id: string, value: string) => void
+  handleAdd: () => void
+} {
+  const [entries, setEntries] = useState<EditableEntry[]>([
+    { id: crypto.randomUUID(), value: "" },
+  ])
+
+  function handleChange(id: string, value: string) {
+    setEntries(prev =>
+      prev.map(entry => (entry.id === id ? { ...entry, value } : entry))
+    )
+  }
+
+  function handleAdd() {
+    setEntries(prev => [...prev, { id: crypto.randomUUID(), value: "" }])
+  }
+
+  return { entries, handleChange, handleAdd }
+}
+
+type EditableEntryTableProps = {
+  sectionTitle: string
+  entriesColumnLabel: string
+  addButtonLabel: string
+  placeholder: string
+  entries: EditableEntry[]
+  testIdPrefix: string
+  onChange: (id: string, value: string) => void
+  onAdd: () => void
+  isEntryInvalid?: (value: string) => boolean
+  invalidHint?: string
+}
+
+// NOTE: raw <div> grid instead of shadcn Table — matches the pre-existing div-grid pattern
+// used by other list tables in this codebase (ProductTemplateTable, PartnerTable, TenantTable,
+// AuditTable), per the same styling ProductTemplateListPage uses.
+function EditableEntryTable({
+  sectionTitle,
+  entriesColumnLabel,
+  addButtonLabel,
+  placeholder,
+  entries,
+  testIdPrefix,
+  onChange,
+  onAdd,
+  isEntryInvalid,
+  invalidHint,
+}: EditableEntryTableProps) {
+  return (
+    <Card className="p-0 overflow-hidden">
+      <CardHeader className="bg-muted px-4 py-2 gap-0">
+        <CardTitle className="text-xs">{sectionTitle}</CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 py-4">
+        <div
+          className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
+          data-testid={`${testIdPrefix}-table`}
+        >
+          <div className="flex border-b border-border h-10 items-center justify-between px-2">
+            <span className="text-sm font-medium text-foreground">
+              {entriesColumnLabel}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid={`add-${testIdPrefix}-button`}
+              onClick={onAdd}
+            >
+              <Plus size={16} />
+              {addButtonLabel}
+            </Button>
+          </div>
+
+          {entries.map((entry, index) => {
+            const showError = isEntryInvalid?.(entry.value) ?? false
+            return (
+              <div
+                key={entry.id}
+                className="flex flex-col justify-center gap-1 border-b border-border last:border-b-0 min-h-[52px] px-2 py-1.5"
+              >
+                <Input
+                  className="w-full border-transparent focus-visible:border-transparent"
+                  data-testid={`field-${testIdPrefix}-${index}`}
+                  placeholder={placeholder}
+                  value={entry.value}
+                  error={showError}
+                  onChange={e => onChange(entry.id, e.target.value)}
+                />
+                {showError && invalidHint && (
+                  <p className="text-xs text-destructive">{invalidHint}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 function PartnerSubmitForm({
@@ -159,6 +284,29 @@ function PartnerSubmitForm({
     (initialDraft?.partner_type as PartnerType | undefined) ??
       PartnerTypeSchema.enum.legal_entity
   )
+
+  const {
+    entries: dealerNumbers,
+    handleChange: handleDealerNumberChange,
+    handleAdd: handleAddDealerNumber,
+  } = useEditableEntryList()
+  // Dealer number errors only surface after a submit attempt, matching RHF's own
+  // default (onSubmit) validation timing for the fields it manages.
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
+
+  // Lifted out of AccountsSection so the entries survive through to
+  // submitMutation.onSuccess in SubmitPartnerPage, same as dealerNumbers above.
+  const [accounts, setAccounts] = useState<Account[]>([])
+
+  function handleAddAccount(values: AccountFormValues) {
+    setAccounts(prev => [...prev, { ...values, id: crypto.randomUUID() }])
+  }
+
+  function handleEditAccount(id: string, values: AccountFormValues) {
+    setAccounts(prev =>
+      prev.map(account => (account.id === id ? { ...values, id } : account))
+    )
+  }
 
   const {
     register,
@@ -199,6 +347,8 @@ function PartnerSubmitForm({
   }
 
   function onValid(values: IdentityForm) {
+    if (dealerNumbers.some(entry => isDealerNumberInvalid(entry.value))) return
+
     const { registered_address, ...rest } = values
     // No reset here: the parent swaps this form out for the matching review, and on the way
     // back it hands the same values in as `initialDraft`. Clearing them made a failed match
@@ -212,6 +362,16 @@ function PartnerSubmitForm({
         }),
       } as PartnerIdentityInput,
       draft: values as PartnerSubmitFormDraft,
+      dealerNumbers: dealerNumbers
+        .map(entry => entry.value.trim())
+        .filter(value => value.length > 0),
+      bankAccounts: accounts.map(account => ({
+        iban: account.iban,
+        account_number: account.account_number,
+        holder_name: account.holder_name,
+        bank_name: account.bank_name,
+        bic: account.bic,
+      })),
     })
   }
 
@@ -266,7 +426,10 @@ function PartnerSubmitForm({
   return (
     <form
       id={formId}
-      onSubmit={handleSubmit(onValid)}
+      onSubmit={event => {
+        setHasAttemptedSubmit(true)
+        void handleSubmit(onValid)(event)
+      }}
       className="flex flex-col gap-4"
     >
       {/* NOTE: raw <input type="hidden"> — no shadcn equivalent for a hidden
@@ -626,6 +789,33 @@ function PartnerSubmitForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Both sections are legal_entity-only: neither Händlernummer nor Accounts applies to
+          a natural person or a registered sole trader. */}
+      {isLegalEntity && (
+        <>
+          <EditableEntryTable
+            sectionTitle={t("submit.form.sections.dealerNumber")}
+            entriesColumnLabel={t("submit.form.entriesColumn")}
+            addButtonLabel={t("submit.form.addDealerNumberButton")}
+            placeholder={t("submit.form.dealerNumberPlaceholder")}
+            entries={dealerNumbers}
+            testIdPrefix="dealer-number"
+            onChange={handleDealerNumberChange}
+            onAdd={handleAddDealerNumber}
+            isEntryInvalid={
+              hasAttemptedSubmit ? isDealerNumberInvalid : undefined
+            }
+            invalidHint={t("submit.form.errors.invalidDealerNumber")}
+          />
+
+          <AccountsSection
+            accounts={accounts}
+            onAdd={handleAddAccount}
+            onEdit={handleEditAccount}
+          />
+        </>
+      )}
     </form>
   )
 }

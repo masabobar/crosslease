@@ -555,3 +555,39 @@ export const MergeHistoryResponseSchema = z.object({
   items: z.array(MergeLineageRecordResponseSchema),
 })
 export type MergeHistoryResponse = z.infer<typeof MergeHistoryResponseSchema>
+
+export const LcNumberResponseSchema = z.object({
+  id: z.string(),
+  partner_id: z.string(),
+  lc_number: z.string(),
+  created_at: z.string().datetime({ offset: true }),
+})
+export type LcNumberResponse = z.infer<typeof LcNumberResponseSchema>
+
+export const LcNumberListResponseSchema = z.object({
+  partner_id: z.string(),
+  items: z.array(LcNumberResponseSchema),
+})
+export type LcNumberListResponse = z.infer<typeof LcNumberListResponseSchema>
+
+export const BankAccountResponseSchema = z.object({
+  id: z.string(),
+  partner_id: z.string(),
+  iban: z.string(),
+  account_number: z.string().nullable(),
+  holder_name: z.string().nullable(),
+  bank_name: z.string().nullable(),
+  bic: z.string().nullable(),
+  status: z.string(),
+  created_at: z.string().datetime({ offset: true }),
+  closed_at: z.string().nullable(),
+})
+export type BankAccountResponse = z.infer<typeof BankAccountResponseSchema>
+
+export const BankAccountListResponseSchema = z.object({
+  partner_id: z.string(),
+  items: z.array(BankAccountResponseSchema),
+})
+export type BankAccountListResponse = z.infer<
+  typeof BankAccountListResponseSchema
+>

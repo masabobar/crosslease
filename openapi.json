@@ -10393,6 +10393,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
+          "special_bank_settlement": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Bank Settlement"
+          },
           "vfe_amount_eur": {
             "anyOf": [
               { "type": "number", "minimum": 0.0 },
@@ -11353,6 +11357,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
+          "special_bank_settlement": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Bank Settlement"
+          },
           "effective_from": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
@@ -11456,6 +11464,7 @@
           "payout_account_id",
           "collection_account_id",
           "special_conditions",
+          "special_bank_settlement",
           "effective_from",
           "activated_at",
           "activated_by",
@@ -11519,6 +11528,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
           },
+          "special_bank_settlement": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Bank Settlement"
+          },
           "vfe_amount_eur": {
             "anyOf": [
               {
@@ -11566,6 +11579,14 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "pin_changes": {
+            "items": {
+              "$ref": "#/components/schemas/FAPinnedVersionChangeImpact"
+            },
+            "type": "array",
+            "title": "Pin Changes",
+            "default": []
           }
         },
         "type": "object",
@@ -11582,6 +11603,7 @@
           "valid_from",
           "valid_until",
           "special_conditions",
+          "special_bank_settlement",
           "vfe_amount_eur",
           "payout_account_id",
           "collection_account_id",
@@ -11738,6 +11760,45 @@
         "type": "object",
         "required": ["items", "total", "page", "per_page", "total_pages"],
         "title": "FAListResponse"
+      },
+      "FAPinnedVersionChangeImpact": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "from_version_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "From Version Id"
+          },
+          "to_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "To Version Id"
+          },
+          "affected_active_financings": {
+            "type": "integer",
+            "title": "Affected Active Financings",
+            "default": 0
+          },
+          "affected_documents": {
+            "type": "integer",
+            "title": "Affected Documents",
+            "default": 0
+          },
+          "warning": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warning"
+          }
+        },
+        "type": "object",
+        "required": ["template_id", "from_version_id", "to_version_id"],
+        "title": "FAPinnedVersionChangeImpact",
+        "description": "PRD1042-1891 §1 — a pinned-version change identifies what it affects (no auto re-pin). One entry\nper template whose pinned BPT version changed on this edit. Downstream counts are stubs until the\nFinancing epic; the structure is fixed now so the FE knows what to expect."
       },
       "FAPricingSnapshotResponse": {
         "properties": {
@@ -16841,6 +16902,10 @@
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
+          },
+          "special_bank_settlement": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Special Bank Settlement"
           },
           "vfe_amount_eur": {
             "anyOf": [
