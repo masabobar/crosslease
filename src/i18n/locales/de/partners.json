@@ -145,10 +145,30 @@
       "cancel": "Cancel",
       "submitButton": "Submit for matching",
       "submitting": "Submitting…",
+      "addDealerNumberButton": "Neue Händlernummer hinzufügen",
+      "addAccountButton": "Neues Konto hinzufügen",
+      "entriesColumn": "Entries",
+      "dealerNumberPlaceholder": "Händlernummer eingeben",
+      "accountsEmptyHint": "Noch keine Konten hinzugefügt.",
+      "accountDialog": {
+        "addTitle": "Konto hinzufügen",
+        "editTitle": "Konto bearbeiten",
+        "save": "Speichern",
+        "edit": "Bearbeiten",
+        "fields": {
+          "iban": "IBAN",
+          "accountNumber": "Kontonummer",
+          "holderName": "Kontoinhaber",
+          "bankName": "Bankname",
+          "bic": "BIC"
+        }
+      },
       "sections": {
         "basicIdentity": "BASIC IDENTITY",
         "registryIdentifiers": "REGISTRY IDENTIFIERS",
-        "address": "ADDRESS"
+        "address": "ADDRESS",
+        "dealerNumber": "HÄNDLERNUMMER",
+        "accounts": "KONTEN"
       },
       "fields": {
         "entityType": "Entity type"
@@ -162,7 +182,8 @@
         "required": "Dieses Feld ist erforderlich.",
         "invalidCountry": "Wählen Sie ein Land aus der Liste aus.",
         "leiInvalid": "Die LEI muss aus genau 20 alphanumerischen Zeichen bestehen (ISO 17442).",
-        "dateOfBirthInFuture": "Das Geburtsdatum darf nicht in der Zukunft liegen."
+        "dateOfBirthInFuture": "Das Geburtsdatum darf nicht in der Zukunft liegen.",
+        "invalidDealerNumber": "Geben Sie genau 4 Ziffern ein."
       }
     },
     "matchStep": {
@@ -186,7 +207,9 @@
     },
     "errors": {
       "matchFailed": "Failed to check for duplicates. Please try again.",
-      "submitFailed": "Failed to submit partner. Please try again."
+      "submitFailed": "Failed to submit partner. Please try again.",
+      "lcNumberAddFailed": "Händlernummer {{number}} konnte nicht hinzugefügt werden.",
+      "bankAccountAddFailed": "Konto {{iban}} konnte nicht hinzugefügt werden."
     }
   },
   "detail": {
@@ -208,6 +231,10 @@
       "identitySectionTitle": "Identity",
       "classificationSectionTitle": "Classification",
       "complianceSectionTitle": "Compliance status",
+      "dealerNumbersSectionTitle": "Händlernummern",
+      "accountsSectionTitle": "Konten",
+      "dealerNumbersEmpty": "Keine Händlernummern hinterlegt",
+      "accountsEmpty": "Keine Konten hinterlegt",
       "fields": {
         "entityType": "Entity type",
         "partnerId": "Partner ID",

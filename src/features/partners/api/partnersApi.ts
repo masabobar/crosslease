@@ -5,9 +5,13 @@ import {
   ConfirmationHistoryResponseSchema,
   DecisionHistoryResponseSchema,
   DuplicatePairListResponseSchema,
+  BankAccountListResponseSchema,
+  BankAccountResponseSchema,
   IdentityChangeDetailResponseSchema,
   IdentityChangeProposeResponseSchema,
   IdentityHistoryResponseSchema,
+  LcNumberListResponseSchema,
+  LcNumberResponseSchema,
   MergeHistoryResponseSchema,
   MergeInitiateResponseSchema,
   PartnerDetailResponseSchema,
@@ -23,6 +27,8 @@ import {
 import type {
   ArchiveEligibilityResponse,
   ArchivePartnerResponse,
+  BankAccountListResponse,
+  BankAccountResponse,
   ConfirmationHistoryResponse,
   DecisionHistoryResponse,
   DuplicatePairListResponse,
@@ -31,6 +37,8 @@ import type {
   IdentityChangeDetailResponse,
   IdentityChangeProposeResponse,
   IdentityHistoryResponse,
+  LcNumberListResponse,
+  LcNumberResponse,
   MergeHistoryResponse,
   MergeInitiateResponse,
   MergeReasonCode,
@@ -86,6 +94,8 @@ export const PARTNERS_QUERY_KEYS = {
   mergeHistory: (id: string) => ["partners", "merge-history", id] as const,
   duplicatePairs: (tenantId: string | null) =>
     ["partners", "duplicate-pairs", tenantId] as const,
+  lcNumbers: (id: string) => ["partners", "lc-numbers", id] as const,
+  bankAccounts: (id: string) => ["partners", "bank-accounts", id] as const,
 } as const
 
 // ── Identity input types (for forms) ─────────────────────────────────────────
@@ -183,6 +193,18 @@ export type InitiateMergeBody = {
   survivor_partner_id: string
   merge_reason_code: MergeReasonCode
   note?: string | null
+}
+
+export type AddLcNumberBody = {
+  lc_number: string
+}
+
+export type AddBankAccountBody = {
+  iban: string
+  account_number?: string | null
+  holder_name?: string | null
+  bank_name?: string | null
+  bic?: string | null
 }
 
 // ── API functions ─────────────────────────────────────────────────────────────
@@ -340,4 +362,34 @@ export async function initiateMerge(
 ): Promise<MergeInitiateResponse> {
   const data = await api.post(`/partners/merge`, body)
   return MergeInitiateResponseSchema.parse(data)
+}
+
+export async function addLcNumber(
+  partnerId: string,
+  body: AddLcNumberBody
+): Promise<LcNumberResponse> {
+  const data = await api.post(`/partners/${partnerId}/lc-numbers`, body)
+  return LcNumberResponseSchema.parse(data)
+}
+
+export async function addBankAccount(
+  partnerId: string,
+  body: AddBankAccountBody
+): Promise<BankAccountResponse> {
+  const data = await api.post(`/partners/${partnerId}/bank-accounts`, body)
+  return BankAccountResponseSchema.parse(data)
+}
+
+export async function fetchLcNumbers(
+  partnerId: string
+): Promise<LcNumberListResponse> {
+  const data = await api.get(`/partners/${partnerId}/lc-numbers`)
+  return LcNumberListResponseSchema.parse(data)
+}
+
+export async function fetchBankAccounts(
+  partnerId: string
+): Promise<BankAccountListResponse> {
+  const data = await api.get(`/partners/${partnerId}/bank-accounts`)
+  return BankAccountListResponseSchema.parse(data)
 }

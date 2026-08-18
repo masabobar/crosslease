@@ -11,6 +11,8 @@ import type {
 } from "@/features/partners/components/PartnerSubmitForm"
 import { MatchingReview } from "@/features/partners/components/MatchingReview"
 import {
+  addBankAccount,
+  addLcNumber,
   matchPartner,
   submitPartner,
 } from "@/features/partners/api/partnersApi"
@@ -20,6 +22,7 @@ import type {
   SubmitPartnerBody,
 } from "@/features/partners/api/partnersApi"
 import type { PartnerMatchResponse } from "@/features/partners/api/schema"
+import type { AccountFormValues } from "@/features/partners/components/AccountFormDialog"
 import { partnerDetail } from "@/router/paths"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -47,6 +50,10 @@ export default function SubmitPartnerPage() {
   const [matchResult, setMatchResult] = useState<PartnerMatchResponse | null>(
     null
   )
+  // Carried the same way as `pending` — captured at form submit, consumed once the partner
+  // is actually created in submitMutation.onSuccess below.
+  const [dealerNumbers, setDealerNumbers] = useState<string[]>([])
+  const [bankAccounts, setBankAccounts] = useState<AccountFormValues[]>([])
 
   const matchMutation = useMutation({
     mutationFn: (body: MatchPartnerBody) =>
@@ -63,11 +70,63 @@ export default function SubmitPartnerPage() {
     },
   })
 
+  const addLcNumberMutation = useMutation({
+    mutationFn: ({
+      partnerId,
+      lcNumber,
+    }: {
+      partnerId: string
+      lcNumber: string
+    }) => addLcNumber(partnerId, { lc_number: lcNumber }),
+    onError: (err, variables) => {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, {
+              defaultValue: t("submit.errors.lcNumberAddFailed", {
+                number: variables.lcNumber,
+              }),
+            })
+          : t("submit.errors.lcNumberAddFailed", {
+              number: variables.lcNumber,
+            })
+      )
+    },
+  })
+
+  const addBankAccountMutation = useMutation({
+    mutationFn: ({
+      partnerId,
+      account,
+    }: {
+      partnerId: string
+      account: AccountFormValues
+    }) => addBankAccount(partnerId, account),
+    onError: (err, variables) => {
+      toast.error(
+        err instanceof ApiError
+          ? t(`errors.${err.code}`, {
+              defaultValue: t("submit.errors.bankAccountAddFailed", {
+                iban: variables.account.iban,
+              }),
+            })
+          : t("submit.errors.bankAccountAddFailed", {
+              iban: variables.account.iban,
+            })
+      )
+    },
+  })
+
   const submitMutation = useMutation({
     mutationFn: (body: SubmitPartnerBody) =>
       submitPartner(tenantId as string, body),
     onSuccess: result => {
       navigate(partnerDetail(result.partner_id))
+      dealerNumbers.forEach(lcNumber => {
+        addLcNumberMutation.mutate({ partnerId: result.partner_id, lcNumber })
+      })
+      bankAccounts.forEach(account => {
+        addBankAccountMutation.mutate({ partnerId: result.partner_id, account })
+      })
     },
     onError: err => {
       toast.error(
@@ -80,10 +139,17 @@ export default function SubmitPartnerPage() {
     },
   })
 
-  async function handleFormSubmit({ identity, draft: values }: SubmitResult) {
+  async function handleFormSubmit({
+    identity,
+    draft: values,
+    dealerNumbers: lcNumbers,
+    bankAccounts: accounts,
+  }: SubmitResult) {
     if (!tenantId) return
     setDraft(values)
     setPending({ identity })
+    setDealerNumbers(lcNumbers)
+    setBankAccounts(accounts)
     setMatchResult(null)
     setView("matching")
     try {

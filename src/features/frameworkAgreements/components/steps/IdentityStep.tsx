@@ -16,7 +16,6 @@ import {
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import { useLcPartnerOptions } from "@/features/frameworkAgreements/hooks/useLcPartnerOptions"
-import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 
 type Props = {
@@ -27,15 +26,11 @@ function IdentityStep({ form }: Props) {
   const { t } = useTranslation("frameworkAgreements")
   const { register, control, setValue } = form
   const { errors } = useFormState({ control })
-  const { data: currentUser } = useCurrentUser()
   const resolveMsg = useResolveFrameworkAgreementFieldError()
 
   const selectedLcName = useWatch({ control, name: "lc_partner_name" })
   const [lcSearch, setLcSearch] = useState("")
-  const { options: lcOptions } = useLcPartnerOptions(
-    currentUser?.tenant_id ?? null,
-    lcSearch
-  )
+  const { options: lcOptions } = useLcPartnerOptions()
 
   return (
     <div
@@ -78,10 +73,10 @@ function IdentityStep({ form }: Props) {
           control={control}
           name="lc_partner_id"
           render={({ field }) => {
-            // lcOptions is search-filtered, so once the search text changes the
-            // selected partner drops out of it. Falling back to the label already
-            // stored in lc_partner_name keeps the selection visible instead of
-            // rendering an empty input over a set lc_partner_id.
+            // lcOptions may not have loaded yet (e.g. editing a draft with an
+            // lc_partner_id already set). Falling back to the label already stored
+            // in lc_partner_name keeps the selection visible instead of rendering
+            // an empty input over a set lc_partner_id.
             const selectedOption =
               lcOptions.find(o => o.value === field.value) ??
               (field.value
@@ -90,7 +85,6 @@ function IdentityStep({ form }: Props) {
             return (
               <Combobox
                 items={lcOptions}
-                filter={null}
                 value={selectedOption}
                 onValueChange={option => {
                   field.onChange(option?.value ?? "")

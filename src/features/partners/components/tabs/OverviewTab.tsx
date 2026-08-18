@@ -5,7 +5,10 @@ import {
 } from "@/features/partners/components/PartnerDetailPrimitives"
 import { PartnerIdentityFields } from "@/features/partners/components/PartnerIdentityFields"
 import { PartnerTypeBadge } from "@/features/partners/components/PartnerTypeBadge"
+import { DealerNumbersSection } from "@/features/partners/components/DealerNumbersSection"
+import { BankAccountsSection } from "@/features/partners/components/BankAccountsSection"
 import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
+import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import type {
   PartnerDetailResponse,
   RoleAssignmentSummary,
@@ -34,42 +37,55 @@ type OverviewTabProps = {
 function OverviewTab({ partner, roles }: OverviewTabProps) {
   const { t } = useTranslation("partners")
   const identity = partner.identity
+  const isLegalEntity =
+    partner.partner_type === PartnerTypeSchema.enum.legal_entity
 
   return (
-    <div className="flex gap-6 p-3">
-      <SectionCard title={t("detail.overview.identitySectionTitle")}>
-        <PartnerIdentityFields identity={identity} />
-      </SectionCard>
-
-      <div className="flex flex-col gap-6 flex-1 min-w-0">
-        <SectionCard title={t("detail.overview.classificationSectionTitle")}>
-          <DetailRow label={t("detail.overview.fields.entityType")}>
-            <PartnerTypeBadge type={partner.partner_type} />
-          </DetailRow>
-          <DetailRow label={t("detail.overview.fields.country")}>
-            {identity.country}
-          </DetailRow>
-          <DetailRow label={t("detail.overview.fields.partnerId")}>
-            {partner.partner_id}
-          </DetailRow>
-          <DetailRow label={t("detail.overview.fields.roles")}>
-            <RolesList roles={roles} />
-          </DetailRow>
+    <div className="flex flex-col gap-6 p-3">
+      <div className="flex gap-6">
+        <SectionCard title={t("detail.overview.identitySectionTitle")}>
+          <PartnerIdentityFields identity={identity} />
         </SectionCard>
 
-        <SectionCard title={t("detail.overview.complianceSectionTitle")}>
-          <DetailRow label={t("detail.overview.uboCompleteness")}>
-            <span className="inline-flex items-center gap-1.5">
-              <span
-                className={`inline-block size-2 rounded-full ${UBO_STATUS_DOT_COLOR[partner.ubo_completeness_status]}`}
-              />
-              {t(
-                `uboStatus.${partner.ubo_completeness_status}` as "uboStatus.missing"
-              )}
-            </span>
-          </DetailRow>
-        </SectionCard>
+        <div className="flex flex-col gap-6 flex-1 min-w-0">
+          <SectionCard
+            title={t("detail.overview.classificationSectionTitle")}
+          >
+            <DetailRow label={t("detail.overview.fields.entityType")}>
+              <PartnerTypeBadge type={partner.partner_type} />
+            </DetailRow>
+            <DetailRow label={t("detail.overview.fields.country")}>
+              {identity.country}
+            </DetailRow>
+            <DetailRow label={t("detail.overview.fields.partnerId")}>
+              {partner.partner_id}
+            </DetailRow>
+            <DetailRow label={t("detail.overview.fields.roles")}>
+              <RolesList roles={roles} />
+            </DetailRow>
+          </SectionCard>
+
+          <SectionCard title={t("detail.overview.complianceSectionTitle")}>
+            <DetailRow label={t("detail.overview.uboCompleteness")}>
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className={`inline-block size-2 rounded-full ${UBO_STATUS_DOT_COLOR[partner.ubo_completeness_status]}`}
+                />
+                {t(
+                  `uboStatus.${partner.ubo_completeness_status}` as "uboStatus.missing"
+                )}
+              </span>
+            </DetailRow>
+          </SectionCard>
+        </div>
       </div>
+
+      {isLegalEntity && (
+        <>
+          <DealerNumbersSection partnerId={partner.partner_id} />
+          <BankAccountsSection partnerId={partner.partner_id} />
+        </>
+      )}
     </div>
   )
 }
