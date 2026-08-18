@@ -64,10 +64,14 @@ export function isFrameworkAgreementExpiredByDate(
 }
 
 // Narrows the allowed-templates picker by a free-text query, matching template name or
-// template code case-insensitively. Per CR PRD1042-1799 CR-FA-05 the picker keeps the full
-// published list — no filtering derived from earlier wizard steps and no "smart" version
-// pre-selection — so search is the only narrowing, and it happens client-side because
-// GET /product-templates/selectable returns every option in one unpaginated response.
+// template code case-insensitively, client-side, because GET /product-templates/selectable
+// returns every option in one unpaginated response.
+//
+// Per CR PRD1042-1799 CR-FA-05 the picker used to keep the full published list with no
+// filtering derived from earlier wizard steps — search was the only narrowing. The Create
+// wizard now also narrows by valid_from (see filterTemplatesEffectiveBy below); this
+// supersedes CR-FA-05 for Create only. The Edit wizard's picker (EditValidityTemplatesStep)
+// never touches valid_from and stays unfiltered, so it keeps the original CR-FA-05 behavior.
 // GET /product-templates/selectable is version-scoped — it returns one row per selectable
 // version (ACTIVE *and* in-window SUPERSEDED, see get_selectable_versions in
 // ../refinext-api/), so a template with an active v2 and a superseded v1 arrives twice under
@@ -81,17 +85,99 @@ export function isFrameworkAgreementExpiredByDate(
 export function dedupeSelectableTemplates(
   options: readonly SelectableTemplateItem[]
 ): readonly SelectableTemplateItem[] {
-  const byTemplate = new Map<string, SelectableTemplateItem>()
+  return options
+}
+
+// Create-wizard-only eligibility filter: a template must already be in effect by the
+// agreement's own valid_from to be selectable — an agreement cannot bind a product that
+// isn't valid yet on the day it starts. Both sides are wire date-only strings (yyyy-MM-dd),
+// parsed to Date for the comparison rather than compared lexicographically.
+// Inclusive: a template whose own valid_from equals the agreement's is already in effect
+// that day. A template with no valid_from set has no lower bound and is never excluded.
+// No agreementValidFrom (the field is still empty) means no filtering at all — the picker
+// shows the full default list, same as before this filter existed.
+export function filterTemplatesEffectiveBy(
+  options: readonly SelectableTemplateItem[],
+  agreementValidFrom: string
+): readonly SelectableTemplateItem[] {
+  if (!agreementValidFrom) return options
+  const agreementTime = new Date(agreementValidFrom).getTime()
+  return options.filter(
+    option =>
+      !option.valid_from ||
+      new Date(option.valid_from).getTime() <= agreementTime
+  )
+}
+
+// A template_id can now appear once per selectable version (dedupeSelectableTemplates above
+// is a no-op). Any version's row is selectable, and ProductTemplateMultiSelect remembers
+// exactly which one the user picked — but `product_template_ids` only ever stores the
+// template_id, so a template that arrives in `value` with no remembered version yet (the
+// initial render, or an Edit-wizard `value` populated from an existing agreement) needs a
+// deterministic default. This supplies that default: the highest version_number, same
+// tie-break dedupeSelectableTemplates used before it was disabled ("the one that will
+// actually be bound").
+export function canonicalVersionByTemplate(
+  options: readonly SelectableTemplateItem[]
+): ReadonlyMap<string, string> {
+  const canonical = new Map<string, string>()
   for (const option of options) {
-    const current = byTemplate.get(option.template_id)
-    if (
-      !current ||
-      Number(option.version_number) > Number(current.version_number)
-    ) {
-      byTemplate.set(option.template_id, option)
+    const current = canonical.get(option.template_id)
+    if (!current || Number(option.version_number) > Number(current)) {
+      canonical.set(option.template_id, option.version_number)
     }
   }
-  return [...byTemplate.values()]
+  return canonical
+}
+
+// Groups every version-row of the same template_id together, in first-seen order, rather
+// than leaving them interleaved with other templates once duplicate version rows exist.
+// Returns one array per distinct template_id (not a flattened list) so the picker can render
+// each template's versions stacked one beneath another instead of side by side with
+// unrelated templates. Preserves the relative order of distinct templates and of each
+// template's own rows.
+export function groupByTemplateId(
+  options: readonly SelectableTemplateItem[]
+): readonly (readonly SelectableTemplateItem[])[] {
+  const groups = new Map<string, SelectableTemplateItem[]>()
+  for (const option of options) {
+    const group = groups.get(option.template_id)
+    if (group) {
+      group.push(option)
+    } else {
+      groups.set(option.template_id, [option])
+    }
+  }
+  return [...groups.values()]
+}
+
+// Distributes groupByTemplateId's groups across two columns for the picker's 2-column
+// layout. A group (all versions of one template) is never split across the boundary — each
+// whole group goes to whichever column currently holds fewer rows so far (ties favor the
+// left column). This keeps versions of the same template stacked together while still
+// landing close to an equal row count per column; plain CSS grid auto-flow (row-major
+// left/right alternation by group *count*, not row count) can leave one column much taller
+// than the other once group sizes vary.
+export function splitGroupsIntoColumns(
+  groups: readonly (readonly SelectableTemplateItem[])[]
+): readonly [
+  readonly (readonly SelectableTemplateItem[])[],
+  readonly (readonly SelectableTemplateItem[])[],
+] {
+  const left: (readonly SelectableTemplateItem[])[] = []
+  const right: (readonly SelectableTemplateItem[])[] = []
+  let leftCount = 0
+  let rightCount = 0
+  for (const group of groups) {
+    if (leftCount <= rightCount) {
+      left.push(group)
+      leftCount += group.length
+    } else {
+      right.push(group)
+      rightCount += group.length
+    }
+  }
+  return [left, right]
 }
 
 export function filterSelectableTemplates(

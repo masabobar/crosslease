@@ -114,7 +114,6 @@ export function ProductTemplateDetailDrawer({
     versionNumber
   )
 
-  const isActive = data?.version_status === TemplateStatusSchema.enum.active
   const isDraft = data?.version_status === TemplateStatusSchema.enum.draft
 
   return (
@@ -180,13 +179,14 @@ export function ProductTemplateDetailDrawer({
           {data && <DetailBody detail={data} />}
         </div>
 
-        {data && (isActive || isDraft) && canManageDraft && templateId && (
+        {data && canManageDraft && templateId && (
           <SheetFooter className="border-t border-border">
             <ProductTemplatePublishedActions
               templateId={templateId}
               versionNumber={data.version_number}
               isDraft={isDraft}
               productStatus={data.product_status}
+              versionStatus={data.version_status}
             />
           </SheetFooter>
         )}

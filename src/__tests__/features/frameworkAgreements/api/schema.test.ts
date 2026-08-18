@@ -492,6 +492,7 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
     template_code: "FIN-00001",
     template_name: "Test Refinancing Template",
     version_number: "0.1",
+    valid_from: "2026-01-01",
   }
 
   it("accepts a valid item using the wire field name template_id", () => {
@@ -539,6 +540,25 @@ describe("SelectableTemplateItemSchema / SelectableTemplatesResponseSchema", () 
         template_name: validItem.template_name,
       })
     ).toThrow()
+  })
+
+  it("rejects a missing valid_from", () => {
+    expect(() =>
+      SelectableTemplateItemSchema.parse({
+        template_id: validItem.template_id,
+        template_code: validItem.template_code,
+        template_name: validItem.template_name,
+        version_number: validItem.version_number,
+      })
+    ).toThrow()
+  })
+
+  // Drives the Create wizard's eligibility filter (filterTemplatesEffectiveBy) treating a
+  // template with no valid_from set as having no lower bound.
+  it("accepts a null valid_from", () => {
+    expect(() =>
+      SelectableTemplateItemSchema.parse({ ...validItem, valid_from: null })
+    ).not.toThrow()
   })
 
   it("accepts a full selectable templates response", () => {

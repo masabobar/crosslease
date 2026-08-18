@@ -13,6 +13,8 @@ type Props<T extends ProductTemplatesFormFields> = {
   errors: FieldErrors<T>
   resolveMsg: (msg: string | undefined) => string | undefined
   hint?: string
+  // Create-wizard-only eligibility filter — see ProductTemplateMultiSelect.
+  agreementValidFrom?: string
 }
 
 function ProductTemplatesField<T extends ProductTemplatesFormFields>({
@@ -20,6 +22,7 @@ function ProductTemplatesField<T extends ProductTemplatesFormFields>({
   errors,
   resolveMsg,
   hint,
+  agreementValidFrom,
 }: Props<T>) {
   const { t } = useTranslation("frameworkAgreements")
   const typedControl = control as unknown as Control<ProductTemplatesFormFields>
@@ -39,6 +42,7 @@ function ProductTemplatesField<T extends ProductTemplatesFormFields>({
             value={field.value ?? []}
             onChange={field.onChange}
             error={!!typedErrors.product_template_ids}
+            agreementValidFrom={agreementValidFrom}
           />
         )}
       />

@@ -103,6 +103,7 @@ function ValidityTemplatesStep({ form }: Props) {
         control={control}
         errors={errors}
         resolveMsg={resolveMsg}
+        agreementValidFrom={validFrom}
       />
     </div>
   )

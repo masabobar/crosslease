@@ -4,6 +4,7 @@ import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TemplateVersionStatusBadge } from "@/features/productTemplates/components/TemplateVersionStatusBadge"
+import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import { PRODUCT_STATUS_ACTIVE } from "@/features/productTemplates/constants"
 import type {
   TemplateListItem,
@@ -192,6 +193,12 @@ function ProductTemplateTable({
               ) : item.current_version ? (
                 <TemplateVersionStatusBadge
                   status={item.current_version.version_status}
+                  label={
+                    item.current_version.version_status ===
+                    TemplateStatusSchema.enum.active
+                      ? t("list.effectiveStatusLabel")
+                      : undefined
+                  }
                 />
               ) : (
                 <span className="text-sm text-muted-foreground">—</span>

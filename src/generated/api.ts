@@ -1734,7 +1734,10 @@ const FADetailResponse = z
     is_expired: z.boolean(),
     edit_version_counter: z.number().int(),
     product_template_ids: z.array(z.string().uuid()),
-    product_template_version_pins: z.record(z.string(), z.union([z.string(), z.null()])),
+    product_template_version_pins: z.record(
+      z.string(),
+      z.union([z.string(), z.null()])
+    ),
     document_count: z.number().int(),
     linked_financings_count: z.number().int(),
     utilization_pct: z.union([z.string(), z.null()]),

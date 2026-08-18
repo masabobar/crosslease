@@ -108,7 +108,7 @@ const naturalPersonSchema = z.object({
   registered_address: addressSchema,
 })
 
-const soleProprietorSchema = z.object({
+const registeredSoleTraderSchema = z.object({
   partner_type: z.literal(PartnerTypeSchema.enum.registered_sole_trader),
   full_name: z.string().min(1, "required"),
   date_of_birth: dateOfBirthSchema,
@@ -120,13 +120,13 @@ const soleProprietorSchema = z.object({
 
 type LegalEntityForm = z.infer<typeof legalEntitySchema>
 type NaturalPersonForm = z.infer<typeof naturalPersonSchema>
-type SoleProprietorForm = z.infer<typeof soleProprietorSchema>
-type IdentityForm = LegalEntityForm | NaturalPersonForm | SoleProprietorForm
+type RegisteredSoleTraderForm = z.infer<typeof registeredSoleTraderSchema>
+type IdentityForm = LegalEntityForm | NaturalPersonForm | RegisteredSoleTraderForm
 
 function schemaForType(type: PartnerType) {
   if (type === PartnerTypeSchema.enum.natural_person) return naturalPersonSchema
   if (type === PartnerTypeSchema.enum.registered_sole_trader)
-    return soleProprietorSchema
+    return registeredSoleTraderSchema
   return legalEntitySchema
 }
 

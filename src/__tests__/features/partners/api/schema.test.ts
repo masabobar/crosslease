@@ -10,7 +10,7 @@ import {
   RegisteredAddressSchema,
   LegalEntityIdentityDetailSchema,
   NaturalPersonIdentityDetailSchema,
-  SoleProprietorIdentityDetailSchema,
+  RegisteredSoleTraderIdentityDetailSchema,
   PartnerIdentityDetailSchema,
   PartnerListItemSchema,
   PartnerListResponseSchema,
@@ -297,7 +297,7 @@ describe("NaturalPersonIdentityDetailSchema", () => {
   })
 })
 
-describe("SoleProprietorIdentityDetailSchema", () => {
+describe("RegisteredSoleTraderIdentityDetailSchema", () => {
   const valid = {
     partner_type: "registered_sole_trader",
     full_name: "Hans Meier",
@@ -309,12 +309,12 @@ describe("SoleProprietorIdentityDetailSchema", () => {
   }
 
   it("accepts a valid sole proprietor", () => {
-    expect(() => SoleProprietorIdentityDetailSchema.parse(valid)).not.toThrow()
+    expect(() => RegisteredSoleTraderIdentityDetailSchema.parse(valid)).not.toThrow()
   })
 
   it("rejects wrong partner_type", () => {
     expect(() =>
-      SoleProprietorIdentityDetailSchema.parse({
+      RegisteredSoleTraderIdentityDetailSchema.parse({
         ...valid,
         partner_type: "guarantor",
       })
