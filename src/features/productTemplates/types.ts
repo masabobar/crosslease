@@ -11,6 +11,16 @@ import type {
   ProductTemplateWizardForm,
   TemplateStatus,
 } from "@/features/productTemplates/api/schema"
+import { PRODUCT_STATUS_DEACTIVATED } from "@/features/productTemplates/constants"
+
+// The list page's status filter mixes two different backend concepts: the per-version
+// TemplateStatus, and the product-level "deactivated" state (product_status). The list
+// endpoint's `status` query param is a plain string on the wire (no longer a TemplateStatus
+// enum — see the comment on TemplateStatusSchema in api/schema.ts), so it accepts this
+// sentinel too; ProductTemplateListPage sends it straight through like any other value.
+export type ProductTemplateStatusFilter =
+  | TemplateStatus
+  | typeof PRODUCT_STATUS_DEACTIVATED
 
 // Statuses a user may filter the template list by. `discarded` is deliberately excluded:
 // per CR-BPT-05 on PRD1042-1798 it exists on the backend only, because a draft can be
@@ -25,11 +35,15 @@ import type {
 //
 // Lives here rather than in constants.ts because constants.ts is imported *by* api/schema.ts
 // (for the termination-justification bounds), so reading the schema enum from there would
-// close an initialization cycle.
-export const FILTERABLE_TEMPLATE_STATUSES: readonly TemplateStatus[] =
-  TemplateStatusSchema.options.filter(
-    status => status !== TemplateStatusSchema.enum.discarded
-  )
+// close an initialization cycle. `deactivated` is appended last since it isn't a
+// TemplateStatus value at all — see ProductTemplateStatusFilter above.
+export const FILTERABLE_TEMPLATE_STATUSES: readonly ProductTemplateStatusFilter[] =
+  [
+    ...TemplateStatusSchema.options.filter(
+      status => status !== TemplateStatusSchema.enum.discarded
+    ),
+    PRODUCT_STATUS_DEACTIVATED,
+  ]
 
 // system_admin is deliberately absent from both lists below: PRD1042-1703 #1 excludes the
 // platform operator from every product_template:* permission (including the four-eyes

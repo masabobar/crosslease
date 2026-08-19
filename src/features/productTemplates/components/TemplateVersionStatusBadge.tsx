@@ -3,15 +3,12 @@ import type { TemplateStatus } from "@/features/productTemplates/api/schema"
 
 type Props = {
   status: TemplateStatus
-  // Overrides the translated status text without changing the shared `versionStatuses.*`
-  // keys other consumers of this badge rely on.
-  label?: string
 }
 
 const STATUS_BADGE_CLASSES: Record<TemplateStatus, string> = {
   draft: "bg-sky-600/10 text-sky-600",
   scheduled: "bg-indigo-600/10 text-indigo-600",
-  active: "bg-green-600/10 text-green-600",
+  effective: "bg-green-600/10 text-green-600",
   superseded: "bg-slate-600/10 text-slate-600",
   terminated: "bg-red-600/10 text-red-600",
   discarded: "bg-muted text-foreground",
@@ -19,7 +16,7 @@ const STATUS_BADGE_CLASSES: Record<TemplateStatus, string> = {
 
 // Soft pill only — no dot. The colored dot lives on the timeline rail in
 // VersionHistoryPage, not inside this badge (matches the Figma "Soft Badge" component).
-function TemplateVersionStatusBadge({ status, label }: Props) {
+function TemplateVersionStatusBadge({ status }: Props) {
   const { t } = useTranslation("productTemplates")
 
   return (
@@ -32,7 +29,7 @@ function TemplateVersionStatusBadge({ status, label }: Props) {
       data-testid={`version-status-badge-${status}`}
       className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE_CLASSES[status]}`}
     >
-      {label ?? t(`versionStatuses.${status}` as "versionStatuses.draft")}
+      {t(`versionStatuses.${status}` as "versionStatuses.draft")}
     </span>
   )
 }

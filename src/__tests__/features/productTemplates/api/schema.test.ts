@@ -254,7 +254,7 @@ describe("PublishTemplateDraftResponseSchema", () => {
   const validPublishResponse = {
     version_id: "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     version_number: "1.0",
-    version_status: "active",
+    version_status: "effective",
     activated_at: "2026-07-13T09:00:00Z",
     activated_by: "c1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   }
@@ -514,7 +514,7 @@ describe("ProductTemplatePublishFormSchema", () => {
 const validVersionSummary = {
   id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
   version_number: "1.0",
-  version_status: "active",
+  version_status: "effective",
   bindings_count: 3,
   created_at: "2026-05-22T14:30:00Z",
 }
@@ -533,7 +533,7 @@ describe("TemplateVersionSummarySchema", () => {
   it.each([
     "draft",
     "scheduled",
-    "active",
+    "effective",
     "superseded",
     "terminated",
     "discarded",
@@ -708,7 +708,7 @@ describe("VersionDiffResponseSchema", () => {
 describe("TemplateVersionDetailSchema", () => {
   const validDetail = {
     version_number: "1.0",
-    version_status: "active",
+    version_status: "effective",
     template_name: "Full refinancing standard",
     refinancing_form: "annuity",
     legal_structure: "loan_credit",
@@ -997,7 +997,7 @@ describe("TemplateCurrentVersionSummarySchema / TemplateListItemSchema / Templat
   const validCurrentVersion = {
     version_id: "f7a5c6b8-cdae-4f55-af6e-5d6e7f8a9b01",
     version_number: "1.0",
-    version_status: "active",
+    version_status: "effective",
     refinancing_form: "annuity",
     legal_structure: "loan_credit",
     payment_timing: "advance",

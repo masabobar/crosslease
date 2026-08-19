@@ -32,7 +32,6 @@
       "searchPlaceholder": "Nach Code oder Name suchen…",
       "allStatuses": "Alle Status"
     },
-    "effectiveStatusLabel": "Wirksam",
     "pagination": {
       "rowsPerPage": "Zeilen pro Seite",
       "previous": "Zurück",
@@ -194,7 +193,7 @@
   "versionStatuses": {
     "draft": "Entwurf",
     "scheduled": "Geplant",
-    "active": "Aktiv",
+    "effective": "Wirksam",
     "superseded": "Abgelöst",
     "terminated": "Beendet",
     "discarded": "Verworfen"

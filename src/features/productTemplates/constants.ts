@@ -46,6 +46,10 @@ export const DEACTIVATION_REASON_MAX_LENGTH = 2000
 // literal, so a new deactivated-ish value the BE adds still renders correctly.
 export const PRODUCT_STATUS_ACTIVE = "active"
 
+// The wire value deactivateProductTemplate sets — see the comment above. Named so the list
+// page's status filter can reference it instead of an inline string literal.
+export const PRODUCT_STATUS_DEACTIVATED = "deactivated"
+
 // Wire value of the audit log's `entity_type` for a product template, per
 // `../refinext-api/` — used to build the audit-trail drill-down query. The audit feature
 // itself has no FE constant for these: it renders whatever `entity_types` the filter-options

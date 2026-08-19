@@ -9,6 +9,7 @@ import {
   ProductTemplateWizardFormSchema,
   TemplateStatusSchema,
 } from "@/features/productTemplates/api/schema"
+import { PRODUCT_STATUS_DEACTIVATED } from "@/features/productTemplates/constants"
 
 const isoDateOffsetByDays = (days: number) =>
   format(addDays(new Date(), days), "yyyy-MM-dd")
@@ -109,9 +110,16 @@ describe("FILTERABLE_TEMPLATE_STATUSES", () => {
 
   it("offers every other wire status, so a new backend status is not silently dropped", () => {
     expect([...FILTERABLE_TEMPLATE_STATUSES].sort()).toEqual(
-      TemplateStatusSchema.options
-        .filter(status => status !== TemplateStatusSchema.enum.discarded)
-        .sort()
+      [
+        ...TemplateStatusSchema.options.filter(
+          status => status !== TemplateStatusSchema.enum.discarded
+        ),
+        PRODUCT_STATUS_DEACTIVATED,
+      ].sort()
     )
+  })
+
+  it("also offers the product-level deactivated sentinel — not a TemplateStatus, but the list's own filter for it", () => {
+    expect(FILTERABLE_TEMPLATE_STATUSES).toContain(PRODUCT_STATUS_DEACTIVATED)
   })
 })
