@@ -423,7 +423,7 @@ describe("ActivateFARequestSchema", () => {
 // CR-FA-07 on PRD1042-1799, revised 6/8/2026. Deliberately NOT the same set as
 // FALifecycleStatus: `expired` is displayable only and is never sent back to the API.
 describe("FAAgreementLifecycleSchema", () => {
-  it.each(["draft", "active", "terminated", "expired"])(
+  it.each(["draft", "active", "deactivated", "terminated", "expired"])(
     "accepts the documented lifecycle %s",
     value => {
       expect(() => FAAgreementLifecycleSchema.parse(value)).not.toThrow()
@@ -660,8 +660,10 @@ describe("FADetailResponseSchema", () => {
     activated_at: null,
     activated_by: null,
     activated_by_name: null,
-    suspended_at: null,
-    suspended_by: null,
+    deactivated_at: null,
+    deactivated_by: null,
+    reactivated_at: null,
+    reactivated_by: null,
     terminated_at: null,
     terminated_by: null,
     created_by: null,
@@ -681,6 +683,20 @@ describe("FADetailResponseSchema", () => {
         vfe_amount_eur: "1500.0000",
         created_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
         created_by_name: "Vincent Brooke",
+      })
+    ).not.toThrow()
+  })
+
+  it("accepts a deactivated-then-reactivated agreement (PRD1042-1891 §3)", () => {
+    expect(() =>
+      FADetailResponseSchema.parse({
+        ...baseDetail,
+        status: "active",
+        agreement_lifecycle: "active",
+        deactivated_at: "2026-07-01T09:00:00Z",
+        deactivated_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
+        reactivated_at: "2026-07-15T09:00:00Z",
+        reactivated_by: "b3e1c9a0-1111-4a2b-8c3d-000000000004",
       })
     ).not.toThrow()
   })

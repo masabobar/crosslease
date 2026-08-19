@@ -840,6 +840,73 @@ const PartnerDetailResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const RegisteredAddressInput = z
+  .object({
+    street: z.string().min(1),
+    city: z.string().min(1),
+    postal_code: z.string().min(1),
+    country: z.string().min(1),
+    state_region: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const LegalEntityIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    legal_name: z.string(),
+    legal_form: z.union([z.string(), z.null()]).optional(),
+    country: z.string().min(2).max(2),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    lei: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
+    foreign_identifier: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const NaturalPersonIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    place_of_birth: z.string(),
+    country: z.string().min(2).max(2),
+    birth_name: z.union([z.string(), z.null()]).optional(),
+    national_id: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
+  })
+  .passthrough()
+const SoleProprietorIdentityInput = z
+  .object({
+    partner_type: z.string(),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    country: z.string().min(2).max(2),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
+  })
+  .passthrough()
+const PartnerSubmitRequest = z
+  .object({
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      NaturalPersonIdentityInput,
+      SoleProprietorIdentityInput,
+    ]),
+  })
+  .passthrough()
+const PartnerSubmitResponse = z
+  .object({
+    partner_id: z.string(),
+    display_name: z.string(),
+    partner_type: PartnerType,
+    status: z.string(),
+    is_new: z.boolean(),
+    governed_action_id: z.union([z.string(), z.null()]).optional(),
+    country: z.union([z.string(), z.null()]).optional(),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
+    commercial_register_no: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const ResolutionEventSummary = z
   .object({
     classification: z.string(),
@@ -1119,51 +1186,6 @@ const MergeHistoryResponse = z
     items: z.array(MergeLineageRecordResponse),
   })
   .passthrough()
-const RegisteredAddressInput = z
-  .object({
-    street: z.string().min(1),
-    city: z.string().min(1),
-    postal_code: z.string().min(1),
-    country: z.string().min(1),
-    state_region: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const LegalEntityIdentityInput = z
-  .object({
-    partner_type: z.string(),
-    legal_name: z.string(),
-    legal_form: z.union([z.string(), z.null()]).optional(),
-    country: z.string().min(2).max(2),
-    tax_id_vat: z.union([z.string(), z.null()]).optional(),
-    lei: z.union([z.string(), z.null()]).optional(),
-    commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
-    foreign_identifier: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const NaturalPersonIdentityInput = z
-  .object({
-    partner_type: z.string(),
-    full_name: z.string(),
-    date_of_birth: z.string(),
-    place_of_birth: z.string(),
-    country: z.string().min(2).max(2),
-    birth_name: z.union([z.string(), z.null()]).optional(),
-    national_id: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
-  })
-  .passthrough()
-const SoleProprietorIdentityInput = z
-  .object({
-    partner_type: z.string(),
-    full_name: z.string(),
-    date_of_birth: z.string(),
-    country: z.string().min(2).max(2),
-    tax_id_vat: z.union([z.string(), z.null()]).optional(),
-    commercial_register_no: z.union([z.string(), z.null()]).optional(),
-    registered_address: z.union([RegisteredAddressInput, z.null()]).optional(),
-  })
-  .passthrough()
 const PartnerMatchRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
@@ -1180,28 +1202,6 @@ const PartnerMatchResponse = z
     matched_partner_id: z.union([z.string(), z.null()]),
     candidate_summaries: z.array(CandidateSummary),
     inputs_hash: z.string(),
-  })
-  .passthrough()
-const PartnerSubmitRequest = z
-  .object({
-    identity: z.discriminatedUnion("partner_type", [
-      LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
-    ]),
-  })
-  .passthrough()
-const PartnerSubmitResponse = z
-  .object({
-    partner_id: z.string(),
-    display_name: z.string(),
-    partner_type: PartnerType,
-    status: z.string(),
-    is_new: z.boolean(),
-    governed_action_id: z.union([z.string(), z.null()]).optional(),
-    country: z.union([z.string(), z.null()]).optional(),
-    tax_id_vat: z.union([z.string(), z.null()]).optional(),
-    commercial_register_no: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const PartnerStatus = z.enum([
@@ -1617,7 +1617,12 @@ const CreateFARequest = z
       .optional(),
   })
   .passthrough()
-const FALifecycleStatus = z.enum(["draft", "active", "terminated"])
+const FALifecycleStatus = z.enum([
+  "draft",
+  "active",
+  "deactivated",
+  "terminated",
+])
 const FAPinnedVersionChangeImpact = z
   .object({
     template_id: z.string().uuid(),
@@ -1657,6 +1662,7 @@ const FADraftResponse = z
 const FAAgreementLifecycle = z.enum([
   "draft",
   "active",
+  "deactivated",
   "terminated",
   "expired",
 ])
@@ -1744,8 +1750,10 @@ const FADetailResponse = z
     activated_at: z.union([z.string(), z.null()]),
     activated_by: z.union([z.string(), z.null()]),
     activated_by_name: z.union([z.string(), z.null()]),
-    suspended_at: z.union([z.string(), z.null()]),
-    suspended_by: z.union([z.string(), z.null()]),
+    deactivated_at: z.union([z.string(), z.null()]),
+    deactivated_by: z.union([z.string(), z.null()]),
+    reactivated_at: z.union([z.string(), z.null()]),
+    reactivated_by: z.union([z.string(), z.null()]),
     terminated_at: z.union([z.string(), z.null()]),
     terminated_by: z.union([z.string(), z.null()]),
     created_by: z.union([z.string(), z.null()]),
@@ -1795,6 +1803,12 @@ const FATerminatedResponse = z
     status: z.string(),
     terminated_at: z.string().datetime({ offset: true }),
   })
+  .passthrough()
+const DeactivateFARequest = z
+  .object({ justification: z.string().min(20).max(1000) })
+  .passthrough()
+const ReactivateFARequest = z
+  .object({ justification: z.string().min(20).max(1000) })
   .passthrough()
 const FALCPartnerItem = z
   .object({ id: z.string().uuid(), legal_name: z.string() })
@@ -2991,6 +3005,12 @@ export const schemas = {
   NaturalPersonIdentityDetail,
   SoleProprietorIdentityDetail,
   PartnerDetailResponse,
+  RegisteredAddressInput,
+  LegalEntityIdentityInput,
+  NaturalPersonIdentityInput,
+  SoleProprietorIdentityInput,
+  PartnerSubmitRequest,
+  PartnerSubmitResponse,
   ResolutionEventSummary,
   CandidateSummary,
   ResolutionCandidatesResponse,
@@ -3027,14 +3047,8 @@ export const schemas = {
   IdentityChangeDetailResponse,
   MergeLineageRecordResponse,
   MergeHistoryResponse,
-  RegisteredAddressInput,
-  LegalEntityIdentityInput,
-  NaturalPersonIdentityInput,
-  SoleProprietorIdentityInput,
   PartnerMatchRequest,
   PartnerMatchResponse,
-  PartnerSubmitRequest,
-  PartnerSubmitResponse,
   PartnerStatus,
   PartnerRole,
   UboCompletenessStatus,
@@ -3101,6 +3115,8 @@ export const schemas = {
   TerminationReadinessResponse,
   TerminateFARequest,
   FATerminatedResponse,
+  DeactivateFARequest,
+  ReactivateFARequest,
   FALCPartnerItem,
   FALCPartnersResponse,
   FAUtilizationResponse,
@@ -4658,6 +4674,34 @@ and invalidates all active sessions.`,
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/deactivate",
+    alias: "deactivate_fa_api_v1_framework_agreements__id__deactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ justification: z.string().min(20).max(1000) })
+          .passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FADraftResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "put",
     path: "/api/v1/framework-agreements/:id/document-overrides",
     alias:
@@ -4843,6 +4887,34 @@ and invalidates all active sessions.`,
       },
     ],
     response: FAPricingSnapshotResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/framework-agreements/:id/reactivate",
+    alias: "reactivate_fa_api_v1_framework_agreements__id__reactivate_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ justification: z.string().min(20).max(1000) })
+          .passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FADraftResponse,
     errors: [
       {
         status: 422,
@@ -5348,6 +5420,32 @@ Post-November: this endpoint will reflect live channel configuration.`,
       },
     ],
     response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/partners/:id",
+    alias: "edit_partner_draft_api_v1_partners__id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerSubmitRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerSubmitResponse,
     errors: [
       {
         status: 422,

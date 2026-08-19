@@ -3315,6 +3315,47 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": ["Partners"],
+        "summary": "Edit Partner Draft",
+        "operationId": "edit_partner_draft_api_v1_partners__id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerSubmitRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerSubmitResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/partners/{id}/resolution-candidates": {
@@ -5632,6 +5673,88 @@
                 "schema": {
                   "$ref": "#/components/schemas/FATerminatedResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/deactivate": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Deactivate Fa",
+        "operationId": "deactivate_fa_api_v1_framework_agreements__id__deactivate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeactivateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FADraftResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/framework-agreements/{id}/reactivate": {
+      "post": {
+        "tags": ["Framework Agreements"],
+        "summary": "Reactivate Fa",
+        "operationId": "reactivate_fa_api_v1_framework_agreements__id__reactivate_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReactivateFARequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FADraftResponse" }
               }
             }
           },
@@ -10677,6 +10800,19 @@
         ],
         "title": "CreateTenantRequest"
       },
+      "DeactivateFARequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "DeactivateFARequest"
+      },
       "DeactivateProductRequest": {
         "properties": {
           "reason": {
@@ -11132,9 +11268,9 @@
       },
       "FAAgreementLifecycle": {
         "type": "string",
-        "enum": ["draft", "active", "terminated", "expired"],
+        "enum": ["draft", "active", "deactivated", "terminated", "expired"],
         "title": "FAAgreementLifecycle",
-        "description": "The *derived* agreement-level lifecycle. Computed from the anchor's stored status + termination\nstamp + validity — never stored. `EXPIRED` is a past `valid_until` on an otherwise-active\nagreement; `TERMINATED` is the terminal, agreement-level end. (CR-FA-04 versioning withdrawn.)"
+        "description": "The *derived* agreement-level lifecycle. Computed from the anchor's stored status + termination\nstamp + validity — never stored. `EXPIRED` is a past `valid_until` on an otherwise-active\nagreement; `TERMINATED` is the terminal, agreement-level end. `DEACTIVATED` is the switched-off\nstate (PRD1042-1891 §3) and takes precedence over EXPIRED. (CR-FA-04 versioning withdrawn.)"
       },
       "FAAuditEventResponse": {
         "properties": {
@@ -11383,19 +11519,33 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Activated By Name"
           },
-          "suspended_at": {
+          "deactivated_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
               { "type": "null" }
             ],
-            "title": "Suspended At"
+            "title": "Deactivated At"
           },
-          "suspended_by": {
+          "deactivated_by": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
               { "type": "null" }
             ],
-            "title": "Suspended By"
+            "title": "Deactivated By"
+          },
+          "reactivated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Reactivated At"
+          },
+          "reactivated_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Reactivated By"
           },
           "terminated_at": {
             "anyOf": [
@@ -11466,8 +11616,10 @@
           "activated_at",
           "activated_by",
           "activated_by_name",
-          "suspended_at",
-          "suspended_by",
+          "deactivated_at",
+          "deactivated_by",
+          "reactivated_at",
+          "reactivated_by",
           "terminated_at",
           "terminated_by",
           "created_by",
@@ -11663,7 +11815,7 @@
       },
       "FALifecycleStatus": {
         "type": "string",
-        "enum": ["draft", "active", "terminated"],
+        "enum": ["draft", "active", "deactivated", "terminated"],
         "title": "FALifecycleStatus"
       },
       "FALinkedFinancingsResponse": {
@@ -14240,6 +14392,19 @@
         },
         "type": "object",
         "title": "ReInitiateRequest"
+      },
+      "ReactivateFARequest": {
+        "properties": {
+          "justification": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 20,
+            "title": "Justification"
+          }
+        },
+        "type": "object",
+        "required": ["justification"],
+        "title": "ReactivateFARequest"
       },
       "ReactivateTenantRequest": {
         "properties": {

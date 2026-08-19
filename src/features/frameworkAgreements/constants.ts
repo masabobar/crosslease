@@ -11,6 +11,7 @@ export const FA_STATUS_BADGE_VARIANT: Record<
 > = {
   draft: "outline",
   active: "default",
+  deactivated: "outline",
   terminated: "outline",
   expired: "secondary",
 }
