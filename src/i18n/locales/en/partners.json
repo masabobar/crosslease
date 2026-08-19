@@ -149,6 +149,7 @@
       "addAccountButton": "Add new account",
       "entriesColumn": "Entries",
       "dealerNumberPlaceholder": "Enter dealer number",
+      "dealerNumberEmptyHint": "No dealer numbers added yet.",
       "accountsEmptyHint": "No accounts added yet.",
       "accountDialog": {
         "addTitle": "Add account",

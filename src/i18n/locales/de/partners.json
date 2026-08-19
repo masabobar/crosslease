@@ -149,6 +149,7 @@
       "addAccountButton": "Neues Konto hinzufügen",
       "entriesColumn": "Entries",
       "dealerNumberPlaceholder": "Händlernummer eingeben",
+      "dealerNumberEmptyHint": "Noch keine Händlernummern hinzugefügt.",
       "accountsEmptyHint": "Noch keine Konten hinzugefügt.",
       "accountDialog": {
         "addTitle": "Konto hinzufügen",
