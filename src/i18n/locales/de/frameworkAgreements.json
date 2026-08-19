@@ -30,6 +30,7 @@
   "statuses": {
     "draft": "Entwurf",
     "active": "Aktiv",
+    "deactivated": "Deaktiviert",
     "terminated": "Beendet",
     "expired": "Abgelaufen"
   },

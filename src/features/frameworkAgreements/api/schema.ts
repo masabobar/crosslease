@@ -3,13 +3,20 @@ import { requiredEnum, requiredNumber } from "@/lib/zodHelpers"
 import { FieldDiffItemSchema } from "@/types/api"
 
 // Wire enums — must match refinext-api src/app/modules/framework_agreements/domain/enums.py exactly
-export const FALifecycleStatusSchema = z.enum(["draft", "active", "terminated"])
+export const FALifecycleStatusSchema = z.enum([
+  "draft",
+  "active",
+  "deactivated",
+  "terminated",
+])
 export type FALifecycleStatus = z.infer<typeof FALifecycleStatusSchema>
 
 // The agreement's displayable lifecycle — CR-FA-07 on PRD1042-1799 as revised 6/8/2026:
-// Draft (discardable), Active, Expired, Terminated. No Superseded, because CR-FA-04 was
-// withdrawn and the agreement is not versioned; no Scheduled, which the CR leaves open and
-// the wire does not offer (see open-questions Q-075).
+// Draft (discardable), Active, Deactivated, Expired, Terminated. No Superseded, because
+// CR-FA-04 was withdrawn and the agreement is not versioned; no Scheduled, which the CR
+// leaves open and the wire does not offer (see open-questions Q-075). `deactivated` is the
+// switched-off state added by PRD1042-1891 §3 and takes precedence over `expired` — the
+// backend computes that precedence, the FE just renders whichever value it receives.
 //
 // Distinct from FALifecycleStatus above, and the two are not interchangeable:
 //
@@ -24,6 +31,7 @@ export type FALifecycleStatus = z.infer<typeof FALifecycleStatusSchema>
 export const FAAgreementLifecycleSchema = z.enum([
   "draft",
   "active",
+  "deactivated",
   "terminated",
   "expired",
 ])
@@ -285,8 +293,12 @@ export const FADetailResponseSchema = z.object({
   activated_at: z.string().nullable(),
   activated_by: z.string().uuid().nullable(),
   activated_by_name: z.string().nullable(),
-  suspended_at: z.string().nullable(),
-  suspended_by: z.string().uuid().nullable(),
+  // Renamed from suspended_at/suspended_by (PRD1042-1891 §3) — reactivated_at/_by are new,
+  // set when a deactivated agreement is reactivated.
+  deactivated_at: z.string().nullable(),
+  deactivated_by: z.string().uuid().nullable(),
+  reactivated_at: z.string().nullable(),
+  reactivated_by: z.string().uuid().nullable(),
   terminated_at: z.string().nullable(),
   terminated_by: z.string().uuid().nullable(),
   created_by: z.string().uuid().nullable(),
