@@ -5100,10 +5100,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                { "$ref": "#/components/schemas/TemplateStatus" },
-                { "type": "null" }
-              ],
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
               "title": "Status"
             }
           },
@@ -16287,18 +16284,6 @@
         "type": "object",
         "required": ["items", "total", "page", "per_page", "total_pages"],
         "title": "TemplateListResponse"
-      },
-      "TemplateStatus": {
-        "type": "string",
-        "enum": [
-          "draft",
-          "scheduled",
-          "active",
-          "superseded",
-          "terminated",
-          "discarded"
-        ],
-        "title": "TemplateStatus"
       },
       "TemplateVersionSummary": {
         "properties": {

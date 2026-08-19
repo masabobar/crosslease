@@ -1514,15 +1514,6 @@ const VersionDiffResponse = z
     orchestration_linkage: z.array(FieldDiffItem),
   })
   .passthrough()
-const TemplateStatus = z.enum([
-  "draft",
-  "scheduled",
-  "active",
-  "superseded",
-  "terminated",
-  "discarded",
-])
-const status = z.union([TemplateStatus, z.null()]).optional()
 const TemplateCurrentVersionSummary = z
   .object({
     version_id: z.string().uuid(),
@@ -3086,8 +3077,6 @@ export const schemas = {
   VersionUsageItem,
   VersionUsageResponse,
   VersionDiffResponse,
-  TemplateStatus,
-  status,
   TemplateCurrentVersionSummary,
   TemplateListItem,
   TemplateListResponse,
@@ -7244,7 +7233,7 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "status",
         type: "Query",
-        schema: status,
+        schema: search,
       },
       {
         name: "page",

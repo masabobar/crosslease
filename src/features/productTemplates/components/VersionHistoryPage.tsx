@@ -46,7 +46,7 @@ import NotFoundPage from "@/features/errors/components/NotFoundPage"
 const TIMELINE_DOT_CLASSES: Record<TemplateStatus, string> = {
   draft: "bg-primary",
   scheduled: "bg-indigo-600",
-  active: "bg-green-600",
+  effective: "bg-green-600",
   superseded: "bg-slate-500",
   terminated: "bg-red-600",
   discarded: "bg-slate-300",

@@ -72,10 +72,14 @@ export type AssetCategory = z.infer<typeof AssetCategorySchema>
 // derive it from. Declared here, above the first response schema that references it, rather
 // than down with the version-history shapes: every `version_status` field below is this enum,
 // and a `const` referenced before its initializer throws at module load.
+//
+// "active" was renamed to "effective" on the backend (a currently-in-force version reads as
+// "effective", not "active") — a wire value change, not just a label swap. Distinct from
+// PRODUCT_STATUS_ACTIVE in constants.ts, which is the separate product-level status.
 export const TemplateStatusSchema = z.enum([
   "draft",
   "scheduled",
-  "active",
+  "effective",
   "superseded",
   "terminated",
   "discarded",

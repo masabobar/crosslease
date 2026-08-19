@@ -23,7 +23,6 @@ import type {
   TemplateDraftDiscardedResponse,
   TemplateDraftUpdatedResponse,
   TemplateListResponse,
-  TemplateStatus,
   TemplateVersionDetail,
   TerminateTemplateVersionRequest,
   TerminateTemplateVersionResponse,
@@ -34,7 +33,12 @@ import type {
 
 export type ProductTemplateListParams = {
   search?: string
-  status?: TemplateStatus
+  // Was `TemplateStatus` (the 6-value version-status enum): the backend widened this query
+  // param to a plain string and dropped the TemplateStatus component from openapi.json — it
+  // no longer rejects values outside that enum. TemplateStatus itself is unaffected as a
+  // concept (version_status fields on responses are still validated against it); only this
+  // request-side constraint was relaxed.
+  status?: string
   page?: number
   per_page?: number
 }

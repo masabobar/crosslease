@@ -27,11 +27,9 @@ import {
   FILTERABLE_TEMPLATE_STATUSES,
   PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES,
 } from "@/features/productTemplates/types"
-import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
-import type {
-  TemplateListItem,
-  TemplateStatus,
-} from "@/features/productTemplates/api/schema"
+import type { ProductTemplateStatusFilter } from "@/features/productTemplates/types"
+import { PRODUCT_STATUS_DEACTIVATED } from "@/features/productTemplates/constants"
+import type { TemplateListItem } from "@/features/productTemplates/api/schema"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
@@ -91,18 +89,16 @@ export default function ProductTemplateListPage() {
   const pageNumbers = data ? buildPageNumbers(page, totalPages) : []
   const hasActiveFilters = !!search.trim() || !!statusFilter
 
-  // "Active" reads as "Effective" on this page's status filter, matching the table's
-  // status badge — a page-local override, not a change to the shared `versionStatuses.*`
-  // keys other product-template surfaces still render as "Active".
-  function statusFilterLabel(status: TemplateStatus): string {
-    return status === TemplateStatusSchema.enum.active
-      ? t("list.effectiveStatusLabel")
-      : t(`versionStatuses.${status}` as "versionStatuses.draft")
-  }
-
   function handleRowClick(template: TemplateListItem) {
     setSelectedTemplate(template)
     setIsDrawerOpen(true)
+  }
+
+  // `deactivated` is a product_status, not a TemplateStatus, so it has its own label key.
+  function statusFilterLabel(status: ProductTemplateStatusFilter): string {
+    return status === PRODUCT_STATUS_DEACTIVATED
+      ? t("list.productStatus.deactivated")
+      : t(`versionStatuses.${status}` as "versionStatuses.draft")
   }
 
   function handleCreateTemplate() {
@@ -182,7 +178,7 @@ export default function ProductTemplateListPage() {
           value={statusFilter ?? ALL_STATUSES_VALUE}
           onValueChange={v =>
             setStatusFilter(
-              v === ALL_STATUSES_VALUE ? null : (v as TemplateStatus)
+              v === ALL_STATUSES_VALUE ? null : (v as ProductTemplateStatusFilter)
             )
           }
         >

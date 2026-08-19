@@ -1,6 +1,8 @@
 import { useSearchParams } from "react-router-dom"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type { TemplateStatus } from "@/features/productTemplates/api/schema"
+import { PRODUCT_STATUS_DEACTIVATED } from "@/features/productTemplates/constants"
+import type { ProductTemplateStatusFilter } from "@/features/productTemplates/types"
 
 export const PAGE_SIZES = [10, 25, 50, 100] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
@@ -12,11 +14,11 @@ type ProductTemplateListParams = {
   page: number
   perPage: PageSize
   search: string
-  statusFilter: TemplateStatus | null
+  statusFilter: ProductTemplateStatusFilter | null
   setPage: (p: number) => void
   setPerPage: (size: PageSize) => void
   setSearch: (q: string) => void
-  setStatusFilter: (status: TemplateStatus | null) => void
+  setStatusFilter: (status: ProductTemplateStatusFilter | null) => void
 }
 
 export function useProductTemplateListParams(): ProductTemplateListParams {
@@ -48,10 +50,11 @@ export function useProductTemplateListParams(): ProductTemplateListParams {
     : DEFAULT_PAGE_SIZE
   const search = params.get("q") ?? ""
   const rawStatus = params.get("status")
-  const statusFilter: TemplateStatus | null =
+  const statusFilter: ProductTemplateStatusFilter | null =
     rawStatus &&
-    TemplateStatusSchema.options.includes(rawStatus as TemplateStatus)
-      ? (rawStatus as TemplateStatus)
+    (TemplateStatusSchema.options.includes(rawStatus as TemplateStatus) ||
+      rawStatus === PRODUCT_STATUS_DEACTIVATED)
+      ? (rawStatus as ProductTemplateStatusFilter)
       : null
 
   function setPage(p: number) {
@@ -69,7 +72,7 @@ export function useProductTemplateListParams(): ProductTemplateListParams {
     update({ q: q || null, page: null })
   }
 
-  function setStatusFilter(status: TemplateStatus | null) {
+  function setStatusFilter(status: ProductTemplateStatusFilter | null) {
     update({ status, page: null })
   }
 
