@@ -160,8 +160,8 @@ type PartnerSubmitFormProps = {
 // Backs the Dealer number section below — not a wire field on any identity shape yet (see
 // api/schema.ts), so it's local UI state rather than on the RHF form, kept out of the
 // match/submit payload beyond the non-empty values threaded through onValid. The list starts
-// with one blank entry; "Add new …" appends another. Keyed by a generated id, not array
-// index, since entries are only ever appended.
+// empty (an empty-state message renders instead of a table); "Add new …" appends a blank
+// entry. Keyed by a generated id, not array index, since entries are only ever appended.
 type EditableEntry = { id: string; value: string }
 
 // Enforced client-side against LcNumberCreateRequest.lc_number's backend regex — blank
@@ -176,9 +176,7 @@ function useEditableEntryList(): {
   handleChange: (id: string, value: string) => void
   handleAdd: () => void
 } {
-  const [entries, setEntries] = useState<EditableEntry[]>([
-    { id: crypto.randomUUID(), value: "" },
-  ])
+  const [entries, setEntries] = useState<EditableEntry[]>([])
 
   function handleChange(id: string, value: string) {
     setEntries(prev =>
@@ -198,6 +196,7 @@ type EditableEntryTableProps = {
   entriesColumnLabel: string
   addButtonLabel: string
   placeholder: string
+  emptyMessage: string
   entries: EditableEntry[]
   testIdPrefix: string
   onChange: (id: string, value: string) => void
@@ -214,6 +213,7 @@ function EditableEntryTable({
   entriesColumnLabel,
   addButtonLabel,
   placeholder,
+  emptyMessage,
   entries,
   testIdPrefix,
   onChange,
@@ -247,27 +247,36 @@ function EditableEntryTable({
             </Button>
           </div>
 
-          {entries.map((entry, index) => {
-            const showError = isEntryInvalid?.(entry.value) ?? false
-            return (
-              <div
-                key={entry.id}
-                className="flex flex-col justify-center gap-1 border-b border-border last:border-b-0 min-h-[52px] px-2 py-1.5"
-              >
-                <Input
-                  className="w-full border-transparent focus-visible:border-transparent"
-                  data-testid={`field-${testIdPrefix}-${index}`}
-                  placeholder={placeholder}
-                  value={entry.value}
-                  error={showError}
-                  onChange={e => onChange(entry.id, e.target.value)}
-                />
-                {showError && invalidHint && (
-                  <p className="text-xs text-destructive">{invalidHint}</p>
-                )}
-              </div>
-            )
-          })}
+          {entries.length === 0 ? (
+            <p
+              className="px-2 py-4 text-sm text-muted-foreground"
+              data-testid={`${testIdPrefix}-empty`}
+            >
+              {emptyMessage}
+            </p>
+          ) : (
+            entries.map((entry, index) => {
+              const showError = isEntryInvalid?.(entry.value) ?? false
+              return (
+                <div
+                  key={entry.id}
+                  className="flex flex-col justify-center gap-1 border-b border-border last:border-b-0 min-h-[52px] px-2 py-1.5"
+                >
+                  <Input
+                    className="w-full border-transparent focus-visible:border-transparent"
+                    data-testid={`field-${testIdPrefix}-${index}`}
+                    placeholder={placeholder}
+                    value={entry.value}
+                    error={showError}
+                    onChange={e => onChange(entry.id, e.target.value)}
+                  />
+                  {showError && invalidHint && (
+                    <p className="text-xs text-destructive">{invalidHint}</p>
+                  )}
+                </div>
+              )
+            })
+          )}
         </div>
       </CardContent>
     </Card>
@@ -799,6 +808,7 @@ function PartnerSubmitForm({
             entriesColumnLabel={t("submit.form.entriesColumn")}
             addButtonLabel={t("submit.form.addDealerNumberButton")}
             placeholder={t("submit.form.dealerNumberPlaceholder")}
+            emptyMessage={t("submit.form.dealerNumberEmptyHint")}
             entries={dealerNumbers}
             testIdPrefix="dealer-number"
             onChange={handleDealerNumberChange}
