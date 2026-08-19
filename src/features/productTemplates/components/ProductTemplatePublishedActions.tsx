@@ -229,6 +229,16 @@ export function ProductTemplatePublishedActions({
   }
 
   function getActions() {
+    // Deactivated is product-level and overrides everything else: a deactivated product's
+    // only available action is reactivating it, regardless of the current version's own
+    // lifecycle status or draft state.
+    if (isDeactivated) {
+      return (
+        <div className="flex justify-end gap-2">
+          {getActivateDeactivateButton()}
+        </div>
+      )
+    }
     return isDraft ? getDraftActions() : getRegularActions()
   }
 
