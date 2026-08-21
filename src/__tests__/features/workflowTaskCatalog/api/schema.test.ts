@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   AddTaskRequestSchema,
   AuditTrailResponseSchema,
+  CaseTypeSchema,
   CatalogDetailResponseSchema,
   CatalogEntityTypeSchema,
   CatalogLayerSchema,
@@ -27,6 +28,7 @@ const validListItem = {
   catalog_state: "active",
   entity_type: "refinancing_request",
   entity_id: TEMPLATE_UUID,
+  case_type: "main_process",
   valid_from: "2026-08-01",
   valid_until: null,
   created_at: "2026-07-30T12:00:00Z",
@@ -40,6 +42,7 @@ const validCatalogResponse = {
   catalog_state: "active",
   entity_type: "refinancing_request",
   entity_id: TEMPLATE_UUID,
+  case_type: "main_process",
   valid_from: "2026-08-01",
   valid_until: null,
   description: null,
@@ -59,19 +62,38 @@ describe("wire enums", () => {
       "financing",
       "redemption_request",
     ])
-    expect(CatalogStateSchema.options).toEqual(["active", "archived"])
+    // PRD1042-1894 Block 8 (AC §7): Draft → Active → Suspended, and back — supersedes the
+    // earlier "created directly ACTIVE, no transitions" model.
+    expect(CatalogStateSchema.options).toEqual([
+      "draft",
+      "active",
+      "suspended",
+      "archived",
+    ])
+    // PRD1042-1790 item 1 — only main_process/package_redemption carry a checklist in the
+    // November MVP; the other five are modeled because the wire sends them, not because
+    // this app builds anything for them yet.
+    expect(CaseTypeSchema.options).toEqual([
+      "main_process",
+      "package_redemption",
+      "single_redemption",
+      "lessee_change",
+      "object_swap",
+      "extension",
+      "asset_event",
+    ])
   })
 
-  // The pre-wiring shell carried draft/deprecated states that the BE never had: a catalog is
-  // created directly ACTIVE and no endpoint transitions it. Reintroducing either here would
-  // silently accept a state the wire cannot produce.
-  it("rejects the retired draft and deprecated states", () => {
-    expect(() => CatalogStateSchema.parse("draft")).toThrow()
+  it("rejects the retired deprecated state — never had a wire counterpart", () => {
     expect(() => CatalogStateSchema.parse("deprecated")).toThrow()
   })
 
   it("rejects an unknown entity type", () => {
     expect(() => CatalogEntityTypeSchema.parse("lessee_change")).toThrow()
+  })
+
+  it("rejects an unknown case type", () => {
+    expect(() => CaseTypeSchema.parse("financing")).toThrow()
   })
 })
 
@@ -106,6 +128,7 @@ describe("CatalogListItemSchema", () => {
     "catalog_state",
     "entity_type",
     "entity_id",
+    "case_type",
     "valid_from",
     "valid_until",
     "created_at",
@@ -192,7 +215,6 @@ describe("CreateCatalogRequestSchema", () => {
       CreateCatalogRequestSchema.parse({
         catalog_name: "Refinancing Rules",
         catalog_layer: "product_specific",
-        entity_type: "refinancing_request",
         entity_id: TEMPLATE_UUID,
         valid_from: "2026-08-01",
         valid_until: null,
@@ -206,13 +228,50 @@ describe("CreateCatalogRequestSchema", () => {
       CreateCatalogRequestSchema.parse({
         catalog_name: "Financing Default",
         catalog_layer: "global_default",
-        entity_type: "financing",
         entity_id: null,
         valid_from: "2026-08-01",
         valid_until: null,
         case_type: "main_process",
       })
     ).not.toThrow()
+  })
+
+  // entity_type is no longer part of this request (PRD1042-1790 item 1) — the backend
+  // derives it from case_type. A stray entity_type in the payload is silently stripped
+  // rather than rejected, same as any other unrecognized key.
+  it("strips a stray entity_type instead of rejecting it", () => {
+    const parsed = CreateCatalogRequestSchema.parse({
+      catalog_name: "Refinancing Rules",
+      catalog_layer: "product_specific",
+      entity_type: "refinancing_request",
+      entity_id: TEMPLATE_UUID,
+      valid_from: "2026-08-01",
+      case_type: "main_process",
+    })
+    expect(parsed).not.toHaveProperty("entity_type")
+  })
+
+  it("rejects a missing case_type", () => {
+    expect(() =>
+      CreateCatalogRequestSchema.parse({
+        catalog_name: "Refinancing Rules",
+        catalog_layer: "product_specific",
+        entity_id: TEMPLATE_UUID,
+        valid_from: "2026-08-01",
+      })
+    ).toThrow()
+  })
+
+  it("rejects a case_type outside the documented enum", () => {
+    expect(() =>
+      CreateCatalogRequestSchema.parse({
+        catalog_name: "Refinancing Rules",
+        catalog_layer: "product_specific",
+        entity_id: TEMPLATE_UUID,
+        valid_from: "2026-08-01",
+        case_type: "financing",
+      })
+    ).toThrow()
   })
 
   it("rejects an empty catalog name", () => {
@@ -251,9 +310,9 @@ describe("CreateCatalogRequestSchema", () => {
       CreateCatalogRequestSchema.parse({
         catalog_name: "Refinancing Rules",
         catalog_layer: "product_specific",
-        entity_type: "refinancing_request",
         entity_id: "Mortgage Plus",
         valid_from: "2026-08-01",
+        case_type: "main_process",
       })
     ).toThrow()
   })
@@ -264,6 +323,14 @@ describe("CatalogResponseSchema", () => {
     const parsed = CatalogResponseSchema.parse(validCatalogResponse)
     expect(parsed.warnings).toEqual([])
     expect(parsed.current_version_id).toBeUndefined()
+  })
+
+  it("accepts a null case_type", () => {
+    const parsed = CatalogResponseSchema.parse({
+      ...validCatalogResponse,
+      case_type: null,
+    })
+    expect(parsed.case_type).toBeNull()
   })
 
   it("keeps the no-global-default warning the BE returns on create", () => {

@@ -12,11 +12,36 @@ export const CatalogEntityTypeSchema = z.enum([
 ])
 export type CatalogEntityType = z.infer<typeof CatalogEntityTypeSchema>
 
-// Only two states exist on the wire. A catalog is created directly ACTIVE
-// (services.py create_catalog) — there is no draft, and no endpoint transitions state,
-// so "deprecated" from the pre-wiring shell has no wire counterpart.
-export const CatalogStateSchema = z.enum(["active", "archived"])
+// PRD1042-1894 Block 8 (AC §7) — the catalogue lifecycle: Draft → Active → Suspended, and
+// back (reactivate). A new catalogue starts DRAFT (never resolved by a case); activate runs
+// the validator and, on success, makes it the one resolved for its case type + product; an
+// Active catalogue can be suspended (stops resolving for new cases, nothing deleted) and
+// reactivated. ARCHIVED is a reserved post-MVP terminal, not reachable through this flow.
+// Supersedes the older "created directly ACTIVE, no draft, no transitions" model — see
+// the activate/{catalog_id}/activate, /suspend, /reactivate endpoints in openapi.json.
+export const CatalogStateSchema = z.enum([
+  "draft",
+  "active",
+  "suspended",
+  "archived",
+])
 export type CatalogState = z.infer<typeof CatalogStateSchema>
+
+// PRD1042-1790 item 1 — the process a case runs, distinct from the object it runs on
+// (CatalogEntityType). Seven case types exist; only the two below (main_process,
+// package_redemption) carry a checklist in the November MVP. The other five run without a
+// catalogue and nothing is built to give them one (out of scope). Financing is deliberately
+// not a case type — it has actions, not a workflow, and cannot own a catalogue.
+export const CaseTypeSchema = z.enum([
+  "main_process",
+  "package_redemption",
+  "single_redemption",
+  "lessee_change",
+  "object_swap",
+  "extension",
+  "asset_event",
+])
+export type CaseType = z.infer<typeof CaseTypeSchema>
 
 // The four product-specific change types CR PRD1042-1554 B2 requires, as the wire spells them.
 // `defined` is the Global Default layer's own entry; the other three are the product's changes.
@@ -111,6 +136,7 @@ export const CatalogListItemSchema = z.object({
   catalog_state: CatalogStateSchema,
   entity_type: CatalogEntityTypeSchema.nullable(),
   entity_id: z.string().uuid().nullable(),
+  case_type: CaseTypeSchema.nullable(),
   valid_from: z.string(),
   valid_until: z.string().nullable(),
   created_at: z.string(),
@@ -127,17 +153,18 @@ export const CatalogListResponseSchema = z.object({
 export type CatalogListResponse = z.infer<typeof CatalogListResponseSchema>
 
 // POST /workflow-task-catalogs — mirrors CreateCatalogRequest.
-// entity_type is required for BOTH layers; entity_id must be null for global_default and
-// is required for product_specific (catalog_schemas.py validate_product_specific_fields).
+// entity_type is no longer part of this request (PRD1042-1790 item 1) — the backend derives
+// it from case_type and returns it on the response schemas below instead. entity_id must
+// still be null for global_default and is required for product_specific
+// (catalog_schemas.py validate_product_specific_fields).
 export const CreateCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200),
   catalog_layer: CatalogLayerSchema,
   valid_from: z.string(),
   valid_until: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
-  entity_type: CatalogEntityTypeSchema.nullable().optional(),
   entity_id: z.string().uuid().nullable().optional(),
-  case_type: z.string(),
+  case_type: CaseTypeSchema,
 })
 export type CreateCatalogRequest = z.infer<typeof CreateCatalogRequestSchema>
 
@@ -152,6 +179,7 @@ export const CatalogResponseSchema = z.object({
   catalog_state: CatalogStateSchema,
   entity_type: CatalogEntityTypeSchema.nullable(),
   entity_id: z.string().uuid().nullable(),
+  case_type: CaseTypeSchema.nullable(),
   valid_from: z.string(),
   valid_until: z.string().nullable(),
   description: z.string().nullable(),

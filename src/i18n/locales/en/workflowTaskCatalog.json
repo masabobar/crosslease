@@ -9,7 +9,9 @@
     "redemption_request": "Redemption Request"
   },
   "catalogStates": {
+    "draft": "Draft",
     "active": "Active",
+    "suspended": "Suspended",
     "archived": "Archived"
   },
   "list": {

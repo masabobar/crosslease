@@ -22,7 +22,7 @@ import { useSelectableProductTemplates } from "@/features/frameworkAgreements/ho
 import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
 import { ENTITY_TYPE_OPTIONS } from "@/features/workflowTaskCatalog/constants"
 import {
-  CatalogEntityTypeSchema,
+  CaseTypeSchema,
   CatalogLayerSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
@@ -172,14 +172,18 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
       {
         catalog_name: values.catalogName.trim(),
         catalog_layer: layer,
-        // Form fields are strings ("" = unset); parse at the form → wire boundary so an
-        // unexpected value throws here instead of travelling as a bad request param.
-        entity_type: CatalogEntityTypeSchema.parse(values.entityType),
+        // entity_type is no longer part of CreateCatalogRequest (PRD1042-1790 item 1) — the
+        // backend now derives it from case_type and returns it on the response instead. The
+        // Entity type field above still validates values.entityType client-side but that
+        // choice is no longer transmitted; case_type is still fixed per layer below pending
+        // a real entityType → case_type mapping.
         // entity_id carries the Product Template UUID and must be null on Global Default.
         entity_id: isGlobalDefault ? null : values.productTemplate,
         valid_from: values.validFrom,
         valid_until: values.validUntil || null,
-        case_type: isGlobalDefault ? "package_redemption" : "main_process",
+        case_type: isGlobalDefault
+          ? CaseTypeSchema.enum.package_redemption
+          : CaseTypeSchema.enum.main_process,
       },
       {
         onSuccess: response => {
