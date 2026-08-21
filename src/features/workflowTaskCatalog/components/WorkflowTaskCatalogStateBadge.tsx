@@ -9,9 +9,12 @@ type Props = {
 }
 
 // Soft green pill for active — matches TemplateVersionStatusBadge's palette. Archived
-// renders as plain text with no pill background, per the Figma list view.
+// renders as plain text with no pill background, per the Figma list view. Draft/suspended
+// added for the Draft → Active → Suspended lifecycle (PRD1042-1894 Block 8 AC §7).
 const STATE_BADGE_CLASSES: Record<CatalogState, string> = {
+  [CatalogStateSchema.enum.draft]: "bg-sky-600/10 text-sky-600",
   [CatalogStateSchema.enum.active]: "bg-green-600/10 text-green-600",
+  [CatalogStateSchema.enum.suspended]: "bg-amber-600/10 text-amber-600",
   [CatalogStateSchema.enum.archived]: "",
 }
 

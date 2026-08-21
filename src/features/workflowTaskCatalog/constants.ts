@@ -59,7 +59,12 @@ export const ENTITY_TYPE_OPTIONS = [
 ] as const
 
 export const CATALOG_STATE_OPTIONS = [
+  { value: CatalogStateSchema.enum.draft, labelKey: "catalogStates.draft" },
   { value: CatalogStateSchema.enum.active, labelKey: "catalogStates.active" },
+  {
+    value: CatalogStateSchema.enum.suspended,
+    labelKey: "catalogStates.suspended",
+  },
   {
     value: CatalogStateSchema.enum.archived,
     labelKey: "catalogStates.archived",

@@ -135,13 +135,14 @@ export default function WorkflowTaskCatalogDetailPage() {
         ?.template_name ?? null)
     : null
 
-  // No draft state exists on the wire — a catalogue is created directly active and nothing
-  // transitions it, so "active" is the editable state and "archived" is terminal read-only.
+  // PRD1042-1894 Block 8 (AC §7): the catalogue lifecycle is now Draft → Active → Suspended,
+  // and editing is in place on any of those states (the audit trail is the history, not a
+  // version flow) — only ARCHIVED is the reserved, terminal read-only state.
   // current_version_id is the only source of the version every task mutation needs: with no
   // version there is no request to build, so authoring is off rather than failing on submit.
   const canEditTasks =
     canManage &&
-    catalog.catalog_state === CatalogStateSchema.enum.active &&
+    catalog.catalog_state !== CatalogStateSchema.enum.archived &&
     catalog.current_version_id !== null
 
   return (
