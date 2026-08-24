@@ -24,6 +24,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
   FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES,
 } from "@/features/frameworkAgreements/types"
 import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
@@ -80,6 +81,10 @@ export default function FrameworkAgreementDetailPage() {
   const canViewAuditHistory = Boolean(
     currentUser?.role &&
     FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES.includes(currentUser.role)
+  )
+  const isPricingOnlyView = Boolean(
+    currentUser?.role &&
+    FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES.includes(currentUser.role)
   )
 
   if (agreementId === undefined || isFrameworkAgreementNotFoundError(error)) {
@@ -185,18 +190,22 @@ export default function FrameworkAgreementDetailPage() {
           >
             {t("detail.tabs.agreementDetails")}
           </TabsTrigger>
-          <TabsTrigger
-            value="templatesAndDocuments"
-            data-testid="tab-templates-and-documents"
-          >
-            {t("detail.tabs.templatesAndDocuments")}
-          </TabsTrigger>
-          <TabsTrigger value="utilization" data-testid="tab-utilization">
-            {t("detail.tabs.utilization")}
-          </TabsTrigger>
-          <TabsTrigger value="financings" data-testid="tab-financings">
-            {t("detail.tabs.financings")}
-          </TabsTrigger>
+          {!isPricingOnlyView && (
+            <>
+              <TabsTrigger
+                value="templatesAndDocuments"
+                data-testid="tab-templates-and-documents"
+              >
+                {t("detail.tabs.templatesAndDocuments")}
+              </TabsTrigger>
+              <TabsTrigger value="utilization" data-testid="tab-utilization">
+                {t("detail.tabs.utilization")}
+              </TabsTrigger>
+              <TabsTrigger value="financings" data-testid="tab-financings">
+                {t("detail.tabs.financings")}
+              </TabsTrigger>
+            </>
+          )}
           {canViewAuditHistory && (
             <TabsTrigger value="auditHistory" data-testid="tab-audit-history">
               {t("detail.tabs.auditHistory")}
@@ -206,58 +215,68 @@ export default function FrameworkAgreementDetailPage() {
 
         <TabsContent value="agreementDetails">
           <div className="grid grid-cols-2 gap-6 mt-4">
-            <div className="border border-border rounded-xl bg-background overflow-hidden">
-              <div className="bg-muted px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.sections.identity")}
-                </p>
-              </div>
-              <div className="p-4 flex flex-col gap-4">
-                <ReviewRow
-                  label={t("detail.fields.agreementId")}
-                  value={
-                    <span className="flex items-center gap-1.5">
-                      {data.id}
-                      <CopyButton text={data.id} />
-                    </span>
-                  }
-                />
-                <ReviewRow
-                  label={t("fields.agreementName")}
-                  value={data.agreement_name}
-                />
-                <ReviewRow
-                  label={t("fields.leasingCompany")}
-                  value={data.lc_partner_name ?? "—"}
-                />
-                <ReviewRow
-                  label={t("fields.bankEntity")}
-                  value={
-                    data.bank_entity
-                      ? t(
-                          `bankEntities.${data.bank_entity}` as "bankEntities.sparkasse"
-                        )
-                      : "—"
-                  }
-                />
-                <ReviewRow label={t("fields.currency")} value={data.currency} />
-              </div>
-            </div>
+            {!isPricingOnlyView && (
+              <>
+                <div className="border border-border rounded-xl bg-background overflow-hidden">
+                  <div className="bg-muted px-4 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                      {t("detail.sections.identity")}
+                    </p>
+                  </div>
+                  <div className="p-4 flex flex-col gap-4">
+                    <ReviewRow
+                      label={t("detail.fields.agreementId")}
+                      value={
+                        <span className="flex items-center gap-1.5">
+                          {data.id}
+                          <CopyButton text={data.id} />
+                        </span>
+                      }
+                    />
+                    <ReviewRow
+                      label={t("fields.agreementName")}
+                      value={data.agreement_name}
+                    />
+                    <ReviewRow
+                      label={t("fields.leasingCompany")}
+                      value={data.lc_partner_name ?? "—"}
+                    />
+                    <ReviewRow
+                      label={t("fields.bankEntity")}
+                      value={
+                        data.bank_entity
+                          ? t(
+                              `bankEntities.${data.bank_entity}` as "bankEntities.sparkasse"
+                            )
+                          : "—"
+                      }
+                    />
+                    <ReviewRow
+                      label={t("fields.currency")}
+                      value={data.currency}
+                    />
+                  </div>
+                </div>
 
-            <div className="border border-border rounded-xl bg-background overflow-hidden">
-              <div className="bg-muted px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.sections.creditEnvelope")}
-                </p>
-              </div>
-              <div className="p-4 flex flex-col gap-4">
-                <ReviewRow
-                  label={t("fields.maxVolumeEur")}
-                  value={formatCurrency(data.max_volume_eur, data.currency)}
-                />
-                <ReviewRow label={t("fields.currency")} value={data.currency} />
-              </div>
-            </div>
+                <div className="border border-border rounded-xl bg-background overflow-hidden">
+                  <div className="bg-muted px-4 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                      {t("detail.sections.creditEnvelope")}
+                    </p>
+                  </div>
+                  <div className="p-4 flex flex-col gap-4">
+                    <ReviewRow
+                      label={t("fields.maxVolumeEur")}
+                      value={formatCurrency(data.max_volume_eur, data.currency)}
+                    />
+                    <ReviewRow
+                      label={t("fields.currency")}
+                      value={data.currency}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {data.vfe_amount_eur !== null && (
               <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
@@ -290,77 +309,83 @@ export default function FrameworkAgreementDetailPage() {
               </div>
             )}
 
-            <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
-              <div className="bg-muted px-4 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                  {t("detail.sections.lifecycle")}
-                </p>
+            {!isPricingOnlyView && (
+              <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
+                <div className="bg-muted px-4 py-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                    {t("detail.sections.lifecycle")}
+                  </p>
+                </div>
+                <div className="p-4 grid grid-cols-2 gap-4">
+                  <ReviewRow
+                    label={t("detail.fields.status")}
+                    value={t(`statuses.${data.agreement_lifecycle}`)}
+                  />
+                  {data.created_by_name && (
+                    <ReviewRow
+                      label={t("detail.fields.createdBy")}
+                      value={data.created_by_name}
+                    />
+                  )}
+                  <ReviewRow
+                    label={t("detail.fields.createdAt")}
+                    value={formatDateTime(data.created_at)}
+                  />
+                  {data.activated_by_name && (
+                    <ReviewRow
+                      label={t("detail.fields.activatedBy")}
+                      value={data.activated_by_name}
+                    />
+                  )}
+                  {data.activated_at && (
+                    <ReviewRow
+                      label={t("detail.fields.activatedAt")}
+                      value={formatDateTime(data.activated_at)}
+                    />
+                  )}
+                  <ReviewRow
+                    label={t("fields.validFrom")}
+                    value={data.valid_from}
+                  />
+                  <ReviewRow
+                    label={t("fields.validUntil")}
+                    value={data.valid_until ?? t("fields.openEnded")}
+                  />
+                  {data.terminated_at && (
+                    <ReviewRow
+                      label={t("detail.fields.terminatedAt")}
+                      value={formatDateTime(data.terminated_at)}
+                    />
+                  )}
+                </div>
               </div>
-              <div className="p-4 grid grid-cols-2 gap-4">
-                <ReviewRow
-                  label={t("detail.fields.status")}
-                  value={t(`statuses.${data.agreement_lifecycle}`)}
-                />
-                {data.created_by_name && (
-                  <ReviewRow
-                    label={t("detail.fields.createdBy")}
-                    value={data.created_by_name}
-                  />
-                )}
-                <ReviewRow
-                  label={t("detail.fields.createdAt")}
-                  value={formatDateTime(data.created_at)}
-                />
-                {data.activated_by_name && (
-                  <ReviewRow
-                    label={t("detail.fields.activatedBy")}
-                    value={data.activated_by_name}
-                  />
-                )}
-                {data.activated_at && (
-                  <ReviewRow
-                    label={t("detail.fields.activatedAt")}
-                    value={formatDateTime(data.activated_at)}
-                  />
-                )}
-                <ReviewRow
-                  label={t("fields.validFrom")}
-                  value={data.valid_from}
-                />
-                <ReviewRow
-                  label={t("fields.validUntil")}
-                  value={data.valid_until ?? t("fields.openEnded")}
-                />
-                {data.terminated_at && (
-                  <ReviewRow
-                    label={t("detail.fields.terminatedAt")}
-                    value={formatDateTime(data.terminated_at)}
-                  />
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </TabsContent>
 
-        <TabsContent value="templatesAndDocuments">
-          <TemplatesAndDocumentsTab
-            frameworkAgreementId={data.id}
-            frameworkAgreementStatus={data.status}
-            productTemplateIds={data.product_template_ids}
-            canManageFrameworkAgreement={canManageFrameworkAgreement}
-          />
-        </TabsContent>
+        {!isPricingOnlyView && (
+          <>
+            <TabsContent value="templatesAndDocuments">
+              <TemplatesAndDocumentsTab
+                frameworkAgreementId={data.id}
+                frameworkAgreementStatus={data.status}
+                productTemplateIds={data.product_template_ids}
+                canManageFrameworkAgreement={canManageFrameworkAgreement}
+              />
+            </TabsContent>
 
-        <TabsContent value="utilization">
-          <UtilizationTab
-            frameworkAgreementId={data.id}
-            currency={data.currency}
-          />
-        </TabsContent>
+            <TabsContent value="utilization">
+              <UtilizationTab
+                frameworkAgreementId={data.id}
+                currency={data.currency}
+              />
+            </TabsContent>
 
-        <TabsContent value="financings">
-          <FinancingsTab frameworkAgreementId={data.id} />
-        </TabsContent>
+            <TabsContent value="financings">
+              <FinancingsTab frameworkAgreementId={data.id} />
+            </TabsContent>
+          </>
+        )}
 
         {canViewAuditHistory && (
           <TabsContent value="auditHistory">

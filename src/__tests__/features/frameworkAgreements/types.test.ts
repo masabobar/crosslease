@@ -3,6 +3,7 @@ import {
   FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES,
   FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES,
   FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES,
+  FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES,
 } from "@/features/frameworkAgreements/types"
 
 /**
@@ -75,6 +76,44 @@ describe("FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES", () => {
   it("is a subset of the FA read gate", () => {
     FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES.forEach(role => {
       expect(FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES).toContain(role)
+    })
+  })
+})
+
+describe("FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES", () => {
+  it("contains only front_office", () => {
+    expect([...FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES]).toEqual([
+      "front_office",
+    ])
+  })
+
+  // The narrowed view is a subset of the detail screen, so a role that cannot
+  // open the screen at all must never appear here — it would read as "sees the
+  // pricing section" when it in fact sees a 403.
+  it("is a subset of the FA read gate", () => {
+    FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES.forEach(role => {
+      expect(FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES).toContain(role)
+    })
+  })
+
+  it.each(NO_FA_ACCESS_ROLES)("excludes %s", role => {
+    expect(FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES.includes(role)).toBe(false)
+  })
+
+  // bank_power_user edits the agreement and back_office/auditor read all of it;
+  // narrowing any of them to the pricing section would hide data they own.
+  it.each(["bank_power_user", "back_office", "auditor"] as const)(
+    "excludes %s, which sees the full detail surface",
+    role => {
+      expect(FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES.includes(role)).toBe(false)
+    }
+  )
+
+  // front_office holds FA read but not FA audit — the two gates must stay
+  // consistent, or the pricing-only view would still offer an audit tab.
+  it("names a role that is excluded from the audit gate", () => {
+    FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES.forEach(role => {
+      expect(FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES).not.toContain(role)
     })
   })
 })

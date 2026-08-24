@@ -34,6 +34,19 @@ export const FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES: readonly UserRole[] = [
 export const FRAMEWORK_AGREEMENT_AUDIT_READ_ALLOWED_ROLES: readonly UserRole[] =
   [BANK_POWER_USER_ROLE, BACK_OFFICE_ROLE, AUDITOR_ROLE]
 
+// front_office reads a framework agreement for one purpose — the pricing it needs to
+// assemble a financing — so on the detail screen it gets the Agreement details tab and
+// the Pricing section, and nothing else (PRD1042-1707). Editing stays with the Bank
+// Power User via FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES.
+//
+// This narrows the UI only; it is not a confidentiality boundary. The BE already decides
+// what the role may read — `hide_pricing` in fa_schemas.py is leasing_company_user-only,
+// so front_office genuinely receives pricing, while special_conditions, lifecycle
+// timestamps and actor refs arrive null for it regardless of what this list says.
+export const FRAMEWORK_AGREEMENT_PRICING_ONLY_ROLES: readonly UserRole[] = [
+  FRONT_OFFICE_ROLE,
+]
+
 export type FrameworkAgreementWizardStep =
   | "identity"
   | "envelopePricing"

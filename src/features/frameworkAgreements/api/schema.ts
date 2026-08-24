@@ -260,8 +260,15 @@ export const FALCPartnersResponseSchema = z.object({
 })
 export type FALCPartnersResponse = z.infer<typeof FALCPartnersResponseSchema>
 
-// GET /framework-agreements/{id} — role-scoped: pricing/lifecycle-actor/special_conditions
-// fields are null for front_office/leasing_company_user/support_user (see phase-9a).
+// GET /framework-agreements/{id} — role-scoped, but not uniformly: the BE applies four
+// separate rules (fa_schemas.py, FADetailResponse.from_entity).
+//   pricing (vfe_amount_eur) + bank-internal fields → hidden from leasing_company_user ONLY.
+//     front_office is a bank operational role and reads pricing to assemble financings.
+//   special_conditions, lifecycle timestamps, actor refs → hidden from front_office,
+//     leasing_company_user and support_user.
+// Do not collapse these into one list: an earlier version of this comment claimed pricing
+// was nulled for front_office, which made PRD1042-1707 look like backend work when the
+// gap was entirely in this repo's UI.
 export const FADetailResponseSchema = z.object({
   id: z.string().uuid(),
   agreement_name: z.string(),
