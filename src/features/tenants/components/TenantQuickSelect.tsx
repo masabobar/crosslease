@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/select"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
-import { ApiError } from "@/lib/api"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 export function TenantQuickSelect() {
   const { t } = useTranslation("tenants")
@@ -26,9 +26,7 @@ export function TenantQuickSelect() {
   if (isError) {
     return (
       <p className="text-sm text-destructive" data-testid="tenant-select-error">
-        {error instanceof ApiError
-          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

@@ -13,12 +13,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSetChecklistItemStatus } from "@/features/workflowTaskCatalog/hooks/useSetChecklistItemStatus"
 import { SETTABLE_CHECKLIST_ITEM_STATUS_OPTIONS } from "@/features/workflowTaskCatalog/constants"
 import { SettableChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import type { ChecklistItemResponse } from "@/features/workflowTaskCatalog/api/runtimeSchema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // The note is optional on the wire. Open question 18 on CR PRD1042-1790 asks whether waiving
 // should require a written reason — until that is answered the platform's own rule (optional)
@@ -90,13 +90,7 @@ function SetChecklistItemStatusDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

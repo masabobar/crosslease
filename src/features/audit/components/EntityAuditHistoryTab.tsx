@@ -2,11 +2,11 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { ApiError } from "@/lib/api"
 import { AuditTable } from "@/features/audit/components/AuditTable"
 import { AuditEventDrawer } from "@/features/audit/components/AuditEventDrawer"
 import { useEntityAuditEvents } from "@/features/audit/hooks/useEntityAuditEvents"
 import type { AuditEventListItem } from "@/features/audit/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const ENTITY_TAB_PAGE_SIZE = 10
 
@@ -44,9 +44,7 @@ export function EntityAuditHistoryTab({
           className="py-8 text-center text-sm text-muted-foreground"
           data-testid="entity-audit-load-error"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       )}
 

@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { isUuidRouteParam } from "@/lib/routeParams"
-import { ApiError } from "@/lib/api"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { PartnerTypeBadge } from "@/features/partners/components/PartnerTypeBadge"
 import {
@@ -39,6 +38,7 @@ import {
   PartnerTypeSchema,
 } from "@/features/partners/api/schema"
 import { PARTNER_SUBMIT_ALLOWED_ROLES } from "@/features/partners/types"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   AUDITOR_ROLE,
   FRONT_OFFICE_ROLE,
@@ -119,9 +119,7 @@ export default function PartnerDetailPage() {
         className="text-sm text-destructive p-8"
         data-testid="partner-load-error"
       >
-        {error instanceof ApiError
-          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

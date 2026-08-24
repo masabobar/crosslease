@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableEmptyState } from "@/components/ui/empty"
 import { formatDateTime } from "@/lib/formatters"
-import { ApiError } from "@/lib/api"
 import { useWorkflowTaskCatalogAuditTrail } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogAuditTrail"
 import { deriveFieldDelta } from "@/features/workflowTaskCatalog/utils"
 import type { TaskFieldChange } from "@/features/workflowTaskCatalog/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const SKELETON_ROWS = 4
 
@@ -138,11 +138,7 @@ function AuditTrailTab({ catalogId }: Props) {
         data-testid="audit-trail-error"
         className="text-sm text-destructive py-8 text-center"
       >
-        {error instanceof ApiError
-          ? t(`errors.${error.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

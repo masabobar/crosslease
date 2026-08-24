@@ -19,7 +19,6 @@ import {
 import { SelectField } from "@/components/ui/select"
 import { useCreateGrant } from "@/features/tenants/hooks/useCreateGrant"
 import { useUsers } from "@/features/users/hooks/useUsers"
-import { ApiError } from "@/lib/api"
 import {
   AccessReasonSchema,
   CreateGrantFormSchema,
@@ -31,6 +30,7 @@ import { formatDateTime, getInitials } from "@/lib/formatters"
 import { UserInitialsAvatar } from "@/features/tenants/components/UserInitialsAvatar"
 import { cn } from "@/lib/utils"
 import { SUPPORT_USER_ROLE } from "@/features/users/types"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   DATE_FORMAT,
   MAX_GRANT_DAYS,
@@ -265,11 +265,7 @@ export function NewGrantDialog({
                 data-testid="new-grant-grantee-error"
                 className="text-sm text-destructive"
               >
-                {usersError instanceof ApiError
-                  ? t(`errors.${usersError.code}`, {
-                      defaultValue: t("errors.generic"),
-                    })
-                  : t("errors.generic")}
+                {resolveApiErrorMessage(usersError, t)}
               </p>
             ) : (
               <Controller

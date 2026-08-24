@@ -10,9 +10,9 @@ import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useArchivePartner } from "@/features/partners/hooks/useArchivePartner"
 import { usePartnerArchiveEligibility } from "@/features/partners/hooks/usePartnerArchiveEligibility"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const archiveSchema = z.object({
   reason: z.string().min(20),
@@ -94,11 +94,7 @@ function ArchivePartnerDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

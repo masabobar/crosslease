@@ -33,9 +33,9 @@ import {
   todayCalendarDate,
 } from "@/features/users/api/schema"
 import { resolveFieldMessage } from "@/features/users/utils"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { InviteSuccessResult } from "@/features/users/types"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type InviteUserModalProps = {
   open: boolean
@@ -220,11 +220,7 @@ function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
       )
         return
 
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      toast.error(resolveApiErrorMessage(err, t))
     }
   })
 

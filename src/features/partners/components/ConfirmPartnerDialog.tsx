@@ -6,9 +6,9 @@ import { toast } from "sonner"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useConfirmPartner } from "@/features/partners/hooks/useConfirmPartner"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Single-actor FO confirmation per US 13.5 (PRD1042-1449): no BO approval.
 const confirmSchema = z.object({
@@ -69,11 +69,7 @@ function ConfirmPartnerDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

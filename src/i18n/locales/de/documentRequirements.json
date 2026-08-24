@@ -188,6 +188,23 @@
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "CATALOG_VALIDATION_ERROR": "Dieser Katalog konnte nicht validiert werden. Überprüfen Sie die Anforderungen und versuchen Sie es erneut.",
+    "DOCUMENT_REQUIREMENT_CATALOG_MODULE_NOT_ACTIVE": "Dokumentenanforderungen sind für Ihre Organisation nicht aktiviert.",
+    "DOCUMENT_REQUIREMENT_CATALOG_NOT_FOUND": "Dieser Katalog wurde nicht gefunden. Möglicherweise wurde er entfernt.",
+    "DOCUMENT_REQUIREMENT_FULFILMENT_NOT_FOUND": "Dieser Erfüllungsnachweis wurde nicht gefunden.",
+    "DOCUMENT_REQUIREMENT_NOT_FOUND": "Diese Anforderung wurde nicht gefunden. Laden Sie den Katalog neu.",
+    "DOCUMENT_TYPE_ORIGIN_MISMATCH": "Der Dokumententyp stammt nicht aus der erwarteten Quelle.",
+    "DUPLICATE_CATALOG_NAME": "Ein Katalog mit diesem Namen und dieser Art existiert bereits.",
+    "DUPLICATE_REQUIREMENT_CODE": "Dieser Anforderungscode wird in diesem Katalog bereits verwendet.",
+    "EMPTY_CATALOG": "Dieser Katalog enthält keine aktiven Anforderungen. Fügen Sie mindestens eine hinzu, bevor Sie fortfahren.",
+    "INCOMPATIBLE_DOCUMENT_TYPE": "Der verknüpfte Dokumententyp entspricht nicht dem für diese Anforderung erwarteten Typ.",
+    "INVALID_CONDITION": "Eine Bedingung ist erforderlich, wenn die Anwendbarkeit „Bedingt“ ist, und muss andernfalls leer bleiben.",
+    "INVALID_CONTEXT_SCOPE": "Der Prozesskontext einer Anforderung muss Teil der Prozesskontexte des Katalogs sein.",
+    "INVALID_FULFILMENT_STATUS_TRANSITION": "Diese Änderung des Erfüllungsstatus ist nicht zulässig.",
+    "LC_PARTNER_NOT_BOUND": "Ihr Konto ist keiner Leasinggesellschaft zugeordnet, daher können diese Verpflichtungen nicht angezeigt werden.",
+    "ONE_CATALOGUE_PER_BANK": "Für diese Bank existiert bereits ein Katalog für Dokumentenanforderungen.",
+    "REQUIREMENT_ALREADY_DEACTIVATED": "Diese Anforderung ist bereits deaktiviert.",
+    "UNKNOWN_DOCUMENT_TYPE": "Dieser Dokumententyp ist nicht im Dokumententypverzeichnis Ihrer Bank enthalten.",
     "VALIDATION_ERROR": "Einige der eingegebenen Werte wurden abgelehnt. Bitte überprüfen Sie das Formular und versuchen Sie es erneut."
   }
 }

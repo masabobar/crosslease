@@ -24,9 +24,9 @@ import type {
   UpsertIntegrationBindingForm,
   IntegrationBindingResponse,
 } from "@/features/tenants/api/schema"
-import { ApiError } from "@/lib/api"
 import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 import { formatDateTime } from "@/lib/formatters"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type SectionProps = {
   tenantId: string
@@ -434,9 +434,7 @@ export function IntegrationBindingSection({
             className="text-sm text-muted-foreground py-4 text-center"
             data-testid="integration-binding-error"
           >
-            {error instanceof ApiError
-              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         ) : !hasBinding ? (
           <div className="flex flex-col items-center gap-3 py-8 px-2">

@@ -4,8 +4,8 @@ import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SelectField } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ApiError } from "@/lib/api"
 import { useDocumentRequirementCatalogPreview } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogPreview"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type Props = {
   catalogId: string
@@ -82,11 +82,7 @@ function DocumentRequirementCatalogPreviewPanel({
           data-testid="preview-error"
           className="mt-3 text-sm text-destructive"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       )}
 

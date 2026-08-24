@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import type { FieldValues, UseFormSetError } from "react-hook-form"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type FormErrorTarget<T extends FieldValues> = {
   /** Pass the form's `getValues` — used to read the registered field names. */
@@ -35,10 +35,6 @@ export function useTenantFormErrorHandler<T extends FieldValues>({
     )
       return
 
-    toast.error(
-      error instanceof ApiError
-        ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-        : t("errors.generic")
-    )
+    toast.error(resolveApiErrorMessage(error, t))
   }
 }

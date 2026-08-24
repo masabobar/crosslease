@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import { NPV_FORMULA_OPTIONS } from "@/features/productTemplates/constants"
-import { resolveApiErrorMessage } from "@/features/productTemplates/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { useTemplateVersionDiff } from "@/features/productTemplates/hooks/useTemplateVersionDiff"
 import type { FieldDiffItem } from "@/features/productTemplates/api/schema"
 

@@ -99,7 +99,24 @@
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "title": "Etwas ist schiefgelaufen",
     "retry": "Erneut versuchen",
-    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder.",
-    "NETWORK_ERROR": "Der Server ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    "AUDITOR_ACCESS_EXPIRED": "Ihr Prüfungsauftrag ist abgelaufen. Sie haben keinen Zugriff mehr auf diese Daten.",
+    "BAD_REQUEST": "Die Anfrage konnte nicht verarbeitet werden. Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut.",
+    "CROSS_TENANT_ACCESS_ATTEMPTED": "Dieser Datensatz gehört zu einer anderen Organisation und kann nicht aufgerufen werden.",
+    "FILE_TOO_LARGE": "Diese Datei ist zu groß. Bitte laden Sie eine kleinere Datei hoch.",
+    "FORBIDDEN": "Sie haben keine Berechtigung für diese Aktion.",
+    "INTERNAL_SERVER_ERROR": "Der Server konnte diese Anfrage nicht abschließen. Bitte versuchen Sie es erneut; wenden Sie sich bei anhaltenden Problemen an den Support.",
+    "INVALID_FILE_TYPE": "Dieser Dateityp wird nicht unterstützt.",
+    "INVALID_IMAGE_DIMENSIONS": "Die Bildabmessungen liegen außerhalb des zulässigen Bereichs.",
+    "MEDIA_NOT_FOUND": "Diese Datei wurde nicht gefunden. Möglicherweise wurde sie entfernt.",
+    "MEDIA_UPLOAD_ERROR": "Die Datei konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.",
+    "MODULE_NOT_ACTIVE": "Diese Funktion ist für Ihre Organisation nicht aktiviert.",
+    "NETWORK_ERROR": "Der Server ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "NOT_FOUND": "Der angeforderte Datensatz wurde nicht gefunden. Möglicherweise wurde er entfernt.",
+    "PERMISSION_DENIED": "Sie haben keine Berechtigung für diese Aktion.",
+    "RATE_LIMIT_EXCEEDED": "Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+    "SESSION_EXPIRED": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "TOKEN_REVOKED": "Ihre Sitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an.",
+    "UNAUTHORIZED": "Sie sind nicht angemeldet. Bitte melden Sie sich an und versuchen Sie es erneut.",
+    "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   }
 }

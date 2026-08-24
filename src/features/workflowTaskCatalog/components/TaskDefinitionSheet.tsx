@@ -23,13 +23,13 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import { useAddCatalogTask } from "@/features/workflowTaskCatalog/hooks/useAddCatalogTask"
 import { useUpdateCatalogTask } from "@/features/workflowTaskCatalog/hooks/useUpdateCatalogTask"
 import { useRemoveCatalogTask } from "@/features/workflowTaskCatalog/hooks/useRemoveCatalogTask"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS,
   TASK_CATEGORY_OPTIONS,
@@ -299,13 +299,7 @@ function TaskDefinitionSheet({
     )
       return
 
-    toast.error(
-      err instanceof ApiError
-        ? t(`errors.${err.code}` as "errors.generic", {
-            defaultValue: t("errors.generic"),
-          })
-        : t("errors.generic")
-    )
+    toast.error(resolveApiErrorMessage(err, t))
   }
 
   function onSubmit(values: TaskFormValues) {

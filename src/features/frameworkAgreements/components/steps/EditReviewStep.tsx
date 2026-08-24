@@ -3,12 +3,12 @@ import { useFormState, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ApiError } from "@/lib/api"
 import { formatCurrency } from "@/lib/formatters"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import type {
   EditFrameworkAgreementFormValues,
   FADetailResponse,
@@ -121,11 +121,7 @@ function EditReviewStep({ form, frameworkAgreement }: Props) {
                     className="text-xs text-destructive"
                   >
                     {t("wizard.templateNamesUnavailable")}{" "}
-                    {templatesError instanceof ApiError
-                      ? t(`errors.${templatesError.code}` as "errors.generic", {
-                          defaultValue: t("errors.generic"),
-                        })
-                      : t("errors.generic")}
+                    {resolveApiErrorMessage(templatesError, t)}
                   </p>
                 )}
               </div>

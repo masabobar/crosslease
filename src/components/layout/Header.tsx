@@ -8,7 +8,6 @@ import {
   LogOut,
   User,
 } from "lucide-react"
-import { toast } from "sonner"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -18,12 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useLogout } from "@/features/auth/hooks/useLogout"
 import { getInitials } from "@/lib/formatters"
 import { useBreadcrumbs } from "@/components/layout/useBreadcrumbs"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 export function Header() {
   const { t } = useTranslation("common")
@@ -135,13 +134,7 @@ export function Header() {
               onClick={() => {
                 doLogout(undefined, {
                   onError: err => {
-                    toast.error(
-                      err instanceof ApiError
-                        ? t(`errors.${err.code}`, {
-                            defaultValue: t("errors.generic"),
-                          })
-                        : t("errors.generic")
-                    )
+                    showApiError(err, t)
                   },
                 })
               }}

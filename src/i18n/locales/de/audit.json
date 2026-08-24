@@ -140,6 +140,9 @@
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "AUDIT_EVENT_NOT_FOUND": "Dieses Audit-Ereignis wurde nicht gefunden.",
+    "EXPORT_FAILED": "Der Export konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "EXPORT_NOT_READY": "Der Export wird noch erstellt. Versuchen Sie es in einem Moment erneut.",
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   },
   "clipboard": {

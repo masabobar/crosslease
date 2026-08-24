@@ -9,7 +9,6 @@ import {
   SheetClose,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { ApiError } from "@/lib/api"
 import { AuditResultBadge } from "@/features/audit/components/AuditResultBadge"
 import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
 import { useAuditEventDetail } from "@/features/audit/hooks/useAuditEventDetail"
@@ -17,6 +16,7 @@ import { useAuditEventLabels } from "@/features/audit/hooks/useAuditEventLabels"
 import { deriveAuditResult } from "@/features/audit/api/schema"
 import { formatEventType } from "@/lib/formatters"
 import type { AuditEvent, AuditResult } from "@/features/audit/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type DrawerTab = "overview" | "actor" | "payload"
 
@@ -390,11 +390,7 @@ export function AuditEventDrawer({ eventId, onClose }: AuditEventDrawerProps) {
         {isError && !isLoading && (
           <div className="flex-1 flex items-center justify-center px-4 h-full">
             <p className="text-sm text-muted-foreground text-center">
-              {error instanceof ApiError
-                ? t(`errors.${error.code}`, {
-                    defaultValue: t("errors.generic"),
-                  })
-                : t("errors.generic")}
+              {resolveApiErrorMessage(error, t)}
             </p>
           </div>
         )}

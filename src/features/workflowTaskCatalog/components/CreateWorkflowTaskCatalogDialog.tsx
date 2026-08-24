@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
@@ -26,6 +25,7 @@ import {
   CatalogLayerSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Two schemas rather than one shared shape with .extend()/.refine(): the only real
 // difference is that productTemplate is required for Product-Specific and unused for
@@ -209,13 +209,7 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )
@@ -347,11 +341,7 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
                   data-testid="create-catalog-product-template-error"
                   className="text-sm text-destructive"
                 >
-                  {templatesError instanceof ApiError
-                    ? t(`errors.${templatesError.code}` as "errors.generic", {
-                        defaultValue: t("errors.generic"),
-                      })
-                    : t("errors.generic")}
+                  {resolveApiErrorMessage(templatesError, t)}
                 </p>
               ) : (
                 <Controller

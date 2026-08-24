@@ -34,9 +34,8 @@ import { isUuidRouteParam } from "@/lib/routeParams"
 import {
   isProductTemplateNotFoundError,
   latestVersionNumber,
-  resolveApiErrorMessage,
-  showApiError,
 } from "@/features/productTemplates/utils"
+import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { PRODUCT_TEMPLATE_AUDIT_ENTITY_TYPE } from "@/features/productTemplates/constants"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 

@@ -16,6 +16,7 @@ import {
   CASE_PHASE_GATE_DECIDE_ALLOWED_ROLES,
 } from "@/features/workflowTaskCatalog/types"
 import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 /**
  * The runtime half of the Workflow Task Catalog — CR PRD1042-1554 items B5–B8, FE sub-task
@@ -128,11 +129,7 @@ export default function CaseChecklistPage() {
           data-testid="case-checklist-error"
           className="text-sm text-destructive py-8 text-center"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       </div>
     )
@@ -168,13 +165,7 @@ export default function CaseChecklistPage() {
           <AlertTitle>{t("caseChecklist.projectionError.title")}</AlertTitle>
           <AlertDescription>
             <p>{t("caseChecklist.projectionError.description")}</p>
-            <p className="mt-2">
-              {projectionError instanceof ApiError
-                ? t(`errors.${projectionError.code}` as "errors.generic", {
-                    defaultValue: t("errors.generic"),
-                  })
-                : t("errors.generic")}
-            </p>
+            <p className="mt-2">{resolveApiErrorMessage(projectionError, t)}</p>
           </AlertDescription>
         </Alert>
       ) : (
@@ -211,11 +202,7 @@ export default function CaseChecklistPage() {
             data-testid="case-phase-gates-error"
             className="text-sm text-destructive"
           >
-            {gatesError instanceof ApiError
-              ? t(`errors.${gatesError.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(gatesError, t)}
           </p>
         ) : (
           <CasePhaseGatePanel

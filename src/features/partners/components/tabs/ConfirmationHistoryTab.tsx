@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button"
 import { usePartnerConfirmationHistory } from "@/features/partners/hooks/usePartnerConfirmationHistory"
 import { initialsFromName } from "@/features/partners/utils"
 import { formatDateTime } from "@/lib/formatters"
-import { ApiError } from "@/lib/api"
 import { PartnerStatusSchema } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const CONFIRMATION_HISTORY_PAGE_SIZE = 50
 
@@ -68,9 +68,7 @@ function ConfirmationHistoryTab({ partnerId }: ConfirmationHistoryTabProps) {
   if (isError) {
     return (
       <p className="text-sm text-destructive py-8 text-center">
-        {error instanceof ApiError
-          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

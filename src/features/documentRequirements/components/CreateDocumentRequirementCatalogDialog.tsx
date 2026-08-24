@@ -15,7 +15,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { resolveFormMessage } from "@/lib/formMessages"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -24,6 +23,7 @@ import { useCreateDocumentRequirementCatalog } from "@/features/documentRequirem
 import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import { CATALOG_TYPE_OPTIONS } from "@/features/documentRequirements/constants"
 import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequirements/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Every rule carries a message *code*, never bare prose: an unannotated `.max()` would surface
 // Zod's own English text to the user (see resolveFormMessage).
@@ -177,13 +177,7 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )
@@ -268,11 +262,7 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
                   data-testid="create-catalog-product-template-error"
                   className="text-sm text-destructive"
                 >
-                  {templatesError instanceof ApiError
-                    ? t(`errors.${templatesError.code}` as "errors.generic", {
-                        defaultValue: t("errors.generic"),
-                      })
-                    : t("errors.generic")}
+                  {resolveApiErrorMessage(templatesError, t)}
                 </p>
               ) : (
                 <Controller

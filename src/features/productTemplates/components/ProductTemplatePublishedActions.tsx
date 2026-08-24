@@ -25,7 +25,7 @@ import { useCreateNewProductTemplateVersion } from "@/features/productTemplates/
 import { useTerminateProductTemplateVersion } from "@/features/productTemplates/hooks/useTerminateProductTemplateVersion"
 import { useDeactivateProductTemplate } from "@/features/productTemplates/hooks/useDeactivateProductTemplate"
 import { useReactivateProductTemplate } from "@/features/productTemplates/hooks/useReactivateProductTemplate"
-import { showApiError } from "@/features/productTemplates/utils"
+import { showApiError } from "@/lib/apiErrorMessage"
 import { productTemplateNewVersionEdit } from "@/router/paths"
 import { useDiscardProductTemplateDraft } from "@/features/productTemplates/hooks/useDiscardProductTemplateDraft.ts"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
@@ -404,7 +404,8 @@ export function ProductTemplatePublishedActions({
               onClick={handleConfirmDeactivate}
               disabled={
                 isDeactivating ||
-                deactivationReason.trim().length < DEACTIVATION_REASON_MIN_LENGTH
+                deactivationReason.trim().length <
+                  DEACTIVATION_REASON_MIN_LENGTH
               }
             >
               {t("versionHistory.deactivateDialog.confirm")}

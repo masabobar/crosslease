@@ -9,7 +9,6 @@ import {
 import { useTranslation } from "react-i18next"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
-import { ApiError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { USER_ROLES } from "@/features/users/types"
 import type { UserRole, UserFilterState } from "@/features/users/types"
@@ -23,6 +22,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // i18n key casts for dynamic lookups
 type RolesKey = `roles.${UserRole}`
@@ -313,11 +313,7 @@ function UserFilterPanel({
                     data-testid="filter-tenant-error"
                     className="text-sm text-destructive"
                   >
-                    {tenantsError instanceof ApiError
-                      ? t(`errors.${tenantsError.code}`, {
-                          defaultValue: t("errors.generic"),
-                        })
-                      : t("errors.generic")}
+                    {resolveApiErrorMessage(tenantsError, t)}
                   </p>
                 ) : (
                   <SingleSelectDropdown

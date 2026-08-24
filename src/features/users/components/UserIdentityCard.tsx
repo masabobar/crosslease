@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { SquarePen } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +17,7 @@ import { useEditUser } from "@/features/users/hooks/useEditUser"
 import { buildIdentityPatch } from "@/features/users/utils"
 import { FieldMessage } from "@/features/users/components/FieldMessage"
 import { useToastStore } from "@/store/toastStore"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   AdminIdentityFormSchema,
   UserStatusSchema,
@@ -93,9 +93,7 @@ export function UserIdentityCard({
   /** Translated reason for a single rejected outcome, used in the partial-success toasts. */
   function reasonMessage(outcome: PromiseSettledResult<unknown>): string {
     const reason = outcome.status === "rejected" ? outcome.reason : null
-    return reason instanceof ApiError
-      ? t(`errors.${reason.code}`, { defaultValue: t("errors.generic") })
-      : t("errors.generic")
+    return resolveApiErrorMessage(reason, t)
   }
 
   function applyFieldErrors(outcome: PromiseSettledResult<unknown>): boolean {

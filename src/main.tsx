@@ -8,7 +8,7 @@ import {
 import { RouterProvider } from "react-router-dom"
 import { router } from "@/router"
 import { THIRTY_SECONDS_MS } from "@/lib/constants"
-import { ApiError } from "@/lib/api"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { useToastStore } from "@/store/toastStore"
 import { i18n } from "@/i18n/config"
 import "./index.css"
@@ -21,14 +21,13 @@ const queryClient = new QueryClient({
       // background refetches of a query that previously loaded successfully.
       if (query.state.data === undefined) return
 
-      const genericMessage = i18n.t("errors.generic")
       useToastStore.getState().showToast({
         variant: "error",
         title: i18n.t("errors.title"),
-        message:
-          error instanceof ApiError
-            ? i18n.t(`errors.${error.code}`, { defaultValue: genericMessage })
-            : genericMessage,
+        // Resolves against `common`, which is both this `t`'s default namespace and the
+        // fallback one — so the shared code catalogue is reachable from here even though a
+        // background refetch can fail on any feature's screen.
+        message: resolveApiErrorMessage(error, i18n.t),
       })
     },
   }),

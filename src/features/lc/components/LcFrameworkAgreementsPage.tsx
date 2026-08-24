@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next"
 import { Download } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ApiError } from "@/lib/api"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
 import { useLcPortalFrameworkAgreements } from "@/features/lc/hooks/useLcPortalFrameworkAgreements"
 import { getLcPortalDocumentDownloadUrl } from "@/features/lc/api/lcPortalApi"
@@ -19,6 +18,7 @@ import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { formatCurrency } from "@/lib/formatters"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import type { LCPortalFAListItem } from "@/features/lc/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
   const { t } = useTranslation("lc")
@@ -148,6 +148,11 @@ function FrameworkAgreementCard({ fa }: { fa: LCPortalFAListItem }) {
 
 export default function LcFrameworkAgreementsPage() {
   const { t } = useTranslation("lc")
+  // The failures this screen can surface are the framework-agreement codes, which are keyed in
+  // that feature's namespace (plus the shared ones in `common`, reached via fallbackNS). The
+  // `lc` namespace only ever carried its own nested copy of VALIDATION_ERROR, so resolving
+  // errors through it left every FA_* code on the generic message.
+  const { t: tErrors } = useTranslation("frameworkAgreements")
   const { data, isLoading, isError, error } = useLcPortalFrameworkAgreements()
 
   if (isFrameworkAgreementNotFoundError(error)) {
@@ -172,11 +177,7 @@ export default function LcFrameworkAgreementsPage() {
 
       {isError && !isLoading && (
         <p className="text-sm text-destructive py-8 text-center">
-          {error instanceof ApiError
-            ? t(`frameworkAgreements.errors.${error.code}`, {
-                defaultValue: t("frameworkAgreements.errors.generic"),
-              })
-            : t("frameworkAgreements.errors.generic")}
+          {resolveApiErrorMessage(error, tErrors)}
         </p>
       )}
 

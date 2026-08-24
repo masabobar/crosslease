@@ -4,7 +4,6 @@ import { z } from "zod"
 import { ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -25,6 +24,7 @@ import {
   UserRoleSchema,
 } from "@/features/users/api/schema"
 import { SERVER_ERROR_TYPE } from "@/lib/apiFieldErrors"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Module-level so the resolver never captures a stale per-role enum: which roles are
 // offered is enforced by the select's options (ROLE_TRANSITIONS), not by the schema.
@@ -86,11 +86,7 @@ export function EditRoleScopeDialog({
       )
         return
 
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      toast.error(resolveApiErrorMessage(err, t))
     }
   }
 

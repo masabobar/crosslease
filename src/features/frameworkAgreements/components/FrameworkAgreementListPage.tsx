@@ -2,8 +2,6 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight, Download, Plus } from "lucide-react"
-import { toast } from "sonner"
-import { ApiError } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { SearchInput } from "@/components/ui/search-input"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
@@ -36,6 +34,7 @@ import type {
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { FRAMEWORK_AGREEMENT_MANAGE_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 import { PATHS } from "@/router/paths"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 const ALL_VALUE = "all"
 const EXPORT_FILE_NAME = "framework-agreements.csv"
@@ -106,13 +105,7 @@ export default function FrameworkAgreementListPage() {
       {
         onSuccess: blob => downloadBlob(blob, EXPORT_FILE_NAME),
         onError: err => {
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          showApiError(err, t)
         },
       }
     )

@@ -38,6 +38,8 @@
     "frameworkAgreements": "Rahmenvereinbarungen"
   },
   "errors": {
-    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "NOTIFICATION_CONTRACT_REJECTION": "Diese Benachrichtigung wurde abgelehnt und konnte nicht zugestellt werden.",
+    "NOTIFICATION_TENANT_CONTEXT_INVALID": "Dieser Benachrichtigung fehlt ein gültiger Organisationskontext."
   }
 }

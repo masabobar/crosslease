@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { ApiError } from "@/lib/api"
 import { useLogout } from "@/features/auth/hooks/useLogout"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 export function TenantSuspendedPage() {
   const { t } = useTranslation("common")
@@ -11,11 +10,7 @@ export function TenantSuspendedPage() {
   function handleLogout() {
     logout(undefined, {
       onError: err => {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
+        showApiError(err, t)
       },
     })
   }

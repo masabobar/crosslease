@@ -5,11 +5,11 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { ApiError } from "@/lib/api"
 import { useDeactivateRequirement } from "@/features/documentRequirements/hooks/useDeactivateRequirement"
 import { RequirementTable } from "@/features/documentRequirements/components/RequirementTable"
 import { RequirementSheet } from "@/features/documentRequirements/components/RequirementSheet"
 import { DocumentRequirementCatalogPreviewPanel } from "@/features/documentRequirements/components/DocumentRequirementCatalogPreviewPanel"
+import { showApiError } from "@/lib/apiErrorMessage"
 import type {
   DocumentRequirementCatalogDetailResponse,
   RequirementResponse,
@@ -49,13 +49,7 @@ function DocumentRequirementCatalogRequirementsTab({
         toast.success(t("requirement.deactivateSuccess"))
       },
       onError: err => {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")
-        )
+        showApiError(err, t)
       },
     })
   }

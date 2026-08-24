@@ -5,11 +5,12 @@
 > "no commit body, no newlines"), that copy is stale: bodies are permitted, `commitlint` accepts them,
 > and most commits in this repo have one.
 >
-> **As of 2026-08-07 `.project-management/` is tracked**, so that file is shared and a stale copy is now
-> a bug to fix in place rather than route around. Note the precedence ladder runs \*project rules > CLAUDE.md
->
-> > these specialized rules\*, which means a wrong line there silently outranks a correct one here — fix it
-> > at the source.
+> **`.project-management/` is git-ignored and local-only** (`.gitignore:34`; it has never been tracked),
+> so `project-rules.md` is not shared — a stale copy there is one machine's problem, and correcting it
+> reaches nobody else. It still outranks this file: the precedence ladder is
+> _project rules > CLAUDE.md > these specialized rules_, so a wrong line there silently wins over a
+> correct one here. Fix it at the source anyway, and when the correction matters to the team, land it in
+> a tracked file — this one or `CLAUDE.md`.
 
 ## Commit Message Format
 

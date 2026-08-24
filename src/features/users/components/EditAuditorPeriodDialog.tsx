@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -26,6 +25,7 @@ import {
 } from "@/features/users/api/schema"
 import { AUDITOR_ROLE } from "@/features/users/types"
 import { formatDate } from "@/lib/formatters"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type Props = {
   open: boolean
@@ -90,11 +90,7 @@ export function EditAuditorPeriodDialog({
       )
         return
 
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      toast.error(resolveApiErrorMessage(err, t))
     }
   }
 

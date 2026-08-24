@@ -16,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ApiError } from "@/lib/api"
 import { PATHS, frameworkAgreementDetail } from "@/router/paths"
 import { useCreateFrameworkAgreementDraft } from "@/features/frameworkAgreements/hooks/useCreateFrameworkAgreementDraft"
 import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
@@ -39,6 +38,7 @@ import { ValidityTemplatesStep } from "@/features/frameworkAgreements/components
 import { ConditionsStep } from "@/features/frameworkAgreements/components/steps/ConditionsStep"
 import { DocumentsStep } from "@/features/frameworkAgreements/components/steps/DocumentsStep"
 import { ReviewStep } from "@/features/frameworkAgreements/components/steps/ReviewStep"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 const ORDERED_STEPS: readonly FrameworkAgreementWizardStep[] =
   FRAMEWORK_AGREEMENT_WIZARD_STEPS
@@ -136,13 +136,7 @@ export default function CreateFrameworkAgreementWizardPage() {
       try {
         await deleteDraftMutation.mutateAsync(draftId)
       } catch (err) {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")
-        )
+        showApiError(err, t)
       }
     }
     navigate(-1)
@@ -192,13 +186,7 @@ export default function CreateFrameworkAgreementWizardPage() {
         draftId = draft.id
         persistedDraftIdRef.current = draft.id
       } catch (err) {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")
-        )
+        showApiError(err, t)
         return
       }
     }

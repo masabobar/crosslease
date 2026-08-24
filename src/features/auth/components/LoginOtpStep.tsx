@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next"
 import { verifyOtp, resendOtp } from "../api/loginApi"
 import { TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { SUCCESS_REDIRECT_DELAY_MS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
@@ -15,6 +14,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { AppLogo } from "./AppLogo"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type OtpHelper =
   | { type: "none" }
@@ -61,10 +61,7 @@ export function LoginOtpStep({
     return () => clearTimeout(redirectTimeoutRef.current)
   }, [isSuccess, navigate])
 
-  const resolveErrorMessage = (err: unknown) =>
-    err instanceof ApiError
-      ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-      : t("errors.generic")
+  const resolveErrorMessage = (err: unknown) => resolveApiErrorMessage(err, t)
 
   const handleOtpSubmit = async (e: FormEvent) => {
     e.preventDefault()

@@ -20,11 +20,11 @@ import {
   TenantStatusSchema,
   TenantTypeSchema,
 } from "@/features/tenants/api/schema"
-import { ApiError } from "@/lib/api"
 import { PATHS, tenantDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { TENANT_CREATE_ALLOWED_ROLES } from "@/features/tenants/types"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const PAGE_SIZE = 20
 
@@ -338,11 +338,7 @@ export default function TenantManagementPage() {
                 data-testid="filter-module-error"
                 className="px-3 py-2 text-sm text-destructive"
               >
-                {platformModulesError instanceof ApiError
-                  ? t(`errors.${platformModulesError.code}`, {
-                      defaultValue: t("errors.generic"),
-                    })
-                  : t("errors.generic")}
+                {resolveApiErrorMessage(platformModulesError, t)}
               </p>
             ) : (
               platformModules.map(module => (
@@ -476,9 +472,7 @@ export default function TenantManagementPage() {
             className="text-sm text-destructive py-8 text-center"
             data-testid="tenant-list-error"
           >
-            {error instanceof ApiError
-              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         ) : (
           <TenantTable

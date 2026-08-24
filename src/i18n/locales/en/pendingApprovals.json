@@ -225,11 +225,16 @@
   "view": "View",
   "loading": "Loading…",
   "errors": {
-    "GOVERNED_ACTION_NOT_FOUND": "This request could not be found. It may have already been resolved.",
-    "GOVERNED_ACTION_ALREADY_RESOLVED": "This request has already been resolved and can no longer be modified.",
-    "GOVERNED_ACTION_NOT_EXPIRED": "Only expired requests can be re-initiated.",
-    "REINITIATION_REASON_REQUIRED": "A reason is required to re-initiate this request on behalf of another user.",
     "generic": "Something went wrong. Please try again.",
+    "GOVERNED_ACTION_ALREADY_RESOLVED": "This request has already been resolved and can no longer be modified.",
+    "GOVERNED_ACTION_EXPIRED": "This request has expired and must be re-initiated.",
+    "GOVERNED_ACTION_NOT_EXPIRED": "Only expired requests can be re-initiated.",
+    "GOVERNED_ACTION_NOT_FOUND": "This request could not be found. It may have already been resolved.",
+    "INSUFFICIENT_ROLE_FOR_APPROVAL": "Your role is not authorised to approve or reject this type of action.",
+    "MERGE_CONFLICT_NOT_ACKNOWLEDGED": "Conflict acknowledgement is required before approving this merge.",
+    "MODULE_NOT_ACTIVATABLE": "This module cannot be activated or deactivated.",
+    "REINITIATION_REASON_REQUIRED": "A reason is required to re-initiate this request on behalf of another user.",
+    "SELF_APPROVAL_NOT_ALLOWED": "You cannot approve or reject your own request.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   },
   "roles": {

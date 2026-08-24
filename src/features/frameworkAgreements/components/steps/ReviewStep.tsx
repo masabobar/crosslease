@@ -1,7 +1,6 @@
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { formatCurrency } from "@/lib/formatters"
 import { SectionCard } from "@/features/frameworkAgreements/components/SectionCard"
@@ -9,6 +8,7 @@ import { ReviewRow } from "@/features/frameworkAgreements/components/ReviewRow"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import type { FrameworkAgreementWizardForm } from "@/features/frameworkAgreements/api/schema"
 import type { FrameworkAgreementDocumentDraft } from "@/features/frameworkAgreements/types"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type Props = {
   form: UseFormReturn<FrameworkAgreementWizardForm>
@@ -105,11 +105,7 @@ function ReviewStep({ form, documents }: Props) {
                     className="text-xs text-destructive"
                   >
                     {t("wizard.templateNamesUnavailable")}{" "}
-                    {templatesError instanceof ApiError
-                      ? t(`errors.${templatesError.code}` as "errors.generic", {
-                          defaultValue: t("errors.generic"),
-                        })
-                      : t("errors.generic")}
+                    {resolveApiErrorMessage(templatesError, t)}
                   </p>
                 )}
               </div>

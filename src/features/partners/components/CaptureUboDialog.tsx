@@ -28,9 +28,9 @@ import {
   PartnerStatusSchema,
   PartnerTypeSchema,
 } from "@/features/partners/api/schema"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { selectOnFocus } from "@/lib/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const captureUboSchema = z.object({
   ubo_partner_id: z.string().min(1),
@@ -112,11 +112,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )
@@ -145,11 +141,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
                 data-testid="capture-ubo-partner-error"
                 className="text-sm text-destructive"
               >
-                {partnersError instanceof ApiError
-                  ? t(`errors.${partnersError.code}`, {
-                      defaultValue: t("errors.generic"),
-                    })
-                  : t("errors.generic")}
+                {resolveApiErrorMessage(partnersError, t)}
               </p>
             ) : (
               <Controller

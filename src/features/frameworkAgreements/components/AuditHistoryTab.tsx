@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { format, parseISO } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,12 +17,12 @@ import type {
   FAAuditEventResponse,
   FAEventTypeFilter,
 } from "@/features/frameworkAgreements/api/schema"
-import { ApiError } from "@/lib/api"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { downloadBlob } from "@/lib/download"
 import { formatDateTime } from "@/lib/formatters"
 import { BACK_OFFICE_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
+import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 
 const AUDIT_HISTORY_PAGE_SIZE = 50
 // `datetime-local` reads and writes wall-clock time, so its `max` must be built from local
@@ -188,13 +187,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         onSuccess: blob =>
           downloadBlob(blob, `fa-audit-${frameworkAgreementId}.csv`),
         onError: err => {
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          showApiError(err, t)
         },
       }
     )
@@ -283,12 +276,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
           )}
           {reconstructQuery.isError && (
             <p className="text-sm text-destructive">
-              {reconstructQuery.error instanceof ApiError
-                ? t(
-                    `errors.${reconstructQuery.error.code}` as "errors.generic",
-                    { defaultValue: t("errors.generic") }
-                  )
-                : t("errors.generic")}
+              {resolveApiErrorMessage(reconstructQuery.error, t)}
             </p>
           )}
           {reconstructQuery.data &&

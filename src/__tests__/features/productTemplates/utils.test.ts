@@ -1,72 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import type { TFunction } from "i18next"
+import { describe, it, expect } from "vitest"
 import { ApiError } from "@/lib/api"
 import {
   compareVersionNumbers,
   isProductTemplateNotFoundError,
   isModuleNotActiveError,
   latestVersionNumber,
-  resolveApiErrorMessage,
   resolveFieldErrorMessage,
-  showApiError,
 } from "@/features/productTemplates/utils"
 
-const toastErrorMock = vi.hoisted(() => vi.fn())
-vi.mock("sonner", () => ({ toast: { error: toastErrorMock } }))
-
-// Stands in for i18next's t(): returns the key when the namespace has one, otherwise the
-// caller-supplied defaultValue — the same contract resolveApiErrorMessage relies on.
-const KNOWN_KEYS = new Set([
-  "errors.generic",
-  "errors.PRODUCT_TEMPLATE_NOT_FOUND",
-])
-const t = ((key: string, options?: { defaultValue?: string }) =>
-  KNOWN_KEYS.has(key)
-    ? key
-    : (options?.defaultValue ??
-      key)) as unknown as TFunction<"productTemplates">
-
-describe("resolveApiErrorMessage", () => {
-  it("translates a known BE error code via its errors.<CODE> key", () => {
-    const error = new ApiError("PRODUCT_TEMPLATE_NOT_FOUND", "Not found")
-    expect(resolveApiErrorMessage(error, t)).toBe(
-      "errors.PRODUCT_TEMPLATE_NOT_FOUND"
-    )
-  })
-
-  it("falls back to the generic message for a code with no i18n key", () => {
-    const error = new ApiError("SOME_BRAND_NEW_CODE", "Unmapped")
-    expect(resolveApiErrorMessage(error, t)).toBe("errors.generic")
-  })
-
-  it("falls back to the generic message for a non-ApiError throw", () => {
-    expect(resolveApiErrorMessage(new Error("network down"), t)).toBe(
-      "errors.generic"
-    )
-  })
-
-  it("falls back to the generic message for undefined (query with no error)", () => {
-    expect(resolveApiErrorMessage(undefined, t)).toBe("errors.generic")
-  })
-})
-
-describe("showApiError", () => {
-  beforeEach(() => {
-    toastErrorMock.mockClear()
-  })
-
-  it("toasts the resolved message for a known code", () => {
-    showApiError(new ApiError("PRODUCT_TEMPLATE_NOT_FOUND", "Not found"), t)
-    expect(toastErrorMock).toHaveBeenCalledWith(
-      "errors.PRODUCT_TEMPLATE_NOT_FOUND"
-    )
-  })
-
-  it("toasts the generic message for an unknown code", () => {
-    showApiError(new ApiError("SOME_BRAND_NEW_CODE", "Unmapped"), t)
-    expect(toastErrorMock).toHaveBeenCalledWith("errors.generic")
-  })
-})
+// resolveApiErrorMessage / showApiError now live in @/lib/apiErrorMessage, shared by every
+// feature — their tests moved with them, to src/__tests__/lib/apiErrorMessage.test.ts.
 
 describe("isProductTemplateNotFoundError", () => {
   it("returns true for PRODUCT_TEMPLATE_NOT_FOUND", () => {

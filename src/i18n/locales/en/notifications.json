@@ -38,6 +38,8 @@
     "frameworkAgreements": "Framework agreements"
   },
   "errors": {
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "NOTIFICATION_CONTRACT_REJECTION": "This notification was rejected and could not be delivered.",
+    "NOTIFICATION_TENANT_CONTEXT_INVALID": "This notification is missing a valid organisation context."
   }
 }

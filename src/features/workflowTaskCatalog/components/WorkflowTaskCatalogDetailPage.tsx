@@ -5,7 +5,6 @@ import { Landmark, ListFilter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
-import { ApiError } from "@/lib/api"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
 import { IdentityScopeTab } from "@/features/workflowTaskCatalog/components/IdentityScopeTab"
@@ -19,6 +18,7 @@ import { useWorkflowTaskCatalogDetail } from "@/features/workflowTaskCatalog/hoo
 import { WORKFLOW_TASK_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import type { WorkflowTaskCatalogDetailTab } from "@/features/workflowTaskCatalog/types"
 import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // The detail response returns created_by and tenant_id as UUIDs with no display names, so they
 // are resolved against the tenant's user list — the same join SupportGrantsTab uses for a
@@ -106,11 +106,7 @@ export default function WorkflowTaskCatalogDetailPage() {
           data-testid="catalog-detail-error"
           className="text-sm text-destructive py-8 text-center"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       </div>
     )

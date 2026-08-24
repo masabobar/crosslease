@@ -17,7 +17,7 @@
     "type-check": "tsc -b --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "generate:api": "openapi-zod-client openapi.json -o src/generated/api.ts",
+    "generate:api": "openapi-zod-client openapi.json -o src/generated/api.ts && node scripts/fix-generated-zod-record.js src/generated/api.ts",
     "fetch:openapi": "curl -sf https://api.refinext-dev.projects.holycode.com/api/openapi.json -o openapi.json && prettier --write openapi.json && pnpm generate:api"
   },
   "dependencies": {

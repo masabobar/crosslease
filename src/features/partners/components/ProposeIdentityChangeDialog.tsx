@@ -29,11 +29,11 @@ import {
   isCommercialRegisterApplicable,
   isNotFutureDate,
 } from "@/features/partners/utils"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { COUNTRIES } from "@/lib/countries"
 import { selectOnFocus } from "@/lib/utils"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
 
@@ -173,11 +173,7 @@ function ProposeIdentityChangeDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

@@ -22,11 +22,8 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { TenantScopeGate } from "@/components/shared/TenantScopeGate"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
-import {
-  isProductTemplateNotFoundError,
-  resolveApiErrorMessage,
-  showApiError,
-} from "@/features/productTemplates/utils"
+import { isProductTemplateNotFoundError } from "@/features/productTemplates/utils"
+import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import {
   DisbursementDerivationRuleSchema,
@@ -287,7 +284,7 @@ function WizardFormView({
       await publishDraft({
         templateId: ref.templateId,
         versionNumber: ref.versionNumber,
-        body: { justification: justification.trim() || '' },
+        body: { justification: justification.trim() || "" },
       })
       onPublished()
     } catch (err) {

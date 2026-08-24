@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useSearchParams, useNavigate } from "react-router-dom"
-import { ApiError } from "@/lib/api"
 import { AuditTable } from "@/features/audit/components/AuditTable"
 import { AuditQuickFilters } from "@/features/audit/components/AuditQuickFilters"
 import { FilterPill } from "@/components/ui/filter-pill"
@@ -20,6 +19,7 @@ import type { AuditFilterState } from "@/features/audit/types"
 import type { AuditEventListItem } from "@/features/audit/api/schema"
 import { formatDate, formatEventType, formatActionType } from "@/lib/formatters"
 import { auditTrailDetail } from "@/router/paths"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const PAGE_SIZES = [10, 25, 50, 100] as const
 type PageSize = (typeof PAGE_SIZES)[number]
@@ -330,9 +330,7 @@ export default function AuditTrailPage() {
             className="py-12 text-center text-sm text-muted-foreground"
             data-testid="audit-load-error"
           >
-            {error instanceof ApiError
-              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
         {/* Rendered whenever there is data, error or not: hiding the table on a failed

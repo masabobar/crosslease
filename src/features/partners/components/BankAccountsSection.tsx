@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { SectionCard } from "@/features/partners/components/PartnerDetailPrimitives"
 import { useBankAccounts } from "@/features/partners/hooks/useBankAccounts"
-import { ApiError } from "@/lib/api"
 import type { BankAccountResponse } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type BankAccountsSectionProps = {
   partnerId: string
@@ -44,9 +44,7 @@ function BankAccountsSection({ partnerId }: BankAccountsSectionProps) {
         <div className="h-6 rounded-lg bg-muted animate-pulse" />
       ) : isError ? (
         <p className="text-sm text-destructive">
-          {error instanceof ApiError
-            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">

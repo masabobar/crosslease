@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom"
 import { Copy, Check, ArrowRight, ChevronDown, ChevronUp } from "lucide-react"
 import { useAuditEventDetail } from "@/features/audit/hooks/useAuditEventDetail"
 import { useAuditEventLabels } from "@/features/audit/hooks/useAuditEventLabels"
-import { ApiError } from "@/lib/api"
 import {
   formatEventType,
   formatActionType,
@@ -17,6 +16,7 @@ import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import type { AuditEvent } from "@/features/audit/api/schema"
 import { EntityTypeBadge } from "@/features/audit/components/EntityTypeBadge"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type Tab = "overview" | "actor" | "payload"
 
@@ -577,9 +577,7 @@ export default function AuditEventDetailPage() {
 
       {isError && !isLoading && (
         <p className="text-sm text-muted-foreground">
-          {error instanceof ApiError
-            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       )}
 

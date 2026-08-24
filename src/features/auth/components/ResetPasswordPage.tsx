@@ -9,7 +9,6 @@ import { SetPasswordFormSchema } from "../api/passwordPolicy"
 import type { SetPasswordFormInput } from "../api/passwordPolicy"
 import { validateResetToken, resetPassword } from "../api/forgotPasswordApi"
 import { AUTH_QUERY_KEYS } from "../api/queryKeys"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +23,7 @@ import {
 import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { PasswordStrengthBar } from "./PasswordStrengthBar"
 import { FieldError } from "./FieldError"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type PageState = "loading" | "valid" | "blocked" | "success"
 
@@ -85,11 +85,7 @@ export default function ResetPasswordPage() {
       }
       setIsSuccess(true)
     } catch (err) {
-      setServerError(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      setServerError(resolveApiErrorMessage(err, t))
     }
   })
 
