@@ -33,6 +33,11 @@ fi
 
 corepack pnpm exec prettier --write "$TEMP_DIR/openapi.json" 2>/dev/null
 corepack pnpm exec openapi-zod-client "$TEMP_DIR/openapi.json" -o "$TEMP_DIR/api.ts" 2>/dev/null
+# Same repair `generate:api` applies, so both sides of the diff below are produced by an
+# identical pipeline. Without it the generator's Zod v3 `z.record()` output is compared against
+# a committed file carrying the v4 fix, and the check reports drift on every push regardless of
+# whether the backend moved at all.
+node scripts/fix-generated-zod-record.js "$TEMP_DIR/api.ts" >/dev/null
 
 DRIFT=0
 diff -q openapi.json "$TEMP_DIR/openapi.json" >/dev/null 2>&1 || DRIFT=1
