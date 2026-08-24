@@ -80,6 +80,34 @@ export function isValidLcNumber(raw: string): boolean {
   return LC_NUMBER_REGEX.test(raw.trim())
 }
 
+// Mirrors _normalize_iban in refinext-api's partner_schemas.py: the backend strips
+// all whitespace and upper-cases before it validates or stores, so the same canonical
+// form has to be produced here or the form would reject a spaced-out IBAN the API
+// accepts. Users routinely type IBANs in 4-character groups.
+export function normalizeIban(raw: string): string {
+  return raw.split(/\s+/).join("").toUpperCase()
+}
+
+// Mirrors _IBAN_RE in refinext-api's partner_schemas.py — country code, two check
+// digits, then 11-30 alphanumeric BBAN characters. Structural only: the backend
+// deliberately skips mod-97 for the MVP, so validating the checksum here would
+// reject IBANs the API accepts.
+const IBAN_REGEX = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/
+
+export function isValidIban(raw: string): boolean {
+  return IBAN_REGEX.test(normalizeIban(raw))
+}
+
+// ISO 9362 per PRD1042-2076: 4-letter bank code, 2-letter country code, 2-character
+// location code, and an optional 3-character branch code — so 8 or 11 characters.
+// The backend caps BIC at 11 characters but checks no format (it treats BIC as
+// display data), which makes this check deliberately stricter than the API.
+const BIC_REGEX = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/
+
+export function isValidBic(raw: string): boolean {
+  return BIC_REGEX.test(raw.trim().toUpperCase())
+}
+
 // A date of birth cannot be in the future. The submit form's calendar already caps
 // at today, but a value can still arrive from browser autofill, a form reset, or a
 // programmatic setValue — so the rule has to exist in the schema too

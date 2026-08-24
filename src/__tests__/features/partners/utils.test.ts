@@ -6,8 +6,11 @@ import {
   initialsFromName,
   isCommercialRegisterApplicable,
   isNotFutureDate,
+  isValidBic,
+  isValidIban,
   isValidLcNumber,
   isValidLei,
+  normalizeIban,
 } from "@/features/partners/utils"
 import { ANCHOR_LABEL_KEY_BY_FIELD } from "@/features/partners/constants"
 
@@ -54,9 +57,9 @@ describe("isCommercialRegisterApplicable", () => {
   })
 
   it("allows registered_sole_trader partners registered in DE", () => {
-    expect(
-      isCommercialRegisterApplicable("registered_sole_trader", "DE")
-    ).toBe(true)
+    expect(isCommercialRegisterApplicable("registered_sole_trader", "DE")).toBe(
+      true
+    )
   })
 
   it("is case-insensitive on the country code", () => {
@@ -68,9 +71,9 @@ describe("isCommercialRegisterApplicable", () => {
   })
 
   it("rejects registered_sole_trader partners registered outside DE", () => {
-    expect(
-      isCommercialRegisterApplicable("registered_sole_trader", "FR")
-    ).toBe(false)
+    expect(isCommercialRegisterApplicable("registered_sole_trader", "FR")).toBe(
+      false
+    )
   })
 
   it("rejects natural_person regardless of country", () => {
@@ -140,6 +143,94 @@ describe("isValidLcNumber", () => {
   it("rejects an empty string", () => {
     expect(isValidLcNumber("")).toBe(false)
     expect(isValidLcNumber("   ")).toBe(false)
+  })
+})
+
+describe("normalizeIban", () => {
+  it("strips whitespace and upper-cases, matching the backend's canonical form", () => {
+    expect(normalizeIban("de89 3704 0044 0532 0130 00")).toBe(
+      "DE89370400440532013000"
+    )
+  })
+
+  it("leaves an already-canonical value unchanged", () => {
+    expect(normalizeIban("RS35220000000000341234")).toBe(
+      "RS35220000000000341234"
+    )
+  })
+})
+
+describe("isValidIban", () => {
+  it("accepts a well-formed IBAN", () => {
+    expect(isValidIban("RS35220000000000341234")).toBe(true)
+    expect(isValidIban("DE89370400440532013000")).toBe(true)
+  })
+
+  it("accepts an IBAN typed in groups, as users enter it", () => {
+    expect(isValidIban("DE89 3704 0044 0532 0130 00")).toBe(true)
+  })
+
+  it("accepts lower case, since the value is normalised first", () => {
+    expect(isValidIban("rs35220000000000341234")).toBe(true)
+  })
+
+  it("rejects the value reported in PRD1042-2076", () => {
+    expect(isValidIban("1111")).toBe(false)
+  })
+
+  it("rejects a missing or malformed country prefix", () => {
+    expect(isValidIban("3535220000000000341234")).toBe(false)
+    expect(isValidIban("RSAB220000000000341234")).toBe(false)
+  })
+
+  it("rejects a BBAN outside the 11-30 character range", () => {
+    expect(isValidIban("RS351234567890")).toBe(false)
+    expect(isValidIban(`RS35${"1".repeat(31)}`)).toBe(false)
+  })
+
+  it("rejects an empty string", () => {
+    expect(isValidIban("")).toBe(false)
+    expect(isValidIban("   ")).toBe(false)
+  })
+
+  // The backend documents mod-97 as deliberately out of scope for the MVP, so a
+  // structurally valid IBAN with wrong check digits must still pass here —
+  // rejecting it would make the form stricter than the API.
+  it("does not verify the mod-97 checksum", () => {
+    expect(isValidIban("DE00370400440532013000")).toBe(true)
+  })
+})
+
+describe("isValidBic", () => {
+  it("accepts an 8-character BIC", () => {
+    expect(isValidBic("XYZBRS22")).toBe(true)
+  })
+
+  it("accepts an 11-character BIC with a branch code", () => {
+    expect(isValidBic("XYZBRS22XXX")).toBe(true)
+  })
+
+  it("trims and upper-cases before checking", () => {
+    expect(isValidBic("  xyzbrs22  ")).toBe(true)
+  })
+
+  it("rejects the value reported in PRD1042-2076", () => {
+    expect(isValidBic("XXXX")).toBe(false)
+  })
+
+  it("rejects lengths other than 8 or 11", () => {
+    expect(isValidBic("XYZBRS2")).toBe(false)
+    expect(isValidBic("XYZBRS22X")).toBe(false)
+    expect(isValidBic("XYZBRS22XXXX")).toBe(false)
+  })
+
+  it("rejects digits in the bank and country codes", () => {
+    expect(isValidBic("1YZBRS22")).toBe(false)
+    expect(isValidBic("XYZB1S22")).toBe(false)
+  })
+
+  it("rejects an empty string", () => {
+    expect(isValidBic("")).toBe(false)
   })
 })
 
