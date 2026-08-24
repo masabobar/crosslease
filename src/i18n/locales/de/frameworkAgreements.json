@@ -246,7 +246,7 @@
     "viewEventLog": "Ereignisprotokoll",
     "viewReconstruct": "Rekonstruieren",
     "sectionTitle": "Prüfprotokoll",
-    "searchPlaceholder": "Suchen",
+    "searchPlaceholder": "Nach Benutzer suchen",
     "filterEventType": "Ereignistyp",
     "filterDateRange": "Zeitraum",
     "from": "Von",

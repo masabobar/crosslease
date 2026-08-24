@@ -246,7 +246,7 @@
     "viewEventLog": "Event log",
     "viewReconstruct": "Reconstruct",
     "sectionTitle": "Audit history",
-    "searchPlaceholder": "Search",
+    "searchPlaceholder": "Search by user",
     "filterEventType": "Event type",
     "filterDateRange": "Date range",
     "from": "From",
