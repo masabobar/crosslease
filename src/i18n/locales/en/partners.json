@@ -184,7 +184,9 @@
         "invalidCountry": "Select a country from the list.",
         "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442).",
         "dateOfBirthInFuture": "Date of birth cannot be in the future.",
-        "invalidDealerNumber": "Enter exactly 4 digits."
+        "invalidDealerNumber": "Enter exactly 4 digits.",
+        "ibanInvalid": "Enter a valid IBAN: country code, 2 check digits, then 11-30 letters or digits.",
+        "bicInvalid": "Enter a valid BIC: 8 or 11 characters (bank, country, location, optional branch)."
       }
     },
     "matchStep": {

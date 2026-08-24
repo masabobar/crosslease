@@ -6,15 +6,34 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  isValidBic,
+  isValidIban,
+  normalizeIban,
+} from "@/features/partners/utils"
 
 // No wire counterpart yet (see AccountsSection) — validated locally rather than against an
 // api/schema.ts shape. Only iban and account_number are mandatory per the field spec.
+//
+// The format rules matter more here than in a form that posts directly: these accounts are
+// held in local state and only POSTed from submitMutation.onSuccess, after the partner has
+// been created and the user navigated away. A malformed IBAN the backend rejects would
+// therefore surface as a toast on the detail page with the account silently missing
+// (PRD1042-2076), so the value has to be caught at entry.
 const accountFormSchema = z.object({
-  iban: z.string().trim().min(1, "required"),
+  iban: z
+    .string()
+    .trim()
+    .min(1, "required")
+    .refine(isValidIban, { message: "ibanInvalid" }),
   account_number: z.string().trim().min(1, "required"),
   holder_name: z.string().trim(),
   bank_name: z.string().trim(),
-  bic: z.string().trim(),
+  // Optional per CR PRD1042-1807 — checked only once the user has typed something.
+  bic: z
+    .string()
+    .trim()
+    .refine(v => v === "" || isValidBic(v), { message: "bicInvalid" }),
 })
 
 type AccountFormValues = z.infer<typeof accountFormSchema>
@@ -60,7 +79,9 @@ function AccountFormDialog({
 
   function onSubmit(values: AccountFormValues) {
     onSave({
-      iban: values.iban.trim(),
+      // Stored in the backend's canonical form, so the card here shows the same
+      // value the partner detail view will read back after creation.
+      iban: normalizeIban(values.iban),
       account_number: values.account_number.trim(),
       holder_name: values.holder_name.trim(),
       bank_name: values.bank_name.trim(),
@@ -72,7 +93,7 @@ function AccountFormDialog({
   function resolveMessage(message: string | undefined): string | undefined {
     if (!message) return undefined
     if (message === "required") return tCommon("validation.required")
-    return message
+    return t(`submit.form.errors.${message}` as "submit.form.errors.required")
   }
 
   return (
@@ -162,14 +183,20 @@ function AccountFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="account-bic" className="mb-2">
+            <Label htmlFor="account-bic" error={!!errors.bic} className="mb-2">
               {t("submit.form.accountDialog.fields.bic")}
             </Label>
             <Input
               id="account-bic"
               data-testid="account-bic-input"
+              error={!!errors.bic}
               {...register("bic")}
             />
+            {errors.bic && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMessage(errors.bic.message)}
+              </p>
+            )}
           </div>
         </div>
 
