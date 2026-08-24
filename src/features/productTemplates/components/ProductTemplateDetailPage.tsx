@@ -15,7 +15,7 @@ import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useT
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { PRODUCT_TEMPLATE_CREATE_ALLOWED_ROLES } from "@/features/productTemplates/types"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
-import { resolveApiErrorMessage } from "@/features/productTemplates/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { productTemplateVersionHistory } from "@/router/paths"
 
 /**

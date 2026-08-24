@@ -8,9 +8,8 @@ import {
   resolveFieldErrorMessage,
 } from "@/features/productTemplates/utils"
 
-// resolveApiErrorMessage / showApiError now live in @/lib/apiErrorMessage (this module only
-// re-exports them for its existing call sites) — their tests moved with them, to
-// src/__tests__/lib/apiErrorMessage.test.ts.
+// resolveApiErrorMessage / showApiError now live in @/lib/apiErrorMessage, shared by every
+// feature — their tests moved with them, to src/__tests__/lib/apiErrorMessage.test.ts.
 
 describe("isProductTemplateNotFoundError", () => {
   it("returns true for PRODUCT_TEMPLATE_NOT_FOUND", () => {

@@ -15,7 +15,7 @@ import {
 } from "@/features/productTemplates/components/ProductTemplateDetailPrimitives"
 import { ProductTemplatePublishedActions } from "@/features/productTemplates/components/ProductTemplatePublishedActions"
 import { useTemplateVersionDetail } from "@/features/productTemplates/hooks/useTemplateVersionDetail"
-import { resolveApiErrorMessage } from "@/features/productTemplates/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { TemplateStatusSchema } from "@/features/productTemplates/api/schema"
 import type {
   TemplateCurrentVersionSummary,

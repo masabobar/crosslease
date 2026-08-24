@@ -2,12 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { UseMutationResult } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { logout } from "@/features/auth/api/logoutApi"
 import { useAuthStore } from "@/store/authStore"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import { PATHS } from "@/router/paths"
-import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 export function useLogout(): UseMutationResult<void, Error, void> {
   const { t } = useTranslation("auth")
@@ -21,7 +20,7 @@ export function useLogout(): UseMutationResult<void, Error, void> {
   return useMutation({
     mutationFn: logout,
     onError: err => {
-      toast.error(resolveApiErrorMessage(err, t))
+      showApiError(err, t)
     },
     onSettled: () => {
       clearAuth()

@@ -53,6 +53,21 @@ mutation.mutate(payload, {
 })
 ```
 
+**Which of the two helpers to reach for.** They are the same resolution — `showApiError` is
+`toast.error(resolveApiErrorMessage(...))` — so this is about what the handler reads like, not about
+behaviour:
+
+- **`showApiError(err, t)`** when the toast is the whole handler. That is the default, and it covers
+  `onError`, a `.catch()` on `mutateAsync`, and a `try`/`catch` around one.
+- **`toast.error(resolveApiErrorMessage(err, t))`** when the toast is one branch of a handler that
+  does something else first — in practice the fallback after `applyApiFieldErrors()` returns (§2.1).
+  Keeping the `toast.error` visible there keeps it symmetrical with the `return` above it, instead of
+  hiding half the handler behind a name.
+- **`resolveApiErrorMessage(err, t)` alone** whenever the message is rendered rather than toasted —
+  every query `isError` branch (§3).
+
+Either way the resolution ternary is never re-implemented; that is the rule this section exists for.
+
 **What error codes to handle:**
 
 - Check `openapi.json` (or `../refinext-api/`) for every code the endpoint documents, and add an `errors.<CODE>` i18n key for each — the dynamic lookup then handles display with no code change. Note `openapi.json` **understates** the taxonomy: it declares only `422 HTTPValidationError`, while the real codes are registered in `../refinext-api/src/app/shared/errors/handlers.py`. Read the handlers.

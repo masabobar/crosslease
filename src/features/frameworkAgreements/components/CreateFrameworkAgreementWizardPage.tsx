@@ -38,7 +38,7 @@ import { ValidityTemplatesStep } from "@/features/frameworkAgreements/components
 import { ConditionsStep } from "@/features/frameworkAgreements/components/steps/ConditionsStep"
 import { DocumentsStep } from "@/features/frameworkAgreements/components/steps/DocumentsStep"
 import { ReviewStep } from "@/features/frameworkAgreements/components/steps/ReviewStep"
-import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 const ORDERED_STEPS: readonly FrameworkAgreementWizardStep[] =
   FRAMEWORK_AGREEMENT_WIZARD_STEPS
@@ -136,7 +136,7 @@ export default function CreateFrameworkAgreementWizardPage() {
       try {
         await deleteDraftMutation.mutateAsync(draftId)
       } catch (err) {
-        toast.error(resolveApiErrorMessage(err, t))
+        showApiError(err, t)
       }
     }
     navigate(-1)
@@ -186,7 +186,7 @@ export default function CreateFrameworkAgreementWizardPage() {
         draftId = draft.id
         persistedDraftIdRef.current = draft.id
       } catch (err) {
-        toast.error(resolveApiErrorMessage(err, t))
+        showApiError(err, t)
         return
       }
     }

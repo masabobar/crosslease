@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 import { format, parseISO } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +22,7 @@ import { downloadBlob } from "@/lib/download"
 import { formatDateTime } from "@/lib/formatters"
 import { BACK_OFFICE_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
-import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
+import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 
 const AUDIT_HISTORY_PAGE_SIZE = 50
 // `datetime-local` reads and writes wall-clock time, so its `max` must be built from local
@@ -188,7 +187,7 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         onSuccess: blob =>
           downloadBlob(blob, `fa-audit-${frameworkAgreementId}.csv`),
         onError: err => {
-          toast.error(resolveApiErrorMessage(err, t))
+          showApiError(err, t)
         },
       }
     )

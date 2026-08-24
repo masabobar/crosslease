@@ -9,7 +9,7 @@ import { useDeactivateRequirement } from "@/features/documentRequirements/hooks/
 import { RequirementTable } from "@/features/documentRequirements/components/RequirementTable"
 import { RequirementSheet } from "@/features/documentRequirements/components/RequirementSheet"
 import { DocumentRequirementCatalogPreviewPanel } from "@/features/documentRequirements/components/DocumentRequirementCatalogPreviewPanel"
-import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
+import { showApiError } from "@/lib/apiErrorMessage"
 import type {
   DocumentRequirementCatalogDetailResponse,
   RequirementResponse,
@@ -49,7 +49,7 @@ function DocumentRequirementCatalogRequirementsTab({
         toast.success(t("requirement.deactivateSuccess"))
       },
       onError: err => {
-        toast.error(resolveApiErrorMessage(err, t))
+        showApiError(err, t)
       },
     })
   }

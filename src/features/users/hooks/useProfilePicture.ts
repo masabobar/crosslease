@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { useToastStore } from "@/store/toastStore"
-import { toast } from "sonner"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
-import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
+import { showApiError } from "@/lib/apiErrorMessage"
 
 type UseProfilePicture = {
   uploadMutation: ReturnType<typeof useUploadSelfPicture>
@@ -33,7 +32,7 @@ export function useProfilePicture(userId: string): UseProfilePicture {
         })
       })
       .catch((err: unknown) => {
-        toast.error(resolveApiErrorMessage(err, t))
+        showApiError(err, t)
       })
   }
 
@@ -48,7 +47,7 @@ export function useProfilePicture(userId: string): UseProfilePicture {
         })
       })
       .catch((err: unknown) => {
-        toast.error(resolveApiErrorMessage(err, t))
+        showApiError(err, t)
       })
   }
 

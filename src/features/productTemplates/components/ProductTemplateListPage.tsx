@@ -38,8 +38,8 @@ import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
 import {
   isProductTemplateNotFoundError,
   isModuleNotActiveError,
-  resolveApiErrorMessage,
 } from "@/features/productTemplates/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { TableEmptyState } from "@/components/ui/empty"
 
@@ -178,7 +178,9 @@ export default function ProductTemplateListPage() {
           value={statusFilter ?? ALL_STATUSES_VALUE}
           onValueChange={v =>
             setStatusFilter(
-              v === ALL_STATUSES_VALUE ? null : (v as ProductTemplateStatusFilter)
+              v === ALL_STATUSES_VALUE
+                ? null
+                : (v as ProductTemplateStatusFilter)
             )
           }
         >

@@ -44,11 +44,6 @@ export function resolveFieldErrorMessage(
   return errorMessages[msg] ?? msg
 }
 
-// Re-exported so this feature's existing call sites keep importing from one place. The
-// resolution itself now lives in @/lib/apiErrorMessage, shared by every feature — see that
-// file for the order the message is resolved in.
-export { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
-
 /**
  * Orders the BE's dotted version strings ("0.1", "1.0", "2") by segment so the caller can
  * pick the highest without relying on the list's arrival order — which is not part of the
