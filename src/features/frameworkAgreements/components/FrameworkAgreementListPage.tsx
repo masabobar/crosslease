@@ -67,7 +67,7 @@ export default function FrameworkAgreementListPage() {
   const { data, isLoading, isError } = useFrameworkAgreementList({
     page,
     per_page: perPage,
-    ...(debouncedSearch.trim() ? { q: debouncedSearch.trim() } : {}),
+    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
   })

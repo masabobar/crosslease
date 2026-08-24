@@ -40,8 +40,12 @@ import type {
   UpdateFARequest,
 } from "@/features/frameworkAgreements/api/schema"
 
+// Query params accepted by GET /framework-agreements. `search` is the wire name, the same
+// one the export endpoint below takes — it was `q` until PRD1042-1701, which is the URL
+// param this screen uses, not the API's. The API ignores unknown params rather than
+// rejecting them, so the list came back unfiltered with nothing to show it had gone wrong.
 export type FrameworkAgreementListParams = {
-  q?: string
+  search?: string
   status?: FALifecycleStatus
   lc_partner_id?: string
   bank_entity?: BankEntity
