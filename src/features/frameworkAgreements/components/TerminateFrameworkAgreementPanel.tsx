@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useTerminateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useTerminateFrameworkAgreement"
 import { useFrameworkAgreementTerminationReadiness } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementTerminationReadiness"
 import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import { TerminateFARequestSchema } from "@/features/frameworkAgreements/api/schema"
 import type { TerminateFARequest } from "@/features/frameworkAgreements/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const terminateFormSchema = TerminateFARequestSchema.extend({
   irreversibility_confirmed:
@@ -107,13 +107,7 @@ function TerminateFrameworkAgreementPanel({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

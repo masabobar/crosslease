@@ -16,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { frameworkAgreementDetail } from "@/router/paths"
@@ -48,6 +47,7 @@ import { EnvelopePricingFields } from "@/features/frameworkAgreements/components
 import { ConditionsStep } from "@/features/frameworkAgreements/components/steps/ConditionsStep"
 import { EditValidityTemplatesStep } from "@/features/frameworkAgreements/components/steps/EditValidityTemplatesStep"
 import { EditReviewStep } from "@/features/frameworkAgreements/components/steps/EditReviewStep"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const ORDERED_STEPS: readonly FrameworkAgreementEditStep[] =
   FRAMEWORK_AGREEMENT_EDIT_STEPS
@@ -167,13 +167,7 @@ function EditWizardForm({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

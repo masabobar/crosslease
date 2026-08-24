@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import { Badge } from "@/components/ui/badge"
 import { SectionCard } from "@/features/partners/components/PartnerDetailPrimitives"
 import { useLcNumbers } from "@/features/partners/hooks/useLcNumbers"
-import { ApiError } from "@/lib/api"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type DealerNumbersSectionProps = {
   partnerId: string
@@ -19,9 +19,7 @@ function DealerNumbersSection({ partnerId }: DealerNumbersSectionProps) {
         <div className="h-6 rounded-lg bg-muted animate-pulse" />
       ) : isError ? (
         <p className="text-sm text-destructive">
-          {error instanceof ApiError
-            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">

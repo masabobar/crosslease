@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ApiError } from "@/lib/api"
 import { usePartnerDecisionHistory } from "@/features/partners/hooks/usePartnerDecisionHistory"
 import { initialsFromName } from "@/features/partners/utils"
 import {
@@ -10,6 +9,7 @@ import {
   formatEventType,
 } from "@/lib/formatters"
 import type { DecisionHistoryEntry } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const DECISION_HISTORY_PAGE_SIZE = 50
 
@@ -137,9 +137,7 @@ function DecisionHistoryTab({ partnerId }: DecisionHistoryTabProps) {
   if (isError) {
     return (
       <p className="text-sm text-destructive py-8 text-center">
-        {error instanceof ApiError
-          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

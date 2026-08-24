@@ -18,6 +18,12 @@ i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
   defaultNS: "common",
+  // Lets a feature namespace fall through to `common` for keys it does not define itself. The
+  // error catalogue depends on it: the codes any endpoint can raise (PERMISSION_DENIED,
+  // VALIDATION_ERROR, RATE_LIMIT_EXCEEDED, …) live once in common/errors rather than being
+  // copied into all 13 namespaces. i18next consults fallbackNS before applying `defaultValue`,
+  // so `t('errors.<CODE>', { defaultValue })` reaches the shared catalogue from any feature.
+  fallbackNS: "common",
   resources: {
     en: {
       common: enCommon,

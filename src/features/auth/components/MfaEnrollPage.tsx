@@ -7,7 +7,6 @@ import { mfaEnroll, mfaActivate } from "../api/mfaApi"
 import { TOTP_CODE_LENGTH } from "../api/mfaSchema"
 import { AUTH_QUERY_KEYS } from "@/features/auth/api/queryKeys"
 import { useAuthStore } from "@/store/authStore"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +19,7 @@ import {
   AuthCardFooter,
 } from "./AuthCard"
 import { RecoveryCodesCard } from "./RecoveryCodesCard"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type LocationState = { mfa_token: string } | null
 type PageStep = "enroll" | "recovery"
@@ -89,11 +89,7 @@ export default function MfaEnrollPage() {
       <AuthPageLayout>
         <div className="w-full max-w-[400px] bg-card rounded-xl shadow-sm border border-border p-6">
           <p className="text-sm text-destructive">
-            {enrollError instanceof ApiError
-              ? t(`errors.${enrollError.code}`, {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(enrollError, t)}
           </p>
           <Button
             type="button"
@@ -119,11 +115,7 @@ export default function MfaEnrollPage() {
       setAuthenticated(true)
       setStep("recovery")
     } catch (err) {
-      setServerError(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      setServerError(resolveApiErrorMessage(err, t))
     } finally {
       setIsActivating(false)
     }

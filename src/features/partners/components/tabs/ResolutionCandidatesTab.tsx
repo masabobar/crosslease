@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
-import { ApiError } from "@/lib/api"
 import { formatAnchorLabel } from "@/features/partners/utils"
 import { useResolutionCandidates } from "@/features/partners/hooks/useResolutionCandidates"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const SKELETON_COUNT = 3
 
@@ -46,9 +46,7 @@ function ResolutionCandidatesTab({ partnerId }: ResolutionCandidatesTabProps) {
   if (isError) {
     return (
       <p className="text-sm text-destructive py-8 text-center">
-        {error instanceof ApiError
-          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

@@ -14,12 +14,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { resolveFormMessage } from "@/lib/formMessages"
 import { useUpdateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useUpdateDocumentRequirementCatalog"
 import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import type { DocumentRequirementCatalogDetailResponse } from "@/features/documentRequirements/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Every rule carries a message *code*, never bare prose: an unannotated `.max()` would surface
 // Zod's own English text to the user (see resolveFormMessage).
@@ -117,13 +117,7 @@ function EditDocumentRequirementCatalogDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

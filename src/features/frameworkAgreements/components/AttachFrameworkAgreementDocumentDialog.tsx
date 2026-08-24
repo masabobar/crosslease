@@ -18,11 +18,11 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useAttachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useAttachFrameworkAgreementDocument"
 import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import { FADocumentTypeSchema } from "@/features/frameworkAgreements/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   FA_DOCUMENT_ACCEPTED_MIME,
   FA_DOCUMENT_BYTES_PER_MB,
@@ -99,13 +99,7 @@ function AttachFrameworkAgreementDocumentDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

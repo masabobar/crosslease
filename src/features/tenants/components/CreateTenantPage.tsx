@@ -28,7 +28,7 @@ import {
 } from "@/features/tenants/hooks/useTenantWizardDraft"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
-import { ApiError } from "@/lib/api"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -284,11 +284,7 @@ export default function CreateTenantPage() {
                   className="mb-4 text-sm text-destructive"
                   data-testid="modules-fetch-error"
                 >
-                  {modulesError instanceof ApiError
-                    ? t(`errors.${modulesError.code}`, {
-                        defaultValue: t("errors.generic"),
-                      })
-                    : t("errors.generic")}
+                  {resolveApiErrorMessage(modulesError, t)}
                 </p>
               )}
               <ModulesStep
@@ -305,11 +301,7 @@ export default function CreateTenantPage() {
                   className="mb-4 text-sm text-destructive"
                   data-testid="seed-fetch-error"
                 >
-                  {packagesError instanceof ApiError
-                    ? t(`errors.${packagesError.code}`, {
-                        defaultValue: t("errors.generic"),
-                      })
-                    : t("errors.generic")}
+                  {resolveApiErrorMessage(packagesError, t)}
                 </p>
               )}
               <SeedPackageStep

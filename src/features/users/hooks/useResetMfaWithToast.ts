@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { ApiError } from "@/lib/api"
 import { useResetUserMfa } from "@/features/users/hooks/useUserActions"
 import { useToastStore } from "@/store/toastStore"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type UseResetMfaWithToast = {
   resetMfa: (userId: string, name: string, onSettled?: () => void) => void
@@ -31,11 +31,7 @@ export function useResetMfaWithToast(): UseResetMfaWithToast {
         })
       },
       onError: (err: unknown) => {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
+        toast.error(resolveApiErrorMessage(err, t))
       },
       onSettled: () => onSettled?.(),
     })

@@ -19,9 +19,9 @@ import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { MergeReasonCodeSchema } from "@/features/partners/api/schema"
 import { MERGE_REASON_CODES } from "@/features/partners/constants"
 import { useInitiateMerge } from "@/features/partners/hooks/useInitiateMerge"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { PATHS } from "@/router/paths"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import type {
   DuplicateCandidatePairResponse,
   PartnerDetailResponse,
@@ -95,11 +95,7 @@ function InitiateMergeDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

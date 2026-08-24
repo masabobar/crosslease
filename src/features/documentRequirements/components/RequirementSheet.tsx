@@ -17,12 +17,12 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { resolveFormMessage } from "@/lib/formMessages"
 import { useAddRequirement } from "@/features/documentRequirements/hooks/useAddRequirement"
 import { useUpdateRequirement } from "@/features/documentRequirements/hooks/useUpdateRequirement"
 import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   DocumentOriginSchema,
   DocumentRequirementCatalogTypeSchema,
@@ -201,13 +201,7 @@ function RequirementSheet({
       )
         return
 
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}` as "errors.generic", {
-              defaultValue: t("errors.generic"),
-            })
-          : t("errors.generic")
-      )
+      toast.error(resolveApiErrorMessage(err, t))
     }
 
     if (isEdit && requirement) {

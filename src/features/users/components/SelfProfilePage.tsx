@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { toast } from "sonner"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -28,6 +27,7 @@ import { UserDetailSkeleton } from "@/features/users/components/UserDetailSkelet
 import { UserDetailTabsCard } from "@/features/users/components/UserDetailTabsCard"
 import { UserHeroCard } from "@/features/users/components/UserHeroCard"
 import { UserRoleScopeCard } from "@/features/users/components/UserRoleScopeCard"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 function SelfProfileContent({ user }: { user: UserDetail }) {
   const { t } = useTranslation("users")
@@ -76,11 +76,7 @@ function SelfProfileContent({ user }: { user: UserDetail }) {
         )
           return
 
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
+        toast.error(resolveApiErrorMessage(err, t))
       })
   }
 

@@ -43,6 +43,7 @@ import { GeneratePasswordButton } from "./GeneratePasswordButton"
 import { PasswordStrengthBar } from "./PasswordStrengthBar"
 import { FieldError } from "./FieldError"
 import { SUPPORT_MAILTO } from "@/lib/constants"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type PageState =
   | "loading"
@@ -131,11 +132,7 @@ export default function ActivateAccountPage() {
       }
       setIsSuccess(true)
     } catch (err) {
-      setServerError(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      setServerError(resolveApiErrorMessage(err, t))
     }
   })
 

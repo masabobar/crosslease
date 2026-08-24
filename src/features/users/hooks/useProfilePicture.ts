@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next"
 import { useToastStore } from "@/store/toastStore"
 import { toast } from "sonner"
-import { ApiError } from "@/lib/api"
 import { useUploadSelfPicture } from "@/features/users/hooks/useUploadSelfPicture"
 import { useDeleteSelfPicture } from "@/features/users/hooks/useDeleteSelfPicture"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type UseProfilePicture = {
   uploadMutation: ReturnType<typeof useUploadSelfPicture>
@@ -33,11 +33,7 @@ export function useProfilePicture(userId: string): UseProfilePicture {
         })
       })
       .catch((err: unknown) => {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
+        toast.error(resolveApiErrorMessage(err, t))
       })
   }
 
@@ -52,11 +48,7 @@ export function useProfilePicture(userId: string): UseProfilePicture {
         })
       })
       .catch((err: unknown) => {
-        toast.error(
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")
-        )
+        toast.error(resolveApiErrorMessage(err, t))
       })
   }
 

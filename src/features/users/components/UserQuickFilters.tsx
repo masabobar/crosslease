@@ -19,10 +19,10 @@ import type { UserFilterVisibility } from "@/features/users/utils"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useTenants } from "@/features/tenants/hooks/useTenants"
 import { TenantStatusSchema } from "@/features/tenants/api/schema"
-import { ApiError } from "@/lib/api"
 import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import { RoleBadge } from "@/features/users/components/RoleBadge"
 import { UserStatusBadge } from "@/features/users/components/UserStatusBadge"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 export type QuickFilterKey = "role" | "tenant" | "status" | "lastLogin"
 
@@ -137,11 +137,7 @@ export function UserQuickFilters({
               data-testid="quick-filter-tenant-error"
               className="px-3 py-2 text-sm text-destructive"
             >
-              {tenantsError instanceof ApiError
-                ? t(`errors.${tenantsError.code}`, {
-                    defaultValue: t("errors.generic"),
-                  })
-                : t("errors.generic")}
+              {resolveApiErrorMessage(tenantsError, t)}
             </p>
           )
         }

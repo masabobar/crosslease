@@ -23,8 +23,8 @@ import {
   GRANTOR_LOOKUP_PAGE_SIZE,
   SUPPORT_USERS_DROPDOWN_PAGE_SIZE,
 } from "@/features/tenants/constants"
-import { ApiError } from "@/lib/api"
 import { formatDateTime, getInitials } from "@/lib/formatters"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const GRANT_STATUS_TONE: Record<GrantStatus, SoftBadgeTone> = {
   active: "success",
@@ -221,9 +221,7 @@ export function SupportGrantsTab({
 
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {error instanceof ApiError
-              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
 

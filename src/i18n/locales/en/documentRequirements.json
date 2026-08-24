@@ -188,6 +188,23 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
+    "CATALOG_VALIDATION_ERROR": "This catalogue could not be validated. Review the requirements and try again.",
+    "DOCUMENT_REQUIREMENT_CATALOG_MODULE_NOT_ACTIVE": "Document requirements are not enabled for your organisation.",
+    "DOCUMENT_REQUIREMENT_CATALOG_NOT_FOUND": "This catalogue could not be found. It may have been removed.",
+    "DOCUMENT_REQUIREMENT_FULFILMENT_NOT_FOUND": "This fulfilment record could not be found.",
+    "DOCUMENT_REQUIREMENT_NOT_FOUND": "This requirement could not be found. Reload the catalogue.",
+    "DOCUMENT_TYPE_ORIGIN_MISMATCH": "The document type does not come from the expected source.",
+    "DUPLICATE_CATALOG_NAME": "A catalogue with this name and type already exists.",
+    "DUPLICATE_REQUIREMENT_CODE": "This requirement code is already used in this catalogue.",
+    "EMPTY_CATALOG": "This catalogue has no active requirements. Add at least one before continuing.",
+    "INCOMPATIBLE_DOCUMENT_TYPE": "The linked document type does not match the type this requirement expects.",
+    "INVALID_CONDITION": "A condition is required when applicability is Conditional, and must be left empty otherwise.",
+    "INVALID_CONTEXT_SCOPE": "A requirement's process context must be part of the catalogue's process contexts.",
+    "INVALID_FULFILMENT_STATUS_TRANSITION": "This fulfilment status change is not allowed.",
+    "LC_PARTNER_NOT_BOUND": "Your account is not linked to a leasing company, so these obligations cannot be shown.",
+    "ONE_CATALOGUE_PER_BANK": "A document requirement catalogue already exists for this bank.",
+    "REQUIREMENT_ALREADY_DEACTIVATED": "This requirement is already deactivated.",
+    "UNKNOWN_DOCUMENT_TYPE": "This document type is not in your bank's document-type registry.",
     "VALIDATION_ERROR": "Some of the values entered were rejected. Please review the form and try again."
   }
 }

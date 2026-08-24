@@ -32,11 +32,11 @@ import {
   useDeactivateUser,
   useResendInvitation,
 } from "@/features/users/hooks/useUserActions"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { USER_ACTION_TYPE } from "@/features/users/types"
 import type { UserModalActionType } from "@/features/users/types"
 import { resolveFieldMessage } from "@/features/users/utils"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type ActionUser = {
   id: string
@@ -281,11 +281,7 @@ function UserActionModal({
       )
         return
 
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      toast.error(resolveApiErrorMessage(err, t))
     }
   })
 

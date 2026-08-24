@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { buildPageNumbers } from "@/lib/pagination"
-import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
@@ -30,6 +29,7 @@ import {
 import type { PageSize } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogListParams"
 import { CatalogLayerSchema } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 export default function WorkflowTaskCatalogListPage() {
   const { t } = useTranslation("workflowTaskCatalog")
@@ -149,11 +149,7 @@ export default function WorkflowTaskCatalogListPage() {
             data-testid="workflow-task-catalog-list-error"
             className="text-sm text-destructive py-8 text-center"
           >
-            {error instanceof ApiError
-              ? t(`errors.${error.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
         {!isError && (

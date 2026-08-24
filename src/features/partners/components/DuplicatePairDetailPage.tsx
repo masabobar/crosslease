@@ -27,9 +27,9 @@ import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants
 import { PATHS, partnerDetail } from "@/router/paths"
 import { formatDate } from "@/lib/formatters"
 import { isUuidRouteParam } from "@/lib/routeParams"
-import { ApiError } from "@/lib/api"
 import { DuplicateCandidatePairStatusSchema } from "@/features/partners/api/schema"
 import type { PartnerDetailResponse } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type ConfirmedDuplicateSectionProps = {
   partnerA?: PartnerDetailResponse
@@ -195,9 +195,7 @@ export default function DuplicatePairDetailPage() {
         className="text-sm text-destructive p-8"
         data-testid="duplicate-pair-load-error"
       >
-        {error instanceof ApiError
-          ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")}
+        {resolveApiErrorMessage(error, t)}
       </p>
     )
   }

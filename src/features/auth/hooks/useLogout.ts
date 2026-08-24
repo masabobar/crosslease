@@ -6,8 +6,8 @@ import { toast } from "sonner"
 import { logout } from "@/features/auth/api/logoutApi"
 import { useAuthStore } from "@/store/authStore"
 import { useTenantSelectionStore } from "@/store/tenantSelectionStore"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 export function useLogout(): UseMutationResult<void, Error, void> {
   const { t } = useTranslation("auth")
@@ -21,11 +21,7 @@ export function useLogout(): UseMutationResult<void, Error, void> {
   return useMutation({
     mutationFn: logout,
     onError: err => {
-      toast.error(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      toast.error(resolveApiErrorMessage(err, t))
     },
     onSettled: () => {
       clearAuth()

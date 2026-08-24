@@ -7,7 +7,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { ApiError } from "@/lib/api"
 import { formatDate } from "@/lib/formatters"
 import {
   TenantInfoCard,
@@ -18,6 +17,7 @@ import { useTenantAccessPolicy } from "@/features/tenants/hooks/useTenantAccessP
 import { useUpdateAccessPolicy } from "@/features/tenants/hooks/useUpdateAccessPolicy"
 import { useTenantFormErrorHandler } from "@/features/tenants/hooks/useTenantFormErrorHandler"
 import { UpdateAccessPolicyFormSchema } from "@/features/tenants/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import type {
   AccessPolicyFlagRecord,
   UpdateAccessPolicyForm,
@@ -176,9 +176,7 @@ export function AccessPolicyCard({
           data-testid="access-policy-error"
           className="text-sm text-destructive"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       ) : isEditing ? (
         <form

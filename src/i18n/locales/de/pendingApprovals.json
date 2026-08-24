@@ -225,11 +225,16 @@
   "view": "Anzeigen",
   "loading": "Wird geladen…",
   "errors": {
-    "GOVERNED_ACTION_NOT_FOUND": "Diese Anfrage konnte nicht gefunden werden. Sie wurde möglicherweise bereits bearbeitet.",
-    "GOVERNED_ACTION_ALREADY_RESOLVED": "Diese Anfrage wurde bereits bearbeitet und kann nicht mehr geändert werden.",
-    "GOVERNED_ACTION_NOT_EXPIRED": "Nur abgelaufene Anfragen können erneut eingereicht werden.",
-    "REINITIATION_REASON_REQUIRED": "Ein Grund ist erforderlich, um diese Anfrage im Namen einer anderen Person erneut einzureichen.",
     "generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "GOVERNED_ACTION_ALREADY_RESOLVED": "Diese Anfrage wurde bereits bearbeitet und kann nicht mehr geändert werden.",
+    "GOVERNED_ACTION_EXPIRED": "Diese Anfrage ist abgelaufen und muss erneut eingereicht werden.",
+    "GOVERNED_ACTION_NOT_EXPIRED": "Nur abgelaufene Anfragen können erneut eingereicht werden.",
+    "GOVERNED_ACTION_NOT_FOUND": "Diese Anfrage konnte nicht gefunden werden. Sie wurde möglicherweise bereits bearbeitet.",
+    "INSUFFICIENT_ROLE_FOR_APPROVAL": "Ihre Rolle ist nicht berechtigt, diese Art von Aktion zu genehmigen oder abzulehnen.",
+    "MERGE_CONFLICT_NOT_ACKNOWLEDGED": "Die Bestätigung des Konflikts ist erforderlich, bevor diese Zusammenführung genehmigt werden kann.",
+    "MODULE_NOT_ACTIVATABLE": "Dieses Modul kann nicht aktiviert oder deaktiviert werden.",
+    "REINITIATION_REASON_REQUIRED": "Ein Grund ist erforderlich, um diese Anfrage im Namen einer anderen Person erneut einzureichen.",
+    "SELF_APPROVAL_NOT_ALLOWED": "Sie können Ihre eigene Anfrage nicht genehmigen oder ablehnen.",
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
   },
   "roles": {

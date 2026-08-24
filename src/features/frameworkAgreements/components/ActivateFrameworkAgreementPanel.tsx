@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useActivateFrameworkAgreement } from "@/features/frameworkAgreements/hooks/useActivateFrameworkAgreement"
 import { useResolveFrameworkAgreementFieldError } from "@/features/frameworkAgreements/utils"
 import { ActivateFARequestSchema } from "@/features/frameworkAgreements/api/schema"
 import type { ActivateFARequest } from "@/features/frameworkAgreements/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const activateFormSchema = ActivateFARequestSchema.extend({
   documents_confirmed: ActivateFARequestSchema.shape.documents_confirmed.refine(
@@ -66,13 +66,7 @@ function ActivateFrameworkAgreementPanel({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { EntityAuditHistoryTab } from "@/features/audit/components/EntityAuditHistoryTab"
-import { ApiError } from "@/lib/api"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
@@ -16,6 +15,7 @@ import { DocumentRequirementCatalogRequirementsTab } from "@/features/documentRe
 import { DocumentRequirementCatalogSourceLayerTab } from "@/features/documentRequirements/components/DocumentRequirementCatalogSourceLayerTab"
 import { DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/documentRequirements/types"
 import type { DocumentRequirementCatalogDetailTab } from "@/features/documentRequirements/types"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const AUDIT_ENTITY_TYPE = "document_requirement_catalog"
 
@@ -81,11 +81,7 @@ export default function DocumentRequirementCatalogDetailPage() {
           data-testid="document-requirement-catalog-detail-error"
           className="text-sm text-destructive py-8 text-center"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}` as "errors.generic", {
-                defaultValue: t("errors.generic"),
-              })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       </div>
     )

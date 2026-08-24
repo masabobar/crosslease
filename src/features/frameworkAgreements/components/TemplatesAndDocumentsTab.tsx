@@ -20,9 +20,9 @@ import { useSelectableProductTemplates } from "@/features/frameworkAgreements/ho
 import { useFrameworkAgreementDocuments } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDocuments"
 import { useDetachFrameworkAgreementDocument } from "@/features/frameworkAgreements/hooks/useDetachFrameworkAgreementDocument"
 import { useFrameworkAgreementDocumentDownloadUrl } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementDocumentDownloadUrl"
-import { ApiError } from "@/lib/api"
 import { formatDateTime } from "@/lib/formatters"
 import { FALifecycleStatusSchema } from "@/features/frameworkAgreements/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import type {
   AttachDocumentResponse,
   FALifecycleStatus,
@@ -69,13 +69,7 @@ function TemplatesAndDocumentsTab({
         onSuccess: data =>
           window.open(data.url, "_blank", "noopener,noreferrer"),
         onError: err => {
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )
@@ -88,13 +82,7 @@ function TemplatesAndDocumentsTab({
       {
         onSuccess: () => setDetachTarget(null),
         onError: err => {
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

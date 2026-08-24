@@ -8,8 +8,8 @@ import { DeactivateModuleDialog } from "@/features/tenants/components/Deactivate
 import { IntegrationBindingSection } from "@/features/tenants/components/IntegrationBindingSection"
 import { ModuleStatusBadge } from "@/features/tenants/components/ModuleStatusBadge"
 import { useTenantModules } from "@/features/tenants/hooks/useTenantModules"
-import { ApiError } from "@/lib/api"
 import { formatDate } from "@/lib/formatters"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import type {
   TenantModuleEntry,
   TenantStatus,
@@ -216,9 +216,7 @@ export function ModulesConfigTab({
         {isLoading && <div className="h-32 animate-pulse bg-muted rounded" />}
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {error instanceof ApiError
-              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
         {!isLoading && !isError && modules.length === 0 && (

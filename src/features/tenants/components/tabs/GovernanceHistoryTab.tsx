@@ -14,9 +14,9 @@ import { SoftBadge } from "@/features/tenants/components/SoftBadge"
 import type { SoftBadgeTone } from "@/features/tenants/components/SoftBadge"
 import { useTenantGovernanceHistory } from "@/features/tenants/hooks/useTenantGovernanceHistory"
 import { formatDate, formatDateTime } from "@/lib/formatters"
-import { ApiError } from "@/lib/api"
 import type { GovernanceHistoryEvent } from "@/features/tenants/api/schema"
 import { GovernanceEventTypeSchema } from "@/features/tenants/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const GOVERNANCE_HISTORY_PAGE_SIZE = 50
 
@@ -382,9 +382,7 @@ export function GovernanceHistoryTab({ tenantId }: GovernanceHistoryTabProps) {
 
         {isError && !isLoading && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            {error instanceof ApiError
-              ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
 

@@ -1,5 +1,3 @@
-import { toast } from "sonner"
-import type { TFunction } from "i18next"
 import { ApiError } from "@/lib/api"
 
 // These two codes both mean "render Not-Found, not a generic error" — the BE returns
@@ -46,29 +44,10 @@ export function resolveFieldErrorMessage(
   return errorMessages[msg] ?? msg
 }
 
-// Display string for a failed request: any BE error code translates via errors.<CODE>,
-// falling back to the generic message for unknown codes and non-ApiError throws (network
-// down, timeout) — see .claude/rules/error-handling-and-logging.md §2. Shared by the toast
-// below and by every query `isError` branch in this feature, so a code that has an i18n key
-// reaches the user whichever surface the request failed on.
-export function resolveApiErrorMessage(
-  err: unknown,
-  t: TFunction<"productTemplates">
-): string {
-  return err instanceof ApiError
-    ? t(`errors.${err.code}` as "errors.generic", {
-        defaultValue: t("errors.generic"),
-      })
-    : t("errors.generic")
-}
-
-// Shared mutation-error toast for this feature.
-export function showApiError(
-  err: unknown,
-  t: TFunction<"productTemplates">
-): void {
-  toast.error(resolveApiErrorMessage(err, t))
-}
+// Re-exported so this feature's existing call sites keep importing from one place. The
+// resolution itself now lives in @/lib/apiErrorMessage, shared by every feature — see that
+// file for the order the message is resolved in.
+export { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 
 /**
  * Orders the BE's dotted version strings ("0.1", "1.0", "2") by segment so the caller can

@@ -140,6 +140,9 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
+    "AUDIT_EVENT_NOT_FOUND": "This audit event could not be found.",
+    "EXPORT_FAILED": "The export could not be generated. Please try again.",
+    "EXPORT_NOT_READY": "The export is still being generated. Try again in a moment.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   },
   "clipboard": {

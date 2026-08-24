@@ -8,13 +8,13 @@ import { login } from "../api/loginApi"
 import { LoginInputSchema, REQUIRED_FIELD_MESSAGE } from "../api/schema"
 import type { LoginInput } from "../api/schema"
 import { useAuthStore } from "@/store/authStore"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoginBrandingPanel } from "./LoginBrandingPanel"
 import { LoginOtpStep } from "./LoginOtpStep"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type LoginStep =
   | { name: "credentials" }
@@ -76,11 +76,7 @@ export default function LoginPage() {
         return
       }
     } catch (err) {
-      setServerError(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      setServerError(resolveApiErrorMessage(err, t))
     }
   })
 

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table"
 import { useNotificationConfig } from "@/features/notifications/hooks/useNotificationConfig"
 import { getEventTypeDisplay } from "@/features/notifications/constants"
-import { ApiError } from "@/lib/api"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const SKELETON_ROWS = 6
 const COLUMN_COUNT = 4
@@ -41,9 +41,7 @@ export default function NotificationConfigPage() {
           className="mt-6 py-12 text-center text-sm text-destructive"
           data-testid="notification-config-load-error"
         >
-          {error instanceof ApiError
-            ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic")}
+          {resolveApiErrorMessage(error, t)}
         </p>
       )}
 

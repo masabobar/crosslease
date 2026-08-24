@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next"
 import { mfaVerify } from "../api/mfaApi"
 import { isAcceptedMfaCode, normalizeMfaCodeInput } from "../api/mfaSchema"
 import { useAuthStore } from "@/store/authStore"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +17,7 @@ import {
   AuthCardFooter,
 } from "./AuthCard"
 import { RecoveryCodesCard } from "./RecoveryCodesCard"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type LocationState = { mfa_token: string; email?: string } | null
 
@@ -76,11 +76,7 @@ export default function MfaVerifyPage() {
       }
       navigate(PATHS.DASHBOARD)
     } catch (err) {
-      setServerError(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      setServerError(resolveApiErrorMessage(err, t))
     } finally {
       setIsSubmitting(false)
     }

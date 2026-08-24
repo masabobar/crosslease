@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next"
 import { ForgotPasswordInputSchema } from "../api/forgotPasswordSchema"
 import type { ForgotPasswordInput } from "../api/forgotPasswordSchema"
 import { requestPasswordReset } from "../api/forgotPasswordApi"
-import { ApiError } from "@/lib/api"
 import { PATHS } from "@/router/paths"
 import { useToastStore } from "@/store/toastStore"
 import { Button } from "@/components/ui/button"
@@ -21,6 +20,7 @@ import {
   AuthCardFooter,
 } from "./AuthCard"
 import { FieldError } from "./FieldError"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type Step = "enter-email" | "check-email"
 
@@ -47,11 +47,7 @@ export default function ForgotPasswordPage() {
       setSubmittedEmail(data.email)
       setStep("check-email")
     } catch (err) {
-      setServerError(
-        err instanceof ApiError
-          ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-          : t("errors.generic")
-      )
+      setServerError(resolveApiErrorMessage(err, t))
     }
   })
 
@@ -63,10 +59,7 @@ export default function ForgotPasswordPage() {
       showToast({
         variant: "warning",
         title: t("forgotPassword.checkEmail.resendFailed.title"),
-        message:
-          err instanceof ApiError
-            ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-            : t("errors.generic"),
+        message: resolveApiErrorMessage(err, t),
       })
     } finally {
       setIsResending(false)

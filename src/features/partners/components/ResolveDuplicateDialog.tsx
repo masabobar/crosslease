@@ -21,9 +21,9 @@ import {
 } from "@/features/partners/api/schema"
 import { DUPLICATE_RESOLUTION_REASON_CODES } from "@/features/partners/constants"
 import { useResolveDuplicatePair } from "@/features/partners/hooks/useResolveDuplicatePair"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { DuplicateCandidatePairResponse } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const DECISION_OPTIONS = DuplicateResolutionDecisionSchema.options
 
@@ -110,11 +110,7 @@ function ResolveDuplicateDialog({ open, onOpenChange, pair, tenantId }: Props) {
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

@@ -13,12 +13,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSetCasePhaseGate } from "@/features/workflowTaskCatalog/hooks/useSetCasePhaseGate"
 import { PHASE_GATE_STATUS_OPTIONS } from "@/features/workflowTaskCatalog/constants"
 import { PhaseGateStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import type { StageCategorization } from "@/features/workflowTaskCatalog/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const setPhaseGateFormSchema = z.object({
   status: z.string().min(1, "required"),
@@ -84,13 +84,7 @@ function SetPhaseGateDialog({ businessObjectId, phase, onOpenChange }: Props) {
           // WTC_PHASE_GATE_INVALID_TRANSITION lands here — an approved gate is terminal, so a
           // second decision on it is refused. The panel already hides the control in that case;
           // this covers the race where another user approved it first.
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )

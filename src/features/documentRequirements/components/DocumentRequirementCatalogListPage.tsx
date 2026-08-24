@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { buildPageNumbers } from "@/lib/pagination"
-import { ApiError } from "@/lib/api"
 import { documentRequirementCatalogDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
@@ -28,6 +27,7 @@ import {
   useDocumentRequirementCatalogListParams,
 } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogListParams"
 import type { PageSize } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogListParams"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 export default function DocumentRequirementCatalogListPage() {
   const { t } = useTranslation("documentRequirements")
@@ -120,11 +120,7 @@ export default function DocumentRequirementCatalogListPage() {
             data-testid="document-requirement-catalog-list-error"
             className="text-sm text-destructive py-8 text-center"
           >
-            {error instanceof ApiError
-              ? t(`errors.${error.code}` as "errors.generic", {
-                  defaultValue: t("errors.generic"),
-                })
-              : t("errors.generic")}
+            {resolveApiErrorMessage(error, t)}
           </p>
         )}
         {!isError && (

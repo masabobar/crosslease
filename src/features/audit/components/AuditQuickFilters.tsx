@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
-import { ApiError } from "@/lib/api"
 import type { AuditFilterState } from "@/features/audit/types"
 import { Button } from "@/components/ui/button"
 import { formatEventType, formatActionType } from "@/lib/formatters"
@@ -14,6 +13,7 @@ import {
   FILTER_TRIGGER_CLASS,
 } from "@/components/ui/filter-button"
 import { useAuditFilterOptions } from "@/features/audit/hooks/useAuditFilterOptions"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 type AuditQuickFiltersProps = {
   appliedFilters: AuditFilterState
@@ -66,9 +66,7 @@ function FilterOptionsError({ error }: { error: unknown }) {
   const { t } = useTranslation("audit")
   return (
     <p className="px-3 py-2 text-sm text-destructive">
-      {error instanceof ApiError
-        ? t(`errors.${error.code}`, { defaultValue: t("errors.generic") })
-        : t("errors.generic")}
+      {resolveApiErrorMessage(error, t)}
     </p>
   )
 }

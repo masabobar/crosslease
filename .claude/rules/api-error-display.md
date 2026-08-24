@@ -1,7 +1,7 @@
 # API Error Display — Exhaustive BE Error Handling
 
-**Version:** 1.1
-**Last Updated:** 2026-07-30
+**Version:** 1.2
+**Last Updated:** 2026-08-21
 **Status:** Active
 
 **MANDATORY: Every API mutation and every user-visible query error MUST be caught and surfaced to the user. Silent API failures are bugs. When reviewing or modifying code, FIX missing error handling immediately — do not flag for later.**
@@ -25,18 +25,14 @@ No API call may fail silently. Every path through an async operation that result
 Every `useMutation` call site MUST handle errors. Use `onError` on the `mutate()` call or on the `useMutation` hook itself.
 
 ```ts
-// ✅ CORRECT — dynamic lookup: every BE code translates via errors.<CODE>,
-// generic fallback covers unknown codes and non-ApiError throws.
+// ✅ CORRECT — one shared helper. Resolves errors.<CODE> in this namespace, then in `common`
+// (via fallbackNS), then the caller's fallback, then the BE's own message, then errors.generic.
+import { showApiError } from "@/lib/apiErrorMessage"
+
 const mutation = useMutation({ mutationFn: createUser })
 
 mutation.mutate(payload, {
-  onError: err => {
-    toast.error(
-      err instanceof ApiError
-        ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-        : t("errors.generic")
-    )
-  },
+  onError: err => showApiError(err, t),
 })
 
 // ❌ MISSING onError — silent failure, user sees nothing
@@ -111,10 +107,7 @@ Query errors appear in the component that renders the data. Use the `error` + `i
 const { data, error, isError } = useQuery({ queryKey: KEYS.user(id), queryFn: fetchUser })
 
 if (isError) {
-  const message = error instanceof ApiError
-    ? t(`errors.${error.code}`, { defaultValue: t('errors.generic') })
-    : t('errors.generic')
-  return <ErrorState message={message} />
+  return <ErrorState message={resolveApiErrorMessage(error, t)} />
 }
 
 // ❌ MISSING error handling — blank or stale content on failure
@@ -133,21 +126,23 @@ When `/code-review` or `/review-codebase` finds an API call missing error handli
 1. Identify the mutation/query call site.
 2. Look up the endpoint's error codes in `openapi.json` (grep by path) or `../refinext-api/`.
 3. Apply the fix using §2 (mutation) or §3 (query) pattern.
-4. Add i18n keys for any new error codes to both `en/<feature>.json` and `de/<feature>.json`.
+4. Add i18n keys for any new error codes to both locales — `en/<feature>.json` + `de/<feature>.json`,
+   or `common.json` when any endpoint can raise the code (RBAC, rate limit, validation).
 5. Do not leave a TODO — complete the fix inline.
 
 ---
 
 ## 5. Anti-Patterns
 
-| ❌                                            | Why it breaks                       | ✅                                            |
-| --------------------------------------------- | ----------------------------------- | --------------------------------------------- |
-| `mutation.mutate(payload)` with no `onError`  | User sees nothing on failure        | Add `onError` with dynamic lookup (§2)        |
-| `switch (err.code) { case ... }` in `onError` | Breaks on every new BE code         | Dynamic `errors.<CODE>` lookup + fallback     |
-| `catch (e) { console.error(e) }`              | Logged only, invisible to user      | `toast.error(t('errors.generic'))`            |
-| `onError: () => toast.error('Failed')`        | Hardcoded string, no code handling  | `t(\`errors.${err.code}\`, { defaultValue })` |
-| Matching on `err.message`                     | Messages are not stable contracts   | Always check `err.code`                       |
-| No `isError` branch in query render           | Blank or broken UI on query failure | Render `<ErrorState>` when `isError`          |
+| ❌                                            | Why it breaks                             | ✅                                          |
+| --------------------------------------------- | ----------------------------------------- | ------------------------------------------- |
+| `mutation.mutate(payload)` with no `onError`  | User sees nothing on failure              | `onError: err => showApiError(err, t)` (§2) |
+| `switch (err.code) { case ... }` in `onError` | Breaks on every new BE code               | `showApiError(err, t)`                      |
+| `catch (e) { console.error(e) }`              | Logged only, invisible to user            | `toast.error(t('errors.generic'))`          |
+| `onError: () => toast.error('Failed')`        | Hardcoded string, no code handling        | `showApiError(err, t)`                      |
+| Matching on `err.message`                     | Messages are not stable contracts         | Always check `err.code`                     |
+| No `isError` branch in query render           | Blank or broken UI on query failure       | Render `<ErrorState>` when `isError`        |
+| Re-implementing the resolution ternary inline | Loses the `common` + BE-message fallbacks | Import from `@/lib/apiErrorMessage`         |
 
 ---
 

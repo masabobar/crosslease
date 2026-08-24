@@ -99,7 +99,24 @@
     "generic": "Something went wrong. Please try again.",
     "title": "Something went wrong",
     "retry": "Try again",
-    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields.",
-    "NETWORK_ERROR": "Cannot reach the server. Check your connection and try again."
+    "AUDITOR_ACCESS_EXPIRED": "Your audit mandate has expired. You no longer have access to this data.",
+    "BAD_REQUEST": "The request could not be processed. Please check your input and try again.",
+    "CROSS_TENANT_ACCESS_ATTEMPTED": "This record belongs to another organisation and cannot be accessed.",
+    "FILE_TOO_LARGE": "This file is too large. Please upload a smaller file.",
+    "FORBIDDEN": "You do not have permission to perform this action.",
+    "INTERNAL_SERVER_ERROR": "The server could not complete this request. Please try again; if it keeps happening, contact support.",
+    "INVALID_FILE_TYPE": "This file type is not supported.",
+    "INVALID_IMAGE_DIMENSIONS": "The image dimensions are outside the allowed range.",
+    "MEDIA_NOT_FOUND": "This file could not be found. It may have been removed.",
+    "MEDIA_UPLOAD_ERROR": "The file could not be uploaded. Please try again.",
+    "MODULE_NOT_ACTIVE": "This feature is not enabled for your organisation.",
+    "NETWORK_ERROR": "Cannot reach the server. Check your connection and try again.",
+    "NOT_FOUND": "The requested record could not be found. It may have been removed.",
+    "PERMISSION_DENIED": "You do not have permission to perform this action.",
+    "RATE_LIMIT_EXCEEDED": "Too many requests. Please wait a moment and try again.",
+    "SESSION_EXPIRED": "Your session has expired. Please log in again.",
+    "TOKEN_REVOKED": "Your session is no longer valid. Please log in again.",
+    "UNAUTHORIZED": "You are not signed in. Please log in and try again.",
+    "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
   }
 }

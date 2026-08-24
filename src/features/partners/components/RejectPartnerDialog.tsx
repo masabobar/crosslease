@@ -7,9 +7,9 @@ import { TriangleAlert } from "lucide-react"
 import { ConfirmActionDialog } from "@/components/shared/ConfirmActionDialog"
 import { PartnerStatusBadge } from "@/features/partners/components/PartnerStatusBadge"
 import { useRejectPartner } from "@/features/partners/hooks/useRejectPartner"
-import { ApiError } from "@/lib/api"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import type { PartnerStatus } from "@/features/partners/api/schema"
+import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Rejection is terminal — note is mandatory (min 10 chars, per BE contract).
 const rejectSchema = z.object({
@@ -70,11 +70,7 @@ function RejectPartnerDialog({
           )
             return
 
-          toast.error(
-            err instanceof ApiError
-              ? t(`errors.${err.code}`, { defaultValue: t("errors.generic") })
-              : t("errors.generic")
-          )
+          toast.error(resolveApiErrorMessage(err, t))
         },
       }
     )
