@@ -162,7 +162,7 @@
     "sections": {
       "identity": "Identity",
       "creditEnvelope": "Credit envelope",
-      "pricing": "Pricing",
+      "earlyRepayment": "Early repayment",
       "lifecycle": "Lifecycle",
       "specialConditions": "Special conditions"
     },
