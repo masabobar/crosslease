@@ -42,6 +42,7 @@ import {
 import { FRAMEWORK_AGREEMENT_EDIT_STEPS } from "@/features/frameworkAgreements/types"
 import type { FrameworkAgreementEditStep } from "@/features/frameworkAgreements/types"
 import { WizardStepper } from "@/features/frameworkAgreements/components/WizardStepper"
+import { WizardSuccessPanel } from "@/features/frameworkAgreements/components/WizardSuccessPanel"
 import { EditIdentityStep } from "@/features/frameworkAgreements/components/steps/EditIdentityStep"
 import { EnvelopePricingFields } from "@/features/frameworkAgreements/components/steps/EnvelopePricingFields"
 import { ConditionsStep } from "@/features/frameworkAgreements/components/steps/ConditionsStep"
@@ -81,6 +82,9 @@ function EditWizardForm({
     ReadonlySet<FrameworkAgreementEditStep>
   >(new Set(["identity"]))
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
+  // The name as submitted, not as loaded: a draft's agreement_name is editable, so the
+  // confirmation would otherwise greet the user with the name they just changed away from.
+  const [savedName, setSavedName] = useState<string | null>(null)
 
   const form = useForm<EditFrameworkAgreementFormValues>({
     resolver: zodResolver(EditFrameworkAgreementFormSchema),
@@ -147,15 +151,19 @@ function EditWizardForm({
       return
     }
 
+    const values = form.getValues()
+
     mutation.mutate(
       {
         id: frameworkAgreement.id,
-        body: buildUpdateFAPayload(form.getValues(), isDraft),
+        body: buildUpdateFAPayload(values, isDraft),
       },
       {
         onSuccess: () => {
-          toast.success(t("edit.saved"))
-          navigate(detailPath)
+          // A toast on its own was missed on the way back to the detail page
+          // (PRD1042-1697) — the save is confirmed on a screen of its own, and the
+          // user chooses when to leave it.
+          setSavedName(values.agreement_name)
         },
         onError: err => {
           if (
@@ -170,6 +178,27 @@ function EditWizardForm({
           toast.error(resolveApiErrorMessage(err, t))
         },
       }
+    )
+  }
+
+  if (savedName !== null) {
+    return (
+      <WizardSuccessPanel
+        data-testid="fa-updated-success"
+        title={t("edit.savedSuccess.title")}
+        subtitle={t("edit.savedSuccess.subtitle", { name: savedName })}
+        actions={
+          <Button
+            type="button"
+            className="flex-1"
+            data-testid="back-to-agreement-details-button"
+            onClick={() => navigate(detailPath)}
+          >
+            <ArrowRight size={16} />
+            {t("edit.savedSuccess.backToDetails")}
+          </Button>
+        }
+      />
     )
   }
 
