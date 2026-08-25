@@ -282,7 +282,7 @@ export default function FrameworkAgreementDetailPage() {
               <div className="border border-border rounded-xl bg-background overflow-hidden col-span-2">
                 <div className="bg-muted px-4 py-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
-                    {t("detail.sections.pricing")}
+                    {t("detail.sections.earlyRepayment")}
                   </p>
                 </div>
                 <div className="p-4 grid grid-cols-2 gap-4">

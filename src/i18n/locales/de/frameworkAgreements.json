@@ -162,7 +162,7 @@
     "sections": {
       "identity": "Identität",
       "creditEnvelope": "Kreditrahmen",
-      "pricing": "Preisgestaltung",
+      "earlyRepayment": "Vorfälligkeit",
       "lifecycle": "Lebenszyklus",
       "specialConditions": "Besondere Bedingungen"
     },
