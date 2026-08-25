@@ -232,7 +232,11 @@
     "justificationHint": "Pflichtfeld (mind. 30 Zeichen). Wird im Prüfprotokoll gespeichert.",
     "confirmButton": "Änderungen speichern",
     "loading": "Vereinbarung wird geladen…",
-    "saved": "Änderungen gespeichert.",
+    "savedSuccess": {
+      "title": "Vereinbarung aktualisiert",
+      "subtitle": "Ihre Änderungen an {{name}} wurden gespeichert. Die Änderung und ihre Begründung werden im Audit-Trail gespeichert.",
+      "backToDetails": "Zurück zu den Vereinbarungsdetails"
+    },
     "incompleteForm": "Füllen Sie die erforderlichen Felder aus, bevor Sie speichern.",
     "backToAgreement": "Zurück zur Vereinbarung",
     "discardDialog": {

@@ -232,7 +232,11 @@
     "justificationHint": "Mandatory (min. 30 characters). Stored in the audit trail.",
     "confirmButton": "Save changes",
     "loading": "Loading agreement…",
-    "saved": "Changes saved.",
+    "savedSuccess": {
+      "title": "Agreement updated",
+      "subtitle": "Your changes to {{name}} have been saved. The change and its justification are recorded in the audit trail.",
+      "backToDetails": "Back to agreement details"
+    },
     "incompleteForm": "Complete the required fields before saving.",
     "backToAgreement": "Back to the agreement",
     "discardDialog": {

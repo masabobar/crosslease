@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ArrowRight, ArrowLeft, Check } from "lucide-react"
+import { ArrowRight, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,6 +32,7 @@ import type {
   FrameworkAgreementWizardStep,
 } from "@/features/frameworkAgreements/types"
 import { WizardStepper } from "@/features/frameworkAgreements/components/WizardStepper"
+import { WizardSuccessPanel } from "@/features/frameworkAgreements/components/WizardSuccessPanel"
 import { IdentityStep } from "@/features/frameworkAgreements/components/steps/IdentityStep"
 import { EnvelopePricingStep } from "@/features/frameworkAgreements/components/steps/EnvelopePricingStep"
 import { ValidityTemplatesStep } from "@/features/frameworkAgreements/components/steps/ValidityTemplatesStep"
@@ -225,27 +226,14 @@ export default function CreateFrameworkAgreementWizardPage() {
 
   if (createdAgreement) {
     return (
-      <div className="flex flex-col h-full items-center justify-center bg-slate-50">
-        <div
-          className="w-full max-w-[400px] bg-card rounded-[14px] shadow-2xl p-6 flex flex-col gap-6 items-center"
-          data-testid="fa-created-success"
-        >
-          <div className="flex flex-col items-center gap-3 w-full">
-            <div className="bg-success/10 p-3 rounded-[14px]">
-              <Check size={24} className="text-success" strokeWidth={2.5} />
-            </div>
-            <div className="flex flex-col gap-3 text-center w-full">
-              <h1 className="text-xl font-semibold text-foreground">
-                {t("wizard.createdSuccess.title")}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t("wizard.createdSuccess.subtitle", {
-                  name: createdAgreement.agreementName,
-                })}
-              </p>
-            </div>
-          </div>
-          <div className="flex w-full gap-2.5">
+      <WizardSuccessPanel
+        data-testid="fa-created-success"
+        title={t("wizard.createdSuccess.title")}
+        subtitle={t("wizard.createdSuccess.subtitle", {
+          name: createdAgreement.agreementName,
+        })}
+        actions={
+          <>
             <Button
               type="button"
               variant="outline"
@@ -266,9 +254,9 @@ export default function CreateFrameworkAgreementWizardPage() {
               <ArrowRight size={16} />
               {t("wizard.createdSuccess.viewAgreement")}
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
     )
   }
 
