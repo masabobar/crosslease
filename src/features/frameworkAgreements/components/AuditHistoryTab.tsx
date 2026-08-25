@@ -13,6 +13,10 @@ import { useFrameworkAgreementAuditHistory } from "@/features/frameworkAgreement
 import { useFrameworkAgreementReconstruct } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementReconstruct"
 import { useExportFrameworkAgreementAuditHistoryCsv } from "@/features/frameworkAgreements/hooks/useExportFrameworkAgreementAuditHistoryCsv"
 import { FAEventTypeFilterSchema } from "@/features/frameworkAgreements/api/schema"
+import {
+  toAuditRangeEnd,
+  toAuditRangeStart,
+} from "@/features/frameworkAgreements/utils"
 import type {
   FAAuditEventResponse,
   FAEventTypeFilter,
@@ -142,8 +146,8 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
     per_page: AUDIT_HISTORY_PAGE_SIZE,
     ...(search.trim() ? { search: search.trim() } : {}),
     ...(eventTypeFilters.length > 0 ? { type: eventTypeFilters } : {}),
-    ...(fromDate ? { from: fromDate } : {}),
-    ...(toDate ? { to: toDate } : {}),
+    ...(fromDate ? { from: toAuditRangeStart(fromDate) } : {}),
+    ...(toDate ? { to: toAuditRangeEnd(toDate) } : {}),
   })
 
   const reconstructQuery = useFrameworkAgreementReconstruct(
@@ -178,8 +182,8 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         params: {
           ...(search.trim() ? { search: search.trim() } : {}),
           ...(eventTypeFilters.length > 0 ? { type: eventTypeFilters } : {}),
-          ...(fromDate ? { from: fromDate } : {}),
-          ...(toDate ? { to: toDate } : {}),
+          ...(fromDate ? { from: toAuditRangeStart(fromDate) } : {}),
+          ...(toDate ? { to: toAuditRangeEnd(toDate) } : {}),
           ...(exportReason.trim() ? { reason: exportReason.trim() } : {}),
         },
       },

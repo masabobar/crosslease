@@ -8,6 +8,8 @@ import {
   groupByTemplateId,
   isFrameworkAgreementExpiredByDate,
   splitGroupsIntoColumns,
+  toAuditRangeEnd,
+  toAuditRangeStart,
 } from "@/features/frameworkAgreements/utils"
 import type { SelectableTemplateItem } from "@/features/frameworkAgreements/api/schema"
 
@@ -390,5 +392,52 @@ describe("splitGroupsIntoColumns", () => {
 
   it("returns two empty columns for no groups", () => {
     expect(splitGroupsIntoColumns([])).toEqual([[], []])
+  })
+})
+
+// PRD1042-1817: the audit-history endpoint types `from`/`to` as date-times and filters
+// `recorded_at >= from` / `<= to`, but <DatePicker> emits a date-only `yyyy-MM-dd`. Sent
+// unconverted, `to` meant that day's midnight and the whole chosen end day fell outside
+// the range — a single-day filter returned nothing over a populated audit trail.
+describe("toAuditRangeStart / toAuditRangeEnd", () => {
+  it("anchors the start to the first instant of the local day", () => {
+    const start = new Date(toAuditRangeStart("2026-08-07"))
+    expect(start.getFullYear()).toBe(2026)
+    expect(start.getMonth()).toBe(7)
+    expect(start.getDate()).toBe(7)
+    expect(start.getHours()).toBe(0)
+    expect(start.getMinutes()).toBe(0)
+    expect(start.getSeconds()).toBe(0)
+  })
+
+  it("anchors the end to the last instant of the local day, not its midnight", () => {
+    const end = new Date(toAuditRangeEnd("2026-08-07"))
+    expect(end.getDate()).toBe(7)
+    expect(end.getHours()).toBe(23)
+    expect(end.getMinutes()).toBe(59)
+    expect(end.getSeconds()).toBe(59)
+  })
+
+  it("covers an event recorded during the chosen end day — the reported defect", () => {
+    // Midday on the single day picked for both ends. Before the fix `to` was that day's
+    // 00:00, so this event sorted after the range and the list came back empty.
+    const midday = new Date(2026, 7, 7, 12, 30).getTime()
+    expect(
+      new Date(toAuditRangeStart("2026-08-07")).getTime()
+    ).toBeLessThanOrEqual(midday)
+    expect(
+      new Date(toAuditRangeEnd("2026-08-07")).getTime()
+    ).toBeGreaterThanOrEqual(midday)
+  })
+
+  it("emits UTC instants, which is what the timezone-aware column is compared against", () => {
+    expect(toAuditRangeStart("2026-08-07")).toMatch(/Z$/)
+    expect(toAuditRangeEnd("2026-08-07")).toMatch(/Z$/)
+  })
+
+  it("keeps a single-day range non-empty", () => {
+    expect(new Date(toAuditRangeEnd("2026-08-07")).getTime()).toBeGreaterThan(
+      new Date(toAuditRangeStart("2026-08-07")).getTime()
+    )
   })
 })
