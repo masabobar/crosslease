@@ -236,3 +236,11 @@ export function toAuditRangeStart(dateOnly: string): string {
 export function toAuditRangeEnd(dateOnly: string): string {
   return endOfDay(parseISO(dateOnly)).toISOString()
 }
+
+// The Reconstruct panel picks a date and a time separately (Figma 27:2576), but
+// GET /framework-agreements/{id}/reconstruct takes a single `as_of` instant. An omitted
+// time means the start of that day rather than "now", so a reconstruct is reproducible:
+// re-running it with the same date has to replay the same events.
+export function toAsOfInstant(dateOnly: string, time: string): string {
+  return parseISO(`${dateOnly}T${time || "00:00"}`).toISOString()
+}

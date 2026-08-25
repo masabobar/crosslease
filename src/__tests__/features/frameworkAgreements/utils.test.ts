@@ -8,6 +8,7 @@ import {
   groupByTemplateId,
   isFrameworkAgreementExpiredByDate,
   splitGroupsIntoColumns,
+  toAsOfInstant,
   toAuditRangeEnd,
   toAuditRangeStart,
 } from "@/features/frameworkAgreements/utils"
@@ -439,5 +440,25 @@ describe("toAuditRangeStart / toAuditRangeEnd", () => {
     expect(new Date(toAuditRangeEnd("2026-08-07")).getTime()).toBeGreaterThan(
       new Date(toAuditRangeStart("2026-08-07")).getTime()
     )
+  })
+})
+
+describe("toAsOfInstant", () => {
+  it("combines the picked date and time into one UTC instant", () => {
+    const asOf = new Date(toAsOfInstant("2026-03-14", "10:00"))
+    expect(asOf.getFullYear()).toBe(2026)
+    expect(asOf.getMonth()).toBe(2)
+    expect(asOf.getDate()).toBe(14)
+    expect(asOf.getHours()).toBe(10)
+    expect(asOf.getMinutes()).toBe(0)
+    expect(toAsOfInstant("2026-03-14", "10:00")).toMatch(/Z$/)
+  })
+
+  it("falls back to the start of the day when no time is picked", () => {
+    // Not "now": re-running a reconstruct for the same date must replay the same events.
+    const asOf = new Date(toAsOfInstant("2026-03-14", ""))
+    expect(asOf.getHours()).toBe(0)
+    expect(asOf.getMinutes()).toBe(0)
+    expect(asOf.getSeconds()).toBe(0)
   })
 })
