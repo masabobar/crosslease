@@ -73,7 +73,7 @@
   "wizard": {
     "steps": {
       "identity": "Identität",
-      "envelopePricing": "Rahmen & Preisgestaltung",
+      "envelopePricing": "Rahmen & Vorfälligkeit",
       "validityTemplates": "Gültigkeit & Vorlagen",
       "conditions": "Bedingungen",
       "documents": "Dokumente",
@@ -87,12 +87,11 @@
       "currencyHint": "Die Währung wird bei der Erstellung festgelegt und kann nicht geändert werden"
     },
     "envelopePricing": {
-      "title": "Rahmen & Preisgestaltung",
-      "subtitle": "Legen Sie den Kreditrahmen und die Preiskonditionen fest. Diese Werte werden von allen Finanzierungen unter dieser Vereinbarung übernommen.",
+      "title": "Rahmen & Vorfälligkeit",
+      "subtitle": "Legen Sie den Kreditrahmen und die Vorfälligkeitsentschädigung fest. Diese gelten für alle Finanzierungen unter dieser Vereinbarung.",
       "creditEnvelopeSection": "Kreditrahmen",
-      "pricingSection": "Preisgestaltung (von Finanzierungen übernommen)",
+      "earlyRepaymentSection": "Vorfälligkeit",
       "maxVolumeHint": "Feste Obergrenze für das gesamte auszahlbare Volumen unter dieser Vereinbarung.",
-      "vfeRateHint": "Pauschale Vorfälligkeitsentschädigung für diese Leasinggesellschaft. Wird aus dem Standardwert der Leasinggesellschaft vorbelegt; pro Vereinbarung überschreibbar.",
       "vfeAmountHint": "Absoluter Betrag, der bei einer vorzeitigen Rückzahlung hinzukommt."
     },
     "validityTemplates": {

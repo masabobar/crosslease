@@ -70,7 +70,7 @@ function EnvelopePricingFields<T extends EnvelopePricingFormFields>({
         </div>
       </SectionCard>
 
-      <SectionCard title={t("wizard.envelopePricing.pricingSection")}>
+      <SectionCard title={t("wizard.envelopePricing.earlyRepaymentSection")}>
         <div>
           <Label
             htmlFor={`${idPrefix}vfe_amount_eur`}

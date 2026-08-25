@@ -73,7 +73,7 @@
   "wizard": {
     "steps": {
       "identity": "Identity",
-      "envelopePricing": "Envelope & pricing",
+      "envelopePricing": "Envelope & early repayment",
       "validityTemplates": "Validity & templates",
       "conditions": "Conditions",
       "documents": "Documents",
@@ -87,12 +87,11 @@
       "currencyHint": "Currency is fixed at creation and cannot be changed"
     },
     "envelopePricing": {
-      "title": "Envelope & pricing",
-      "subtitle": "Set the credit envelope and pricing terms. These values will be inherited by all financings under this agreement.",
+      "title": "Envelope & early repayment",
+      "subtitle": "Set the credit envelope and the early-repayment penalty. These apply to all financings under this agreement.",
       "creditEnvelopeSection": "Credit envelope",
-      "pricingSection": "Pricing (inherited by financings)",
+      "earlyRepaymentSection": "Early repayment",
       "maxVolumeHint": "Hard ceiling on total disbursable amount under this agreement.",
-      "vfeRateHint": "Flat early-repayment penalty rate for this leasing company. Prefilled from the leasing company default; override per agreement.",
       "vfeAmountHint": "Absolute amount added when an early repayment is calculated."
     },
     "validityTemplates": {
