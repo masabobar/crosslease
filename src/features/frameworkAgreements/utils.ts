@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { endOfDay, parseISO, startOfDay } from "date-fns"
 import { ApiError } from "@/lib/api"
 import { resolveFormMessage } from "@/lib/formMessages"
 import {
@@ -215,4 +216,31 @@ export function useResolveFrameworkAgreementFieldError(): (
     }
     return resolveFormMessage(msg, t, "errors")
   }
+}
+
+// The audit-history date filter sends instants, not days.
+//
+// <DatePicker> emits a date-only `yyyy-MM-dd`, but GET /framework-agreements/{id}/audit-history
+// declares `from` and `to` as date-times and the repository compares them against a
+// timezone-aware `recorded_at` with `>= from` / `<= to` (see core/audit/db/repository.py in
+// ../refinext-api/). Sent unconverted, `to` parses as that day's *midnight*, so every event
+// recorded during the chosen end day falls outside the range — picking a single day returns
+// nothing at all while its audit trail plainly exists (PRD1042-1817).
+//
+// The boundaries are the viewer's local day expressed as the UTC instants the API compares
+// against, which is the same conversion the Reconstruct panel already does for `as_of`.
+export function toAuditRangeStart(dateOnly: string): string {
+  return startOfDay(parseISO(dateOnly)).toISOString()
+}
+
+export function toAuditRangeEnd(dateOnly: string): string {
+  return endOfDay(parseISO(dateOnly)).toISOString()
+}
+
+// The Reconstruct panel picks a date and a time separately (Figma 27:2576), but
+// GET /framework-agreements/{id}/reconstruct takes a single `as_of` instant. An omitted
+// time means the start of that day rather than "now", so a reconstruct is reproducible:
+// re-running it with the same date has to replay the same events.
+export function toAsOfInstant(dateOnly: string, time: string): string {
+  return parseISO(`${dateOnly}T${time || "00:00"}`).toISOString()
 }

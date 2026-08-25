@@ -1,6 +1,10 @@
 import { useState } from "react"
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { format, parseISO } from "date-fns"
+import { parseISO, startOfToday } from "date-fns"
+import { History, Info } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SearchInput } from "@/components/ui/search-input"
@@ -13,21 +17,27 @@ import { useFrameworkAgreementAuditHistory } from "@/features/frameworkAgreement
 import { useFrameworkAgreementReconstruct } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementReconstruct"
 import { useExportFrameworkAgreementAuditHistoryCsv } from "@/features/frameworkAgreements/hooks/useExportFrameworkAgreementAuditHistoryCsv"
 import { FAEventTypeFilterSchema } from "@/features/frameworkAgreements/api/schema"
+import {
+  toAsOfInstant,
+  toAuditRangeEnd,
+  toAuditRangeStart,
+} from "@/features/frameworkAgreements/utils"
+import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
+import { FA_STATUS_BADGE_VARIANT } from "@/features/frameworkAgreements/constants"
 import type {
+  FAAgreementLifecycle,
   FAAuditEventResponse,
   FAEventTypeFilter,
 } from "@/features/frameworkAgreements/api/schema"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { downloadBlob } from "@/lib/download"
+import { cn } from "@/lib/utils"
 import { formatDateTime } from "@/lib/formatters"
 import { BACK_OFFICE_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 
 const AUDIT_HISTORY_PAGE_SIZE = 50
-// `datetime-local` reads and writes wall-clock time, so its `max` must be built from local
-// parts — toISOString() would cap the picker at the user's UTC offset instead of now.
-const DATETIME_LOCAL_FORMAT = "yyyy-MM-dd'T'HH:mm"
 
 type AuditView = "eventLog" | "reconstruct"
 
@@ -110,6 +120,84 @@ function EventCard({ event }: { event: FAAuditEventResponse }) {
   )
 }
 
+// One label/value pair on the reconstructed-state grid: uppercase caption above the value
+// (Figma 27:2848 "Titles"). The value is a node rather than a string so a status badge and
+// the product-template chips use the same cell as the plain text fields.
+function StateField({
+  label,
+  className,
+  children,
+}: {
+  label: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <div className={cn("flex flex-col gap-1 items-start", className)}>
+      <p className="text-xs font-semibold uppercase text-muted-foreground">
+        {label}
+      </p>
+      {children}
+    </div>
+  )
+}
+
+// Rendered by both views: the event log shows it filtered, and Reconstruct shows the same
+// list bounded at the as-of instant (Figma 27:2576 "Events up to …") — the reconstruct
+// response carries only a replayed-state snapshot, never the events behind it.
+function AuditEventList({
+  isLoading,
+  isError,
+  events,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+}: {
+  isLoading: boolean
+  isError: boolean
+  events: FAAuditEventResponse[]
+  hasNextPage: boolean
+  isFetchingNextPage: boolean
+  onLoadMore: () => void
+}) {
+  const { t } = useTranslation("frameworkAgreements")
+
+  if (isLoading) return <div className="h-48 animate-pulse bg-muted rounded" />
+
+  if (isError)
+    return <p className="text-sm text-destructive">{t("errors.generic")}</p>
+
+  if (events.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground py-4 text-center">
+        {t("auditHistory.noEvents")}
+      </p>
+    )
+
+  return (
+    <>
+      {events.map(event => (
+        <EventCard key={event.id} event={event} />
+      ))}
+      {hasNextPage && (
+        <div className="pt-3 flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onLoadMore}
+            disabled={isFetchingNextPage}
+            data-testid="audit-load-more"
+          >
+            {isFetchingNextPage
+              ? t("auditHistory.loadingMore")
+              : t("auditHistory.loadMore")}
+          </Button>
+        </div>
+      )}
+    </>
+  )
+}
+
 type Props = {
   frameworkAgreementId: string
   currentUserRole: UserRole | null
@@ -125,11 +213,25 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
   )
   const [fromDate, setFromDate] = useState<string | null>(null)
   const [toDate, setToDate] = useState<string | null>(null)
-  const [asOfInput, setAsOfInput] = useState("")
+  const [asOfDate, setAsOfDate] = useState<string | null>(null)
+  const [asOfTime, setAsOfTime] = useState("")
   const [submittedAsOf, setSubmittedAsOf] = useState<string | null>(null)
+  const [showFullState, setShowFullState] = useState(false)
   const [exportReason, setExportReason] = useState("")
 
   const reasonRequired = currentUserRole === BACK_OFFICE_ROLE
+  const today = startOfToday()
+
+  // The snapshot stores template ids; the only name source is the current selectable list,
+  // so a template retired since the reconstructed date resolves to nothing and falls back
+  // to its id rather than rendering a blank chip.
+  const templatesQuery = useSelectableProductTemplates()
+  const templateNameById = new Map(
+    (templatesQuery.data?.items ?? []).map(tpl => [
+      tpl.template_id,
+      tpl.template_name,
+    ])
+  )
 
   const {
     data,
@@ -138,13 +240,24 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useFrameworkAgreementAuditHistory(frameworkAgreementId, {
-    per_page: AUDIT_HISTORY_PAGE_SIZE,
-    ...(search.trim() ? { search: search.trim() } : {}),
-    ...(eventTypeFilters.length > 0 ? { type: eventTypeFilters } : {}),
-    ...(fromDate ? { from: fromDate } : {}),
-    ...(toDate ? { to: toDate } : {}),
-  })
+  } = useFrameworkAgreementAuditHistory(
+    frameworkAgreementId,
+    // Reconstruct answers "what did this look like then", so its list is bounded at the
+    // as-of instant and ignores the event-log's own filters rather than intersecting with
+    // filters the user cannot see from that view.
+    activeView === "reconstruct"
+      ? {
+          per_page: AUDIT_HISTORY_PAGE_SIZE,
+          ...(submittedAsOf ? { to: submittedAsOf } : {}),
+        }
+      : {
+          per_page: AUDIT_HISTORY_PAGE_SIZE,
+          ...(search.trim() ? { search: search.trim() } : {}),
+          ...(eventTypeFilters.length > 0 ? { type: eventTypeFilters } : {}),
+          ...(fromDate ? { from: toAuditRangeStart(fromDate) } : {}),
+          ...(toDate ? { to: toAuditRangeEnd(toDate) } : {}),
+        }
+  )
 
   const reconstructQuery = useFrameworkAgreementReconstruct(
     frameworkAgreementId,
@@ -167,8 +280,9 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
   }
 
   function handleReconstruct() {
-    if (!asOfInput) return
-    setSubmittedAsOf(new Date(asOfInput).toISOString())
+    if (!asOfDate) return
+    setShowFullState(false)
+    setSubmittedAsOf(toAsOfInstant(asOfDate, asOfTime))
   }
 
   function handleExport() {
@@ -178,8 +292,8 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
         params: {
           ...(search.trim() ? { search: search.trim() } : {}),
           ...(eventTypeFilters.length > 0 ? { type: eventTypeFilters } : {}),
-          ...(fromDate ? { from: fromDate } : {}),
-          ...(toDate ? { to: toDate } : {}),
+          ...(fromDate ? { from: toAuditRangeStart(fromDate) } : {}),
+          ...(toDate ? { to: toAuditRangeEnd(toDate) } : {}),
           ...(exportReason.trim() ? { reason: exportReason.trim() } : {}),
         },
       },
@@ -245,29 +359,47 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
       {activeView === "reconstruct" ? (
         <SectionCard title={t("auditHistory.reconstructTitle")}>
           <div className="flex items-end gap-2 flex-wrap">
-            {/* NOTE: native datetime-local rather than the shadcn DatePicker used for the
-                event-log filters below — GET /reconstruct takes `as_of` as a full
-                ISO8601 date-time, and DatePicker is date-only (it emits yyyy-MM-dd).
-                Convert both to a shared datetime primitive if a second such field
-                appears; one call site does not justify building one. */}
+            <DatePicker
+              value={asOfDate ?? undefined}
+              onChange={v => setAsOfDate(v)}
+              // A reconstruct only ever looks backwards, so the calendar stops at today.
+              // No floor: the agreement's whole history is legitimately in range
+              // (date-inputs.md §4 — this is a historical view, not a create form).
+              maxDate={today}
+              captionLayout="dropdown"
+              className="w-48"
+              data-testid="audit-reconstruct-as-of-date"
+            />
             <Input
-              type="datetime-local"
-              value={asOfInput}
-              onChange={e => setAsOfInput(e.target.value)}
-              max={format(new Date(), DATETIME_LOCAL_FORMAT)}
-              className="w-56"
-              data-testid="audit-reconstruct-as-of"
+              type="time"
+              value={asOfTime}
+              onChange={e => setAsOfTime(e.target.value)}
+              aria-label={t("auditHistory.reconstructTimeLabel")}
+              className="w-32"
+              data-testid="audit-reconstruct-as-of-time"
             />
             <Button
               type="button"
               variant="outline"
               onClick={handleReconstruct}
-              disabled={!asOfInput}
+              disabled={!asOfDate}
               data-testid="audit-reconstruct-submit"
             >
               {t("auditHistory.reconstructButton")}
             </Button>
           </div>
+
+          {!submittedAsOf && (
+            <div
+              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-border py-12 text-center"
+              data-testid="audit-reconstruct-empty"
+            >
+              <History size={24} className="text-muted-foreground" />
+              <p className="text-sm text-muted-foreground max-w-xs">
+                {t("auditHistory.reconstructEmpty")}
+              </p>
+            </div>
+          )}
 
           {reconstructQuery.isFetching && (
             <p className="text-sm text-muted-foreground">
@@ -282,69 +414,118 @@ function AuditHistoryTab({ frameworkAgreementId, currentUserRole }: Props) {
           {reconstructQuery.data &&
             (() => {
               const { state } = reconstructQuery.data
+              const asOfLabel = formatDateTime(reconstructQuery.data.as_of)
+              // product_template_ids is excluded because it has its own chip field below —
+              // counting it here would offer "View full details" on a snapshot whose only
+              // remaining entry is already on screen, revealing nothing when clicked.
               const primaryKeys = new Set([
                 "status",
+                "product_template_ids",
                 ...RECONSTRUCT_PRIMARY_FIELDS.map(f => f.key),
               ])
               const otherEntries = Object.entries(state).filter(
                 ([key]) => !primaryKeys.has(key)
               )
               return (
-                <div className="flex flex-col gap-3">
-                  <p
-                    className="text-xs text-foreground rounded-lg bg-muted px-3 py-2"
-                    data-testid="audit-reconstruct-banner"
-                  >
-                    {t("auditHistory.reconstructBanner", {
-                      date: formatDateTime(reconstructQuery.data.as_of),
-                    })}
-                  </p>
+                <div className="flex flex-col gap-4">
+                  <Alert variant="info" data-testid="audit-reconstruct-banner">
+                    <Info />
+                    <AlertDescription>
+                      {t("auditHistory.reconstructBanner", { date: asOfLabel })}
+                    </AlertDescription>
+                  </Alert>
+
                   <div
-                    className="flex flex-col gap-2 rounded-lg border border-border p-3"
+                    className="flex flex-col overflow-hidden rounded-xl border border-info"
                     data-testid="audit-reconstruct-state"
                   >
+                    <div className="flex items-center gap-2 bg-info/10 px-4 py-2">
+                      <p className="flex-1 text-sm font-semibold text-foreground">
+                        {t("auditHistory.stateCardTitle", { date: asOfLabel })}
+                      </p>
+                      {otherEntries.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0"
+                          onClick={() => setShowFullState(v => !v)}
+                          data-testid="audit-reconstruct-toggle-details"
+                        >
+                          {showFullState
+                            ? t("auditHistory.hideFullDetails")
+                            : t("auditHistory.viewFullDetails")}
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-10 gap-y-8 bg-card p-4">
+                      {Object.hasOwn(state, "status") && (
+                        <StateField label={t("detail.fields.status")}>
+                          <Badge
+                            variant={
+                              FA_STATUS_BADGE_VARIANT[
+                                state.status as FAAgreementLifecycle
+                              ] ?? "outline"
+                            }
+                          >
+                            {renderStateFieldValue("status", state.status)}
+                          </Badge>
+                        </StateField>
+                      )}
+                      {RECONSTRUCT_PRIMARY_FIELDS.filter(({ key }) =>
+                        Object.hasOwn(state, key)
+                      ).map(({ key, labelKey }) => (
+                        <StateField key={key} label={t(labelKey)}>
+                          <span className="text-sm text-foreground">
+                            {renderStateFieldValue(key, state[key])}
+                          </span>
+                        </StateField>
+                      ))}
+                      {Array.isArray(state.product_template_ids) && (
+                        <StateField
+                          label={t("fields.allowedProductTemplates")}
+                          className="col-span-full"
+                        >
+                          <div className="flex flex-wrap gap-1.5">
+                            {state.product_template_ids.map(id => (
+                              <Badge key={String(id)} variant="outline">
+                                {templateNameById.get(String(id)) ?? String(id)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </StateField>
+                      )}
+                      {showFullState &&
+                        otherEntries.map(([field, value]) => (
+                          <StateField key={field} label={field}>
+                            <span className="text-sm text-foreground">
+                              {formatDiffValue(value)}
+                            </span>
+                          </StateField>
+                        ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {t("auditHistory.eventsUpTo", { date: asOfLabel })}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {t("auditHistory.eventsReplayed", {
                         count: reconstructQuery.data.events_replayed,
                       })}
                     </p>
-                    {Object.hasOwn(state, "status") && (
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">
-                          {t("detail.fields.status")}:
-                        </span>
-                        <span className="text-foreground">
-                          {renderStateFieldValue("status", state.status)}
-                        </span>
-                      </div>
-                    )}
-                    {RECONSTRUCT_PRIMARY_FIELDS.filter(({ key }) =>
-                      Object.hasOwn(state, key)
-                    ).map(({ key, labelKey }) => (
-                      <div
-                        key={key}
-                        className="flex items-center gap-2 text-xs"
-                      >
-                        <span className="text-muted-foreground">
-                          {t(labelKey)}:
-                        </span>
-                        <span className="text-foreground">
-                          {renderStateFieldValue(key, state[key])}
-                        </span>
-                      </div>
-                    ))}
-                    {otherEntries.map(([field, value]) => (
-                      <div
-                        key={field}
-                        className="flex items-center gap-2 text-xs"
-                      >
-                        <span className="text-muted-foreground">{field}:</span>
-                        <span className="text-foreground">
-                          {formatDiffValue(value)}
-                        </span>
-                      </div>
-                    ))}
                   </div>
+
+                  <AuditEventList
+                    isLoading={isLoading}
+                    isError={isError}
+                    events={events}
+                    hasNextPage={!!hasNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    onLoadMore={() => fetchNextPage()}
+                  />
                 </div>
               )
             })()}
