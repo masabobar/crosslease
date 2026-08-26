@@ -115,6 +115,41 @@ export const StageCategorizationSchema = z.enum([
 ])
 export type StageCategorization = z.infer<typeof StageCategorizationSchema>
 
+// PRD1042-1794 Block 10 — the tenant's document-type registry. A requirement names a document type
+// by `type_code`, and `fulfilment_service` matches an arriving document against that same code, so a
+// code that is not in the registry produces a requirement nothing can ever fulfil. Authoring picks
+// from here rather than typing a code.
+//
+// Note the origin vocabularies differ and must not be conflated: the registry says
+// `requested | generated`, a requirement's own `document_origin` says `uploaded | generated`. Any
+// mapping between them belongs to the backend, so nothing here derives one.
+export const DocumentTypeOriginSchema = z.enum(["requested", "generated"])
+export type DocumentTypeOrigin = z.infer<typeof DocumentTypeOriginSchema>
+
+export const DocumentRoleScopeSchema = z.enum(["lessee", "guarantor", "case"])
+export type DocumentRoleScope = z.infer<typeof DocumentRoleScopeSchema>
+
+export const DocumentTypeSchema = z.object({
+  id: z.string().uuid(),
+  type_code: z.string(),
+  type_name: z.string(),
+  role_scope: DocumentRoleScopeSchema,
+  origin: DocumentTypeOriginSchema,
+  note: z.string().nullable(),
+  is_active: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+export type DocumentType = z.infer<typeof DocumentTypeSchema>
+
+export const DocumentTypeListResponseSchema = z.object({
+  items: z.array(DocumentTypeSchema),
+  total: z.number().int(),
+})
+export type DocumentTypeListResponse = z.infer<
+  typeof DocumentTypeListResponseSchema
+>
+
 export const DocumentOriginSchema = z.enum(["uploaded", "generated"])
 export type DocumentOrigin = z.infer<typeof DocumentOriginSchema>
 

@@ -6,12 +6,14 @@ import {
   DocumentRequirementCatalogListResponseSchema,
   DocumentRequirementCatalogResponseSchema,
   DocumentRequirementListResponseSchema,
+  DocumentTypeListResponseSchema,
   MaterializationResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
   UpdateRequirementRequestSchema,
 } from "@/features/documentRequirements/api/schema"
 import type {
+  DocumentTypeListResponse,
   AddRequirementRequest,
   CreateDocumentRequirementCatalogRequest,
   DocumentRequirementCatalogDetailResponse,
@@ -175,4 +177,13 @@ export async function fetchDocumentRequirementCatalogPreview(
     { params: { process_context: processContext } }
   )
   return MaterializationResponseSchema.parse(data)
+}
+
+// PRD1042-1794 Block 10 — the tenant's document-type registry. `include_inactive` is deliberately
+// not sent: an authoring picker must not offer a retired type, and the backend already filters.
+export async function fetchTenantDocumentTypes(
+  tenantId: string
+): Promise<DocumentTypeListResponse> {
+  const data = await api.get(`/tenants/${tenantId}/document-types`)
+  return DocumentTypeListResponseSchema.parse(data)
 }

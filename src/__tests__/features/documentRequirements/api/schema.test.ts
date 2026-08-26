@@ -7,6 +7,9 @@ import {
   DocumentRequirementCatalogResponseSchema,
   DocumentRequirementListResponseSchema,
   DocumentRequirementSchema,
+  DocumentTypeListResponseSchema,
+  DocumentTypeOriginSchema,
+  DocumentTypeSchema,
   MaterializationResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
@@ -537,5 +540,63 @@ describe("MaterializationResponseSchema", () => {
         effective_requirements: [],
       })
     ).toThrow()
+  })
+})
+
+describe("document-type registry (PRD1042-1794 Block 10)", () => {
+  const validType = {
+    id: TEMPLATE_UUID,
+    type_code: "LEASE_CONTRACT",
+    type_name: "Lease contract",
+    role_scope: "lessee",
+    origin: "requested",
+    note: null,
+    is_active: true,
+    created_at: "2026-08-26T10:00:00Z",
+    updated_at: "2026-08-26T10:00:00Z",
+  }
+
+  it("accepts a registered document type", () => {
+    const parsed = DocumentTypeSchema.parse(validType)
+    expect(parsed.type_code).toBe("LEASE_CONTRACT")
+    expect(parsed.origin).toBe("requested")
+  })
+
+  // The registry's origin vocabulary is NOT the requirement's. A requirement's document_origin is
+  // uploaded | generated; the registry says requested | generated. Conflating them would silently
+  // mislabel every requested document as uploaded.
+  it("keeps the registry origin distinct from a requirement's document origin", () => {
+    expect(DocumentTypeOriginSchema.options).toEqual(["requested", "generated"])
+    expect(DocumentTypeOriginSchema.options).not.toContain("uploaded")
+    expect(() => DocumentTypeOriginSchema.parse("uploaded")).toThrow()
+  })
+
+  it("rejects an unknown role scope", () => {
+    expect(() =>
+      DocumentTypeSchema.parse({ ...validType, role_scope: "vendor" })
+    ).toThrow()
+  })
+
+  it("accepts an inactive type on read, so a retired one still renders", () => {
+    const parsed = DocumentTypeSchema.parse({ ...validType, is_active: false })
+    expect(parsed.is_active).toBe(false)
+  })
+
+  it("parses the enveloped list", () => {
+    const parsed = DocumentTypeListResponseSchema.parse({
+      items: [validType],
+      total: 1,
+    })
+    expect(parsed.items).toHaveLength(1)
+    expect(parsed.total).toBe(1)
+  })
+
+  it("rejects a bare array — the endpoint is enveloped", () => {
+    expect(() => DocumentTypeListResponseSchema.parse([validType])).toThrow()
+  })
+
+  it("accepts an empty registry", () => {
+    const parsed = DocumentTypeListResponseSchema.parse({ items: [], total: 0 })
+    expect(parsed.items).toEqual([])
   })
 })

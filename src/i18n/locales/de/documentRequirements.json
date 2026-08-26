@@ -174,7 +174,10 @@
     "documentOrigins": {
       "uploaded": "Hochgeladen",
       "generated": "Generiert"
-    }
+    },
+    "documentTypesUnavailable": "Die Dokumentarten konnten nicht geladen werden. Laden Sie die Seite neu — eine Anforderung ohne Dokumentart wäre nicht erfüllbar.",
+    "noDocumentTypes": "Es sind noch keine Dokumentarten registriert. Legen Sie zuerst eine im Register an.",
+    "selectDocumentType": "Dokumentart auswählen"
   },
   "preview": {
     "title": "Vorschau des effektiven Anforderungssatzes",
