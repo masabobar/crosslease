@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest"
+import { addDays, format, subDays } from "date-fns"
 import {
   ActivateFARequestSchema,
   CreateFARequestSchema,
@@ -745,7 +746,10 @@ describe("FrameworkAgreementWizardFormSchema", () => {
     rate_type: "fixed",
     effective_rate: 4.75,
     rate_lock_period_months: 12,
-    valid_from: "2026-06-01",
+    // Derived, not a literal: the create schema rejects a valid_from before today, so a fixed
+    // date silently rots into a failing fixture the moment it passes (this one was 2026-06-01).
+    // Tomorrow rather than today so the fixture cannot flip on a run that straddles midnight.
+    valid_from: format(addDays(new Date(), 1), "yyyy-MM-dd"),
     product_template_ids: ["b3e1c9a0-1111-4a2b-8c3d-000000000002"],
   }
 
@@ -791,6 +795,44 @@ describe("FrameworkAgreementWizardFormSchema", () => {
         valid_until: validForm.valid_from,
       })
     ).toThrow()
+  })
+
+  // Step 3's calendar floors valid_from at today (PRD1042-1652), but it computes that bound
+  // once at render, so a wizard left open across midnight would otherwise submit yesterday.
+  it("rejects a valid_from before today", () => {
+    const result = FrameworkAgreementWizardFormSchema.safeParse({
+      ...validForm,
+      valid_from: format(subDays(new Date(), 1), "yyyy-MM-dd"),
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error!.issues.find(i => i.path[0] === "valid_from")?.message
+    ).toBe("validFromInPast")
+  })
+
+  // Inclusive, matching the calendar's own floor: today is selectable, so today must parse.
+  it("accepts a valid_from of today", () => {
+    expect(() =>
+      FrameworkAgreementWizardFormSchema.parse({
+        ...validForm,
+        valid_from: format(new Date(), "yyyy-MM-dd"),
+        valid_until: undefined,
+      })
+    ).not.toThrow()
+  })
+
+  // Zod runs a superRefine even after a field-level rule has failed, so without the `!== ""`
+  // guard an untouched field would report being in the past as well as being required.
+  it("reports 'required' alone for an untouched valid_from", () => {
+    const result = FrameworkAgreementWizardFormSchema.safeParse({
+      ...validForm,
+      valid_from: "",
+    })
+    expect(result.success).toBe(false)
+    const messages = result
+      .error!.issues.filter(i => i.path[0] === "valid_from")
+      .map(i => i.message)
+    expect(messages).toEqual(["required"])
   })
 
   // Guards the i18n contract: resolveFrameworkAgreementFieldError only translates

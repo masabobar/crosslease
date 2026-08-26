@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { format } from "date-fns"
 import { requiredEnum, requiredNumber } from "@/lib/zodHelpers"
 import { FieldDiffItemSchema } from "@/types/api"
 
@@ -495,6 +496,25 @@ export const FrameworkAgreementWizardFormSchema = z
         code: "custom",
         message: "validUntilBeforeFrom",
         path: ["valid_until"],
+      })
+    }
+    // Step 3's calendar already floors valid_from at today (PRD1042-1652), but that bound is
+    // computed once at render, so a wizard left open across midnight submits yesterday. The
+    // `!== ""` guard keeps an untouched field reporting "required" alone — Zod runs a
+    // superRefine even when a field-level rule has already failed. Same shape as the Workflow
+    // Task Catalogue's refineValidFrom.
+    //
+    // Create only. EditFrameworkAgreementFormSchema deliberately has no equivalent: a draft
+    // created days ago can legitimately have started already, and rejecting it here would
+    // block an edit that has nothing to do with its dates.
+    if (
+      data.valid_from !== "" &&
+      data.valid_from < format(new Date(), "yyyy-MM-dd")
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "validFromInPast",
+        path: ["valid_from"],
       })
     }
   })

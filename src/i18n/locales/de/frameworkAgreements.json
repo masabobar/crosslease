@@ -300,6 +300,7 @@
   "errors": {
     "atLeastOneTemplate": "Wählen Sie mindestens eine Produktvorlage",
     "validUntilBeforeFrom": "„Gültig bis“ muss nach „Gültig ab“ liegen",
+    "validFromInPast": "„Gültig ab“ darf nicht in der Vergangenheit liegen",
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "vfeAmountMin": "Muss mindestens {{min}} EUR betragen.",
     "FA_ACCOUNT_NOT_ELIGIBLE": "Das angegebene Konto muss ein aktives Bankkonto der Leasinggesellschaft dieser Vereinbarung sein.",
