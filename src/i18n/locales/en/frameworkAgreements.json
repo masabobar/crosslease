@@ -300,6 +300,7 @@
   "errors": {
     "atLeastOneTemplate": "Select at least one Product Template",
     "validUntilBeforeFrom": "Valid Until must be after Valid From",
+    "validFromInPast": "Valid From cannot be in the past",
     "generic": "Something went wrong. Please try again.",
     "vfeAmountMin": "Must be {{min}} EUR or more.",
     "FA_ACCOUNT_NOT_ELIGIBLE": "The designated account must be an active bank account of the leasing company on this agreement.",
