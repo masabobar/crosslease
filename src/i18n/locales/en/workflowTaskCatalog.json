@@ -177,14 +177,15 @@
         "weight": "Weight",
         "displayOrder": "Display order",
         "mandatory": "Mandatory",
-        "stage": "Stage",
+        "stage": "Process stage (platform)",
         "active": "Active",
         "parentTask": "Parent task",
         "conditionalTrigger": "Conditional trigger",
         "processContexts": "Applicable process contexts",
         "documentRequirement": "Document requirement",
         "pinningBehavior": "Pinning behavior",
-        "responsibleRoles": "Responsible roles"
+        "responsibleRoles": "Responsible roles",
+        "phase": "Stage"
       },
       "mandatoryOptions": {
         "yes": "Yes",
@@ -219,7 +220,6 @@
       },
       "taskTypes": {
         "checkbox": "Checkbox",
-        "four_eyes_sign_off": "Four-eyes sign-off",
         "typed_upload": "Typed upload",
         "generated_document": "Generated document",
         "calculation": "Calculation",
@@ -256,7 +256,8 @@
       "documentRequirementNone": "No document requirement",
       "pinningBehaviorHint": "Pin by version keeps this task on the requirement version you pick. Pin by ID follows the requirement's active version automatically.",
       "noDocumentRequirements": "No active document requirements exist for this tenant yet.",
-      "documentRequirementsUnavailable": "Document requirements could not be loaded. Close this and try again."
+      "documentRequirementsUnavailable": "Document requirements could not be loaded. Close this and try again.",
+      "noStagesYet": "No stages defined yet"
     },
     "auditTrail": {
       "columns": {
@@ -278,6 +279,24 @@
           "task_updated": "Task updated",
           "task_removed": "Task removed"
         }
+      }
+    },
+    "stages": {
+      "title": "Stages",
+      "caption": "The stages of this catalogue, in process order. Every task belongs to one.",
+      "empty": "No stages yet. Add the first one before adding tasks.",
+      "namePlaceholder": "Stage name",
+      "addButton": "Add stage",
+      "save": "Save",
+      "rename": "Rename stage",
+      "remove": "Remove stage",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "removeConfirm": {
+        "title": "Remove this stage?",
+        "description": "\"{{name}}\" holds {{count}} task(s). Removing the stage removes them with it.",
+        "confirm": "Remove stage and tasks",
+        "cancel": "Cancel"
       }
     }
   },

@@ -150,9 +150,11 @@ export type ConditionalTrigger = z.infer<typeof ConditionalTriggerSchema>
 
 // What the task demands from the worker, distinct from TaskCategory (a subject-area
 // classification) — decides what opens for the worker and how the task closes.
+// PRD1042-1892 item 5 — SEVEN types. `four_eyes_sign_off` was removed: four eyes is a flag on the
+// task plus its exclusion set, not a kind of work ("this replaces the earlier line that four-eyes
+// was a type of task"). The BE enum dropped it, so offering it here only ever bought a 422.
 export const TaskTypeSchema = z.enum([
   "checkbox",
-  "four_eyes_sign_off",
   "typed_upload",
   "generated_document",
   "calculation",
@@ -161,6 +163,54 @@ export const TaskTypeSchema = z.enum([
   "state_transition",
 ])
 export type TaskType = z.infer<typeof TaskTypeSchema>
+
+// PRD1042-1892 item 2 — the stages of a catalogue are the bank's own, not a platform list. A Bank
+// Admin creates, names, orders and removes them, and every task belongs to one. These mirror
+// phase_schemas.py; a phase belongs to a catalogue VERSION, so every call carries the version id.
+//
+// Note the vocabulary: the BE calls these `phases` on the wire and the CR calls them stages. The
+// wire name is kept here verbatim (enums-and-constants.md §2) and the UI labels say stage.
+export const CataloguePhaseSchema = z.object({
+  id: z.string().uuid(),
+  catalog_version_id: z.string().uuid(),
+  name: z.string(),
+  position: z.number().int(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+export type CataloguePhase = z.infer<typeof CataloguePhaseSchema>
+
+// GET .../phases returns a bare array, not an envelope-wrapped page.
+export const CataloguePhaseListSchema = z.array(CataloguePhaseSchema)
+
+// `position` is optional on create — the BE appends at max+1 when omitted, which is what the
+// panel relies on rather than computing a position client-side.
+export const CreatePhaseRequestSchema = z.object({
+  name: z.string().min(1).max(80),
+  position: z.number().int().min(1).optional(),
+})
+export type CreatePhaseRequest = z.infer<typeof CreatePhaseRequestSchema>
+
+export const UpdatePhaseRequestSchema = z.object({
+  name: z.string().min(1).max(80).optional(),
+  position: z.number().int().min(1).optional(),
+})
+export type UpdatePhaseRequest = z.infer<typeof UpdatePhaseRequestSchema>
+
+// A full permutation of this version's phase ids, in the order wanted.
+export const ReorderPhasesRequestSchema = z.object({
+  ordered_phase_ids: z.array(z.string().uuid()).min(1),
+})
+export type ReorderPhasesRequest = z.infer<typeof ReorderPhasesRequestSchema>
+
+// DELETE .../phases/{id} — `removed: false` with `tasks_in_phase > 0` means the caller must
+// re-request with confirm=true. The panel turns that into a confirmation naming the count.
+export const RemovePhaseResponseSchema = z.object({
+  phase_id: z.string().uuid(),
+  tasks_in_phase: z.number().int(),
+  removed: z.boolean(),
+})
+export type RemovePhaseResponse = z.infer<typeof RemovePhaseResponseSchema>
 
 // GET /workflow-task-catalogs — mirrors CatalogListItemResponse.
 // Deliberately thin: no version label, no published-at, no reference count and no product
@@ -271,6 +321,9 @@ export const TaskDefinitionItemSchema = z.object({
   applicable_process_contexts: z.array(TaskProcessContextSchema).nullable(),
   is_active: z.boolean(),
   parent_task_id: z.string().uuid().nullable(),
+  // PRD1042-1892 item 2 — the stage the task sits in. Null on override/deactivated rows, which
+  // inherit the parent's stage, and on rows authored before stages existed (no backfill).
+  phase_id: z.string().uuid().nullable(),
   doc_requirement_ref: z.string().uuid().nullable(),
   doc_requirement_pin_mode: DocRequirementPinModeSchema.nullable(),
   conditional_trigger: ConditionalTriggerSchema.nullable(),
@@ -349,6 +402,9 @@ export const AddTaskRequestSchema = z.object({
   applicable_process_contexts: z.array(TaskProcessContextSchema).optional(),
   is_active: z.boolean().optional(),
   parent_task_id: z.string().uuid().optional(),
+  // Mandatory for defined/supplement — task_service.py refuses those with no phase_id
+  // (422 WTC_TASK_PHASE_REQUIRED). Override/deactivated inherit the parent's stage.
+  phase_id: z.string().uuid().optional(),
   doc_requirement_ref: z.string().uuid().optional(),
   doc_requirement_pin_mode: DocRequirementPinModeSchema.optional(),
   conditional_trigger: ConditionalTriggerSchema.optional(),

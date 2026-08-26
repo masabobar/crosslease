@@ -2887,6 +2887,17 @@ const role_scope = z.union([DocumentRoleScope, z.null()]).optional()
 const DocumentTypeListResponse = z
   .object({ items: z.array(DocumentTypeResponse), total: z.number().int() })
   .passthrough()
+const DocumentTypeMatrixRow = z
+  .object({
+    type_code: z.string(),
+    type_name: z.string(),
+    role_scope: DocumentRoleScope,
+    origin: DocumentTypeOrigin,
+  })
+  .passthrough()
+const DocumentTypeMatrixResponse = z
+  .object({ rows: z.array(DocumentTypeMatrixRow), total: z.number().int() })
+  .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
   .object({
@@ -3225,6 +3236,8 @@ export const schemas = {
   origin,
   role_scope,
   DocumentTypeListResponse,
+  DocumentTypeMatrixRow,
+  DocumentTypeMatrixResponse,
   TestSessionRequest,
   OTPResponse,
 }
@@ -7053,6 +7066,28 @@ No existing sessions are invalidated immediately.
       },
     ],
     response: DocumentTypeListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/tenants/:tenant_id/document-types/matrix",
+    alias:
+      "get_document_type_matrix_api_v1_tenants__tenant_id__document_types_matrix_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentTypeMatrixResponse,
     errors: [
       {
         status: 422,
