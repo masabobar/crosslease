@@ -38,9 +38,3 @@ export async function fetchLcObligations(
   const data = await api.get(`/lc/obligations/${businessObjectId}`)
   return LCObligationResponseSchema.parse(data)
 }
-
-// The obligation's document is streamed by the media endpoint, which authenticates from the session
-// cookie — so a plain navigation is authenticated and no token is ever put in a URL.
-export function getLcObligationDocumentUrl(documentId: string): string {
-  return `${api.defaults.baseURL}/media/${documentId}`
-}

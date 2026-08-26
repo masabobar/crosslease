@@ -55,11 +55,16 @@ export type LCPortalFAListResponse = z.infer<
 
 // ── D-12: this company's own obligations for one case (PRD1042-1796 item 9) ──────────────────
 //
-// Matches LCObligationItem / LCObligationResponse in refinext-api surface_schemas.py. What is NOT
-// here is the point of the shape: no catalogue, no source layer, no condition, no classification and
-// no blocking flag. Item 9 forbids all of it on a leasing-company screen, and the backend does not
-// send it — so there is nothing here to leak by accident.
+// Matches LCObligationItem / LCObligationResponse in refinext-api surface_schemas.py exactly (verify
+// against src/generated/api.ts, the wire source of truth). What is NOT here is the point of the
+// shape: no catalogue, no source layer, no condition, no classification and no blocking flag. Item 9
+// forbids all of it on a leasing-company screen, and the backend does not send it — so there is
+// nothing here to leak by accident.
 export const LCObligationItemSchema = z.object({
+  // PRD1042-1794 — the backend now names which catalogue requirement each obligation fulfils, so a
+  // leasing company can upload against it via POST /cases/{case_id}/documents. It is an opaque handle
+  // to the LC screen: nothing about the catalogue is rendered from it, only sent back on upload.
+  requirement_definition_id: z.string().uuid(),
   document_type_name: z.string(),
   // Rendered as Required / Optional — what the company must send. Never as blocking: under CR
   // PRD1042-1794 membership carries "required", so this and blocking are derived from one fact, and
@@ -69,19 +74,16 @@ export const LCObligationItemSchema = z.object({
   // The LC vocabulary, not the internal one — the backend maps it (`_LC_STATUS_MAP`) before sending.
   // Parsed as a plain string so a status added there widens this screen instead of blanking it.
   fulfilment_status: z.string(),
+  // True when the company still has to act on this obligation (outstanding/rejected). Drives whether
+  // the upload control is offered — keyed off this rather than the status vocabulary so a status
+  // added on the backend does not silently hide or mis-offer the control.
   action_needed: z.boolean(),
-  // Separates what this company must send from the documents the bank has released.
-  document_origin: z.string(),
-  // Present only once the obligation is met, which is what lets the screen offer it for opening —
-  // item 9 forbids showing a requirement as met with nothing behind it.
-  linked_document_id: z.string().uuid().nullable(),
 })
 export type LCObligationItem = z.infer<typeof LCObligationItemSchema>
 
 export const LCObligationResponseSchema = z.object({
   business_object_id: z.string().uuid(),
-  // Null when no checkpoint was named: every obligation of the case.
-  process_context: z.string().nullable(),
+  process_context: z.string(),
   documents_status_summary: z.string(),
   obligations: z.array(LCObligationItemSchema),
 })

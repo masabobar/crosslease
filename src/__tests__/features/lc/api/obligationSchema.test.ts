@@ -5,20 +5,22 @@ import {
 } from "@/features/lc/api/schema"
 
 const OBJECT_UUID = "3f1c9a2e-0b7d-4c5e-8a11-9d2e6f4b7c80"
-const DOCUMENT_UUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+const REQUIREMENT_UUID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 
+// Matches the backend LCObligationItem exactly (verify against src/generated/api.ts): a requirement
+// handle, the document type, whether it is required, its LC-vocabulary status and whether the company
+// still has to act. Nothing else is sent.
 const validObligation = {
+  requirement_definition_id: REQUIREMENT_UUID,
   document_type_name: "Lease contract",
   is_mandatory: true,
   fulfilment_status: "outstanding",
   action_needed: true,
-  document_origin: "uploaded",
-  linked_document_id: null,
 }
 
 const validResponse = {
   business_object_id: OBJECT_UUID,
-  process_context: null,
+  process_context: "refinancing_request",
   documents_status_summary: "1 document outstanding",
   obligations: [validObligation],
 }
@@ -27,17 +29,20 @@ describe("LCObligationItemSchema", () => {
   it("accepts an outstanding obligation", () => {
     const parsed = LCObligationItemSchema.parse(validObligation)
     expect(parsed.document_type_name).toBe("Lease contract")
-    expect(parsed.linked_document_id).toBeNull()
+    expect(parsed.requirement_definition_id).toBe(REQUIREMENT_UUID)
+    expect(parsed.action_needed).toBe(true)
   })
 
-  it("carries the document once the obligation is met", () => {
+  it("carries the requirement handle the LC upload sends back", () => {
     const parsed = LCObligationItemSchema.parse({
       ...validObligation,
       fulfilment_status: "provided",
       action_needed: false,
-      linked_document_id: DOCUMENT_UUID,
     })
-    expect(parsed.linked_document_id).toBe(DOCUMENT_UUID)
+    // PRD1042-1794 — this is the id POST /cases/{case_id}/documents needs; without it the LC screen
+    // could not offer an upload.
+    expect(parsed.requirement_definition_id).toBe(REQUIREMENT_UUID)
+    expect(parsed.action_needed).toBe(false)
   })
 
   // PRD1042-1796 item 9 forbids the catalogue, the layers, the conditions, which layer won and
@@ -73,21 +78,27 @@ describe("LCObligationItemSchema", () => {
     expect(parsed.fulfilment_status).toBe("waived")
   })
 
-  it("rejects a non-uuid document reference", () => {
+  it("rejects a non-uuid requirement handle", () => {
     expect(() =>
       LCObligationItemSchema.parse({
         ...validObligation,
-        linked_document_id: "doc-1",
+        requirement_definition_id: "req-1",
       })
     ).toThrow()
+  })
+
+  it("rejects an obligation missing the requirement handle", () => {
+    const { requirement_definition_id: _omitted, ...withoutHandle } =
+      validObligation
+    void _omitted
+    expect(() => LCObligationItemSchema.parse(withoutHandle)).toThrow()
   })
 })
 
 describe("LCObligationResponseSchema", () => {
   it("accepts the response addressed by object id alone", () => {
     const parsed = LCObligationResponseSchema.parse(validResponse)
-    // Null rather than a checkpoint the company never named.
-    expect(parsed.process_context).toBeNull()
+    expect(parsed.process_context).toBe("refinancing_request")
     expect(parsed.obligations).toHaveLength(1)
   })
 
