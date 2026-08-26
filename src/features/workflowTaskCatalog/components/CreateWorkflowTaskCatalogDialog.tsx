@@ -19,11 +19,10 @@ import {
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
-import { CATALOG_OWNING_ENTITY_TYPE_OPTIONS } from "@/features/workflowTaskCatalog/constants"
+import { useCatalogCaseTypes } from "@/features/workflowTaskCatalog/hooks/useCatalogCaseTypes"
 import {
-  CASE_TYPE_BY_ENTITY_TYPE,
+  CaseTypeSchema,
   CatalogLayerSchema,
-  CatalogOwningEntityTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
@@ -62,7 +61,7 @@ function refineValidFrom(
 const globalDefaultCatalogSchema = z
   .object({
     catalogName: z.string().trim().min(1, "required"),
-    entityType: z.string().min(1, "required"),
+    caseType: z.string().min(1, "required"),
     productTemplate: z.string(),
     validFrom: z.string().min(1, "required"),
     validUntil: z.string(),
@@ -76,7 +75,7 @@ const globalDefaultCatalogSchema = z
 const productSpecificCatalogSchema = z
   .object({
     catalogName: z.string().trim().min(1, "required"),
-    entityType: z.string().min(1, "required"),
+    caseType: z.string().min(1, "required"),
     productTemplate: z.string().min(1, "required"),
     validFrom: z.string().min(1, "required"),
     validUntil: z.string(),
@@ -89,7 +88,7 @@ const productSpecificCatalogSchema = z
 
 type CreateCatalogFormValues = {
   catalogName: string
-  entityType: string
+  caseType: string
   productTemplate: string
   validFrom: string
   validUntil: string
@@ -97,7 +96,7 @@ type CreateCatalogFormValues = {
 
 const EMPTY_FORM_VALUES: CreateCatalogFormValues = {
   catalogName: "",
-  entityType: "",
+  caseType: "",
   productTemplate: "",
   validFrom: "",
   validUntil: "",
@@ -112,6 +111,12 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
   const { t: tCommon } = useTranslation("common")
   const isGlobalDefault = layer === CatalogLayerSchema.enum.global_default
+  // PRD1042-1790 item 1 — the scopeable case types come from the backend, never a local list.
+  const {
+    data: caseTypes,
+    isError: isCaseTypesError,
+    error: caseTypesError,
+  } = useCatalogCaseTypes()
 
   // Reused from the FA feature: GET /product-templates/selectable returns only templates
   // with a published version valid today, which is what the catalog's entity_id must be
@@ -179,17 +184,10 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
         entity_id: isGlobalDefault ? null : values.productTemplate,
         valid_from: values.validFrom,
         valid_until: values.validUntil || null,
-        // The chosen Entity type decides the case_type, for both layers. Hardcoding it per layer
-        // put every Global Default into the single scope (tenant, global_default,
-        // package_redemption, NULL) — and since scope uniqueness is per case_type among ACTIVE
-        // catalogues, the first one worked and every one after it failed with
-        // WTC_CATALOG_DUPLICATE_SCOPE, while a main_process Global Default (the one
-        // Product-Specific catalogues inherit from) was unreachable. .parse() narrows to the
-        // two entity types the select offers, as CreateDocumentRequirementCatalogDialog does.
-        case_type:
-          CASE_TYPE_BY_ENTITY_TYPE[
-            CatalogOwningEntityTypeSchema.parse(values.entityType)
-          ],
+        // The case type IS the scope key (PRD1042-1790 item 1), so it is asked for directly. It
+        // used to be derived from a chosen Entity type, which capped the axis at the two case
+        // types an entity type maps to and put the superseded vocabulary on screen.
+        case_type: CaseTypeSchema.parse(values.caseType),
       },
       {
         onSuccess: response => {
@@ -260,33 +258,43 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
 
           <div>
             <Label
-              htmlFor="create-catalog-entity-type"
-              error={!!errors.entityType}
+              htmlFor="create-catalog-case-type"
+              error={!!errors.caseType}
               className="mb-2"
             >
-              {t("create.fields.entityType")}
+              {t("create.fields.caseType")}
             </Label>
             <Controller
               control={control}
-              name="entityType"
+              name="caseType"
               render={({ field }) => (
                 <SelectField
-                  id="create-catalog-entity-type"
-                  data-testid="create-catalog-entity-type-select"
+                  id="create-catalog-case-type"
+                  data-testid="create-catalog-case-type-select"
                   value={field.value}
                   onValueChange={field.onChange}
-                  options={CATALOG_OWNING_ENTITY_TYPE_OPTIONS.map(o => ({
-                    value: o.value,
-                    label: t(o.labelKey),
+                  // Exactly what the backend reports as scopeable — no local list, so a further
+                  // case type appears here with no frontend release (AC-74/AC-94).
+                  options={(caseTypes ?? []).map(item => ({
+                    value: item.case_type,
+                    label: t(`caseTypes.${item.case_type}`),
                   }))}
-                  placeholder={t("create.fields.entityTypePlaceholder")}
-                  error={!!errors.entityType}
+                  placeholder={t("create.fields.caseTypePlaceholder")}
+                  error={!!errors.caseType}
                 />
               )}
             />
-            {errors.entityType && (
+            {errors.caseType && (
               <p className="mt-1 text-sm text-destructive">
-                {resolveMessage(errors.entityType.message)}
+                {resolveMessage(errors.caseType.message)}
+              </p>
+            )}
+            {isCaseTypesError && (
+              <p
+                className="mt-1 text-sm text-destructive"
+                data-testid="create-catalog-case-types-error"
+              >
+                {resolveApiErrorMessage(caseTypesError, t)}
               </p>
             )}
           </div>

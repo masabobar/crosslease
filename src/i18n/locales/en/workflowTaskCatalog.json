@@ -73,10 +73,8 @@
       "catalogLayer": "Catalog layer",
       "catalogLayerHintGlobalDefault": "Automatically set to null for global default catalogs.",
       "catalogLayerHintProductSpecific": "Automatically set to product-specific. Cannot be changed.",
-      "entityType": "Entity type",
-      "entityTypePlaceholder": "Select",
       "catalogName": "Catalog name",
-      "catalogNameHint": "Must be unique within the selected entity type.",
+      "catalogNameHint": "Must be unique within the selected case type.",
       "productTemplate": "Applicable product template",
       "productTemplateNotApplicable": "Not applicable for global default",
       "productTemplateLockedHint": "Fixed for this catalog type. Cannot be changed.",
@@ -85,7 +83,9 @@
       "productTemplateEmpty": "No product template with an active published version is available, so a product-specific catalog cannot be created yet.",
       "validFrom": "Valid from",
       "validUntil": "Valid until",
-      "optional": "(optional)"
+      "optional": "(optional)",
+      "caseType": "Case type",
+      "caseTypePlaceholder": "Select"
     },
     "errors": {
       "validUntilBeforeValidFrom": "Valid until must be on or after valid from.",
@@ -425,5 +425,14 @@
         "submit": "Save"
       }
     }
+  },
+  "caseTypes": {
+    "main_process": "Main Refinancing Process",
+    "package_redemption": "Package Redemption",
+    "single_redemption": "Single Redemption",
+    "lessee_change": "Lessee Change",
+    "object_swap": "Object Swap",
+    "extension": "Extension",
+    "asset_event": "Asset Event"
   }
 }

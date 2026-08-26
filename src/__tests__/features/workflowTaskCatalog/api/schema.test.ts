@@ -8,6 +8,8 @@ import {
   CatalogLayerSchema,
   CatalogListItemSchema,
   CatalogListResponseSchema,
+  CatalogCaseTypeItemSchema,
+  CatalogCaseTypeListSchema,
   CatalogOwningEntityTypeSchema,
   CataloguePhaseListSchema,
   CataloguePhaseSchema,
@@ -17,7 +19,6 @@ import {
   TaskTypeSchema,
   CatalogResponseSchema,
   CatalogStateSchema,
-  CASE_TYPE_BY_ENTITY_TYPE,
   CreateCatalogRequestSchema,
   TaskDefinitionItemSchema,
   TaskResponseWithWarningsSchema,
@@ -787,34 +788,53 @@ describe("CatalogOwningEntityTypeSchema", () => {
   })
 })
 
-describe("CASE_TYPE_BY_ENTITY_TYPE", () => {
-  // Mirrors CASE_TYPE_ENTITY_TYPE in the BE's workflow_task_catalog/domain/enums.py, inverted.
-  it("maps each owning entity type to its case type", () => {
-    expect(CASE_TYPE_BY_ENTITY_TYPE.refinancing_request).toBe("main_process")
-    expect(CASE_TYPE_BY_ENTITY_TYPE.redemption_request).toBe(
-      "package_redemption"
-    )
+describe("CatalogCaseTypeItemSchema", () => {
+  // PRD1042-1790 item 1 — the create dialog reads the scopeable case types rather than carrying its
+  // own list. AC-94 fails an implementation wired to a fixed count of case types, so there is
+  // deliberately no assertion here on how many the backend returns.
+  it("accepts a case type with the entity type it derives", () => {
+    const parsed = CatalogCaseTypeItemSchema.parse({
+      case_type: "main_process",
+      entity_type: "refinancing_request",
+    })
+    expect(parsed.case_type).toBe("main_process")
+    expect(parsed.entity_type).toBe("refinancing_request")
   })
 
-  // The bug this map replaced hardcoded one case_type for every Global Default, collapsing all
-  // of them into a single scope. Distinct values are what give each entity type its own scope.
-  it("gives the two entity types distinct case types", () => {
-    const caseTypes = Object.values(CASE_TYPE_BY_ENTITY_TYPE)
-    expect(new Set(caseTypes).size).toBe(caseTypes.length)
+  it("accepts a case type the frontend does not offer today", () => {
+    // The point of reading the set: were the backend to start reporting object_swap, the schema
+    // must parse it rather than needing a release to widen an enum.
+    const parsed = CatalogCaseTypeItemSchema.parse({
+      case_type: "object_swap",
+      entity_type: "refinancing_request",
+    })
+    expect(parsed.case_type).toBe("object_swap")
   })
 
-  it("covers every owning entity type and nothing else", () => {
-    expect(Object.keys(CASE_TYPE_BY_ENTITY_TYPE).sort()).toEqual(
-      [...CatalogOwningEntityTypeSchema.options].sort()
-    )
+  it("rejects a case type outside the wire enum", () => {
+    expect(() =>
+      CatalogCaseTypeItemSchema.parse({
+        case_type: "not_a_case_type",
+        entity_type: "refinancing_request",
+      })
+    ).toThrow()
   })
 
-  // Only the two typed case types may own a catalogue (TYPED_CASE_TYPES); anything else is
-  // rejected with WTC_CATALOG_INVALID_CASE_TYPE, so the map must never point at one.
-  it("only ever maps to a case type the BE accepts", () => {
-    for (const caseType of Object.values(CASE_TYPE_BY_ENTITY_TYPE)) {
-      expect(["main_process", "package_redemption"]).toContain(caseType)
-    }
+  it("parses the list as a bare array", () => {
+    const parsed = CatalogCaseTypeListSchema.parse([
+      { case_type: "main_process", entity_type: "refinancing_request" },
+      { case_type: "package_redemption", entity_type: "redemption_request" },
+    ])
+    expect(parsed).toHaveLength(2)
+  })
+})
+
+describe("CatalogOwningEntityTypeSchema", () => {
+  // Financing is not a case type (PRD1042-1790), so no case type derives it and no catalogue can
+  // carry it — which is why the list filter must not offer it.
+  it("excludes financing", () => {
+    expect(CatalogOwningEntityTypeSchema.options).not.toContain("financing")
+    expect(() => CatalogOwningEntityTypeSchema.parse("financing")).toThrow()
   })
 })
 

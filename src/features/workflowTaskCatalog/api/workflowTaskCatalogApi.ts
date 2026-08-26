@@ -5,6 +5,7 @@ import {
   CatalogDetailResponseSchema,
   CatalogListResponseSchema,
   CatalogResponseSchema,
+  CatalogCaseTypeListSchema,
   CataloguePhaseListSchema,
   CataloguePhaseSchema,
   RemovePhaseResponseSchema,
@@ -18,6 +19,7 @@ import type {
   CatalogLayer,
   CatalogListResponse,
   CatalogResponse,
+  CatalogCaseTypeItem,
   CatalogState,
   CataloguePhase,
   CreateCatalogRequest,
@@ -69,6 +71,8 @@ export const WORKFLOW_TASK_CATALOG_QUERY_KEYS = {
   // endpoint is scoped to one.
   phases: (catalogId: string, versionId: string) =>
     ["workflow-task-catalogs", "phases", catalogId, versionId] as const,
+  // Tenant-independent within a session and effectively static, so one key with no params.
+  caseTypes: () => ["workflow-task-catalogs", "case-types"] as const,
 } as const
 
 export async function fetchWorkflowTaskCatalogs(
@@ -206,4 +210,11 @@ export async function removeCatalogPhase(
     { params: { confirm } }
   )
   return RemovePhaseResponseSchema.parse(data)
+}
+
+// PRD1042-1790 item 1 — the case types a catalogue may be scoped to. The create dialog offers
+// exactly this, so the axis widens without a frontend release (AC-74/AC-94).
+export async function fetchCatalogCaseTypes(): Promise<CatalogCaseTypeItem[]> {
+  const data = await api.get("/workflow-task-catalogs/case-types")
+  return CatalogCaseTypeListSchema.parse(data)
 }
