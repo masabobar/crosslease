@@ -2230,6 +2230,7 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
       tenant_id: z.string().uuid(),
       catalog_name: z.string(),
       catalog_layer: CatalogLayer,
+      case_type: z.union([CaseType, z.null()]).optional(),
       entity_type: z.union([CatalogEntityType, z.null()]),
       entity_id: z.union([z.string(), z.null()]),
       catalog_state: CatalogState,
