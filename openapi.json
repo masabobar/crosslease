@@ -7211,6 +7211,30 @@
         }
       }
     },
+    "/api/v1/workflow-task-catalogs/case-types": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "List Catalog Case Types",
+        "description": "PRD1042-1790 item 1 — the case types a catalogue may be scoped to.\n\nDeclared before `/{catalog_id}` so the literal path wins over the UUID route, the same ordering\n`/field-registry` above relies on.\n\nReturns every case type in the enum's own order, each with the entity type it derives (null for\nthose that derive none). Since PRD1042-1917 all seven case types carry a catalogue, so there is\nno longer a \"typed\" subset to gate on — the client reads the full set from here rather than\nre-listing it (AC-94 fails an implementation wired to a fixed count of case types).",
+        "operationId": "list_catalog_case_types_api_v1_workflow_task_catalogs_case_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCaseTypeItem"
+                  },
+                  "type": "array",
+                  "title": "Response List Catalog Case Types Api V1 Workflow Task Catalogs Case Types Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workflow-task-catalogs/{catalog_id}": {
       "get": {
         "tags": ["Workflow Task Catalog"],
@@ -8750,14 +8774,20 @@
           {
             "name": "object_type",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Object Type" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Object Type"
+            }
           },
           {
             "name": "process_context",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Process Context" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
           }
         ],
         "responses": {
@@ -8893,24 +8923,32 @@
           {
             "name": "catalog_id",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
-              "format": "uuid",
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
               "title": "Catalog Id"
             }
           },
           {
             "name": "object_type",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Object Type" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Object Type"
+            }
           },
           {
             "name": "process_context",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Process Context" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
           }
         ],
         "responses": {
@@ -9044,12 +9082,6 @@
             }
           },
           {
-            "name": "process_context",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Process Context" }
-          },
-          {
             "name": "business_object_id",
             "in": "query",
             "required": true,
@@ -9060,10 +9092,22 @@
             }
           },
           {
+            "name": "process_context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
+          },
+          {
             "name": "business_object_type",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Business Object Type" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Business Object Type"
+            }
           }
         ],
         "responses": {
@@ -9349,6 +9393,74 @@
           "200": {
             "description": "Successful Response",
             "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/internal/test/session": {
+      "post": {
+        "tags": ["Internal - Test Hooks"],
+        "summary": "Test Session",
+        "description": "Create a real authenticated session for any user without going through 2FA.\n\nReplicates the tail of verify_otp: evicts oldest session if needed, issues\naccess + refresh tokens as HTTP-only cookies.\n\nUser status is NOT checked — QA can obtain a session for suspended or\ndeactivated users to test authenticated edge-case scenarios.",
+        "operationId": "test_session_internal_test_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TestSessionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/test/otp": {
+      "get": {
+        "tags": ["Internal - Test Hooks"],
+        "summary": "Test Get Otp",
+        "description": "Return the current valid OTP code for a user.\n\nUse after POST /api/v1/auth/login to retrieve the generated OTP without\nneeding email access. Returns 404 if no active (non-expired, non-used) OTP\nexists for the given email.",
+        "operationId": "test_get_otp_internal_test_otp_get",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Email" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OTPResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
           }
         }
       }
@@ -10774,6 +10886,21 @@
         "title": "CaseType",
         "description": "PRD1042-1917 OQ-01 (closed 19 Aug 2026) — the seven case types, and the process each runs.\n\nAll seven carry a checklist, with the catalogue step counts recorded on the ticket: main\nprocess 44, package redemption 20, single redemption 11, lessee change 8, object swap 8,\nasset event 4, extension 42. The earlier figure of six belongs to 17 Aug, when the extension\nwas still held back; it was released on 18 Aug and is one case with its own catalogue, not two.\n\nAmendment Request is deliberately absent: the CrossLease click dummy offers it, the client does\nnot have it, and it is not built. The Financing is not a case type either — it has actions\nrather than a workflow, and it cannot own a catalogue."
       },
+      "CatalogCaseTypeItem": {
+        "properties": {
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "entity_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CatalogEntityType" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["case_type"],
+        "title": "CatalogCaseTypeItem",
+        "description": "PRD1042-1790 item 1 — a case type that may own a catalogue, and the entity type it derives.\n\nExists so no client has to carry its own copy of ``TYPED_CASE_TYPES``. AC-94 refuses an\nimplementation \"wired to a fixed count of case types\", and an enum the FE re-lists is exactly\nthat: assigning a catalogue to a third case type would need a frontend release. Reading the set\nfrom here makes it a backend change, and later a configuration one, with no client work.\n\n``entity_type`` is the coarse object the case type derives (``CASE_TYPE_ENTITY_TYPE``). It is not\npart of the create contract — the backend derives it — and is surfaced only so a client can label\nor group by it without re-deriving the mapping. It is null for the case types that derive no\nentity type (since PRD1042-1917 not every case type maps to one)."
+      },
       "CatalogEntityType": {
         "type": "string",
         "enum": ["refinancing_request", "financing", "redemption_request"],
@@ -11115,7 +11242,10 @@
             "format": "uuid",
             "title": "Catalog Id"
           },
-          "process_context": { "type": "string", "title": "Process Context" },
+          "process_context": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Process Context"
+          },
           "business_object_id": {
             "type": "string",
             "format": "uuid",
@@ -11146,7 +11276,6 @@
         "type": "object",
         "required": [
           "catalog_id",
-          "process_context",
           "business_object_id",
           "summary",
           "mandatory_total",
@@ -13681,7 +13810,19 @@
             "type": "string",
             "title": "Fulfilment Status"
           },
-          "action_needed": { "type": "boolean", "title": "Action Needed" }
+          "action_needed": { "type": "boolean", "title": "Action Needed" },
+          "document_origin": {
+            "type": "string",
+            "title": "Document Origin",
+            "default": ""
+          },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          }
         },
         "type": "object",
         "required": [
@@ -13700,7 +13841,10 @@
             "format": "uuid",
             "title": "Business Object Id"
           },
-          "process_context": { "type": "string", "title": "Process Context" },
+          "process_context": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Process Context"
+          },
           "documents_status_summary": {
             "type": "string",
             "title": "Documents Status Summary"
@@ -13714,7 +13858,6 @@
         "type": "object",
         "required": [
           "business_object_id",
-          "process_context",
           "documents_status_summary",
           "obligations"
         ],
@@ -14556,6 +14699,19 @@
         ],
         "title": "NewVersionCreatedResponse"
       },
+      "OTPResponse": {
+        "properties": {
+          "code": { "type": "string", "title": "Code" },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": ["code", "expires_at"],
+        "title": "OTPResponse"
+      },
       "OrchestrationLinkageItem": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -14988,7 +15144,14 @@
           },
           "requirement_code": { "type": "string", "title": "Requirement Code" },
           "classification": { "type": "string", "title": "Classification" },
-          "status": { "type": "string", "title": "Status" }
+          "status": { "type": "string", "title": "Status" },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          }
         },
         "type": "object",
         "required": [
@@ -15730,7 +15893,20 @@
             "title": "Fulfilment Status"
           },
           "is_blocking": { "type": "boolean", "title": "Is Blocking" },
-          "document_origin": { "type": "string", "title": "Document Origin" }
+          "document_origin": { "type": "string", "title": "Document Origin" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts",
+            "default": []
+          },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          }
         },
         "type": "object",
         "required": [
@@ -15757,7 +15933,10 @@
             "format": "uuid",
             "title": "Business Object Id"
           },
-          "process_context": { "type": "string", "title": "Process Context" },
+          "process_context": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Process Context"
+          },
           "completeness_summary": {
             "type": "string",
             "title": "Completeness Summary"
@@ -15772,7 +15951,6 @@
         "required": [
           "catalog_id",
           "business_object_id",
-          "process_context",
           "completeness_summary",
           "requirements"
         ],
@@ -17613,6 +17791,14 @@
         ],
         "title": "TerminationReadinessResponse"
       },
+      "TestSessionRequest": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["email"],
+        "title": "TestSessionRequest"
+      },
       "TransitionStatusRequest": {
         "properties": {
           "requirement_definition_id": {
@@ -19352,6 +19538,12 @@
           },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
           "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
+          "case_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CaseType" },
+              { "type": "null" }
+            ]
+          },
           "entity_type": {
             "anyOf": [
               { "$ref": "#/components/schemas/CatalogEntityType" },

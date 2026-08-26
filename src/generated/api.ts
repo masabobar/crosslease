@@ -2154,6 +2154,12 @@ const FieldRegistryItem = z
     data_available: z.boolean(),
   })
   .passthrough()
+const CatalogCaseTypeItem = z
+  .object({
+    case_type: CaseType,
+    entity_type: z.union([CatalogEntityType, z.null()]).optional(),
+  })
+  .passthrough()
 const LayerAction = z.enum(["defined", "override", "deactivated", "supplement"])
 const TaskCategory = z.enum([
   "legal",
@@ -2309,6 +2315,7 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
       tenant_id: z.string().uuid(),
       catalog_name: z.string(),
       catalog_layer: CatalogLayer,
+      case_type: z.union([CaseType, z.null()]).optional(),
       entity_type: z.union([CatalogEntityType, z.null()]),
       entity_id: z.union([z.string(), z.null()]),
       catalog_state: CatalogState,
@@ -2807,13 +2814,15 @@ const RuntimeRequirementItem = z
     fulfilment_status: z.string(),
     is_blocking: z.boolean(),
     document_origin: z.string(),
+    applicable_process_contexts: z.array(z.string()).optional().default([]),
+    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const RuntimeRequirementSurfaceResponse = z
   .object({
     catalog_id: z.string().uuid(),
     business_object_id: z.string().uuid(),
-    process_context: z.string(),
+    process_context: z.union([z.string(), z.null()]).optional(),
     completeness_summary: z.string(),
     requirements: z.array(RuntimeRequirementItem),
   })
@@ -2851,12 +2860,14 @@ const LCObligationItem = z
     is_mandatory: z.boolean(),
     fulfilment_status: z.string(),
     action_needed: z.boolean(),
+    document_origin: z.string().optional().default(""),
+    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const LCObligationResponse = z
   .object({
     business_object_id: z.string().uuid(),
-    process_context: z.string(),
+    process_context: z.union([z.string(), z.null()]).optional(),
     documents_status_summary: z.string(),
     obligations: z.array(LCObligationItem),
   })
@@ -2898,12 +2909,13 @@ const PerRequirementStatusResponse = z
     requirement_code: z.string(),
     classification: z.string(),
     status: z.string(),
+    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const CompletenessResponse = z
   .object({
     catalog_id: z.string().uuid(),
-    process_context: z.string(),
+    process_context: z.union([z.string(), z.null()]).optional(),
     business_object_id: z.string().uuid(),
     summary: z.string(),
     mandatory_total: z.number().int(),
@@ -2955,6 +2967,13 @@ const DocumentTypeMatrixRow = z
   .passthrough()
 const DocumentTypeMatrixResponse = z
   .object({ rows: z.array(DocumentTypeMatrixRow), total: z.number().int() })
+  .passthrough()
+const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
+const OTPResponse = z
+  .object({
+    code: z.string(),
+    expires_at: z.string().datetime({ offset: true }),
+  })
   .passthrough()
 
 export const schemas = {
@@ -3221,6 +3240,7 @@ export const schemas = {
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
   SuspendCatalogResponse,
   FieldRegistryItem,
+  CatalogCaseTypeItem,
   LayerAction,
   TaskCategory,
   TaskResponsibleRole,
@@ -3299,6 +3319,8 @@ export const schemas = {
   DocumentTypeListResponse,
   DocumentTypeMatrixRow,
   DocumentTypeMatrixResponse,
+  TestSessionRequest,
+  OTPResponse,
 }
 
 const endpoints = makeApi([
@@ -4505,19 +4527,19 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
         schema: z.string().uuid(),
       },
       {
-        name: "process_context",
-        type: "Query",
-        schema: z.string(),
-      },
-      {
         name: "business_object_id",
         type: "Query",
         schema: z.string().uuid(),
       },
       {
+        name: "process_context",
+        type: "Query",
+        schema: search,
+      },
+      {
         name: "business_object_type",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
     ],
     response: CompletenessResponse,
@@ -4630,12 +4652,12 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
       {
         name: "object_type",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
       {
         name: "process_context",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
     ],
     response: RuntimeRequirementSurfaceResponse,
@@ -5711,17 +5733,17 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
       {
         name: "catalog_id",
         type: "Query",
-        schema: z.string().uuid(),
+        schema: search,
       },
       {
         name: "object_type",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
       {
         name: "process_context",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
     ],
     response: LCObligationResponse,
@@ -8988,6 +9010,23 @@ cases + product, then proceeds (never blocked).`,
   },
   {
     method: "get",
+    path: "/api/v1/workflow-task-catalogs/case-types",
+    alias:
+      "list_catalog_case_types_api_v1_workflow_task_catalogs_case_types_get",
+    description: `PRD1042-1790 item 1 — the case types a catalogue may be scoped to.
+
+Declared before &#x60;/{catalog_id}&#x60; so the literal path wins over the UUID route, the same ordering
+&#x60;/field-registry&#x60; above relies on.
+
+Returns every case type in the enum&#x27;s own order, each with the entity type it derives (null for
+those that derive none). Since PRD1042-1917 all seven case types carry a catalogue, so there is
+no longer a &quot;typed&quot; subset to gate on — the client reads the full set from here rather than
+re-listing it (AC-94 fails an implementation wired to a fixed count of case types).`,
+    requestFormat: "json",
+    response: z.array(CatalogCaseTypeItem),
+  },
+  {
+    method: "get",
     path: "/api/v1/workflow-task-catalogs/field-registry",
     alias:
       "list_field_registry_api_v1_workflow_task_catalogs_field_registry_get",
@@ -9002,6 +9041,60 @@ before &#x60;/{catalog_id}&#x60; so the literal path wins over the UUID route.`,
     alias: "health_check_health_get",
     requestFormat: "json",
     response: z.unknown(),
+  },
+  {
+    method: "get",
+    path: "/internal/test/otp",
+    alias: "test_get_otp_internal_test_otp_get",
+    description: `Return the current valid OTP code for a user.
+
+Use after POST /api/v1/auth/login to retrieve the generated OTP without
+needing email access. Returns 404 if no active (non-expired, non-used) OTP
+exists for the given email.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "email",
+        type: "Query",
+        schema: z.string(),
+      },
+    ],
+    response: OTPResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/internal/test/session",
+    alias: "test_session_internal_test_session_post",
+    description: `Create a real authenticated session for any user without going through 2FA.
+
+Replicates the tail of verify_otp: evicts oldest session if needed, issues
+access + refresh tokens as HTTP-only cookies.
+
+User status is NOT checked — QA can obtain a session for suspended or
+deactivated users to test authenticated edge-case scenarios.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ email: z.string().email() }).passthrough(),
+      },
+    ],
+    response: LoginResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
   },
 ])
 
