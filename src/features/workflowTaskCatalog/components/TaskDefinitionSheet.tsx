@@ -29,6 +29,7 @@ import { useTenantDocumentRequirements } from "@/features/documentRequirements/h
 import { useAddCatalogTask } from "@/features/workflowTaskCatalog/hooks/useAddCatalogTask"
 import { useUpdateCatalogTask } from "@/features/workflowTaskCatalog/hooks/useUpdateCatalogTask"
 import { useRemoveCatalogTask } from "@/features/workflowTaskCatalog/hooks/useRemoveCatalogTask"
+import { useCatalogPhases } from "@/features/workflowTaskCatalog/hooks/useCatalogPhases"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS,
@@ -76,6 +77,7 @@ function toFormValues(
     task_description: task?.task_description ?? "",
     category: task?.category ?? "",
     task_type: task?.task_type ?? "",
+    phase_id: task?.phase_id ?? "",
     responsible_roles: task?.responsible_roles ?? [],
     weight: task && task.weight !== null ? String(task.weight) : "",
     display_order:
@@ -153,6 +155,7 @@ function toWirePayload(
     category: orUndefined(values.category) as AddTaskRequest["category"],
     task_type: orUndefined(values.task_type) as AddTaskRequest["task_type"],
     responsible_roles: values.responsible_roles,
+    phase_id: values.phase_id,
     is_mandatory: values.is_mandatory === "true",
     weight,
     display_order: Number(values.display_order),
@@ -210,6 +213,8 @@ function TaskDefinitionSheet({
   const addTask = useAddCatalogTask()
   const updateTask = useUpdateCatalogTask()
   const removeTask = useRemoveCatalogTask()
+  // PRD1042-1892 item 2 — the stage options are this catalogue version's own, not a platform list.
+  const { data: phases = [] } = useCatalogPhases(catalogId, versionId)
   const {
     data: globalDefaultTasks,
     isError: isParentLoadError,
@@ -697,6 +702,37 @@ function TaskDefinitionSheet({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-2" error={!!errors.phase_id}>
+                      {t("detail.taskSheet.fields.phase")}
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="phase_id"
+                      render={({ field }) => (
+                        <SelectField
+                          data-testid="task-sheet-phase"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          options={phases.map(phase => ({
+                            value: phase.id,
+                            label: phase.name,
+                          }))}
+                          placeholder={
+                            phases.length === 0
+                              ? t("detail.taskSheet.noStagesYet")
+                              : t("detail.taskSheet.notSet")
+                          }
+                          error={!!errors.phase_id}
+                        />
+                      )}
+                    />
+                    {errors.phase_id && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {resolveMessage(errors.phase_id.message)}
+                      </p>
+                    )}
+                  </div>
                   <div>
                     <Label
                       className="mb-2"

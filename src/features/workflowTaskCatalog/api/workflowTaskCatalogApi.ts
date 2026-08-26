@@ -5,6 +5,9 @@ import {
   CatalogDetailResponseSchema,
   CatalogListResponseSchema,
   CatalogResponseSchema,
+  CataloguePhaseListSchema,
+  CataloguePhaseSchema,
+  RemovePhaseResponseSchema,
   TaskResponseWithWarningsSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type {
@@ -16,8 +19,13 @@ import type {
   CatalogListResponse,
   CatalogResponse,
   CatalogState,
+  CataloguePhase,
   CreateCatalogRequest,
+  CreatePhaseRequest,
+  RemovePhaseResponse,
+  ReorderPhasesRequest,
   TaskResponseWithWarnings,
+  UpdatePhaseRequest,
   UpdateTaskRequest,
 } from "@/features/workflowTaskCatalog/api/schema"
 
@@ -57,6 +65,10 @@ export const WORKFLOW_TASK_CATALOG_QUERY_KEYS = {
   // product-specific catalogue of that entity type, so they can share the cache entry.
   globalDefaultTasks: (entityType: CatalogEntityType | null) =>
     ["workflow-task-catalogs", "global-default-tasks", entityType] as const,
+  // Keyed by version, not catalogue: a phase belongs to a catalogue version and every phase
+  // endpoint is scoped to one.
+  phases: (catalogId: string, versionId: string) =>
+    ["workflow-task-catalogs", "phases", catalogId, versionId] as const,
 } as const
 
 export async function fetchWorkflowTaskCatalogs(
@@ -128,4 +140,70 @@ export async function removeCatalogTask(
   await api.delete(
     `/workflow-task-catalogs/${catalogId}/versions/${versionId}/tasks/${taskId}`
   )
+}
+
+// PRD1042-1892 item 2 — the catalogue's own stages. All five endpoints are version-scoped, so
+// they take the same (catalogId, versionId) pair the task mutations do.
+export async function fetchCatalogPhases(
+  catalogId: string,
+  versionId: string
+): Promise<CataloguePhase[]> {
+  const data = await api.get(
+    `/workflow-task-catalogs/${catalogId}/versions/${versionId}/phases`
+  )
+  return CataloguePhaseListSchema.parse(data)
+}
+
+export async function addCatalogPhase(
+  catalogId: string,
+  versionId: string,
+  body: CreatePhaseRequest
+): Promise<CataloguePhase> {
+  const data = await api.post(
+    `/workflow-task-catalogs/${catalogId}/versions/${versionId}/phases`,
+    body
+  )
+  return CataloguePhaseSchema.parse(data)
+}
+
+export async function updateCatalogPhase(
+  catalogId: string,
+  versionId: string,
+  phaseId: string,
+  body: UpdatePhaseRequest
+): Promise<CataloguePhase> {
+  const data = await api.patch(
+    `/workflow-task-catalogs/${catalogId}/versions/${versionId}/phases/${phaseId}`,
+    body
+  )
+  return CataloguePhaseSchema.parse(data)
+}
+
+// Reorder is a POST rather than a PATCH per phase: the BE takes the full permutation so the
+// positions stay contiguous, which per-phase updates could not guarantee mid-sequence.
+export async function reorderCatalogPhases(
+  catalogId: string,
+  versionId: string,
+  body: ReorderPhasesRequest
+): Promise<CataloguePhase[]> {
+  const data = await api.post(
+    `/workflow-task-catalogs/${catalogId}/versions/${versionId}/phases/reorder`,
+    body
+  )
+  return CataloguePhaseListSchema.parse(data)
+}
+
+// Returns `removed: false` with a task count when the stage still holds tasks — the caller must
+// re-request with confirm=true, which is why this is not a plain 204 delete.
+export async function removeCatalogPhase(
+  catalogId: string,
+  versionId: string,
+  phaseId: string,
+  confirm: boolean
+): Promise<RemovePhaseResponse> {
+  const data = await api.delete(
+    `/workflow-task-catalogs/${catalogId}/versions/${versionId}/phases/${phaseId}`,
+    { params: { confirm } }
+  )
+  return RemovePhaseResponseSchema.parse(data)
 }

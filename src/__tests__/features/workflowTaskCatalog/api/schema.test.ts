@@ -9,6 +9,12 @@ import {
   CatalogListItemSchema,
   CatalogListResponseSchema,
   CatalogOwningEntityTypeSchema,
+  CataloguePhaseListSchema,
+  CataloguePhaseSchema,
+  CreatePhaseRequestSchema,
+  RemovePhaseResponseSchema,
+  ReorderPhasesRequestSchema,
+  TaskTypeSchema,
   CatalogResponseSchema,
   CatalogStateSchema,
   CASE_TYPE_BY_ENTITY_TYPE,
@@ -367,6 +373,7 @@ describe("CatalogResponseSchema", () => {
 const VERSION_UUID = "7c1e5a90-2b3d-4f8e-9a11-6d5c4b3a2e10"
 const TASK_UUID = "abcdefab-1234-4567-89ab-cdefabcdef12"
 const PARENT_UUID = "fedcbafe-4321-4765-8ba9-21fedcbafedc"
+const PHASE_UUID = "1c2d3e4f-5678-4901-abcd-ef1234567890"
 
 // A `defined` row: the Global Default layer's own entry, so it carries real values.
 const validDefinedTask = {
@@ -379,6 +386,7 @@ const validDefinedTask = {
   category: "legal",
   responsible_role: "front_office",
   responsible_roles: ["front_office"],
+  phase_id: PHASE_UUID,
   is_mandatory: true,
   weight: "2.50",
   display_order: 10,
@@ -467,6 +475,7 @@ describe("TaskDefinitionItemSchema", () => {
       category: null,
       responsible_role: null,
       responsible_roles: null,
+      phase_id: null,
       is_mandatory: null,
       weight: null,
       display_order: null,
@@ -806,5 +815,138 @@ describe("CASE_TYPE_BY_ENTITY_TYPE", () => {
     for (const caseType of Object.values(CASE_TYPE_BY_ENTITY_TYPE)) {
       expect(["main_process", "package_redemption"]).toContain(caseType)
     }
+  })
+})
+
+describe("TaskTypeSchema", () => {
+  // PRD1042-1892 item 5 retired four_eyes_sign_off as a type: four eyes is a flag on the task plus
+  // its exclusion set. The BE enum carries seven values and rejects the eighth, so offering it
+  // could only ever produce a 422.
+  it("carries the seven element types and not the retired sign-off", () => {
+    expect(TaskTypeSchema.options).toHaveLength(7)
+    expect(TaskTypeSchema.options).not.toContain("four_eyes_sign_off")
+  })
+
+  it("rejects the retired four_eyes_sign_off value", () => {
+    expect(() => TaskTypeSchema.parse("four_eyes_sign_off")).toThrow()
+  })
+
+  it("still accepts checkbox, which is what a four-eyes sign-off now is", () => {
+    expect(TaskTypeSchema.parse("checkbox")).toBe("checkbox")
+  })
+})
+
+describe("CataloguePhaseSchema", () => {
+  const validPhase = {
+    id: PHASE_UUID,
+    catalog_version_id: VERSION_UUID,
+    name: "Phase A",
+    position: 1,
+    created_at: "2026-08-26T10:00:00Z",
+    updated_at: "2026-08-26T10:00:00Z",
+  }
+
+  it("accepts a stage as the BE returns it", () => {
+    const parsed = CataloguePhaseSchema.parse(validPhase)
+    expect(parsed.name).toBe("Phase A")
+    expect(parsed.position).toBe(1)
+  })
+
+  it("rejects a fractional position", () => {
+    expect(() =>
+      CataloguePhaseSchema.parse({ ...validPhase, position: 1.5 })
+    ).toThrow()
+  })
+
+  // GET .../phases returns a bare array, not an envelope-wrapped page.
+  it("parses the list as a bare array", () => {
+    expect(CataloguePhaseListSchema.parse([validPhase])).toHaveLength(1)
+    expect(CataloguePhaseListSchema.parse([])).toEqual([])
+  })
+})
+
+describe("CreatePhaseRequestSchema", () => {
+  it("accepts a name alone, letting the BE append at the end", () => {
+    const parsed = CreatePhaseRequestSchema.parse({ name: "Phase B" })
+    expect(parsed.position).toBeUndefined()
+  })
+
+  it("rejects an empty name", () => {
+    expect(() => CreatePhaseRequestSchema.parse({ name: "" })).toThrow()
+  })
+
+  it("rejects a name past the BE's 80-character limit", () => {
+    expect(() =>
+      CreatePhaseRequestSchema.parse({ name: "x".repeat(81) })
+    ).toThrow()
+  })
+
+  // The BE declares position with ge=1, so zero is not a valid first slot.
+  it("rejects a zero position", () => {
+    expect(() =>
+      CreatePhaseRequestSchema.parse({ name: "Phase B", position: 0 })
+    ).toThrow()
+  })
+})
+
+describe("ReorderPhasesRequestSchema", () => {
+  it("accepts a permutation of ids", () => {
+    const parsed = ReorderPhasesRequestSchema.parse({
+      ordered_phase_ids: [PHASE_UUID, PARENT_UUID],
+    })
+    expect(parsed.ordered_phase_ids).toHaveLength(2)
+  })
+
+  it("rejects an empty order", () => {
+    expect(() =>
+      ReorderPhasesRequestSchema.parse({ ordered_phase_ids: [] })
+    ).toThrow()
+  })
+})
+
+describe("RemovePhaseResponseSchema", () => {
+  // removed=false with a task count is the BE asking for confirm=true, not a failure.
+  it("accepts the unconfirmed response that reports a task count", () => {
+    const parsed = RemovePhaseResponseSchema.parse({
+      phase_id: PHASE_UUID,
+      tasks_in_phase: 3,
+      removed: false,
+    })
+    expect(parsed.removed).toBe(false)
+    expect(parsed.tasks_in_phase).toBe(3)
+  })
+
+  it("accepts the confirmed removal of an empty stage", () => {
+    const parsed = RemovePhaseResponseSchema.parse({
+      phase_id: PHASE_UUID,
+      tasks_in_phase: 0,
+      removed: true,
+    })
+    expect(parsed.removed).toBe(true)
+  })
+})
+
+describe("AddTaskRequestSchema — phase_id", () => {
+  // task_service.py refuses a defined/supplement task with no phase_id
+  // (422 WTC_TASK_PHASE_REQUIRED), which is why the form treats it as mandatory.
+  it("accepts a phase_id", () => {
+    const parsed = AddTaskRequestSchema.parse({
+      layer_action: "defined",
+      phase_id: PHASE_UUID,
+    })
+    expect(parsed.phase_id).toBe(PHASE_UUID)
+  })
+
+  it("rejects a non-uuid phase_id", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({ layer_action: "defined", phase_id: "A" })
+    ).toThrow()
+  })
+
+  // Override and deactivated inherit the parent's stage, so the key is optional on the request.
+  it("accepts an override with no phase_id", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({ layer_action: "override" })
+    ).not.toThrow()
   })
 })

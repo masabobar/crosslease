@@ -24,6 +24,10 @@ const REQUIRED_FOR_OWN_TASK = [
   "task_name",
   "task_description",
   "category",
+  // PRD1042-1892 item 2 — "a task with no stage cannot be saved". task_service.py refuses a
+  // defined/supplement task with no phase_id (422 WTC_TASK_PHASE_REQUIRED); override and
+  // deactivated inherit the parent's stage and must not send one.
+  "phase_id",
   "is_mandatory",
   "display_order",
   "stage_categorization",
@@ -39,6 +43,7 @@ export const taskFormSchema = z
     task_description: z.string(),
     category: z.string(),
     task_type: z.string(),
+    phase_id: z.string(),
     responsible_roles: z.array(StepResponsibleRoleSchema),
     weight: z.string(),
     display_order: z.string(),

@@ -14,6 +14,7 @@ import { TableEmptyState } from "@/components/ui/empty"
 import { cn } from "@/lib/utils"
 import { STATUS_PILL_CLASSES } from "@/features/workflowTaskCatalog/constants"
 import { TaskDefinitionSheet } from "@/features/workflowTaskCatalog/components/TaskDefinitionSheet"
+import { CatalogStagesPanel } from "@/features/workflowTaskCatalog/components/CatalogStagesPanel"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import { LayerActionSchema } from "@/features/workflowTaskCatalog/api/schema"
 import type {
@@ -141,6 +142,19 @@ function TaskDefinitionsTab({
           </Button>
         )}
       </div>
+
+      {/* PRD1042-1892 item 2 — the catalogue's own stages. Placed here rather than on a tab of
+          its own because tasks are grouped by stage: a task cannot be saved without one, so the
+          two belong on the same surface. */}
+      {/* No current version means no stages to hold and no task to save — the same guard the
+          sheet applies below. */}
+      {versionId && (
+        <CatalogStagesPanel
+          catalogId={catalogId}
+          versionId={versionId}
+          canEdit={canEdit}
+        />
+      )}
 
       <div className="border border-border rounded-xl overflow-hidden">
         <Table>

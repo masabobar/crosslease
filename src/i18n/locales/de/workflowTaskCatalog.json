@@ -177,14 +177,15 @@
         "weight": "Gewichtung",
         "displayOrder": "Anzeigereihenfolge",
         "mandatory": "Pflicht",
-        "stage": "Phase",
+        "stage": "Prozessphase (Plattform)",
         "active": "Aktiv",
         "parentTask": "Übergeordnete Aufgabe",
         "conditionalTrigger": "Bedingter Auslöser",
         "processContexts": "Zutreffende Prozesskontexte",
         "documentRequirement": "Dokumentanforderung",
         "pinningBehavior": "Pinning-Verhalten",
-        "responsibleRoles": "Verantwortliche Rollen"
+        "responsibleRoles": "Verantwortliche Rollen",
+        "phase": "Phase"
       },
       "mandatoryOptions": {
         "yes": "Ja",
@@ -219,7 +220,6 @@
       },
       "taskTypes": {
         "checkbox": "Checkbox",
-        "four_eyes_sign_off": "Vier-Augen-Freigabe",
         "typed_upload": "Typisierter Upload",
         "generated_document": "Generiertes Dokument",
         "calculation": "Berechnung",
@@ -256,7 +256,8 @@
       "documentRequirementNone": "Keine Dokumentanforderung",
       "pinningBehaviorHint": "„Nach Version fixieren“ hält diese Aufgabe an der gewählten Anforderungsversion. „Nach ID fixieren“ folgt automatisch der aktiven Version der Anforderung.",
       "noDocumentRequirements": "Für diesen Mandanten existieren noch keine aktiven Dokumentanforderungen.",
-      "documentRequirementsUnavailable": "Dokumentanforderungen konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut."
+      "documentRequirementsUnavailable": "Dokumentanforderungen konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
+      "noStagesYet": "Noch keine Phasen definiert"
     },
     "auditTrail": {
       "columns": {
@@ -278,6 +279,24 @@
           "task_updated": "Aufgabe aktualisiert",
           "task_removed": "Aufgabe entfernt"
         }
+      }
+    },
+    "stages": {
+      "title": "Phasen",
+      "caption": "Die Phasen dieses Katalogs in Prozessreihenfolge. Jede Aufgabe gehört zu einer.",
+      "empty": "Noch keine Phasen. Fügen Sie die erste hinzu, bevor Sie Aufgaben anlegen.",
+      "namePlaceholder": "Phasenname",
+      "addButton": "Phase hinzufügen",
+      "save": "Speichern",
+      "rename": "Phase umbenennen",
+      "remove": "Phase entfernen",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "removeConfirm": {
+        "title": "Diese Phase entfernen?",
+        "description": "„{{name}}“ enthält {{count}} Aufgabe(n). Beim Entfernen der Phase werden diese mit entfernt.",
+        "confirm": "Phase und Aufgaben entfernen",
+        "cancel": "Abbrechen"
       }
     }
   },
