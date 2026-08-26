@@ -27,6 +27,7 @@ import {
   SettableChecklistItemStatusSchema,
 } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import type {
+  TaskType,
   CatalogEntityType,
   CatalogLayer,
   CatalogState,
@@ -148,3 +149,16 @@ export const PHASE_GATE_STATUS_OPTIONS = PhaseGateStatusSchema.options.map(
 // with no gate is still visible — the wire enum is a closed set (StageCategorization), and
 // `.options` preserves the declaration order, which is the process order.
 export const CASE_PHASE_ORDER = StageCategorizationSchema.options
+
+// PRD1042-1894 Block 5 — the task types that carry their own parameters, and so render the
+// type-parameter fieldset. Upload's parameter is `doc_requirement_ref`, which has its own fieldset,
+// and checkbox / calculation / external_handover configure nothing.
+const TYPES_WITH_PARAMETERS: readonly TaskType[] = [
+  TaskTypeSchema.enum.generated_document,
+  TaskTypeSchema.enum.state_transition,
+  TaskTypeSchema.enum.field_capture,
+]
+
+export function taskTypeHasParameters(taskType: string): boolean {
+  return TYPES_WITH_PARAMETERS.includes(taskType as TaskType)
+}

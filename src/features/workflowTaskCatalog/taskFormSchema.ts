@@ -1,8 +1,10 @@
 import { z } from "zod"
 import {
   LayerActionSchema,
+  StateTransitionOutcomeSchema,
   StepResponsibleRoleSchema,
   TaskProcessContextSchema,
+  TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type { LayerAction } from "@/features/workflowTaskCatalog/api/schema"
 
@@ -45,6 +47,13 @@ export const taskFormSchema = z
     task_type: z.string(),
     phase_id: z.string(),
     responsible_roles: z.array(StepResponsibleRoleSchema),
+    // PRD1042-1894 Block 5 — per-type parameters. Held as "" / [] rather than undefined, like every
+    // other field on this form, and only sent for the type that uses them.
+    generated_document_ref: z.string(),
+    trigger_event: z.string(),
+    permitted_outcomes: z.array(StateTransitionOutcomeSchema),
+    lifecycle_entity: z.string(),
+    capture_section_name: z.string(),
     weight: z.string(),
     display_order: z.string(),
     is_mandatory: z.string(),
@@ -103,6 +112,44 @@ export const taskFormSchema = z
         path: ["responsible_roles"],
         message: "required",
       })
+    }
+
+    // PRD1042-1894 Block 5 — the parameters the chosen type cannot activate without. This is
+    // deliberately STRICTER than the endpoint, which accepts the task and lets
+    // `_activation_blockers` refuse the whole catalogue later. Enforcing it here is the point: the
+    // sheet offers these types, so without the check a task saves clean and the catalogue then
+    // cannot be activated, with no control anywhere to fix it.
+    if (data.task_type === TaskTypeSchema.enum.generated_document) {
+      if (!data.generated_document_ref) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["generated_document_ref"],
+          message: "required",
+        })
+      }
+      if (!data.trigger_event.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["trigger_event"],
+          message: "required",
+        })
+      }
+    }
+    if (data.task_type === TaskTypeSchema.enum.state_transition) {
+      if (data.permitted_outcomes.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["permitted_outcomes"],
+          message: "required",
+        })
+      }
+      if (!data.lifecycle_entity.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lifecycle_entity"],
+          message: "required",
+        })
+      }
     }
   })
 

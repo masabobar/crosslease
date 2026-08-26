@@ -16,6 +16,7 @@ import {
   CreatePhaseRequestSchema,
   RemovePhaseResponseSchema,
   ReorderPhasesRequestSchema,
+  StateTransitionOutcomeSchema,
   TaskTypeSchema,
   CatalogResponseSchema,
   CatalogStateSchema,
@@ -388,6 +389,11 @@ const validDefinedTask = {
   responsible_role: "front_office",
   responsible_roles: ["front_office"],
   phase_id: PHASE_UUID,
+  generated_document_ref: null,
+  trigger_event: null,
+  permitted_outcomes: null,
+  lifecycle_entity: null,
+  capture_section_name: null,
   is_mandatory: true,
   weight: "2.50",
   display_order: 10,
@@ -992,5 +998,94 @@ describe("AddTaskRequestSchema — phase_id", () => {
     expect(() =>
       AddTaskRequestSchema.parse({ layer_action: "override" })
     ).not.toThrow()
+  })
+})
+
+describe("task type parameters (PRD1042-1894 Block 5)", () => {
+  // The endpoint accepts a task with none of these, and `_activation_blockers` then refuses the
+  // whole catalogue — so the frontend had to be able to author them or the catalogue was a dead
+  // end with nothing on screen to fix.
+  it("exposes the four state-transition outcomes", () => {
+    expect(StateTransitionOutcomeSchema.options).toEqual([
+      "committed",
+      "rejected",
+      "missing_information",
+      "rework",
+    ])
+  })
+
+  it("reads a generate task's document and trigger event", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      task_type: "generated_document",
+      generated_document_ref: TEMPLATE_UUID,
+      trigger_event: "offer_approved",
+    })
+    expect(parsed.generated_document_ref).toBe(TEMPLATE_UUID)
+    expect(parsed.trigger_event).toBe("offer_approved")
+  })
+
+  it("reads a state-transition task's outcomes and entity", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      task_type: "state_transition",
+      permitted_outcomes: ["committed", "rejected"],
+      lifecycle_entity: "refinancing_request",
+    })
+    expect(parsed.permitted_outcomes).toEqual(["committed", "rejected"])
+    expect(parsed.lifecycle_entity).toBe("refinancing_request")
+  })
+
+  it("rejects an outcome outside the enum", () => {
+    expect(() =>
+      TaskDefinitionItemSchema.parse({
+        ...validDefinedTask,
+        permitted_outcomes: ["approved"],
+      })
+    ).toThrow()
+  })
+
+  it("requires every type parameter to be present, even as null", () => {
+    for (const field of [
+      "generated_document_ref",
+      "trigger_event",
+      "permitted_outcomes",
+      "lifecycle_entity",
+      "capture_section_name",
+    ]) {
+      const payload: Record<string, unknown> = { ...validDefinedTask }
+      delete payload[field]
+      expect(() => TaskDefinitionItemSchema.parse(payload)).toThrow()
+    }
+  })
+
+  it("accepts the parameters on an add request", () => {
+    const parsed = AddTaskRequestSchema.parse({
+      layer_action: "defined",
+      task_type: "state_transition",
+      permitted_outcomes: ["rework"],
+      lifecycle_entity: "financing",
+    })
+    expect(parsed.permitted_outcomes).toEqual(["rework"])
+  })
+
+  // min(1): the activation blocker refuses `not t.permitted_outcomes`, so an empty array is the
+  // same defect as omitting it.
+  it("rejects an empty permitted_outcomes on an add request", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({
+        layer_action: "defined",
+        permitted_outcomes: [],
+      })
+    ).toThrow()
+  })
+
+  it("rejects a trigger event past the BE's 50-character limit", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({
+        layer_action: "defined",
+        trigger_event: "x".repeat(51),
+      })
+    ).toThrow()
   })
 })

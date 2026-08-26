@@ -18755,6 +18755,12 @@
           },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
           "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
+          "case_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/CaseType" },
+              { "type": "null" }
+            ]
+          },
           "entity_type": {
             "anyOf": [
               { "$ref": "#/components/schemas/CatalogEntityType" },

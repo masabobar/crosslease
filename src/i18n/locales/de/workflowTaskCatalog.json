@@ -165,7 +165,8 @@
         "taskIdentity": "Aufgabenidentität",
         "behaviorAndGating": "Verhalten und Gating",
         "inheritedFromGlobalDefault": "Vom globalen Standard geerbt",
-        "documentLinkage": "Dokumentverknüpfung"
+        "documentLinkage": "Dokumentverknüpfung",
+        "typeParameters": "Typparameter"
       },
       "fields": {
         "type": "Typ",
@@ -186,7 +187,12 @@
         "documentRequirement": "Dokumentanforderung",
         "pinningBehavior": "Pinning-Verhalten",
         "responsibleRoles": "Verantwortliche Rollen",
-        "phase": "Phase"
+        "phase": "Phase",
+        "generatedDocument": "Zu erzeugendes Dokument",
+        "triggerEvent": "Auslösendes Ereignis",
+        "permittedOutcomes": "Zulässige Ergebnisse",
+        "lifecycleEntity": "Lebenszyklus-Objekt",
+        "captureSectionName": "Abschnitt im Fallformular"
       },
       "mandatoryOptions": {
         "yes": "Ja",
@@ -258,7 +264,16 @@
       "pinningBehaviorHint": "„Nach Version fixieren“ hält diese Aufgabe an der gewählten Anforderungsversion. „Nach ID fixieren“ folgt automatisch der aktiven Version der Anforderung.",
       "noDocumentRequirements": "Für diesen Mandanten existieren noch keine aktiven Dokumentanforderungen.",
       "documentRequirementsUnavailable": "Dokumentanforderungen konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
-      "noStagesYet": "Noch keine Phasen definiert"
+      "noStagesYet": "Noch keine Phasen definiert",
+      "triggerEventPlaceholder": "z. B. offer_approved",
+      "lifecycleEntityPlaceholder": "z. B. refinancing_request",
+      "captureSectionPlaceholder": "z. B. Objektdaten",
+      "stateTransitionOutcomes": {
+        "committed": "Zugesagt",
+        "rejected": "Abgelehnt",
+        "missing_information": "Fehlende Informationen",
+        "rework": "Nachbearbeitung"
+      }
     },
     "auditTrail": {
       "columns": {

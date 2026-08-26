@@ -120,6 +120,18 @@ export const StepResponsibleRoleSchema = UserRoleSchema.extract([
 ])
 export type StepResponsibleRole = z.infer<typeof StepResponsibleRoleSchema>
 
+// PRD1042-1894 Block 5 — the permitted outcomes of a state_transition task. A per-task set, not a
+// value set of the type: main process step 4 carries all four.
+export const StateTransitionOutcomeSchema = z.enum([
+  "committed",
+  "rejected",
+  "missing_information",
+  "rework",
+])
+export type StateTransitionOutcome = z.infer<
+  typeof StateTransitionOutcomeSchema
+>
+
 export const StageCategorizationSchema = z.enum([
   "pre_submission",
   "stage_1_review",
@@ -330,6 +342,14 @@ export const TaskDefinitionItemSchema = z.object({
   // PRD1042-1892 item 2 — the stage the task sits in. Null on override/deactivated rows, which
   // inherit the parent's stage, and on rows authored before stages existed (no backfill).
   phase_id: z.string().uuid().nullable(),
+  // PRD1042-1894 Block 5 — per-type configuration. Each is null unless the task's type uses it:
+  // generate → generated_document_ref + trigger_event; state_transition → permitted_outcomes +
+  // lifecycle_entity; capture → capture_section_name. Upload reuses doc_requirement_ref below.
+  generated_document_ref: z.string().uuid().nullable(),
+  trigger_event: z.string().nullable(),
+  permitted_outcomes: z.array(StateTransitionOutcomeSchema).nullable(),
+  lifecycle_entity: z.string().nullable(),
+  capture_section_name: z.string().nullable(),
   doc_requirement_ref: z.string().uuid().nullable(),
   doc_requirement_pin_mode: DocRequirementPinModeSchema.nullable(),
   conditional_trigger: ConditionalTriggerSchema.nullable(),
@@ -414,6 +434,15 @@ export const AddTaskRequestSchema = z.object({
   // Mandatory for defined/supplement — task_service.py refuses those with no phase_id
   // (422 WTC_TASK_PHASE_REQUIRED). Override/deactivated inherit the parent's stage.
   phase_id: z.string().uuid().optional(),
+  // PRD1042-1894 Block 5 — the type's own parameters. The endpoint accepts a task without them,
+  // but `_activation_blockers` then refuses the catalogue: a generate task needs its document and
+  // trigger event, a state_transition its outcomes and entity. Optional here because the type
+  // decides which apply; the form requires the ones the chosen type needs (taskFormSchema).
+  generated_document_ref: z.string().uuid().optional(),
+  trigger_event: z.string().min(1).max(50).optional(),
+  permitted_outcomes: z.array(StateTransitionOutcomeSchema).min(1).optional(),
+  lifecycle_entity: z.string().min(1).max(50).optional(),
+  capture_section_name: z.string().min(1).max(100).optional(),
   doc_requirement_ref: z.string().uuid().optional(),
   doc_requirement_pin_mode: DocRequirementPinModeSchema.optional(),
   conditional_trigger: ConditionalTriggerSchema.optional(),
