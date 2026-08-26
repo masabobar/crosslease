@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TaskDefinitionViewPanel } from "@/features/workflowTaskCatalog/components/TaskDefinitionViewPanel"
 import { TaskDocumentLinkageFields } from "@/features/workflowTaskCatalog/components/TaskDocumentLinkageFields"
+import { TaskTypeParameterFields } from "@/features/workflowTaskCatalog/components/TaskTypeParameterFields"
 import {
   PARENT_BACKED_ACTIONS,
   taskFormSchema,
@@ -35,6 +36,7 @@ import {
   PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS,
   TASK_CATEGORY_OPTIONS,
   STEP_RESPONSIBLE_ROLE_OPTIONS,
+  taskTypeHasParameters,
   TASK_STAGE_OPTIONS,
   TASK_TYPE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
@@ -43,6 +45,7 @@ import {
   ConditionalTriggerSchema,
   LayerActionSchema,
   TaskProcessContextSchema,
+  TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type {
   AddTaskRequest,
@@ -78,6 +81,11 @@ function toFormValues(
     category: task?.category ?? "",
     task_type: task?.task_type ?? "",
     phase_id: task?.phase_id ?? "",
+    generated_document_ref: task?.generated_document_ref ?? "",
+    trigger_event: task?.trigger_event ?? "",
+    permitted_outcomes: task?.permitted_outcomes ?? [],
+    lifecycle_entity: task?.lifecycle_entity ?? "",
+    capture_section_name: task?.capture_section_name ?? "",
     responsible_roles: task?.responsible_roles ?? [],
     weight: task && task.weight !== null ? String(task.weight) : "",
     display_order:
@@ -103,6 +111,31 @@ function toFormValues(
  * distinguishes "not provided" from an explicit null (PATCH rejects the latter on a mandatory
  * field with WTC_TASK_MANDATORY_FIELD_NULL).
  */
+// PRD1042-1894 Block 5 — the parameters of the selected type, and nothing else. Returned as a
+// partial so the caller spreads it: an omitted key is not sent, which is what keeps a generate
+// task's trigger event off a checkbox task.
+function typeParameterPayload(values: TaskFormValues): Partial<AddTaskRequest> {
+  if (values.task_type === TaskTypeSchema.enum.generated_document) {
+    return {
+      generated_document_ref: values.generated_document_ref,
+      trigger_event: values.trigger_event.trim(),
+    }
+  }
+  if (values.task_type === TaskTypeSchema.enum.state_transition) {
+    return {
+      permitted_outcomes: values.permitted_outcomes,
+      lifecycle_entity: values.lifecycle_entity.trim(),
+    }
+  }
+  if (values.task_type === TaskTypeSchema.enum.field_capture) {
+    // Optional — omitted rather than sent empty when the author left it blank.
+    return values.capture_section_name.trim()
+      ? { capture_section_name: values.capture_section_name.trim() }
+      : {}
+  }
+  return {}
+}
+
 function toWirePayload(
   values: TaskFormValues
 ): Omit<AddTaskRequest, "layer_action"> {
@@ -156,6 +189,10 @@ function toWirePayload(
     task_type: orUndefined(values.task_type) as AddTaskRequest["task_type"],
     responsible_roles: values.responsible_roles,
     phase_id: values.phase_id,
+    // PRD1042-1894 Block 5 — send only what the chosen type uses. A parameter belonging to another
+    // type would be stored against a task that never reads it, and PATCH treats a sent key as an
+    // intentional write (see _OVERRIDE_FORBIDDEN_ON_UPDATE for the same reasoning).
+    ...typeParameterPayload(values),
     is_mandatory: values.is_mandatory === "true",
     weight,
     display_order: Number(values.display_order),
@@ -248,6 +285,8 @@ function TaskDefinitionSheet({
   const selectedAction = useWatch({ control, name: "layer_action" })
   const selectedParentId = useWatch({ control, name: "parent_task_id" })
   const watchedDocRef = useWatch({ control, name: "doc_requirement_ref" })
+  // Block 5's parameters follow the selected type, so the fieldset re-renders as it changes.
+  const watchedTaskType = useWatch({ control, name: "task_type" })
   const isParentBacked = PARENT_BACKED_ACTIONS.includes(selectedAction)
   const isDocLinkable = DOC_LINKABLE_ACTIONS.includes(selectedAction)
   const isPending =
@@ -864,6 +903,21 @@ function TaskDefinitionSheet({
                   </>
                 )}
               </>
+            )}
+
+            {/* PRD1042-1894 Block 5 — only the types that carry parameters render the fieldset.
+                Without these the endpoint accepts the task and the catalogue then cannot be
+                activated, with nothing on screen to fix. */}
+            {taskTypeHasParameters(watchedTaskType) && (
+              <TaskTypeParameterFields
+                control={control}
+                errors={errors}
+                taskType={watchedTaskType}
+                documentOptions={documentRequirementOptions}
+                isDocumentsLoading={isDocRequirementsLoading}
+                isDocumentsError={isDocRequirementsError}
+                resolveMessage={resolveMessage}
+              />
             )}
 
             {/* US 15.7 — authorable on defined / supplement / override, never on deactivate. */}

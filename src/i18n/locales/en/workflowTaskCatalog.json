@@ -165,7 +165,8 @@
         "taskIdentity": "Task identity",
         "behaviorAndGating": "Behavior and gating",
         "inheritedFromGlobalDefault": "Inherited from global default",
-        "documentLinkage": "Document linkage"
+        "documentLinkage": "Document linkage",
+        "typeParameters": "Type parameters"
       },
       "fields": {
         "type": "Type",
@@ -186,7 +187,12 @@
         "documentRequirement": "Document requirement",
         "pinningBehavior": "Pinning behavior",
         "responsibleRoles": "Responsible roles",
-        "phase": "Stage"
+        "phase": "Stage",
+        "generatedDocument": "Document to generate",
+        "triggerEvent": "Trigger event",
+        "permittedOutcomes": "Permitted outcomes",
+        "lifecycleEntity": "Lifecycle entity",
+        "captureSectionName": "Case form section"
       },
       "mandatoryOptions": {
         "yes": "Yes",
@@ -258,7 +264,16 @@
       "pinningBehaviorHint": "Pin by version keeps this task on the requirement version you pick. Pin by ID follows the requirement's active version automatically.",
       "noDocumentRequirements": "No active document requirements exist for this tenant yet.",
       "documentRequirementsUnavailable": "Document requirements could not be loaded. Close this and try again.",
-      "noStagesYet": "No stages defined yet"
+      "noStagesYet": "No stages defined yet",
+      "triggerEventPlaceholder": "e.g. offer_approved",
+      "lifecycleEntityPlaceholder": "e.g. refinancing_request",
+      "captureSectionPlaceholder": "e.g. Object data",
+      "stateTransitionOutcomes": {
+        "committed": "Committed",
+        "rejected": "Rejected",
+        "missing_information": "Missing information",
+        "rework": "Rework"
+      }
     },
     "auditTrail": {
       "columns": {
