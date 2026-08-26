@@ -110,6 +110,7 @@
       "sectionTitle": "Identity",
       "catalogName": "Catalog name",
       "layer": "Layer",
+      "caseType": "Case type",
       "entityType": "Entity type",
       "productTemplate": "Product template",
       "tenant": "Tenant",

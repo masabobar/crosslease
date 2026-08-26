@@ -57,6 +57,15 @@ function IdentityScopeTab({
             label={t("detail.identity.layer")}
             value={t(`catalogLayers.${catalog.catalog_layer}`)}
           />
+          {/* The scope key first, then the object it derives — the order they matter in. */}
+          <DetailRow
+            label={t("detail.identity.caseType")}
+            value={
+              catalog.case_type
+                ? t(`caseTypes.${catalog.case_type}`)
+                : notApplicable
+            }
+          />
           <DetailRow
             label={t("detail.identity.entityType")}
             value={

@@ -110,6 +110,7 @@
       "sectionTitle": "Identität",
       "catalogName": "Katalogname",
       "layer": "Ebene",
+      "caseType": "Fallart",
       "entityType": "Objekttyp",
       "productTemplate": "Produktvorlage",
       "tenant": "Mandant",

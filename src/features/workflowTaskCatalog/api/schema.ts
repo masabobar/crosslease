@@ -350,6 +350,9 @@ export const CatalogDetailResponseSchema = z.object({
   catalog_name: z.string(),
   catalog_layer: CatalogLayerSchema,
   catalog_state: CatalogStateSchema,
+  // PRD1042-1790 item 1 — the scope key. `entity_type` beside it is the derived object and
+  // the old name for this axis; both are returned and they are not interchangeable.
+  case_type: CaseTypeSchema.nullable(),
   entity_type: CatalogEntityTypeSchema.nullable(),
   entity_id: z.string().uuid().nullable(),
   valid_from: z.string(),
