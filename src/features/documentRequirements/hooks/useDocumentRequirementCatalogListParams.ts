@@ -1,5 +1,4 @@
 import { useSearchParams } from "react-router-dom"
-import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequirements/api/schema"
 import type { DocumentRequirementCatalogFilterState } from "@/features/documentRequirements/constants"
 
 export const PAGE_SIZES = [10, 25, 50] as const
@@ -11,15 +10,6 @@ export const DEFAULT_PAGE_SIZE: PageSize = 25
 export const MIN_SEARCH_LENGTH = 3
 
 type ParamUpdate = Record<string, string | null>
-
-function readEnum<T extends string>(
-  value: string | null,
-  allowed: readonly T[]
-): T | null {
-  return value !== null && (allowed as readonly string[]).includes(value)
-    ? (value as T)
-    : null
-}
 
 type DocumentRequirementCatalogListParams = {
   page: number
@@ -63,18 +53,12 @@ export function useDocumentRequirementCatalogListParams(): DocumentRequirementCa
   const search = params.get("q") ?? ""
 
   const filters: DocumentRequirementCatalogFilterState = {
-    catalogType: readEnum(
-      params.get("catalog_type"),
-      DocumentRequirementCatalogTypeSchema.options
-    ),
     // Free-form on the wire (no backend enum), so nothing to validate against here.
     processContext: params.get("process_context"),
   }
 
   const hasActiveFilters =
-    Boolean(search.trim()) ||
-    filters.catalogType !== null ||
-    filters.processContext !== null
+    Boolean(search.trim()) || filters.processContext !== null
 
   function setPage(p: number) {
     update({ page: p === 1 ? null : String(p) })
@@ -93,9 +77,6 @@ export function useDocumentRequirementCatalogListParams(): DocumentRequirementCa
 
   function setFilters(changes: Partial<DocumentRequirementCatalogFilterState>) {
     update({
-      ...("catalogType" in changes && {
-        catalog_type: changes.catalogType ?? null,
-      }),
       ...("processContext" in changes && {
         process_context: changes.processContext ?? null,
       }),

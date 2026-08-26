@@ -9,7 +9,6 @@ import type { RequirementResponse } from "@/features/documentRequirements/api/sc
 const COL_CODE = "w-[180px] shrink-0"
 const COL_NAME = "flex-1 min-w-[160px]"
 const COL_CLASSIFICATION = "w-[130px] shrink-0"
-const COL_SOURCE_LAYER = "w-[130px] shrink-0"
 const COL_STATUS = "w-[100px] shrink-0"
 const ROW_H = "h-[52px]"
 
@@ -19,10 +18,6 @@ const HEADER_COLUMNS = [
   {
     width: COL_CLASSIFICATION,
     labelKey: "requirement.table.columns.classification",
-  },
-  {
-    width: COL_SOURCE_LAYER,
-    labelKey: "requirement.table.columns.sourceLayer",
   },
   { width: COL_STATUS, labelKey: "requirement.table.columns.status" },
 ] as const
@@ -99,13 +94,6 @@ function RequirementTable({
                 `requirement.classifications.${requirement.classification}` as "requirement.classifications.mandatory"
               )}
             </span>
-          </div>
-          <div className={`${COL_SOURCE_LAYER} p-2`}>
-            <Badge variant="secondary">
-              {t(
-                `requirement.sourceLayers.${requirement.source_layer}` as "requirement.sourceLayers.default"
-              )}
-            </Badge>
           </div>
           <div className={`${COL_STATUS} p-2`}>
             <Badge variant={requirement.is_active ? "secondary" : "outline"}>

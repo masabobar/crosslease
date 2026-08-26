@@ -7,9 +7,7 @@ import type { DocumentRequirementCatalogListItem } from "@/features/documentRequ
 // by other list tables in this codebase (ProductTemplateTable, PartnerTable, WorkflowTaskCatalogTable).
 // Name is the only flexible column.
 const COL_NAME = "flex-1 min-w-[160px]"
-const COL_TYPE = "w-[130px] shrink-0"
 const COL_PROCESS_CONTEXTS = "w-[220px] shrink-0"
-const COL_PRODUCT_TEMPLATE = "w-[160px] shrink-0"
 const COL_VALID_FROM = "w-[110px] shrink-0"
 const COL_VALID_TO = "w-[110px] shrink-0"
 const COL_CREATED = "w-[190px] shrink-0"
@@ -17,18 +15,13 @@ const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
 // Operational State and Created By are absent by design — neither field exists on the wire
-// (see open-questions.md). Applicable Product Template resolves entity_id via the same
-// selectable-templates join the Workflow Task Catalog uses (Q-042's sanctioned pattern).
+// (see open-questions.md). CR-1794 removed the product layer, so there is no Catalog Type or
+// Product Template column.
 const HEADER_COLUMNS = [
   { width: COL_NAME, labelKey: "list.table.columns.catalogName" },
-  { width: COL_TYPE, labelKey: "list.table.columns.catalogType" },
   {
     width: COL_PROCESS_CONTEXTS,
     labelKey: "list.table.columns.processContexts",
-  },
-  {
-    width: COL_PRODUCT_TEMPLATE,
-    labelKey: "list.table.columns.productTemplate",
   },
   { width: COL_VALID_FROM, labelKey: "list.table.columns.validFrom" },
   { width: COL_VALID_TO, labelKey: "list.table.columns.validTo" },
@@ -39,10 +32,6 @@ type Props = {
   rows: DocumentRequirementCatalogListItem[]
   isLoading: boolean
   hasActiveFilters: boolean
-  // Product Template UUID → display name, sourced from /product-templates/selectable. Only
-  // covers templates with a published version valid today; a superseded template falls back to
-  // its id, same convention as the Workflow Task Catalog's table.
-  templateNames: Map<string, string>
   onRowClick: (catalogId: string) => void
 }
 
@@ -50,7 +39,6 @@ function DocumentRequirementCatalogTable({
   rows,
   isLoading,
   hasActiveFilters,
-  templateNames,
   onRowClick,
 }: Props) {
   const { t } = useTranslation("documentRequirements")
@@ -115,13 +103,6 @@ function DocumentRequirementCatalogTable({
                 {row.catalog_name}
               </p>
             </div>
-            <div className={`${COL_TYPE} p-2`}>
-              <span className="text-sm text-foreground">
-                {t(
-                  `catalogTypes.${row.catalog_type}` as "catalogTypes.global_default"
-                )}
-              </span>
-            </div>
             <div className={`${COL_PROCESS_CONTEXTS} p-2`}>
               <span className="text-sm text-foreground truncate block">
                 {row.applicable_process_contexts
@@ -134,14 +115,6 @@ function DocumentRequirementCatalogTable({
                     )
                   )
                   .join(", ")}
-              </span>
-            </div>
-            <div className={`${COL_PRODUCT_TEMPLATE} p-2`}>
-              <span className="text-sm text-foreground truncate block">
-                {row.product_template_id
-                  ? (templateNames.get(row.product_template_id) ??
-                    row.product_template_id)
-                  : t("list.table.notApplicable")}
               </span>
             </div>
             <div className={`${COL_VALID_FROM} p-2`}>

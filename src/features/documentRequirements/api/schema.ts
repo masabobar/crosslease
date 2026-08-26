@@ -6,23 +6,17 @@ import { z } from "zod"
  * `DocumentRequirementSchema` is the thin field subset the Workflow Task Catalog picker needs
  * (US 15.7), composed via `.pick()` from the full `RequirementResponseSchema` below rather than
  * duplicated — the two describe the same wire entity.
+ *
+ * CR PRD1042-1794 removed the product layer from the document side entirely: `catalog_type`,
+ * `product_template_id`, `source_layer` and `governance_classification` no longer exist on the
+ * wire (see catalog_schemas.py / requirement_schemas.py), and `conditional` was dropped from the
+ * requirement classification enum. None of them are declared here anymore.
  */
-
-// Same two-layer model as the workflow task catalogue.
-export const DocumentRequirementCatalogTypeSchema = z.enum([
-  "global_default",
-  "product_specific",
-])
-export type DocumentRequirementCatalogType = z.infer<
-  typeof DocumentRequirementCatalogTypeSchema
->
 
 export const DocumentRequirementCatalogListItemSchema = z.object({
   id: z.string().uuid(),
   catalog_name: z.string(),
-  catalog_type: DocumentRequirementCatalogTypeSchema,
   applicable_process_contexts: z.array(z.string()),
-  product_template_id: z.string().uuid().nullable(),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
   created_at: z.string(),
@@ -42,15 +36,11 @@ export type DocumentRequirementCatalogListResponse = z.infer<
   typeof DocumentRequirementCatalogListResponseSchema
 >
 
-// POST /tenants/{tenant_id}/document-requirement-catalogs — mirrors CreateCatalogRequest.
-// product_template_id is required for product_specific and must be absent for global_default;
-// enforced by the two create-dialog schemas (see CreateDocumentRequirementCatalogDialog), not
-// here — the BE itself has no such cross-field check beyond product_template_id being nullable.
+// POST /tenants/{tenant_id}/document-requirement-catalogs — mirrors CreateCatalogRequest. CR-1794
+// removed the product layer, so there is no catalog_type / product_template_id to send.
 export const CreateDocumentRequirementCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200),
-  catalog_type: DocumentRequirementCatalogTypeSchema,
   applicable_process_contexts: z.array(z.string()).min(1),
-  product_template_id: z.string().uuid().nullable(),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
 })
@@ -65,9 +55,7 @@ export type CreateDocumentRequirementCatalogRequest = z.infer<
 export const DocumentRequirementCatalogResponseSchema = z.object({
   id: z.string().uuid(),
   catalog_name: z.string(),
-  catalog_type: DocumentRequirementCatalogTypeSchema,
   applicable_process_contexts: z.array(z.string()),
-  product_template_id: z.string().uuid().nullable(),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
   created_by: z.string().uuid(),
@@ -80,33 +68,10 @@ export type DocumentRequirementCatalogResponse = z.infer<
 
 // Wire enums — must match refinext-api
 // src/app/modules/document_requirement_catalog/domain/enums.py exactly.
-export const RequirementClassificationSchema = z.enum([
-  "mandatory",
-  "optional",
-  "conditional",
-])
+export const RequirementClassificationSchema = z.enum(["mandatory", "optional"])
 export type RequirementClassification = z.infer<
   typeof RequirementClassificationSchema
 >
-
-export const GovernanceClassificationSchema = z.enum([
-  "operational",
-  "compliance_sensitive",
-  "regulatory_critical",
-])
-export type GovernanceClassification = z.infer<
-  typeof GovernanceClassificationSchema
->
-
-// `default` is set automatically by the BE for Global Default entries; the other three are the
-// three permitted Product-Specific layer actions (US 16.3).
-export const SourceLayerSchema = z.enum([
-  "default",
-  "override",
-  "supplement",
-  "deactivated",
-])
-export type SourceLayer = z.infer<typeof SourceLayerSchema>
 
 export const StageCategorizationSchema = z.enum([
   "submission",
@@ -170,8 +135,6 @@ export const RequirementResponseSchema = z.object({
   document_type_name: z.string(),
   description: z.string().nullable(),
   classification: RequirementClassificationSchema,
-  governance_classification: GovernanceClassificationSchema,
-  source_layer: SourceLayerSchema,
   applicable_process_contexts: z.array(z.string()),
   stage_categorization: StageCategorizationSchema.nullable(),
   document_origin: DocumentOriginSchema,
@@ -191,8 +154,6 @@ const RequirementRequestFieldsSchema = z.object({
   document_type_name: z.string().min(1).max(255),
   description: z.string().nullable().optional(),
   classification: RequirementClassificationSchema.default("mandatory"),
-  governance_classification: GovernanceClassificationSchema,
-  source_layer: SourceLayerSchema.nullable().optional(),
   applicable_process_contexts: z.array(z.string()).min(1),
   stage_categorization: StageCategorizationSchema.nullable().optional(),
   document_origin: DocumentOriginSchema.default("uploaded"),
@@ -205,21 +166,18 @@ const RequirementRequestFieldsSchema = z.object({
 export const AddRequirementRequestSchema = RequirementRequestFieldsSchema
 export type AddRequirementRequest = z.infer<typeof AddRequirementRequestSchema>
 
-// PATCH /document-requirements/{id} — mirrors UpdateRequirementRequest: requirement_code,
-// document_type_code and source_layer are immutable once created, so the edit form must not
-// offer them. No cross-field condition/applicability rule — the BE has none for this endpoint.
+// PATCH /document-requirements/{id} — mirrors UpdateRequirementRequest: requirement_code and
+// document_type_code are immutable once created, so the edit form must not offer them.
 export const UpdateRequirementRequestSchema =
   RequirementRequestFieldsSchema.omit({
     requirement_code: true,
     document_type_code: true,
-    source_layer: true,
   }).partial()
 export type UpdateRequirementRequest = z.infer<
   typeof UpdateRequirementRequestSchema
 >
 
-// PATCH /document-requirement-catalogs/{id} — mirrors UpdateCatalogRequest. catalog_type and
-// product_template_id are absent: neither is mutable once the catalog is created.
+// PATCH /document-requirement-catalogs/{id} — mirrors UpdateCatalogRequest.
 export const UpdateDocumentRequirementCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200).optional(),
   valid_from: z.string().nullable().optional(),
@@ -249,8 +207,6 @@ export const MaterializedRequirementResponseSchema = z.object({
   document_type_code: z.string(),
   document_type_name: z.string(),
   classification: RequirementClassificationSchema,
-  governance_classification: GovernanceClassificationSchema,
-  source_layer: SourceLayerSchema,
   stage_categorization: StageCategorizationSchema.nullable(),
   applicable_process_contexts: z.array(z.string()),
   document_origin: DocumentOriginSchema,
@@ -316,7 +272,6 @@ export const RuntimeRequirementItemSchema = z.object({
   requirement_code: z.string(),
   document_type_name: z.string(),
   classification: z.string(),
-  source_layer: z.string(),
   stage_categorization: z.string().nullable(),
   // Kept as a plain string rather than FulfilmentStatusSchema: the backend types it `str`, and a
   // status added there must widen this screen's rendering, never fail its parse.

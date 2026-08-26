@@ -109,7 +109,7 @@ function DocumentRequirementCatalogPreviewPanel({
                 </div>
                 <Badge variant="secondary">
                   {t(
-                    `requirement.sourceLayers.${req.source_layer}` as "requirement.sourceLayers.default"
+                    `requirement.classifications.${req.classification}` as "requirement.classifications.mandatory"
                   )}
                 </Badge>
               </div>

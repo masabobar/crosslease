@@ -1,4 +1,4 @@
-import { useForm, useWatch, Controller } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
@@ -27,16 +27,10 @@ import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/com
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   DocumentOriginSchema,
-  DocumentRequirementCatalogTypeSchema,
-  GovernanceClassificationSchema,
   RequirementClassificationSchema,
-  SourceLayerSchema,
   StageCategorizationSchema,
 } from "@/features/documentRequirements/api/schema"
-import type {
-  DocumentRequirementCatalogType,
-  RequirementResponse,
-} from "@/features/documentRequirements/api/schema"
+import type { RequirementResponse } from "@/features/documentRequirements/api/schema"
 
 type SheetMode = "view" | "edit" | "add"
 
@@ -47,13 +41,6 @@ const STAGE_OPTIONS = [
     labelKey: `requirement.stages.${value}` as const,
   })),
 ]
-
-const GOVERNANCE_OPTIONS = GovernanceClassificationSchema.options.map(
-  value => ({
-    value,
-    labelKey: `requirement.governance.${value}` as const,
-  })
-)
 
 const CLASSIFICATION_OPTIONS = RequirementClassificationSchema.options.map(
   value => ({
@@ -98,7 +85,6 @@ const requirementFieldsSchema = z.object({
     .max(DOCUMENT_TYPE_NAME_MAX_LENGTH, "tooLong"),
   description: z.string(),
   classification: z.string().min(1, "required"),
-  governanceClassification: z.string().min(1, "required"),
   processContexts: z.array(z.string()).min(1, "required"),
   stageCategorization: z.string(),
   documentOrigin: z.string().min(1, "required"),
@@ -117,7 +103,6 @@ function toFormValues(
     classification:
       requirement?.classification ??
       RequirementClassificationSchema.enum.mandatory,
-    governanceClassification: requirement?.governance_classification ?? "",
     processContexts: requirement?.applicable_process_contexts ?? [],
     stageCategorization: requirement?.stage_categorization ?? "",
     documentOrigin:
@@ -127,7 +112,6 @@ function toFormValues(
 
 type Props = {
   catalogId: string
-  catalogType: DocumentRequirementCatalogType
   mode: SheetMode
   requirement?: RequirementResponse
   onOpenChange: (open: boolean) => void
@@ -135,7 +119,6 @@ type Props = {
 
 function RequirementSheet({
   catalogId,
-  catalogType,
   mode,
   requirement,
   onOpenChange,
@@ -156,8 +139,6 @@ function RequirementSheet({
     value: type.type_code,
     label: `${type.type_code}, ${type.type_name}`,
   }))
-  const isProductSpecific =
-    catalogType === DocumentRequirementCatalogTypeSchema.enum.product_specific
 
   const addRequirement = useAddRequirement(catalogId)
   const updateRequirement = useUpdateRequirement(catalogId)
@@ -175,10 +156,6 @@ function RequirementSheet({
     defaultValues: toFormValues(requirement),
   })
 
-  const classification = useWatch({ control, name: "classification" })
-  const isConditional =
-    classification === RequirementClassificationSchema.enum.conditional
-
   function resolveMessage(message: string | undefined): string | undefined {
     return resolveFormMessage(message, t, "requirement.errors")
   }
@@ -193,9 +170,6 @@ function RequirementSheet({
       description: values.description.trim() || null,
       classification: RequirementClassificationSchema.parse(
         values.classification
-      ),
-      governance_classification: GovernanceClassificationSchema.parse(
-        values.governanceClassification
       ),
       applicable_process_contexts: values.processContexts,
       stage_categorization: values.stageCategorization
@@ -235,13 +209,6 @@ function RequirementSheet({
       {
         requirement_code: values.requirementCode.trim(),
         document_type_code: values.documentTypeCode.trim(),
-        // A Global Default catalog's rows are forced to `default` server-side regardless of what
-        // is sent; a Product-Specific catalog's must be override/supplement/deactivated. Override
-        // has no target-requirement link to record (see open-questions.md Q-061), so every
-        // Product-Specific addition here is a Supplement.
-        source_layer: isProductSpecific
-          ? SourceLayerSchema.enum.supplement
-          : undefined,
         sort_order: DEFAULT_SORT_ORDER,
         ...shared,
       },
@@ -265,18 +232,11 @@ function RequirementSheet({
             <SheetTitle>{requirement.requirement_code}</SheetTitle>
           </SheetHeader>
           <div className="flex flex-col gap-4 px-4 py-4 overflow-y-auto">
-            <div>
-              <Badge variant="secondary">
-                {t(
-                  `requirement.sourceLayers.${requirement.source_layer}` as "requirement.sourceLayers.default"
-                )}
-              </Badge>
-              {!requirement.is_active && (
-                <Badge variant="outline" className="ml-2">
-                  {t("requirement.inactive")}
-                </Badge>
-              )}
-            </div>
+            {!requirement.is_active && (
+              <div>
+                <Badge variant="outline">{t("requirement.inactive")}</Badge>
+              </div>
+            )}
             <dl className="grid grid-cols-1 gap-3">
               {[
                 [
@@ -295,12 +255,6 @@ function RequirementSheet({
                   "requirement.fields.classification",
                   t(
                     `requirement.classifications.${requirement.classification}` as "requirement.classifications.mandatory"
-                  ),
-                ],
-                [
-                  "requirement.fields.governanceClassification",
-                  t(
-                    `requirement.governance.${requirement.governance_classification}` as "requirement.governance.operational"
                   ),
                 ],
                 [
@@ -522,47 +476,6 @@ function RequirementSheet({
               {errors.classification && (
                 <p className="mt-1 text-sm text-destructive">
                   {resolveMessage(errors.classification.message)}
-                </p>
-              )}
-              {isConditional && (
-                <p
-                  data-testid="requirement-predicate-placeholder"
-                  className="mt-2 text-sm text-muted-foreground opacity-80"
-                >
-                  {t("requirement.fields.predicatePostMvpNote")}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label
-                htmlFor="requirement-governance"
-                error={!!errors.governanceClassification}
-                className="mb-2"
-              >
-                {t("requirement.fields.governanceClassification")}
-              </Label>
-              <Controller
-                control={control}
-                name="governanceClassification"
-                render={({ field }) => (
-                  <SelectField
-                    id="requirement-governance"
-                    data-testid="requirement-governance-select"
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    options={GOVERNANCE_OPTIONS.map(o => ({
-                      value: o.value,
-                      label: t(o.labelKey),
-                    }))}
-                    placeholder={t("create.fields.catalogTypePlaceholder")}
-                    error={!!errors.governanceClassification}
-                  />
-                )}
-              />
-              {errors.governanceClassification && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.governanceClassification.message)}
                 </p>
               )}
             </div>

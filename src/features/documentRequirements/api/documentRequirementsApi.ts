@@ -21,7 +21,6 @@ import type {
   DocumentRequirementCatalogDetailResponse,
   DocumentRequirementCatalogListResponse,
   DocumentRequirementCatalogResponse,
-  DocumentRequirementCatalogType,
   DocumentRequirementListResponse,
   MaterializationResponse,
   RequirementResponse,
@@ -31,7 +30,6 @@ import type {
 
 export type DocumentRequirementCatalogListParams = {
   search?: string
-  catalog_type?: DocumentRequirementCatalogType
   process_context?: string
   page?: number
   per_page?: number

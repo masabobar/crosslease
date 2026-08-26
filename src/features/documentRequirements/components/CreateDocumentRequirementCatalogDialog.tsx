@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
-import { SelectField } from "@/components/ui/select"
 import {
   DialogModal,
   DialogHeader,
@@ -20,17 +19,15 @@ import { resolveFormMessage } from "@/lib/formMessages"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useCreateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useCreateDocumentRequirementCatalog"
 import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
-import { CATALOG_TYPE_OPTIONS } from "@/features/documentRequirements/constants"
-import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequirements/api/schema"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 // Every rule carries a message *code*, never bare prose: an unannotated `.max()` would surface
 // Zod's own English text to the user (see resolveFormMessage).
 const CATALOG_NAME_MAX_LENGTH = 200
 
-// CR PRD1042-1794 (A3): there is no product layer for documents — only global_default catalogs
-// are creatable, so the Product Template field and its cross-field rule are gone. Valid To must be
-// >= Valid From when both are set; both are optional per US 16.1's field spec.
+// CR PRD1042-1794: there is no product layer for documents — no catalog type or Product Template
+// field. Valid To must be >= Valid From when both are set; both are optional per US 16.1's field
+// spec.
 const createCatalogSchema = z
   .object({
     catalogName: z
@@ -38,7 +35,6 @@ const createCatalogSchema = z
       .trim()
       .min(1, "required")
       .max(CATALOG_NAME_MAX_LENGTH, "tooLong"),
-    catalogType: z.string().min(1, "required"),
     processContexts: z.array(z.string()).min(1, "required"),
     validFrom: z.string(),
     validTo: z.string(),
@@ -65,7 +61,6 @@ const createCatalogSchema = z
 
 type CreateCatalogFormValues = {
   catalogName: string
-  catalogType: string
   processContexts: string[]
   validFrom: string
   validTo: string
@@ -73,7 +68,6 @@ type CreateCatalogFormValues = {
 
 const EMPTY_FORM_VALUES: CreateCatalogFormValues = {
   catalogName: "",
-  catalogType: "",
   processContexts: [],
   validFrom: "",
   validTo: "",
@@ -123,12 +117,7 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
     createCatalog.mutate(
       {
         catalog_name: values.catalogName.trim(),
-        catalog_type: DocumentRequirementCatalogTypeSchema.parse(
-          values.catalogType
-        ),
         applicable_process_contexts: values.processContexts,
-        // CR PRD1042-1794 (A3): no product layer — always a global_default catalogue.
-        product_template_id: null,
         valid_from: values.validFrom || null,
         valid_to: values.validTo || null,
       },
@@ -181,39 +170,6 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
             {errors.catalogName && (
               <p className="mt-1 text-sm text-destructive">
                 {resolveMessage(errors.catalogName.message)}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label
-              htmlFor="create-catalog-type"
-              error={!!errors.catalogType}
-              className="mb-2"
-            >
-              {t("create.fields.catalogType")}
-            </Label>
-            <Controller
-              control={control}
-              name="catalogType"
-              render={({ field }) => (
-                <SelectField
-                  id="create-catalog-type"
-                  data-testid="create-catalog-type-select"
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  options={CATALOG_TYPE_OPTIONS.map(o => ({
-                    value: o.value,
-                    label: t(o.labelKey),
-                  }))}
-                  placeholder={t("create.fields.catalogTypePlaceholder")}
-                  error={!!errors.catalogType}
-                />
-              )}
-            />
-            {errors.catalogType && (
-              <p className="mt-1 text-sm text-destructive">
-                {resolveMessage(errors.catalogType.message)}
               </p>
             )}
           </div>
