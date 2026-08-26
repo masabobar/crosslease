@@ -1,7 +1,7 @@
 # Date Inputs — Calendar Constraints & Cross-Field Validation
 
-**Version:** 1.0
-**Last Updated:** 2026-08-04
+**Version:** 1.1
+**Last Updated:** 2026-08-26
 **Status:** Active
 
 **MANDATORY: every date input constrains its calendar AND validates in Zod. A paired
@@ -60,12 +60,12 @@ from offering the past before the user has committed to a start.
 Getting this wrong in the other direction — flooring something that should look backwards — is the
 mirror-image bug, and it is worse because it blocks legitimate input.
 
-| Surface                                                      | Floor at today?                   | Why                                                                                                                      |
-| ------------------------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Create** a record with a validity window                   | **Yes** on the start date         | A new record cannot start in the past; most backends reject it outright, so the calendar should too                      |
-| **Edit** an existing record                                  | **No**                            | Existing records legitimately have start dates in the past. Flooring at today makes an unrelated edit impossible to save |
-| **Filters** — audit history, list panels, date-range pickers | **Never**                         | These look backwards by definition. Constrain only the pair (`to >= from`)                                               |
-| **An end date** in any of the above                          | Floor at the **start**, not today | An end before its own start is not a range                                                                               |
+| Surface                                                      | Floor at today?                   | Why                                                                                                                                                                                                                    |
+| ------------------------------------------------------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Create** a record with a validity window                   | **Yes** on the start date         | A new record cannot start in the past; most backends reject it outright, so the calendar should too                                                                                                                    |
+| **Edit** an existing record                                  | **Only while it is a draft**      | An active record legitimately started in the past — and its start date is usually locked anyway. A draft has not started, so the Create rule still applies to it — QA rejected leaving it unconstrained (PRD1042-1652) |
+| **Filters** — audit history, list panels, date-range pickers | **Never**                         | These look backwards by definition. Constrain only the pair (`to >= from`)                                                                                                                                             |
+| **An end date** in any of the above                          | Floor at the **start**, not today | An end before its own start is not a range                                                                                                                                                                             |
 
 ## 5. Every cross-field rule needs a message
 
@@ -84,19 +84,21 @@ submit button.
 
 ## 6. Review checklist
 
-- [ ] Every `<DatePicker>` passes `minDate` and/or `maxDate`, or the surface is a filter / an edit of an existing record (§4)
+- [ ] Every `<DatePicker>` passes `minDate` and/or `maxDate`, or the surface is a filter / an edit of an already-active record (§4)
 - [ ] Every cross-field date rule exists in Zod, not only in the calendar
 - [ ] The calendar floor matches the Zod rule's inclusivity exactly (§2)
 - [ ] A paired end picker derives its floor from `useWatch` on the start field (§3)
 - [ ] Each refinement has a `message` code, a `path`, and a key in `en` **and** `de`
-- [ ] Editing an existing record does **not** floor its start date at today
+- [ ] Editing an **active** record does not floor its start date at today — but editing a **draft** does (§4)
 - [ ] New pickers carry `data-testid` (QA's E2E suite selects on it)
 
 ## 7. Reference implementations
 
 - **Strict-after pair** — `features/frameworkAgreements/components/steps/ValidityTemplatesStep.tsx`:
-  `minDate={today}` on the start, `addDays(from, 1)` on the end, with the comment explaining why edit
-  is deliberately unconstrained.
+  `minDate={today}` on the start, `addDays(from, 1)` on the end.
+- **Draft-only floor** — `features/frameworkAgreements/components/steps/EditIdentityStep.tsx`: the same
+  `minDate={today}` on the start date, with the field `disabled` once the agreement leaves Draft — so
+  the floor only ever reaches a draft, and an active agreement's past start date is never refused (§4).
 - **Inclusive pair** — `features/workflowTaskCatalog/components/CreateWorkflowTaskCatalogDialog.tsx`:
   the same shape with `parseISO(from)` as the floor, because that schema accepts equal dates.
 
@@ -104,8 +106,6 @@ submit button.
 
 Do not "fix" these — they are correct, and each has a reason:
 
-- The Framework Agreement **edit** steps do not floor the start date: existing agreements have past
-  start dates (§4).
 - Filter surfaces — audit history, the user and tenant filter panels, audit quick filters — floor
   nothing at today; they query the past.
 
