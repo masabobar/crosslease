@@ -293,3 +293,55 @@ export const DocumentRequirementListResponseSchema = z.object({
 export type DocumentRequirementListResponse = z.infer<
   typeof DocumentRequirementListResponseSchema
 >
+
+// ── D-11: what a case requires (PRD1042-1796 item 5) ────────────────────────────────────────
+//
+// GET /document-requirement-catalogs/{id}/objects/{object_id}/requirements. Reachable with the
+// object id alone: `object_type` narrows nothing (the id is a UUID, the query is tenant-scoped) and
+// `process_context` is a checkpoint rather than a property of the object, so nothing derives it from
+// an id. Omitting the context spans the whole catalogue, which is why each row carries its own.
+// The statuses the backend defines today (waived / overridden / not_applicable are post-MVP). Used
+// for labelling and styling only — the row's own `fulfilment_status` is parsed as a plain string so
+// a status added on the backend widens this screen instead of breaking it.
+export const FulfilmentStatusSchema = z.enum([
+  "missing",
+  "uploaded_pending_review",
+  "fulfilled",
+  "rejected",
+])
+export type FulfilmentStatus = z.infer<typeof FulfilmentStatusSchema>
+
+export const RuntimeRequirementItemSchema = z.object({
+  requirement_definition_id: z.string().uuid(),
+  requirement_code: z.string(),
+  document_type_name: z.string(),
+  classification: z.string(),
+  source_layer: z.string(),
+  stage_categorization: z.string().nullable(),
+  // Kept as a plain string rather than FulfilmentStatusSchema: the backend types it `str`, and a
+  // status added there must widen this screen's rendering, never fail its parse.
+  fulfilment_status: z.string(),
+  is_blocking: z.boolean(),
+  document_origin: z.string(),
+  // The checkpoints this requirement belongs to — what makes the union interpretable when no
+  // context was named.
+  applicable_process_contexts: z.array(z.string()),
+  // The document that met it, so it is openable by whoever works the case rather than only by
+  // whoever uploaded it (item 5). Null while unmet.
+  linked_document_id: z.string().uuid().nullable(),
+})
+export type RuntimeRequirementItem = z.infer<
+  typeof RuntimeRequirementItemSchema
+>
+
+export const RuntimeRequirementSurfaceResponseSchema = z.object({
+  catalog_id: z.string().uuid(),
+  business_object_id: z.string().uuid(),
+  // Null when no checkpoint was named: the response spans the catalogue.
+  process_context: z.string().nullable(),
+  completeness_summary: z.string(),
+  requirements: z.array(RuntimeRequirementItemSchema),
+})
+export type RuntimeRequirementSurfaceResponse = z.infer<
+  typeof RuntimeRequirementSurfaceResponseSchema
+>

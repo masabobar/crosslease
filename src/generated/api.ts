@@ -2755,13 +2755,15 @@ const RuntimeRequirementItem = z
     fulfilment_status: z.string(),
     is_blocking: z.boolean(),
     document_origin: z.string(),
+    applicable_process_contexts: z.array(z.string()).optional().default([]),
+    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const RuntimeRequirementSurfaceResponse = z
   .object({
     catalog_id: z.string().uuid(),
     business_object_id: z.string().uuid(),
-    process_context: z.string(),
+    process_context: z.union([z.string(), z.null()]).optional(),
     completeness_summary: z.string(),
     requirements: z.array(RuntimeRequirementItem),
   })
@@ -2847,12 +2849,13 @@ const PerRequirementStatusResponse = z
     requirement_code: z.string(),
     classification: z.string(),
     status: z.string(),
+    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const CompletenessResponse = z
   .object({
     catalog_id: z.string().uuid(),
-    process_context: z.string(),
+    process_context: z.union([z.string(), z.null()]).optional(),
     business_object_id: z.string().uuid(),
     summary: z.string(),
     mandatory_total: z.number().int(),
@@ -4136,19 +4139,19 @@ and invalidates all active sessions.`,
         schema: z.string().uuid(),
       },
       {
-        name: "process_context",
-        type: "Query",
-        schema: z.string(),
-      },
-      {
         name: "business_object_id",
         type: "Query",
         schema: z.string().uuid(),
       },
       {
+        name: "process_context",
+        type: "Query",
+        schema: search,
+      },
+      {
         name: "business_object_type",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
     ],
     response: CompletenessResponse,
@@ -4261,12 +4264,12 @@ and invalidates all active sessions.`,
       {
         name: "object_type",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
       {
         name: "process_context",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
     ],
     response: RuntimeRequirementSurfaceResponse,

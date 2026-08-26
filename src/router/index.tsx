@@ -32,7 +32,10 @@ import {
   CASE_CHECKLIST_READ_ALLOWED_ROLES,
   WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES,
 } from "@/features/workflowTaskCatalog/types"
-import { DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES } from "@/features/documentRequirements/types"
+import {
+  CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES,
+  DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
+} from "@/features/documentRequirements/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -148,6 +151,10 @@ const FrameworkAgreementDetailPage = lazy(
 const WorkflowTaskCatalogListPage = lazy(
   () =>
     import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogListPage")
+)
+const CaseDocumentRequirementsPage = lazy(
+  () =>
+    import("@/features/documentRequirements/components/CaseDocumentRequirementsPage")
 )
 const CaseChecklistPage = lazy(
   () => import("@/features/workflowTaskCatalog/components/CaseChecklistPage")
@@ -552,6 +559,18 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={CASE_CHECKLIST_READ_ALLOWED_ROLES}>
               <CaseChecklistPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // Guarded by the DRC runtime read set — wider than the catalogue authoring set, because the
+        // people working a case need to see what it requires without authoring the catalogue.
+        path: PATHS.CASE_DOCUMENT_REQUIREMENTS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES}>
+              <CaseDocumentRequirementsPage />
             </RoleGuard>
           </Suspense>
         ),
