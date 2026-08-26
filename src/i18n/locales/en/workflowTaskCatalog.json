@@ -20,7 +20,7 @@
     "createGlobalDefaultButton": "Create global default catalog",
     "createProductSpecificButton": "Create product-specific catalog",
     "filters": {
-      "searchPlaceholder": "Search by task code or name",
+      "searchPlaceholder": "Search by catalog, task code or name",
       "buttons": {
         "catalogLayer": "Catalog layer",
         "entityType": "Entity type",
