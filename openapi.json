@@ -8313,14 +8313,20 @@
           {
             "name": "object_type",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Object Type" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Object Type"
+            }
           },
           {
             "name": "process_context",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Process Context" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
           }
         ],
         "responses": {
@@ -8607,12 +8613,6 @@
             }
           },
           {
-            "name": "process_context",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Process Context" }
-          },
-          {
             "name": "business_object_id",
             "in": "query",
             "required": true,
@@ -8623,10 +8623,22 @@
             }
           },
           {
+            "name": "process_context",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Process Context"
+            }
+          },
+          {
             "name": "business_object_type",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Business Object Type" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Business Object Type"
+            }
           }
         ],
         "responses": {
@@ -10382,7 +10394,10 @@
             "format": "uuid",
             "title": "Catalog Id"
           },
-          "process_context": { "type": "string", "title": "Process Context" },
+          "process_context": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Process Context"
+          },
           "business_object_id": {
             "type": "string",
             "format": "uuid",
@@ -10413,7 +10428,6 @@
         "type": "object",
         "required": [
           "catalog_id",
-          "process_context",
           "business_object_id",
           "summary",
           "mandatory_total",
@@ -14296,7 +14310,14 @@
           },
           "requirement_code": { "type": "string", "title": "Requirement Code" },
           "classification": { "type": "string", "title": "Classification" },
-          "status": { "type": "string", "title": "Status" }
+          "status": { "type": "string", "title": "Status" },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          }
         },
         "type": "object",
         "required": [
@@ -15045,7 +15066,20 @@
             "title": "Fulfilment Status"
           },
           "is_blocking": { "type": "boolean", "title": "Is Blocking" },
-          "document_origin": { "type": "string", "title": "Document Origin" }
+          "document_origin": { "type": "string", "title": "Document Origin" },
+          "applicable_process_contexts": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Applicable Process Contexts",
+            "default": []
+          },
+          "linked_document_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Document Id"
+          }
         },
         "type": "object",
         "required": [
@@ -15073,7 +15107,10 @@
             "format": "uuid",
             "title": "Business Object Id"
           },
-          "process_context": { "type": "string", "title": "Process Context" },
+          "process_context": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Process Context"
+          },
           "completeness_summary": {
             "type": "string",
             "title": "Completeness Summary"
@@ -15088,7 +15125,6 @@
         "required": [
           "catalog_id",
           "business_object_id",
-          "process_context",
           "completeness_summary",
           "requirements"
         ],
