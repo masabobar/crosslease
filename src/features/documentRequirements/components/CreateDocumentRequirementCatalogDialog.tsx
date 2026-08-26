@@ -18,7 +18,6 @@ import {
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { resolveFormMessage } from "@/lib/formMessages"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useCreateDocumentRequirementCatalog"
 import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import { CATALOG_TYPE_OPTIONS } from "@/features/documentRequirements/constants"
@@ -29,10 +28,9 @@ import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 // Zod's own English text to the user (see resolveFormMessage).
 const CATALOG_NAME_MAX_LENGTH = 200
 
-// Cross-field rules per US 16.1: Product Template is mandatory only for Product-Specific
-// catalogs (null/absent for Global Default), and Valid To must be >= Valid From when both are
-// set — both are optional per the story's own field spec, unlike the Workflow Task Catalog's
-// equivalent where Valid From is required.
+// CR PRD1042-1794 (A3): there is no product layer for documents — only global_default catalogs
+// are creatable, so the Product Template field and its cross-field rule are gone. Valid To must be
+// >= Valid From when both are set; both are optional per US 16.1's field spec.
 const createCatalogSchema = z
   .object({
     catalogName: z
@@ -41,23 +39,11 @@ const createCatalogSchema = z
       .min(1, "required")
       .max(CATALOG_NAME_MAX_LENGTH, "tooLong"),
     catalogType: z.string().min(1, "required"),
-    productTemplate: z.string(),
     processContexts: z.array(z.string()).min(1, "required"),
     validFrom: z.string(),
     validTo: z.string(),
   })
   .superRefine((data, ctx) => {
-    if (
-      data.catalogType ===
-        DocumentRequirementCatalogTypeSchema.enum.product_specific &&
-      !data.productTemplate
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        message: "required",
-        path: ["productTemplate"],
-      })
-    }
     if (data.validTo && data.validFrom && data.validTo < data.validFrom) {
       ctx.addIssue({
         code: "custom",
@@ -80,7 +66,6 @@ const createCatalogSchema = z
 type CreateCatalogFormValues = {
   catalogName: string
   catalogType: string
-  productTemplate: string
   processContexts: string[]
   validFrom: string
   validTo: string
@@ -89,7 +74,6 @@ type CreateCatalogFormValues = {
 const EMPTY_FORM_VALUES: CreateCatalogFormValues = {
   catalogName: "",
   catalogType: "",
-  productTemplate: "",
   processContexts: [],
   validFrom: "",
   validTo: "",
@@ -104,18 +88,7 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
   const { data: currentUser } = useCurrentUser()
   const tenantId = currentUser?.tenant_id ?? undefined
 
-  const {
-    data: templates,
-    isLoading: isLoadingTemplates,
-    isError: isTemplatesError,
-    error: templatesError,
-  } = useSelectableProductTemplates()
   const createCatalog = useCreateDocumentRequirementCatalog(tenantId)
-
-  const templateOptions = (templates?.items ?? []).map(item => ({
-    value: item.template_id,
-    label: `${item.template_name} (${item.version_number})`,
-  }))
 
   const {
     control,
@@ -129,10 +102,6 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
     resolver: zodResolver(createCatalogSchema),
     defaultValues: EMPTY_FORM_VALUES,
   })
-
-  const catalogType = useWatch({ control, name: "catalogType" })
-  const isProductSpecific =
-    catalogType === DocumentRequirementCatalogTypeSchema.enum.product_specific
 
   // Calendar floors matched to the schema rules above: validFromInPast rejects a past Valid
   // From, and the cross-field rule accepts validTo >= validFrom — equal dates are legal, so the
@@ -158,7 +127,8 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
           values.catalogType
         ),
         applicable_process_contexts: values.processContexts,
-        product_template_id: isProductSpecific ? values.productTemplate : null,
+        // CR PRD1042-1794 (A3): no product layer — always a global_default catalogue.
+        product_template_id: null,
         valid_from: values.validFrom || null,
         valid_to: values.validTo || null,
       },
@@ -247,50 +217,6 @@ function CreateDocumentRequirementCatalogDialog({ onOpenChange }: Props) {
               </p>
             )}
           </div>
-
-          {isProductSpecific && (
-            <div>
-              <Label
-                htmlFor="create-catalog-product-template"
-                error={!!errors.productTemplate}
-                className="mb-2"
-              >
-                {t("create.fields.productTemplate")}
-              </Label>
-              {isTemplatesError ? (
-                <p
-                  data-testid="create-catalog-product-template-error"
-                  className="text-sm text-destructive"
-                >
-                  {resolveApiErrorMessage(templatesError, t)}
-                </p>
-              ) : (
-                <Controller
-                  control={control}
-                  name="productTemplate"
-                  render={({ field }) => (
-                    <SelectField
-                      id="create-catalog-product-template"
-                      data-testid="create-catalog-product-template-select"
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      options={templateOptions}
-                      placeholder={t(
-                        "create.fields.productTemplatePlaceholder"
-                      )}
-                      error={!!errors.productTemplate}
-                      disabled={isLoadingTemplates}
-                    />
-                  )}
-                />
-              )}
-              {errors.productTemplate && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.productTemplate.message)}
-                </p>
-              )}
-            </div>
-          )}
 
           <div>
             <Label className="mb-2" error={!!errors.processContexts}>
