@@ -4,14 +4,14 @@
 import { DocumentRequirementCatalogTypeSchema } from "@/features/documentRequirements/api/schema"
 import type { DocumentRequirementCatalogType } from "@/features/documentRequirements/api/schema"
 
+// CR PRD1042-1794 (A3): there is no product layer for documents — the BE now rejects
+// product_specific catalogue creation. `product_specific` stays in the wire enum (api/schema.ts)
+// so existing catalogs still parse on read, but it is no longer offered as a creatable/filterable
+// option here. Full removal is a deferred follow-up alongside the BE schema rip.
 export const CATALOG_TYPE_OPTIONS = [
   {
     value: DocumentRequirementCatalogTypeSchema.enum.global_default,
     labelKey: "catalogTypes.global_default",
-  },
-  {
-    value: DocumentRequirementCatalogTypeSchema.enum.product_specific,
-    labelKey: "catalogTypes.product_specific",
   },
 ] as const
 
