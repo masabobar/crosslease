@@ -146,7 +146,6 @@
       "processContexts": "Process contexts",
       "stageCategorization": "Stage categorization",
       "stageNone": "None",
-      "blocksSubmission": "Blocks submission",
       "documentOrigin": "Document origin",
       "predicatePostMvpNote": "Predicate authoring is not available yet — this requirement will be treated as optional at runtime until a predicate is added in a future release."
     },

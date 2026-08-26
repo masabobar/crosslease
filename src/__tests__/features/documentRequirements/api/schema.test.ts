@@ -11,6 +11,7 @@ import {
   DocumentTypeOriginSchema,
   DocumentTypeSchema,
   MaterializationResponseSchema,
+  MaterializedRequirementResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
   UpdateRequirementRequestSchema,
@@ -100,7 +101,6 @@ describe("DocumentRequirementSchema", () => {
     const parsed = DocumentRequirementSchema.parse({
       ...validRequirement,
       governance_classification: "regulatory",
-      blocks_submission: true,
     }) as Record<string, unknown>
 
     expect(parsed.governance_classification).toBeUndefined()
@@ -284,12 +284,9 @@ const validFullRequirement = {
   source_layer: "default",
   applicable_process_contexts: ["disbursement_readiness"],
   stage_categorization: "submission",
-  blocks_submission: true,
   document_origin: "uploaded",
   is_active: true,
   sort_order: 10,
-  applicability: "always",
-  condition: null,
   created_at: "2026-06-13T10:00:00Z",
   updated_at: "2026-06-13T10:00:00Z",
 }
@@ -303,11 +300,8 @@ const validAddRequirementRequest = {
   governance_classification: "compliance_sensitive",
   applicable_process_contexts: ["disbursement_readiness"],
   stage_categorization: null,
-  blocks_submission: true,
   document_origin: "uploaded",
   sort_order: 0,
-  applicability: "always",
-  condition: null,
 }
 
 describe("RequirementResponseSchema", () => {
@@ -342,21 +336,27 @@ describe("RequirementResponseSchema", () => {
     ).toThrow()
   })
 
-  it("accepts a null condition alongside applicability=always", () => {
+  // CR PRD1042-1794 A4 (12 Aug 2026) removed applicability and condition from the document side —
+  // conditions live only on the workflow step. blocks_submission went with the CR's later decision
+  // that membership carries "required". All three are absent from the contract, so declaring them
+  // required here made every requirement fail to parse. These assertions pin that they stay gone.
+  it("does not require the removed applicability, condition or blocks_submission", () => {
     const parsed = RequirementResponseSchema.parse(validFullRequirement)
-    expect(parsed.condition).toBeNull()
+    expect("applicability" in parsed).toBe(false)
+    expect("condition" in parsed).toBe(false)
+    expect("blocks_submission" in parsed).toBe(false)
   })
 
-  it("accepts a populated condition for a conditional_rule requirement", () => {
-    const parsed = RequirementResponseSchema.parse({
-      ...validFullRequirement,
-      applicability: "conditional_rule",
-      condition: { attribute: "aml_risk_band", equals: "high" },
-    })
-    expect(parsed.condition).toEqual({
-      attribute: "aml_risk_band",
-      equals: "high",
-    })
+  it("still parses when the backend sends them anyway", () => {
+    // Extra keys are stripped rather than rejected, so a stale deployment cannot break the screen.
+    expect(() =>
+      RequirementResponseSchema.parse({
+        ...validFullRequirement,
+        applicability: "always",
+        condition: null,
+        blocks_submission: true,
+      })
+    ).not.toThrow()
   })
 })
 
@@ -377,39 +377,7 @@ describe("AddRequirementRequestSchema", () => {
     }
     const parsed = AddRequirementRequestSchema.parse(minimal)
     expect(parsed.classification).toBe("mandatory")
-    expect(parsed.blocks_submission).toBe(true)
     expect(parsed.document_origin).toBe("uploaded")
-    expect(parsed.applicability).toBe("always")
-  })
-
-  it("rejects condition present without applicability=conditional_rule", () => {
-    expect(() =>
-      AddRequirementRequestSchema.parse({
-        ...validAddRequirementRequest,
-        applicability: "always",
-        condition: { attribute: "aml_risk_band", equals: "high" },
-      })
-    ).toThrow()
-  })
-
-  it("rejects applicability=conditional_rule with no condition", () => {
-    expect(() =>
-      AddRequirementRequestSchema.parse({
-        ...validAddRequirementRequest,
-        applicability: "conditional_rule",
-        condition: null,
-      })
-    ).toThrow()
-  })
-
-  it("accepts applicability=conditional_rule with a condition", () => {
-    expect(() =>
-      AddRequirementRequestSchema.parse({
-        ...validAddRequirementRequest,
-        applicability: "conditional_rule",
-        condition: { attribute: "jurisdiction", equals: "DE" },
-      })
-    ).not.toThrow()
   })
 
   it("rejects an empty applicable_process_contexts array", () => {
@@ -513,7 +481,6 @@ describe("MaterializationResponseSchema", () => {
           source_layer: "default",
           stage_categorization: "submission",
           applicable_process_contexts: ["disbursement_readiness"],
-          blocks_submission: true,
           document_origin: "uploaded",
         },
       ],
@@ -598,5 +565,62 @@ describe("document-type registry (PRD1042-1794 Block 10)", () => {
   it("accepts an empty registry", () => {
     const parsed = DocumentTypeListResponseSchema.parse({ items: [], total: 0 })
     expect(parsed.items).toEqual([])
+  })
+})
+
+// This drift is what broke the Requirements tab: the backend removed three fields, the schema kept
+// declaring them required, and every parse threw. Nothing caught it — the openapi drift check
+// compares the committed contract against the API, not the hand-written schemas against either. So
+// these assert the *shape* the contract documents, field by field, rather than a happy payload.
+describe("requirement schemas against the documented contract", () => {
+  const CONTRACT_REQUIREMENT_FIELDS = [
+    "id",
+    "catalog_id",
+    "requirement_code",
+    "document_type_code",
+    "document_type_name",
+    "description",
+    "classification",
+    "governance_classification",
+    "source_layer",
+    "applicable_process_contexts",
+    "stage_categorization",
+    "document_origin",
+    "is_active",
+    "sort_order",
+    "created_at",
+    "updated_at",
+  ] as const
+
+  it("parses a payload carrying exactly the contract's fields and nothing more", () => {
+    const parsed = RequirementResponseSchema.parse(validFullRequirement)
+    expect(Object.keys(parsed).sort()).toEqual(
+      [...CONTRACT_REQUIREMENT_FIELDS].sort()
+    )
+  })
+
+  it("rejects a payload missing any contract field", () => {
+    for (const field of CONTRACT_REQUIREMENT_FIELDS) {
+      const payload: Record<string, unknown> = { ...validFullRequirement }
+      delete payload[field]
+      expect(() => RequirementResponseSchema.parse(payload)).toThrow()
+    }
+  })
+
+  // The preview/materialization row lost blocks_submission for the same reason.
+  it("keeps the materialized row aligned too", () => {
+    const parsed = MaterializedRequirementResponseSchema.parse({
+      requirement_definition_id: REQUIREMENT_UUID,
+      requirement_code: "DOC-001",
+      document_type_code: "LEASE_CONTRACT",
+      document_type_name: "Lease contract",
+      classification: "mandatory",
+      governance_classification: "operational",
+      source_layer: "default",
+      stage_categorization: null,
+      applicable_process_contexts: ["refinancing_request"],
+      document_origin: "uploaded",
+    })
+    expect("blocks_submission" in parsed).toBe(false)
   })
 })
