@@ -206,7 +206,8 @@
       "checkpoints": "Gilt bei",
       "status": "Status",
       "document": "Dokument",
-      "upload": "Hochladen"
+      "upload": "Hochladen",
+      "actions": "Aktionen"
     },
     "statuses": {
       "missing": "Fehlt",
@@ -227,6 +228,14 @@
       "pending_review": "Warten auf Bankprüfung",
       "missing_required_documents": "Erforderliche Dokumente fehlen",
       "blocked_due_to_missing_evidence": "Blockiert — erforderliche Dokumente fehlen"
+    },
+    "review": {
+      "checkLabel": "Prüfen",
+      "rejectLabel": "Ablehnen",
+      "check": "{{requirement}} prüfen",
+      "reject": "{{requirement}} ablehnen",
+      "checkedSuccess": "Dokument als geprüft markiert",
+      "rejectedSuccess": "Dokument abgelehnt — die Anforderung ist wieder offen"
     }
   }
 }

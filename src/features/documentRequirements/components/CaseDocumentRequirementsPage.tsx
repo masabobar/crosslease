@@ -19,13 +19,32 @@ import { getCaseDocumentUrl } from "@/features/documentRequirements/api/document
 import { useCaseDocumentRequirements } from "@/features/documentRequirements/hooks/useCaseDocumentRequirements"
 import { useDocumentRequirementCatalogList } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogList"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import {
+  FRONT_OFFICE_ROLE,
+  BACK_OFFICE_ROLE,
+  LEASING_COMPANY_USER_ROLE,
+} from "@/features/users/types"
 import { CaseDocumentUploadButton } from "@/features/documentRequirements/components/CaseDocumentUploadButton"
+import { CaseDocumentReviewActions } from "@/features/documentRequirements/components/CaseDocumentReviewActions"
 import type { RuntimeRequirementItem } from "@/features/documentRequirements/api/schema"
 
 // PRD1042-1794 item 6 — a requirement that has no acceptable document yet can be uploaded against.
 // Keyed off the row's own status so a status added on the backend simply does not offer the control
 // rather than mis-offering it.
 const UPLOADABLE_STATUSES = new Set(["missing", "rejected"])
+
+// PRD1042-1794 A10/B3 — a document a leasing company or front office has uploaded is awaiting the
+// bank's review; that is the only status the bank acts on.
+const REVIEWABLE_STATUSES = new Set(["uploaded_pending_review"])
+
+// CR-1794 A9/A10 — who may do what on a case document. Front office and leasing companies upload;
+// back office reviews (check/reject); bank admins and everyone else neither. Enforced on the
+// backend by permission; mirrored here so the UI never offers a control the caller cannot use.
+const UPLOAD_ROLES = new Set<string>([
+  FRONT_OFFICE_ROLE,
+  LEASING_COMPANY_USER_ROLE,
+])
+const REVIEW_ROLES = new Set<string>([BACK_OFFICE_ROLE])
 
 // Keyed by the backend's FulfilmentStatus values. A status added there falls through to the neutral
 // default rather than rendering unstyled, which is why this is a lookup and not a switch.
@@ -156,6 +175,13 @@ export default function CaseDocumentRequirementsPage() {
   // mandatory membership and the row's status, so this is a filter rather than a second judgement.
   const blocking = surface.requirements.filter(r => r.is_blocking)
 
+  // Capability, from the signed-in user's role. The backend is the authority (permission-gated); the
+  // UI only avoids offering a control the caller could not use — a back-office user must not see an
+  // Upload button, a front-office user must not see the review actions.
+  const role = currentUser?.role ?? ""
+  const canUpload = UPLOAD_ROLES.has(role)
+  const canReview = REVIEW_ROLES.has(role)
+
   return (
     <div className="p-8 flex flex-col gap-8" data-testid="case-documents-page">
       <div className="flex flex-col gap-1">
@@ -199,7 +225,7 @@ export default function CaseDocumentRequirementsPage() {
               <TableHead>{t("caseDocuments.columns.checkpoints")}</TableHead>
               <TableHead>{t("caseDocuments.columns.status")}</TableHead>
               <TableHead>{t("caseDocuments.columns.document")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.upload")}</TableHead>
+              <TableHead>{t("caseDocuments.columns.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -209,6 +235,8 @@ export default function CaseDocumentRequirementsPage() {
                 item={item}
                 catalogId={catalogId}
                 businessObjectId={businessObjectId}
+                canUpload={canUpload}
+                canReview={canReview}
               />
             ))}
           </TableBody>
@@ -229,14 +257,23 @@ function RequirementRow({
   item,
   catalogId,
   businessObjectId,
+  canUpload,
+  canReview,
 }: {
   item: RuntimeRequirementItem
   catalogId: string
   businessObjectId: string
+  canUpload: boolean
+  canReview: boolean
 }) {
   const { t } = useTranslation("documentRequirements")
   const notApplicable = t("caseDocuments.notApplicable")
-  const canUpload = UPLOADABLE_STATUSES.has(item.fulfilment_status)
+  // Upload is offered only to an upload-capable role on a row that still needs a document; review
+  // only to the bank on a row awaiting review. A row shows at most one action.
+  const showUpload =
+    canUpload && UPLOADABLE_STATUSES.has(item.fulfilment_status)
+  const showReview =
+    canReview && REVIEWABLE_STATUSES.has(item.fulfilment_status)
 
   return (
     <TableRow
@@ -304,8 +341,15 @@ function RequirementRow({
         )}
       </TableCell>
       <TableCell>
-        {canUpload ? (
+        {showUpload ? (
           <CaseDocumentUploadButton
+            catalogId={catalogId}
+            businessObjectId={businessObjectId}
+            requirementDefinitionId={item.requirement_definition_id}
+            requirementLabel={item.document_type_name}
+          />
+        ) : showReview ? (
+          <CaseDocumentReviewActions
             catalogId={catalogId}
             businessObjectId={businessObjectId}
             requirementDefinitionId={item.requirement_definition_id}

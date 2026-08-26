@@ -231,3 +231,29 @@ export async function uploadCaseDocument(
     headers: { "Content-Type": "multipart/form-data" },
   })
 }
+
+// PRD1042-1794 A10/B3 — the bank's review action on a case document. Back Office checks a document
+// (new_status "fulfilled") or rejects it ("rejected", which reopens the requirement). Front Office
+// and leasing companies upload; only the bank reviews (fulfilment_review_write). Mirrors the backend
+// transition endpoint (routes/fulfilment.py transition_status).
+export async function transitionFulfilmentStatus(
+  catalogId: string,
+  args: {
+    requirementDefinitionId: string
+    businessObjectId: string
+    businessObjectType: string
+    newStatus: "fulfilled" | "rejected"
+    transitionReason?: string
+  }
+): Promise<void> {
+  await api.post(
+    `/document-requirement-catalogs/${catalogId}/fulfilments/transition`,
+    {
+      requirement_definition_id: args.requirementDefinitionId,
+      business_object_id: args.businessObjectId,
+      business_object_type: args.businessObjectType,
+      new_status: args.newStatus,
+      transition_reason: args.transitionReason ?? null,
+    }
+  )
+}

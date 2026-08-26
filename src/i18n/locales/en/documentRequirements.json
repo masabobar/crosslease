@@ -206,7 +206,8 @@
       "checkpoints": "Applies at",
       "status": "Status",
       "document": "Document",
-      "upload": "Upload"
+      "upload": "Upload",
+      "actions": "Actions"
     },
     "statuses": {
       "missing": "Missing",
@@ -227,6 +228,14 @@
       "pending_review": "Awaiting bank review",
       "missing_required_documents": "Missing required documents",
       "blocked_due_to_missing_evidence": "Blocked — required documents missing"
+    },
+    "review": {
+      "checkLabel": "Check",
+      "rejectLabel": "Reject",
+      "check": "Check {{requirement}}",
+      "reject": "Reject {{requirement}}",
+      "checkedSuccess": "Document marked as checked",
+      "rejectedSuccess": "Document rejected — the requirement is open again"
     }
   }
 }
