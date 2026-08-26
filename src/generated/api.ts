@@ -130,6 +130,111 @@ const ResetVerifyResponse = z
     new_recovery_codes: z.union([z.array(z.string()), z.null()]).optional(),
   })
   .passthrough()
+const CaseType = z.enum([
+  "refinancing_request",
+  "package_redemption",
+  "single_redemption",
+  "lessee_change",
+  "object_swap",
+  "extension",
+  "asset_event",
+])
+const StartCaseRequest = z.object({ case_type: CaseType }).passthrough()
+const CaseStatus = z.enum(["open", "waiting", "done", "cancelled"])
+const CaseDisplayStatus = z.enum([
+  "open",
+  "waiting",
+  "done",
+  "cancelled",
+  "draft",
+  "submitted",
+  "missing_information",
+  "rework",
+  "committed",
+  "rejected",
+  "calculating",
+  "ready_for_setup",
+  "disbursed",
+  "active",
+  "ended",
+])
+const CaseOrigin = z.enum(["wizard", "portal", "migrated"])
+const CaseResponse = z
+  .object({
+    id: z.string().uuid(),
+    case_reference: z.string(),
+    case_type: CaseType,
+    case_status: CaseStatus,
+    display_status: CaseDisplayStatus,
+    origin: CaseOrigin,
+    owner_user_id: z.union([z.string(), z.null()]),
+    lc_partner_id: z.union([z.string(), z.null()]),
+    routing_exception: z.boolean(),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const case_type = z.union([CaseType, z.null()]).optional()
+const status = z.union([CaseDisplayStatus, z.null()]).optional()
+const CaseListItem = z
+  .object({
+    id: z.string().uuid(),
+    case_reference: z.string(),
+    case_type: CaseType,
+    case_status: CaseStatus,
+    display_status: CaseDisplayStatus,
+    origin: CaseOrigin,
+    owner_user_id: z.union([z.string(), z.null()]),
+    lc_partner_id: z.union([z.string(), z.null()]),
+    routing_exception: z.boolean(),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CaseListResponse = z
+  .object({
+    items: z.array(CaseListItem),
+    total: z.number().int(),
+    counts_by_status: z.record(z.string(), z.number().int()),
+  })
+  .passthrough()
+const AssignCaseRequest = z
+  .object({ assignee_id: z.string().uuid() })
+  .passthrough()
+const BindLeasingCompanyRequest = z
+  .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
+  .passthrough()
+const CaseLeasingCompanyResponse = z
+  .object({
+    lc_number: z.union([z.string(), z.null()]),
+    name: z.union([z.string(), z.null()]),
+    address: z.union([z.object({}).partial().passthrough(), z.null()]),
+    contact_person: z.union([z.string(), z.null()]),
+    personennummer_os_plus: z.union([z.string(), z.null()]),
+    agreement_reference: z.union([z.string(), z.null()]),
+    agreement_active: z.boolean(),
+    vfe_amount_eur: z.union([z.string(), z.null()]),
+    refinancing_quota: z.union([z.string(), z.null()]),
+    value_date_rule: z.union([z.string(), z.null()]),
+    instalment_due_day: z.union([z.number(), z.null()]),
+    framework_volume_eur: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const BindProductTemplateRequest = z
+  .object({ product_template_id: z.string().uuid() })
+  .passthrough()
+const CaseProductTemplateResponse = z
+  .object({
+    product_template_id: z.string().uuid(),
+    template_code: z.string(),
+    template_name: z.union([z.string(), z.null()]),
+    version_number: z.union([z.string(), z.null()]),
+    version_status: z.union([z.string(), z.null()]),
+    min_term_months: z.union([z.number(), z.null()]),
+    max_term_months: z.union([z.number(), z.null()]),
+    refinancing_form: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
 const UpdateMeRequest = z
   .object({
     first_name: z.union([z.string(), z.null()]),
@@ -1287,11 +1392,6 @@ const LegalStructure = z.enum(["loan_credit", "true_sale"])
 const PaymentTiming = z.enum(["advance", "arrears"])
 const RateBasis = z.enum(["30_360", "act_360", "act_365", "act_act"])
 const RateType = z.enum(["fixed", "floating", "euribor_spread"])
-const FirstInstallmentRule = z.enum([
-  "submission_month",
-  "following_month",
-  "configurable_offset",
-])
 const DisbursementDerivationRule = z.enum(["npv", "npv_ltv", "rv_only"])
 const AssetCategory = z.enum([
   "machinery",
@@ -1320,7 +1420,6 @@ const VersionDetailResponse = z
     rate_basis: RateBasis,
     rate_type: z.union([RateType, z.null()]),
     npv_formula_ref: z.union([z.string(), z.null()]),
-    first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
     disbursement_derivation_rule: z.union([
       DisbursementDerivationRule,
       z.null(),
@@ -1328,7 +1427,6 @@ const VersionDetailResponse = z
     allowed_asset_categories: z.union([z.array(AssetCategory), z.null()]),
     min_term_months: z.union([z.number(), z.null()]),
     max_term_months: z.union([z.number(), z.null()]),
-    max_ltv_ratio: z.union([z.string(), z.null()]),
     min_volume_eur: z.union([z.string(), z.null()]),
     max_volume_eur: z.union([z.string(), z.null()]),
     effective_rate: z.union([z.string(), z.null()]),
@@ -1364,7 +1462,6 @@ const UpdateTemplateDraftRequest = z
     legal_structure: z.union([LegalStructure, z.null()]),
     payment_timing: z.union([PaymentTiming, z.null()]),
     rate_basis: z.union([RateBasis, z.null()]),
-    first_installment_rule: z.union([FirstInstallmentRule, z.null()]),
     disbursement_derivation_rule: z.union([
       DisbursementDerivationRule,
       z.null(),
@@ -1372,7 +1469,6 @@ const UpdateTemplateDraftRequest = z
     allowed_asset_categories: z.union([z.array(AssetCategory), z.null()]),
     min_term_months: z.union([z.number(), z.null()]),
     max_term_months: z.union([z.number(), z.null()]),
-    max_ltv_ratio: z.union([z.number(), z.string(), z.null()]),
     min_volume_eur: z.union([z.number(), z.string(), z.null()]),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]),
     effective_rate: z.union([z.number(), z.string(), z.null()]),
@@ -1522,7 +1618,6 @@ const TemplateCurrentVersionSummary = z
     refinancing_form: RefinancingForm,
     legal_structure: LegalStructure,
     payment_timing: PaymentTiming,
-    max_ltv_ratio: z.union([z.string(), z.null()]).optional(),
     min_term_months: z.union([z.number(), z.null()]).optional(),
     max_term_months: z.union([z.number(), z.null()]).optional(),
     activated_by: z
@@ -1563,9 +1658,6 @@ const CreateTemplateDraftRequest = z
     template_description: z.union([z.string(), z.null()]).optional(),
     valid_from: z.union([z.string(), z.null()]).optional(),
     valid_until: z.union([z.string(), z.null()]).optional(),
-    first_installment_rule: z
-      .union([FirstInstallmentRule, z.null()])
-      .optional(),
     disbursement_derivation_rule: z
       .union([DisbursementDerivationRule, z.null()])
       .optional(),
@@ -1574,7 +1666,6 @@ const CreateTemplateDraftRequest = z
       .optional(),
     min_term_months: z.union([z.number(), z.null()]).optional(),
     max_term_months: z.union([z.number(), z.null()]).optional(),
-    max_ltv_ratio: z.union([z.number(), z.string(), z.null()]).optional(),
     min_volume_eur: z.union([z.number(), z.string(), z.null()]).optional(),
     max_volume_eur: z.union([z.number(), z.string(), z.null()]).optional(),
     effective_rate: z.union([z.number(), z.string(), z.null()]).optional(),
@@ -1989,15 +2080,6 @@ const product_template_id = z
   .optional()
 const CatalogState = z.enum(["draft", "active", "suspended", "archived"])
 const catalog_state = z.union([z.array(CatalogState), z.null()]).optional()
-const CaseType = z.enum([
-  "main_process",
-  "package_redemption",
-  "single_redemption",
-  "lessee_change",
-  "object_swap",
-  "extension",
-  "asset_event",
-])
 const CatalogListItemResponse = z
   .object({
     id: z.string().uuid(),
@@ -2071,9 +2153,6 @@ const FieldRegistryItem = z
     label: z.string(),
     data_available: z.boolean(),
   })
-  .passthrough()
-const CatalogCaseTypeItem = z
-  .object({ case_type: CaseType, entity_type: CatalogEntityType })
   .passthrough()
 const LayerAction = z.enum(["defined", "override", "deactivated", "supplement"])
 const TaskCategory = z.enum([
@@ -2230,7 +2309,6 @@ const app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_sc
       tenant_id: z.string().uuid(),
       catalog_name: z.string(),
       catalog_layer: CatalogLayer,
-      case_type: z.union([CaseType, z.null()]).optional(),
       entity_type: z.union([CatalogEntityType, z.null()]),
       entity_id: z.union([z.string(), z.null()]),
       catalog_state: CatalogState,
@@ -2596,15 +2674,12 @@ const UpdateCatalogRequest = z
   })
   .partial()
   .passthrough()
-const CatalogType = z.enum(["global_default", "product_specific"])
 const app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse =
   z
     .object({
       id: z.string().uuid(),
       catalog_name: z.string(),
-      catalog_type: CatalogType,
       applicable_process_contexts: z.array(z.string()),
-      product_template_id: z.union([z.string(), z.null()]),
       valid_from: z.union([z.string(), z.null()]),
       valid_to: z.union([z.string(), z.null()]),
       created_by: z.string().uuid(),
@@ -2612,17 +2687,7 @@ const app__modules__document_requirement_catalog__interfaces__http__schemas__cat
       updated_at: z.string().datetime({ offset: true }),
     })
     .passthrough()
-const RequirementClassification = z.enum([
-  "mandatory",
-  "optional",
-  "conditional",
-])
-const GovernanceClassification = z.enum([
-  "operational",
-  "compliance_sensitive",
-  "regulatory_critical",
-])
-const SourceLayer = z.enum(["default", "override", "supplement", "deactivated"])
+const RequirementClassification = z.enum(["mandatory", "optional"])
 const app__modules__document_requirement_catalog__domain__enums__StageCategorization =
   z.enum(["submission", "approval", "disbursement_readiness"])
 const DocumentOrigin = z.enum(["uploaded", "generated"])
@@ -2635,8 +2700,6 @@ const RequirementResponse = z
     document_type_name: z.string(),
     description: z.union([z.string(), z.null()]),
     classification: RequirementClassification,
-    governance_classification: GovernanceClassification,
-    source_layer: SourceLayer,
     applicable_process_contexts: z.array(z.string()),
     stage_categorization: z.union([
       app__modules__document_requirement_catalog__domain__enums__StageCategorization,
@@ -2654,9 +2717,7 @@ const app__modules__document_requirement_catalog__interfaces__http__schemas__cat
     .object({
       id: z.string().uuid(),
       catalog_name: z.string(),
-      catalog_type: CatalogType,
       applicable_process_contexts: z.array(z.string()),
-      product_template_id: z.union([z.string(), z.null()]),
       valid_from: z.union([z.string(), z.null()]),
       valid_to: z.union([z.string(), z.null()]),
       created_by: z.string().uuid(),
@@ -2669,21 +2730,16 @@ const app__modules__document_requirement_catalog__interfaces__http__schemas__cat
   z
     .object({
       catalog_name: z.string().min(1).max(200),
-      catalog_type: CatalogType,
       applicable_process_contexts: z.array(z.string()).min(1),
-      product_template_id: z.union([z.string(), z.null()]).optional(),
       valid_from: z.union([z.string(), z.null()]).optional(),
       valid_to: z.union([z.string(), z.null()]).optional(),
     })
     .passthrough()
-const catalog_type = z.union([CatalogType, z.null()]).optional()
 const CatalogListItem = z
   .object({
     id: z.string().uuid(),
     catalog_name: z.string(),
-    catalog_type: CatalogType,
     applicable_process_contexts: z.array(z.string()),
-    product_template_id: z.union([z.string(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_to: z.union([z.string(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
@@ -2706,8 +2762,6 @@ const AddRequirementRequest = z
     document_type_name: z.string().min(1).max(255),
     description: z.union([z.string(), z.null()]).optional(),
     classification: RequirementClassification.optional(),
-    governance_classification: GovernanceClassification,
-    source_layer: z.union([SourceLayer, z.null()]).optional(),
     applicable_process_contexts: z.array(z.string()).min(1),
     stage_categorization: z
       .union([
@@ -2733,7 +2787,6 @@ const UpdateRequirementRequest = z
     document_type_name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
     classification: z.union([RequirementClassification, z.null()]),
-    governance_classification: z.union([GovernanceClassification, z.null()]),
     applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
     stage_categorization: z.union([
       app__modules__document_requirement_catalog__domain__enums__StageCategorization,
@@ -2750,20 +2803,17 @@ const RuntimeRequirementItem = z
     requirement_code: z.string(),
     document_type_name: z.string(),
     classification: z.string(),
-    source_layer: z.string(),
     stage_categorization: z.union([z.string(), z.null()]),
     fulfilment_status: z.string(),
     is_blocking: z.boolean(),
     document_origin: z.string(),
-    applicable_process_contexts: z.array(z.string()).optional().default([]),
-    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const RuntimeRequirementSurfaceResponse = z
   .object({
     catalog_id: z.string().uuid(),
     business_object_id: z.string().uuid(),
-    process_context: z.union([z.string(), z.null()]).optional(),
+    process_context: z.string(),
     completeness_summary: z.string(),
     requirements: z.array(RuntimeRequirementItem),
   })
@@ -2781,8 +2831,6 @@ const MaterializedRequirementResponse = z
     document_type_code: z.string(),
     document_type_name: z.string(),
     classification: z.string(),
-    governance_classification: z.string(),
-    source_layer: z.string(),
     stage_categorization: z.union([z.string(), z.null()]),
     applicable_process_contexts: z.array(z.string()),
     document_origin: z.string(),
@@ -2849,13 +2897,12 @@ const PerRequirementStatusResponse = z
     requirement_code: z.string(),
     classification: z.string(),
     status: z.string(),
-    linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const CompletenessResponse = z
   .object({
     catalog_id: z.string().uuid(),
-    process_context: z.union([z.string(), z.null()]).optional(),
+    process_context: z.string(),
     business_object_id: z.string().uuid(),
     summary: z.string(),
     mandatory_total: z.number().int(),
@@ -2864,6 +2911,9 @@ const CompletenessResponse = z
     mandatory_missing: z.number().int(),
     per_requirement: z.array(PerRequirementStatusResponse),
   })
+  .passthrough()
+const Body_upload_case_document_api_v1_cases__case_id__documents_post = z
+  .object({ requirement_definition_id: z.string().uuid(), file: z.string() })
   .passthrough()
 const DocumentRoleScope = z.enum(["lessee", "guarantor", "case"])
 const DocumentTypeOrigin = z.enum(["requested", "generated"])
@@ -2905,13 +2955,6 @@ const DocumentTypeMatrixRow = z
 const DocumentTypeMatrixResponse = z
   .object({ rows: z.array(DocumentTypeMatrixRow), total: z.number().int() })
   .passthrough()
-const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
-const OTPResponse = z
-  .object({
-    code: z.string(),
-    expires_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
 
 export const schemas = {
   LoginRequest,
@@ -2937,6 +2980,21 @@ export const schemas = {
   ResetPasswordResponse,
   ResetPasswordVerifyRequest,
   ResetVerifyResponse,
+  CaseType,
+  StartCaseRequest,
+  CaseStatus,
+  CaseDisplayStatus,
+  CaseOrigin,
+  CaseResponse,
+  case_type,
+  status,
+  CaseListItem,
+  CaseListResponse,
+  AssignCaseRequest,
+  BindLeasingCompanyRequest,
+  CaseLeasingCompanyResponse,
+  BindProductTemplateRequest,
+  CaseProductTemplateResponse,
   UpdateMeRequest,
   UserMePermissionsResponse,
   AccessReason,
@@ -3080,7 +3138,6 @@ export const schemas = {
   PaymentTiming,
   RateBasis,
   RateType,
-  FirstInstallmentRule,
   DisbursementDerivationRule,
   AssetCategory,
   app__modules__product_templates__interfaces__http__schemas__product_template__UserRef,
@@ -3157,14 +3214,12 @@ export const schemas = {
   product_template_id,
   CatalogState,
   catalog_state,
-  CaseType,
   CatalogListItemResponse,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
   SuspendCatalogResponse,
   FieldRegistryItem,
-  CatalogCaseTypeItem,
   LayerAction,
   TaskCategory,
   TaskResponsibleRole,
@@ -3209,17 +3264,13 @@ export const schemas = {
   VfeRateCreateRequest,
   VfeRateUpdateRequest,
   UpdateCatalogRequest,
-  CatalogType,
   app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
   RequirementClassification,
-  GovernanceClassification,
-  SourceLayer,
   app__modules__document_requirement_catalog__domain__enums__StageCategorization,
   DocumentOrigin,
   RequirementResponse,
   app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogDetailResponse,
   app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CreateCatalogRequest,
-  catalog_type,
   CatalogListItem,
   app__modules__document_requirement_catalog__interfaces__http__schemas__catalog_schemas__CatalogListResponse,
   AddRequirementRequest,
@@ -3237,6 +3288,7 @@ export const schemas = {
   TransitionStatusRequest,
   PerRequirementStatusResponse,
   CompletenessResponse,
+  Body_upload_case_document_api_v1_cases__case_id__documents_post,
   DocumentRoleScope,
   DocumentTypeOrigin,
   CreateDocumentTypeRequest,
@@ -3246,8 +3298,6 @@ export const schemas = {
   DocumentTypeListResponse,
   DocumentTypeMatrixRow,
   DocumentTypeMatrixResponse,
-  TestSessionRequest,
-  OTPResponse,
 }
 
 const endpoints = makeApi([
@@ -3877,6 +3927,96 @@ and invalidates all active sessions.`,
   },
   {
     method: "post",
+    path: "/api/v1/cases",
+    alias: "start_case_api_v1_cases_post",
+    description: `Start a case. The platform sets the reference, the creator and the creation time.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: StartCaseRequest,
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases",
+    alias: "list_cases_api_v1_cases_get",
+    description: `The case list.
+
+&#x60;&#x60;status&#x60;&#x60; takes one displayed value, because a user picks &quot;waiting&quot; rather than filling in
+three fields. The query resolves that choice onto the stored sets and never runs on the derived
+value. &#x60;&#x60;unclaimed&#x60;&#x60; is the view for cases that came in from a leasing company and have not been
+picked up by the bank — whether the interface renders it as a tab, a saved view or a filter is a
+design decision and not a scope one.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_type",
+        type: "Query",
+        schema: case_type,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: status,
+      },
+      {
+        name: "unclaimed",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "mine",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "unassigned",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "my_work_list",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "oldest_first",
+        type: "Query",
+        schema: z.boolean().optional().default(true),
+      },
+      {
+        name: "limit",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: "offset",
+        type: "Query",
+        schema: z.number().int().gte(0).optional().default(0),
+      },
+    ],
+    response: CaseListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
     path: "/api/v1/cases/:business_object_id/checklist",
     alias:
       "materialize_checklist_api_v1_cases__business_object_id__checklist_post",
@@ -4076,6 +4216,231 @@ and invalidates all active sessions.`,
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/cases/:case_id",
+    alias: "get_case_api_v1_cases__case_id__get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/assign",
+    alias: "assign_case_api_v1_cases__case_id__assign_post",
+    description: `Assign, or reassign — the same operation seen before and after the case has an owner.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ assignee_id: z.string().uuid() }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/claim",
+    alias: "claim_case_api_v1_cases__case_id__claim_post",
+    description: `Pull work manually: take an unassigned case from the queue into your own name.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/documents",
+    alias: "upload_case_document_api_v1_cases__case_id__documents_post",
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: Body_upload_case_document_api_v1_cases__case_id__documents_post,
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/cases/:case_id/leasing-company",
+    alias: "bind_leasing_company_api_v1_cases__case_id__leasing_company_put",
+    description: `Step 1 of the wizard: resolve the leasing company from its Händlernummer.
+
+PUT rather than POST because it is settable more than once — the bank may change the company
+until the bank settlement, which is where the quota, the dates and the accounts freeze anyway.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
+          .passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:case_id/leasing-company",
+    alias: "read_leasing_company_api_v1_cases__case_id__leasing_company_get",
+    description: `The company and the terms already agreed with it, read onto the case and never retyped.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.union([CaseLeasingCompanyResponse, z.null()]),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/cases/:case_id/product-template",
+    alias: "bind_product_template_api_v1_cases__case_id__product_template_put",
+    description: `Step 2: choose the product template the request will be judged against.
+
+Chosen from the templates the agreement allows — a template outside that list cannot be used
+even if it exists. Changeable by the bank until the bank settlement, hence PUT.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z
+          .object({ product_template_id: z.string().uuid() })
+          .passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:case_id/product-template",
+    alias: "read_product_template_api_v1_cases__case_id__product_template_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.union([CaseProductTemplateResponse, z.null()]),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/return-to-queue",
+    alias: "return_case_to_queue_api_v1_cases__case_id__return_to_queue_post",
+    description: `Give the case back to the role work list. Unassigned is a legitimate state.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "patch",
     path: "/api/v1/document-requirement-catalogs/:catalog_id",
     alias:
@@ -4139,19 +4504,19 @@ and invalidates all active sessions.`,
         schema: z.string().uuid(),
       },
       {
+        name: "process_context",
+        type: "Query",
+        schema: z.string(),
+      },
+      {
         name: "business_object_id",
         type: "Query",
         schema: z.string().uuid(),
       },
       {
-        name: "process_context",
-        type: "Query",
-        schema: search,
-      },
-      {
         name: "business_object_type",
         type: "Query",
-        schema: search,
+        schema: z.string(),
       },
     ],
     response: CompletenessResponse,
@@ -4264,12 +4629,12 @@ and invalidates all active sessions.`,
       {
         name: "object_type",
         type: "Query",
-        schema: search,
+        schema: z.string(),
       },
       {
         name: "process_context",
         type: "Query",
-        schema: search,
+        schema: z.string(),
       },
     ],
     response: RuntimeRequirementSurfaceResponse,
@@ -6989,11 +7354,6 @@ No existing sessions are invalidated immediately.
         schema: search,
       },
       {
-        name: "catalog_type",
-        type: "Query",
-        schema: catalog_type,
-      },
-      {
         name: "process_context",
         type: "Query",
         schema: search,
@@ -8627,23 +8987,6 @@ cases + product, then proceeds (never blocked).`,
   },
   {
     method: "get",
-    path: "/api/v1/workflow-task-catalogs/case-types",
-    alias:
-      "list_catalog_case_types_api_v1_workflow_task_catalogs_case_types_get",
-    description: `PRD1042-1790 item 1 — the case types a catalogue may be scoped to.
-
-Declared before &#x60;/{catalog_id}&#x60; so the literal path wins over the UUID route, the same ordering
-&#x60;/field-registry&#x60; above relies on.
-
-Returns &#x60;TYPED_CASE_TYPES&#x60; in the enum&#x27;s own order, each with the entity type it derives. A
-client must not re-list these: AC-94 fails an implementation wired to a fixed count of case
-types, and AC-74 makes assigning a catalogue to a further case type configuration rather than a
-release. Widening the set here is therefore the whole change.`,
-    requestFormat: "json",
-    response: z.array(CatalogCaseTypeItem),
-  },
-  {
-    method: "get",
     path: "/api/v1/workflow-task-catalogs/field-registry",
     alias:
       "list_field_registry_api_v1_workflow_task_catalogs_field_registry_get",
@@ -8658,60 +9001,6 @@ before &#x60;/{catalog_id}&#x60; so the literal path wins over the UUID route.`,
     alias: "health_check_health_get",
     requestFormat: "json",
     response: z.unknown(),
-  },
-  {
-    method: "get",
-    path: "/internal/test/otp",
-    alias: "test_get_otp_internal_test_otp_get",
-    description: `Return the current valid OTP code for a user.
-
-Use after POST /api/v1/auth/login to retrieve the generated OTP without
-needing email access. Returns 404 if no active (non-expired, non-used) OTP
-exists for the given email.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "email",
-        type: "Query",
-        schema: z.string(),
-      },
-    ],
-    response: OTPResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/internal/test/session",
-    alias: "test_session_internal_test_session_post",
-    description: `Create a real authenticated session for any user without going through 2FA.
-
-Replicates the tail of verify_otp: evicts oldest session if needed, issues
-access + refresh tokens as HTTP-only cookies.
-
-User status is NOT checked — QA can obtain a session for suspended or
-deactivated users to test authenticated edge-case scenarios.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z.object({ email: z.string().email() }).passthrough(),
-      },
-    ],
-    response: LoginResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
   },
 ])
 

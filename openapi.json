@@ -489,6 +489,479 @@
         }
       }
     },
+    "/api/v1/cases": {
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Start Case",
+        "description": "Start a case. The platform sets the reference, the creator and the creation time.",
+        "operationId": "start_case_api_v1_cases_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StartCaseRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Cases"],
+        "summary": "List Cases",
+        "description": "The case list.\n\n``status`` takes one displayed value, because a user picks \"waiting\" rather than filling in\nthree fields. The query resolves that choice onto the stored sets and never runs on the derived\nvalue. ``unclaimed`` is the view for cases that came in from a leasing company and have not been\npicked up by the bank — whether the interface renders it as a tab, a saved view or a filter is a\ndesign decision and not a scope one.",
+        "operationId": "list_cases_api_v1_cases_get",
+        "parameters": [
+          {
+            "name": "case_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/CaseType" },
+                { "type": "null" }
+              ],
+              "title": "Case Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/CaseDisplayStatus" },
+                { "type": "null" }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "unclaimed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unclaimed"
+            }
+          },
+          {
+            "name": "mine",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Cases you own.",
+              "default": false,
+              "title": "Mine"
+            },
+            "description": "Cases you own."
+          },
+          {
+            "name": "unassigned",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "The unassigned pool.",
+              "default": false,
+              "title": "Unassigned"
+            },
+            "description": "The unassigned pool."
+          },
+          {
+            "name": "my_work_list",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Case types routed to your role.",
+              "default": false,
+              "title": "My Work List"
+            },
+            "description": "Case types routed to your role."
+          },
+          {
+            "name": "oldest_first",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Oldest First"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/claim": {
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Claim Case",
+        "description": "Pull work manually: take an unassigned case from the queue into your own name.",
+        "operationId": "claim_case_api_v1_cases__case_id__claim_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/assign": {
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Assign Case",
+        "description": "Assign, or reassign — the same operation seen before and after the case has an owner.",
+        "operationId": "assign_case_api_v1_cases__case_id__assign_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AssignCaseRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/return-to-queue": {
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Return Case To Queue",
+        "description": "Give the case back to the role work list. Unassigned is a legitimate state.",
+        "operationId": "return_case_to_queue_api_v1_cases__case_id__return_to_queue_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/leasing-company": {
+      "put": {
+        "tags": ["Cases"],
+        "summary": "Bind Leasing Company",
+        "description": "Step 1 of the wizard: resolve the leasing company from its Händlernummer.\n\nPUT rather than POST because it is settable more than once — the bank may change the company\nuntil the bank settlement, which is where the quota, the dates and the accounts freeze anyway.",
+        "operationId": "bind_leasing_company_api_v1_cases__case_id__leasing_company_put",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindLeasingCompanyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Cases"],
+        "summary": "Read Leasing Company",
+        "description": "The company and the terms already agreed with it, read onto the case and never retyped.",
+        "operationId": "read_leasing_company_api_v1_cases__case_id__leasing_company_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CaseLeasingCompanyResponse"
+                    },
+                    { "type": "null" }
+                  ],
+                  "title": "Response Read Leasing Company Api V1 Cases  Case Id  Leasing Company Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/product-template": {
+      "put": {
+        "tags": ["Cases"],
+        "summary": "Bind Product Template",
+        "description": "Step 2: choose the product template the request will be judged against.\n\nChosen from the templates the agreement allows — a template outside that list cannot be used\neven if it exists. Changeable by the bank until the bank settlement, hence PUT.",
+        "operationId": "bind_product_template_api_v1_cases__case_id__product_template_put",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindProductTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Cases"],
+        "summary": "Read Product Template",
+        "operationId": "read_product_template_api_v1_cases__case_id__product_template_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CaseProductTemplateResponse"
+                    },
+                    { "type": "null" }
+                  ],
+                  "title": "Response Read Product Template Api V1 Cases  Case Id  Product Template Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}": {
+      "get": {
+        "tags": ["Cases"],
+        "summary": "Get Case",
+        "operationId": "get_case_api_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me": {
       "get": {
         "tags": ["Users"],
@@ -6738,30 +7211,6 @@
         }
       }
     },
-    "/api/v1/workflow-task-catalogs/case-types": {
-      "get": {
-        "tags": ["Workflow Task Catalog"],
-        "summary": "List Catalog Case Types",
-        "description": "PRD1042-1790 item 1 — the case types a catalogue may be scoped to.\n\nDeclared before `/{catalog_id}` so the literal path wins over the UUID route, the same ordering\n`/field-registry` above relies on.\n\nReturns `TYPED_CASE_TYPES` in the enum's own order, each with the entity type it derives. A\nclient must not re-list these: AC-94 fails an implementation wired to a fixed count of case\ntypes, and AC-74 makes assigning a catalogue to a further case type configuration rather than a\nrelease. Widening the set here is therefore the whole change.",
-        "operationId": "list_catalog_case_types_api_v1_workflow_task_catalogs_case_types_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/CatalogCaseTypeItem"
-                  },
-                  "type": "array",
-                  "title": "Response List Catalog Case Types Api V1 Workflow Task Catalogs Case Types Get"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/workflow-task-catalogs/{catalog_id}": {
       "get": {
         "tags": ["Workflow Task Catalog"],
@@ -8019,18 +8468,6 @@
             }
           },
           {
-            "name": "catalog_type",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                { "$ref": "#/components/schemas/CatalogType" },
-                { "type": "null" }
-              ],
-              "title": "Catalog Type"
-            }
-          },
-          {
             "name": "process_context",
             "in": "query",
             "required": false,
@@ -8313,20 +8750,14 @@
           {
             "name": "object_type",
             "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Object Type"
-            }
+            "required": true,
+            "schema": { "type": "string", "title": "Object Type" }
           },
           {
             "name": "process_context",
             "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Process Context"
-            }
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
           }
         ],
         "responses": {
@@ -8613,6 +9044,12 @@
             }
           },
           {
+            "name": "process_context",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Process Context" }
+          },
+          {
             "name": "business_object_id",
             "in": "query",
             "required": true,
@@ -8623,22 +9060,10 @@
             }
           },
           {
-            "name": "process_context",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Process Context"
-            }
-          },
-          {
             "name": "business_object_type",
             "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Business Object Type"
-            }
+            "required": true,
+            "schema": { "type": "string", "title": "Business Object Type" }
           }
         ],
         "responses": {
@@ -8649,6 +9074,49 @@
                 "schema": {
                   "$ref": "#/components/schemas/CompletenessResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/documents": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "Upload Case Document",
+        "operationId": "upload_case_document_api_v1_cases__case_id__documents_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_case_document_api_v1_cases__case_id__documents_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FulfilmentResponse" }
               }
             }
           },
@@ -8884,74 +9352,6 @@
           }
         }
       }
-    },
-    "/internal/test/session": {
-      "post": {
-        "tags": ["Internal - Test Hooks"],
-        "summary": "Test Session",
-        "description": "Create a real authenticated session for any user without going through 2FA.\n\nReplicates the tail of verify_otp: evicts oldest session if needed, issues\naccess + refresh tokens as HTTP-only cookies.\n\nUser status is NOT checked — QA can obtain a session for suspended or\ndeactivated users to test authenticated edge-case scenarios.",
-        "operationId": "test_session_internal_test_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/TestSessionRequest" }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/LoginResponse" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/internal/test/otp": {
-      "get": {
-        "tags": ["Internal - Test Hooks"],
-        "summary": "Test Get Otp",
-        "description": "Return the current valid OTP code for a user.\n\nUse after POST /api/v1/auth/login to retrieve the generated OTP without\nneeding email access. Returns 404 if no active (non-expired, non-used) OTP\nexists for the given email.",
-        "operationId": "test_get_otp_internal_test_otp_get",
-        "parameters": [
-          {
-            "name": "email",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Email" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/OTPResponse" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -9077,15 +9477,6 @@
             "$ref": "#/components/schemas/RequirementClassification",
             "default": "mandatory"
           },
-          "governance_classification": {
-            "$ref": "#/components/schemas/GovernanceClassification"
-          },
-          "source_layer": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/SourceLayer" },
-              { "type": "null" }
-            ]
-          },
           "applicable_process_contexts": {
             "items": { "type": "string" },
             "type": "array",
@@ -9115,7 +9506,6 @@
           "requirement_code",
           "document_type_code",
           "document_type_name",
-          "governance_classification",
           "applicable_process_contexts"
         ],
         "title": "AddRequirementRequest"
@@ -9462,6 +9852,19 @@
           "other"
         ],
         "title": "AssetCategory"
+      },
+      "AssignCaseRequest": {
+        "properties": {
+          "assignee_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Assignee Id"
+          }
+        },
+        "type": "object",
+        "required": ["assignee_id"],
+        "title": "AssignCaseRequest",
+        "description": "Manual assignment within a role. The platform never picks the person."
       },
       "AttachDocumentResponse": {
         "properties": {
@@ -9948,6 +10351,32 @@
         "enum": ["sparkasse", "landesbank_1", "landesbank_2", "other"],
         "title": "BankEntity"
       },
+      "BindLeasingCompanyRequest": {
+        "properties": {
+          "lc_number": {
+            "type": "string",
+            "pattern": "^[0-9]{4}$",
+            "title": "Lc Number"
+          }
+        },
+        "type": "object",
+        "required": ["lc_number"],
+        "title": "BindLeasingCompanyRequest",
+        "description": "The leasing company is resolved from the Händlernummer and is never selected from a list.\n\nFour digits identify one company, so there is no picker to build: a dropdown over counterparties\nis a list of who the bank does business with, and it is not needed here."
+      },
+      "BindProductTemplateRequest": {
+        "properties": {
+          "product_template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Template Id"
+          }
+        },
+        "type": "object",
+        "required": ["product_template_id"],
+        "title": "BindProductTemplateRequest",
+        "description": "Step 2 of the wizard, and a step of its own rather than half of a general-information page.\n\nThe template list depends on the agreement, which depends on the company, so the order carries a\ndependency — merging the two steps would hide it."
+      },
       "Body_attach_document_api_v1_framework_agreements__id__documents_post": {
         "properties": {
           "file": {
@@ -9977,6 +10406,23 @@
         "type": "object",
         "required": ["file"],
         "title": "Body_attach_document_api_v1_framework_agreements__id__documents_post"
+      },
+      "Body_upload_case_document_api_v1_cases__case_id__documents_post": {
+        "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": ["requirement_definition_id", "file"],
+        "title": "Body_upload_case_document_api_v1_cases__case_id__documents_post"
       },
       "Body_upload_picture_api_v1_users_me_picture_post": {
         "properties": {
@@ -10014,10 +10460,310 @@
         ],
         "title": "CandidateSummary"
       },
+      "CaseDisplayStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "waiting",
+          "done",
+          "cancelled",
+          "draft",
+          "submitted",
+          "missing_information",
+          "rework",
+          "committed",
+          "rejected",
+          "calculating",
+          "ready_for_setup",
+          "disbursed",
+          "active",
+          "ended"
+        ],
+        "title": "CaseDisplayStatus",
+        "description": "The single status shown in the list, derived and never stored.\n\nIt is not a fourth set: every value here comes from one of the three stored sets. Filtering and\nsorting run on the stored sets and never on this value — a query built on a derivation depends\non the derivation instead of on stored data."
+      },
+      "CaseLeasingCompanyResponse": {
+        "properties": {
+          "lc_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lc Number"
+          },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          },
+          "address": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Address"
+          },
+          "contact_person": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contact Person"
+          },
+          "personennummer_os_plus": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Personennummer Os Plus"
+          },
+          "agreement_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Agreement Reference"
+          },
+          "agreement_active": {
+            "type": "boolean",
+            "title": "Agreement Active"
+          },
+          "vfe_amount_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Amount Eur"
+          },
+          "refinancing_quota": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Refinancing Quota"
+          },
+          "value_date_rule": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Value Date Rule"
+          },
+          "instalment_due_day": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Instalment Due Day"
+          },
+          "framework_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Framework Volume Eur"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lc_number",
+          "name",
+          "address",
+          "contact_person",
+          "personennummer_os_plus",
+          "agreement_reference",
+          "agreement_active",
+          "vfe_amount_eur",
+          "refinancing_quota",
+          "value_date_rule",
+          "instalment_due_day",
+          "framework_volume_eur"
+        ],
+        "title": "CaseLeasingCompanyResponse",
+        "description": "The leasing company block of a case. Every value is read-only here.\n\nThey are changed on the agreement itself, by a Power User, and never from a case. The bank-side\nfigures are absent for a leasing-company user, which sees its own company and its own agreement\nreference and never the bank's numbers.\n\nThe two bank accounts are deliberately not here at all. They are partner records the agreement\nonly designates, they appear on the generated documents, and on this card they are noise."
+      },
+      "CaseListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_reference": { "type": "string", "title": "Case Reference" },
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "case_status": { "$ref": "#/components/schemas/CaseStatus" },
+          "display_status": {
+            "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "origin": { "$ref": "#/components/schemas/CaseOrigin" },
+          "owner_user_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Owner User Id"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
+          },
+          "routing_exception": {
+            "type": "boolean",
+            "title": "Routing Exception"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_reference",
+          "case_type",
+          "case_status",
+          "display_status",
+          "origin",
+          "owner_user_id",
+          "lc_partner_id",
+          "routing_exception",
+          "created_by",
+          "created_at"
+        ],
+        "title": "CaseListItem",
+        "description": "One row of the case list.\n\nThe column set is **not settled**: it is a CrossLease proposal and is being resolved\n(1917-OQ-07). Only the age-as-sort-criterion half is decided, and that is the ordering rather\nthan a column. What is missing here is missing because its carrier does not exist yet — the\nlessee, the number of lease contracts and the volume arrive with the contract aggregate\n(US 1.4 / US 1.9), and the phase reached with the checklist. None of them is stubbed with a\nplaceholder value, because a zero on a screen reads as a fact."
+      },
+      "CaseListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/CaseListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "counts_by_status": {
+            "additionalProperties": { "type": "integer" },
+            "type": "object",
+            "title": "Counts By Status"
+          }
+        },
+        "type": "object",
+        "required": ["items", "total", "counts_by_status"],
+        "title": "CaseListResponse"
+      },
+      "CaseOrigin": {
+        "type": "string",
+        "enum": ["wizard", "portal", "migrated"],
+        "title": "CaseOrigin",
+        "description": "How the case came into existence.\n\nA case that arrived through the portal has not been checked by anyone yet and is marked as\nsuch. `MIGRATED` is the container-request marker of PRD1042-1920: the migration creates one\nrequest per migrated package with no process performed, so an empty checklist and an empty\napproval history on it are legitimate rather than incomplete."
+      },
+      "CaseProductTemplateResponse": {
+        "properties": {
+          "product_template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Template Id"
+          },
+          "template_code": { "type": "string", "title": "Template Code" },
+          "template_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Name"
+          },
+          "version_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Version Number"
+          },
+          "version_status": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Version Status"
+          },
+          "min_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Min Term Months"
+          },
+          "max_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Term Months"
+          },
+          "refinancing_form": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Refinancing Form"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_template_id",
+          "template_code",
+          "template_name",
+          "version_number",
+          "version_status",
+          "min_term_months",
+          "max_term_months",
+          "refinancing_form"
+        ],
+        "title": "CaseProductTemplateResponse",
+        "description": "The product rules, visible while contracts are entered.\n\nOnly the confirmed bound is here. The allowed object categories and the min/max volume are not\nconfirmed product bounds (1919-OQ-02, 1919-OQ-01) and are absent rather than shown empty, which\nwould read as \"none configured\"."
+      },
+      "CaseResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_reference": { "type": "string", "title": "Case Reference" },
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "case_status": { "$ref": "#/components/schemas/CaseStatus" },
+          "display_status": {
+            "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "origin": { "$ref": "#/components/schemas/CaseOrigin" },
+          "owner_user_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Owner User Id"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
+          },
+          "routing_exception": {
+            "type": "boolean",
+            "title": "Routing Exception"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_reference",
+          "case_type",
+          "case_status",
+          "display_status",
+          "origin",
+          "owner_user_id",
+          "lc_partner_id",
+          "routing_exception",
+          "created_by",
+          "created_at"
+        ],
+        "title": "CaseResponse"
+      },
+      "CaseStatus": {
+        "type": "string",
+        "enum": ["open", "waiting", "done", "cancelled"],
+        "title": "CaseStatus",
+        "description": "The case's own state. One of the three sets the display status is derived from."
+      },
       "CaseType": {
         "type": "string",
         "enum": [
-          "main_process",
+          "refinancing_request",
           "package_redemption",
           "single_redemption",
           "lessee_change",
@@ -10026,17 +10772,7 @@
           "asset_event"
         ],
         "title": "CaseType",
-        "description": "PRD1042-1790 item 1 — the process a case runs, distinct from the object it runs on\n(``CatalogEntityType``). Seven case types exist; only the two ``*_typed`` ones carry a\nchecklist in the November MVP. The other five run without a catalogue and nothing is built\nto give them one (ticket: *out of scope*). The Financing is deliberately **not** a case type —\nit has actions, not a workflow, and cannot own a catalogue."
-      },
-      "CatalogCaseTypeItem": {
-        "properties": {
-          "case_type": { "$ref": "#/components/schemas/CaseType" },
-          "entity_type": { "$ref": "#/components/schemas/CatalogEntityType" }
-        },
-        "type": "object",
-        "required": ["case_type", "entity_type"],
-        "title": "CatalogCaseTypeItem",
-        "description": "PRD1042-1790 item 1 — a case type that may own a catalogue, and the entity type it derives.\n\nExists so no client has to carry its own copy of ``TYPED_CASE_TYPES``. AC-94 refuses an\nimplementation \"wired to a fixed count of case types\", and an enum the FE re-lists is exactly\nthat: assigning a catalogue to a third case type would need a frontend release. Reading the set\nfrom here makes it a backend change, and later a configuration one, with no client work.\n\n``entity_type`` is the coarse object the case type derives (``CASE_TYPE_ENTITY_TYPE``). It is not\npart of the create contract — the backend derives it — and is surfaced only so a client can label\nor group by it without re-deriving the mapping."
+        "description": "PRD1042-1917 OQ-01 (closed 19 Aug 2026) — the seven case types, and the process each runs.\n\nAll seven carry a checklist, with the catalogue step counts recorded on the ticket: main\nprocess 44, package redemption 20, single redemption 11, lessee change 8, object swap 8,\nasset event 4, extension 42. The earlier figure of six belongs to 17 Aug, when the extension\nwas still held back; it was released on 18 Aug and is one case with its own catalogue, not two.\n\nAmendment Request is deliberately absent: the CrossLease click dummy offers it, the client does\nnot have it, and it is not built. The Financing is not a case type either — it has actions\nrather than a workflow, and it cannot own a catalogue."
       },
       "CatalogEntityType": {
         "type": "string",
@@ -10052,18 +10788,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
           "applicable_process_contexts": {
             "items": { "type": "string" },
             "type": "array",
             "title": "Applicable Process Contexts"
-          },
-          "product_template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Product Template Id"
           },
           "valid_from": {
             "anyOf": [
@@ -10089,9 +10817,7 @@
         "required": [
           "id",
           "catalog_name",
-          "catalog_type",
           "applicable_process_contexts",
-          "product_template_id",
           "valid_from",
           "valid_to",
           "created_at"
@@ -10160,11 +10886,6 @@
         "enum": ["draft", "active", "suspended", "archived"],
         "title": "CatalogState",
         "description": "PRD1042-1894 Block 8 (AC §7) — the catalogue lifecycle: Draft → Active → Suspended.\n\nA new catalogue starts DRAFT (never resolved by a case). Activation runs the validator and, on\nsuccess, makes it the one resolved for its case type + product. An Active catalogue can be\nsuspended (stops resolving for new cases; nothing deleted) and reactivated. Editing is in place on\nany state — the audit trail is the history (no version flow). ARCHIVED is a reserved post-MVP\nterminal (not reachable through this flow)."
-      },
-      "CatalogType": {
-        "type": "string",
-        "enum": ["global_default", "product_specific"],
-        "title": "CatalogType"
       },
       "ChangeEmailRequest": {
         "properties": {
@@ -10394,10 +11115,7 @@
             "format": "uuid",
             "title": "Catalog Id"
           },
-          "process_context": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Process Context"
-          },
+          "process_context": { "type": "string", "title": "Process Context" },
           "business_object_id": {
             "type": "string",
             "format": "uuid",
@@ -10428,6 +11146,7 @@
         "type": "object",
         "required": [
           "catalog_id",
+          "process_context",
           "business_object_id",
           "summary",
           "mandatory_total",
@@ -10735,12 +11454,6 @@
             ],
             "title": "Valid Until"
           },
-          "first_installment_rule": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/FirstInstallmentRule" },
-              { "type": "null" }
-            ]
-          },
           "disbursement_derivation_rule": {
             "anyOf": [
               { "$ref": "#/components/schemas/DisbursementDerivationRule" },
@@ -10764,17 +11477,6 @@
           "max_term_months": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Max Term Months"
-          },
-          "max_ltv_ratio": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Max Ltv Ratio"
           },
           "min_volume_eur": {
             "anyOf": [
@@ -12244,11 +12946,6 @@
         ],
         "title": "FieldRegistryItem"
       },
-      "FirstInstallmentRule": {
-        "type": "string",
-        "enum": ["submission_month", "following_month", "configurable_offset"],
-        "title": "FirstInstallmentRule"
-      },
       "ForgotPasswordRequest": {
         "properties": {
           "email": {
@@ -12314,11 +13011,6 @@
           "created_at"
         ],
         "title": "FulfilmentResponse"
-      },
-      "GovernanceClassification": {
-        "type": "string",
-        "enum": ["operational", "compliance_sensitive", "regulatory_critical"],
-        "title": "GovernanceClassification"
       },
       "GovernanceHistoryEventResponse": {
         "properties": {
@@ -13456,11 +14148,6 @@
             "title": "Document Type Name"
           },
           "classification": { "type": "string", "title": "Classification" },
-          "governance_classification": {
-            "type": "string",
-            "title": "Governance Classification"
-          },
-          "source_layer": { "type": "string", "title": "Source Layer" },
           "stage_categorization": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Stage Categorization"
@@ -13479,8 +14166,6 @@
           "document_type_code",
           "document_type_name",
           "classification",
-          "governance_classification",
-          "source_layer",
           "stage_categorization",
           "applicable_process_contexts",
           "document_origin"
@@ -13864,19 +14549,6 @@
           "snapshot_source_version_id"
         ],
         "title": "NewVersionCreatedResponse"
-      },
-      "OTPResponse": {
-        "properties": {
-          "code": { "type": "string", "title": "Code" },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Expires At"
-          }
-        },
-        "type": "object",
-        "required": ["code", "expires_at"],
-        "title": "OTPResponse"
       },
       "OrchestrationLinkageItem": {
         "properties": {
@@ -14310,14 +14982,7 @@
           },
           "requirement_code": { "type": "string", "title": "Requirement Code" },
           "classification": { "type": "string", "title": "Classification" },
-          "status": { "type": "string", "title": "Status" },
-          "linked_document_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Linked Document Id"
-          }
+          "status": { "type": "string", "title": "Status" }
         },
         "type": "object",
         "required": [
@@ -14675,7 +15340,7 @@
       },
       "RequirementClassification": {
         "type": "string",
-        "enum": ["mandatory", "optional", "conditional"],
+        "enum": ["mandatory", "optional"],
         "title": "RequirementClassification"
       },
       "RequirementListResponse": {
@@ -14718,10 +15383,6 @@
           "classification": {
             "$ref": "#/components/schemas/RequirementClassification"
           },
-          "governance_classification": {
-            "$ref": "#/components/schemas/GovernanceClassification"
-          },
-          "source_layer": { "$ref": "#/components/schemas/SourceLayer" },
           "applicable_process_contexts": {
             "items": { "type": "string" },
             "type": "array",
@@ -14758,8 +15419,6 @@
           "document_type_name",
           "description",
           "classification",
-          "governance_classification",
-          "source_layer",
           "applicable_process_contexts",
           "stage_categorization",
           "document_origin",
@@ -15056,7 +15715,6 @@
             "title": "Document Type Name"
           },
           "classification": { "type": "string", "title": "Classification" },
-          "source_layer": { "type": "string", "title": "Source Layer" },
           "stage_categorization": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Stage Categorization"
@@ -15066,20 +15724,7 @@
             "title": "Fulfilment Status"
           },
           "is_blocking": { "type": "boolean", "title": "Is Blocking" },
-          "document_origin": { "type": "string", "title": "Document Origin" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Applicable Process Contexts",
-            "default": []
-          },
-          "linked_document_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Linked Document Id"
-          }
+          "document_origin": { "type": "string", "title": "Document Origin" }
         },
         "type": "object",
         "required": [
@@ -15087,7 +15732,6 @@
           "requirement_code",
           "document_type_name",
           "classification",
-          "source_layer",
           "stage_categorization",
           "fulfilment_status",
           "is_blocking",
@@ -15107,10 +15751,7 @@
             "format": "uuid",
             "title": "Business Object Id"
           },
-          "process_context": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Process Context"
-          },
+          "process_context": { "type": "string", "title": "Process Context" },
           "completeness_summary": {
             "type": "string",
             "title": "Completeness Summary"
@@ -15125,6 +15766,7 @@
         "required": [
           "catalog_id",
           "business_object_id",
+          "process_context",
           "completeness_summary",
           "requirements"
         ],
@@ -15441,10 +16083,14 @@
         "required": ["partner_type", "full_name", "date_of_birth", "country"],
         "title": "SoleProprietorIdentityInput"
       },
-      "SourceLayer": {
-        "type": "string",
-        "enum": ["default", "override", "supplement", "deactivated"],
-        "title": "SourceLayer"
+      "StartCaseRequest": {
+        "properties": {
+          "case_type": { "$ref": "#/components/schemas/CaseType" }
+        },
+        "type": "object",
+        "required": ["case_type"],
+        "title": "StartCaseRequest",
+        "description": "Starting a case asks for the case type first.\n\nA refinancing request opens the guided wizard; the other six do not — each has its own entry\nsurface. That is a front-end consequence of this field, not a second endpoint."
       },
       "StateTransitionOutcome": {
         "type": "string",
@@ -16440,16 +17086,6 @@
           },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
           "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
-          "max_ltv_ratio": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Max Ltv Ratio"
-          },
           "min_term_months": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Min Term Months"
@@ -16971,14 +17607,6 @@
         ],
         "title": "TerminationReadinessResponse"
       },
-      "TestSessionRequest": {
-        "properties": {
-          "email": { "type": "string", "format": "email", "title": "Email" }
-        },
-        "type": "object",
-        "required": ["email"],
-        "title": "TestSessionRequest"
-      },
       "TransitionStatusRequest": {
         "properties": {
           "requirement_definition_id": {
@@ -17357,12 +17985,6 @@
               { "type": "null" }
             ]
           },
-          "governance_classification": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/GovernanceClassification" },
-              { "type": "null" }
-            ]
-          },
           "applicable_process_contexts": {
             "anyOf": [
               { "items": { "type": "string" }, "type": "array", "minItems": 1 },
@@ -17636,12 +18258,6 @@
               { "type": "null" }
             ]
           },
-          "first_installment_rule": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/FirstInstallmentRule" },
-              { "type": "null" }
-            ]
-          },
           "disbursement_derivation_rule": {
             "anyOf": [
               { "$ref": "#/components/schemas/DisbursementDerivationRule" },
@@ -17665,17 +18281,6 @@
           "max_term_months": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Max Term Months"
-          },
-          "max_ltv_ratio": {
-            "anyOf": [
-              { "type": "number" },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Max Ltv Ratio"
           },
           "min_volume_eur": {
             "anyOf": [
@@ -18193,12 +18798,6 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Npv Formula Ref"
           },
-          "first_installment_rule": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/FirstInstallmentRule" },
-              { "type": "null" }
-            ]
-          },
           "disbursement_derivation_rule": {
             "anyOf": [
               { "$ref": "#/components/schemas/DisbursementDerivationRule" },
@@ -18222,16 +18821,6 @@
           "max_term_months": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Max Term Months"
-          },
-          "max_ltv_ratio": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              },
-              { "type": "null" }
-            ],
-            "title": "Max Ltv Ratio"
           },
           "min_volume_eur": {
             "anyOf": [
@@ -18344,12 +18933,10 @@
           "rate_basis",
           "rate_type",
           "npv_formula_ref",
-          "first_installment_rule",
           "disbursement_derivation_rule",
           "allowed_asset_categories",
           "min_term_months",
           "max_term_months",
-          "max_ltv_ratio",
           "min_volume_eur",
           "max_volume_eur",
           "effective_rate",
@@ -18565,18 +19152,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
           "applicable_process_contexts": {
             "items": { "type": "string" },
             "type": "array",
             "title": "Applicable Process Contexts"
-          },
-          "product_template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Product Template Id"
           },
           "valid_from": {
             "anyOf": [
@@ -18617,9 +19196,7 @@
         "required": [
           "id",
           "catalog_name",
-          "catalog_type",
           "applicable_process_contexts",
-          "product_template_id",
           "valid_from",
           "valid_to",
           "created_by",
@@ -18648,18 +19225,10 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
           "applicable_process_contexts": {
             "items": { "type": "string" },
             "type": "array",
             "title": "Applicable Process Contexts"
-          },
-          "product_template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Product Template Id"
           },
           "valid_from": {
             "anyOf": [
@@ -18695,9 +19264,7 @@
         "required": [
           "id",
           "catalog_name",
-          "catalog_type",
           "applicable_process_contexts",
-          "product_template_id",
           "valid_from",
           "valid_to",
           "created_by",
@@ -18714,19 +19281,11 @@
             "minLength": 1,
             "title": "Catalog Name"
           },
-          "catalog_type": { "$ref": "#/components/schemas/CatalogType" },
           "applicable_process_contexts": {
             "items": { "type": "string" },
             "type": "array",
             "minItems": 1,
             "title": "Applicable Process Contexts"
-          },
-          "product_template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Product Template Id"
           },
           "valid_from": {
             "anyOf": [
@@ -18744,11 +19303,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "catalog_name",
-          "catalog_type",
-          "applicable_process_contexts"
-        ],
+        "required": ["catalog_name", "applicable_process_contexts"],
         "title": "CreateCatalogRequest"
       },
       "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
@@ -18791,12 +19346,6 @@
           },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
           "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
-          "case_type": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/CaseType" },
-              { "type": "null" }
-            ]
-          },
           "entity_type": {
             "anyOf": [
               { "$ref": "#/components/schemas/CatalogEntityType" },
