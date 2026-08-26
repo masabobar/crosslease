@@ -15,6 +15,7 @@ export const STATUS_PILL_CLASSES =
 import {
   CatalogEntityTypeSchema,
   CatalogLayerSchema,
+  CatalogOwningEntityTypeSchema,
   CatalogStateSchema,
   LayerActionSchema,
   StageCategorizationSchema,
@@ -57,6 +58,16 @@ export const ENTITY_TYPE_OPTIONS = [
     labelKey: "entityTypes.redemption_request",
   },
 ] as const
+
+// What the create dialog offers, as opposed to ENTITY_TYPE_OPTIONS above, which the list filter
+// uses. `financing` is filtered out at the source (CatalogOwningEntityTypeSchema) rather than
+// here, so this list and CASE_TYPE_BY_ENTITY_TYPE cannot drift apart: every option maps to a
+// case_type, and the BE rejects anything that does not (InvalidCaseTypeError).
+export const CATALOG_OWNING_ENTITY_TYPE_OPTIONS =
+  CatalogOwningEntityTypeSchema.options.map(value => ({
+    value,
+    labelKey: `entityTypes.${value}` as const,
+  }))
 
 export const CATALOG_STATE_OPTIONS = [
   { value: CatalogStateSchema.enum.draft, labelKey: "catalogStates.draft" },

@@ -8,8 +8,10 @@ import {
   CatalogLayerSchema,
   CatalogListItemSchema,
   CatalogListResponseSchema,
+  CatalogOwningEntityTypeSchema,
   CatalogResponseSchema,
   CatalogStateSchema,
+  CASE_TYPE_BY_ENTITY_TYPE,
   CreateCatalogRequestSchema,
   TaskDefinitionItemSchema,
   TaskResponseWithWarningsSchema,
@@ -671,5 +673,59 @@ describe("TaskResponseWithWarningsSchema", () => {
         layer_action: "banana",
       })
     ).toThrow()
+  })
+})
+
+describe("CatalogOwningEntityTypeSchema", () => {
+  it("accepts the two entity types that can own a catalogue", () => {
+    expect(CatalogOwningEntityTypeSchema.parse("refinancing_request")).toBe(
+      "refinancing_request"
+    )
+    expect(CatalogOwningEntityTypeSchema.parse("redemption_request")).toBe(
+      "redemption_request"
+    )
+  })
+
+  // The Financing has actions, not a workflow, so no case_type derives it and the BE rejects
+  // it at catalogue save (InvalidCaseTypeError). It stays in CatalogEntityTypeSchema because
+  // the list filter still needs the full set.
+  it("rejects financing, which cannot own a catalogue", () => {
+    expect(() => CatalogOwningEntityTypeSchema.parse("financing")).toThrow()
+    expect(CatalogEntityTypeSchema.parse("financing")).toBe("financing")
+  })
+
+  it("rejects an unknown entity type", () => {
+    expect(() => CatalogOwningEntityTypeSchema.parse("banana")).toThrow()
+  })
+})
+
+describe("CASE_TYPE_BY_ENTITY_TYPE", () => {
+  // Mirrors CASE_TYPE_ENTITY_TYPE in the BE's workflow_task_catalog/domain/enums.py, inverted.
+  it("maps each owning entity type to its case type", () => {
+    expect(CASE_TYPE_BY_ENTITY_TYPE.refinancing_request).toBe("main_process")
+    expect(CASE_TYPE_BY_ENTITY_TYPE.redemption_request).toBe(
+      "package_redemption"
+    )
+  })
+
+  // The bug this map replaced hardcoded one case_type for every Global Default, collapsing all
+  // of them into a single scope. Distinct values are what give each entity type its own scope.
+  it("gives the two entity types distinct case types", () => {
+    const caseTypes = Object.values(CASE_TYPE_BY_ENTITY_TYPE)
+    expect(new Set(caseTypes).size).toBe(caseTypes.length)
+  })
+
+  it("covers every owning entity type and nothing else", () => {
+    expect(Object.keys(CASE_TYPE_BY_ENTITY_TYPE).sort()).toEqual(
+      [...CatalogOwningEntityTypeSchema.options].sort()
+    )
+  })
+
+  // Only the two typed case types may own a catalogue (TYPED_CASE_TYPES); anything else is
+  // rejected with WTC_CATALOG_INVALID_CASE_TYPE, so the map must never point at one.
+  it("only ever maps to a case type the BE accepts", () => {
+    for (const caseType of Object.values(CASE_TYPE_BY_ENTITY_TYPE)) {
+      expect(["main_process", "package_redemption"]).toContain(caseType)
+    }
   })
 })

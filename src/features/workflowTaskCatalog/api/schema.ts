@@ -43,6 +43,29 @@ export const CaseTypeSchema = z.enum([
 ])
 export type CaseType = z.infer<typeof CaseTypeSchema>
 
+// The entity types that can own a catalogue: `financing` cannot, so it is excluded rather than
+// re-listed (one source of truth per .claude/rules/enums-and-constants.md §3).
+export const CatalogOwningEntityTypeSchema = CatalogEntityTypeSchema.exclude([
+  "financing",
+])
+export type CatalogOwningEntityType = z.infer<
+  typeof CatalogOwningEntityTypeSchema
+>
+
+// PRD1042-1790 Option A — a catalogue's scope is its case_type (the process), and the BE derives
+// entity_type (the object) from it, so entity_type is not part of the create request at all. This
+// is the BE's CASE_TYPE_ENTITY_TYPE (workflow_task_catalog/domain/enums.py) inverted, which is
+// what lets the Entity type a user picks decide the case_type the catalogue is actually scoped by.
+// Total over CatalogOwningEntityType by construction: only the two typed case types may own a
+// catalogue (TYPED_CASE_TYPES), and each derives a different entity type.
+export const CASE_TYPE_BY_ENTITY_TYPE: Record<
+  CatalogOwningEntityType,
+  CaseType
+> = {
+  refinancing_request: CaseTypeSchema.enum.main_process,
+  redemption_request: CaseTypeSchema.enum.package_redemption,
+}
+
 // The four product-specific change types CR PRD1042-1554 B2 requires, as the wire spells them.
 // `defined` is the Global Default layer's own entry; the other three are the product's changes.
 export const LayerActionSchema = z.enum([
