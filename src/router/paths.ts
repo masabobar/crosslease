@@ -20,6 +20,10 @@ export const PATHS = {
   LC_DOCUMENTS: "/lc/documents",
   LC_PROPOSALS: "/lc/proposals",
   LC_FRAMEWORK_AGREEMENTS: "/lc/framework-agreements",
+  // D-12 (PRD1042-1796 item 9) — a leasing company's own document obligations for one case. Per
+  // case, so it carries an object id; no case module exists to link from yet, the same interim
+  // position as the bank-side case screens.
+  LC_CASE_DOCUMENTS: "/lc/cases/:businessObjectId/documents",
   PENDING_APPROVALS: "/platform-administration/pending-approvals",
   TENANT_MANAGEMENT: "/platform-administration/tenant-management",
   TENANT_MANAGEMENT_CREATE: "/platform-administration/tenant-management/create",

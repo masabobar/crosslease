@@ -1,9 +1,17 @@
 import { api } from "@/lib/api"
-import { LCPortalFAListResponseSchema } from "@/features/lc/api/schema"
-import type { LCPortalFAListResponse } from "@/features/lc/api/schema"
+import {
+  LCObligationResponseSchema,
+  LCPortalFAListResponseSchema,
+} from "@/features/lc/api/schema"
+import type {
+  LCObligationResponse,
+  LCPortalFAListResponse,
+} from "@/features/lc/api/schema"
 
 export const LC_PORTAL_QUERY_KEYS = {
   frameworkAgreements: () => ["lc-portal", "framework-agreements"] as const,
+  obligations: (businessObjectId: string) =>
+    ["lc-portal", "obligations", businessObjectId] as const,
 } as const
 
 export async function fetchLcPortalFrameworkAgreements(): Promise<LCPortalFAListResponse> {
@@ -19,4 +27,20 @@ export function getLcPortalDocumentDownloadUrl(
   docId: string
 ): string {
   return `${api.defaults.baseURL}/lc-portal/framework-agreements/${faId}/documents/${docId}/download`
+}
+
+// D-12 (PRD1042-1796 item 9) — this company's obligations for one case. Sent with the object id and
+// nothing else: a leasing company cannot name a catalogue (that read is bank-only, and item 9 forbids
+// showing it one), the object type narrows nothing, and a checkpoint is not a property of the object.
+export async function fetchLcObligations(
+  businessObjectId: string
+): Promise<LCObligationResponse> {
+  const data = await api.get(`/lc/obligations/${businessObjectId}`)
+  return LCObligationResponseSchema.parse(data)
+}
+
+// The obligation's document is streamed by the media endpoint, which authenticates from the session
+// cookie — so a plain navigation is authenticated and no token is ever put in a URL.
+export function getLcObligationDocumentUrl(documentId: string): string {
+  return `${api.defaults.baseURL}/media/${documentId}`
 }

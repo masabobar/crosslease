@@ -73,6 +73,9 @@ const UserManagementPage = lazy(
 const UserDetailPage = lazy(
   () => import("@/features/users/components/UserDetailPage")
 )
+const LcCaseDocumentsPage = lazy(
+  () => import("@/features/lc/components/LcCaseDocumentsPage")
+)
 const LeasingCompanyWorkspacePage = lazy(
   () => import("@/features/lc/components/LeasingCompanyWorkspacePage")
 )
@@ -591,6 +594,18 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={LC_ONLY_ROLES}>
               <LeasingCompanyWorkspacePage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // LC_ONLY_ROLES, matching the backend's LC_OBLIGATIONS permission: a bank role has the
+        // bank-side surface and has no business on the company's own view of its obligations.
+        path: PATHS.LC_CASE_DOCUMENTS,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={LC_ONLY_ROLES}>
+              <LcCaseDocumentsPage />
             </RoleGuard>
           </Suspense>
         ),

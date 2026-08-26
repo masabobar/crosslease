@@ -52,3 +52,37 @@ export const LCPortalFAListResponseSchema = z.object({
 export type LCPortalFAListResponse = z.infer<
   typeof LCPortalFAListResponseSchema
 >
+
+// ── D-12: this company's own obligations for one case (PRD1042-1796 item 9) ──────────────────
+//
+// Matches LCObligationItem / LCObligationResponse in refinext-api surface_schemas.py. What is NOT
+// here is the point of the shape: no catalogue, no source layer, no condition, no classification and
+// no blocking flag. Item 9 forbids all of it on a leasing-company screen, and the backend does not
+// send it — so there is nothing here to leak by accident.
+export const LCObligationItemSchema = z.object({
+  document_type_name: z.string(),
+  // Rendered as Required / Optional — what the company must send. Never as blocking: under CR
+  // PRD1042-1794 membership carries "required", so this and blocking are derived from one fact, and
+  // "we need this document" is item 9's own "what is still needed" while "your case is stuck on
+  // this" is the bank-internal framing it forbids.
+  is_mandatory: z.boolean(),
+  // The LC vocabulary, not the internal one — the backend maps it (`_LC_STATUS_MAP`) before sending.
+  // Parsed as a plain string so a status added there widens this screen instead of blanking it.
+  fulfilment_status: z.string(),
+  action_needed: z.boolean(),
+  // Separates what this company must send from the documents the bank has released.
+  document_origin: z.string(),
+  // Present only once the obligation is met, which is what lets the screen offer it for opening —
+  // item 9 forbids showing a requirement as met with nothing behind it.
+  linked_document_id: z.string().uuid().nullable(),
+})
+export type LCObligationItem = z.infer<typeof LCObligationItemSchema>
+
+export const LCObligationResponseSchema = z.object({
+  business_object_id: z.string().uuid(),
+  // Null when no checkpoint was named: every obligation of the case.
+  process_context: z.string().nullable(),
+  documents_status_summary: z.string(),
+  obligations: z.array(LCObligationItemSchema),
+})
+export type LCObligationResponse = z.infer<typeof LCObligationResponseSchema>
