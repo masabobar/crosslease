@@ -1,6 +1,7 @@
 import { z } from "zod"
 import {
   LayerActionSchema,
+  StepResponsibleRoleSchema,
   TaskProcessContextSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type { LayerAction } from "@/features/workflowTaskCatalog/api/schema"
@@ -23,7 +24,6 @@ const REQUIRED_FOR_OWN_TASK = [
   "task_name",
   "task_description",
   "category",
-  "responsible_role",
   "is_mandatory",
   "display_order",
   "stage_categorization",
@@ -39,7 +39,7 @@ export const taskFormSchema = z
     task_description: z.string(),
     category: z.string(),
     task_type: z.string(),
-    responsible_role: z.string(),
+    responsible_roles: z.array(StepResponsibleRoleSchema),
     weight: z.string(),
     display_order: z.string(),
     is_mandatory: z.string(),
@@ -87,6 +87,15 @@ export const taskFormSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["applicable_process_contexts"],
+        message: "required",
+      })
+    }
+    // Same shape, same reason: `responsible_roles` is in the BE's mandatory list for a
+    // defined/supplement task, and an empty set is rejected there (min_length=1).
+    if (data.responsible_roles.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["responsible_roles"],
         message: "required",
       })
     }

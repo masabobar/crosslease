@@ -33,7 +33,7 @@ import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS,
   TASK_CATEGORY_OPTIONS,
-  TASK_RESPONSIBLE_ROLE_OPTIONS,
+  STEP_RESPONSIBLE_ROLE_OPTIONS,
   TASK_STAGE_OPTIONS,
   TASK_TYPE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
@@ -76,7 +76,7 @@ function toFormValues(
     task_description: task?.task_description ?? "",
     category: task?.category ?? "",
     task_type: task?.task_type ?? "",
-    responsible_role: task?.responsible_role ?? "",
+    responsible_roles: task?.responsible_roles ?? [],
     weight: task && task.weight !== null ? String(task.weight) : "",
     display_order:
       task && task.display_order !== null ? String(task.display_order) : "",
@@ -132,9 +132,9 @@ function toWirePayload(
       is_mandatory:
         values.is_mandatory === "" ? undefined : values.is_mandatory === "true",
       weight,
-      responsible_role: orUndefined(
-        values.responsible_role
-      ) as AddTaskRequest["responsible_role"],
+      responsible_roles: values.responsible_roles.length
+        ? values.responsible_roles
+        : undefined,
       display_order:
         values.display_order === "" ? undefined : Number(values.display_order),
       stage_categorization: orUndefined(
@@ -152,9 +152,7 @@ function toWirePayload(
     task_description: values.task_description.trim(),
     category: orUndefined(values.category) as AddTaskRequest["category"],
     task_type: orUndefined(values.task_type) as AddTaskRequest["task_type"],
-    responsible_role: orUndefined(
-      values.responsible_role
-    ) as AddTaskRequest["responsible_role"],
+    responsible_roles: values.responsible_roles,
     is_mandatory: values.is_mandatory === "true",
     weight,
     display_order: Number(values.display_order),
@@ -656,29 +654,43 @@ function TaskDefinitionSheet({
                     </div>
                   )}
                   <div>
-                    <Label className="mb-2" error={!!errors.responsible_role}>
-                      {t("detail.taskSheet.fields.responsibleRole")}
+                    <Label className="mb-2" error={!!errors.responsible_roles}>
+                      {t("detail.taskSheet.fields.responsibleRoles")}
                     </Label>
                     <Controller
                       control={control}
-                      name="responsible_role"
+                      name="responsible_roles"
                       render={({ field }) => (
-                        <SelectField
-                          data-testid="task-sheet-responsible-role"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          options={TASK_RESPONSIBLE_ROLE_OPTIONS.map(o => ({
-                            value: o.value,
-                            label: t(o.labelKey),
-                          }))}
-                          placeholder={t("detail.taskSheet.notSet")}
-                          error={!!errors.responsible_role}
-                        />
+                        <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-input p-2.5">
+                          {STEP_RESPONSIBLE_ROLE_OPTIONS.map(option => (
+                            <label
+                              key={option.value}
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
+                              <Checkbox
+                                data-testid={`task-sheet-responsible-role-${option.value}`}
+                                checked={field.value.includes(option.value)}
+                                onCheckedChange={checked =>
+                                  field.onChange(
+                                    checked === true
+                                      ? [...field.value, option.value]
+                                      : field.value.filter(
+                                          v => v !== option.value
+                                        )
+                                  )
+                                }
+                              />
+                              <span className="text-sm text-foreground">
+                                {t(option.labelKey)}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
                       )}
                     />
-                    {errors.responsible_role && (
+                    {errors.responsible_roles && (
                       <p className="mt-1 text-sm text-destructive">
-                        {resolveMessage(errors.responsible_role.message)}
+                        {resolveMessage(errors.responsible_roles.message)}
                       </p>
                     )}
                   </div>

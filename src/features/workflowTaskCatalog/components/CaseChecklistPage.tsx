@@ -43,11 +43,15 @@ import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
  * anywhere. It is deliberately absent from the sidebar — inventing navigation for a case that
  * cannot be listed would be the decorative surface `api-first.md` §4 forbids.
  *
- * ── WHAT THIS SURFACE CANNOT DO ────────────────────────────────────────────────────────────
+ * ── WHO MAY ACT ON AN ITEM ─────────────────────────────────────────────────────────────────
  * CR PRD1042-1792 item 6 wants a worker to act only on items carrying their own responsible role.
- * `ChecklistItemResponse` has no `responsible_role` (1790 B7 / Q-052), so every holder of the
- * runtime write role can action every item. That gap is left visible rather than papered over with
- * a guessed role mapping.
+ * That is now enforced, and on the server: an item carries `responsible_roles` and the runtime
+ * service refuses an actor whose platform role is not among them
+ * (`WTC_CHECKLIST_ROLE_NOT_PERMITTED`, keyed in both locales). This screen deliberately does not
+ * filter or hide anything — PRD1042-1892 item 13 is explicit that a bank worker sees the complete
+ * checklist of a case and that this must not become a visibility filter, because hiding a control
+ * is never the security boundary. The refusal surfaces as an error on the action, not as a
+ * missing row.
  */
 export default function CaseChecklistPage() {
   const { t } = useTranslation("workflowTaskCatalog")

@@ -217,11 +217,20 @@ function TaskDefinitionsTab({
                   />
                 </TableCell>
                 <TableCell>
-                  {task.responsible_role
-                    ? t(
-                        `detail.taskSheet.responsibleRoles.${task.responsible_role}`
-                      )
-                    : notApplicable}
+                  {/* PRD1042-1892 item 13 — the role is a set. A row authored before 17 Aug
+                      carries only the retired singular, so fall back to it rather than
+                      showing nothing for historical tasks. */}
+                  {task.responsible_roles?.length
+                    ? task.responsible_roles
+                        .map(role =>
+                          t(`detail.taskSheet.responsibleRoles.${role}`)
+                        )
+                        .join(", ")
+                    : task.responsible_role
+                      ? t(
+                          `detail.taskSheet.responsibleRoles.${task.responsible_role}`
+                        )
+                      : notApplicable}
                 </TableCell>
                 <TableCell>
                   {task.stage_categorization

@@ -6442,10 +6442,10 @@
                 { "type": "string", "maxLength": 200 },
                 { "type": "null" }
               ],
-              "description": "Substring match on task code / task name",
+              "description": "Substring match on catalog name / task code / task name",
               "title": "Search"
             },
-            "description": "Substring match on task code / task name"
+            "description": "Substring match on catalog name / task code / task name"
           },
           {
             "name": "catalog_layer",

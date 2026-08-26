@@ -20,7 +20,7 @@ import {
   LayerActionSchema,
   StageCategorizationSchema,
   TaskCategorySchema,
-  TaskResponsibleRoleSchema,
+  StepResponsibleRoleSchema,
   TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import {
@@ -124,9 +124,10 @@ export const TASK_TYPE_OPTIONS = TaskTypeSchema.options.map(value => ({
   labelKey: `detail.taskSheet.taskTypes.${value}` as const,
 }))
 
-// Accountability only — runtime task assignment is owned by the Workflow Engine.
-export const TASK_RESPONSIBLE_ROLE_OPTIONS =
-  TaskResponsibleRoleSchema.options.map(value => ({
+// PRD1042-1892 item 13 — the roles a step may be assigned to, as a set. Only the two operational
+// bank roles are authorable; the wider `TaskResponsibleRoleSchema` is read-only history now.
+export const STEP_RESPONSIBLE_ROLE_OPTIONS =
+  StepResponsibleRoleSchema.options.map(value => ({
     value,
     labelKey: `detail.taskSheet.responsibleRoles.${value}` as const,
   }))

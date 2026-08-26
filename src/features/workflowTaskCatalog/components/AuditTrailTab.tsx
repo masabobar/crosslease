@@ -30,6 +30,12 @@ const AUDIT_FIELDS: Record<string, { labelKey: string; enumBlock?: string }> = {
     labelKey: "responsibleRole",
     enumBlock: "responsibleRoles",
   },
+  // PRD1042-1892 item 13 — the set that replaced the singular above. Both are mapped: an audit
+  // row written before 17 Aug carries the singular, one written after carries the set.
+  responsible_roles: {
+    labelKey: "responsibleRoles",
+    enumBlock: "responsibleRoles",
+  },
   is_mandatory: { labelKey: "mandatory" },
   weight: { labelKey: "weight" },
   display_order: { labelKey: "displayOrder" },
