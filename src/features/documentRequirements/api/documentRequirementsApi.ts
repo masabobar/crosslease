@@ -193,10 +193,15 @@ export async function fetchTenantDocumentTypes(
 // returns the whole catalogue with each row carrying its own contexts.
 export async function fetchCaseDocumentRequirements(
   catalogId: string,
-  businessObjectId: string
+  businessObjectId: string,
+  objectType: string,
+  processContext: string
 ): Promise<RuntimeRequirementSurfaceResponse> {
+  // The runtime surface resolves the requirement set for this business object and process context;
+  // both are required by the backend (routes/runtime.py get_runtime_requirements).
   const data = await api.get(
-    `/document-requirement-catalogs/${catalogId}/objects/${businessObjectId}/requirements`
+    `/document-requirement-catalogs/${catalogId}/objects/${businessObjectId}/requirements`,
+    { params: { object_type: objectType, process_context: processContext } }
   )
   return RuntimeRequirementSurfaceResponseSchema.parse(data)
 }

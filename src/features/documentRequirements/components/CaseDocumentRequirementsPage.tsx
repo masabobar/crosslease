@@ -163,7 +163,10 @@ export default function CaseDocumentRequirementsPage() {
           {t("caseDocuments.title")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {surface.completeness_summary}
+          {t(
+            `caseDocuments.summaries.${surface.completeness_summary}` as "caseDocuments.summaries.missing_required_documents",
+            { defaultValue: surface.completeness_summary }
+          )}
         </p>
       </div>
 

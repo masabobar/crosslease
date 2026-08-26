@@ -278,12 +278,11 @@ export const RuntimeRequirementItemSchema = z.object({
   fulfilment_status: z.string(),
   is_blocking: z.boolean(),
   document_origin: z.string(),
-  // The checkpoints this requirement belongs to — what makes the union interpretable when no
-  // context was named.
-  applicable_process_contexts: z.array(z.string()),
-  // The document that met it, so it is openable by whoever works the case rather than only by
-  // whoever uploaded it (item 5). Null while unmet.
-  linked_document_id: z.string().uuid().nullable(),
+  // The backend RuntimeRequirementItem (surface_schemas.py) does not carry these two — they belong
+  // to the materialization/preview contract, not the per-object runtime surface. Kept optional so
+  // this screen parses the runtime response and degrades gracefully when they are absent.
+  applicable_process_contexts: z.array(z.string()).optional().default([]),
+  linked_document_id: z.string().uuid().nullable().optional(),
 })
 export type RuntimeRequirementItem = z.infer<
   typeof RuntimeRequirementItemSchema

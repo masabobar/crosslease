@@ -221,6 +221,12 @@
       "success": "Dokument hochgeladen und wartet auf Prüfung.",
       "invalidMime": "Nur PDF- und Excel-Dateien werden unterstützt.",
       "fileTooLarge": "Die Datei ist zu groß. Die maximale Größe beträgt 25 MB."
+    },
+    "summaries": {
+      "all_mandatory_complete": "Alle erforderlichen Dokumente vorhanden",
+      "pending_review": "Warten auf Bankprüfung",
+      "missing_required_documents": "Erforderliche Dokumente fehlen",
+      "blocked_due_to_missing_evidence": "Blockiert — erforderliche Dokumente fehlen"
     }
   }
 }
