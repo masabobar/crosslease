@@ -179,7 +179,7 @@
         "weight": "Weight",
         "displayOrder": "Display order",
         "mandatory": "Mandatory",
-        "stage": "Process stage (platform)",
+        "stage": "Process category (legacy)",
         "active": "Active",
         "parentTask": "Parent task",
         "conditionalTrigger": "Conditional trigger",
@@ -264,7 +264,7 @@
       "pinningBehaviorHint": "Pin by version keeps this task on the requirement version you pick. Pin by ID follows the requirement's active version automatically.",
       "noDocumentRequirements": "No active document requirements exist for this tenant yet.",
       "documentRequirementsUnavailable": "Document requirements could not be loaded. Close this and try again.",
-      "noStagesYet": "No stages defined yet",
+      "noStagesYet": "No stages yet — add one in Stages first",
       "triggerEventPlaceholder": "e.g. offer_approved",
       "lifecycleEntityPlaceholder": "e.g. refinancing_request",
       "captureSectionPlaceholder": "e.g. Object data",
@@ -336,9 +336,9 @@
     "WTC_CHECKLIST_NOT_FOUND": "No checklist has been materialized for this case yet.",
     "WTC_CHECKLIST_ROLE_NOT_PERMITTED": "Your role is not responsible for this step.",
     "WTC_DOC_REQUIREMENT_REF_INVALID": "The referenced document requirement is not active in this tenant.",
-    "WTC_PHASE_GATE_INVALID_TRANSITION": "This phase gate cannot move to that state. An approved gate is final.",
-    "WTC_PHASE_NAME_CONFLICT": "A phase with this name already exists in the catalogue.",
-    "WTC_PHASE_NOT_FOUND": "This phase could not be found. Reload the catalogue.",
+    "WTC_PHASE_GATE_INVALID_TRANSITION": "This stage gate cannot move to that state. An approved gate is final.",
+    "WTC_PHASE_NAME_CONFLICT": "A stage with this name already exists in the catalogue.",
+    "WTC_PHASE_NOT_FOUND": "This stage could not be found. Reload the catalogue.",
     "WTC_PRODUCT_TEMPLATE_NOT_ACTIVE": "The selected product template has no active published version.",
     "WTC_TASK_CODE_CONFLICT": "A task with this code already exists in this catalog.",
     "WTC_TASK_CODE_GLOBAL_CONFLICT": "This task code collides with a global default task for the same entity type.",
@@ -350,8 +350,8 @@
     "WTC_TASK_NOT_FOUND": "This task no longer exists. Reload the catalog and try again.",
     "WTC_TASK_PARENT_CONFLICT": "This catalog already overrides or deactivates that global default task.",
     "WTC_TASK_PARENT_NOT_FOUND": "The selected global default task could not be found in this scope.",
-    "WTC_TASK_PHASE_MISMATCH": "The selected phase does not belong to this catalogue version.",
-    "WTC_TASK_PHASE_REQUIRED": "Assign the task to a phase before saving."
+    "WTC_TASK_PHASE_MISMATCH": "The selected stage does not belong to this catalogue version.",
+    "WTC_TASK_PHASE_REQUIRED": "Assign the task to a stage before saving."
   },
   "caseChecklist": {
     "title": "Case checklist",
@@ -389,7 +389,7 @@
     },
     "blocked": {
       "title": "Submission is blocked",
-      "description": "These required tasks are still outstanding. Every required task on the case is listed, because the projection cannot yet narrow them to a single phase."
+      "description": "These required tasks are still outstanding. Every required task on the case is listed, because the projection cannot yet narrow them to a single stage."
     },
     "projectionError": {
       "title": "Outstanding required tasks could not be checked",
@@ -412,11 +412,11 @@
       }
     },
     "gates": {
-      "title": "Phase gates",
-      "subtitle": "One gate per phase. A phase with no gate has not been decided yet.",
+      "title": "Stage gates",
+      "subtitle": "One gate per stage. A stage with no gate has not been decided yet.",
       "notSet": "Not set",
       "columns": {
-        "phase": "Phase",
+        "phase": "Stage",
         "status": "Status",
         "approver": "Decided by",
         "decidedAt": "Decided at",
@@ -427,9 +427,9 @@
       }
     },
     "setGate": {
-      "title": "Decide phase gate",
+      "title": "Decide stage gate",
       "subtitle": "{{phase}}",
-      "success": "Phase gate updated.",
+      "success": "Stage gate updated.",
       "fields": {
         "status": "Decision",
         "statusPlaceholder": "Select a decision",
