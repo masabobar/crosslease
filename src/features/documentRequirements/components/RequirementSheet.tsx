@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { SelectField } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Sheet,
   SheetContent,
@@ -20,6 +21,8 @@ import {
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { resolveFormMessage } from "@/lib/formMessages"
 import { useAddRequirement } from "@/features/documentRequirements/hooks/useAddRequirement"
+import { useTenantDocumentTypes } from "@/features/documentRequirements/hooks/useTenantDocumentTypes"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUpdateRequirement } from "@/features/documentRequirements/hooks/useUpdateRequirement"
 import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
@@ -143,6 +146,20 @@ function RequirementSheet({
 }: Props) {
   const { t } = useTranslation("documentRequirements")
   const isEdit = mode === "edit"
+  // PRD1042-1794 Block 10 — the document types this requirement may name. Scoped to the acting
+  // user's own bank: item 3 of the CR forbids a bank selector anywhere, so the tenant is never a
+  // parameter of this screen.
+  const { data: currentUser } = useCurrentUser()
+  const {
+    data: documentTypesResponse,
+    isError: isDocumentTypesError,
+    isPending: isDocumentTypesLoading,
+  } = useTenantDocumentTypes(currentUser?.tenant_id ?? undefined)
+  const documentTypes = documentTypesResponse?.items ?? []
+  const documentTypeOptions = documentTypes.map(type => ({
+    value: type.type_code,
+    label: `${type.type_code}, ${type.type_name}`,
+  }))
   const isProductSpecific =
     catalogType === DocumentRequirementCatalogTypeSchema.enum.product_specific
 
@@ -155,6 +172,7 @@ function RequirementSheet({
     handleSubmit,
     getValues,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<RequirementFormValues>({
     resolver: zodResolver(requirementFieldsSchema),
@@ -392,12 +410,54 @@ function RequirementSheet({
                   >
                     {t("requirement.fields.documentTypeCode")}
                   </Label>
-                  <Input
-                    id="requirement-document-type-code"
-                    data-testid="requirement-document-type-code-input"
-                    error={!!errors.documentTypeCode}
-                    {...register("documentTypeCode")}
-                  />
+                  {/* PRD1042-1794 Block 10 — picked from the tenant's registry, not typed. The
+                      fulfilment service matches an arriving document against this exact code, so a
+                      code that is not in the registry creates a requirement nothing can fulfil. */}
+                  {isDocumentTypesError ? (
+                    <p
+                      data-testid="requirement-document-types-error"
+                      className="text-sm text-destructive"
+                    >
+                      {t("requirement.documentTypesUnavailable")}
+                    </p>
+                  ) : isDocumentTypesLoading ? (
+                    <Skeleton className="h-9 w-full" />
+                  ) : documentTypeOptions.length === 0 ? (
+                    <p
+                      data-testid="requirement-no-document-types"
+                      className="text-sm text-muted-foreground"
+                    >
+                      {t("requirement.noDocumentTypes")}
+                    </p>
+                  ) : (
+                    <Controller
+                      control={control}
+                      name="documentTypeCode"
+                      render={({ field }) => (
+                        <SelectField
+                          id="requirement-document-type-code"
+                          data-testid="requirement-document-type-code-select"
+                          value={field.value}
+                          onValueChange={code => {
+                            field.onChange(code)
+                            // The registry holds the canonical name; it stays editable below
+                            // because the backend allows a per-requirement name.
+                            const picked = documentTypes.find(
+                              type => type.type_code === code
+                            )
+                            if (picked) {
+                              setValue("documentTypeName", picked.type_name, {
+                                shouldValidate: true,
+                              })
+                            }
+                          }}
+                          options={documentTypeOptions}
+                          placeholder={t("requirement.selectDocumentType")}
+                          error={!!errors.documentTypeCode}
+                        />
+                      )}
+                    />
+                  )}
                   {errors.documentTypeCode && (
                     <p className="mt-1 text-sm text-destructive">
                       {resolveMessage(errors.documentTypeCode.message)}
