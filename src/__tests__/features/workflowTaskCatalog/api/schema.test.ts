@@ -558,6 +558,30 @@ describe("CatalogDetailResponseSchema", () => {
     expect(parsed.current_version_id).toBe(VERSION_UUID)
   })
 
+  // PRD1042-1790 item 1 — the detail carries the scope key. The list and create responses always
+  // did; the detail did not, so Identity & Scope could show only the derived entity type.
+  it("carries the case type alongside the derived entity type", () => {
+    const parsed = CatalogDetailResponseSchema.parse(validDetail)
+    expect(parsed.case_type).toBe("main_process")
+    expect(parsed.entity_type).toBe("refinancing_request")
+  })
+
+  it("requires the case type to be present", () => {
+    const withoutCaseType: Record<string, unknown> = { ...validDetail }
+    delete withoutCaseType.case_type
+    expect(() => CatalogDetailResponseSchema.parse(withoutCaseType)).toThrow()
+  })
+
+  // Nullable rather than optional: a row predating the case-type migration has none, and the
+  // screen must be able to render that instead of failing the parse.
+  it("accepts a null case type for a pre-migration row", () => {
+    const parsed = CatalogDetailResponseSchema.parse({
+      ...validDetail,
+      case_type: null,
+    })
+    expect(parsed.case_type).toBeNull()
+  })
+
   // Null means no active version, which makes every task mutation unbuildable — the UI must be
   // able to see that state rather than have the parse reject it.
   it("accepts a null current_version_id", () => {
