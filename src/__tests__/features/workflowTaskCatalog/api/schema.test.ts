@@ -378,6 +378,7 @@ const validDefinedTask = {
   task_description: "Send the notice to the lessee.",
   category: "legal",
   responsible_role: "front_office",
+  responsible_roles: ["front_office"],
   is_mandatory: true,
   weight: "2.50",
   display_order: 10,
@@ -406,6 +407,54 @@ describe("TaskDefinitionItemSchema", () => {
     expect(parsed.weight).toBe(2.5)
   })
 
+  // PRD1042-1892 item 13 — the role is a set of platform roles. Both carriers arrive: a row
+  // authored before 17 Aug has only the retired singular, one authored after has only the set.
+  it("accepts both responsible roles in one row", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      responsible_roles: ["front_office", "back_office"],
+    })
+    expect(parsed.responsible_roles).toEqual(["front_office", "back_office"])
+  })
+
+  it("accepts a post-17-Aug row that carries only the set", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      responsible_role: null,
+      responsible_roles: ["back_office"],
+    })
+    expect(parsed.responsible_role).toBeNull()
+    expect(parsed.responsible_roles).toEqual(["back_office"])
+  })
+
+  // The set is narrowed to the operational bank roles the BE's STEP_RESPONSIBLE_ROLES allows —
+  // a platform role outside that pair is not authorable on a step.
+  it("rejects a platform role outside the authorable pair", () => {
+    expect(() =>
+      TaskDefinitionItemSchema.parse({
+        ...validDefinedTask,
+        responsible_roles: ["system_admin"],
+      })
+    ).toThrow()
+  })
+
+  // The retired accountability enum is a different domain and none of its extra values are roles
+  // a step can be assigned to.
+  it("rejects a retired accountability value in the set", () => {
+    expect(() =>
+      TaskDefinitionItemSchema.parse({
+        ...validDefinedTask,
+        responsible_roles: ["back_office_risk"],
+      })
+    ).toThrow()
+  })
+
+  it("requires the set to be present, even as null", () => {
+    const withoutSet: Record<string, unknown> = { ...validDefinedTask }
+    delete withoutSet.responsible_roles
+    expect(() => TaskDefinitionItemSchema.parse(withoutSet)).toThrow()
+  })
+
   // A deactivated entry only switches its parent off, so the BE legitimately returns null for
   // every descriptive field. Modelling those as optional rather than nullable would reject it.
   it("accepts a deactivated row whose descriptive fields are all null", () => {
@@ -417,6 +466,7 @@ describe("TaskDefinitionItemSchema", () => {
       task_description: null,
       category: null,
       responsible_role: null,
+      responsible_roles: null,
       is_mandatory: null,
       weight: null,
       display_order: null,
@@ -586,6 +636,35 @@ describe("AddTaskRequestSchema", () => {
 
   it("rejects a payload with no layer_action", () => {
     expect(() => AddTaskRequestSchema.parse({ task_code: "LEG-001" })).toThrow()
+  })
+
+  // The BE declares responsible_roles with min_length=1 and counts it among the fields a
+  // defined/supplement task must carry, so an empty set is refused rather than sent.
+  it("rejects an empty responsible_roles set", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({
+        layer_action: "defined",
+        responsible_roles: [],
+      })
+    ).toThrow()
+  })
+
+  it("accepts the authorable role set", () => {
+    const parsed = AddTaskRequestSchema.parse({
+      layer_action: "defined",
+      responsible_roles: ["front_office", "back_office"],
+    })
+    expect(parsed.responsible_roles).toEqual(["front_office", "back_office"])
+  })
+
+  // The retired singular is no longer authorable, so it is not part of the request shape and
+  // never reaches the wire — see toUpdateTaskBody, which derives its allowlist from this schema.
+  it("drops the retired singular responsible_role", () => {
+    const parsed = AddTaskRequestSchema.parse({
+      layer_action: "defined",
+      responsible_role: "compliance",
+    })
+    expect("responsible_role" in parsed).toBe(false)
   })
 
   it("rejects a negative weight", () => {

@@ -183,7 +183,8 @@
         "conditionalTrigger": "Conditional trigger",
         "processContexts": "Applicable process contexts",
         "documentRequirement": "Document requirement",
-        "pinningBehavior": "Pinning behavior"
+        "pinningBehavior": "Pinning behavior",
+        "responsibleRoles": "Responsible roles"
       },
       "mandatoryOptions": {
         "yes": "Yes",
@@ -200,6 +201,7 @@
       },
       "responsibleRoles": {
         "front_office": "Front office",
+        "back_office": "Back office",
         "back_office_risk": "Back office / Risk",
         "compliance": "Compliance",
         "legal": "Legal",

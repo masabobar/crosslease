@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { UserRoleSchema } from "@/features/users/api/schema"
 
 // Wire enums — must match refinext-api
 // src/app/modules/workflow_task_catalog/domain/enums.py exactly.
@@ -99,6 +100,19 @@ export const TaskResponsibleRoleSchema = z.enum([
   "system",
 ])
 export type TaskResponsibleRole = z.infer<typeof TaskResponsibleRoleSchema>
+
+// PRD1042-1892 item 13 (client answer, 17 Aug) — a step's responsible role is a SET of platform
+// UserRole values, narrowed to the operational bank roles that act on a case. Mirrors the BE's
+// `STEP_RESPONSIBLE_ROLES` (workflow_task_catalog/domain/enums.py), which its authoring validator
+// enforces. Extracted from the canonical `UserRoleSchema` rather than retyped, so a change to the
+// platform roles cannot leave this list behind. This retires `TaskResponsibleRoleSchema` above for
+// authoring — that enum is a different domain (it carries `compliance`, `system`, …) and stays only
+// to read historical rows.
+export const StepResponsibleRoleSchema = UserRoleSchema.extract([
+  "front_office",
+  "back_office",
+])
+export type StepResponsibleRole = z.infer<typeof StepResponsibleRoleSchema>
 
 export const StageCategorizationSchema = z.enum([
   "pre_submission",
@@ -245,7 +259,10 @@ export const TaskDefinitionItemSchema = z.object({
   task_name: z.string().nullable(),
   task_description: z.string().nullable(),
   category: TaskCategorySchema.nullable(),
+  // `responsible_role` is the retired singular, still sent for rows authored before 17 Aug;
+  // `responsible_roles` is what new authoring writes. A row carries one or the other.
   responsible_role: TaskResponsibleRoleSchema.nullable(),
+  responsible_roles: z.array(StepResponsibleRoleSchema).nullable(),
   is_mandatory: z.boolean().nullable(),
   // Decimal on the BE, so it arrives as a string.
   weight: z.coerce.number().nullable(),
@@ -322,7 +339,9 @@ export const AddTaskRequestSchema = z.object({
   task_name: z.string().min(1).max(300).optional(),
   task_description: z.string().optional(),
   category: TaskCategorySchema.optional(),
-  responsible_role: TaskResponsibleRoleSchema.optional(),
+  // The BE's AddTaskRequest.validate_action_constraints counts `responsible_roles` among the
+  // fields a defined/supplement task must carry — the legacy singular no longer satisfies it.
+  responsible_roles: z.array(StepResponsibleRoleSchema).min(1).optional(),
   is_mandatory: z.boolean().optional(),
   weight: z.number().min(0).optional(),
   display_order: z.number().int().min(0).optional(),

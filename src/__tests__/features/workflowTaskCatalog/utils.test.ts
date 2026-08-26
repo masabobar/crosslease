@@ -138,7 +138,7 @@ describe("toUpdateTaskBody", () => {
       parent_task_id: "54415cbd-e2a4-4a8f-ae45-2a2b8247f6b8",
       is_mandatory: false,
       weight: 8.25,
-      responsible_role: "back_office_risk",
+      responsible_roles: ["back_office"],
       display_order: 20,
       stage_categorization: "redemption",
       is_active: true,
@@ -147,7 +147,7 @@ describe("toUpdateTaskBody", () => {
     expect(body).toEqual({
       is_mandatory: false,
       weight: 8.25,
-      responsible_role: "back_office_risk",
+      responsible_roles: ["back_office"],
       display_order: 20,
       stage_categorization: "redemption",
       is_active: true,
