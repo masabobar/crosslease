@@ -2846,6 +2846,7 @@ const MaterializationResponse = z
   .passthrough()
 const LCObligationItem = z
   .object({
+    requirement_definition_id: z.string().uuid(),
     document_type_name: z.string(),
     is_mandatory: z.boolean(),
     fulfilment_status: z.string(),

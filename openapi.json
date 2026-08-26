@@ -13667,6 +13667,11 @@
       },
       "LCObligationItem": {
         "properties": {
+          "requirement_definition_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Requirement Definition Id"
+          },
           "document_type_name": {
             "type": "string",
             "title": "Document Type Name"
@@ -13680,6 +13685,7 @@
         },
         "type": "object",
         "required": [
+          "requirement_definition_id",
           "document_type_name",
           "is_mandatory",
           "fulfilment_status",
