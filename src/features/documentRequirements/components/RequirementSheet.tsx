@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { SelectField } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -30,7 +29,6 @@ import {
   DocumentOriginSchema,
   DocumentRequirementCatalogTypeSchema,
   GovernanceClassificationSchema,
-  RequirementApplicabilitySchema,
   RequirementClassificationSchema,
   SourceLayerSchema,
   StageCategorizationSchema,
@@ -103,7 +101,6 @@ const requirementFieldsSchema = z.object({
   governanceClassification: z.string().min(1, "required"),
   processContexts: z.array(z.string()).min(1, "required"),
   stageCategorization: z.string(),
-  blocksSubmission: z.boolean(),
   documentOrigin: z.string().min(1, "required"),
 })
 
@@ -123,7 +120,6 @@ function toFormValues(
     governanceClassification: requirement?.governance_classification ?? "",
     processContexts: requirement?.applicable_process_contexts ?? [],
     stageCategorization: requirement?.stage_categorization ?? "",
-    blocksSubmission: requirement?.blocks_submission ?? true,
     documentOrigin:
       requirement?.document_origin ?? DocumentOriginSchema.enum.uploaded,
   }
@@ -205,7 +201,6 @@ function RequirementSheet({
       stage_categorization: values.stageCategorization
         ? StageCategorizationSchema.parse(values.stageCategorization)
         : null,
-      blocks_submission: values.blocksSubmission,
       document_origin: DocumentOriginSchema.parse(values.documentOrigin),
     }
 
@@ -248,9 +243,6 @@ function RequirementSheet({
           ? SourceLayerSchema.enum.supplement
           : undefined,
         sort_order: DEFAULT_SORT_ORDER,
-        // The predicate authoring UI is post-MVP (US 16.4), so nothing here can produce a
-        // conditional requirement — `condition` is never sent and applicability stays `always`.
-        applicability: RequirementApplicabilitySchema.enum.always,
         ...shared,
       },
       {
@@ -328,12 +320,6 @@ function RequirementSheet({
                         `requirement.stages.${requirement.stage_categorization}` as "requirement.stages.submission"
                       )
                     : t("requirement.fields.stageNone"),
-                ],
-                [
-                  "requirement.fields.blocksSubmission",
-                  requirement.blocks_submission
-                    ? t("requirement.yes")
-                    : t("requirement.no"),
                 ],
                 [
                   "requirement.fields.documentOrigin",
@@ -662,34 +648,6 @@ function RequirementSheet({
               {errors.documentOrigin && (
                 <p className="mt-1 text-sm text-destructive">
                   {resolveMessage(errors.documentOrigin.message)}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="requirement-blocks-submission"
-                  error={!!errors.blocksSubmission}
-                >
-                  {t("requirement.fields.blocksSubmission")}
-                </Label>
-                <Controller
-                  control={control}
-                  name="blocksSubmission"
-                  render={({ field }) => (
-                    <Switch
-                      id="requirement-blocks-submission"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      data-testid="requirement-blocks-submission-switch"
-                    />
-                  )}
-                />
-              </div>
-              {errors.blocksSubmission && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.blocksSubmission.message)}
                 </p>
               )}
             </div>

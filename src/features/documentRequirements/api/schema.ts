@@ -153,17 +153,12 @@ export type DocumentTypeListResponse = z.infer<
 export const DocumentOriginSchema = z.enum(["uploaded", "generated"])
 export type DocumentOrigin = z.infer<typeof DocumentOriginSchema>
 
-// `conditional_rule`/`conditional_manual` both require `condition`; only `conditional_rule` is
-// reachable from the UI in November scope (US 16.4) — the predicate authoring UI is post-MVP, so
-// nothing in this app currently produces `conditional_manual`.
-export const RequirementApplicabilitySchema = z.enum([
-  "always",
-  "conditional_rule",
-  "conditional_manual",
-])
-export type RequirementApplicability = z.infer<
-  typeof RequirementApplicabilitySchema
->
+// `applicability` and `condition` were removed from the document side under CR PRD1042-1794 A4
+// (12 Aug 2026): conditions live only on the workflow step, and nothing on the document side
+// evaluates a rule. `blocks_submission` went with the CR's later decision that membership is the
+// only carrier of "required" — a mandatory member blocks when missing, so there is no separate
+// flag (see surface_service's is_blocking derivation). All three are absent from the contract; the
+// schemas below no longer declare them.
 
 // A requirement row on GET /document-requirement-catalogs/{catalog_id} (embedded) and
 // .../requirements — mirrors RequirementResponse exactly.
@@ -179,12 +174,9 @@ export const RequirementResponseSchema = z.object({
   source_layer: SourceLayerSchema,
   applicable_process_contexts: z.array(z.string()),
   stage_categorization: StageCategorizationSchema.nullable(),
-  blocks_submission: z.boolean(),
   document_origin: DocumentOriginSchema,
   is_active: z.boolean(),
   sort_order: z.number(),
-  applicability: RequirementApplicabilitySchema,
-  condition: z.record(z.string(), z.unknown()).nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 })
@@ -203,33 +195,14 @@ const RequirementRequestFieldsSchema = z.object({
   source_layer: SourceLayerSchema.nullable().optional(),
   applicable_process_contexts: z.array(z.string()).min(1),
   stage_categorization: StageCategorizationSchema.nullable().optional(),
-  blocks_submission: z.boolean().default(true),
   document_origin: DocumentOriginSchema.default("uploaded"),
   sort_order: z.number().int().default(0),
-  applicability: RequirementApplicabilitySchema.default("always"),
-  condition: z.record(z.string(), z.unknown()).nullable().optional(),
 })
 
-// POST .../requirements — mirrors AddRequirementRequest, including its cross-field rule: BE
-// rejects `condition` unless applicability is conditional_rule, and requires it when it is.
-export const AddRequirementRequestSchema =
-  RequirementRequestFieldsSchema.superRefine((data, ctx) => {
-    const isConditionalRule = data.applicability === "conditional_rule"
-    if (isConditionalRule && !data.condition) {
-      ctx.addIssue({
-        code: "custom",
-        message: "conditionRequiredForConditionalRule",
-        path: ["condition"],
-      })
-    }
-    if (!isConditionalRule && data.condition) {
-      ctx.addIssue({
-        code: "custom",
-        message: "conditionOnlyForConditionalRule",
-        path: ["condition"],
-      })
-    }
-  })
+// POST .../requirements — mirrors AddRequirementRequest. The condition/applicability cross-field
+// rule that used to live here went with the fields themselves (CR A4): there is nothing on the
+// document side for a rule to be consistent with.
+export const AddRequirementRequestSchema = RequirementRequestFieldsSchema
 export type AddRequirementRequest = z.infer<typeof AddRequirementRequestSchema>
 
 // PATCH /document-requirements/{id} — mirrors UpdateRequirementRequest: requirement_code,
@@ -280,7 +253,6 @@ export const MaterializedRequirementResponseSchema = z.object({
   source_layer: SourceLayerSchema,
   stage_categorization: StageCategorizationSchema.nullable(),
   applicable_process_contexts: z.array(z.string()),
-  blocks_submission: z.boolean(),
   document_origin: DocumentOriginSchema,
 })
 export type MaterializedRequirementResponse = z.infer<

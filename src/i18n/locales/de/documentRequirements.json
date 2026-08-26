@@ -146,7 +146,6 @@
       "processContexts": "Prozesskontexte",
       "stageCategorization": "Phasenkategorisierung",
       "stageNone": "Keine",
-      "blocksSubmission": "Blockiert Einreichung",
       "documentOrigin": "Dokumentherkunft",
       "predicatePostMvpNote": "Die Prädikatserstellung ist noch nicht verfügbar — diese Anforderung wird zur Laufzeit als optional behandelt, bis in einer zukünftigen Version ein Prädikat hinzugefügt wird."
     },
