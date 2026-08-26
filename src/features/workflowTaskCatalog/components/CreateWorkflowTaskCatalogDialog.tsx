@@ -19,10 +19,11 @@ import {
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
-import { ENTITY_TYPE_OPTIONS } from "@/features/workflowTaskCatalog/constants"
+import { CATALOG_OWNING_ENTITY_TYPE_OPTIONS } from "@/features/workflowTaskCatalog/constants"
 import {
-  CaseTypeSchema,
+  CASE_TYPE_BY_ENTITY_TYPE,
   CatalogLayerSchema,
+  CatalogOwningEntityTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogLayer } from "@/features/workflowTaskCatalog/api/schema"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
@@ -172,18 +173,23 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
       {
         catalog_name: values.catalogName.trim(),
         catalog_layer: layer,
-        // entity_type is no longer part of CreateCatalogRequest (PRD1042-1790 item 1) — the
-        // backend now derives it from case_type and returns it on the response instead. The
-        // Entity type field above still validates values.entityType client-side but that
-        // choice is no longer transmitted; case_type is still fixed per layer below pending
-        // a real entityType → case_type mapping.
+        // entity_type is not part of CreateCatalogRequest (PRD1042-1790 item 1) — the backend
+        // derives it from case_type and returns it on the response instead.
         // entity_id carries the Product Template UUID and must be null on Global Default.
         entity_id: isGlobalDefault ? null : values.productTemplate,
         valid_from: values.validFrom,
         valid_until: values.validUntil || null,
-        case_type: isGlobalDefault
-          ? CaseTypeSchema.enum.package_redemption
-          : CaseTypeSchema.enum.main_process,
+        // The chosen Entity type decides the case_type, for both layers. Hardcoding it per layer
+        // put every Global Default into the single scope (tenant, global_default,
+        // package_redemption, NULL) — and since scope uniqueness is per case_type among ACTIVE
+        // catalogues, the first one worked and every one after it failed with
+        // WTC_CATALOG_DUPLICATE_SCOPE, while a main_process Global Default (the one
+        // Product-Specific catalogues inherit from) was unreachable. .parse() narrows to the
+        // two entity types the select offers, as CreateDocumentRequirementCatalogDialog does.
+        case_type:
+          CASE_TYPE_BY_ENTITY_TYPE[
+            CatalogOwningEntityTypeSchema.parse(values.entityType)
+          ],
       },
       {
         onSuccess: response => {
@@ -269,7 +275,7 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
                   data-testid="create-catalog-entity-type-select"
                   value={field.value}
                   onValueChange={field.onChange}
-                  options={ENTITY_TYPE_OPTIONS.map(o => ({
+                  options={CATALOG_OWNING_ENTITY_TYPE_OPTIONS.map(o => ({
                     value: o.value,
                     label: t(o.labelKey),
                   }))}

@@ -283,7 +283,7 @@
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder.",
     "WTC_CATALOG_ACTIVATION_BLOCKED": "Dieser Katalog kann noch nicht aktiviert werden. Beheben Sie die gemeldeten Probleme und versuchen Sie es erneut.",
-    "WTC_CATALOG_DUPLICATE_SCOPE": "Für diese Ebene, diesen Entitätstyp und diese Produktvorlage existiert bereits ein aktiver Katalog.",
+    "WTC_CATALOG_DUPLICATE_SCOPE": "Für diese Katalogebene und diesen Objekttyp existiert bereits ein aktiver Katalog (bei produktspezifischen Katalogen zusätzlich für diese Produktvorlage).",
     "WTC_CATALOG_INVALID_CASE_TYPE": "Nur die beiden typisierten Fallarten können einen Katalog besitzen.",
     "WTC_CATALOG_INVALID_VALID_FROM": "Gültig ab darf nicht in der Vergangenheit liegen.",
     "WTC_CATALOG_INVALID_VALID_UNTIL": "Gültig bis muss am oder nach Gültig ab liegen.",

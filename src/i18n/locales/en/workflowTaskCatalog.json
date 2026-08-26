@@ -283,7 +283,7 @@
     "generic": "Something went wrong. Please try again.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields.",
     "WTC_CATALOG_ACTIVATION_BLOCKED": "This catalogue cannot be activated yet. Resolve the reported issues and try again.",
-    "WTC_CATALOG_DUPLICATE_SCOPE": "An active catalog already exists for this layer, entity type and product template.",
+    "WTC_CATALOG_DUPLICATE_SCOPE": "An active catalog already exists for this layer and entity type (and, for product-specific catalogs, this product template).",
     "WTC_CATALOG_INVALID_CASE_TYPE": "Only the two typed case types can own a catalogue.",
     "WTC_CATALOG_INVALID_VALID_FROM": "Valid from cannot be in the past.",
     "WTC_CATALOG_INVALID_VALID_UNTIL": "Valid until must be on or after valid from.",
