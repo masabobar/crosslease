@@ -205,13 +205,22 @@
       "classification": "Binding",
       "checkpoints": "Applies at",
       "status": "Status",
-      "document": "Document"
+      "document": "Document",
+      "upload": "Upload"
     },
     "statuses": {
       "missing": "Missing",
       "uploaded_pending_review": "Awaiting review",
       "fulfilled": "Met",
       "rejected": "Rejected"
+    },
+    "upload": {
+      "label": "Upload",
+      "uploading": "Uploading…",
+      "button": "Upload a document for {{requirement}}",
+      "success": "Document uploaded and awaiting review.",
+      "invalidMime": "Only PDF and Excel files are supported.",
+      "fileTooLarge": "File is too large. Maximum size is 25 MB."
     }
   }
 }

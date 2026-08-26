@@ -205,13 +205,22 @@
       "classification": "Verbindlichkeit",
       "checkpoints": "Gilt bei",
       "status": "Status",
-      "document": "Dokument"
+      "document": "Dokument",
+      "upload": "Hochladen"
     },
     "statuses": {
       "missing": "Fehlt",
       "uploaded_pending_review": "Prüfung ausstehend",
       "fulfilled": "Erfüllt",
       "rejected": "Abgelehnt"
+    },
+    "upload": {
+      "label": "Hochladen",
+      "uploading": "Wird hochgeladen…",
+      "button": "Dokument für {{requirement}} hochladen",
+      "success": "Dokument hochgeladen und wartet auf Prüfung.",
+      "invalidMime": "Nur PDF- und Excel-Dateien werden unterstützt.",
+      "fileTooLarge": "Die Datei ist zu groß. Die maximale Größe beträgt 25 MB."
     }
   }
 }

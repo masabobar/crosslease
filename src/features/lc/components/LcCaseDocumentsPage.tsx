@@ -46,11 +46,16 @@ const LC_STATUS_CLASSES: Record<string, string> = {
  * needed". "Your case is stuck on this" is the bank-internal framing it forbids, so there is no
  * blocking language, no count of what is holding the case, and no ordering by urgency.
  *
- * ── NO UPLOAD CONTROL ──────────────────────────────────────────────────────────────────────
- * Item 6's upload point does not exist and neither does an endpoint behind it — the only upload in
- * the contract is framework-agreement scoped. A button that collected a file with nowhere to send it
- * is the decorative UI `api-first.md` §4 forbids. This screen says what is needed; it cannot yet be
- * where the file arrives.
+ * ── NO UPLOAD CONTROL (yet) ────────────────────────────────────────────────────────────────
+ * The case-document upload endpoint now exists (POST /cases/{case_id}/documents, and its permission
+ * accepts LC_OBLIGATIONS), but it requires a `requirement_definition_id` — and this surface, by item
+ * 9's design, does not carry one. LCObligationItem exposes only the document type, whether it is
+ * required, its status and origin; the backend deliberately withholds the catalogue's requirement id
+ * from a leasing company. So there is nothing to send it, and a button that collected a file with no
+ * id to attach it to is the decorative UI `api-first.md` §4 forbids. Wiring LC upload needs the
+ * backend to either resolve the requirement from (case, document_type) or add an opaque handle to
+ * LCObligationItem — see open-questions.md. The bank-side CaseDocumentRequirementsPage, which does
+ * carry requirement_definition_id, has the working upload control.
  *
  * ── DESIGN PROVENANCE ──────────────────────────────────────────────────────────────────────
  * No Figma frame. Built on instruction from this application's existing language, mirroring the

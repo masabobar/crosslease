@@ -15,6 +15,18 @@ export const PROCESS_CONTEXT_OPTIONS = [
   { value: "disbursement", labelKey: "processContexts.disbursement" },
 ] as const
 
+// PRD1042-1794 item 6 — case-document uploads accept PDF and Excel (the FA dropzone is PDF-only; a
+// case document is often a spreadsheet). The backend is the authority; this is the front-line guard
+// so a wrong file is rejected before a round trip. `.xls` and `.xlsx` both appear because browsers
+// disagree on the legacy MIME.
+export const CASE_DOCUMENT_ACCEPTED_MIME = [
+  "application/pdf",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+] as const
+// Matches the FA dropzone bound (FA_DOCUMENT_MAX_FILE_SIZE_BYTES).
+export const CASE_DOCUMENT_MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024
+
 // Process Context is single-value on the wire (GET .../document-requirement-catalogs takes one
 // `process_context` param, matched via an array-contains check). Its field spec asks for
 // multi-select; see open-questions.md for that gap. CR-1794 removed the catalog-type filter.

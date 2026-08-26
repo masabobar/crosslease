@@ -207,3 +207,22 @@ export async function fetchCaseDocumentRequirements(
 export function getCaseDocumentUrl(documentId: string): string {
   return `${api.defaults.baseURL}/media/${documentId}`
 }
+
+// PRD1042-1794 item 6 — upload a document against one case requirement. Multipart, mirroring the FA
+// attach flow (FormData on the shared axios instance, explicit multipart Content-Type). `case_id` is
+// the business object id; `requirement_definition_id` names which requirement the file fulfils. The
+// backend records a fulfilment and flips the requirement to `uploaded_pending_review`, so the caller
+// invalidates the case-requirements query on success. MIME is validated client-side before this is
+// called (see CASE_DOCUMENT_ACCEPTED_MIME); the backend is the authority.
+export async function uploadCaseDocument(
+  caseId: string,
+  requirementDefinitionId: string,
+  file: File
+): Promise<void> {
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("requirement_definition_id", requirementDefinitionId)
+  await api.post(`/cases/${caseId}/documents`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+}

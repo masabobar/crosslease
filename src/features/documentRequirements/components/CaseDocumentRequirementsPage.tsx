@@ -19,7 +19,13 @@ import { getCaseDocumentUrl } from "@/features/documentRequirements/api/document
 import { useCaseDocumentRequirements } from "@/features/documentRequirements/hooks/useCaseDocumentRequirements"
 import { useDocumentRequirementCatalogList } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogList"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { CaseDocumentUploadButton } from "@/features/documentRequirements/components/CaseDocumentUploadButton"
 import type { RuntimeRequirementItem } from "@/features/documentRequirements/api/schema"
+
+// PRD1042-1794 item 6 — a requirement that has no acceptable document yet can be uploaded against.
+// Keyed off the row's own status so a status added on the backend simply does not offer the control
+// rather than mis-offering it.
+const UPLOADABLE_STATUSES = new Set(["missing", "rejected"])
 
 // Keyed by the backend's FulfilmentStatus values. A status added there falls through to the neutral
 // default rather than rendering unstyled, which is why this is a lookup and not a switch.
@@ -46,10 +52,11 @@ const FULFILMENT_STATUS_CLASSES: Record<string, string> = {
  * either — a process context is not a property of the object, so the surface is read without one and
  * every row carries the contexts it applies to.
  *
- * ── WHAT THIS SURFACE DELIBERATELY DOES NOT DO ─────────────────────────────────────────────
- * No upload control. Item 6's upload point does not exist yet and neither does the endpoint behind
- * it — the only upload in the contract is framework-agreement scoped. A button that collected a file
- * and had nowhere to send it is the decorative UI `api-first.md` §4 forbids, so there is none.
+ * ── UPLOAD (PRD1042-1794 item 6) ───────────────────────────────────────────────────────────
+ * A requirement that is missing or rejected can be uploaded against, via POST /cases/{case_id}/
+ * documents (case_id is this object's id). On success the row flips to uploaded_pending_review, so
+ * the mutation invalidates this surface's query. PDF and Excel are accepted (a case document is
+ * often a spreadsheet); MIME is guarded client-side and enforced by the backend.
  */
 export default function CaseDocumentRequirementsPage() {
   const { t } = useTranslation("documentRequirements")
@@ -189,6 +196,7 @@ export default function CaseDocumentRequirementsPage() {
               <TableHead>{t("caseDocuments.columns.checkpoints")}</TableHead>
               <TableHead>{t("caseDocuments.columns.status")}</TableHead>
               <TableHead>{t("caseDocuments.columns.document")}</TableHead>
+              <TableHead>{t("caseDocuments.columns.upload")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -196,6 +204,8 @@ export default function CaseDocumentRequirementsPage() {
               <RequirementRow
                 key={item.requirement_definition_id}
                 item={item}
+                catalogId={catalogId}
+                businessObjectId={businessObjectId}
               />
             ))}
           </TableBody>
@@ -212,9 +222,18 @@ export default function CaseDocumentRequirementsPage() {
   )
 }
 
-function RequirementRow({ item }: { item: RuntimeRequirementItem }) {
+function RequirementRow({
+  item,
+  catalogId,
+  businessObjectId,
+}: {
+  item: RuntimeRequirementItem
+  catalogId: string
+  businessObjectId: string
+}) {
   const { t } = useTranslation("documentRequirements")
   const notApplicable = t("caseDocuments.notApplicable")
+  const canUpload = UPLOADABLE_STATUSES.has(item.fulfilment_status)
 
   return (
     <TableRow
@@ -277,6 +296,18 @@ function RequirementRow({ item }: { item: RuntimeRequirementItem }) {
             {t("caseDocuments.openDocument")}
             <ExternalLink size={14} />
           </a>
+        ) : (
+          <span className="text-sm text-muted-foreground">{notApplicable}</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {canUpload ? (
+          <CaseDocumentUploadButton
+            catalogId={catalogId}
+            businessObjectId={businessObjectId}
+            requirementDefinitionId={item.requirement_definition_id}
+            requirementLabel={item.document_type_name}
+          />
         ) : (
           <span className="text-sm text-muted-foreground">{notApplicable}</span>
         )}
