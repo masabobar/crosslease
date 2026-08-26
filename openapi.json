@@ -8786,6 +8786,45 @@
         }
       }
     },
+    "/api/v1/tenants/{tenant_id}/document-types/matrix": {
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Get Document Type Matrix",
+        "operationId": "get_document_type_matrix_api_v1_tenants__tenant_id__document_types_matrix_get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTypeMatrixResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -11071,6 +11110,31 @@
         "type": "object",
         "required": ["items", "total"],
         "title": "DocumentTypeListResponse"
+      },
+      "DocumentTypeMatrixResponse": {
+        "properties": {
+          "rows": {
+            "items": { "$ref": "#/components/schemas/DocumentTypeMatrixRow" },
+            "type": "array",
+            "title": "Rows"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": ["rows", "total"],
+        "title": "DocumentTypeMatrixResponse",
+        "description": "CR-DRC B9: the bank's document matrix, GENERATED from the registry (not maintained as a grid)."
+      },
+      "DocumentTypeMatrixRow": {
+        "properties": {
+          "type_code": { "type": "string", "title": "Type Code" },
+          "type_name": { "type": "string", "title": "Type Name" },
+          "role_scope": { "$ref": "#/components/schemas/DocumentRoleScope" },
+          "origin": { "$ref": "#/components/schemas/DocumentTypeOrigin" }
+        },
+        "type": "object",
+        "required": ["type_code", "type_name", "role_scope", "origin"],
+        "title": "DocumentTypeMatrixRow"
       },
       "DocumentTypeOrigin": {
         "type": "string",
