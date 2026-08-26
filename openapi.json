@@ -6738,6 +6738,30 @@
         }
       }
     },
+    "/api/v1/workflow-task-catalogs/case-types": {
+      "get": {
+        "tags": ["Workflow Task Catalog"],
+        "summary": "List Catalog Case Types",
+        "description": "PRD1042-1790 item 1 — the case types a catalogue may be scoped to.\n\nDeclared before `/{catalog_id}` so the literal path wins over the UUID route, the same ordering\n`/field-registry` above relies on.\n\nReturns `TYPED_CASE_TYPES` in the enum's own order, each with the entity type it derives. A\nclient must not re-list these: AC-94 fails an implementation wired to a fixed count of case\ntypes, and AC-74 makes assigning a catalogue to a further case type configuration rather than a\nrelease. Widening the set here is therefore the whole change.",
+        "operationId": "list_catalog_case_types_api_v1_workflow_task_catalogs_case_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogCaseTypeItem"
+                  },
+                  "type": "array",
+                  "title": "Response List Catalog Case Types Api V1 Workflow Task Catalogs Case Types Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workflow-task-catalogs/{catalog_id}": {
       "get": {
         "tags": ["Workflow Task Catalog"],
@@ -9991,6 +10015,16 @@
         ],
         "title": "CaseType",
         "description": "PRD1042-1790 item 1 — the process a case runs, distinct from the object it runs on\n(``CatalogEntityType``). Seven case types exist; only the two ``*_typed`` ones carry a\nchecklist in the November MVP. The other five run without a catalogue and nothing is built\nto give them one (ticket: *out of scope*). The Financing is deliberately **not** a case type —\nit has actions, not a workflow, and cannot own a catalogue."
+      },
+      "CatalogCaseTypeItem": {
+        "properties": {
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "entity_type": { "$ref": "#/components/schemas/CatalogEntityType" }
+        },
+        "type": "object",
+        "required": ["case_type", "entity_type"],
+        "title": "CatalogCaseTypeItem",
+        "description": "PRD1042-1790 item 1 — a case type that may own a catalogue, and the entity type it derives.\n\nExists so no client has to carry its own copy of ``TYPED_CASE_TYPES``. AC-94 refuses an\nimplementation \"wired to a fixed count of case types\", and an enum the FE re-lists is exactly\nthat: assigning a catalogue to a third case type would need a frontend release. Reading the set\nfrom here makes it a backend change, and later a configuration one, with no client work.\n\n``entity_type`` is the coarse object the case type derives (``CASE_TYPE_ENTITY_TYPE``). It is not\npart of the create contract — the backend derives it — and is surfaced only so a client can label\nor group by it without re-deriving the mapping."
       },
       "CatalogEntityType": {
         "type": "string",

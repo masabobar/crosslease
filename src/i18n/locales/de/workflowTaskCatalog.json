@@ -73,10 +73,8 @@
       "catalogLayer": "Katalogebene",
       "catalogLayerHintGlobalDefault": "Wird für globale Standardkataloge automatisch auf null gesetzt.",
       "catalogLayerHintProductSpecific": "Automatisch auf produktspezifisch gesetzt. Kann nicht geändert werden.",
-      "entityType": "Objekttyp",
-      "entityTypePlaceholder": "Auswählen",
       "catalogName": "Katalogname",
-      "catalogNameHint": "Muss innerhalb des ausgewählten Objekttyps eindeutig sein.",
+      "catalogNameHint": "Muss innerhalb der gewählten Fallart eindeutig sein.",
       "productTemplate": "Zugehörige Produktvorlage",
       "productTemplateNotApplicable": "Nicht zutreffend für globalen Standard",
       "productTemplateLockedHint": "Für diesen Katalogtyp festgelegt. Kann nicht geändert werden.",
@@ -85,7 +83,9 @@
       "productTemplateEmpty": "Es ist keine Produktvorlage mit einer aktiven veröffentlichten Version verfügbar, daher kann noch kein produktspezifischer Katalog erstellt werden.",
       "validFrom": "Gültig von",
       "validUntil": "Gültig bis",
-      "optional": "(optional)"
+      "optional": "(optional)",
+      "caseType": "Fallart",
+      "caseTypePlaceholder": "Auswählen"
     },
     "errors": {
       "validUntilBeforeValidFrom": "\"Gültig bis\" muss am oder nach \"Gültig von\" liegen.",
@@ -425,5 +425,14 @@
         "submit": "Speichern"
       }
     }
+  },
+  "caseTypes": {
+    "main_process": "Hauptrefinanzierungsprozess",
+    "package_redemption": "Paketablösung",
+    "single_redemption": "Einzelablösung",
+    "lessee_change": "Leasingnehmerwechsel",
+    "object_swap": "Objekttausch",
+    "extension": "Verlängerung",
+    "asset_event": "Objektereignis"
   }
 }

@@ -2072,6 +2072,9 @@ const FieldRegistryItem = z
     data_available: z.boolean(),
   })
   .passthrough()
+const CatalogCaseTypeItem = z
+  .object({ case_type: CaseType, entity_type: CatalogEntityType })
+  .passthrough()
 const LayerAction = z.enum(["defined", "override", "deactivated", "supplement"])
 const TaskCategory = z.enum([
   "legal",
@@ -3157,6 +3160,7 @@ export const schemas = {
   app__modules__workflow_task_catalog__interfaces__http__schemas__catalog_schemas__CatalogResponse,
   SuspendCatalogResponse,
   FieldRegistryItem,
+  CatalogCaseTypeItem,
   LayerAction,
   TaskCategory,
   TaskResponsibleRole,
@@ -8616,6 +8620,23 @@ cases + product, then proceeds (never blocked).`,
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/workflow-task-catalogs/case-types",
+    alias:
+      "list_catalog_case_types_api_v1_workflow_task_catalogs_case_types_get",
+    description: `PRD1042-1790 item 1 — the case types a catalogue may be scoped to.
+
+Declared before &#x60;/{catalog_id}&#x60; so the literal path wins over the UUID route, the same ordering
+&#x60;/field-registry&#x60; above relies on.
+
+Returns &#x60;TYPED_CASE_TYPES&#x60; in the enum&#x27;s own order, each with the entity type it derives. A
+client must not re-list these: AC-94 fails an implementation wired to a fixed count of case
+types, and AC-74 makes assigning a catalogue to a further case type configuration rather than a
+release. Widening the set here is therefore the whole change.`,
+    requestFormat: "json",
+    response: z.array(CatalogCaseTypeItem),
   },
   {
     method: "get",

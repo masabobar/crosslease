@@ -13,7 +13,6 @@ export const STATUS_PILL_CLASSES =
   "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium"
 
 import {
-  CatalogEntityTypeSchema,
   CatalogLayerSchema,
   CatalogOwningEntityTypeSchema,
   CatalogStateSchema,
@@ -44,30 +43,15 @@ export const CATALOG_LAYER_OPTIONS = [
   },
 ] as const
 
-export const ENTITY_TYPE_OPTIONS = [
-  {
-    value: CatalogEntityTypeSchema.enum.refinancing_request,
-    labelKey: "entityTypes.refinancing_request",
-  },
-  {
-    value: CatalogEntityTypeSchema.enum.financing,
-    labelKey: "entityTypes.financing",
-  },
-  {
-    value: CatalogEntityTypeSchema.enum.redemption_request,
-    labelKey: "entityTypes.redemption_request",
-  },
-] as const
-
-// What the create dialog offers, as opposed to ENTITY_TYPE_OPTIONS above, which the list filter
-// uses. `financing` is filtered out at the source (CatalogOwningEntityTypeSchema) rather than
-// here, so this list and CASE_TYPE_BY_ENTITY_TYPE cannot drift apart: every option maps to a
-// case_type, and the BE rejects anything that does not (InvalidCaseTypeError).
-export const CATALOG_OWNING_ENTITY_TYPE_OPTIONS =
-  CatalogOwningEntityTypeSchema.options.map(value => ({
+// The entity types the list filter offers. Derived from CatalogOwningEntityTypeSchema rather than
+// the full wire enum, so `financing` is absent: PRD1042-1790 removed it as a case type, no case type
+// derives it, and no catalogue can carry it — a filter option that could never match a row.
+export const ENTITY_TYPE_OPTIONS = CatalogOwningEntityTypeSchema.options.map(
+  value => ({
     value,
     labelKey: `entityTypes.${value}` as const,
-  }))
+  })
+)
 
 export const CATALOG_STATE_OPTIONS = [
   { value: CatalogStateSchema.enum.draft, labelKey: "catalogStates.draft" },

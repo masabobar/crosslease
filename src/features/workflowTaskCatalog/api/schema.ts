@@ -44,8 +44,11 @@ export const CaseTypeSchema = z.enum([
 ])
 export type CaseType = z.infer<typeof CaseTypeSchema>
 
-// The entity types that can own a catalogue: `financing` cannot, so it is excluded rather than
-// re-listed (one source of truth per .claude/rules/enums-and-constants.md §3).
+// The entity types a catalogue can actually carry. `financing` cannot: PRD1042-1790 removed it as
+// a case type — it is a resolution input carrying the product reference, and its steps are stages
+// inside the Main Refinancing Process catalogue — so no case type derives it and no catalogue can
+// hold it. Excluded rather than re-listed (one source of truth per enums-and-constants.md §3).
+// Used by the list filter; the create dialog asks for a case type instead.
 export const CatalogOwningEntityTypeSchema = CatalogEntityTypeSchema.exclude([
   "financing",
 ])
@@ -53,19 +56,22 @@ export type CatalogOwningEntityType = z.infer<
   typeof CatalogOwningEntityTypeSchema
 >
 
-// PRD1042-1790 Option A — a catalogue's scope is its case_type (the process), and the BE derives
-// entity_type (the object) from it, so entity_type is not part of the create request at all. This
-// is the BE's CASE_TYPE_ENTITY_TYPE (workflow_task_catalog/domain/enums.py) inverted, which is
-// what lets the Entity type a user picks decide the case_type the catalogue is actually scoped by.
-// Total over CatalogOwningEntityType by construction: only the two typed case types may own a
-// catalogue (TYPED_CASE_TYPES), and each derives a different entity type.
-export const CASE_TYPE_BY_ENTITY_TYPE: Record<
-  CatalogOwningEntityType,
-  CaseType
-> = {
-  refinancing_request: CaseTypeSchema.enum.main_process,
-  redemption_request: CaseTypeSchema.enum.package_redemption,
-}
+// PRD1042-1790 item 1 — the case types a catalogue may be scoped to, as GET
+// /workflow-task-catalogs/case-types reports them. Read rather than re-listed: AC-94 fails an
+// implementation wired to a fixed count of case types, so the create dialog offers exactly what
+// this returns and a third case type needs no frontend release. `entity_type` is the coarse object
+// the case type derives — display only, never part of the create request.
+//
+// This replaces a client-side CASE_TYPE_BY_ENTITY_TYPE map: inverting the BE's own derivation here
+// meant the user picked an entity type, of which there are three, to reach a case type, of which
+// there are seven — so four case types were unreachable by construction.
+export const CatalogCaseTypeItemSchema = z.object({
+  case_type: CaseTypeSchema,
+  entity_type: CatalogEntityTypeSchema,
+})
+export type CatalogCaseTypeItem = z.infer<typeof CatalogCaseTypeItemSchema>
+
+export const CatalogCaseTypeListSchema = z.array(CatalogCaseTypeItemSchema)
 
 // The four product-specific change types CR PRD1042-1554 B2 requires, as the wire spells them.
 // `defined` is the Global Default layer's own entry; the other three are the product's changes.
