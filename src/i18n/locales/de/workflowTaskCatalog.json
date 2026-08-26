@@ -20,7 +20,7 @@
     "createGlobalDefaultButton": "Globalen Standardkatalog erstellen",
     "createProductSpecificButton": "Produktspezifischen Katalog erstellen",
     "filters": {
-      "searchPlaceholder": "Nach Aufgabencode oder -name suchen",
+      "searchPlaceholder": "Nach Katalog, Aufgabencode oder -name suchen",
       "buttons": {
         "catalogLayer": "Katalogebene",
         "entityType": "Objekttyp",

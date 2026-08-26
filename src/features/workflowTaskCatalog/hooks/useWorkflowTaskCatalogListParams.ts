@@ -12,9 +12,9 @@ export const PAGE_SIZES = [10, 25, 50] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 export const DEFAULT_PAGE_SIZE: PageSize = 25
 
-// The BE resolves `search` with an ILIKE subquery over each catalog's task codes and names,
-// and notes it has no pg_trgm index yet — so short prefixes are not worth a round trip.
-// Same guard as useProductTemplateList.
+// The BE resolves `search` with an ILIKE on the catalog's own name, OR'd with a subquery over its
+// task codes and names (catalog name added for PRD1042-2138). It notes it has no pg_trgm index yet
+// — so short prefixes are not worth a round trip. Same guard as useProductTemplateList.
 export const MIN_SEARCH_LENGTH = 3
 
 type ParamUpdate = Record<string, string | string[] | null>
