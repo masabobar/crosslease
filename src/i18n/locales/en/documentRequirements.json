@@ -208,5 +208,41 @@
     "REQUIREMENT_ALREADY_DEACTIVATED": "This requirement is already deactivated.",
     "UNKNOWN_DOCUMENT_TYPE": "This document type is not in your bank's document-type registry.",
     "VALIDATION_ERROR": "Some of the values entered were rejected. Please review the form and try again."
+  },
+  "caseDocuments": {
+    "title": "Required documents",
+    "notApplicable": "—",
+    "blocks": "blocking",
+    "openDocument": "Open",
+    "badId": {
+      "title": "That is not a valid case reference",
+      "description": "The address is missing a valid case id, so there is nothing to look up."
+    },
+    "noCatalogue": {
+      "title": "No document requirements are defined yet",
+      "description": "This bank has no document requirement catalogue, so nothing is required of this case yet. That is not the same as the case being complete."
+    },
+    "blocking": {
+      "title": "These documents are holding the case",
+      "description": "Each of these is mandatory and has not been met."
+    },
+    "empty": {
+      "title": "Nothing is required of this case",
+      "description": "The catalogue defines no requirements that apply here."
+    },
+    "columns": {
+      "documentType": "Document type",
+      "requirement": "Requirement",
+      "classification": "Binding",
+      "checkpoints": "Applies at",
+      "status": "Status",
+      "document": "Document"
+    },
+    "statuses": {
+      "missing": "Missing",
+      "uploaded_pending_review": "Awaiting review",
+      "fulfilled": "Met",
+      "rejected": "Rejected"
+    }
   }
 }

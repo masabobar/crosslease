@@ -7,6 +7,7 @@ import {
   DocumentRequirementCatalogResponseSchema,
   DocumentRequirementListResponseSchema,
   DocumentTypeListResponseSchema,
+  RuntimeRequirementSurfaceResponseSchema,
   MaterializationResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
@@ -14,6 +15,7 @@ import {
 } from "@/features/documentRequirements/api/schema"
 import type {
   DocumentTypeListResponse,
+  RuntimeRequirementSurfaceResponse,
   AddRequirementRequest,
   CreateDocumentRequirementCatalogRequest,
   DocumentRequirementCatalogDetailResponse,
@@ -186,4 +188,24 @@ export async function fetchTenantDocumentTypes(
 ): Promise<DocumentTypeListResponse> {
   const data = await api.get(`/tenants/${tenantId}/document-types`)
   return DocumentTypeListResponseSchema.parse(data)
+}
+
+// D-11 (PRD1042-1796 item 5) — what a case requires. Neither `object_type` nor `process_context` is
+// sent: the first narrows nothing, and the second is a checkpoint no screen can know, so omitting it
+// returns the whole catalogue with each row carrying its own contexts.
+export async function fetchCaseDocumentRequirements(
+  catalogId: string,
+  businessObjectId: string
+): Promise<RuntimeRequirementSurfaceResponse> {
+  const data = await api.get(
+    `/document-requirement-catalogs/${catalogId}/objects/${businessObjectId}/requirements`
+  )
+  return RuntimeRequirementSurfaceResponseSchema.parse(data)
+}
+
+// The fulfilling document is streamed by the media endpoint, which authenticates from the session
+// cookie — so a plain navigation is authenticated and no token is ever put in a URL. Same pattern as
+// getLcPortalDocumentDownloadUrl.
+export function getCaseDocumentUrl(documentId: string): string {
+  return `${api.defaults.baseURL}/media/${documentId}`
 }

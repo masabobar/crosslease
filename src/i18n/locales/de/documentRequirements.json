@@ -208,5 +208,41 @@
     "REQUIREMENT_ALREADY_DEACTIVATED": "Diese Anforderung ist bereits deaktiviert.",
     "UNKNOWN_DOCUMENT_TYPE": "Dieser Dokumententyp ist nicht im Dokumententypverzeichnis Ihrer Bank enthalten.",
     "VALIDATION_ERROR": "Einige der eingegebenen Werte wurden abgelehnt. Bitte überprüfen Sie das Formular und versuchen Sie es erneut."
+  },
+  "caseDocuments": {
+    "title": "Erforderliche Dokumente",
+    "notApplicable": "—",
+    "blocks": "blockierend",
+    "openDocument": "Öffnen",
+    "badId": {
+      "title": "Keine gültige Fallreferenz",
+      "description": "In der Adresse fehlt eine gültige Fall-ID, daher kann nichts abgerufen werden."
+    },
+    "noCatalogue": {
+      "title": "Es sind noch keine Dokumentanforderungen definiert",
+      "description": "Für diese Bank existiert kein Katalog für Dokumentanforderungen, daher wird für diesen Fall noch nichts gefordert. Das bedeutet nicht, dass der Fall vollständig ist."
+    },
+    "blocking": {
+      "title": "Diese Dokumente blockieren den Fall",
+      "description": "Jedes davon ist verpflichtend und noch nicht erfüllt."
+    },
+    "empty": {
+      "title": "Für diesen Fall wird nichts gefordert",
+      "description": "Der Katalog definiert keine hier anwendbaren Anforderungen."
+    },
+    "columns": {
+      "documentType": "Dokumentart",
+      "requirement": "Anforderung",
+      "classification": "Verbindlichkeit",
+      "checkpoints": "Gilt bei",
+      "status": "Status",
+      "document": "Dokument"
+    },
+    "statuses": {
+      "missing": "Fehlt",
+      "uploaded_pending_review": "Prüfung ausstehend",
+      "fulfilled": "Erfüllt",
+      "rejected": "Abgelehnt"
+    }
   }
 }

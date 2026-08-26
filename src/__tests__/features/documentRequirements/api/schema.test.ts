@@ -10,6 +10,9 @@ import {
   DocumentTypeListResponseSchema,
   DocumentTypeOriginSchema,
   DocumentTypeSchema,
+  FulfilmentStatusSchema,
+  RuntimeRequirementItemSchema,
+  RuntimeRequirementSurfaceResponseSchema,
   MaterializationResponseSchema,
   MaterializedRequirementResponseSchema,
   RequirementResponseSchema,
@@ -622,5 +625,98 @@ describe("requirement schemas against the documented contract", () => {
       document_origin: "uploaded",
     })
     expect("blocks_submission" in parsed).toBe(false)
+  })
+})
+
+describe("D-11 runtime requirement surface (PRD1042-1796 item 5)", () => {
+  const validItem = {
+    requirement_definition_id: REQUIREMENT_UUID,
+    requirement_code: "DOC-001",
+    document_type_name: "Lease contract",
+    classification: "mandatory",
+    source_layer: "default",
+    stage_categorization: null,
+    fulfilment_status: "missing",
+    is_blocking: true,
+    document_origin: "uploaded",
+    applicable_process_contexts: ["submission"],
+    linked_document_id: null,
+  }
+
+  const validSurface = {
+    catalog_id: CATALOG_UUID,
+    business_object_id: TEMPLATE_UUID,
+    process_context: null,
+    completeness_summary: "1 of 1 mandatory documents outstanding",
+    requirements: [validItem],
+  }
+
+  it("accepts the surface read without naming a checkpoint", () => {
+    const parsed = RuntimeRequirementSurfaceResponseSchema.parse(validSurface)
+    // Null rather than a made-up context: the response spans the catalogue, and each row says where
+    // it applies.
+    expect(parsed.process_context).toBeNull()
+    expect(parsed.requirements[0].applicable_process_contexts).toEqual([
+      "submission",
+    ])
+  })
+
+  it("accepts a surface narrowed to one checkpoint", () => {
+    const parsed = RuntimeRequirementSurfaceResponseSchema.parse({
+      ...validSurface,
+      process_context: "submission",
+    })
+    expect(parsed.process_context).toBe("submission")
+  })
+
+  it("carries the fulfilling document so it can be opened", () => {
+    const parsed = RuntimeRequirementItemSchema.parse({
+      ...validItem,
+      fulfilment_status: "fulfilled",
+      is_blocking: false,
+      linked_document_id: USER_UUID,
+    })
+    expect(parsed.linked_document_id).toBe(USER_UUID)
+  })
+
+  it("has no document while the requirement is unmet", () => {
+    const parsed = RuntimeRequirementItemSchema.parse(validItem)
+    expect(parsed.linked_document_id).toBeNull()
+  })
+
+  // fulfilment_status is a plain string on the wire. A status added on the backend must widen what
+  // this screen renders, never fail the parse and blank the page.
+  it("accepts a fulfilment status this frontend does not know yet", () => {
+    const parsed = RuntimeRequirementItemSchema.parse({
+      ...validItem,
+      fulfilment_status: "waived",
+    })
+    expect(parsed.fulfilment_status).toBe("waived")
+  })
+
+  it("still names the statuses the backend defines today", () => {
+    expect(FulfilmentStatusSchema.options).toEqual([
+      "missing",
+      "uploaded_pending_review",
+      "fulfilled",
+      "rejected",
+    ])
+  })
+
+  it("rejects a non-uuid business object id", () => {
+    expect(() =>
+      RuntimeRequirementSurfaceResponseSchema.parse({
+        ...validSurface,
+        business_object_id: "case-1",
+      })
+    ).toThrow()
+  })
+
+  it("accepts a case with nothing required of it", () => {
+    const parsed = RuntimeRequirementSurfaceResponseSchema.parse({
+      ...validSurface,
+      requirements: [],
+    })
+    expect(parsed.requirements).toEqual([])
   })
 })

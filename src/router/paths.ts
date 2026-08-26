@@ -63,6 +63,10 @@ export const PATHS = {
   // to link here, so this is the interim entry point for the runtime checklist; see the design
   // provenance note on CaseChecklistPage.tsx.
   CASE_CHECKLIST: "/cases/:businessObjectId/checklist",
+  // D-11 (PRD1042-1796 item 5). Same interim entry point as the checklist above and for the same
+  // reason: no case module exists to link from. Carries only the object id — the catalogue is
+  // resolved (one per bank) and the checkpoint is not a property of the object.
+  CASE_DOCUMENT_REQUIREMENTS: "/cases/:businessObjectId/documents",
 } as const
 
 export function adminUserDetail(id: string): string {
