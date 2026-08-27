@@ -1,11 +1,18 @@
 import { useQuery } from "@tanstack/react-query"
 import type { UseQueryResult } from "@tanstack/react-query"
 import type { DocumentTypeListResponse } from "@/features/documentRequirements/api/schema"
-import { fetchTenantDocumentTypes } from "@/features/documentRequirements/api/documentRequirementsApi"
+import {
+  fetchTenantDocumentTypes,
+  listDocumentTypes,
+} from "@/features/documentRequirements/api/documentRequirementsApi"
 
 export const DOCUMENT_TYPE_QUERY_KEYS = {
   all: ["document-types"] as const,
   byTenant: (tenantId: string) => ["document-types", tenantId] as const,
+  // The management list is keyed separately by its include_inactive flag: it must refetch when the
+  // toggle flips and must not collide with the active-only picker cache under byTenant.
+  list: (tenantId: string, includeInactive: boolean) =>
+    ["document-types", "list", tenantId, includeInactive] as const,
 } as const
 
 // PRD1042-1794 Block 10 — the registry a requirement's document type must come from. It changes only
@@ -20,5 +27,19 @@ export function useTenantDocumentTypes(
     queryFn: () => fetchTenantDocumentTypes(tenantId as string),
     enabled: Boolean(tenantId),
     staleTime: ONE_HOUR_MS,
+  })
+}
+
+// The management screen's list — unlike the picker above it can include deactivated rows. No
+// staleTime: a maintainer expects an edit or a (de)activation to be reflected immediately, and the
+// mutation hooks invalidate DOCUMENT_TYPE_QUERY_KEYS.all on success.
+export function useDocumentTypeList(
+  tenantId: string | undefined,
+  includeInactive: boolean
+): UseQueryResult<DocumentTypeListResponse, Error> {
+  return useQuery({
+    queryKey: DOCUMENT_TYPE_QUERY_KEYS.list(tenantId ?? "", includeInactive),
+    queryFn: () => listDocumentTypes(tenantId as string, includeInactive),
+    enabled: Boolean(tenantId),
   })
 }

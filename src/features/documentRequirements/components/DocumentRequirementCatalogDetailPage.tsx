@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { ListFilter } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { EntityAuditHistoryTab } from "@/features/audit/components/EntityAuditHistoryTab"
@@ -92,24 +91,6 @@ export default function DocumentRequirementCatalogDetailPage() {
             {catalog.catalog_name}
           </h1>
         </div>
-      </div>
-
-      <div className="flex items-center gap-6 rounded-lg bg-muted px-3 py-2.5">
-        <span className="flex items-center gap-1.5 text-sm">
-          <ListFilter size={14} className="text-muted-foreground" />
-          <span className="text-muted-foreground">
-            {t("detail.header.processContexts")}
-          </span>
-          <span className="text-foreground">
-            {catalog.applicable_process_contexts
-              .map(value =>
-                t(`processContexts.${value}` as "processContexts.financing", {
-                  defaultValue: value,
-                })
-              )
-              .join(", ")}
-          </span>
-        </span>
       </div>
 
       <UnderlineTabBar

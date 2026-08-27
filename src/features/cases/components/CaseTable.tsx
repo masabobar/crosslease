@@ -1,48 +1,46 @@
 import { useTranslation } from "react-i18next"
+import { Badge } from "@/components/ui/badge"
 import { TableEmptyState } from "@/components/ui/empty"
-import { formatDate, formatDateTime } from "@/lib/formatters"
-import type { DocumentRequirementCatalogListItem } from "@/features/documentRequirements/api/schema"
+import { formatDateTime } from "@/lib/formatters"
+import { caseDisplayStatusBadgeVariant } from "@/features/cases/types"
+import type { CaseListItem } from "@/features/cases/api/schema"
 
-// NOTE: raw <div> grid instead of shadcn Table — matches the pre-existing div-grid pattern used
-// by other list tables in this codebase (ProductTemplateTable, PartnerTable, WorkflowTaskCatalogTable).
-// Name is the only flexible column.
-const COL_NAME = "flex-1 min-w-[160px]"
-const COL_VALID_FROM = "w-[110px] shrink-0"
-const COL_VALID_TO = "w-[110px] shrink-0"
+// Raw <div> grid rather than the shadcn Table primitive — matches the pre-existing div-grid list
+// pattern (DocumentRequirementCatalogTable, ProductTemplateTable, WorkflowTaskCatalogTable). Case
+// reference is the only flexible column.
+const COL_REFERENCE = "flex-1 min-w-[160px]"
+const COL_TYPE = "w-[200px] shrink-0"
+const COL_STATUS = "w-[160px] shrink-0"
 const COL_CREATED = "w-[190px] shrink-0"
 const ROW_H = "h-[52px]"
 const SKELETON_COUNT = 5
 
-// Operational State and Created By are absent by design — neither field exists on the wire
-// (see open-questions.md). CR-1794 removed the product layer, so there is no Catalog Type or
-// Product Template column; the DRC usability change retired the catalog's process-context axis, so
-// there is no process-contexts column either.
 const HEADER_COLUMNS = [
-  { width: COL_NAME, labelKey: "list.table.columns.catalogName" },
-  { width: COL_VALID_FROM, labelKey: "list.table.columns.validFrom" },
-  { width: COL_VALID_TO, labelKey: "list.table.columns.validTo" },
+  { width: COL_REFERENCE, labelKey: "list.table.columns.caseReference" },
+  { width: COL_TYPE, labelKey: "list.table.columns.caseType" },
+  { width: COL_STATUS, labelKey: "list.table.columns.status" },
   { width: COL_CREATED, labelKey: "list.table.columns.createdAt" },
 ] as const
 
 type Props = {
-  rows: DocumentRequirementCatalogListItem[]
+  rows: CaseListItem[]
   isLoading: boolean
   hasActiveFilters: boolean
-  onRowClick: (catalogId: string) => void
+  onRowClick: (caseId: string) => void
 }
 
-function DocumentRequirementCatalogTable({
+export function CaseTable({
   rows,
   isLoading,
   hasActiveFilters,
   onRowClick,
 }: Props) {
-  const { t } = useTranslation("documentRequirements")
+  const { t } = useTranslation("cases")
 
   return (
     <div
       className="w-full border border-border rounded-[10px] overflow-hidden bg-background"
-      data-testid="document-requirement-catalog-table"
+      data-testid="case-table"
     >
       <div className="flex border-b border-border h-10 items-center">
         {HEADER_COLUMNS.map(col => (
@@ -56,7 +54,7 @@ function DocumentRequirementCatalogTable({
       </div>
 
       {isLoading && (
-        <div data-testid="document-requirement-catalog-table-loading">
+        <div data-testid="case-table-loading">
           {Array.from({ length: SKELETON_COUNT }, (_, i) => (
             <div
               key={i}
@@ -90,34 +88,32 @@ function DocumentRequirementCatalogTable({
         rows.map(row => (
           <div
             key={row.id}
-            data-testid={`document-requirement-catalog-row-${row.id}`}
+            data-testid={`case-row-${row.id}`}
             className={`flex border-b border-border last:border-b-0 ${ROW_H} items-center hover:bg-muted/40 transition-colors cursor-pointer`}
             onClick={() => onRowClick(row.id)}
           >
-            <div className={`${COL_NAME} p-2`}>
+            <div className={`${COL_REFERENCE} p-2`}>
               <p className="text-sm font-medium truncate text-foreground leading-tight">
-                {row.catalog_name}
+                {row.case_reference}
               </p>
             </div>
-            <div className={`${COL_VALID_FROM} p-2`}>
-              <span className="text-sm text-foreground">
-                {row.valid_from
-                  ? formatDate(row.valid_from)
-                  : t("list.table.notApplicable")}
+            <div className={`${COL_TYPE} p-2`}>
+              <span className="text-sm text-foreground truncate block">
+                {t(
+                  `caseTypes.${row.case_type}` as "caseTypes.refinancing_request",
+                  { defaultValue: row.case_type }
+                )}
               </span>
             </div>
-            <div className={`${COL_VALID_TO} p-2`}>
-              <span
-                className={
-                  row.valid_to
-                    ? "text-sm text-foreground"
-                    : "text-sm text-muted-foreground"
-                }
+            <div className={`${COL_STATUS} p-2`}>
+              <Badge
+                variant={caseDisplayStatusBadgeVariant(row.display_status)}
               >
-                {row.valid_to
-                  ? formatDate(row.valid_to)
-                  : t("list.table.openEnded")}
-              </span>
+                {t(
+                  `displayStatuses.${row.display_status}` as "displayStatuses.open",
+                  { defaultValue: row.display_status }
+                )}
+              </Badge>
             </div>
             <div className={`${COL_CREATED} p-2`}>
               <span className="text-sm text-foreground">
@@ -129,5 +125,3 @@ function DocumentRequirementCatalogTable({
     </div>
   )
 }
-
-export { DocumentRequirementCatalogTable }

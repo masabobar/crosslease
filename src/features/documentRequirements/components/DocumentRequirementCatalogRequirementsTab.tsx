@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { useDeactivateRequirement } from "@/features/documentRequirements/hooks/useDeactivateRequirement"
 import { RequirementTable } from "@/features/documentRequirements/components/RequirementTable"
 import { RequirementSheet } from "@/features/documentRequirements/components/RequirementSheet"
-import { DocumentRequirementCatalogPreviewPanel } from "@/features/documentRequirements/components/DocumentRequirementCatalogPreviewPanel"
 import { showApiError } from "@/lib/apiErrorMessage"
 import type {
   DocumentRequirementCatalogDetailResponse,
@@ -86,11 +85,6 @@ function DocumentRequirementCatalogRequirementsTab({
         onRowClick={requirement => setSheetState({ mode: "view", requirement })}
         onEdit={requirement => setSheetState({ mode: "edit", requirement })}
         onDeactivate={handleDeactivate}
-      />
-
-      <DocumentRequirementCatalogPreviewPanel
-        catalogId={catalog.id}
-        applicableProcessContexts={catalog.applicable_process_contexts}
       />
 
       {sheetState && (

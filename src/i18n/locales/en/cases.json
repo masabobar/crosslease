@@ -1,0 +1,52 @@
+{
+  "list": {
+    "title": "Cases",
+    "subtitle": "Refinancing and redemption cases you and your team are working.",
+    "filters": {
+      "all": "All",
+      "mine": "Assigned to me",
+      "unassigned": "Unassigned"
+    },
+    "table": {
+      "columns": {
+        "caseReference": "Case reference",
+        "caseType": "Case type",
+        "status": "Status",
+        "createdAt": "Created at"
+      }
+    },
+    "emptyState": {
+      "title": "No cases yet",
+      "description": "Cases appear here as they are created."
+    },
+    "emptyFiltered": {
+      "title": "No cases match this filter",
+      "description": "Try a different filter to see more cases."
+    }
+  },
+  "detail": {
+    "fields": {
+      "caseType": "Case type",
+      "caseId": "Case ID"
+    },
+    "tabs": {
+      "documents": "Documents"
+    },
+    "loadError": "This case could not be loaded. Please try again."
+  },
+  "caseTypes": {
+    "refinancing_request": "Refinancing request",
+    "package_redemption": "Package redemption",
+    "single_redemption": "Single redemption",
+    "lessee_change": "Lessee change",
+    "object_swap": "Object swap",
+    "extension": "Extension",
+    "asset_event": "Asset event"
+  },
+  "displayStatuses": {
+    "open": "Open",
+    "waiting": "Waiting",
+    "done": "Done",
+    "cancelled": "Cancelled"
+  }
+}

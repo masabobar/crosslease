@@ -10,6 +10,14 @@ export const DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES: readonly UserRol
 export const DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES: readonly UserRole[] =
   ["bank_power_user", "support_user", "auditor"]
 
+// PRD1042-1794 Block 10 — the document-type registry management screen. Purely an authoring
+// surface (list/create/edit/deactivate all require DOCUMENT_REQUIREMENT_CATALOG_* write perms
+// held only by the Power User), so unlike the catalogue READ set above it is bank_power_user only
+// — no read-only diagnostic access for support_user/auditor.
+export const DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES: readonly UserRole[] = [
+  "bank_power_user",
+]
+
 // Mirrors the roles granted DOCUMENT_REQUIREMENT_CATALOG_RUNTIME_READ in the backend's permission
 // matrix — a case surface, not an authoring one, so it is wider than the catalogue read set above.
 // leasing_company_user is absent by design: an LC sees only its own obligations (item 9), never the

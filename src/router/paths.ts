@@ -63,14 +63,22 @@ export const PATHS = {
     "/business-configuration/document-requirement-catalogs",
   DOCUMENT_REQUIREMENT_CATALOG_DETAIL:
     "/business-configuration/document-requirement-catalogs/:id",
+  // PRD1042-1794 Block 10 — the tenant's document-type registry management screen. A Bank Power
+  // User populates this so the requirement-authoring dropdown has types to pick from.
+  DOCUMENT_TYPE_LIST: "/business-configuration/document-types",
   // Case work, not business configuration — hence the separate prefix. No case module exists yet
   // to link here, so this is the interim entry point for the runtime checklist; see the design
   // provenance note on CaseChecklistPage.tsx.
   CASE_CHECKLIST: "/cases/:businessObjectId/checklist",
-  // D-11 (PRD1042-1796 item 5). Same interim entry point as the checklist above and for the same
-  // reason: no case module exists to link from. Carries only the object id — the catalogue is
+  // D-11 (PRD1042-1796 item 5). A deep link that still works; the primary way in is now the Case
+  // list → Case detail → Documents tab below. Carries only the object id — the catalogue is
   // resolved (one per bank) and the checkpoint is not a property of the object.
   CASE_DOCUMENT_REQUIREMENTS: "/cases/:businessObjectId/documents",
+  // PRD1042-1794 (DRC usability) — the operational Case list and detail. The detail's Documents tab
+  // is how Front/Back Office reach a case's documents; before this there was no way to a case's
+  // document surface except typing the CASE_DOCUMENT_REQUIREMENTS URL by hand.
+  CASE_LIST: "/cases",
+  CASE_DETAIL: "/cases/:caseId",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -138,4 +146,8 @@ export function documentRequirementCatalogDetail(id: string): string {
 
 export function caseChecklist(businessObjectId: string): string {
   return PATHS.CASE_CHECKLIST.replace(":businessObjectId", businessObjectId)
+}
+
+export function caseDetail(caseId: string): string {
+  return PATHS.CASE_DETAIL.replace(":caseId", caseId)
 }

@@ -35,7 +35,9 @@ import {
 import {
   CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES,
   DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
+  DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES,
 } from "@/features/documentRequirements/types"
+import { CASE_READ_ALLOWED_ROLES } from "@/features/cases/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -173,6 +175,16 @@ const DocumentRequirementCatalogListPage = lazy(
 const DocumentRequirementCatalogDetailPage = lazy(
   () =>
     import("@/features/documentRequirements/components/DocumentRequirementCatalogDetailPage")
+)
+const DocumentTypeListPage = lazy(
+  () =>
+    import("@/features/documentRequirements/components/DocumentTypeListPage")
+)
+const CaseListPage = lazy(
+  () => import("@/features/cases/components/CaseListPage")
+)
+const CaseDetailPage = lazy(
+  () => import("@/features/cases/components/CaseDetailPage")
 )
 
 export const router = createBrowserRouter([
@@ -555,6 +567,19 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // bank_power_user only (DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES): a pure authoring surface, so
+        // it does not inherit the catalogue's wider READ set that grants support_user/auditor
+        // read-only diagnostic access.
+        path: PATHS.DOCUMENT_TYPE_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES}>
+              <DocumentTypeListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
         // Guarded by the RUNTIME read set, not the catalog one: the case workers who work a
         // checklist have no business on the catalogue authoring screens, and vice versa.
         path: PATHS.CASE_CHECKLIST,
@@ -574,6 +599,32 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES}>
               <CaseDocumentRequirementsPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // PRD1042-1794 (DRC usability) — the bank-side Case list. FO/BO are the case workers;
+        // BANK_POWER_USER reads. Upload/review controls inside the detail's Documents tab gate by
+        // role of their own, so this outer guard is a read gate, not the write authority.
+        path: PATHS.CASE_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_READ_ALLOWED_ROLES}>
+              <CaseListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // Case detail shell (US 16.22). React Router ranks by specificity, so the more-specific
+        // CASE_DOCUMENT_REQUIREMENTS (`/cases/:id/documents`) still wins for its deep link; this
+        // catches `/cases/:caseId`.
+        path: PATHS.CASE_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_READ_ALLOWED_ROLES}>
+              <CaseDetailPage />
             </RoleGuard>
           </Suspense>
         ),

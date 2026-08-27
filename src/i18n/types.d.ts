@@ -11,6 +11,7 @@ import type enFrameworkAgreements from "./locales/en/frameworkAgreements.json"
 import type enNotifications from "./locales/en/notifications.json"
 import type enWorkflowTaskCatalog from "./locales/en/workflowTaskCatalog.json"
 import type enDocumentRequirements from "./locales/en/documentRequirements.json"
+import type enCases from "./locales/en/cases.json"
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -29,6 +30,7 @@ declare module "i18next" {
       notifications: typeof enNotifications
       workflowTaskCatalog: typeof enWorkflowTaskCatalog
       documentRequirements: typeof enDocumentRequirements
+      cases: typeof enCases
     }
   }
 }

@@ -20,7 +20,7 @@ const validObligation = {
 
 const validResponse = {
   business_object_id: OBJECT_UUID,
-  process_context: "refinancing_request",
+  case_type: "refinancing_request",
   documents_status_summary: "1 document outstanding",
   obligations: [validObligation],
 }
@@ -98,7 +98,7 @@ describe("LCObligationItemSchema", () => {
 describe("LCObligationResponseSchema", () => {
   it("accepts the response addressed by object id alone", () => {
     const parsed = LCObligationResponseSchema.parse(validResponse)
-    expect(parsed.process_context).toBe("refinancing_request")
+    expect(parsed.case_type).toBe("refinancing_request")
     expect(parsed.obligations).toHaveLength(1)
   })
 
