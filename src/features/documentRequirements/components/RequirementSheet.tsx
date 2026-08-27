@@ -166,8 +166,16 @@ function RequirementSheet({
   }
 
   function onSubmit(values: RequirementFormValues) {
+    // The name is the picked type's own name, never typed. In add mode resolve it from the current
+    // selection (falling back to the value the dropdown already stamped); in edit mode the type is
+    // immutable, so the requirement's existing name carries through unchanged.
+    const pickedType = documentTypes.find(
+      type => type.type_code === values.documentTypeCode
+    )
+    const resolvedName = pickedType?.type_name ?? values.documentTypeName.trim()
+
     const shared = {
-      document_type_name: values.documentTypeName.trim(),
+      document_type_name: resolvedName,
       description: values.description.trim() || null,
       classification: RequirementClassificationSchema.parse(
         values.classification
@@ -408,26 +416,12 @@ function RequirementSheet({
               </>
             )}
 
-            <div>
-              <Label
-                htmlFor="requirement-document-type-name"
-                error={!!errors.documentTypeName}
-                className="mb-2"
-              >
-                {t("requirement.fields.documentTypeName")}
-              </Label>
-              <Input
-                id="requirement-document-type-name"
-                data-testid="requirement-document-type-name-input"
-                error={!!errors.documentTypeName}
-                {...register("documentTypeName")}
-              />
-              {errors.documentTypeName && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.documentTypeName.message)}
-                </p>
-              )}
-            </div>
+            {/* document_type_name is not a field the user fills: it is the picked type's own name,
+                carried silently. Showing it as a second editable box beside the type dropdown only
+                invited it to drift from the type it names. In add mode it is set from the dropdown
+                selection below; in edit mode the type is immutable, so the existing name rides along
+                unchanged. The backend still requires it, so it stays in the form state — just not on
+                screen. */}
 
             <div>
               <Label htmlFor="requirement-description" className="mb-2">
