@@ -24,6 +24,19 @@
       "description": "Wählen Sie einen anderen Filter, um mehr Fälle zu sehen."
     }
   },
+  "start": {
+    "button": "Fall anlegen",
+    "title": "Fall anlegen",
+    "subtitle": "Wählen Sie den Falltyp. Die Referenz wird automatisch vergeben, und Sie gelangen direkt zu den Dokumenten des Falls.",
+    "fields": {
+      "caseType": "Falltyp"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "submit": "Fall anlegen"
+    },
+    "success": "Fall angelegt."
+  },
   "detail": {
     "fields": {
       "caseType": "Falltyp",

@@ -6,6 +6,7 @@ import {
 import type {
   CaseListResponse,
   CaseResponse,
+  CaseType,
 } from "@/features/cases/api/schema"
 
 // GET /cases query params, mirroring the backend list endpoint. `status` is the alias the backend
@@ -40,5 +41,13 @@ export async function fetchCases(
 
 export async function fetchCase(caseId: string): Promise<CaseResponse> {
   const data = await api.get(`/cases/${caseId}`)
+  return CaseResponseSchema.parse(data)
+}
+
+// POST /cases — start a case. The backend (StartCaseRequest) asks only for the case type; it sets the
+// reference, creator and creation time itself. FO / BO / LC users may start one (routes/cases.py
+// _CASE_WRITE_ROLES); the response is the new case, which the caller navigates straight to.
+export async function createCase(caseType: CaseType): Promise<CaseResponse> {
+  const data = await api.post(`/cases`, { case_type: caseType })
   return CaseResponseSchema.parse(data)
 }

@@ -24,6 +24,19 @@
       "description": "Try a different filter to see more cases."
     }
   },
+  "start": {
+    "button": "Start case",
+    "title": "Start a case",
+    "subtitle": "Pick the case type. The reference is assigned automatically, and you go straight to the case's documents.",
+    "fields": {
+      "caseType": "Case type"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submit": "Start case"
+    },
+    "success": "Case started."
+  },
   "detail": {
     "fields": {
       "caseType": "Case type",
