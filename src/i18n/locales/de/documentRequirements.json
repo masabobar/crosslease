@@ -1,22 +1,23 @@
 {
-  "processContexts": {
+  "caseTypes": {
     "refinancing_request": "Refinanzierungsanfrage",
-    "lease_contract": "Leasingvertrag",
-    "financing": "Finanzierung",
-    "disbursement": "Auszahlung"
+    "package_redemption": "Paketablösung",
+    "single_redemption": "Einzelablösung",
+    "lessee_change": "Leasingnehmerwechsel",
+    "object_swap": "Objekttausch",
+    "extension": "Verlängerung",
+    "asset_event": "Asset-Ereignis"
   },
   "list": {
     "title": "Dokumentenanforderungskatalog",
     "subtitle": "Verwalten Sie die Dokumentenanforderungskataloge Ihres Mandanten.",
     "createButton": "Katalog erstellen",
     "filters": {
-      "searchPlaceholder": "Nach Katalogname suchen",
-      "allProcessContexts": "Alle Prozesskontexte"
+      "searchPlaceholder": "Nach Katalogname suchen"
     },
     "table": {
       "columns": {
         "catalogName": "Katalogname",
-        "processContexts": "Prozesskontexte",
         "validFrom": "Gültig von",
         "validTo": "Gültig bis",
         "createdAt": "Erstellt am"
@@ -45,7 +46,6 @@
       "catalogName": "Katalogname",
       "productTemplate": "Zutreffende Produktvorlage",
       "productTemplatePlaceholder": "Auswählen",
-      "processContexts": "Zutreffende Prozesskontexte",
       "validFrom": "Gültig von",
       "validTo": "Gültig bis",
       "optional": "(optional)"
@@ -61,9 +61,6 @@
     }
   },
   "detail": {
-    "header": {
-      "processContexts": "Prozesskontexte"
-    },
     "tabs": {
       "identity": "Identität",
       "requirements": "Anforderungen",
@@ -73,7 +70,6 @@
       "title": "Katalogidentität",
       "editButton": "Bearbeiten",
       "catalogName": "Katalogname",
-      "processContexts": "Prozesskontexte",
       "validFrom": "Gültig von",
       "validTo": "Gültig bis",
       "createdBy": "Erstellt von",
@@ -128,7 +124,7 @@
       "documentTypeName": "Dokumenttypname",
       "description": "Beschreibung",
       "classification": "Klassifizierung",
-      "processContexts": "Prozesskontexte",
+      "caseTypes": "Gilt für Falltypen",
       "stageCategorization": "Phasenkategorisierung",
       "stageNone": "Keine",
       "documentOrigin": "Dokumentherkunft"
@@ -150,12 +146,69 @@
     "noDocumentTypes": "Es sind noch keine Dokumentarten registriert. Legen Sie zuerst eine im Register an.",
     "selectDocumentType": "Dokumentart auswählen"
   },
-  "preview": {
-    "title": "Vorschau des effektiven Anforderungssatzes",
-    "diagnosticBadge": "Diagnose · nur lesend · wird nie gespeichert",
-    "selectProcessContext": "Prozesskontext auswählen",
-    "previewButton": "Vorschau",
-    "emptyState": "Keine aktiven Anforderungen entsprechen diesem Prozesskontext."
+  "documentType": {
+    "list": {
+      "title": "Dokumenttypen",
+      "subtitle": "Pflegen Sie das Register der Dokumenttypen, aus dem Ihre Anforderungsautoren auswählen.",
+      "addButton": "Dokumenttyp hinzufügen"
+    },
+    "actionsMenuLabel": "Zeilenaktionen",
+    "actions": {
+      "edit": "Bearbeiten",
+      "deactivate": "Deaktivieren",
+      "reactivate": "Reaktivieren"
+    },
+    "table": {
+      "columns": {
+        "typeCode": "Code",
+        "typeName": "Name",
+        "roleScope": "Rollenbereich",
+        "origin": "Herkunft",
+        "status": "Aktiv"
+      }
+    },
+    "emptyState": {
+      "title": "Noch keine Dokumenttypen",
+      "description": "Fügen Sie einen hinzu, um zu beginnen."
+    },
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "showInactive": "Inaktive anzeigen",
+    "addTitle": "Dokumenttyp hinzufügen",
+    "addSubtitle": "Code und Herkunft werden einmalig festgelegt und können später nicht geändert werden.",
+    "editTitle": "Dokumenttyp bearbeiten",
+    "editSubtitle": "Code und Herkunft können nach der Erstellung nicht geändert werden.",
+    "addSubmit": "Hinzufügen",
+    "editSubmit": "Speichern",
+    "addSuccess": "Dokumenttyp hinzugefügt.",
+    "editSuccess": "Dokumenttyp aktualisiert.",
+    "deactivateSuccess": "Dokumenttyp deaktiviert.",
+    "reactivateSuccess": "Dokumenttyp reaktiviert.",
+    "fields": {
+      "typeCode": "Code",
+      "typeName": "Name",
+      "roleScope": "Rollenbereich",
+      "origin": "Herkunft",
+      "note": "Notiz"
+    },
+    "roleScopes": {
+      "lessee": "Leasingnehmer",
+      "guarantor": "Bürge",
+      "case": "Fall"
+    },
+    "origins": {
+      "requested": "Angefordert",
+      "generated": "Generiert"
+    },
+    "deactivateConfirm": {
+      "title": "Diesen Dokumenttyp deaktivieren?",
+      "description": "Er wird beim Erstellen neuer Dokumentanforderungen nicht mehr angeboten. Bestehende Anforderungen sind nicht betroffen. Sie können ihn später wieder reaktivieren."
+    },
+    "reactivateConfirm": {
+      "title": "Diesen Dokumenttyp reaktivieren?",
+      "description": "Er wird beim Erstellen neuer Dokumentanforderungen wieder angeboten."
+    },
+    "errors": {}
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
@@ -203,7 +256,7 @@
       "documentType": "Dokumentart",
       "requirement": "Anforderung",
       "classification": "Verbindlichkeit",
-      "checkpoints": "Gilt bei",
+      "caseTypes": "Falltypen",
       "status": "Status",
       "document": "Dokument",
       "upload": "Hochladen",

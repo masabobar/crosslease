@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   AddRequirementRequestSchema,
   CreateDocumentRequirementCatalogRequestSchema,
+  CreateDocumentTypeRequestSchema,
   DocumentRequirementCatalogDetailResponseSchema,
   DocumentRequirementCatalogListResponseSchema,
   DocumentRequirementCatalogResponseSchema,
@@ -13,10 +14,9 @@ import {
   FulfilmentStatusSchema,
   RuntimeRequirementItemSchema,
   RuntimeRequirementSurfaceResponseSchema,
-  MaterializationResponseSchema,
-  MaterializedRequirementResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
+  UpdateDocumentTypeRequestSchema,
   UpdateRequirementRequestSchema,
 } from "@/features/documentRequirements/api/schema"
 
@@ -38,7 +38,6 @@ const validRequirement = {
 const validCatalogItem = {
   id: CATALOG_UUID,
   catalog_name: "FHA Standard 2024 documents",
-  applicable_process_contexts: ["disbursement_readiness"],
   valid_from: "2026-06-13",
   valid_to: null,
   created_at: "2026-06-13T10:00:00Z",
@@ -46,7 +45,6 @@ const validCatalogItem = {
 
 const validCreateRequest = {
   catalog_name: "FHA Standard 2024 documents",
-  applicable_process_contexts: ["disbursement_readiness"],
   valid_from: "2026-06-13",
   valid_to: null,
 }
@@ -193,13 +191,16 @@ describe("CreateDocumentRequirementCatalogRequestSchema", () => {
     ).toThrow()
   })
 
-  it("rejects an empty applicable_process_contexts array", () => {
-    expect(() =>
-      CreateDocumentRequirementCatalogRequestSchema.parse({
-        ...validCreateRequest,
-        applicable_process_contexts: [],
-      })
-    ).toThrow()
+  // PRD1042-1794 DRC usability: the catalog no longer carries an applicability axis — it is just
+  // name + validity, so a stray applicable_* field is simply stripped rather than required.
+  it("does not model an applicability axis on the catalog", () => {
+    const parsed = CreateDocumentRequirementCatalogRequestSchema.parse({
+      ...validCreateRequest,
+      applicable_case_types: ["refinancing_request"],
+      applicable_process_contexts: ["disbursement_readiness"],
+    }) as Record<string, unknown>
+    expect("applicable_case_types" in parsed).toBe(false)
+    expect("applicable_process_contexts" in parsed).toBe(false)
   })
 })
 
@@ -263,7 +264,7 @@ const validFullRequirement = {
   document_type_name: "Asset registration confirmation",
   description: "Registry confirmation of the true-sale asset transfer.",
   classification: "mandatory",
-  applicable_process_contexts: ["disbursement_readiness"],
+  applicable_case_types: ["refinancing_request"],
   stage_categorization: "submission",
   document_origin: "uploaded",
   is_active: true,
@@ -278,7 +279,7 @@ const validAddRequirementRequest = {
   document_type_name: "Asset registration confirmation",
   description: null,
   classification: "mandatory",
-  applicable_process_contexts: ["disbursement_readiness"],
+  applicable_case_types: ["refinancing_request"],
   stage_categorization: null,
   document_origin: "uploaded",
   sort_order: 0,
@@ -360,18 +361,18 @@ describe("AddRequirementRequestSchema", () => {
       requirement_code: "DOC-FHA-002",
       document_type_code: "LOAN_OFFER",
       document_type_name: "Loan offer",
-      applicable_process_contexts: ["financing"],
+      applicable_case_types: ["extension"],
     }
     const parsed = AddRequirementRequestSchema.parse(minimal)
     expect(parsed.classification).toBe("mandatory")
     expect(parsed.document_origin).toBe("uploaded")
   })
 
-  it("rejects an empty applicable_process_contexts array", () => {
+  it("rejects an empty applicable_case_types array", () => {
     expect(() =>
       AddRequirementRequestSchema.parse({
         ...validAddRequirementRequest,
-        applicable_process_contexts: [],
+        applicable_case_types: [],
       })
     ).toThrow()
   })
@@ -418,12 +419,15 @@ describe("UpdateDocumentRequirementCatalogRequestSchema", () => {
     expect(parsed.product_template_id).toBeUndefined()
   })
 
-  it("rejects an empty applicable_process_contexts array when provided", () => {
-    expect(() =>
-      UpdateDocumentRequirementCatalogRequestSchema.parse({
-        applicable_process_contexts: [],
-      })
-    ).toThrow()
+  // PRD1042-1794 DRC usability: the catalog lost its applicability axis, so an applicable_* field on
+  // an update is simply stripped rather than validated.
+  it("does not model an applicability axis", () => {
+    const parsed = UpdateDocumentRequirementCatalogRequestSchema.parse({
+      applicable_case_types: ["refinancing_request"],
+      applicable_process_contexts: ["financing"],
+    }) as Record<string, unknown>
+    expect("applicable_case_types" in parsed).toBe(false)
+    expect("applicable_process_contexts" in parsed).toBe(false)
   })
 })
 
@@ -448,49 +452,6 @@ describe("DocumentRequirementCatalogDetailResponseSchema", () => {
   it("rejects a missing requirements field", () => {
     expect(() =>
       DocumentRequirementCatalogDetailResponseSchema.parse(validCatalogResponse)
-    ).toThrow()
-  })
-})
-
-describe("MaterializationResponseSchema", () => {
-  it("accepts the documented shape", () => {
-    const response = {
-      catalog_id: CATALOG_UUID,
-      process_context: "disbursement_readiness",
-      effective_requirements: [
-        {
-          requirement_definition_id: REQUIREMENT_UUID,
-          requirement_code: "DOC-FHA-001",
-          document_type_code: "ASSET_REG_CONF",
-          document_type_name: "Asset registration confirmation",
-          classification: "mandatory",
-          stage_categorization: "submission",
-          applicable_process_contexts: ["disbursement_readiness"],
-          document_origin: "uploaded",
-        },
-      ],
-      total: 1,
-    }
-    expect(MaterializationResponseSchema.parse(response)).toEqual(response)
-  })
-
-  it("accepts an empty effective set", () => {
-    const parsed = MaterializationResponseSchema.parse({
-      catalog_id: CATALOG_UUID,
-      process_context: "financing",
-      effective_requirements: [],
-      total: 0,
-    })
-    expect(parsed.effective_requirements).toEqual([])
-  })
-
-  it("rejects a missing total field", () => {
-    expect(() =>
-      MaterializationResponseSchema.parse({
-        catalog_id: CATALOG_UUID,
-        process_context: "financing",
-        effective_requirements: [],
-      })
     ).toThrow()
   })
 })
@@ -553,6 +514,99 @@ describe("document-type registry (PRD1042-1794 Block 10)", () => {
   })
 })
 
+describe("CreateDocumentTypeRequestSchema (PRD1042-1794 Block 10)", () => {
+  const validCreate = {
+    type_code: "LEASE_CONTRACT",
+    type_name: "Lease contract",
+    role_scope: "lessee",
+    origin: "requested",
+    note: null,
+  }
+
+  it("accepts the documented shape", () => {
+    expect(CreateDocumentTypeRequestSchema.parse(validCreate)).toEqual(
+      validCreate
+    )
+  })
+
+  it("defaults origin to requested when omitted", () => {
+    const minimal = {
+      type_code: "LOAN_OFFER",
+      type_name: "Loan offer",
+      role_scope: "case",
+    }
+    expect(CreateDocumentTypeRequestSchema.parse(minimal).origin).toBe(
+      "requested"
+    )
+  })
+
+  it("rejects a type_code over 100 characters", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        type_code: "a".repeat(101),
+      })
+    ).toThrow()
+  })
+
+  it("rejects a type_name over 255 characters", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        type_name: "a".repeat(256),
+      })
+    ).toThrow()
+  })
+
+  it("rejects an unknown role scope", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        role_scope: "vendor",
+      })
+    ).toThrow()
+  })
+
+  // The registry origin is requested | generated — never the requirement's uploaded | generated.
+  it("rejects the requirement-side origin value 'uploaded'", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        origin: "uploaded",
+      })
+    ).toThrow()
+  })
+})
+
+describe("UpdateDocumentTypeRequestSchema (PRD1042-1794 Block 10)", () => {
+  it("accepts a single-field partial update", () => {
+    const parsed = UpdateDocumentTypeRequestSchema.parse({
+      type_name: "Renamed type",
+    })
+    expect(parsed.type_name).toBe("Renamed type")
+  })
+
+  it("accepts an empty object — every field is optional", () => {
+    expect(() => UpdateDocumentTypeRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("carries is_active for the deactivate/reactivate row action", () => {
+    expect(
+      UpdateDocumentTypeRequestSchema.parse({ is_active: false }).is_active
+    ).toBe(false)
+  })
+
+  // type_code and origin are immutable, so the request contract must not carry them.
+  it("has no type_code or origin field — neither is mutable", () => {
+    const parsed = UpdateDocumentTypeRequestSchema.parse({
+      type_code: "should-be-stripped",
+      origin: "should-be-stripped",
+    }) as Record<string, unknown>
+    expect(parsed.type_code).toBeUndefined()
+    expect(parsed.origin).toBeUndefined()
+  })
+})
+
 // This drift is what broke the Requirements tab: the backend removed three fields, the schema kept
 // declaring them required, and every parse threw. Nothing caught it — the openapi drift check
 // compares the committed contract against the API, not the hand-written schemas against either. So
@@ -566,7 +620,7 @@ describe("requirement schemas against the documented contract", () => {
     "document_type_name",
     "description",
     "classification",
-    "applicable_process_contexts",
+    "applicable_case_types",
     "stage_categorization",
     "document_origin",
     "is_active",
@@ -589,21 +643,6 @@ describe("requirement schemas against the documented contract", () => {
       expect(() => RequirementResponseSchema.parse(payload)).toThrow()
     }
   })
-
-  // The preview/materialization row lost blocks_submission for the same reason.
-  it("keeps the materialized row aligned too", () => {
-    const parsed = MaterializedRequirementResponseSchema.parse({
-      requirement_definition_id: REQUIREMENT_UUID,
-      requirement_code: "DOC-001",
-      document_type_code: "LEASE_CONTRACT",
-      document_type_name: "Lease contract",
-      classification: "mandatory",
-      stage_categorization: null,
-      applicable_process_contexts: ["refinancing_request"],
-      document_origin: "uploaded",
-    })
-    expect("blocks_submission" in parsed).toBe(false)
-  })
 })
 
 describe("D-11 runtime requirement surface (PRD1042-1796 item 5)", () => {
@@ -616,34 +655,34 @@ describe("D-11 runtime requirement surface (PRD1042-1796 item 5)", () => {
     fulfilment_status: "missing",
     is_blocking: true,
     document_origin: "uploaded",
-    applicable_process_contexts: ["submission"],
+    applicable_case_types: ["refinancing_request"],
     linked_document_id: null,
   }
 
   const validSurface = {
     catalog_id: CATALOG_UUID,
     business_object_id: TEMPLATE_UUID,
-    process_context: null,
+    case_type: null,
     completeness_summary: "1 of 1 mandatory documents outstanding",
     requirements: [validItem],
   }
 
-  it("accepts the surface read without naming a checkpoint", () => {
+  it("accepts the surface read without naming a case type", () => {
     const parsed = RuntimeRequirementSurfaceResponseSchema.parse(validSurface)
-    // Null rather than a made-up context: the response spans the catalogue, and each row says where
-    // it applies.
-    expect(parsed.process_context).toBeNull()
-    expect(parsed.requirements[0].applicable_process_contexts).toEqual([
-      "submission",
+    // Null rather than a made-up type: the response spans the catalogue, and each row says which
+    // case types it applies to.
+    expect(parsed.case_type).toBeNull()
+    expect(parsed.requirements[0].applicable_case_types).toEqual([
+      "refinancing_request",
     ])
   })
 
-  it("accepts a surface narrowed to one checkpoint", () => {
+  it("accepts a surface resolved for one case type", () => {
     const parsed = RuntimeRequirementSurfaceResponseSchema.parse({
       ...validSurface,
-      process_context: "submission",
+      case_type: "refinancing_request",
     })
-    expect(parsed.process_context).toBe("submission")
+    expect(parsed.case_type).toBe("refinancing_request")
   })
 
   it("carries the fulfilling document so it can be opened", () => {

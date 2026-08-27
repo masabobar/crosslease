@@ -83,7 +83,10 @@ export type LCObligationItem = z.infer<typeof LCObligationItemSchema>
 
 export const LCObligationResponseSchema = z.object({
   business_object_id: z.string().uuid(),
-  process_context: z.string(),
+  // PRD1042-1794 DRC usability — the case type the obligation set was resolved for. The screen does
+  // not render it (item 9 forbids showing a leasing company the bank-internal framing); parsed only
+  // so the response shape matches the new contract.
+  case_type: z.string(),
   documents_status_summary: z.string(),
   obligations: z.array(LCObligationItemSchema),
 })

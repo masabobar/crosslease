@@ -17,7 +17,6 @@ import {
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { resolveFormMessage } from "@/lib/formMessages"
 import { useUpdateDocumentRequirementCatalog } from "@/features/documentRequirements/hooks/useUpdateDocumentRequirementCatalog"
-import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
 import type { DocumentRequirementCatalogDetailResponse } from "@/features/documentRequirements/api/schema"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
@@ -35,7 +34,6 @@ const editCatalogSchema = z
       .trim()
       .min(1, "required")
       .max(CATALOG_NAME_MAX_LENGTH, "tooLong"),
-    processContexts: z.array(z.string()).min(1, "required"),
     validFrom: z.string(),
     validTo: z.string(),
   })
@@ -49,7 +47,6 @@ const editCatalogSchema = z
 
 type EditCatalogFormValues = {
   catalogName: string
-  processContexts: string[]
   validFrom: string
   validTo: string
 }
@@ -77,7 +74,6 @@ function EditDocumentRequirementCatalogDialog({
     resolver: zodResolver(editCatalogSchema),
     defaultValues: {
       catalogName: catalog.catalog_name,
-      processContexts: catalog.applicable_process_contexts,
       validFrom: catalog.valid_from ?? "",
       validTo: catalog.valid_to ?? "",
     },
@@ -98,7 +94,6 @@ function EditDocumentRequirementCatalogDialog({
     updateCatalog.mutate(
       {
         catalog_name: values.catalogName.trim(),
-        applicable_process_contexts: values.processContexts,
         valid_from: values.validFrom || null,
         valid_to: values.validTo || null,
       },
@@ -153,28 +148,6 @@ function EditDocumentRequirementCatalogDialog({
             {errors.catalogName && (
               <p className="mt-1 text-sm text-destructive">
                 {resolveMessage(errors.catalogName.message)}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label className="mb-2" error={!!errors.processContexts}>
-              {t("create.fields.processContexts")}
-            </Label>
-            <Controller
-              control={control}
-              name="processContexts"
-              render={({ field }) => (
-                <ProcessContextCheckboxGroup
-                  value={field.value}
-                  onChange={field.onChange}
-                  testIdPrefix="edit-catalog"
-                />
-              )}
-            />
-            {errors.processContexts && (
-              <p className="mt-1 text-sm text-destructive">
-                {resolveMessage(errors.processContexts.message)}
               </p>
             )}
           </div>

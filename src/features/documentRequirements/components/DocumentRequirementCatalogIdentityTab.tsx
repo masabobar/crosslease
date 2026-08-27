@@ -38,16 +38,6 @@ function DocumentRequirementCatalogIdentityTab({ catalog, canManage }: Props) {
   const fields: { labelKey: string; value: string }[] = [
     { labelKey: "detail.identity.catalogName", value: catalog.catalog_name },
     {
-      labelKey: "detail.identity.processContexts",
-      value: catalog.applicable_process_contexts
-        .map(value =>
-          t(`processContexts.${value}` as "processContexts.financing", {
-            defaultValue: value,
-          })
-        )
-        .join(", "),
-    },
-    {
       labelKey: "detail.identity.validFrom",
       value: catalog.valid_from
         ? formatDate(catalog.valid_from)

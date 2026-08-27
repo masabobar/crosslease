@@ -23,7 +23,7 @@ import { useAddRequirement } from "@/features/documentRequirements/hooks/useAddR
 import { useTenantDocumentTypes } from "@/features/documentRequirements/hooks/useTenantDocumentTypes"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUpdateRequirement } from "@/features/documentRequirements/hooks/useUpdateRequirement"
-import { ProcessContextCheckboxGroup } from "@/features/documentRequirements/components/ProcessContextCheckboxGroup"
+import { CaseTypeCheckboxGroup } from "@/features/documentRequirements/components/CaseTypeCheckboxGroup"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   DocumentOriginSchema,
@@ -85,7 +85,7 @@ const requirementFieldsSchema = z.object({
     .max(DOCUMENT_TYPE_NAME_MAX_LENGTH, "tooLong"),
   description: z.string(),
   classification: z.string().min(1, "required"),
-  processContexts: z.array(z.string()).min(1, "required"),
+  caseTypes: z.array(z.string()).min(1, "required"),
   stageCategorization: z.string(),
   documentOrigin: z.string().min(1, "required"),
 })
@@ -103,7 +103,7 @@ function toFormValues(
     classification:
       requirement?.classification ??
       RequirementClassificationSchema.enum.mandatory,
-    processContexts: requirement?.applicable_process_contexts ?? [],
+    caseTypes: requirement?.applicable_case_types ?? [],
     stageCategorization: requirement?.stage_categorization ?? "",
     documentOrigin:
       requirement?.document_origin ?? DocumentOriginSchema.enum.uploaded,
@@ -135,9 +135,10 @@ function RequirementSheet({
     isPending: isDocumentTypesLoading,
   } = useTenantDocumentTypes(currentUser?.tenant_id ?? undefined)
   const documentTypes = documentTypesResponse?.items ?? []
+  // Show the human name; the code is an internal identifier, not something to surface as the label.
   const documentTypeOptions = documentTypes.map(type => ({
     value: type.type_code,
-    label: `${type.type_code}, ${type.type_name}`,
+    label: type.type_name,
   }))
 
   const addRequirement = useAddRequirement(catalogId)
@@ -171,7 +172,7 @@ function RequirementSheet({
       classification: RequirementClassificationSchema.parse(
         values.classification
       ),
-      applicable_process_contexts: values.processContexts,
+      applicable_case_types: values.caseTypes,
       stage_categorization: values.stageCategorization
         ? StageCategorizationSchema.parse(values.stageCategorization)
         : null,
@@ -258,10 +259,10 @@ function RequirementSheet({
                   ),
                 ],
                 [
-                  "requirement.fields.processContexts",
-                  requirement.applicable_process_contexts
+                  "requirement.fields.caseTypes",
+                  requirement.applicable_case_types
                     .map(v =>
-                      t(`processContexts.${v}` as "processContexts.financing", {
+                      t(`caseTypes.${v}` as "caseTypes.refinancing_request", {
                         defaultValue: v,
                       })
                     )
@@ -481,23 +482,23 @@ function RequirementSheet({
             </div>
 
             <div>
-              <Label className="mb-2" error={!!errors.processContexts}>
-                {t("create.fields.processContexts")}
+              <Label className="mb-2" error={!!errors.caseTypes}>
+                {t("requirement.fields.caseTypes")}
               </Label>
               <Controller
                 control={control}
-                name="processContexts"
+                name="caseTypes"
                 render={({ field }) => (
-                  <ProcessContextCheckboxGroup
+                  <CaseTypeCheckboxGroup
                     value={field.value}
                     onChange={field.onChange}
                     testIdPrefix="requirement"
                   />
                 )}
               />
-              {errors.processContexts && (
+              {errors.caseTypes && (
                 <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.processContexts.message)}
+                  {resolveMessage(errors.caseTypes.message)}
                 </p>
               )}
             </div>

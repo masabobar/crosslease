@@ -43,12 +43,10 @@ export default function DocumentRequirementCatalogListPage() {
     page,
     perPage,
     search,
-    filters,
     hasActiveFilters,
     setPage,
     setPerPage,
     setSearch,
-    setFilters,
   } = useDocumentRequirementCatalogListParams()
 
   // Debounced before it reaches the query key: the field re-renders on every keystroke, but
@@ -63,9 +61,6 @@ export default function DocumentRequirementCatalogListPage() {
       page,
       per_page: perPage,
       ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-      ...(filters.processContext
-        ? { process_context: filters.processContext }
-        : {}),
     }
   )
 
@@ -99,8 +94,6 @@ export default function DocumentRequirementCatalogListPage() {
         <DocumentRequirementCatalogFilterBar
           search={search}
           onSearchChange={setSearch}
-          filters={filters}
-          onFiltersChange={setFilters}
         />
       </div>
 
