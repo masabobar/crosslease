@@ -84,6 +84,42 @@ schema-drift:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
+# Base template for the Alpine-based deploy jobs.
+# They need `envsubst` (gettext) and ssh/scp, which bare Alpine does not ship.
+# Alpine's default CDN intermittently fails to serve the package index — a single
+# `apk add` then kills the deploy before it starts. Retry, then try other mirrors.
+.deploy-base:
+  image: $ALPINE_IMAGE
+  services: [] # Explicitly removes any inherited services
+  tags:
+    - docker
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - script_failure
+  before_script:
+    - |
+      ALPINE_BRANCH="v$(cut -d. -f1,2 /etc/alpine-release)"
+      install_deploy_deps() {
+        for mirror in \
+          https://dl-cdn.alpinelinux.org/alpine \
+          https://uk.alpinelinux.org/alpine \
+          https://mirror.leaseweb.com/alpine
+        do
+          printf '%s/%s/main\n%s/%s/community\n' "$mirror" "$ALPINE_BRANCH" "$mirror" "$ALPINE_BRANCH" > /etc/apk/repositories
+          for attempt in 1 2 3; do
+            apk add --no-cache gettext openssh-client && return 0
+            echo "apk add failed from $mirror (attempt $attempt/3) - retrying in 5s"
+            sleep 5
+          done
+        done
+        echo "ERROR: no Alpine mirror could serve gettext + openssh-client"
+        return 1
+      }
+      install_deploy_deps
+
 build:develop:
   stage: build
   tags:
@@ -115,14 +151,9 @@ build:develop:
 
 deploy:develop:
   stage: deploy
-  services: [] # Explicitly removes any inherited services
-  tags:
-    - docker
+  extends: .deploy-base
   dependencies:
     - build:develop
-  image: $ALPINE_IMAGE
-  before_script:
-    - apk add --no-cache gettext openssh-client
   variables:
     DEPLOY_HOST: 213.239.198.198
     DEPLOY_PORT: 22250
@@ -231,14 +262,9 @@ build:staging:
 
 deploy:staging:
   stage: deploy
-  services: []
-  tags:
-    - docker
+  extends: .deploy-base
   dependencies:
     - build:staging
-  image: $ALPINE_IMAGE
-  before_script:
-    - apk add --no-cache gettext openssh-client
   variables:
     DEPLOY_HOST: refinext-st.projects.holycode.com
     DEPLOY_PORT: 22251

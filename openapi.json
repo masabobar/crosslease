@@ -8492,15 +8492,6 @@
             }
           },
           {
-            "name": "process_context",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Process Context"
-            }
-          },
-          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -8781,12 +8772,12 @@
             }
           },
           {
-            "name": "process_context",
+            "name": "case_type",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Process Context"
+              "title": "Case Type"
             }
           }
         ],
@@ -8876,10 +8867,13 @@
             }
           },
           {
-            "name": "process_context",
+            "name": "case_type",
             "in": "query",
-            "required": true,
-            "schema": { "type": "string", "title": "Process Context" }
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Case Type"
+            }
           }
         ],
         "responses": {
@@ -8942,12 +8936,12 @@
             }
           },
           {
-            "name": "process_context",
+            "name": "case_type",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Process Context"
+              "title": "Case Type"
             }
           }
         ],
@@ -9092,12 +9086,12 @@
             }
           },
           {
-            "name": "process_context",
+            "name": "case_type",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "Process Context"
+              "title": "Case Type"
             }
           },
           {
@@ -9280,6 +9274,65 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocumentTypeListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenant_id}/document-types/{document_type_id}": {
+      "patch": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Update Document Type",
+        "operationId": "update_document_type_api_v1_tenants__tenant_id__document_types__document_type_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Tenant Id"
+            }
+          },
+          {
+            "name": "document_type_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Type Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDocumentTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentTypeResponse"
                 }
               }
             }
@@ -9589,11 +9642,11 @@
             "$ref": "#/components/schemas/RequirementClassification",
             "default": "mandatory"
           },
-          "applicable_process_contexts": {
+          "applicable_case_types": {
             "items": { "type": "string" },
             "type": "array",
             "minItems": 1,
-            "title": "Applicable Process Contexts"
+            "title": "Applicable Case Types"
           },
           "stage_categorization": {
             "anyOf": [
@@ -9618,7 +9671,7 @@
           "requirement_code",
           "document_type_code",
           "document_type_name",
-          "applicable_process_contexts"
+          "applicable_case_types"
         ],
         "title": "AddRequirementRequest"
       },
@@ -10915,11 +10968,6 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Applicable Process Contexts"
-          },
           "valid_from": {
             "anyOf": [
               { "type": "string", "format": "date" },
@@ -10944,7 +10992,6 @@
         "required": [
           "id",
           "catalog_name",
-          "applicable_process_contexts",
           "valid_from",
           "valid_to",
           "created_at"
@@ -11242,9 +11289,9 @@
             "format": "uuid",
             "title": "Catalog Id"
           },
-          "process_context": {
+          "case_type": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Process Context"
+            "title": "Case Type"
           },
           "business_object_id": {
             "type": "string",
@@ -13841,9 +13888,9 @@
             "format": "uuid",
             "title": "Business Object Id"
           },
-          "process_context": {
+          "case_type": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Process Context"
+            "title": "Case Type"
           },
           "documents_status_summary": {
             "type": "string",
@@ -14218,7 +14265,10 @@
             "format": "uuid",
             "title": "Catalog Id"
           },
-          "process_context": { "type": "string", "title": "Process Context" },
+          "case_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Type"
+          },
           "effective_requirements": {
             "items": {
               "$ref": "#/components/schemas/MaterializedRequirementResponse"
@@ -14229,12 +14279,7 @@
           "total": { "type": "integer", "title": "Total" }
         },
         "type": "object",
-        "required": [
-          "catalog_id",
-          "process_context",
-          "effective_requirements",
-          "total"
-        ],
+        "required": ["catalog_id", "effective_requirements", "total"],
         "title": "MaterializationResponse"
       },
       "MaterializeChecklistRequest": {
@@ -14265,7 +14310,10 @@
       },
       "MaterializeRequest": {
         "properties": {
-          "process_context": { "type": "string", "title": "Process Context" },
+          "case_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Type"
+          },
           "framework_agreement_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -14275,7 +14323,6 @@
           }
         },
         "type": "object",
-        "required": ["process_context"],
         "title": "MaterializeRequest"
       },
       "MaterializedRequirementResponse": {
@@ -14301,10 +14348,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Stage Categorization"
           },
-          "applicable_process_contexts": {
+          "applicable_case_types": {
             "items": { "type": "string" },
             "type": "array",
-            "title": "Applicable Process Contexts"
+            "title": "Applicable Case Types"
           },
           "document_origin": { "type": "string", "title": "Document Origin" }
         },
@@ -14316,7 +14363,7 @@
           "document_type_name",
           "classification",
           "stage_categorization",
-          "applicable_process_contexts",
+          "applicable_case_types",
           "document_origin"
         ],
         "title": "MaterializedRequirementResponse"
@@ -15552,10 +15599,10 @@
           "classification": {
             "$ref": "#/components/schemas/RequirementClassification"
           },
-          "applicable_process_contexts": {
+          "applicable_case_types": {
             "items": { "type": "string" },
             "type": "array",
-            "title": "Applicable Process Contexts"
+            "title": "Applicable Case Types"
           },
           "stage_categorization": {
             "anyOf": [
@@ -15588,7 +15635,7 @@
           "document_type_name",
           "description",
           "classification",
-          "applicable_process_contexts",
+          "applicable_case_types",
           "stage_categorization",
           "document_origin",
           "is_active",
@@ -15894,10 +15941,10 @@
           },
           "is_blocking": { "type": "boolean", "title": "Is Blocking" },
           "document_origin": { "type": "string", "title": "Document Origin" },
-          "applicable_process_contexts": {
+          "applicable_case_types": {
             "items": { "type": "string" },
             "type": "array",
-            "title": "Applicable Process Contexts",
+            "title": "Applicable Case Types",
             "default": []
           },
           "linked_document_id": {
@@ -15933,9 +15980,9 @@
             "format": "uuid",
             "title": "Business Object Id"
           },
-          "process_context": {
+          "case_type": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Process Context"
+            "title": "Case Type"
           },
           "completeness_summary": {
             "type": "string",
@@ -17944,17 +17991,37 @@
               { "type": "null" }
             ],
             "title": "Valid To"
-          },
-          "applicable_process_contexts": {
-            "anyOf": [
-              { "items": { "type": "string" }, "type": "array", "minItems": 1 },
-              { "type": "null" }
-            ],
-            "title": "Applicable Process Contexts"
           }
         },
         "type": "object",
         "title": "UpdateCatalogRequest"
+      },
+      "UpdateDocumentTypeRequest": {
+        "properties": {
+          "type_name": {
+            "anyOf": [
+              { "type": "string", "maxLength": 255, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Type Name"
+          },
+          "role_scope": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DocumentRoleScope" },
+              { "type": "null" }
+            ]
+          },
+          "note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Note"
+          },
+          "is_active": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "UpdateDocumentTypeRequest"
       },
       "UpdateFARequest": {
         "properties": {
@@ -18177,12 +18244,12 @@
               { "type": "null" }
             ]
           },
-          "applicable_process_contexts": {
+          "applicable_case_types": {
             "anyOf": [
               { "items": { "type": "string" }, "type": "array", "minItems": 1 },
               { "type": "null" }
             ],
-            "title": "Applicable Process Contexts"
+            "title": "Applicable Case Types"
           },
           "stage_categorization": {
             "anyOf": [
@@ -19344,11 +19411,6 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Applicable Process Contexts"
-          },
           "valid_from": {
             "anyOf": [
               { "type": "string", "format": "date" },
@@ -19388,7 +19450,6 @@
         "required": [
           "id",
           "catalog_name",
-          "applicable_process_contexts",
           "valid_from",
           "valid_to",
           "created_by",
@@ -19417,11 +19478,6 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "catalog_name": { "type": "string", "title": "Catalog Name" },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "title": "Applicable Process Contexts"
-          },
           "valid_from": {
             "anyOf": [
               { "type": "string", "format": "date" },
@@ -19456,7 +19512,6 @@
         "required": [
           "id",
           "catalog_name",
-          "applicable_process_contexts",
           "valid_from",
           "valid_to",
           "created_by",
@@ -19472,12 +19527,6 @@
             "maxLength": 200,
             "minLength": 1,
             "title": "Catalog Name"
-          },
-          "applicable_process_contexts": {
-            "items": { "type": "string" },
-            "type": "array",
-            "minItems": 1,
-            "title": "Applicable Process Contexts"
           },
           "valid_from": {
             "anyOf": [
@@ -19495,7 +19544,7 @@
           }
         },
         "type": "object",
-        "required": ["catalog_name", "applicable_process_contexts"],
+        "required": ["catalog_name"],
         "title": "CreateCatalogRequest"
       },
       "app__modules__product_templates__interfaces__http__schemas__product_template__UserRef": {
