@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest"
 import {
   AddTaskRequestSchema,
+  ConditionOperatorSchema,
+  ConditionRowItemSchema,
+  DocumentCheckItemSchema,
+  FieldRegistryItemSchema,
+  FieldRegistryListSchema,
+  TaskApplicabilitySchema,
   AuditTrailResponseSchema,
   CaseTypeSchema,
   CatalogDetailResponseSchema,
@@ -38,7 +44,7 @@ const validListItem = {
   catalog_state: "active",
   entity_type: "refinancing_request",
   entity_id: TEMPLATE_UUID,
-  case_type: "main_process",
+  case_type: "refinancing_request",
   valid_from: "2026-08-01",
   valid_until: null,
   created_at: "2026-07-30T12:00:00Z",
@@ -52,7 +58,7 @@ const validCatalogResponse = {
   catalog_state: "active",
   entity_type: "refinancing_request",
   entity_id: TEMPLATE_UUID,
-  case_type: "main_process",
+  case_type: "refinancing_request",
   valid_from: "2026-08-01",
   valid_until: null,
   description: null,
@@ -80,11 +86,11 @@ describe("wire enums", () => {
       "suspended",
       "archived",
     ])
-    // PRD1042-1790 item 1 — only main_process/package_redemption carry a checklist in the
-    // November MVP; the other five are modeled because the wire sends them, not because
-    // this app builds anything for them yet.
+    // PRD1042-1917 OQ-01 (19 Aug 2026) — all seven case types carry a catalogue, and the first
+    // is `refinancing_request`: `main_process` was the catalogue's client-facing name, never the
+    // case type, and migration case1917b01 rewrote the stored rows.
     expect(CaseTypeSchema.options).toEqual([
-      "main_process",
+      "refinancing_request",
       "package_redemption",
       "single_redemption",
       "lessee_change",
@@ -228,7 +234,7 @@ describe("CreateCatalogRequestSchema", () => {
         entity_id: TEMPLATE_UUID,
         valid_from: "2026-08-01",
         valid_until: null,
-        case_type: "main_process",
+        case_type: "refinancing_request",
       })
     ).not.toThrow()
   })
@@ -241,7 +247,7 @@ describe("CreateCatalogRequestSchema", () => {
         entity_id: null,
         valid_from: "2026-08-01",
         valid_until: null,
-        case_type: "main_process",
+        case_type: "refinancing_request",
       })
     ).not.toThrow()
   })
@@ -256,7 +262,7 @@ describe("CreateCatalogRequestSchema", () => {
       entity_type: "refinancing_request",
       entity_id: TEMPLATE_UUID,
       valid_from: "2026-08-01",
-      case_type: "main_process",
+      case_type: "refinancing_request",
     })
     expect(parsed).not.toHaveProperty("entity_type")
   })
@@ -322,7 +328,7 @@ describe("CreateCatalogRequestSchema", () => {
         catalog_layer: "product_specific",
         entity_id: "Mortgage Plus",
         valid_from: "2026-08-01",
-        case_type: "main_process",
+        case_type: "refinancing_request",
       })
     ).toThrow()
   })
@@ -382,6 +388,7 @@ const validDefinedTask = {
   id: TASK_UUID,
   catalog_version_id: VERSION_UUID,
   layer_action: "defined",
+  task_number: 4,
   task_code: "LEG-001",
   task_name: "Legal notice of assignment",
   task_description: "Send the notice to the lessee.",
@@ -405,6 +412,12 @@ const validDefinedTask = {
   doc_requirement_pin_mode: null,
   conditional_trigger: null,
   task_type: "checkbox",
+  applicability: "always",
+  four_eyes: false,
+  exclusion_task_ids: [],
+  four_eyes_exclusion_wide: false,
+  document_checks: [],
+  condition_rows: [],
   created_by: USER_UUID,
   created_at: "2026-07-30T12:00:00Z",
   updated_at: "2026-07-30T12:00:00Z",
@@ -442,12 +455,22 @@ describe("TaskDefinitionItemSchema", () => {
     expect(parsed.responsible_roles).toEqual(["back_office"])
   })
 
-  // The set is narrowed to the operational bank roles the BE's STEP_RESPONSIBLE_ROLES allows —
-  // a platform role outside that pair is not authorable on a step.
-  it("rejects a platform role outside the authorable pair", () => {
+  // Reading follows the wire, which declares `list[UserRole]` — the whole platform enum. The
+  // narrowing belongs to the WRITE path (next test): a stored row outside the authorable pair is
+  // not something this app may author, but refusing to *read* it turned one unexpected value into
+  // a blank detail page against a 200 response.
+  it("accepts a platform role outside the authorable pair", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      responsible_roles: ["system_admin"],
+    })
+    expect(parsed.responsible_roles).toEqual(["system_admin"])
+  })
+
+  it("still refuses to author a role outside the pair", () => {
     expect(() =>
-      TaskDefinitionItemSchema.parse({
-        ...validDefinedTask,
+      AddTaskRequestSchema.parse({
+        layer_action: "defined",
         responsible_roles: ["system_admin"],
       })
     ).toThrow()
@@ -518,6 +541,7 @@ describe("TaskDefinitionItemSchema", () => {
         is_mandatory: true,
         weight: "2.50",
         responsible_role: "front_office",
+        responsible_roles: ["front_office"],
         display_order: 10,
         stage_categorization: "stage_1_review",
         doc_requirement_ref: null,
@@ -568,7 +592,7 @@ describe("CatalogDetailResponseSchema", () => {
   // did; the detail did not, so Identity & Scope could show only the derived entity type.
   it("carries the case type alongside the derived entity type", () => {
     const parsed = CatalogDetailResponseSchema.parse(validDetail)
-    expect(parsed.case_type).toBe("main_process")
+    expect(parsed.case_type).toBe("refinancing_request")
     expect(parsed.entity_type).toBe("refinancing_request")
   })
 
@@ -824,21 +848,34 @@ describe("CatalogCaseTypeItemSchema", () => {
   // deliberately no assertion here on how many the backend returns.
   it("accepts a case type with the entity type it derives", () => {
     const parsed = CatalogCaseTypeItemSchema.parse({
-      case_type: "main_process",
+      case_type: "refinancing_request",
       entity_type: "refinancing_request",
     })
-    expect(parsed.case_type).toBe("main_process")
+    expect(parsed.case_type).toBe("refinancing_request")
     expect(parsed.entity_type).toBe("refinancing_request")
   })
 
-  it("accepts a case type the frontend does not offer today", () => {
-    // The point of reading the set: were the backend to start reporting object_swap, the schema
-    // must parse it rather than needing a release to widen an enum.
+  it("accepts a case type that derives no entity type", () => {
+    // Four of the seven derive none (CASE_TYPE_ENTITY_TYPE in the BE's enums.py), and the route
+    // sends `.get(ct)` — i.e. null — for those. Requiring the key non-null here is what broke the
+    // create dialog's case-type list once all seven were returned.
     const parsed = CatalogCaseTypeItemSchema.parse({
       case_type: "object_swap",
-      entity_type: "refinancing_request",
+      entity_type: null,
     })
     expect(parsed.case_type).toBe("object_swap")
+    expect(parsed.entity_type).toBeNull()
+  })
+
+  it("rejects the retired main_process value", () => {
+    // The exact QA-reported failure: a 200 response the frontend turned into a ZodError, so the
+    // whole catalogue list rendered its generic error state.
+    expect(() =>
+      CatalogCaseTypeItemSchema.parse({
+        case_type: "main_process",
+        entity_type: "refinancing_request",
+      })
+    ).toThrow()
   })
 
   it("rejects a case type outside the wire enum", () => {
@@ -852,7 +889,7 @@ describe("CatalogCaseTypeItemSchema", () => {
 
   it("parses the list as a bare array", () => {
     const parsed = CatalogCaseTypeListSchema.parse([
-      { case_type: "main_process", entity_type: "refinancing_request" },
+      { case_type: "refinancing_request", entity_type: "refinancing_request" },
       { case_type: "package_redemption", entity_type: "redemption_request" },
     ])
     expect(parsed).toHaveLength(2)
@@ -1087,5 +1124,215 @@ describe("task type parameters (PRD1042-1894 Block 5)", () => {
         trigger_event: "x".repeat(51),
       })
     ).toThrow()
+  })
+})
+
+// --- PRD1042-1790 items 3/4 + PRD1042-1894 Block 3: the task fields the wire added ---
+
+describe("TaskApplicabilitySchema", () => {
+  it("accepts exactly the three wire values", () => {
+    expect(TaskApplicabilitySchema.options).toEqual([
+      "always",
+      "rule",
+      "person",
+    ])
+  })
+
+  it("rejects anything else", () => {
+    expect(() => TaskApplicabilitySchema.parse("sometimes")).toThrow()
+  })
+})
+
+describe("ConditionOperatorSchema", () => {
+  it("accepts exactly the six wire values", () => {
+    expect(ConditionOperatorSchema.options).toEqual([
+      "is",
+      "is_not",
+      "greater_than",
+      "less_than",
+      "at_least",
+      "at_most",
+    ])
+  })
+})
+
+describe("DocumentCheckItemSchema", () => {
+  it("accepts a documented row", () => {
+    const parsed = DocumentCheckItemSchema.parse({
+      document_ref: TEMPLATE_UUID,
+      position: 0,
+    })
+    expect(parsed.position).toBe(0)
+  })
+
+  it("rejects a non-integer position", () => {
+    expect(() =>
+      DocumentCheckItemSchema.parse({
+        document_ref: TEMPLATE_UUID,
+        position: 1.5,
+      })
+    ).toThrow()
+  })
+})
+
+describe("ConditionRowItemSchema", () => {
+  it("accepts a row comparing against a literal", () => {
+    const parsed = ConditionRowItemSchema.parse({
+      field_registry_id: TEMPLATE_UUID,
+      operator: "at_least",
+      value_raw: "50000",
+      value_config_ref: null,
+    })
+    expect(parsed.operator).toBe("at_least")
+    expect(parsed.value_raw).toBe("50000")
+  })
+
+  it("accepts a row comparing against a configured value", () => {
+    const parsed = ConditionRowItemSchema.parse({
+      field_registry_id: TEMPLATE_UUID,
+      operator: "is",
+      value_raw: null,
+      value_config_ref: CATALOG_UUID,
+    })
+    expect(parsed.value_config_ref).toBe(CATALOG_UUID)
+  })
+
+  it("rejects an unknown operator", () => {
+    expect(() =>
+      ConditionRowItemSchema.parse({
+        field_registry_id: TEMPLATE_UUID,
+        operator: "roughly",
+      })
+    ).toThrow()
+  })
+})
+
+describe("FieldRegistryItemSchema", () => {
+  const validField = {
+    id: TEMPLATE_UUID,
+    field_key: "financing_amount",
+    field_type: "decimal",
+    label: "Financing amount",
+    data_available: true,
+  }
+
+  it("accepts the documented shape", () => {
+    expect(FieldRegistryItemSchema.parse(validField).label).toBe(
+      "Financing amount"
+    )
+  })
+
+  it("requires data_available rather than defaulting it", () => {
+    const withoutFlag: Record<string, unknown> = { ...validField }
+    delete withoutFlag.data_available
+    expect(() => FieldRegistryItemSchema.parse(withoutFlag)).toThrow()
+  })
+
+  it("parses the list as a bare array", () => {
+    expect(FieldRegistryListSchema.parse([validField])).toHaveLength(1)
+  })
+})
+
+describe("TaskDefinitionItemSchema — added wire fields", () => {
+  // All non-nullable on the wire, so a missing key is a contract break rather than "no value" —
+  // exactly the class of drift that produced the QA report this work started from.
+  it.each([
+    "four_eyes",
+    "exclusion_task_ids",
+    "four_eyes_exclusion_wide",
+    "document_checks",
+    "condition_rows",
+  ])("requires %s to be present", key => {
+    const without: Record<string, unknown> = { ...validDefinedTask }
+    delete without[key]
+    expect(() => TaskDefinitionItemSchema.parse(without)).toThrow()
+  })
+
+  it("accepts a null task_number for a row created before they existed", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      task_number: null,
+    })
+    expect(parsed.task_number).toBeNull()
+  })
+
+  it("reads a four-eyes step with both kinds of exclusion", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      four_eyes: true,
+      four_eyes_exclusion_wide: true,
+      exclusion_task_ids: [PARENT_UUID],
+    })
+    expect(parsed.four_eyes).toBe(true)
+    expect(parsed.four_eyes_exclusion_wide).toBe(true)
+    expect(parsed.exclusion_task_ids).toEqual([PARENT_UUID])
+  })
+
+  it("reads the document checks and condition rows it is sent", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      task_type: "typed_upload",
+      applicability: "rule",
+      document_checks: [{ document_ref: TEMPLATE_UUID, position: 1 }],
+      condition_rows: [
+        {
+          field_registry_id: TEMPLATE_UUID,
+          operator: "greater_than",
+          value_raw: "100000",
+          value_config_ref: null,
+        },
+      ],
+    })
+    expect(parsed.document_checks).toHaveLength(1)
+    expect(parsed.condition_rows[0].operator).toBe("greater_than")
+    expect(parsed.applicability).toBe("rule")
+  })
+
+  it("accepts a null applicability", () => {
+    const parsed = TaskDefinitionItemSchema.parse({
+      ...validDefinedTask,
+      applicability: null,
+    })
+    expect(parsed.applicability).toBeNull()
+  })
+})
+
+describe("AddTaskRequestSchema — added authorable fields", () => {
+  it("accepts applicability and the two four-eyes flags", () => {
+    const parsed = AddTaskRequestSchema.parse({
+      layer_action: "defined",
+      applicability: "person",
+      four_eyes: true,
+      four_eyes_exclusion_wide: true,
+    })
+    expect(parsed.applicability).toBe("person")
+    expect(parsed.four_eyes).toBe(true)
+  })
+
+  // Every one of them is optional: the BE stores `always` / false for a task that omits them, and
+  // the sheet deliberately omits applicability on an override, where the key is refused outright.
+  it("accepts a payload carrying none of them", () => {
+    const parsed = AddTaskRequestSchema.parse({ layer_action: "defined" })
+    expect(parsed.applicability).toBeUndefined()
+    expect(parsed.four_eyes).toBeUndefined()
+  })
+
+  it("rejects an unknown applicability", () => {
+    expect(() =>
+      AddTaskRequestSchema.parse({
+        layer_action: "defined",
+        applicability: "occasionally",
+      })
+    ).toThrow()
+  })
+
+  // The PATCH shape is derived from this one, so the new fields must reach it too.
+  it("carries the new fields through to UpdateTaskRequestSchema", () => {
+    const parsed = UpdateTaskRequestSchema.parse({
+      applicability: "always",
+      four_eyes: false,
+      four_eyes_exclusion_wide: false,
+    })
+    expect(parsed.applicability).toBe("always")
   })
 })

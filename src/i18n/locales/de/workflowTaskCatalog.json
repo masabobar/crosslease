@@ -137,7 +137,8 @@
         "role": "Rolle",
         "stage": "Phase",
         "weight": "Gewichtung",
-        "docRef": "Dok.-Ref."
+        "docRef": "Dok.-Ref.",
+        "number": "Nr."
       },
       "yes": "Ja",
       "no": "Nein",
@@ -153,7 +154,9 @@
         "title": "Noch keine Aufgabendefinitionen",
         "descriptionEditable": "Fügen Sie die erste Aufgabe zu diesem Katalog hinzu.",
         "descriptionReadOnly": "Ein Bank-Admin hat diesem Katalog noch keine Aufgaben hinzugefügt."
-      }
+      },
+      "fourEyesBadge": "4-Augen",
+      "fourEyesTitle": "Erfordert Vier-Augen-Freigabe"
     },
     "taskSheet": {
       "addTitle": "Aufgabe hinzufügen",
@@ -166,7 +169,10 @@
         "behaviorAndGating": "Verhalten und Gating",
         "inheritedFromGlobalDefault": "Vom globalen Standard geerbt",
         "documentLinkage": "Dokumentverknüpfung",
-        "typeParameters": "Typparameter"
+        "typeParameters": "Typparameter",
+        "fourEyes": "Vier-Augen-Kontrolle",
+        "documentChecks": "Dokumentenprüfungen",
+        "conditions": "Gültigkeitsbedingungen"
       },
       "fields": {
         "type": "Typ",
@@ -192,7 +198,11 @@
         "triggerEvent": "Auslösendes Ereignis",
         "permittedOutcomes": "Zulässige Ergebnisse",
         "lifecycleEntity": "Lebenszyklus-Objekt",
-        "captureSectionName": "Abschnitt im Fallformular"
+        "captureSectionName": "Abschnitt im Fallformular",
+        "applicability": "Gilt",
+        "fourEyes": "Erfordert Vier-Augen-Freigabe",
+        "fourEyesExclusionWide": "Alle ausschließen, die einen anderen Schritt dieses Katalogs abgeschlossen haben",
+        "exclusionTasks": "Ausgeschlossene Schritte"
       },
       "mandatoryOptions": {
         "yes": "Ja",
@@ -215,7 +225,12 @@
         "legal": "Recht",
         "treasury": "Treasury",
         "support": "Support",
-        "system": "System"
+        "system": "System",
+        "system_admin": "Systemadministrator",
+        "support_user": "Support-Benutzer",
+        "auditor": "Auditor",
+        "bank_power_user": "Bank-Power-User",
+        "leasing_company_user": "Leasinggesellschaft-Benutzer"
       },
       "stages": {
         "pre_submission": "Vor Einreichung",
@@ -273,6 +288,25 @@
         "rejected": "Abgelehnt",
         "missing_information": "Fehlende Informationen",
         "rework": "Nachbearbeitung"
+      },
+      "yes": "Ja",
+      "no": "Nein",
+      "stepNumber": "Schritt {{number}}",
+      "applicabilityPlaceholder": "Immer (Standard)",
+      "applicabilityHint": "Ohne Auswahl gilt der Schritt immer.",
+      "fourEyesHint": "Eine zweite Person muss den Schritt freigeben. Die katalogweite Regel lässt sich mit einzelnen ausgeschlossenen Schritten kombinieren; vorhandene werden angezeigt.",
+      "applicabilities": {
+        "always": "Immer",
+        "rule": "Nach Regel",
+        "person": "Nach Entscheidung"
+      },
+      "conditionOperators": {
+        "is": "ist",
+        "is_not": "ist nicht",
+        "greater_than": "größer als",
+        "less_than": "kleiner als",
+        "at_least": "mindestens",
+        "at_most": "höchstens"
       }
     },
     "auditTrail": {
@@ -363,7 +397,8 @@
       "status": "Status",
       "checkedBy": "Erledigt von",
       "checkedAt": "Erledigt am",
-      "note": "Notiz"
+      "note": "Notiz",
+      "stage": "Phase"
     },
     "mandatory": {
       "required": "Pflicht",
@@ -440,10 +475,14 @@
         "cancel": "Abbrechen",
         "submit": "Speichern"
       }
-    }
+    },
+    "fourEyesBadge": "4-Augen",
+    "fourEyesTitle": "Eine zweite Person muss diese Aufgabe freigeben",
+    "systemActor": "System",
+    "documentChecksSummary": "{{marked}} von {{total}} Dokumenten geprüft"
   },
   "caseTypes": {
-    "main_process": "Hauptrefinanzierungsprozess",
+    "refinancing_request": "Hauptrefinanzierungsprozess",
     "package_redemption": "Paketablösung",
     "single_redemption": "Einzelablösung",
     "lessee_change": "Leasingnehmerwechsel",

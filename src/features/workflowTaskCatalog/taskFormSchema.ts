@@ -60,6 +60,16 @@ export const taskFormSchema = z
     stage_categorization: z.string(),
     applicable_process_contexts: z.array(TaskProcessContextSchema),
     is_active: z.boolean(),
+    // PRD1042-1790 items 3/4 — held as "" when unset, like every other select on this form. Not
+    // in REQUIRED_FOR_OWN_TASK: the BE stores `always` for a GD-layer task that omits it, so an
+    // empty value is a legitimate "use the default" rather than a missing answer.
+    applicability: z.string(),
+    // PRD1042-1894 Block 3 — plain booleans, defaulted false, no cross-field rule. `wide` is only
+    // meaningful while `four_eyes` is on, which the sheet expresses by disabling it rather than by
+    // a refinement: the BE accepts the combination and silently ignoring input is worse than
+    // showing why it cannot be set.
+    four_eyes: z.boolean(),
+    four_eyes_exclusion_wide: z.boolean(),
     treasury_threshold_trigger: z.boolean(),
     doc_requirement_ref: z.string(),
     doc_requirement_pin_mode: z.string(),

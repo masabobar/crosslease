@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ChevronRight, File, Plus } from "lucide-react"
+import { ChevronRight, File, Plus, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -16,7 +16,10 @@ import { STATUS_PILL_CLASSES } from "@/features/workflowTaskCatalog/constants"
 import { TaskDefinitionSheet } from "@/features/workflowTaskCatalog/components/TaskDefinitionSheet"
 import { CatalogStagesPanel } from "@/features/workflowTaskCatalog/components/CatalogStagesPanel"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
-import { LayerActionSchema } from "@/features/workflowTaskCatalog/api/schema"
+import {
+  LayerActionSchema,
+  TaskApplicabilitySchema,
+} from "@/features/workflowTaskCatalog/api/schema"
 import type {
   CatalogEntityType,
   CatalogLayer,
@@ -104,9 +107,39 @@ function TaskDefinitionsTab({
     return requirementCodeById.get(ref) ?? ref
   }
 
-  const orderedTasks = [...tasks].sort(
-    (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
-  )
+  // `task_number` is the server-assigned step number and the order the bank reads the catalogue
+  // in, so it wins where both rows have one. `display_order` remains the tie-break and the only
+  // ordering for rows created before task numbers existed.
+  const orderedTasks = [...tasks].sort((a, b) => {
+    if (a.task_number !== null && b.task_number !== null) {
+      return a.task_number - b.task_number
+    }
+    return (a.display_order ?? 0) - (b.display_order ?? 0)
+  })
+
+  // Same fallback chain the view panel uses: the set when present, the retired singular
+  // otherwise. Kept local rather than shared — the two call sites read different i18n
+  // namespaces' worth of context and a third occurrence has not appeared.
+  function rolesLabel(
+    roles: readonly string[] | null,
+    singular: string | null
+  ): string {
+    if (roles?.length) {
+      return roles
+        .map(role =>
+          t(
+            `detail.taskSheet.responsibleRoles.${role}` as "detail.taskSheet.responsibleRoles.front_office"
+          )
+        )
+        .join(", ")
+    }
+    if (singular) {
+      return t(
+        `detail.taskSheet.responsibleRoles.${singular}` as "detail.taskSheet.responsibleRoles.front_office"
+      )
+    }
+    return notApplicable
+  }
 
   function mandatoryLabel(value: boolean | null): string {
     if (value === null) return notApplicable
@@ -160,6 +193,9 @@ function TaskDefinitionsTab({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                {t("detail.taskDefinitions.columns.number")}
+              </TableHead>
               <TableHead>{t("detail.taskDefinitions.columns.type")}</TableHead>
               <TableHead>{t("detail.taskDefinitions.columns.task")}</TableHead>
               <TableHead>
@@ -194,19 +230,43 @@ function TaskDefinitionsTab({
                   setSheetState({ mode: "view", task })
                 }}
               >
+                <TableCell className="text-sm tabular-nums text-muted-foreground">
+                  {task.task_number ?? notApplicable}
+                </TableCell>
                 <TableCell>
                   <TypeBadge layerAction={task.layer_action} />
                 </TableCell>
                 <TableCell>
-                  <p className="font-medium text-foreground">
+                  <p className="flex items-center gap-1.5 font-medium text-foreground">
                     {task.task_name ??
                       task.inherited?.task_name ??
                       notApplicable}
+                    {/* Four eyes changes who may close the step, so it belongs beside the name
+                        rather than in a column of its own — most rows do not have it. */}
+                    {task.four_eyes && (
+                      <span
+                        className="inline-flex items-center gap-0.5 text-xs font-normal text-amber-700"
+                        title={t("detail.taskDefinitions.fourEyesTitle")}
+                        data-testid={`task-definition-four-eyes-${task.id}`}
+                      >
+                        <ShieldCheck size={14} />
+                        {t("detail.taskDefinitions.fourEyesBadge")}
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {task.task_code ?? task.inherited?.task_code ?? "—"}
                     {task.inherited &&
                       `, ${t("detail.taskDefinitions.inheritedSuffix")}`}
+                    {/* Only when it is NOT the default: `always` is what nearly every step
+                        says, and repeating it down a 44-row catalogue hides the handful of
+                        conditional steps that are the reason to look. */}
+                    {task.applicability &&
+                      task.applicability !==
+                        TaskApplicabilitySchema.enum.always &&
+                      `, ${t(
+                        `detail.taskSheet.applicabilities.${task.applicability}` as "detail.taskSheet.applicabilities.always"
+                      )}`}
                   </p>
                 </TableCell>
                 <TableCell>
@@ -233,18 +293,30 @@ function TaskDefinitionsTab({
                 <TableCell>
                   {/* PRD1042-1892 item 13 — the role is a set. A row authored before 17 Aug
                       carries only the retired singular, so fall back to it rather than
-                      showing nothing for historical tasks. */}
-                  {task.responsible_roles?.length
-                    ? task.responsible_roles
-                        .map(role =>
-                          t(`detail.taskSheet.responsibleRoles.${role}`)
+                      showing nothing for historical tasks. An override shows the inherited set
+                      struck through beneath its own, like every other overridden value here. */}
+                  <OverrideValue
+                    own={rolesLabel(
+                      task.responsible_roles,
+                      task.responsible_role
+                    )}
+                    inherited={
+                      task.inherited &&
+                      rolesLabel(
+                        task.inherited.responsible_roles,
+                        task.inherited.responsible_role
+                      ) !==
+                        rolesLabel(
+                          task.responsible_roles,
+                          task.responsible_role
                         )
-                        .join(", ")
-                    : task.responsible_role
-                      ? t(
-                          `detail.taskSheet.responsibleRoles.${task.responsible_role}`
-                        )
-                      : notApplicable}
+                        ? rolesLabel(
+                            task.inherited.responsible_roles,
+                            task.inherited.responsible_role
+                          )
+                        : null
+                    }
+                  />
                 </TableCell>
                 <TableCell>
                   {task.stage_categorization
