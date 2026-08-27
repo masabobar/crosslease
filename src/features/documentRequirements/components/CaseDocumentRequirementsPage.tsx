@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { isUuidRouteParam } from "@/lib/routeParams"
+import { useCase } from "@/features/cases/hooks/useCase"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
 
 /**
@@ -17,9 +18,10 @@ import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/c
  *
  * ── WHY THE ROUTE CARRIES ONLY AN OBJECT ID ────────────────────────────────────────────────
  * The catalogue is not asked for: item 4 forbids a catalogue selector on a case screen, and one
- * catalogue per bank (CR-DRC A2) means there is nothing to choose. The checkpoint is not asked for
- * either — a process context is not a property of the object, so the surface is read without one and
- * every row carries the contexts it applies to.
+ * catalogue per bank (CR-DRC A2) means there is nothing to choose. The requirement set is keyed by
+ * the case's own `case_type` (PRD1042-1794 DRC usability), which is not in the route — so this deep
+ * link fetches the case to read its type and hands it to the panel, the same value the Case detail
+ * tab passes from its already-loaded case.
  */
 export default function CaseDocumentRequirementsPage() {
   const { t } = useTranslation("documentRequirements")
@@ -29,6 +31,10 @@ export default function CaseDocumentRequirementsPage() {
   const businessObjectId = isUuidRouteParam(businessObjectIdParam)
     ? businessObjectIdParam
     : undefined
+
+  // The route carries only the object id; the case type is a property of the case, so the deep link
+  // reads it from the case itself. The panel stays disabled until it resolves.
+  const { data: caseData } = useCase(businessObjectId)
 
   if (!businessObjectId) {
     return (
@@ -51,7 +57,10 @@ export default function CaseDocumentRequirementsPage() {
         </h1>
       </div>
 
-      <CaseDocumentRequirementsPanel businessObjectId={businessObjectId} />
+      <CaseDocumentRequirementsPanel
+        businessObjectId={businessObjectId}
+        caseType={caseData?.case_type}
+      />
     </div>
   )
 }

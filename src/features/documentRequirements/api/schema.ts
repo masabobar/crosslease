@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { CaseTypeSchema } from "@/features/cases/api/schema"
 
 /**
  * Document Requirement Catalog (Epic 16) — wire schemas.
@@ -11,12 +12,22 @@ import { z } from "zod"
  * `product_template_id`, `source_layer` and `governance_classification` no longer exist on the
  * wire (see catalog_schemas.py / requirement_schemas.py), and `conditional` was dropped from the
  * requirement classification enum. None of them are declared here anymore.
+ *
+ * PRD1042-1794 DRC usability: the required-document set is keyed by CASE TYPE, not process
+ * context. The catalog itself no longer carries an applicability axis (it is just name + validity);
+ * a requirement declares which case types it applies to via `applicable_case_types`, and the
+ * runtime surface resolves the set for a case's own `case_type`. `process_context` is retired
+ * throughout — see the cases feature's `CaseTypeSchema` for the seven authoritative values.
  */
+
+// The seven case-type values, reused from the cases feature rather than redefined — a requirement's
+// applicability axis is exactly the case's own type, so there is one source of truth for the enum.
+export { CaseTypeSchema }
+export type { CaseType } from "@/features/cases/api/schema"
 
 export const DocumentRequirementCatalogListItemSchema = z.object({
   id: z.string().uuid(),
   catalog_name: z.string(),
-  applicable_process_contexts: z.array(z.string()),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
   created_at: z.string(),
@@ -37,10 +48,11 @@ export type DocumentRequirementCatalogListResponse = z.infer<
 >
 
 // POST /tenants/{tenant_id}/document-requirement-catalogs — mirrors CreateCatalogRequest. CR-1794
-// removed the product layer, so there is no catalog_type / product_template_id to send.
+// removed the product layer, so there is no catalog_type / product_template_id to send; the DRC
+// usability change retired the catalog's applicability axis too — a catalog is now just name +
+// validity, and the case-type axis lives on the requirement.
 export const CreateDocumentRequirementCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200),
-  applicable_process_contexts: z.array(z.string()).min(1),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
 })
@@ -55,7 +67,6 @@ export type CreateDocumentRequirementCatalogRequest = z.infer<
 export const DocumentRequirementCatalogResponseSchema = z.object({
   id: z.string().uuid(),
   catalog_name: z.string(),
-  applicable_process_contexts: z.array(z.string()),
   valid_from: z.string().nullable(),
   valid_to: z.string().nullable(),
   created_by: z.string().uuid(),
@@ -162,7 +173,7 @@ export const RequirementResponseSchema = z.object({
   document_type_name: z.string(),
   description: z.string().nullable(),
   classification: RequirementClassificationSchema,
-  applicable_process_contexts: z.array(z.string()),
+  applicable_case_types: z.array(z.string()),
   stage_categorization: StageCategorizationSchema.nullable(),
   document_origin: DocumentOriginSchema,
   is_active: z.boolean(),
@@ -181,7 +192,9 @@ const RequirementRequestFieldsSchema = z.object({
   document_type_name: z.string().min(1).max(255),
   description: z.string().nullable().optional(),
   classification: RequirementClassificationSchema.default("mandatory"),
-  applicable_process_contexts: z.array(z.string()).min(1),
+  // At least one case type is required on create for a mandatory requirement — the resolution key
+  // the runtime surface matches a case's own `case_type` against.
+  applicable_case_types: z.array(z.string()).min(1),
   stage_categorization: StageCategorizationSchema.nullable().optional(),
   document_origin: DocumentOriginSchema.default("uploaded"),
   sort_order: z.number().int().default(0),
@@ -209,7 +222,6 @@ export const UpdateDocumentRequirementCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200).optional(),
   valid_from: z.string().nullable().optional(),
   valid_to: z.string().nullable().optional(),
-  applicable_process_contexts: z.array(z.string()).min(1).optional(),
 })
 export type UpdateDocumentRequirementCatalogRequest = z.infer<
   typeof UpdateDocumentRequirementCatalogRequestSchema
@@ -224,32 +236,6 @@ export const DocumentRequirementCatalogDetailResponseSchema =
   })
 export type DocumentRequirementCatalogDetailResponse = z.infer<
   typeof DocumentRequirementCatalogDetailResponseSchema
->
-
-// GET .../preview?process_context= — mirrors MaterializationResponse (also the shape of
-// POST .../materialize). Diagnostic only: never persists, per US 16.21.
-export const MaterializedRequirementResponseSchema = z.object({
-  requirement_definition_id: z.string().uuid(),
-  requirement_code: z.string(),
-  document_type_code: z.string(),
-  document_type_name: z.string(),
-  classification: RequirementClassificationSchema,
-  stage_categorization: StageCategorizationSchema.nullable(),
-  applicable_process_contexts: z.array(z.string()),
-  document_origin: DocumentOriginSchema,
-})
-export type MaterializedRequirementResponse = z.infer<
-  typeof MaterializedRequirementResponseSchema
->
-
-export const MaterializationResponseSchema = z.object({
-  catalog_id: z.string().uuid(),
-  process_context: z.string(),
-  effective_requirements: z.array(MaterializedRequirementResponseSchema),
-  total: z.number(),
-})
-export type MaterializationResponse = z.infer<
-  typeof MaterializationResponseSchema
 >
 
 // GET /document-requirement-catalogs/{catalog_id}/requirements — read-only slice consumed by the
@@ -279,10 +265,10 @@ export type DocumentRequirementListResponse = z.infer<
 
 // ── D-11: what a case requires (PRD1042-1796 item 5) ────────────────────────────────────────
 //
-// GET /document-requirement-catalogs/{id}/objects/{object_id}/requirements. Reachable with the
-// object id alone: `object_type` narrows nothing (the id is a UUID, the query is tenant-scoped) and
-// `process_context` is a checkpoint rather than a property of the object, so nothing derives it from
-// an id. Omitting the context spans the whole catalogue, which is why each row carries its own.
+// GET /document-requirement-catalogs/{id}/objects/{object_id}/requirements. Resolved from the
+// case's own `case_type`: the runtime surface returns the requirement set that applies to that case
+// type, and each row carries the case types it applies to. Omitting the case type spans the whole
+// catalogue.
 // The statuses the backend defines today (waived / overridden / not_applicable are post-MVP). Used
 // for labelling and styling only — the row's own `fulfilment_status` is parsed as a plain string so
 // a status added on the backend widens this screen instead of breaking it.
@@ -305,10 +291,9 @@ export const RuntimeRequirementItemSchema = z.object({
   fulfilment_status: z.string(),
   is_blocking: z.boolean(),
   document_origin: z.string(),
-  // The backend RuntimeRequirementItem (surface_schemas.py) does not carry these two — they belong
-  // to the materialization/preview contract, not the per-object runtime surface. Kept optional so
-  // this screen parses the runtime response and degrades gracefully when they are absent.
-  applicable_process_contexts: z.array(z.string()).optional().default([]),
+  // The case types this requirement applies to. Kept optional/defaulted so this screen parses the
+  // runtime response and degrades gracefully when the backend omits it.
+  applicable_case_types: z.array(z.string()).optional().default([]),
   linked_document_id: z.string().uuid().nullable().optional(),
 })
 export type RuntimeRequirementItem = z.infer<
@@ -318,8 +303,9 @@ export type RuntimeRequirementItem = z.infer<
 export const RuntimeRequirementSurfaceResponseSchema = z.object({
   catalog_id: z.string().uuid(),
   business_object_id: z.string().uuid(),
-  // Null when no checkpoint was named: the response spans the catalogue.
-  process_context: z.string().nullable(),
+  // The case type the set was resolved for. Null when none was named: the response spans the
+  // catalogue.
+  case_type: z.string().nullable(),
   completeness_summary: z.string(),
   requirements: z.array(RuntimeRequirementItemSchema),
 })

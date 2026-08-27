@@ -65,16 +65,20 @@ const FULFILMENT_STATUS_CLASSES: Record<string, string> = {
  * tab (which passes the case id). The catalogue auto-resolution and role-gated upload/review
  * controls are unchanged — only where they render moved.
  *
- * ── WHY NO CATALOGUE / CHECKPOINT IS ASKED FOR ─────────────────────────────────────────────
+ * ── WHY NO CATALOGUE IS ASKED FOR, AND HOW THE SET IS KEYED ─────────────────────────────────
  * The catalogue is not selected: one catalogue per bank (CR-DRC A2) means there is nothing to
- * choose, so the single global default IS the case's catalogue. The checkpoint is not asked for
- * either — a process context is not a property of the object, so the surface is read without one and
- * every row carries the contexts it applies to.
+ * choose, so the single global default IS the case's catalogue. The requirement set is keyed by the
+ * case's own `case_type` (PRD1042-1794 DRC usability) — the runtime surface returns the requirements
+ * that apply to that type, and every row carries the case types it applies to. `caseType` is passed
+ * in by the caller that has the case object (Case detail passes the loaded case's type); it is
+ * optional so the surface stays disabled, rather than mis-resolving, until it is known.
  */
 export function CaseDocumentRequirementsPanel({
   businessObjectId,
+  caseType,
 }: {
   businessObjectId: string
+  caseType?: string
 }) {
   const { t } = useTranslation("documentRequirements")
 
@@ -94,9 +98,9 @@ export function CaseDocumentRequirementsPanel({
     isPending,
     isError,
     error,
-  } = useCaseDocumentRequirements(catalogId, businessObjectId)
+  } = useCaseDocumentRequirements(catalogId, businessObjectId, caseType)
 
-  if (isCatalogsLoading || (catalogId && isPending)) {
+  if (isCatalogsLoading || (catalogId && caseType && isPending)) {
     return (
       <div className="flex flex-col gap-4" data-testid="case-documents-loading">
         <Skeleton className="h-8 w-72" />
@@ -187,7 +191,7 @@ export function CaseDocumentRequirementsPanel({
               <TableHead>{t("caseDocuments.columns.documentType")}</TableHead>
               <TableHead>{t("caseDocuments.columns.requirement")}</TableHead>
               <TableHead>{t("caseDocuments.columns.classification")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.checkpoints")}</TableHead>
+              <TableHead>{t("caseDocuments.columns.caseTypes")}</TableHead>
               <TableHead>{t("caseDocuments.columns.status")}</TableHead>
               <TableHead>{t("caseDocuments.columns.document")}</TableHead>
               <TableHead>{t("caseDocuments.columns.actions")}</TableHead>
@@ -253,15 +257,14 @@ function RequirementRow({
         )}
       </TableCell>
       <TableCell>
-        {/* The checkpoints this requirement applies at. Present because the surface is read without
-            naming one, so a row has to say where it belongs rather than the page claiming one. */}
-        {item.applicable_process_contexts.length > 0
-          ? item.applicable_process_contexts
-              .map(context =>
-                t(
-                  `processContexts.${context}` as "processContexts.refinancing_request",
-                  { defaultValue: context }
-                )
+        {/* The case types this requirement applies to — the axis the set is keyed by. Each row
+            carries its own so the surface says which case types it belongs to. */}
+        {item.applicable_case_types.length > 0
+          ? item.applicable_case_types
+              .map(caseType =>
+                t(`caseTypes.${caseType}` as "caseTypes.refinancing_request", {
+                  defaultValue: caseType,
+                })
               )
               .join(", ")
           : notApplicable}

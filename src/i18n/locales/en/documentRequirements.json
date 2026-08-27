@@ -1,22 +1,23 @@
 {
-  "processContexts": {
-    "refinancing_request": "Refinancing Request",
-    "lease_contract": "Lease Contract",
-    "financing": "Financing",
-    "disbursement": "Disbursement"
+  "caseTypes": {
+    "refinancing_request": "Refinancing request",
+    "package_redemption": "Package redemption",
+    "single_redemption": "Single redemption",
+    "lessee_change": "Lessee change",
+    "object_swap": "Object swap",
+    "extension": "Extension",
+    "asset_event": "Asset event"
   },
   "list": {
     "title": "Document requirement catalog",
     "subtitle": "Manage document requirement catalogs used across your tenant.",
     "createButton": "Create catalog",
     "filters": {
-      "searchPlaceholder": "Search by catalog name",
-      "allProcessContexts": "All process contexts"
+      "searchPlaceholder": "Search by catalog name"
     },
     "table": {
       "columns": {
         "catalogName": "Catalog name",
-        "processContexts": "Process contexts",
         "validFrom": "Valid from",
         "validTo": "Valid to",
         "createdAt": "Created at"
@@ -45,7 +46,6 @@
       "catalogName": "Catalog name",
       "productTemplate": "Applicable product template",
       "productTemplatePlaceholder": "Select",
-      "processContexts": "Applicable process contexts",
       "validFrom": "Valid from",
       "validTo": "Valid to",
       "optional": "(optional)"
@@ -61,9 +61,6 @@
     }
   },
   "detail": {
-    "header": {
-      "processContexts": "Process contexts"
-    },
     "tabs": {
       "identity": "Identity",
       "requirements": "Requirements",
@@ -73,7 +70,6 @@
       "title": "Catalog identity",
       "editButton": "Edit",
       "catalogName": "Catalog name",
-      "processContexts": "Process contexts",
       "validFrom": "Valid from",
       "validTo": "Valid to",
       "createdBy": "Created by",
@@ -128,7 +124,7 @@
       "documentTypeName": "Document type name",
       "description": "Description",
       "classification": "Classification",
-      "processContexts": "Process contexts",
+      "caseTypes": "Applies to case types",
       "stageCategorization": "Stage categorization",
       "stageNone": "None",
       "documentOrigin": "Document origin"
@@ -214,13 +210,6 @@
     },
     "errors": {}
   },
-  "preview": {
-    "title": "Effective requirement set preview",
-    "diagnosticBadge": "Diagnostic · read only · never persists",
-    "selectProcessContext": "Select a process context",
-    "previewButton": "Preview",
-    "emptyState": "No active requirements match this process context."
-  },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "CATALOG_VALIDATION_ERROR": "This catalogue could not be validated. Review the requirements and try again.",
@@ -267,7 +256,7 @@
       "documentType": "Document type",
       "requirement": "Requirement",
       "classification": "Binding",
-      "checkpoints": "Applies at",
+      "caseTypes": "Case types",
       "status": "Status",
       "document": "Document",
       "upload": "Upload",

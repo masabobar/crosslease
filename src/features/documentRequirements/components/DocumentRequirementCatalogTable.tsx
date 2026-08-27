@@ -7,7 +7,6 @@ import type { DocumentRequirementCatalogListItem } from "@/features/documentRequ
 // by other list tables in this codebase (ProductTemplateTable, PartnerTable, WorkflowTaskCatalogTable).
 // Name is the only flexible column.
 const COL_NAME = "flex-1 min-w-[160px]"
-const COL_PROCESS_CONTEXTS = "w-[220px] shrink-0"
 const COL_VALID_FROM = "w-[110px] shrink-0"
 const COL_VALID_TO = "w-[110px] shrink-0"
 const COL_CREATED = "w-[190px] shrink-0"
@@ -16,13 +15,10 @@ const SKELETON_COUNT = 5
 
 // Operational State and Created By are absent by design — neither field exists on the wire
 // (see open-questions.md). CR-1794 removed the product layer, so there is no Catalog Type or
-// Product Template column.
+// Product Template column; the DRC usability change retired the catalog's process-context axis, so
+// there is no process-contexts column either.
 const HEADER_COLUMNS = [
   { width: COL_NAME, labelKey: "list.table.columns.catalogName" },
-  {
-    width: COL_PROCESS_CONTEXTS,
-    labelKey: "list.table.columns.processContexts",
-  },
   { width: COL_VALID_FROM, labelKey: "list.table.columns.validFrom" },
   { width: COL_VALID_TO, labelKey: "list.table.columns.validTo" },
   { width: COL_CREATED, labelKey: "list.table.columns.createdAt" },
@@ -102,20 +98,6 @@ function DocumentRequirementCatalogTable({
               <p className="text-sm font-medium truncate text-foreground leading-tight">
                 {row.catalog_name}
               </p>
-            </div>
-            <div className={`${COL_PROCESS_CONTEXTS} p-2`}>
-              <span className="text-sm text-foreground truncate block">
-                {row.applicable_process_contexts
-                  .map(value =>
-                    t(
-                      `processContexts.${value}` as "processContexts.financing",
-                      {
-                        defaultValue: value,
-                      }
-                    )
-                  )
-                  .join(", ")}
-              </span>
             </div>
             <div className={`${COL_VALID_FROM} p-2`}>
               <span className="text-sm text-foreground">

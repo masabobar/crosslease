@@ -1,5 +1,4 @@
 import { useSearchParams } from "react-router-dom"
-import type { DocumentRequirementCatalogFilterState } from "@/features/documentRequirements/constants"
 
 export const PAGE_SIZES = [10, 25, 50] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
@@ -15,12 +14,10 @@ type DocumentRequirementCatalogListParams = {
   page: number
   perPage: PageSize
   search: string
-  filters: DocumentRequirementCatalogFilterState
   hasActiveFilters: boolean
   setPage: (p: number) => void
   setPerPage: (size: PageSize) => void
   setSearch: (q: string) => void
-  setFilters: (changes: Partial<DocumentRequirementCatalogFilterState>) => void
 }
 
 export function useDocumentRequirementCatalogListParams(): DocumentRequirementCatalogListParams {
@@ -52,13 +49,9 @@ export function useDocumentRequirementCatalogListParams(): DocumentRequirementCa
     : DEFAULT_PAGE_SIZE
   const search = params.get("q") ?? ""
 
-  const filters: DocumentRequirementCatalogFilterState = {
-    // Free-form on the wire (no backend enum), so nothing to validate against here.
-    processContext: params.get("process_context"),
-  }
-
-  const hasActiveFilters =
-    Boolean(search.trim()) || filters.processContext !== null
+  // Search is the only filter now — CR-1794 removed the product layer and the DRC usability change
+  // retired the catalog's process-context axis, so there is nothing else to narrow the list by.
+  const hasActiveFilters = Boolean(search.trim())
 
   function setPage(p: number) {
     update({ page: p === 1 ? null : String(p) })
@@ -75,24 +68,13 @@ export function useDocumentRequirementCatalogListParams(): DocumentRequirementCa
     update({ q: q || null, page: null })
   }
 
-  function setFilters(changes: Partial<DocumentRequirementCatalogFilterState>) {
-    update({
-      ...("processContext" in changes && {
-        process_context: changes.processContext ?? null,
-      }),
-      page: null,
-    })
-  }
-
   return {
     page,
     perPage,
     search,
-    filters,
     hasActiveFilters,
     setPage,
     setPerPage,
     setSearch,
-    setFilters,
   }
 }

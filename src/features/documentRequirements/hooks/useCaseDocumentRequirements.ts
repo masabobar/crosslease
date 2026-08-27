@@ -5,34 +5,47 @@ import { fetchCaseDocumentRequirements } from "@/features/documentRequirements/a
 
 export const CASE_DOCUMENT_REQUIREMENT_QUERY_KEYS = {
   all: ["case-document-requirements"] as const,
-  forObject: (catalogId: string, businessObjectId: string) =>
-    ["case-document-requirements", catalogId, businessObjectId] as const,
+  // caseType is a trailing segment so a mutation that knows only the catalogue + object (upload,
+  // review) can invalidate by the [catalogId, businessObjectId] prefix and hit every case-type
+  // variant, while the surface query keys the exact tuple it reads.
+  forObject: (catalogId: string, businessObjectId: string, caseType?: string) =>
+    [
+      "case-document-requirements",
+      catalogId,
+      businessObjectId,
+      ...(caseType !== undefined ? [caseType] : []),
+    ] as const,
 } as const
 
-// A refinancing-request case resolves its requirement set under the "submission" process context
-// (the standard mandatory set the bank authored). object_type names the business object kind.
+// The business object kind. A case is a `refinancing_request` object regardless of its case type —
+// this is the object's fixed kind, distinct from `case_type`, which is the case's own type used to
+// resolve the requirement set.
 const CASE_OBJECT_TYPE = "refinancing_request"
-const CASE_PROCESS_CONTEXT = "submission"
 
-// D-11 (PRD1042-1796 item 5). Disabled until both ids exist: the catalogue is resolved from the
-// bank's single catalogue (CR-DRC A2), so an absent one means the tenant has none yet rather than
-// that the caller forgot to pass it.
+// D-11 (PRD1042-1796 item 5). The set is keyed by the case's own `case_type` (PRD1042-1794 DRC
+// usability): the runtime surface returns the requirements that apply to that type. Disabled until
+// all three inputs exist — the catalogue is resolved from the bank's single catalogue (CR-DRC A2),
+// so an absent one means the tenant has none yet, and an absent case type means the case has not
+// loaded rather than that the caller forgot to pass it.
 export function useCaseDocumentRequirements(
   catalogId: string | undefined,
-  businessObjectId: string | undefined
+  businessObjectId: string | undefined,
+  caseType: string | undefined
 ): UseQueryResult<RuntimeRequirementSurfaceResponse, Error> {
   return useQuery({
     queryKey: CASE_DOCUMENT_REQUIREMENT_QUERY_KEYS.forObject(
       catalogId ?? "",
-      businessObjectId ?? ""
+      businessObjectId ?? "",
+      caseType ?? ""
     ),
     queryFn: () =>
       fetchCaseDocumentRequirements(
         catalogId as string,
         businessObjectId as string,
         CASE_OBJECT_TYPE,
-        CASE_PROCESS_CONTEXT
+        caseType as string
       ),
-    enabled: Boolean(catalogId) && Boolean(businessObjectId),
+    enabled:
+      Boolean(catalogId) && Boolean(businessObjectId) && Boolean(caseType),
   })
 }

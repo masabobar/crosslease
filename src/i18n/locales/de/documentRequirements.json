@@ -1,22 +1,23 @@
 {
-  "processContexts": {
+  "caseTypes": {
     "refinancing_request": "Refinanzierungsanfrage",
-    "lease_contract": "Leasingvertrag",
-    "financing": "Finanzierung",
-    "disbursement": "Auszahlung"
+    "package_redemption": "Paketablösung",
+    "single_redemption": "Einzelablösung",
+    "lessee_change": "Leasingnehmerwechsel",
+    "object_swap": "Objekttausch",
+    "extension": "Verlängerung",
+    "asset_event": "Asset-Ereignis"
   },
   "list": {
     "title": "Dokumentenanforderungskatalog",
     "subtitle": "Verwalten Sie die Dokumentenanforderungskataloge Ihres Mandanten.",
     "createButton": "Katalog erstellen",
     "filters": {
-      "searchPlaceholder": "Nach Katalogname suchen",
-      "allProcessContexts": "Alle Prozesskontexte"
+      "searchPlaceholder": "Nach Katalogname suchen"
     },
     "table": {
       "columns": {
         "catalogName": "Katalogname",
-        "processContexts": "Prozesskontexte",
         "validFrom": "Gültig von",
         "validTo": "Gültig bis",
         "createdAt": "Erstellt am"
@@ -45,7 +46,6 @@
       "catalogName": "Katalogname",
       "productTemplate": "Zutreffende Produktvorlage",
       "productTemplatePlaceholder": "Auswählen",
-      "processContexts": "Zutreffende Prozesskontexte",
       "validFrom": "Gültig von",
       "validTo": "Gültig bis",
       "optional": "(optional)"
@@ -61,9 +61,6 @@
     }
   },
   "detail": {
-    "header": {
-      "processContexts": "Prozesskontexte"
-    },
     "tabs": {
       "identity": "Identität",
       "requirements": "Anforderungen",
@@ -73,7 +70,6 @@
       "title": "Katalogidentität",
       "editButton": "Bearbeiten",
       "catalogName": "Katalogname",
-      "processContexts": "Prozesskontexte",
       "validFrom": "Gültig von",
       "validTo": "Gültig bis",
       "createdBy": "Erstellt von",
@@ -128,7 +124,7 @@
       "documentTypeName": "Dokumenttypname",
       "description": "Beschreibung",
       "classification": "Klassifizierung",
-      "processContexts": "Prozesskontexte",
+      "caseTypes": "Gilt für Falltypen",
       "stageCategorization": "Phasenkategorisierung",
       "stageNone": "Keine",
       "documentOrigin": "Dokumentherkunft"
@@ -214,13 +210,6 @@
     },
     "errors": {}
   },
-  "preview": {
-    "title": "Vorschau des effektiven Anforderungssatzes",
-    "diagnosticBadge": "Diagnose · nur lesend · wird nie gespeichert",
-    "selectProcessContext": "Prozesskontext auswählen",
-    "previewButton": "Vorschau",
-    "emptyState": "Keine aktiven Anforderungen entsprechen diesem Prozesskontext."
-  },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "CATALOG_VALIDATION_ERROR": "Dieser Katalog konnte nicht validiert werden. Überprüfen Sie die Anforderungen und versuchen Sie es erneut.",
@@ -267,7 +256,7 @@
       "documentType": "Dokumentart",
       "requirement": "Anforderung",
       "classification": "Verbindlichkeit",
-      "checkpoints": "Gilt bei",
+      "caseTypes": "Falltypen",
       "status": "Status",
       "document": "Dokument",
       "upload": "Hochladen",

@@ -97,7 +97,13 @@ export default function CaseDetailPage() {
 
         <TabsContent value="documents">
           <div className="mt-4">
-            <CaseDocumentRequirementsPanel businessObjectId={data.id} />
+            {/* case_type is the resolution key for the document set (PRD1042-1794 DRC usability);
+                the case object is loaded here, so the panel is handed the type rather than
+                re-fetching it. */}
+            <CaseDocumentRequirementsPanel
+              businessObjectId={data.id}
+              caseType={data.case_type}
+            />
           </div>
         </TabsContent>
       </Tabs>

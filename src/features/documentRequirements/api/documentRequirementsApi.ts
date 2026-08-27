@@ -10,7 +10,6 @@ import {
   DocumentTypeListResponseSchema,
   DocumentTypeSchema,
   RuntimeRequirementSurfaceResponseSchema,
-  MaterializationResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
   UpdateDocumentTypeRequestSchema,
@@ -27,7 +26,6 @@ import type {
   DocumentRequirementCatalogListResponse,
   DocumentRequirementCatalogResponse,
   DocumentRequirementListResponse,
-  MaterializationResponse,
   RequirementResponse,
   UpdateDocumentRequirementCatalogRequest,
   UpdateDocumentTypeRequest,
@@ -36,7 +34,6 @@ import type {
 
 export type DocumentRequirementCatalogListParams = {
   search?: string
-  process_context?: string
   page?: number
   per_page?: number
 }
@@ -58,16 +55,6 @@ export const DOCUMENT_REQUIREMENT_QUERY_KEYS = {
     ["document-requirements", "requirements"] as const,
   detail: (catalogId: string) =>
     ["document-requirements", "catalogs", "detail", catalogId] as const,
-  // Diagnostic only (US 16.21) — never persists, so a short staleTime on the query hook is
-  // enough; no invalidation needed anywhere.
-  preview: (catalogId: string, processContext: string) =>
-    [
-      "document-requirements",
-      "catalogs",
-      "preview",
-      catalogId,
-      processContext,
-    ] as const,
 } as const
 
 // The endpoint caps per_page server-side; these are the widest useful pages for a picker.
@@ -173,18 +160,6 @@ export async function deactivateRequirement(
   return RequirementResponseSchema.parse(data)
 }
 
-// US 16.21 — diagnostic only, never persists.
-export async function fetchDocumentRequirementCatalogPreview(
-  catalogId: string,
-  processContext: string
-): Promise<MaterializationResponse> {
-  const data = await api.get(
-    `/document-requirement-catalogs/${catalogId}/preview`,
-    { params: { process_context: processContext } }
-  )
-  return MaterializationResponseSchema.parse(data)
-}
-
 // PRD1042-1794 Block 10 — the tenant's document-type registry. `include_inactive` is deliberately
 // not sent: an authoring picker must not offer a retired type, and the backend already filters.
 export async function fetchTenantDocumentTypes(
@@ -233,20 +208,18 @@ export async function updateDocumentType(
   return DocumentTypeSchema.parse(data)
 }
 
-// D-11 (PRD1042-1796 item 5) — what a case requires. Neither `object_type` nor `process_context` is
-// sent: the first narrows nothing, and the second is a checkpoint no screen can know, so omitting it
-// returns the whole catalogue with each row carrying its own contexts.
+// D-11 (PRD1042-1796 item 5) — what a case requires. `object_type` is the business object kind
+// (a case is a `refinancing_request` object). `case_type` is the case's own type — the resolution
+// key the backend matches a requirement's `applicable_case_types` against; the two are distinct.
 export async function fetchCaseDocumentRequirements(
   catalogId: string,
   businessObjectId: string,
   objectType: string,
-  processContext: string
+  caseType: string
 ): Promise<RuntimeRequirementSurfaceResponse> {
-  // The runtime surface resolves the requirement set for this business object and process context;
-  // both are required by the backend (routes/runtime.py get_runtime_requirements).
   const data = await api.get(
     `/document-requirement-catalogs/${catalogId}/objects/${businessObjectId}/requirements`,
-    { params: { object_type: objectType, process_context: processContext } }
+    { params: { object_type: objectType, case_type: caseType } }
   )
   return RuntimeRequirementSurfaceResponseSchema.parse(data)
 }
