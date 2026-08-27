@@ -115,6 +115,33 @@ export type DocumentTypeListResponse = z.infer<
   typeof DocumentTypeListResponseSchema
 >
 
+// POST /tenants/{tenant_id}/document-types — create a registry entry. Mirrors the backend
+// CreateDocumentTypeRequest: type_code and origin are set once here and are immutable afterwards
+// (the PATCH contract omits both). `origin` defaults to `requested`.
+export const CreateDocumentTypeRequestSchema = z.object({
+  type_code: z.string().min(1).max(100),
+  type_name: z.string().min(1).max(255),
+  role_scope: DocumentRoleScopeSchema,
+  origin: DocumentTypeOriginSchema.default("requested"),
+  note: z.string().nullable().optional(),
+})
+export type CreateDocumentTypeRequest = z.infer<
+  typeof CreateDocumentTypeRequestSchema
+>
+
+// PATCH /tenants/{tenant_id}/document-types/{id} — edit a registry entry. All fields optional;
+// type_code and origin are immutable and therefore absent. `is_active` carries the
+// deactivate/reactivate row action.
+export const UpdateDocumentTypeRequestSchema = z.object({
+  type_name: z.string().min(1).max(255).optional(),
+  role_scope: DocumentRoleScopeSchema.optional(),
+  note: z.string().nullable().optional(),
+  is_active: z.boolean().optional(),
+})
+export type UpdateDocumentTypeRequest = z.infer<
+  typeof UpdateDocumentTypeRequestSchema
+>
+
 export const DocumentOriginSchema = z.enum(["uploaded", "generated"])
 export type DocumentOrigin = z.infer<typeof DocumentOriginSchema>
 

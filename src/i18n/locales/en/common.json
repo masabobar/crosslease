@@ -28,6 +28,7 @@
     "frameworkAgreements": "Framework agreements",
     "workflowTaskCatalogs": "Workflow task catalogs",
     "documentRequirementCatalogs": "Document requirement catalogs",
+    "documentTypes": "Document types",
     "rulesSetup": "Rules setup",
     "platformAdministration": "Platform administration",
     "userManagement": "User management",

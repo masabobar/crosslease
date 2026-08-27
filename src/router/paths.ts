@@ -63,6 +63,9 @@ export const PATHS = {
     "/business-configuration/document-requirement-catalogs",
   DOCUMENT_REQUIREMENT_CATALOG_DETAIL:
     "/business-configuration/document-requirement-catalogs/:id",
+  // PRD1042-1794 Block 10 — the tenant's document-type registry management screen. A Bank Power
+  // User populates this so the requirement-authoring dropdown has types to pick from.
+  DOCUMENT_TYPE_LIST: "/business-configuration/document-types",
   // Case work, not business configuration — hence the separate prefix. No case module exists yet
   // to link here, so this is the interim entry point for the runtime checklist; see the design
   // provenance note on CaseChecklistPage.tsx.

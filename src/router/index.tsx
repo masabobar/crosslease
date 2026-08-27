@@ -35,6 +35,7 @@ import {
 import {
   CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES,
   DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
+  DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES,
 } from "@/features/documentRequirements/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
@@ -173,6 +174,10 @@ const DocumentRequirementCatalogListPage = lazy(
 const DocumentRequirementCatalogDetailPage = lazy(
   () =>
     import("@/features/documentRequirements/components/DocumentRequirementCatalogDetailPage")
+)
+const DocumentTypeListPage = lazy(
+  () =>
+    import("@/features/documentRequirements/components/DocumentTypeListPage")
 )
 
 export const router = createBrowserRouter([
@@ -550,6 +555,19 @@ export const router = createBrowserRouter([
               allowed={DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES}
             >
               <DocumentRequirementCatalogDetailPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // bank_power_user only (DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES): a pure authoring surface, so
+        // it does not inherit the catalogue's wider READ set that grants support_user/auditor
+        // read-only diagnostic access.
+        path: PATHS.DOCUMENT_TYPE_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES}>
+              <DocumentTypeListPage />
             </RoleGuard>
           </Suspense>
         ),

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import {
   AddRequirementRequestSchema,
   CreateDocumentRequirementCatalogRequestSchema,
+  CreateDocumentTypeRequestSchema,
   DocumentRequirementCatalogDetailResponseSchema,
   DocumentRequirementCatalogListResponseSchema,
   DocumentRequirementCatalogResponseSchema,
@@ -17,6 +18,7 @@ import {
   MaterializedRequirementResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
+  UpdateDocumentTypeRequestSchema,
   UpdateRequirementRequestSchema,
 } from "@/features/documentRequirements/api/schema"
 
@@ -550,6 +552,99 @@ describe("document-type registry (PRD1042-1794 Block 10)", () => {
   it("accepts an empty registry", () => {
     const parsed = DocumentTypeListResponseSchema.parse({ items: [], total: 0 })
     expect(parsed.items).toEqual([])
+  })
+})
+
+describe("CreateDocumentTypeRequestSchema (PRD1042-1794 Block 10)", () => {
+  const validCreate = {
+    type_code: "LEASE_CONTRACT",
+    type_name: "Lease contract",
+    role_scope: "lessee",
+    origin: "requested",
+    note: null,
+  }
+
+  it("accepts the documented shape", () => {
+    expect(CreateDocumentTypeRequestSchema.parse(validCreate)).toEqual(
+      validCreate
+    )
+  })
+
+  it("defaults origin to requested when omitted", () => {
+    const minimal = {
+      type_code: "LOAN_OFFER",
+      type_name: "Loan offer",
+      role_scope: "case",
+    }
+    expect(CreateDocumentTypeRequestSchema.parse(minimal).origin).toBe(
+      "requested"
+    )
+  })
+
+  it("rejects a type_code over 100 characters", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        type_code: "a".repeat(101),
+      })
+    ).toThrow()
+  })
+
+  it("rejects a type_name over 255 characters", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        type_name: "a".repeat(256),
+      })
+    ).toThrow()
+  })
+
+  it("rejects an unknown role scope", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        role_scope: "vendor",
+      })
+    ).toThrow()
+  })
+
+  // The registry origin is requested | generated — never the requirement's uploaded | generated.
+  it("rejects the requirement-side origin value 'uploaded'", () => {
+    expect(() =>
+      CreateDocumentTypeRequestSchema.parse({
+        ...validCreate,
+        origin: "uploaded",
+      })
+    ).toThrow()
+  })
+})
+
+describe("UpdateDocumentTypeRequestSchema (PRD1042-1794 Block 10)", () => {
+  it("accepts a single-field partial update", () => {
+    const parsed = UpdateDocumentTypeRequestSchema.parse({
+      type_name: "Renamed type",
+    })
+    expect(parsed.type_name).toBe("Renamed type")
+  })
+
+  it("accepts an empty object — every field is optional", () => {
+    expect(() => UpdateDocumentTypeRequestSchema.parse({})).not.toThrow()
+  })
+
+  it("carries is_active for the deactivate/reactivate row action", () => {
+    expect(
+      UpdateDocumentTypeRequestSchema.parse({ is_active: false }).is_active
+    ).toBe(false)
+  })
+
+  // type_code and origin are immutable, so the request contract must not carry them.
+  it("has no type_code or origin field — neither is mutable", () => {
+    const parsed = UpdateDocumentTypeRequestSchema.parse({
+      type_code: "should-be-stripped",
+      origin: "should-be-stripped",
+    }) as Record<string, unknown>
+    expect(parsed.type_code).toBeUndefined()
+    expect(parsed.origin).toBeUndefined()
   })
 })
 

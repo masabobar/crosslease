@@ -150,6 +150,70 @@
     "noDocumentTypes": "No document types are registered yet. Add one to the registry before creating a requirement.",
     "selectDocumentType": "Select a document type"
   },
+  "documentType": {
+    "list": {
+      "title": "Document types",
+      "subtitle": "Maintain the registry of document types your requirement authors pick from.",
+      "addButton": "Add document type"
+    },
+    "actionsMenuLabel": "Row actions",
+    "actions": {
+      "edit": "Edit",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate"
+    },
+    "table": {
+      "columns": {
+        "typeCode": "Code",
+        "typeName": "Name",
+        "roleScope": "Role scope",
+        "origin": "Origin",
+        "status": "Active"
+      }
+    },
+    "emptyState": {
+      "title": "No document types yet",
+      "description": "Add one to get started."
+    },
+    "active": "Active",
+    "inactive": "Inactive",
+    "showInactive": "Show inactive",
+    "addTitle": "Add document type",
+    "addSubtitle": "The code and origin are set once and cannot be changed later.",
+    "editTitle": "Edit document type",
+    "editSubtitle": "Code and origin cannot be changed after creation.",
+    "addSubmit": "Add",
+    "editSubmit": "Save",
+    "addSuccess": "Document type added.",
+    "editSuccess": "Document type updated.",
+    "deactivateSuccess": "Document type deactivated.",
+    "reactivateSuccess": "Document type reactivated.",
+    "fields": {
+      "typeCode": "Code",
+      "typeName": "Name",
+      "roleScope": "Role scope",
+      "origin": "Origin",
+      "note": "Note"
+    },
+    "roleScopes": {
+      "lessee": "Lessee",
+      "guarantor": "Guarantor",
+      "case": "Case"
+    },
+    "origins": {
+      "requested": "Requested",
+      "generated": "Generated"
+    },
+    "deactivateConfirm": {
+      "title": "Deactivate this document type?",
+      "description": "It will no longer be offered when authoring new document requirements. Existing requirements are unaffected. You can reactivate it later."
+    },
+    "reactivateConfirm": {
+      "title": "Reactivate this document type?",
+      "description": "It will be offered again when authoring new document requirements."
+    },
+    "errors": {}
+  },
   "preview": {
     "title": "Effective requirement set preview",
     "diagnosticBadge": "Diagnostic · read only · never persists",

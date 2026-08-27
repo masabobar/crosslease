@@ -2,18 +2,23 @@ import { api } from "@/lib/api"
 import {
   AddRequirementRequestSchema,
   CreateDocumentRequirementCatalogRequestSchema,
+  CreateDocumentTypeRequestSchema,
   DocumentRequirementCatalogDetailResponseSchema,
   DocumentRequirementCatalogListResponseSchema,
   DocumentRequirementCatalogResponseSchema,
   DocumentRequirementListResponseSchema,
   DocumentTypeListResponseSchema,
+  DocumentTypeSchema,
   RuntimeRequirementSurfaceResponseSchema,
   MaterializationResponseSchema,
   RequirementResponseSchema,
   UpdateDocumentRequirementCatalogRequestSchema,
+  UpdateDocumentTypeRequestSchema,
   UpdateRequirementRequestSchema,
 } from "@/features/documentRequirements/api/schema"
 import type {
+  CreateDocumentTypeRequest,
+  DocumentType,
   DocumentTypeListResponse,
   RuntimeRequirementSurfaceResponse,
   AddRequirementRequest,
@@ -25,6 +30,7 @@ import type {
   MaterializationResponse,
   RequirementResponse,
   UpdateDocumentRequirementCatalogRequest,
+  UpdateDocumentTypeRequest,
   UpdateRequirementRequest,
 } from "@/features/documentRequirements/api/schema"
 
@@ -186,6 +192,45 @@ export async function fetchTenantDocumentTypes(
 ): Promise<DocumentTypeListResponse> {
   const data = await api.get(`/tenants/${tenantId}/document-types`)
   return DocumentTypeListResponseSchema.parse(data)
+}
+
+// PRD1042-1794 Block 10 — the registry management list. Unlike the picker fetch above, this one
+// drives a maintenance screen, so it can opt into deactivated rows via `include_inactive` (the
+// backend defaults to active-only). Kept separate so the picker never accidentally offers a
+// retired type.
+export async function listDocumentTypes(
+  tenantId: string,
+  includeInactive = false
+): Promise<DocumentTypeListResponse> {
+  const data = await api.get(`/tenants/${tenantId}/document-types`, {
+    params: includeInactive ? { include_inactive: true } : undefined,
+  })
+  return DocumentTypeListResponseSchema.parse(data)
+}
+
+export async function createDocumentType(
+  tenantId: string,
+  body: CreateDocumentTypeRequest
+): Promise<DocumentType> {
+  const data = await api.post(
+    `/tenants/${tenantId}/document-types`,
+    CreateDocumentTypeRequestSchema.parse(body)
+  )
+  return DocumentTypeSchema.parse(data)
+}
+
+// type_code and origin are immutable, so the request contract (and this function's body) never
+// carries them; `is_active` is how the deactivate/reactivate row action is expressed.
+export async function updateDocumentType(
+  tenantId: string,
+  documentTypeId: string,
+  body: UpdateDocumentTypeRequest
+): Promise<DocumentType> {
+  const data = await api.patch(
+    `/tenants/${tenantId}/document-types/${documentTypeId}`,
+    UpdateDocumentTypeRequestSchema.parse(body)
+  )
+  return DocumentTypeSchema.parse(data)
 }
 
 // D-11 (PRD1042-1796 item 5) — what a case requires. Neither `object_type` nor `process_context` is
