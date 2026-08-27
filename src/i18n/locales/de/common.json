@@ -29,6 +29,7 @@
     "frameworkAgreements": "Rahmenvereinbarungen",
     "workflowTaskCatalogs": "Workflow-Aufgabenkataloge",
     "documentRequirementCatalogs": "Dokumentenanforderungskataloge",
+    "documentCatalog": "Dokumentenkatalog",
     "documentTypes": "Dokumenttypen",
     "rulesSetup": "Regelkonfiguration",
     "platformAdministration": "Plattformadministration",

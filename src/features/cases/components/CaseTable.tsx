@@ -6,7 +6,7 @@ import { caseDisplayStatusBadgeVariant } from "@/features/cases/types"
 import type { CaseListItem } from "@/features/cases/api/schema"
 
 // Raw <div> grid rather than the shadcn Table primitive — matches the pre-existing div-grid list
-// pattern (DocumentRequirementCatalogTable, ProductTemplateTable, WorkflowTaskCatalogTable). Case
+// pattern (ProductTemplateTable, WorkflowTaskCatalogTable). Case
 // reference is the only flexible column.
 const COL_REFERENCE = "flex-1 min-w-[160px]"
 const COL_TYPE = "w-[200px] shrink-0"

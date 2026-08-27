@@ -168,13 +168,8 @@ const WorkflowTaskCatalogDetailPage = lazy(
   () =>
     import("@/features/workflowTaskCatalog/components/WorkflowTaskCatalogDetailPage")
 )
-const DocumentRequirementCatalogListPage = lazy(
-  () =>
-    import("@/features/documentRequirements/components/DocumentRequirementCatalogListPage")
-)
-const DocumentRequirementCatalogDetailPage = lazy(
-  () =>
-    import("@/features/documentRequirements/components/DocumentRequirementCatalogDetailPage")
+const DocumentCatalogPage = lazy(
+  () => import("@/features/documentRequirements/components/DocumentCatalogPage")
 )
 const DocumentTypeListPage = lazy(
   () =>
@@ -543,25 +538,15 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // One catalogue per bank (CR-DRC A2): the sidebar opens the single catalogue directly —
+        // no list, no detail-by-id, no create dialog. The path is kept so existing links resolve.
         path: PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST,
         element: (
           <Suspense fallback={null}>
             <RoleGuard
               allowed={DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES}
             >
-              <DocumentRequirementCatalogListPage />
-            </RoleGuard>
-          </Suspense>
-        ),
-      },
-      {
-        path: PATHS.DOCUMENT_REQUIREMENT_CATALOG_DETAIL,
-        element: (
-          <Suspense fallback={null}>
-            <RoleGuard
-              allowed={DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES}
-            >
-              <DocumentRequirementCatalogDetailPage />
+              <DocumentCatalogPage />
             </RoleGuard>
           </Suspense>
         ),

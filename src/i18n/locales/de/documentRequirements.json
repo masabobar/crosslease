@@ -8,6 +8,13 @@
     "extension": "Verlängerung",
     "asset_event": "Asset-Ereignis"
   },
+  "catalog": {
+    "title": "Dokumentenkatalog",
+    "missing": {
+      "title": "Noch kein Dokumentenkatalog",
+      "description": "Für diesen Mandanten existiert kein Dokumentenkatalog. Für neue Banken wird er automatisch erstellt; wenden Sie sich an einen Administrator, falls er fehlt."
+    }
+  },
   "list": {
     "title": "Dokumentenanforderungskatalog",
     "subtitle": "Verwalten Sie die Dokumentenanforderungskataloge Ihres Mandanten.",

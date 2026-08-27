@@ -554,7 +554,7 @@ export function Sidebar() {
                   {canAccessDocumentRequirementCatalog && (
                     <SidebarNavLink
                       to={PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST}
-                      label={t("nav.documentRequirementCatalogs")}
+                      label={t("nav.documentCatalog")}
                       testid="nav-document-requirement-catalogs"
                       isActive={isDocumentRequirementCatalogListActive}
                     />

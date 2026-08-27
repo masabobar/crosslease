@@ -5,7 +5,6 @@ import { parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
@@ -20,20 +19,12 @@ import { useUpdateDocumentRequirementCatalog } from "@/features/documentRequirem
 import type { DocumentRequirementCatalogDetailResponse } from "@/features/documentRequirements/api/schema"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
-// Every rule carries a message *code*, never bare prose: an unannotated `.max()` would surface
-// Zod's own English text to the user (see resolveFormMessage).
-const CATALOG_NAME_MAX_LENGTH = 200
-
+// The catalogue is not named anymore (one per bank), so this dialog edits only the validity window.
 // Editing an existing catalog does NOT floor Valid From at today — unlike creation, an existing
 // record may legitimately have a start date in the past (date-inputs.md §4). Valid To must still
 // be >= Valid From when both are present.
 const editCatalogSchema = z
   .object({
-    catalogName: z
-      .string()
-      .trim()
-      .min(1, "required")
-      .max(CATALOG_NAME_MAX_LENGTH, "tooLong"),
     validFrom: z.string(),
     validTo: z.string(),
   })
@@ -46,7 +37,6 @@ const editCatalogSchema = z
   )
 
 type EditCatalogFormValues = {
-  catalogName: string
   validFrom: string
   validTo: string
 }
@@ -65,7 +55,6 @@ function EditDocumentRequirementCatalogDialog({
 
   const {
     control,
-    register,
     handleSubmit,
     getValues,
     setError,
@@ -73,7 +62,6 @@ function EditDocumentRequirementCatalogDialog({
   } = useForm<EditCatalogFormValues>({
     resolver: zodResolver(editCatalogSchema),
     defaultValues: {
-      catalogName: catalog.catalog_name,
       validFrom: catalog.valid_from ?? "",
       validTo: catalog.valid_to ?? "",
     },
@@ -93,7 +81,8 @@ function EditDocumentRequirementCatalogDialog({
   function onSubmit(values: EditCatalogFormValues) {
     updateCatalog.mutate(
       {
-        catalog_name: values.catalogName.trim(),
+        // The name is fixed and not shown; send it unchanged so the PATCH does not blank it.
+        catalog_name: catalog.catalog_name,
         valid_from: values.validFrom || null,
         valid_to: values.validTo || null,
       },
@@ -131,27 +120,6 @@ function EditDocumentRequirementCatalogDialog({
         </div>
 
         <div className="flex flex-col gap-4 px-4 py-4 max-h-[60vh] overflow-y-auto">
-          <div>
-            <Label
-              htmlFor="edit-catalog-name"
-              error={!!errors.catalogName}
-              className="mb-2"
-            >
-              {t("create.fields.catalogName")}
-            </Label>
-            <Input
-              id="edit-catalog-name"
-              data-testid="edit-catalog-name-input"
-              error={!!errors.catalogName}
-              {...register("catalogName")}
-            />
-            {errors.catalogName && (
-              <p className="mt-1 text-sm text-destructive">
-                {resolveMessage(errors.catalogName.message)}
-              </p>
-            )}
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="edit-catalog-valid-from" className="mb-2">
