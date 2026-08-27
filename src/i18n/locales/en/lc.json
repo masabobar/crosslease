@@ -48,13 +48,12 @@
     "title": "Documents for this request",
     "required": "Required",
     "optional": "Optional",
-    "openDocument": "Open",
-    "noFile": "Not yet",
+    "noAction": "Nothing to do",
     "badId": {
       "title": "That is not a valid request reference",
       "description": "The address is missing a valid request id, so there is nothing to look up."
     },
-    "toSend": {
+    "obligations": {
       "title": "What we still need from you",
       "caption": "Send these to the bank. Anything already received is shown with its status.",
       "empty": {
@@ -62,25 +61,25 @@
         "description": "The bank is not waiting on any document from you for this request."
       }
     },
-    "released": {
-      "title": "Documents the bank has released",
-      "caption": "Produced by the bank for this request. Open one to read it.",
-      "empty": {
-        "title": "Nothing released yet",
-        "description": "The bank has not released any document for this request."
-      }
-    },
     "columns": {
       "document": "Document",
       "required": "Required",
       "status": "Status",
-      "file": "File"
+      "upload": "Upload"
     },
     "statuses": {
       "outstanding": "Outstanding",
       "uploaded": "Received, awaiting review",
       "provided": "Accepted",
       "rejected": "Not accepted"
+    },
+    "upload": {
+      "label": "Upload",
+      "uploading": "Uploading…",
+      "button": "Upload a document for {{requirement}}",
+      "success": "Document uploaded and awaiting review.",
+      "invalidMime": "Only PDF and Excel files are supported.",
+      "fileTooLarge": "File is too large. Maximum size is 25 MB."
     }
   }
 }

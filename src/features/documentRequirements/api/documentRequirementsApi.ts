@@ -21,7 +21,6 @@ import type {
   DocumentRequirementCatalogDetailResponse,
   DocumentRequirementCatalogListResponse,
   DocumentRequirementCatalogResponse,
-  DocumentRequirementCatalogType,
   DocumentRequirementListResponse,
   MaterializationResponse,
   RequirementResponse,
@@ -31,7 +30,6 @@ import type {
 
 export type DocumentRequirementCatalogListParams = {
   search?: string
-  catalog_type?: DocumentRequirementCatalogType
   process_context?: string
   page?: number
   per_page?: number
@@ -195,10 +193,15 @@ export async function fetchTenantDocumentTypes(
 // returns the whole catalogue with each row carrying its own contexts.
 export async function fetchCaseDocumentRequirements(
   catalogId: string,
-  businessObjectId: string
+  businessObjectId: string,
+  objectType: string,
+  processContext: string
 ): Promise<RuntimeRequirementSurfaceResponse> {
+  // The runtime surface resolves the requirement set for this business object and process context;
+  // both are required by the backend (routes/runtime.py get_runtime_requirements).
   const data = await api.get(
-    `/document-requirement-catalogs/${catalogId}/objects/${businessObjectId}/requirements`
+    `/document-requirement-catalogs/${catalogId}/objects/${businessObjectId}/requirements`,
+    { params: { object_type: objectType, process_context: processContext } }
   )
   return RuntimeRequirementSurfaceResponseSchema.parse(data)
 }
@@ -208,4 +211,49 @@ export async function fetchCaseDocumentRequirements(
 // getLcPortalDocumentDownloadUrl.
 export function getCaseDocumentUrl(documentId: string): string {
   return `${api.defaults.baseURL}/media/${documentId}`
+}
+
+// PRD1042-1794 item 6 — upload a document against one case requirement. Multipart, mirroring the FA
+// attach flow (FormData on the shared axios instance, explicit multipart Content-Type). `case_id` is
+// the business object id; `requirement_definition_id` names which requirement the file fulfils. The
+// backend records a fulfilment and flips the requirement to `uploaded_pending_review`, so the caller
+// invalidates the case-requirements query on success. MIME is validated client-side before this is
+// called (see CASE_DOCUMENT_ACCEPTED_MIME); the backend is the authority.
+export async function uploadCaseDocument(
+  caseId: string,
+  requirementDefinitionId: string,
+  file: File
+): Promise<void> {
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("requirement_definition_id", requirementDefinitionId)
+  await api.post(`/cases/${caseId}/documents`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+}
+
+// PRD1042-1794 A10/B3 — the bank's review action on a case document. Back Office checks a document
+// (new_status "fulfilled") or rejects it ("rejected", which reopens the requirement). Front Office
+// and leasing companies upload; only the bank reviews (fulfilment_review_write). Mirrors the backend
+// transition endpoint (routes/fulfilment.py transition_status).
+export async function transitionFulfilmentStatus(
+  catalogId: string,
+  args: {
+    requirementDefinitionId: string
+    businessObjectId: string
+    businessObjectType: string
+    newStatus: "fulfilled" | "rejected"
+    transitionReason?: string
+  }
+): Promise<void> {
+  await api.post(
+    `/document-requirement-catalogs/${catalogId}/fulfilments/transition`,
+    {
+      requirement_definition_id: args.requirementDefinitionId,
+      business_object_id: args.businessObjectId,
+      business_object_type: args.businessObjectType,
+      new_status: args.newStatus,
+      transition_reason: args.transitionReason ?? null,
+    }
+  )
 }

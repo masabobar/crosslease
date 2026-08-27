@@ -96,7 +96,6 @@ function DocumentRequirementCatalogRequirementsTab({
       {sheetState && (
         <RequirementSheet
           catalogId={catalog.id}
-          catalogType={catalog.catalog_type}
           mode={sheetState.mode}
           requirement={
             sheetState.mode === "add" ? undefined : sheetState.requirement

@@ -48,13 +48,12 @@
     "title": "Dokumente zu dieser Anfrage",
     "required": "Erforderlich",
     "optional": "Optional",
-    "openDocument": "Öffnen",
-    "noFile": "Noch nicht",
+    "noAction": "Nichts zu tun",
     "badId": {
       "title": "Keine gültige Anfragereferenz",
       "description": "In der Adresse fehlt eine gültige Anfrage-ID, daher kann nichts abgerufen werden."
     },
-    "toSend": {
+    "obligations": {
       "title": "Was wir noch von Ihnen benötigen",
       "caption": "Senden Sie diese an die Bank. Bereits eingegangene Dokumente werden mit Status angezeigt.",
       "empty": {
@@ -62,25 +61,25 @@
         "description": "Die Bank wartet für diese Anfrage auf kein Dokument von Ihnen."
       }
     },
-    "released": {
-      "title": "Von der Bank freigegebene Dokumente",
-      "caption": "Von der Bank für diese Anfrage erstellt. Zum Lesen öffnen.",
-      "empty": {
-        "title": "Noch nichts freigegeben",
-        "description": "Die Bank hat für diese Anfrage noch kein Dokument freigegeben."
-      }
-    },
     "columns": {
       "document": "Dokument",
       "required": "Erforderlich",
       "status": "Status",
-      "file": "Datei"
+      "upload": "Hochladen"
     },
     "statuses": {
       "outstanding": "Offen",
       "uploaded": "Eingegangen, Prüfung ausstehend",
       "provided": "Akzeptiert",
       "rejected": "Nicht akzeptiert"
+    },
+    "upload": {
+      "label": "Hochladen",
+      "uploading": "Wird hochgeladen…",
+      "button": "Ein Dokument für {{requirement}} hochladen",
+      "success": "Dokument hochgeladen und wartet auf Prüfung.",
+      "invalidMime": "Es werden nur PDF- und Excel-Dateien unterstützt.",
+      "fileTooLarge": "Die Datei ist zu groß. Die maximale Größe beträgt 25 MB."
     }
   }
 }

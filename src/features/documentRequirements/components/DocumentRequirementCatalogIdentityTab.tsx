@@ -16,15 +16,10 @@ const NAME_LOOKUP_PAGE_SIZE = 100
 
 type Props = {
   catalog: DocumentRequirementCatalogDetailResponse
-  productTemplateName: string | null
   canManage: boolean
 }
 
-function DocumentRequirementCatalogIdentityTab({
-  catalog,
-  productTemplateName,
-  canManage,
-}: Props) {
+function DocumentRequirementCatalogIdentityTab({ catalog, canManage }: Props) {
   const { t } = useTranslation("documentRequirements")
   const [isEditOpen, setIsEditOpen] = useState(false)
   const { data: currentUser } = useCurrentUser()
@@ -42,16 +37,6 @@ function DocumentRequirementCatalogIdentityTab({
 
   const fields: { labelKey: string; value: string }[] = [
     { labelKey: "detail.identity.catalogName", value: catalog.catalog_name },
-    {
-      labelKey: "detail.identity.catalogType",
-      value: t(
-        `catalogTypes.${catalog.catalog_type}` as "catalogTypes.global_default"
-      ),
-    },
-    {
-      labelKey: "detail.identity.productTemplate",
-      value: productTemplateName ?? t("detail.identity.notApplicable"),
-    },
     {
       labelKey: "detail.identity.processContexts",
       value: catalog.applicable_process_contexts

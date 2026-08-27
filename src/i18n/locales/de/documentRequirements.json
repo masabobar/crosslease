@@ -1,8 +1,4 @@
 {
-  "catalogTypes": {
-    "global_default": "Globaler Standard",
-    "product_specific": "Produktspezifisch"
-  },
   "processContexts": {
     "refinancing_request": "Refinanzierungsanfrage",
     "lease_contract": "Leasingvertrag",
@@ -15,15 +11,12 @@
     "createButton": "Katalog erstellen",
     "filters": {
       "searchPlaceholder": "Nach Katalogname suchen",
-      "allCatalogTypes": "Alle Katalogtypen",
       "allProcessContexts": "Alle Prozesskontexte"
     },
     "table": {
       "columns": {
         "catalogName": "Katalogname",
-        "catalogType": "Katalogtyp",
         "processContexts": "Prozesskontexte",
-        "productTemplate": "Produktvorlage",
         "validFrom": "Gültig von",
         "validTo": "Gültig bis",
         "createdAt": "Erstellt am"
@@ -50,8 +43,6 @@
     "subtitle": "Einen neuen Dokumentenanforderungskatalog erstellen.",
     "fields": {
       "catalogName": "Katalogname",
-      "catalogType": "Katalogtyp",
-      "catalogTypePlaceholder": "Auswählen",
       "productTemplate": "Zutreffende Produktvorlage",
       "productTemplatePlaceholder": "Auswählen",
       "processContexts": "Zutreffende Prozesskontexte",
@@ -71,21 +62,17 @@
   },
   "detail": {
     "header": {
-      "productTemplate": "Produktvorlage",
       "processContexts": "Prozesskontexte"
     },
     "tabs": {
       "identity": "Identität",
       "requirements": "Anforderungen",
-      "sourceLayer": "Quellebene",
       "audit": "Audit"
     },
     "identity": {
       "title": "Katalogidentität",
       "editButton": "Bearbeiten",
       "catalogName": "Katalogname",
-      "catalogType": "Katalogtyp",
-      "productTemplate": "Produktvorlage",
       "processContexts": "Prozesskontexte",
       "validFrom": "Gültig von",
       "validTo": "Gültig bis",
@@ -111,7 +98,6 @@
         "requirementCode": "Anforderungscode",
         "documentTypeName": "Dokumenttyp",
         "classification": "Klassifizierung",
-        "sourceLayer": "Quellebene",
         "status": "Status"
       }
     },
@@ -142,28 +128,14 @@
       "documentTypeName": "Dokumenttypname",
       "description": "Beschreibung",
       "classification": "Klassifizierung",
-      "governanceClassification": "Governance-Klassifizierung",
       "processContexts": "Prozesskontexte",
       "stageCategorization": "Phasenkategorisierung",
       "stageNone": "Keine",
-      "documentOrigin": "Dokumentherkunft",
-      "predicatePostMvpNote": "Die Prädikatserstellung ist noch nicht verfügbar — diese Anforderung wird zur Laufzeit als optional behandelt, bis in einer zukünftigen Version ein Prädikat hinzugefügt wird."
+      "documentOrigin": "Dokumentherkunft"
     },
     "classifications": {
       "mandatory": "Pflicht",
-      "optional": "Optional",
-      "conditional": "Bedingt"
-    },
-    "governance": {
-      "operational": "Operativ",
-      "compliance_sensitive": "Compliance-sensibel",
-      "regulatory_critical": "Regulatorisch kritisch"
-    },
-    "sourceLayers": {
-      "default": "Standard",
-      "override": "Überschreibung",
-      "supplement": "Ergänzung",
-      "deactivated": "Deaktiviert"
+      "optional": "Optional"
     },
     "stages": {
       "submission": "Einreichung",
@@ -184,9 +156,6 @@
     "selectProcessContext": "Prozesskontext auswählen",
     "previewButton": "Vorschau",
     "emptyState": "Keine aktiven Anforderungen entsprechen diesem Prozesskontext."
-  },
-  "sourceLayer": {
-    "emptyGroup": "Keine Anforderungen in dieser Ebene."
   },
   "errors": {
     "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
@@ -236,13 +205,37 @@
       "classification": "Verbindlichkeit",
       "checkpoints": "Gilt bei",
       "status": "Status",
-      "document": "Dokument"
+      "document": "Dokument",
+      "upload": "Hochladen",
+      "actions": "Aktionen"
     },
     "statuses": {
       "missing": "Fehlt",
       "uploaded_pending_review": "Prüfung ausstehend",
       "fulfilled": "Erfüllt",
       "rejected": "Abgelehnt"
+    },
+    "upload": {
+      "label": "Hochladen",
+      "uploading": "Wird hochgeladen…",
+      "button": "Dokument für {{requirement}} hochladen",
+      "success": "Dokument hochgeladen und wartet auf Prüfung.",
+      "invalidMime": "Nur PDF- und Excel-Dateien werden unterstützt.",
+      "fileTooLarge": "Die Datei ist zu groß. Die maximale Größe beträgt 25 MB."
+    },
+    "summaries": {
+      "all_mandatory_complete": "Alle erforderlichen Dokumente vorhanden",
+      "pending_review": "Warten auf Bankprüfung",
+      "missing_required_documents": "Erforderliche Dokumente fehlen",
+      "blocked_due_to_missing_evidence": "Blockiert — erforderliche Dokumente fehlen"
+    },
+    "review": {
+      "checkLabel": "Prüfen",
+      "rejectLabel": "Ablehnen",
+      "check": "{{requirement}} prüfen",
+      "reject": "{{requirement}} ablehnen",
+      "checkedSuccess": "Dokument als geprüft markiert",
+      "rejectedSuccess": "Dokument abgelehnt — die Anforderung ist wieder offen"
     }
   }
 }

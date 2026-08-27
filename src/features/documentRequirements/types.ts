@@ -22,5 +22,4 @@ export const CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES: readonly UserRole[] 
 export type DocumentRequirementCatalogDetailTab =
   | "identity"
   | "requirements"
-  | "sourceLayer"
   | "audit"

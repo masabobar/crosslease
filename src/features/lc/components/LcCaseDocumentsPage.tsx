@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
-import { ExternalLink } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -15,8 +14,8 @@ import { TableEmptyState } from "@/components/ui/empty"
 import { cn } from "@/lib/utils"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
-import { getLcObligationDocumentUrl } from "@/features/lc/api/lcPortalApi"
 import { useLcObligations } from "@/features/lc/hooks/useLcObligations"
+import { LcObligationUploadButton } from "@/features/lc/components/LcObligationUploadButton"
 import type { LCObligationItem } from "@/features/lc/api/schema"
 
 // The LC vocabulary the backend maps to before sending (`_LC_STATUS_MAP`), not the internal one. An
@@ -30,15 +29,15 @@ const LC_STATUS_CLASSES: Record<string, string> = {
 
 /**
  * D-12 — a leasing company's own document obligations for one case (PRD1042-1796 item 9): "what is
- * still needed for that company's own cases and whether it has arrived, plus the documents the bank
- * has released".
+ * still needed for that company's own cases and whether it has arrived".
  *
  * ── WHAT THIS SCREEN MUST NOT SHOW, AND WHY IT CANNOT ──────────────────────────────────────
  * Item 9 forbids the catalogue, the layers, the conditions, which layer won, and whether a
  * requirement blocks. None of it is rendered here — and none of it is even received: the backend's
- * LCObligationItem carries only the document type, whether it is required, its status, its origin
- * and the document that met it. So this is not a screen that filters bank-internal detail out; it is
- * one that never has it. That is deliberate, per "hiding a control is never the control".
+ * LCObligationItem carries only the document type, whether it is required, its status, whether the
+ * company still has to act, and an opaque requirement handle. So this is not a screen that filters
+ * bank-internal detail out; it is one that never has it. That is deliberate, per "hiding a control is
+ * never the control".
  *
  * `is_mandatory` is rendered as Required / Optional — what the company must send. Never as blocking.
  * Under CR PRD1042-1794 membership carries "required", so required and blocking are derived from one
@@ -46,11 +45,14 @@ const LC_STATUS_CLASSES: Record<string, string> = {
  * needed". "Your case is stuck on this" is the bank-internal framing it forbids, so there is no
  * blocking language, no count of what is holding the case, and no ordering by urgency.
  *
- * ── NO UPLOAD CONTROL ──────────────────────────────────────────────────────────────────────
- * Item 6's upload point does not exist and neither does an endpoint behind it — the only upload in
- * the contract is framework-agreement scoped. A button that collected a file with nowhere to send it
- * is the decorative UI `api-first.md` §4 forbids. This screen says what is needed; it cannot yet be
- * where the file arrives.
+ * ── UPLOAD (PRD1042-1794) ──────────────────────────────────────────────────────────────────
+ * The backend now names which catalogue requirement each obligation fulfils
+ * (`requirement_definition_id`) — an opaque handle to this screen, nothing of the catalogue is
+ * rendered from it. That is what lets a leasing company upload against an obligation via the shared
+ * POST /cases/{case_id}/documents (its guard accepts LC_OBLIGATIONS). The control is offered only
+ * where the company still has to act (`action_needed`), and on success the obligations surface is
+ * refetched so the row flips to received. The endpoint, the upload hook's shape and the MIME/size
+ * guard are reused from the bank-side CaseDocumentRequirementsPage so the two stay the same product.
  *
  * ── DESIGN PROVENANCE ──────────────────────────────────────────────────────────────────────
  * No Figma frame. Built on instruction from this application's existing language, mirroring the
@@ -106,13 +108,6 @@ export default function LcCaseDocumentsPage() {
     )
   }
 
-  // The two halves item 9 asks for, split on who produces the document rather than on status: what
-  // this company still has to send, and what the bank has released to it.
-  const toSend = data.obligations.filter(o => o.document_origin !== "generated")
-  const released = data.obligations.filter(
-    o => o.document_origin === "generated"
-  )
-
   return (
     <div
       className="p-8 flex flex-col gap-8"
@@ -127,83 +122,62 @@ export default function LcCaseDocumentsPage() {
         </p>
       </div>
 
-      <ObligationSection
-        heading={t("caseDocuments.toSend.title")}
-        caption={t("caseDocuments.toSend.caption")}
-        emptyTitle={t("caseDocuments.toSend.empty.title")}
-        emptyDescription={t("caseDocuments.toSend.empty.description")}
-        obligations={toSend}
-        testId="lc-case-documents-to-send"
-      />
+      <div className="flex flex-col gap-3" data-testid="lc-case-documents-list">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">
+            {t("caseDocuments.obligations.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("caseDocuments.obligations.caption")}
+          </p>
+        </div>
 
-      <ObligationSection
-        heading={t("caseDocuments.released.title")}
-        caption={t("caseDocuments.released.caption")}
-        emptyTitle={t("caseDocuments.released.empty.title")}
-        emptyDescription={t("caseDocuments.released.empty.description")}
-        obligations={released}
-        testId="lc-case-documents-released"
-      />
-    </div>
-  )
-}
+        <div className="border border-border rounded-xl overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("caseDocuments.columns.document")}</TableHead>
+                <TableHead>{t("caseDocuments.columns.required")}</TableHead>
+                <TableHead>{t("caseDocuments.columns.status")}</TableHead>
+                <TableHead>{t("caseDocuments.columns.upload")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.obligations.map(item => (
+                <ObligationRow
+                  key={item.requirement_definition_id}
+                  item={item}
+                  businessObjectId={businessObjectId}
+                />
+              ))}
+            </TableBody>
+          </Table>
 
-type SectionProps = {
-  heading: string
-  caption: string
-  emptyTitle: string
-  emptyDescription: string
-  obligations: LCObligationItem[]
-  testId: string
-}
-
-function ObligationSection({
-  heading,
-  caption,
-  emptyTitle,
-  emptyDescription,
-  obligations,
-  testId,
-}: SectionProps) {
-  const { t } = useTranslation("lc")
-
-  return (
-    <div className="flex flex-col gap-3" data-testid={testId}>
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">{heading}</h2>
-        <p className="text-sm text-muted-foreground">{caption}</p>
-      </div>
-
-      <div className="border border-border rounded-xl overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("caseDocuments.columns.document")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.required")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.status")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.file")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {obligations.map(item => (
-              <ObligationRow key={item.document_type_name} item={item} />
-            ))}
-          </TableBody>
-        </Table>
-
-        {obligations.length === 0 && (
-          <TableEmptyState title={emptyTitle} description={emptyDescription} />
-        )}
+          {data.obligations.length === 0 && (
+            <TableEmptyState
+              title={t("caseDocuments.obligations.empty.title")}
+              description={t("caseDocuments.obligations.empty.description")}
+            />
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-function ObligationRow({ item }: { item: LCObligationItem }) {
+function ObligationRow({
+  item,
+  businessObjectId,
+}: {
+  item: LCObligationItem
+  businessObjectId: string
+}) {
   const { t } = useTranslation("lc")
 
   return (
-    <TableRow data-testid={`lc-case-documents-row-${item.document_type_name}`}>
+    <TableRow
+      data-testid={`lc-case-documents-row-${item.requirement_definition_id}`}
+    >
       <TableCell className="font-medium">{item.document_type_name}</TableCell>
       <TableCell>
         {/* What the company must send — not whether the case is blocked. */}
@@ -218,7 +192,7 @@ function ObligationRow({ item }: { item: LCObligationItem }) {
             LC_STATUS_CLASSES[item.fulfilment_status] ??
               "bg-muted text-muted-foreground"
           )}
-          data-testid={`lc-case-documents-status-${item.document_type_name}`}
+          data-testid={`lc-case-documents-status-${item.requirement_definition_id}`}
         >
           {t(
             `caseDocuments.statuses.${item.fulfilment_status}` as "caseDocuments.statuses.outstanding",
@@ -227,22 +201,18 @@ function ObligationRow({ item }: { item: LCObligationItem }) {
         </span>
       </TableCell>
       <TableCell>
-        {/* Item 9: a requirement is never shown as met with nothing behind it. The document is
-            offered only when the backend actually carries one. */}
-        {item.linked_document_id ? (
-          <a
-            href={getLcObligationDocumentUrl(item.linked_document_id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            data-testid={`lc-case-documents-open-${item.document_type_name}`}
-          >
-            {t("caseDocuments.openDocument")}
-            <ExternalLink size={14} />
-          </a>
+        {/* Offered only where the company still has to act — keyed off action_needed rather than the
+            status vocabulary so a status added on the backend does not hide or mis-offer the control.
+            The requirement handle is opaque here: it names what the upload fulfils, nothing more. */}
+        {item.action_needed ? (
+          <LcObligationUploadButton
+            businessObjectId={businessObjectId}
+            requirementDefinitionId={item.requirement_definition_id}
+            requirementLabel={item.document_type_name}
+          />
         ) : (
           <span className="text-sm text-muted-foreground">
-            {t("caseDocuments.noFile")}
+            {t("caseDocuments.noAction")}
           </span>
         )}
       </TableCell>

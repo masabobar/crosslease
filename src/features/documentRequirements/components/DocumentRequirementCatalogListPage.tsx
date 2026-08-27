@@ -14,7 +14,6 @@ import {
 import { buildPageNumbers } from "@/lib/pagination"
 import { documentRequirementCatalogDetail } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
-import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import { DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/documentRequirements/types"
@@ -58,21 +57,12 @@ export default function DocumentRequirementCatalogListPage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
-  // Product Template names are not on the list response — only product_template_id — so the
-  // column and any future filter resolve against the same selectable-templates list the
-  // Workflow Task Catalog uses. See open-questions.md.
-  const { data: templates } = useSelectableProductTemplates()
-  const templateNames = new Map(
-    (templates?.items ?? []).map(item => [item.template_id, item.template_name])
-  )
-
   const { data, isLoading, isError, error } = useDocumentRequirementCatalogList(
     tenantId,
     {
       page,
       per_page: perPage,
       ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-      ...(filters.catalogType ? { catalog_type: filters.catalogType } : {}),
       ...(filters.processContext
         ? { process_context: filters.processContext }
         : {}),
@@ -128,7 +118,6 @@ export default function DocumentRequirementCatalogListPage() {
             rows={rows}
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
-            templateNames={templateNames}
             onRowClick={id => navigate(documentRequirementCatalogDetail(id))}
           />
         )}

@@ -38,9 +38,7 @@ const validRequirement = {
 const validCatalogItem = {
   id: CATALOG_UUID,
   catalog_name: "FHA Standard 2024 documents",
-  catalog_type: "product_specific",
   applicable_process_contexts: ["disbursement_readiness"],
-  product_template_id: TEMPLATE_UUID,
   valid_from: "2026-06-13",
   valid_to: null,
   created_at: "2026-06-13T10:00:00Z",
@@ -48,9 +46,7 @@ const validCatalogItem = {
 
 const validCreateRequest = {
   catalog_name: "FHA Standard 2024 documents",
-  catalog_type: "product_specific",
   applicable_process_contexts: ["disbursement_readiness"],
-  product_template_id: TEMPLATE_UUID,
   valid_from: "2026-06-13",
   valid_to: null,
 }
@@ -104,9 +100,11 @@ describe("DocumentRequirementSchema", () => {
     const parsed = DocumentRequirementSchema.parse({
       ...validRequirement,
       governance_classification: "regulatory",
+      source_layer: "default",
     }) as Record<string, unknown>
 
     expect(parsed.governance_classification).toBeUndefined()
+    expect(parsed.source_layer).toBeUndefined()
     expect(parsed.blocks_submission).toBeUndefined()
     expect(parsed.requirement_code).toBe("DOC-FHA-001")
   })
@@ -124,13 +122,13 @@ describe("DocumentRequirementCatalogListResponseSchema", () => {
     expect(parsed.items[0].catalog_name).toBe("FHA Standard 2024 documents")
   })
 
-  it("accepts a global default catalogue with no product template", () => {
+  it("strips a stale catalog_type / product_template_id sent by an old backend", () => {
     const parsed = DocumentRequirementCatalogListResponseSchema.parse({
       items: [
         {
           ...validCatalogItem,
           catalog_type: "global_default",
-          product_template_id: null,
+          product_template_id: TEMPLATE_UUID,
         },
       ],
       total: 1,
@@ -138,19 +136,9 @@ describe("DocumentRequirementCatalogListResponseSchema", () => {
       per_page: 50,
       total_pages: 1,
     })
-    expect(parsed.items[0].product_template_id).toBeNull()
-  })
-
-  it("rejects an unknown catalog_type", () => {
-    expect(() =>
-      DocumentRequirementCatalogListResponseSchema.parse({
-        items: [{ ...validCatalogItem, catalog_type: "tenant_specific" }],
-        total: 1,
-        page: 1,
-        per_page: 50,
-        total_pages: 1,
-      })
-    ).toThrow()
+    const item = parsed.items[0] as Record<string, unknown>
+    expect(item.catalog_type).toBeUndefined()
+    expect(item.product_template_id).toBeUndefined()
   })
 
   it("rejects a missing pagination field", () => {
@@ -186,13 +174,14 @@ describe("CreateDocumentRequirementCatalogRequestSchema", () => {
     ).toEqual(validCreateRequest)
   })
 
-  it("accepts a global default catalog with no product template", () => {
+  it("strips a stale catalog_type / product_template_id from the payload", () => {
     const parsed = CreateDocumentRequirementCatalogRequestSchema.parse({
       ...validCreateRequest,
       catalog_type: "global_default",
-      product_template_id: null,
-    })
-    expect(parsed.product_template_id).toBeNull()
+      product_template_id: TEMPLATE_UUID,
+    }) as Record<string, unknown>
+    expect(parsed.catalog_type).toBeUndefined()
+    expect(parsed.product_template_id).toBeUndefined()
   })
 
   it("rejects a catalog name over 200 characters", () => {
@@ -209,15 +198,6 @@ describe("CreateDocumentRequirementCatalogRequestSchema", () => {
       CreateDocumentRequirementCatalogRequestSchema.parse({
         ...validCreateRequest,
         applicable_process_contexts: [],
-      })
-    ).toThrow()
-  })
-
-  it("rejects an unknown catalog_type", () => {
-    expect(() =>
-      CreateDocumentRequirementCatalogRequestSchema.parse({
-        ...validCreateRequest,
-        catalog_type: "tenant_specific",
       })
     ).toThrow()
   })
@@ -283,8 +263,6 @@ const validFullRequirement = {
   document_type_name: "Asset registration confirmation",
   description: "Registry confirmation of the true-sale asset transfer.",
   classification: "mandatory",
-  governance_classification: "compliance_sensitive",
-  source_layer: "default",
   applicable_process_contexts: ["disbursement_readiness"],
   stage_categorization: "submission",
   document_origin: "uploaded",
@@ -300,7 +278,6 @@ const validAddRequirementRequest = {
   document_type_name: "Asset registration confirmation",
   description: null,
   classification: "mandatory",
-  governance_classification: "compliance_sensitive",
   applicable_process_contexts: ["disbursement_readiness"],
   stage_categorization: null,
   document_origin: "uploaded",
@@ -314,20 +291,23 @@ describe("RequirementResponseSchema", () => {
     )
   })
 
-  it("accepts every documented source_layer value", () => {
-    for (const source_layer of [
-      "default",
-      "override",
-      "supplement",
-      "deactivated",
-    ]) {
+  // CR PRD1042-1794 dropped `conditional` from the requirement classification enum — only
+  // mandatory | optional remain.
+  it("accepts every documented classification and rejects the removed conditional", () => {
+    for (const classification of ["mandatory", "optional"]) {
       expect(() =>
         RequirementResponseSchema.parse({
           ...validFullRequirement,
-          source_layer,
+          classification,
         })
       ).not.toThrow()
     }
+    expect(() =>
+      RequirementResponseSchema.parse({
+        ...validFullRequirement,
+        classification: "conditional",
+      })
+    ).toThrow()
   })
 
   it("rejects an unknown classification", () => {
@@ -339,15 +319,18 @@ describe("RequirementResponseSchema", () => {
     ).toThrow()
   })
 
-  // CR PRD1042-1794 A4 (12 Aug 2026) removed applicability and condition from the document side —
-  // conditions live only on the workflow step. blocks_submission went with the CR's later decision
-  // that membership carries "required". All three are absent from the contract, so declaring them
-  // required here made every requirement fail to parse. These assertions pin that they stay gone.
-  it("does not require the removed applicability, condition or blocks_submission", () => {
-    const parsed = RequirementResponseSchema.parse(validFullRequirement)
+  // CR PRD1042-1794 removed applicability, condition, blocks_submission, governance_classification
+  // and source_layer from the document side. All are absent from the contract; these assertions pin
+  // that they stay gone.
+  it("does not model the removed governance/source-layer/applicability fields", () => {
+    const parsed = RequirementResponseSchema.parse(
+      validFullRequirement
+    ) as Record<string, unknown>
     expect("applicability" in parsed).toBe(false)
     expect("condition" in parsed).toBe(false)
     expect("blocks_submission" in parsed).toBe(false)
+    expect("governance_classification" in parsed).toBe(false)
+    expect("source_layer" in parsed).toBe(false)
   })
 
   it("still parses when the backend sends them anyway", () => {
@@ -358,6 +341,8 @@ describe("RequirementResponseSchema", () => {
         applicability: "always",
         condition: null,
         blocks_submission: true,
+        governance_classification: "compliance_sensitive",
+        source_layer: "default",
       })
     ).not.toThrow()
   })
@@ -375,7 +360,6 @@ describe("AddRequirementRequestSchema", () => {
       requirement_code: "DOC-FHA-002",
       document_type_code: "LOAN_OFFER",
       document_type_name: "Loan offer",
-      governance_classification: "operational",
       applicable_process_contexts: ["financing"],
     }
     const parsed = AddRequirementRequestSchema.parse(minimal)
@@ -405,7 +389,7 @@ describe("UpdateRequirementRequestSchema", () => {
     expect(() => UpdateRequirementRequestSchema.parse({})).not.toThrow()
   })
 
-  it("has no requirement_code, document_type_code or source_layer field", () => {
+  it("has no requirement_code or document_type_code field — neither is mutable", () => {
     const parsed = UpdateRequirementRequestSchema.parse({
       requirement_code: "should-be-stripped",
       document_type_code: "should-be-stripped",
@@ -480,8 +464,6 @@ describe("MaterializationResponseSchema", () => {
           document_type_code: "ASSET_REG_CONF",
           document_type_name: "Asset registration confirmation",
           classification: "mandatory",
-          governance_classification: "compliance_sensitive",
-          source_layer: "default",
           stage_categorization: "submission",
           applicable_process_contexts: ["disbursement_readiness"],
           document_origin: "uploaded",
@@ -584,8 +566,6 @@ describe("requirement schemas against the documented contract", () => {
     "document_type_name",
     "description",
     "classification",
-    "governance_classification",
-    "source_layer",
     "applicable_process_contexts",
     "stage_categorization",
     "document_origin",
@@ -618,8 +598,6 @@ describe("requirement schemas against the documented contract", () => {
       document_type_code: "LEASE_CONTRACT",
       document_type_name: "Lease contract",
       classification: "mandatory",
-      governance_classification: "operational",
-      source_layer: "default",
       stage_categorization: null,
       applicable_process_contexts: ["refinancing_request"],
       document_origin: "uploaded",
@@ -634,7 +612,6 @@ describe("D-11 runtime requirement surface (PRD1042-1796 item 5)", () => {
     requirement_code: "DOC-001",
     document_type_name: "Lease contract",
     classification: "mandatory",
-    source_layer: "default",
     stage_categorization: null,
     fulfilment_status: "missing",
     is_blocking: true,

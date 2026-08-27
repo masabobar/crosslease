@@ -1,8 +1,4 @@
 {
-  "catalogTypes": {
-    "global_default": "Global default",
-    "product_specific": "Product-specific"
-  },
   "processContexts": {
     "refinancing_request": "Refinancing Request",
     "lease_contract": "Lease Contract",
@@ -15,15 +11,12 @@
     "createButton": "Create catalog",
     "filters": {
       "searchPlaceholder": "Search by catalog name",
-      "allCatalogTypes": "All catalog types",
       "allProcessContexts": "All process contexts"
     },
     "table": {
       "columns": {
         "catalogName": "Catalog name",
-        "catalogType": "Catalog type",
         "processContexts": "Process contexts",
-        "productTemplate": "Product template",
         "validFrom": "Valid from",
         "validTo": "Valid to",
         "createdAt": "Created at"
@@ -50,8 +43,6 @@
     "subtitle": "Create a new document requirement catalog.",
     "fields": {
       "catalogName": "Catalog name",
-      "catalogType": "Catalog type",
-      "catalogTypePlaceholder": "Select",
       "productTemplate": "Applicable product template",
       "productTemplatePlaceholder": "Select",
       "processContexts": "Applicable process contexts",
@@ -71,21 +62,17 @@
   },
   "detail": {
     "header": {
-      "productTemplate": "Product template",
       "processContexts": "Process contexts"
     },
     "tabs": {
       "identity": "Identity",
       "requirements": "Requirements",
-      "sourceLayer": "Source layer",
       "audit": "Audit"
     },
     "identity": {
       "title": "Catalog identity",
       "editButton": "Edit",
       "catalogName": "Catalog name",
-      "catalogType": "Catalog type",
-      "productTemplate": "Product template",
       "processContexts": "Process contexts",
       "validFrom": "Valid from",
       "validTo": "Valid to",
@@ -111,7 +98,6 @@
         "requirementCode": "Requirement code",
         "documentTypeName": "Document type",
         "classification": "Classification",
-        "sourceLayer": "Source layer",
         "status": "Status"
       }
     },
@@ -142,28 +128,14 @@
       "documentTypeName": "Document type name",
       "description": "Description",
       "classification": "Classification",
-      "governanceClassification": "Governance classification",
       "processContexts": "Process contexts",
       "stageCategorization": "Stage categorization",
       "stageNone": "None",
-      "documentOrigin": "Document origin",
-      "predicatePostMvpNote": "Predicate authoring is not available yet — this requirement will be treated as optional at runtime until a predicate is added in a future release."
+      "documentOrigin": "Document origin"
     },
     "classifications": {
       "mandatory": "Mandatory",
-      "optional": "Optional",
-      "conditional": "Conditional"
-    },
-    "governance": {
-      "operational": "Operational",
-      "compliance_sensitive": "Compliance-sensitive",
-      "regulatory_critical": "Regulatory-critical"
-    },
-    "sourceLayers": {
-      "default": "Default",
-      "override": "Override",
-      "supplement": "Supplement",
-      "deactivated": "Deactivated"
+      "optional": "Optional"
     },
     "stages": {
       "submission": "Submission",
@@ -184,9 +156,6 @@
     "selectProcessContext": "Select a process context",
     "previewButton": "Preview",
     "emptyState": "No active requirements match this process context."
-  },
-  "sourceLayer": {
-    "emptyGroup": "No requirements in this layer."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -236,13 +205,37 @@
       "classification": "Binding",
       "checkpoints": "Applies at",
       "status": "Status",
-      "document": "Document"
+      "document": "Document",
+      "upload": "Upload",
+      "actions": "Actions"
     },
     "statuses": {
       "missing": "Missing",
       "uploaded_pending_review": "Awaiting review",
       "fulfilled": "Met",
       "rejected": "Rejected"
+    },
+    "upload": {
+      "label": "Upload",
+      "uploading": "Uploading…",
+      "button": "Upload a document for {{requirement}}",
+      "success": "Document uploaded and awaiting review.",
+      "invalidMime": "Only PDF and Excel files are supported.",
+      "fileTooLarge": "File is too large. Maximum size is 25 MB."
+    },
+    "summaries": {
+      "all_mandatory_complete": "All required documents provided",
+      "pending_review": "Awaiting bank review",
+      "missing_required_documents": "Missing required documents",
+      "blocked_due_to_missing_evidence": "Blocked — required documents missing"
+    },
+    "review": {
+      "checkLabel": "Check",
+      "rejectLabel": "Reject",
+      "check": "Check {{requirement}}",
+      "reject": "Reject {{requirement}}",
+      "checkedSuccess": "Document marked as checked",
+      "rejectedSuccess": "Document rejected — the requirement is open again"
     }
   }
 }
