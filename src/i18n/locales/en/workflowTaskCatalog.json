@@ -137,7 +137,8 @@
         "role": "Role",
         "stage": "Stage",
         "weight": "Weight",
-        "docRef": "Doc ref"
+        "docRef": "Doc ref",
+        "number": "#"
       },
       "yes": "Yes",
       "no": "No",
@@ -153,7 +154,9 @@
         "title": "No task definitions yet",
         "descriptionEditable": "Add the first task to this catalog.",
         "descriptionReadOnly": "A Bank Admin has not added any tasks to this catalog yet."
-      }
+      },
+      "fourEyesBadge": "4-eyes",
+      "fourEyesTitle": "Requires four-eyes sign-off"
     },
     "taskSheet": {
       "addTitle": "Add task",
@@ -166,7 +169,10 @@
         "behaviorAndGating": "Behavior and gating",
         "inheritedFromGlobalDefault": "Inherited from global default",
         "documentLinkage": "Document linkage",
-        "typeParameters": "Type parameters"
+        "typeParameters": "Type parameters",
+        "fourEyes": "Four-eyes control",
+        "documentChecks": "Document checks",
+        "conditions": "Applicability conditions"
       },
       "fields": {
         "type": "Type",
@@ -192,7 +198,11 @@
         "triggerEvent": "Trigger event",
         "permittedOutcomes": "Permitted outcomes",
         "lifecycleEntity": "Lifecycle entity",
-        "captureSectionName": "Case form section"
+        "captureSectionName": "Case form section",
+        "applicability": "Applies",
+        "fourEyes": "Requires four-eyes sign-off",
+        "fourEyesExclusionWide": "Exclude anyone who closed another step of this catalogue",
+        "exclusionTasks": "Excluded steps"
       },
       "mandatoryOptions": {
         "yes": "Yes",
@@ -215,7 +225,12 @@
         "legal": "Legal",
         "treasury": "Treasury",
         "support": "Support",
-        "system": "System"
+        "system": "System",
+        "system_admin": "System administrator",
+        "support_user": "Support user",
+        "auditor": "Auditor",
+        "bank_power_user": "Bank power user",
+        "leasing_company_user": "Leasing company user"
       },
       "stages": {
         "pre_submission": "Pre-Submission",
@@ -273,6 +288,25 @@
         "rejected": "Rejected",
         "missing_information": "Missing information",
         "rework": "Rework"
+      },
+      "yes": "Yes",
+      "no": "No",
+      "stepNumber": "Step {{number}}",
+      "applicabilityPlaceholder": "Always (default)",
+      "applicabilityHint": "Left unset, the step applies always.",
+      "fourEyesHint": "A second person must sign the step off. The catalogue-wide rule can be combined with specific excluded steps, which are shown when the step already carries them.",
+      "applicabilities": {
+        "always": "Always",
+        "rule": "By rule",
+        "person": "By decision"
+      },
+      "conditionOperators": {
+        "is": "is",
+        "is_not": "is not",
+        "greater_than": "greater than",
+        "less_than": "less than",
+        "at_least": "at least",
+        "at_most": "at most"
       }
     },
     "auditTrail": {
@@ -363,7 +397,8 @@
       "status": "Status",
       "checkedBy": "Settled by",
       "checkedAt": "Settled at",
-      "note": "Note"
+      "note": "Note",
+      "stage": "Stage"
     },
     "mandatory": {
       "required": "Required",
@@ -440,10 +475,14 @@
         "cancel": "Cancel",
         "submit": "Save"
       }
-    }
+    },
+    "fourEyesBadge": "4-eyes",
+    "fourEyesTitle": "A second person must sign this task off",
+    "systemActor": "System",
+    "documentChecksSummary": "{{marked}} of {{total}} documents checked"
   },
   "caseTypes": {
-    "main_process": "Main Refinancing Process",
+    "refinancing_request": "Main Refinancing Process",
     "package_redemption": "Package Redemption",
     "single_redemption": "Single Redemption",
     "lessee_change": "Lessee Change",

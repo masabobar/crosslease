@@ -1,7 +1,10 @@
 import { z } from "zod"
+import { UserRoleSchema } from "@/features/users/api/schema"
 import {
   StageCategorizationSchema,
+  TaskApplicabilitySchema,
   TaskResponsibleRoleSchema,
+  TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 
 // Runtime half of the Workflow Task Catalog — the checklist that sits on a case, and the phase
@@ -26,6 +29,37 @@ export const PhaseGateStatusSchema = z.enum([
   "rejected",
 ])
 export type PhaseGateStatus = z.infer<typeof PhaseGateStatusSchema>
+
+// Who closed a checklist item. Distinct from `checked_by`, which is null for a system close and so
+// cannot be told apart from "nobody yet" on its own — this is what lets the screen say "System"
+// instead of rendering a dash on an item that is in fact settled.
+export const ChecklistCloseActorSchema = z.enum(["person", "system"])
+export type ChecklistCloseActor = z.infer<typeof ChecklistCloseActorSchema>
+
+// The worker's verdict on one document of a typed_upload task's check list.
+export const DocumentCheckMarkSchema = z.enum([
+  "in_order",
+  "not_in_order",
+  "not_applicable",
+])
+export type DocumentCheckMark = z.infer<typeof DocumentCheckMarkSchema>
+
+// One materialised document check on a case item — the runtime counterpart of the catalogue's
+// DocumentCheckItem. `mark` is null until somebody marks it, which is what makes the per-item
+// progress ("2 of 5 in order") readable without a second request.
+export const ChecklistItemCheckResponseSchema = z.object({
+  id: z.string().uuid(),
+  source_document_check_id: z.string().uuid(),
+  document_ref: z.string().uuid(),
+  position: z.number().int(),
+  mark: DocumentCheckMarkSchema.nullable(),
+  note: z.string().nullable(),
+  marked_by: z.string().uuid().nullable(),
+  marked_at: z.string().nullable(),
+})
+export type ChecklistItemCheckResponse = z.infer<
+  typeof ChecklistItemCheckResponseSchema
+>
 
 // GET/POST /cases/{business_object_id}/checklist — mirrors ChecklistItemResponse.
 //
@@ -52,11 +86,27 @@ export const ChecklistItemResponseSchema = z.object({
   // Decimal on the BE, so it arrives as a string.
   weight: z.coerce.number().nullable(),
   responsible_role: TaskResponsibleRoleSchema.nullish(),
+  // The role SET, as the wire declares it (`list[UserRole]`) — same reasoning as the catalogue
+  // task's own `responsible_roles`: the read schema follows the wire, not the authoring subset.
+  responsible_roles: z.array(UserRoleSchema).nullish(),
   display_order: z.number().int().nullish(),
+  // Arrived with the PRD1042-1894 / 1790 model work and closes the rest of Q-052: a case item can
+  // now say which stage it belongs to, what kind of work it is, when it applies, and whether it
+  // needs four eyes. All four were previously readable only on the catalogue task, which is why
+  // the checklist could not group or explain itself.
+  stage_categorization: StageCategorizationSchema.nullish(),
+  task_type: TaskTypeSchema.nullish(),
+  applicability: TaskApplicabilitySchema.nullish(),
+  four_eyes: z.boolean().default(false),
+  doc_requirement_ref: z.string().uuid().nullish(),
   status: ChecklistItemStatusSchema,
   note: z.string().nullable(),
   checked_by: z.string().uuid().nullable(),
+  // Optional key with a nullable value, like the two above it — the contract's `required` array
+  // still lists only the original eleven.
+  checked_by_type: ChecklistCloseActorSchema.nullish(),
   checked_at: z.string().nullable(),
+  checks: z.array(ChecklistItemCheckResponseSchema).default([]),
 })
 export type ChecklistItemResponse = z.infer<typeof ChecklistItemResponseSchema>
 

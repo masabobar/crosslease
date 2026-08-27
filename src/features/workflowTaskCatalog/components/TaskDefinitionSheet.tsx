@@ -25,6 +25,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
+import { cn } from "@/lib/utils"
 import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import { useAddCatalogTask } from "@/features/workflowTaskCatalog/hooks/useAddCatalogTask"
@@ -34,6 +35,7 @@ import { useCatalogPhases } from "@/features/workflowTaskCatalog/hooks/useCatalo
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import {
   PRODUCT_SPECIFIC_TASK_TYPE_OPTIONS,
+  TASK_APPLICABILITY_OPTIONS,
   TASK_CATEGORY_OPTIONS,
   STEP_RESPONSIBLE_ROLE_OPTIONS,
   taskTypeHasParameters,
@@ -44,6 +46,7 @@ import {
   CatalogLayerSchema,
   ConditionalTriggerSchema,
   LayerActionSchema,
+  StepResponsibleRoleSchema,
   TaskProcessContextSchema,
   TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -52,6 +55,7 @@ import type {
   CatalogEntityType,
   CatalogLayer,
   LayerAction,
+  StepResponsibleRole,
   TaskDefinitionItem,
   UpdateTaskRequest,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -62,6 +66,12 @@ type SheetMode = "view" | "edit" | "add"
 // which may set its own linkage even though it inherits everything else. Note this is the OPPOSITE
 // of conditional_trigger, which override inherits and must not author
 // (`task_service._OVERRIDE_FORBIDDEN_ON_UPDATE`). Deactivate takes the parent and nothing else.
+// The roles a write may carry, as a set for the O(1) membership test toFormValues needs. Derived
+// from the schema so it cannot drift from what the BE accepts.
+const AUTHORABLE_STEP_ROLES = new Set<StepResponsibleRole>(
+  StepResponsibleRoleSchema.options
+)
+
 const DOC_LINKABLE_ACTIONS: readonly LayerAction[] = [
   LayerActionSchema.enum.defined,
   LayerActionSchema.enum.supplement,
@@ -86,7 +96,16 @@ function toFormValues(
     permitted_outcomes: task?.permitted_outcomes ?? [],
     lifecycle_entity: task?.lifecycle_entity ?? "",
     capture_section_name: task?.capture_section_name ?? "",
-    responsible_roles: task?.responsible_roles ?? [],
+    // Narrowed to the authorable set on the way IN: the read schema follows the wire
+    // (`list[UserRole]`), while this multi-select offers only front_office / back_office because
+    // that is all `_validate_step_roles` accepts on a write. A stored row carrying anything else
+    // therefore cannot be represented here — it is dropped rather than shown as an unselectable
+    // value, and the form's own "at least one role" rule then makes the author pick. Sending it
+    // back untouched would 422, so silently preserving it is not an option either.
+    responsible_roles: (task?.responsible_roles ?? []).filter(
+      (role): role is StepResponsibleRole =>
+        AUTHORABLE_STEP_ROLES.has(role as StepResponsibleRole)
+    ),
     weight: task && task.weight !== null ? String(task.weight) : "",
     display_order:
       task && task.display_order !== null ? String(task.display_order) : "",
@@ -95,6 +114,9 @@ function toFormValues(
     stage_categorization: task?.stage_categorization ?? "",
     applicable_process_contexts: task?.applicable_process_contexts ?? [],
     is_active: task?.is_active ?? true,
+    applicability: task?.applicability ?? "",
+    four_eyes: task?.four_eyes ?? false,
+    four_eyes_exclusion_wide: task?.four_eyes_exclusion_wide ?? false,
     treasury_threshold_trigger: Boolean(task && task.conditional_trigger),
     doc_requirement_ref: task?.doc_requirement_ref ?? "",
     doc_requirement_pin_mode: task?.doc_requirement_pin_mode ?? "",
@@ -176,6 +198,11 @@ function toWirePayload(
         values.stage_categorization
       ) as AddTaskRequest["stage_categorization"],
       is_active: values.is_active,
+      // Authorable on an override: neither flag appears in the BE's override-forbidden set, so a
+      // product may tighten (or relax) four eyes on a step it inherits. `applicability` is NOT
+      // here — that one IS forbidden, and sending it fails the whole request.
+      four_eyes: values.four_eyes,
+      four_eyes_exclusion_wide: values.four_eyes_exclusion_wide,
       ...docLinkage,
     }
   }
@@ -201,6 +228,13 @@ function toWirePayload(
     ) as AddTaskRequest["stage_categorization"],
     applicable_process_contexts: values.applicable_process_contexts,
     is_active: values.is_active,
+    // Omitted when unset so the service applies its own `always` default, rather than the FE
+    // guessing at it — the two would drift the moment the BE changes the default.
+    applicability: orUndefined(
+      values.applicability
+    ) as AddTaskRequest["applicability"],
+    four_eyes: values.four_eyes,
+    four_eyes_exclusion_wide: values.four_eyes_exclusion_wide,
     conditional_trigger: values.treasury_threshold_trigger
       ? ConditionalTriggerSchema.enum.financing_amount_over_threshold
       : undefined,
@@ -287,6 +321,8 @@ function TaskDefinitionSheet({
   const watchedDocRef = useWatch({ control, name: "doc_requirement_ref" })
   // Block 5's parameters follow the selected type, so the fieldset re-renders as it changes.
   const watchedTaskType = useWatch({ control, name: "task_type" })
+  // The wide-exclusion checkbox is meaningless without the flag it widens, so it follows it.
+  const watchedFourEyes = useWatch({ control, name: "four_eyes" })
   const isParentBacked = PARENT_BACKED_ACTIONS.includes(selectedAction)
   const isDocLinkable = DOC_LINKABLE_ACTIONS.includes(selectedAction)
   const isPending =
@@ -310,6 +346,27 @@ function TaskDefinitionSheet({
   const linkedRequirement = (documentRequirements ?? []).find(
     requirement => requirement.id === task?.doc_requirement_ref
   )
+
+  // A document check names a requirement by id only. Same resolution the tab does for
+  // `doc_requirement_ref`, reused here for the check list.
+  function resolveDocumentCode(ref: string): string {
+    return (
+      (documentRequirements ?? []).find(requirement => requirement.id === ref)
+        ?.requirement_code ?? ref
+    )
+  }
+
+  // A four-eyes exclusion names a task by id. It may point at a task in this catalogue or at the
+  // Global Default parent set, so both lists are searched before falling back to the id.
+  function resolveTaskName(taskId: string): string {
+    const match =
+      existingTasks.find(candidate => candidate.id === taskId) ??
+      (globalDefaultTasks ?? []).find(candidate => candidate.id === taskId)
+    if (!match) return taskId
+    return match.task_code
+      ? `${match.task_code}, ${match.task_name ?? ""}`.replace(/, $/, "")
+      : (match.task_name ?? taskId)
+  }
 
   const parentOptions = (globalDefaultTasks ?? [])
     .filter(candidate => !claimedParentIds.has(candidate.id))
@@ -402,6 +459,11 @@ function TaskDefinitionSheet({
         task={task}
         catalogLayer={catalogLayer}
         linkedRequirement={linkedRequirement}
+        // A document check and a four-eyes exclusion both carry only a UUID, so the panel is
+        // given the two lookups it would otherwise have to fetch for itself. Both fall back to
+        // the raw id rather than rendering blank, so an out-of-scope reference stays diagnosable.
+        resolveDocumentCode={resolveDocumentCode}
+        resolveTaskName={resolveTaskName}
         canEdit={canEdit}
         isPending={isPending}
         onClose={handleClose}
@@ -608,6 +670,36 @@ function TaskDefinitionSheet({
                       {resolveMessage(errors.task_type.message)}
                     </p>
                   )}
+                </div>
+                {/* PRD1042-1790 items 3/4 — WHEN the step applies, beside WHAT kind of work it
+                    is. Only rendered here, on a task that owns its values: the BE refuses the key
+                    on override (inherited) and on deactivate. Left unset the service stores
+                    `always`, so there is no error state and no required marker. */}
+                <div>
+                  <Label className="mb-2">
+                    {t("detail.taskSheet.fields.applicability")}
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="applicability"
+                    render={({ field }) => (
+                      <SelectField
+                        data-testid="task-sheet-applicability"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        options={TASK_APPLICABILITY_OPTIONS.map(o => ({
+                          value: o.value,
+                          label: t(o.labelKey),
+                        }))}
+                        placeholder={t(
+                          "detail.taskSheet.applicabilityPlaceholder"
+                        )}
+                      />
+                    )}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("detail.taskSheet.applicabilityHint")}
+                  </p>
                 </div>
               </>
             )}
@@ -931,6 +1023,65 @@ function TaskDefinitionSheet({
                 isError={isDocRequirementsError}
                 selectedRef={watchedDocRef}
               />
+            )}
+
+            {/* PRD1042-1894 Block 3 / 1892 item 5 — four eyes is a flag on the step plus its
+                exclusion set, not a task type. Offered on every action except `deactivated`,
+                which runs nothing and so has nobody to sign off: the BE would accept the key
+                there, but storing a control on a switched-off row is meaningless.
+                The exclusion SET is read-only for now — the service writes it through its own
+                path and picking specific tasks needs a picker this sheet does not have, so the
+                catalogue-wide rule is the only one authorable here. The view panel lists whatever
+                specific exclusions a row already carries. */}
+            {selectedAction !== LayerActionSchema.enum.deactivated && (
+              <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                  {t("detail.taskSheet.sections.fourEyes")}
+                </p>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <Controller
+                    control={control}
+                    name="four_eyes"
+                    render={({ field }) => (
+                      <Checkbox
+                        data-testid="task-sheet-four-eyes"
+                        checked={field.value}
+                        onCheckedChange={v => field.onChange(v === true)}
+                      />
+                    )}
+                  />
+                  <span className="text-sm text-foreground leading-snug">
+                    {t("detail.taskSheet.fields.fourEyes")}
+                  </span>
+                </label>
+                <label
+                  className={cn(
+                    "flex items-start gap-2",
+                    watchedFourEyes
+                      ? "cursor-pointer"
+                      : "cursor-not-allowed opacity-60"
+                  )}
+                >
+                  <Controller
+                    control={control}
+                    name="four_eyes_exclusion_wide"
+                    render={({ field }) => (
+                      <Checkbox
+                        data-testid="task-sheet-four-eyes-wide"
+                        checked={field.value}
+                        disabled={!watchedFourEyes}
+                        onCheckedChange={v => field.onChange(v === true)}
+                      />
+                    )}
+                  />
+                  <span className="text-sm text-foreground leading-snug">
+                    {t("detail.taskSheet.fields.fourEyesExclusionWide")}
+                  </span>
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {t("detail.taskSheet.fourEyesHint")}
+                </p>
+              </div>
             )}
 
             <label className="flex items-center gap-2 cursor-pointer">

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 import {
+  ChecklistCloseActorSchema,
+  ChecklistItemCheckResponseSchema,
   ChecklistItemResponseSchema,
   ChecklistItemStatusSchema,
+  DocumentCheckMarkSchema,
   PhaseGateResponseSchema,
   PhaseGateStatusSchema,
   RequiredProjectionResponseSchema,
@@ -306,5 +309,149 @@ describe("SetPhaseGateRequestSchema", () => {
 
   it("rejects a missing status", () => {
     expect(() => SetPhaseGateRequestSchema.parse({ note: "why" })).toThrow()
+  })
+})
+
+// --- PRD1042-1894 / 1790: the fields the case item gained ---
+
+describe("ChecklistCloseActorSchema", () => {
+  it("accepts exactly the two wire values", () => {
+    expect(ChecklistCloseActorSchema.options).toEqual(["person", "system"])
+  })
+
+  it("rejects anything else", () => {
+    expect(() => ChecklistCloseActorSchema.parse("robot")).toThrow()
+  })
+})
+
+describe("DocumentCheckMarkSchema", () => {
+  it("accepts exactly the three wire values", () => {
+    expect(DocumentCheckMarkSchema.options).toEqual([
+      "in_order",
+      "not_in_order",
+      "not_applicable",
+    ])
+  })
+})
+
+describe("ChecklistItemCheckResponseSchema", () => {
+  const validCheck = {
+    id: ITEM_ID,
+    source_document_check_id: TASK_ID,
+    document_ref: CASE_ID,
+    position: 1,
+    mark: null,
+    note: null,
+    marked_by: null,
+    marked_at: null,
+  }
+
+  it("accepts an unmarked check", () => {
+    const parsed = ChecklistItemCheckResponseSchema.parse(validCheck)
+    expect(parsed.mark).toBeNull()
+    expect(parsed.position).toBe(1)
+  })
+
+  it("accepts a marked check", () => {
+    const parsed = ChecklistItemCheckResponseSchema.parse({
+      ...validCheck,
+      mark: "in_order",
+      marked_by: USER_ID,
+      marked_at: "2026-08-27T09:00:00Z",
+    })
+    expect(parsed.mark).toBe("in_order")
+  })
+
+  it("rejects an unknown mark", () => {
+    expect(() =>
+      ChecklistItemCheckResponseSchema.parse({ ...validCheck, mark: "maybe" })
+    ).toThrow()
+  })
+})
+
+describe("ChecklistItemResponseSchema — added optional fields", () => {
+  // These arrived after the original eleven and are absent from the contract's `required` array,
+  // so a payload without any of them must still parse — that is what keeps the screen working
+  // against an older backend.
+  it("still parses a payload carrying none of them", () => {
+    const parsed = ChecklistItemResponseSchema.parse(validItem)
+    expect(parsed.stage_categorization).toBeUndefined()
+    expect(parsed.task_type).toBeUndefined()
+    expect(parsed.applicability).toBeUndefined()
+    expect(parsed.checked_by_type).toBeUndefined()
+  })
+
+  it("defaults four_eyes to false and checks to an empty array", () => {
+    const parsed = ChecklistItemResponseSchema.parse(validItem)
+    expect(parsed.four_eyes).toBe(false)
+    expect(parsed.checks).toEqual([])
+  })
+
+  it("reads the stage, type, applicability and four-eyes flag when sent", () => {
+    const parsed = ChecklistItemResponseSchema.parse({
+      ...validItem,
+      stage_categorization: "stage_1_review",
+      task_type: "typed_upload",
+      applicability: "rule",
+      four_eyes: true,
+      doc_requirement_ref: TASK_ID,
+    })
+    expect(parsed.stage_categorization).toBe("stage_1_review")
+    expect(parsed.task_type).toBe("typed_upload")
+    expect(parsed.applicability).toBe("rule")
+    expect(parsed.four_eyes).toBe(true)
+  })
+
+  // The distinction the "Settled by" column depends on: a system close leaves checked_by null,
+  // so without checked_by_type it is indistinguishable from an item nobody has touched.
+  it("distinguishes a system close from an untouched item", () => {
+    const systemClosed = ChecklistItemResponseSchema.parse({
+      ...validItem,
+      status: "checked",
+      checked_by: null,
+      checked_by_type: "system",
+    })
+    expect(systemClosed.checked_by).toBeNull()
+    expect(systemClosed.checked_by_type).toBe("system")
+
+    const untouched = ChecklistItemResponseSchema.parse(validItem)
+    expect(untouched.checked_by_type).toBeUndefined()
+  })
+
+  it("reads the role set as the full platform enum", () => {
+    const parsed = ChecklistItemResponseSchema.parse({
+      ...validItem,
+      responsible_roles: ["bank_power_user"],
+    })
+    expect(parsed.responsible_roles).toEqual(["bank_power_user"])
+  })
+
+  it("rejects a role outside the platform enum", () => {
+    expect(() =>
+      ChecklistItemResponseSchema.parse({
+        ...validItem,
+        responsible_roles: ["back_office_risk"],
+      })
+    ).toThrow()
+  })
+
+  it("parses the nested checks it is sent", () => {
+    const parsed = ChecklistItemResponseSchema.parse({
+      ...validItem,
+      checks: [
+        {
+          id: ITEM_ID,
+          source_document_check_id: TASK_ID,
+          document_ref: CASE_ID,
+          position: 1,
+          mark: "in_order",
+          note: null,
+          marked_by: USER_ID,
+          marked_at: "2026-08-27T09:00:00Z",
+        },
+      ],
+    })
+    expect(parsed.checks).toHaveLength(1)
+    expect(parsed.checks[0].mark).toBe("in_order")
   })
 })

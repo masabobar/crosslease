@@ -7,6 +7,7 @@ import {
   CatalogResponseSchema,
   CatalogCaseTypeListSchema,
   CataloguePhaseListSchema,
+  FieldRegistryListSchema,
   CataloguePhaseSchema,
   RemovePhaseResponseSchema,
   TaskResponseWithWarningsSchema,
@@ -21,6 +22,7 @@ import type {
   CatalogResponse,
   CatalogCaseTypeItem,
   CatalogState,
+  FieldRegistryItem,
   CataloguePhase,
   CreateCatalogRequest,
   CreatePhaseRequest,
@@ -73,6 +75,8 @@ export const WORKFLOW_TASK_CATALOG_QUERY_KEYS = {
     ["workflow-task-catalogs", "phases", catalogId, versionId] as const,
   // Tenant-independent within a session and effectively static, so one key with no params.
   caseTypes: () => ["workflow-task-catalogs", "case-types"] as const,
+  // Same shape as caseTypes: a platform-level catalogue of testable fields, no params.
+  fieldRegistry: () => ["workflow-task-catalogs", "field-registry"] as const,
 } as const
 
 export async function fetchWorkflowTaskCatalogs(
@@ -217,4 +221,12 @@ export async function removeCatalogPhase(
 export async function fetchCatalogCaseTypes(): Promise<CatalogCaseTypeItem[]> {
   const data = await api.get("/workflow-task-catalogs/case-types")
   return CatalogCaseTypeListSchema.parse(data)
+}
+
+// The fields an applicability condition row may test. Read-only here: the rows themselves are
+// written through the service's own path and this app has no authoring surface for them, so this
+// exists to resolve `field_registry_id` to a human label.
+export async function fetchFieldRegistry(): Promise<FieldRegistryItem[]> {
+  const data = await api.get("/workflow-task-catalogs/field-registry")
+  return FieldRegistryListSchema.parse(data)
 }

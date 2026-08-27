@@ -18,6 +18,7 @@ import {
   CatalogStateSchema,
   LayerActionSchema,
   StageCategorizationSchema,
+  TaskApplicabilitySchema,
   TaskCategorySchema,
   StepResponsibleRoleSchema,
   TaskTypeSchema,
@@ -116,6 +117,16 @@ export const STEP_RESPONSIBLE_ROLE_OPTIONS =
     value,
     labelKey: `detail.taskSheet.responsibleRoles.${value}` as const,
   }))
+
+// PRD1042-1790 items 3/4 — WHEN the task applies. Authorable on defined/supplement only: the BE
+// rejects the key on override ("inherited from Global Default") and on deactivated, so the sheet
+// renders this select for those two actions and omits the field entirely otherwise.
+export const TASK_APPLICABILITY_OPTIONS = TaskApplicabilitySchema.options.map(
+  value => ({
+    value,
+    labelKey: `detail.taskSheet.applicabilities.${value}` as const,
+  })
+)
 
 export const TASK_STAGE_OPTIONS = StageCategorizationSchema.options.map(
   value => ({
