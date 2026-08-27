@@ -66,14 +66,17 @@ function SidebarNavLink({
       to={to}
       data-testid={testid}
       className={cn(
-        "flex items-center justify-between text-sm whitespace-nowrap",
+        "flex items-center justify-between gap-2 text-sm",
         indent && "pl-3",
         isActive
           ? "font-medium text-sidebar-primary-foreground"
           : "text-foreground hover:text-sidebar-primary-foreground"
       )}
     >
-      {label}
+      {/* The label needs its own shrinkable box: as a bare text node it cannot shrink, so a
+          label wider than the rail pushes the active dot past the nav's clipped edge and the
+          dot renders half-cut. Same min-w-0 + truncate the LC nav items above already use. */}
+      <span className="min-w-0 truncate">{label}</span>
       {isActive && (
         <span className="size-1.5 rounded-full bg-sidebar-primary-foreground shrink-0" />
       )}
