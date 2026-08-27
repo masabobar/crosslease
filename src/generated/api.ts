@@ -2677,7 +2677,6 @@ const UpdateCatalogRequest = z
     catalog_name: z.union([z.string(), z.null()]),
     valid_from: z.union([z.string(), z.null()]),
     valid_to: z.union([z.string(), z.null()]),
-    applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
   })
   .partial()
   .passthrough()
@@ -2686,7 +2685,6 @@ const app__modules__document_requirement_catalog__interfaces__http__schemas__cat
     .object({
       id: z.string().uuid(),
       catalog_name: z.string(),
-      applicable_process_contexts: z.array(z.string()),
       valid_from: z.union([z.string(), z.null()]),
       valid_to: z.union([z.string(), z.null()]),
       created_by: z.string().uuid(),
@@ -2707,7 +2705,7 @@ const RequirementResponse = z
     document_type_name: z.string(),
     description: z.union([z.string(), z.null()]),
     classification: RequirementClassification,
-    applicable_process_contexts: z.array(z.string()),
+    applicable_case_types: z.array(z.string()),
     stage_categorization: z.union([
       app__modules__document_requirement_catalog__domain__enums__StageCategorization,
       z.null(),
@@ -2724,7 +2722,6 @@ const app__modules__document_requirement_catalog__interfaces__http__schemas__cat
     .object({
       id: z.string().uuid(),
       catalog_name: z.string(),
-      applicable_process_contexts: z.array(z.string()),
       valid_from: z.union([z.string(), z.null()]),
       valid_to: z.union([z.string(), z.null()]),
       created_by: z.string().uuid(),
@@ -2737,7 +2734,6 @@ const app__modules__document_requirement_catalog__interfaces__http__schemas__cat
   z
     .object({
       catalog_name: z.string().min(1).max(200),
-      applicable_process_contexts: z.array(z.string()).min(1),
       valid_from: z.union([z.string(), z.null()]).optional(),
       valid_to: z.union([z.string(), z.null()]).optional(),
     })
@@ -2746,7 +2742,6 @@ const CatalogListItem = z
   .object({
     id: z.string().uuid(),
     catalog_name: z.string(),
-    applicable_process_contexts: z.array(z.string()),
     valid_from: z.union([z.string(), z.null()]),
     valid_to: z.union([z.string(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
@@ -2769,7 +2764,7 @@ const AddRequirementRequest = z
     document_type_name: z.string().min(1).max(255),
     description: z.union([z.string(), z.null()]).optional(),
     classification: RequirementClassification.optional(),
-    applicable_process_contexts: z.array(z.string()).min(1),
+    applicable_case_types: z.array(z.string()).min(1),
     stage_categorization: z
       .union([
         app__modules__document_requirement_catalog__domain__enums__StageCategorization,
@@ -2794,7 +2789,7 @@ const UpdateRequirementRequest = z
     document_type_name: z.union([z.string(), z.null()]),
     description: z.union([z.string(), z.null()]),
     classification: z.union([RequirementClassification, z.null()]),
-    applicable_process_contexts: z.union([z.array(z.string()), z.null()]),
+    applicable_case_types: z.union([z.array(z.string()), z.null()]),
     stage_categorization: z.union([
       app__modules__document_requirement_catalog__domain__enums__StageCategorization,
       z.null(),
@@ -2814,7 +2809,7 @@ const RuntimeRequirementItem = z
     fulfilment_status: z.string(),
     is_blocking: z.boolean(),
     document_origin: z.string(),
-    applicable_process_contexts: z.array(z.string()).optional().default([]),
+    applicable_case_types: z.array(z.string()).optional().default([]),
     linked_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
@@ -2822,16 +2817,17 @@ const RuntimeRequirementSurfaceResponse = z
   .object({
     catalog_id: z.string().uuid(),
     business_object_id: z.string().uuid(),
-    process_context: z.union([z.string(), z.null()]).optional(),
+    case_type: z.union([z.string(), z.null()]).optional(),
     completeness_summary: z.string(),
     requirements: z.array(RuntimeRequirementItem),
   })
   .passthrough()
 const MaterializeRequest = z
   .object({
-    process_context: z.string(),
-    framework_agreement_id: z.union([z.string(), z.null()]).optional(),
+    case_type: z.union([z.string(), z.null()]),
+    framework_agreement_id: z.union([z.string(), z.null()]),
   })
+  .partial()
   .passthrough()
 const MaterializedRequirementResponse = z
   .object({
@@ -2841,14 +2837,14 @@ const MaterializedRequirementResponse = z
     document_type_name: z.string(),
     classification: z.string(),
     stage_categorization: z.union([z.string(), z.null()]),
-    applicable_process_contexts: z.array(z.string()),
+    applicable_case_types: z.array(z.string()),
     document_origin: z.string(),
   })
   .passthrough()
 const MaterializationResponse = z
   .object({
     catalog_id: z.string().uuid(),
-    process_context: z.string(),
+    case_type: z.union([z.string(), z.null()]).optional(),
     effective_requirements: z.array(MaterializedRequirementResponse),
     total: z.number().int(),
   })
@@ -2867,7 +2863,7 @@ const LCObligationItem = z
 const LCObligationResponse = z
   .object({
     business_object_id: z.string().uuid(),
-    process_context: z.union([z.string(), z.null()]).optional(),
+    case_type: z.union([z.string(), z.null()]).optional(),
     documents_status_summary: z.string(),
     obligations: z.array(LCObligationItem),
   })
@@ -2915,7 +2911,7 @@ const PerRequirementStatusResponse = z
 const CompletenessResponse = z
   .object({
     catalog_id: z.string().uuid(),
-    process_context: z.union([z.string(), z.null()]).optional(),
+    case_type: z.union([z.string(), z.null()]).optional(),
     business_object_id: z.string().uuid(),
     summary: z.string(),
     mandatory_total: z.number().int(),
@@ -2956,6 +2952,15 @@ const origin = z.union([DocumentTypeOrigin, z.null()]).optional()
 const role_scope = z.union([DocumentRoleScope, z.null()]).optional()
 const DocumentTypeListResponse = z
   .object({ items: z.array(DocumentTypeResponse), total: z.number().int() })
+  .passthrough()
+const UpdateDocumentTypeRequest = z
+  .object({
+    type_name: z.union([z.string(), z.null()]),
+    role_scope: z.union([DocumentRoleScope, z.null()]),
+    note: z.union([z.string(), z.null()]),
+    is_active: z.union([z.boolean(), z.null()]),
+  })
+  .partial()
   .passthrough()
 const DocumentTypeMatrixRow = z
   .object({
@@ -3317,6 +3322,7 @@ export const schemas = {
   origin,
   role_scope,
   DocumentTypeListResponse,
+  UpdateDocumentTypeRequest,
   DocumentTypeMatrixRow,
   DocumentTypeMatrixResponse,
   TestSessionRequest,
@@ -4532,7 +4538,7 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
         schema: z.string().uuid(),
       },
       {
-        name: "process_context",
+        name: "case_type",
         type: "Query",
         schema: search,
       },
@@ -4655,7 +4661,7 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
         schema: search,
       },
       {
-        name: "process_context",
+        name: "case_type",
         type: "Query",
         schema: search,
       },
@@ -4682,9 +4688,9 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
         schema: z.string().uuid(),
       },
       {
-        name: "process_context",
+        name: "case_type",
         type: "Query",
-        schema: z.string(),
+        schema: search,
       },
     ],
     response: MaterializationResponse,
@@ -5741,7 +5747,7 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
         schema: search,
       },
       {
-        name: "process_context",
+        name: "case_type",
         type: "Query",
         schema: search,
       },
@@ -7377,11 +7383,6 @@ No existing sessions are invalidated immediately.
         schema: search,
       },
       {
-        name: "process_context",
-        type: "Query",
-        schema: search,
-      },
-      {
         name: "page",
         type: "Query",
         schema: z.number().int().gte(1).optional().default(1),
@@ -7457,6 +7458,38 @@ No existing sessions are invalidated immediately.
       },
     ],
     response: DocumentTypeListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/tenants/:tenant_id/document-types/:document_type_id",
+    alias:
+      "update_document_type_api_v1_tenants__tenant_id__document_types__document_type_id__patch",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateDocumentTypeRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "document_type_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentTypeResponse,
     errors: [
       {
         status: 422,
