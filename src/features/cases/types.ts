@@ -1,21 +1,18 @@
-import {
-  BACK_OFFICE_ROLE,
-  BANK_POWER_USER_ROLE,
-  FRONT_OFFICE_ROLE,
-} from "@/features/users/types"
+import { BACK_OFFICE_ROLE, FRONT_OFFICE_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import type { CaseDisplayStatus } from "@/features/cases/api/schema"
 
 // PRD1042-1794 (DRC usability) — who reaches the bank-side Case list and detail. Front Office and
 // Back Office are the operational case workers (they own the upload/review actions inside the
-// Documents tab); Bank Power User is included for read so the bank's authoring role can see the
-// operational surface its catalogue drives. leasing_company_user is absent by design: an LC has its
-// own /lc/... screens and sees only its own obligations, never the bank's case list. system_admin
-// and the platform roles have nothing operational here.
+// Documents tab), and they are exactly the bank roles the backend's case-read allows
+// (`_CASE_READ_ROLES` = front_office, back_office, leasing_company_user). Bank Power User is
+// deliberately NOT here: it is the authoring role (catalogue + document types), not an operational
+// case worker, and the backend 404s /cases for it — so offering the nav would only lead to a dead
+// page. leasing_company_user is absent too: an LC has its own /lc/... screens and sees only its own
+// obligations, never the bank's case list.
 export const CASE_READ_ALLOWED_ROLES: readonly UserRole[] = [
   FRONT_OFFICE_ROLE,
   BACK_OFFICE_ROLE,
-  BANK_POWER_USER_ROLE,
 ]
 
 // UI-only enum, never crosses the wire — a plain type guard is enough. The Documents tab ships now;
