@@ -1,12 +1,16 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { caseDetail } from "@/router/paths"
 import { CaseTable } from "@/features/cases/components/CaseTable"
+import { StartCaseDialog } from "@/features/cases/components/StartCaseDialog"
 import { useCases } from "@/features/cases/hooks/useCases"
 import { CASE_LIST_LIMIT } from "@/features/cases/api/casesApi"
+import { CASE_WRITE_ALLOWED_ROLES } from "@/features/cases/types"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 
 // Light work-list scoping, mirroring the backend's `mine` / `unassigned` toggles. Kept to a couple
 // of buttons on purpose (the ticket asks for a light filter surface); the two are mutually
@@ -17,6 +21,11 @@ export default function CaseListPage() {
   const { t } = useTranslation("cases")
   const navigate = useNavigate()
   const [scope, setScope] = useState<CaseScope>("all")
+  const [startOpen, setStartOpen] = useState(false)
+
+  const { data: currentUser } = useCurrentUser()
+  const canStartCase =
+    !!currentUser && CASE_WRITE_ALLOWED_ROLES.includes(currentUser.role)
 
   const { data, isLoading, isError, error } = useCases({
     limit: CASE_LIST_LIMIT,
@@ -44,7 +53,18 @@ export default function CaseListPage() {
             {t("list.subtitle")}
           </p>
         </div>
+        {canStartCase && (
+          <Button
+            data-testid="start-case-button"
+            onClick={() => setStartOpen(true)}
+          >
+            <Plus size={16} />
+            {t("start.button")}
+          </Button>
+        )}
       </div>
+
+      {startOpen && <StartCaseDialog onOpenChange={setStartOpen} />}
 
       <div
         className="mt-6 flex items-center gap-2"

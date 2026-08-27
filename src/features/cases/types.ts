@@ -15,6 +15,15 @@ export const CASE_READ_ALLOWED_ROLES: readonly UserRole[] = [
   BACK_OFFICE_ROLE,
 ]
 
+// Who may START a case from the bank-side UI. Front Office and Back Office — the same two the
+// backend's _CASE_WRITE_ROLES allows on this surface (leasing_company_user also writes, but through
+// its own portal, never the bank case list). Bank Power User is excluded: the configurator holds no
+// case rights (four-eyes — a role that fills cases cannot also author the rules that gate them).
+export const CASE_WRITE_ALLOWED_ROLES: readonly UserRole[] = [
+  FRONT_OFFICE_ROLE,
+  BACK_OFFICE_ROLE,
+]
+
 // UI-only enum, never crosses the wire — a plain type guard is enough. The Documents tab ships now;
 // checklist/parties/terms are the extension points the detail shell is structured for (US 16.22).
 export type CaseDetailTab = "documents"
