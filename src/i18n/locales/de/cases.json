@@ -1,0 +1,52 @@
+{
+  "list": {
+    "title": "Fälle",
+    "subtitle": "Refinanzierungs- und Ablösefälle, die Sie und Ihr Team bearbeiten.",
+    "filters": {
+      "all": "Alle",
+      "mine": "Mir zugewiesen",
+      "unassigned": "Nicht zugewiesen"
+    },
+    "table": {
+      "columns": {
+        "caseReference": "Fallreferenz",
+        "caseType": "Falltyp",
+        "status": "Status",
+        "createdAt": "Erstellt am"
+      }
+    },
+    "emptyState": {
+      "title": "Noch keine Fälle",
+      "description": "Fälle erscheinen hier, sobald sie angelegt werden."
+    },
+    "emptyFiltered": {
+      "title": "Keine Fälle für diesen Filter",
+      "description": "Wählen Sie einen anderen Filter, um mehr Fälle zu sehen."
+    }
+  },
+  "detail": {
+    "fields": {
+      "caseType": "Falltyp",
+      "caseId": "Fall-ID"
+    },
+    "tabs": {
+      "documents": "Dokumente"
+    },
+    "loadError": "Dieser Fall konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "caseTypes": {
+    "refinancing_request": "Refinanzierungsanfrage",
+    "package_redemption": "Paketablösung",
+    "single_redemption": "Einzelablösung",
+    "lessee_change": "Leasingnehmerwechsel",
+    "object_swap": "Objekttausch",
+    "extension": "Verlängerung",
+    "asset_event": "Asset-Ereignis"
+  },
+  "displayStatuses": {
+    "open": "Offen",
+    "waiting": "Wartend",
+    "done": "Erledigt",
+    "cancelled": "Storniert"
+  }
+}

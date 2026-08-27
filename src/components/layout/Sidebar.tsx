@@ -47,6 +47,7 @@ import {
   DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
   DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES,
 } from "@/features/documentRequirements/types"
+import { CASE_READ_ALLOWED_ROLES } from "@/features/cases/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
 type SidebarNavLinkProps = {
@@ -138,6 +139,9 @@ export function Sidebar() {
   const canAccessDocumentTypes =
     !!currentUser &&
     DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
+  // Operational Case list — the way into a case's Documents tab (PRD1042-1794). FO/BO/BPU only.
+  const canAccessCases =
+    !!currentUser && CASE_READ_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMainExpanded, setIsMainExpanded] = useState(false)
@@ -146,6 +150,9 @@ export function Sidebar() {
   )
   const [isBusinessConfigExpanded, setIsBusinessConfigExpanded] = useState(() =>
     location.pathname.startsWith(BUSINESS_CONFIGURATION_PREFIX)
+  )
+  const [isOperationsExpanded, setIsOperationsExpanded] = useState(() =>
+    location.pathname.startsWith(PATHS.CASE_LIST)
   )
 
   const isMainActive = location.pathname === PATHS.DASHBOARD
@@ -174,6 +181,12 @@ export function Sidebar() {
   const isBusinessConfigActive = location.pathname.startsWith(
     BUSINESS_CONFIGURATION_PREFIX
   )
+  // Every /cases/* route (list, detail, deep-link documents/checklist) lives under Operations, so
+  // the group lights up for all of them.
+  const isOperationsActive = location.pathname.startsWith(PATHS.CASE_LIST)
+  const isCaseListActive =
+    location.pathname === PATHS.CASE_LIST ||
+    location.pathname.startsWith(PATHS.CASE_LIST + "/")
   const isProductTemplateListActive = location.pathname.startsWith(
     PATHS.PRODUCT_TEMPLATE_LIST
   )
@@ -383,32 +396,85 @@ export function Sidebar() {
               )}
             </Collapsible>
 
-            {/* ── Flat items with right chevron ── */}
-            {[
-              { key: "operations", label: t("nav.operations") },
-              { key: "rulesSetup", label: t("nav.rulesSetup") },
-            ].map(({ key, label }) => (
-              <div
-                key={key}
-                className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-default hover:bg-muted"
+            {/* ── Operations group (expandable) ── Operational case work lives here; today its
+                one item is the Case list, the way into a case's Documents tab (PRD1042-1794). */}
+            <Collapsible
+              open={isOperationsExpanded}
+              onOpenChange={setIsOperationsExpanded}
+              className="flex flex-col gap-2"
+            >
+              <CollapsibleTrigger
+                className={cn(
+                  buttonVariants({ variant: "ghost" }),
+                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
+                  isOperationsActive &&
+                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                )}
               >
                 <SquareTerminal
                   size={16}
-                  className="text-muted-foreground shrink-0"
+                  className={cn(
+                    "shrink-0",
+                    !isOperationsActive && "text-muted-foreground"
+                  )}
                 />
                 {!isCollapsed && (
                   <>
-                    <span className="flex-1 text-sm text-foreground min-w-0 truncate">
-                      {label}
+                    <span className="flex-1 text-left text-sm min-w-0 truncate">
+                      {t("nav.operations")}
                     </span>
-                    <ChevronRight
-                      size={16}
-                      className="text-muted-foreground shrink-0"
-                    />
+                    {isOperationsExpanded ? (
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0",
+                          !isOperationsActive && "text-muted-foreground"
+                        )}
+                      />
+                    ) : (
+                      <ChevronRight
+                        size={16}
+                        className={cn(
+                          "shrink-0",
+                          !isOperationsActive && "text-muted-foreground"
+                        )}
+                      />
+                    )}
                   </>
                 )}
-              </div>
-            ))}
+              </CollapsibleTrigger>
+              {!isCollapsed && (
+                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
+                  {canAccessCases && (
+                    <SidebarNavLink
+                      to={PATHS.CASE_LIST}
+                      label={t("nav.cases")}
+                      testid="nav-cases"
+                      isActive={isCaseListActive}
+                    />
+                  )}
+                </CollapsibleContent>
+              )}
+            </Collapsible>
+
+            {/* ── Rules setup (placeholder flat item) ── */}
+            <div className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-default hover:bg-muted">
+              <SquareTerminal
+                size={16}
+                className="text-muted-foreground shrink-0"
+              />
+              {!isCollapsed && (
+                <>
+                  <span className="flex-1 text-sm text-foreground min-w-0 truncate">
+                    {t("nav.rulesSetup")}
+                  </span>
+                  <ChevronRight
+                    size={16}
+                    className="text-muted-foreground shrink-0"
+                  />
+                </>
+              )}
+            </div>
 
             {/* ── Business configuration group (expandable) ── */}
             <Collapsible
