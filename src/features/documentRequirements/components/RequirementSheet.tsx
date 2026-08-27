@@ -135,9 +135,10 @@ function RequirementSheet({
     isPending: isDocumentTypesLoading,
   } = useTenantDocumentTypes(currentUser?.tenant_id ?? undefined)
   const documentTypes = documentTypesResponse?.items ?? []
+  // Show the human name; the code is an internal identifier, not something to surface as the label.
   const documentTypeOptions = documentTypes.map(type => ({
     value: type.type_code,
-    label: `${type.type_code}, ${type.type_name}`,
+    label: type.type_name,
   }))
 
   const addRequirement = useAddRequirement(catalogId)
