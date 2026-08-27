@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,9 +63,18 @@ export function CatalogStagesPanel({ catalogId, versionId, canEdit }: Props) {
 
   const ordered = [...phases].sort((a, b) => a.position - b.position)
 
+  // The button stays enabled and reports why it refused, rather than going grey with no
+  // explanation — a disabled control tells the user nothing about what is missing.
   function submitNew() {
+    if (addPhase.isPending) {
+      toast.info(t("detail.stages.addBusy"))
+      return
+    }
     const name = newName.trim()
-    if (!name) return
+    if (!name) {
+      toast.info(t("detail.stages.addNeedsName"))
+      return
+    }
     // `position` is omitted deliberately — the BE appends at max+1, which is what "add a stage"
     // means here. Computing it client-side would race a concurrent add.
     addPhase.mutate(
@@ -278,7 +288,6 @@ export function CatalogStagesPanel({ catalogId, versionId, canEdit }: Props) {
           <Button
             type="button"
             variant="outline"
-            disabled={!newName.trim() || addPhase.isPending}
             onClick={submitNew}
             data-testid="catalog-stage-add-button"
           >

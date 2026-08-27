@@ -338,6 +338,8 @@
       "empty": "Noch keine Phasen. Fügen Sie die erste hinzu, bevor Sie Aufgaben anlegen.",
       "namePlaceholder": "Phasenname",
       "addButton": "Phase hinzufügen",
+      "addNeedsName": "Geben Sie zuerst einen Phasennamen ein.",
+      "addBusy": "Die vorherige Phase wird noch hinzugefügt — einen Moment.",
       "save": "Speichern",
       "rename": "Phase umbenennen",
       "remove": "Phase entfernen",
