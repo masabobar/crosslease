@@ -5,7 +5,7 @@ import { DocumentTypeRowActionsMenu } from "@/features/documentRequirements/comp
 import type { DocumentType } from "@/features/documentRequirements/api/schema"
 
 // NOTE: raw <div> grid instead of shadcn Table — matches the pre-existing div-grid pattern used by
-// the sibling list tables (DocumentRequirementCatalogTable, RequirementTable). Name is the only
+// the sibling list tables (RequirementTable, ProductTemplateTable). Name is the only
 // flexible column.
 const COL_CODE = "w-[160px] shrink-0"
 const COL_NAME = "flex-1 min-w-[160px]"

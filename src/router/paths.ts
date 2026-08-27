@@ -59,10 +59,10 @@ export const PATHS = {
   WORKFLOW_TASK_CATALOG_LIST: "/business-configuration/workflow-task-catalogs",
   WORKFLOW_TASK_CATALOG_DETAIL:
     "/business-configuration/workflow-task-catalogs/:id",
+  // One catalogue per bank (CR-DRC A2): a single page, resolved from the tenant — no list and no
+  // detail-by-id route. The path name keeps its historical *_LIST suffix for continuity.
   DOCUMENT_REQUIREMENT_CATALOG_LIST:
     "/business-configuration/document-requirement-catalogs",
-  DOCUMENT_REQUIREMENT_CATALOG_DETAIL:
-    "/business-configuration/document-requirement-catalogs/:id",
   // PRD1042-1794 Block 10 — the tenant's document-type registry management screen. A Bank Power
   // User populates this so the requirement-authoring dropdown has types to pick from.
   DOCUMENT_TYPE_LIST: "/business-configuration/document-types",
@@ -138,10 +138,6 @@ export function frameworkAgreementEdit(id: string): string {
 
 export function workflowTaskCatalogDetail(id: string): string {
   return PATHS.WORKFLOW_TASK_CATALOG_DETAIL.replace(":id", id)
-}
-
-export function documentRequirementCatalogDetail(id: string): string {
-  return PATHS.DOCUMENT_REQUIREMENT_CATALOG_DETAIL.replace(":id", id)
 }
 
 export function caseChecklist(businessObjectId: string): string {

@@ -8,6 +8,13 @@
     "extension": "Extension",
     "asset_event": "Asset event"
   },
+  "catalog": {
+    "title": "Document catalog",
+    "missing": {
+      "title": "No document catalog yet",
+      "description": "This tenant has no document catalog. It is created automatically for new banks; contact an administrator if it is missing."
+    }
+  },
   "list": {
     "title": "Document requirement catalog",
     "subtitle": "Manage document requirement catalogs used across your tenant.",

@@ -5,7 +5,7 @@ import { RequirementRowActionsMenu } from "@/features/documentRequirements/compo
 import type { RequirementResponse } from "@/features/documentRequirements/api/schema"
 
 // NOTE: raw <div> grid instead of shadcn Table — matches the pre-existing div-grid pattern used
-// by other list tables in this codebase (see DocumentRequirementCatalogTable.tsx, Unit A).
+// by other list tables in this codebase (see ProductTemplateTable.tsx, Unit A).
 const COL_CODE = "w-[180px] shrink-0"
 const COL_NAME = "flex-1 min-w-[160px]"
 const COL_CLASSIFICATION = "w-[130px] shrink-0"
