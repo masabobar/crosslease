@@ -3603,7 +3603,7 @@
       "get": {
         "tags": ["Media"],
         "summary": "Stream a media file (authenticated)",
-        "description": "Stream a media file from S3. Requires valid session.\n\nAccess is granted if the caller owns the file or is a system_admin.\nReturns 404 for non-existent or unauthorized files (non-disclosing).",
+        "description": "Stream a media file from S3. Requires valid session.\n\nAccess is granted if the caller owns the file, is a system_admin, or — for a case document —\ncan see the case the document belongs to. Returns 404 for non-existent or unauthorized files\n(non-disclosing).",
         "operationId": "serve_media_api_v1_media__id__get",
         "parameters": [
           {

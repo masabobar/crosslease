@@ -5767,8 +5767,9 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
     alias: "serve_media_api_v1_media__id__get",
     description: `Stream a media file from S3. Requires valid session.
 
-Access is granted if the caller owns the file or is a system_admin.
-Returns 404 for non-existent or unauthorized files (non-disclosing).`,
+Access is granted if the caller owns the file, is a system_admin, or — for a case document —
+can see the case the document belongs to. Returns 404 for non-existent or unauthorized files
+(non-disclosing).`,
     requestFormat: "json",
     parameters: [
       {
