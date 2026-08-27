@@ -39,6 +39,11 @@ export const CASE_DISPLAY_STATUS_BADGE_VARIANT: Record<
   waiting: "secondary",
   done: "outline",
   cancelled: "destructive",
+  // A refinancing request derives its display from request_status: it starts "draft" and flips to
+  // "submitted" once its mandatory documents are complete (PRD1042-1794, interim). Styled so the flip
+  // reads as forward progress rather than falling through to the neutral default.
+  draft: "secondary",
+  submitted: "default",
 }
 
 export function caseDisplayStatusBadgeVariant(

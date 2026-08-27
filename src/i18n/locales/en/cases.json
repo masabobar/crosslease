@@ -31,6 +31,7 @@
     "fields": {
       "caseType": "Case type"
     },
+    "caseTypeComingSoon": "{{type}} (coming soon)",
     "actions": {
       "cancel": "Cancel",
       "submit": "Start case"
@@ -60,6 +61,8 @@
     "open": "Open",
     "waiting": "Waiting",
     "done": "Done",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "draft": "Draft",
+    "submitted": "Submitted"
   }
 }
