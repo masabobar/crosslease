@@ -280,6 +280,7 @@
       "noDocumentRequirements": "No active document requirements exist for this tenant yet.",
       "documentRequirementsUnavailable": "Document requirements could not be loaded. Close this and try again.",
       "noStagesYet": "No stages yet — add one in Stages first",
+      "addStageAction": "Go to Stages to add one",
       "triggerEventPlaceholder": "e.g. offer_approved",
       "lifecycleEntityPlaceholder": "e.g. refinancing_request",
       "captureSectionPlaceholder": "e.g. Object data",

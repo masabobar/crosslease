@@ -256,6 +256,9 @@ type Props = {
   // WTC_TASK_PARENT_CONFLICT.
   existingTasks: TaskDefinitionItem[]
   canEdit: boolean
+  // PRD1042-2145 — which change type an `add` opens on, decided by the caller at the moment the
+  // sheet opens. Optional because view/edit take the action from the task itself.
+  defaultLayerAction?: LayerAction
   onOpenChange: (open: boolean) => void
   onRequestEdit: () => void
 }
@@ -270,6 +273,7 @@ function TaskDefinitionSheet({
   tenantId,
   existingTasks,
   canEdit,
+  defaultLayerAction,
   onOpenChange,
   onRequestEdit,
 }: Props) {
@@ -277,9 +281,13 @@ function TaskDefinitionSheet({
   const { t: tCommon } = useTranslation("common")
   const isGlobalDefaultLayer =
     catalogLayer === CatalogLayerSchema.enum.global_default
-  const defaultAction: LayerAction = isGlobalDefaultLayer
-    ? LayerActionSchema.enum.defined
-    : LayerActionSchema.enum.override
+  // A caller that has resolved a completable action wins; without one, fall back to the layer's
+  // nominal default. See the tab's resolveDefaultLayerAction for why `override` is not always safe.
+  const defaultAction: LayerAction =
+    defaultLayerAction ??
+    (isGlobalDefaultLayer
+      ? LayerActionSchema.enum.defined
+      : LayerActionSchema.enum.override)
 
   const addTask = useAddCatalogTask()
   const updateTask = useUpdateCatalogTask()
@@ -861,6 +869,23 @@ function TaskDefinitionSheet({
                     {errors.phase_id && (
                       <p className="mt-1 text-sm text-destructive">
                         {resolveMessage(errors.phase_id.message)}
+                      </p>
+                    )}
+                    {/* PRD1042-2145 — with no stages a defined/supplement task can never be
+                        saved (phase_id is mandatory), so the author has to leave for the Stages
+                        panel on the tab behind this sheet. Closing discards nothing that could
+                        have been saved anyway. */}
+                    {phases.length === 0 && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0 text-sm font-normal"
+                          data-testid="task-sheet-add-stage-link"
+                          onClick={handleClose}
+                        >
+                          {t("detail.taskSheet.addStageAction")}
+                        </Button>
                       </p>
                     )}
                   </div>

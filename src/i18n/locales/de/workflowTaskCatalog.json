@@ -280,6 +280,7 @@
       "noDocumentRequirements": "Für diesen Mandanten existieren noch keine aktiven Dokumentanforderungen.",
       "documentRequirementsUnavailable": "Dokumentanforderungen konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
       "noStagesYet": "Noch keine Phasen — legen Sie zuerst eine unter „Phasen“ an",
+      "addStageAction": "Zu „Phasen“ wechseln, um eine anzulegen",
       "triggerEventPlaceholder": "z. B. offer_approved",
       "lifecycleEntityPlaceholder": "z. B. refinancing_request",
       "captureSectionPlaceholder": "z. B. Objektdaten",

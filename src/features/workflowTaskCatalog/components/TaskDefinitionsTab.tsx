@@ -15,8 +15,10 @@ import { cn } from "@/lib/utils"
 import { STATUS_PILL_CLASSES } from "@/features/workflowTaskCatalog/constants"
 import { TaskDefinitionSheet } from "@/features/workflowTaskCatalog/components/TaskDefinitionSheet"
 import { CatalogStagesPanel } from "@/features/workflowTaskCatalog/components/CatalogStagesPanel"
+import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
 import {
+  CatalogLayerSchema,
   LayerActionSchema,
   TaskApplicabilitySchema,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -66,7 +68,7 @@ function OverrideValue({
 
 type SheetState =
   | { mode: "view" | "edit"; task: TaskDefinitionItem }
-  | { mode: "add"; task: null }
+  | { mode: "add"; task: null; defaultLayerAction: LayerAction }
   | null
 
 type Props = {
@@ -97,6 +99,14 @@ function TaskDefinitionsTab({
   const notApplicable = t("detail.taskDefinitions.notApplicable")
   // Shares one request with the sheet through the query cache — same key, same tenant.
   const { data: documentRequirements } = useTenantDocumentRequirements(tenantId)
+  const isGlobalDefaultLayer =
+    catalogLayer === CatalogLayerSchema.enum.global_default
+  // Same key as the sheet's own call, so this costs no extra request — and reading it here warms
+  // the cache before "+ Add task" is ever pressed, which is what lets the action below be
+  // resolved from settled data rather than guessed.
+  const { data: globalDefaultTasks } = useGlobalDefaultTasks(
+    isGlobalDefaultLayer ? null : entityType
+  )
 
   // A task carries only the requirement's UUID, so the code has to be resolved. An id outside the
   // fetched page falls back to the raw UUID rather than rendering blank, so it stays diagnosable.
@@ -141,6 +151,27 @@ function TaskDefinitionsTab({
     return notApplicable
   }
 
+  // PRD1042-2145 — override and deactivate both need a Global Default task to point at, so
+  // opening "+ Add task" on override when none is selectable strands the author on a change type
+  // that can never be saved: the parent picker collapses to an explanation and the form cannot
+  // validate. Supplement is the one action a product-specific catalogue can always complete.
+  // Resolved when the sheet opens rather than during render, so a background refetch can never
+  // move the form's default under a half-filled sheet.
+  function resolveDefaultLayerAction(): LayerAction {
+    if (isGlobalDefaultLayer) return LayerActionSchema.enum.defined
+    const claimedParentIds = new Set(
+      tasks
+        .filter(other => other.parent_task_id)
+        .map(other => other.parent_task_id as string)
+    )
+    const hasSelectableParent = (globalDefaultTasks ?? []).some(
+      candidate => !claimedParentIds.has(candidate.id)
+    )
+    return hasSelectableParent
+      ? LayerActionSchema.enum.override
+      : LayerActionSchema.enum.supplement
+  }
+
   function mandatoryLabel(value: boolean | null): string {
     if (value === null) return notApplicable
     return value
@@ -168,7 +199,13 @@ function TaskDefinitionsTab({
             type="button"
             variant="outline"
             data-testid="add-task-definition-button"
-            onClick={() => setSheetState({ mode: "add", task: null })}
+            onClick={() =>
+              setSheetState({
+                mode: "add",
+                task: null,
+                defaultLayerAction: resolveDefaultLayerAction(),
+              })
+            }
           >
             <Plus size={16} />
             {t("detail.taskDefinitions.addButton")}
@@ -371,6 +408,11 @@ function TaskDefinitionsTab({
           tenantId={tenantId}
           existingTasks={tasks}
           canEdit={canEdit}
+          defaultLayerAction={
+            sheetState.mode === "add"
+              ? sheetState.defaultLayerAction
+              : undefined
+          }
           onOpenChange={open => !open && setSheetState(null)}
           onRequestEdit={() =>
             setSheetState(prev =>
