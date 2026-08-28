@@ -147,8 +147,16 @@ function WorkflowTaskCatalogTable({
               </span>
             </div>
             <div className={`${COL_VALID_FROM} p-2`}>
-              <span className="text-sm text-foreground">
-                {formatDate(row.valid_from)}
+              <span
+                className={
+                  row.valid_from
+                    ? "text-sm text-foreground"
+                    : "text-sm text-muted-foreground"
+                }
+              >
+                {row.valid_from
+                  ? formatDate(row.valid_from)
+                  : t("list.table.notApplicable")}
               </span>
             </div>
             <div className={`${COL_VALID_UNTIL} p-2`}>
