@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { QueryClient, UseMutationResult } from "@tanstack/react-query"
 import {
-  activateWorkflowTaskCatalog,
   reactivateWorkflowTaskCatalog,
   suspendWorkflowTaskCatalog,
   WORKFLOW_TASK_CATALOG_QUERY_KEYS,
@@ -16,9 +15,12 @@ import type {
 /**
  * PRD1042-1894 Block 8 (AC §7) — the catalogue lifecycle transitions.
  *
- * Three separate mutations rather than one taking an action argument: each returns a different
- * shape (suspend reports the affected cases, the other two return the catalogue) and each has its
- * own success message, so a single hook would only hide a switch inside itself.
+ * PRD1042-2148 removed the activate mutation with the control: a catalogue is created Active, so
+ * only the transitions that come after activation remain.
+ *
+ * Two separate mutations rather than one taking an action argument: they return different shapes
+ * (suspend reports the affected cases, reactivate returns the catalogue) and each has its own
+ * success message, so a single hook would only hide a switch inside itself.
  */
 
 /**
@@ -50,20 +52,6 @@ async function settleLifecycleTransition(
     (cached: CatalogDetailResponse | undefined) =>
       cached ? { ...cached, catalog_state: catalogState } : cached
   )
-}
-
-export function useActivateWorkflowTaskCatalog(): UseMutationResult<
-  CatalogResponse,
-  Error,
-  string
-> {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (catalogId: string) => activateWorkflowTaskCatalog(catalogId),
-    onSuccess: (result, catalogId) =>
-      settleLifecycleTransition(queryClient, catalogId, result.catalog_state),
-  })
 }
 
 export function useSuspendWorkflowTaskCatalog(): UseMutationResult<

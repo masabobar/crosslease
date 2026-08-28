@@ -120,8 +120,6 @@
       "notSet": "Not set"
     },
     "lifecycleActions": {
-      "activate": "Activate",
-      "activated": "Catalog activated.",
       "suspend": "Suspend",
       "suspended": "Catalog suspended. {{count}} case(s) were already resolved against it.",
       "reactivate": "Reactivate",
@@ -380,6 +378,7 @@
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields.",
     "WTC_CATALOG_ACTIVATION_BLOCKED": "This catalogue cannot be activated yet. Resolve the reported issues and try again.",
     "WTC_CATALOG_DUPLICATE_SCOPE": "An active catalog already exists for this layer and entity type (and, for product-specific catalogs, this product template).",
+    "WTC_CATALOG_GLOBAL_DEFAULT_REQUIRED": "Create a global default catalog for this case type before adding a product-specific one.",
     "WTC_CATALOG_INVALID_CASE_TYPE": "Only the two typed case types can own a catalogue.",
     "WTC_CATALOG_INVALID_VALID_FROM": "Valid from cannot be in the past.",
     "WTC_CATALOG_INVALID_VALID_UNTIL": "Valid until must be on or after valid from.",
@@ -404,6 +403,7 @@
     "WTC_TASK_CONDITION_FIELD_INVALID": "A display condition must reference a field from the field registry.",
     "WTC_TASK_EXCLUSION_INVALID": "A four-eyes exclusion must reference another task in the same catalogue version.",
     "WTC_TASK_HAS_DEPENDENTS": "This global default task cannot be removed while product-specific catalogs still override or deactivate it.",
+    "WTC_TASK_INCOMPLETE": "This step is missing something it cannot be worked without. Check the reported details and try again.",
     "WTC_TASK_LAYER_MISMATCH": "That change type is not allowed on this catalog's layer.",
     "WTC_TASK_MANDATORY_FIELD_NULL": "A required field cannot be cleared on this task.",
     "WTC_TASK_NOT_FOUND": "This task no longer exists. Reload the catalog and try again.",

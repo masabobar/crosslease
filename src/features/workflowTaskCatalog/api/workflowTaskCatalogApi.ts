@@ -99,20 +99,10 @@ export async function createWorkflowTaskCatalog(
   return CatalogResponseSchema.parse(data)
 }
 
-// PRD1042-1894 Block 8 (AC §7) — the catalogue lifecycle: Draft → Active → Suspended → Active.
-// All three take no body and are Bank Power User only (the routes answer 404 to any other role,
+// PRD1042-2148 — what is left of the catalogue lifecycle once creation IS activation: Active →
+// Suspended → Active. Both take no body and are Bank Power User only (the routes answer 404 to any other role,
 // per US 15.1/15.2 existence non-disclosure), so the controls are gated on the same role rather
 // than on a permission string.
-//
-// Activate runs the validator and refuses with WTC_CATALOG_ACTIVATION_BLOCKED (422) when a task
-// is missing a stage, a responsible role, or its type parameters; the catalogue stays a draft.
-export async function activateWorkflowTaskCatalog(
-  catalogId: string
-): Promise<CatalogResponse> {
-  const data = await api.post(`/workflow-task-catalogs/${catalogId}/activate`)
-  return CatalogResponseSchema.parse(data)
-}
-
 // Suspending is never refused — it reports the cases already resolved against the catalogue so
 // the caller can say what it affected, then proceeds.
 export async function suspendWorkflowTaskCatalog(

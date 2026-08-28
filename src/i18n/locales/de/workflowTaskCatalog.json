@@ -120,8 +120,6 @@
       "notSet": "Nicht gesetzt"
     },
     "lifecycleActions": {
-      "activate": "Aktivieren",
-      "activated": "Katalog aktiviert.",
       "suspend": "Sperren",
       "suspended": "Katalog gesperrt. {{count}} Fall/Fälle wurden bereits darüber aufgelöst.",
       "reactivate": "Reaktivieren",
@@ -380,6 +378,7 @@
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder.",
     "WTC_CATALOG_ACTIVATION_BLOCKED": "Dieser Katalog kann noch nicht aktiviert werden. Beheben Sie die gemeldeten Probleme und versuchen Sie es erneut.",
     "WTC_CATALOG_DUPLICATE_SCOPE": "Für diese Katalogebene und diesen Objekttyp existiert bereits ein aktiver Katalog (bei produktspezifischen Katalogen zusätzlich für diese Produktvorlage).",
+    "WTC_CATALOG_GLOBAL_DEFAULT_REQUIRED": "Erstellen Sie zuerst einen globalen Standardkatalog für diesen Falltyp, bevor Sie einen produktspezifischen anlegen.",
     "WTC_CATALOG_INVALID_CASE_TYPE": "Nur die beiden typisierten Fallarten können einen Katalog besitzen.",
     "WTC_CATALOG_INVALID_VALID_FROM": "Gültig ab darf nicht in der Vergangenheit liegen.",
     "WTC_CATALOG_INVALID_VALID_UNTIL": "Gültig bis muss am oder nach Gültig ab liegen.",
@@ -404,6 +403,7 @@
     "WTC_TASK_CONDITION_FIELD_INVALID": "Eine Anzeigebedingung muss auf ein Feld aus dem Feldverzeichnis verweisen.",
     "WTC_TASK_EXCLUSION_INVALID": "Ein Vier-Augen-Ausschluss muss auf eine andere Aufgabe derselben Katalogversion verweisen.",
     "WTC_TASK_HAS_DEPENDENTS": "Diese globale Standardaufgabe kann nicht entfernt werden, solange produktspezifische Kataloge sie überschreiben oder deaktivieren.",
+    "WTC_TASK_INCOMPLETE": "Diesem Schritt fehlt etwas, ohne das er nicht bearbeitet werden kann. Prüfen Sie die gemeldeten Details und versuchen Sie es erneut.",
     "WTC_TASK_LAYER_MISMATCH": "Dieser Änderungstyp ist auf der Ebene dieses Katalogs nicht zulässig.",
     "WTC_TASK_MANDATORY_FIELD_NULL": "Ein Pflichtfeld dieser Aufgabe kann nicht geleert werden.",
     "WTC_TASK_NOT_FOUND": "Diese Aufgabe existiert nicht mehr. Laden Sie den Katalog neu.",
