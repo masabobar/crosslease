@@ -11041,8 +11041,10 @@
             ]
           },
           "valid_from": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
             "title": "Valid From"
           },
           "valid_until": {
@@ -19625,8 +19627,10 @@
           },
           "catalog_state": { "$ref": "#/components/schemas/CatalogState" },
           "valid_from": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
             "title": "Valid From"
           },
           "valid_until": {
@@ -19735,8 +19739,10 @@
             ]
           },
           "valid_from": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
             "title": "Valid From"
           },
           "valid_until": {
@@ -19807,8 +19813,10 @@
           },
           "catalog_layer": { "$ref": "#/components/schemas/CatalogLayer" },
           "valid_from": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
             "title": "Valid From"
           },
           "valid_until": {
@@ -19832,12 +19840,7 @@
           "case_type": { "$ref": "#/components/schemas/CaseType" }
         },
         "type": "object",
-        "required": [
-          "catalog_name",
-          "catalog_layer",
-          "valid_from",
-          "case_type"
-        ],
+        "required": ["catalog_name", "catalog_layer", "case_type"],
         "title": "CreateCatalogRequest"
       }
     }
