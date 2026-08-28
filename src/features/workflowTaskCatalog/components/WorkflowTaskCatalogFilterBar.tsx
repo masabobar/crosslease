@@ -3,9 +3,9 @@ import { SearchInput } from "@/components/ui/search-input"
 import { FilterButton } from "@/components/ui/filter-button"
 import { FilterCheckboxOption } from "@/components/ui/filter-checkbox-option"
 import {
+  CASE_TYPE_OPTIONS,
   CATALOG_LAYER_OPTIONS,
   CATALOG_STATE_OPTIONS,
-  ENTITY_TYPE_OPTIONS,
 } from "@/features/workflowTaskCatalog/constants"
 import type { WorkflowTaskCatalogFilterState } from "@/features/workflowTaskCatalog/constants"
 
@@ -38,7 +38,7 @@ function WorkflowTaskCatalogFilterBar({
 
   const buttonLabels: Record<FilterKey, string> = {
     catalogLayer: t("list.filters.buttons.catalogLayer"),
-    entityType: t("list.filters.buttons.entityType"),
+    caseType: t("list.filters.buttons.caseType"),
     productTemplate: t("list.filters.buttons.productTemplate"),
     catalogState: t("list.filters.buttons.catalogState"),
   }
@@ -79,19 +79,19 @@ function WorkflowTaskCatalogFilterBar({
         </FilterButton>
 
         <FilterButton
-          data-testid="catalog-filter-entityType"
-          label={buttonLabels.entityType}
-          count={filters.entityType.length}
-          contentClassName="w-52"
+          data-testid="catalog-filter-caseType"
+          label={buttonLabels.caseType}
+          count={filters.caseType.length}
+          contentClassName="w-64"
         >
-          {ENTITY_TYPE_OPTIONS.map(option => (
+          {CASE_TYPE_OPTIONS.map(option => (
             <FilterCheckboxOption
               key={option.value}
-              checked={filters.entityType.includes(option.value)}
-              data-testid={`catalog-filter-option-entityType-${option.value}`}
+              checked={filters.caseType.includes(option.value)}
+              data-testid={`catalog-filter-option-caseType-${option.value}`}
               onClick={() =>
                 onFiltersChange({
-                  entityType: toggle(filters.entityType, option.value),
+                  caseType: toggle(filters.caseType, option.value),
                 })
               }
             >

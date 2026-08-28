@@ -30,7 +30,7 @@ const SKELETON_COUNT = 5
 const HEADER_COLUMNS = [
   { width: COL_NAME, labelKey: "list.table.columns.catalogName" },
   { width: COL_LAYER, labelKey: "list.table.columns.catalogLayer" },
-  { width: COL_ENTITY, labelKey: "list.table.columns.entityType" },
+  { width: COL_ENTITY, labelKey: "list.table.columns.caseType" },
   {
     width: COL_PRODUCT_TEMPLATE,
     labelKey: "list.table.columns.productTemplate",
@@ -134,10 +134,8 @@ function WorkflowTaskCatalogTable({
             </div>
             <div className={`${COL_ENTITY} p-2`}>
               <span className="text-sm text-foreground">
-                {row.entity_type
-                  ? t(
-                      `entityTypes.${row.entity_type}` as "entityTypes.financing"
-                    )
+                {row.case_type
+                  ? t(`caseTypes.${row.case_type}` as "caseTypes.lessee_change")
                   : t("list.table.notApplicable")}
               </span>
             </div>

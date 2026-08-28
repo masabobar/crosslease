@@ -13,8 +13,8 @@ export const STATUS_PILL_CLASSES =
   "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium"
 
 import {
+  CaseTypeSchema,
   CatalogLayerSchema,
-  CatalogOwningEntityTypeSchema,
   CatalogStateSchema,
   LayerActionSchema,
   StageCategorizationSchema,
@@ -29,7 +29,7 @@ import {
 } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import type {
   TaskType,
-  CatalogEntityType,
+  CaseType,
   CatalogLayer,
   CatalogState,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -45,15 +45,15 @@ export const CATALOG_LAYER_OPTIONS = [
   },
 ] as const
 
-// The entity types the list filter offers. Derived from CatalogOwningEntityTypeSchema rather than
-// the full wire enum, so `financing` is absent: PRD1042-1790 removed it as a case type, no case type
-// derives it, and no catalogue can carry it — a filter option that could never match a row.
-export const ENTITY_TYPE_OPTIONS = CatalogOwningEntityTypeSchema.options.map(
-  value => ({
-    value,
-    labelKey: `entityTypes.${value}` as const,
-  })
-)
+// PRD1042-2147 — the list is filtered by CASE TYPE. A catalogue is scoped by case_type
+// (PRD1042-1917 OQ-01) and four of the seven case types derive no entity type at all, so an
+// entity-type filter could never reach their catalogues. The full seven come straight from the
+// wire enum; `useCatalogCaseTypes` is the runtime list for the create dialog, but a filter must
+// offer every value the column can hold, including case types no catalogue uses yet.
+export const CASE_TYPE_OPTIONS = CaseTypeSchema.options.map(value => ({
+  value,
+  labelKey: `caseTypes.${value}` as const,
+}))
 
 export const CATALOG_STATE_OPTIONS = [
   { value: CatalogStateSchema.enum.draft, labelKey: "catalogStates.draft" },
@@ -74,7 +74,7 @@ export const CATALOG_STATE_OPTIONS = [
 // productTemplate holds Product Template UUIDs (the `product_template_id` query param), not names.
 export type WorkflowTaskCatalogFilterState = {
   catalogLayer: CatalogLayer[]
-  entityType: CatalogEntityType[]
+  caseType: CaseType[]
   productTemplate: string[]
   catalogState: CatalogState[]
 }

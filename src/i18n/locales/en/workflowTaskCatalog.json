@@ -23,7 +23,7 @@
       "searchPlaceholder": "Search by catalog, task code or name",
       "buttons": {
         "catalogLayer": "Catalog layer",
-        "entityType": "Entity type",
+        "caseType": "Case type",
         "productTemplate": "Product template",
         "catalogState": "Catalog state"
       },
@@ -33,7 +33,7 @@
       "columns": {
         "catalogName": "Catalog name",
         "catalogLayer": "Catalog layer",
-        "entityType": "Entity type",
+        "caseType": "Case type",
         "productTemplate": "Product template",
         "catalogState": "Catalog state",
         "validFrom": "Valid from",

@@ -23,7 +23,7 @@
       "searchPlaceholder": "Nach Katalog, Aufgabencode oder -name suchen",
       "buttons": {
         "catalogLayer": "Katalogebene",
-        "entityType": "Objekttyp",
+        "caseType": "Falltyp",
         "productTemplate": "Produktvorlage",
         "catalogState": "Katalogstatus"
       },
@@ -33,7 +33,7 @@
       "columns": {
         "catalogName": "Katalogname",
         "catalogLayer": "Katalogebene",
-        "entityType": "Objekttyp",
+        "caseType": "Falltyp",
         "productTemplate": "Produktvorlage",
         "catalogState": "Katalogstatus",
         "validFrom": "Gültig ab",

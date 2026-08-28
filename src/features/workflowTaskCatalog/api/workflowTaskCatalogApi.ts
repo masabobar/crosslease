@@ -19,6 +19,7 @@ import type {
   CatalogDetailResponse,
   CatalogEntityType,
   CatalogLayer,
+  CaseType,
   CatalogListResponse,
   CatalogResponse,
   CatalogCaseTypeItem,
@@ -41,6 +42,9 @@ export type WorkflowTaskCatalogListParams = {
   search?: string
   catalog_layer?: CatalogLayer[]
   entity_type?: CatalogEntityType[]
+  // PRD1042-2147 — the axis the list filter actually uses; a catalogue is scoped by case
+  // type, and four of the seven derive no entity type at all.
+  case_type?: CaseType[]
   // Product Template UUIDs. The BE maps this straight onto the catalog's entity_id
   // (routes/catalogs.py), which is where a product-specific catalog stores its template.
   product_template_id?: string[]
