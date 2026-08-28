@@ -21,6 +21,7 @@ import {
   CataloguePhaseSchema,
   CreatePhaseRequestSchema,
   RemovePhaseResponseSchema,
+  SuspendCatalogResponseSchema,
   ReorderPhasesRequestSchema,
   StateTransitionOutcomeSchema,
   TaskTypeSchema,
@@ -1334,5 +1335,56 @@ describe("AddTaskRequestSchema — added authorable fields", () => {
       four_eyes_exclusion_wide: false,
     })
     expect(parsed.applicability).toBe("always")
+  })
+})
+
+// PRD1042-2148 — suspend is the one lifecycle transition with its own response shape: it reports
+// the cases already resolved against the catalogue rather than returning the catalogue.
+describe("SuspendCatalogResponseSchema", () => {
+  const valid = {
+    catalog_id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    catalog_state: "suspended",
+    product_template_id: null,
+    affected_case_ids: [],
+  }
+
+  it("accepts the documented shape", () => {
+    const parsed = SuspendCatalogResponseSchema.parse(valid)
+    expect(parsed.catalog_state).toBe("suspended")
+    expect(parsed.affected_case_ids).toEqual([])
+  })
+
+  it("accepts affected case ids and a product template", () => {
+    const parsed = SuspendCatalogResponseSchema.parse({
+      ...valid,
+      product_template_id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+      affected_case_ids: ["3f2504e0-4f89-41d3-9a0c-0305e82c3303"],
+    })
+    expect(parsed.affected_case_ids).toHaveLength(1)
+  })
+
+  it("rejects a catalog_state outside the enum", () => {
+    expect(() =>
+      SuspendCatalogResponseSchema.parse({ ...valid, catalog_state: "paused" })
+    ).toThrow()
+  })
+
+  it("rejects a non-uuid in affected_case_ids", () => {
+    expect(() =>
+      SuspendCatalogResponseSchema.parse({
+        ...valid,
+        affected_case_ids: ["not-a-uuid"],
+      })
+    ).toThrow()
+  })
+
+  it("rejects a missing affected_case_ids", () => {
+    expect(() =>
+      SuspendCatalogResponseSchema.parse({
+        catalog_id: valid.catalog_id,
+        catalog_state: valid.catalog_state,
+        product_template_id: valid.product_template_id,
+      })
+    ).toThrow()
   })
 })

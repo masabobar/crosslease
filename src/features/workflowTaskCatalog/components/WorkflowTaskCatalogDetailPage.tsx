@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { WorkflowTaskCatalogStateBadge } from "@/features/workflowTaskCatalog/components/WorkflowTaskCatalogStateBadge"
+import { CatalogLifecycleActions } from "@/features/workflowTaskCatalog/components/CatalogLifecycleActions"
 import { IdentityScopeTab } from "@/features/workflowTaskCatalog/components/IdentityScopeTab"
 import { TaskDefinitionsTab } from "@/features/workflowTaskCatalog/components/TaskDefinitionsTab"
 import { AuditTrailTab } from "@/features/workflowTaskCatalog/components/AuditTrailTab"
@@ -158,6 +159,11 @@ export default function WorkflowTaskCatalogDetailPage() {
             <WorkflowTaskCatalogStateBadge state={catalog.catalog_state} />
           </div>
         </div>
+        <CatalogLifecycleActions
+          catalogId={catalog.id}
+          catalogState={catalog.catalog_state}
+          canManage={canManage}
+        />
       </div>
 
       <div className="flex items-center gap-6 rounded-lg bg-muted px-3 py-2.5">

@@ -125,6 +125,20 @@
       "validUntil": "Gültig bis",
       "openEnded": "Unbefristet"
     },
+    "lifecycleActions": {
+      "activate": "Aktivieren",
+      "activated": "Katalog aktiviert.",
+      "suspend": "Sperren",
+      "suspended": "Katalog gesperrt. {{count}} Fall/Fälle wurden bereits darüber aufgelöst.",
+      "reactivate": "Reaktivieren",
+      "reactivated": "Katalog reaktiviert.",
+      "suspendConfirm": {
+        "title": "Diesen Katalog sperren?",
+        "description": "Er wird für neue Fälle nicht mehr aufgelöst. Bereits aufgelöste Fälle behalten ihre Checkliste, und Sie können ihn jederzeit reaktivieren.",
+        "confirm": "Katalog sperren",
+        "cancel": "Abbrechen"
+      }
+    },
     "taskDefinitions": {
       "title": "Aufgabendefinitionen",
       "captionReadOnly": "Nur Lesezugriff. Aufgabendefinitionen können nur von einem Bank-Admin in einem aktiven Katalog bearbeitet werden.",

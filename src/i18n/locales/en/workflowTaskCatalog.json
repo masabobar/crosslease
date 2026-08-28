@@ -125,6 +125,20 @@
       "validUntil": "Valid until",
       "openEnded": "Open ended"
     },
+    "lifecycleActions": {
+      "activate": "Activate",
+      "activated": "Catalog activated.",
+      "suspend": "Suspend",
+      "suspended": "Catalog suspended. {{count}} case(s) were already resolved against it.",
+      "reactivate": "Reactivate",
+      "reactivated": "Catalog reactivated.",
+      "suspendConfirm": {
+        "title": "Suspend this catalog?",
+        "description": "It stops resolving for new cases. Cases already resolved against it keep their checklist, and you can reactivate it at any time.",
+        "confirm": "Suspend catalog",
+        "cancel": "Cancel"
+      }
+    },
     "taskDefinitions": {
       "title": "Task definitions",
       "captionReadOnly": "Read only. Task definitions can only be edited by a Bank Admin on an active catalog.",
