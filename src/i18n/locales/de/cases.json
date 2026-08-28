@@ -37,7 +37,8 @@
       "cancel": "Abbrechen",
       "submit": "Fall anlegen"
     },
-    "success": "Fall angelegt."
+    "success": "Fall angelegt.",
+    "caseTypeNoRequirements": "{{type}} (keine Anforderungen konfiguriert)"
   },
   "detail": {
     "fields": {
@@ -46,7 +47,10 @@
     },
     "loadError": "Dieser Fall konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
     "takeOver": "Übernehmen",
-    "takeOverSuccess": "Fall übernommen."
+    "takeOverSuccess": "Fall übernommen.",
+    "reject": "Ablehnen",
+    "rejectSuccess": "Vorschlag abgelehnt.",
+    "uploadBlockedUnclaimed": "Dieser Fall wurde noch nicht übernommen. Übernehmen Sie ihn, bevor Sie Dokumente hochladen."
   },
   "caseTypes": {
     "refinancing_request": "Refinanzierungsanfrage",
@@ -63,6 +67,10 @@
     "done": "Erledigt",
     "cancelled": "Storniert",
     "draft": "Entwurf",
-    "submitted": "Eingereicht"
+    "submitted": "Eingereicht",
+    "missing_information": "Fehlende Informationen",
+    "rework": "Nachbearbeitung",
+    "committed": "Zugesagt",
+    "rejected": "Abgelehnt"
   }
 }

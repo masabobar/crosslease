@@ -85,6 +85,11 @@
       "success": "Document uploaded and awaiting review.",
       "invalidMime": "Only PDF and Excel files are supported.",
       "fileTooLarge": "File is too large. Maximum size is 25 MB."
+    },
+    "summary": {
+      "all_documents_submitted": "All documents submitted. The bank is reviewing your request.",
+      "documents_under_review": "Your documents are under review by the bank.",
+      "action_required": "Action required — please upload the documents listed below."
     }
   }
 }

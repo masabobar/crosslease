@@ -232,7 +232,10 @@
     "ONE_CATALOGUE_PER_BANK": "Für diese Bank existiert bereits ein Katalog für Dokumentenanforderungen.",
     "REQUIREMENT_ALREADY_DEACTIVATED": "Diese Anforderung ist bereits deaktiviert.",
     "UNKNOWN_DOCUMENT_TYPE": "Dieser Dokumententyp ist nicht im Dokumententypverzeichnis Ihrer Bank enthalten.",
-    "VALIDATION_ERROR": "Einige der eingegebenen Werte wurden abgelehnt. Bitte überprüfen Sie das Formular und versuchen Sie es erneut."
+    "VALIDATION_ERROR": "Einige der eingegebenen Werte wurden abgelehnt. Bitte überprüfen Sie das Formular und versuchen Sie es erneut.",
+    "CASE_NO_REQUIREMENTS_FOR_TYPE": "Für diese Bank sind für diesen Falltyp noch keine Dokumentanforderungen konfiguriert, daher kann kein Fall dafür angelegt werden. Bitten Sie einen Bankadministrator, zuerst Anforderungen hinzuzufügen.",
+    "CASE_NOT_CLAIMED": "Übernehmen Sie diesen Fall, bevor Sie Dokumente hochladen.",
+    "CASE_NOT_REJECTABLE": "Dieser Vorschlag kann nicht mehr abgelehnt werden – er wurde bereits übernommen oder abgeschlossen."
   },
   "caseDocuments": {
     "title": "Erforderliche Dokumente",

@@ -118,7 +118,10 @@ export default function LcCaseDocumentsPage() {
           {t("caseDocuments.title")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {data.documents_status_summary}
+          {t(
+            `caseDocuments.summary.${data.documents_status_summary}` as "caseDocuments.summary.action_required",
+            { defaultValue: data.documents_status_summary }
+          )}
         </p>
       </div>
 

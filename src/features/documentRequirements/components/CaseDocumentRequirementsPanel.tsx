@@ -76,9 +76,15 @@ const FULFILMENT_STATUS_CLASSES: Record<string, string> = {
 export function CaseDocumentRequirementsPanel({
   businessObjectId,
   caseType,
+  uploadDisabled = false,
+  uploadDisabledReason,
 }: {
   businessObjectId: string
   caseType?: string
+  // Set when a bank user is viewing a case they have not taken over yet: uploading is blocked until
+  // the case is claimed (PRD1042-1794). The upload controls render disabled with the reason.
+  uploadDisabled?: boolean
+  uploadDisabledReason?: string
 }) {
   const { t } = useTranslation("documentRequirements")
 
@@ -206,6 +212,8 @@ export function CaseDocumentRequirementsPanel({
                 businessObjectId={businessObjectId}
                 canUpload={canUpload}
                 canReview={canReview}
+                uploadDisabled={uploadDisabled}
+                uploadDisabledReason={uploadDisabledReason}
               />
             ))}
           </TableBody>
@@ -228,12 +236,16 @@ function RequirementRow({
   businessObjectId,
   canUpload,
   canReview,
+  uploadDisabled,
+  uploadDisabledReason,
 }: {
   item: RuntimeRequirementItem
   catalogId: string
   businessObjectId: string
   canUpload: boolean
   canReview: boolean
+  uploadDisabled?: boolean
+  uploadDisabledReason?: string
 }) {
   const { t } = useTranslation("documentRequirements")
   const notApplicable = t("caseDocuments.notApplicable")
@@ -315,6 +327,8 @@ function RequirementRow({
             businessObjectId={businessObjectId}
             requirementDefinitionId={item.requirement_definition_id}
             requirementLabel={item.document_type_name}
+            disabled={uploadDisabled}
+            disabledReason={uploadDisabledReason}
           />
         ) : showReview ? (
           <CaseDocumentReviewActions
