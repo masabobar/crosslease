@@ -49,11 +49,6 @@ const CLASSIFICATION_OPTIONS = RequirementClassificationSchema.options.map(
   })
 )
 
-const DOCUMENT_ORIGIN_OPTIONS = DocumentOriginSchema.options.map(value => ({
-  value,
-  labelKey: `requirement.documentOrigins.${value}` as const,
-}))
-
 // requirement_code and document_type_code are immutable once created (UpdateRequirementRequest
 // has neither field), so the edit form hides them — but the resolver stays a single schema
 // (rather than an edit-mode variant that omits them) so useForm's generic type doesn't have to
@@ -87,7 +82,6 @@ const requirementFieldsSchema = z.object({
   classification: z.string().min(1, "required"),
   caseTypes: z.array(z.string()).min(1, "required"),
   stageCategorization: z.string(),
-  documentOrigin: z.string().min(1, "required"),
 })
 
 type RequirementFormValues = z.infer<typeof requirementFieldsSchema>
@@ -105,8 +99,6 @@ function toFormValues(
       RequirementClassificationSchema.enum.mandatory,
     caseTypes: requirement?.applicable_case_types ?? [],
     stageCategorization: requirement?.stage_categorization ?? "",
-    documentOrigin:
-      requirement?.document_origin ?? DocumentOriginSchema.enum.uploaded,
   }
 }
 
@@ -184,7 +176,7 @@ function RequirementSheet({
       stage_categorization: values.stageCategorization
         ? StageCategorizationSchema.parse(values.stageCategorization)
         : null,
-      document_origin: DocumentOriginSchema.parse(values.documentOrigin),
+      document_origin: DocumentOriginSchema.enum.uploaded,
     }
 
     const onError = (err: unknown) => {
@@ -283,12 +275,6 @@ function RequirementSheet({
                         `requirement.stages.${requirement.stage_categorization}` as "requirement.stages.submission"
                       )
                     : t("requirement.fields.stageNone"),
-                ],
-                [
-                  "requirement.fields.documentOrigin",
-                  t(
-                    `requirement.documentOrigins.${requirement.document_origin}` as "requirement.documentOrigins.uploaded"
-                  ),
                 ],
               ].map(([labelKey, value]) => (
                 <div key={labelKey}>
@@ -524,38 +510,6 @@ function RequirementSheet({
               {errors.stageCategorization && (
                 <p className="mt-1 text-sm text-destructive">
                   {resolveMessage(errors.stageCategorization.message)}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label
-                htmlFor="requirement-document-origin"
-                error={!!errors.documentOrigin}
-                className="mb-2"
-              >
-                {t("requirement.fields.documentOrigin")}
-              </Label>
-              <Controller
-                control={control}
-                name="documentOrigin"
-                render={({ field }) => (
-                  <SelectField
-                    id="requirement-document-origin"
-                    data-testid="requirement-document-origin-select"
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    options={DOCUMENT_ORIGIN_OPTIONS.map(o => ({
-                      value: o.value,
-                      label: t(o.labelKey),
-                    }))}
-                    error={!!errors.documentOrigin}
-                  />
-                )}
-              />
-              {errors.documentOrigin && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.documentOrigin.message)}
                 </p>
               )}
             </div>

@@ -39,9 +39,13 @@ const CASE_TYPE_OPTIONS = CaseTypeSchema.options.map(value => ({
 
 type Props = {
   onOpenChange: (open: boolean) => void
+  // Where to go after the case is created. The bank flow lands on the case detail page; the
+  // leasing-company flow lands on its own documents surface (the bank detail route is closed to LC).
+  // Defaults to the case detail page so the bank call sites need no change.
+  redirectTo?: (createdId: string) => string
 }
 
-function StartCaseDialog({ onOpenChange }: Props) {
+function StartCaseDialog({ onOpenChange, redirectTo }: Props) {
   const { t } = useTranslation("cases")
   const navigate = useNavigate()
   const createCase = useCreateCase()
@@ -70,7 +74,7 @@ function StartCaseDialog({ onOpenChange }: Props) {
       onSuccess: created => {
         toast.success(t("start.success"))
         handleClose()
-        navigate(caseDetail(created.id))
+        navigate(redirectTo ? redirectTo(created.id) : caseDetail(created.id))
       },
       onError: err => showApiError(err, t),
     })

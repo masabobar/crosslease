@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { PATHS } from "@/router/paths"
+import { PATHS, lcCaseDocuments } from "@/router/paths"
 import { LC_ONLY_ROLES } from "@/features/users/types"
 
 /**
@@ -45,6 +45,12 @@ describe("LC workspace paths", () => {
     lcSubPaths.forEach(path => {
       expect(path.startsWith(PATHS.LC_WORKSPACE)).toBe(true)
     })
+  })
+})
+
+describe("lcCaseDocuments path helper", () => {
+  it("builds the LC case documents path from a business object id", () => {
+    expect(lcCaseDocuments("abc-123")).toBe("/lc/cases/abc-123/documents")
   })
 })
 

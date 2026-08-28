@@ -44,6 +44,11 @@
       "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
     }
   },
+  "proposals": {
+    "title": "Vorschläge",
+    "subtitle": "Von Ihnen bei der Bank eingereichte Fälle. Laden Sie die erforderlichen Dokumente hoch; die Bank prüft jeden Fall und übernimmt ihn.",
+    "raiseButton": "Vorschlag einreichen"
+  },
   "caseDocuments": {
     "title": "Dokumente zu dieser Anfrage",
     "required": "Erforderlich",

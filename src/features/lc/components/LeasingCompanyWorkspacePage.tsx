@@ -34,7 +34,6 @@ export default function LeasingCompanyWorkspacePage() {
       label: t("workspace.sections.proposals"),
       path: PATHS.LC_PROPOSALS,
       icon: Send,
-      comingSoon: true,
     },
     {
       key: "frameworkAgreements",

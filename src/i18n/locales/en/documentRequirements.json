@@ -133,8 +133,7 @@
       "classification": "Classification",
       "caseTypes": "Applies to case types",
       "stageCategorization": "Stage categorization",
-      "stageNone": "None",
-      "documentOrigin": "Document origin"
+      "stageNone": "None"
     },
     "classifications": {
       "mandatory": "Mandatory",
@@ -144,10 +143,6 @@
       "submission": "Submission",
       "approval": "Approval",
       "disbursement_readiness": "Disbursement readiness"
-    },
-    "documentOrigins": {
-      "uploaded": "Uploaded",
-      "generated": "Generated"
     },
     "documentTypesUnavailable": "The document types could not be loaded. Reload the page — creating a requirement without one would leave it unfulfillable.",
     "noDocumentTypes": "No document types are registered yet. Add one to the registry before creating a requirement.",

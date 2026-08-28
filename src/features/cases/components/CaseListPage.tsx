@@ -15,7 +15,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 // Light work-list scoping, mirroring the backend's `mine` / `unassigned` toggles. Kept to a couple
 // of buttons on purpose (the ticket asks for a light filter surface); the two are mutually
 // exclusive — a case is either mine or unassigned, never asked for both at once.
-type CaseScope = "all" | "mine" | "unassigned"
+type CaseScope = "all" | "mine" | "unassigned" | "unclaimed"
 
 export default function CaseListPage() {
   const { t } = useTranslation("cases")
@@ -31,6 +31,7 @@ export default function CaseListPage() {
     limit: CASE_LIST_LIMIT,
     ...(scope === "mine" ? { mine: true } : {}),
     ...(scope === "unassigned" ? { unassigned: true } : {}),
+    ...(scope === "unclaimed" ? { unclaimed: true } : {}),
   })
 
   const rows = data?.items ?? []
@@ -40,6 +41,7 @@ export default function CaseListPage() {
     { value: "all", label: t("list.filters.all") },
     { value: "mine", label: t("list.filters.mine") },
     { value: "unassigned", label: t("list.filters.unassigned") },
+    { value: "unclaimed", label: t("list.filters.unclaimed") },
   ] as const satisfies readonly { value: CaseScope; label: string }[]
 
   return (
