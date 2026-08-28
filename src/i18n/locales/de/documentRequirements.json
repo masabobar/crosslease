@@ -71,7 +71,8 @@
     "tabs": {
       "identity": "Identität",
       "requirements": "Anforderungen",
-      "audit": "Audit"
+      "audit": "Audit",
+      "documentTypes": "Dokumenttypen"
     },
     "identity": {
       "title": "Katalogidentität",

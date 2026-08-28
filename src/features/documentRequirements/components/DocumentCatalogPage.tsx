@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -9,11 +10,30 @@ import { useDocumentRequirementCatalogList } from "@/features/documentRequiremen
 import { useDocumentRequirementCatalogDetail } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogDetail"
 import { DocumentRequirementCatalogIdentityTab } from "@/features/documentRequirements/components/DocumentRequirementCatalogIdentityTab"
 import { DocumentRequirementCatalogRequirementsTab } from "@/features/documentRequirements/components/DocumentRequirementCatalogRequirementsTab"
-import { DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES } from "@/features/documentRequirements/types"
+import { DocumentTypesTab } from "@/features/documentRequirements/components/DocumentTypesTab"
+import {
+  DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES,
+  DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES,
+} from "@/features/documentRequirements/types"
 import type { DocumentRequirementCatalogDetailTab } from "@/features/documentRequirements/types"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 const AUDIT_ENTITY_TYPE = "document_requirement_catalog"
+
+// UI-only enum, never crosses the wire — a plain type guard is enough (no Zod schema needed
+// per .claude/rules/enums-and-constants.md §3).
+const DETAIL_TABS: readonly DocumentRequirementCatalogDetailTab[] = [
+  "identity",
+  "requirements",
+  "audit",
+  "documentTypes",
+]
+
+function isDetailTab(
+  value: string | null
+): value is DocumentRequirementCatalogDetailTab {
+  return DETAIL_TABS.includes(value as DocumentRequirementCatalogDetailTab)
+}
 
 /**
  * The bank's single document catalogue (PRD1042-1794 DRC usability).
@@ -29,12 +49,29 @@ export default function DocumentCatalogPage() {
   const { data: currentUser } = useCurrentUser()
   const tenantId = currentUser?.tenant_id ?? undefined
 
+  // `?tab=` is read once as the initial tab, not kept in sync afterwards: the only thing that
+  // writes it is the redirect from the retired /document-types route, which needs to land on the
+  // registry rather than on Requirements.
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get("tab")
   const [activeTab, setActiveTab] =
-    useState<DocumentRequirementCatalogDetailTab>("requirements")
+    useState<DocumentRequirementCatalogDetailTab>(
+      isDetailTab(tabParam) ? tabParam : "requirements"
+    )
 
   const canManage = Boolean(
     currentUser?.role &&
     DOCUMENT_REQUIREMENT_CATALOG_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
+  )
+
+  // The document-type registry is Bank Power User only. This page's own guard is the WIDER
+  // catalogue READ set, which also admits support_user and auditor for read-only diagnostics —
+  // so the tab carries its own gate rather than inheriting the page's. Without this, moving the
+  // registry off its own route would hand an authoring surface to two roles that were
+  // deliberately excluded from it.
+  const canManageDocumentTypes = Boolean(
+    currentUser?.role &&
+    DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   )
 
   // Resolve the one catalogue: one per bank, so the first item IS the catalogue. A single page of
@@ -139,6 +176,15 @@ export default function DocumentCatalogPage() {
             label: t("detail.tabs.audit"),
             testId: "tab-audit",
           },
+          ...(canManageDocumentTypes
+            ? [
+                {
+                  key: "documentTypes" as const,
+                  label: t("detail.tabs.documentTypes"),
+                  testId: "tab-document-types",
+                },
+              ]
+            : []),
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -161,6 +207,12 @@ export default function DocumentCatalogPage() {
           <EntityAuditHistoryTab
             entityType={AUDIT_ENTITY_TYPE}
             entityId={catalog.id}
+          />
+        )}
+        {activeTab === "documentTypes" && canManageDocumentTypes && (
+          <DocumentTypesTab
+            tenantId={tenantId}
+            canManage={canManageDocumentTypes}
           />
         )}
       </div>
