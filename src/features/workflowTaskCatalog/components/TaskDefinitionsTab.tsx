@@ -23,7 +23,7 @@ import {
   TaskApplicabilitySchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type {
-  CatalogEntityType,
+  CaseType,
   CatalogLayer,
   LayerAction,
   TaskDefinitionItem,
@@ -77,7 +77,7 @@ type Props = {
   // caller already forces canEdit false in that case.
   versionId: string | null
   catalogLayer: CatalogLayer
-  entityType: CatalogEntityType | null
+  caseType: CaseType | null
   // US 15.7: document requirements are resolved per tenant, which is the scope the BE validates
   // a task's doc_requirement_ref against.
   tenantId: string
@@ -89,7 +89,7 @@ function TaskDefinitionsTab({
   catalogId,
   versionId,
   catalogLayer,
-  entityType,
+  caseType,
   tenantId,
   tasks,
   canEdit,
@@ -105,7 +105,7 @@ function TaskDefinitionsTab({
   // the cache before "+ Add task" is ever pressed, which is what lets the action below be
   // resolved from settled data rather than guessed.
   const { data: globalDefaultTasks } = useGlobalDefaultTasks(
-    isGlobalDefaultLayer ? null : entityType
+    isGlobalDefaultLayer ? null : caseType
   )
 
   // A task carries only the requirement's UUID, so the code has to be resolved. An id outside the
@@ -404,7 +404,7 @@ function TaskDefinitionsTab({
           catalogId={catalogId}
           versionId={versionId}
           catalogLayer={catalogLayer}
-          entityType={entityType}
+          caseType={caseType}
           tenantId={tenantId}
           existingTasks={tasks}
           canEdit={canEdit}

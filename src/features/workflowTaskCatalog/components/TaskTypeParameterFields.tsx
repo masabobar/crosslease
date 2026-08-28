@@ -31,10 +31,17 @@ type Props = {
   control: Control<TaskFormValues>
   errors: FieldErrors<TaskFormValues>
   taskType: string
-  // The tenant's document requirements, already loaded for the linkage fieldset. A generate task's
-  // document is the same registry: the backend stores the ref without resolving it, and the DRC is
-  // the only document registry that exists (the document-type registry, PRD1042-1794 Block 10, is
-  // not built). The requested/generated origin match is not enforced yet either.
+  // PRD1042-2146 — the tenant's GENERATED document types, not its document requirements.
+  //
+  // These are two different catalogues and the distinction is the whole point: a requirement is a
+  // document coming IN (the leasing company uploads it); a generate step produces one going OUT.
+  // This picker was fed the requirement set because when it was written the document-type registry
+  // did not exist yet — PRD1042-1794 Block 10 has since built it, and it carries the
+  // `requested | generated` origin that separates the two. Filtering to `generated` is what makes
+  // the field offer documents the platform can actually produce.
+  //
+  // The backend stores `generated_document_ref` as an opaque UUID and never resolves it, so which
+  // registry the id comes from is decided here and nowhere else.
   documentOptions: { value: string; label: string }[]
   isDocumentsLoading: boolean
   isDocumentsError: boolean
@@ -77,10 +84,19 @@ export function TaskTypeParameterFields({
                 className="text-sm text-destructive"
                 data-testid="task-sheet-generated-document-error"
               >
-                {t("detail.taskSheet.documentRequirementsUnavailable")}
+                {t("detail.taskSheet.generatedDocumentsUnavailable")}
               </p>
             ) : isDocumentsLoading ? (
               <Skeleton className="h-9 w-full" />
+            ) : documentOptions.length === 0 ? (
+              // An empty registry reads as a broken control otherwise — the same trap the stage
+              // picker had (PRD1042-2145). Say what is missing and where to add it.
+              <p
+                className="text-sm text-muted-foreground"
+                data-testid="task-sheet-no-generated-documents"
+              >
+                {t("detail.taskSheet.noGeneratedDocuments")}
+              </p>
             ) : (
               <Controller
                 control={control}

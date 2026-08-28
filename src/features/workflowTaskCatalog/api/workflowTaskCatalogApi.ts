@@ -71,10 +71,11 @@ export const WORKFLOW_TASK_CATALOG_QUERY_KEYS = {
     ["workflow-task-catalogs", "detail", catalogId] as const,
   auditTrail: (catalogId: string) =>
     ["workflow-task-catalogs", "audit-trail", catalogId] as const,
-  // Keyed by entity type, not catalogue: the Global Default set is shared by every
-  // product-specific catalogue of that entity type, so they can share the cache entry.
-  globalDefaultTasks: (entityType: CatalogEntityType | null) =>
-    ["workflow-task-catalogs", "global-default-tasks", entityType] as const,
+  // Keyed by CASE TYPE, not catalogue: the Global Default set is shared by every product-specific
+  // catalogue of that case type, so they can share the cache entry. It was keyed by entity type
+  // until PRD1042-2145 — see the hook for why that could not resolve.
+  globalDefaultTasks: (caseType: CaseType | null) =>
+    ["workflow-task-catalogs", "global-default-tasks", caseType] as const,
   // Keyed by version, not catalogue: a phase belongs to a catalogue version and every phase
   // endpoint is scoped to one.
   phases: (catalogId: string, versionId: string) =>

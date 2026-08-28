@@ -219,7 +219,7 @@ export default function WorkflowTaskCatalogDetailPage() {
               catalogId={catalog.id}
               versionId={catalog.current_version_id}
               catalogLayer={catalog.catalog_layer}
-              entityType={catalog.entity_type}
+              caseType={catalog.case_type}
               tenantId={catalog.tenant_id}
               tasks={catalog.tasks}
               canEdit={canEditTasks}
