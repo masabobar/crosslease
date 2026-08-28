@@ -2075,6 +2075,7 @@ const CatalogEntityType = z.enum([
   "redemption_request",
 ])
 const entity_type = z.union([z.array(CatalogEntityType), z.null()]).optional()
+const case_type__2 = z.union([z.array(CaseType), z.null()]).optional()
 const product_template_id = z
   .union([z.array(z.string().uuid()), z.null()])
   .optional()
@@ -3236,6 +3237,7 @@ export const schemas = {
   catalog_layer,
   CatalogEntityType,
   entity_type,
+  case_type__2,
   product_template_id,
   CatalogState,
   catalog_state,
@@ -8535,6 +8537,11 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
         name: "entity_type",
         type: "Query",
         schema: entity_type,
+      },
+      {
+        name: "case_type",
+        type: "Query",
+        schema: case_type__2,
       },
       {
         name: "product_template_id",
