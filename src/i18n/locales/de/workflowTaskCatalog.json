@@ -326,9 +326,23 @@
       "eventTypes": {
         "wtc_catalog": {
           "created": "Katalog erstellt",
+          "activated": "Katalog aktiviert",
+          "suspended": "Katalog gesperrt",
+          "reactivated": "Katalog reaktiviert",
           "task_added": "Aufgabe hinzugefügt",
           "task_updated": "Aufgabe aktualisiert",
-          "task_removed": "Aufgabe entfernt"
+          "task_removed": "Aufgabe entfernt",
+          "phase_added": "Phase hinzugefügt",
+          "phase_renamed": "Phase umbenannt",
+          "phase_reordered": "Phasen neu angeordnet",
+          "phase_removed": "Phase entfernt",
+          "audit_trail_exported": "Prüfprotokoll exportiert",
+          "case_checklist_materialized": "Fall-Checkliste erstellt",
+          "case_item_status_set": "Status des Checklistenpunkts gesetzt",
+          "case_item_check_marked": "Checklistenpunkt abgehakt",
+          "case_phase_gate_decided": "Phasenfreigabe entschieden",
+          "list_accessed": "Katalogliste aufgerufen",
+          "cross_tenant_template_access": "Mandantenübergreifender Vorlagenzugriff"
         }
       }
     },

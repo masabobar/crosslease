@@ -492,7 +492,13 @@ function TaskDefinitionSheet({
 
   return (
     <Sheet open onOpenChange={o => !o && handleClose()}>
-      <SheetContent data-testid="task-definition-form-sheet">
+      {/* Wider than the sheet default (sm:max-w-sm): this is the densest form in the app —
+          three two-column rows, a nine-item process-context grid and four bordered
+          fieldsets — and at the default width the paired controls wrapped mid-label. */}
+      <SheetContent
+        className="w-full data-[side=right]:sm:max-w-2xl"
+        data-testid="task-definition-form-sheet"
+      >
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col h-full"
