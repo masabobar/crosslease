@@ -364,6 +364,22 @@ export const CatalogResponseSchema = z.object({
 })
 export type CatalogResponse = z.infer<typeof CatalogResponseSchema>
 
+// POST /workflow-task-catalogs/{id}/suspend — mirrors SuspendCatalogResponse. Suspending is
+// never blocked, so this is a report rather than a decision: it names the cases already resolved
+// against the catalogue so the action is not silent (PRD1042-1894 Block 8 AC §7).
+// `catalog_state` is typed as a bare string on the wire (the route passes the ORM column
+// straight through) but the service only ever sets `suspended` here, so it is parsed as the
+// closed enum — a drift should surface rather than reach the UI as an unknown state.
+export const SuspendCatalogResponseSchema = z.object({
+  catalog_id: z.string().uuid(),
+  catalog_state: CatalogStateSchema,
+  product_template_id: z.string().uuid().nullable(),
+  affected_case_ids: z.array(z.string().uuid()),
+})
+export type SuspendCatalogResponse = z.infer<
+  typeof SuspendCatalogResponseSchema
+>
+
 // The Global Default values sitting behind an override/deactivate row. Present only when the
 // task has a parent; every field is required-but-nullable because the parent itself may not
 // have set it. This is what makes US 15.23's "override rows show the inherited values

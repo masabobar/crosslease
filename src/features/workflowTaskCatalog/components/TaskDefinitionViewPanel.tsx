@@ -101,7 +101,12 @@ function TaskDefinitionViewPanel({
 
   return (
     <Sheet open onOpenChange={o => !o && onClose()}>
-      <SheetContent data-testid="task-definition-view-sheet">
+      {/* Matches the authoring sheet's width — the same task, read-only, so opening Edit
+          must not resize the panel under the reader. */}
+      <SheetContent
+        className="w-full data-[side=right]:sm:max-w-2xl"
+        data-testid="task-definition-view-sheet"
+      >
         <SheetHeader>
           <SheetTitle>
             {task.task_name ?? task.inherited?.task_name ?? task.id}

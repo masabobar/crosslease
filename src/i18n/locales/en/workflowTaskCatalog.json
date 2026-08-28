@@ -23,7 +23,7 @@
       "searchPlaceholder": "Search by catalog, task code or name",
       "buttons": {
         "catalogLayer": "Catalog layer",
-        "entityType": "Entity type",
+        "caseType": "Case type",
         "productTemplate": "Product template",
         "catalogState": "Catalog state"
       },
@@ -33,7 +33,7 @@
       "columns": {
         "catalogName": "Catalog name",
         "catalogLayer": "Catalog layer",
-        "entityType": "Entity type",
+        "caseType": "Case type",
         "productTemplate": "Product template",
         "catalogState": "Catalog state",
         "validFrom": "Valid from",
@@ -124,6 +124,20 @@
       "validFrom": "Valid from",
       "validUntil": "Valid until",
       "openEnded": "Open ended"
+    },
+    "lifecycleActions": {
+      "activate": "Activate",
+      "activated": "Catalog activated.",
+      "suspend": "Suspend",
+      "suspended": "Catalog suspended. {{count}} case(s) were already resolved against it.",
+      "reactivate": "Reactivate",
+      "reactivated": "Catalog reactivated.",
+      "suspendConfirm": {
+        "title": "Suspend this catalog?",
+        "description": "It stops resolving for new cases. Cases already resolved against it keep their checklist, and you can reactivate it at any time.",
+        "confirm": "Suspend catalog",
+        "cancel": "Cancel"
+      }
     },
     "taskDefinitions": {
       "title": "Task definitions",
@@ -326,9 +340,23 @@
       "eventTypes": {
         "wtc_catalog": {
           "created": "Catalog created",
+          "activated": "Catalog activated",
+          "suspended": "Catalog suspended",
+          "reactivated": "Catalog reactivated",
           "task_added": "Task added",
           "task_updated": "Task updated",
-          "task_removed": "Task removed"
+          "task_removed": "Task removed",
+          "phase_added": "Stage added",
+          "phase_renamed": "Stage renamed",
+          "phase_reordered": "Stages reordered",
+          "phase_removed": "Stage removed",
+          "audit_trail_exported": "Audit trail exported",
+          "case_checklist_materialized": "Case checklist created",
+          "case_item_status_set": "Checklist item status set",
+          "case_item_check_marked": "Checklist item checked",
+          "case_phase_gate_decided": "Stage gate decided",
+          "list_accessed": "Catalog list accessed",
+          "cross_tenant_template_access": "Cross-tenant template access"
         }
       }
     },

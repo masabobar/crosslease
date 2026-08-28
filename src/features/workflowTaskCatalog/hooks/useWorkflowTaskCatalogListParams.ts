@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom"
 import {
-  CatalogEntityTypeSchema,
+  CaseTypeSchema,
   CatalogLayerSchema,
   CatalogStateSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
@@ -77,10 +77,7 @@ export function useWorkflowTaskCatalogListParams(): WorkflowTaskCatalogListParam
       params.getAll("catalog_layer"),
       CatalogLayerSchema.options
     ),
-    entityType: readEnumList(
-      params.getAll("entity_type"),
-      CatalogEntityTypeSchema.options
-    ),
+    caseType: readEnumList(params.getAll("case_type"), CaseTypeSchema.options),
     // Free-form UUIDs rather than a closed enum, so there is nothing to validate against here;
     // an unknown id simply matches no catalog server-side.
     productTemplate: params.getAll("product_template_id"),
@@ -111,7 +108,7 @@ export function useWorkflowTaskCatalogListParams(): WorkflowTaskCatalogListParam
   function setFilters(changes: Partial<WorkflowTaskCatalogFilterState>) {
     update({
       ...(changes.catalogLayer && { catalog_layer: changes.catalogLayer }),
-      ...(changes.entityType && { entity_type: changes.entityType }),
+      ...(changes.caseType && { case_type: changes.caseType }),
       ...(changes.productTemplate && {
         product_template_id: changes.productTemplate,
       }),

@@ -23,7 +23,7 @@
       "searchPlaceholder": "Nach Katalog, Aufgabencode oder -name suchen",
       "buttons": {
         "catalogLayer": "Katalogebene",
-        "entityType": "Objekttyp",
+        "caseType": "Falltyp",
         "productTemplate": "Produktvorlage",
         "catalogState": "Katalogstatus"
       },
@@ -33,7 +33,7 @@
       "columns": {
         "catalogName": "Katalogname",
         "catalogLayer": "Katalogebene",
-        "entityType": "Objekttyp",
+        "caseType": "Falltyp",
         "productTemplate": "Produktvorlage",
         "catalogState": "Katalogstatus",
         "validFrom": "Gültig ab",
@@ -124,6 +124,20 @@
       "validFrom": "Gültig von",
       "validUntil": "Gültig bis",
       "openEnded": "Unbefristet"
+    },
+    "lifecycleActions": {
+      "activate": "Aktivieren",
+      "activated": "Katalog aktiviert.",
+      "suspend": "Sperren",
+      "suspended": "Katalog gesperrt. {{count}} Fall/Fälle wurden bereits darüber aufgelöst.",
+      "reactivate": "Reaktivieren",
+      "reactivated": "Katalog reaktiviert.",
+      "suspendConfirm": {
+        "title": "Diesen Katalog sperren?",
+        "description": "Er wird für neue Fälle nicht mehr aufgelöst. Bereits aufgelöste Fälle behalten ihre Checkliste, und Sie können ihn jederzeit reaktivieren.",
+        "confirm": "Katalog sperren",
+        "cancel": "Abbrechen"
+      }
     },
     "taskDefinitions": {
       "title": "Aufgabendefinitionen",
@@ -326,9 +340,23 @@
       "eventTypes": {
         "wtc_catalog": {
           "created": "Katalog erstellt",
+          "activated": "Katalog aktiviert",
+          "suspended": "Katalog gesperrt",
+          "reactivated": "Katalog reaktiviert",
           "task_added": "Aufgabe hinzugefügt",
           "task_updated": "Aufgabe aktualisiert",
-          "task_removed": "Aufgabe entfernt"
+          "task_removed": "Aufgabe entfernt",
+          "phase_added": "Phase hinzugefügt",
+          "phase_renamed": "Phase umbenannt",
+          "phase_reordered": "Phasen neu angeordnet",
+          "phase_removed": "Phase entfernt",
+          "audit_trail_exported": "Prüfprotokoll exportiert",
+          "case_checklist_materialized": "Fall-Checkliste erstellt",
+          "case_item_status_set": "Status des Checklistenpunkts gesetzt",
+          "case_item_check_marked": "Checklistenpunkt abgehakt",
+          "case_phase_gate_decided": "Phasenfreigabe entschieden",
+          "list_accessed": "Katalogliste aufgerufen",
+          "cross_tenant_template_access": "Mandantenübergreifender Vorlagenzugriff"
         }
       }
     },

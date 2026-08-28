@@ -80,7 +80,7 @@ export default function WorkflowTaskCatalogListPage() {
     ...(filters.catalogLayer.length
       ? { catalog_layer: filters.catalogLayer }
       : {}),
-    ...(filters.entityType.length ? { entity_type: filters.entityType } : {}),
+    ...(filters.caseType.length ? { case_type: filters.caseType } : {}),
     ...(filters.productTemplate.length
       ? { product_template_id: filters.productTemplate }
       : {}),

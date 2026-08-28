@@ -10,6 +10,7 @@ import {
   FieldRegistryListSchema,
   CataloguePhaseSchema,
   RemovePhaseResponseSchema,
+  SuspendCatalogResponseSchema,
   TaskResponseWithWarningsSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type {
@@ -18,6 +19,7 @@ import type {
   CatalogDetailResponse,
   CatalogEntityType,
   CatalogLayer,
+  CaseType,
   CatalogListResponse,
   CatalogResponse,
   CatalogCaseTypeItem,
@@ -28,6 +30,7 @@ import type {
   CreatePhaseRequest,
   RemovePhaseResponse,
   ReorderPhasesRequest,
+  SuspendCatalogResponse,
   TaskResponseWithWarnings,
   UpdatePhaseRequest,
   UpdateTaskRequest,
@@ -39,6 +42,9 @@ export type WorkflowTaskCatalogListParams = {
   search?: string
   catalog_layer?: CatalogLayer[]
   entity_type?: CatalogEntityType[]
+  // PRD1042-2147 — the axis the list filter actually uses; a catalogue is scoped by case
+  // type, and four of the seven derive no entity type at all.
+  case_type?: CaseType[]
   // Product Template UUIDs. The BE maps this straight onto the catalog's entity_id
   // (routes/catalogs.py), which is where a product-specific catalog stores its template.
   product_template_id?: string[]
@@ -90,6 +96,36 @@ export async function createWorkflowTaskCatalog(
   body: CreateCatalogRequest
 ): Promise<CatalogResponse> {
   const data = await api.post("/workflow-task-catalogs", body)
+  return CatalogResponseSchema.parse(data)
+}
+
+// PRD1042-1894 Block 8 (AC §7) — the catalogue lifecycle: Draft → Active → Suspended → Active.
+// All three take no body and are Bank Power User only (the routes answer 404 to any other role,
+// per US 15.1/15.2 existence non-disclosure), so the controls are gated on the same role rather
+// than on a permission string.
+//
+// Activate runs the validator and refuses with WTC_CATALOG_ACTIVATION_BLOCKED (422) when a task
+// is missing a stage, a responsible role, or its type parameters; the catalogue stays a draft.
+export async function activateWorkflowTaskCatalog(
+  catalogId: string
+): Promise<CatalogResponse> {
+  const data = await api.post(`/workflow-task-catalogs/${catalogId}/activate`)
+  return CatalogResponseSchema.parse(data)
+}
+
+// Suspending is never refused — it reports the cases already resolved against the catalogue so
+// the caller can say what it affected, then proceeds.
+export async function suspendWorkflowTaskCatalog(
+  catalogId: string
+): Promise<SuspendCatalogResponse> {
+  const data = await api.post(`/workflow-task-catalogs/${catalogId}/suspend`)
+  return SuspendCatalogResponseSchema.parse(data)
+}
+
+export async function reactivateWorkflowTaskCatalog(
+  catalogId: string
+): Promise<CatalogResponse> {
+  const data = await api.post(`/workflow-task-catalogs/${catalogId}/reactivate`)
   return CatalogResponseSchema.parse(data)
 }
 
