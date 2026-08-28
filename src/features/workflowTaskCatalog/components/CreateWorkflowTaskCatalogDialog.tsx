@@ -1,14 +1,12 @@
-import { useForm, Controller, useWatch } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { format, parseISO, startOfToday } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DatePicker } from "@/components/ui/date-picker"
 import { SelectField } from "@/components/ui/select"
 import {
   DialogModal,
@@ -31,75 +29,36 @@ import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 // difference is that productTemplate is required for Product-Specific and unused for
 // Global Default (entity_id must be null for that layer) — duplicating the four shared
 // fields keeps each schema readable without fighting zod's typing on refined objects.
-const VALID_UNTIL_REFINEMENT = {
-  message: "validUntilBeforeValidFrom",
-  path: ["validUntil"],
-}
+// PRD1042-2150 — the wizard no longer asks for a validity window. Both dates, their
+// cross-field rule and the past-date guard went with the fields: there is nothing left on
+// this form to validate, and the backend now accepts a catalogue without one. A window can
+// still be set later from the catalogue's own edit surface.
 
-// The BE rejects a past valid_from outright (WTC_CATALOG_INVALID_VALID_FROM;
-// BACKDATING_TOLERANCE_DAYS is 0), so catch it here rather than spend a guaranteed 422.
-// Same shape as ProductTemplateWizardFormSchema's validFromInPast rule.
-function refineValidFrom(
-  data: { validFrom: string },
-  ctx: z.RefinementCtx
-): void {
-  if (
-    data.validFrom !== "" &&
-    data.validFrom < format(new Date(), "yyyy-MM-dd")
-  ) {
-    ctx.addIssue({
-      code: "custom",
-      message: "validFromInPast",
-      path: ["validFrom"],
-    })
-  }
-}
+// productTemplate is a plain (non-optional) z.string() in both schemas — "not set" is
+// represented as "" rather than undefined — so both schemas produce the exact same output
+// shape as CreateCatalogFormValues below.
+const globalDefaultCatalogSchema = z.object({
+  catalogName: z.string().trim().min(1, "required"),
+  caseType: z.string().min(1, "required"),
+  productTemplate: z.string(),
+})
 
-// productTemplate/validUntil are plain (non-optional) z.string() in both schemas —
-// "not set" is represented as "" rather than undefined — so both schemas produce the
-// exact same output shape as CreateCatalogFormValues below.
-const globalDefaultCatalogSchema = z
-  .object({
-    catalogName: z.string().trim().min(1, "required"),
-    caseType: z.string().min(1, "required"),
-    productTemplate: z.string(),
-    validFrom: z.string().min(1, "required"),
-    validUntil: z.string(),
-  })
-  .refine(
-    data => !data.validUntil || data.validUntil >= data.validFrom,
-    VALID_UNTIL_REFINEMENT
-  )
-  .superRefine(refineValidFrom)
-
-const productSpecificCatalogSchema = z
-  .object({
-    catalogName: z.string().trim().min(1, "required"),
-    caseType: z.string().min(1, "required"),
-    productTemplate: z.string().min(1, "required"),
-    validFrom: z.string().min(1, "required"),
-    validUntil: z.string(),
-  })
-  .refine(
-    data => !data.validUntil || data.validUntil >= data.validFrom,
-    VALID_UNTIL_REFINEMENT
-  )
-  .superRefine(refineValidFrom)
+const productSpecificCatalogSchema = z.object({
+  catalogName: z.string().trim().min(1, "required"),
+  caseType: z.string().min(1, "required"),
+  productTemplate: z.string().min(1, "required"),
+})
 
 type CreateCatalogFormValues = {
   catalogName: string
   caseType: string
   productTemplate: string
-  validFrom: string
-  validUntil: string
 }
 
 const EMPTY_FORM_VALUES: CreateCatalogFormValues = {
   catalogName: "",
   caseType: "",
   productTemplate: "",
-  validFrom: "",
-  validUntil: "",
 }
 
 type Props = {
@@ -151,21 +110,10 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
     defaultValues: EMPTY_FORM_VALUES,
   })
 
-  // Calendar floors, matched to the schema rules above so the two can never disagree:
-  // refineValidFrom rejects a validFrom before today, and VALID_UNTIL_REFINEMENT accepts
-  // validUntil >= validFrom — equal dates are legal here, so the end floor is the chosen
-  // start itself rather than the day after it. Both schemas share these two fields, so one
-  // pair of floors covers Global Default and Product-Specific alike.
-  const validFrom = useWatch({ control, name: "validFrom" })
-  const today = startOfToday()
-  const validUntilMin = validFrom ? parseISO(validFrom) : today
-
+  // Every rule left on this form is a presence check, so `required` is the only message the
+  // resolver can receive — PRD1042-2150 removed the two date rules that were not.
   function resolveMessage(message: string | undefined): string | undefined {
-    if (!message) return undefined
-    if (message === "required") return tCommon("validation.required")
-    return t(
-      `create.errors.${message}` as "create.errors.validUntilBeforeValidFrom"
-    )
+    return message ? tCommon("validation.required") : undefined
   }
 
   function handleClose() {
@@ -182,8 +130,6 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
         // derives it from case_type and returns it on the response instead.
         // entity_id carries the Product Template UUID and must be null on Global Default.
         entity_id: isGlobalDefault ? null : values.productTemplate,
-        valid_from: values.validFrom,
-        valid_until: values.validUntil || null,
         // The case type IS the scope key (PRD1042-1790 item 1), so it is asked for directly. It
         // used to be derived from a chosen Entity type, which capped the axis at the two case
         // types an entity type maps to and put the superseded vocabulary on screen.
@@ -391,71 +337,6 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
               )}
             </div>
           )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label
-                htmlFor="create-catalog-valid-from"
-                error={!!errors.validFrom}
-                className="mb-2"
-              >
-                {t("create.fields.validFrom")}
-              </Label>
-              <Controller
-                control={control}
-                name="validFrom"
-                render={({ field }) => (
-                  <DatePicker
-                    id="create-catalog-valid-from"
-                    data-testid="create-catalog-valid-from-datepicker"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={!!errors.validFrom}
-                    minDate={today}
-                    captionLayout="dropdown"
-                  />
-                )}
-              />
-              {errors.validFrom && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.validFrom.message)}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label
-                htmlFor="create-catalog-valid-until"
-                error={!!errors.validUntil}
-                className="mb-2"
-              >
-                {t("create.fields.validUntil")}{" "}
-                <span className="font-normal text-muted-foreground">
-                  {t("create.fields.optional")}
-                </span>
-              </Label>
-              <Controller
-                control={control}
-                name="validUntil"
-                render={({ field }) => (
-                  <DatePicker
-                    id="create-catalog-valid-until"
-                    data-testid="create-catalog-valid-until-datepicker"
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={!!errors.validUntil}
-                    minDate={validUntilMin}
-                    captionLayout="dropdown"
-                  />
-                )}
-              />
-              {errors.validUntil && (
-                <p className="mt-1 text-sm text-destructive">
-                  {resolveMessage(errors.validUntil.message)}
-                </p>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">

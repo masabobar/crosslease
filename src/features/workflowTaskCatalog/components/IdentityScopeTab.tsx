@@ -108,7 +108,11 @@ function IdentityScopeTab({
           />
           <DetailRow
             label={t("detail.lifecycle.validFrom")}
-            value={formatDate(catalog.valid_from)}
+            value={
+              catalog.valid_from
+                ? formatDate(catalog.valid_from)
+                : t("detail.lifecycle.notSet")
+            }
           />
           <DetailRow
             label={t("detail.lifecycle.validUntil")}

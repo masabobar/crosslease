@@ -172,6 +172,27 @@ describe("CatalogListItemSchema", () => {
       CatalogListItemSchema.parse({ ...validListItem, valid_from: 20260801 })
     ).toThrow()
   })
+
+  // PRD1042-2150 — the creation wizard no longer asks for a validity window, so a catalogue
+  // can carry none. The key stays required on the wire (nullable, not optional): the backend
+  // always sends it, it just may be null.
+  it("accepts a null valid_from", () => {
+    const parsed = CatalogListItemSchema.parse({
+      ...validListItem,
+      valid_from: null,
+    })
+    expect(parsed.valid_from).toBeNull()
+  })
+
+  it("accepts a catalogue with no validity window at all", () => {
+    const parsed = CatalogListItemSchema.parse({
+      ...validListItem,
+      valid_from: null,
+      valid_until: null,
+    })
+    expect(parsed.valid_from).toBeNull()
+    expect(parsed.valid_until).toBeNull()
+  })
 })
 
 describe("CatalogListResponseSchema", () => {

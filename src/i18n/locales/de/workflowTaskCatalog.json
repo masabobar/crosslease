@@ -81,15 +81,8 @@
       "productTemplatePlaceholder": "Auswählen",
       "productTemplateHint": "Nur aktive Produktvorlagen sind verfügbar.",
       "productTemplateEmpty": "Es ist keine Produktvorlage mit einer aktiven veröffentlichten Version verfügbar, daher kann noch kein produktspezifischer Katalog erstellt werden.",
-      "validFrom": "Gültig von",
-      "validUntil": "Gültig bis",
-      "optional": "(optional)",
       "caseType": "Fallart",
       "caseTypePlaceholder": "Auswählen"
-    },
-    "errors": {
-      "validUntilBeforeValidFrom": "\"Gültig bis\" muss am oder nach \"Gültig von\" liegen.",
-      "validFromInPast": "Gültig ab darf nicht in der Vergangenheit liegen."
     },
     "actions": {
       "cancel": "Abbrechen",
@@ -123,7 +116,8 @@
       "createdBy": "Erstellt von",
       "validFrom": "Gültig von",
       "validUntil": "Gültig bis",
-      "openEnded": "Unbefristet"
+      "openEnded": "Unbefristet",
+      "notSet": "Nicht gesetzt"
     },
     "lifecycleActions": {
       "activate": "Aktivieren",

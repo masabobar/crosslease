@@ -81,15 +81,8 @@
       "productTemplatePlaceholder": "Select",
       "productTemplateHint": "Only active Product Templates are available.",
       "productTemplateEmpty": "No product template with an active published version is available, so a product-specific catalog cannot be created yet.",
-      "validFrom": "Valid from",
-      "validUntil": "Valid until",
-      "optional": "(optional)",
       "caseType": "Case type",
       "caseTypePlaceholder": "Select"
-    },
-    "errors": {
-      "validUntilBeforeValidFrom": "Valid until must be on or after valid from.",
-      "validFromInPast": "Valid from cannot be in the past."
     },
     "actions": {
       "cancel": "Cancel",
@@ -123,7 +116,8 @@
       "createdBy": "Created by",
       "validFrom": "Valid from",
       "validUntil": "Valid until",
-      "openEnded": "Open ended"
+      "openEnded": "Open ended",
+      "notSet": "Not set"
     },
     "lifecycleActions": {
       "activate": "Activate",

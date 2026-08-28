@@ -310,7 +310,7 @@ export const CatalogListItemSchema = z.object({
   entity_type: CatalogEntityTypeSchema.nullable(),
   entity_id: z.string().uuid().nullable(),
   case_type: CaseTypeSchema.nullable(),
-  valid_from: z.string(),
+  valid_from: z.string().nullable(),
   valid_until: z.string().nullable(),
   created_at: z.string(),
 })
@@ -333,8 +333,8 @@ export type CatalogListResponse = z.infer<typeof CatalogListResponseSchema>
 export const CreateCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200),
   catalog_layer: CatalogLayerSchema,
-  valid_from: z.string(),
-  valid_until: z.string().nullable().optional(),
+  // PRD1042-2150 — the creation wizard no longer asks for a validity window and the backend
+  // no longer requires one, so neither date is part of the create contract.
   description: z.string().nullable().optional(),
   entity_id: z.string().uuid().nullable().optional(),
   case_type: CaseTypeSchema,
@@ -353,7 +353,7 @@ export const CatalogResponseSchema = z.object({
   entity_type: CatalogEntityTypeSchema.nullable(),
   entity_id: z.string().uuid().nullable(),
   case_type: CaseTypeSchema.nullable(),
-  valid_from: z.string(),
+  valid_from: z.string().nullable(),
   valid_until: z.string().nullable(),
   description: z.string().nullable(),
   created_by: z.string().uuid(),
@@ -488,7 +488,7 @@ export const CatalogDetailResponseSchema = z.object({
   case_type: CaseTypeSchema.nullable(),
   entity_type: CatalogEntityTypeSchema.nullable(),
   entity_id: z.string().uuid().nullable(),
-  valid_from: z.string(),
+  valid_from: z.string().nullable(),
   valid_until: z.string().nullable(),
   description: z.string().nullable(),
   created_by: z.string().uuid(),
