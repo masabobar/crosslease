@@ -16,15 +16,15 @@ import { showApiError } from "@/lib/apiErrorMessage"
 import { CatalogStateSchema } from "@/features/workflowTaskCatalog/api/schema"
 import type { CatalogState } from "@/features/workflowTaskCatalog/api/schema"
 import {
-  useActivateWorkflowTaskCatalog,
   useReactivateWorkflowTaskCatalog,
   useSuspendWorkflowTaskCatalog,
 } from "@/features/workflowTaskCatalog/hooks/useWorkflowTaskCatalogLifecycle"
 
-// PRD1042-1894 Block 8 (AC §7) — Draft → Active → Suspended → Active. Exactly one transition is
-// offered at a time because the backend accepts exactly one: activating a non-draft, suspending a
-// non-active or reactivating a non-suspended all answer WTC_CATALOG_STATE_TRANSITION. `archived`
-// is a reserved post-MVP terminal with no route, so it offers nothing.
+// PRD1042-2148 — a catalogue is created Active, so the only transitions left are the ones that
+// come AFTER activation: Suspend an active one, Reactivate a suspended one. There is no Activate
+// control because there is no draft to move out of; `draft` is unreachable and `archived` is a
+// reserved post-MVP terminal with no route. Exactly one transition is offered at a time because
+// the backend accepts exactly one — the others answer WTC_CATALOG_STATE_TRANSITION.
 type Props = {
   catalogId: string
   catalogState: CatalogState
@@ -41,34 +41,12 @@ function CatalogLifecycleActions({
   const { t } = useTranslation("workflowTaskCatalog")
   const [isSuspendConfirmOpen, setIsSuspendConfirmOpen] = useState(false)
 
-  const activate = useActivateWorkflowTaskCatalog()
   const suspend = useSuspendWorkflowTaskCatalog()
   const reactivate = useReactivateWorkflowTaskCatalog()
 
-  const isPending =
-    activate.isPending || suspend.isPending || reactivate.isPending
+  const isPending = suspend.isPending || reactivate.isPending
 
   if (!canManage) return null
-
-  if (catalogState === CatalogStateSchema.enum.draft) {
-    return (
-      <Button
-        data-testid="catalog-activate-button"
-        disabled={isPending}
-        onClick={() =>
-          activate.mutate(catalogId, {
-            onSuccess: () =>
-              toast.success(t("detail.lifecycleActions.activated")),
-            // The activation validator's own reasons ride on the error; showApiError resolves
-            // WTC_CATALOG_ACTIVATION_BLOCKED to the curated message.
-            onError: err => showApiError(err, t),
-          })
-        }
-      >
-        {t("detail.lifecycleActions.activate")}
-      </Button>
-    )
-  }
 
   if (catalogState === CatalogStateSchema.enum.active) {
     return (
