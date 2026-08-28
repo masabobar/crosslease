@@ -6955,6 +6955,23 @@
             "description": "Filter by entity type"
           },
           {
+            "name": "case_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CaseType" }
+                },
+                { "type": "null" }
+              ],
+              "description": "Filter by case type",
+              "title": "Case Type"
+            },
+            "description": "Filter by case type"
+          },
+          {
             "name": "product_template_id",
             "in": "query",
             "required": false,
