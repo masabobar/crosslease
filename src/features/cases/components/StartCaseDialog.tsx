@@ -19,10 +19,12 @@ import { caseDetail } from "@/router/paths"
 import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { useCreateCase } from "@/features/cases/hooks/useCreateCase"
 
-// The case type is the only field the backend needs to start a case (StartCaseRequest). All seven
-// types are offered — the backend accepts each identically, and offering all of them is what lets a
-// tester see case-type-scoped requirements resolve differently per type. The guided refinancing
-// wizard is a later, separate surface; this dialog is the lightweight entry point for every type.
+// The case type is the only field the backend needs to start a case (StartCaseRequest). Only the
+// refinancing request has any built behaviour yet (its document-driven status, and the eventual
+// guided wizard); the other six are shown but DISABLED so the roadmap is visible without letting a
+// tester create a dead-end case of a type nothing yet acts on. Re-enable each as its process lands.
+const ENABLED_CASE_TYPE = CaseTypeSchema.enum.refinancing_request
+
 const startCaseSchema = z.object({
   caseType: z.string().min(1, "required"),
 })
@@ -32,6 +34,7 @@ type StartCaseFormValues = z.infer<typeof startCaseSchema>
 const CASE_TYPE_OPTIONS = CaseTypeSchema.options.map(value => ({
   value,
   labelKey: `caseTypes.${value}` as const,
+  disabled: value !== ENABLED_CASE_TYPE,
 }))
 
 type Props = {
@@ -103,7 +106,10 @@ function StartCaseDialog({ onOpenChange }: Props) {
                   onValueChange={field.onChange}
                   options={CASE_TYPE_OPTIONS.map(o => ({
                     value: o.value,
-                    label: t(o.labelKey),
+                    label: o.disabled
+                      ? t("start.caseTypeComingSoon", { type: t(o.labelKey) })
+                      : t(o.labelKey),
+                    disabled: o.disabled,
                   }))}
                   error={!!errors.caseType}
                 />
