@@ -5729,6 +5729,40 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
   },
   {
     method: "get",
+    path: "/api/v1/lc/cases",
+    alias: "list_lc_cases_api_v1_lc_cases_get",
+    description: `The leasing company&#x27;s own cases (its raised proposals and any the bank has since taken over).
+
+Defaults to newest-first (&#x60;&#x60;oldest_first&#x3D;False&#x60;&#x60;), unlike the bank&#x27;s queue-oriented &#x60;&#x60;/cases&#x60;&#x60;.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "oldest_first",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "limit",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: "offset",
+        type: "Query",
+        schema: z.number().int().gte(0).optional().default(0),
+      },
+    ],
+    response: CaseListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
     path: "/api/v1/lc/obligations/:business_object_id",
     alias: "get_lc_obligations_api_v1_lc_obligations__business_object_id__get",
     requestFormat: "json",

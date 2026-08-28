@@ -962,6 +962,67 @@
         }
       }
     },
+    "/api/v1/lc/cases": {
+      "get": {
+        "tags": ["Cases — LC"],
+        "summary": "List Lc Cases",
+        "description": "The leasing company's own cases (its raised proposals and any the bank has since taken over).\n\nDefaults to newest-first (``oldest_first=False``), unlike the bank's queue-oriented ``/cases``.",
+        "operationId": "list_lc_cases_api_v1_lc_cases_get",
+        "parameters": [
+          {
+            "name": "oldest_first",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Oldest First"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseListResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me": {
       "get": {
         "tags": ["Users"],

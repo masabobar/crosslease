@@ -28,6 +28,8 @@ import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { cn } from "@/lib/utils"
 import { useGlobalDefaultTasks } from "@/features/workflowTaskCatalog/hooks/useGlobalDefaultTasks"
 import { useTenantDocumentRequirements } from "@/features/documentRequirements/hooks/useTenantDocumentRequirements"
+import { useTenantDocumentTypes } from "@/features/documentRequirements/hooks/useTenantDocumentTypes"
+import { DocumentTypeOriginSchema } from "@/features/documentRequirements/api/schema"
 import { useAddCatalogTask } from "@/features/workflowTaskCatalog/hooks/useAddCatalogTask"
 import { useUpdateCatalogTask } from "@/features/workflowTaskCatalog/hooks/useUpdateCatalogTask"
 import { useRemoveCatalogTask } from "@/features/workflowTaskCatalog/hooks/useRemoveCatalogTask"
@@ -51,8 +53,8 @@ import {
   TaskTypeSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type {
+  CaseType,
   AddTaskRequest,
-  CatalogEntityType,
   CatalogLayer,
   LayerAction,
   StepResponsibleRole,
@@ -248,7 +250,7 @@ type Props = {
   catalogId: string
   versionId: string
   catalogLayer: CatalogLayer
-  entityType: CatalogEntityType | null
+  caseType: CaseType | null
   // US 15.7 — document requirements are tenant-scoped, matching the BE's validation scope.
   tenantId: string
   // Used to hide Global Default parents this catalogue already overrides or deactivates — the
@@ -269,7 +271,7 @@ function TaskDefinitionSheet({
   catalogId,
   versionId,
   catalogLayer,
-  entityType,
+  caseType,
   tenantId,
   existingTasks,
   canEdit,
@@ -298,12 +300,22 @@ function TaskDefinitionSheet({
     data: globalDefaultTasks,
     isError: isParentLoadError,
     isPending: isParentLoading,
-  } = useGlobalDefaultTasks(isGlobalDefaultLayer ? null : entityType)
+  } = useGlobalDefaultTasks(isGlobalDefaultLayer ? null : caseType)
   const {
     data: documentRequirements,
     isError: isDocRequirementsQueryError,
     isPending: isDocRequirementsLoading,
   } = useTenantDocumentRequirements(tenantId)
+
+  // PRD1042-2146 — a generate step produces a document; it does not consume one. Its picker reads
+  // the document-type registry filtered to the `generated` origin, NOT the requirement set above
+  // (which is what the leasing company uploads). The two were conflated because the registry did
+  // not exist when this field was written.
+  const {
+    data: documentTypes,
+    isError: isDocTypesQueryError,
+    isPending: isDocTypesLoading,
+  } = useTenantDocumentTypes(tenantId)
 
   const {
     control,
@@ -359,6 +371,23 @@ function TaskDefinitionSheet({
   // query-error toast in main.tsx.
   const isDocRequirementsError =
     isDocRequirementsQueryError && documentRequirementOptions.length === 0
+
+  // Active + generated only: a retired type must not be offered, and a `requested` type is one the
+  // bank asks for rather than one the platform can produce.
+  const generatedDocumentOptions = (documentTypes?.items ?? [])
+    .filter(
+      documentType =>
+        documentType.is_active &&
+        documentType.origin === DocumentTypeOriginSchema.enum.generated
+    )
+    .map(documentType => ({
+      value: documentType.id,
+      label: `${documentType.type_code}, ${documentType.type_name}`,
+    }))
+  // Same reasoning as the requirement picker: a failed refetch keeps the last good set rather than
+  // blanking a populated control (PRD1042-2146).
+  const isDocTypesError =
+    isDocTypesQueryError && generatedDocumentOptions.length === 0
 
   const linkedRequirement = (documentRequirements ?? []).find(
     requirement => requirement.id === task?.doc_requirement_ref
@@ -1045,9 +1074,9 @@ function TaskDefinitionSheet({
                 control={control}
                 errors={errors}
                 taskType={watchedTaskType}
-                documentOptions={documentRequirementOptions}
-                isDocumentsLoading={isDocRequirementsLoading}
-                isDocumentsError={isDocRequirementsError}
+                documentOptions={generatedDocumentOptions}
+                isDocumentsLoading={isDocTypesLoading}
+                isDocumentsError={isDocTypesError}
                 resolveMessage={resolveMessage}
               />
             )}

@@ -274,7 +274,7 @@
         "servicing": "Servicing",
         "redemption": "Redemption"
       },
-      "noGlobalDefaultTasks": "No global default catalog with tasks exists for this entity type yet. Create one first — an override or deactivate entry needs a global default task to point at.",
+      "noGlobalDefaultTasks": "No global default catalog with tasks exists for this case type yet. Create one first — an override or deactivate entry needs a global default task to point at.",
       "parentsUnavailable": "Global default tasks could not be loaded. Close this and try again.",
       "allParentsClaimed": "Every global default task is already overridden or deactivated by this catalog. Each one can only be changed once per catalog.",
       "pinModes": {
@@ -314,7 +314,9 @@
         "less_than": "less than",
         "at_least": "at least",
         "at_most": "at most"
-      }
+      },
+      "generatedDocumentsUnavailable": "Document types could not be loaded. Close this and try again.",
+      "noGeneratedDocuments": "No generated document types exist yet. Add one under Document catalog → Document types, with origin Generated."
     },
     "auditTrail": {
       "columns": {

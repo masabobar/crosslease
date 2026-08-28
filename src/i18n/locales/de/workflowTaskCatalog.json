@@ -274,7 +274,7 @@
         "servicing": "Betreuung",
         "redemption": "Ablösung"
       },
-      "noGlobalDefaultTasks": "Für diesen Entitätstyp existiert noch kein globaler Standardkatalog mit Aufgaben. Erstellen Sie zuerst einen — eine Überschreibung oder Deaktivierung benötigt eine globale Standardaufgabe als Ziel.",
+      "noGlobalDefaultTasks": "Für diesen Falltyp existiert noch kein globaler Standardkatalog mit Aufgaben. Erstellen Sie zuerst einen — ein Überschreibungs- oder Deaktivierungseintrag benötigt eine globale Standardaufgabe als Bezug.",
       "parentsUnavailable": "Globale Standardaufgaben konnten nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
       "allParentsClaimed": "Alle globalen Standardaufgaben werden von diesem Katalog bereits überschrieben oder deaktiviert. Jede kann pro Katalog nur einmal geändert werden.",
       "pinModes": {
@@ -314,7 +314,9 @@
         "less_than": "kleiner als",
         "at_least": "mindestens",
         "at_most": "höchstens"
-      }
+      },
+      "generatedDocumentsUnavailable": "Dokumenttypen konnten nicht geladen werden. Schließen Sie dies und versuchen Sie es erneut.",
+      "noGeneratedDocuments": "Es existieren noch keine generierten Dokumenttypen. Legen Sie einen unter Dokumentenkatalog → Dokumenttypen mit Herkunft „Generiert“ an."
     },
     "auditTrail": {
       "columns": {
