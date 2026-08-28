@@ -44,6 +44,11 @@
       "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
     }
   },
+  "proposals": {
+    "title": "Proposals",
+    "subtitle": "Cases you have raised with the bank. Upload the required documents; the bank reviews and takes each one over.",
+    "raiseButton": "Raise a proposal"
+  },
   "caseDocuments": {
     "title": "Documents for this request",
     "required": "Required",

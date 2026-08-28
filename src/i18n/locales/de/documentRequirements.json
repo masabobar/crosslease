@@ -134,8 +134,7 @@
       "classification": "Klassifizierung",
       "caseTypes": "Gilt für Falltypen",
       "stageCategorization": "Phasenkategorisierung",
-      "stageNone": "Keine",
-      "documentOrigin": "Dokumentherkunft"
+      "stageNone": "Keine"
     },
     "classifications": {
       "mandatory": "Pflicht",
@@ -145,10 +144,6 @@
       "submission": "Einreichung",
       "approval": "Genehmigung",
       "disbursement_readiness": "Auszahlungsbereitschaft"
-    },
-    "documentOrigins": {
-      "uploaded": "Hochgeladen",
-      "generated": "Generiert"
     },
     "documentTypesUnavailable": "Die Dokumentarten konnten nicht geladen werden. Laden Sie die Seite neu — eine Anforderung ohne Dokumentart wäre nicht erfüllbar.",
     "noDocumentTypes": "Es sind noch keine Dokumentarten registriert. Legen Sie zuerst eine im Register an.",

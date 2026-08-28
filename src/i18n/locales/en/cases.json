@@ -5,7 +5,8 @@
     "filters": {
       "all": "All",
       "mine": "Assigned to me",
-      "unassigned": "Unassigned"
+      "unassigned": "Unassigned",
+      "unclaimed": "Unclaimed"
     },
     "table": {
       "columns": {
@@ -43,10 +44,9 @@
       "caseType": "Case type",
       "caseId": "Case ID"
     },
-    "tabs": {
-      "documents": "Documents"
-    },
-    "loadError": "This case could not be loaded. Please try again."
+    "loadError": "This case could not be loaded. Please try again.",
+    "takeOver": "Take over",
+    "takeOverSuccess": "Case taken over."
   },
   "caseTypes": {
     "refinancing_request": "Refinancing request",

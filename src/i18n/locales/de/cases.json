@@ -5,7 +5,8 @@
     "filters": {
       "all": "Alle",
       "mine": "Mir zugewiesen",
-      "unassigned": "Nicht zugewiesen"
+      "unassigned": "Nicht zugewiesen",
+      "unclaimed": "Nicht übernommen"
     },
     "table": {
       "columns": {
@@ -43,10 +44,9 @@
       "caseType": "Falltyp",
       "caseId": "Fall-ID"
     },
-    "tabs": {
-      "documents": "Dokumente"
-    },
-    "loadError": "Dieser Fall konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+    "loadError": "Dieser Fall konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "takeOver": "Übernehmen",
+    "takeOverSuccess": "Fall übernommen."
   },
   "caseTypes": {
     "refinancing_request": "Refinanzierungsanfrage",

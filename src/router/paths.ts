@@ -147,3 +147,7 @@ export function caseChecklist(businessObjectId: string): string {
 export function caseDetail(caseId: string): string {
   return PATHS.CASE_DETAIL.replace(":caseId", caseId)
 }
+
+export function lcCaseDocuments(businessObjectId: string): string {
+  return PATHS.LC_CASE_DOCUMENTS.replace(":businessObjectId", businessObjectId)
+}
