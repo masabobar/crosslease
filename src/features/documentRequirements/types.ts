@@ -31,3 +31,6 @@ export type DocumentRequirementCatalogDetailTab =
   | "identity"
   | "requirements"
   | "audit"
+  // The document-type registry, moved here from its own route. Only offered to the roles in
+  // DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES — see DocumentCatalogPage.
+  | "documentTypes"

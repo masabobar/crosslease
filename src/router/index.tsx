@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter, Navigate } from "react-router-dom"
 import { lazy, Suspense } from "react"
 import { PATHS } from "./paths"
 import { RoleGuard } from "@/router/RoleGuard"
@@ -35,7 +35,6 @@ import {
 import {
   CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES,
   DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
-  DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES,
 } from "@/features/documentRequirements/types"
 import { CASE_READ_ALLOWED_ROLES } from "@/features/cases/types"
 
@@ -170,10 +169,6 @@ const WorkflowTaskCatalogDetailPage = lazy(
 )
 const DocumentCatalogPage = lazy(
   () => import("@/features/documentRequirements/components/DocumentCatalogPage")
-)
-const DocumentTypeListPage = lazy(
-  () =>
-    import("@/features/documentRequirements/components/DocumentTypeListPage")
 )
 const CaseListPage = lazy(
   () => import("@/features/cases/components/CaseListPage")
@@ -552,16 +547,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        // bank_power_user only (DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES): a pure authoring surface, so
-        // it does not inherit the catalogue's wider READ set that grants support_user/auditor
-        // read-only diagnostic access.
+        // The document-type registry is a tab on the Document Catalog now, not a destination of
+        // its own. The path is kept as a redirect so existing links and bookmarks still land —
+        // `?tab=documentTypes` selects the tab, and the tab is still bank_power_user only, gated
+        // inside the page rather than here (the page's own guard is the wider catalogue READ set).
         path: PATHS.DOCUMENT_TYPE_LIST,
         element: (
-          <Suspense fallback={null}>
-            <RoleGuard allowed={DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES}>
-              <DocumentTypeListPage />
-            </RoleGuard>
-          </Suspense>
+          <Navigate
+            to={`${PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST}?tab=documentTypes`}
+            replace
+          />
         ),
       },
       {

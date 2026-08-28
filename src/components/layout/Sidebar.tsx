@@ -43,10 +43,7 @@ import { PRODUCT_TEMPLATE_READ_ALLOWED_ROLES } from "@/features/productTemplates
 import { FRAMEWORK_AGREEMENT_READ_ALLOWED_ROLES } from "@/features/frameworkAgreements/types"
 import { FRAMEWORK_AGREEMENT_MODULE_KEY } from "@/features/frameworkAgreements/constants"
 import { WORKFLOW_TASK_CATALOG_READ_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
-import {
-  DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
-  DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES,
-} from "@/features/documentRequirements/types"
+import { DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES } from "@/features/documentRequirements/types"
 import { CASE_READ_ALLOWED_ROLES } from "@/features/cases/types"
 import crossleaseLogo from "@/assets/crosslease.png"
 
@@ -137,11 +134,6 @@ export function Sidebar() {
   const canAccessDocumentRequirementCatalog =
     !!currentUser &&
     DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES.includes(currentUser.role)
-  // Document-type registry is authoring-only (bank_power_user), narrower than the catalogue read
-  // set above — same reasoning as the route guard.
-  const canAccessDocumentTypes =
-    !!currentUser &&
-    DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
   // Operational Case list — the way into a case's Documents tab (PRD1042-1794). FO/BO/BPU only.
   const canAccessCases =
     !!currentUser && CASE_READ_ALLOWED_ROLES.includes(currentUser.role)
@@ -201,9 +193,6 @@ export function Sidebar() {
   )
   const isDocumentRequirementCatalogListActive = location.pathname.startsWith(
     PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST
-  )
-  const isDocumentTypeListActive = location.pathname.startsWith(
-    PATHS.DOCUMENT_TYPE_LIST
   )
 
   return (
@@ -557,14 +546,6 @@ export function Sidebar() {
                       label={t("nav.documentCatalog")}
                       testid="nav-document-requirement-catalogs"
                       isActive={isDocumentRequirementCatalogListActive}
-                    />
-                  )}
-                  {canAccessDocumentTypes && (
-                    <SidebarNavLink
-                      to={PATHS.DOCUMENT_TYPE_LIST}
-                      label={t("nav.documentTypes")}
-                      testid="nav-document-types"
-                      isActive={isDocumentTypeListActive}
                     />
                   )}
                 </CollapsibleContent>

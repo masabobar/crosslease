@@ -16,10 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { showApiError, resolveApiErrorMessage } from "@/lib/apiErrorMessage"
-import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useDocumentTypeList } from "@/features/documentRequirements/hooks/useTenantDocumentTypes"
 import { useUpdateDocumentType } from "@/features/documentRequirements/hooks/useUpdateDocumentType"
-import { DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES } from "@/features/documentRequirements/types"
 import { DocumentTypeTable } from "@/features/documentRequirements/components/DocumentTypeTable"
 import { DocumentTypeDialog } from "@/features/documentRequirements/components/DocumentTypeDialog"
 import type { DocumentType } from "@/features/documentRequirements/api/schema"
@@ -29,15 +27,24 @@ type DialogState =
   | { mode: "edit"; documentType: DocumentType }
   | null
 
-export default function DocumentTypeListPage() {
-  const { t } = useTranslation("documentRequirements")
-  const { data: currentUser } = useCurrentUser()
-  const tenantId = currentUser?.tenant_id ?? undefined
+type Props = {
+  tenantId: string | undefined
+  // Bank Power User only. The registry is a pure authoring surface, so it does NOT inherit the
+  // catalogue page's wider read set — support_user and auditor reach that page for read-only
+  // diagnostics and must not reach this tab. The caller also hides the tab itself; this prop is
+  // what keeps the controls off if it is ever rendered another way.
+  canManage: boolean
+}
 
-  const canManage = Boolean(
-    currentUser?.role &&
-    DOCUMENT_TYPE_MANAGE_ALLOWED_ROLES.includes(currentUser.role)
-  )
+/**
+ * PRD1042-1794 Block 10 — the tenant's document-type registry, as a tab on the Document Catalog.
+ *
+ * Was a standalone page under its own route until it moved here: a requirement names a document
+ * type by code, so the registry is read and edited in the same sitting as the requirements that
+ * depend on it, and a separate sidebar destination made that a round trip.
+ */
+function DocumentTypesTab({ tenantId, canManage }: Props) {
+  const { t } = useTranslation("documentRequirements")
 
   const [showInactive, setShowInactive] = useState(false)
   const [dialogState, setDialogState] = useState<DialogState>(null)
@@ -75,16 +82,11 @@ export default function DocumentTypeListPage() {
   }
 
   return (
-    <div className="p-8">
+    <div data-testid="document-types-tab">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            {t("documentType.list.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("documentType.list.subtitle")}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {t("documentType.list.subtitle")}
+        </p>
         {canManage && (
           <Button
             data-testid="add-document-type-button"
@@ -176,3 +178,5 @@ export default function DocumentTypeListPage() {
     </div>
   )
 }
+
+export { DocumentTypesTab }
