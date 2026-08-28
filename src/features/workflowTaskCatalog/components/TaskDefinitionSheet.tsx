@@ -301,7 +301,7 @@ function TaskDefinitionSheet({
   } = useGlobalDefaultTasks(isGlobalDefaultLayer ? null : entityType)
   const {
     data: documentRequirements,
-    isError: isDocRequirementsError,
+    isError: isDocRequirementsQueryError,
     isPending: isDocRequirementsLoading,
   } = useTenantDocumentRequirements(tenantId)
 
@@ -351,6 +351,15 @@ function TaskDefinitionSheet({
       label: `${requirement.requirement_code}, ${requirement.document_type_name}`,
     })
   )
+  // A failed *refetch* keeps the last good set in the cache: React Query leaves `data` in place
+  // and flips `isError`, so treating "errored" as "unavailable" blanks a picker that still has
+  // everything it needs — the PRD1042-2146 symptom, where the options were listed a moment
+  // earlier and the section then collapsed to an error. Only a failure with nothing cached to
+  // show is a real error state; the refetch failure itself is still surfaced by the global
+  // query-error toast in main.tsx.
+  const isDocRequirementsError =
+    isDocRequirementsQueryError && documentRequirementOptions.length === 0
+
   const linkedRequirement = (documentRequirements ?? []).find(
     requirement => requirement.id === task?.doc_requirement_ref
   )
