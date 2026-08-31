@@ -762,6 +762,40 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/reject": {
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Reject Case Proposal",
+        "description": "Decline an unclaimed leasing-company proposal. The request moves to rejected and the leasing\ncompany sees it on its own case. A bank owner-role only (an LC caller is refused in the service).",
+        "operationId": "reject_case_proposal_api_v1_cases__case_id__reject_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/leasing-company": {
       "put": {
         "tags": ["Cases"],
@@ -8881,6 +8915,25 @@
         }
       }
     },
+    "/api/v1/document-requirement-catalogs/case-types/startable": {
+      "get": {
+        "tags": ["Document Requirement Catalog"],
+        "summary": "Startable Case Types",
+        "operationId": "startable_case_types_api_v1_document_requirement_catalogs_case_types_startable_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartableCaseTypesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/document-requirement-catalogs/{catalog_id}/materialize": {
       "post": {
         "tags": ["Document Requirement Catalog"],
@@ -16402,6 +16455,18 @@
         "required": ["case_type"],
         "title": "StartCaseRequest",
         "description": "Starting a case asks for the case type first.\n\nA refinancing request opens the guided wizard; the other six do not — each has its own entry\nsurface. That is a front-end consequence of this field, not a second endpoint."
+      },
+      "StartableCaseTypesResponse": {
+        "properties": {
+          "startable_case_types": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Startable Case Types"
+          }
+        },
+        "type": "object",
+        "required": ["startable_case_types"],
+        "title": "StartableCaseTypesResponse"
       },
       "StateTransitionOutcome": {
         "type": "string",
