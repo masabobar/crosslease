@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { api } from "@/lib/api"
 import {
   CaseListResponseSchema,
@@ -8,6 +9,22 @@ import type {
   CaseResponse,
   CaseType,
 } from "@/features/cases/api/schema"
+
+// GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
+// least one requirement configured for. A case cannot be started for a type with no requirement
+// (the backend refuses it), so the Start-case / Raise-proposal dialogs use this to disable the rest.
+// Parsed as plain strings (not the CaseType enum) so a case type added on the backend widens the set
+// instead of being dropped.
+const StartableCaseTypesResponseSchema = z.object({
+  startable_case_types: z.array(z.string()),
+})
+
+export async function fetchStartableCaseTypes(): Promise<string[]> {
+  const data = await api.get(
+    `/document-requirement-catalogs/case-types/startable`
+  )
+  return StartableCaseTypesResponseSchema.parse(data).startable_case_types
+}
 
 // GET /cases query params, mirroring the backend list endpoint. `status` is the alias the backend
 // accepts for display_status; the boolean flags are the work-list scoping toggles. All optional —
@@ -29,6 +46,7 @@ export const CASE_QUERY_KEYS = {
   lcList: (params?: Pick<CaseListParams, "oldest_first" | "limit">) =>
     ["cases", "lc-list", params] as const,
   detail: (caseId: string) => ["cases", "detail", caseId] as const,
+  startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
 // The endpoint caps limit server-side at 200; this is the widest useful page for the list view.
@@ -67,5 +85,12 @@ export async function fetchLcCases(
 // now-owned case.
 export async function claimCase(caseId: string): Promise<CaseResponse> {
   const data = await api.post(`/cases/${caseId}/claim`)
+  return CaseResponseSchema.parse(data)
+}
+
+// POST /cases/{id}/reject — the bank declines an unclaimed LC proposal. The request moves to
+// rejected and the leasing company sees it on its own case. Returns the updated case.
+export async function rejectCase(caseId: string): Promise<CaseResponse> {
+  const data = await api.post(`/cases/${caseId}/reject`)
   return CaseResponseSchema.parse(data)
 }

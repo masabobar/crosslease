@@ -17,6 +17,11 @@ type Props = {
   // Labels the hidden input / button for the row, so a test (and a screen reader) can tell the
   // per-requirement controls apart.
   requirementLabel: string
+  // Disable uploading when the bank has not taken the case over yet. A bank user works a case only
+  // after claiming it (the backend refuses an upload to an unclaimed case, PRD1042-1794); disabling
+  // here means they never hit that error. Carries a reason for the tooltip.
+  disabled?: boolean
+  disabledReason?: string
 }
 
 // PRD1042-1794 item 6 — the upload affordance for a single missing/rejected requirement row. A
@@ -28,6 +33,8 @@ function CaseDocumentUploadButton({
   businessObjectId,
   requirementDefinitionId,
   requirementLabel,
+  disabled = false,
+  disabledReason,
 }: Props) {
   const { t } = useTranslation("documentRequirements")
   const inputRef = useRef<HTMLInputElement>(null)
@@ -60,7 +67,8 @@ function CaseDocumentUploadButton({
         type="button"
         variant="outline"
         size="sm"
-        disabled={upload.isPending}
+        disabled={disabled || upload.isPending}
+        title={disabled ? disabledReason : undefined}
         onClick={() => inputRef.current?.click()}
         aria-label={t("caseDocuments.upload.button", {
           requirement: requirementLabel,

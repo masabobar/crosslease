@@ -44,6 +44,12 @@ export const CASE_DISPLAY_STATUS_BADGE_VARIANT: Record<
   // reads as forward progress rather than falling through to the neutral default.
   draft: "secondary",
   submitted: "default",
+  // Later request states: the bank asking for more / rework reads as attention (secondary);
+  // committed is a positive terminal (default); rejected is a negative terminal (destructive).
+  missing_information: "secondary",
+  rework: "secondary",
+  committed: "default",
+  rejected: "destructive",
 }
 
 export function caseDisplayStatusBadgeVariant(

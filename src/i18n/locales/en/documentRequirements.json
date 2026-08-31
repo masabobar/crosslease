@@ -232,7 +232,10 @@
     "ONE_CATALOGUE_PER_BANK": "A document requirement catalogue already exists for this bank.",
     "REQUIREMENT_ALREADY_DEACTIVATED": "This requirement is already deactivated.",
     "UNKNOWN_DOCUMENT_TYPE": "This document type is not in your bank's document-type registry.",
-    "VALIDATION_ERROR": "Some of the values entered were rejected. Please review the form and try again."
+    "VALIDATION_ERROR": "Some of the values entered were rejected. Please review the form and try again.",
+    "CASE_NO_REQUIREMENTS_FOR_TYPE": "This bank has no document requirements configured for this case type yet, so a case cannot be started for it. Ask a bank administrator to add requirements first.",
+    "CASE_NOT_CLAIMED": "Take this case over before uploading documents to it.",
+    "CASE_NOT_REJECTABLE": "This proposal can no longer be rejected — it has already been taken over or resolved."
   },
   "caseDocuments": {
     "title": "Required documents",

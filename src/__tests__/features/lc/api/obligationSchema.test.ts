@@ -110,6 +110,17 @@ describe("LCObligationResponseSchema", () => {
     expect(parsed.obligations).toEqual([])
   })
 
+  it("accepts a null case_type (the LC obligations endpoint names no case type)", () => {
+    // Regression: the backend contract is `str | None` and this endpoint takes no case-type
+    // parameter, so it legitimately returns null. A non-nullable schema here threw a ZodError right
+    // after an LC user created a case, surfacing as "Something went wrong" on the documents page.
+    const parsed = LCObligationResponseSchema.parse({
+      ...validResponse,
+      case_type: null,
+    })
+    expect(parsed.case_type).toBeNull()
+  })
+
   it("rejects a missing status summary", () => {
     const { documents_status_summary: _omitted, ...withoutSummary } =
       validResponse

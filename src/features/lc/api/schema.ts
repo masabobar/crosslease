@@ -85,8 +85,9 @@ export const LCObligationResponseSchema = z.object({
   business_object_id: z.string().uuid(),
   // PRD1042-1794 DRC usability — the case type the obligation set was resolved for. The screen does
   // not render it (item 9 forbids showing a leasing company the bank-internal framing); parsed only
-  // so the response shape matches the new contract.
-  case_type: z.string(),
+  // so the response shape matches the new contract. Nullable: the LC obligations endpoint takes no
+  // case-type parameter, so the backend legitimately returns null here (contract is str | None).
+  case_type: z.string().nullable(),
   documents_status_summary: z.string(),
   obligations: z.array(LCObligationItemSchema),
 })

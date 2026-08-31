@@ -18,6 +18,7 @@ import { resolveFormMessage } from "@/lib/formMessages"
 import { caseDetail } from "@/router/paths"
 import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { useCreateCase } from "@/features/cases/hooks/useCreateCase"
+import { useStartableCaseTypes } from "@/features/cases/hooks/useStartableCaseTypes"
 
 // The case type is the only field the backend needs to start a case (StartCaseRequest). Only the
 // refinancing request has any built behaviour yet (its document-driven status, and the eventual
@@ -34,7 +35,6 @@ type StartCaseFormValues = z.infer<typeof startCaseSchema>
 const CASE_TYPE_OPTIONS = CaseTypeSchema.options.map(value => ({
   value,
   labelKey: `caseTypes.${value}` as const,
-  disabled: value !== ENABLED_CASE_TYPE,
 }))
 
 type Props = {
@@ -49,6 +49,22 @@ function StartCaseDialog({ onOpenChange, redirectTo }: Props) {
   const { t } = useTranslation("cases")
   const navigate = useNavigate()
   const createCase = useCreateCase()
+  // The bank must have at least one requirement configured for a case type, or the backend refuses
+  // to start it (PRD1042-1794). Disable those types up front so the user never hits the dead end.
+  const { data: startableCaseTypes } = useStartableCaseTypes()
+
+  // A type is offered only when it has built behaviour AND the bank has requirements for it. While
+  // the startable set is loading, fall back to the built-type gate alone (the submit still surfaces
+  // any 422). A type with no requirements is disabled with its own reason, distinct from "coming
+  // soon".
+  function disabledReason(
+    value: string
+  ): "coming_soon" | "no_requirements" | null {
+    if (value !== ENABLED_CASE_TYPE) return "coming_soon"
+    if (startableCaseTypes && !startableCaseTypes.includes(value))
+      return "no_requirements"
+    return null
+  }
 
   const {
     control,
@@ -108,13 +124,18 @@ function StartCaseDialog({ onOpenChange, redirectTo }: Props) {
                   data-testid="start-case-type-select"
                   value={field.value}
                   onValueChange={field.onChange}
-                  options={CASE_TYPE_OPTIONS.map(o => ({
-                    value: o.value,
-                    label: o.disabled
-                      ? t("start.caseTypeComingSoon", { type: t(o.labelKey) })
-                      : t(o.labelKey),
-                    disabled: o.disabled,
-                  }))}
+                  options={CASE_TYPE_OPTIONS.map(o => {
+                    const reason = disabledReason(o.value)
+                    const label =
+                      reason === "coming_soon"
+                        ? t("start.caseTypeComingSoon", { type: t(o.labelKey) })
+                        : reason === "no_requirements"
+                          ? t("start.caseTypeNoRequirements", {
+                              type: t(o.labelKey),
+                            })
+                          : t(o.labelKey)
+                    return { value: o.value, label, disabled: reason !== null }
+                  })}
                   error={!!errors.caseType}
                 />
               )}

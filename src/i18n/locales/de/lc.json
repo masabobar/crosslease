@@ -85,6 +85,11 @@
       "success": "Dokument hochgeladen und wartet auf Prüfung.",
       "invalidMime": "Es werden nur PDF- und Excel-Dateien unterstützt.",
       "fileTooLarge": "Die Datei ist zu groß. Die maximale Größe beträgt 25 MB."
+    },
+    "summary": {
+      "all_documents_submitted": "Alle Dokumente eingereicht. Die Bank prüft Ihre Anfrage.",
+      "documents_under_review": "Ihre Dokumente werden von der Bank geprüft.",
+      "action_required": "Aktion erforderlich — bitte laden Sie die unten aufgeführten Dokumente hoch."
     }
   }
 }

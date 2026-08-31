@@ -37,7 +37,8 @@
       "cancel": "Cancel",
       "submit": "Start case"
     },
-    "success": "Case started."
+    "success": "Case started.",
+    "caseTypeNoRequirements": "{{type}} (no requirements configured)"
   },
   "detail": {
     "fields": {
@@ -46,7 +47,10 @@
     },
     "loadError": "This case could not be loaded. Please try again.",
     "takeOver": "Take over",
-    "takeOverSuccess": "Case taken over."
+    "takeOverSuccess": "Case taken over.",
+    "reject": "Reject",
+    "rejectSuccess": "Proposal rejected.",
+    "uploadBlockedUnclaimed": "This case has not been taken over yet. Take it over before uploading documents."
   },
   "caseTypes": {
     "refinancing_request": "Refinancing request",
@@ -63,6 +67,10 @@
     "done": "Done",
     "cancelled": "Cancelled",
     "draft": "Draft",
-    "submitted": "Submitted"
+    "submitted": "Submitted",
+    "missing_information": "Missing information",
+    "rework": "Rework",
+    "committed": "Committed",
+    "rejected": "Rejected"
   }
 }

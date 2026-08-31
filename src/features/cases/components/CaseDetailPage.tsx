@@ -9,8 +9,14 @@ import { showApiError } from "@/lib/apiErrorMessage"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { useCase } from "@/features/cases/hooks/useCase"
 import { useClaimCase } from "@/features/cases/hooks/useClaimCase"
+import { useRejectCase } from "@/features/cases/hooks/useRejectCase"
+import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { caseDisplayStatusBadgeVariant } from "@/features/cases/types"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
+
+// Terminal request states for a refinancing-request proposal: once committed or rejected there is
+// nothing left to claim or reject, so the header actions are hidden (the backend 409s either way).
+const TERMINAL_DISPLAY_STATUSES = new Set(["committed", "rejected"])
 
 /**
  * Case detail shell (PRD1042-1794 DRC usability / US 16.22).
@@ -32,6 +38,7 @@ export default function CaseDetailPage() {
 
   const { data, isLoading, isError, error } = useCase(caseId)
   const claimCase = useClaimCase()
+  const rejectCase = useRejectCase()
 
   // A param that is not a UUID can never name a case — render not-found rather than firing a request
   // the backend would reject.
@@ -77,20 +84,42 @@ export default function CaseDetailPage() {
               )}
             </Badge>
           </div>
-          {data.owner_user_id === null && (
-            <Button
-              data-testid="case-take-over-button"
-              disabled={claimCase.isPending}
-              onClick={() =>
-                claimCase.mutate(data.id, {
-                  onSuccess: () => toast.success(t("detail.takeOverSuccess")),
-                  onError: err => showApiError(err, t),
-                })
-              }
-            >
-              {t("detail.takeOver")}
-            </Button>
-          )}
+          {data.owner_user_id === null &&
+            !TERMINAL_DISPLAY_STATUSES.has(data.display_status) && (
+              <div className="flex items-center gap-2">
+                {/* Reject only applies to a refinancing request (the only type with a request
+                  status); the backend enforces the same, this just hides a control that would 409. */}
+                {data.case_type === CaseTypeSchema.enum.refinancing_request && (
+                  <Button
+                    variant="outline"
+                    data-testid="case-reject-button"
+                    disabled={rejectCase.isPending || claimCase.isPending}
+                    onClick={() =>
+                      rejectCase.mutate(data.id, {
+                        onSuccess: () =>
+                          toast.success(t("detail.rejectSuccess")),
+                        onError: err => showApiError(err, t),
+                      })
+                    }
+                  >
+                    {t("detail.reject")}
+                  </Button>
+                )}
+                <Button
+                  data-testid="case-take-over-button"
+                  disabled={claimCase.isPending || rejectCase.isPending}
+                  onClick={() =>
+                    claimCase.mutate(data.id, {
+                      onSuccess: () =>
+                        toast.success(t("detail.takeOverSuccess")),
+                      onError: err => showApiError(err, t),
+                    })
+                  }
+                >
+                  {t("detail.takeOver")}
+                </Button>
+              </div>
+            )}
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>
@@ -111,6 +140,8 @@ export default function CaseDetailPage() {
       <CaseDocumentRequirementsPanel
         businessObjectId={data.id}
         caseType={data.case_type}
+        uploadDisabled={data.owner_user_id === null}
+        uploadDisabledReason={t("detail.uploadBlockedUnclaimed")}
       />
     </div>
   )
