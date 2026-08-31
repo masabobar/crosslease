@@ -2823,6 +2823,9 @@ const RuntimeRequirementSurfaceResponse = z
     requirements: z.array(RuntimeRequirementItem),
   })
   .passthrough()
+const StartableCaseTypesResponse = z
+  .object({ startable_case_types: z.array(z.string()) })
+  .passthrough()
 const MaterializeRequest = z
   .object({
     case_type: z.union([z.string(), z.null()]),
@@ -3306,6 +3309,7 @@ export const schemas = {
   UpdateRequirementRequest,
   RuntimeRequirementItem,
   RuntimeRequirementSurfaceResponse,
+  StartableCaseTypesResponse,
   MaterializeRequest,
   MaterializedRequirementResponse,
   MaterializationResponse,
@@ -4451,6 +4455,29 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
   },
   {
     method: "post",
+    path: "/api/v1/cases/:case_id/reject",
+    alias: "reject_case_proposal_api_v1_cases__case_id__reject_post",
+    description: `Decline an unclaimed leasing-company proposal. The request moves to rejected and the leasing
+company sees it on its own case. A bank owner-role only (an LC caller is refused in the service).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
     path: "/api/v1/cases/:case_id/return-to-queue",
     alias: "return_case_to_queue_api_v1_cases__case_id__return_to_queue_post",
     description: `Give the case back to the role work list. Unassigned is a legitimate state.`,
@@ -4767,6 +4794,14 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/document-requirement-catalogs/case-types/startable",
+    alias:
+      "startable_case_types_api_v1_document_requirement_catalogs_case_types_startable_get",
+    requestFormat: "json",
+    response: StartableCaseTypesResponse,
   },
   {
     method: "patch",
