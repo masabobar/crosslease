@@ -113,10 +113,10 @@ Do not "fix" these — they are correct, and each has a reason:
 
 ## Related
 
-- `.claude/rules/code-review.md` §4 — Forms checklist; this rule is the date-specific expansion
-- `.claude/rules/api-first.md` — confirm the backend's own date rule before choosing a floor; the
+- `.claude/rules/project/code-review.md` §4 — Forms checklist; this rule is the date-specific expansion
+- `.claude/rules/project/api-first.md` — confirm the backend's own date rule before choosing a floor; the
   Workflow Task Catalogue's zero-day backdating tolerance is why its create floor is today
-- `.claude/rules/testing.md` — cross-field refinements are schema logic and get unit tests
+- `.claude/rules/project/testing.md` — cross-field refinements are schema logic and get unit tests
 - `src/components/ui/date-picker.tsx` — the primitive; `minDate` / `maxDate` are already supported
 
 ---

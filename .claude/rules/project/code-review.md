@@ -8,7 +8,7 @@
 
 Synthesis checklist for reviewing all frontend code changes in refinext-app. References existing domain rules for depth — this file is the review layer.
 
-Complements `.claude/rules/code-quality.md` (SOLID & DRY), `.claude/rules/testing.md` (test matrix), `.claude/rules/security-and-auth.md` (RBAC), `.claude/rules/error-handling-and-logging.md` (error patterns).
+Complements `.claude/rules/project/code-quality.md` (SOLID & DRY), `.claude/rules/project/testing.md` (test matrix), `.claude/rules/project/security-and-auth.md` (RBAC), `.claude/rules/project/error-handling-and-logging.md` (error patterns).
 
 > **⚠️ NON-BREAKING RULE — MANDATORY**
 > Every suggestion made during a code review MUST NOT break existing functionality. Before proposing any change, verify it does not: remove or rename exports consumed elsewhere, alter component props or hook signatures in a backward-incompatible way, change runtime behavior that passing tests or the UI depend on, or introduce TypeScript errors in files not touched by the change. If a suggestion cannot be applied without a coordinated update across multiple call-sites, flag that scope explicitly rather than leaving it as a simple drop-in fix.
@@ -104,7 +104,7 @@ type State =
 - [ ] `ApiError.code` used for programmatic error handling — never `.message` string matching
 - [ ] Every request/response shape validated through Zod at the query layer
 - [ ] 401 token-refresh interceptor in `@/lib/api` handles retries before components see the error
-- [ ] **Every error the BE endpoint can return is handled and surfaced to the user — no silent failures.** A 4xx, 5xx, network error, or timeout MUST result in a visible toast (or inline error). A failed request where nothing happens in the UI is a bug. Handle specific codes first, then fall back to a generic toast. Full rule + fix procedure: **`.claude/rules/api-error-display.md`**
+- [ ] **Every error the BE endpoint can return is handled and surfaced to the user — no silent failures.** A 4xx, 5xx, network error, or timeout MUST result in a visible toast (or inline error). A failed request where nothing happens in the UI is a bug. Handle specific codes first, then fall back to a generic toast. Full rule + fix procedure: **`.claude/rules/project/api-error-display.md`**
 
 > **⚠️ FIX-ON-ENCOUNTER — MANDATORY**
 > When reviewing code with `/code-review` or `/review-codebase`, or when modifying any file that contains API calls: if a mutation is missing `onError`, or a query is missing an `isError` branch — **fix it in the same pass.** Do not flag it for later. Apply the pattern below, look up the endpoint's error codes in `openapi.json`, and add the i18n keys.
@@ -173,7 +173,7 @@ mutation.mutate(payload)
 - [ ] Zod schemas tested: valid input parses; invalid input (wrong type, missing field, bad enum) throws
 - [ ] Zustand store actions tested in isolation via `getState()` / direct action calls
 - [ ] Pure utility functions in `src/lib/` have unit tests
-- [ ] New Zod schemas, store actions, and `src/lib/` utilities have tests per `.claude/rules/testing.md` (behavior-based — no numeric coverage threshold)
+- [ ] New Zod schemas, store actions, and `src/lib/` utilities have tests per `.claude/rules/project/testing.md` (behavior-based — no numeric coverage threshold)
 - [ ] No `.only` focused tests (pre-commit blocks these)
 - [ ] `data-testid` present on all new interactive elements
 
@@ -211,7 +211,7 @@ mutation.mutate(payload)
 - [ ] React 19: no `forwardRef`, no manual memoization, no `useEffect` for fetching
 - [ ] State: server state in React Query, client state in Zustand, no cross-contamination
 - [ ] Forms: RHF + Zod, `VALIDATION_ERROR` field detail applied via `applyApiFieldErrors()`, submit gated on `isSubmitting`
-- [ ] API: Zod `parse()` in `queryFn`, `ApiError.code` for error handling, no raw fetch, **every BE error code surfaced via toast / error state — no silent failures** (fix any missing `onError` or `isError` branch inline per `.claude/rules/api-error-display.md`)
+- [ ] API: Zod `parse()` in `queryFn`, `ApiError.code` for error handling, no raw fetch, **every BE error code surfaced via toast / error state — no silent failures** (fix any missing `onError` or `isError` branch inline per `.claude/rules/project/api-error-display.md`)
 - [ ] i18n: all strings via `t()`, both locales updated, namespace registered
 - [ ] Security: role gates use correct wire values, no `console.*`, no unnecessary PII in state
 - [ ] Tests: Zod schemas tested, store actions tested, utilities tested, `data-testid` present
@@ -228,19 +228,19 @@ mutation.mutate(payload)
 
 Quick check during review: shadcn primitive used wherever one exists (`<Button>` not `<button>`, `<Select>` not `<select>`, `<Table>`/`<TableRow>`/`<TableCell>` not raw table tags); missing components installed via `npx shadcn@latest add <component>` before any fallback; every raw HTML element or third-party component in a shadcn slot carries an inline `{/* NOTE: ... */}` comment with the reason.
 
-**Full checklist + component catalogue:** `.claude/rules/code-review-ui.md` (companion).
+**Full checklist + component catalogue:** `.claude/rules/project/code-review-ui.md` (companion).
 
 ---
 
 ## Related
 
-- `.claude/rules/code-review-ui.md` — full shadcn-first checklist + component catalogue (companion to §12)
-- `.claude/rules/code-quality.md` — SOLID & DRY principles
-- `.claude/rules/testing.md` — required-tests gate (schemas / stores / utilities)
-- `.claude/rules/security-and-auth.md` — role wire values, RBAC guards, audit logging
-- `.claude/rules/error-handling-and-logging.md` — error taxonomy, `ApiError.code` usage
-- `.claude/rules/api-error-display.md` — exhaustive BE error handling rule + fix-on-encounter procedure (§5 enforcement)
-- `.claude/rules/api-first.md` — contract verification before frontend work
+- `.claude/rules/project/code-review-ui.md` — full shadcn-first checklist + component catalogue (companion to §12)
+- `.claude/rules/project/code-quality.md` — SOLID & DRY principles
+- `.claude/rules/project/testing.md` — required-tests gate (schemas / stores / utilities)
+- `.claude/rules/project/security-and-auth.md` — role wire values, RBAC guards, audit logging
+- `.claude/rules/project/error-handling-and-logging.md` — error taxonomy, `ApiError.code` usage
+- `.claude/rules/project/api-error-display.md` — exhaustive BE error handling rule + fix-on-encounter procedure (§5 enforcement)
+- `.claude/rules/project/api-first.md` — contract verification before frontend work
 - `.project-management/rules/project-rules.md` — role wire values, session rules, Four-Eyes constraints
 
 ---

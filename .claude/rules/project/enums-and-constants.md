@@ -65,7 +65,7 @@ Inline string comparisons are a refactor hazard — a typo bypasses typecheck:
 // ✅ if (user.role === UserRoleSchema.enum.system_admin)
 ```
 
-If a string is compared against and no constant covers it yet, extract one before moving on (per `.claude/rules/code-review.md` §10).
+If a string is compared against and no constant covers it yet, extract one before moving on (per `.claude/rules/project/code-review.md` §10).
 
 ## 5. Separation from UI Display Text
 
@@ -105,8 +105,8 @@ The cross-layer rule applies only when the value becomes a string identifier tha
 ## Related
 
 - `../refinext-api/` — owns wire values and their migrations
-- `.claude/rules/code-review.md` §10 — hardcoded-value review gate
-- `.claude/rules/error-handling-and-logging.md` — error codes are enums too (`errors.<CODE>` i18n keys)
+- `.claude/rules/project/code-review.md` §10 — hardcoded-value review gate
+- `.claude/rules/project/error-handling-and-logging.md` — error codes are enums too (`errors.<CODE>` i18n keys)
 
 ---
 

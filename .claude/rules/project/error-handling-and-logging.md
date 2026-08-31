@@ -74,10 +74,10 @@ Resolution order:
   **both** locales. Refresh `src/__tests__/fixtures/beErrorCodes.json` from
   `../refinext-api/src/app/shared/errors/codes.py` when the BE adds codes.
 - **No `switch` per error code.** Switches drift and break every time the BE adds a code.
-- **No side effects from `onError`** — no step navigation driven by error codes, and no `form.setError` keyed off a specific domain code. The BE tells us what went wrong via the code; the UI shows it. **One exception:** `VALIDATION_ERROR` is the only code that carries `errors:[{field,…}]`, and that detail is applied to the form via `applyApiFieldErrors()` before falling back to the toast — see `.claude/rules/api-error-display.md` §2.1. Every other code comes from `create_error_response()`, which has no `field` at all.
+- **No side effects from `onError`** — no step navigation driven by error codes, and no `form.setError` keyed off a specific domain code. The BE tells us what went wrong via the code; the UI shows it. **One exception:** `VALIDATION_ERROR` is the only code that carries `errors:[{field,…}]`, and that detail is applied to the form via `applyApiFieldErrors()` before falling back to the toast — see `.claude/rules/project/api-error-display.md` §2.1. Every other code comes from `create_error_response()`, which has no `field` at all.
 - Queries render a visible error state via `isError` — never blank or stale content on failure.
 
-Coverage requirements (every mutation has `onError`, every foreground query has an `isError` branch) and the fix-on-encounter procedure are in `.claude/rules/api-error-display.md` — that is the operative enforcement rule.
+Coverage requirements (every mutation has `onError`, every foreground query has an `isError` branch) and the fix-on-encounter procedure are in `.claude/rules/project/api-error-display.md` — that is the operative enforcement rule.
 
 ## 3. Never Swallow
 
@@ -92,7 +92,7 @@ Retryable failures (5xx, network) get a visible retry affordance — never silen
 ## 4. Logging & PII
 
 - No `console.log` / `console.warn` / `console.debug` in non-test code — the pre-commit hook blocks them.
-- Never put tokens, passwords, or personal data (names, emails, phones) in any log, error message, or error-tracker payload — per `.claude/rules/anonymization.md`.
+- Never put tokens, passwords, or personal data (names, emails, phones) in any log, error message, or error-tracker payload — per `.claude/rules/project/anonymization.md`.
 - If an error tracker (Sentry or equivalent) is added, it must scrub PII and auth headers before sending.
 
 ## 5. Anti-Patterns
@@ -111,9 +111,9 @@ Retryable failures (5xx, network) get a visible retry affordance — never silen
 
 ## Related
 
-- `.claude/rules/api-error-display.md` — exhaustive coverage rule + fix-on-encounter procedure
-- `.claude/rules/anonymization.md` — no personal info in logs or trackers
-- `.claude/rules/code-review.md` §5 — API integration review checklist
+- `.claude/rules/project/api-error-display.md` — exhaustive coverage rule + fix-on-encounter procedure
+- `.claude/rules/project/anonymization.md` — no personal info in logs or trackers
+- `.claude/rules/project/code-review.md` §5 — API integration review checklist
 - CLAUDE.md §API integration — envelope shape and known error codes reference
 
 ---

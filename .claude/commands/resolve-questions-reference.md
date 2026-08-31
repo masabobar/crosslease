@@ -168,4 +168,4 @@ On `Answer`:
 - **Command:** `resolve-questions.md`
 - **Module:** `.claude/commands/modules/interactive-clarifications.md`
 - **Template:** `.project-management/templates/open-questions-template.md`
-- **Anonymization rule:** `.claude/rules/anonymization.md` §3–4
+- **Anonymization rule:** `.claude/rules/project/anonymization.md` §3–4

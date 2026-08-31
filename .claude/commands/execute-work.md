@@ -29,32 +29,32 @@ invocation is the context reset.
 
 ## 🔧 CRITICAL RULES
 
-Read before implementing. The canonical index with triggers is `.claude/rules/README.md`; this is the
+Read before implementing. The canonical index with triggers is `.claude/rules/project/README.md`; this is the
 per-stage subset.
 
 **Always:**
 
 - `CLAUDE.md` — core standards, code conventions, the MUST NOT DO list
-- `.claude/rules/code-quality.md` — SOLID & DRY (mandatory)
-- `.claude/rules/testing.md` — unit tests only; E2E is QA's; no coverage threshold
-- `.claude/rules/stack-specific.md` — React 19 + Vite patterns (no loaders, no manual memoization)
-- `.claude/rules/api-error-display.md` — every mutation has `onError`, every foreground query an `isError` branch (**fix-on-encounter**)
-- `.claude/rules/error-handling-and-logging.md` — `ApiError.code`, never swallow, no `console.*` / PII
-- `.claude/rules/code-review.md` — the gate STEP 4 runs
-- `.claude/rules/browser-verification.md` — exercise the change in a real browser before handoff
-- `.claude/rules/git.md` — conventional commits, Jira ticket, **NO AI credits**
+- `.claude/rules/project/code-quality.md` — SOLID & DRY (mandatory)
+- `.claude/rules/project/testing.md` — unit tests only; E2E is QA's; no coverage threshold
+- `.claude/rules/project/stack-specific.md` — React 19 + Vite patterns (no loaders, no manual memoization)
+- `.claude/rules/project/api-error-display.md` — every mutation has `onError`, every foreground query an `isError` branch (**fix-on-encounter**)
+- `.claude/rules/project/error-handling-and-logging.md` — `ApiError.code`, never swallow, no `console.*` / PII
+- `.claude/rules/project/code-review.md` — the gate STEP 4 runs
+- `.claude/rules/project/browser-verification.md` — exercise the change in a real browser before handoff
+- `.claude/rules/project/git.md` — conventional commits, Jira ticket, **NO AI credits**
 
 **Frontend story (any new screen or component):**
 
-- `.claude/rules/api-first.md` — Phase A contract verification before any code; gaps block
-- `.claude/rules/design-first.md` — Figma URL required per screen (Phase A) and per new `.tsx` (Phase B)
-- `.claude/rules/screen-driven-backlog.md` — one screen per unit; wizard is the one exception
+- `.claude/rules/project/api-first.md` — Phase A contract verification before any code; gaps block
+- `.claude/rules/project/design-first.md` — Figma URL required per screen (Phase A) and per new `.tsx` (Phase B)
+- `.claude/rules/project/screen-driven-backlog.md` — one screen per unit; wizard is the one exception
 
 **Conditional:**
 
-- `.claude/rules/security-and-auth.md` — touching auth, roles, or user data
-- `.claude/rules/enums-and-constants.md` — an enum-like value crosses the wire
-- `.claude/rules/anonymization.md` — writing an artifact that may carry input-document content
+- `.claude/rules/project/security-and-auth.md` — touching auth, roles, or user data
+- `.claude/rules/project/enums-and-constants.md` — an enum-like value crosses the wire
+- `.claude/rules/project/anonymization.md` — writing an artifact that may carry input-document content
 
 ---
 
@@ -140,7 +140,7 @@ fix: stop the FA wizard orphaning drafts when a document fails to attach #PRD104
 ```
 
 A body is optional and explains **why**, not what. Cite a `US-XX.XX` reference only if one actually came
-up in this conversation — per `.claude/rules/git.md`, ask rather than guess, and omit rather than invent.
+up in this conversation — per `.claude/rules/project/git.md`, ask rather than guess, and omit rather than invent.
 No test counts, no coverage, and **no AI attribution of any kind**.
 
 Pre-commit runs lint-staged, the forbidden-code scan, and type-check; commit-msg runs commitlint;
@@ -182,7 +182,7 @@ a useful result; a fabricated ✅ is worse than no check at all.
 
 - `modules/execute-work-plan-mode.md` — STEP 2 in full (context, Phase A gates, plan template)
 - `modules/execute-work-quality-gates.md` — STEP 4 in full (checks, fix loop, review, browser)
-- `.claude/rules/README.md` — the rule index with per-task triggers
+- `.claude/rules/project/README.md` — the rule index with per-task triggers
 - `/jira-sync` — read-only briefing on the unit · `/jira-handoff` — transition to `QA ready`
 - `/bug-sweep` — find and fix actionable Jira bugs · `/code-review` — the per-commit diff gate
 

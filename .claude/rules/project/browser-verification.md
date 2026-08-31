@@ -12,7 +12,7 @@
 
 Do not confuse the two. They have different owners, artifacts, and lifetimes.
 
-|          | Browser verification (this rule)              | E2E specs (`.claude/rules/testing.md`) |
+|          | Browser verification (this rule)              | E2E specs (`.claude/rules/project/testing.md`) |
 | -------- | --------------------------------------------- | -------------------------------------- |
 | Who      | Claude, driving a browser interactively       | QA                                     |
 | When     | After every feature / bug fix, before handoff | QA's own cycle                         |
@@ -97,10 +97,10 @@ useful; a fabricated ✅ is worse than no check at all.
 
 ## Related
 
-- `.claude/rules/testing.md` — unit tests (dev) and E2E specs (QA); this rule replaces neither
+- `.claude/rules/project/testing.md` — unit tests (dev) and E2E specs (QA); this rule replaces neither
 - `.claude/commands/modules/execute-work-quality-gates.md` — where this fires in the story flow
-- `.claude/rules/security-and-auth.md` §2 — role wire values to verify gates against
-- `.claude/rules/design-first.md` — the Figma design this verification compares against
+- `.claude/rules/project/security-and-auth.md` §2 — role wire values to verify gates against
+- `.claude/rules/project/design-first.md` — the Figma design this verification compares against
 - `scripts/check-project-invariants.js` — i18n **parity** check; blind to keys missing from both locales
 
 ---

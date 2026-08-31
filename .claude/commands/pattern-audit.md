@@ -366,7 +366,7 @@ Ask for confirmation before applying **Medium** and **Low** findings.
 
 ## Related
 
-- `.claude/rules/code-quality.md` — SOLID & DRY principles this command enforces structurally
-- `.claude/rules/code-review.md` §10 — the cross-file duplication checklist this command expands
+- `.claude/rules/project/code-quality.md` — SOLID & DRY principles this command enforces structurally
+- `.claude/rules/project/code-review.md` §10 — the cross-file duplication checklist this command expands
 - `/review-codebase` — rule-compliance audit (TypeScript, React 19, i18n, security, testing)
 - `/simplify` — apply simplification to the current diff only

@@ -1,12 +1,12 @@
 ---
 name: review-codebase
-description: Full-codebase audit of src/ against all 11 sections of .claude/rules/code-review.md — the whole-tree sibling of /code-review
+description: Full-codebase audit of src/ against all 11 sections of .claude/rules/project/code-review.md — the whole-tree sibling of /code-review
 ---
 
 # /review-codebase
 
 Perform a comprehensive code review of the entire codebase (or a scoped subset) against
-senior frontend standards defined in `.claude/rules/code-review.md`.
+senior frontend standards defined in `.claude/rules/project/code-review.md`.
 
 Reviews all files in `src/` — not just the diff — checking every feature, shared component,
 hook, utility, and store against all 11 sections of the review checklist.
@@ -33,7 +33,7 @@ the team — match ESLint's own `globalIgnores`.
 
 ### Step 1 — Load the checklist
 
-Read `.claude/rules/code-review.md` in full. This is the evaluation standard for every finding.
+Read `.claude/rules/project/code-review.md` in full. This is the evaluation standard for every finding.
 
 ### Step 2 — Discover the surface
 
@@ -208,7 +208,7 @@ N Critical, N High, N Medium, N Low findings across N files.
 ### Step 6 — Apply fixes (if `--fix` passed)
 
 Apply all **Critical** and **High** findings to the working tree. Every fix MUST follow
-the non-breaking rule from `.claude/rules/code-review.md`'s header — a codebase-wide
+the non-breaking rule from `.claude/rules/project/code-review.md`'s header — a codebase-wide
 sweep touches far more call-sites than a single-file review, so an unsafe fix has a much
 larger blast radius. For each fix:
 
@@ -225,8 +225,8 @@ Ask the user before applying **Medium** and **Low** findings.
 
 ## Related
 
-- `.claude/rules/code-review.md` — the review checklist (11 sections)
-- `.claude/rules/code-quality.md` — SOLID & DRY depth
-- `.claude/rules/testing.md` — required-tests gate (schemas / stores / utils)
-- `.claude/rules/security-and-auth.md` — RBAC wire values, role guards
+- `.claude/rules/project/code-review.md` — the review checklist (11 sections)
+- `.claude/rules/project/code-quality.md` — SOLID & DRY depth
+- `.claude/rules/project/testing.md` — required-tests gate (schemas / stores / utils)
+- `.claude/rules/project/security-and-auth.md` — RBAC wire values, role guards
 - `.claude/hooks/pre-commit-code-review.sh` — hook that prompts review on staged files before commit

@@ -49,22 +49,22 @@ Quick-reference patterns for this repo's actual stack. **CLAUDE.md §Code standa
 
 ## Environment Variables
 
-- Only `VITE_`-prefixed vars are exposed to the client — never put secrets in them (see `.claude/rules/security-and-auth.md` §5).
+- Only `VITE_`-prefixed vars are exposed to the client — never put secrets in them (see `.claude/rules/project/security-and-auth.md` §5).
 - Read via `import.meta.env`. Key vars: `VITE_API_URL`, `VITE_APP_STAGE`. New vars go into `.env.example`.
 
 ## Forms
 
 - React Hook Form + `zodResolver`; schema defined outside the component and reused for the API schema where shapes match.
-- Server-side field errors are shown via the standard error-display pattern — no manual `onChange` state, no error-code-driven `setError` wiring (see `.claude/rules/error-handling-and-logging.md` §2).
+- Server-side field errors are shown via the standard error-display pattern — no manual `onChange` state, no error-code-driven `setError` wiring (see `.claude/rules/project/error-handling-and-logging.md` §2).
 
 ---
 
 ## Related
 
 - CLAUDE.md §Code standards — canonical conventions (TypeScript, React 19, naming, exports)
-- `.claude/rules/api-error-display.md` — mutation/query error coverage
-- `.claude/rules/security-and-auth.md` — token handling, RBAC gating, env-var safety
-- `.claude/rules/enums-and-constants.md` — wire format for enum-like values
+- `.claude/rules/project/api-error-display.md` — mutation/query error coverage
+- `.claude/rules/project/security-and-auth.md` — token handling, RBAC gating, env-var safety
+- `.claude/rules/project/enums-and-constants.md` — wire format for enum-like values
 
 ---
 

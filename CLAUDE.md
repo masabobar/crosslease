@@ -478,7 +478,7 @@ Components in `src/components/ui/` are built with:
 - **When encountering existing code that uses raw HTML or third-party components instead of shadcn equivalents — convert them to the shadcn version as part of the change.** Do not leave non-shadcn UI code in place.
 - When a raw element is genuinely necessary (no shadcn equivalent, or a specific accessibility constraint), add an inline comment: `{/* NOTE: raw <element> — reason */}`
 
-See `.claude/rules/code-review-ui.md` for the full shadcn-first checklist.
+See `.claude/rules/project/code-review-ui.md` for the full shadcn-first checklist.
 
 ---
 
@@ -740,7 +740,7 @@ The app uses `react-i18next`. English is bundled at startup; German is lazy-load
 
 Stage only the changed files explicitly — no `git add -A` or `git add .`.
 
-Commit message: conventional commit format — header `type: short description #TICKET` (single line, max 150 chars). A body is optional and only used to explain WHY or cite user-story references per `.claude/rules/git.md` (canonical commit rules). **No AI attribution** (`Co-Authored-By: Claude` or similar lines are forbidden).
+Commit message: conventional commit format — header `type: short description #TICKET` (single line, max 150 chars). A body is optional and only used to explain WHY or cite user-story references per `.claude/rules/project/git.md` (canonical commit rules). **No AI attribution** (`Co-Authored-By: Claude` or similar lines are forbidden).
 
 Every commit must end with either a Jira ticket (`#PRD1006-42`) or `#no-ticket` when there is no associated ticket.
 

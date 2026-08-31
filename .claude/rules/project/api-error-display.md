@@ -6,7 +6,7 @@
 
 **MANDATORY: Every API mutation and every user-visible query error MUST be caught and surfaced to the user. Silent API failures are bugs. When reviewing or modifying code, FIX missing error handling immediately — do not flag for later.**
 
-Complements `.claude/rules/code-review.md` §5 (API Integration checklist) and `.claude/rules/error-handling-and-logging.md` (BE error taxonomy and codes).
+Complements `.claude/rules/project/code-review.md` §5 (API Integration checklist) and `.claude/rules/project/error-handling-and-logging.md` (BE error taxonomy and codes).
 
 ---
 
@@ -163,8 +163,8 @@ When `/code-review` or `/review-codebase` finds an API call missing error handli
 
 ## Related
 
-- `.claude/rules/code-review.md` §5 — API Integration checklist (this rule drives fix-on-encounter enforcement)
-- `.claude/rules/error-handling-and-logging.md` — BE error taxonomy and `ApiError` class
+- `.claude/rules/project/code-review.md` §5 — API Integration checklist (this rule drives fix-on-encounter enforcement)
+- `.claude/rules/project/error-handling-and-logging.md` — BE error taxonomy and `ApiError` class
 - `CLAUDE.md` — error envelope shape (`detail.code`) and known error codes reference
 
 ---

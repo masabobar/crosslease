@@ -119,7 +119,7 @@ After the call returns:
 
 ## STEP E — Free-text answer ("Other")
 
-1. **Anonymize first.** Pass the free-text through the rules in `.claude/rules/anonymization.md` §3–4 (role labels + source-context substitution). If a personal name leaks, replace per the table; if the answer is just metadata-free content, no change.
+1. **Anonymize first.** Pass the free-text through the rules in `.claude/rules/project/anonymization.md` §3–4 (role labels + source-context substitution). If a personal name leaks, replace per the table; if the answer is just metadata-free content, no change.
 2. Persist the anonymized answer per STEP F.
 
 ---
@@ -170,6 +170,6 @@ Each integration follows the same pattern: emit schema-shaped questions → invo
 
 - **Template:** `.project-management/templates/open-questions-template.md` — defines `open-questions.md` format
 - **Resolution command:** `.claude/commands/resolve-questions.md` — re-runs this loop on existing `Open` questions
-- **Anonymization rule:** `.claude/rules/anonymization.md` — applied to free-text answers
-- **Doc rules:** `.claude/rules/documentation.md` §2.1 — `open-questions.md` ≤ 200 lines
+- **Anonymization rule:** `.claude/rules/project/anonymization.md` — applied to free-text answers
+- **Doc rules:** `.claude/rules/project/documentation.md` §2.1 — `open-questions.md` ≤ 200 lines
 - **Parent command:** `.claude/commands/resolve-questions.md`

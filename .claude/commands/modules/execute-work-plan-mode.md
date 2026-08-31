@@ -24,7 +24,7 @@ stubs (Q-025), so do not cite them as a source.
    read `../refinext-api/` for service-level detail (validation rules, permission checks).
 3. **`CLAUDE.md`** — code standards, MUST NOT DO list, project structure.
 4. **`.claude/rules/`** — the always-load set plus whatever the unit triggers; see the CRITICAL RULES
-   list in `execute-work.md`, indexed with triggers in `.claude/rules/README.md`.
+   list in `execute-work.md`, indexed with triggers in `.claude/rules/project/README.md`.
 5. **`.project-management/rules/project-rules.md`** — domain rules, role wire values, Four-Eyes constraints.
 6. **`.project-management/rules/I18N-RULES.md`** — present in this repo, so **i18n is always mandatory**.
 7. **`.project-management/input/open-questions.md`** — grep for the epic/unit first. An existing entry

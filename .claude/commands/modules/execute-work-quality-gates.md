@@ -39,7 +39,7 @@ On any failure, do not proceed and do not weaken the check. Repeat until clean:
 3. Add whatever the gate says is missing:
    - **Missing required test** → cover the new Zod schema (accepts the documented shape, rejects wrong
      types / missing fields / bad enum values), store action (state transition via `getState()`), or
-     `src/lib/` utility. Behaviour-based, per `.claude/rules/testing.md`.
+     `src/lib/` utility. Behaviour-based, per `.claude/rules/project/testing.md`.
    - **Missing i18n key** → add to **both** `en/<feature>.json` and `de/<feature>.json`. A new namespace
      also needs `i18n/types.d.ts` and `i18n/config.ts` (bundle en, add the de loader entry).
    - **Missing Zod schema** → API data must be parsed in the `queryFn`; no `response.data as SomeType`.
@@ -62,11 +62,11 @@ checklist. Run the diff review as the last gate before the commit:
 
 - **Critical** — blocks the unit; fix and re-run
 - **High** — fix before the commit, unless the fix needs a coordinated change across many call-sites; then
-  state that scope explicitly rather than applying it half-way (non-breaking rule, `.claude/rules/code-review.md`)
+  state that scope explicitly rather than applying it half-way (non-breaking rule, `.claude/rules/project/code-review.md`)
 - **Medium / Low** — report them in STEP 7; do not silently defer
 
 `/code-review` applies its own fix-on-encounter repairs inline (a missing `onError`, a missing i18n key)
-per `.claude/rules/api-error-display.md` §4 — re-run `pnpm test:run` after it touches anything.
+per `.claude/rules/project/api-error-display.md` §4 — re-run `pnpm test:run` after it touches anything.
 
 **Do not** run `/review-codebase` here. It audits all of `src/`, so its findings are mostly unrelated to
 this unit and mixing them in makes the MR unreviewable.
@@ -76,7 +76,7 @@ this unit and mixing them in makes the MR unreviewable.
 ## 4.4 Browser verification
 
 Every gate so far is blind to rendering — none of them draw a page. Exercise the change in a real browser
-per **`.claude/rules/browser-verification.md`**:
+per **`.claude/rules/project/browser-verification.md`**:
 
 - Dev server at `http://localhost:5173`, driven with the Playwright MCP. Reuse a running server; the BE's
   `CORS_ORIGINS` allows only `:5173`, so a fallback to `:5174` fails every request.
@@ -86,7 +86,7 @@ per **`.claude/rules/browser-verification.md`**:
 - **Name the role you signed in as.** For role-gated surfaces, also check a role that should _not_ see
   the control.
 
-This adds no `.spec.ts` files — E2E specs stay QA's per `.claude/rules/testing.md`. If something cannot be
+This adds no `.spec.ts` files — E2E specs stay QA's per `.claude/rules/project/testing.md`. If something cannot be
 reached locally (no seed data, role unavailable), **say so** rather than reporting a pass.
 
 ---

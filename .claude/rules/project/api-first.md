@@ -4,7 +4,7 @@
 
 This rule applies to every screen in this browser SPA that consumes the backend API to render. It does **not** apply to backend-to-backend RPC, internal CLI tools, or pure infra work.
 
-It works alongside `.claude/rules/screen-driven-backlog.md` (which scopes a frontend unit to one screen and produces the screen → endpoint mapping this file's Phase A consumes). This file governs _when frontend implementation is allowed to start_.
+It works alongside `.claude/rules/project/screen-driven-backlog.md` (which scopes a frontend unit to one screen and produces the screen → endpoint mapping this file's Phase A consumes). This file governs _when frontend implementation is allowed to start_.
 
 ---
 
@@ -27,7 +27,7 @@ If **any** of these fail → **STOP**. Do not write frontend code. Go to §2.
 
 ### Phase B — Frontend Implementation (only after Phase A passes)
 
-Standard implementation per `.claude/rules/code-quality.md` and `.claude/rules/testing.md`. The screen consumes the verified endpoints; types are derived from the documented response shape (or imported from a generated client if the project has OpenAPI).
+Standard implementation per `.claude/rules/project/code-quality.md` and `.claude/rules/project/testing.md`. The screen consumes the verified endpoints; types are derived from the documented response shape (or imported from a generated client if the project has OpenAPI).
 
 ---
 
@@ -82,9 +82,9 @@ If the gap is trivial (e.g., one missing field that takes 10 minutes), it is sti
 
 For each frontend story, before exiting plan mode:
 
-- [ ] List every screen the story touches (1 unless wizard — see `.claude/rules/screen-driven-backlog.md`)
+- [ ] List every screen the story touches (1 unless wizard — see `.claude/rules/project/screen-driven-backlog.md`)
 - [ ] For each screen, list every API endpoint it calls (method + path)
-- [ ] For each endpoint, locate its operation in `openapi.json` (endpoint docs are not authored in this repo — see `.claude/rules/documentation-templates.md` §3)
+- [ ] For each endpoint, locate its operation in `openapi.json` (endpoint docs are not authored in this repo — see `.claude/rules/project/documentation-templates.md` §3)
 - [ ] Field-by-field check: every UI input → request schema; every UI output → response shape
 - [ ] Distinguishable error states → distinguishable status codes / error codes
 - [ ] Auth requirements match
@@ -141,6 +141,6 @@ In every other frontend story, this rule applies.
 
 **Related:**
 
-- `.claude/rules/screen-driven-backlog.md` — scopes a frontend unit to one screen and produces the screen → endpoint mapping Phase A verifies
-- `.claude/rules/testing.md` — status-code matrix that documented endpoints must cover
+- `.claude/rules/project/screen-driven-backlog.md` — scopes a frontend unit to one screen and produces the screen → endpoint mapping Phase A verifies
+- `.claude/rules/project/testing.md` — status-code matrix that documented endpoints must cover
 - `.claude/commands/execute-work.md` — plan-mode hook that enforces this gate

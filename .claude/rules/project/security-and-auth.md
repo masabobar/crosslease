@@ -22,7 +22,7 @@
 ## 2. Role-Based Gating (RBAC)
 
 - Role wire values (exact, from `project-rules.md`): `system_admin`, `support_user`, `auditor`, `bank_power_user`, `front_office`, `back_office`, `leasing_company_user`.
-- Reference roles via the Zod schema enum / shared constant — never freehand strings (`=== "system_admin"` inline is a review blocker; see `.claude/rules/code-review.md` §10).
+- Reference roles via the Zod schema enum / shared constant — never freehand strings (`=== "system_admin"` inline is a review blocker; see `.claude/rules/project/code-review.md` §10).
 - Every FE gate must mirror an actual BE enforcement (verified during `api-first.md` Phase A §6). Hiding a button is UX, not security — never assume a hidden control protects data.
 - LC Users (`leasing_company_user`) never see Financing, Risk, Audit, KYC, or Approval Workflow modules.
 
@@ -49,7 +49,7 @@
 
 ## 7. Testing
 
-- Auth API shapes have Zod schema tests; auth store transitions (set/clear tokens, session expiry) have store tests — per `.claude/rules/testing.md`.
+- Auth API shapes have Zod schema tests; auth store transitions (set/clear tokens, session expiry) have store tests — per `.claude/rules/project/testing.md`.
 - New role-gated UI: verify the gate uses the wire-value constant, not a string literal.
 
 ---
@@ -57,9 +57,9 @@
 ## Related
 
 - `../refinext-api/` — server-side auth enforcement (source of truth for what a role can actually do)
-- `.claude/rules/api-first.md` §Phase A.6 — auth model must match between screen and endpoint before FE work starts
-- `.claude/rules/error-handling-and-logging.md` — `ApiError.code` handling for `UNAUTHORIZED` / `FORBIDDEN`
-- `.claude/rules/code-review.md` §7 — security review checklist
+- `.claude/rules/project/api-first.md` §Phase A.6 — auth model must match between screen and endpoint before FE work starts
+- `.claude/rules/project/error-handling-and-logging.md` — `ApiError.code` handling for `UNAUTHORIZED` / `FORBIDDEN`
+- `.claude/rules/project/code-review.md` §7 — security review checklist
 - `.project-management/rules/project-rules.md` — role wire values, session rules, Four-Eyes constraints
 
 ---
