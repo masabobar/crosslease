@@ -192,7 +192,7 @@ With recommended permissions enabled, you get:
 ✅ **Automatic Git Operations**
 
 - Auto-commit after completing stories
-- Follows `.claude/rules/git.md` conventions
+- Follows `.claude/rules/project/git.md` conventions
 - NO AI credits in commit messages
 - Can auto-push to remote (optional)
 

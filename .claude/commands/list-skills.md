@@ -58,4 +58,4 @@ excluded.
 ## Related
 
 - `.claude/commands/how-to-use/README.md` — hand-written decision tree for picking a command
-- `.claude/rules/README.md` — the parallel index for `.claude/rules/`
+- `.claude/rules/project/README.md` — the parallel index for `.claude/rules/`

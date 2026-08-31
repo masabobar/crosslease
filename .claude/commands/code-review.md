@@ -1,13 +1,13 @@
 ---
 name: code-review
-description: Review the working diff (staged by default) against .claude/rules/code-review.md before commit
+description: Review the working diff (staged by default) against .claude/rules/project/code-review.md before commit
 ---
 
 # /code-review
 
-Review **only what changed** against the senior frontend standards in `.claude/rules/code-review.md`.
+Review **only what changed** against the senior frontend standards in `.claude/rules/project/code-review.md`.
 
-This is the per-commit gate referenced by `.claude/rules/code-review.md` ("Run `/code-review` before
+This is the per-commit gate referenced by `.claude/rules/project/code-review.md` ("Run `/code-review` before
 every commit and push") and prompted by `.claude/hooks/pre-commit-code-review.sh`. It is the
 diff-scoped sibling of `/review-codebase` — same 11-section checklist, same severity buckets, but the
 surface is the diff instead of all of `src/`.
@@ -35,9 +35,9 @@ codegen, regenerated via `pnpm fetch:openapi`). Neither is hand-authored — mat
 
 ### Step 1 — Load the checklist
 
-Read `.claude/rules/code-review.md` in full — it is the evaluation standard for every finding, and its
+Read `.claude/rules/project/code-review.md` in full — it is the evaluation standard for every finding, and its
 header carries the **non-breaking rule** that governs every suggestion. Read
-`.claude/rules/api-error-display.md` too; its fix-on-encounter procedure is mandatory in Step 5, not
+`.claude/rules/project/api-error-display.md` too; its fix-on-encounter procedure is mandatory in Step 5, not
 optional.
 
 ### Step 2 — Resolve the diff scope
@@ -148,7 +148,7 @@ contain a keyword can produce a hit — confirm each one in the file before flag
 Two categories are **fixed in this pass regardless of `--fix`**, because the rules require it and both
 fixes are additive and cannot break existing behavior:
 
-1. **Missing API error handling** — `.claude/rules/api-error-display.md` §4: locate the call site, look
+1. **Missing API error handling** — `.claude/rules/project/api-error-display.md` §4: locate the call site, look
    up the endpoint's error codes in `openapi.json`, apply the `onError` dynamic-lookup pattern (§2) or
    the query `isError` pattern (§3), and add the `errors.<CODE>` keys to **both** locales. Never leave
    a TODO.
@@ -227,7 +227,7 @@ No findings in: [list changed files with zero violations]
 ### Step 8 — Apply fixes (if `--fix` passed)
 
 Apply all **Critical** and **High** findings; ask before Medium and Low. Every fix MUST satisfy the
-non-breaking rule in `.claude/rules/code-review.md`'s header — before each edit, verify it does not
+non-breaking rule in `.claude/rules/project/code-review.md`'s header — before each edit, verify it does not
 remove or rename an export consumed elsewhere, change a component prop or hook signature
 incompatibly, alter behavior a passing test depends on, or introduce a type error in an untouched
 file. Read the file first, make the minimal targeted change, and do not refactor surrounding code.
@@ -250,10 +250,10 @@ commit flow asks for the Jira ticket number first — that is the user's call, n
 
 ## Related
 
-- `.claude/rules/code-review.md` — the 11-section checklist (evaluation standard)
-- `.claude/rules/api-error-display.md` — fix-on-encounter procedure enforced in Step 5
-- `.claude/rules/code-review-ui.md` — full shadcn-first checklist behind Step 4's raw-HTML sweep
-- `.claude/rules/testing.md` — required-tests gate behind Step 6
+- `.claude/rules/project/code-review.md` — the 11-section checklist (evaluation standard)
+- `.claude/rules/project/api-error-display.md` — fix-on-encounter procedure enforced in Step 5
+- `.claude/rules/project/code-review-ui.md` — full shadcn-first checklist behind Step 4's raw-HTML sweep
+- `.claude/rules/project/testing.md` — required-tests gate behind Step 6
 - `.claude/commands/review-codebase.md` — whole-`src/` audit; same checklist, wider surface
 - `.claude/commands/pattern-audit.md` — structural health (DRY, extraction, composition)
 - `.claude/hooks/pre-commit-code-review.sh` — hook that prompts this command on `git commit`

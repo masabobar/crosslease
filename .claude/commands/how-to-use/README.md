@@ -101,7 +101,7 @@ inventory — it enumerates the files rather than trusting this table.
 
 - **Command docs:** `.claude/commands/` (parent folder)
 - **Command inventory:** `/list-skills`
-- **Coding / process rules:** `.claude/rules/` — see [`.claude/rules/README.md`](../../rules/README.md) for the index
+- **Coding / process rules:** `.claude/rules/` — see [`.claude/rules/project/README.md`](../../rules/README.md) for the index
 - **Project rules:** `.project-management/rules/project-rules.md`
 - **Live status:** `.project-management/output/progress/DASHBOARD.md`
 - **Open questions:** `.project-management/input/open-questions.md`

@@ -27,8 +27,8 @@ Reads `.project-management/input/open-questions.md`, filters questions with `Sta
 **🔧 RULES:**
 
 - **`CLAUDE.md`** — all output in English
-- **`.claude/rules/anonymization.md`** — anonymize free-text answers before persisting
-- **`.claude/rules/git.md`** — if committing, NO AI credits, conventional commits
+- **`.claude/rules/project/anonymization.md`** — anonymize free-text answers before persisting
+- **`.claude/rules/project/git.md`** — if committing, NO AI credits, conventional commits
 
 ---
 
@@ -107,7 +107,7 @@ NEXT STEPS:
 - **Empty `open-questions.md`** (placeholder `*No open questions.*` still present): emit `✅ All clear — no open questions.` and exit cleanly. Do not invoke the loop.
 - **Filter matches nothing:** emit `No questions match {{filter}}.` Show counts per priority. Exit.
 - **Malformed entry** (missing required schema fields like `question` or `options`): skip it, log a warning to the summary, leave the entry untouched for manual repair.
-- **Commit:** never auto-commit. If the user wants to commit, suggest `git commit -m "docs: resolve N open clarifications"` per `.claude/rules/git.md`.
+- **Commit:** never auto-commit. If the user wants to commit, suggest `git commit -m "docs: resolve N open clarifications"` per `.claude/rules/project/git.md`.
 
 ---
 
@@ -123,7 +123,7 @@ NEXT STEPS:
 
 - **Template:** `.project-management/templates/open-questions-template.md`
 - **Live file:** `.project-management/input/open-questions.md` (created on first skip)
-- **Rule:** `.claude/rules/anonymization.md` (free-text answer anonymization)
+- **Rule:** `.claude/rules/project/anonymization.md` (free-text answer anonymization)
 - **Reference:** `resolve-questions-reference.md` (worked example + edge-case detail)
 
 ---

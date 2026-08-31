@@ -186,8 +186,8 @@ transition anything. End by naming the next action — usually `/execute-work <F
 
 ## Related
 
-- `.claude/rules/api-first.md` — the Phase A gate Step 4 feeds
-- `.claude/rules/security-and-auth.md` §2 — role wire values the Permission Matrix maps onto
-- `.claude/rules/screen-driven-backlog.md` — the story shape this brief supports
+- `.claude/rules/project/api-first.md` — the Phase A gate Step 4 feeds
+- `.claude/rules/project/security-and-auth.md` §2 — role wire values the Permission Matrix maps onto
+- `.claude/rules/project/screen-driven-backlog.md` — the story shape this brief supports
 - `.claude/commands/jira-handoff.md` — the other end of the loop
 - `.claude/commands/bug-sweep.md` — for `Bug` issues

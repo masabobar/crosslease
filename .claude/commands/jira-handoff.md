@@ -174,6 +174,6 @@ If anything was refused or skipped, restate why in one line so the report stands
 ## Related
 
 - `.claude/commands/jira-sync.md` — `_index.md` provides the Story → FE-subtask lookup
-- `.claude/rules/git.md` — the `#PRD1042-NNNN` commit convention Step 1 depends on
+- `.claude/rules/project/git.md` — the `#PRD1042-NNNN` commit convention Step 1 depends on
 - `src/e2e/.claude/agent-memory/qa-lead/reference-jira.md` — QA's independent record of the same
   BE/FE/QA subtask convention

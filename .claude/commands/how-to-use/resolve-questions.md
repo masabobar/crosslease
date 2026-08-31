@@ -55,7 +55,7 @@
 ## 🤔 What happens to my answers?
 
 - **Pre-defined option chosen** → answer is written verbatim to each file listed in `Applied to:`. The question moves to `## Resolved Questions` in `open-questions.md` (the decision log).
-- **"Other" free-text** → passes through anonymization (`.claude/rules/anonymization.md` §3–4) before being persisted.
+- **"Other" free-text** → passes through anonymization (`.claude/rules/project/anonymization.md` §3–4) before being persisted.
 - **Skip** → entry stays in `## Open Questions`. Skip counter increments. Re-run anytime.
 - **Target file no longer exists** → answer recorded as `Orphaned` in the summary; entry still moves to Resolved so the decision is preserved.
 

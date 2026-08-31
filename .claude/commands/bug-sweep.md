@@ -158,7 +158,7 @@ Then commit — one bug per commit, ticket in the header:
 fix: align framework agreement list column widths with the design #PRD1042-1622
 ```
 
-Per `.claude/rules/git.md`: no AI attribution; add a `US-XX.XX` body line only if that story came up in
+Per `.claude/rules/project/git.md`: no AI attribution; add a `US-XX.XX` body line only if that story came up in
 conversation. Ask for the ticket only if the bug key is somehow unknown — normally it _is_ the key.
 
 ### Step 7 — Hand off
@@ -187,7 +187,7 @@ Commit:     a1b2c3d  ·  Jira: → QA ready
 ## Related
 
 - `.claude/commands/jira-handoff.md` — the Step 7 transition
-- `.claude/rules/browser-verification.md` — Steps 3 and 5
-- `.claude/rules/security-and-auth.md` §2 — why permission bugs are usually BE
-- `.claude/rules/api-first.md` — when a bug is a contract gap, not an FE defect
-- `.claude/rules/git.md` — commit format
+- `.claude/rules/project/browser-verification.md` — Steps 3 and 5
+- `.claude/rules/project/security-and-auth.md` §2 — why permission bugs are usually BE
+- `.claude/rules/project/api-first.md` — when a bug is a contract gap, not an FE defect
+- `.claude/rules/project/git.md` — commit format

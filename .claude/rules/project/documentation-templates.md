@@ -8,8 +8,8 @@
 contracts live in `openapi.json` and `../refinext-api/`. This file records where each artifact lives and
 what shape to expect, so nothing gets re-invented locally.
 
-Companion to `.claude/rules/documentation.md` (writing rules — language, style, file size) and
-`.claude/rules/documentation-extras.md` (code comments, diagrams, tooling).
+Companion to `.claude/rules/project/documentation.md` (writing rules — language, style, file size) and
+`.claude/rules/project/documentation-extras.md` (code comments, diagrams, tooling).
 
 ---
 
@@ -47,7 +47,7 @@ the original ambition. Never assume the epic is authoritative because it is larg
 
 ---
 
-## 2. Commit messages → `.claude/rules/git.md`
+## 2. Commit messages → `.claude/rules/project/git.md`
 
 That file is canonical: conventional-commit format, the mandatory Jira ticket or `#no-ticket` suffix, the
 HEREDOC pattern for bodies, and the rule on citing `US-XX.XX` only when it came up in conversation.
@@ -75,24 +75,24 @@ The one artifact this repo does author. Its format lives in
 here. Entries carry `Status`, `Priority` (P0/P1/P2), `Category`, `Asked During`, the question, impact if
 unresolved, and a resolution block once answered.
 
-Free-text answers are anonymized per `.claude/rules/anonymization.md` before they are written down.
+Free-text answers are anonymized per `.claude/rules/project/anonymization.md` before they are written down.
 
 ---
 
 ## 5. Local documentation we do write
 
 Rule files (`.claude/rules/`), command files (`.claude/commands/`), `CLAUDE.md`, and the DASHBOARD journal.
-Style, language, and file-size limits for all of them: `.claude/rules/documentation.md` §2.1 and §3.
+Style, language, and file-size limits for all of them: `.claude/rules/project/documentation.md` §2.1 and §3.
 
 ---
 
 ## Related
 
-- `.claude/rules/documentation.md` — language, style, file-size limits, quality checklist
-- `.claude/rules/documentation-extras.md` — code comments, diagrams, tooling
-- `.claude/rules/git.md` — canonical commit format (§2 defers to it)
-- `.claude/rules/screen-driven-backlog.md` — how a frontend unit is scoped from a Jira story
-- `.claude/rules/anonymization.md` — no personal names in anything committed here
+- `.claude/rules/project/documentation.md` — language, style, file-size limits, quality checklist
+- `.claude/rules/project/documentation-extras.md` — code comments, diagrams, tooling
+- `.claude/rules/project/git.md` — canonical commit format (§2 defers to it)
+- `.claude/rules/project/screen-driven-backlog.md` — how a frontend unit is scoped from a Jira story
+- `.claude/rules/project/anonymization.md` — no personal names in anything committed here
 - `.claude/commands/jira-sync.md` — the read-only briefing that extracts §1's sections
 
 ---

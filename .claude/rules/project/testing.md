@@ -17,7 +17,7 @@
 - No component testing (`@testing-library/react`) — logic is covered by unit tests; UI flows by QA's E2E suite.
 
 > **Not a substitute for looking at the page.** Every feature and bug fix is also exercised in a real
-> browser before handoff — see `.claude/rules/browser-verification.md`. That is interactive verification
+> browser before handoff — see `.claude/rules/project/browser-verification.md`. That is interactive verification
 > by Claude, produces **no committed spec files**, and does not change the rule above: E2E specs stay
 > QA's. It exists because no gate here renders a page — an i18n key missing from _both_ locales, a
 > mis-scoped role gate, or a console error all pass unit tests, type-check, and lint.
@@ -67,8 +67,8 @@ it("clears tokens on logout", () => {
 
 ## Related
 
-- `.claude/rules/code-review.md` §9 — testing review checklist
-- `.claude/rules/api-error-display.md` — error codes the UI must distinguish
+- `.claude/rules/project/code-review.md` §9 — testing review checklist
+- `.claude/rules/project/api-error-display.md` — error codes the UI must distinguish
 - `../refinext-api/` — backend endpoint test matrix lives with the backend
 - `.project-management/rules/project-rules.md` — project-specific testing requirements
 

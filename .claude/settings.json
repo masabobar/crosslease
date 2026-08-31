@@ -50,5 +50,5 @@
       }
     ]
   },
-  "_comment": "⚠️ IMPORTANT: Copy this to settings.json. Claude should NEVER modify settings.json automatically. See .claude/rules/permissions.md for details. Bash(*) already covers all shell commands — do not add narrower Bash entries alongside it; they are dead weight. The deny list is a guard against the most common destructive commands, not a sandbox: with Bash(*) allowed, real safety comes from review, not the list. Hooks require jq + git; see .claude/hooks/*.sh for what they enforce (code-review gate on git commit, documentation.md §2.1 file-size limits)."
+  "_comment": "⚠️ IMPORTANT: Copy this to settings.json. Claude should NEVER modify settings.json automatically. See .claude/rules/project/permissions.md for details. Bash(*) already covers all shell commands — do not add narrower Bash entries alongside it; they are dead weight. The deny list is a guard against the most common destructive commands, not a sandbox: with Bash(*) allowed, real safety comes from review, not the list. Hooks require jq + git; see .claude/hooks/*.sh for what they enforce (code-review gate on git commit, documentation.md §2.1 file-size limits)."
 }

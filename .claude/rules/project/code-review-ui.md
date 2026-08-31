@@ -4,7 +4,7 @@
 **Last Updated:** 2026-07-05
 **Status:** Active
 
-Companion to `.claude/rules/code-review.md` — holds the full §12 shadcn-first checklist. The main file keeps the per-commit review flow; this file is the component-catalogue reference.
+Companion to `.claude/rules/project/code-review.md` — holds the full §12 shadcn-first checklist. The main file keeps the per-commit review flow; this file is the component-catalogue reference.
 
 **Principle: shadcn/ui is the default choice for every UI element. Any deviation requires an explicit inline note.**
 
@@ -36,7 +36,7 @@ Companion to `.claude/rules/code-review.md` — holds the full §12 shadcn-first
 
 ## Related
 
-- `.claude/rules/code-review.md` §12 — entry point; PR checklist row "UI components"
+- `.claude/rules/project/code-review.md` §12 — entry point; PR checklist row "UI components"
 - CLAUDE.md §UI components — the shadcn-first mandate
 
 ---

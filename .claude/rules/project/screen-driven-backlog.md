@@ -11,8 +11,8 @@ screen → endpoint mapping must be written out and verified.**
 > to write into. So this rule no longer governs how stories are _written_; it governs how a unit of
 > frontend work is **scoped and verified before it is built**. The filename is historical.
 
-Works with `.claude/rules/api-first.md` (which consumes the mapping from §3 to gate implementation) and
-`.claude/rules/design-first.md` (which gates on design fidelity per screen).
+Works with `.claude/rules/project/api-first.md` (which consumes the mapping from §3 to gate implementation) and
+`.claude/rules/project/design-first.md` (which gates on design fidelity per screen).
 
 ---
 
@@ -115,8 +115,8 @@ desktop-first and semi-responsive, per CLAUDE.md §Responsive design.
 
 ## Related
 
-- `.claude/rules/api-first.md` — Phase A consumes the §3 mapping to gate implementation
-- `.claude/rules/design-first.md` — per-screen (Phase A) and per-component (Phase B) design gates
+- `.claude/rules/project/api-first.md` — Phase A consumes the §3 mapping to gate implementation
+- `.claude/rules/project/design-first.md` — per-screen (Phase A) and per-component (Phase B) design gates
 - `.claude/commands/execute-work.md` — STEP 2 produces the mapping; STEP 4 verifies the screen renders
 - `.claude/commands/jira-sync.md` — pulls the Jira story this scoping works from
 
