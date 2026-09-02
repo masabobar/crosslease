@@ -34,10 +34,39 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: THIRTY_SECONDS_MS } },
 })
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </StrictMode>
-)
+function render() {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </StrictMode>
+  )
+}
+
+// PROTOTYPE MOCK bootstrap — see .claude/rules/project/prototype-mode.md.
+//
+// Double-guarded on purpose. `import.meta.env.DEV` is false in any production build, so the mock
+// layer cannot be switched on by an environment variable leaking into a real deploy; VITE_USE_MOCKS
+// then makes it opt-in during development. Dropping either guard would make a public prototype
+// possible by accident.
+//
+// The dynamic import keeps msw and every handler out of the production bundle: Rollup drops the
+// branch entirely once DEV is statically false.
+async function start() {
+  if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS === "true") {
+    const [{ worker }, { installMockRoleSwitcher }] = await Promise.all([
+      import("@/mocks/browser"),
+      import("@/mocks/role"),
+    ])
+    installMockRoleSwitcher()
+    // "warn" covers anything outside `/api/v1` (assets, third-party). API paths never reach it: the
+    // fallback handler claims every one and answers 501 rather than letting the call escape to the
+    // real API, whose 401 would trip the interceptor's refresh-then-clearAuth path and log the
+    // reviewer out. See handlers/fallback.ts.
+    await worker.start({ onUnhandledRequest: "warn" })
+  }
+  render()
+}
+
+void start()

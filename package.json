@@ -71,6 +71,7 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
+    "msw": "^2.15.0",
     "openapi-zod-client": "^1.18.3",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.3.0",
