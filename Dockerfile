@@ -16,7 +16,7 @@ RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 COPY . .
 
 CMD ["pnpm", "run", "dev"]
@@ -31,8 +31,12 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
 
 WORKDIR /app
+# No BuildKit cache mount for the pnpm store: Railway's Dockerfile validator
+# rejects a cache `id` that is not prefixed with its own cache key, and failing
+# that check aborts the deploy before the build even starts. Layer caching
+# already keeps this step from re-running unless the lockfile changes.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 ARG VITE_APP_STAGE
 ARG PROJECT_NAME

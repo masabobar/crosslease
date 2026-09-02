@@ -496,7 +496,9 @@ Constraints that are easy to break (learned the hard way — the notes file that
 rationale was retired 2026-07-29):
 
 - `pnpm-workspace.yaml` must be copied **before** `pnpm install` in the Dockerfile
-- `--mount=type=cache` for the pnpm store requires BuildKit (above)
+- `--mount=type=cache` requires BuildKit (above) — and Railway rejects a cache `id`
+  without its own cache-key prefix, failing the deploy at Dockerfile validation before
+  the build starts, so the pnpm store mount was dropped rather than made Railway-specific
 - nginx needs the SPA-routing fallback and serves hashed assets with a 1-year cache
 - CI runs DinD with TLS **disabled**; the SSH deploy key must match `authorized_keys` on the server
 - Staging is set up; **production is not**
