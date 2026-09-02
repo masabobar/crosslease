@@ -1,0 +1,63 @@
+# Rendered at container start by the stock nginx entrypoint
+# (20-envsubst-on-templates.sh), which runs envsubst over every
+# /etc/nginx/templates/*.template and writes the result into /etc/nginx/conf.d/.
+# Only real environment variables are substituted, so nginx's own runtime
+# variables ($uri, $scheme, ...) pass through untouched.
+
+server {
+    listen       ${PORT};
+    server_name  _;
+    root         /usr/share/nginx/html;
+    index        index.html;
+
+    # Written at container start by 40-basic-auth.sh: the auth_basic directives
+    # when BASIC_AUTH_USER/BASIC_AUTH_PASSWORD are set, an inert comment when
+    # they are not. Server-level so it also covers the regex asset location,
+    # which would otherwise bypass a location-/-only guard.
+    include /etc/nginx/basic-auth.conf;
+
+    # Railway's healthcheck is unauthenticated — a 401 here would fail the
+    # check and the deploy would never go live.
+    location = /healthz {
+        auth_basic off;
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 'ok';
+    }
+
+    # Same-origin API proxy. Auth is cookie-borne with SameSite=Lax, so the
+    # browser must see the API on this very host — a cross-site XHR to the API
+    # domain would have its auth cookie stripped and every request would 401.
+    # This mirrors the Vite dev proxy documented in .env.example.
+    # API_PROXY_TARGET is read at container start, so the backend can be
+    # repointed with an env var alone — no rebuild.
+    location /api/ {
+        # The API enforces its own auth — that is the real security boundary.
+        # Exempting it keeps the browser's Basic credentials out of the proxied
+        # request, so they cannot interfere with the cookie-borne app login.
+        auth_basic off;
+        proxy_set_header   Authorization "";
+
+        proxy_pass         ${API_PROXY_TARGET}/api/;
+        proxy_ssl_server_name on;
+        proxy_http_version 1.1;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # Handle client-side routing
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+}
