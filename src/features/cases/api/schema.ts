@@ -53,7 +53,54 @@ export type Case = z.infer<typeof CaseSchema>
 
 // GET /cases — mirrors CaseListResponse. The list item and the detail response share a shape, so
 // the same schema drives both the table rows and the detail header.
-export const CaseListItemSchema = CaseSchema
+/**
+ * GET /cases — one row of the list.
+ *
+ * ── THE FOUR OPTIONAL FIELDS ARE DOCUMENTED BACKEND GAPS ───────────────────────────────────────
+ * The Figma frame for this screen (`CREATE NEW.pdf`, frame 1) shows six columns. `CaseListItem` as
+ * the contract declares it backs only two of them — the case reference with its type, and the
+ * status. The other four are added below as **`.optional()`**, which is what makes this honest
+ * rather than invented:
+ *
+ *   - the real API's response still parses — the fields are simply absent, so they read `undefined`
+ *   - the table then renders an em-dash in those cells, so the screen is **visibly incomplete**
+ *     against a real backend instead of showing a fabricated figure
+ *   - the mock layer supplies them, so the design can be reviewed as drawn (prototype-mode.md)
+ *
+ * The names are not guesses: `lc_partner_name` is exactly what the backend already denormalises
+ * onto its own **list** rows (`FAListItemResponse`), `contract_count` exists on `CaseDataResponse`
+ * and `FinancingOverviewResponse`, and `phase_name` / `steps_done` / `steps_applicable` are
+ * `PhaseProgressResponse`'s own vocabulary. So this is the same shape the backend already uses,
+ * asked for on one more row.
+ *
+ * `last_activity_at` / `last_activity_by` are the exception — neither appears anywhere in the
+ * contract, and `CaseListItem` carries only `created_at` / `created_by`. Those two are NOT reused
+ * for this column: "Created" and "Last activity" are different facts, and labelling one as the
+ * other would be a quiet lie on an audit-relevant screen.
+ *
+ * Tracked as a backend gap; the columns disappear the day the fields land as required.
+ */
+export const CaseListItemSchema = CaseSchema.extend({
+  // Design column "Leasing company / Lessee". Only the leasing-company half is requested — there
+  // is no lessee anywhere on the case, and resolving one would mean a request per row.
+  lc_partner_name: z.string().nullable().optional(),
+  // Design column "Contracts".
+  contract_count: z.number().int().nullable().optional(),
+  // Design column "Phase" — rendered as "Phase A" over "Step 1/5".
+  //
+  // The fraction is the phase's ORDINAL, not progress within it. Across all eight rows of the
+  // frame the numerator equals the phase letter's position (A→1/5, C→3/5, D→4/5, E→5/5) and the
+  // denominator never moves off 5. So it needs the position and the phase count, not the
+  // `steps_done` / `steps_applicable` pair that `PhaseProgressResponse` carries — those describe
+  // step completion inside a phase, which this column does not show.
+  phase_name: z.string().nullable().optional(),
+  phase_position: z.number().int().nullable().optional(),
+  phase_count: z.number().int().nullable().optional(),
+  // Design column "Last activity" — a timestamp over the person who caused it. The design shows a
+  // display name, not an id, so this is a name.
+  last_activity_at: z.string().nullable().optional(),
+  last_activity_by: z.string().nullable().optional(),
+})
 export type CaseListItem = z.infer<typeof CaseListItemSchema>
 
 export const CaseListResponseSchema = z.object({
@@ -62,8 +109,8 @@ export const CaseListResponseSchema = z.object({
 })
 export type CaseListResponse = z.infer<typeof CaseListResponseSchema>
 
-// GET /cases/{case_id} — mirrors CaseResponse. Same field set as the list item today; kept as its
-// own alias so a field the detail endpoint adds later does not have to widen the list row.
+// GET /cases/{case_id} — mirrors CaseResponse. Deliberately NOT the list-item schema: that one
+// carries the optional display fields above, which the detail endpoint does not promise either.
 export const CaseResponseSchema = CaseSchema
 export type CaseResponse = z.infer<typeof CaseResponseSchema>
 

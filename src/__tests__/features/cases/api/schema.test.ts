@@ -51,6 +51,63 @@ describe("cases schemas", () => {
     expect(CaseResponseSchema.parse(validCase)).toEqual(validCase)
   })
 
+  // The Cases list carries six display fields the contract does not declare (leasing company name,
+  // contract count, phase, last activity). They are optional precisely so the real API's narrower
+  // response keeps parsing — these tests are what stop that from regressing into required.
+  describe("CaseListItemSchema display-field gaps", () => {
+    const withDisplayFields = {
+      ...validCase,
+      lc_partner_name: "Premium Leasing GmbH",
+      contract_count: 3,
+      phase_name: "Application & credit review",
+      phase_position: 1,
+      phase_count: 5,
+      last_activity_at: "2026-06-14T08:30:00Z",
+      last_activity_by: "Front Office",
+    }
+
+    it("parses the real API's row, which carries none of them", () => {
+      const parsed = CaseListItemSchema.parse(validCase)
+      expect(parsed.lc_partner_name).toBeUndefined()
+      expect(parsed.contract_count).toBeUndefined()
+      expect(parsed.phase_position).toBeUndefined()
+      expect(parsed.last_activity_at).toBeUndefined()
+    })
+
+    it("keeps them when the mock layer supplies them", () => {
+      expect(CaseListItemSchema.parse(withDisplayFields)).toEqual(
+        withDisplayFields
+      )
+    })
+
+    it("accepts them as explicitly null", () => {
+      // A backend that adds the columns but has no value yet would send null, not omit the key.
+      const nulled = {
+        ...validCase,
+        lc_partner_name: null,
+        contract_count: null,
+        phase_name: null,
+        phase_position: null,
+        phase_count: null,
+        last_activity_at: null,
+        last_activity_by: null,
+      }
+      expect(CaseListItemSchema.parse(nulled)).toEqual(nulled)
+    })
+
+    it("still rejects a wrongly-typed display field", () => {
+      expect(() =>
+        CaseListItemSchema.parse({ ...validCase, contract_count: "3" })
+      ).toThrow()
+    })
+
+    it("does not widen the detail endpoint — CaseResponseSchema strips them", () => {
+      // The detail endpoint promises no more than the contract does, so the display fields must not
+      // leak into it just because the list row shares a base schema.
+      expect(CaseResponseSchema.parse(withDisplayFields)).toEqual(validCase)
+    })
+  })
+
   it("parses a case list response", () => {
     const response = { items: [validCase], total: 1 }
     expect(CaseListResponseSchema.parse(response)).toEqual(response)

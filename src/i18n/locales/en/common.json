@@ -63,7 +63,8 @@
     "createTenant": "Create tenant",
     "partnerManagement": "Partner management",
     "submitPartner": "Submit partner",
-    "duplicateQueue": "Duplication queue"
+    "duplicateQueue": "Duplication queue",
+    "cases": "Cases"
   },
   "notFound": {
     "heading": "Page not found",

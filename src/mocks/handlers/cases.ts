@@ -69,8 +69,22 @@ function applyFilters(url: URL, rows: Case[]): Case[] {
     flag("oldest_first") ? byCreated : (a, b) => byCreated(b, a)
   )
 
+  return out
+}
+
+// Paging is applied after filtering, and `total` is taken BEFORE the slice — otherwise the pager
+// reads "1 of 1 page" no matter how many rows matched, and the design's "Previous 1 2 3 … Next"
+// never appears.
+function paginate(url: URL, rows: Case[]): { items: Case[]; total: number } {
+  const total = rows.length
   const limit = Number(url.searchParams.get("limit") ?? "")
-  return Number.isFinite(limit) && limit > 0 ? out.slice(0, limit) : out
+  const offset = Number(url.searchParams.get("offset") ?? "")
+  const from = Number.isFinite(offset) && offset > 0 ? offset : 0
+  const items =
+    Number.isFinite(limit) && limit > 0
+      ? rows.slice(from, from + limit)
+      : rows.slice(from)
+  return { items, total }
 }
 
 // The design's A–E progress band (Add convenant.pdf / BO approval.pdf): five phases with the names
@@ -142,20 +156,18 @@ export const caseHandlers = [
   ),
 
   http.get(`${API}/cases`, ({ request }) => {
-    const items = applyFilters(new URL(request.url), allCases())
-    return envelope(
-      CaseListResponseSchema.parse({ items, total: items.length })
-    )
+    const url = new URL(request.url)
+    const page = paginate(url, applyFilters(url, allCases()))
+    return envelope(CaseListResponseSchema.parse(page))
   }),
 
   // The leasing company's own cases. Scoped to portal-origin rows, which is the closest honest
   // approximation of the backend scoping to the caller's LC.
   http.get(`${API}/lc/cases`, ({ request }) => {
+    const url = new URL(request.url)
     const own = allCases().filter(c => c.origin === "portal")
-    const items = applyFilters(new URL(request.url), own)
-    return envelope(
-      CaseListResponseSchema.parse({ items, total: items.length })
-    )
+    const page = paginate(url, applyFilters(url, own))
+    return envelope(CaseListResponseSchema.parse(page))
   }),
 
   http.post(`${API}/cases`, async ({ request }) => {

@@ -42,6 +42,9 @@ export type CaseListParams = {
   my_work_list?: boolean
   oldest_first?: boolean
   limit?: number
+  // The list endpoint pages with limit+offset and returns `total`, which is what the design's
+  // "Previous 1 2 3 … Next" pager is driven from.
+  offset?: number
 }
 
 export const CASE_QUERY_KEYS = {

@@ -15,12 +15,22 @@
  *
  * Company names are the design mockups' own placeholders. No real person's name appears here.
  */
-import type { Case } from "@/features/cases/api/schema"
+import type { CaseListItem } from "@/features/cases/api/schema"
 
 const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 const LC_PARTNER = "00000000-0000-4000-8000-00000000a001"
 
-export const mockCases: Case[] = [
+// The same three leasing companies the business-config fixtures use, so a case and its framework
+// agreement never disagree about who the counterparty is.
+const PREMIUM_NAME = "Premium Leasing GmbH"
+const NORDIC_NAME = "Nordic Fleet Partners AB"
+const BALTIC_NAME = "Baltic Machinery Leasing GmbH"
+
+// The A–E model has exactly five phases (design-extract §2), which is why the design's phase column
+// reads "Step n/5" on every row.
+const TOTAL_PHASES = 5
+
+export const mockCases: CaseListItem[] = [
   {
     id: "00000000-0000-4000-8000-00000000c001",
     case_reference: "RR-2026-104",
@@ -33,6 +43,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-08-12T09:14:00Z",
+    lc_partner_name: PREMIUM_NAME,
+    contract_count: 1,
+    phase_name: "Application & credit review",
+    phase_position: 1,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-14T10:22:00Z",
+    last_activity_by: "Front Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c002",
@@ -46,6 +63,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-08-28T14:02:00Z",
+    lc_partner_name: PREMIUM_NAME,
+    contract_count: 2,
+    phase_name: "Application & credit review",
+    phase_position: 1,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-28T14:02:00Z",
+    last_activity_by: "Front Office",
   },
   // Arrived through the portal, so nobody has picked it up — the case the spec says lands unassigned
   // in the Front Office work list with an origin mark.
@@ -61,6 +85,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Leasing Company",
     created_at: "2026-09-01T07:41:00Z",
+    lc_partner_name: NORDIC_NAME,
+    contract_count: 3,
+    phase_name: "Approval & disbursement",
+    phase_position: 4,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-09-01T08:15:00Z",
+    last_activity_by: "Leasing Company",
   },
   {
     id: "00000000-0000-4000-8000-00000000c004",
@@ -74,6 +105,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-07-30T11:20:00Z",
+    lc_partner_name: BALTIC_NAME,
+    contract_count: 1,
+    phase_name: "Data entry & loan setup",
+    phase_position: 3,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-02T09:40:00Z",
+    last_activity_by: "Back Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c005",
@@ -87,6 +125,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-06-02T08:05:00Z",
+    lc_partner_name: PREMIUM_NAME,
+    contract_count: 3,
+    phase_name: "Live servicing",
+    phase_position: 5,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-01T08:05:00Z",
+    last_activity_by: "Back Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c006",
@@ -100,6 +145,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-08-19T13:33:00Z",
+    lc_partner_name: NORDIC_NAME,
+    contract_count: 2,
+    phase_name: "Settlement documents",
+    phase_position: 2,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-20T11:05:00Z",
+    last_activity_by: "Front Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c007",
@@ -113,6 +165,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Back Office",
     created_at: "2026-05-14T10:02:00Z",
+    lc_partner_name: BALTIC_NAME,
+    contract_count: 1,
+    phase_name: "Live servicing",
+    phase_position: 5,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-05-20T16:44:00Z",
+    last_activity_by: "Back Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c008",
@@ -126,6 +185,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-08-25T15:47:00Z",
+    lc_partner_name: PREMIUM_NAME,
+    contract_count: 1,
+    phase_name: "Application & credit review",
+    phase_position: 1,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-25T15:47:00Z",
+    last_activity_by: "Front Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c009",
@@ -139,6 +205,13 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Front Office",
     created_at: "2026-08-30T09:58:00Z",
+    lc_partner_name: NORDIC_NAME,
+    contract_count: 4,
+    phase_name: "Settlement documents",
+    phase_position: 2,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-08-31T09:12:00Z",
+    last_activity_by: "Front Office",
   },
   // A case type with no row in the routing table: it is never refused, it lands unassigned and carries
   // a visible marker (spec §3.3, Routing fallback).
@@ -154,6 +227,13 @@ export const mockCases: Case[] = [
     routing_exception: true,
     created_by: "Front Office",
     created_at: "2026-09-01T16:12:00Z",
+    lc_partner_name: BALTIC_NAME,
+    contract_count: 1,
+    phase_name: "Application & credit review",
+    phase_position: 1,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-09-01T16:12:00Z",
+    last_activity_by: "Front Office",
   },
   {
     id: "00000000-0000-4000-8000-00000000c011",
@@ -167,5 +247,12 @@ export const mockCases: Case[] = [
     routing_exception: false,
     created_by: "Back Office",
     created_at: "2026-06-21T12:30:00Z",
+    lc_partner_name: PREMIUM_NAME,
+    contract_count: 2,
+    phase_name: "Data entry & loan setup",
+    phase_position: 3,
+    phase_count: TOTAL_PHASES,
+    last_activity_at: "2026-06-25T12:30:00Z",
+    last_activity_by: "Back Office",
   },
 ]

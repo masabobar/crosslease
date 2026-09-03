@@ -23,6 +23,7 @@ export type BreadcrumbLabelKey =
   | "breadcrumb.partnerManagement"
   | "breadcrumb.submitPartner"
   | "breadcrumb.duplicateQueue"
+  | "breadcrumb.cases"
 
 export type Crumb = {
   labelKey?: BreadcrumbLabelKey
@@ -31,6 +32,10 @@ export type Crumb = {
 }
 
 const BREADCRUMBS: Record<string, Crumb[]> = {
+  [PATHS.CASE_LIST]: [
+    { labelKey: "breadcrumb.home" },
+    { labelKey: "breadcrumb.cases" },
+  ],
   [PATHS.USER_MANAGEMENT]: [
     { labelKey: "breadcrumb.home" },
     { labelKey: "breadcrumb.platformAdministration" },

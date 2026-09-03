@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { phaseLetter } from "@/features/cases/utils"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { CaseProgressResponse } from "@/features/cases/api/schema"
@@ -27,15 +28,6 @@ import type { CaseProgressResponse } from "@/features/cases/api/schema"
 type Props = {
   progress: CaseProgressResponse | undefined
   isLoading: boolean
-}
-
-const LETTERS = "ABCDEFGH"
-
-function letterFor(position: number | null, index: number): string {
-  // `position` is 1-based on the wire and nullable; the array index is the fallback so an unnamed
-  // phase still gets a stable letter instead of an empty circle.
-  const ordinal = position !== null && position > 0 ? position - 1 : index
-  return LETTERS[ordinal] ?? String(ordinal + 1)
 }
 
 export function CaseProgressBand({ progress, isLoading }: Props) {
@@ -82,7 +74,7 @@ export function CaseProgressBand({ progress, isLoading }: Props) {
             <li
               key={`${phase.position ?? index}-${phase.phase_name ?? index}`}
               className={cn("flex flex-col items-center", !isLast && "flex-1")}
-              data-testid={`case-progress-phase-${letterFor(phase.position, index)}`}
+              data-testid={`case-progress-phase-${phaseLetter(phase.position, index)}`}
             >
               <div className="flex w-full items-center">
                 <span
@@ -95,7 +87,7 @@ export function CaseProgressBand({ progress, isLoading }: Props) {
                         : "border-border text-muted-foreground"
                   )}
                 >
-                  {letterFor(phase.position, index)}
+                  {phaseLetter(phase.position, index)}
                 </span>
                 {!isLast && (
                   <span

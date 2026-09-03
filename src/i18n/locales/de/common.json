@@ -63,7 +63,8 @@
     "createTenant": "Mandant erstellen",
     "partnerManagement": "Partnerverwaltung",
     "submitPartner": "Partner einreichen",
-    "duplicateQueue": "Duplikat-Warteschlange"
+    "duplicateQueue": "Duplikat-Warteschlange",
+    "cases": "Fälle"
   },
   "notFound": {
     "heading": "Seite nicht gefunden",

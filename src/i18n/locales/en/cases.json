@@ -1,20 +1,19 @@
 {
   "list": {
     "title": "Cases",
-    "subtitle": "Refinancing and redemption cases you and your team are working.",
-    "filters": {
-      "all": "All",
-      "mine": "Assigned to me",
-      "unassigned": "Unassigned",
-      "unclaimed": "Unclaimed"
-    },
+    "subtitle": "Every case that moves a set of lease contracts through refinancing.",
     "table": {
       "columns": {
-        "caseReference": "Case reference",
         "caseType": "Case type",
         "status": "Status",
-        "createdAt": "Created at"
-      }
+        "case": "Case",
+        "leasingCompany": "Leasing company",
+        "contracts": "Contracts",
+        "phase": "Phase",
+        "lastActivity": "Last activity"
+      },
+      "phaseLabel": "Phase {{letter}}",
+      "stepLabel": "Step {{position}}/{{total}}"
     },
     "emptyState": {
       "title": "No cases yet",
@@ -23,6 +22,12 @@
     "emptyFiltered": {
       "title": "No cases match this filter",
       "description": "Try a different filter to see more cases."
+    },
+    "searchPlaceholder": "Search",
+    "rowCount": "{{shown}} of {{total}} shown",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "start": {

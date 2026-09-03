@@ -1,20 +1,19 @@
 {
   "list": {
     "title": "Fälle",
-    "subtitle": "Refinanzierungs- und Ablösefälle, die Sie und Ihr Team bearbeiten.",
-    "filters": {
-      "all": "Alle",
-      "mine": "Mir zugewiesen",
-      "unassigned": "Nicht zugewiesen",
-      "unclaimed": "Nicht übernommen"
-    },
+    "subtitle": "Jeder Fall, der eine Reihe von Leasingverträgen durch die Refinanzierung führt.",
     "table": {
       "columns": {
-        "caseReference": "Fallreferenz",
-        "caseType": "Falltyp",
+        "caseType": "Fallart",
         "status": "Status",
-        "createdAt": "Erstellt am"
-      }
+        "case": "Fall",
+        "leasingCompany": "Leasinggesellschaft",
+        "contracts": "Verträge",
+        "phase": "Phase",
+        "lastActivity": "Letzte Aktivität"
+      },
+      "phaseLabel": "Phase {{letter}}",
+      "stepLabel": "Schritt {{position}}/{{total}}"
     },
     "emptyState": {
       "title": "Noch keine Fälle",
@@ -23,6 +22,12 @@
     "emptyFiltered": {
       "title": "Keine Fälle für diesen Filter",
       "description": "Wählen Sie einen anderen Filter, um mehr Fälle zu sehen."
+    },
+    "searchPlaceholder": "Suchen",
+    "rowCount": "{{shown}} von {{total}} angezeigt",
+    "pagination": {
+      "previous": "Zurück",
+      "next": "Weiter"
     }
   },
   "start": {
