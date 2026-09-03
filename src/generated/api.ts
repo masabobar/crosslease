@@ -2817,18 +2817,19 @@ const FALCPartnersResponse = z
   .passthrough()
 const FAUtilizationResponse = z
   .object({
-    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    disbursed_volume_eur: z.union([z.string(), z.null()]).optional(),
-    redeemed_volume_eur: z.union([z.string(), z.null()]).optional(),
-    net_exposure_eur: z.union([z.string(), z.null()]).optional(),
-    available_volume_eur: z.union([z.string(), z.null()]).optional(),
-    utilization_pct: z.union([z.string(), z.null()]).optional(),
-    limit_available_flag: z.union([z.boolean(), z.null()]).optional(),
-    limit_breach_flag: z.union([z.boolean(), z.null()]).optional(),
-    last_refreshed_at: z.union([z.string(), z.null()]).optional(),
-    source: z.string().optional().default("limit_management"),
-    available: z.boolean().optional().default(false),
+    max_volume_eur: z.union([z.string(), z.null()]),
+    disbursed_volume_eur: z.union([z.string(), z.null()]),
+    redeemed_volume_eur: z.union([z.string(), z.null()]),
+    net_exposure_eur: z.union([z.string(), z.null()]),
+    available_volume_eur: z.union([z.string(), z.null()]),
+    utilization_pct: z.union([z.string(), z.null()]),
+    limit_available_flag: z.union([z.boolean(), z.null()]),
+    limit_breach_flag: z.union([z.boolean(), z.null()]),
+    last_refreshed_at: z.union([z.string(), z.null()]),
+    source: z.string().default("limit_management"),
+    available: z.boolean().default(false),
   })
+  .partial()
   .passthrough()
 const FALinkedFinancingsResponse = z
   .object({ count: z.number().int().default(0), items: z.array(z.unknown()) })
@@ -2956,7 +2957,7 @@ const LCPortalDocumentItem = z
     file_name: z.string(),
     file_size_bytes: z.number().int(),
     mime_type: z.string(),
-    document_type: z.string(),
+    document_type: z.union([z.string(), z.null()]).optional(),
     document_label: z.union([z.string(), z.null()]),
     uploaded_at: z.string().datetime({ offset: true }),
   })
@@ -2968,7 +2969,7 @@ const LCPortalFAListItem = z
     status: FALifecycleStatus,
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
-    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    max_volume_eur: z.union([z.string(), z.null()]).optional(),
     available_volume_eur: z.union([z.string(), z.null()]).optional(),
     new_financings_available: z.union([z.boolean(), z.null()]).optional(),
     product_templates: z.array(LCPortalProductTemplateItem),
@@ -3733,7 +3734,7 @@ const UpdateRequirementRequest = z
   .passthrough()
 const RuntimeRequirementItem = z
   .object({
-    requirement_definition_id: z.string().uuid(),
+    requirement_definition_id: z.union([z.string(), z.null()]).optional(),
     requirement_code: z.string(),
     document_type_name: z.string(),
     classification: z.string(),
@@ -3786,7 +3787,7 @@ const MaterializationResponse = z
   .passthrough()
 const LCObligationItem = z
   .object({
-    requirement_definition_id: z.string().uuid(),
+    requirement_definition_id: z.union([z.string(), z.null()]).optional(),
     document_type_name: z.string(),
     is_mandatory: z.boolean(),
     fulfilment_status: z.string(),
@@ -3836,7 +3837,7 @@ const TransitionStatusRequest = z
   .passthrough()
 const PerRequirementStatusResponse = z
   .object({
-    requirement_definition_id: z.string().uuid(),
+    requirement_definition_id: z.union([z.string(), z.null()]).optional(),
     requirement_code: z.string(),
     classification: z.string(),
     status: z.string(),

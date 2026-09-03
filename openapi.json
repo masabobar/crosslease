@@ -18168,8 +18168,13 @@
       "FAUtilizationResponse": {
         "properties": {
           "max_volume_eur": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
             "title": "Max Volume Eur"
           },
           "disbursed_volume_eur": {
@@ -18249,7 +18254,6 @@
           }
         },
         "type": "object",
-        "required": ["max_volume_eur"],
         "title": "FAUtilizationResponse"
       },
       "FieldDiffItem": {
@@ -19904,8 +19908,10 @@
       "LCObligationItem": {
         "properties": {
           "requirement_definition_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
             "title": "Requirement Definition Id"
           },
           "document_type_name": {
@@ -19933,7 +19939,6 @@
         },
         "type": "object",
         "required": [
-          "requirement_definition_id",
           "document_type_name",
           "is_mandatory",
           "fulfilment_status",
@@ -19976,7 +19981,10 @@
           "file_name": { "type": "string", "title": "File Name" },
           "file_size_bytes": { "type": "integer", "title": "File Size Bytes" },
           "mime_type": { "type": "string", "title": "Mime Type" },
-          "document_type": { "type": "string", "title": "Document Type" },
+          "document_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Type"
+          },
           "document_label": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Document Label"
@@ -19993,7 +20001,6 @@
           "file_name",
           "file_size_bytes",
           "mime_type",
-          "document_type",
           "document_label",
           "uploaded_at"
         ],
@@ -20017,8 +20024,13 @@
             "title": "Valid Until"
           },
           "max_volume_eur": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
             "title": "Max Volume Eur"
           },
           "available_volume_eur": {
@@ -20055,7 +20067,6 @@
           "status",
           "valid_from",
           "valid_until",
-          "max_volume_eur",
           "product_templates",
           "documents"
         ],
@@ -22187,8 +22198,10 @@
       "PerRequirementStatusResponse": {
         "properties": {
           "requirement_definition_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
             "title": "Requirement Definition Id"
           },
           "requirement_code": { "type": "string", "title": "Requirement Code" },
@@ -22203,12 +22216,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "requirement_definition_id",
-          "requirement_code",
-          "classification",
-          "status"
-        ],
+        "required": ["requirement_code", "classification", "status"],
         "title": "PerRequirementStatusResponse"
       },
       "PhaseGateResponse": {
@@ -23232,8 +23240,10 @@
       "RuntimeRequirementItem": {
         "properties": {
           "requirement_definition_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
             "title": "Requirement Definition Id"
           },
           "requirement_code": { "type": "string", "title": "Requirement Code" },
@@ -23268,7 +23278,6 @@
         },
         "type": "object",
         "required": [
-          "requirement_definition_id",
           "requirement_code",
           "document_type_name",
           "classification",
