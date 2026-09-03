@@ -1,11 +1,15 @@
 import { z } from "zod"
 import { api } from "@/lib/api"
 import {
+  CaseDataMetaSchema,
   CaseListResponseSchema,
+  CaseProgressResponseSchema,
   CaseResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
+  CaseDataMeta,
   CaseListResponse,
+  CaseProgressResponse,
   CaseResponse,
   CaseType,
 } from "@/features/cases/api/schema"
@@ -46,6 +50,8 @@ export const CASE_QUERY_KEYS = {
   lcList: (params?: Pick<CaseListParams, "oldest_first" | "limit">) =>
     ["cases", "lc-list", params] as const,
   detail: (caseId: string) => ["cases", "detail", caseId] as const,
+  dataMeta: (caseId: string) => ["cases", "data-meta", caseId] as const,
+  progress: (caseId: string) => ["cases", "progress", caseId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -62,6 +68,22 @@ export async function fetchCases(
 export async function fetchCase(caseId: string): Promise<CaseResponse> {
   const data = await api.get(`/cases/${caseId}`)
   return CaseResponseSchema.parse(data)
+}
+
+// GET /cases/{business_object_id}/progress — the phase stepper and the overall counter the design's
+// progress band renders. Keyed by case id: the route param IS the business object id for a case.
+export async function fetchCaseProgress(
+  caseId: string
+): Promise<CaseProgressResponse> {
+  const data = await api.get(`/cases/${caseId}/progress`)
+  return CaseProgressResponseSchema.parse(data)
+}
+
+// GET /cases/{case_id}/data — read for the workspace header's contract count only; see
+// CaseDataMetaSchema for why the shape is narrowed rather than modelled in full.
+export async function fetchCaseDataMeta(caseId: string): Promise<CaseDataMeta> {
+  const data = await api.get(`/cases/${caseId}/data`)
+  return CaseDataMetaSchema.parse(data)
 }
 
 // POST /cases — start a case. The backend (StartCaseRequest) asks only for the case type; it sets the

@@ -66,3 +66,41 @@ export type CaseListResponse = z.infer<typeof CaseListResponseSchema>
 // own alias so a field the detail endpoint adds later does not have to widen the list row.
 export const CaseResponseSchema = CaseSchema
 export type CaseResponse = z.infer<typeof CaseResponseSchema>
+
+// GET /cases/{business_object_id}/progress — mirrors CaseProgressResponse, added with the
+// 2026-09-02 contract refresh.
+//
+// This is what the design's progress band reads: `Progress · {done}/{applicable} ({percent}%)` above
+// a phase stepper. `phase_name` and `position` are nullable on the wire, so a phase the backend
+// cannot name still counts toward the totals rather than breaking the row.
+export const PhaseProgressResponseSchema = z.object({
+  phase_name: z.string().nullable(),
+  position: z.number().int().nullable(),
+  steps_done: z.number().int(),
+  steps_applicable: z.number().int(),
+  is_complete: z.boolean(),
+  is_current: z.boolean(),
+})
+export type PhaseProgressResponse = z.infer<typeof PhaseProgressResponseSchema>
+
+export const CaseProgressResponseSchema = z.object({
+  business_object_id: z.string().uuid(),
+  phases: z.array(PhaseProgressResponseSchema),
+  overall_done: z.number().int(),
+  overall_applicable: z.number().int(),
+  percent_complete: z.number().int(),
+  all_complete: z.boolean(),
+})
+export type CaseProgressResponse = z.infer<typeof CaseProgressResponseSchema>
+
+// GET /cases/{case_id}/data — narrowed deliberately.
+//
+// `CaseDataResponse` is a wide, deeply nested aggregate (leasing_company, contracts, financing,
+// collateral, absent_blocks). The workspace header needs one number from it, so only that is
+// declared: Zod strips unknown keys, so this parses the full response and keeps the meta fields.
+// Modelling the rest before a screen consumes it would be inventing a contract we do not read.
+export const CaseDataMetaSchema = z.object({
+  case_id: z.string().uuid(),
+  contract_count: z.number().int(),
+})
+export type CaseDataMeta = z.infer<typeof CaseDataMetaSchema>

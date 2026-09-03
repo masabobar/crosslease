@@ -72,5 +72,42 @@
     "rework": "Nachbearbeitung",
     "committed": "Zugesagt",
     "rejected": "Abgelehnt"
+  },
+  "workspace": {
+    "eyebrow": {
+      "refinancing_request": "REFINANZIERUNGSANFRAGE",
+      "package_redemption": "PAKETABLÖSUNG",
+      "single_redemption": "EINZELABLÖSUNG",
+      "lessee_change": "LEASINGNEHMERWECHSEL",
+      "object_swap": "OBJEKTTAUSCH",
+      "extension": "VERLÄNGERUNG",
+      "asset_event": "OBJEKTEREIGNIS"
+    },
+    "meta": {
+      "case": "Fall",
+      "contracts": "Verträge",
+      "objects": "Objekte",
+      "payoutAmount": "Auszahlungsbetrag",
+      "created": "Erstellt",
+      "none": "—"
+    },
+    "progress": {
+      "label": "Fortschritt",
+      "summary": "{{done}}/{{total}} ({{percent}}%)",
+      "unnamedPhase": "Unbenannte Phase"
+    },
+    "tabs": {
+      "checklist": "Checkliste",
+      "calculations": "Berechnungen",
+      "data": "Daten",
+      "contracts": "Verträge",
+      "documents": "Dokumente",
+      "redemption": "Ablösung",
+      "activity": "Aktivität"
+    },
+    "notBuilt": {
+      "title": "Noch nicht umgesetzt",
+      "description": "Für diesen Bereich liegt ein Design vor, er ist auf diesem Bildschirm aber noch nicht umgesetzt."
+    }
   }
 }

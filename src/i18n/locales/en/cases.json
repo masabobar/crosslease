@@ -72,5 +72,42 @@
     "rework": "Rework",
     "committed": "Committed",
     "rejected": "Rejected"
+  },
+  "workspace": {
+    "eyebrow": {
+      "refinancing_request": "REFINANCING REQUEST",
+      "package_redemption": "PACKAGE REDEMPTION",
+      "single_redemption": "SINGLE REDEMPTION",
+      "lessee_change": "LESSEE CHANGE",
+      "object_swap": "OBJECT SWAP",
+      "extension": "EXTENSION",
+      "asset_event": "ASSET EVENT"
+    },
+    "meta": {
+      "case": "Case",
+      "contracts": "Contracts",
+      "objects": "Objects",
+      "payoutAmount": "Payout amount",
+      "created": "Created",
+      "none": "—"
+    },
+    "progress": {
+      "label": "Progress",
+      "summary": "{{done}}/{{total}} ({{percent}}%)",
+      "unnamedPhase": "Unnamed phase"
+    },
+    "tabs": {
+      "checklist": "Checklist",
+      "calculations": "Calculations",
+      "data": "Data",
+      "contracts": "Contracts",
+      "documents": "Documents",
+      "redemption": "Redemption",
+      "activity": "Activity"
+    },
+    "notBuilt": {
+      "title": "Not built yet",
+      "description": "This area has a design but no implementation on this screen yet."
+    }
   }
 }

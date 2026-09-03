@@ -11,6 +11,7 @@
 import { http } from "msw"
 import {
   CaseListResponseSchema,
+  CaseProgressResponseSchema,
   CaseResponseSchema,
   CaseTypeSchema,
   type Case,
@@ -73,7 +74,68 @@ function applyFilters(url: URL, rows: Case[]): Case[] {
   return Number.isFinite(limit) && limit > 0 ? out.slice(0, limit) : out
 }
 
+// The design's A–E progress band (Add convenant.pdf / BO approval.pdf): five phases with the names
+// and step counts the client's own frames show, summing to the 44-step catalogue. `is_current` marks
+// phase A as the ringed node and `is_complete` fills its connector.
+const PROGRESS_PHASES = [
+  {
+    phase_name: "Application & credit review",
+    position: 1,
+    steps_done: 3,
+    steps_applicable: 4,
+  },
+  {
+    phase_name: "Settlement documents",
+    position: 2,
+    steps_done: 0,
+    steps_applicable: 8,
+  },
+  {
+    phase_name: "Data entry & loan setup",
+    position: 3,
+    steps_done: 0,
+    steps_applicable: 11,
+  },
+  {
+    phase_name: "Approval & disbursement",
+    position: 4,
+    steps_done: 0,
+    steps_applicable: 9,
+  },
+  {
+    phase_name: "Post-processing & archive",
+    position: 5,
+    steps_done: 0,
+    steps_applicable: 12,
+  },
+] as const
+
 export const caseHandlers = [
+  http.get(`${API}/cases/:businessObjectId/progress`, ({ params }) => {
+    const phases = PROGRESS_PHASES.map(p => ({
+      ...p,
+      is_complete: p.steps_done >= p.steps_applicable,
+      is_current: p.steps_done > 0 && p.steps_done < p.steps_applicable,
+    }))
+    const done = phases.reduce((t, p) => t + p.steps_done, 0)
+    const applicable = phases.reduce((t, p) => t + p.steps_applicable, 0)
+    return envelope(
+      CaseProgressResponseSchema.parse({
+        business_object_id: String(params.businessObjectId),
+        phases,
+        overall_done: done,
+        overall_applicable: applicable,
+        percent_complete: Math.round((done / applicable) * 100),
+        all_complete: done === applicable,
+      })
+    )
+  }),
+
+  // Only the header's contract count is read from this aggregate; see CaseDataMetaSchema.
+  http.get(`${API}/cases/:caseId/data`, ({ params }) =>
+    envelope({ case_id: String(params.caseId), contract_count: 134 })
+  ),
+
   // The Start-case dialog disables any type the bank has no requirement configured for. All seven are
   // startable here so the dialog is explorable.
   http.get(`${API}/document-requirement-catalogs/case-types/startable`, () =>
