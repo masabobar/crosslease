@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { Badge } from "@/components/ui/badge"
-import { caseDisplayStatusBadgeVariant } from "@/features/cases/types"
+import { CaseStatusBadge } from "@/features/cases/components/CaseStatusBadge"
 import type { CaseResponse } from "@/features/cases/api/schema"
 
 /**
@@ -65,14 +64,7 @@ export function CaseWorkspaceHeader({
             <h1 className="text-2xl font-semibold text-foreground">
               {caseData.case_reference}
             </h1>
-            <Badge
-              variant={caseDisplayStatusBadgeVariant(caseData.display_status)}
-            >
-              {t(
-                `displayStatuses.${caseData.display_status}` as "displayStatuses.open",
-                { defaultValue: caseData.display_status }
-              )}
-            </Badge>
+            <CaseStatusBadge status={caseData.display_status} />
           </div>
         </div>
         {actions}

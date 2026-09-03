@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
-import { Badge } from "@/components/ui/badge"
 import { TableEmptyState } from "@/components/ui/empty"
 import { formatDate } from "@/lib/formatters"
-import { caseDisplayStatusBadgeVariant } from "@/features/cases/types"
+import { CaseStatusBadge } from "@/features/cases/components/CaseStatusBadge"
 import { phaseLetter } from "@/features/cases/utils"
 import type { CaseListItem } from "@/features/cases/api/schema"
 
@@ -136,14 +135,7 @@ export function CaseTable({
               </div>
 
               <div className={`${COL_STATUS} px-3 py-2`}>
-                <Badge
-                  variant={caseDisplayStatusBadgeVariant(row.display_status)}
-                >
-                  {t(
-                    `displayStatuses.${row.display_status}` as "displayStatuses.open",
-                    { defaultValue: row.display_status }
-                  )}
-                </Badge>
+                <CaseStatusBadge status={row.display_status} />
               </div>
 
               {/* "Phase A" over "Step 1/5", where the fraction is the phase's ordinal — see

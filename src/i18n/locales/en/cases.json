@@ -76,7 +76,10 @@
     "missing_information": "Missing information",
     "rework": "Rework",
     "committed": "Committed",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "approved": "Approved",
+    "ready_for_setup": "Ready for setup",
+    "live": "Live"
   },
   "workspace": {
     "eyebrow": {

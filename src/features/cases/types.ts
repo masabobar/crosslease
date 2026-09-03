@@ -28,32 +28,75 @@ export const CASE_WRITE_ALLOWED_ROLES: readonly UserRole[] = [
 // checklist/parties/terms are the extension points the detail shell is structured for (US 16.22).
 export type CaseDetailTab = "documents"
 
-// display_status is a plain string on the wire (the backend widens it independently), so this is a
-// lookup with a neutral fallback rather than an exhaustive Record: a status added there renders with
-// the default variant instead of an undefined one.
-export const CASE_DISPLAY_STATUS_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  open: "default",
-  waiting: "secondary",
-  done: "outline",
-  cancelled: "destructive",
-  // A refinancing request derives its display from request_status: it starts "draft" and flips to
-  // "submitted" once its mandatory documents are complete (PRD1042-1794, interim). Styled so the flip
-  // reads as forward progress rather than falling through to the neutral default.
-  draft: "secondary",
-  submitted: "default",
-  // Later request states: the bank asking for more / rework reads as attention (secondary);
-  // committed is a positive terminal (default); rejected is a negative terminal (destructive).
-  missing_information: "secondary",
-  rework: "secondary",
-  committed: "default",
-  rejected: "destructive",
+/**
+ * `display_status` is a **display string** on the wire, not an enum — the backend sends
+ * `"Missing information"`, `"Submitted"`, `"Ready for setup"`: Title Case, with spaces.
+ *
+ * ── WHY THIS SLUG EXISTS ───────────────────────────────────────────────────────────────────────
+ * The tone map and the i18n catalogue are both keyed `lowercase_snake`, and before this they were
+ * looked up with the raw wire value. Every lookup therefore missed, which produced two live
+ * defects: every status badge fell through to the neutral variant (so the list was a column of
+ * identical grey pills instead of the design's colours), and every label fell through to `t()`'s
+ * `defaultValue` — meaning the **German locale silently rendered the English wire string**.
+ *
+ * Normalising here fixes both at once, and keeps the key format stable if the backend adjusts its
+ * capitalisation or spacing.
+ */
+export function caseDisplayStatusSlug(status: CaseDisplayStatus): string {
+  return status.trim().toLowerCase().replace(/\s+/g, "_")
 }
+
+type CaseStatusTone =
+  | "info"
+  | "success"
+  | "warning"
+  | "pending"
+  | "accent"
+  | "neutral"
+  | "destructive"
+
+/**
+ * Status → badge tone, keyed by the slug above. Colours are read off the Figma frame
+ * (`CREATE NEW.pdf` frame 1): blue in flight, green good, orange needs-you, amber waiting,
+ * purple finished, red refused, grey inert.
+ *
+ * A lookup with a neutral fallback rather than an exhaustive `Record`, deliberately: the backend
+ * widens this set independently, and a status it adds must render as a plain grey pill rather than
+ * crash on an undefined variant.
+ */
+export const CASE_DISPLAY_STATUS_BADGE_VARIANT: Record<string, CaseStatusTone> =
+  {
+    // Not yet acted on, nothing wrong — the same blue as `submitted`.
+    open: "info",
+    submitted: "info",
+    // A refinancing request derives its display from request_status: it starts "draft" and flips to
+    // "submitted" once its mandatory documents are complete (PRD1042-1794, interim). Grey → blue
+    // reads as forward progress.
+    draft: "neutral",
+    // Waiting on the next step rather than on the reader.
+    waiting: "pending",
+    ready_for_setup: "pending",
+    // Something is missing and someone has to supply it — the design's orange, distinct from amber
+    // on purpose, because these two demand different people's attention.
+    missing_information: "warning",
+    rework: "warning",
+    // Good outcomes. `live` is the design's label for an active financing.
+    approved: "success",
+    committed: "success",
+    live: "success",
+    // Finished, in the design's purple.
+    done: "accent",
+    // Negative terminal.
+    rejected: "destructive",
+    // Inert terminal — ended without a verdict, so neither green nor red.
+    cancelled: "neutral",
+  }
 
 export function caseDisplayStatusBadgeVariant(
   status: CaseDisplayStatus
-): "default" | "secondary" | "outline" | "destructive" {
-  return CASE_DISPLAY_STATUS_BADGE_VARIANT[status] ?? "secondary"
+): CaseStatusTone {
+  return (
+    CASE_DISPLAY_STATUS_BADGE_VARIANT[caseDisplayStatusSlug(status)] ??
+    "neutral"
+  )
 }

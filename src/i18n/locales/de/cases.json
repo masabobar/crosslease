@@ -76,7 +76,10 @@
     "missing_information": "Fehlende Informationen",
     "rework": "Nachbearbeitung",
     "committed": "Zugesagt",
-    "rejected": "Abgelehnt"
+    "rejected": "Abgelehnt",
+    "approved": "Genehmigt",
+    "ready_for_setup": "Bereit zur Einrichtung",
+    "live": "Aktiv"
   },
   "workspace": {
     "eyebrow": {
