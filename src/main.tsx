@@ -34,10 +34,11 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: THIRTY_SECONDS_MS } },
 })
 
-function render() {
+function render(banner?: React.ReactNode) {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
+        {banner}
         <RouterProvider router={router} />
       </QueryClientProvider>
     </StrictMode>
@@ -46,15 +47,20 @@ function render() {
 
 // PROTOTYPE MOCK bootstrap — see .claude/rules/project/prototype-mode.md.
 //
-// Double-guarded on purpose. `import.meta.env.DEV` is false in any production build, so the mock
-// layer cannot be switched on by an environment variable leaking into a real deploy; VITE_USE_MOCKS
-// then makes it opt-in during development. Dropping either guard would make a public prototype
-// possible by accident.
+// `VITE_USE_MOCKS` is the only guard. It was previously paired with `import.meta.env.DEV`, which is
+// statically false in a production build and so made a mocked deploy impossible; that pairing was
+// removed on request so a deployed prototype could be shared. The consequence is deliberate and
+// worth stating: **any** build whose environment carries VITE_USE_MOCKS=true serves fabricated data,
+// including one deployed at a URL containing the word "production".
 //
-// The dynamic import keeps msw and every handler out of the production bundle: Rollup drops the
-// branch entirely once DEV is statically false.
+// The compensating control is PrototypeBanner — a permanent on-screen marker, rendered only when the
+// worker actually started, so the fakeness cannot be mistaken for a working app. Do not remove it
+// while this guard is single.
+//
+// The import stays dynamic so msw and the handlers remain a separate chunk that is never fetched
+// unless the flag is on — the cost of a normal build is one unused chunk, not a heavier main bundle.
 async function start() {
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS === "true") {
+  if (import.meta.env.VITE_USE_MOCKS === "true") {
     try {
       const [{ worker }, { installMockRoleSwitcher }] = await Promise.all([
         import("@/mocks/browser"),
@@ -78,6 +84,11 @@ async function start() {
       console.error(
         "[PROTOTYPE MOCK] active — any email logs in; the role comes from the email's local part, e.g. front_office@prototype.example.com. Switch with setMockRole('back_office')."
       )
+      // Rendered only here, on the success path: a banner shown when the worker failed to start would
+      // claim the data is mocked while the app is in fact talking to the real API.
+      const { PrototypeBanner } = await import("@/mocks/PrototypeBanner")
+      render(<PrototypeBanner />)
+      return
     } catch (mockError) {
       // The app must still boot. Without this the whole page stays blank on any mock failure — a
       // stale service worker, a bad handler import — with nothing on screen to say why, which is

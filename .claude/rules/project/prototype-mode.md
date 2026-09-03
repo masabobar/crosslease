@@ -63,13 +63,42 @@ opened at all, so neither the design nor the built screens can be reviewed.
 
 ### Guard rails, as built
 
-| Rule                        | How it is enforced                                                                                                                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Cannot reach production     | Double-guarded: `import.meta.env.DEV` **and** `VITE_USE_MOCKS === "true"` in `src/main.tsx`. DEV is statically false in a production build, so Rollup drops the branch and msw never enters the bundle |
-| Greppable                   | Every mock file opens with `PROTOTYPE MOCK`. `grep -rl "PROTOTYPE MOCK" src/` is the full inventory                                                                                                    |
-| One directory               | All of it lives in `src/mocks/`. Deleting that directory plus the `main.tsx` block and `public/mockServiceWorker.js` removes the feature entirely                                                      |
-| Fails loudly, not quietly   | Handlers parse their output through the **real** Zod schema (`UserResponseSchema`). A fixture that drifts throws in one place instead of rendering a broken screen                                     |
-| Mock is the disposable half | **Zod schemas are written first, mocks second.** The schema survives when the API lands; the handler is deleted                                                                                        |
+| Rule                        | How it is enforced                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~Cannot reach production~~ | **No longer true — see §1.1.** `VITE_USE_MOCKS` is now the only guard, and it is a Docker build ARG. A deploy built with it serves fabricated data. `PrototypeBanner` is the compensating control |
+| Greppable                   | Every mock file opens with `PROTOTYPE MOCK`. `grep -rl "PROTOTYPE MOCK" src/` is the full inventory                                                                                               |
+| One directory               | All of it lives in `src/mocks/`. Deleting that directory plus the `main.tsx` block and `public/mockServiceWorker.js` removes the feature entirely                                                 |
+| Fails loudly, not quietly   | Handlers parse their output through the **real** Zod schema (`UserResponseSchema`). A fixture that drifts throws in one place instead of rendering a broken screen                                |
+| Mock is the disposable half | **Zod schemas are written first, mocks second.** The schema survives when the API lands; the handler is deleted                                                                                   |
+
+### 1.1 The production guard was removed on request (2026-09-03)
+
+The mock layer was originally double-guarded, the outer guard being `import.meta.env.DEV` — statically
+false in a production build, so a deployed app could not serve mocks whatever its environment said.
+**That guard was removed on the user's explicit request**, after the cost below was stated, so that a
+deployed prototype could be shared without running a dev server.
+
+What is now true:
+
+- `VITE_USE_MOCKS` is the **only** guard. It is read at build time and passed as a Docker build ARG,
+  so a deployed build carries whatever value it was built with.
+- **The existing `crosslease-production` deploy is the one being mocked.** A URL containing the word
+  _production_ now serves fabricated data to anyone past its Basic auth gate. That is the sharpest
+  possible form of the "looks done vs is done" delta `api-first.md` §4 objects to.
+- The compensating control is **`src/mocks/PrototypeBanner.tsx`** — a permanent, non-dismissible
+  banner on every screen, rendered only when the worker actually started. **While the guard is
+  single, that banner is the safeguard.** Do not remove it, do not make it dismissible, and do not
+  suppress it per route.
+- `mockServiceWorker.js` is exempted from nginx's one-year `immutable` asset cache
+  (`nginx.conf.template`). It is not content-hashed, so caching it would pin one revision in every
+  visitor's browser and leave no way to update the worker or turn the layer off.
+
+Verified in both directions: a build without the flag contains **no** msw code at all (Vite
+substitutes the flag, the branch goes dead, the dynamic import is dropped); a build with it emits msw
+as a separate ~284 KB chunk plus the banner.
+
+**When real dev-API credentials become available, turn this off** — unset `VITE_USE_MOCKS` on the
+deploy and rebuild. Nothing else reverses it, and nothing will remind you.
 
 ### Exit criterion
 

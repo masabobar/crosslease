@@ -50,6 +50,14 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # The MSW service worker is NOT content-hashed, so the immutable rule below would pin one
+    # revision in every visitor's browser for a year — leaving no way to update the worker or turn
+    # the mock layer off. Declared first so the more specific match wins.
+    location = /mockServiceWorker.js {
+        expires -1;
+        add_header Cache-Control "no-store";
+    }
+
     # Cache static assets
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
         expires 1y;

@@ -120,5 +120,8 @@
     "TOKEN_REVOKED": "Your session is no longer valid. Please log in again.",
     "UNAUTHORIZED": "You are not signed in. Please log in and try again.",
     "VALIDATION_ERROR": "Some values were rejected. Please review the highlighted fields."
+  },
+  "prototype": {
+    "banner": "Prototype — all data on this screen is mocked. Nothing is saved and nothing is real."
   }
 }

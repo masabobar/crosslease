@@ -120,5 +120,8 @@
     "TOKEN_REVOKED": "Ihre Sitzung ist nicht mehr gültig. Bitte melden Sie sich erneut an.",
     "UNAUTHORIZED": "Sie sind nicht angemeldet. Bitte melden Sie sich an und versuchen Sie es erneut.",
     "VALIDATION_ERROR": "Einige Werte wurden abgelehnt. Bitte überprüfen Sie die markierten Felder."
+  },
+  "prototype": {
+    "banner": "Prototyp — alle Daten auf diesem Bildschirm sind simuliert. Es wird nichts gespeichert und nichts ist echt."
   }
 }

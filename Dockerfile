@@ -44,9 +44,15 @@ ARG PROJECT_NAME
 # from and the nginx /api proxy handles the rest. An absolute URL still works
 # when the browser and the API share a site (the GitLab deploys pass one).
 ARG VITE_API_URL=/api/v1
+# PROTOTYPE MOCK — see .claude/rules/project/prototype-mode.md. Set to "true" to build a deploy that
+# serves mocked data instead of calling the API. Off unless explicitly passed, and the built app
+# shows a permanent banner while it is on, because nothing else distinguishes a fully-mocked deploy
+# from a working one.
+ARG VITE_USE_MOCKS
 ENV VITE_APP_STAGE=$VITE_APP_STAGE
 ENV PROJECT_NAME=$PROJECT_NAME
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_USE_MOCKS=$VITE_USE_MOCKS
 
 COPY . .
 RUN pnpm run build
