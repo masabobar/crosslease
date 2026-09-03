@@ -1,0 +1,64 @@
+{
+  "status": {
+    "calculating": "Wird berechnet",
+    "ready_for_setup": "Bereit zur Einrichtung",
+    "disbursed": "Ausgezahlt",
+    "active": "Aktiv",
+    "ended": "Beendet",
+    "cancelled": "Storniert"
+  },
+  "kind": {
+    "single": "Einzeldarlehen",
+    "package": "Paketdarlehen"
+  },
+  "covenantState": {
+    "open": "Offen",
+    "met": "Erfüllt",
+    "waived": "Erlassen",
+    "expired": "Abgelaufen"
+  },
+  "data": {
+    "noFinancing": "Zu diesem Fall besteht noch keine Finanzierung. Eine Finanzierung entsteht mit der Genehmigung des Refinanzierungsantrags — sie kann nicht direkt angelegt werden.",
+    "figuresPending": {
+      "title": "Beträge werden noch berechnet",
+      "description": "Die unten angezeigten Beträge sind vorläufig und ändern sich nach Abschluss der Berechnung."
+    },
+    "hero": {
+      "outstandingBalance": "Restsaldo",
+      "asOf": "Berechnet zum {{date}}",
+      "loanNumber": "Darlehensnummer {{number}}",
+      "loanAccount": "Darlehenskonto {{account}}",
+      "financingAmount": "Auszahlungsbetrag, genehmigtes Darlehen",
+      "figuresHidden": "Für Ihre Rolle nicht sichtbar"
+    },
+    "claim": {
+      "title": "Forderung und Sicherheiten",
+      "nominalClaim": "Nominalforderung",
+      "presentValue": "Barwert",
+      "collateralTotal": "Sicherheiten insgesamt",
+      "contractCount": "Verträge",
+      "objectCount": "Objekte"
+    },
+    "pricing": {
+      "title": "Konditionen",
+      "refinancingRate": "Refinanzierungszinssatz",
+      "effectiveQuota": "Effektive Quote",
+      "financingQuote": "Finanzierungsquote"
+    },
+    "decision": {
+      "title": "Ursprünglicher Antrag",
+      "requestStatus": "Antragsstatus",
+      "decidedAt": "Entschieden am",
+      "reason": "Entscheidungsgrund"
+    },
+    "covenants": {
+      "title": "Genehmigungsbedingungen",
+      "openCount": "{{count}} offen",
+      "empty": "Zu dieser Finanzierung wurden keine Genehmigungsbedingungen erfasst.",
+      "condition": "Bedingung",
+      "step": "Checklistenschritt",
+      "dueDate": "Fällig am",
+      "state": "Status"
+    }
+  }
+}

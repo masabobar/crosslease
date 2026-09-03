@@ -12,18 +12,20 @@ import { setupWorker } from "msw/browser"
 import { authHandlers } from "@/mocks/handlers/auth"
 import { caseHandlers } from "@/mocks/handlers/cases"
 import { checklistHandlers } from "@/mocks/handlers/checklist"
+import { financingHandlers } from "@/mocks/handlers/financing"
 import { businessConfigHandlers } from "@/mocks/handlers/businessConfig"
 import { userHandlers } from "@/mocks/handlers/users"
 import { fallbackHandlers } from "@/mocks/handlers/fallback"
 
 // Order matters where paths overlap: authHandlers claims `/users/me` and `/users/me/permissions`
-// before userHandlers' `/users/:id` can swallow them, and checklistHandlers' literal
-// `/cases/:id/checklist*` paths are registered before caseHandlers' `/cases/:caseId` catch-all.
+// before userHandlers' `/users/:id` can swallow them, and the literal `/cases/:id/checklist*` and
+// `/cases/:id/financing/*` paths are registered before caseHandlers' `/cases/:caseId` catch-all.
 //
 // `fallbackHandlers` MUST stay last — it matches every API path, so anything after it would be dead.
 export const worker = setupWorker(
   ...authHandlers,
   ...checklistHandlers,
+  ...financingHandlers,
   ...caseHandlers,
   ...businessConfigHandlers,
   ...userHandlers,

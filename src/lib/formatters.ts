@@ -85,6 +85,50 @@ export function formatCurrency(amount: number, currencyCode: string): string {
 }
 
 /**
+ * Formats a monetary amount that arrived as a decimal **string**, the way the API serialises every
+ * financing figure (`"372868.01"`) to keep cent-exact values away from float drift.
+ *
+ * Returns an em-dash for `null`, which is the point of having this rather than
+ * `formatCurrency(Number(x), …)`: a nullable figure coerced through `Number` makes `null` into `0`
+ * and renders "€ 0,00", indistinguishable from a real zero. A financing whose amount has not been
+ * calculated yet must look absent, not free.
+ *
+ * A non-numeric string also yields an em-dash rather than "€ NaN".
+ */
+export function formatDecimalCurrency(
+  value: string | null,
+  currencyCode: string
+): string {
+  if (value === null) return "—"
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) return "—"
+  return formatCurrency(amount, currencyCode)
+}
+
+/**
+ * Formats a rate or ratio that arrived as a decimal string — `"4.650"` → `"4,650 %"`.
+ *
+ * `fractionDigits` defaults to 2 (quotas, ratios). Refinancing rates pass 3: the design shows
+ * `4,650 %` and the spec's rate precision is three decimals, so truncating to two would round away
+ * a basis point on a figure the bank prices from.
+ *
+ * German digit grouping matches `formatCurrency` — deliberately not tied to the UI language, since
+ * these are the bank's own figures and must read identically in both locales.
+ */
+export function formatDecimalPercent(
+  value: string | null,
+  fractionDigits = 2
+): string {
+  if (value === null) return "—"
+  const rate = Number(value)
+  if (!Number.isFinite(rate)) return "—"
+  return `${new Intl.NumberFormat(CURRENCY_LOCALE, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(rate)} %`
+}
+
+/**
  * Converts a dot-separated event type identifier into a human-readable label.
  * "auth.login_success" → "Login Success"
  */

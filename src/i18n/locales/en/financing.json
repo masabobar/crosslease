@@ -1,0 +1,64 @@
+{
+  "status": {
+    "calculating": "Calculating",
+    "ready_for_setup": "Ready for setup",
+    "disbursed": "Disbursed",
+    "active": "Live",
+    "ended": "Ended",
+    "cancelled": "Cancelled"
+  },
+  "kind": {
+    "single": "Single loan",
+    "package": "Package loan"
+  },
+  "covenantState": {
+    "open": "Open",
+    "met": "Met",
+    "waived": "Waived",
+    "expired": "Expired"
+  },
+  "data": {
+    "noFinancing": "This case has no financing yet. A financing is created when the refinancing request is approved — it cannot be created directly.",
+    "figuresPending": {
+      "title": "Figures are still being calculated",
+      "description": "The amounts below are provisional and will change once the calculation completes."
+    },
+    "hero": {
+      "outstandingBalance": "Outstanding balance",
+      "asOf": "Calculated as of {{date}}",
+      "loanNumber": "Loan number {{number}}",
+      "loanAccount": "Loan account {{account}}",
+      "financingAmount": "Payout amount, approved loan",
+      "figuresHidden": "Not visible to your role"
+    },
+    "claim": {
+      "title": "Claim and collateral",
+      "nominalClaim": "Nominal claim",
+      "presentValue": "Present value",
+      "collateralTotal": "Collateral total",
+      "contractCount": "Contracts",
+      "objectCount": "Objects"
+    },
+    "pricing": {
+      "title": "Pricing",
+      "refinancingRate": "Refinancing rate",
+      "effectiveQuota": "Effective quota",
+      "financingQuote": "Financing quote"
+    },
+    "decision": {
+      "title": "Originating request",
+      "requestStatus": "Request status",
+      "decidedAt": "Decided at",
+      "reason": "Decision reason"
+    },
+    "covenants": {
+      "title": "Approval conditions",
+      "openCount": "{{count}} open",
+      "empty": "No approval conditions were attached to this financing.",
+      "condition": "Condition",
+      "step": "Checklist step",
+      "dueDate": "Due date",
+      "state": "State"
+    }
+  }
+}

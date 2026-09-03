@@ -12,6 +12,7 @@ import type enNotifications from "./locales/en/notifications.json"
 import type enWorkflowTaskCatalog from "./locales/en/workflowTaskCatalog.json"
 import type enDocumentRequirements from "./locales/en/documentRequirements.json"
 import type enCases from "./locales/en/cases.json"
+import type enFinancing from "./locales/en/financing.json"
 
 declare module "i18next" {
   interface CustomTypeOptions {
@@ -31,6 +32,7 @@ declare module "i18next" {
       workflowTaskCatalog: typeof enWorkflowTaskCatalog
       documentRequirements: typeof enDocumentRequirements
       cases: typeof enCases
+      financing: typeof enFinancing
     }
   }
 }
