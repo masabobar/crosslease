@@ -47,7 +47,13 @@ export function mockUser(role: UserRole): UserResponse {
     user_id: `USR-9000${Object.keys(IDS).indexOf(role) + 1}`,
     first_name: first,
     last_name: last,
-    email: `${role}@prototype.local`,
+    // `example.com` deliberately, not `.local`. These addresses are typed into the real login form,
+    // and if the mock layer is off — which it always is in a production build — the address reaches
+    // the API's validator. `.local` is a reserved special-use TLD (RFC 6762), which pydantic's
+    // email-validator refuses, so the API answered 422 VALIDATION_ERROR instead of a clean 401. That
+    // read as "login is broken" rather than "this account does not exist". `example.com` is reserved
+    // for exactly this purpose (RFC 2606) and passes validation.
+    email: `${role}@prototype.example.com`,
     role,
     permissions: [],
     tenant_id: OUTSIDE_TENANT.includes(role) ? null : BANK_TENANT_ID,

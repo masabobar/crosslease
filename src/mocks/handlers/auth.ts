@@ -19,7 +19,7 @@ import { API } from "@/mocks/apiBase"
 
 export const authHandlers = [
   // Any email and password are accepted — this is a design review tool, not an auth test. But an
-  // email whose local part names a role signs you in AS that role, so `front_office@prototype.local`
+  // email whose local part names a role signs you in AS that role, so `front_office@prototype.example.com`
   // does the obvious thing and the role stops being invisible console state.
   http.post(`${API}/auth/login`, async ({ request }) => {
     const body = (await request.json().catch(() => null)) as {

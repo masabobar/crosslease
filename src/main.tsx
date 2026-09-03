@@ -76,7 +76,7 @@ async function start() {
       })
       // eslint-disable-next-line no-console -- console.error is permitted (the hook blocks log/warn/debug); this is the only way to tell, at a glance, whether the layer that fakes your login is actually live
       console.error(
-        "[PROTOTYPE MOCK] active — any email logs in; the role comes from the email's local part, e.g. front_office@prototype.local. Switch with setMockRole('back_office')."
+        "[PROTOTYPE MOCK] active — any email logs in; the role comes from the email's local part, e.g. front_office@prototype.example.com. Switch with setMockRole('back_office')."
       )
     } catch (mockError) {
       // The app must still boot. Without this the whole page stays blank on any mock failure — a

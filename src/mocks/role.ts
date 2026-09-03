@@ -18,7 +18,7 @@ const DEFAULT_ROLE: UserRole = "front_office"
 /**
  * Adopts a role from the email typed at login, when that email names one.
  *
- * `front_office@prototype.local` signs you in as Front Office — which is what anyone expects from a
+ * `front_office@prototype.example.com` signs you in as Front Office — which is what anyone expects from a
  * login form, and stops the role being an invisible piece of console state. Any other address is
  * accepted too and leaves the current role alone, so a real-looking email still gets you in.
  */
