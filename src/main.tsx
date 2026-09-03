@@ -55,16 +55,39 @@ function render() {
 // branch entirely once DEV is statically false.
 async function start() {
   if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS === "true") {
-    const [{ worker }, { installMockRoleSwitcher }] = await Promise.all([
-      import("@/mocks/browser"),
-      import("@/mocks/role"),
-    ])
-    installMockRoleSwitcher()
-    // "warn" covers anything outside `/api/v1` (assets, third-party). API paths never reach it: the
-    // fallback handler claims every one and answers 501 rather than letting the call escape to the
-    // real API, whose 401 would trip the interceptor's refresh-then-clearAuth path and log the
-    // reviewer out. See handlers/fallback.ts.
-    await worker.start({ onUnhandledRequest: "warn" })
+    try {
+      const [{ worker }, { installMockRoleSwitcher }] = await Promise.all([
+        import("@/mocks/browser"),
+        import("@/mocks/role"),
+      ])
+      installMockRoleSwitcher()
+      await worker.start({
+        // Scoped deliberately, not the `"warn"` shorthand. `"warn"` engages MSW's unhandled-request
+        // strategy for EVERY request the worker sees, including same-origin document fetches like
+        // `/settings/profile` — and that path ends in the worker re-fetching the request, which
+        // throws `TypeError: Failed to fetch` and kills the response. Returning without calling
+        // `print` leaves the request alone.
+        //
+        // Nothing is lost by scoping it: the fallback handler claims every `/api/v1` path, so an
+        // unmocked API call already reports itself as a 501 naming the endpoint (handlers/fallback.ts).
+        onUnhandledRequest(request, print) {
+          if (new URL(request.url).pathname.startsWith("/api/")) print.warning()
+        },
+      })
+      // eslint-disable-next-line no-console -- console.error is permitted (the hook blocks log/warn/debug); this is the only way to tell, at a glance, whether the layer that fakes your login is actually live
+      console.error(
+        "[PROTOTYPE MOCK] active — any email logs in; the role comes from the email's local part, e.g. front_office@prototype.local. Switch with setMockRole('back_office')."
+      )
+    } catch (mockError) {
+      // The app must still boot. Without this the whole page stays blank on any mock failure — a
+      // stale service worker, a bad handler import — with nothing on screen to say why, which is
+      // indistinguishable from "login is broken".
+      // eslint-disable-next-line no-console -- as above; a silent failure here is the worst outcome
+      console.error(
+        "[PROTOTYPE MOCK] failed to start — the app is running against the REAL API, so login needs real credentials.",
+        mockError
+      )
+    }
   }
   render()
 }
