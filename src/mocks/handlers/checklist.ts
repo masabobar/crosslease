@@ -14,8 +14,8 @@ import {
 } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import { mockChecklist, mockPhaseGates } from "@/mocks/fixtures/checklist"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
+import { API } from "@/mocks/apiBase"
 
-const API = "*/api/v1"
 const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 
 // Per business object, so two cases do not share a checklist.

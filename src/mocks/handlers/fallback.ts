@@ -19,9 +19,10 @@
  * message below, which is what puts the endpoint's name on screen.
  */
 import { http, HttpResponse } from "msw"
+import { API } from "@/mocks/apiBase"
 
 export const fallbackHandlers = [
-  http.all("*/api/v1/*", ({ request }) => {
+  http.all(`${API}/*`, ({ request }) => {
     const { pathname } = new URL(request.url)
     return HttpResponse.json(
       {

@@ -26,8 +26,7 @@ import {
   mockUtilization,
 } from "@/mocks/fixtures/businessConfig"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
-
-const API = "*/api/v1"
+import { API } from "@/mocks/apiBase"
 
 /** Free-text search over one displayed field — enough for the search box to visibly work. */
 function search<T>(url: URL, rows: T[], field: (row: T) => string): T[] {

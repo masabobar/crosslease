@@ -13,8 +13,7 @@ import {
 } from "@/features/users/api/schema"
 import { mockUser } from "@/mocks/fixtures/users"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
-
-const API = "*/api/v1"
+import { API } from "@/mocks/apiBase"
 
 const TENANT_NAME = "CrossLease Bank"
 

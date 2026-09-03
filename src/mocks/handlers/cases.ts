@@ -20,8 +20,7 @@ import { UserRoleSchema } from "@/features/users/api/schema"
 import { mockCases } from "@/mocks/fixtures/cases"
 import { getMockRole } from "@/mocks/role"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
-
-const API = "*/api/v1"
+import { API } from "@/mocks/apiBase"
 
 const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 

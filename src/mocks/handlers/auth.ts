@@ -15,8 +15,7 @@ import { UserResponseSchema } from "@/features/users/api/schema"
 import { mockUser } from "@/mocks/fixtures/users"
 import { adoptRoleFromEmail, getMockRole } from "@/mocks/role"
 import { envelope } from "@/mocks/envelope"
-
-const API = "*/api/v1"
+import { API } from "@/mocks/apiBase"
 
 export const authHandlers = [
   // Any email and password are accepted — this is a design review tool, not an auth test. But an
