@@ -183,6 +183,7 @@ const CaseResponse = z
     lc_partner_id: z.union([z.string(), z.null()]),
     routing_exception: z.boolean(),
     origin_financing_id: z.union([z.string(), z.null()]).optional(),
+    decision_round: z.number().int().optional().default(0),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
   })
@@ -202,6 +203,7 @@ const CaseListItem = z
     lc_partner_id: z.union([z.string(), z.null()]),
     routing_exception: z.boolean(),
     origin_financing_id: z.union([z.string(), z.null()]).optional(),
+    decision_round: z.number().int().optional().default(0),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
   })
@@ -512,6 +514,27 @@ const CasePartyMatchResponse = z
     submission_blocked: z.boolean(),
     parties: z.array(PartyMatchItem),
   })
+  .passthrough()
+const CaseCommentItem = z
+  .object({
+    id: z.string().uuid(),
+    case_id: z.string().uuid(),
+    author_id: z.string().uuid(),
+    author_role: z.string(),
+    body: z.string(),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CaseCommentListResponse = z
+  .object({
+    items: z.array(CaseCommentItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+  })
+  .passthrough()
+const AddCaseCommentRequest = z
+  .object({ body: z.string().min(1).max(2000) })
   .passthrough()
 const LcCaseDetailResponse = z
   .object({
@@ -832,7 +855,32 @@ const FinancingRemainingBalanceResponse = z
     remaining_balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
   })
   .passthrough()
-const batch_id = z.union([z.string(), z.null()]).optional()
+const search = z.union([z.string(), z.null()]).optional()
+const FinancingListItem = z
+  .object({
+    id: z.string().uuid(),
+    case_id: z.string().uuid(),
+    financing_reference: z.string(),
+    case_reference: z.string(),
+    lc_number: z.union([z.string(), z.null()]),
+    status: FinancingStatus,
+    kind: FinancingKind,
+    refinancing_rate: z.union([z.string(), z.null()]),
+    value_date: z.union([z.string(), z.null()]),
+    calculation_state: z.string(),
+    loan_number: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const FinancingListResponse = z
+  .object({
+    items: z.array(FinancingListItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
 const ContractDeferredState = z.enum(["active", "deferred"])
 const ContractCompleteness = z.enum(["complete", "incomplete"])
 const ContractRead = z
@@ -3514,6 +3562,7 @@ const ChecklistItemResponse = z
       .optional(),
     task_type: z.union([TaskType, z.null()]).optional(),
     applicability: z.union([TaskApplicability, z.null()]).optional(),
+    condition_text: z.union([z.string(), z.null()]).optional(),
     responsible_role: z.union([TaskResponsibleRole, z.null()]).optional(),
     responsible_roles: z.union([z.array(UserRole), z.null()]).optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
@@ -4033,6 +4082,9 @@ export const schemas = {
   CombinedDocumentListResponse,
   PartyMatchItem,
   CasePartyMatchResponse,
+  CaseCommentItem,
+  CaseCommentListResponse,
+  AddCaseCommentRequest,
   LcCaseDetailResponse,
   FinancingKind,
   FinancingStatus,
@@ -4069,7 +4121,9 @@ export const schemas = {
   ContractContributionListResponse,
   PerContractSideResponse,
   FinancingRemainingBalanceResponse,
-  batch_id,
+  search,
+  FinancingListItem,
+  FinancingListResponse,
   ContractDeferredState,
   ContractCompleteness,
   ContractRead,
@@ -4440,37 +4494,37 @@ const endpoints = makeApi([
       {
         name: "entity_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "action_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "event_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "entity_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "actor_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "actor_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "trigger_source",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "sensitive",
@@ -4480,12 +4534,12 @@ const endpoints = makeApi([
       {
         name: "from_dt",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "to_dt",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -4548,27 +4602,27 @@ const endpoints = makeApi([
       {
         name: "action_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "event_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "actor_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "actor_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "trigger_source",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "sensitive",
@@ -4578,12 +4632,12 @@ const endpoints = makeApi([
       {
         name: "from_dt",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "to_dt",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -5825,6 +5879,76 @@ auto-files or transfers it anywhere.`,
   },
   {
     method: "get",
+    path: "/api/v1/cases/:case_id/comments",
+    alias: "list_case_comments_api_v1_cases__case_id__comments_get",
+    description: `The case&#x27;s comment thread, oldest first (PRD1042-1893 item 18).
+
+Correspondence lives as a comment thread on the case: the channel through which the bank tells
+the leasing company what is missing, and the LC answers — in the manner of a ticketing tool. The
+LC reads (and writes) on its OWN case only (tenant + company scoping through the case itself);
+every other role answers 404. One thread, both sides see all of it. The thread sends nothing —
+the on-hold case state is what sends the leasing company to look.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(100),
+      },
+    ],
+    response: CaseCommentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/comments",
+    alias: "add_case_comment_api_v1_cases__case_id__comments_post",
+    description: `Add a comment to the case thread (PRD1042-1893 item 18).
+
+Append-only — a comment is never edited or deleted; the thread is the record of what was said.
+Both sides write: the bank (front / back office) and the leasing company on its own case. Each
+comment records the author&#x27;s role at the time, so the reader sees which side spoke. Audited
+(&#x60;&#x60;CASE_COMMENT_ADDED&#x60;&#x60;); NO outbound notification of any kind in this slice.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ body: z.string().min(1).max(2000) }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
     path: "/api/v1/cases/:case_id/contracts",
     alias: "list_contracts_api_v1_cases__case_id__contracts_get",
     description: `The contracts of a request (paged, optionally filtered to one import run).
@@ -5841,7 +5965,7 @@ are excluded. Each row carries its derived completeness for the badge.`,
       {
         name: "batch_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "limit",
@@ -6931,6 +7055,37 @@ route and the case-list route converge on the same service method.`,
   },
   {
     method: "get",
+    path: "/api/v1/cases/:case_id/financing/handover-file",
+    alias:
+      "download_handover_file_api_v1_cases__case_id__financing_handover_file_get",
+    description: `The hand-over file for the bank&#x27;s core system — checklist step 18 (PRD1042-1941, US 1.25).
+
+Thirty-one comma-separated fields in the four classes the core system expects (case data /
+calculated values / fixed defaults / institution-filled); amounts at two decimals, rates at
+three. Carries NEITHER returned value — the loan number and loan account do not exist when the
+file is produced. Re-producible while the loan is not yet set up; every export is audited
+(&#x60;&#x60;FINANCING_HANDOVER_EXPORTED&#x60;&#x60;). Export belongs to the preparing role alone (front office;
+everyone else, incl. back office, answers not-found per the story&#x27;s matrix). A case with no
+financing → 404. Columns without a calculation carrier export EMPTY (see &#x60;&#x60;handover_service&#x60;&#x60;).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
     path: "/api/v1/cases/:case_id/financing/overview",
     alias:
       "read_financing_overview_api_v1_cases__case_id__financing_overview_get",
@@ -7240,6 +7395,63 @@ authenticated media endpoint.`,
   },
   {
     method: "post",
+    path: "/api/v1/cases/:case_id/generated-documents/bank-settlement",
+    alias:
+      "produce_bank_settlement_api_v1_cases__case_id__generated_documents_bank_settlement_post",
+    description: `Produce (or re-produce) the bank settlement — step 15 (PRD1042-1940, US 1.24).
+
+Assigns the settlement number on first production (a field of the FINANCING: 4 digits,
+sequential per tenant, gaps permitted, seeded above the legacy counter) and keeps it across a
+re-creation. NOT reproducible once the loan is set up in the core system (step 18 — both
+returned values recorded): the attempt answers 409 GENERATED_DOCUMENT_LOCKED and is logged.
+Front Office alone produces (everyone else 403); download follows case access.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GeneratedDocumentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/generated-documents/cover-sheet",
+    alias:
+      "produce_cover_sheet_api_v1_cases__case_id__generated_documents_cover_sheet_post",
+    description: `Produce (or re-produce) the cover sheet — step 34 (PRD1042-1940, US 1.24).
+
+Immediately before the collateral capture at step 35. The total exposure figure it carries has
+no carrier yet (the borrower-unit aggregation is unbuilt) and renders pending — never a zero.
+Reproducible. The total-exposure sheet and the calculation data sheet have NO production point
+(owed by CrossLease, none inferred) and no route here.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GeneratedDocumentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
     path: "/api/v1/cases/:case_id/generated-documents/financing-commitment",
     alias:
       "produce_financing_commitment_api_v1_cases__case_id__generated_documents_financing_commitment_post",
@@ -7249,6 +7461,61 @@ The commitment is normally produced automatically when the rate is committed at 
 out of the state transition), but the preparing role (Front Office alone) can re-produce it here —
 it is reproducible until nothing about it changes. Refused with a message naming the missing rate if
 the rate has not been committed yet. Returns the refreshed generated-document list.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GeneratedDocumentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/generated-documents/loan-offer",
+    alias:
+      "produce_loan_offer_api_v1_cases__case_id__generated_documents_loan_offer_post",
+    description: `Produce (or re-produce) the loan offer — step 24, out at step 32 (PRD1042-1940, US 1.24).
+
+Prints the loan number and the bank&#x27;s own loan account read from the financing (empty until the
+step-18 set-up records them). The case annotation, the per-LC framework-agreement references and
+the two accounts resolved through the framework agreement are pending carriers and render as
+such. Reproducible; signature lines stay empty (signing happens outside the platform).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: GeneratedDocumentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/generated-documents/payment-plan",
+    alias:
+      "produce_payment_plan_api_v1_cases__case_id__generated_documents_payment_plan_post",
+    description: `Produce (or re-produce) the payment plan document — step 15 (PRD1042-1940, US 1.24).
+
+Renders the platform&#x27;s own plan (one section per contract) in the confirmed column set; refused
+with a message naming the missing plan when no plan rows exist yet. NOT reproducible after the
+step-18 loan set-up (409 GENERATED_DOCUMENT_LOCKED, logged). Front Office alone produces.`,
     requestFormat: "json",
     parameters: [
       {
@@ -8000,12 +8267,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "case_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "business_object_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: CompletenessResponse,
@@ -8118,12 +8385,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "object_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "case_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: RuntimeRequirementSurfaceResponse,
@@ -8150,7 +8417,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "case_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: MaterializationResponse,
@@ -8284,6 +8551,95 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/financings",
+    alias: "list_financings_api_v1_financings_get",
+    description: `The financings inventory of the tenant (PRD1042-1949, US 1.33) — sortable, filterable, paged.
+
+Rows carry the stored carriers only: the deal figures stay deferred (1931-OQ-03), and
+Sollbelastung / Habenausgleich are not built (1949-OQ-01 — source of truth unresolved). Bank
+roles only (FO / BO / BPU); the LC and every platform role answer 404 (non-disclosure).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(FinancingStatus).optional().default([]),
+      },
+      {
+        name: "kind",
+        type: "Query",
+        schema: z.array(FinancingKind).optional().default([]),
+      },
+      {
+        name: "sort",
+        type: "Query",
+        schema: z.string().optional().default("-created_at"),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(25),
+      },
+    ],
+    response: FinancingListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/export-csv",
+    alias: "export_financings_csv_api_v1_financings_export_csv_get",
+    description: `Export the filtered financings inventory as CSV (PRD1042-1949, US 1.33). The export is
+audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leaving the system is an access event.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: search,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(FinancingStatus).optional().default([]),
+      },
+      {
+        name: "kind",
+        type: "Query",
+        schema: z.array(FinancingKind).optional().default([]),
+      },
+      {
+        name: "sort",
+        type: "Query",
+        schema: z.string().optional().default("-created_at"),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/framework-agreements",
     alias: "create_fa_draft_api_v1_framework_agreements_post",
@@ -8313,7 +8669,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "status",
@@ -8333,12 +8689,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "valid_from",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "valid_until",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -8469,7 +8825,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "type",
@@ -8479,12 +8835,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "from",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "to",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "per_page",
@@ -8494,7 +8850,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "cursor",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: FAAuditHistoryResponse,
@@ -8521,12 +8877,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "reason",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "type",
@@ -8536,12 +8892,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "from",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "to",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: z.unknown(),
@@ -8909,7 +9265,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "status",
@@ -8929,12 +9285,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "valid_from",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "valid_until",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: z.unknown(),
@@ -8980,7 +9336,7 @@ Auditors see only actions scoped to their tenant.`,
       {
         name: "initiator_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -9274,17 +9630,17 @@ separate &#x60;&#x60;GET /lc/obligations/{case_id}&#x60;&#x60;; the bank↔LC co
       {
         name: "catalog_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "object_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "case_type",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: LCObligationResponse,
@@ -9636,7 +9992,7 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       {
         name: "cursor",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "per_page",
@@ -9667,7 +10023,7 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       {
         name: "cursor",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "per_page",
@@ -10417,7 +10773,7 @@ Accessible to all authenticated users.`,
       {
         name: "framework_agreement_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
     ],
     response: SelectableTemplatesResponse,
@@ -10467,7 +10823,7 @@ On reject/withdraw/expire the tenant is archived.
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "status",
@@ -10482,22 +10838,22 @@ On reject/withdraw/expire the tenant is archived.
       {
         name: "country",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "from_date",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "to_date",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "module_key",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "module_active",
@@ -10663,17 +11019,17 @@ On reject/withdraw/expire the tenant is archived.
       {
         name: "from_date",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "to_date",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "cursor",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "per_page",
@@ -10982,7 +11338,7 @@ No existing sessions are invalidated immediately.
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -11276,7 +11632,7 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "status",
@@ -11384,12 +11740,12 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "status",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -11450,7 +11806,7 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "role",
@@ -11465,17 +11821,17 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "tenant_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "last_login_from",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "last_login_to",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "page",
@@ -11861,7 +12217,7 @@ Max 3 concurrent jobs per user → &#x60;429&#x60; if exceeded.
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "role",
@@ -11876,17 +12232,17 @@ Max 3 concurrent jobs per user → &#x60;429&#x60; if exceeded.
       {
         name: "tenant_id",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "last_login_from",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "last_login_to",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "format",
@@ -12125,7 +12481,7 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
       {
         name: "search",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "catalog_layer",
@@ -12264,7 +12620,7 @@ BPU + Support + Auditor (read). Cursor-paginated, newest first.`,
       {
         name: "cursor",
         type: "Query",
-        schema: batch_id,
+        schema: search,
       },
       {
         name: "per_page",

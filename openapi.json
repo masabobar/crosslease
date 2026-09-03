@@ -2091,6 +2091,105 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/comments": {
+      "get": {
+        "tags": ["Cases"],
+        "summary": "List Case Comments",
+        "description": "The case's comment thread, oldest first (PRD1042-1893 item 18).\n\nCorrespondence lives as a comment thread on the case: the channel through which the bank tells\nthe leasing company what is missing, and the LC answers — in the manner of a ticketing tool. The\nLC reads (and writes) on its OWN case only (tenant + company scoping through the case itself);\nevery other role answers 404. One thread, both sides see all of it. The thread sends nothing —\nthe on-hold case state is what sends the leasing company to look.",
+        "operationId": "list_case_comments_api_v1_cases__case_id__comments_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseCommentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Add Case Comment",
+        "description": "Add a comment to the case thread (PRD1042-1893 item 18).\n\nAppend-only — a comment is never edited or deleted; the thread is the record of what was said.\nBoth sides write: the bank (front / back office) and the leasing company on its own case. Each\ncomment records the author's role at the time, so the reader sees which side spoke. Audited\n(``CASE_COMMENT_ADDED``); NO outbound notification of any kind in this slice.",
+        "operationId": "add_case_comment_api_v1_cases__case_id__comments_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddCaseCommentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CaseCommentItem" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/lc/cases": {
       "get": {
         "tags": ["Cases — LC"],
@@ -2324,6 +2423,36 @@
                 "schema": { "$ref": "#/components/schemas/FinancingRead" }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/financing/handover-file": {
+      "get": {
+        "tags": ["Financing"],
+        "summary": "Download Handover File",
+        "description": "The hand-over file for the bank's core system — checklist step 18 (PRD1042-1941, US 1.25).\n\nThirty-one comma-separated fields in the four classes the core system expects (case data /\ncalculated values / fixed defaults / institution-filled); amounts at two decimals, rates at\nthree. Carries NEITHER returned value — the loan number and loan account do not exist when the\nfile is produced. Re-producible while the loan is not yet set up; every export is audited\n(``FINANCING_HANDOVER_EXPORTED``). Export belongs to the preparing role alone (front office;\neveryone else, incl. back office, answers not-found per the story's matrix). A case with no\nfinancing → 404. Columns without a calculation carrier export EMPTY (see ``handover_service``).",
+        "operationId": "download_handover_file_api_v1_cases__case_id__financing_handover_file_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -3140,6 +3269,171 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/financings": {
+      "get": {
+        "tags": ["Financing"],
+        "summary": "List Financings",
+        "description": "The financings inventory of the tenant (PRD1042-1949, US 1.33) — sortable, filterable, paged.\n\nRows carry the stored carriers only: the deal figures stay deferred (1931-OQ-03), and\nSollbelastung / Habenausgleich are not built (1949-OQ-01 — source of truth unresolved). Bank\nroles only (FO / BO / BPU); the LC and every platform role answer 404 (non-disclosure).",
+        "operationId": "list_financings_api_v1_financings_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FinancingStatus" },
+              "default": [],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FinancingKind" },
+              "default": [],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "-created_at",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinancingListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/financings/export-csv": {
+      "get": {
+        "tags": ["Financing"],
+        "summary": "Export Financings Csv",
+        "description": "Export the filtered financings inventory as CSV (PRD1042-1949, US 1.33). The export is\naudited (``FINANCING_LIST_EXPORTED``) — an inventory leaving the system is an access event.",
+        "operationId": "export_financings_csv_api_v1_financings_export_csv_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FinancingStatus" },
+              "default": [],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/FinancingKind" },
+              "default": [],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "-created_at",
+              "title": "Sort"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -12717,6 +13011,150 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/generated-documents/bank-settlement": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Generated Documents"],
+        "summary": "Produce Bank Settlement",
+        "description": "Produce (or re-produce) the bank settlement — step 15 (PRD1042-1940, US 1.24).\n\nAssigns the settlement number on first production (a field of the FINANCING: 4 digits,\nsequential per tenant, gaps permitted, seeded above the legacy counter) and keeps it across a\nre-creation. NOT reproducible once the loan is set up in the core system (step 18 — both\nreturned values recorded): the attempt answers 409 GENERATED_DOCUMENT_LOCKED and is logged.\nFront Office alone produces (everyone else 403); download follows case access.",
+        "operationId": "produce_bank_settlement_api_v1_cases__case_id__generated_documents_bank_settlement_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/generated-documents/payment-plan": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Generated Documents"],
+        "summary": "Produce Payment Plan",
+        "description": "Produce (or re-produce) the payment plan document — step 15 (PRD1042-1940, US 1.24).\n\nRenders the platform's own plan (one section per contract) in the confirmed column set; refused\nwith a message naming the missing plan when no plan rows exist yet. NOT reproducible after the\nstep-18 loan set-up (409 GENERATED_DOCUMENT_LOCKED, logged). Front Office alone produces.",
+        "operationId": "produce_payment_plan_api_v1_cases__case_id__generated_documents_payment_plan_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/generated-documents/loan-offer": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Generated Documents"],
+        "summary": "Produce Loan Offer",
+        "description": "Produce (or re-produce) the loan offer — step 24, out at step 32 (PRD1042-1940, US 1.24).\n\nPrints the loan number and the bank's own loan account read from the financing (empty until the\nstep-18 set-up records them). The case annotation, the per-LC framework-agreement references and\nthe two accounts resolved through the framework agreement are pending carriers and render as\nsuch. Reproducible; signature lines stay empty (signing happens outside the platform).",
+        "operationId": "produce_loan_offer_api_v1_cases__case_id__generated_documents_loan_offer_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/generated-documents/cover-sheet": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Generated Documents"],
+        "summary": "Produce Cover Sheet",
+        "description": "Produce (or re-produce) the cover sheet — step 34 (PRD1042-1940, US 1.24).\n\nImmediately before the collateral capture at step 35. The total exposure figure it carries has\nno carrier yet (the borrower-unit aggregation is unbuilt) and renders pending — never a zero.\nReproducible. The total-exposure sheet and the calculation data sheet have NO production point\n(owed by CrossLease, none inferred) and no route here.",
+        "operationId": "produce_cover_sheet_api_v1_cases__case_id__generated_documents_cover_sheet_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenant_id}/document-types": {
       "post": {
         "tags": ["Document Requirement Catalog"],
@@ -13193,6 +13631,20 @@
         "required": ["condition_text", "due_date"],
         "title": "AddApprovalConditionRequest",
         "description": "Add an approval condition to a financing (PRD1042-1937, US 1.21).\n\nFree text with a due date of its own. The step reference is a display label (holds no progress,\ngates nothing); the evidence id points at a document held by the financing (no catalogue). Both\noptional."
+      },
+      "AddCaseCommentRequest": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": ["body"],
+        "title": "AddCaseCommentRequest",
+        "description": "PRD1042-1893 item 18 — one comment on the case thread."
       },
       "AddRequirementRequest": {
         "properties": {
@@ -14430,6 +14882,49 @@
         "title": "CaseActivityResponse",
         "description": "Newest-first, offset-paginated Activity trail for one case."
       },
+      "CaseCommentItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "author_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Author Id"
+          },
+          "author_role": { "type": "string", "title": "Author Role" },
+          "body": { "type": "string", "title": "Body" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "author_id",
+          "author_role",
+          "body",
+          "created_at"
+        ],
+        "title": "CaseCommentItem"
+      },
+      "CaseCommentListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/CaseCommentItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page"],
+        "title": "CaseCommentListResponse"
+      },
       "CaseDataFinancingBlock": {
         "properties": {
           "refinancing_rate": {
@@ -14785,6 +15280,11 @@
             ],
             "title": "Origin Financing Id"
           },
+          "decision_round": {
+            "type": "integer",
+            "title": "Decision Round",
+            "default": 0
+          },
           "created_by": {
             "type": "string",
             "format": "uuid",
@@ -14971,6 +15471,11 @@
               { "type": "null" }
             ],
             "title": "Origin Financing Id"
+          },
+          "decision_round": {
+            "type": "integer",
+            "title": "Decision Round",
+            "default": 0
           },
           "created_by": {
             "type": "string",
@@ -15320,6 +15825,10 @@
               { "$ref": "#/components/schemas/TaskApplicability" },
               { "type": "null" }
             ]
+          },
+          "condition_text": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Condition Text"
           },
           "responsible_role": {
             "anyOf": [
@@ -18472,6 +18981,86 @@
         "enum": ["single", "package"],
         "title": "FinancingKind",
         "description": "Whether the financing redeems one contract or a package of them (PRD1042-1948).\n\nA single financing redeems exactly one leasing contract; a package financing redeems several under\none refinancing. The value is provisional at intake — US-1.16 (PRD1042-1932) derives it from the\ncontract count once the contract model exists (US 1.6/1.8/1.12). Until then the financing is created\nas ``SINGLE`` (see the model's ``kind`` column note)."
+      },
+      "FinancingListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "financing_reference": {
+            "type": "string",
+            "title": "Financing Reference"
+          },
+          "case_reference": { "type": "string", "title": "Case Reference" },
+          "lc_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lc Number"
+          },
+          "status": { "$ref": "#/components/schemas/FinancingStatus" },
+          "kind": { "$ref": "#/components/schemas/FinancingKind" },
+          "refinancing_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Refinancing Rate"
+          },
+          "value_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Value Date"
+          },
+          "calculation_state": {
+            "type": "string",
+            "title": "Calculation State"
+          },
+          "loan_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Loan Number"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "financing_reference",
+          "case_reference",
+          "lc_number",
+          "status",
+          "kind",
+          "refinancing_rate",
+          "value_date",
+          "calculation_state",
+          "loan_number",
+          "created_at"
+        ],
+        "title": "FinancingListItem",
+        "description": "One row of the standalone financings list (PRD1042-1949, US 1.33).\n\nCarries the stored carriers only: the deal FIGURES stay deferred (1931-OQ-03), and\nSollbelastung / Habenausgleich are NOT here — their source of truth is unresolved (1949-OQ-01)."
+      },
+      "FinancingListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/FinancingListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "per_page", "total_pages"],
+        "title": "FinancingListResponse"
       },
       "FinancingOverviewResponse": {
         "properties": {
