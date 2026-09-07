@@ -82,20 +82,6 @@
     "caseTypeNoRequirements": "{{type}} (keine Anforderungen konfiguriert)"
   },
   "wizard": {
-    "steps": {
-      "leasingCompany": {
-        "label": "Leasinggesellschaft",
-        "description": "Gesellschaft & Rahmenvertrag"
-      },
-      "contracts": {
-        "label": "Verträge",
-        "description": "Erfassungsweg & Liste"
-      },
-      "summary": {
-        "label": "Zusammenfassung",
-        "description": "Prüfen & einreichen"
-      }
-    },
     "actions": {
       "cancel": "Abbrechen",
       "back": "Zurück",
@@ -103,16 +89,44 @@
       "continue": "Weiter",
       "draftSaved": "Als Entwurf gespeichert."
     },
-    "leasingCompany": {
-      "title": "Neuer Refinanzierungsantrag"
-    },
-    "contracts": {
-      "title": "Verträge",
-      "pending": "Die Vertragserfassung und der Massen-Upload sind noch nicht umgesetzt (US 1.4, US 1.5)."
-    },
-    "summary": {
-      "title": "Zusammenfassung",
-      "pending": "Der Prüf- und Einreichungsschritt ist noch nicht umgesetzt (US 1.17)."
+    "bulk": {
+      "title": "Prüfung der Massendatei",
+      "subtitle": "Jeder Datensatz wird gegen das Vertragsregister geprüft, bevor etwas angelegt wird.",
+      "uploadHint": "CSV oder Excel. Es wird nichts zum Fall hinzugefügt, bis Sie das Ergebnis bestätigen.",
+      "view": "Ansicht",
+      "downloadErrors": "Fehlerbericht herunterladen",
+      "commit": "{{count}} Vertrag zum Fall hinzufügen",
+      "commit_other": "{{count}} Verträge zum Fall hinzufügen",
+      "committed": "{{count}} Vertrag zum Fall hinzugefügt.",
+      "committed_other": "{{count}} Verträge zum Fall hinzugefügt.",
+      "alreadyCommitted": "Diese Datei wurde bereits hinzugefügt ({{count}} Vertrag).",
+      "alreadyCommitted_other": "Diese Datei wurde bereits hinzugefügt ({{count}} Verträge).",
+      "totals": {
+        "total": "Zeilen gesamt",
+        "valid": "Gültige Zeilen",
+        "failed": "Fehlerhafte Zeilen",
+        "held": "Mögliche Duplikate"
+      },
+      "filters": {
+        "all": "Alle"
+      },
+      "columns": {
+        "row": "Zeile",
+        "status": "Status",
+        "reason": "Grund"
+      },
+      "rowStatus": {
+        "valid": "Bestanden",
+        "passed": "Bestanden",
+        "failed": "Fehlerhaft",
+        "error": "Fehlerhaft",
+        "held": "Duplikat",
+        "duplicate": "Duplikat",
+        "committed": "Hinzugefügt"
+      },
+      "precondition": {
+        "title": "Die Datei wurde nicht geprüft"
+      }
     },
     "company": {
       "searchLabel": "Leasinggesellschaft auswählen",
@@ -151,6 +165,49 @@
       "templatePlaceholder": "Produkttemplate auswählen",
       "templateHelper": "Es können nur Templates gewählt werden, die der Rahmenvertrag zulässt.",
       "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu"
+    },
+    "contracts": {
+      "title": "Verträge",
+      "chooseEntry": "Erfassungsweg wählen",
+      "manualEntry": "Vertrag manuell erfassen",
+      "manualComingSoon": "Die manuelle Vertragserfassung ist noch nicht umgesetzt — sie erfasst Leasingnehmer, Objekte und Konditionen und kommt mit US 1.6–1.9. Bitte vorläufig die Massendatei verwenden.",
+      "bulkUpload": "Massendatei hochladen",
+      "empty": "Keine Verträge erfasst",
+      "unnamedContract": "Vertrag ohne Nummer",
+      "termMonths": "{{count}} Monat",
+      "termMonths_other": "{{count}} Monate",
+      "columns": {
+        "contract": "Vertrag",
+        "start": "Beginn",
+        "term": "Laufzeit",
+        "instalment": "Rate",
+        "state": "Status"
+      },
+      "deferredState": {
+        "active": "Aktiv",
+        "deferred": "Gestundet"
+      }
+    },
+    "leasingCompany": {
+      "title": "Neuer Refinanzierungsantrag"
+    },
+    "steps": {
+      "leasingCompany": {
+        "label": "Leasinggesellschaft",
+        "description": "Gesellschaft & Rahmenvertrag"
+      },
+      "contracts": {
+        "label": "Verträge",
+        "description": "Erfassungsweg & Liste"
+      },
+      "summary": {
+        "label": "Zusammenfassung",
+        "description": "Prüfen & einreichen"
+      }
+    },
+    "summary": {
+      "title": "Zusammenfassung",
+      "pending": "Der Prüf- und Einreichungsschritt ist noch nicht umgesetzt (US 1.17)."
     }
   },
   "workspace": {

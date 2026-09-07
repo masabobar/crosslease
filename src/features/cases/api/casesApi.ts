@@ -8,6 +8,9 @@ import {
   CaseProductTemplateResponseSchema,
   CaseProgressResponseSchema,
   CaseResponseSchema,
+  ImportBatchPreviewResponseSchema,
+  ImportBatchResponseSchema,
+  ImportCommitResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
@@ -18,6 +21,9 @@ import type {
   CaseProgressResponse,
   CaseResponse,
   CaseType,
+  ImportBatchPreviewResponse,
+  ImportBatchResponse,
+  ImportCommitResponse,
 } from "@/features/cases/api/schema"
 
 // GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
@@ -66,6 +72,8 @@ export const CASE_QUERY_KEYS = {
     ["cases", "leasing-company", caseId] as const,
   productTemplate: (caseId: string) =>
     ["cases", "product-template", caseId] as const,
+  importBatch: (caseId: string, batchId: string) =>
+    ["cases", "import-batch", caseId, batchId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -167,6 +175,65 @@ export async function bindCaseProductTemplate(
     product_template_id: productTemplateId,
   })
   return CaseProductTemplateResponseSchema.parse(data)
+}
+
+/**
+ * POST /cases/{case_id}/contracts/import — upload a bulk contract file (US 1.5).
+ *
+ * One multipart field, `file`. Creates a batch and assesses its rows; **nothing becomes a contract
+ * until `commitContractImport`**, so this is safe to call and abandon.
+ */
+export async function uploadContractImport(
+  caseId: string,
+  file: File
+): Promise<ImportBatchResponse> {
+  const formData = new FormData()
+  formData.append("file", file)
+  const data = await api.post(`/cases/${caseId}/contracts/import`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  })
+  return ImportBatchResponseSchema.parse(data)
+}
+
+// GET /cases/{case_id}/contracts/import/{batch_id} — the batch with its per-row verdicts.
+export async function fetchContractImportBatch(
+  caseId: string,
+  batchId: string
+): Promise<ImportBatchPreviewResponse> {
+  const data = await api.get(`/cases/${caseId}/contracts/import/${batchId}`)
+  return ImportBatchPreviewResponseSchema.parse(data)
+}
+
+// POST /cases/{case_id}/contracts/import/{batch_id}/commit — turns the valid and held rows into
+// contracts. Failed rows are left behind, which is why the design's button counts valid + held.
+export async function commitContractImport(
+  caseId: string,
+  batchId: string
+): Promise<ImportCommitResponse> {
+  const data = await api.post(
+    `/cases/${caseId}/contracts/import/${batchId}/commit`
+  )
+  return ImportCommitResponseSchema.parse(data)
+}
+
+/**
+ * The correction-file URL for a batch — the design's "Download error report".
+ *
+ * A URL rather than a fetch, deliberately. `openapi.json` declares this endpoint's 200 as
+ * `application/json` with an **empty schema** (`{}`), which is what FastAPI emits when a handler
+ * returns an unannotated `Response` — so the real body is undeclared and may well be a file. Rather
+ * than parse an invented shape, the browser is handed the URL and deals with whatever comes back,
+ * the same pattern the LC portal's document download uses (`getLcPortalDocumentDownloadUrl`). Auth
+ * rides along because credentials are cookies, so a top-level navigation is authenticated.
+ *
+ * If the body turns out to be JSON rather than a file, this opens a JSON tab instead of saving a
+ * report — visible and harmless, and better than guessing. Tracked as an open question.
+ */
+export function getContractImportCorrectionFileUrl(
+  caseId: string,
+  batchId: string
+): string {
+  return `${api.defaults.baseURL}/cases/${caseId}/contracts/import/${batchId}/correction-file`
 }
 
 // POST /cases — start a case. The backend (StartCaseRequest) asks only for the case type; it sets the

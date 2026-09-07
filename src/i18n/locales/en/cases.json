@@ -82,20 +82,6 @@
     "caseTypeNoRequirements": "{{type}} (no requirements configured)"
   },
   "wizard": {
-    "steps": {
-      "leasingCompany": {
-        "label": "Leasing company",
-        "description": "Company & agreement"
-      },
-      "contracts": {
-        "label": "Contracts",
-        "description": "Entry route & list"
-      },
-      "summary": {
-        "label": "Summary",
-        "description": "Review & submit"
-      }
-    },
     "actions": {
       "cancel": "Cancel",
       "back": "Back",
@@ -103,16 +89,44 @@
       "continue": "Continue",
       "draftSaved": "Saved as draft."
     },
-    "leasingCompany": {
-      "title": "New refinancing request"
-    },
-    "contracts": {
-      "title": "Contracts",
-      "pending": "Contract entry and the bulk upload are not built yet (US 1.4, US 1.5)."
-    },
-    "summary": {
-      "title": "Summary",
-      "pending": "The review and submit step is not built yet (US 1.17)."
+    "bulk": {
+      "title": "Bulk file validation",
+      "subtitle": "Each record is matched against the contract registry before anything is created.",
+      "uploadHint": "CSV or Excel. Nothing is added to the case until you confirm the result.",
+      "view": "View",
+      "downloadErrors": "Download error report",
+      "commit": "Add {{count}} contract to the case",
+      "commit_other": "Add {{count}} contracts to the case",
+      "committed": "{{count}} contract added to the case.",
+      "committed_other": "{{count}} contracts added to the case.",
+      "alreadyCommitted": "This file has already been added ({{count}} contract).",
+      "alreadyCommitted_other": "This file has already been added ({{count}} contracts).",
+      "totals": {
+        "total": "Total rows",
+        "valid": "Valid rows",
+        "failed": "Failed rows",
+        "held": "Possible duplicates"
+      },
+      "filters": {
+        "all": "All"
+      },
+      "columns": {
+        "row": "Row",
+        "status": "Status",
+        "reason": "Reason"
+      },
+      "rowStatus": {
+        "valid": "Passed",
+        "passed": "Passed",
+        "failed": "Failed",
+        "error": "Failed",
+        "held": "Duplicate",
+        "duplicate": "Duplicate",
+        "committed": "Added"
+      },
+      "precondition": {
+        "title": "The file was not assessed"
+      }
     },
     "company": {
       "searchLabel": "Select leasing company",
@@ -151,6 +165,49 @@
       "templatePlaceholder": "Choose a product template",
       "templateHelper": "Only templates the framework agreement allows can be picked.",
       "noTemplates": "The framework agreement allows no product templates"
+    },
+    "contracts": {
+      "title": "Contracts",
+      "chooseEntry": "Choose contract entry",
+      "manualEntry": "Manual contract entry",
+      "manualComingSoon": "Manual contract entry is not built yet — it captures the lessee, the objects and the terms, and lands with US 1.6–1.9. Use the bulk file for now.",
+      "bulkUpload": "Upload bulk file",
+      "empty": "No entered contracts",
+      "unnamedContract": "Contract without a number",
+      "termMonths": "{{count}} month",
+      "termMonths_other": "{{count}} months",
+      "columns": {
+        "contract": "Contract",
+        "start": "Start date",
+        "term": "Term",
+        "instalment": "Instalment",
+        "state": "State"
+      },
+      "deferredState": {
+        "active": "Active",
+        "deferred": "Deferred"
+      }
+    },
+    "leasingCompany": {
+      "title": "New refinancing request"
+    },
+    "steps": {
+      "leasingCompany": {
+        "label": "Leasing company",
+        "description": "Company & agreement"
+      },
+      "contracts": {
+        "label": "Contracts",
+        "description": "Entry route & list"
+      },
+      "summary": {
+        "label": "Summary",
+        "description": "Review & submit"
+      }
+    },
+    "summary": {
+      "title": "Summary",
+      "pending": "The review and submit step is not built yet (US 1.17)."
     }
   },
   "workspace": {

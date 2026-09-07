@@ -12,6 +12,8 @@ import { caseDetail } from "@/router/paths"
 import { useCase } from "@/features/cases/hooks/useCase"
 import { useCaseLeasingCompany } from "@/features/cases/hooks/useCaseLeasingCompany"
 import { useCaseProductTemplate } from "@/features/cases/hooks/useCaseProductTemplate"
+import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
+import { ContractsStep } from "@/features/cases/components/steps/ContractsStep"
 import { LeasingCompanyStep } from "@/features/cases/components/steps/LeasingCompanyStep"
 import {
   CASE_WIZARD_STEPS,
@@ -46,6 +48,7 @@ export default function StartCaseWizardPage() {
   const caseQuery = useCase(isValidId ? caseId : undefined)
   const leasingCompany = useCaseLeasingCompany(isValidId ? caseId : undefined)
   const productTemplate = useCaseProductTemplate(isValidId ? caseId : undefined)
+  const contracts = useCaseContracts(isValidId ? caseId : undefined)
 
   const [step, setStep] = useState<CaseWizardStep>(CASE_WIZARD_STEPS[0])
 
@@ -63,8 +66,9 @@ export default function StartCaseWizardPage() {
 
   const progress = {
     isLeasingCompanyBound,
-    // Filled in when step 2 lands; the guard is already in `canOpenStep`.
-    hasContracts: false,
+    // Committed contracts, not the bulk preview's candidate rows: step 3 summarises what is in the
+    // case, so a batch uploaded but never committed must not open it.
+    hasContracts: (contracts.data?.total ?? 0) > 0,
   }
 
   const back = previousStep(step)
@@ -120,12 +124,14 @@ export default function StartCaseWizardPage() {
             />
           )}
 
-          {step !== "leasingCompany" && (
+          {step === "contracts" && <ContractsStep caseId={caseId as string} />}
+
+          {step === "summary" && (
             <p
               className="text-sm text-muted-foreground"
-              data-testid={`case-wizard-step-pending-${step}`}
+              data-testid="case-wizard-step-pending-summary"
             >
-              {t(`wizard.${step}.pending` as "wizard.summary.pending")}
+              {t("wizard.summary.pending")}
             </p>
           )}
         </div>

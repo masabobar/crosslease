@@ -211,6 +211,85 @@ export type CaseProductTemplateResponse = z.infer<
   typeof CaseProductTemplateResponseSchema
 >
 
+/**
+ * Bulk contract import — wizard step 2 (US 1.5), the design's "MiLK file validation" modal.
+ *
+ * ── THE FLOW ───────────────────────────────────────────────────────────────────────────────────
+ * `POST /contracts/import` (multipart) → a batch with counts but no rows · `GET .../{batch_id}` →
+ * the same counts plus the per-row verdicts · `POST .../commit` → the rows become contracts.
+ * Nothing is created until the commit, which is what makes the preview a real gate rather than a
+ * confirmation of work already done.
+ *
+ * ── `rows_held` IS THE DESIGN'S "POSSIBLE DUPLICATES" ──────────────────────────────────────────
+ * The frame shows four tiles — Total 15, Valid 8, Failed 4, Possible Duplicates 3 — and a commit
+ * button reading "Continue with 11 valid contracts". 8 + 4 + 3 = 15 and 8 + 3 = 11, so held rows
+ * are committed alongside valid ones and only failures are dropped. There is **no total on the
+ * wire**; it is the sum of the three, which is arithmetic on declared fields rather than invention.
+ *
+ * ── `status` AND `rejection_kind` ARE UNCONSTRAINED STRINGS ────────────────────────────────────
+ * Neither is an enum in `openapi.json`, so no fixed set of row states may be assumed. They are
+ * parsed as strings and rendered through an i18n lookup that falls back to the raw value — the same
+ * treatment `CaseDisplayStatus` gets, and for the same reason (see features/cases/types.ts).
+ */
+export const ImportRowItemSchema = z.object({
+  row_number: z.number().int(),
+  status: z.string(),
+  rejection_kind: z.string().nullable(),
+  error_field: z.string().nullable(),
+  error_message: z.string().nullable(),
+  // The uploaded file's raw row. `type: object` with **no declared properties** — its keys are the
+  // spreadsheet's own column headers, which vary per file. Parsed permissively so the response
+  // validates; deliberately never read by key, which is why the design's "Contract no." column is
+  // not rendered (there is no stable field to take it from).
+  raw_data: z.record(z.string(), z.unknown()),
+  contract_id: z.string().uuid().nullable(),
+})
+export type ImportRowItem = z.infer<typeof ImportRowItemSchema>
+
+// POST /cases/{case_id}/contracts/import — the upload's own answer. Carries the counts but not the
+// rows, so the modal follows it with the preview read below.
+export const ImportBatchResponseSchema = z.object({
+  batch_id: z.string().uuid(),
+  case_id: z.string().uuid(),
+  file_name: z.string(),
+  status: z.string(),
+  rows_held: z.number().int(),
+  rows_valid: z.number().int(),
+  rows_failed: z.number().int(),
+  // A whole-file refusal — a missing product template, an unreadable file — as opposed to per-row
+  // errors. Set means no row was even assessed, so the modal shows this instead of a row table.
+  // The design has no state for it.
+  precondition_error: z.string().nullable(),
+  created_at: z.string(),
+})
+export type ImportBatchResponse = z.infer<typeof ImportBatchResponseSchema>
+
+// GET /cases/{case_id}/contracts/import/{batch_id} — the counts again, plus the per-row verdicts.
+export const ImportBatchPreviewResponseSchema = z.object({
+  batch_id: z.string().uuid(),
+  case_id: z.string().uuid(),
+  file_name: z.string(),
+  status: z.string(),
+  rows: z.array(ImportRowItemSchema),
+  rows_committed: z.number().int(),
+  rows_held: z.number().int(),
+  rows_valid: z.number().int(),
+  rows_failed: z.number().int(),
+  precondition_error: z.string().nullable(),
+})
+export type ImportBatchPreviewResponse = z.infer<
+  typeof ImportBatchPreviewResponseSchema
+>
+
+// POST /cases/{case_id}/contracts/import/{batch_id}/commit
+export const ImportCommitResponseSchema = z.object({
+  batch_id: z.string().uuid(),
+  status: z.string(),
+  committed: z.number().int(),
+  remaining_failed: z.number().int(),
+})
+export type ImportCommitResponse = z.infer<typeof ImportCommitResponseSchema>
+
 // The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
 // contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
 // `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they

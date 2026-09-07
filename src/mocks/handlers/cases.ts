@@ -17,13 +17,22 @@ import {
   CaseProgressResponseSchema,
   CaseResponseSchema,
   CaseTypeSchema,
+  ImportBatchPreviewResponseSchema,
+  ImportBatchResponseSchema,
+  ImportCommitResponseSchema,
   type Case,
   type CaseLeasingCompanyResponse,
   type CaseProductTemplateResponse,
+  type ImportBatchPreviewResponse,
 } from "@/features/cases/api/schema"
 import { LcNumberListResponseSchema } from "@/features/partners/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
 import { mockCaseContractsByCaseId } from "@/mocks/fixtures/caseContracts"
+import {
+  importedContracts,
+  makeImportBatch,
+  toBatchResponse,
+} from "@/mocks/fixtures/contractImport"
 import {
   boundLeasingCompany,
   mockLcNumbersByPartnerId,
@@ -42,6 +51,10 @@ const created: Case[] = []
 // Wizard step 1's bindings, session-scoped for the same reason as `created`.
 const boundByCaseId: Record<string, CaseLeasingCompanyResponse> = {}
 const templateByCaseId: Record<string, CaseProductTemplateResponse> = {}
+
+// Wizard step 2's import batches, likewise. Mutated in place on commit so `rows_committed` reflects
+// that a batch is spent — re-opening a committed batch must not offer to commit it twice.
+const importBatchesById: Record<string, ImportBatchPreviewResponse> = {}
 
 function allCases(): Case[] {
   return [...created, ...mockCases]
@@ -217,6 +230,55 @@ export const caseHandlers = [
       })
       templateByCaseId[params.caseId as string] = template
       return envelope(template)
+    }
+  ),
+
+  // ── Wizard step 2: bulk contract import ───────────────────────────────────
+  // The upload assesses rows and returns counts; nothing becomes a contract until the commit. Both
+  // halves are session-scoped, so a reload starts clean.
+  http.post(`${API}/cases/:caseId/contracts/import`, async ({ params }) => {
+    const batch = makeImportBatch(params.caseId as string)
+    importBatchesById[batch.batch_id] = batch
+    return envelope(ImportBatchResponseSchema.parse(toBatchResponse(batch)))
+  }),
+
+  http.get(`${API}/cases/:caseId/contracts/import/:batchId`, ({ params }) => {
+    const batch = importBatchesById[params.batchId as string]
+    return batch
+      ? envelope(ImportBatchPreviewResponseSchema.parse(batch))
+      : errorEnvelope("NOT_FOUND", "Import batch not found", 404)
+  }),
+
+  http.post(
+    `${API}/cases/:caseId/contracts/import/:batchId/commit`,
+    ({ params }) => {
+      const batch = importBatchesById[params.batchId as string]
+      if (!batch) {
+        return errorEnvelope("NOT_FOUND", "Import batch not found", 404)
+      }
+
+      // Valid AND held rows are committed; only failures remain behind. That is what makes the
+      // design's "Continue with 11 valid contracts" add up against 8 valid and 3 duplicates.
+      const committed = batch.rows_valid + batch.rows_held
+      batch.rows_committed = committed
+      batch.status = "committed"
+
+      // The committed rows become the case's contracts, so step 2's list and step 3's guard both
+      // change — without this the wizard would commit and still show an empty case.
+      const caseId = params.caseId as string
+      mockCaseContractsByCaseId[caseId] = [
+        ...(mockCaseContractsByCaseId[caseId] ?? []),
+        ...importedContracts(committed),
+      ]
+
+      return envelope(
+        ImportCommitResponseSchema.parse({
+          batch_id: batch.batch_id,
+          status: batch.status,
+          committed,
+          remaining_failed: batch.rows_failed,
+        })
+      )
     }
   ),
 
