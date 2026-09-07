@@ -281,6 +281,32 @@ export type ImportBatchPreviewResponse = z.infer<
   typeof ImportBatchPreviewResponseSchema
 >
 
+/**
+ * POST /cases/{case_id}/submit — the wizard's step 3 (US 1.17).
+ *
+ * No request body: everything being submitted is already on the case. The response returns the case
+ * in its new state, which is what moves the request out of `draft`, plus who submitted and when.
+ *
+ * `submitted_by` and `submitted_at` are both nullable despite being required keys, so neither may be
+ * relied on for the confirmation message.
+ */
+export const SubmitResultResponseSchema = z.object({
+  case: CaseSchema,
+  submitted_by: z.string().nullable(),
+  submitted_at: z.string().nullable(),
+})
+export type SubmitResultResponse = z.infer<typeof SubmitResultResponseSchema>
+
+// GET /cases/{case_id}/contracts/totals — the summary's contract count and its money sums. Note it
+// carries **no object, lessee, date or term aggregate**; see features/cases/summaryFigures.ts.
+export const PackageTotalsReadSchema = z.object({
+  contract_count: z.number().int(),
+  residual_sum: z.string(),
+  acquisition_cost_sum: z.string().nullable(),
+  special_payment_sum: z.string().nullable(),
+})
+export type PackageTotalsRead = z.infer<typeof PackageTotalsReadSchema>
+
 // POST /cases/{case_id}/contracts/import/{batch_id}/commit
 export const ImportCommitResponseSchema = z.object({
   batch_id: z.string().uuid(),
@@ -315,6 +341,10 @@ export type ContractDeferredState = z.infer<typeof ContractDeferredStateSchema>
 export const CaseContractSchema = z.object({
   id: z.string().uuid(),
   leasing_company_contract_number: z.string().nullable(),
+  // Read only to count distinct lessees for the wizard's summary (US 1.17). The wire carries no
+  // lessee *name* here — just this id — which is why the Contracts tab does not render a lessee
+  // column (Q-015) even though the summary can still count them.
+  lessee_partner_id: z.string().uuid().nullable(),
   short_name: z.string().nullable(),
   contract_type: z.string().nullable(),
   amortisation_type: z.string().nullable(),

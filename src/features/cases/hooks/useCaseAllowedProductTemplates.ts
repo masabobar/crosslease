@@ -70,6 +70,13 @@ export function useCaseAllowedProductTemplates(
       : []
 
   return {
+    /**
+     * The active agreement's id, once resolved.
+     *
+     * Exposed so step 3 can read the agreement's utilisation for its "Remaining available" figure
+     * without repeating this lookup — the two steps want different fields off the same agreement.
+     */
+    agreementId,
     templates,
     isLoading:
       agreements.isLoading ||

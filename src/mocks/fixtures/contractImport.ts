@@ -23,6 +23,14 @@ import type {
   ImportRowItem,
 } from "@/features/cases/api/schema"
 
+// Imported contracts are spread across three lessees so the summary's derived lessee count is a
+// real number rather than 1-per-file or equal to the contract count.
+const LESSEE_PARTNER_IDS = [
+  "00000000-0000-4000-8000-00000000a101",
+  "00000000-0000-4000-8000-00000000a102",
+  "00000000-0000-4000-8000-00000000a103",
+]
+
 const VALID_ROWS = 8
 const FAILED_ROWS = 4
 const HELD_ROWS = 3
@@ -134,6 +142,7 @@ export function importedContracts(count: number): CaseContract[] {
   return Array.from({ length: count }, (_unused, index) => ({
     id: `00000000-0000-4000-8000-0000000c${hex(index + 1)}01`,
     leasing_company_contract_number: `PL-2025-0030${index + 1}`,
+    lessee_partner_id: LESSEE_PARTNER_IDS[index % LESSEE_PARTNER_IDS.length],
     short_name: null,
     contract_type: "lease",
     amortisation_type: "partial",

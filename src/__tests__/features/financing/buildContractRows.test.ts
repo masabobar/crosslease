@@ -25,6 +25,7 @@ function caseContract(overrides: Partial<CaseContract> = {}): CaseContract {
   return {
     id: CONTRACT_ID,
     leasing_company_contract_number: "LC-0001",
+    lessee_partner_id: null,
     short_name: null,
     contract_type: "lease",
     amortisation_type: "full",

@@ -83,11 +83,13 @@
   },
   "wizard": {
     "actions": {
-      "cancel": "Cancel",
       "back": "Back",
-      "saveAsDraft": "Save as draft",
+      "cancel": "Cancel",
       "continue": "Continue",
-      "draftSaved": "Saved as draft."
+      "draftSaved": "Saved as draft.",
+      "saveAsDraft": "Save as draft",
+      "submit": "Submit",
+      "submitted": "The refinancing request has been submitted."
     },
     "bulk": {
       "title": "Bulk file validation",
@@ -206,8 +208,29 @@
       }
     },
     "summary": {
-      "title": "Summary",
-      "pending": "The review and submit step is not built yet (US 1.17)."
+      "title": "Summary"
+    },
+    "summaryCards": {
+      "edit": "Edit",
+      "leasingCompany": "Leasing company",
+      "contracts": "Contracts",
+      "name": "Name",
+      "frameworkAgreement": "Framework agreement",
+      "productTemplate": "Bank product template",
+      "frameworkVolume": "Framework volume",
+      "remainingAvailable": "Remaining available",
+      "contractCount": "Number of contracts",
+      "residualSum": "Total residual value",
+      "acquisitionCostSum": "Total acquisition cost",
+      "lesseeCount": "Number of lessees",
+      "earliestStart": "Earliest start date",
+      "latestStart": "Latest start date",
+      "averageTerm": "Average term",
+      "figuresPartial": "Lessee count, start dates and average term are hidden: only {{shown}} of {{total}} contracts were loaded, so those figures cannot be computed for the whole request.",
+      "objectsAbsent": {
+        "title": "Number of objects is not shown",
+        "description": "The platform has no object count for a request before it is approved, so this figure cannot be included in the summary. It becomes available on the financing."
+      }
     }
   },
   "workspace": {

@@ -20,6 +20,8 @@ import {
   ImportBatchPreviewResponseSchema,
   ImportBatchResponseSchema,
   ImportCommitResponseSchema,
+  PackageTotalsReadSchema,
+  SubmitResultResponseSchema,
   type Case,
   type CaseLeasingCompanyResponse,
   type CaseProductTemplateResponse,
@@ -281,6 +283,42 @@ export const caseHandlers = [
       )
     }
   ),
+
+  // ── Wizard step 3: summary + submit ───────────────────────────────────────
+  // The totals the summary card reads. Derived from the case's own contracts so the count matches
+  // the list on step 2 — a fixed number here would let the two screens disagree.
+  http.get(`${API}/cases/:caseId/contracts/totals`, ({ params }) => {
+    const items = mockCaseContractsByCaseId[params.caseId as string] ?? []
+    return envelope(
+      PackageTotalsReadSchema.parse({
+        contract_count: items.length,
+        residual_sum: "41200.00",
+        acquisition_cost_sum: "1875000.00",
+        special_payment_sum: null,
+      })
+    )
+  }),
+
+  http.post(`${API}/cases/:caseId/submit`, ({ params }) => {
+    const caseId = params.caseId as string
+    const found = allCases().find(c => c.id === caseId)
+    if (!found) {
+      return errorEnvelope("NOT_FOUND", "Case not found", 404)
+    }
+
+    // Submission moves the request out of draft, which is what the case list's derived display
+    // status renders. Mutating the fixture means the list actually changes after a submit rather
+    // than still showing a draft.
+    found.display_status = "submitted"
+
+    return envelope(
+      SubmitResultResponseSchema.parse({
+        case: found,
+        submitted_by: FRONT_OFFICE_USER,
+        submitted_at: "2026-09-07T12:00:00Z",
+      })
+    )
+  }),
 
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {

@@ -304,6 +304,7 @@ describe("CaseContractSchema", () => {
   const minimalContract = {
     id: CONTRACT_UUID,
     leasing_company_contract_number: null,
+    lessee_partner_id: null,
     short_name: null,
     contract_type: null,
     amortisation_type: null,
@@ -321,14 +322,36 @@ describe("CaseContractSchema", () => {
   })
 
   it("drops the ContractRead fields this screen does not read", () => {
+    // `lessee_partner_id` was in this list until US 1.17 needed it to count distinct lessees for
+    // the wizard summary, so it is now read rather than stripped — see the test below.
     const parsed = CaseContractSchema.parse({
       ...minimalContract,
-      lessee_partner_id: "00000000-0000-4000-8000-0000000000p1",
       missing_fields: ["residual_value"],
       settlement_blockers: [],
       buy_back_agreement: true,
     })
     expect(parsed).toEqual(minimalContract)
+  })
+
+  // Read only to count distinct lessees on the summary. The wire carries no lessee NAME here, which
+  // is why the Contracts tab still has no lessee column (Q-015) even though the count is possible.
+  it("keeps lessee_partner_id", () => {
+    const lessee = "00000000-0000-4000-8000-0000000000a1"
+    expect(
+      CaseContractSchema.parse({
+        ...minimalContract,
+        lessee_partner_id: lessee,
+      }).lessee_partner_id
+    ).toBe(lessee)
+  })
+
+  it("rejects a non-uuid lessee_partner_id", () => {
+    expect(() =>
+      CaseContractSchema.parse({
+        ...minimalContract,
+        lessee_partner_id: "PARTNER-1",
+      })
+    ).toThrow()
   })
 
   // Money stays a decimal string end to end; coercing it would turn a null instalment into a

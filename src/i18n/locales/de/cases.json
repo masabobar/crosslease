@@ -83,11 +83,13 @@
   },
   "wizard": {
     "actions": {
-      "cancel": "Abbrechen",
       "back": "Zurück",
-      "saveAsDraft": "Als Entwurf speichern",
+      "cancel": "Abbrechen",
       "continue": "Weiter",
-      "draftSaved": "Als Entwurf gespeichert."
+      "draftSaved": "Als Entwurf gespeichert.",
+      "saveAsDraft": "Als Entwurf speichern",
+      "submit": "Einreichen",
+      "submitted": "Der Refinanzierungsantrag wurde eingereicht."
     },
     "bulk": {
       "title": "Prüfung der Massendatei",
@@ -206,8 +208,29 @@
       }
     },
     "summary": {
-      "title": "Zusammenfassung",
-      "pending": "Der Prüf- und Einreichungsschritt ist noch nicht umgesetzt (US 1.17)."
+      "title": "Zusammenfassung"
+    },
+    "summaryCards": {
+      "edit": "Bearbeiten",
+      "leasingCompany": "Leasinggesellschaft",
+      "contracts": "Verträge",
+      "name": "Name",
+      "frameworkAgreement": "Rahmenvertrag",
+      "productTemplate": "Bank-Produkttemplate",
+      "frameworkVolume": "Rahmenvolumen",
+      "remainingAvailable": "Verfügbarer Rest",
+      "contractCount": "Anzahl Verträge",
+      "residualSum": "Restwert gesamt",
+      "acquisitionCostSum": "Anschaffungskosten gesamt",
+      "lesseeCount": "Anzahl Leasingnehmer",
+      "earliestStart": "Frühester Beginn",
+      "latestStart": "Spätester Beginn",
+      "averageTerm": "Durchschnittliche Laufzeit",
+      "figuresPartial": "Anzahl Leasingnehmer, Beginndaten und durchschnittliche Laufzeit werden nicht angezeigt: es wurden nur {{shown}} von {{total}} Verträgen geladen, daher lassen sich diese Werte nicht für den gesamten Antrag berechnen.",
+      "objectsAbsent": {
+        "title": "Anzahl Objekte wird nicht angezeigt",
+        "description": "Für einen Antrag vor der Genehmigung liegt keine Objektanzahl vor, daher kann dieser Wert nicht in die Zusammenfassung aufgenommen werden. Er steht auf der Finanzierung zur Verfügung."
+      }
     }
   },
   "workspace": {

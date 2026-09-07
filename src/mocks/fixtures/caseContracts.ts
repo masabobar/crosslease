@@ -23,10 +23,16 @@ import type { CaseContract } from "@/features/cases/api/schema"
 
 const LIVE_FINANCING_CASE_ID = "00000000-0000-4000-8000-00000000c005"
 
+// Two distinct lessees across three contracts, and one contract with none recorded — so the
+// wizard summary's derived lessee count is 2, not 3, which is the case worth having a fixture for.
+const LESSEE_PARTNER_ID = "00000000-0000-4000-8000-00000000a101"
+const LESSEE_PARTNER_ID_2 = "00000000-0000-4000-8000-00000000a102"
+
 const LIVE_FINANCING_CONTRACTS: CaseContract[] = [
   {
     id: "00000000-0000-4000-8000-0000000acc01",
     leasing_company_contract_number: "PL-2025-00211",
+    lessee_partner_id: LESSEE_PARTNER_ID,
     short_name: "Volvo FH 460",
     contract_type: "hire_purchase",
     amortisation_type: "full",
@@ -39,6 +45,7 @@ const LIVE_FINANCING_CONTRACTS: CaseContract[] = [
   {
     id: "00000000-0000-4000-8000-0000000acc02",
     leasing_company_contract_number: "PL-2025-00212",
+    lessee_partner_id: LESSEE_PARTNER_ID_2,
     short_name: "Krone SD trailer",
     contract_type: "lease",
     amortisation_type: "partial",
@@ -52,6 +59,7 @@ const LIVE_FINANCING_CONTRACTS: CaseContract[] = [
   {
     id: "00000000-0000-4000-8000-0000000acc03",
     leasing_company_contract_number: "PL-2025-00213",
+    lessee_partner_id: null,
     short_name: "Linde H30 forklift",
     contract_type: "lease",
     amortisation_type: "partial",

@@ -11,6 +11,8 @@ import {
   ImportBatchPreviewResponseSchema,
   ImportBatchResponseSchema,
   ImportCommitResponseSchema,
+  PackageTotalsReadSchema,
+  SubmitResultResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
@@ -24,6 +26,8 @@ import type {
   ImportBatchPreviewResponse,
   ImportBatchResponse,
   ImportCommitResponse,
+  PackageTotalsRead,
+  SubmitResultResponse,
 } from "@/features/cases/api/schema"
 
 // GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
@@ -74,6 +78,8 @@ export const CASE_QUERY_KEYS = {
     ["cases", "product-template", caseId] as const,
   importBatch: (caseId: string, batchId: string) =>
     ["cases", "import-batch", caseId, batchId] as const,
+  contractTotals: (caseId: string) =>
+    ["cases", "contract-totals", caseId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -234,6 +240,27 @@ export function getContractImportCorrectionFileUrl(
   batchId: string
 ): string {
   return `${api.defaults.baseURL}/cases/${caseId}/contracts/import/${batchId}/correction-file`
+}
+
+/**
+ * POST /cases/{case_id}/submit — submits the refinancing request (US 1.17).
+ *
+ * No body: everything being submitted already sits on the case. The response carries the case in its
+ * new state, so the caller can show what it became rather than assuming.
+ */
+export async function submitCase(
+  caseId: string
+): Promise<SubmitResultResponse> {
+  const data = await api.post(`/cases/${caseId}/submit`)
+  return SubmitResultResponseSchema.parse(data)
+}
+
+// GET /cases/{case_id}/contracts/totals — the summary's contract count and money sums.
+export async function fetchCaseContractTotals(
+  caseId: string
+): Promise<PackageTotalsRead> {
+  const data = await api.get(`/cases/${caseId}/contracts/totals`)
+  return PackageTotalsReadSchema.parse(data)
 }
 
 // POST /cases — start a case. The backend (StartCaseRequest) asks only for the case type; it sets the

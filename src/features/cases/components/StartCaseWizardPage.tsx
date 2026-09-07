@@ -8,12 +8,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { WizardStepper } from "@/components/shared/WizardStepper"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
 import { isUuidRouteParam } from "@/lib/routeParams"
+import { showApiError } from "@/lib/apiErrorMessage"
 import { caseDetail } from "@/router/paths"
 import { useCase } from "@/features/cases/hooks/useCase"
 import { useCaseLeasingCompany } from "@/features/cases/hooks/useCaseLeasingCompany"
 import { useCaseProductTemplate } from "@/features/cases/hooks/useCaseProductTemplate"
 import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
+import { useSubmitCase } from "@/features/cases/hooks/useSubmitCase"
 import { ContractsStep } from "@/features/cases/components/steps/ContractsStep"
+import { SummaryStep } from "@/features/cases/components/steps/SummaryStep"
 import { LeasingCompanyStep } from "@/features/cases/components/steps/LeasingCompanyStep"
 import {
   CASE_WIZARD_STEPS,
@@ -34,10 +37,13 @@ import type { CaseWizardStep } from "@/features/cases/wizard"
  * routes here with its id. That is also what makes `Save as draft` free: the case is already
  * persisted at every point, so the footer button simply leaves.
  *
- * ── WHAT IS BUILT HERE ─────────────────────────────────────────────────────────────────────────
- * Step 1 only, in this commit. Steps 2 and 3 render a placeholder naming the story that will fill
- * them, rather than an empty pane that reads as "nothing to do here" — the same convention the case
- * workspace uses for its design-only tabs.
+ * ── STEP GATING ────────────────────────────────────────────────────────────────────────────────
+ * A step opens only once the previous one has actually landed on the server, not merely been
+ * visited: step 2 needs the company **and** the template bound, because the contract import
+ * validates rows against the template; step 3 and Submit need **committed** contracts, not an
+ * uploaded batch. The gates live in `wizard.ts` so they are testable, and `Submit` re-checks
+ * `hasContracts` rather than trusting that reaching this step still qualifies — the user can arrive
+ * at the summary and then empty the case through its Edit link.
  */
 export default function StartCaseWizardPage() {
   const { t } = useTranslation("cases")
@@ -49,6 +55,7 @@ export default function StartCaseWizardPage() {
   const leasingCompany = useCaseLeasingCompany(isValidId ? caseId : undefined)
   const productTemplate = useCaseProductTemplate(isValidId ? caseId : undefined)
   const contracts = useCaseContracts(isValidId ? caseId : undefined)
+  const submitCase = useSubmitCase()
 
   const [step, setStep] = useState<CaseWizardStep>(CASE_WIZARD_STEPS[0])
 
@@ -74,6 +81,18 @@ export default function StartCaseWizardPage() {
   const back = previousStep(step)
   const forward = nextStep(step)
   const canContinue = forward !== null && canOpenStep(forward, progress)
+
+  function handleSubmit() {
+    submitCase.mutate(caseId as string, {
+      onSuccess: () => {
+        toast.success(t("wizard.actions.submitted"))
+        // Out to the case workspace, not back into the wizard: once submitted the request is no
+        // longer a draft the wizard edits, and the workspace is where its progress is followed.
+        navigate(caseDetail(caseId as string))
+      },
+      onError: err => showApiError(err, t),
+    })
+  }
 
   function handleSaveDraft() {
     // Nothing to persist — every step has already written through to the case. The draft *is* the
@@ -127,12 +146,13 @@ export default function StartCaseWizardPage() {
           {step === "contracts" && <ContractsStep caseId={caseId as string} />}
 
           {step === "summary" && (
-            <p
-              className="text-sm text-muted-foreground"
-              data-testid="case-wizard-step-pending-summary"
-            >
-              {t("wizard.summary.pending")}
-            </p>
+            <SummaryStep
+              caseId={caseId as string}
+              lcPartnerId={caseQuery.data.lc_partner_id}
+              leasingCompany={leasingCompany.data ?? null}
+              productTemplate={productTemplate.data ?? null}
+              onEditStep={setStep}
+            />
           )}
         </div>
       </div>
@@ -178,6 +198,20 @@ export default function StartCaseWizardPage() {
             >
               {t("wizard.actions.continue")}
               <ArrowRight size={16} />
+            </Button>
+          )}
+
+          {/* Submit replaces Continue on the last step, as the design does. Gated on there being
+              contracts as well: the case reaching this step is not proof it still qualifies, since
+              the user can arrive here and then remove everything via Edit. */}
+          {forward === null && (
+            <Button
+              type="button"
+              data-testid="case-wizard-submit-button"
+              disabled={submitCase.isPending || !progress.hasContracts}
+              onClick={handleSubmit}
+            >
+              {t("wizard.actions.submit")}
             </Button>
           )}
         </div>
