@@ -5,15 +5,20 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronsLeft,
-  Home,
-  SquareTerminal,
   Shield,
+  ShieldCheck,
   FileText,
+  Files,
   BarChart2,
   FolderOpen,
+  LayoutGrid,
+  RefreshCcw,
   Send,
+  Settings2,
+  SlidersHorizontal,
   Landmark,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Collapsible,
@@ -85,6 +90,97 @@ function SidebarNavLink({
   )
 }
 
+/**
+ * A flat top-level nav item that goes somewhere — the shape the Figma frames use for `Dashboard`
+ * and `Cases` (`CREATE NEW.pdf` frame 1): icon, label, and the pale-blue active pill.
+ *
+ * Distinct from `SidebarNavLink`, which is the indented child form with no icon.
+ */
+function SidebarTopLevelLink({
+  to,
+  label,
+  testid,
+  icon: Icon,
+  isActive,
+  isCollapsed,
+}: {
+  to: string
+  label: string
+  testid: string
+  icon: LucideIcon
+  isActive: boolean
+  isCollapsed: boolean
+}) {
+  return (
+    <Link
+      to={to}
+      data-testid={testid}
+      className={cn(
+        buttonVariants({ variant: "ghost" }),
+        "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
+        isActive &&
+          "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+      )}
+    >
+      <Icon
+        size={16}
+        className={cn("shrink-0", !isActive && "text-muted-foreground")}
+      />
+      {!isCollapsed && (
+        <span className="flex-1 text-left text-sm min-w-0 truncate">
+          {label}
+        </span>
+      )}
+    </Link>
+  )
+}
+
+/**
+ * A nav section the design shows but this app has no screen for.
+ *
+ * ── WHY IT LOOKS DISABLED RATHER THAN NORMAL ───────────────────────────────────────────────────
+ * These items were previously rendered identically to working ones — `Refinancing requests`,
+ * `Contracts`, `Financing` and `Rules setup` were inert `<span>`s with `cursor-default`, visually
+ * indistinguishable from a live link. Every reviewer clicked them and nothing happened.
+ *
+ * Keeping the design's nav shape is worth something, so they stay; pretending they work is not, so
+ * they are muted, marked `aria-disabled`, and carry a title saying why. Same principle as the
+ * workspace's `IMPLEMENTED_TABS`: a surface with a design but no implementation says so rather than
+ * rendering an empty shell that reads as "nothing to do here".
+ */
+function SidebarUnbuiltItem({
+  label,
+  testid,
+  icon: Icon,
+  isCollapsed,
+  notBuiltLabel,
+}: {
+  label: string
+  testid: string
+  icon: LucideIcon
+  isCollapsed: boolean
+  notBuiltLabel: string
+}) {
+  return (
+    <div
+      data-testid={testid}
+      aria-disabled="true"
+      title={notBuiltLabel}
+      className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-not-allowed opacity-50"
+    >
+      <Icon size={16} className="text-muted-foreground shrink-0" />
+      {!isCollapsed && (
+        <>
+          <span className="flex-1 text-sm text-muted-foreground min-w-0 truncate">
+            {label}
+          </span>
+          <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+        </>
+      )}
+    </div>
+  )
+}
+
 export function Sidebar() {
   const { t } = useTranslation("common")
   const location = useLocation()
@@ -139,18 +235,14 @@ export function Sidebar() {
     !!currentUser && CASE_READ_ALLOWED_ROLES.includes(currentUser.role)
   const isLcUser = !!currentUser && LC_ONLY_ROLES.includes(currentUser.role)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMainExpanded, setIsMainExpanded] = useState(false)
   const [isPlatformAdminExpanded, setIsPlatformAdminExpanded] = useState(() =>
     location.pathname.startsWith(PLATFORM_ADMINISTRATION_PREFIX)
   )
   const [isBusinessConfigExpanded, setIsBusinessConfigExpanded] = useState(() =>
     location.pathname.startsWith(BUSINESS_CONFIGURATION_PREFIX)
   )
-  const [isOperationsExpanded, setIsOperationsExpanded] = useState(() =>
-    location.pathname.startsWith(PATHS.CASE_LIST)
-  )
 
-  const isMainActive = location.pathname === PATHS.DASHBOARD
+  const isDashboardActive = location.pathname === PATHS.DASHBOARD
   const isPlatformAdminActive = location.pathname.startsWith(
     PLATFORM_ADMINISTRATION_PREFIX
   )
@@ -176,9 +268,6 @@ export function Sidebar() {
   const isBusinessConfigActive = location.pathname.startsWith(
     BUSINESS_CONFIGURATION_PREFIX
   )
-  // Every /cases/* route (list, detail, deep-link documents/checklist) lives under Operations, so
-  // the group lights up for all of them.
-  const isOperationsActive = location.pathname.startsWith(PATHS.CASE_LIST)
   const isCaseListActive =
     location.pathname === PATHS.CASE_LIST ||
     location.pathname.startsWith(PATHS.CASE_LIST + "/")
@@ -323,150 +412,65 @@ export function Sidebar() {
         {/* Internal-only navigation — completely hidden for LC users */}
         {!isLcUser && (
           <>
-            {/* ── Main group (expandable) ── */}
-            <Collapsible
-              open={isMainExpanded}
-              onOpenChange={setIsMainExpanded}
-              className="flex flex-col gap-2"
-            >
-              <CollapsibleTrigger
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
-                  isMainActive &&
-                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                )}
-              >
-                <Home
-                  size={16}
-                  className={cn(
-                    "shrink-0",
-                    !isMainActive && "text-muted-foreground"
-                  )}
-                />
-                {!isCollapsed && (
-                  <>
-                    <span className="flex-1 text-left text-sm min-w-0 truncate">
-                      {t("nav.main")}
-                    </span>
-                    {isMainExpanded ? (
-                      <ChevronDown
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isMainActive && "text-muted-foreground"
-                        )}
-                      />
-                    ) : (
-                      <ChevronRight
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isMainActive && "text-muted-foreground"
-                        )}
-                      />
-                    )}
-                  </>
-                )}
-              </CollapsibleTrigger>
-              {!isCollapsed && (
-                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
-                  {[
-                    t("nav.dashboard"),
-                    t("nav.refinancingRequests"),
-                    t("nav.contracts"),
-                    t("nav.financing"),
-                  ].map(label => (
-                    <span
-                      key={label}
-                      className="text-sm text-foreground whitespace-nowrap cursor-default"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </CollapsibleContent>
-              )}
-            </Collapsible>
+            {/* ── Flat top-level nav, in the Figma frames' order ──────────────────────────
+                Dashboard · Cases · Operations · Risk and compliance · Documents ·
+                Business configuration · Platform administration (`CREATE NEW.pdf` frame 1).
 
-            {/* ── Operations group (expandable) ── Operational case work lives here; today its
-                one item is the Case list, the way into a case's Documents tab (PRD1042-1794). */}
-            <Collapsible
-              open={isOperationsExpanded}
-              onOpenChange={setIsOperationsExpanded}
-              className="flex flex-col gap-2"
-            >
-              <CollapsibleTrigger
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
-                  isOperationsActive &&
-                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                )}
-              >
-                <SquareTerminal
-                  size={16}
-                  className={cn(
-                    "shrink-0",
-                    !isOperationsActive && "text-muted-foreground"
-                  )}
-                />
-                {!isCollapsed && (
-                  <>
-                    <span className="flex-1 text-left text-sm min-w-0 truncate">
-                      {t("nav.operations")}
-                    </span>
-                    {isOperationsExpanded ? (
-                      <ChevronDown
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isOperationsActive && "text-muted-foreground"
-                        )}
-                      />
-                    ) : (
-                      <ChevronRight
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isOperationsActive && "text-muted-foreground"
-                        )}
-                      />
-                    )}
-                  </>
-                )}
-              </CollapsibleTrigger>
-              {!isCollapsed && (
-                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
-                  {canAccessCases && (
-                    <SidebarNavLink
-                      to={PATHS.CASE_LIST}
-                      label={t("nav.cases")}
-                      testid="nav-cases"
-                      isActive={isCaseListActive}
-                    />
-                  )}
-                </CollapsibleContent>
-              )}
-            </Collapsible>
+                What changed and why: the design has no "Main" wrapper — Dashboard is a top-level
+                destination — and Cases sits at the top level rather than nested under Operations.
+                The old Main group's children (`Refinancing requests`, `Contracts`, `Financing`)
+                and the `Rules setup` item were inert spans with no route behind them and no
+                counterpart in the design, so they are gone rather than restyled.
 
-            {/* ── Rules setup (placeholder flat item) ── */}
-            <div className="flex items-center gap-2 px-2 py-2 rounded-[10px] cursor-default hover:bg-muted">
-              <SquareTerminal
-                size={16}
-                className="text-muted-foreground shrink-0"
+                Operations, Risk and compliance and Documents have no screens in this app. They are
+                rendered as visibly-unbuilt items so the design's shape survives without any of
+                them pretending to be a working link — see SidebarUnbuiltItem. */}
+            <SidebarTopLevelLink
+              to={PATHS.DASHBOARD}
+              label={t("nav.dashboard")}
+              testid="nav-dashboard"
+              icon={LayoutGrid}
+              isActive={isDashboardActive}
+              isCollapsed={isCollapsed}
+            />
+
+            {canAccessCases && (
+              <SidebarTopLevelLink
+                to={PATHS.CASE_LIST}
+                label={t("nav.cases")}
+                testid="nav-cases"
+                icon={RefreshCcw}
+                isActive={isCaseListActive}
+                isCollapsed={isCollapsed}
               />
-              {!isCollapsed && (
-                <>
-                  <span className="flex-1 text-sm text-foreground min-w-0 truncate">
-                    {t("nav.rulesSetup")}
-                  </span>
-                  <ChevronRight
-                    size={16}
-                    className="text-muted-foreground shrink-0"
-                  />
-                </>
-              )}
-            </div>
+            )}
+
+            <SidebarUnbuiltItem
+              label={t("nav.operations")}
+              testid="nav-operations-unbuilt"
+              icon={SlidersHorizontal}
+              isCollapsed={isCollapsed}
+              notBuiltLabel={t("nav.notBuilt")}
+            />
+
+            {/* The frame reads "Risk and compiance" — a typo in the design. Shipping it would put
+                the misspelling in front of users, so the label is corrected here and the defect is
+                recorded in the design extract's copy-defects section instead. */}
+            <SidebarUnbuiltItem
+              label={t("nav.riskAndCompliance")}
+              testid="nav-risk-and-compliance-unbuilt"
+              icon={ShieldCheck}
+              isCollapsed={isCollapsed}
+              notBuiltLabel={t("nav.notBuilt")}
+            />
+
+            <SidebarUnbuiltItem
+              label={t("nav.documents")}
+              testid="nav-documents-unbuilt"
+              icon={Files}
+              isCollapsed={isCollapsed}
+              notBuiltLabel={t("nav.notBuilt")}
+            />
 
             {/* ── Business configuration group (expandable) ── */}
             <Collapsible
@@ -482,7 +486,7 @@ export function Sidebar() {
                     "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                 )}
               >
-                <SquareTerminal
+                <Settings2
                   size={16}
                   className={cn(
                     "shrink-0",

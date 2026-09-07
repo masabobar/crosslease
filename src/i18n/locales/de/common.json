@@ -17,20 +17,15 @@
   },
   "nav": {
     "leasingPlatform": "Leasing Platform",
-    "main": "Main",
     "dashboard": "Dashboard",
-    "refinancingRequests": "Finanzierungsanfragen",
-    "contracts": "Verträge",
-    "financing": "Finanzierung",
     "operations": "Betrieb",
     "cases": "Fälle",
-    "businessConfigurations": "Geschäftskonfigurationen",
+    "businessConfigurations": "Geschäftskonfiguration",
     "productTemplates": "Produktvorlagen",
     "frameworkAgreements": "Rahmenvereinbarungen",
     "workflowTaskCatalogs": "Workflow-Aufgabenkataloge",
     "documentRequirementCatalogs": "Dokumentenanforderungskataloge",
     "documentCatalog": "Dokumentenkatalog",
-    "rulesSetup": "Regelkonfiguration",
     "platformAdministration": "Plattformadministration",
     "userManagement": "Benutzerverwaltung",
     "partnerManagement": "Partnerverwaltung",
@@ -48,7 +43,10 @@
     "lcProposals": "Vorschläge",
     "lcFrameworkAgreements": "Rahmenvereinbarungen",
     "pendingApprovals": "Ausstehende Genehmigungen",
-    "myProfile": "Mein Profil"
+    "myProfile": "Mein Profil",
+    "riskAndCompliance": "Risiko und Compliance",
+    "documents": "Dokumente",
+    "notBuilt": "Noch nicht umgesetzt — für diesen Bereich gibt es ein Design, aber keine Seiten."
   },
   "breadcrumb": {
     "home": "Startseite",

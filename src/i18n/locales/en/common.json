@@ -17,20 +17,15 @@
   },
   "nav": {
     "leasingPlatform": "Leasing Platform",
-    "main": "Main",
     "dashboard": "Dashboard",
-    "refinancingRequests": "Refinancing requests",
-    "contracts": "Contracts",
-    "financing": "Financing",
     "operations": "Operations",
     "cases": "Cases",
-    "businessConfigurations": "Business configurations",
+    "businessConfigurations": "Business configuration",
     "productTemplates": "Product templates",
     "frameworkAgreements": "Framework agreements",
     "workflowTaskCatalogs": "Workflow task catalogs",
     "documentRequirementCatalogs": "Document requirement catalogs",
     "documentCatalog": "Document catalog",
-    "rulesSetup": "Rules setup",
     "platformAdministration": "Platform administration",
     "userManagement": "User management",
     "partnerManagement": "Partner Management",
@@ -48,7 +43,10 @@
     "lcProposals": "Proposals",
     "lcFrameworkAgreements": "Framework Agreements",
     "pendingApprovals": "Pending approvals",
-    "myProfile": "My profile"
+    "myProfile": "My profile",
+    "riskAndCompliance": "Risk and compliance",
+    "documents": "Documents",
+    "notBuilt": "Not built yet — this section has a design but no screens."
   },
   "breadcrumb": {
     "home": "Home",
