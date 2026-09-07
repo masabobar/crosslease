@@ -201,9 +201,12 @@ export function mockChecklist(
   businessObjectId: string
 ): ChecklistItemResponse[] {
   return SEEDS.map(s => ({
-    id: `00000000-0000-4000-8000-000000${String(9000 + s.n)}`,
+    // 12 hex characters in the last segment — `000000` plus a four-digit number is only ten, and
+    // an invalid UUID here made the schema reject the entire checklist response (MSW then 500s), so
+    // the Checklist tab was blank in the prototype. Found by driving the browser.
+    id: `00000000-0000-4000-8000-00000000${String(9000 + s.n)}`,
     business_object_id: businessObjectId,
-    source_catalog_task_id: `00000000-0000-4000-8000-000000${String(8000 + s.n)}`,
+    source_catalog_task_id: `00000000-0000-4000-8000-00000000${String(8000 + s.n)}`,
     task_code: s.code,
     task_name: s.name,
     is_mandatory: s.mandatory ?? true,

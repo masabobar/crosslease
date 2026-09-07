@@ -15,6 +15,7 @@ import {
 import {
   FAListResponseSchema,
   FALCPartnersResponseSchema,
+  FADetailResponseSchema,
   FAUtilizationResponseSchema,
   SelectableTemplatesResponseSchema,
 } from "@/features/frameworkAgreements/api/schema"
@@ -113,27 +114,57 @@ export const businessConfigHandlers = [
 
   http.get(`${API}/framework-agreements/:id`, ({ params }) => {
     const found = mockFrameworkAgreements.find(fa => fa.id === params.id)
-    // The detail response is a wider shape than the list item, and it is role-scoped four different
-    // ways on the backend. Rather than invent that, the list row is returned as-is: the detail screen
-    // will report the fields it is missing in the console, which is the honest signal.
+    if (!found) {
+      return errorEnvelope("NOT_FOUND", "Framework agreement not found", 404)
+    }
+
+    // Parsed through the real detail schema, which this handler previously did NOT do — and it was
+    // returning the *list* row, which is a dozen fields short of `FADetailResponse`. The fetcher
+    // parses, so every read of this endpoint threw, React Query retried, and any consumer sat on a
+    // loading state forever. That is what kept the wizard's product-template picker from ever
+    // rendering (found by driving the browser, not by any automated gate).
     //
-    // `product_template_ids` is the one exception, added because the wizard's step 1 genuinely
-    // depends on it — it is what makes "only templates the framework agreement allows" real rather
-    // than decorative. Every effective template is permitted here except the last, so the
-    // intersection in `filterTemplatesAllowedByAgreement` is observable rather than a no-op.
-    return found
-      ? envelope({
-          ...found,
-          product_template_ids: mockProductTemplates
-            .filter(
-              t =>
-                t.current_version?.version_status ===
-                TemplateStatusSchema.enum.effective
-            )
-            .slice(0, -1)
-            .map(t => t.id),
-        })
-      : errorEnvelope("NOT_FOUND", "Framework agreement not found", 404)
+    // The list row supplies what it can; the rest are the detail-only fields, mostly null because
+    // this fixture's agreement was activated and nothing else has happened to it.
+    return envelope(
+      FADetailResponseSchema.parse({
+        ...found,
+        currency: "EUR",
+        // The list row carries no volume, and the spec records that none is maintained for any of
+        // the seven leasing companies — but this field is non-nullable on the detail response, so a
+        // figure has to be sent. The utilisation projection is where the empty case is exercised.
+        max_volume_eur: 2000000,
+        edit_version_counter: 1,
+        // Every effective template except the last, so the intersection in
+        // filterTemplatesAllowedByAgreement is observable rather than a no-op.
+        product_template_ids: mockProductTemplates
+          .filter(
+            t =>
+              t.current_version?.version_status ===
+              TemplateStatusSchema.enum.effective
+          )
+          .slice(0, -1)
+          .map(t => t.id),
+        document_count: 2,
+        linked_financings_count: 1,
+        limit_available: null,
+        vfe_amount_eur: 850,
+        special_conditions: null,
+        effective_from: found.valid_from,
+        activated_at: "2025-01-02T09:00:00Z",
+        activated_by: null,
+        activated_by_name: "Bank Power User",
+        deactivated_at: null,
+        deactivated_by: null,
+        reactivated_at: null,
+        reactivated_by: null,
+        terminated_at: null,
+        terminated_by: null,
+        created_by: null,
+        created_by_name: "Bank Power User",
+        created_at: "2025-01-01T08:00:00Z",
+      })
+    )
   }),
 
   // ── Product templates ─────────────────────────────────────────────────────
