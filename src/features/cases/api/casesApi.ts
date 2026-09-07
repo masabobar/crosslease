@@ -13,6 +13,10 @@ import {
   ImportCommitResponseSchema,
   PackageTotalsReadSchema,
   SubmitResultResponseSchema,
+  CaseContractSchema,
+  LeaseObjectListResponseSchema,
+  LeaseObjectReadSchema,
+  ObjectClassificationResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
@@ -28,6 +32,10 @@ import type {
   ImportCommitResponse,
   PackageTotalsRead,
   SubmitResultResponse,
+  CaseContract,
+  LeaseObjectListResponse,
+  LeaseObjectRead,
+  ObjectClassificationResponse,
 } from "@/features/cases/api/schema"
 
 // GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
@@ -80,6 +88,9 @@ export const CASE_QUERY_KEYS = {
     ["cases", "import-batch", caseId, batchId] as const,
   contractTotals: (caseId: string) =>
     ["cases", "contract-totals", caseId] as const,
+  objectClassification: ["object-classification"] as const,
+  contractObjects: (contractId: string) =>
+    ["contracts", "objects", contractId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -292,4 +303,53 @@ export async function claimCase(caseId: string): Promise<CaseResponse> {
 export async function rejectCase(caseId: string): Promise<CaseResponse> {
   const data = await api.post(`/cases/${caseId}/reject`)
   return CaseResponseSchema.parse(data)
+}
+
+/**
+ * GET /object-classification — the object group / sub-group tree the manual-entry form picks from.
+ *
+ * Bank-wide configuration, not case-scoped, and it changes rarely — so callers cache it long. The
+ * `is_vehicle` flag on each group is what decides whether the sub-group picker and the three
+ * registration fields apply (see ObjectGroupItemSchema).
+ */
+export async function fetchObjectClassification(): Promise<ObjectClassificationResponse> {
+  const data = await api.get(`/object-classification`)
+  return ObjectClassificationResponseSchema.parse(data)
+}
+
+// GET /contracts/{contract_id}/objects — the lease objects on one contract.
+export async function fetchContractObjects(
+  contractId: string
+): Promise<LeaseObjectListResponse> {
+  const data = await api.get(`/contracts/${contractId}/objects`)
+  return LeaseObjectListResponseSchema.parse(data)
+}
+
+// POST /contracts/{contract_id}/objects — adds one lease object. Every field is optional on
+// `LeaseObjectCreate`, so an object can be started with a group alone and completed later.
+export async function createContractObject(
+  contractId: string,
+  body: Record<string, unknown>
+): Promise<LeaseObjectRead> {
+  const data = await api.post(`/contracts/${contractId}/objects`, body)
+  return LeaseObjectReadSchema.parse(data)
+}
+
+// PATCH /objects/{object_id} — edits one lease object in place.
+export async function updateContractObject(
+  objectId: string,
+  body: Record<string, unknown>
+): Promise<LeaseObjectRead> {
+  const data = await api.patch(`/objects/${objectId}`, body)
+  return LeaseObjectReadSchema.parse(data)
+}
+
+// POST /cases/{case_id}/contracts — creates a contract manually (US 1.9). `ContractCreate` has 19
+// fields and requires none, so the modal creates the contract first and fills its tabs afterwards.
+export async function createCaseContract(
+  caseId: string,
+  body: Record<string, unknown>
+): Promise<CaseContract> {
+  const data = await api.post(`/cases/${caseId}/contracts`, body)
+  return CaseContractSchema.parse(data)
 }

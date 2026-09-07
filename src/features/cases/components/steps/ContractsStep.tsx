@@ -17,6 +17,7 @@ import { formatDate, formatDecimalCurrency } from "@/lib/formatters"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
 import { BulkContractImportDialog } from "@/features/cases/components/BulkContractImportDialog"
+import { ManualContractEntryDialog } from "@/features/cases/components/ManualContractEntryDialog"
 import { ContractDeferredStateSchema } from "@/features/cases/api/schema"
 
 type Props = {
@@ -43,6 +44,7 @@ export function ContractsStep({ caseId }: Props) {
   const { t } = useTranslation("cases")
   const contracts = useCaseContracts(caseId)
   const [isBulkOpen, setBulkOpen] = useState(false)
+  const [isManualOpen, setManualOpen] = useState(false)
 
   const items = contracts.data?.items ?? []
 
@@ -61,8 +63,8 @@ export function ContractsStep({ caseId }: Props) {
             <Button
               type="button"
               variant="outline"
-              disabled
               data-testid="case-wizard-manual-entry-button"
+              onClick={() => setManualOpen(true)}
             >
               <Plus size={16} />
               {t("wizard.contracts.manualEntry")}
@@ -80,13 +82,13 @@ export function ContractsStep({ caseId }: Props) {
           </div>
         </div>
 
-        {/* Says why the route is closed rather than leaving a dead control — the same treatment
-            StartCaseDialog gives the six case types whose processes are not built. */}
+        {/* The route is open now; which of its four tabs are built is stated inside the modal
+            rather than here, so this line names only what is still missing from it. */}
         <p
           className="mt-2 text-xs text-muted-foreground"
           data-testid="case-wizard-manual-entry-reason"
         >
-          {t("wizard.contracts.manualComingSoon")}
+          {t("wizard.contracts.manualPartial")}
         </p>
       </section>
 
@@ -170,6 +172,14 @@ export function ContractsStep({ caseId }: Props) {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {isManualOpen && (
+        <ManualContractEntryDialog
+          caseId={caseId}
+          onOpenChange={setManualOpen}
+          onSaved={() => void contracts.refetch()}
+        />
       )}
 
       {isBulkOpen && (

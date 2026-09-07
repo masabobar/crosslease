@@ -169,15 +169,8 @@
       "noTemplates": "The framework agreement allows no product templates"
     },
     "contracts": {
-      "title": "Contracts",
-      "chooseEntry": "Choose contract entry",
-      "manualEntry": "Manual contract entry",
-      "manualComingSoon": "Manual contract entry is not built yet — it captures the lessee, the objects and the terms, and lands with US 1.6–1.9. Use the bulk file for now.",
       "bulkUpload": "Upload bulk file",
-      "empty": "No entered contracts",
-      "unnamedContract": "Contract without a number",
-      "termMonths": "{{count}} month",
-      "termMonths_other": "{{count}} months",
+      "chooseEntry": "Choose contract entry",
       "columns": {
         "contract": "Contract",
         "start": "Start date",
@@ -188,10 +181,67 @@
       "deferredState": {
         "active": "Active",
         "deferred": "Deferred"
-      }
+      },
+      "empty": "No entered contracts",
+      "manualComingSoon": "Manual contract entry is not built yet — it captures the lessee, the objects and the terms, and lands with US 1.6–1.9. Use the bulk file for now.",
+      "manualEntry": "Manual contract entry",
+      "manualPartial": "Manual entry captures lease objects today. The lessee, the contract terms and the payment plan follow with US 1.6, 1.9 and 1.11.",
+      "termMonths": "{{count}} month",
+      "termMonths_other": "{{count}} months",
+      "title": "Contracts",
+      "unnamedContract": "Contract without a number"
     },
     "leasingCompany": {
       "title": "New refinancing request"
+    },
+    "manual": {
+      "title": "Manual contract entry",
+      "save": "Save contract",
+      "saved": "Contract saved to the case.",
+      "tabs": {
+        "lessee": "Lessee",
+        "object": "Object",
+        "contractDetails": "Contract details",
+        "cashFlow": "Cash flow"
+      },
+      "pending": {
+        "lessee": "Capturing the lessee is not built yet (US 1.6). Its endpoints exist — /contracts/{id}/lessee and its preview — so this is implementation, not a gap.",
+        "contractDetails": "Capturing the contract terms is not built yet (US 1.9).",
+        "cashFlow": "The payment plan is not built yet (US 1.11)."
+      },
+      "object": {
+        "heading": "Lease objects ({{count}})",
+        "add": "Object",
+        "empty": "No objects on this contract yet.",
+        "savedTitle": "Object {{number}}",
+        "savedEmpty": "No details recorded",
+        "saveObject": "Save object",
+        "newOrUsed": {
+          "new": "New",
+          "used": "Used"
+        },
+        "errors": {
+          "yearFormat": "Enter a four-digit year."
+        },
+        "fields": {
+          "description": "Object description",
+          "group": "Object group",
+          "groupPlaceholder": "Select an object group",
+          "subGroup": "Sub-group",
+          "subGroupPlaceholder": "Select a sub-group",
+          "manufacturer": "Manufacturer",
+          "brand": "Brand",
+          "yearOfManufacture": "Year of manufacture",
+          "chassis": "Chassis / Serial no.",
+          "plate": "Licence plate",
+          "zlb": "ZLB II, vehicle registration",
+          "newOrUsed": "New / used",
+          "acquisitionCost": "Net acquisition cost (EUR)",
+          "marketValue": "Market value (EUR)",
+          "appraisedValue": "Appraised value (EUR)",
+          "specialPayment": "Special payment (EUR)"
+        }
+      }
     },
     "steps": {
       "leasingCompany": {

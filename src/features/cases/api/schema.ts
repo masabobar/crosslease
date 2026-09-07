@@ -316,6 +316,96 @@ export const ImportCommitResponseSchema = z.object({
 })
 export type ImportCommitResponse = z.infer<typeof ImportCommitResponseSchema>
 
+/**
+ * Manual contract entry — the design's `Manual contract entry` modal, Object tab (US 1.8).
+ *
+ * ── THE VEHICLE FLAG IS WHAT THE DESIGN'S INDENTATION MEANS ────────────────────────────────────
+ * `GET /object-classification` returns groups with an **`is_vehicle`** flag and their sub-groups.
+ * In the Figma frame, `Fuel type` sits indented beneath `Object group` — that indentation is this
+ * flag: the sub-group picker and the vehicle-only fields (chassis, licence plate, ZLB II) apply to
+ * a vehicle group and not to, say, industrial equipment. So the form reads the flag rather than
+ * hard-coding a list of vehicle groups.
+ *
+ * The frame labels the sub-group "Fuel type" and shows `Hybrid`. That is one bank's sub-group
+ * vocabulary, not a separate field — there is no `fuel_type` anywhere in the contract.
+ */
+export const ObjectSubGroupItemSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+})
+export type ObjectSubGroupItem = z.infer<typeof ObjectSubGroupItemSchema>
+
+export const ObjectGroupItemSchema = z.object({
+  code: z.string(),
+  name: z.string(),
+  // Gates the sub-group picker and the three registration fields — see the note above.
+  is_vehicle: z.boolean(),
+  provenance: z.string(),
+  sub_groups: z.array(ObjectSubGroupItemSchema),
+})
+export type ObjectGroupItem = z.infer<typeof ObjectGroupItemSchema>
+
+export const ObjectClassificationResponseSchema = z.object({
+  groups: z.array(ObjectGroupItemSchema),
+})
+export type ObjectClassificationResponse = z.infer<
+  typeof ObjectClassificationResponseSchema
+>
+
+export const NewOrUsedSchema = z.enum(["new", "used"])
+export type NewOrUsed = z.infer<typeof NewOrUsedSchema>
+
+// Two states, and the design's "Select File" row is what moves it: `pending` until a DAT valuation
+// is attached, `uploaded` once one is.
+export const DatEvidenceStatusSchema = z.enum(["pending", "uploaded"])
+export type DatEvidenceStatus = z.infer<typeof DatEvidenceStatusSchema>
+
+/**
+ * A lease object as the wire returns it.
+ *
+ * Money arrives as `number | string` on this resource — the backend is inconsistent with the case
+ * and financing responses, which are decimal strings throughout. Kept as a union and normalised at
+ * the formatting boundary rather than coerced, because coercing would turn a null figure into a
+ * convincing zero (the reason spelled out in features/financing/api/schema.ts).
+ */
+const MoneySchema = z.union([z.number(), z.string()]).nullable()
+
+export const LeaseObjectReadSchema = z.object({
+  id: z.string().uuid(),
+  contract_id: z.string().uuid(),
+  object_number: z.number().int(),
+  object_group: z.string().nullable(),
+  object_sub_group: z.string().nullable(),
+  object_description: z.string().nullable(),
+  manufacturer: z.string().nullable(),
+  brand: z.string().nullable(),
+  year_of_manufacture: z.number().int().nullable(),
+  chassis_or_serial_number: z.string().nullable(),
+  registration_plate: z.string().nullable(),
+  vehicle_registration_document_number: z.string().nullable(),
+  new_or_used: NewOrUsedSchema.nullable(),
+  acquisition_cost: MoneySchema,
+  residual_value: MoneySchema,
+  special_payment: MoneySchema,
+  market_value: MoneySchema,
+  appraised_value: MoneySchema,
+  value_as_at: z.string().nullable(),
+  dat_evidence_status: DatEvidenceStatusSchema.nullable(),
+  dat_evidence_document_id: z.string().nullable(),
+  removed_at: z.string().nullable(),
+})
+export type LeaseObjectRead = z.infer<typeof LeaseObjectReadSchema>
+
+// Note the envelope: `{contract_id, objects}` — not the `{items, total}` shape the case's contract
+// list and every other collection on this API uses.
+export const LeaseObjectListResponseSchema = z.object({
+  contract_id: z.string().uuid(),
+  objects: z.array(LeaseObjectReadSchema),
+})
+export type LeaseObjectListResponse = z.infer<
+  typeof LeaseObjectListResponseSchema
+>
+
 // The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
 // contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
 // `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they

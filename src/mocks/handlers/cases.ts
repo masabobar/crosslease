@@ -20,16 +20,21 @@ import {
   ImportBatchPreviewResponseSchema,
   ImportBatchResponseSchema,
   ImportCommitResponseSchema,
+  LeaseObjectListResponseSchema,
+  LeaseObjectReadSchema,
+  ObjectClassificationResponseSchema,
   PackageTotalsReadSchema,
   SubmitResultResponseSchema,
   type Case,
   type CaseLeasingCompanyResponse,
   type CaseProductTemplateResponse,
   type ImportBatchPreviewResponse,
+  type LeaseObjectRead,
 } from "@/features/cases/api/schema"
 import { LcNumberListResponseSchema } from "@/features/partners/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
 import { mockCaseContractsByCaseId } from "@/mocks/fixtures/caseContracts"
+import { mockObjectGroups } from "@/mocks/fixtures/objectClassification"
 import {
   importedContracts,
   makeImportBatch,
@@ -57,6 +62,37 @@ const templateByCaseId: Record<string, CaseProductTemplateResponse> = {}
 // Wizard step 2's import batches, likewise. Mutated in place on commit so `rows_committed` reflects
 // that a batch is spent — re-opening a committed batch must not offer to commit it twice.
 const importBatchesById: Record<string, ImportBatchPreviewResponse> = {}
+
+// Manual-entry lease objects, keyed by contract. Session-scoped like everything else here.
+const objectsByContractId: Record<string, LeaseObjectRead[]> = {}
+
+function hexPair(n: number): string {
+  return n.toString(16).padStart(2, "0")
+}
+
+// Every nullable field of LeaseObjectRead, so a POST body carrying only a group still parses into
+// the full read shape the schema requires.
+const EMPTY_LEASE_OBJECT = {
+  object_group: null,
+  object_sub_group: null,
+  object_description: null,
+  manufacturer: null,
+  brand: null,
+  year_of_manufacture: null,
+  chassis_or_serial_number: null,
+  registration_plate: null,
+  vehicle_registration_document_number: null,
+  new_or_used: null,
+  acquisition_cost: null,
+  residual_value: null,
+  special_payment: null,
+  market_value: null,
+  appraised_value: null,
+  value_as_at: null,
+  dat_evidence_status: null,
+  dat_evidence_document_id: null,
+  removed_at: null,
+}
 
 function allCases(): Case[] {
   return [...created, ...mockCases]
@@ -319,6 +355,44 @@ export const caseHandlers = [
       })
     )
   }),
+
+  // ── Manual contract entry (US 1.8) ────────────────────────────────────────
+  http.get(`${API}/object-classification`, () =>
+    envelope(
+      ObjectClassificationResponseSchema.parse({ groups: mockObjectGroups })
+    )
+  ),
+
+  http.get(`${API}/contracts/:contractId/objects`, ({ params }) => {
+    const contractId = params.contractId as string
+    return envelope(
+      LeaseObjectListResponseSchema.parse({
+        contract_id: contractId,
+        objects: objectsByContractId[contractId] ?? [],
+      })
+    )
+  }),
+
+  http.post(
+    `${API}/contracts/:contractId/objects`,
+    async ({ params, request }) => {
+      const contractId = params.contractId as string
+      const body = (await request.json()) as Record<string, unknown>
+      const existing = objectsByContractId[contractId] ?? []
+
+      const created = LeaseObjectReadSchema.parse({
+        ...EMPTY_LEASE_OBJECT,
+        ...body,
+        id: `00000000-0000-4000-8000-0000000e${hexPair(existing.length + 1)}01`,
+        contract_id: contractId,
+        // The backend numbers objects within their contract; the form never sends this.
+        object_number: existing.length + 1,
+      })
+
+      objectsByContractId[contractId] = [...existing, created]
+      return envelope(created)
+    }
+  ),
 
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {

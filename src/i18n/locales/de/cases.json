@@ -169,15 +169,8 @@
       "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu"
     },
     "contracts": {
-      "title": "Verträge",
-      "chooseEntry": "Erfassungsweg wählen",
-      "manualEntry": "Vertrag manuell erfassen",
-      "manualComingSoon": "Die manuelle Vertragserfassung ist noch nicht umgesetzt — sie erfasst Leasingnehmer, Objekte und Konditionen und kommt mit US 1.6–1.9. Bitte vorläufig die Massendatei verwenden.",
       "bulkUpload": "Massendatei hochladen",
-      "empty": "Keine Verträge erfasst",
-      "unnamedContract": "Vertrag ohne Nummer",
-      "termMonths": "{{count}} Monat",
-      "termMonths_other": "{{count}} Monate",
+      "chooseEntry": "Erfassungsweg wählen",
       "columns": {
         "contract": "Vertrag",
         "start": "Beginn",
@@ -188,10 +181,67 @@
       "deferredState": {
         "active": "Aktiv",
         "deferred": "Gestundet"
-      }
+      },
+      "empty": "Keine Verträge erfasst",
+      "manualComingSoon": "Die manuelle Vertragserfassung ist noch nicht umgesetzt — sie erfasst Leasingnehmer, Objekte und Konditionen und kommt mit US 1.6–1.9. Bitte vorläufig die Massendatei verwenden.",
+      "manualEntry": "Vertrag manuell erfassen",
+      "manualPartial": "Die manuelle Erfassung deckt derzeit die Leasingobjekte ab. Leasingnehmer, Vertragskonditionen und Zahlungsplan folgen mit US 1.6, 1.9 und 1.11.",
+      "termMonths": "{{count}} Monat",
+      "termMonths_other": "{{count}} Monate",
+      "title": "Verträge",
+      "unnamedContract": "Vertrag ohne Nummer"
     },
     "leasingCompany": {
       "title": "Neuer Refinanzierungsantrag"
+    },
+    "manual": {
+      "title": "Vertrag manuell erfassen",
+      "save": "Vertrag speichern",
+      "saved": "Vertrag zum Fall gespeichert.",
+      "tabs": {
+        "lessee": "Leasingnehmer",
+        "object": "Objekt",
+        "contractDetails": "Vertragsdaten",
+        "cashFlow": "Zahlungsstrom"
+      },
+      "pending": {
+        "lessee": "Die Erfassung des Leasingnehmers ist noch nicht umgesetzt (US 1.6). Die Endpunkte existieren — /contracts/{id}/lessee und die Vorschau — es fehlt also nur die Umsetzung.",
+        "contractDetails": "Die Erfassung der Vertragskonditionen ist noch nicht umgesetzt (US 1.9).",
+        "cashFlow": "Der Zahlungsplan ist noch nicht umgesetzt (US 1.11)."
+      },
+      "object": {
+        "heading": "Leasingobjekte ({{count}})",
+        "add": "Objekt",
+        "empty": "Noch keine Objekte auf diesem Vertrag.",
+        "savedTitle": "Objekt {{number}}",
+        "savedEmpty": "Keine Angaben erfasst",
+        "saveObject": "Objekt speichern",
+        "newOrUsed": {
+          "new": "Neu",
+          "used": "Gebraucht"
+        },
+        "errors": {
+          "yearFormat": "Bitte ein vierstelliges Jahr eingeben."
+        },
+        "fields": {
+          "description": "Objektbeschreibung",
+          "group": "Objektgruppe",
+          "groupPlaceholder": "Objektgruppe auswählen",
+          "subGroup": "Untergruppe",
+          "subGroupPlaceholder": "Untergruppe auswählen",
+          "manufacturer": "Hersteller",
+          "brand": "Marke",
+          "yearOfManufacture": "Baujahr",
+          "chassis": "Fahrgestell-/Seriennummer",
+          "plate": "Kennzeichen",
+          "zlb": "ZLB II, Fahrzeugschein",
+          "newOrUsed": "Neu / Gebraucht",
+          "acquisitionCost": "Netto-Anschaffungskosten (EUR)",
+          "marketValue": "Marktwert (EUR)",
+          "appraisedValue": "Gutachterwert (EUR)",
+          "specialPayment": "Sonderzahlung (EUR)"
+        }
+      }
     },
     "steps": {
       "leasingCompany": {
