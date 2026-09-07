@@ -1,15 +1,33 @@
 {
-  "status": {
-    "calculating": "Calculating",
-    "ready_for_setup": "Ready for setup",
-    "disbursed": "Disbursed",
-    "active": "Live",
-    "ended": "Ended",
-    "cancelled": "Cancelled"
-  },
-  "kind": {
-    "single": "Single loan",
-    "package": "Package loan"
+  "contracts": {
+    "empty": "This financing includes no contracts.",
+    "unnamedContract": "Contract without a number",
+    "objectCount": "{{count}} object",
+    "objectCount_other": "{{count}} objects",
+    "termMonths": "{{count}} month",
+    "termMonths_other": "{{count}} months",
+    "termsMissing": "Terms unknown",
+    "columns": {
+      "contract": "Contract",
+      "objects": "Objects",
+      "start": "Start date",
+      "term": "Term",
+      "instalment": "Instalment",
+      "residualValue": "Residual value",
+      "share": "Share of the loan",
+      "state": "State"
+    },
+    "deferredState": {
+      "active": "Active",
+      "deferred": "Deferred"
+    },
+    "termsUnavailable": {
+      "title": "Contract terms could not be loaded"
+    },
+    "truncated": {
+      "title": "Not all contracts are shown",
+      "description": "Showing {{shown}} of {{total}} contracts in this request."
+    }
   },
   "covenantState": {
     "open": "Open",
@@ -60,5 +78,17 @@
       "dueDate": "Due date",
       "state": "State"
     }
+  },
+  "kind": {
+    "single": "Single loan",
+    "package": "Package loan"
+  },
+  "status": {
+    "calculating": "Calculating",
+    "ready_for_setup": "Ready for setup",
+    "disbursed": "Disbursed",
+    "active": "Live",
+    "ended": "Ended",
+    "cancelled": "Cancelled"
   }
 }

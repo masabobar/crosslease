@@ -18,6 +18,7 @@ import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { CaseProgressBand } from "@/features/cases/components/CaseProgressBand"
 import { CaseWorkspaceHeader } from "@/features/cases/components/CaseWorkspaceHeader"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
+import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
 
@@ -65,7 +66,15 @@ type TabKey = (typeof TAB_KEYS)[number]
 // `data` is the design's financing Data tab. It lives here rather than under a route of its own
 // because the backend exposes a financing only as a sub-resource of its case — there is no
 // `GET /financings` and no `/financings/{id}` — so the case is the only way in.
-const IMPLEMENTED_TABS = new Set<TabKey>(["checklist", "data", "documents"])
+//
+// `contracts` is the design's financing Contracts tab (US 1.34) and lives beside `data` for the
+// same reason: both read the case's financing, which has no route of its own.
+const IMPLEMENTED_TABS = new Set<TabKey>([
+  "checklist",
+  "data",
+  "contracts",
+  "documents",
+])
 
 export default function CaseDetailPage() {
   const { t } = useTranslation("cases")
@@ -174,6 +183,10 @@ export default function CaseDetailPage() {
       )}
 
       {activeTab === "data" && <FinancingDataPanel caseId={data.id} />}
+
+      {activeTab === "contracts" && (
+        <FinancingContractsPanel caseId={data.id} />
+      )}
 
       {activeTab === "documents" && (
         /* case_type is the resolution key for the document set (PRD1042-1794 DRC usability); the case

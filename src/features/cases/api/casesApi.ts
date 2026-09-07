@@ -1,12 +1,14 @@
 import { z } from "zod"
 import { api } from "@/lib/api"
 import {
+  CaseContractListResponseSchema,
   CaseDataMetaSchema,
   CaseListResponseSchema,
   CaseProgressResponseSchema,
   CaseResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
+  CaseContractListResponse,
   CaseDataMeta,
   CaseListResponse,
   CaseProgressResponse,
@@ -55,8 +57,14 @@ export const CASE_QUERY_KEYS = {
   detail: (caseId: string) => ["cases", "detail", caseId] as const,
   dataMeta: (caseId: string) => ["cases", "data-meta", caseId] as const,
   progress: (caseId: string) => ["cases", "progress", caseId] as const,
+  contracts: (caseId: string) => ["cases", "contracts", caseId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
+
+// The endpoint's own default page is 50. A refinancing request is a bundle of lease contracts rather
+// than an unbounded collection, so one wide page backs the tab without paging controls the design
+// does not show. If a real request ever exceeds this, `total` exposes it (see the panel's notice).
+export const CASE_CONTRACT_LIMIT = 200
 
 // The endpoint caps limit server-side at 200; this is the widest useful page for the list view.
 export const CASE_LIST_LIMIT = 200
@@ -87,6 +95,18 @@ export async function fetchCaseProgress(
 export async function fetchCaseDataMeta(caseId: string): Promise<CaseDataMeta> {
   const data = await api.get(`/cases/${caseId}/data`)
   return CaseDataMetaSchema.parse(data)
+}
+
+// GET /cases/{case_id}/contracts — the lease contracts in a refinancing request. Read by the
+// financing workspace's Contracts tab, which joins these display fields onto the per-contract
+// financing figures (the financing endpoints carry only ids and shares, not terms).
+export async function fetchCaseContracts(
+  caseId: string
+): Promise<CaseContractListResponse> {
+  const data = await api.get(`/cases/${caseId}/contracts`, {
+    params: { limit: CASE_CONTRACT_LIMIT },
+  })
+  return CaseContractListResponseSchema.parse(data)
 }
 
 // POST /cases — start a case. The backend (StartCaseRequest) asks only for the case type; it sets the

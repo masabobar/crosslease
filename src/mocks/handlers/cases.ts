@@ -10,6 +10,7 @@
  */
 import { http } from "msw"
 import {
+  CaseContractListResponseSchema,
   CaseListResponseSchema,
   CaseProgressResponseSchema,
   CaseResponseSchema,
@@ -17,6 +18,7 @@ import {
   type Case,
 } from "@/features/cases/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
+import { mockCaseContractsByCaseId } from "@/mocks/fixtures/caseContracts"
 import { mockCases } from "@/mocks/fixtures/cases"
 import { getMockRole } from "@/mocks/role"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
@@ -148,6 +150,16 @@ export const caseHandlers = [
   http.get(`${API}/cases/:caseId/data`, ({ params }) =>
     envelope({ case_id: String(params.caseId), contract_count: 134 })
   ),
+
+  // GET /cases/{case_id}/contracts — the Contracts tab's terms half. A case with no fixture entry
+  // answers an empty page rather than 404: every case has a contract set, possibly empty, so an
+  // empty list is the honest shape and the tab's empty state is a real state.
+  http.get(`${API}/cases/:caseId/contracts`, ({ params }) => {
+    const items = mockCaseContractsByCaseId[params.caseId as string] ?? []
+    return envelope(
+      CaseContractListResponseSchema.parse({ items, total: items.length })
+    )
+  }),
 
   // The Start-case dialog disables any type the bank has no requirement configured for. All seven are
   // startable here so the dialog is explorable.

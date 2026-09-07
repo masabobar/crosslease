@@ -9,6 +9,9 @@ import {
   CaseDataMetaSchema,
   CaseProgressResponseSchema,
   PhaseProgressResponseSchema,
+  CaseContractSchema,
+  CaseContractListResponseSchema,
+  ContractDeferredStateSchema,
 } from "@/features/cases/api/schema"
 
 const CASE_UUID = "5c2d8b10-6a4f-4e9b-8c31-7d0a1f2b3c44"
@@ -275,5 +278,98 @@ describe("CaseDataMetaSchema", () => {
     expect(() =>
       CaseDataMetaSchema.parse({ case_id: CASE_UUID, contract_count: "134" })
     ).toThrow()
+  })
+})
+
+describe("ContractDeferredStateSchema", () => {
+  it("accepts the two values the contract declares", () => {
+    expect(ContractDeferredStateSchema.parse("active")).toBe("active")
+    expect(ContractDeferredStateSchema.parse("deferred")).toBe("deferred")
+  })
+
+  // The design's Contracts tab shows `Active` / `Overdue` / `Ended`. Only the first exists on the
+  // wire, so the other two must not parse — if the backend ever sends them the enum should fail
+  // loudly rather than let an unmapped badge render.
+  it("rejects the design's extra states", () => {
+    expect(() => ContractDeferredStateSchema.parse("overdue")).toThrow()
+    expect(() => ContractDeferredStateSchema.parse("ended")).toThrow()
+  })
+})
+
+describe("CaseContractSchema", () => {
+  const CONTRACT_UUID = "00000000-0000-4000-8000-0000000000c1"
+
+  const minimalContract = {
+    id: CONTRACT_UUID,
+    leasing_company_contract_number: null,
+    short_name: null,
+    contract_type: null,
+    amortisation_type: null,
+    term_months: null,
+    net_instalment: null,
+    residual_value: null,
+    contract_start: null,
+    deferred_state: "active",
+  }
+
+  // A bulk-imported contract can be missing every optional term while still being a real row, so
+  // the all-null shape has to parse rather than throw.
+  it("parses a contract whose every nullable term is null", () => {
+    expect(CaseContractSchema.parse(minimalContract)).toEqual(minimalContract)
+  })
+
+  it("drops the ContractRead fields this screen does not read", () => {
+    const parsed = CaseContractSchema.parse({
+      ...minimalContract,
+      lessee_partner_id: "00000000-0000-4000-8000-0000000000p1",
+      missing_fields: ["residual_value"],
+      settlement_blockers: [],
+      buy_back_agreement: true,
+    })
+    expect(parsed).toEqual(minimalContract)
+  })
+
+  // Money stays a decimal string end to end; coercing it would turn a null instalment into a
+  // convincing 0,00 (see the note in features/financing/api/schema.ts).
+  it("rejects a numeric instalment", () => {
+    expect(() =>
+      CaseContractSchema.parse({ ...minimalContract, net_instalment: 1250 })
+    ).toThrow()
+  })
+
+  it("rejects a non-integer term", () => {
+    expect(() =>
+      CaseContractSchema.parse({ ...minimalContract, term_months: "48" })
+    ).toThrow()
+  })
+
+  it("requires deferred_state", () => {
+    const withoutState: Record<string, unknown> = { ...minimalContract }
+    delete withoutState.deferred_state
+    expect(() => CaseContractSchema.parse(withoutState)).toThrow()
+  })
+
+  // `contract_type` is deliberately a string, not an enum: ContractRead does not constrain it, so
+  // whatever vocabulary the backend sends must render instead of breaking the page.
+  it("accepts a contract_type the spec's enum does not list", () => {
+    expect(
+      CaseContractSchema.parse({
+        ...minimalContract,
+        contract_type: "operating_lease",
+      }).contract_type
+    ).toBe("operating_lease")
+  })
+
+  it("parses the list envelope", () => {
+    expect(
+      CaseContractListResponseSchema.parse({
+        items: [minimalContract],
+        total: 1,
+      })
+    ).toEqual({ items: [minimalContract], total: 1 })
+  })
+
+  it("rejects a list envelope with no total", () => {
+    expect(() => CaseContractListResponseSchema.parse({ items: [] })).toThrow()
   })
 })

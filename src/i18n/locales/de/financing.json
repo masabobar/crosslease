@@ -1,15 +1,33 @@
 {
-  "status": {
-    "calculating": "Wird berechnet",
-    "ready_for_setup": "Bereit zur Einrichtung",
-    "disbursed": "Ausgezahlt",
-    "active": "Aktiv",
-    "ended": "Beendet",
-    "cancelled": "Storniert"
-  },
-  "kind": {
-    "single": "Einzeldarlehen",
-    "package": "Paketdarlehen"
+  "contracts": {
+    "empty": "Diese Finanzierung enthält keine Verträge.",
+    "unnamedContract": "Vertrag ohne Nummer",
+    "objectCount": "{{count}} Objekt",
+    "objectCount_other": "{{count}} Objekte",
+    "termMonths": "{{count}} Monat",
+    "termMonths_other": "{{count}} Monate",
+    "termsMissing": "Konditionen unbekannt",
+    "columns": {
+      "contract": "Vertrag",
+      "objects": "Objekte",
+      "start": "Beginn",
+      "term": "Laufzeit",
+      "instalment": "Rate",
+      "residualValue": "Restwert",
+      "share": "Anteil am Darlehen",
+      "state": "Status"
+    },
+    "deferredState": {
+      "active": "Aktiv",
+      "deferred": "Gestundet"
+    },
+    "termsUnavailable": {
+      "title": "Vertragskonditionen konnten nicht geladen werden"
+    },
+    "truncated": {
+      "title": "Es werden nicht alle Verträge angezeigt",
+      "description": "{{shown}} von {{total}} Verträgen dieses Antrags werden angezeigt."
+    }
   },
   "covenantState": {
     "open": "Offen",
@@ -60,5 +78,17 @@
       "dueDate": "Fällig am",
       "state": "Status"
     }
+  },
+  "kind": {
+    "single": "Einzeldarlehen",
+    "package": "Paketdarlehen"
+  },
+  "status": {
+    "calculating": "Wird berechnet",
+    "ready_for_setup": "Bereit zur Einrichtung",
+    "disbursed": "Ausgezahlt",
+    "active": "Aktiv",
+    "ended": "Beendet",
+    "cancelled": "Storniert"
   }
 }

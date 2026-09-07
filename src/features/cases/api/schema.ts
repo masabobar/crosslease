@@ -151,3 +151,49 @@ export const CaseDataMetaSchema = z.object({
   contract_count: z.number().int(),
 })
 export type CaseDataMeta = z.infer<typeof CaseDataMetaSchema>
+
+// The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
+// contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
+// `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they
+// are parsed as strings below; see the note there.
+export const ContractDeferredStateSchema = z.enum(["active", "deferred"])
+export type ContractDeferredState = z.infer<typeof ContractDeferredStateSchema>
+
+/**
+ * GET /cases/{case_id}/contracts — narrowed deliberately, the same way `CaseDataMetaSchema` is.
+ *
+ * `ContractRead` carries 32 fields. The financing workspace's Contracts tab reads ten of them, so
+ * only those are declared; Zod strips the rest. Declaring all 32 before a screen consumes them
+ * would be modelling a contract we do not read.
+ *
+ * `contract_type` and `amortisation_type` are strings, not enums, and that is not laziness:
+ * `ContractRead` genuinely does not constrain them (see `ContractDeferredStateSchema` above). The
+ * design's Contracts tab shows a *third* contract type (`Finance lease` / `Operating lease`) and a
+ * different amortisation axis (`Linear` / `Degressive`) than the spec's two-value pairs — a live
+ * conflict (design-extract §8). Since the write schemas admit only the spec's values, the design's
+ * vocabulary is unreachable through this API; parsing as a string renders whatever the backend
+ * actually sends, including legacy or imported values, rather than throwing on the whole page.
+ */
+export const CaseContractSchema = z.object({
+  id: z.string().uuid(),
+  leasing_company_contract_number: z.string().nullable(),
+  short_name: z.string().nullable(),
+  contract_type: z.string().nullable(),
+  amortisation_type: z.string().nullable(),
+  term_months: z.number().int().nullable(),
+  // Decimal strings, for the reason spelled out in features/financing/api/schema.ts — coercing a
+  // nullable decimal turns `null` into a convincing `0`.
+  net_instalment: z.string().nullable(),
+  residual_value: z.string().nullable(),
+  contract_start: z.string().nullable(),
+  deferred_state: ContractDeferredStateSchema,
+})
+export type CaseContract = z.infer<typeof CaseContractSchema>
+
+export const CaseContractListResponseSchema = z.object({
+  items: z.array(CaseContractSchema),
+  total: z.number().int(),
+})
+export type CaseContractListResponse = z.infer<
+  typeof CaseContractListResponseSchema
+>
