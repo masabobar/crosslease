@@ -3,14 +3,18 @@ import { api } from "@/lib/api"
 import {
   CaseContractListResponseSchema,
   CaseDataMetaSchema,
+  CaseLeasingCompanyResponseSchema,
   CaseListResponseSchema,
+  CaseProductTemplateResponseSchema,
   CaseProgressResponseSchema,
   CaseResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
   CaseDataMeta,
+  CaseLeasingCompanyResponse,
   CaseListResponse,
+  CaseProductTemplateResponse,
   CaseProgressResponse,
   CaseResponse,
   CaseType,
@@ -58,6 +62,10 @@ export const CASE_QUERY_KEYS = {
   dataMeta: (caseId: string) => ["cases", "data-meta", caseId] as const,
   progress: (caseId: string) => ["cases", "progress", caseId] as const,
   contracts: (caseId: string) => ["cases", "contracts", caseId] as const,
+  leasingCompany: (caseId: string) =>
+    ["cases", "leasing-company", caseId] as const,
+  productTemplate: (caseId: string) =>
+    ["cases", "product-template", caseId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -107,6 +115,58 @@ export async function fetchCaseContracts(
     params: { limit: CASE_CONTRACT_LIMIT },
   })
   return CaseContractListResponseSchema.parse(data)
+}
+
+/**
+ * GET /cases/{case_id}/leasing-company — wizard step 1.
+ *
+ * Answers `null` (not 404) for a case whose leasing company is not bound yet, which is every case
+ * between `POST /cases` and the first bind. `null` is returned as-is rather than parsed, so callers
+ * distinguish "not bound" from "failed to read".
+ */
+export async function fetchCaseLeasingCompany(
+  caseId: string
+): Promise<CaseLeasingCompanyResponse | null> {
+  const data = await api.get(`/cases/${caseId}/leasing-company`)
+  return data === null ? null : CaseLeasingCompanyResponseSchema.parse(data)
+}
+
+/**
+ * PUT /cases/{case_id}/leasing-company — binds by **Händlernummer**, not by partner id.
+ *
+ * `BindLeasingCompanyRequest` takes `{ lc_number }` matching `^[0-9]{4}$`, while the search that
+ * finds the company returns `{ id, legal_name }`. The two do not meet: the caller must resolve the
+ * partner's LC numbers first (`/partners/{id}/lc-numbers`) and pick one. A company may hold up to
+ * four, and no source says which is chosen — tracked as Q-014, and why step 1 carries a picker the
+ * Figma frame does not show.
+ */
+export async function bindCaseLeasingCompany(
+  caseId: string,
+  lcNumber: string
+): Promise<CaseLeasingCompanyResponse> {
+  const data = await api.put(`/cases/${caseId}/leasing-company`, {
+    lc_number: lcNumber,
+  })
+  return CaseLeasingCompanyResponseSchema.parse(data)
+}
+
+// GET /cases/{case_id}/product-template — nullable in the same way as the leasing company above.
+export async function fetchCaseProductTemplate(
+  caseId: string
+): Promise<CaseProductTemplateResponse | null> {
+  const data = await api.get(`/cases/${caseId}/product-template`)
+  return data === null ? null : CaseProductTemplateResponseSchema.parse(data)
+}
+
+// PUT /cases/{case_id}/product-template — BindProductTemplateRequest { product_template_id }.
+export async function bindCaseProductTemplate(
+  caseId: string,
+  productTemplateId: string
+): Promise<CaseProductTemplateResponse> {
+  const data = await api.put(`/cases/${caseId}/product-template`, {
+    product_template_id: productTemplateId,
+  })
+  return CaseProductTemplateResponseSchema.parse(data)
 }
 
 // POST /cases — start a case. The backend (StartCaseRequest) asks only for the case type; it sets the

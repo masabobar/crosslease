@@ -1,4 +1,40 @@
 {
+  "caseTypes": {
+    "refinancing_request": "Refinanzierungsanfrage",
+    "package_redemption": "Paketablösung",
+    "single_redemption": "Einzelablösung",
+    "lessee_change": "Leasingnehmerwechsel",
+    "object_swap": "Objekttausch",
+    "extension": "Verlängerung",
+    "asset_event": "Asset-Ereignis"
+  },
+  "detail": {
+    "fields": {
+      "caseType": "Falltyp",
+      "caseId": "Fall-ID"
+    },
+    "loadError": "Dieser Fall konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "takeOver": "Übernehmen",
+    "takeOverSuccess": "Fall übernommen.",
+    "reject": "Ablehnen",
+    "rejectSuccess": "Vorschlag abgelehnt.",
+    "uploadBlockedUnclaimed": "Dieser Fall wurde noch nicht übernommen. Übernehmen Sie ihn, bevor Sie Dokumente hochladen."
+  },
+  "displayStatuses": {
+    "open": "Offen",
+    "waiting": "Wartend",
+    "done": "Erledigt",
+    "cancelled": "Storniert",
+    "draft": "Entwurf",
+    "submitted": "Eingereicht",
+    "missing_information": "Fehlende Informationen",
+    "rework": "Nachbearbeitung",
+    "committed": "Zugesagt",
+    "rejected": "Abgelehnt",
+    "approved": "Genehmigt",
+    "ready_for_setup": "Bereit zur Einrichtung",
+    "live": "Aktiv"
+  },
   "list": {
     "title": "Fälle",
     "subtitle": "Jeder Fall, der eine Reihe von Leasingverträgen durch die Refinanzierung führt.",
@@ -45,41 +81,77 @@
     "success": "Fall angelegt.",
     "caseTypeNoRequirements": "{{type}} (keine Anforderungen konfiguriert)"
   },
-  "detail": {
-    "fields": {
-      "caseType": "Falltyp",
-      "caseId": "Fall-ID"
+  "wizard": {
+    "steps": {
+      "leasingCompany": {
+        "label": "Leasinggesellschaft",
+        "description": "Gesellschaft & Rahmenvertrag"
+      },
+      "contracts": {
+        "label": "Verträge",
+        "description": "Erfassungsweg & Liste"
+      },
+      "summary": {
+        "label": "Zusammenfassung",
+        "description": "Prüfen & einreichen"
+      }
     },
-    "loadError": "Dieser Fall konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
-    "takeOver": "Übernehmen",
-    "takeOverSuccess": "Fall übernommen.",
-    "reject": "Ablehnen",
-    "rejectSuccess": "Vorschlag abgelehnt.",
-    "uploadBlockedUnclaimed": "Dieser Fall wurde noch nicht übernommen. Übernehmen Sie ihn, bevor Sie Dokumente hochladen."
-  },
-  "caseTypes": {
-    "refinancing_request": "Refinanzierungsanfrage",
-    "package_redemption": "Paketablösung",
-    "single_redemption": "Einzelablösung",
-    "lessee_change": "Leasingnehmerwechsel",
-    "object_swap": "Objekttausch",
-    "extension": "Verlängerung",
-    "asset_event": "Asset-Ereignis"
-  },
-  "displayStatuses": {
-    "open": "Offen",
-    "waiting": "Wartend",
-    "done": "Erledigt",
-    "cancelled": "Storniert",
-    "draft": "Entwurf",
-    "submitted": "Eingereicht",
-    "missing_information": "Fehlende Informationen",
-    "rework": "Nachbearbeitung",
-    "committed": "Zugesagt",
-    "rejected": "Abgelehnt",
-    "approved": "Genehmigt",
-    "ready_for_setup": "Bereit zur Einrichtung",
-    "live": "Aktiv"
+    "actions": {
+      "cancel": "Abbrechen",
+      "back": "Zurück",
+      "saveAsDraft": "Als Entwurf speichern",
+      "continue": "Weiter",
+      "draftSaved": "Als Entwurf gespeichert."
+    },
+    "leasingCompany": {
+      "title": "Neuer Refinanzierungsantrag"
+    },
+    "contracts": {
+      "title": "Verträge",
+      "pending": "Die Vertragserfassung und der Massen-Upload sind noch nicht umgesetzt (US 1.4, US 1.5)."
+    },
+    "summary": {
+      "title": "Zusammenfassung",
+      "pending": "Der Prüf- und Einreichungsschritt ist noch nicht umgesetzt (US 1.17)."
+    },
+    "company": {
+      "searchLabel": "Leasinggesellschaft auswählen",
+      "searchPlaceholder": "Mindestens 3 Zeichen des Firmennamens eingeben",
+      "noMatches": "Keine Leasinggesellschaft mit diesem Namen gefunden.",
+      "selected": "Ausgewählt",
+      "bind": "Diese Gesellschaft verwenden",
+      "lcNumber": "Händlernummer {{number}}",
+      "lcNumberLabel": "Händlernummer",
+      "lcNumberPlaceholder": "Händlernummer auswählen",
+      "noLcNumber": {
+        "title": "Diese Gesellschaft hat keine Händlernummer",
+        "description": "{{name}} kann keinem Fall zugeordnet werden: die Plattform identifiziert eine Leasinggesellschaft im Fall über ihre Händlernummer, und es ist keine erfasst. Bitte zuerst im Partnersatz hinterlegen."
+      },
+      "chooseLcNumber": {
+        "title": "Händlernummer auswählen",
+        "description": "Diese Gesellschaft hat {{count}} Händlernummern. Der Antrag wird der Nummer zugeordnet, über die er eingeht — bitte die passende auswählen."
+      },
+      "agreement": "Rahmenvertrag",
+      "agreementActive": "Aktiv",
+      "agreementInactive": "Nicht aktiv",
+      "agreementReference": "Referenz",
+      "frameworkVolume": "Rahmenvolumen",
+      "vfeAmount": "VFE-Betrag",
+      "refinancingQuota": "Refinanzierungsquote",
+      "contactPerson": "Ansprechpartner",
+      "noAgreement": {
+        "title": "Kein aktiver Rahmenvertrag",
+        "description": "Diese Leasinggesellschaft hat keinen aktiven Rahmenvertrag. Daher kann kein Produkttemplate gewählt werden und der Antrag kann nicht fortgeführt werden."
+      },
+      "multipleAgreements": {
+        "title": "Mehr als ein aktiver Rahmenvertrag",
+        "description": "Für diese Gesellschaft wurden {{count}} aktive Rahmenverträge gefunden, es sollte genau einer sein. Die Templates unten stammen aus dem ersten; bitte die Rahmenverträge prüfen."
+      },
+      "templateLabel": "Bank-Produkttemplate",
+      "templatePlaceholder": "Produkttemplate auswählen",
+      "templateHelper": "Es können nur Templates gewählt werden, die der Rahmenvertrag zulässt.",
+      "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu"
+    }
   },
   "workspace": {
     "eyebrow": {

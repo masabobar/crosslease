@@ -11,14 +11,23 @@
 import { http } from "msw"
 import {
   CaseContractListResponseSchema,
+  CaseLeasingCompanyResponseSchema,
   CaseListResponseSchema,
+  CaseProductTemplateResponseSchema,
   CaseProgressResponseSchema,
   CaseResponseSchema,
   CaseTypeSchema,
   type Case,
+  type CaseLeasingCompanyResponse,
+  type CaseProductTemplateResponse,
 } from "@/features/cases/api/schema"
+import { LcNumberListResponseSchema } from "@/features/partners/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
 import { mockCaseContractsByCaseId } from "@/mocks/fixtures/caseContracts"
+import {
+  boundLeasingCompany,
+  mockLcNumbersByPartnerId,
+} from "@/mocks/fixtures/caseWizard"
 import { mockCases } from "@/mocks/fixtures/cases"
 import { getMockRole } from "@/mocks/role"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
@@ -29,6 +38,10 @@ const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 // Newly started cases live here for the session so that creating one, then landing on its detail
 // page, works. Not persisted: a reload is a clean slate, which is what you want from a prototype.
 const created: Case[] = []
+
+// Wizard step 1's bindings, session-scoped for the same reason as `created`.
+const boundByCaseId: Record<string, CaseLeasingCompanyResponse> = {}
+const templateByCaseId: Record<string, CaseProductTemplateResponse> = {}
 
 function allCases(): Case[] {
   return [...created, ...mockCases]
@@ -150,6 +163,73 @@ export const caseHandlers = [
   http.get(`${API}/cases/:caseId/data`, ({ params }) =>
     envelope({ case_id: String(params.caseId), contract_count: 134 })
   ),
+
+  // ── Wizard step 1 ─────────────────────────────────────────────────────────
+  // The bind is session-scoped and in-memory, like `created` above: binding a company then walking
+  // back to step 1 shows the bound state, and a reload starts clean. That is what a prototype
+  // should do — persisting it would imply a durability the mock layer does not have.
+  http.get(`${API}/cases/:caseId/leasing-company`, ({ params }) => {
+    const bound = boundByCaseId[params.caseId as string]
+    // `null` — not 404 — for an unbound case, matching the endpoint's `anyOf: [..., null]`. The
+    // wizard distinguishes "not bound yet" from "failed to read", so this path must stay null.
+    return envelope(bound ?? null)
+  }),
+
+  http.put(
+    `${API}/cases/:caseId/leasing-company`,
+    async ({ params, request }) => {
+      const body = (await request.json()) as { lc_number?: string }
+      const lcNumber = body.lc_number ?? ""
+
+      // The backend's BindLeasingCompanyRequest constrains this to exactly four digits. Enforced
+      // here so the wizard's error path is reachable without a real backend.
+      if (!/^[0-9]{4}$/.test(lcNumber)) {
+        return errorEnvelope(
+          "VALIDATION_ERROR",
+          "lc_number must be exactly four digits.",
+          422
+        )
+      }
+
+      const bound = boundLeasingCompany(lcNumber)
+      boundByCaseId[params.caseId as string] = bound
+      return envelope(CaseLeasingCompanyResponseSchema.parse(bound))
+    }
+  ),
+
+  http.get(`${API}/cases/:caseId/product-template`, ({ params }) =>
+    envelope(templateByCaseId[params.caseId as string] ?? null)
+  ),
+
+  http.put(
+    `${API}/cases/:caseId/product-template`,
+    async ({ params, request }) => {
+      const body = (await request.json()) as { product_template_id?: string }
+      const template = CaseProductTemplateResponseSchema.parse({
+        product_template_id: body.product_template_id,
+        template_code: "STD-LEASE-REFI",
+        template_name: "Standard lease refinancing",
+        version_number: "4",
+        version_status: "effective",
+        min_term_months: 12,
+        max_term_months: 72,
+        refinancing_form: "annuity",
+      })
+      templateByCaseId[params.caseId as string] = template
+      return envelope(template)
+    }
+  ),
+
+  // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
+  http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {
+    const partnerId = params.partnerId as string
+    return envelope(
+      LcNumberListResponseSchema.parse({
+        partner_id: partnerId,
+        items: mockLcNumbersByPartnerId[partnerId] ?? [],
+      })
+    )
+  }),
 
   // GET /cases/{case_id}/contracts — the Contracts tab's terms half. A case with no fixture entry
   // answers an empty page rather than 404: every case has a contract set, possibly empty, so an

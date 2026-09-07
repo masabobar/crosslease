@@ -16,8 +16,12 @@ import {
   FAListResponseSchema,
   FALCPartnersResponseSchema,
   FAUtilizationResponseSchema,
+  SelectableTemplatesResponseSchema,
 } from "@/features/frameworkAgreements/api/schema"
-import { TemplateListResponseSchema } from "@/features/productTemplates/api/schema"
+import {
+  TemplateListResponseSchema,
+  TemplateStatusSchema,
+} from "@/features/productTemplates/api/schema"
 import { mockDuplicatePairs, mockPartners } from "@/mocks/fixtures/partners"
 import {
   mockFrameworkAgreements,
@@ -112,24 +116,56 @@ export const businessConfigHandlers = [
     // The detail response is a wider shape than the list item, and it is role-scoped four different
     // ways on the backend. Rather than invent that, the list row is returned as-is: the detail screen
     // will report the fields it is missing in the console, which is the honest signal.
+    //
+    // `product_template_ids` is the one exception, added because the wizard's step 1 genuinely
+    // depends on it — it is what makes "only templates the framework agreement allows" real rather
+    // than decorative. Every effective template is permitted here except the last, so the
+    // intersection in `filterTemplatesAllowedByAgreement` is observable rather than a no-op.
     return found
-      ? envelope(found)
+      ? envelope({
+          ...found,
+          product_template_ids: mockProductTemplates
+            .filter(
+              t =>
+                t.current_version?.version_status ===
+                TemplateStatusSchema.enum.effective
+            )
+            .slice(0, -1)
+            .map(t => t.id),
+        })
       : errorEnvelope("NOT_FOUND", "Framework agreement not found", 404)
   }),
 
   // ── Product templates ─────────────────────────────────────────────────────
   // The templates an agreement allows. Wizard step 1 reads this; nothing outside the list may be used.
+  //
+  // Parsed through the real schema, which this handler previously did not do — and it had drifted:
+  // it emitted `id` where `SelectableTemplateItem` declares `template_id`, and a nullable
+  // `template_name` / `version_number` where both are required. Any consumer that parses (the
+  // fetcher does) would have thrown. Rows the fixture cannot satisfy are dropped rather than
+  // coerced: a template with no effective version genuinely is not selectable.
   http.get(`${API}/product-templates/selectable`, () =>
-    envelope({
-      items: mockProductTemplates
-        .filter(t => t.current_version?.version_status === "effective")
-        .map(t => ({
-          id: t.id,
-          template_code: t.template_code,
-          template_name: t.template_name,
-          version_number: t.current_version?.version_number ?? null,
-        })),
-    })
+    envelope(
+      SelectableTemplatesResponseSchema.parse({
+        items: mockProductTemplates
+          .filter(
+            t =>
+              t.current_version?.version_status ===
+                TemplateStatusSchema.enum.effective &&
+              t.template_name !== null &&
+              t.current_version?.version_number !== undefined
+          )
+          .map(t => ({
+            template_id: t.id,
+            template_code: t.template_code,
+            template_name: t.template_name,
+            version_number: t.current_version?.version_number,
+            // Nullable on the wire, and the FE's version summary does not carry it, so it is left
+            // null rather than invented. Only the FA create wizard's eligibility filter reads it.
+            valid_from: null,
+          })),
+      })
+    )
   ),
 
   http.get(`${API}/tenants/:tenantId/product-templates`, ({ request }) => {

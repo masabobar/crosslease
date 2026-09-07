@@ -36,7 +36,10 @@ import {
   CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES,
   DOCUMENT_REQUIREMENT_CATALOG_READ_ALLOWED_ROLES,
 } from "@/features/documentRequirements/types"
-import { CASE_READ_ALLOWED_ROLES } from "@/features/cases/types"
+import {
+  CASE_READ_ALLOWED_ROLES,
+  CASE_WRITE_ALLOWED_ROLES,
+} from "@/features/cases/types"
 
 const LoginPage = lazy(() => import("@/features/auth/components/LoginPage"))
 const ForgotPasswordPage = lazy(
@@ -178,6 +181,9 @@ const CaseListPage = lazy(
 )
 const CaseDetailPage = lazy(
   () => import("@/features/cases/components/CaseDetailPage")
+)
+const StartCaseWizardPage = lazy(
+  () => import("@/features/cases/components/StartCaseWizardPage")
 )
 
 export const router = createBrowserRouter([
@@ -595,6 +601,19 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={CASE_READ_ALLOWED_ROLES}>
               <CaseListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // The New refinancing request wizard (US 1.1–1.5, 1.17). Guarded on WRITE rather than read:
+        // every step binds or imports, so a role that may only read a case has nothing to do here.
+        // More specific than CASE_DETAIL, so React Router ranks it first.
+        path: PATHS.CASE_WIZARD,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_WRITE_ALLOWED_ROLES}>
+              <StartCaseWizardPage />
             </RoleGuard>
           </Suspense>
         ),

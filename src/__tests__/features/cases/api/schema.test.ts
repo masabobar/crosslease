@@ -12,6 +12,8 @@ import {
   CaseContractSchema,
   CaseContractListResponseSchema,
   ContractDeferredStateSchema,
+  CaseLeasingCompanyResponseSchema,
+  CaseProductTemplateResponseSchema,
 } from "@/features/cases/api/schema"
 
 const CASE_UUID = "5c2d8b10-6a4f-4e9b-8c31-7d0a1f2b3c44"
@@ -371,5 +373,129 @@ describe("CaseContractSchema", () => {
 
   it("rejects a list envelope with no total", () => {
     expect(() => CaseContractListResponseSchema.parse({ items: [] })).toThrow()
+  })
+})
+
+describe("CaseLeasingCompanyResponseSchema", () => {
+  const bound = {
+    lc_number: "1234",
+    name: "Premium Leasing GmbH",
+    address: { city: "Hamburg" },
+    contact_person: "Head of refinancing",
+    personennummer_os_plus: "OS-99001",
+    agreement_reference: "FA-2024-018",
+    agreement_active: true,
+    vfe_amount_eur: "850.00",
+    refinancing_quota: "97.00",
+    value_date_rule: "month_end",
+    instalment_due_day: 1,
+    framework_volume_eur: "2000000.00",
+  }
+
+  it("parses a bound leasing company with its agreement", () => {
+    expect(CaseLeasingCompanyResponseSchema.parse(bound)).toEqual(bound)
+  })
+
+  // A case is unbound between POST /cases and the first bind, and the endpoint answers with the
+  // fields null rather than 404. That must parse — it is the wizard's opening state.
+  it("parses the unbound shape, every nullable field null", () => {
+    const unbound = {
+      ...bound,
+      lc_number: null,
+      name: null,
+      address: null,
+      contact_person: null,
+      personennummer_os_plus: null,
+      agreement_reference: null,
+      agreement_active: false,
+      vfe_amount_eur: null,
+      refinancing_quota: null,
+      value_date_rule: null,
+      instalment_due_day: null,
+      framework_volume_eur: null,
+    }
+    expect(CaseLeasingCompanyResponseSchema.parse(unbound)).toEqual(unbound)
+  })
+
+  // The design shows a payout and a collection IBAN on this block; §5.2 says they belong on
+  // generated documents instead. The contract carries neither — this asserts the schema does not
+  // quietly acquire them.
+  it("strips any bank account the response might carry", () => {
+    const parsed = CaseLeasingCompanyResponseSchema.parse({
+      ...bound,
+      payout_iban: "DE44500105170648489807",
+      collection_iban: "DE44500105170648489808",
+    })
+    expect(parsed).not.toHaveProperty("payout_iban")
+    expect(parsed).not.toHaveProperty("collection_iban")
+  })
+
+  it("keeps money and quotas as decimal strings", () => {
+    expect(() =>
+      CaseLeasingCompanyResponseSchema.parse({
+        ...bound,
+        framework_volume_eur: 2000000,
+      })
+    ).toThrow()
+  })
+
+  // `agreement_active` is the only non-nullable field: the badge beside the reference has to render
+  // one way or the other, so a missing flag is a parse failure rather than a silent default.
+  it("requires agreement_active", () => {
+    const withoutFlag: Record<string, unknown> = { ...bound }
+    delete withoutFlag.agreement_active
+    expect(() => CaseLeasingCompanyResponseSchema.parse(withoutFlag)).toThrow()
+  })
+
+  it("rejects a non-integer instalment due day", () => {
+    expect(() =>
+      CaseLeasingCompanyResponseSchema.parse({
+        ...bound,
+        instalment_due_day: 1.5,
+      })
+    ).toThrow()
+  })
+})
+
+describe("CaseProductTemplateResponseSchema", () => {
+  const template = {
+    product_template_id: "00000000-0000-4000-8000-0000000000f1",
+    template_code: "STD-LEASE",
+    template_name: "Standard lease refinancing",
+    version_number: "4",
+    version_status: "active",
+    min_term_months: 12,
+    max_term_months: 72,
+    refinancing_form: "annuity",
+  }
+
+  it("parses the bound template", () => {
+    expect(CaseProductTemplateResponseSchema.parse(template)).toEqual(template)
+  })
+
+  it("requires the id and the code", () => {
+    const withoutCode: Record<string, unknown> = { ...template }
+    delete withoutCode.template_code
+    expect(() => CaseProductTemplateResponseSchema.parse(withoutCode)).toThrow()
+  })
+
+  it("rejects a non-uuid template id", () => {
+    expect(() =>
+      CaseProductTemplateResponseSchema.parse({
+        ...template,
+        product_template_id: "STD-LEASE",
+      })
+    ).toThrow()
+  })
+
+  // `version_status` and `refinancing_form` have enum counterparts elsewhere in the registry but
+  // are unconstrained strings on THIS response, so a value outside those enums must still parse.
+  it("accepts an unconstrained version_status", () => {
+    expect(
+      CaseProductTemplateResponseSchema.parse({
+        ...template,
+        version_status: "something_new",
+      }).version_status
+    ).toBe("something_new")
   })
 })

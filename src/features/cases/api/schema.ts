@@ -152,6 +152,65 @@ export const CaseDataMetaSchema = z.object({
 })
 export type CaseDataMeta = z.infer<typeof CaseDataMetaSchema>
 
+/**
+ * GET /cases/{case_id}/leasing-company — the wizard's step 1, read back after the bind.
+ *
+ * ── THIS RESPONSE SETTLES TWO DESIGN CONFLICTS IN THE SPEC'S FAVOUR ────────────────────────────
+ * `agreement_reference` and `agreement_active` are **outputs** of binding the leasing company, not
+ * inputs. There is no endpoint that offers a choice of framework agreement for a case, which is
+ * exactly D-79: *"one active framework agreement per leasing company; determined by the company,
+ * shown read-only, never a dropdown."* The Figma frame draws a dropdown (design-extract §6); the
+ * contract does not support one, so the agreement renders read-only.
+ *
+ * And there is **no bank account on this response** — no payout IBAN, no collection IBAN. The design
+ * shows both in full; §5.2 says they are partner records that belong on generated documents, not
+ * here. The contract agrees with the spec.
+ *
+ * `null` is a legitimate whole-body response: a case exists before its leasing company is bound, so
+ * the endpoint answers `null` rather than 404 (see the `anyOf` in openapi.json). The hook models
+ * that as `null` data, not as an error.
+ *
+ * Money and quotas are decimal strings for the reason given in features/financing/api/schema.ts.
+ */
+export const CaseLeasingCompanyResponseSchema = z.object({
+  lc_number: z.string().nullable(),
+  name: z.string().nullable(),
+  // Untyped `object` on the wire — no declared properties, so nothing here may be read by key.
+  // Parsed permissively so the response still validates; deliberately not rendered. The design's
+  // result row reads "Premium Leasing GmbH, Hamburg", but neither this nor `FALCPartnerItem`
+  // declares a city, so the town is not shown.
+  address: z.record(z.string(), z.unknown()).nullable(),
+  contact_person: z.string().nullable(),
+  personennummer_os_plus: z.string().nullable(),
+  agreement_reference: z.string().nullable(),
+  agreement_active: z.boolean(),
+  vfe_amount_eur: z.string().nullable(),
+  refinancing_quota: z.string().nullable(),
+  value_date_rule: z.string().nullable(),
+  instalment_due_day: z.number().int().nullable(),
+  framework_volume_eur: z.string().nullable(),
+})
+export type CaseLeasingCompanyResponse = z.infer<
+  typeof CaseLeasingCompanyResponseSchema
+>
+
+// GET /cases/{case_id}/product-template — the bound template, also nullable before step 1 completes.
+// `version_status` and `refinancing_form` are unconstrained strings on the wire despite both having
+// enum counterparts elsewhere in the registry, so they are parsed as strings.
+export const CaseProductTemplateResponseSchema = z.object({
+  product_template_id: z.string().uuid(),
+  template_code: z.string(),
+  template_name: z.string().nullable(),
+  version_number: z.string().nullable(),
+  version_status: z.string().nullable(),
+  min_term_months: z.number().int().nullable(),
+  max_term_months: z.number().int().nullable(),
+  refinancing_form: z.string().nullable(),
+})
+export type CaseProductTemplateResponse = z.infer<
+  typeof CaseProductTemplateResponseSchema
+>
+
 // The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
 // contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
 // `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they

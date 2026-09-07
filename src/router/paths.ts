@@ -79,6 +79,10 @@ export const PATHS = {
   // document surface except typing the CASE_DOCUMENT_REQUIREMENTS URL by hand.
   CASE_LIST: "/cases",
   CASE_DETAIL: "/cases/:caseId",
+  // The New refinancing request wizard (US 1.1–1.5, 1.17). Nested under the case because every
+  // step writes to a case-scoped endpoint, so the case exists before the wizard opens — see
+  // StartCaseWizardPage. Not "/cases/new": there is no case-less draft to edit.
+  CASE_WIZARD: "/cases/:caseId/new-request",
 } as const
 
 export function adminUserDetail(id: string): string {
@@ -146,6 +150,10 @@ export function caseChecklist(businessObjectId: string): string {
 
 export function caseDetail(caseId: string): string {
   return PATHS.CASE_DETAIL.replace(":caseId", caseId)
+}
+
+export function caseWizard(caseId: string): string {
+  return PATHS.CASE_WIZARD.replace(":caseId", caseId)
 }
 
 export function lcCaseDocuments(businessObjectId: string): string {

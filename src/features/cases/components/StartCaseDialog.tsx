@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { showApiError } from "@/lib/apiErrorMessage"
 import { resolveFormMessage } from "@/lib/formMessages"
-import { caseDetail } from "@/router/paths"
+import { caseDetail, caseWizard } from "@/router/paths"
 import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { useCreateCase } from "@/features/cases/hooks/useCreateCase"
 import { useStartableCaseTypes } from "@/features/cases/hooks/useStartableCaseTypes"
@@ -86,11 +86,25 @@ function StartCaseDialog({ onOpenChange, redirectTo }: Props) {
   }
 
   function onSubmit(values: StartCaseFormValues) {
-    createCase.mutate(CaseTypeSchema.parse(values.caseType), {
+    const caseType = CaseTypeSchema.parse(values.caseType)
+    createCase.mutate(caseType, {
       onSuccess: created => {
         toast.success(t("start.success"))
         handleClose()
-        navigate(redirectTo ? redirectTo(created.id) : caseDetail(created.id))
+
+        // US 1.1: "Starting a case asks for the case type first. A refinancing request opens the
+        // guided wizard. The other six case types do not open the request wizard." An explicit
+        // `redirectTo` still wins — the LC portal passes its own destination, because the bank
+        // wizard route is closed to leasing-company users.
+        if (redirectTo) {
+          navigate(redirectTo(created.id))
+          return
+        }
+        navigate(
+          caseType === CaseTypeSchema.enum.refinancing_request
+            ? caseWizard(created.id)
+            : caseDetail(created.id)
+        )
       },
       onError: err => showApiError(err, t),
     })
