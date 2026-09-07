@@ -98,7 +98,7 @@
         "dd_return_escalation": "Direct debit return handling and escalation.",
         "reporting": "Operational and executive reporting views.",
         "bank_product_template": "Financing product configuration and versioning.",
-        "framework_agreement": "Leasing company framework and covenant management.",
+        "framework_agreement": "Leasing company framework agreements and approval conditions.",
         "rate_table": "Interest rate tables and pricing configuration.",
         "partner_management": "Leasing company and lessee partner records.",
         "notification_center": "Platform notification delivery and inbox.",

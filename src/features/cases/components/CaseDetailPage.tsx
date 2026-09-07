@@ -38,11 +38,11 @@ const TERMINAL_DISPLAY_STATUSES = new Set(["committed", "rejected"])
  * second section lands a <Tabs> shell can be reintroduced around the panels".
  *
  * ── WHAT IS DELIBERATELY NOT HERE ──────────────────────────────────────────────────────────
- * The design also puts a **Covenants** section at the foot of the Checklist tab. It is not built,
- * because where those live is an open conflict: the design says the case, the spec says the
- * financing — "one object, on the financing, not the case … section 5 of nine on the financing
- * screen" (§5.13, D-37) — and the design's own financing Data tab carries no such section. Building
- * either placement now means rebuilding US 1.21 later. Tracked as Q-008.
+ * The design puts a **Covenants** section at the foot of the Checklist tab. It is not built here,
+ * and now never will be: **Q-008 was answered on 2026-09-08** — approval conditions belong to the
+ * *financing*, not the case, as the spec had it (§5.13, D-37), and the confirmed UI term is
+ * **Approval Conditions**, retiring "Covenants". They render on the financing Data tab
+ * (`FinancingDataPanel`), which is where the contract carries them.
  *
  * Five tabs have a design but no implementation yet, so they say so rather than rendering an empty
  * shell that reads as "nothing to do here".

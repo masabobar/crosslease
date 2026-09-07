@@ -55,11 +55,15 @@ const RATE_FRACTION_DIGITS = 3
  * would present a provisional or unauthorised figure as final: `figures_pending` and
  * `bank_figures_visible`. See the gate below.
  *
- * ── COVENANTS (Q-008 RESOLVED) ─────────────────────────────────────────────────────────────────
- * Covenants were held back from the workspace while their placement was open — the design put them
- * on the case, the spec on the financing. The contract settles it: `covenants` and
- * `open_covenant_count` hang off the **financing overview**, which is what the spec said (§5.13,
- * D-37). They render here, not on the case.
+ * ── APPROVAL CONDITIONS (Q-008 — CONFIRMED BY THE CLIENT 2026-09-08) ───────────────────────────
+ * These were held back from the case workspace while their placement was open: the design put them
+ * on the case's Checklist tab, the spec on the financing. Both the contract and the client settle
+ * it on the **financing** — `covenants` and `open_covenant_count` hang off the financing overview
+ * (§5.13, D-37), so they render here and nowhere else.
+ *
+ * The confirmed UI term is **Approval Conditions**; "Covenants" is retired (D-38). The wire names
+ * keep the old word, which is the backend's business — only the visible label follows the rename,
+ * and the i18n keys mirror the wire so the mapping stays greppable.
  */
 export function FinancingDataPanel({ caseId }: { caseId: string }) {
   const { t } = useTranslation("financing")
