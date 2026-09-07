@@ -4,6 +4,7 @@ import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUserDetail } from "@/features/users/hooks/useUserDetail"
 import { useTenantDetail } from "@/features/tenants/hooks/useTenantDetail"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
+import { useCase } from "@/features/cases/hooks/useCase"
 import { useDuplicatePairs } from "@/features/partners/hooks/useDuplicatePairs"
 import { SYSTEM_ADMIN_ROLE } from "@/features/users/types"
 import { TENANT_LIST_ALLOWED_ROLES } from "@/features/tenants/types"
@@ -103,6 +104,9 @@ export function useBreadcrumbs(): Crumb[] {
   const partnerSubmitMatch = useMatch(PATHS.PARTNER_SUBMIT)
   const partnerDuplicateDetailMatch = useMatch(PATHS.PARTNER_DUPLICATE_DETAIL)
   const partnerDetailMatchRaw = useMatch(PATHS.PARTNER_DETAIL)
+  // `/cases/:caseId` — the deep-link checklist and documents routes have their own paths, so this
+  // matches only the workspace itself.
+  const caseDetailMatch = useMatch(PATHS.CASE_DETAIL)
   const partnerDetailMatch = partnerSubmitMatch ? null : partnerDetailMatchRaw
 
   const { data: currentUser } = useCurrentUser()
@@ -113,6 +117,7 @@ export function useBreadcrumbs(): Crumb[] {
   const { data: detailPartner } = usePartnerDetail(
     partnerDetailMatch?.params.id ?? null
   )
+  const { data: detailCase } = useCase(caseDetailMatch?.params.caseId)
   const selectedTenantId = useTenantSelectionStore(s => s.selectedTenantId)
   const duplicatesTenantId =
     currentUser?.tenant_id ??
@@ -129,6 +134,18 @@ export function useBreadcrumbs(): Crumb[] {
   const { data: duplicatePartnerB } = usePartnerDetail(
     duplicatePair?.partner_b_id ?? null
   )
+
+  // Home › Cases › RR-2026-104, per the workspace frames (`Documents - MERGE documents.pdf`).
+  // The frames label the middle crumb "Case" there and "Cases" on the list itself; the list's
+  // wording wins, because this crumb links to the list and a singular label pointing at a plural
+  // destination reads as a different page.
+  if (caseDetailMatch) {
+    return [
+      { labelKey: "breadcrumb.home" },
+      { labelKey: "breadcrumb.cases", path: PATHS.CASE_LIST },
+      { label: detailCase?.case_reference ?? "…" },
+    ]
+  }
 
   if (userDetailMatch) {
     return [
