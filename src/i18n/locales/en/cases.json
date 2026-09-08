@@ -530,19 +530,17 @@
     },
     "handover": {
       "title": "OS+ transfer file",
-      "subtitle": "CSV export for loan setup in OS+. Belongs to checklist step 18. Amounts at two decimals, the rate at three.",
-      "export": "Export the hand-over file"
+      "subtitle": "CSV export for loan setup in OS+.",
+      "export": "Export OS+ file"
     },
     "combined": {
       "title": "Merge documents",
-      "subtitle": "Combines every document filed on the case into one PDF with a table of contents. Step 42 is the to-do that points at it, not the trigger.",
+      "subtitle": "Combines all generated and uploaded documents into a PDF with table of contents.",
       "create": "Create complete document",
       "rebuild": "Rebuild",
       "download": "Download",
       "built": "Combined document built.",
-      "current": "Current build: {{count}} documents, built {{built}}.",
-      "nameLabel": "Document name",
-      "nameHelp": "The platform names the built file itself — this endpoint takes no name — so this is recorded for the case, not sent."
+      "current": "Current build: {{count}} documents, built {{built}}."
     },
     "subtabs": {
       "incoming": "Incoming",

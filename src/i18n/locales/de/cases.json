@@ -530,19 +530,17 @@
     },
     "handover": {
       "title": "OS+ Transferdatei",
-      "subtitle": "CSV-Export für die Darlehensanlage in OS+. Gehört zu Checklistenschritt 18. Beträge mit zwei, der Zinssatz mit drei Dezimalstellen.",
-      "export": "Hand-over-Datei exportieren"
+      "subtitle": "CSV-Export für die Darlehensanlage in OS+.",
+      "export": "OS+ Datei exportieren"
     },
     "combined": {
       "title": "Dokumente zusammenführen",
-      "subtitle": "Fasst jedes zum Fall eingereichte Dokument zu einer PDF mit Inhaltsverzeichnis zusammen. Schritt 42 ist die Aufgabe, die darauf zeigt, nicht der Auslöser.",
+      "subtitle": "Fasst alle generierten und hochgeladenen Dokumente zu einer PDF mit Inhaltsverzeichnis zusammen.",
       "create": "Gesamtdokument erstellen",
       "rebuild": "Neu erstellen",
       "download": "Herunterladen",
       "built": "Gesamtdokument erstellt.",
-      "current": "Aktueller Stand: {{count}} Dokumente, erstellt {{built}}.",
-      "nameLabel": "Dokumentname",
-      "nameHelp": "Die Plattform benennt die erzeugte Datei selbst — dieser Endpunkt nimmt keinen Namen — dies wird also für den Fall erfasst, nicht gesendet."
+      "current": "Aktueller Stand: {{count}} Dokumente, erstellt {{built}}."
     },
     "subtabs": {
       "incoming": "Eingehend",

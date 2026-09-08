@@ -23,7 +23,10 @@ import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDial
 import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { CaseCollateralPanel } from "@/features/cases/components/CaseCollateralPanel"
-import { CaseGeneratedDocumentsPanel } from "@/features/cases/components/CaseGeneratedDocumentsPanel"
+import {
+  CaseDocumentExtras,
+  CaseGeneratedDocumentsPanel,
+} from "@/features/cases/components/CaseGeneratedDocumentsPanel"
 import { CalculationPanel } from "@/features/financing/components/CalculationPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
@@ -271,6 +274,11 @@ export default function CaseDetailPage() {
           {docSubtab === "generated" && (
             <CaseGeneratedDocumentsPanel caseId={data.id} />
           )}
+
+          {/* Under both sub-tabs, as the newest dummy has it: the OS+ export and the combined
+              build act on the case's whole document set, not on either half of it. Hidden from a
+              portal user inside the component. */}
+          <CaseDocumentExtras caseId={data.id} />
         </div>
       )}
 

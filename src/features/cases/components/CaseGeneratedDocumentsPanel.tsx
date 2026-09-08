@@ -1,10 +1,9 @@
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { LEASING_COMPANY_USER_ROLE } from "@/features/users/types"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -62,16 +61,7 @@ type Props = { caseId: string }
 export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
   const { t } = useTranslation("cases")
   const generated = useGeneratedDocuments(caseId)
-  const combined = useCombinedDocumentHistory(caseId)
   const generate = useGenerateCaseDocument()
-  const build = useBuildCombinedDocument()
-  /**
-   * The dummy asks for a name before the build. `POST /combined-document` takes **no body**, so the
-   * name cannot be sent — the backend derives the filename itself. It is collected and shown
-   * because the design asks for it, and the field says plainly that the platform names the file;
-   * inventing a body field would fail, and dropping the field would lose the design's intent.
-   */
-  const [name, setName] = useState("")
 
   if (generated.isLoading) return <Skeleton className="h-56 w-full" />
 
@@ -87,7 +77,6 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
   }
 
   const entries = mergeGeneratedRows(generated.data?.documents ?? [])
-  const build_ = currentBuild(combined.data?.builds ?? [])
 
   return (
     <div className="flex flex-col gap-6" data-testid="case-generated-documents">
@@ -234,109 +223,115 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
           </Table>
         </div>
       </section>
+    </div>
+  )
+}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* ── OS+ transfer file (US 1.25) ── */}
-        <section
-          className="rounded-lg border p-4"
-          data-testid="case-handover-file"
+/**
+ * The OS+ hand-over file and the combined document.
+ *
+ * A separate component because the newest click dummy renders these **under both** sub-tabs rather
+ * than only beside the generated list — they act on the case's whole document set, not on either
+ * half of it. It is also hidden from a portal user, for the reason the dummy gives: "the portal
+ * uploads incoming documents and nothing else: the OS+ file is a core-banking export and the merged
+ * document contains the bank's own generated documents."
+ */
+export function CaseDocumentExtras({ caseId }: Props) {
+  const { t } = useTranslation("cases")
+  const { data: currentUser } = useCurrentUser()
+  // Every hook runs before the portal early-return: a conditional return above them would change
+  // the hook order between renders.
+  const combined = useCombinedDocumentHistory(caseId)
+  const build = useBuildCombinedDocument()
+
+  if (currentUser?.role === LEASING_COMPANY_USER_ROLE) return null
+
+  const build_ = currentBuild(combined.data?.builds ?? [])
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {/* ── OS+ transfer file (US 1.25) ── */}
+      <section
+        className="rounded-lg border p-4"
+        data-testid="case-handover-file"
+      >
+        <h3 className="text-sm font-semibold">
+          {t("documents.handover.title")}
+        </h3>
+        <p className="mb-3 mt-1 text-xs text-muted-foreground">
+          {t("documents.handover.subtitle")}
+        </p>
+        {/* NOTE: raw <a> — a file the browser downloads. shadcn Button renders a <button>, which
+            cannot carry an href, so the button styling is applied to the anchor instead. */}
+        <a
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          href={getHandoverFileUrl(caseId)}
+          target="_blank"
+          rel="noreferrer"
+          data-testid="case-handover-export"
         >
-          <h3 className="text-sm font-semibold">
-            {t("documents.handover.title")}
-          </h3>
-          <p className="mb-3 mt-1 text-xs text-muted-foreground">
-            {t("documents.handover.subtitle")}
-          </p>
-          {/* NOTE: raw <a> — a file the browser downloads. shadcn Button renders a <button>, which
-              cannot carry an href, so the button styling is applied to the anchor instead. */}
-          <a
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            href={getHandoverFileUrl(caseId)}
-            target="_blank"
-            rel="noreferrer"
-            data-testid="case-handover-export"
+          {t("documents.handover.export")}
+        </a>
+      </section>
+
+      {/* ── Combined document (US 1.27) ── */}
+      <section
+        className="rounded-lg border p-4"
+        data-testid="case-combined-document"
+      >
+        <h3 className="text-sm font-semibold">
+          {t("documents.combined.title")}
+        </h3>
+        <p className="mb-3 mt-1 text-xs text-muted-foreground">
+          {t("documents.combined.subtitle")}
+        </p>
+
+        {build_ !== null && (
+          <p
+            className="mb-3 text-xs text-muted-foreground"
+            data-testid="case-combined-current"
           >
-            {t("documents.handover.export")}
-          </a>
-        </section>
-
-        {/* ── Combined document (US 1.27) ── */}
-        <section
-          className="rounded-lg border p-4"
-          data-testid="case-combined-document"
-        >
-          <h3 className="text-sm font-semibold">
-            {t("documents.combined.title")}
-          </h3>
-          <p className="mb-3 mt-1 text-xs text-muted-foreground">
-            {t("documents.combined.subtitle")}
+            {t("documents.combined.current", {
+              count: build_.document_count,
+              built: formatDateTime(build_.built_at),
+            })}
           </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            data-testid="case-combined-build"
+            disabled={build.isPending}
+            onClick={() =>
+              build.mutate(
+                { caseId },
+                {
+                  onSuccess: () => toast.success(t("documents.combined.built")),
+                  onError: err => showApiError(err, t),
+                }
+              )
+            }
+          >
+            {build_ === null
+              ? t("documents.combined.create")
+              : t("documents.combined.rebuild")}
+          </Button>
 
           {build_ !== null && (
-            <p
-              className="mb-3 text-xs text-muted-foreground"
-              data-testid="case-combined-current"
+            <a
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              href={getCombinedDocumentDownloadUrl(caseId)}
+              target="_blank"
+              rel="noreferrer"
+              data-testid="case-combined-download"
             >
-              {t("documents.combined.current", {
-                count: build_.document_count,
-                built: formatDateTime(build_.built_at),
-              })}
-            </p>
+              {t("documents.combined.download")}
+            </a>
           )}
-
-          <div className="mb-3">
-            <Label htmlFor="combined-name" className="mb-1.5">
-              {t("documents.combined.nameLabel")}
-            </Label>
-            <Input
-              id="combined-name"
-              value={name}
-              data-testid="case-combined-name"
-              onChange={e => setName(e.target.value)}
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("documents.combined.nameHelp")}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              data-testid="case-combined-build"
-              disabled={build.isPending || name.trim() === ""}
-              onClick={() =>
-                build.mutate(
-                  { caseId },
-                  {
-                    onSuccess: () =>
-                      toast.success(t("documents.combined.built")),
-                    onError: err => showApiError(err, t),
-                  }
-                )
-              }
-            >
-              {build_ === null
-                ? t("documents.combined.create")
-                : t("documents.combined.rebuild")}
-            </Button>
-
-            {build_ !== null && (
-              <a
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" })
-                )}
-                href={getCombinedDocumentDownloadUrl(caseId)}
-                target="_blank"
-                rel="noreferrer"
-                data-testid="case-combined-download"
-              >
-                {t("documents.combined.download")}
-              </a>
-            )}
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   )
 }
