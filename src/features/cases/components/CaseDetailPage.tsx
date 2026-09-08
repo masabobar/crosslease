@@ -20,6 +20,7 @@ import { CaseWorkspaceHeader } from "@/features/cases/components/CaseWorkspaceHe
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
 import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel"
 import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDialog"
+import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
@@ -203,7 +204,15 @@ export default function CaseDetailPage() {
         <FinancingContractsPanel caseId={data.id} />
       )}
 
-      {activeTab === "activity" && <CaseActivityPanel caseId={data.id} />}
+      {activeTab === "activity" && (
+        <div className="flex flex-col gap-6">
+          {/* The state and its transitions sit with the trail rather than in the header: reading
+              what happened and moving the case on are the same job, and the trail is where a
+              transition's effect shows up. */}
+          <CaseStatePanel caseRecord={data} />
+          <CaseActivityPanel caseId={data.id} />
+        </div>
+      )}
 
       {isDecisionOpen && (
         <CaseDecisionDialog caseId={data.id} onOpenChange={setDecisionOpen} />

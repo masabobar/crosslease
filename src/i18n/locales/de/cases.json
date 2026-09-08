@@ -124,6 +124,31 @@
     "success": "Fall angelegt.",
     "caseTypeNoRequirements": "{{type}} (keine Anforderungen konfiguriert)"
   },
+  "state": {
+    "title": "Status",
+    "displayStatus": "Angezeigter Status",
+    "caseStatus": "Fallstatus",
+    "explanation": "Der angezeigte Status wird aus Fall, Antrag und Finanzierung gemeinsam abgeleitet. Der Fallstatus ist der eigene gespeicherte Status des Falls — Filter und Sortierung laufen über die gespeicherten Werte, niemals über den abgeleiteten.",
+    "transitioned": "Der Fall ist jetzt {{status}}.",
+    "caseStatuses": {
+      "open": "Offen",
+      "waiting": "Wartend",
+      "done": "Erledigt",
+      "cancelled": "Storniert"
+    },
+    "transitions": {
+      "resubmit": "Erneut einreichen",
+      "return_to_queue": "Zurück in die Warteschlange",
+      "reactivate": "Reaktivieren",
+      "cancel": "Fall stornieren"
+    },
+    "cancelConfirm": {
+      "title": "Diesen Fall stornieren?",
+      "description": "Die Stornierung beendet den Fall. Er kann danach reaktiviert werden, aber laufende Arbeit endet hier.",
+      "keep": "Fall behalten",
+      "confirm": "Fall stornieren"
+    }
+  },
   "wizard": {
     "actions": {
       "back": "Zurück",

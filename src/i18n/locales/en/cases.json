@@ -124,6 +124,31 @@
     "success": "Case started.",
     "caseTypeNoRequirements": "{{type}} (no requirements configured)"
   },
+  "state": {
+    "title": "State",
+    "displayStatus": "Status shown",
+    "caseStatus": "Case status",
+    "explanation": "The status shown is derived from the case, the request and the financing together. The case status is the case's own stored state — filters and sorting run on the stored sets, never on the derived value.",
+    "transitioned": "The case is now {{status}}.",
+    "caseStatuses": {
+      "open": "Open",
+      "waiting": "Waiting",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "transitions": {
+      "resubmit": "Resubmit",
+      "return_to_queue": "Return to queue",
+      "reactivate": "Reactivate",
+      "cancel": "Cancel case"
+    },
+    "cancelConfirm": {
+      "title": "Cancel this case?",
+      "description": "Cancelling ends the case. It can be reactivated afterwards, but any work in progress stops here.",
+      "keep": "Keep the case",
+      "confirm": "Cancel the case"
+    }
+  },
   "wizard": {
     "actions": {
       "back": "Back",

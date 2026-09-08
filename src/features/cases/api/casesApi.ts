@@ -538,3 +538,18 @@ export async function decideCase(
   })
   return CaseResponseSchema.parse(data)
 }
+
+/**
+ * The case lifecycle transitions (US 1.30, US 1.31).
+ *
+ * All four are POST with no body — the transition is the whole request. Legality is configured on
+ * the backend per task (Q-004), so a refusal here is a normal answer and the caller surfaces it.
+ */
+export async function transitionCase(
+  caseId: string,
+  transition: "resubmit" | "return_to_queue" | "reactivate" | "cancel"
+): Promise<CaseResponse> {
+  const path = transition === "return_to_queue" ? "return-to-queue" : transition
+  const data = await api.post(`/cases/${caseId}/${path}`)
+  return CaseResponseSchema.parse(data)
+}

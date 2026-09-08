@@ -16,6 +16,7 @@ import {
   CaseProductTemplateResponseSchema,
   CaseProgressResponseSchema,
   CaseResponseSchema,
+  CaseStatusSchema,
   CaseTypeSchema,
   ImportBatchPreviewResponseSchema,
   ImportBatchResponseSchema,
@@ -802,6 +803,42 @@ export const caseHandlers = [
     })
     return envelope(CaseResponseSchema.parse(found))
   }),
+
+  // ── US 1.30 / US 1.31: the case lifecycle transitions ─────────────────────
+  // All four are POST with no body. The mock moves display_status the way the real derivation
+  // would, so the list, the badge and the offered transitions all change afterwards.
+  ...(
+    [
+      ["resubmit", "submitted"],
+      ["return-to-queue", "open"],
+      ["reactivate", "open"],
+      ["cancel", "cancelled"],
+    ] as const
+  ).map(([path, nextStatus]) =>
+    http.post(`${API}/cases/:caseId/${path}`, ({ params }) => {
+      const caseId = params.caseId as string
+      const found = allCases().find(c => c.id === caseId)
+      if (!found) return errorEnvelope("NOT_FOUND", "Case not found", 404)
+
+      // Returning to the queue also drops the owner — that is what the queue is for.
+      if (path === "return-to-queue") found.owner_user_id = null
+
+      found.display_status = nextStatus
+      found.case_status =
+        nextStatus === "cancelled"
+          ? CaseStatusSchema.enum.cancelled
+          : CaseStatusSchema.enum.open
+
+      pushActivity(caseId, {
+        event_type: `case_${path.replace(/-/g, "_")}`,
+        action_type: "update",
+        entity_type: "case",
+        entity_display: found.case_reference,
+        new_data: { display_status: nextStatus },
+      })
+      return envelope(CaseResponseSchema.parse(found))
+    })
+  ),
 
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {
