@@ -2669,6 +2669,50 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/financing/correct-settlement": {
+      "post": {
+        "tags": ["Financing"],
+        "summary": "Correct Case Settlement",
+        "description": "Correct a settlement before SetUp — return the financing to Calculating (PRD1042-11, US 1.42).\n\nBefore SetUp a settled financing can still be corrected: it moves back from ReadyForSetup to\nCalculating with a **mandatory reason** and an audit entry, and the stored calculation is marked out\nof date (the stale figure is never recomputed on read — AC-23). This does NOT re-run the four-eyes\nchain (D-144). The preparing role (Front Office) performs it; a call from any other state than\nReadyForSetup is refused **409** `INVALID_FINANCING_TRANSITION` (the back-edge is the only legal edge\ninto Calculating). A blank reason is **400**.",
+        "operationId": "correct_case_settlement_api_v1_cases__case_id__financing_correct_settlement_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectSettlementRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FinancingRead" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/financing/conditions": {
       "post": {
         "tags": ["Financing"],
@@ -16831,6 +16875,15 @@
         "enum": ["lease", "hire_purchase"],
         "title": "ContractType",
         "description": "The kind of leasing contract (PRD1042-1925, US 1.9).\n\n``LEASE`` is Leasing, ``HIRE_PURCHASE`` is Mietkauf. The contract type selects which of the two\ncontract documents (``Leasingvertrag`` / ``Mietkaufvertrag``) is the required one — exactly one per\ncase (PRD1042-1794). Mandatory before the bank settlement, not at submission (the draft saves\nwithout it). ``LEASE`` / ``HIRE_PURCHASE`` are a client-side *proposal* for the code names, not yet\nconfirmed — kept isolated here so a rename is one edit. Teilamortisation (amortisation type) and\nKilometerleasing (the mileage flag) are separate facts, NOT contract types."
+      },
+      "CorrectSettlementRequest": {
+        "properties": {
+          "reason": { "type": "string", "minLength": 1, "title": "Reason" }
+        },
+        "type": "object",
+        "required": ["reason"],
+        "title": "CorrectSettlementRequest",
+        "description": "Correct a settlement before SetUp, returning the financing to Calculating (US 1.42, D-144).\n\nThe correction is a real, expected case — but it must say WHY: the reason is mandatory and rides the\naudit entry (§5.8.8). Whitespace-only is rejected (a blank reason is no reason)."
       },
       "CorrespondenceKind": {
         "type": "string",

@@ -675,6 +675,9 @@ const CommitRateRequest = z
   .object({ lock_days: z.number().int().default(7) })
   .partial()
   .passthrough()
+const CorrectSettlementRequest = z
+  .object({ reason: z.string().min(1) })
+  .passthrough()
 const AddApprovalConditionRequest = z
   .object({
     condition_text: z.string().min(1),
@@ -4101,6 +4104,7 @@ export const schemas = {
   OverrideQuotaRequest,
   SetValueDateRequest,
   CommitRateRequest,
+  CorrectSettlementRequest,
   AddApprovalConditionRequest,
   ApprovalConditionResponse,
   ApprovalConditionListResponse,
@@ -7011,6 +7015,41 @@ waiver is approved. A cross-tenant / unknown case is 404; an unknown condition o
       },
     ],
     response: GovernedActionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/financing/correct-settlement",
+    alias:
+      "correct_case_settlement_api_v1_cases__case_id__financing_correct_settlement_post",
+    description: `Correct a settlement before SetUp — return the financing to Calculating (PRD1042-11, US 1.42).
+
+Before SetUp a settled financing can still be corrected: it moves back from ReadyForSetup to
+Calculating with a **mandatory reason** and an audit entry, and the stored calculation is marked out
+of date (the stale figure is never recomputed on read — AC-23). This does NOT re-run the four-eyes
+chain (D-144). The preparing role (Front Office) performs it; a call from any other state than
+ReadyForSetup is refused **409** &#x60;INVALID_FINANCING_TRANSITION&#x60; (the back-edge is the only legal edge
+into Calculating). A blank reason is **400**.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ reason: z.string().min(1) }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FinancingRead,
     errors: [
       {
         status: 422,
