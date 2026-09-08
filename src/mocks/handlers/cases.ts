@@ -63,6 +63,7 @@ import { mockCases } from "@/mocks/fixtures/cases"
 import { mockPartners } from "@/mocks/fixtures/partners"
 import { getMockRole } from "@/mocks/role"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
+import { mockUuid } from "@/mocks/uuid"
 import { API } from "@/mocks/apiBase"
 
 const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
@@ -122,6 +123,114 @@ function pushActivity(
     },
   ]
 }
+
+/**
+ * Seed a case's trail on first read.
+ *
+ * The comment above `activityByCaseId` has always claimed the trail is "seeded lazily on first
+ * read", but nothing actually seeded it — so every case's Activity tab rendered "Nothing has
+ * happened on this case yet", including cases that are demonstrably live. The rows below mirror the
+ * Details-page design's Activity list: who acted, in what role at the time, and what changed.
+ *
+ * `actor_role_at_time` is fixed per row rather than read from the current session: the trail records
+ * the authority someone held when they acted, which is the whole point of keeping it.
+ */
+const BACK_OFFICE_USER = "00000000-0000-4000-8000-000000000006"
+
+const SEED_TRAIL: {
+  event_type: string
+  action_type: string
+  entity_type: string
+  entity_display: string | null
+  actor_id: string
+  actor_type: string
+  actor_display: string | null
+  actor_role_at_time: string | null
+  changed_fields: string[] | null
+  recorded_at: string
+}[] = [
+  {
+    event_type: "case.created",
+    action_type: "create",
+    entity_type: "case",
+    entity_display: "Case",
+    actor_id: FRONT_OFFICE_USER,
+    actor_type: "user",
+    actor_display: "Front Office",
+    actor_role_at_time: "front_office",
+    changed_fields: ["case_reference", "case_type"],
+    recorded_at: "2026-06-02T08:14:00Z",
+  },
+  {
+    event_type: "case.submitted",
+    action_type: "transition",
+    entity_type: "case",
+    entity_display: "Case",
+    actor_id: FRONT_OFFICE_USER,
+    actor_type: "user",
+    actor_display: "Front Office",
+    actor_role_at_time: "front_office",
+    changed_fields: ["case_status"],
+    recorded_at: "2026-06-04T10:02:00Z",
+  },
+  {
+    // `actor_id` is a required plain string in the contract — not a UUID — so a system actor
+    // carries a non-null id while `actor_role_at_time` is null: nobody held authority for it.
+    event_type: "document.generated",
+    action_type: "create",
+    entity_type: "generated_document",
+    entity_display: "Cover sheet",
+    actor_id: "system",
+    actor_type: "system",
+    actor_display: "System",
+    actor_role_at_time: null,
+    changed_fields: null,
+    recorded_at: "2026-06-04T10:03:00Z",
+  },
+  {
+    event_type: "documents.reviewed",
+    action_type: "update",
+    entity_type: "case_document",
+    entity_display: "Settlement documents",
+    actor_id: BACK_OFFICE_USER,
+    actor_type: "user",
+    actor_display: "Back Office",
+    actor_role_at_time: "back_office",
+    changed_fields: ["fulfilment_status"],
+    recorded_at: "2026-07-24T09:12:00Z",
+  },
+]
+
+function seedActivity(caseId: string): CaseActivityItem[] {
+  if (activityByCaseId[caseId] !== undefined) return activityByCaseId[caseId]
+  activityByCaseId[caseId] = SEED_TRAIL.map((row, index) => ({
+    id: mockUuid(`a5${index.toString(16)}`),
+    audit_seq: index + 1,
+    entity_id: null,
+    old_data: null,
+    new_data: null,
+    ...row,
+  }))
+  return activityByCaseId[caseId]
+}
+
+function seedComments(caseId: string): CaseCommentItem[] {
+  if (commentsByCaseId[caseId] !== undefined) return commentsByCaseId[caseId]
+  commentsByCaseId[caseId] = [
+    {
+      id: mockUuid("cd01"),
+      case_id: caseId,
+      author_id: "00000000-0000-4000-8000-000000000007",
+      // Unconstrained on the wire, so the panel labels it through i18n with the raw value as the
+      // fallback — the leasing company is a legitimate author here.
+      author_role: "leasing_company_user",
+      body: "The vehicle registration document is missing for CT-1000. Please upload it so we can move this on.",
+      created_at: "2026-08-05T13:30:00Z",
+    },
+  ]
+  return commentsByCaseId[caseId]
+}
+
 const guarantorsByContractId: Record<string, GuarantorListItem[]> = {}
 
 function hexPair(n: number): string {
@@ -721,7 +830,7 @@ export const caseHandlers = [
 
   http.get(`${API}/cases/:caseId/activity`, ({ params, request }) => {
     const url = new URL(request.url)
-    const rows = [...(activityByCaseId[params.caseId as string] ?? [])]
+    const rows = [...seedActivity(params.caseId as string)]
       // Newest first for display, but the ordering key is audit_seq — two events can share a
       // timestamp, a sequence cannot tie.
       .sort((a, b) => b.audit_seq - a.audit_seq)
@@ -741,7 +850,7 @@ export const caseHandlers = [
   }),
 
   http.get(`${API}/cases/:caseId/comments`, ({ params }) => {
-    const rows = commentsByCaseId[params.caseId as string] ?? []
+    const rows = seedComments(params.caseId as string)
     return envelope(
       CaseCommentListResponseSchema.parse({
         items: rows,
@@ -755,7 +864,7 @@ export const caseHandlers = [
   http.post(`${API}/cases/:caseId/comments`, async ({ params, request }) => {
     const caseId = params.caseId as string
     const body = (await request.json()) as { body: string }
-    const rows = commentsByCaseId[caseId] ?? []
+    const rows = seedComments(caseId)
 
     const comment = CaseCommentItemSchema.parse({
       // 12 hex characters in the last segment. An earlier version used a `cm` prefix as a

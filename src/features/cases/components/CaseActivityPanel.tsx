@@ -103,7 +103,12 @@ export function CaseActivityPanel({ caseId }: Props) {
                 {item.actor_role_at_time !== null && (
                   <>
                     {" · "}
-                    <Badge variant="outline">{item.actor_role_at_time}</Badge>
+                    <Badge variant="outline">
+                      {t(
+                        `users:roles.${item.actor_role_at_time}` as "users:roles.front_office",
+                        { defaultValue: item.actor_role_at_time }
+                      )}
+                    </Badge>
                   </>
                 )}
               </p>
@@ -190,7 +195,12 @@ export function CaseActivityPanel({ caseId }: Props) {
               <p className="mt-1 text-xs text-muted-foreground">
                 {/* The role the author held when they wrote it, for the same reason the trail
                     keeps `actor_role_at_time`. */}
-                {comment.author_role} · {formatDateTime(comment.created_at)}
+                {t(
+                  `users:roles.${comment.author_role}` as "users:roles.front_office",
+                  { defaultValue: comment.author_role }
+                )}
+                {" · "}
+                {formatDateTime(comment.created_at)}
               </p>
             </div>
           ))}
