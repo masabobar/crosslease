@@ -4,10 +4,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUsers } from "@/features/users/hooks/useUsers"
-import { CaseChecklistTable } from "@/features/workflowTaskCatalog/components/CaseChecklistTable"
+import { CaseChecklistPhaseList } from "@/features/workflowTaskCatalog/components/CaseChecklistPhaseList"
 import { CasePhaseGatePanel } from "@/features/workflowTaskCatalog/components/CasePhaseGatePanel"
 import { useCaseChecklist } from "@/features/workflowTaskCatalog/hooks/useCaseChecklist"
 import { useCaseRequiredProjection } from "@/features/workflowTaskCatalog/hooks/useCaseRequiredProjection"
+import { useCaseProgress } from "@/features/cases/hooks/useCaseProgress"
 import { useCasePhaseGates } from "@/features/workflowTaskCatalog/hooks/useCasePhaseGates"
 import {
   CASE_CHECKLIST_WRITE_ALLOWED_ROLES,
@@ -50,6 +51,9 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
   } = useCaseChecklist(businessObjectId)
   const { isError: isProjectionError, error: projectionError } =
     useCaseRequiredProjection(businessObjectId)
+  // Read for the phase names and their order; each section's counts are computed from the items
+  // themselves, so a failed progress query degrades to bare letters rather than blanking the list.
+  const { data: progress } = useCaseProgress(businessObjectId)
   const {
     data: gates,
     isError: isGatesError,
@@ -130,9 +134,14 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
         </Alert>
       )}
 
-      <CaseChecklistTable
+      {/* Phase sections, not one flat table — the design groups the tasks under
+          `A · Application & credit review` with an `N open · M yours` count, which is what makes
+          "where is this case, and is it waiting on me" readable at a glance. The phase names come
+          from the same progress response the band above the tabs uses. */}
+      <CaseChecklistPhaseList
         businessObjectId={businessObjectId}
         items={items}
+        progress={progress}
         canWrite={canWrite}
         users={users}
       />

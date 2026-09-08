@@ -418,15 +418,6 @@
     "title": "Case checklist",
     "subtitle": "Tasks materialized onto this case from the workflow task catalog. Settling every required task is what releases the submission gate.",
     "notApplicable": "—",
-    "columns": {
-      "task": "Task",
-      "mandatory": "Requirement",
-      "status": "Status",
-      "checkedBy": "Settled by",
-      "checkedAt": "Settled at",
-      "note": "Note",
-      "stage": "Stage"
-    },
     "mandatory": {
       "required": "Required",
       "optional": "Optional"
@@ -502,7 +493,12 @@
     "fourEyesBadge": "4-eyes",
     "fourEyesTitle": "A second person must sign this task off",
     "systemActor": "System",
-    "documentChecksSummary": "{{marked}} of {{total}} documents checked"
+    "documentChecksSummary": "{{marked}} of {{total}} documents checked",
+    "phases": {
+      "count": "{{open}} open · {{yours}} yours",
+      "unclassified": "Not assigned to a phase",
+      "settledBy": "{{who}} · {{when}}"
+    }
   },
   "caseTypes": {
     "refinancing_request": "Main Refinancing Process",

@@ -418,15 +418,6 @@
     "title": "Fall-Checkliste",
     "subtitle": "Aufgaben, die aus dem Workflow-Aufgabenkatalog auf diesen Fall übertragen wurden. Erst wenn alle Pflichtaufgaben erledigt sind, wird die Einreichung freigegeben.",
     "notApplicable": "—",
-    "columns": {
-      "task": "Aufgabe",
-      "mandatory": "Erfordernis",
-      "status": "Status",
-      "checkedBy": "Erledigt von",
-      "checkedAt": "Erledigt am",
-      "note": "Notiz",
-      "stage": "Phase"
-    },
     "mandatory": {
       "required": "Pflicht",
       "optional": "Optional"
@@ -502,7 +493,12 @@
     "fourEyesBadge": "4-Augen",
     "fourEyesTitle": "Eine zweite Person muss diese Aufgabe freigeben",
     "systemActor": "System",
-    "documentChecksSummary": "{{marked}} von {{total}} Dokumenten geprüft"
+    "documentChecksSummary": "{{marked}} von {{total}} Dokumenten geprüft",
+    "phases": {
+      "count": "{{open}} offen · {{yours}} für Sie",
+      "unclassified": "Keiner Phase zugeordnet",
+      "settledBy": "{{who}} · {{when}}"
+    }
   },
   "caseTypes": {
     "refinancing_request": "Hauptrefinanzierungsprozess",
