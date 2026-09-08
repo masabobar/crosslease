@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +17,10 @@ import { useBindLeasingCompany } from "@/features/cases/hooks/useBindLeasingComp
 import { useBindProductTemplate } from "@/features/cases/hooks/useBindProductTemplate"
 import { templateOptionLabel } from "@/features/cases/allowedTemplates"
 import type { CaseLeasingCompanyResponse } from "@/features/cases/api/schema"
-import type { FALCPartnerItem } from "@/features/frameworkAgreements/api/schema"
+import type {
+  FALCPartnerItem,
+  SelectableTemplateItem,
+} from "@/features/frameworkAgreements/api/schema"
 
 // Below three characters a name search matches most of the book, the same threshold the framework
 // agreement list uses. Applied client-side here: `/framework-agreements/lc-partners` takes no
@@ -370,33 +373,104 @@ function ProductTemplateSelect({
         </Alert>
       )}
 
-      <Label htmlFor="template-select">
-        {t("wizard.company.templateLabel")}
-      </Label>
-      <SelectField
-        id="template-select"
-        data-testid="case-wizard-template-field"
-        className="mt-1.5"
-        value={chosen}
-        disabled={isBinding || allowed.templates.length === 0}
-        placeholder={
-          allowed.templates.length === 0
-            ? t("wizard.company.noTemplates")
-            : t("wizard.company.templatePlaceholder")
-        }
-        onValueChange={value => {
-          setChosen(value)
-          onSelect(value)
-        }}
-        options={allowed.templates.map(template => ({
-          value: template.template_id,
-          label: templateOptionLabel(template),
-        }))}
-      />
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        {t("wizard.company.templateHelper")}
-      </p>
+      {/* The click dummy resolves this rather than asking: "One framework agreement per leasing
+          company is active at a time, and the template follows the agreement. Both resolve from the
+          company; neither is offered as a choice."
+ 
+          It can only be honoured when the agreement allows exactly one template. Picking one out of
+          several would need the agreement's pinned version, and that is not on the wire —
+          `SelectableTemplateItem` carries no pinned flag, and CR-FA-05 is recorded as still
+          backend-blocked (Q-063 / Q-068). So one template resolves; several still ask, because the
+          alternative is choosing for the user on no evidence. */}
+      {allowed.templates.length === 1 ? (
+        <ResolvedTemplate
+          template={allowed.templates[0]}
+          onResolved={onSelect}
+        />
+      ) : (
+        <>
+          <Label htmlFor="template-select">
+            {t("wizard.company.templateLabel")}
+          </Label>
+          <SelectField
+            id="template-select"
+            data-testid="case-wizard-template-field"
+            className="mt-1.5"
+            value={chosen}
+            disabled={isBinding || allowed.templates.length === 0}
+            placeholder={
+              allowed.templates.length === 0
+                ? t("wizard.company.noTemplates")
+                : t("wizard.company.templatePlaceholder")
+            }
+            onValueChange={value => {
+              setChosen(value)
+              onSelect(value)
+            }}
+            options={allowed.templates.map(template => ({
+              value: template.template_id,
+              label: templateOptionLabel(template),
+            }))}
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {t("wizard.company.templateHelper")}
+          </p>
+        </>
+      )}
     </section>
+  )
+}
+
+/**
+ * The template as a **resolved value**, not a choice — the dummy's `resolved()` field with its
+ * "Set by the framework agreement." hint.
+ *
+ * It reports itself upward on mount so Continue is satisfied without the user picking something
+ * there was never a choice about. Reported in an effect rather than during render, because
+ * `onSelect` sets state in the parent.
+ */
+function ResolvedTemplate({
+  template,
+  onResolved,
+}: {
+  template: SelectableTemplateItem
+  onResolved: (productTemplateId: string) => void
+}) {
+  const { t } = useTranslation("cases")
+
+  /**
+   * Reported once per template, and never again.
+   *
+   * `onResolved` is an inline arrow in the parent that fires the bind mutation, so its identity
+   * changes on every render. Depending on it re-ran this effect each render and bound the template
+   * in a loop until the wizard crashed. The callback is therefore read through a ref, and a second
+   * ref records which id has already been reported so a re-render cannot re-fire it.
+   */
+  const onResolvedRef = useRef(onResolved)
+  const reportedRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    onResolvedRef.current = onResolved
+  })
+
+  useEffect(() => {
+    if (reportedRef.current === template.template_id) return
+    reportedRef.current = template.template_id
+    onResolvedRef.current(template.template_id)
+  }, [template.template_id])
+
+  return (
+    <div data-testid="case-wizard-template-resolved">
+      <p className="text-xs text-muted-foreground">
+        {t("wizard.company.templateLabel")}
+      </p>
+      <p className="mt-0.5 text-sm font-medium">
+        {templateOptionLabel(template)}
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t("wizard.company.templateResolved")}
+      </p>
+    </div>
   )
 }
 

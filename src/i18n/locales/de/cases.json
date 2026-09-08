@@ -229,7 +229,8 @@
       "templateLabel": "Bank-Produkttemplate",
       "templatePlaceholder": "Produkttemplate auswählen",
       "templateHelper": "Es können nur Templates gewählt werden, die der Rahmenvertrag zulässt.",
-      "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu"
+      "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu",
+      "templateResolved": "Durch den Rahmenvertrag festgelegt."
     },
     "contracts": {
       "bulkUpload": "Massendatei hochladen",

@@ -229,7 +229,8 @@
       "templateLabel": "Bank product template",
       "templatePlaceholder": "Choose a product template",
       "templateHelper": "Only templates the framework agreement allows can be picked.",
-      "noTemplates": "The framework agreement allows no product templates"
+      "noTemplates": "The framework agreement allows no product templates",
+      "templateResolved": "Set by the framework agreement."
     },
     "contracts": {
       "bulkUpload": "Upload bulk file",
