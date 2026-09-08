@@ -251,9 +251,7 @@
         "deferred": "Deferred"
       },
       "empty": "No entered contracts",
-      "manualComingSoon": "Manual contract entry is not built yet — it captures the lessee, the objects and the terms, and lands with US 1.6–1.9. Use the bulk file for now.",
       "manualEntry": "Manual contract entry",
-      "manualPartial": "Manual entry captures lease objects today. The lessee, the contract terms and the payment plan follow with US 1.6, 1.9 and 1.11.",
       "removalReasonPlaceholder": "Why are these being removed?",
       "removeSelected": "Remove from request",
       "removed": "{{count}} contract removed.",

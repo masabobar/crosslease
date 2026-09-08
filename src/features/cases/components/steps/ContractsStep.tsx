@@ -101,15 +101,6 @@ export function ContractsStep({ caseId }: Props) {
             </Button>
           </div>
         </div>
-
-        {/* The route is open now; which of its four tabs are built is stated inside the modal
-            rather than here, so this line names only what is still missing from it. */}
-        <p
-          className="mt-2 text-xs text-muted-foreground"
-          data-testid="case-wizard-manual-entry-reason"
-        >
-          {t("wizard.contracts.manualPartial")}
-        </p>
       </section>
 
       {contracts.isLoading && <Skeleton className="h-32 w-full" />}

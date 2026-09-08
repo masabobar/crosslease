@@ -251,9 +251,7 @@
         "deferred": "Gestundet"
       },
       "empty": "Keine Verträge erfasst",
-      "manualComingSoon": "Die manuelle Vertragserfassung ist noch nicht umgesetzt — sie erfasst Leasingnehmer, Objekte und Konditionen und kommt mit US 1.6–1.9. Bitte vorläufig die Massendatei verwenden.",
       "manualEntry": "Vertrag manuell erfassen",
-      "manualPartial": "Die manuelle Erfassung deckt derzeit die Leasingobjekte ab. Leasingnehmer, Vertragskonditionen und Zahlungsplan folgen mit US 1.6, 1.9 und 1.11.",
       "removalReasonPlaceholder": "Warum werden diese entfernt?",
       "removeSelected": "Aus Antrag entfernen",
       "removed": "{{count}} Vertrag entfernt.",
