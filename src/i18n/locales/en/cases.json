@@ -278,16 +278,21 @@
         "invalidRows": "Check line {{rows}} — each line needs a date and an amount with at most two decimals.",
         "finalRule": "Exactly one line must be marked as the final payment.",
         "columns": {
-          "n": "#",
+          "period": "Period",
           "dueDate": "Due date",
           "amount": "Amount",
           "isFinal": "Final",
-          "origin": "Origin"
+          "origin": "Origin",
+          "type": "Type"
         },
         "origin": {
           "generated": "Generated",
           "manual": "Manual",
           "imported": "Imported"
+        },
+        "types": {
+          "finalPayment": "Final payment",
+          "instalment": "Instalment"
         }
       },
       "details": {
@@ -349,8 +354,8 @@
           "description": "Object description",
           "group": "Object group",
           "groupPlaceholder": "Select an object group",
-          "subGroup": "Sub-group",
-          "subGroupPlaceholder": "Select a sub-group",
+          "subGroup": "Fuel type",
+          "subGroupPlaceholder": "Select a fuel type",
           "manufacturer": "Manufacturer",
           "brand": "Brand",
           "yearOfManufacture": "Year of manufacture",
@@ -361,7 +366,16 @@
           "acquisitionCost": "Net acquisition cost (EUR)",
           "marketValue": "Market value (EUR)",
           "appraisedValue": "Appraised value (EUR)",
-          "specialPayment": "Special payment (EUR)"
+          "specialPayment": "Special payment (EUR)",
+          "residualValue": "Residual value (EUR)",
+          "valueAsAt": "Values as at",
+          "marketValueInOrder": "Market value is in order (i.O.)",
+          "datEvidence": "DAT evidence",
+          "datEvidencePlaceholder": "Select a state"
+        },
+        "datEvidence": {
+          "pending": "Pending",
+          "uploaded": "Uploaded"
         }
       },
       "parties": {

@@ -278,16 +278,21 @@
         "invalidRows": "Bitte Zeile {{rows}} prüfen — jede Zeile braucht ein Datum und einen Betrag mit maximal zwei Dezimalstellen.",
         "finalRule": "Genau eine Zeile muss als Schlusszahlung markiert sein.",
         "columns": {
-          "n": "#",
+          "period": "Periode",
           "dueDate": "Fälligkeit",
           "amount": "Betrag",
           "isFinal": "Schluss",
-          "origin": "Herkunft"
+          "origin": "Herkunft",
+          "type": "Art"
         },
         "origin": {
           "generated": "Erzeugt",
           "manual": "Manuell",
           "imported": "Importiert"
+        },
+        "types": {
+          "finalPayment": "Schlusszahlung",
+          "instalment": "Rate"
         }
       },
       "details": {
@@ -349,8 +354,8 @@
           "description": "Objektbeschreibung",
           "group": "Objektgruppe",
           "groupPlaceholder": "Objektgruppe auswählen",
-          "subGroup": "Untergruppe",
-          "subGroupPlaceholder": "Untergruppe auswählen",
+          "subGroup": "Kraftstoffart",
+          "subGroupPlaceholder": "Kraftstoffart auswählen",
           "manufacturer": "Hersteller",
           "brand": "Marke",
           "yearOfManufacture": "Baujahr",
@@ -361,7 +366,16 @@
           "acquisitionCost": "Netto-Anschaffungskosten (EUR)",
           "marketValue": "Marktwert (EUR)",
           "appraisedValue": "Gutachterwert (EUR)",
-          "specialPayment": "Sonderzahlung (EUR)"
+          "specialPayment": "Sonderzahlung (EUR)",
+          "residualValue": "Restwert (EUR)",
+          "valueAsAt": "Werte per",
+          "marketValueInOrder": "Marktwert ist i.O.",
+          "datEvidence": "DAT-Nachweis",
+          "datEvidencePlaceholder": "Status auswählen"
+        },
+        "datEvidence": {
+          "pending": "Ausstehend",
+          "uploaded": "Hochgeladen"
         }
       },
       "parties": {

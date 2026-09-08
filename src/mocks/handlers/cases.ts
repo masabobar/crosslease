@@ -256,6 +256,7 @@ const EMPTY_LEASE_OBJECT = {
   market_value: null,
   appraised_value: null,
   value_as_at: null,
+  market_value_indicator: null,
   dat_evidence_status: null,
   dat_evidence_document_id: null,
   removed_at: null,

@@ -353,6 +353,13 @@ export type ObjectClassificationResponse = z.infer<
 >
 
 export const NewOrUsedSchema = z.enum(["new", "used"])
+
+/**
+ * The market-value indicator. `i_o` (`i.O.`) is the only confirmed value, which is why the form
+ * offers a tick rather than a picker. It is not a "valuation performed" flag.
+ */
+export const MarketValueIndicatorSchema = z.enum(["i_o"])
+export type MarketValueIndicator = z.infer<typeof MarketValueIndicatorSchema>
 export type NewOrUsed = z.infer<typeof NewOrUsedSchema>
 
 // Two states, and the design's "Select File" row is what moves it: `pending` until a DAT valuation
@@ -390,6 +397,7 @@ export const LeaseObjectReadSchema = z.object({
   market_value: MoneySchema,
   appraised_value: MoneySchema,
   value_as_at: z.string().nullable(),
+  market_value_indicator: MarketValueIndicatorSchema.nullable(),
   dat_evidence_status: DatEvidenceStatusSchema.nullable(),
   dat_evidence_document_id: z.string().nullable(),
   removed_at: z.string().nullable(),

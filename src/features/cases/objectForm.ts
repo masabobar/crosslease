@@ -1,5 +1,8 @@
 import { z } from "zod"
-import { NewOrUsedSchema } from "@/features/cases/api/schema"
+import {
+  DatEvidenceStatusSchema,
+  NewOrUsedSchema,
+} from "@/features/cases/api/schema"
 import type {
   LeaseObjectRead,
   ObjectGroupItem,
@@ -37,6 +40,23 @@ export const objectFormSchema = z.object({
   market_value: z.string(),
   appraised_value: z.string(),
   special_payment: z.string(),
+  // The remaining writable fields of LeaseObjectCreate. All four were absent from the form, so an
+  // object could not carry them at all.
+  residual_value: z.string(),
+  // The date the recorded values are as at — the design prints a date beside its figures.
+  value_as_at: z.string(),
+  /**
+   * `i.O.` is the ONLY confirmed value, so this is a tick rather than a picker. It is **not** a
+   * "valuation performed" flag — the contract is explicit that the earlier candidate for that was
+   * withdrawn. It states the recorded market value is in order, which is a different claim.
+   */
+  market_value_in_order: z.boolean(),
+  /**
+   * DAT evidence is held as **status plus the document reference only** — no per-object DAT value
+   * is stored, because the collateral total sits on the package. `pending` once the capture step is
+   * opened, `uploaded` once a document reference is recorded.
+   */
+  dat_evidence_status: z.union([DatEvidenceStatusSchema, z.literal("")]),
 })
 
 export type ObjectFormValues = z.infer<typeof objectFormSchema>
@@ -56,6 +76,10 @@ export const EMPTY_OBJECT_FORM: ObjectFormValues = {
   market_value: "",
   appraised_value: "",
   special_payment: "",
+  residual_value: "",
+  value_as_at: "",
+  market_value_in_order: false,
+  dat_evidence_status: "",
 }
 
 /**
@@ -134,6 +158,16 @@ export function toObjectPayload(
     market_value: moneyOrNull(values.market_value),
     appraised_value: moneyOrNull(values.appraised_value),
     special_payment: moneyOrNull(values.special_payment),
+    residual_value: moneyOrNull(values.residual_value),
+    value_as_at: textOrNull(values.value_as_at),
+    // The enum carries one value, so the tick maps to it or to null.
+    market_value_indicator: values.market_value_in_order ? "i_o" : null,
+    // Vehicle-only: DAT evidence is a vehicle concept, and sending a status for a non-vehicle
+    // object would record a state that cannot be satisfied.
+    dat_evidence_status:
+      isVehicle && values.dat_evidence_status !== ""
+        ? values.dat_evidence_status
+        : null,
   }
 }
 
@@ -161,5 +195,9 @@ export function toObjectFormValues(object: LeaseObjectRead): ObjectFormValues {
     market_value: money(object.market_value),
     appraised_value: money(object.appraised_value),
     special_payment: money(object.special_payment),
+    residual_value: money(object.residual_value),
+    value_as_at: object.value_as_at ?? "",
+    market_value_in_order: object.market_value_indicator === "i_o",
+    dat_evidence_status: object.dat_evidence_status ?? "",
   }
 }

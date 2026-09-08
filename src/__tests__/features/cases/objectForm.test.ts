@@ -177,6 +177,7 @@ describe("toObjectFormValues", () => {
       market_value: null,
       appraised_value: 91000,
       value_as_at: null,
+      market_value_indicator: null,
       dat_evidence_status: "uploaded",
       dat_evidence_document_id: "doc-1",
       removed_at: null,

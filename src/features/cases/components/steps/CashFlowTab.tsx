@@ -172,9 +172,14 @@ export function CashFlowTab({ caseId, contractId }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("wizard.manual.cashFlow.columns.n")}</TableHead>
+                <TableHead>
+                  {t("wizard.manual.cashFlow.columns.period")}
+                </TableHead>
                 <TableHead>
                   {t("wizard.manual.cashFlow.columns.dueDate")}
+                </TableHead>
+                <TableHead>
+                  {t("wizard.manual.cashFlow.columns.type")}
                 </TableHead>
                 <TableHead>
                   {t("wizard.manual.cashFlow.columns.amount")}
@@ -212,6 +217,19 @@ export function CashFlowTab({ caseId, contractId }: Props) {
                         {formatDate(row.due_date)}
                       </span>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    {/* The design names three types — Down payment, Installment, Final payment.
+                        The wire carries no type, only `is_final`, so the two that boolean actually
+                        determines are shown and a down payment is not inferred: nothing on the
+                        entry distinguishes one from an instalment. */}
+                    <span className="text-xs text-muted-foreground">
+                      {t(
+                        row.is_final
+                          ? "wizard.manual.cashFlow.types.finalPayment"
+                          : "wizard.manual.cashFlow.types.instalment"
+                      )}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {isEditing ? (

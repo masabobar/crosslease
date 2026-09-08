@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SelectField } from "@/components/ui/select"
+import { DatEvidenceStatusSchema } from "@/features/cases/api/schema"
 import { Skeleton } from "@/components/ui/skeleton"
 import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { resolveFormMessage } from "@/lib/formMessages"
@@ -183,6 +184,7 @@ function ObjectForm({
   const groupCode = useWatch({ control, name: "object_group" })
   const subGroupCode = useWatch({ control, name: "object_sub_group" })
   const newOrUsed = useWatch({ control, name: "new_or_used" })
+  const datEvidence = useWatch({ control, name: "dat_evidence_status" })
   const isVehicle = isVehicleGroup(groups, groupCode)
   const subGroups = subGroupsFor(groups, groupCode)
 
@@ -290,6 +292,33 @@ function ObjectForm({
               {...register("vehicle_registration_document_number")}
             />
           </Field>
+
+          {/* Vehicle-only, and status-only: the contract holds DAT evidence as a state plus a
+              document reference, and stores no per-object DAT value — the collateral total sits on
+              the package instead. The design's "Select File" is not offered because attaching the
+              document needs a media upload endpoint scoped to an object, which does not exist;
+              `dat_evidence_document_id` can only be set to a document that already exists. */}
+          <Field label={t("wizard.manual.object.fields.datEvidence")}>
+            <SelectField
+              data-testid="object-dat-evidence-select"
+              value={datEvidence}
+              placeholder={t(
+                "wizard.manual.object.fields.datEvidencePlaceholder"
+              )}
+              options={DatEvidenceStatusSchema.options.map(value => ({
+                value,
+                label: t(
+                  `wizard.manual.object.datEvidence.${value}` as "wizard.manual.object.datEvidence.pending"
+                ),
+              }))}
+              onValueChange={value =>
+                setValue(
+                  "dat_evidence_status",
+                  value as (typeof DatEvidenceStatusSchema.options)[number]
+                )
+              }
+            />
+          </Field>
         </div>
       )}
 
@@ -344,6 +373,37 @@ function ObjectForm({
             {...register("special_payment")}
           />
         </Field>
+        <Field label={t("wizard.manual.object.fields.residualValue")}>
+          <Input
+            inputMode="decimal"
+            data-testid="object-residual-value-input"
+            {...register("residual_value")}
+          />
+        </Field>
+        {/* The date the figures above are as at — the design prints one beside its values. */}
+        <Field label={t("wizard.manual.object.fields.valueAsAt")}>
+          <Input
+            type="date"
+            data-testid="object-value-as-at-input"
+            {...register("value_as_at")}
+          />
+        </Field>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {/* A tick, not a picker: `i.O.` is the only confirmed value of the indicator. It says the
+            recorded market value is in order — deliberately NOT "a valuation was performed", which
+            the contract states was withdrawn as a field. */}
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            data-testid="object-market-value-in-order"
+            {...register("market_value_in_order")}
+          />
+          {/* NOTE: raw <input type="checkbox"> — bound through RHF `register`, which the BaseUI
+              Checkbox does not accept; every other tick in this form uses the same pattern. */}
+          {t("wizard.manual.object.fields.marketValueInOrder")}
+        </label>
       </div>
 
       <div className="flex items-center justify-end gap-2">
