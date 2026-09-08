@@ -781,6 +781,28 @@ export const caseHandlers = [
     return envelope(comment)
   }),
 
+  // POST /cases/{case_id}/decide — US 1.29. The outcome becomes the request status, which the
+  // case's derived display status renders, so the list and the badge both change after a decision.
+  http.post(`${API}/cases/:caseId/decide`, async ({ params, request }) => {
+    const caseId = params.caseId as string
+    const body = (await request.json()) as {
+      outcome: string
+      reason: string | null
+    }
+    const found = allCases().find(c => c.id === caseId)
+    if (!found) return errorEnvelope("NOT_FOUND", "Case not found", 404)
+
+    found.display_status = body.outcome
+    pushActivity(caseId, {
+      event_type: "request_decided",
+      action_type: "update",
+      entity_type: "request",
+      entity_display: found.case_reference,
+      new_data: { outcome: body.outcome, reason: body.reason },
+    })
+    return envelope(CaseResponseSchema.parse(found))
+  }),
+
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {
     const partnerId = params.partnerId as string

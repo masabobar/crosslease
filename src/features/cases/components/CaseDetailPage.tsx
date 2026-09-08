@@ -19,6 +19,7 @@ import { CaseProgressBand } from "@/features/cases/components/CaseProgressBand"
 import { CaseWorkspaceHeader } from "@/features/cases/components/CaseWorkspaceHeader"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
 import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel"
+import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDialog"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
@@ -79,6 +80,8 @@ const IMPLEMENTED_TABS = new Set<TabKey>([
 ])
 
 export default function CaseDetailPage() {
+  // US 1.29 — the step-4 decision.
+  const [isDecisionOpen, setDecisionOpen] = useState(false)
   const { t } = useTranslation("cases")
   const { caseId: caseIdParam } = useParams<{ caseId: string }>()
   const caseId = isUuidRouteParam(caseIdParam) ? caseIdParam : undefined
@@ -148,6 +151,16 @@ export default function CaseDetailPage() {
                   {t("detail.reject")}
                 </Button>
               )}
+              {/* US 1.29. Offered alongside Take over rather than inside a tab: deciding is an
+                  act on the case, not a view of it. Hidden on a terminal case for the same reason
+                  claim and reject are — the backend 409s either way. */}
+              <Button
+                variant="outline"
+                data-testid="case-decide-button"
+                onClick={() => setDecisionOpen(true)}
+              >
+                {t("decision.title")}
+              </Button>
               <Button
                 data-testid="case-take-over-button"
                 disabled={claimCase.isPending || rejectCase.isPending}
@@ -191,6 +204,10 @@ export default function CaseDetailPage() {
       )}
 
       {activeTab === "activity" && <CaseActivityPanel caseId={data.id} />}
+
+      {isDecisionOpen && (
+        <CaseDecisionDialog caseId={data.id} onOpenChange={setDecisionOpen} />
+      )}
 
       {activeTab === "documents" && (
         /* case_type is the resolution key for the document set (PRD1042-1794 DRC usability); the case

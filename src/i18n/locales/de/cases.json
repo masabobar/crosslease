@@ -22,6 +22,35 @@
     "extension": "Verlängerung",
     "asset_event": "Asset-Ereignis"
   },
+  "decision": {
+    "title": "Antrag entscheiden",
+    "subtitle": "Dies ist Schritt 4 des Prozesses. Die Entscheidung kann hier nicht zurückgenommen werden.",
+    "reasonRequired": "Begründung (erforderlich)",
+    "reasonOptional": "Notiz (optional)",
+    "reasonPlaceholder": "Was soll der Empfänger als Nächstes tun?",
+    "submit": "Entscheidung erfassen",
+    "recorded": "Entscheidung erfasst — der Fall ist jetzt {{status}}.",
+    "approveWarning": "Die Genehmigung schließt den Antrag ab und lässt die Finanzierung entstehen. Der Fall läuft ab hier als Finanzierung weiter.",
+    "sendBackWarning": "Damit geht der Fall aus Ihrer Hand. Wer ihn übernimmt, handelt nach Ihrer Begründung.",
+    "outcomes": {
+      "committed": {
+        "label": "Genehmigen",
+        "description": "Antrag abschließen. Die Finanzierung entsteht."
+      },
+      "rejected": {
+        "label": "Ablehnen",
+        "description": "Antrag ablehnen. Es entsteht keine Finanzierung."
+      },
+      "missing_information": {
+        "label": "Informationen fehlen",
+        "description": "Vor der Entscheidung etwas von der Leasinggesellschaft anfordern."
+      },
+      "rework": {
+        "label": "Interne Nachbearbeitung",
+        "description": "Fall bankintern zur Korrektur zurückgeben."
+      }
+    }
+  },
   "detail": {
     "fields": {
       "caseType": "Falltyp",

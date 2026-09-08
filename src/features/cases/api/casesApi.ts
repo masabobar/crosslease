@@ -524,3 +524,17 @@ export async function addCaseComment(
   const data = await api.post(`/cases/${caseId}/comments`, { body })
   return CaseCommentItemSchema.parse(data)
 }
+
+// POST /cases/{case_id}/decide — the step-4 decision (US 1.29). `outcome` is declared as
+// `RequestStatus`, which is wider than the four legal verdicts; see features/cases/decisionOutcomes.ts.
+export async function decideCase(
+  caseId: string,
+  outcome: string,
+  reason: string | null
+): Promise<CaseResponse> {
+  const data = await api.post(`/cases/${caseId}/decide`, {
+    outcome,
+    reason,
+  })
+  return CaseResponseSchema.parse(data)
+}

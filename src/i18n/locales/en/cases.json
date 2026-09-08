@@ -22,6 +22,35 @@
     "extension": "Extension",
     "asset_event": "Asset event"
   },
+  "decision": {
+    "title": "Decide the request",
+    "subtitle": "This is step 4 of the process. The decision cannot be undone from here.",
+    "reasonRequired": "Reason (required)",
+    "reasonOptional": "Note (optional)",
+    "reasonPlaceholder": "What should the recipient do next?",
+    "submit": "Record decision",
+    "recorded": "Decision recorded — the case is now {{status}}.",
+    "approveWarning": "Approving commits the request and brings the financing into existence. The case continues as the financing from here.",
+    "sendBackWarning": "This sends the case out of your hands. Whoever picks it up will act on the reason you give.",
+    "outcomes": {
+      "committed": {
+        "label": "Approve",
+        "description": "Commit the request. The financing comes into existence."
+      },
+      "rejected": {
+        "label": "Reject",
+        "description": "Refuse the request. It does not become a financing."
+      },
+      "missing_information": {
+        "label": "Information missing",
+        "description": "Ask the leasing company for something before deciding."
+      },
+      "rework": {
+        "label": "Internal rework",
+        "description": "Send the case back inside the bank to be corrected."
+      }
+    }
+  },
   "detail": {
     "fields": {
       "caseType": "Case type",
