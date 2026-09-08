@@ -24,7 +24,8 @@ import {
 import type { ApprovalConditionResponse } from "@/features/financing/api/schema"
 import { GovernedActionSchema } from "@/features/governedActions/api/schema"
 import {
-  mockFinancingByCaseId,
+  mockFinancingFor,
+  isWizardCase,
   mockRemainingBalanceByCaseId,
 } from "@/mocks/fixtures/financing"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
@@ -38,7 +39,7 @@ function seedConditions(caseId: string): ApprovalConditionResponse[] {
   if (conditionsByCaseId[caseId] !== undefined) {
     return conditionsByCaseId[caseId]
   }
-  const financing = mockFinancingByCaseId[caseId]
+  const financing = mockFinancingFor(caseId)
   conditionsByCaseId[caseId] = (financing?.covenants ?? []).map(c => ({
     id: c.id,
     financing_id: financing?.id ?? caseId,
@@ -68,6 +69,10 @@ const DESIGN_CASE = "00000000-0000-4000-8000-00000000c001"
 /** The cases that carry computed per-contract figures. */
 const CASES_WITH_FIGURES = [LIVE_CASE, DESIGN_CASE]
 
+function hasFigures(caseId: string): boolean {
+  return CASES_WITH_FIGURES.includes(caseId) || isWizardCase(caseId)
+}
+
 type CalcState = {
   refinancing_rate: string | null
   refinancing_quota_override: string | null
@@ -81,7 +86,7 @@ type CalcState = {
 const calcByCaseId: Record<string, CalcState> = {}
 
 function calcState(caseId: string): CalcState {
-  const seeded = caseId === DESIGN_CASE
+  const seeded = caseId === DESIGN_CASE || isWizardCase(caseId)
   calcByCaseId[caseId] ??= {
     // Empty everywhere except the design's case: US 1.15 forbids a default, and the pending state
     // is only reachable on a financing that has none.
@@ -128,7 +133,7 @@ const COMPONENTS = [
 
 function financingRecord(caseId: string) {
   const state = calcState(caseId)
-  const financing = mockFinancingByCaseId[caseId]
+  const financing = mockFinancingFor(caseId)
   return {
     id: financing?.id ?? "00000000-0000-4000-8000-00000000f001",
     case_id: caseId,
@@ -160,7 +165,7 @@ function financingRecord(caseId: string) {
 export const financingHandlers = [
   http.get(`${API}/cases/:caseId/financing`, ({ params }) => {
     const caseId = params.caseId as string
-    if (mockFinancingByCaseId[caseId] === undefined) {
+    if (mockFinancingFor(caseId) === undefined) {
       return errorEnvelope("NOT_FOUND", "No financing for this case", 404)
     }
     return envelope(FinancingReadSchema.parse(financingRecord(caseId)))
@@ -174,7 +179,7 @@ export const financingHandlers = [
         case_id: caseId,
         // Nothing is computed before the rate exists, so there are no components either.
         components:
-          hasRate && CASES_WITH_FIGURES.includes(caseId)
+          hasRate && hasFigures(caseId)
             ? COMPONENTS.map(c => ({
                 ...c,
                 calculated_as_of: "2026-09-08T09:00:00Z",
@@ -189,7 +194,7 @@ export const financingHandlers = [
     const caseId = params.caseId as string
     const hasRate = calcState(caseId).refinancing_rate !== null
     const rows =
-      hasRate && CASES_WITH_FIGURES.includes(caseId)
+      hasRate && hasFigures(caseId)
         ? COMPONENTS.map(c => ({
             contract_id: c.contract_id,
             status: c.status,
@@ -294,7 +299,7 @@ export const financingHandlers = [
         id: `00000000-0000-4000-8000-0000000ac${conditionSeq
           .toString(16)
           .padStart(3, "0")}`,
-        financing_id: mockFinancingByCaseId[caseId]?.id ?? caseId,
+        financing_id: mockFinancingFor(caseId)?.id ?? caseId,
         condition_text: body.condition_text,
         due_date: body.due_date,
         state: "open",
@@ -369,7 +374,7 @@ export const financingHandlers = [
   ),
 
   http.get(`${API}/cases/:caseId/financing/overview`, ({ params }) => {
-    const financing = mockFinancingByCaseId[params.caseId as string]
+    const financing = mockFinancingFor(params.caseId as string)
     if (!financing) {
       return errorEnvelope("NOT_FOUND", "This case has no financing yet.", 404)
     }

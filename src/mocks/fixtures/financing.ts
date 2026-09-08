@@ -202,7 +202,40 @@ const CALCULATING_FINANCING: FinancingOverviewResponse = {
   financing_quote_pct: null,
   figures_pending: true,
   bank_figures_visible: true,
-  contracts: [],
+  contracts: [
+    {
+      contract_id: "00000000-0000-4000-8000-0000000acd01",
+      short_name: "Knaus Van TI Plus",
+      leasing_company_contract_number: "PL-2025-00213",
+      contract_type: "Hire purchase",
+      status: "Active",
+      financing_amount_share: "744621.03",
+      objects: [
+        {
+          object_id: "00000000-0000-4000-8000-0000000bd001",
+          object_number: 1,
+          object_group: "Wohnmobil",
+          object_sub_group: "Diesel-Hybrid",
+        },
+      ],
+    },
+    {
+      contract_id: "00000000-0000-4000-8000-0000000acd02",
+      short_name: "Nordkap Spedition fleet",
+      leasing_company_contract_number: "PL-2025-00214",
+      contract_type: "Finance lease",
+      status: "Active",
+      financing_amount_share: "744621.03",
+      objects: [
+        {
+          object_id: "00000000-0000-4000-8000-0000000bd002",
+          object_number: 2,
+          object_group: "Commercial vehicles",
+          object_sub_group: "Tractor unit",
+        },
+      ],
+    },
+  ],
   covenants: [
     {
       id: "00000000-0000-4000-8000-0000000de001",
@@ -268,4 +301,30 @@ export const mockRemainingBalanceByCaseId: Record<
     as_of: "2026-09-03",
     remaining_balance: "372868.01",
   },
+}
+
+/**
+ * Cases the wizard creates carry ids of the form `…-0000000cf###` (see the `POST /cases` handler).
+ * They are reviewed far more often than the three seeded cases, and without a financing their
+ * Calculations, Data and Contracts tabs all read "No financing yet" — so the tabs a reviewer opens
+ * first are the ones that show nothing.
+ *
+ * A wizard case therefore borrows the design case's financing, with its own case id. It is a
+ * prototype convenience and deliberately narrow: it does **not** invent a financing for the seeded
+ * cases that are meant to have none (draft, cancelled), which is what keeps the "only an approved
+ * request produces a financing" rule visible.
+ */
+const WIZARD_CASE_PREFIX = "00000000-0000-4000-8000-0000000cf"
+
+export function isWizardCase(caseId: string): boolean {
+  return caseId.startsWith(WIZARD_CASE_PREFIX)
+}
+
+export function mockFinancingFor(
+  caseId: string
+): FinancingOverviewResponse | undefined {
+  const seeded = mockFinancingByCaseId[caseId]
+  if (seeded !== undefined) return seeded
+  if (!isWizardCase(caseId)) return undefined
+  return { ...CALCULATING_FINANCING, case_id: caseId }
 }

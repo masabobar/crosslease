@@ -347,13 +347,13 @@ const PROGRESS_PHASES = [
     phase_name: "Approval & disbursement",
     position: 4,
     steps_done: 0,
-    steps_applicable: 9,
+    steps_applicable: 11,
   },
   {
     phase_name: "Post-processing & archive",
     position: 5,
     steps_done: 0,
-    steps_applicable: 12,
+    steps_applicable: 11,
   },
 ] as const
 
