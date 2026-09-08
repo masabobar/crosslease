@@ -24,6 +24,11 @@ export const GovernedActionTypeSchema = z.enum([
   "partner_role_assign",
   "partner_identity_change",
   "partner_merge",
+  // Epic 3 / US 1.21: waiving a financing approval condition is four-eyes, so the waive
+  // endpoint answers with a governed action rather than the condition. Absent from this
+  // enum, a single pending waiver made PaginatedGovernedActionsSchema.parse() throw and
+  // blanked the whole pending-approvals list.
+  "financing_approval_condition_waive",
   "product_template_activate",
   "product_template_deprecate",
 ])

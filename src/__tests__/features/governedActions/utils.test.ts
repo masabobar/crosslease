@@ -4,6 +4,7 @@ import {
   getGovernedActionSubject,
   HAS_CHANGE_SECTION,
 } from "@/features/governedActions/utils"
+import { GovernedActionSchema } from "@/features/governedActions/api/schema"
 import type { GovernedAction } from "@/features/governedActions/api/schema"
 
 const BASE_ACTION = {
@@ -179,5 +180,58 @@ describe("HAS_CHANGE_SECTION", () => {
   // for it, so gating it in would render an empty card.
   it("excludes partner_confirm", () => {
     expect(HAS_CHANGE_SECTION.has("partner_confirm")).toBe(false)
+  })
+})
+
+describe("getGovernedActionSubject — condition waiver (US 1.21)", () => {
+  // Waiving an approval condition is four-eyes, so it arrives in this list like any other
+  // governed action. Before the type was added to the enum, one pending waiver made the
+  // paginated parse throw and the whole pending-approvals page rendered its error state.
+  const waiverAction = {
+    id: "00000000-0000-4000-8000-0000000aa001",
+    action_type: "financing_approval_condition_waive",
+    subject_type: "approval_condition",
+    subject_id: "00000000-0000-4000-8000-0000000ac001",
+    tenant_id: null,
+    status: "pending",
+    initiator_id: "00000000-0000-4000-8000-000000000005",
+    approver_id: null,
+    display_snapshot: {},
+    initiator_snapshot: {},
+    approver_snapshot: null,
+    execution_params: {},
+    reason: "Guarantee will not arrive before payout",
+    approver_comment: null,
+    expires_at: null,
+    resolved_at: null,
+    correlation_id: null,
+    created_at: "2026-09-08T09:12:00Z",
+    updated_at: "2026-09-08T09:12:00Z",
+  }
+
+  it("parses through the shared governed-action schema", () => {
+    expect(GovernedActionSchema.parse(waiverAction).action_type).toBe(
+      "financing_approval_condition_waive"
+    )
+  })
+
+  // The waiver's display_snapshot is an open record in the contract, so no key is read from it.
+  // A null value renders as the feature's "—" placeholder rather than as an invented reference.
+  it("reports the financing subject kind without inventing a value", () => {
+    const subject = getGovernedActionSubject(
+      GovernedActionSchema.parse(waiverAction)
+    )
+    expect(subject.kind).toBe("financing")
+    expect(subject.value).toBeNull()
+  })
+
+  it("survives a snapshot carrying unexpected keys", () => {
+    const subject = getGovernedActionSubject(
+      GovernedActionSchema.parse({
+        ...waiverAction,
+        display_snapshot: { condition_text: "anything", nested: { a: 1 } },
+      })
+    )
+    expect(subject.kind).toBe("financing")
   })
 })

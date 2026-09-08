@@ -97,6 +97,7 @@ type AffectedEntityLabelKey =
   | "drawer.affectedTemplate"
   | "drawer.affectedTenant"
   | "drawer.affectedModule"
+  | "drawer.affectedFinancing"
 
 const AFFECTED_ENTITY_LABEL_KEY: Record<
   GovernedActionSubjectKind,
@@ -107,6 +108,7 @@ const AFFECTED_ENTITY_LABEL_KEY: Record<
   template: "drawer.affectedTemplate",
   tenant: "drawer.affectedTenant",
   module: "drawer.affectedModule",
+  financing: "drawer.affectedFinancing",
 }
 
 export function PendingApprovalDetailDrawer({ open, onClose, action }: Props) {

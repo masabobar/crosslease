@@ -1,4 +1,34 @@
 {
+  "conditions": {
+    "title": "Genehmigungsbedingungen",
+    "allSettled": "Alle erfüllt",
+    "openCount": "{{count}} offen",
+    "empty": "Keine Genehmigungsbedingungen zu dieser Finanzierung.",
+    "add": "Bedingung hinzufügen",
+    "addSubmit": "Hinzufügen",
+    "cancel": "Abbrechen",
+    "settle": "Als erfüllt markieren",
+    "settled": "Bedingung als erfüllt markiert.",
+    "waive": "Verzicht beantragen",
+    "columns": {
+      "condition": "Bedingung",
+      "step": "Checklistenschritt",
+      "dueDate": "Fällig",
+      "state": "Status"
+    },
+    "fields": {
+      "text": "Was zu erfüllen ist",
+      "dueDate": "Fällig bis"
+    },
+    "waiver": {
+      "title": "Ein Verzicht braucht einen zweiten Genehmiger",
+      "description": "Damit wird die Bedingung nicht aufgehoben. Es wird eine Genehmigung beantragt, und der Antrag erscheint unter Ausstehende Genehmigungen — die Bedingung bleibt offen, bis jemand anderes zustimmt.",
+      "reason": "Warum soll darauf verzichtet werden?",
+      "expiry": "Verzicht gültig bis",
+      "submit": "Genehmigung beantragen",
+      "requested": "Verzicht beantragt — er braucht nun einen zweiten Genehmiger."
+    }
+  },
   "contracts": {
     "empty": "Diese Finanzierung enthält keine Verträge.",
     "unnamedContract": "Vertrag ohne Nummer",

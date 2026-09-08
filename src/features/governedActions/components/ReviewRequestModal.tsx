@@ -62,6 +62,7 @@ type AffectedEntityLabelKey =
   | "modal.affectedTemplate"
   | "modal.affectedTenant"
   | "modal.affectedModule"
+  | "modal.affectedFinancing"
 
 const AFFECTED_ENTITY_LABEL_KEY: Record<
   GovernedActionSubjectKind,
@@ -72,6 +73,7 @@ const AFFECTED_ENTITY_LABEL_KEY: Record<
   template: "modal.affectedTemplate",
   tenant: "modal.affectedTenant",
   module: "modal.affectedModule",
+  financing: "modal.affectedFinancing",
 }
 
 export function ReviewRequestModal({

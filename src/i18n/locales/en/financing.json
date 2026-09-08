@@ -1,4 +1,34 @@
 {
+  "conditions": {
+    "title": "Approval conditions",
+    "allSettled": "All settled",
+    "openCount": "{{count}} open",
+    "empty": "No approval conditions on this financing.",
+    "add": "Add condition",
+    "addSubmit": "Add",
+    "cancel": "Cancel",
+    "settle": "Mark met",
+    "settled": "Condition marked as met.",
+    "waive": "Request waiver",
+    "columns": {
+      "condition": "Condition",
+      "step": "Checklist step",
+      "dueDate": "Due date",
+      "state": "State"
+    },
+    "fields": {
+      "text": "What must happen",
+      "dueDate": "Due by"
+    },
+    "waiver": {
+      "title": "A waiver needs a second approver",
+      "description": "This does not lift the condition. It asks for approval, and the request appears in Pending approvals — the condition stays open until someone else approves it.",
+      "reason": "Why should this be waived?",
+      "expiry": "Waiver valid until",
+      "submit": "Request approval",
+      "requested": "Waiver requested — it now needs a second approver."
+    }
+  },
   "contracts": {
     "empty": "This financing includes no contracts.",
     "unnamedContract": "Contract without a number",

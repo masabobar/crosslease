@@ -43,6 +43,27 @@ describe("canReviewGovernedAction", () => {
   it("returns false when role is undefined", () => {
     expect(canReviewGovernedAction("partner_confirm", undefined)).toBe(false)
   })
+
+  // The approve role for a condition waiver lives in the API's governed_actions/constants.py,
+  // which openapi.json does not expose — so it is deliberately left unmapped and must fail
+  // closed for EVERY role. Guessing it would either hide the control from whoever can approve
+  // or offer it to someone who then gets a 403 on click (Q-018).
+  it("denies the unmapped condition-waiver type to every role", () => {
+    const everyRole = [
+      "system_admin",
+      "support_user",
+      "auditor",
+      "bank_power_user",
+      "front_office",
+      "back_office",
+      "leasing_company_user",
+    ] as const
+    for (const role of everyRole) {
+      expect(
+        canReviewGovernedAction("financing_approval_condition_waive", role)
+      ).toBe(false)
+    }
+  })
 })
 
 describe("GOVERNED_ACTION_LIST_ALLOWED_ROLES", () => {

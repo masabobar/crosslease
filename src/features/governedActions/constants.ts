@@ -28,9 +28,13 @@ export const GOVERNED_ACTION_LIST_ALLOWED_ROLES: readonly UserRole[] = [
 // Platform-level types are approved by System Admin only; tenant-level partner_* types
 // are approved by Back Office only — System Admin is deliberately excluded from those
 // even though it holds the route-level governed_action:approve permission.
-export const GOVERNED_ACTION_APPROVE_ROLES: Record<
-  GovernedActionType,
-  UserRole
+// Partial on purpose. An unmapped type yields `canReviewGovernedAction() === false`, so a
+// type whose approver role this repo cannot confirm shows no approve/reject control at all
+// rather than one that 403s on click. `financing_approval_condition_waive` is unmapped for
+// exactly that reason: its role lives in the API's governed_actions/constants.py, which
+// openapi.json does not expose (Q-018).
+export const GOVERNED_ACTION_APPROVE_ROLES: Partial<
+  Record<GovernedActionType, UserRole>
 > = {
   tenant_create: SYSTEM_ADMIN_ROLE,
   tenant_suspend: SYSTEM_ADMIN_ROLE,

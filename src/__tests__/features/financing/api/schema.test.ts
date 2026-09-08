@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
+  ApprovalConditionListResponseSchema,
+  ApprovalConditionResponseSchema,
   FinancingOverviewResponseSchema,
   FinancingRemainingBalanceResponseSchema,
   FinancingStatusSchema,
@@ -190,5 +192,93 @@ describe("FinancingRemainingBalanceResponseSchema", () => {
       remaining_balance: "372868.01",
     })
     expect(parsed.remaining_balance).toBe("372868.01")
+  })
+})
+
+// ── US 1.21 — approval conditions ────────────────────────────────────────────────────────────────
+
+const openCondition = {
+  id: "00000000-0000-4000-8000-0000000ac001",
+  financing_id: "00000000-0000-4000-8000-00000000f001",
+  condition_text: "Provide the signed guarantee",
+  due_date: "2026-10-31",
+  state: "open",
+  step_reference: null,
+  evidence_document_id: null,
+  set_by: "00000000-0000-4000-8000-000000000005",
+  set_at: "2026-09-08T09:12:00Z",
+  settled_by: null,
+  settled_at: null,
+}
+
+describe("ApprovalConditionResponseSchema", () => {
+  it("parses an open condition with every nullable field null", () => {
+    expect(ApprovalConditionResponseSchema.parse(openCondition).state).toBe(
+      "open"
+    )
+  })
+
+  it("accepts each of the four states the contract declares", () => {
+    for (const state of ["open", "met", "waived", "expired"]) {
+      expect(
+        ApprovalConditionResponseSchema.parse({ ...openCondition, state }).state
+      ).toBe(state)
+    }
+  })
+
+  it("rejects a state outside the contract's enum", () => {
+    expect(() =>
+      ApprovalConditionResponseSchema.parse({
+        ...openCondition,
+        state: "waiver_pending",
+      })
+    ).toThrow()
+  })
+
+  // Requesting a waiver answers with a governed action and leaves the condition open, so a row
+  // never carries a "waiver requested" state. A schema that tolerated one would invite the UI to
+  // render a control as lifted while it is still only requested.
+  it("rejects a missing settled_at rather than defaulting it", () => {
+    const withoutSettledAt = Object.fromEntries(
+      Object.entries(openCondition).filter(([key]) => key !== "settled_at")
+    )
+    expect(() =>
+      ApprovalConditionResponseSchema.parse(withoutSettledAt)
+    ).toThrow()
+  })
+})
+
+describe("ApprovalConditionListResponseSchema", () => {
+  it("parses an empty list", () => {
+    const parsed = ApprovalConditionListResponseSchema.parse({
+      conditions: [],
+      open_count: 0,
+      all_settled: true,
+    })
+    expect(parsed.conditions).toEqual([])
+    expect(parsed.all_settled).toBe(true)
+  })
+
+  // `all_settled` is the backend's own readiness signal and is read verbatim. The schema must not
+  // recompute or cross-check it against open_count: Epic 3 puts fulfilment evaluation in Conditions
+  // Management, so a disagreement is the server's to resolve, not this layer's to paper over.
+  it("keeps all_settled as sent even when it disagrees with open_count", () => {
+    const parsed = ApprovalConditionListResponseSchema.parse({
+      conditions: [openCondition],
+      open_count: 1,
+      all_settled: true,
+    })
+    expect(parsed.all_settled).toBe(true)
+    expect(parsed.open_count).toBe(1)
+  })
+
+  it("rejects a fractional open_count", () => {
+    expect(() =>
+      ApprovalConditionListResponseSchema.parse({
+        conditions: [],
+        open_count: 1.5,
+        all_settled: false,
+      })
+    ).toThrow()
   })
 })

@@ -50,6 +50,7 @@ export type GovernedActionSubjectKind =
   | "template"
   | "tenant"
   | "module"
+  | "financing"
 
 export type GovernedActionSubject = {
   kind: GovernedActionSubjectKind
@@ -153,6 +154,12 @@ export function getGovernedActionSubject(
           displaySnapshot(action, TemplateNameSnapshotSchema).template_name ??
           null,
       }
+    case ACTION_TYPE.financing_approval_condition_waive:
+      // The waiver's `display_snapshot` is an open record in the contract and the API repo
+      // is not available here to pin its keys, so no field is read from it. The action type
+      // alone still identifies what is being approved; inventing a key to show a condition
+      // reference would be a guess rendered as fact.
+      return { kind: "financing", value: null }
     default: {
       // Exhaustiveness guard: every GovernedActionType is handled above, so this is
       // unreachable and `action_type` narrows to `never`. Adding a type to the schema

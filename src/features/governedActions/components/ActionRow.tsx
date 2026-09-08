@@ -72,6 +72,7 @@ type SubjectLabelKey =
   | "row.template"
   | "row.tenant"
   | "row.module"
+  | "row.financing"
 
 const SUBJECT_LABEL_KEY: Record<GovernedActionSubjectKind, SubjectLabelKey> = {
   user: "row.user",
@@ -79,6 +80,7 @@ const SUBJECT_LABEL_KEY: Record<GovernedActionSubjectKind, SubjectLabelKey> = {
   template: "row.template",
   tenant: "row.tenant",
   module: "row.module",
+  financing: "row.financing",
 }
 
 type Props = {

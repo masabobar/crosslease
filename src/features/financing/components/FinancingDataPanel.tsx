@@ -3,14 +3,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import {
   formatDate,
@@ -20,12 +12,10 @@ import {
 } from "@/lib/formatters"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { ApiError } from "@/lib/api"
+import { ApprovalConditionsPanel } from "@/features/financing/components/ApprovalConditionsPanel"
 import { useFinancingOverview } from "@/features/financing/hooks/useFinancingOverview"
 import { useFinancingRemainingBalance } from "@/features/financing/hooks/useFinancingRemainingBalance"
-import {
-  covenantStateBadgeVariant,
-  financingStatusBadgeVariant,
-} from "@/features/financing/types"
+import { financingStatusBadgeVariant } from "@/features/financing/types"
 
 // Rates are priced to a basis point, so the refinancing rate renders to three decimals — matching
 // both the design's "4,650 %" and the spec's rate precision. Quotas and ratios keep two.
@@ -284,60 +274,11 @@ export function FinancingDataPanel({ caseId }: { caseId: string }) {
         </Card>
       )}
 
-      <section data-testid="financing-covenants">
-        <div className="mb-3 flex items-center gap-2">
-          <h3 className="text-sm font-semibold">{t("data.covenants.title")}</h3>
-          {data.open_covenant_count > 0 && (
-            <Badge variant="secondary">
-              {t("data.covenants.openCount", {
-                count: data.open_covenant_count,
-              })}
-            </Badge>
-          )}
-        </div>
-
-        {data.covenants.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("data.covenants.empty")}
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("data.covenants.condition")}</TableHead>
-                  <TableHead>{t("data.covenants.step")}</TableHead>
-                  <TableHead>{t("data.covenants.dueDate")}</TableHead>
-                  <TableHead>{t("data.covenants.state")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.covenants.map(covenant => (
-                  <TableRow
-                    key={covenant.id}
-                    data-testid={`financing-covenant-row-${covenant.id}`}
-                  >
-                    <TableCell>{covenant.condition_text}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {covenant.step_reference ?? "—"}
-                    </TableCell>
-                    <TableCell className="tabular-nums">
-                      {formatDate(covenant.due_date)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={covenantStateBadgeVariant(covenant.state)}
-                      >
-                        {t(`covenantState.${covenant.state}`)}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
+      {/* US 1.21. Was a read-only list while the placement was open; Q-008 confirmed the
+          financing, so it is now the actionable panel — add, settle, request a waiver. It reads
+          the dedicated conditions endpoint rather than the overview's `covenants`, because that
+          one carries who set a condition and when it was settled. */}
+      <ApprovalConditionsPanel caseId={caseId} />
     </div>
   )
 }

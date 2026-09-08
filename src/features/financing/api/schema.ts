@@ -157,3 +157,44 @@ export const FinancingRemainingBalanceResponseSchema = z.object({
 export type FinancingRemainingBalanceResponse = z.infer<
   typeof FinancingRemainingBalanceResponseSchema
 >
+
+/**
+ * Approval conditions on a financing — US 1.21.
+ *
+ * ── PLACEMENT IS SETTLED ───────────────────────────────────────────────────────────────────────
+ * On the **financing**, not the case: the spec said so (§5.13, D-37), the contract agrees (these
+ * hang off `/cases/{id}/financing/conditions`), and the client confirmed it on 2026-09-08 (Q-008).
+ * The confirmed UI term is **Approval Conditions**; "Covenants" is retired (D-38), though the wire
+ * keeps the old word.
+ *
+ * ── `all_settled` IS THE READINESS SIGNAL ──────────────────────────────────────────────────────
+ * Epic 3 states that Conditions Management owns fulfilment evaluation and the financing merely
+ * *consumes* the aggregated signal. `all_settled` is that signal. It is read, never recomputed from
+ * the rows — recomputing it here would duplicate the ownership boundary the epic draws.
+ */
+export const ApprovalConditionResponseSchema = z.object({
+  id: z.string().uuid(),
+  financing_id: z.string().uuid(),
+  condition_text: z.string(),
+  due_date: z.string(),
+  state: ApprovalConditionStateSchema,
+  step_reference: z.string().nullable(),
+  evidence_document_id: z.string().nullable(),
+  set_by: z.string(),
+  set_at: z.string(),
+  settled_by: z.string().nullable(),
+  settled_at: z.string().nullable(),
+})
+export type ApprovalConditionResponse = z.infer<
+  typeof ApprovalConditionResponseSchema
+>
+
+export const ApprovalConditionListResponseSchema = z.object({
+  conditions: z.array(ApprovalConditionResponseSchema),
+  open_count: z.number().int(),
+  // Read, not derived — see the note above.
+  all_settled: z.boolean(),
+})
+export type ApprovalConditionListResponse = z.infer<
+  typeof ApprovalConditionListResponseSchema
+>
