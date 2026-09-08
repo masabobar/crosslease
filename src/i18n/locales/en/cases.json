@@ -195,6 +195,34 @@
       "title": "New refinancing request"
     },
     "manual": {
+      "cashFlow": {
+        "noContract": "Add contract details or an object first — a payment plan belongs to a saved contract.",
+        "none": {
+          "title": "No payment plan yet",
+          "description": "This contract has no financing component, so no plan exists. Generate one from the contract's terms, or enter the schedule by hand."
+        },
+        "total": "Total of the schedule",
+        "rowCount": "{{count}} line",
+        "rowCount_other": "{{count}} lines",
+        "generate": "Generate from terms",
+        "addRow": "Add line",
+        "empty": "No schedule lines.",
+        "save": "Save schedule",
+        "invalidRows": "Check line {{rows}} — each line needs a date and an amount with at most two decimals.",
+        "finalRule": "Exactly one line must be marked as the final payment.",
+        "columns": {
+          "n": "#",
+          "dueDate": "Due date",
+          "amount": "Amount",
+          "isFinal": "Final",
+          "origin": "Origin"
+        },
+        "origin": {
+          "generated": "Generated",
+          "manual": "Manual",
+          "imported": "Imported"
+        }
+      },
       "details": {
         "save": "Save contract details",
         "saved": "Contract details saved.",
@@ -285,11 +313,6 @@
           "title": "A party not yet in the registry cannot be added here",
           "description": "Only confirmed partners from the bank's registry can be linked. Creating a partner in place is a separate form covering three partner types, and it is not built yet — if the lessee or a guarantor is missing, create them in Partner management first."
         }
-      },
-      "pending": {
-        "lessee": "Capturing the lessee is not built yet (US 1.6). Its endpoints exist — /contracts/{id}/lessee and its preview — so this is implementation, not a gap.",
-        "contractDetails": "Capturing the contract terms is not built yet (US 1.9).",
-        "cashFlow": "The payment plan is not built yet (US 1.11)."
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",

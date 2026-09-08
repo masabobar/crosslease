@@ -459,6 +459,48 @@ export const GuarantorListResponseSchema = z.object({
 })
 export type GuarantorListResponse = z.infer<typeof GuarantorListResponseSchema>
 
+/**
+ * The payment plan of a lease contract — the manual-entry modal's **Cash flow** tab (US 1.11).
+ *
+ * ── WHAT `origin` IS FOR ───────────────────────────────────────────────────────────────────────
+ * Each entry says where it came from. Unconstrained on the wire, so it is a string here and
+ * rendered through a lookup that falls back to the raw value — the same treatment every other
+ * undeclared status on this API gets. It matters because a generated plan and a hand-entered one
+ * are different evidence: the calculation specification's whole point is that the schedule is what
+ * the lessor receives, so which rows a human typed is not a detail.
+ *
+ * ── AMOUNTS STAY STRINGS ON READ ───────────────────────────────────────────────────────────────
+ * `amount` is a decimal string on the response and `number | string` on the write. Read side keeps
+ * the string — the calculation spec is explicit that amounts *"are decimal strings on purpose — do
+ * not parse them into binary floats"*, and this is the one screen where that matters most, since
+ * the acceptance gate on the arithmetic is 0.02 EUR.
+ */
+export const PaymentPlanEntrySchema = z.object({
+  due_date: z.string(),
+  amount: z.string(),
+  is_final: z.boolean(),
+  origin: z.string(),
+})
+export type PaymentPlanEntry = z.infer<typeof PaymentPlanEntrySchema>
+
+// `component` is NOT nullable: a plan is always read in the context of a financing component, so a
+// contract with no component has no plan to read rather than a plan with a null component.
+export const PaymentPlanResponseSchema = z.object({
+  component: z.object({
+    id: z.string().uuid(),
+    contract_id: z.string().uuid(),
+    status: z.string(),
+    calculated_as_of: z.string().nullable(),
+    freeze_timestamp: z.string().nullable(),
+    financing_amount_share: z.string().nullable(),
+    financed_residual: z.string().nullable(),
+    share_running_instalment: z.string().nullable(),
+    share_final_instalment: z.string().nullable(),
+  }),
+  entries: z.array(PaymentPlanEntrySchema),
+})
+export type PaymentPlanResponse = z.infer<typeof PaymentPlanResponseSchema>
+
 // The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
 // contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
 // `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they

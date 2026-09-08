@@ -20,6 +20,7 @@ import {
   GuarantorListResponseSchema,
   GuarantorLinkResponseSchema,
   LesseeLinkResponseSchema,
+  PaymentPlanResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
@@ -42,6 +43,7 @@ import type {
   GuarantorListResponse,
   GuarantorLinkResponse,
   LesseeLinkResponse,
+  PaymentPlanResponse,
 } from "@/features/cases/api/schema"
 
 // GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
@@ -101,6 +103,8 @@ export const CASE_QUERY_KEYS = {
     ["contracts", "lessee", contractId] as const,
   contractGuarantors: (contractId: string) =>
     ["contracts", "guarantors", contractId] as const,
+  paymentPlan: (caseId: string, contractId: string) =>
+    ["cases", "payment-plan", caseId, contractId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -426,4 +430,40 @@ export async function updateContract(
 ): Promise<CaseContract> {
   const data = await api.patch(`/contracts/${contractId}`, body)
   return CaseContractSchema.parse(data)
+}
+
+// GET /cases/{case_id}/contracts/{contract_id}/payment-plan (US 1.11).
+export async function fetchPaymentPlan(
+  caseId: string,
+  contractId: string
+): Promise<PaymentPlanResponse> {
+  const data = await api.get(
+    `/cases/${caseId}/contracts/${contractId}/payment-plan`
+  )
+  return PaymentPlanResponseSchema.parse(data)
+}
+
+// POST .../payment-plan/generate — derives the plan from the contract's terms. No request body:
+// everything it needs is already on the contract.
+export async function generatePaymentPlan(
+  caseId: string,
+  contractId: string
+): Promise<PaymentPlanResponse> {
+  const data = await api.post(
+    `/cases/${caseId}/contracts/${contractId}/payment-plan/generate`
+  )
+  return PaymentPlanResponseSchema.parse(data)
+}
+
+// PUT .../payment-plan — replaces the plan with hand-entered rows (`SetManualPlanRequest`).
+export async function setManualPaymentPlan(
+  caseId: string,
+  contractId: string,
+  rows: { due_date: string; amount: string; is_final: boolean }[]
+): Promise<PaymentPlanResponse> {
+  const data = await api.put(
+    `/cases/${caseId}/contracts/${contractId}/payment-plan`,
+    { rows }
+  )
+  return PaymentPlanResponseSchema.parse(data)
 }

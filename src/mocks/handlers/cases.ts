@@ -26,6 +26,7 @@ import {
   LeaseObjectListResponseSchema,
   LeaseObjectReadSchema,
   LesseeLinkResponseSchema,
+  PaymentPlanResponseSchema,
   ObjectClassificationResponseSchema,
   PackageTotalsReadSchema,
   SubmitResultResponseSchema,
@@ -36,6 +37,7 @@ import {
   type GuarantorListItem,
   type LeaseObjectRead,
   type LesseeLinkResponse,
+  type PaymentPlanResponse,
 } from "@/features/cases/api/schema"
 import { LcNumberListResponseSchema } from "@/features/partners/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
@@ -73,6 +75,7 @@ const importBatchesById: Record<string, ImportBatchPreviewResponse> = {}
 // Manual-entry lease objects, keyed by contract. Session-scoped like everything else here.
 const objectsByContractId: Record<string, LeaseObjectRead[]> = {}
 const lesseeByContractId: Record<string, LesseeLinkResponse> = {}
+const planByContractId: Record<string, PaymentPlanResponse> = {}
 const guarantorsByContractId: Record<string, GuarantorListItem[]> = {}
 
 function hexPair(n: number): string {
@@ -555,6 +558,92 @@ export const caseHandlers = [
 
     return errorEnvelope("NOT_FOUND", "Contract not found", 404)
   }),
+
+  // ── Manual entry: the payment plan (US 1.11) ──────────────────────────────
+  // 404 until a plan exists, which is what the tab treats as "no plan yet" rather than as an error
+  // — a contract with no financing component genuinely has none.
+  http.get(
+    `${API}/cases/:caseId/contracts/:contractId/payment-plan`,
+    ({ params }) => {
+      const plan = planByContractId[params.contractId as string]
+      return plan
+        ? envelope(PaymentPlanResponseSchema.parse(plan))
+        : errorEnvelope("NOT_FOUND", "No payment plan for this contract", 404)
+    }
+  ),
+
+  // Derives a plan from the contract's terms. Twelve equal instalments plus a final line, which is
+  // enough to exercise the screen — the real arithmetic (annuity, discounting, the broken-period
+  // factor) is the engine's and is specified in Refinancing-Calculation-Specification.html.
+  http.post(
+    `${API}/cases/:caseId/contracts/:contractId/payment-plan/generate`,
+    ({ params }) => {
+      const contractId = params.contractId as string
+      const entries = Array.from({ length: 12 }, (_u, i) => ({
+        due_date: `2026-${String(i + 1).padStart(2, "0")}-01`,
+        amount: "1250.00",
+        is_final: false,
+        origin: "generated",
+      }))
+      entries.push({
+        due_date: "2027-01-01",
+        amount: "41200.00",
+        is_final: true,
+        origin: "generated",
+      })
+
+      const plan = {
+        component: {
+          id: "00000000-0000-4000-8000-00000000fc01",
+          contract_id: contractId,
+          status: "calculated",
+          calculated_as_of: "2026-09-08T10:00:00Z",
+          freeze_timestamp: null,
+          financing_amount_share: "56200.00",
+          financed_residual: "41200.00",
+          share_running_instalment: "1250.00",
+          share_final_instalment: "41200.00",
+        },
+        entries,
+      }
+      planByContractId[contractId] = plan
+      return envelope(PaymentPlanResponseSchema.parse(plan))
+    }
+  ),
+
+  http.put(
+    `${API}/cases/:caseId/contracts/:contractId/payment-plan`,
+    async ({ params, request }) => {
+      const contractId = params.contractId as string
+      const body = (await request.json()) as {
+        rows: { due_date: string; amount: string | number; is_final: boolean }[]
+      }
+      const existing = planByContractId[contractId]
+
+      const plan = {
+        component: existing?.component ?? {
+          id: "00000000-0000-4000-8000-00000000fc01",
+          contract_id: contractId,
+          status: "manual",
+          calculated_as_of: null,
+          freeze_timestamp: null,
+          financing_amount_share: null,
+          financed_residual: null,
+          share_running_instalment: null,
+          share_final_instalment: null,
+        },
+        // `origin` becomes `manual` — that is the whole point of the field, and the tab renders it.
+        entries: body.rows.map(r => ({
+          due_date: r.due_date,
+          amount: String(r.amount),
+          is_final: r.is_final,
+          origin: "manual",
+        })),
+      }
+      planByContractId[contractId] = plan
+      return envelope(PaymentPlanResponseSchema.parse(plan))
+    }
+  ),
 
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {

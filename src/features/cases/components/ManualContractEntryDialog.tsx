@@ -9,6 +9,7 @@ import { showApiError } from "@/lib/apiErrorMessage"
 import { createCaseContract } from "@/features/cases/api/casesApi"
 import { CASE_QUERY_KEYS } from "@/features/cases/api/casesApi"
 import { useQueryClient } from "@tanstack/react-query"
+import { CashFlowTab } from "@/features/cases/components/steps/CashFlowTab"
 import { ContractDetailsTab } from "@/features/cases/components/steps/ContractDetailsTab"
 import { LesseeTab } from "@/features/cases/components/steps/LesseeTab"
 import { ObjectTab } from "@/features/cases/components/steps/ObjectTab"
@@ -22,14 +23,6 @@ const MANUAL_ENTRY_TABS = [
 ] as const
 
 type ManualEntryTab = (typeof MANUAL_ENTRY_TABS)[number]
-
-// The tabs with a form behind them today. Everything else says what it is waiting for rather than
-// rendering an empty pane — the same convention the case workspace uses for its design-only tabs.
-const IMPLEMENTED_TABS = new Set<ManualEntryTab>([
-  "lessee",
-  "object",
-  "contractDetails",
-])
 
 type Props = {
   caseId: string
@@ -53,11 +46,12 @@ type Props = {
  * than papered over with a hidden cleanup that cannot actually run.
  *
  * ── WHAT IS BUILT ──────────────────────────────────────────────────────────────────────────────
- * **Lessee** (US 1.6 + US 1.7 — guarantors and co-obligors share the tab), **Object** (US 1.8) and
- * **Contract details** (US 1.9). **Cash flow** (US 1.11) is not built: it is a schedule editor
- * (`SetManualPlanRequest` takes rows), and the calculation specification that governs what a plan
- * means only landed on 2026-09-08 — building the editor before reading it against that spec would
- * be guessing at a surface where the acceptance gate is 0.02 EUR.
+ * All four tabs: **Lessee** (US 1.6 + US 1.7 — guarantors and co-obligors share the tab),
+ * **Object** (US 1.8), **Contract details** (US 1.9) and **Cash flow** (US 1.11).
+ *
+ * What is still absent inside them is stated on each surface rather than here — chiefly
+ * create-partner-in-context on the Lessee tab and the DAT-evidence upload on the Object tab, both
+ * because no endpoint supports them yet.
  */
 export function ManualContractEntryDialog({
   caseId,
@@ -128,15 +122,8 @@ export function ManualContractEntryDialog({
           />
         )}
 
-        {!IMPLEMENTED_TABS.has(tab) && (
-          <p
-            className="text-sm text-muted-foreground"
-            data-testid={`manual-entry-pending-${tab}`}
-          >
-            {t(
-              `wizard.manual.pending.${tab}` as "wizard.manual.pending.lessee"
-            )}
-          </p>
+        {tab === "cashFlow" && !isCreating && (
+          <CashFlowTab caseId={caseId} contractId={contractId} />
         )}
       </div>
 

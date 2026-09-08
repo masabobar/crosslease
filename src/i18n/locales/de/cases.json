@@ -195,6 +195,34 @@
       "title": "Neuer Refinanzierungsantrag"
     },
     "manual": {
+      "cashFlow": {
+        "noContract": "Bitte zuerst Vertragsdaten oder ein Objekt erfassen — ein Zahlungsplan gehört zu einem gespeicherten Vertrag.",
+        "none": {
+          "title": "Noch kein Zahlungsplan",
+          "description": "Dieser Vertrag hat keine Finanzierungskomponente, daher existiert kein Plan. Aus den Vertragskonditionen erzeugen oder den Plan manuell erfassen."
+        },
+        "total": "Summe des Plans",
+        "rowCount": "{{count}} Zeile",
+        "rowCount_other": "{{count}} Zeilen",
+        "generate": "Aus Konditionen erzeugen",
+        "addRow": "Zeile hinzufügen",
+        "empty": "Keine Planzeilen.",
+        "save": "Plan speichern",
+        "invalidRows": "Bitte Zeile {{rows}} prüfen — jede Zeile braucht ein Datum und einen Betrag mit maximal zwei Dezimalstellen.",
+        "finalRule": "Genau eine Zeile muss als Schlusszahlung markiert sein.",
+        "columns": {
+          "n": "#",
+          "dueDate": "Fälligkeit",
+          "amount": "Betrag",
+          "isFinal": "Schluss",
+          "origin": "Herkunft"
+        },
+        "origin": {
+          "generated": "Erzeugt",
+          "manual": "Manuell",
+          "imported": "Importiert"
+        }
+      },
       "details": {
         "save": "Vertragsdaten speichern",
         "saved": "Vertragsdaten gespeichert.",
@@ -285,11 +313,6 @@
           "title": "Eine noch nicht registrierte Partei kann hier nicht angelegt werden",
           "description": "Es können nur bestätigte Partner aus dem Partnerregister verknüpft werden. Das Anlegen eines Partners an dieser Stelle ist ein separates Formular für drei Partnertypen und noch nicht umgesetzt — fehlt der Leasingnehmer oder ein Bürge, bitte zuerst in der Partnerverwaltung anlegen."
         }
-      },
-      "pending": {
-        "lessee": "Die Erfassung des Leasingnehmers ist noch nicht umgesetzt (US 1.6). Die Endpunkte existieren — /contracts/{id}/lessee und die Vorschau — es fehlt also nur die Umsetzung.",
-        "contractDetails": "Die Erfassung der Vertragskonditionen ist noch nicht umgesetzt (US 1.9).",
-        "cashFlow": "Der Zahlungsplan ist noch nicht umgesetzt (US 1.11)."
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",
