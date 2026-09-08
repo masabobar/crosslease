@@ -120,5 +120,77 @@
     "active": "Live",
     "ended": "Ended",
     "cancelled": "Cancelled"
+  },
+  "calculation": {
+    "noFinancing": {
+      "title": "No financing yet",
+      "description": "A financing exists once the refinancing request has been approved. Until then there is nothing to calculate."
+    },
+    "inputs": {
+      "title": "Rate and value date"
+    },
+    "readOnlyNotice": "You can read these figures. Entering and changing the rate is the preparing role's task.",
+    "save": "Save",
+    "commit": "Commit rate",
+    "recalculate": "Recalculate",
+    "recalculated": "Recalculation started.",
+    "planFrozen": "Settlement and plan frozen",
+    "rate": {
+      "label": "Refinancing rate (%)",
+      "placeholder": "Enter the rate",
+      "help": "Taken from the bank's pricing tool and typed in per deal. Three decimal places; there is no default.",
+      "notSet": "Not entered yet",
+      "invalid": "The rate must be a number with at most three decimal places.",
+      "saved": "Rate saved.",
+      "committed": "Rate committed.",
+      "committedBadge": "Committed {{rate}} % until {{expiry}}"
+    },
+    "valueDate": {
+      "label": "Refinancing start / value date",
+      "help": "The date the refinancing runs from, and the instalment boundary. An instalment falling on this date is not refinanced."
+    },
+    "lock": {
+      "label": "Rate lock",
+      "days": "{{count}} days"
+    },
+    "quota": {
+      "label": "Refinancing quota (%)",
+      "override": "Override",
+      "invalid": "The quota must be a percentage between 0 and 100.",
+      "saved": "Quota override saved.",
+      "inherited": "Inherited from the framework agreement.",
+      "overridden": "Overridden on this financing. The override is logged."
+    },
+    "figures": {
+      "title": "Financing figures",
+      "subtitle": "Calculated by the platform from the contracts in this request. None of these is an input.",
+      "financingAmount": "Financing amount",
+      "financingAmountHint": "The present value of the refinanced cash flows. This is the figure the Treasury threshold is measured against.",
+      "runningInstalment": "Loan instalment",
+      "scheduleFinalInstalment": "Schedule final instalment",
+      "scheduleFinalInstalmentHint": "The remaining balance plus the last period's interest. It carries the rounding difference and closes the balance at zero.",
+      "quotadResidual": "Quota'd residual value",
+      "quotadResidualHint": "The residual value times the quota. A separate figure — it carries no rounding difference and may differ from the schedule final instalment by cents.",
+      "pending": {
+        "title": "Figures pending",
+        "description": "The refinancing rate has not been entered, so nothing is calculated yet. These figures stay pending rather than being computed against an assumed rate."
+      }
+    },
+    "treasury": {
+      "title": "Above the Treasury threshold",
+      "description": "The financing amount is above {{threshold}}. The case is flagged and the notification step applies. This is a warning, not a block — nothing already done is undone."
+    },
+    "perContract": {
+      "title": "Per contract",
+      "subtitle": "The evidence of what was computed. Each figure is rounded per contract; the package totals above are the sums of these.",
+      "empty": "No contract figures have been calculated yet.",
+      "columns": {
+        "contract": "Contract",
+        "refinanced": "Refinanced instalments",
+        "share": "Share of the amount",
+        "residual": "Quota'd residual",
+        "calculatedAsOf": "Calculated as of"
+      }
+    }
   }
 }

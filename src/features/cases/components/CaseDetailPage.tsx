@@ -22,6 +22,7 @@ import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel
 import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDialog"
 import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
+import { CalculationPanel } from "@/features/financing/components/CalculationPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
 
@@ -74,6 +75,7 @@ type TabKey = (typeof TAB_KEYS)[number]
 // same reason: both read the case's financing, which has no route of its own.
 const IMPLEMENTED_TABS = new Set<TabKey>([
   "checklist",
+  "calculations",
   "data",
   "contracts",
   "documents",
@@ -197,6 +199,10 @@ export default function CaseDetailPage() {
       {activeTab === "checklist" && (
         <CaseChecklistPanel businessObjectId={data.id} />
       )}
+
+      {/* The Calculation area (US 1.15) — the authorised surface for the refinancing rate. There
+          is deliberately no second financing screen that edits it. */}
+      {activeTab === "calculations" && <CalculationPanel caseId={data.id} />}
 
       {activeTab === "data" && <FinancingDataPanel caseId={data.id} />}
 

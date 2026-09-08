@@ -51,7 +51,7 @@ const actions = [
     id: "00000000-0000-4000-8000-0000000aa002",
     action_type: "partner_confirm",
     subject_type: "partner",
-    subject_id: "00000000-0000-4000-8000-0000000p0001",
+    subject_id: "00000000-0000-4000-8000-00000000ab01",
     tenant_id: null,
     status: "pending",
     initiator_id: "00000000-0000-4000-8000-000000000042",

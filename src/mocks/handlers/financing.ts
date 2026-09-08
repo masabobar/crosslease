@@ -14,6 +14,9 @@
 import { http } from "msw"
 import {
   ApprovalConditionListResponseSchema,
+  ContractContributionListResponseSchema,
+  FinancingComponentListResponseSchema,
+  FinancingReadSchema,
   ApprovalConditionResponseSchema,
   FinancingOverviewResponseSchema,
   FinancingRemainingBalanceResponseSchema,
@@ -54,7 +57,203 @@ function seedConditions(caseId: string): ApprovalConditionResponse[] {
 
 let conditionSeq = 0
 
+// ── US 1.15 — the Calculation area ───────────────────────────────────────────────────────────────
+// Session-scoped calculation state. The rate starts EMPTY on purpose: US 1.15 forbids a default or
+// a prefill, and the pending-figures state is only reachable if the fixture starts without one.
+
+const LIVE_CASE = "00000000-0000-4000-8000-00000000c005"
+
+type CalcState = {
+  refinancing_rate: string | null
+  refinancing_quota_override: string | null
+  effective_quota: string
+  value_date: string | null
+  committed_rate: string | null
+  committed_rate_expiry: string | null
+  rate_lock_days: number | null
+}
+
+const calcByCaseId: Record<string, CalcState> = {}
+
+function calcState(caseId: string): CalcState {
+  calcByCaseId[caseId] ??= {
+    refinancing_rate: null,
+    refinancing_quota_override: null,
+    // 98 % — the leasing company keeps two to five per cent of every instalment.
+    effective_quota: "0.98",
+    value_date: "2026-10-01",
+    committed_rate: null,
+    committed_rate_expiry: null,
+    rate_lock_days: null,
+  }
+  return calcByCaseId[caseId]
+}
+
+/**
+ * Per-contract figures, already rounded to the cent — which is what the frontend then sums.
+ * `share_final_instalment` and `financed_residual` deliberately differ by a cent in total, because
+ * that difference is real and the screen must not present it as a fault.
+ */
+const COMPONENTS = [
+  {
+    id: "00000000-0000-4000-8000-00000000fc01",
+    contract_id: "00000000-0000-4000-8000-0000000000c1",
+    status: "calculated",
+    financing_amount_share: "744621.03",
+    financed_residual: "719779.83",
+    share_running_instalment: "8322.91",
+    share_final_instalment: "719779.78",
+  },
+  {
+    id: "00000000-0000-4000-8000-00000000fc02",
+    contract_id: "00000000-0000-4000-8000-0000000000c2",
+    status: "calculated",
+    financing_amount_share: "744621.03",
+    financed_residual: "719779.83",
+    share_running_instalment: "8322.91",
+    share_final_instalment: "719779.84",
+  },
+]
+
+function financingRecord(caseId: string) {
+  const state = calcState(caseId)
+  const financing = mockFinancingByCaseId[caseId]
+  return {
+    id: financing?.id ?? "00000000-0000-4000-8000-00000000f001",
+    case_id: caseId,
+    financing_reference: financing?.financing_reference ?? "FIN-2026-0005",
+    framework_agreement_id: null,
+    product_template_id: null,
+    product_template_version: null,
+    kind: "package",
+    refinancing_rate: state.refinancing_rate,
+    refinancing_quota_override: state.refinancing_quota_override,
+    effective_quota: state.effective_quota,
+    value_date: state.value_date,
+    committed_rate: state.committed_rate,
+    committed_rate_expiry: state.committed_rate_expiry,
+    rate_lock_days: state.rate_lock_days,
+    settlement_ready: state.refinancing_rate !== null,
+    calculation_state:
+      state.refinancing_rate === null ? "pending" : "calculated",
+    calculation_version: 1,
+    // Null until the core banking system issues it — which is what keeps the rate field open.
+    loan_number: null,
+    loan_account: null,
+    status: "active",
+    created_by: "00000000-0000-4000-8000-000000000005",
+    created_at: "2026-08-01T09:00:00Z",
+  }
+}
+
 export const financingHandlers = [
+  http.get(`${API}/cases/:caseId/financing`, ({ params }) => {
+    const caseId = params.caseId as string
+    if (mockFinancingByCaseId[caseId] === undefined) {
+      return errorEnvelope("NOT_FOUND", "No financing for this case", 404)
+    }
+    return envelope(FinancingReadSchema.parse(financingRecord(caseId)))
+  }),
+
+  http.get(`${API}/cases/:caseId/financing/components`, ({ params }) => {
+    const caseId = params.caseId as string
+    const hasRate = calcState(caseId).refinancing_rate !== null
+    return envelope(
+      FinancingComponentListResponseSchema.parse({
+        case_id: caseId,
+        // Nothing is computed before the rate exists, so there are no components either.
+        components:
+          hasRate && caseId === LIVE_CASE
+            ? COMPONENTS.map(c => ({
+                ...c,
+                calculated_as_of: "2026-09-08T09:00:00Z",
+                freeze_timestamp: null,
+              }))
+            : [],
+      })
+    )
+  }),
+
+  http.get(`${API}/cases/:caseId/financing/per-contract`, ({ params }) => {
+    const caseId = params.caseId as string
+    const hasRate = calcState(caseId).refinancing_rate !== null
+    const rows =
+      hasRate && caseId === LIVE_CASE
+        ? COMPONENTS.map(c => ({
+            contract_id: c.contract_id,
+            status: c.status,
+            financing_amount_share: c.financing_amount_share,
+            // 48 instalments, 47 refinanced — the one on the value date is not.
+            refinanced_instalments: 47,
+          }))
+        : []
+    return envelope(
+      ContractContributionListResponseSchema.parse({
+        case_id: caseId,
+        contributions: rows,
+        contract_count: rows.length,
+        contribution_sum: hasRate && rows.length > 0 ? "1489242.06" : null,
+        figures_pending: !hasRate,
+      })
+    )
+  }),
+
+  http.put(
+    `${API}/cases/:caseId/financing/rate`,
+    async ({ params, request }) => {
+      const caseId = params.caseId as string
+      const body = (await request.json()) as { rate: string | number }
+      calcState(caseId).refinancing_rate = String(body.rate)
+      return envelope(FinancingReadSchema.parse(financingRecord(caseId)))
+    }
+  ),
+
+  http.put(
+    `${API}/cases/:caseId/financing/quota`,
+    async ({ params, request }) => {
+      const caseId = params.caseId as string
+      const body = (await request.json()) as { quota: string | number }
+      const state = calcState(caseId)
+      state.refinancing_quota_override = String(body.quota)
+      state.effective_quota = String(body.quota)
+      return envelope(FinancingReadSchema.parse(financingRecord(caseId)))
+    }
+  ),
+
+  http.put(
+    `${API}/cases/:caseId/financing/value-date`,
+    async ({ params, request }) => {
+      const caseId = params.caseId as string
+      const body = (await request.json()) as { value_date: string }
+      calcState(caseId).value_date = body.value_date
+      return envelope(FinancingReadSchema.parse(financingRecord(caseId)))
+    }
+  ),
+
+  http.post(`${API}/cases/:caseId/financing/recalculate`, ({ params }) =>
+    envelope(
+      FinancingReadSchema.parse(financingRecord(params.caseId as string))
+    )
+  ),
+
+  http.post(
+    `${API}/cases/:caseId/financing/commit-rate`,
+    async ({ params, request }) => {
+      const caseId = params.caseId as string
+      const body = (await request.json().catch(() => ({}))) as {
+        lock_days?: number
+      }
+      const state = calcState(caseId)
+      const lockDays = body.lock_days ?? 7
+      state.committed_rate = state.refinancing_rate
+      state.rate_lock_days = lockDays
+      const expiry = new Date()
+      expiry.setDate(expiry.getDate() + lockDays)
+      state.committed_rate_expiry = expiry.toISOString().slice(0, 10)
+      return envelope(FinancingReadSchema.parse(financingRecord(caseId)))
+    }
+  ),
+
   http.get(`${API}/cases/:caseId/financing/conditions`, ({ params }) => {
     const rows = seedConditions(params.caseId as string)
     const open = rows.filter(r => r.state === "open").length
@@ -135,7 +334,7 @@ export const financingHandlers = [
     ({ params }) =>
       envelope(
         GovernedActionSchema.parse({
-          id: "00000000-0000-4000-8000-00000000wa01".replace("wa", "aa"),
+          id: "00000000-0000-4000-8000-00000000aa01",
           action_type: "financing_approval_condition_waive",
           subject_type: "approval_condition",
           subject_id: params.conditionId,

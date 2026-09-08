@@ -198,3 +198,110 @@ export const ApprovalConditionListResponseSchema = z.object({
 export type ApprovalConditionListResponse = z.infer<
   typeof ApprovalConditionListResponseSchema
 >
+
+// ── US 1.15 — the refinancing rate, the quota and the derived figures ────────────────────────────
+
+/**
+ * The financing's calculation carrier: the three things a person enters, and the state the backend
+ * keeps about them. Every money and rate value is a **decimal string** — the calculation
+ * specification is explicit that amounts and rates are decimal strings on purpose and must not be
+ * parsed into binary floats.
+ *
+ * `effective_quota` is the resolved quota (the framework agreement's, or the override where one was
+ * set) and is read rather than recomputed from the other two. `settlement_ready` is likewise the
+ * backend's own gate: US 1.15 R7 makes settlement readiness lifecycle logic, not a required-field
+ * marker, so this flag is read and never derived from whether the rate looks filled in.
+ */
+export const FinancingReadSchema = z.object({
+  id: z.string().uuid(),
+  case_id: z.string().uuid(),
+  financing_reference: z.string(),
+  framework_agreement_id: z.string().uuid().nullable(),
+  product_template_id: z.string().uuid().nullable(),
+  // Pinned so a historical calculation reproduces under the version it was made with.
+  product_template_version: z.string().uuid().nullable(),
+  kind: FinancingKindSchema,
+  refinancing_rate: z.string().nullable(),
+  refinancing_quota_override: z.string().nullable(),
+  effective_quota: z.string().nullable(),
+  value_date: z.string().nullable(),
+  // Kept alongside `refinancing_rate` rather than overwriting it: the difference between the
+  // committed rate and the rate at settlement is what documents the deviation.
+  committed_rate: z.string().nullable(),
+  committed_rate_expiry: z.string().nullable(),
+  rate_lock_days: z.number().int().nullable(),
+  settlement_ready: z.boolean(),
+  // Unconstrained on the wire, so it is not modelled as an enum.
+  calculation_state: z.string(),
+  calculation_version: z.number().int(),
+  loan_number: z.string().nullable(),
+  loan_account: z.string().nullable(),
+  status: FinancingStatusSchema,
+  created_by: z.string().uuid(),
+  created_at: z.string(),
+})
+export type FinancingRead = z.infer<typeof FinancingReadSchema>
+
+/**
+ * One contract's contribution to the package. `refinanced_instalments` is the count that is
+ * actually financed — an instalment falling on the value date is not refinanced, so a contract
+ * with 48 instalments commonly refinances 47.
+ */
+export const ContractContributionItemSchema = z.object({
+  contract_id: z.string().uuid(),
+  status: z.string(),
+  financing_amount_share: z.string().nullable(),
+  refinanced_instalments: z.number().int(),
+})
+export type ContractContributionItem = z.infer<
+  typeof ContractContributionItemSchema
+>
+
+export const ContractContributionListResponseSchema = z.object({
+  case_id: z.string().uuid(),
+  contributions: z.array(ContractContributionItemSchema),
+  contract_count: z.number().int(),
+  contribution_sum: z.string().nullable(),
+  // The backend's own "not computed yet" signal. US 1.15 requires that figures depending on the
+  // rate are shown as pending rather than computed against an empty or assumed rate, and this is
+  // the flag that says so — it is read, never inferred from a null amount.
+  figures_pending: z.boolean(),
+})
+export type ContractContributionListResponse = z.infer<
+  typeof ContractContributionListResponseSchema
+>
+
+/**
+ * The per-contract calculated figures — the evidence of what was computed.
+ *
+ * `financed_residual` and `share_final_instalment` are the **two distinct final figures** US 1.15
+ * R4 insists on keeping apart: the quota'd residual value carries no rounding difference, while the
+ * schedule final instalment is the remaining balance plus the last period's interest and closes the
+ * balance at zero. They differ by cents. Neither is computed from the other, and they are never
+ * collapsed into one field named "final instalment".
+ *
+ * `calculated_as_of` is the date the share was calculated as of; `freeze_timestamp` is set when the
+ * plan freezes at step 18.
+ */
+export const FinancingComponentResponseSchema = z.object({
+  id: z.string().uuid(),
+  contract_id: z.string().uuid(),
+  status: z.string(),
+  calculated_as_of: z.string().nullable(),
+  freeze_timestamp: z.string().nullable(),
+  financing_amount_share: z.string().nullable(),
+  financed_residual: z.string().nullable(),
+  share_running_instalment: z.string().nullable(),
+  share_final_instalment: z.string().nullable(),
+})
+export type FinancingComponentResponse = z.infer<
+  typeof FinancingComponentResponseSchema
+>
+
+export const FinancingComponentListResponseSchema = z.object({
+  case_id: z.string().uuid(),
+  components: z.array(FinancingComponentResponseSchema),
+})
+export type FinancingComponentListResponse = z.infer<
+  typeof FinancingComponentListResponseSchema
+>

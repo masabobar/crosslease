@@ -120,5 +120,77 @@
     "active": "Aktiv",
     "ended": "Beendet",
     "cancelled": "Storniert"
+  },
+  "calculation": {
+    "noFinancing": {
+      "title": "Noch keine Finanzierung",
+      "description": "Eine Finanzierung entsteht, sobald der Refinanzierungsantrag genehmigt ist. Vorher gibt es nichts zu berechnen."
+    },
+    "inputs": {
+      "title": "Zinssatz und Wertstellungsdatum"
+    },
+    "readOnlyNotice": "Sie können diese Werte einsehen. Die Eingabe und Änderung des Zinssatzes obliegt der vorbereitenden Rolle.",
+    "save": "Speichern",
+    "commit": "Zinssatz festschreiben",
+    "recalculate": "Neu berechnen",
+    "recalculated": "Neuberechnung gestartet.",
+    "planFrozen": "Abrechnung und Plan festgeschrieben",
+    "rate": {
+      "label": "Refinanzierungszinssatz (%)",
+      "placeholder": "Zinssatz eingeben",
+      "help": "Aus dem Pricing-Tool der Bank und je Geschäft eingegeben. Drei Dezimalstellen; es gibt keinen Vorgabewert.",
+      "notSet": "Noch nicht eingegeben",
+      "invalid": "Der Zinssatz muss eine Zahl mit höchstens drei Dezimalstellen sein.",
+      "saved": "Zinssatz gespeichert.",
+      "committed": "Zinssatz festgeschrieben.",
+      "committedBadge": "Festgeschrieben {{rate}} % bis {{expiry}}"
+    },
+    "valueDate": {
+      "label": "Refinanzierungsbeginn / Wertstellungsdatum",
+      "help": "Das Datum, ab dem die Refinanzierung läuft, und die Ratengrenze. Eine auf dieses Datum fallende Rate wird nicht refinanziert."
+    },
+    "lock": {
+      "label": "Zinsbindung",
+      "days": "{{count}} Tage"
+    },
+    "quota": {
+      "label": "Refinanzierungsquote (%)",
+      "override": "Überschreiben",
+      "invalid": "Die Quote muss ein Prozentwert zwischen 0 und 100 sein.",
+      "saved": "Quotenüberschreibung gespeichert.",
+      "inherited": "Aus dem Rahmenvertrag übernommen.",
+      "overridden": "Für diese Finanzierung überschrieben. Die Überschreibung wird protokolliert."
+    },
+    "figures": {
+      "title": "Finanzierungswerte",
+      "subtitle": "Von der Plattform aus den Verträgen dieses Antrags berechnet. Keiner dieser Werte ist eine Eingabe.",
+      "financingAmount": "Finanzierungsbetrag",
+      "financingAmountHint": "Der Barwert der refinanzierten Zahlungsströme. Dieser Wert wird gegen die Treasury-Schwelle gemessen.",
+      "runningInstalment": "Darlehensrate",
+      "scheduleFinalInstalment": "Schlussrate des Plans",
+      "scheduleFinalInstalmentHint": "Der Restsaldo plus die Zinsen der letzten Periode. Sie trägt die Rundungsdifferenz und stellt den Saldo auf null.",
+      "quotadResidual": "Quotierter Restwert",
+      "quotadResidualHint": "Der Restwert mal die Quote. Ein eigener Wert — er trägt keine Rundungsdifferenz und kann um Cent von der Schlussrate abweichen.",
+      "pending": {
+        "title": "Werte ausstehend",
+        "description": "Der Refinanzierungszinssatz ist nicht eingegeben, daher wird noch nichts berechnet. Die Werte bleiben ausstehend, statt gegen einen angenommenen Zinssatz berechnet zu werden."
+      }
+    },
+    "treasury": {
+      "title": "Über der Treasury-Schwelle",
+      "description": "Der Finanzierungsbetrag liegt über {{threshold}}. Der Fall wird markiert und der Benachrichtigungsschritt gilt. Dies ist eine Warnung, keine Sperre — nichts bereits Erledigtes wird zurückgenommen."
+    },
+    "perContract": {
+      "title": "Je Vertrag",
+      "subtitle": "Der Nachweis des Berechneten. Jeder Wert wird je Vertrag gerundet; die Paketsummen oben sind die Summen dieser Werte.",
+      "empty": "Es wurden noch keine Vertragswerte berechnet.",
+      "columns": {
+        "contract": "Vertrag",
+        "refinanced": "Refinanzierte Raten",
+        "share": "Anteil am Betrag",
+        "residual": "Quotierter Restwert",
+        "calculatedAsOf": "Berechnet zum"
+      }
+    }
   }
 }

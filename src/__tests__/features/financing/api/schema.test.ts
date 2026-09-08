@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 import {
   ApprovalConditionListResponseSchema,
+  ContractContributionListResponseSchema,
+  FinancingComponentResponseSchema,
+  FinancingReadSchema,
   ApprovalConditionResponseSchema,
   FinancingOverviewResponseSchema,
   FinancingRemainingBalanceResponseSchema,
@@ -280,5 +283,145 @@ describe("ApprovalConditionListResponseSchema", () => {
         all_settled: false,
       })
     ).toThrow()
+  })
+})
+
+// ── US 1.15 — the calculation carrier ────────────────────────────────────────────────────────────
+
+const pendingFinancing = {
+  id: "00000000-0000-4000-8000-00000000f001",
+  case_id: "00000000-0000-4000-8000-00000000c005",
+  financing_reference: "FIN-2026-0005",
+  framework_agreement_id: null,
+  product_template_id: null,
+  product_template_version: null,
+  kind: "package",
+  refinancing_rate: null,
+  refinancing_quota_override: null,
+  effective_quota: "0.98",
+  value_date: null,
+  committed_rate: null,
+  committed_rate_expiry: null,
+  rate_lock_days: null,
+  settlement_ready: false,
+  calculation_state: "pending",
+  calculation_version: 1,
+  loan_number: null,
+  loan_account: null,
+  status: "active",
+  created_by: "00000000-0000-4000-8000-000000000005",
+  created_at: "2026-08-01T09:00:00Z",
+}
+
+describe("FinancingReadSchema", () => {
+  // The rate is optional at intake, so a financing with no rate at all is a real state and must
+  // parse rather than throw.
+  it("parses a financing with no rate entered yet", () => {
+    const parsed = FinancingReadSchema.parse(pendingFinancing)
+    expect(parsed.refinancing_rate).toBeNull()
+    expect(parsed.settlement_ready).toBe(false)
+  })
+
+  // Money and rates stay decimal strings end to end — the specification is explicit that they must
+  // not be parsed into binary floats, so a number on the wire is a contract violation, not input
+  // to coerce.
+  it("rejects a numeric rate rather than coercing it to a string", () => {
+    expect(() =>
+      FinancingReadSchema.parse({ ...pendingFinancing, refinancing_rate: 4.25 })
+    ).toThrow()
+  })
+
+  it("keeps the committed rate alongside the current rate", () => {
+    const parsed = FinancingReadSchema.parse({
+      ...pendingFinancing,
+      refinancing_rate: "4.375",
+      committed_rate: "4.250",
+      committed_rate_expiry: "2026-09-15",
+      rate_lock_days: 7,
+    })
+    // Both are retained: their difference is what documents the deviation.
+    expect(parsed.refinancing_rate).toBe("4.375")
+    expect(parsed.committed_rate).toBe("4.250")
+  })
+
+  // `calculation_state` has no declared enum in the contract, so an unfamiliar value must pass
+  // through rather than throw and blank the screen.
+  it("accepts any calculation_state string", () => {
+    expect(
+      FinancingReadSchema.parse({
+        ...pendingFinancing,
+        calculation_state: "awaiting_treasury_notice",
+      }).calculation_state
+    ).toBe("awaiting_treasury_notice")
+  })
+
+  it("rejects a fractional calculation_version", () => {
+    expect(() =>
+      FinancingReadSchema.parse({
+        ...pendingFinancing,
+        calculation_version: 1.5,
+      })
+    ).toThrow()
+  })
+})
+
+describe("ContractContributionListResponseSchema", () => {
+  it("parses the pending state with no contributions", () => {
+    const parsed = ContractContributionListResponseSchema.parse({
+      case_id: "00000000-0000-4000-8000-00000000c005",
+      contributions: [],
+      contract_count: 0,
+      contribution_sum: null,
+      figures_pending: true,
+    })
+    expect(parsed.figures_pending).toBe(true)
+    expect(parsed.contribution_sum).toBeNull()
+  })
+
+  it("requires figures_pending rather than defaulting it", () => {
+    // Defaulting it to false would render pending figures as computed.
+    expect(() =>
+      ContractContributionListResponseSchema.parse({
+        case_id: "00000000-0000-4000-8000-00000000c005",
+        contributions: [],
+        contract_count: 0,
+        contribution_sum: null,
+      })
+    ).toThrow()
+  })
+})
+
+describe("FinancingComponentResponseSchema", () => {
+  const component = {
+    id: "00000000-0000-4000-8000-00000000fc01",
+    contract_id: "00000000-0000-4000-8000-0000000000c1",
+    status: "calculated",
+    calculated_as_of: "2026-09-08T09:00:00Z",
+    freeze_timestamp: null,
+    financing_amount_share: "744621.03",
+    financed_residual: "719779.83",
+    share_running_instalment: "8322.91",
+    share_final_instalment: "719779.78",
+  }
+
+  // The two final figures are separate fields on the wire and stay separate in the type. A schema
+  // that folded them into one would re-create the conflation US 1.15 R4 removed.
+  it("carries the quota'd residual and the schedule final instalment as distinct fields", () => {
+    const parsed = FinancingComponentResponseSchema.parse(component)
+    expect(parsed.financed_residual).toBe("719779.83")
+    expect(parsed.share_final_instalment).toBe("719779.78")
+  })
+
+  it("parses an unfrozen component", () => {
+    expect(
+      FinancingComponentResponseSchema.parse(component).freeze_timestamp
+    ).toBeNull()
+  })
+
+  it("rejects a component missing its calculation date", () => {
+    const withoutDate = Object.fromEntries(
+      Object.entries(component).filter(([key]) => key !== "calculated_as_of")
+    )
+    expect(() => FinancingComponentResponseSchema.parse(withoutDate)).toThrow()
   })
 })

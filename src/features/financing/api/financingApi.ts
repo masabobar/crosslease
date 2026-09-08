@@ -1,4 +1,14 @@
 import { api } from "@/lib/api"
+import {
+  ContractContributionListResponseSchema,
+  FinancingComponentListResponseSchema,
+  FinancingReadSchema,
+} from "@/features/financing/api/schema"
+import type {
+  ContractContributionListResponse,
+  FinancingComponentListResponse,
+  FinancingRead,
+} from "@/features/financing/api/schema"
 import { GovernedActionSchema } from "@/features/governedActions/api/schema"
 import type { GovernedAction } from "@/features/governedActions/api/schema"
 import {
@@ -93,5 +103,89 @@ export async function requestConditionWaiver(
       `/cases/${caseId}/financing/conditions/${conditionId}/waive`,
       body
     )
+  )
+}
+
+// ── US 1.15 — the Calculation area ───────────────────────────────────────────────────────────────
+
+export const FINANCING_CALCULATION_KEYS = {
+  financing: (caseId: string) => ["financing", caseId, "record"] as const,
+  components: (caseId: string) => ["financing", caseId, "components"] as const,
+  contributions: (caseId: string) =>
+    ["financing", caseId, "contributions"] as const,
+}
+
+export async function fetchFinancing(caseId: string): Promise<FinancingRead> {
+  return FinancingReadSchema.parse(await api.get(`/cases/${caseId}/financing`))
+}
+
+export async function fetchFinancingComponents(
+  caseId: string
+): Promise<FinancingComponentListResponse> {
+  return FinancingComponentListResponseSchema.parse(
+    await api.get(`/cases/${caseId}/financing/components`)
+  )
+}
+
+export async function fetchContractContributions(
+  caseId: string
+): Promise<ContractContributionListResponse> {
+  return ContractContributionListResponseSchema.parse(
+    await api.get(`/cases/${caseId}/financing/per-contract`)
+  )
+}
+
+/**
+ * The rate goes to the wire as the **decimal string the user typed**, not as a parsed number.
+ * The endpoint accepts either, and sending the string is what keeps the third decimal exactly as
+ * entered — a difference there produces a different repayment schedule.
+ */
+export async function setRefinancingRate(
+  caseId: string,
+  rate: string
+): Promise<FinancingRead> {
+  return FinancingReadSchema.parse(
+    await api.put(`/cases/${caseId}/financing/rate`, { rate })
+  )
+}
+
+/** `quota` is the wire's fraction (0–1), not the percentage shown on screen. */
+export async function overrideQuota(
+  caseId: string,
+  quota: string
+): Promise<FinancingRead> {
+  return FinancingReadSchema.parse(
+    await api.put(`/cases/${caseId}/financing/quota`, { quota })
+  )
+}
+
+export async function setValueDate(
+  caseId: string,
+  valueDate: string
+): Promise<FinancingRead> {
+  return FinancingReadSchema.parse(
+    await api.put(`/cases/${caseId}/financing/value-date`, {
+      value_date: valueDate,
+    })
+  )
+}
+
+export async function recalculateFinancing(
+  caseId: string
+): Promise<FinancingRead> {
+  return FinancingReadSchema.parse(
+    await api.post(`/cases/${caseId}/financing/recalculate`, {})
+  )
+}
+
+/** Freezes the committed rate and its expiry — the first of the three freeze points (step 4). */
+export async function commitRate(
+  caseId: string,
+  lockDays: number
+): Promise<FinancingRead> {
+  return FinancingReadSchema.parse(
+    await api.post(`/cases/${caseId}/financing/commit-rate`, {
+      lock_days: lockDays,
+    })
   )
 }
