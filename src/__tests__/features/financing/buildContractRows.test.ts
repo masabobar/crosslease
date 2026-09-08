@@ -32,7 +32,10 @@ function caseContract(overrides: Partial<CaseContract> = {}): CaseContract {
     term_months: 48,
     net_instalment: "1250.00",
     residual_value: "372868.00",
+    contract_residual: null,
+    target_closing_balance: null,
     contract_start: "2026-08-01",
+    deviating_first_due_date: null,
     deferred_state: "active",
     ...overrides,
   }

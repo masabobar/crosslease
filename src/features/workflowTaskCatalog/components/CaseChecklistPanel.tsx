@@ -13,11 +13,10 @@ import {
   CASE_CHECKLIST_WRITE_ALLOWED_ROLES,
   CASE_PHASE_GATE_DECIDE_ALLOWED_ROLES,
 } from "@/features/workflowTaskCatalog/types"
-import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 /**
- * The runtime checklist of one case, as a panel: the outstanding-tasks notice, the item table, and
+ * The runtime checklist of one case, as a panel: the item table, the phase gates, and
  * the phase gates.
  *
  * Extracted from `CaseChecklistPage` so two surfaces can render the same thing — the standalone
@@ -49,11 +48,8 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
     isError,
     error,
   } = useCaseChecklist(businessObjectId)
-  const {
-    data: projection,
-    isError: isProjectionError,
-    error: projectionError,
-  } = useCaseRequiredProjection(businessObjectId)
+  const { isError: isProjectionError, error: projectionError } =
+    useCaseRequiredProjection(businessObjectId)
   const {
     data: gates,
     isError: isGatesError,
@@ -113,20 +109,15 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
     )
   }
 
-  // CR item 7 — a blocked submission has to say what is outstanding. The projection filters on
-  // is_mandatory alone; it cannot filter by gating stage, because the case item carries neither
-  // the process contexts nor the stage (1790 B2 / Q-052). So this names every outstanding required
-  // task rather than only those blocking one particular gate.
-  const outstandingRequired = (projection?.required_items ?? []).filter(
-    item => item.status === ChecklistItemStatusSchema.enum.open
-  )
-  // Absent projection data must not read as "not blocked": the query sets retry:false, so a single
-  // failure would otherwise hide the notice below and make a blocked case look clear.
-  const isBlocked = projection ? !projection.all_required_done : false
-
   return (
     <div className="flex flex-col gap-8" data-testid="case-checklist-panel">
-      {isProjectionError ? (
+      {/* The outstanding-required banner was removed on request: the Details-page design's
+          Checklist tab carries no such block, and the same information is already on the rows —
+          each open required task shows its own status and its Complete-or-waive action. What is
+          kept is the projection *error*, which is a different thing: it means the readiness of the
+          case could not be determined at all, and silence there would read as "nothing is
+          outstanding". */}
+      {isProjectionError && (
         <Alert
           variant="destructive"
           data-testid="case-checklist-projection-error"
@@ -137,25 +128,6 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
             <p className="mt-2">{resolveApiErrorMessage(projectionError, t)}</p>
           </AlertDescription>
         </Alert>
-      ) : (
-        isBlocked && (
-          <Alert variant="destructive" data-testid="case-checklist-blocked">
-            <AlertTitle>{t("caseChecklist.blocked.title")}</AlertTitle>
-            <AlertDescription>
-              <p>{t("caseChecklist.blocked.description")}</p>
-              <ul className="mt-2 list-disc pl-4">
-                {outstandingRequired.map(item => (
-                  <li
-                    key={item.id}
-                    data-testid={`case-checklist-outstanding-${item.id}`}
-                  >
-                    {item.task_name ?? item.task_code ?? item.id}
-                  </li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )
       )}
 
       <CaseChecklistTable

@@ -205,20 +205,15 @@
       "selected": "Selected",
       "bind": "Use this company",
       "lcNumber": "Dealer number {{number}}",
-      "lcNumberLabel": "Dealer number",
-      "lcNumberPlaceholder": "Choose a dealer number",
       "noLcNumber": {
         "title": "This company has no dealer number",
         "description": "{{name}} cannot be bound to a case: the platform identifies a leasing company on a case by its dealer number, and none is recorded. Add one on the partner record first."
-      },
-      "chooseLcNumber": {
-        "title": "Choose a dealer number",
-        "description": "This company holds {{count}} dealer numbers. The request is bound to the one it comes in through, so pick the number this request belongs to."
       },
       "agreement": "Framework agreement",
       "agreementActive": "Active",
       "agreementInactive": "Not active",
       "agreementReference": "Reference",
+      "dealerNumber": "Dealer number",
       "frameworkVolume": "Framework volume",
       "vfeAmount": "VFE amount",
       "refinancingQuota": "Refinancing quota",
@@ -331,7 +326,10 @@
           "nonRefinanceable": "Non-refinanceable part (EUR)",
           "mileageLease": "Mileage lease",
           "buyBack": "Buy-back agreement",
-          "putOption": "Put option"
+          "putOption": "Put option",
+          "contractResidual": "Contract residual (EUR)",
+          "targetClosingBalance": "Target closing balance (EUR)",
+          "deviatingFirstDueDate": "Deviating first due date"
         }
       },
       "object": {

@@ -313,7 +313,10 @@ describe("CaseContractSchema", () => {
     term_months: null,
     net_instalment: null,
     residual_value: null,
+    contract_residual: null,
+    target_closing_balance: null,
     contract_start: null,
+    deviating_first_due_date: null,
     deferred_state: "active",
   }
 
@@ -325,7 +328,9 @@ describe("CaseContractSchema", () => {
 
   it("drops the ContractRead fields this screen does not read", () => {
     // `lessee_partner_id` was in this list until US 1.17 needed it to count distinct lessees for
-    // the wizard summary, so it is now read rather than stripped — see the test below.
+    // the wizard summary, so it is now read rather than stripped — see the test below. The same
+    // happened to `contract_residual`, `target_closing_balance` and `deviating_first_due_date`
+    // when the manual-entry form started writing them.
     const parsed = CaseContractSchema.parse({
       ...minimalContract,
       missing_fields: ["residual_value"],

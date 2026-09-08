@@ -205,6 +205,30 @@ export function ContractDetailsTab({
             {...register("non_refinanceable_part")}
           />
         </Field>
+        {/* The contract's own residual, as distinct from the value the refinancing works from. */}
+        <Field label={t("wizard.manual.details.fields.contractResidual")}>
+          <Input
+            inputMode="decimal"
+            data-testid="contract-contract-residual-input"
+            {...register("contract_residual")}
+          />
+        </Field>
+        <Field label={t("wizard.manual.details.fields.targetClosingBalance")}>
+          <Input
+            inputMode="decimal"
+            data-testid="contract-target-closing-balance-input"
+            {...register("target_closing_balance")}
+          />
+        </Field>
+        {/* Only set when the first instalment does not fall one full period after the value date;
+            the engine then charges that first period pro rata on the 30/360 count. */}
+        <Field label={t("wizard.manual.details.fields.deviatingFirstDueDate")}>
+          <Input
+            type="date"
+            data-testid="contract-deviating-first-due-date-input"
+            {...register("deviating_first_due_date")}
+          />
+        </Field>
       </div>
 
       <div className="flex flex-col gap-2">

@@ -149,6 +149,9 @@ export function importedContracts(count: number): CaseContract[] {
     term_months: index % 3 === 0 ? null : 48,
     net_instalment: index % 3 === 0 ? null : "1250.00",
     residual_value: null,
+    contract_residual: null,
+    target_closing_balance: null,
+    deviating_first_due_date: null,
     contract_start: index % 3 === 0 ? null : "2025-09-01",
     deferred_state: "active",
   }))

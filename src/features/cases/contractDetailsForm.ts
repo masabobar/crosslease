@@ -43,6 +43,13 @@ export const contractDetailsFormSchema = z.object({
   residual_value: z.string(),
   special_payment: z.string(),
   non_refinanceable_part: z.string(),
+  // The remaining three writable fields of ContractCreate/ContractEdit. They were absent from the
+  // form, so a contract could not carry them at all — not a design omission, just a gap.
+  contract_residual: z.string(),
+  target_closing_balance: z.string(),
+  // Set only when the first instalment does not fall one full period after the value date; the
+  // engine charges that first period pro rata on the 30/360 count.
+  deviating_first_due_date: z.string(),
   mileage_lease: z.boolean(),
   buy_back_agreement: z.boolean(),
   put_option: z.boolean(),
@@ -64,6 +71,9 @@ export const EMPTY_CONTRACT_DETAILS_FORM: ContractDetailsFormValues = {
   residual_value: "",
   special_payment: "",
   non_refinanceable_part: "",
+  contract_residual: "",
+  target_closing_balance: "",
+  deviating_first_due_date: "",
   mileage_lease: false,
   buy_back_agreement: false,
   put_option: false,
@@ -105,6 +115,9 @@ export function toContractEditPayload(
     residual_value: moneyOrNull(values.residual_value),
     special_payment: moneyOrNull(values.special_payment),
     non_refinanceable_part: moneyOrNull(values.non_refinanceable_part),
+    contract_residual: moneyOrNull(values.contract_residual),
+    target_closing_balance: moneyOrNull(values.target_closing_balance),
+    deviating_first_due_date: textOrNull(values.deviating_first_due_date),
     // Booleans are always sent: a cleared tick is a real answer ("no buy-back"), and omitting it
     // on a PATCH would leave the previous value in place.
     mileage_lease: values.mileage_lease,
@@ -129,5 +142,8 @@ export function toContractDetailsFormValues(
     contract_start: contract.contract_start ?? "",
     net_instalment: contract.net_instalment ?? "",
     residual_value: contract.residual_value ?? "",
+    contract_residual: contract.contract_residual ?? "",
+    target_closing_balance: contract.target_closing_balance ?? "",
+    deviating_first_due_date: contract.deviating_first_due_date ?? "",
   }
 }

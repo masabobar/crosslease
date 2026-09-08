@@ -181,7 +181,6 @@ function LcNumberBind({
 }) {
   const { t } = useTranslation("cases")
   const lcNumbers = useLcNumbers(partner.id)
-  const [chosen, setChosen] = useState<string>("")
 
   if (lcNumbers.isLoading) return <Skeleton className="h-20 w-full" />
 
@@ -213,67 +212,32 @@ function LcNumberBind({
     )
   }
 
-  // Exactly one number: nothing to choose, so no control is shown — the design's flow is preserved
-  // for the common case, and the picker below appears only when the data genuinely forces a choice.
-  if (numbers.length === 1) {
-    return (
-      <div className="flex items-center justify-between rounded-lg border px-4 py-3">
-        <div className="text-sm">
-          <p className="font-medium">{partner.legal_name}</p>
-          <p className="text-muted-foreground">
-            {t("wizard.company.lcNumber", { number: numbers[0].lc_number })}
-          </p>
-        </div>
-        <Button
-          data-testid="case-wizard-bind-lc-button"
-          disabled={isBinding}
-          onClick={() => onBind(numbers[0].lc_number)}
-        >
-          {t("wizard.company.bind")}
-        </Button>
-      </div>
-    )
-  }
+  /**
+   * The dealer number is not asked for.
+   *
+   * `PUT /cases/{id}/leasing-company` binds on `lc_number`, so one still has to be sent — but the
+   * design shows no picker, and it was removed on request. The first number the registry returns is
+   * used, and it is **shown** here and again on the agreement block rather than applied invisibly:
+   * a company can hold several, and which one the case is bound to is a real fact about the case.
+   *
+   * Q-014 is the open question behind this: the spec says a request "retains the one it came in
+   * through", but nothing says which of several that is, and the platform has no inbound channel to
+   * read it from. So this picks the first rather than pretending to know.
+   */
+  const lcNumber = numbers[0].lc_number
 
   return (
-    <div
-      className="flex flex-col gap-3 rounded-lg border p-4"
-      data-testid="case-wizard-lc-number-picker"
-    >
-      {/* Q-014: the spec says the request "retains the one it came in through", but nothing says
-          which of several is chosen, and the design shows no picker. Asking is the only honest
-          option — guessing would silently bind the case to the wrong dealer number. */}
-      <Alert data-testid="case-wizard-lc-number-choice-notice">
-        <AlertTitle>{t("wizard.company.chooseLcNumber.title")}</AlertTitle>
-        <AlertDescription>
-          {t("wizard.company.chooseLcNumber.description", {
-            count: numbers.length,
-          })}
-        </AlertDescription>
-      </Alert>
-
-      <div>
-        <Label htmlFor="lc-number-select">
-          {t("wizard.company.lcNumberLabel")}
-        </Label>
-        <SelectField
-          id="lc-number-select"
-          data-testid="case-wizard-lc-number-select"
-          value={chosen}
-          onValueChange={setChosen}
-          placeholder={t("wizard.company.lcNumberPlaceholder")}
-          className="mt-1.5"
-          options={numbers.map(number => ({
-            value: number.lc_number,
-            label: number.lc_number,
-          }))}
-        />
+    <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+      <div className="text-sm">
+        <p className="font-medium">{partner.legal_name}</p>
+        <p className="text-muted-foreground">
+          {t("wizard.company.lcNumber", { number: lcNumber })}
+        </p>
       </div>
-
       <Button
         data-testid="case-wizard-bind-lc-button"
-        disabled={isBinding || chosen === ""}
-        onClick={() => onBind(chosen)}
+        disabled={isBinding}
+        onClick={() => onBind(lcNumber)}
       >
         {t("wizard.company.bind")}
       </Button>
@@ -320,6 +284,10 @@ function AgreementBlock({
         <Row
           label={t("wizard.company.agreementReference")}
           value={leasingCompany.agreement_reference ?? "—"}
+        />
+        <Row
+          label={t("wizard.company.dealerNumber")}
+          value={leasingCompany.lc_number ?? "—"}
         />
         <Row
           label={t("wizard.company.frameworkVolume")}

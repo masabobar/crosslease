@@ -120,7 +120,10 @@ describe("toContractDetailsFormValues", () => {
       term_months: 48,
       net_instalment: "1250.00",
       residual_value: null,
+      contract_residual: "41200.00",
+      target_closing_balance: null,
       contract_start: "2025-09-01",
+      deviating_first_due_date: "2025-10-15",
       deferred_state: "active",
     })
 
@@ -132,7 +135,12 @@ describe("toContractDetailsFormValues", () => {
       term_months: "48",
       net_instalment: "1250.00",
       residual_value: "",
+      // Newly writable fields: a present value round-trips, an absent one becomes an empty field
+      // rather than the string "null".
+      contract_residual: "41200.00",
+      target_closing_balance: "",
       contract_start: "2025-09-01",
+      deviating_first_due_date: "2025-10-15",
     })
   })
 })

@@ -449,10 +449,6 @@
       "title": "No checklist on this case yet",
       "description": "Nothing has been materialized for this case. A checklist appears once the process that owns the case requests one from the catalog."
     },
-    "blocked": {
-      "title": "Submission is blocked",
-      "description": "These required tasks are still outstanding. Every required task on the case is listed, because the projection cannot yet narrow them to a single stage."
-    },
     "projectionError": {
       "title": "Outstanding required tasks could not be checked",
       "description": "Whether this case is blocked from submission is unknown. Treat the checklist below as incomplete until this loads."

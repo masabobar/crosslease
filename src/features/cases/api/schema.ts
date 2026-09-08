@@ -621,7 +621,15 @@ export const CaseContractSchema = z.object({
   // nullable decimal turns `null` into a convincing `0`.
   net_instalment: z.string().nullable(),
   residual_value: z.string().nullable(),
+  // Distinct from `residual_value`: the contract's own residual as written by the leasing company,
+  // against the value the refinancing works from.
+  contract_residual: z.string().nullable(),
+  target_closing_balance: z.string().nullable(),
   contract_start: z.string().nullable(),
+  // Set only when the first instalment does not fall one full period after the value date. The
+  // engine then charges that first period pro rata on the 30/360 count, so it is a real input
+  // rather than a display detail.
+  deviating_first_due_date: z.string().nullable(),
   deferred_state: ContractDeferredStateSchema,
 })
 export type CaseContract = z.infer<typeof CaseContractSchema>

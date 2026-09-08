@@ -205,20 +205,15 @@
       "selected": "Ausgewählt",
       "bind": "Diese Gesellschaft verwenden",
       "lcNumber": "Händlernummer {{number}}",
-      "lcNumberLabel": "Händlernummer",
-      "lcNumberPlaceholder": "Händlernummer auswählen",
       "noLcNumber": {
         "title": "Diese Gesellschaft hat keine Händlernummer",
         "description": "{{name}} kann keinem Fall zugeordnet werden: die Plattform identifiziert eine Leasinggesellschaft im Fall über ihre Händlernummer, und es ist keine erfasst. Bitte zuerst im Partnersatz hinterlegen."
-      },
-      "chooseLcNumber": {
-        "title": "Händlernummer auswählen",
-        "description": "Diese Gesellschaft hat {{count}} Händlernummern. Der Antrag wird der Nummer zugeordnet, über die er eingeht — bitte die passende auswählen."
       },
       "agreement": "Rahmenvertrag",
       "agreementActive": "Aktiv",
       "agreementInactive": "Nicht aktiv",
       "agreementReference": "Referenz",
+      "dealerNumber": "Händlernummer",
       "frameworkVolume": "Rahmenvolumen",
       "vfeAmount": "VFE-Betrag",
       "refinancingQuota": "Refinanzierungsquote",
@@ -331,7 +326,10 @@
           "nonRefinanceable": "Nicht refinanzierbarer Anteil (EUR)",
           "mileageLease": "Kilometerleasing",
           "buyBack": "Rückkaufvereinbarung",
-          "putOption": "Andienungsrecht"
+          "putOption": "Andienungsrecht",
+          "contractResidual": "Vertragsrestwert (EUR)",
+          "targetClosingBalance": "Ziel-Restsaldo (EUR)",
+          "deviatingFirstDueDate": "Abweichender erster Fälligkeitstermin"
         }
       },
       "object": {
