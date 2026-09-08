@@ -584,7 +584,10 @@ export const caseHandlers = [
       term_months: null,
       net_instalment: null,
       residual_value: null,
+      contract_residual: null,
+      target_closing_balance: null,
       contract_start: null,
+      deviating_first_due_date: null,
       deferred_state: "active",
       ...body,
     })
@@ -702,6 +705,16 @@ export const caseHandlers = [
           body.residual_value === null || body.residual_value === undefined
             ? rows[index].residual_value
             : String(body.residual_value),
+        contract_residual:
+          body.contract_residual === null ||
+          body.contract_residual === undefined
+            ? rows[index].contract_residual
+            : String(body.contract_residual),
+        target_closing_balance:
+          body.target_closing_balance === null ||
+          body.target_closing_balance === undefined
+            ? rows[index].target_closing_balance
+            : String(body.target_closing_balance),
       })
       mockCaseContractsByCaseId[caseId] = [
         ...rows.slice(0, index),

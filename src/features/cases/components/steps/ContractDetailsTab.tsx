@@ -1,8 +1,8 @@
 import { useForm, useWatch } from "react-hook-form"
+import { useEffect, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,12 @@ type Props = {
   caseId: string
   contractId: string | null
   onNeedContract: () => Promise<string | null>
+  /**
+   * Hands the modal a function that commits this form. The design's single `Save contract` is what
+   * commits the contract, so the footer needs a way to flush the one tab that holds unsaved form
+   * state. Registered once on mount; the modal calls it and awaits the write.
+   */
+  onRegisterSubmit?: (submit: () => Promise<void>) => void
 }
 
 /**
@@ -47,6 +53,7 @@ export function ContractDetailsTab({
   caseId,
   contractId,
   onNeedContract,
+  onRegisterSubmit,
 }: Props) {
   const { t } = useTranslation("cases")
   const update = useUpdateContract(caseId)
@@ -73,14 +80,33 @@ export function ContractDetailsTab({
   async function onSubmit(values: ContractDetailsFormValues) {
     const id = contractId ?? (await onNeedContract())
     if (id === null) return
-    update.mutate(
-      { contractId: id, body: toContractEditPayload(values) },
-      {
-        onSuccess: () => toast.success(t("wizard.manual.details.saved")),
-        onError: err => showApiError(err, t),
-      }
-    )
+    // `mutateAsync` rather than `mutate` so the modal's Save can await the write before it closes —
+    // closing over an in-flight request is how a "saved" toast ends up on a contract that was not.
+    try {
+      await update.mutateAsync({
+        contractId: id,
+        body: toContractEditPayload(values),
+      })
+      toast.success(t("wizard.manual.details.saved"))
+    } catch (error) {
+      showApiError(error, t)
+      throw error
+    }
   }
+
+  // The submit is handed up behind a ref so the function the modal holds stays stable while the
+  // form re-renders on every keystroke. The ref is written in an effect, not during render —
+  // React Compiler forbids touching refs while rendering.
+  const submitRef = useRef<() => Promise<void>>(() => Promise.resolve())
+
+  useEffect(() => {
+    submitRef.current = () => handleSubmit(onSubmit)()
+  })
+
+  useEffect(() => {
+    // Registered once. The wrapper reads the ref at call time, so it never goes stale.
+    onRegisterSubmit?.(() => submitRef.current())
+  }, [onRegisterSubmit])
 
   return (
     <form
@@ -251,15 +277,6 @@ export function ContractDetailsTab({
           label={t("wizard.manual.details.fields.putOption")}
         />
       </div>
-
-      <Button
-        type="submit"
-        className="self-end"
-        data-testid="contract-details-save"
-        disabled={update.isPending}
-      >
-        {t("wizard.manual.details.save")}
-      </Button>
     </form>
   )
 }

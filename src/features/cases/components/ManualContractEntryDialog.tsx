@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -64,6 +64,11 @@ export function ManualContractEntryDialog({
   const [tab, setTab] = useState<ManualEntryTab>("lessee")
   const [contractId, setContractId] = useState<string | null>(null)
   const [isCreating, setCreating] = useState(false)
+  const [isSaving, setSaving] = useState(false)
+  // The Contract details tab is the only surface holding unsaved form state, so it hands its
+  // submit up and the footer's single Save flushes it. The design has one Save on the modal, not
+  // one per tab.
+  const submitDetailsRef = useRef<(() => Promise<void>) | null>(null)
 
   // Created on demand rather than on mount, so opening the modal and closing it again without
   // touching anything leaves nothing behind.
@@ -119,6 +124,9 @@ export function ManualContractEntryDialog({
             caseId={caseId}
             contractId={contractId}
             onNeedContract={ensureContract}
+            onRegisterSubmit={submit => {
+              submitDetailsRef.current = submit
+            }}
           />
         )}
 
@@ -139,11 +147,30 @@ export function ManualContractEntryDialog({
         <Button
           type="button"
           data-testid="manual-entry-save-button"
-          disabled={contractId === null}
-          onClick={() => {
-            toast.success(t("wizard.manual.saved"))
-            onSaved()
-            onOpenChange(false)
+          disabled={isSaving}
+          onClick={async () => {
+            setSaving(true)
+            try {
+              // Nothing has been entered on any tab yet, so there is no contract to save. Creating
+              // an empty one here would leave a blank row on the case that cannot be deleted.
+              if (contractId === null) {
+                toast.error(t("wizard.manual.nothingToSave"))
+                return
+              }
+              // Flush the details form if it has been opened, and stop on a failed write rather
+              // than closing over it — a "saved" toast on a contract that was not saved is worse
+              // than the error.
+              if (submitDetailsRef.current !== null) {
+                await submitDetailsRef.current()
+              }
+              toast.success(t("wizard.manual.saved"))
+              onSaved()
+              onOpenChange(false)
+            } catch {
+              // The tab already surfaced the error; the modal stays open so the entry is not lost.
+            } finally {
+              setSaving(false)
+            }
           }}
         >
           {t("wizard.manual.save")}

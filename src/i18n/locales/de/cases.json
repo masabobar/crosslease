@@ -291,7 +291,6 @@
         }
       },
       "details": {
-        "save": "Vertragsdaten speichern",
         "saved": "Vertragsdaten gespeichert.",
         "errors": {
           "termFormat": "Laufzeit in ganzen Monaten eingeben."
@@ -392,7 +391,8 @@
         "contractDetails": "Vertragsdaten",
         "cashFlow": "Zahlungsstrom"
       },
-      "title": "Vertrag manuell erfassen"
+      "title": "Vertrag manuell erfassen",
+      "nothingToSave": "Es wurde noch nichts eingegeben."
     },
     "steps": {
       "leasingCompany": {

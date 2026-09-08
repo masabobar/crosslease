@@ -291,7 +291,6 @@
         }
       },
       "details": {
-        "save": "Save contract details",
         "saved": "Contract details saved.",
         "errors": {
           "termFormat": "Enter the term in whole months."
@@ -392,7 +391,8 @@
         "contractDetails": "Contract details",
         "cashFlow": "Cash flow"
       },
-      "title": "Manual contract entry"
+      "title": "Manual contract entry",
+      "nothingToSave": "Nothing has been entered yet."
     },
     "steps": {
       "leasingCompany": {
