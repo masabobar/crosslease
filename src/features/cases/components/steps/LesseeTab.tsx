@@ -57,7 +57,6 @@ type Props = {
 export function LesseeTab({ contractId, onNeedContract }: Props) {
   const { t } = useTranslation("cases")
   const lessee = useContractLessee(contractId ?? undefined)
-  const guarantors = useContractGuarantors(contractId ?? undefined)
 
   return (
     <div className="flex flex-col gap-6" data-testid="lessee-tab">
@@ -69,15 +68,6 @@ export function LesseeTab({ contractId, onNeedContract }: Props) {
         isLoading={lessee.isLoading}
       />
 
-      <GuarantorSection
-        contractId={contractId}
-        onNeedContract={onNeedContract}
-        guarantors={guarantors.data?.guarantors ?? []}
-        isLoading={guarantors.isLoading}
-        isError={guarantors.isError}
-        error={guarantors.error}
-      />
-
       {/* Stated on the surface rather than only in the code: without this path a lessee who is not
           yet in the registry cannot be captured at all, and the user should not have to discover
           that by failing to find them. */}
@@ -87,6 +77,28 @@ export function LesseeTab({ contractId, onNeedContract }: Props) {
           {t("wizard.manual.parties.createAbsent.description")}
         </AlertDescription>
       </Alert>
+    </div>
+  )
+}
+
+/**
+ * **Guarantors / co-obligors** — its own tab, as the click dummy has it, rather than a block under
+ * Lessee. They are a separate list against the contract (`/contracts/{id}/guarantors`), and the
+ * design separates them because capturing a lessee and capturing sureties are different jobs.
+ */
+export function GuarantorsTab({ contractId, onNeedContract }: Props) {
+  const guarantors = useContractGuarantors(contractId ?? undefined)
+
+  return (
+    <div className="flex flex-col gap-6" data-testid="guarantors-tab">
+      <GuarantorSection
+        contractId={contractId}
+        onNeedContract={onNeedContract}
+        guarantors={guarantors.data?.guarantors ?? []}
+        isLoading={guarantors.isLoading}
+        isError={guarantors.isError}
+        error={guarantors.error}
+      />
     </div>
   )
 }

@@ -244,6 +244,11 @@ function ObjectForm({
               }))}
             />
           </Field>
+          {/* The click dummy states this outright, and it is the reason the field is not renamed
+              "Fuel type": one field, not two — that is only its report name in the vehicle case. */}
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {t("wizard.manual.object.fields.subGroupHelp")}
+          </p>
         </div>
       )}
 

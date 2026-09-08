@@ -354,8 +354,8 @@
           "description": "Objektbeschreibung",
           "group": "Objektgruppe",
           "groupPlaceholder": "Objektgruppe auswählen",
-          "subGroup": "Kraftstoffart",
-          "subGroupPlaceholder": "Kraftstoffart auswählen",
+          "subGroup": "Objekt-Untergruppe",
+          "subGroupPlaceholder": "Untergruppe auswählen",
           "manufacturer": "Hersteller",
           "brand": "Marke",
           "yearOfManufacture": "Baujahr",
@@ -371,7 +371,8 @@
           "valueAsAt": "Werte per",
           "marketValueInOrder": "Marktwert ist i.O.",
           "datEvidence": "DAT-Nachweis",
-          "datEvidencePlaceholder": "Status auswählen"
+          "datEvidencePlaceholder": "Status auswählen",
+          "subGroupHelp": "Bei einer Fahrzeuggruppe ist dies die Kraftstoffart. Ein Feld, nicht zwei — „Kraftstoffart“ ist nur ihr Berichtsname im Fahrzeugfall."
         },
         "datEvidence": {
           "pending": "Ausstehend",
@@ -401,12 +402,20 @@
       "saved": "Vertrag zum Fall gespeichert.",
       "tabs": {
         "lessee": "Leasingnehmer",
-        "object": "Objekt",
-        "contractDetails": "Vertragsdaten",
-        "cashFlow": "Zahlungsstrom"
+        "guarantors": "Bürgen / Mitverpflichtete",
+        "objects": "Objekte",
+        "contractDetails": "Vertragsdetails",
+        "paymentPlan": "Zahlungsplan"
       },
       "title": "Vertrag manuell erfassen",
-      "nothingToSave": "Es wurde noch nichts eingegeben."
+      "nothingToSave": "Es wurde noch nichts eingegeben.",
+      "plan": {
+        "title": "Zahlungsplan",
+        "producedFrom": "Aus den Bedingungen oben erzeugt",
+        "note": "Die Plattform gibt den Leasingvertrag wieder; sie bepreist ihn nicht neu.",
+        "enable": "Nichtlinearer Zahlungsplan",
+        "enabled": "Nichtlinearer Zahlungsplan ist aktiv"
+      }
     },
     "steps": {
       "leasingCompany": {

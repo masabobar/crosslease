@@ -354,8 +354,8 @@
           "description": "Object description",
           "group": "Object group",
           "groupPlaceholder": "Select an object group",
-          "subGroup": "Fuel type",
-          "subGroupPlaceholder": "Select a fuel type",
+          "subGroup": "Object sub-group",
+          "subGroupPlaceholder": "Select a sub-group",
           "manufacturer": "Manufacturer",
           "brand": "Brand",
           "yearOfManufacture": "Year of manufacture",
@@ -371,7 +371,8 @@
           "valueAsAt": "Values as at",
           "marketValueInOrder": "Market value is in order (i.O.)",
           "datEvidence": "DAT evidence",
-          "datEvidencePlaceholder": "Select a state"
+          "datEvidencePlaceholder": "Select a state",
+          "subGroupHelp": "For a vehicle group this is the fuel type. One field, not two — “fuel type” is only its report name in the vehicle case."
         },
         "datEvidence": {
           "pending": "Pending",
@@ -401,12 +402,20 @@
       "saved": "Contract saved to the case.",
       "tabs": {
         "lessee": "Lessee",
-        "object": "Object",
+        "guarantors": "Guarantors / co-obligors",
+        "objects": "Objects",
         "contractDetails": "Contract details",
-        "cashFlow": "Cash flow"
+        "paymentPlan": "Payment plan"
       },
       "title": "Manual contract entry",
-      "nothingToSave": "Nothing has been entered yet."
+      "nothingToSave": "Nothing has been entered yet.",
+      "plan": {
+        "title": "Payment plan",
+        "producedFrom": "Produced from the terms above",
+        "note": "The platform reproduces the lease; it does not re-price it.",
+        "enable": "Non-linear payment plan",
+        "enabled": "Non-linear payment plan is on"
+      }
     },
     "steps": {
       "leasingCompany": {

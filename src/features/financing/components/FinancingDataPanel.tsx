@@ -12,7 +12,6 @@ import {
 } from "@/lib/formatters"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { ApiError } from "@/lib/api"
-import { ApprovalConditionsPanel } from "@/features/financing/components/ApprovalConditionsPanel"
 import { useFinancingOverview } from "@/features/financing/hooks/useFinancingOverview"
 import { useFinancingRemainingBalance } from "@/features/financing/hooks/useFinancingRemainingBalance"
 import { financingStatusBadgeVariant } from "@/features/financing/types"
@@ -278,7 +277,6 @@ export function FinancingDataPanel({ caseId }: { caseId: string }) {
           financing, so it is now the actionable panel — add, settle, request a waiver. It reads
           the dedicated conditions endpoint rather than the overview's `covenants`, because that
           one carries who set a condition and when it was settled. */}
-      <ApprovalConditionsPanel caseId={caseId} />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
@@ -31,6 +32,9 @@ type Props = {
    * state. Registered once on mount; the modal calls it and awaits the write.
    */
   onRegisterSubmit?: (submit: () => Promise<void>) => void
+  /** Whether the non-linear payment plan is switched on — the only way the Payment plan tab opens. */
+  isNonLinearPlan?: boolean
+  onToggleNonLinearPlan?: () => void
 }
 
 /**
@@ -54,6 +58,8 @@ export function ContractDetailsTab({
   contractId,
   onNeedContract,
   onRegisterSubmit,
+  isNonLinearPlan = false,
+  onToggleNonLinearPlan,
 }: Props) {
   const { t } = useTranslation("cases")
   const update = useUpdateContract(caseId)
@@ -277,6 +283,39 @@ export function ContractDetailsTab({
           label={t("wizard.manual.details.fields.putOption")}
         />
       </div>
+      {onToggleNonLinearPlan !== undefined && (
+        /* The dummy's card at the foot of this tab. A linear plan needs no table — it is produced
+           from the terms above on save — so the table is reached through this switch and not
+           offered by default. */
+        <section
+          className="rounded-lg border p-4"
+          data-testid="contract-plan-switch"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">
+                {t("wizard.manual.plan.producedFrom")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t("wizard.manual.plan.note")}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant={isNonLinearPlan ? "default" : "outline"}
+              size="sm"
+              data-testid="contract-plan-toggle"
+              onClick={onToggleNonLinearPlan}
+            >
+              {t(
+                isNonLinearPlan
+                  ? "wizard.manual.plan.enabled"
+                  : "wizard.manual.plan.enable"
+              )}
+            </Button>
+          </div>
+        </section>
+      )}
     </form>
   )
 }

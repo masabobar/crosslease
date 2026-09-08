@@ -11,18 +11,40 @@ import { CASE_QUERY_KEYS } from "@/features/cases/api/casesApi"
 import { useQueryClient } from "@tanstack/react-query"
 import { CashFlowTab } from "@/features/cases/components/steps/CashFlowTab"
 import { ContractDetailsTab } from "@/features/cases/components/steps/ContractDetailsTab"
-import { LesseeTab } from "@/features/cases/components/steps/LesseeTab"
+import {
+  GuarantorsTab,
+  LesseeTab,
+} from "@/features/cases/components/steps/LesseeTab"
 import { ObjectTab } from "@/features/cases/components/steps/ObjectTab"
 
-// The design's four tabs, in its order.
-const MANUAL_ENTRY_TABS = [
+/**
+ * The click dummy's tab order (Figma V2, 31 Aug – 1 Sep 2026). Two things in it are decisions
+ * rather than layout:
+ *
+ * - **Guarantors / co-obligors is its own tab**, not a block under Lessee.
+ * - **Payment plan is hidden** until the non-linear plan is switched on. The dummy is explicit
+ *   about why: *"99 % of contracts are linear and the plan is produced in the background from
+ *   start, term, frequency and rate on save… The non-linear case is an edge case reached through
+ *   one link, deliberately not designed further."* Showing the table by default would invite
+ *   hand-entry for the 99 % that must not have it.
+ *
+ * The dummy also has a **Collaterals** tab. It is not here: collateral in the contract is
+ * case-level — one type, one total, one evidence document — while the dummy's tab is a per-contract
+ * list of Type / Value / Guarantor rows. There is no per-contract collateral endpoint and no
+ * guarantor-per-collateral field, so the tab would be a form that cannot save (Q-022).
+ */
+const BASE_MANUAL_ENTRY_TABS = [
   "lessee",
-  "object",
+  "guarantors",
+  "objects",
   "contractDetails",
-  "cashFlow",
 ] as const
 
-type ManualEntryTab = (typeof MANUAL_ENTRY_TABS)[number]
+const PAYMENT_PLAN_TAB = "paymentPlan" as const
+
+type ManualEntryTab =
+  | (typeof BASE_MANUAL_ENTRY_TABS)[number]
+  | typeof PAYMENT_PLAN_TAB
 
 type Props = {
   caseId: string
@@ -62,6 +84,9 @@ export function ManualContractEntryDialog({
   const queryClient = useQueryClient()
   // Opens on the design's first tab now that it is built.
   const [tab, setTab] = useState<ManualEntryTab>("lessee")
+  // Off by default, and the only way to reach the Payment plan tab. A linear plan is produced from
+  // the contract's terms on save; this is the edge case, reached deliberately.
+  const [isNonLinearPlan, setNonLinearPlan] = useState(false)
   const [contractId, setContractId] = useState<string | null>(null)
   const [isCreating, setCreating] = useState(false)
   const [isSaving, setSaving] = useState(false)
@@ -99,9 +124,12 @@ export function ManualContractEntryDialog({
       </div>
 
       <UnderlineTabBar
-        tabs={MANUAL_ENTRY_TABS.map(key => ({
+        tabs={[
+          ...BASE_MANUAL_ENTRY_TABS,
+          ...(isNonLinearPlan ? [PAYMENT_PLAN_TAB] : []),
+        ].map(key => ({
           key,
-          label: t(`wizard.manual.tabs.${key}` as "wizard.manual.tabs.object"),
+          label: t(`wizard.manual.tabs.${key}` as "wizard.manual.tabs.objects"),
           testId: `manual-entry-tab-${key}`,
         }))}
         activeTab={tab}
@@ -115,7 +143,14 @@ export function ManualContractEntryDialog({
           <LesseeTab contractId={contractId} onNeedContract={ensureContract} />
         )}
 
-        {tab === "object" && !isCreating && (
+        {tab === "guarantors" && !isCreating && (
+          <GuarantorsTab
+            contractId={contractId}
+            onNeedContract={ensureContract}
+          />
+        )}
+
+        {tab === "objects" && !isCreating && (
           <ObjectTab contractId={contractId} onNeedContract={ensureContract} />
         )}
 
@@ -127,10 +162,23 @@ export function ManualContractEntryDialog({
             onRegisterSubmit={submit => {
               submitDetailsRef.current = submit
             }}
+            isNonLinearPlan={isNonLinearPlan}
+            onToggleNonLinearPlan={() => {
+              const next = !isNonLinearPlan
+              setNonLinearPlan(next)
+              // Switching it off while sitting on the Payment plan tab would leave the modal on a
+              // tab that no longer exists. Read through the updater rather than the narrowed `tab`
+              // this branch closes over.
+              setTab(current =>
+                !next && current === PAYMENT_PLAN_TAB
+                  ? "contractDetails"
+                  : current
+              )
+            }}
           />
         )}
 
-        {tab === "cashFlow" && !isCreating && (
+        {tab === PAYMENT_PLAN_TAB && !isCreating && (
           <CashFlowTab caseId={caseId} contractId={contractId} />
         )}
       </div>

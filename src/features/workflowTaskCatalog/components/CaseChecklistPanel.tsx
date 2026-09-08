@@ -9,6 +9,7 @@ import { CasePhaseGatePanel } from "@/features/workflowTaskCatalog/components/Ca
 import { useCaseChecklist } from "@/features/workflowTaskCatalog/hooks/useCaseChecklist"
 import { useCaseRequiredProjection } from "@/features/workflowTaskCatalog/hooks/useCaseRequiredProjection"
 import { useCaseProgress } from "@/features/cases/hooks/useCaseProgress"
+import { ApprovalConditionsPanel } from "@/features/financing/components/ApprovalConditionsPanel"
 import { useCasePhaseGates } from "@/features/workflowTaskCatalog/hooks/useCasePhaseGates"
 import {
   CASE_CHECKLIST_WRITE_ALLOWED_ROLES,
@@ -133,6 +134,12 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* The click dummy is explicit (Figma V2, 1 Sep 2026): approval conditions belong on this
+          tab, BEFORE the checklist — not in the Calculation area and not on Data, where they were.
+          They gate the payout, so they are read before the task list rather than beside the
+          figures. */}
+      <ApprovalConditionsPanel caseId={businessObjectId} />
 
       {/* Phase sections, not one flat table — the design groups the tasks under
           `A · Application & credit review` with an `N open · M yours` count, which is what makes
