@@ -15,6 +15,8 @@ import { useLcNumbers } from "@/features/partners/hooks/useLcNumbers"
 import { useCaseAllowedProductTemplates } from "@/features/cases/hooks/useCaseAllowedProductTemplates"
 import { useBindLeasingCompany } from "@/features/cases/hooks/useBindLeasingCompany"
 import { useBindProductTemplate } from "@/features/cases/hooks/useBindProductTemplate"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { LEASING_COMPANY_USER_ROLE } from "@/features/users/types"
 import { templateOptionLabel } from "@/features/cases/allowedTemplates"
 import type { CaseLeasingCompanyResponse } from "@/features/cases/api/schema"
 import type {
@@ -60,11 +62,33 @@ export function LeasingCompanyStep({
   isLoadingLeasingCompany,
 }: Props) {
   const { t } = useTranslation("cases")
+  const { data: currentUser } = useCurrentUser()
 
   const partners = useFrameworkAgreementLcPartners()
   const [search, setSearch] = useState("")
   const [selectedPartner, setSelectedPartner] =
     useState<FALCPartnerItem | null>(null)
+
+  /**
+   * The leasing-company portal variant.
+   *
+   * The point of the portal is that the leasing company starts the request itself, so it has to get
+   * through this wizard — and the three things a bank user decides here are not its to decide. Its
+   * own company is **pre-selected and locked**, the one active framework agreement resolves from
+   * that, and the **bank product template is not shown to it at all**, so it can never be what
+   * stops a portal user continuing.
+   *
+   * `lc_partner_id` on the user is what ties the session to a company. Without it there is nothing
+   * to pre-select, so the search is left in place rather than showing an empty locked field.
+   */
+  const isPortalUser = currentUser?.role === LEASING_COMPANY_USER_ROLE
+  const ownPartner =
+    isPortalUser && currentUser?.lc_partner_id
+      ? ((partners.data?.items ?? []).find(
+          partner => partner.id === currentUser.lc_partner_id
+        ) ?? null)
+      : null
+  const isPortalLocked = isPortalUser && ownPartner !== null
 
   const bindLeasingCompany = useBindLeasingCompany()
   const bindProductTemplate = useBindProductTemplate()
@@ -80,57 +104,88 @@ export function LeasingCompanyStep({
 
   return (
     <div className="flex flex-col gap-6" data-testid="case-wizard-step-company">
-      <section>
-        <Label htmlFor="lc-search">{t("wizard.company.searchLabel")}</Label>
-        <Input
-          id="lc-search"
-          data-testid="case-wizard-lc-search-input"
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-          placeholder={t("wizard.company.searchPlaceholder")}
-          className="mt-1.5"
-        />
+      {isPortalLocked ? (
+        <section data-testid="case-wizard-lc-locked">
+          <Label>{t("wizard.company.searchLabel")}</Label>
+          <div className="mt-1.5 rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+            <p className="font-medium">{ownPartner.legal_name}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t("wizard.company.portalLocked")}
+            </p>
+          </div>
+        </section>
+      ) : (
+        <section>
+          <Label htmlFor="lc-search">{t("wizard.company.searchLabel")}</Label>
+          <Input
+            id="lc-search"
+            data-testid="case-wizard-lc-search-input"
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            placeholder={t("wizard.company.searchPlaceholder")}
+            className="mt-1.5"
+          />
 
-        {partners.isError && (
-          <p
-            className="mt-2 text-sm text-destructive"
-            data-testid="case-wizard-lc-search-error"
-          >
-            {resolveApiErrorMessage(partners.error, t)}
-          </p>
-        )}
+          {partners.isError && (
+            <p
+              className="mt-2 text-sm text-destructive"
+              data-testid="case-wizard-lc-search-error"
+            >
+              {resolveApiErrorMessage(partners.error, t)}
+            </p>
+          )}
 
-        {search.trim().length >= MIN_SEARCH_LENGTH && matches.length === 0 && (
-          <p
-            className="mt-2 text-sm text-muted-foreground"
-            data-testid="case-wizard-lc-no-matches"
-          >
-            {t("wizard.company.noMatches")}
-          </p>
-        )}
+          {search.trim().length >= MIN_SEARCH_LENGTH &&
+            matches.length === 0 && (
+              <p
+                className="mt-2 text-sm text-muted-foreground"
+                data-testid="case-wizard-lc-no-matches"
+              >
+                {t("wizard.company.noMatches")}
+              </p>
+            )}
 
-        <div className="mt-2 flex flex-col gap-2">
-          {matches.map(partner => (
-            /* NOTE: raw <button> — a selectable result row, not an action button. shadcn Button
+          <div className="mt-2 flex flex-col gap-2">
+            {matches.map(partner => (
+              /* NOTE: raw <button> — a selectable result row, not an action button. shadcn Button
                centres its content and imposes a height, both wrong for a full-width row with a
                badge pushed to the right; wrapping it would mean overriding most of its variant. */
-            <button
-              key={partner.id}
-              type="button"
-              data-testid={`case-wizard-lc-result-${partner.id}`}
-              onClick={() => setSelectedPartner(partner)}
-              className="flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm hover:bg-accent"
-            >
-              <span className="font-medium">{partner.legal_name}</span>
-              {selectedPartner?.id === partner.id && (
-                <Badge variant="default">{t("wizard.company.selected")}</Badge>
-              )}
-            </button>
-          ))}
-        </div>
-      </section>
+              <button
+                key={partner.id}
+                type="button"
+                data-testid={`case-wizard-lc-result-${partner.id}`}
+                onClick={() => setSelectedPartner(partner)}
+                className="flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm hover:bg-accent"
+              >
+                <span className="font-medium">{partner.legal_name}</span>
+                {selectedPartner?.id === partner.id && (
+                  <Badge variant="default">
+                    {t("wizard.company.selected")}
+                  </Badge>
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {selectedPartner !== null && !isBound && (
+      {/* A portal user's own company is bound the same way a searched one is — the endpoint still
+          needs a dealer number — but it is never searched for. */}
+      {isPortalLocked && !isBound && (
+        <LcNumberBind
+          caseId={caseId}
+          partner={ownPartner}
+          isBinding={bindLeasingCompany.isPending}
+          onBind={lcNumber =>
+            bindLeasingCompany.mutate(
+              { caseId, lcNumber },
+              { onError: err => showApiError(err, t) }
+            )
+          }
+        />
+      )}
+
+      {!isPortalLocked && selectedPartner !== null && !isBound && (
         <LcNumberBind
           caseId={caseId}
           partner={selectedPartner}
@@ -147,12 +202,17 @@ export function LeasingCompanyStep({
       {isLoadingLeasingCompany && <Skeleton className="h-40 w-full" />}
 
       {isBound && leasingCompany !== null && (
-        <AgreementBlock leasingCompany={leasingCompany} />
+        <AgreementBlock
+          leasingCompany={leasingCompany}
+          hideBankOnlyFigures={isPortalUser}
+        />
       )}
 
-      {isBound && (
+      {/* Not rendered for a portal user at all — not disabled, not empty. The template is the
+          bank's decision and the portal is not asked to make it. */}
+      {isBound && !isPortalUser && (
         <ProductTemplateSelect
-          lcPartnerId={selectedPartner?.id}
+          lcPartnerId={selectedPartner?.id ?? ownPartner?.id}
           isBinding={bindProductTemplate.isPending}
           onSelect={productTemplateId =>
             bindProductTemplate.mutate(
@@ -258,8 +318,15 @@ function LcNumberBind({
  */
 function AgreementBlock({
   leasingCompany,
+  hideBankOnlyFigures = false,
 }: {
   leasingCompany: CaseLeasingCompanyResponse
+  /**
+   * A portal user does not see the bank's own figures on the agreement. The click dummy hides the
+   * refinancing quota and the utilisation pair from `lc_user`; the quota is the one of those this
+   * response actually carries.
+   */
+  hideBankOnlyFigures?: boolean
 }) {
   const { t } = useTranslation("cases")
 
@@ -306,10 +373,12 @@ function AgreementBlock({
             EUR_CURRENCY_CODE
           )}
         />
-        <Row
-          label={t("wizard.company.refinancingQuota")}
-          value={formatDecimalPercent(leasingCompany.refinancing_quota)}
-        />
+        {!hideBankOnlyFigures && (
+          <Row
+            label={t("wizard.company.refinancingQuota")}
+            value={formatDecimalPercent(leasingCompany.refinancing_quota)}
+          />
+        )}
         <Row
           label={t("wizard.company.contactPerson")}
           value={leasingCompany.contact_person ?? "—"}

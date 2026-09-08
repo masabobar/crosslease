@@ -8,6 +8,7 @@
  * is the whole reason the mock sits at the network layer instead of stubbing the query functions.
  */
 import type { UserResponse } from "@/features/users/api/schema"
+import { LEASING_COMPANY_USER_ROLE } from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 
 const NOW = "2026-09-02T10:00:00Z"
@@ -44,6 +45,12 @@ export function mockUser(role: UserRole): UserResponse {
   const [first, last] = NAMES[role]
   return {
     id: IDS[role],
+    // Only a portal user belongs to a leasing company; every bank role is null. This is what the
+    // wizard reads to pre-select and lock step 1 for the portal.
+    lc_partner_id:
+      role === LEASING_COMPANY_USER_ROLE
+        ? "00000000-0000-4000-8000-00000000a001"
+        : null,
     user_id: `USR-9000${Object.keys(IDS).indexOf(role) + 1}`,
     first_name: first,
     last_name: last,

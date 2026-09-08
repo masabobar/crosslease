@@ -230,7 +230,8 @@
       "templatePlaceholder": "Produkttemplate auswählen",
       "templateHelper": "Es können nur Templates gewählt werden, die der Rahmenvertrag zulässt.",
       "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu",
-      "templateResolved": "Durch den Rahmenvertrag festgelegt."
+      "templateResolved": "Durch den Rahmenvertrag festgelegt.",
+      "portalLocked": "Vorausgewählt und gesperrt — eine Portalanfrage gilt immer für Ihr eigenes Unternehmen."
     },
     "contracts": {
       "bulkUpload": "Massendatei hochladen",

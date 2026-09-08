@@ -57,6 +57,11 @@ export const UserResponseSchema = z.object({
   role: UserRoleSchema,
   permissions: z.array(z.string()).default([]),
   tenant_id: z.string().nullable(),
+  // The leasing company a portal user belongs to. Declared on `UserResponse` in the contract but
+  // never read here until the wizard needed it: a portal request is always for the user's own
+  // company, so this is what pre-selects and locks it on step 1. Optional because the contract's
+  // required list does not carry it.
+  lc_partner_id: z.string().nullable().optional(),
   status: UserStatusSchema,
   phone_number: z.string().nullable().optional(),
   profile_picture_url: z.string().nullable().optional(),

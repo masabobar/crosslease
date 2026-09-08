@@ -14,6 +14,8 @@ import { useCase } from "@/features/cases/hooks/useCase"
 import { useCaseLeasingCompany } from "@/features/cases/hooks/useCaseLeasingCompany"
 import { useCaseProductTemplate } from "@/features/cases/hooks/useCaseProductTemplate"
 import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
+import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { LEASING_COMPANY_USER_ROLE } from "@/features/users/types"
 import { useSubmitCase } from "@/features/cases/hooks/useSubmitCase"
 import { ContractsStep } from "@/features/cases/components/steps/ContractsStep"
 import { SummaryStep } from "@/features/cases/components/steps/SummaryStep"
@@ -40,7 +42,8 @@ import type { CaseWizardStep } from "@/features/cases/wizard"
  * ── STEP GATING ────────────────────────────────────────────────────────────────────────────────
  * A step opens only once the previous one has actually landed on the server, not merely been
  * visited: step 2 needs the company **and** the template bound, because the contract import
- * validates rows against the template; step 3 and Submit need **committed** contracts, not an
+ * validates rows against the template — except for a portal user, which is never shown the
+ * template and so can never be asked to bind one; step 3 and Submit need **committed** contracts, not an
  * uploaded batch. The gates live in `wizard.ts` so they are testable, and `Submit` re-checks
  * `hasContracts` rather than trusting that reaching this step still qualifies — the user can arrive
  * at the summary and then empty the case through its Edit link.
@@ -55,21 +58,36 @@ export default function StartCaseWizardPage() {
   const leasingCompany = useCaseLeasingCompany(isValidId ? caseId : undefined)
   const productTemplate = useCaseProductTemplate(isValidId ? caseId : undefined)
   const contracts = useCaseContracts(isValidId ? caseId : undefined)
+  const { data: currentUser } = useCurrentUser()
   const submitCase = useSubmitCase()
 
   const [step, setStep] = useState<CaseWizardStep>(CASE_WIZARD_STEPS[0])
 
   if (!isValidId) return <NotFoundPage />
 
-  // Step 1 is complete once BOTH the company and the template are bound: the import in step 2
-  // validates rows against the template, so a case with a company but no template would fail the
-  // whole file on a precondition rather than show anything useful.
-  const isLeasingCompanyBound =
+  /**
+   * Step 1 is complete once BOTH the company and the template are bound: the import in step 2
+   * validates rows against the template, so a case with a company but no template would fail the
+   * whole file on a precondition rather than show anything useful.
+   *
+   * **Except for a portal user**, where the template is not part of step 1 at all. The click dummy
+   * is explicit: the bank product template "is not shown to it at all, so it cannot be required to
+   * continue." Requiring it anyway is precisely what left a portal user stuck on step one — the
+   * screen would offer no way to satisfy a condition it never showed.
+   *
+   * The template still governs the bulk import, so a portal user reaching step 2 before the bank
+   * has bound one may meet that precondition there. That is the backend's answer to give, and a
+   * refusal on the file is a far better outcome than a Continue button that can never enable.
+   */
+  const isPortalUser = currentUser?.role === LEASING_COMPANY_USER_ROLE
+  const isCompanyBound =
     leasingCompany.data !== null &&
     leasingCompany.data !== undefined &&
-    leasingCompany.data.lc_number !== null &&
-    productTemplate.data !== null &&
-    productTemplate.data !== undefined
+    leasingCompany.data.lc_number !== null
+  const isTemplateBound =
+    productTemplate.data !== null && productTemplate.data !== undefined
+  const isLeasingCompanyBound =
+    isCompanyBound && (isPortalUser || isTemplateBound)
 
   const progress = {
     isLeasingCompanyBound,

@@ -1,11 +1,22 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { FileText, BarChart2, FolderOpen, Send, Landmark } from "lucide-react"
+import {
+  FileText,
+  BarChart2,
+  FolderOpen,
+  Send,
+  Landmark,
+  Plus,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { StartCaseDialog } from "@/features/cases/components/StartCaseDialog"
 import { PATHS } from "@/router/paths"
 import type { WorkspaceSection } from "@/features/lc/types"
 
 export default function LeasingCompanyWorkspacePage() {
   const { t } = useTranslation("lc")
+  const [startOpen, setStartOpen] = useState(false)
 
   const sections: WorkspaceSection[] = [
     {
@@ -48,14 +59,40 @@ export default function LeasingCompanyWorkspacePage() {
       data-testid="lc-workspace-page"
       className="flex flex-col gap-6 p-6 max-w-4xl"
     >
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("workspace.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("workspace.subtitle")}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t("workspace.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("workspace.subtitle")}
+          </p>
+        </div>
+
+        {/* The portal's own entry into the wizard. It is here rather than on the bank's case list
+            because a portal user cannot read that list at all — and the click dummy is explicit
+            that the point of the portal is the leasing company starting the request itself. */}
+        <Button
+          type="button"
+          data-testid="lc-start-request-button"
+          onClick={() => setStartOpen(true)}
+        >
+          <Plus size={16} />
+          {t("workspace.startRequest")}
+        </Button>
       </div>
+
+      {startOpen && (
+        /* The portal lands on the wizard, not on the case detail the bank flow goes to — the
+           detail route is closed to a portal user, and the wizard is the point of entry the dummy
+           describes. */
+        <StartCaseDialog
+          onOpenChange={setStartOpen}
+          redirectTo={createdId =>
+            PATHS.CASE_WIZARD.replace(":caseId", createdId)
+          }
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         {sections.map(({ key, label, path, icon: Icon, comingSoon }) => (

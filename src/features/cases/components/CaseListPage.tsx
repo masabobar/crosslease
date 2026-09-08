@@ -16,7 +16,7 @@ import { useCases } from "@/features/cases/hooks/useCases"
 import { CaseTypeSchema } from "@/features/cases/api/schema"
 import {
   CASE_DISPLAY_STATUS_BADGE_VARIANT,
-  CASE_WRITE_ALLOWED_ROLES,
+  CASE_START_ALLOWED_ROLES,
 } from "@/features/cases/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 
@@ -59,7 +59,7 @@ export default function CaseListPage() {
 
   const { data: currentUser } = useCurrentUser()
   const canStartCase =
-    !!currentUser && CASE_WRITE_ALLOWED_ROLES.includes(currentUser.role)
+    !!currentUser && CASE_START_ALLOWED_ROLES.includes(currentUser.role)
 
   const { data, isLoading, isError, error } = useCases({
     limit: PAGE_SIZE,

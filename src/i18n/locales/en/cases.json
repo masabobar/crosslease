@@ -230,7 +230,8 @@
       "templatePlaceholder": "Choose a product template",
       "templateHelper": "Only templates the framework agreement allows can be picked.",
       "noTemplates": "The framework agreement allows no product templates",
-      "templateResolved": "Set by the framework agreement."
+      "templateResolved": "Set by the framework agreement.",
+      "portalLocked": "Pre-selected and locked — a portal request is always for your own company."
     },
     "contracts": {
       "bulkUpload": "Upload bulk file",

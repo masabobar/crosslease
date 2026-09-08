@@ -1,4 +1,8 @@
-import { BACK_OFFICE_ROLE, FRONT_OFFICE_ROLE } from "@/features/users/types"
+import {
+  BACK_OFFICE_ROLE,
+  FRONT_OFFICE_ROLE,
+  LEASING_COMPANY_USER_ROLE,
+} from "@/features/users/types"
 import type { UserRole } from "@/features/users/types"
 import type { CaseDisplayStatus } from "@/features/cases/api/schema"
 
@@ -22,6 +26,30 @@ export const CASE_READ_ALLOWED_ROLES: readonly UserRole[] = [
 export const CASE_WRITE_ALLOWED_ROLES: readonly UserRole[] = [
   FRONT_OFFICE_ROLE,
   BACK_OFFICE_ROLE,
+]
+
+/**
+ * Who may **start** a refinancing request — deliberately narrower in meaning than
+ * `CASE_WRITE_ALLOWED_ROLES`, and wider by exactly one role.
+ *
+ * The click dummy is explicit that the portal exists so the leasing company starts the request
+ * itself: *"The point of the portal is that the leasing company starts the request itself and
+ * enters its own contract data, so it has to get through this wizard."* Its step 1 is a different
+ * screen — the company pre-selected and locked, the bank product template not shown at all.
+ *
+ * ── THIS ASSERTS A BACKEND PERMISSION THE CONTRACT DOES NOT EVIDENCE (Q-023) ───────────────────
+ * Every LC endpoint in `openapi.json` is a **GET** — `/lc/cases`, `/lc/cases/{id}`,
+ * `/lc/obligations/{id}`, `/lc-portal/framework-agreements`. There is no portal write path and no
+ * statement that `POST /cases` accepts a portal user. So this is the one gate in the case feature
+ * that does not mirror a known backend rule, and it is separate from `CASE_WRITE_ALLOWED_ROLES`
+ * precisely so that admitting the portal here does not admit it to every other case-write surface.
+ *
+ * If the backend refuses a portal user, remove the role from this list — nothing else changes.
+ */
+export const CASE_START_ALLOWED_ROLES: readonly UserRole[] = [
+  FRONT_OFFICE_ROLE,
+  BACK_OFFICE_ROLE,
+  LEASING_COMPANY_USER_ROLE,
 ]
 
 // UI-only enum, never crosses the wire — a plain type guard is enough. The Documents tab ships now;

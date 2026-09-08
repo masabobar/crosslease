@@ -9,7 +9,8 @@
       "proposals": "Vorschläge",
       "frameworkAgreements": "Rahmenvereinbarungen"
     },
-    "comingSoon": "Dieser Bereich ist in Kürze verfügbar."
+    "comingSoon": "Dieser Bereich ist in Kürze verfügbar.",
+    "startRequest": "Neue Refinanzierungsanfrage"
   },
   "frameworkAgreements": {
     "title": "Rahmenvereinbarungen",

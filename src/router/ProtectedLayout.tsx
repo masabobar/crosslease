@@ -16,6 +16,19 @@ const TENANT_NOT_ACTIVE_ERROR_CODE = "TENANT_NOT_ACTIVE"
 // without this exception the redirect below made it permanently unreachable.
 const LC_ALLOWED_NON_LC_PATHS: readonly string[] = [PATHS.SETTINGS_PROFILE]
 
+/**
+ * Paths outside `/lc` a portal user may open even though they are not prefixes.
+ *
+ * Only the **new-request wizard**: the click dummy is explicit that the portal exists so the
+ * leasing company starts the request itself and enters its own contract data, so it has to get
+ * through that wizard. It is matched as a pattern rather than added to the prefix list above,
+ * because the case id sits in the middle of the path and a `/cases/` prefix would hand the portal
+ * the whole bank case area.
+ */
+const LC_ALLOWED_PATH_PATTERNS: readonly RegExp[] = [
+  /^\/cases\/[0-9a-fA-F-]+\/new-request\/?$/,
+]
+
 export default function ProtectedLayout() {
   const { t } = useTranslation("common")
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
@@ -62,9 +75,9 @@ export default function ProtectedLayout() {
   // LC users must land on their dedicated workspace, not the internal dashboard
   if (currentUser && LC_ONLY_ROLES.includes(currentUser.role)) {
     const isOnLcPath = location.pathname.startsWith(PATHS.LC_WORKSPACE)
-    const isOnAllowedPath = LC_ALLOWED_NON_LC_PATHS.some(p =>
-      location.pathname.startsWith(p)
-    )
+    const isOnAllowedPath =
+      LC_ALLOWED_NON_LC_PATHS.some(p => location.pathname.startsWith(p)) ||
+      LC_ALLOWED_PATH_PATTERNS.some(pattern => pattern.test(location.pathname))
     if (!isOnLcPath && !isOnAllowedPath) {
       return <Navigate to={PATHS.LC_WORKSPACE} replace />
     }
