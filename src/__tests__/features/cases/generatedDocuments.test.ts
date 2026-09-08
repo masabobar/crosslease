@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 import {
+  ARISES_AT,
   GENERATABLE_KINDS,
   GENERATED_DOCUMENT_KINDS,
+  isFrozenOnceProduced,
+  isUploadedKind,
   currentBuild,
   documentCodeForKind,
   isGeneratable,
@@ -29,13 +32,28 @@ describe("mergeGeneratedRows", () => {
   })
 
   // The order comes from the kind list, not from the response, so the table does not reshuffle as
-  // documents are produced one at a time.
-  it("keeps a fixed order regardless of the order documents arrive in", () => {
+  // documents are produced one at a time. The list follows the click dummy's order, which runs by
+  // the step each document arises at rather than alphabetically.
+  it("keeps the dummy's fixed order regardless of the order documents arrive in", () => {
     const codes = mergeGeneratedRows([
-      row("payment_plan"),
       row("cover_sheet"),
+      row("financing_commitment"),
     ]).map(e => e.code)
-    expect(codes.slice(0, 2)).toEqual(["cover_sheet", "calculation_data_sheet"])
+    expect(codes).toEqual([
+      "financing_commitment",
+      "total_exposure_sheet",
+      "bank_settlement",
+      "payment_plan",
+      "loan_offer",
+      "cover_sheet",
+      "calculation_data_sheet",
+    ])
+  })
+
+  it("lists the total exposure sheet, which the dummy adds", () => {
+    expect(mergeGeneratedRows([]).map(e => e.code)).toContain(
+      "total_exposure_sheet"
+    )
   })
 
   it("attaches a produced document to its expected kind", () => {
@@ -121,5 +139,53 @@ describe("currentBuild", () => {
   it("returns null when no build is current", () => {
     expect(currentBuild([{ id: "a", is_current: false }])).toBeNull()
     expect(currentBuild([])).toBeNull()
+  })
+})
+
+describe("the three action rules the dummy distinguishes", () => {
+  // "Uploaded — produced outside": the calculation data sheet is not generated here at all.
+  it("marks the calculation data sheet as uploaded, not generated", () => {
+    expect(isUploadedKind("calculation-data-sheet")).toBe(true)
+    expect(isGeneratable("calculation-data-sheet")).toBe(false)
+  })
+
+  it("treats every other listed kind as not uploaded", () => {
+    for (const kind of GENERATED_DOCUMENT_KINDS) {
+      if (kind === "calculation-data-sheet") continue
+      expect(isUploadedKind(kind)).toBe(false)
+    }
+  })
+
+  /**
+   * Settlement and plan freeze at step 18, so once produced they get a disabled reason rather than
+   * a Regenerate button. Offering one would invite an action that contradicts the freeze.
+   */
+  it("freezes the bank settlement and the payment plan once produced", () => {
+    expect(isFrozenOnceProduced("bank-settlement")).toBe(true)
+    expect(isFrozenOnceProduced("payment-plan")).toBe(true)
+  })
+
+  it("leaves the rest re-producible", () => {
+    for (const kind of [
+      "cover-sheet",
+      "loan-offer",
+      "financing-commitment",
+    ] as const) {
+      expect(isFrozenOnceProduced(kind)).toBe(false)
+      expect(isGeneratable(kind)).toBe(true)
+    }
+  })
+
+  // The total exposure sheet is in the dummy's list but has no generator endpoint, so it is listed
+  // and never offered as a button.
+  it("lists the total exposure sheet without making it generatable", () => {
+    expect(isGeneratable("total-exposure-sheet")).toBe(false)
+    expect(ARISES_AT["total-exposure-sheet"]).toBe("2 · A")
+  })
+
+  it("gives every listed kind a place it arises at", () => {
+    for (const kind of GENERATED_DOCUMENT_KINDS) {
+      expect(ARISES_AT[kind]).toBeTruthy()
+    }
   })
 })

@@ -191,6 +191,19 @@
         "residual": "Quota'd residual",
         "calculatedAsOf": "Calculated as of"
       }
+    },
+    "freezePoints": {
+      "title": "Three freeze points",
+      "columns": {
+        "what": "What freezes",
+        "step": "Step",
+        "phase": "Phase"
+      },
+      "rows": {
+        "committedRate": "The committed rate and its expiry",
+        "rateField": "The rate field — editable until the bank settlement",
+        "settlementAndPlan": "Settlement and plan — everything, from the loan creation in the core system"
+      }
     }
   }
 }

@@ -394,9 +394,12 @@
         "searchPlaceholder": "Type at least 3 characters of the partner name",
         "noMatches": "No confirmed partner matches that name.",
         "createAbsent": {
-          "title": "A party not yet in the registry cannot be added here",
-          "description": "Only confirmed partners from the bank's registry can be linked. Creating a partner in place is a separate form covering three partner types, and it is not built yet — if the lessee or a guarantor is missing, create them in Partner management first."
-        }
+          "title": "Creating the party here is not built yet",
+          "description": "The endpoint supports it — a lessee can be captured by identity for a legal entity, a natural person or a sole proprietor — but the form is not built. Until it is, create the partner in Partner management and search for it here."
+        },
+        "viewPartner": "View partner details",
+        "replaceLessee": "Choose a different lessee",
+        "replaceNotice": "Picking a party below replaces the current lessee. Leaving without picking keeps it."
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",
@@ -497,7 +500,7 @@
   "documents": {
     "generated": {
       "title": "Generated documents",
-      "subtitle": "Created directly from the case data. Everything else on this tab is uploaded.",
+      "subtitle": "Produced here, in the Documents area. A checklist step never generates a document — it is only a to-do with a link to one.",
       "count": "{{produced}} of {{total}} produced",
       "missing": "Missing",
       "present": "Generated",
@@ -508,7 +511,8 @@
         "type": "Document type",
         "status": "Status",
         "filename": "Filename",
-        "produced": "Produced"
+        "produced": "Produced",
+        "arisesAt": "Arises at"
       },
       "types": {
         "cover_sheet": "Cover sheet",
@@ -516,22 +520,31 @@
         "loan_offer": "Loan offer",
         "bank_settlement": "Bank settlement",
         "payment_plan": "Payment plan",
-        "financing_commitment": "Financing commitment"
-      }
+        "financing_commitment": "Financing commitment",
+        "total_exposure_sheet": "Total exposure sheet"
+      },
+      "producedOutside": "Uploaded — produced outside",
+      "cannotProduceAgain": "Cannot be produced again"
     },
     "handover": {
       "title": "OS+ transfer file",
-      "subtitle": "CSV export for loan setup in OS+.",
-      "export": "Export OS+ file"
+      "subtitle": "CSV export for loan setup in OS+. Belongs to checklist step 18. Amounts at two decimals, the rate at three.",
+      "export": "Export the hand-over file"
     },
     "combined": {
       "title": "Merge documents",
-      "subtitle": "Combines all generated and uploaded documents into a PDF with a table of contents.",
+      "subtitle": "Combines every document filed on the case into one PDF with a table of contents. Step 42 is the to-do that points at it, not the trigger.",
       "create": "Create complete document",
       "rebuild": "Rebuild",
       "download": "Download",
       "built": "Combined document built.",
-      "current": "Current build: {{count}} documents, built {{built}}."
+      "current": "Current build: {{count}} documents, built {{built}}.",
+      "nameLabel": "Document name",
+      "nameHelp": "The platform names the built file itself — this endpoint takes no name — so this is recorded for the case, not sent."
+    },
+    "subtabs": {
+      "incoming": "Incoming",
+      "generated": "Generated"
     }
   },
   "collateral": {

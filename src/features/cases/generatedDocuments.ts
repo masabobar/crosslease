@@ -16,12 +16,13 @@ import type { GeneratedDocumentRow } from "@/features/cases/api/schema"
  * element is omitted rather than drawn as a button that cannot work.
  */
 export const GENERATED_DOCUMENT_KINDS = [
-  "cover-sheet",
-  "calculation-data-sheet",
-  "loan-offer",
+  "financing-commitment",
+  "total-exposure-sheet",
   "bank-settlement",
   "payment-plan",
-  "financing-commitment",
+  "loan-offer",
+  "cover-sheet",
+  "calculation-data-sheet",
 ] as const
 
 export type GeneratedDocumentKind = (typeof GENERATED_DOCUMENT_KINDS)[number]
@@ -51,12 +52,55 @@ export function isGeneratable(kind: string): kind is GeneratedDocumentKind {
  * translation in one place instead of at every call site.
  */
 const CODE_BY_KIND: Record<GeneratedDocumentKind, string> = {
-  "cover-sheet": "cover_sheet",
-  "calculation-data-sheet": "calculation_data_sheet",
-  "loan-offer": "loan_offer",
+  "financing-commitment": "financing_commitment",
+  "total-exposure-sheet": "total_exposure_sheet",
   "bank-settlement": "bank_settlement",
   "payment-plan": "payment_plan",
-  "financing-commitment": "financing_commitment",
+  "loan-offer": "loan_offer",
+  "cover-sheet": "cover_sheet",
+  "calculation-data-sheet": "calculation_data_sheet",
+}
+
+/**
+ * Where each document arises — the click dummy's "Arises at" column. It is the checklist step that
+ * produces the document, not a step that generates it: the dummy is explicit that *"a checklist
+ * step never generates a document — it is only a to-do with a link to one"*.
+ */
+export const ARISES_AT: Record<GeneratedDocumentKind, string> = {
+  "financing-commitment": "4 · A",
+  "total-exposure-sheet": "2 · A",
+  "bank-settlement": "15",
+  "payment-plan": "15",
+  "loan-offer": "24",
+  "cover-sheet": "34",
+  // Produced outside the platform, so it is uploaded rather than generated.
+  "calculation-data-sheet": "—",
+}
+
+/**
+ * Documents produced outside the platform: they are **uploaded**, never generated. The dummy shows
+ * the calculation data sheet this way ("Uploaded — produced outside").
+ */
+export const UPLOADED_KINDS: readonly GeneratedDocumentKind[] = [
+  "calculation-data-sheet",
+]
+
+/**
+ * Documents that freeze once produced — the dummy renders a disabled "Cannot be produced again"
+ * for these rather than a Regenerate button, because settlement and plan freeze at step 18 and
+ * re-producing them would contradict the freeze.
+ */
+export const FROZEN_ONCE_PRODUCED: readonly GeneratedDocumentKind[] = [
+  "bank-settlement",
+  "payment-plan",
+]
+
+export function isUploadedKind(kind: GeneratedDocumentKind): boolean {
+  return UPLOADED_KINDS.includes(kind)
+}
+
+export function isFrozenOnceProduced(kind: GeneratedDocumentKind): boolean {
+  return FROZEN_ONCE_PRODUCED.includes(kind)
 }
 
 export function documentCodeForKind(kind: GeneratedDocumentKind): string {

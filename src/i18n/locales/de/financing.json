@@ -191,6 +191,19 @@
         "residual": "Quotierter Restwert",
         "calculatedAsOf": "Berechnet zum"
       }
+    },
+    "freezePoints": {
+      "title": "Drei Fixierungspunkte",
+      "columns": {
+        "what": "Was fixiert wird",
+        "step": "Schritt",
+        "phase": "Phase"
+      },
+      "rows": {
+        "committedRate": "Der festgeschriebene Zinssatz und sein Ablauf",
+        "rateField": "Das Zinssatzfeld — bearbeitbar bis zur Bankabrechnung",
+        "settlementAndPlan": "Abrechnung und Plan — alles, ab der Darlehensanlage im Kernsystem"
+      }
     }
   }
 }

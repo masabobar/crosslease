@@ -1,7 +1,10 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -20,8 +23,11 @@ import {
   getHandoverFileUrl,
 } from "@/features/cases/api/casesApi"
 import {
+  ARISES_AT,
   currentBuild,
+  isFrozenOnceProduced,
   isGeneratable,
+  isUploadedKind,
   mergeGeneratedRows,
   producedCount,
 } from "@/features/cases/generatedDocuments"
@@ -59,6 +65,13 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
   const combined = useCombinedDocumentHistory(caseId)
   const generate = useGenerateCaseDocument()
   const build = useBuildCombinedDocument()
+  /**
+   * The dummy asks for a name before the build. `POST /combined-document` takes **no body**, so the
+   * name cannot be sent — the backend derives the filename itself. It is collected and shown
+   * because the design asks for it, and the field says plainly that the platform names the file;
+   * inventing a body field would fail, and dropping the field would lose the design's intent.
+   */
+  const [name, setName] = useState("")
 
   if (generated.isLoading) return <Skeleton className="h-56 w-full" />
 
@@ -99,6 +112,9 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("documents.generated.columns.type")}</TableHead>
+                <TableHead>
+                  {t("documents.generated.columns.arisesAt")}
+                </TableHead>
                 <TableHead>{t("documents.generated.columns.status")}</TableHead>
                 <TableHead>
                   {t("documents.generated.columns.filename")}
@@ -122,6 +138,9 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
                       `documents.generated.types.${entry.code}` as "documents.generated.types.cover_sheet",
                       { defaultValue: entry.code }
                     )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground tabular-nums">
+                    {entry.kind === null ? "—" : ARISES_AT[entry.kind]}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -157,30 +176,56 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
                     {/* Only kinds with a generator endpoint get a button. The design also draws an
                         amortisation schedule and a release declaration; neither has an endpoint, so
                         neither is offered here. */}
-                    {entry.kind !== null && isGeneratable(entry.kind) && (
+                    {/* Three different answers, as the dummy has them. A document produced
+                        outside the platform is uploaded, never generated. One that freezes at
+                        step 18 offers a disabled reason rather than a Regenerate that would
+                        contradict the freeze. Everything else generates. */}
+                    {entry.kind !== null && isUploadedKind(entry.kind) ? (
+                      <span
+                        className="text-xs text-muted-foreground"
+                        data-testid={`case-generated-uploaded-${entry.code}`}
+                      >
+                        {t("documents.generated.producedOutside")}
+                      </span>
+                    ) : entry.kind !== null &&
+                      isFrozenOnceProduced(entry.kind) &&
+                      entry.row !== null ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        data-testid={`case-generate-${entry.code}`}
-                        disabled={generate.isPending}
-                        onClick={() =>
-                          generate.mutate(
-                            { caseId, kind: entry.kind! },
-                            {
-                              onSuccess: () =>
-                                toast.success(
-                                  t("documents.generated.produced")
-                                ),
-                              onError: err => showApiError(err, t),
-                            }
-                          )
-                        }
+                        disabled
+                        data-testid={`case-generated-frozen-${entry.code}`}
                       >
-                        {entry.row === null
-                          ? t("documents.generated.generate")
-                          : t("documents.generated.regenerate")}
+                        {t("documents.generated.cannotProduceAgain")}
                       </Button>
+                    ) : (
+                      entry.kind !== null &&
+                      isGeneratable(entry.kind) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          data-testid={`case-generate-${entry.code}`}
+                          disabled={generate.isPending}
+                          onClick={() =>
+                            generate.mutate(
+                              { caseId, kind: entry.kind! },
+                              {
+                                onSuccess: () =>
+                                  toast.success(
+                                    t("documents.generated.produced")
+                                  ),
+                                onError: err => showApiError(err, t),
+                              }
+                            )
+                          }
+                        >
+                          {entry.row === null
+                            ? t("documents.generated.generate")
+                            : t("documents.generated.regenerate")}
+                        </Button>
+                      )
                     )}
                   </TableCell>
                 </TableRow>
@@ -239,12 +284,27 @@ export function CaseGeneratedDocumentsPanel({ caseId }: Props) {
             </p>
           )}
 
+          <div className="mb-3">
+            <Label htmlFor="combined-name" className="mb-1.5">
+              {t("documents.combined.nameLabel")}
+            </Label>
+            <Input
+              id="combined-name"
+              value={name}
+              data-testid="case-combined-name"
+              onChange={e => setName(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("documents.combined.nameHelp")}
+            </p>
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               size="sm"
               data-testid="case-combined-build"
-              disabled={build.isPending}
+              disabled={build.isPending || name.trim() === ""}
               onClick={() =>
                 build.mutate(
                   { caseId },

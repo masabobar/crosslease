@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PATHS } from "@/router/paths"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
 import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
@@ -68,9 +69,10 @@ export function LesseeTab({ contractId, onNeedContract }: Props) {
         isLoading={lessee.isLoading}
       />
 
-      {/* Stated on the surface rather than only in the code: without this path a lessee who is not
-          yet in the registry cannot be captured at all, and the user should not have to discover
-          that by failing to find them. */}
+      {/* The contract DOES support creating the party here — `LesseeCaptureRequest` carries an
+          `identity` branch for legal entity, natural person and sole proprietor. The form for it is
+          not built (three identity shapes, each with its own required fields), so this says the
+          route exists and where to go meanwhile, rather than claiming it is impossible. */}
       <Alert data-testid="lessee-tab-create-in-context-absent">
         <AlertTitle>{t("wizard.manual.parties.createAbsent.title")}</AlertTitle>
         <AlertDescription>
@@ -118,6 +120,7 @@ function LesseeSection({
 }) {
   const { t } = useTranslation("cases")
   const capture = useCaptureLessee()
+  const [isReplacing, setReplacing] = useState(false)
 
   async function link(partnerId: string) {
     const id = contractId ?? (await onNeedContract())
@@ -136,30 +139,70 @@ function LesseeSection({
 
       {isLoading && <Skeleton className="h-16 w-full" />}
 
-      {!isLoading && linkedPartnerId !== null ? (
+      {!isLoading && linkedPartnerId !== null && !isReplacing ? (
         <div
-          className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
+          className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm"
           data-testid="lessee-linked"
         >
-          <div>
+          <div className="min-w-0">
             <p className="font-medium">
               {t("wizard.manual.parties.lesseeLinked")}
             </p>
             <p className="text-xs text-muted-foreground">{linkedPartnerId}</p>
+            {/* The click dummy's link, opening in a new tab: the party is inspected in the partner
+                register, not edited from inside this modal. */}
+            <a
+              className="mt-1 inline-block text-xs underline underline-offset-2"
+              href={PATHS.PARTNER_DETAIL.replace(":id", linkedPartnerId)}
+              target="_blank"
+              rel="noreferrer"
+              data-testid="lessee-view-partner"
+            >
+              {t("wizard.manual.parties.viewPartner")}
+            </a>
           </div>
-          {isNew && (
-            <Badge variant="secondary" data-testid="lessee-is-new">
-              {t("wizard.manual.parties.newPartner")}
-            </Badge>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {isNew && (
+              <Badge variant="secondary" data-testid="lessee-is-new">
+                {t("wizard.manual.parties.newPartner")}
+              </Badge>
+            )}
+            {/* The dummy's action is Remove, then search or create again. There is no unlink
+                endpoint — `POST .../lessee` only ever sets one — so this reopens the picker and the
+                next pick REPLACES the link. Labelled "Choose a different lessee" rather than
+                "Remove" so it does not promise a deletion that cannot happen: leaving the modal
+                without picking again keeps the current lessee. */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="lessee-replace"
+              onClick={() => setReplacing(true)}
+            >
+              {t("wizard.manual.parties.replaceLessee")}
+            </Button>
+          </div>
         </div>
       ) : (
         !isLoading && (
-          <PartnerPicker
-            testIdPrefix="lessee"
-            isLinking={capture.isPending}
-            onPick={link}
-          />
+          <>
+            {isReplacing && linkedPartnerId !== null && (
+              <p
+                className="mb-2 text-xs text-muted-foreground"
+                data-testid="lessee-replace-notice"
+              >
+                {t("wizard.manual.parties.replaceNotice")}
+              </p>
+            )}
+            <PartnerPicker
+              testIdPrefix="lessee"
+              isLinking={capture.isPending}
+              onPick={partnerId => {
+                setReplacing(false)
+                link(partnerId)
+              }}
+            />
+          </>
         )
       )}
     </section>

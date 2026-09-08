@@ -66,6 +66,11 @@ const TAB_KEYS = [
 
 type TabKey = (typeof TAB_KEYS)[number]
 
+// The click dummy's split of the Documents tab. Incoming leads, because what the case owes is what
+// holds it up.
+const DOCUMENT_SUBTABS = ["incoming", "generated"] as const
+type DocumentSubtab = (typeof DOCUMENT_SUBTABS)[number]
+
 // The tabs that have a panel behind them today. Everything else is design-only; keeping the
 // list explicit means adding a panel is one edit here rather than a condition to hunt for.
 //
@@ -91,6 +96,7 @@ export default function CaseDetailPage() {
   const { caseId: caseIdParam } = useParams<{ caseId: string }>()
   const caseId = isUuidRouteParam(caseIdParam) ? caseIdParam : undefined
   const [activeTab, setActiveTab] = useState<TabKey>("checklist")
+  const [docSubtab, setDocSubtab] = useState<DocumentSubtab>("incoming")
 
   const { data, isLoading, isError, error } = useCase(caseId)
   const progress = useCaseProgress(caseId)
@@ -234,20 +240,37 @@ export default function CaseDetailPage() {
       )}
 
       {activeTab === "documents" && (
-        <div className="flex flex-col gap-8">
-          {/* The design splits this tab in two and says why on the screen: generated documents come
-              from the case data, the rest are uploaded. Produced first, because generating is what
-              unblocks the rest of the set. */}
-          <CaseGeneratedDocumentsPanel caseId={data.id} />
-
-          {/* case_type is the resolution key for the document set (PRD1042-1794 DRC usability); the
-              case object is loaded here, so the panel is handed the type rather than re-fetching it. */}
-          <CaseDocumentRequirementsPanel
-            businessObjectId={data.id}
-            caseType={data.case_type}
-            uploadDisabled={data.owner_user_id === null}
-            uploadDisabledReason={t("detail.uploadBlockedUnclaimed")}
+        <div className="flex flex-col gap-6">
+          {/* The click dummy splits this tab in two — Incoming and Generated — rather than stacking
+              them. They answer different questions: what the case still owes, and what the platform
+              has produced. Stacked, the second was below the fold of a long requirement table. */}
+          <UnderlineTabBar
+            tabs={DOCUMENT_SUBTABS.map(key => ({
+              key,
+              label: t(
+                `documents.subtabs.${key}` as "documents.subtabs.incoming"
+              ),
+              testId: `case-doc-subtab-${key}`,
+            }))}
+            activeTab={docSubtab}
+            onChange={setDocSubtab}
           />
+
+          {docSubtab === "incoming" && (
+            /* case_type is the resolution key for the document set (PRD1042-1794 DRC usability);
+               the case object is loaded here, so the panel is handed the type rather than
+               re-fetching it. */
+            <CaseDocumentRequirementsPanel
+              businessObjectId={data.id}
+              caseType={data.case_type}
+              uploadDisabled={data.owner_user_id === null}
+              uploadDisabledReason={t("detail.uploadBlockedUnclaimed")}
+            />
+          )}
+
+          {docSubtab === "generated" && (
+            <CaseGeneratedDocumentsPanel caseId={data.id} />
+          )}
         </div>
       )}
 

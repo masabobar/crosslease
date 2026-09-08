@@ -39,11 +39,13 @@ function generated(caseId: string): string[] {
 }
 
 const FILE_NAMES: Record<string, string> = {
+  financing_commitment: "Finanzierungszusage_RR-2026-104.pdf",
+  total_exposure_sheet: "Gesamtengagement_RR-2026-104.pdf",
   cover_sheet: "Deckblatt_RR-2026-104.pdf",
   loan_offer: "Loan_offer_RR-2026-104.pdf",
   bank_settlement: "Bankabrechnung_RR-2026-104.pdf",
   payment_plan: "Zahlungsplan_RR-2026-104.pdf",
-  financing_commitment: "Finanzierungszusage_RR-2026-104.pdf",
+  calculation_data_sheet: "Berechnungsdatenblatt_RR-2026-104.pdf",
 }
 
 // Built through `mockUuid`, which refuses a non-hex tag — a readable tag like "med1" is exactly

@@ -394,9 +394,12 @@
         "searchPlaceholder": "Mindestens 3 Zeichen des Partnernamens eingeben",
         "noMatches": "Kein bestätigter Partner mit diesem Namen gefunden.",
         "createAbsent": {
-          "title": "Eine noch nicht registrierte Partei kann hier nicht angelegt werden",
-          "description": "Es können nur bestätigte Partner aus dem Partnerregister verknüpft werden. Das Anlegen eines Partners an dieser Stelle ist ein separates Formular für drei Partnertypen und noch nicht umgesetzt — fehlt der Leasingnehmer oder ein Bürge, bitte zuerst in der Partnerverwaltung anlegen."
-        }
+          "title": "Das Anlegen der Partei hier ist noch nicht gebaut",
+          "description": "Der Endpunkt unterstützt es — ein Leasingnehmer kann über die Identität als juristische Person, natürliche Person oder Einzelunternehmen erfasst werden — aber das Formular fehlt. Bis dahin legen Sie den Partner in der Partnerverwaltung an und suchen ihn hier."
+        },
+        "viewPartner": "Partnerdetails ansehen",
+        "replaceLessee": "Anderen Leasingnehmer wählen",
+        "replaceNotice": "Die Auswahl unten ersetzt den aktuellen Leasingnehmer. Ohne Auswahl bleibt er unverändert."
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",
@@ -497,7 +500,7 @@
   "documents": {
     "generated": {
       "title": "Generierte Dokumente",
-      "subtitle": "Direkt aus den Falldaten erstellt. Alles andere auf diesem Tab wird hochgeladen.",
+      "subtitle": "Hier erstellt, im Dokumentenbereich. Ein Checklistenschritt erzeugt nie ein Dokument — er ist nur eine Aufgabe mit einem Link darauf.",
       "count": "{{produced}} von {{total}} erstellt",
       "missing": "Fehlt",
       "present": "Generiert",
@@ -508,7 +511,8 @@
         "type": "Dokumentart",
         "status": "Status",
         "filename": "Dateiname",
-        "produced": "Erstellt"
+        "produced": "Erstellt",
+        "arisesAt": "Entsteht bei"
       },
       "types": {
         "cover_sheet": "Deckblatt",
@@ -516,22 +520,31 @@
         "loan_offer": "Darlehensangebot",
         "bank_settlement": "Bankabrechnung",
         "payment_plan": "Zahlungsplan",
-        "financing_commitment": "Finanzierungszusage"
-      }
+        "financing_commitment": "Finanzierungszusage",
+        "total_exposure_sheet": "Gesamtengagement-Blatt"
+      },
+      "producedOutside": "Hochgeladen — extern erstellt",
+      "cannotProduceAgain": "Kann nicht erneut erstellt werden"
     },
     "handover": {
       "title": "OS+ Transferdatei",
-      "subtitle": "CSV-Export für die Darlehensanlage in OS+.",
-      "export": "OS+ Datei exportieren"
+      "subtitle": "CSV-Export für die Darlehensanlage in OS+. Gehört zu Checklistenschritt 18. Beträge mit zwei, der Zinssatz mit drei Dezimalstellen.",
+      "export": "Hand-over-Datei exportieren"
     },
     "combined": {
       "title": "Dokumente zusammenführen",
-      "subtitle": "Fasst alle generierten und hochgeladenen Dokumente zu einer PDF mit Inhaltsverzeichnis zusammen.",
+      "subtitle": "Fasst jedes zum Fall eingereichte Dokument zu einer PDF mit Inhaltsverzeichnis zusammen. Schritt 42 ist die Aufgabe, die darauf zeigt, nicht der Auslöser.",
       "create": "Gesamtdokument erstellen",
       "rebuild": "Neu erstellen",
       "download": "Herunterladen",
       "built": "Gesamtdokument erstellt.",
-      "current": "Aktueller Stand: {{count}} Dokumente, erstellt {{built}}."
+      "current": "Aktueller Stand: {{count}} Dokumente, erstellt {{built}}.",
+      "nameLabel": "Dokumentname",
+      "nameHelp": "Die Plattform benennt die erzeugte Datei selbst — dieser Endpunkt nimmt keinen Namen — dies wird also für den Fall erfasst, nicht gesendet."
+    },
+    "subtabs": {
+      "incoming": "Eingehend",
+      "generated": "Generiert"
     }
   },
   "collateral": {

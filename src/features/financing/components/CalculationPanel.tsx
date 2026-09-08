@@ -50,6 +50,18 @@ import {
 type Props = { caseId: string }
 
 /**
+ * The three freeze points, as the click dummy tabulates them. Constants rather than prose because
+ * `calculationFigures.ts` enforces exactly these three as three separate predicates — a single
+ * "is it frozen" check would collapse them, and the story is explicit that building against the
+ * wrong one either locks the rate before it is known or lets it move after the loan exists.
+ */
+const FREEZE_POINTS = [
+  { key: "committedRate", step: 4, phase: "A" },
+  { key: "rateField", step: 15, phase: "C" },
+  { key: "settlementAndPlan", step: 18, phase: "C" },
+] as const
+
+/**
  * The case's **Calculation area** — US 1.15. Where the deal stops being the leasing company's
  * contract and becomes the bank's loan.
  *
@@ -472,6 +484,51 @@ export function CalculationPanel({ caseId }: Props) {
               ? t("calculation.quota.overridden")
               : t("calculation.quota.inherited")}
           </p>
+        </div>
+      </section>
+
+      {/* The click dummy's card, verbatim as a table. It is here because the three points are the
+          thing most easily got wrong on this screen: they are three separate guards, and the panel
+          above enforces them as three. Showing them makes the rule checkable against the code. */}
+      <section
+        className="rounded-lg border p-4"
+        data-testid="calculation-freeze-points"
+      >
+        <h3 className="mb-3 text-sm font-semibold">
+          {t("calculation.freezePoints.title")}
+        </h3>
+        <div className="overflow-x-auto rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  {t("calculation.freezePoints.columns.what")}
+                </TableHead>
+                <TableHead>
+                  {t("calculation.freezePoints.columns.step")}
+                </TableHead>
+                <TableHead>
+                  {t("calculation.freezePoints.columns.phase")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {FREEZE_POINTS.map(point => (
+                <TableRow
+                  key={point.key}
+                  data-testid={`freeze-point-${point.key}`}
+                >
+                  <TableCell>
+                    {t(
+                      `calculation.freezePoints.rows.${point.key}` as "calculation.freezePoints.rows.committedRate"
+                    )}
+                  </TableCell>
+                  <TableCell className="tabular-nums">{point.step}</TableCell>
+                  <TableCell>{point.phase}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </section>
 
