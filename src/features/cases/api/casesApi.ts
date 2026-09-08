@@ -1,6 +1,20 @@
 import { z } from "zod"
 import { api } from "@/lib/api"
 import {
+  CollateralResponseSchema,
+  CombinedDocumentListResponseSchema,
+  CombinedDocumentResponseSchema,
+  GeneratedDocumentListResponseSchema,
+} from "@/features/cases/api/schema"
+import type {
+  CollateralResponse,
+  CollateralType,
+  CombinedDocumentListResponse,
+  CombinedDocumentResponse,
+  GeneratedDocumentListResponse,
+} from "@/features/cases/api/schema"
+import type { GeneratedDocumentKind } from "@/features/cases/generatedDocuments"
+import {
   CaseContractListResponseSchema,
   CaseDataMetaSchema,
   CaseLeasingCompanyResponseSchema,
@@ -552,4 +566,139 @@ export async function transitionCase(
   const path = transition === "return_to_queue" ? "return-to-queue" : transition
   const data = await api.post(`/cases/${caseId}/${path}`)
   return CaseResponseSchema.parse(data)
+}
+
+// ── The Documents tab: generated documents, the OS+ hand-over file, the combined build ───────────
+
+export const CASE_DOCUMENT_KEYS = {
+  generated: (caseId: string) =>
+    ["cases", caseId, "generated-documents"] as const,
+  combined: (caseId: string) => ["cases", caseId, "combined-document"] as const,
+}
+
+export async function fetchGeneratedDocuments(
+  caseId: string
+): Promise<GeneratedDocumentListResponse> {
+  return GeneratedDocumentListResponseSchema.parse(
+    await api.get(`/cases/${caseId}/generated-documents`)
+  )
+}
+
+/**
+ * Produce one document from the case's data. Every generator answers with the **refreshed list**
+ * rather than the single document, so the caller replaces its list from the response instead of
+ * guessing where the new row belongs.
+ */
+export async function generateCaseDocument(
+  caseId: string,
+  kind: GeneratedDocumentKind
+): Promise<GeneratedDocumentListResponse> {
+  return GeneratedDocumentListResponseSchema.parse(
+    await api.post(`/cases/${caseId}/generated-documents/${kind}`, {})
+  )
+}
+
+export async function fetchCombinedDocumentHistory(
+  caseId: string
+): Promise<CombinedDocumentListResponse> {
+  return CombinedDocumentListResponseSchema.parse(
+    await api.get(`/cases/${caseId}/combined-document/history`)
+  )
+}
+
+export async function buildCombinedDocument(
+  caseId: string
+): Promise<CombinedDocumentResponse> {
+  return CombinedDocumentResponseSchema.parse(
+    await api.post(`/cases/${caseId}/combined-document`, {})
+  )
+}
+
+/**
+ * URLs, not fetches. Both endpoints stream a file and declare an **empty response schema**, so
+ * there is nothing to parse — and because auth is cookie-borne, a plain top-level navigation to
+ * them is authenticated. Same pattern as the activity CSV export and the LC portal download.
+ */
+export function getCombinedDocumentDownloadUrl(caseId: string): string {
+  return `${api.defaults.baseURL}/cases/${caseId}/combined-document/download`
+}
+
+/** The design's "OS+ TRANSFER FILE — CSV export for loan setup in OS+" (US 1.25). */
+export function getHandoverFileUrl(caseId: string): string {
+  return `${api.defaults.baseURL}/cases/${caseId}/financing/handover-file`
+}
+
+export function getGeneratedDocumentUrl(mediaId: string): string {
+  return `${api.defaults.baseURL}/media/${mediaId}`
+}
+
+// ── Collateral / DAT data (US 1.14) ──────────────────────────────────────────────────────────────
+
+export const CASE_COLLATERAL_KEYS = {
+  detail: (caseId: string) => ["cases", caseId, "collateral"] as const,
+}
+
+export async function fetchCaseCollateral(
+  caseId: string
+): Promise<CollateralResponse> {
+  return CollateralResponseSchema.parse(
+    await api.get(`/cases/${caseId}/collateral`)
+  )
+}
+
+/** The total goes to the wire as the decimal string the user typed, never as a parsed float. */
+export async function setCollateralTotal(
+  caseId: string,
+  totalEur: string
+): Promise<CollateralResponse> {
+  return CollateralResponseSchema.parse(
+    await api.put(`/cases/${caseId}/collateral/total`, { total_eur: totalEur })
+  )
+}
+
+export async function setCollateralType(
+  caseId: string,
+  collateralType: CollateralType
+): Promise<CollateralResponse> {
+  return CollateralResponseSchema.parse(
+    await api.put(`/cases/${caseId}/collateral/type`, {
+      collateral_type: collateralType,
+    })
+  )
+}
+
+export async function setCollateralEvidence(
+  caseId: string,
+  evidenceDocumentId: string | null
+): Promise<CollateralResponse> {
+  return CollateralResponseSchema.parse(
+    await api.put(`/cases/${caseId}/collateral/evidence`, {
+      evidence_document_id: evidenceDocumentId,
+    })
+  )
+}
+
+/**
+ * Re-determine with a **new** figure — the preparing role's act. It takes an amount because the
+ * point is a fresh determination, not an acknowledgement: a re-check that could clear on a click
+ * would defeat the control.
+ */
+export async function redetermineCollateral(
+  caseId: string,
+  totalEur: string
+): Promise<CollateralResponse> {
+  return CollateralResponseSchema.parse(
+    await api.post(`/cases/${caseId}/collateral/redetermine`, {
+      total_eur: totalEur,
+    })
+  )
+}
+
+/** The releasing role's act, and only valid once the figure has been re-determined. */
+export async function confirmCollateral(
+  caseId: string
+): Promise<CollateralResponse> {
+  return CollateralResponseSchema.parse(
+    await api.post(`/cases/${caseId}/collateral/confirm`, {})
+  )
 }

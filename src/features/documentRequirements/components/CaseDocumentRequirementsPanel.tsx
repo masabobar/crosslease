@@ -48,6 +48,10 @@ const REVIEW_ROLES = new Set<string>([BACK_OFFICE_ROLE])
 // default rather than rendering unstyled, which is why this is a lookup and not a switch.
 const FULFILMENT_STATUS_CLASSES: Record<string, string> = {
   missing: "bg-muted text-muted-foreground",
+  // The backend's actual word for "not met yet" — the reject endpoint's own description says the
+  // requirement "goes back to outstanding". `missing` is kept beside it because the status is an
+  // unconstrained wire string and both spellings have been observed.
+  outstanding: "bg-muted text-muted-foreground",
   uploaded_pending_review: "bg-warning/10 text-warning",
   fulfilled: "bg-success/10 text-success",
   rejected: "bg-destructive/10 text-destructive",

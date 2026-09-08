@@ -22,6 +22,8 @@ import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel
 import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDialog"
 import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
+import { CaseCollateralPanel } from "@/features/cases/components/CaseCollateralPanel"
+import { CaseGeneratedDocumentsPanel } from "@/features/cases/components/CaseGeneratedDocumentsPanel"
 import { CalculationPanel } from "@/features/financing/components/CalculationPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
@@ -204,7 +206,14 @@ export default function CaseDetailPage() {
           is deliberately no second financing screen that edits it. */}
       {activeTab === "calculations" && <CalculationPanel caseId={data.id} />}
 
-      {activeTab === "data" && <FinancingDataPanel caseId={data.id} />}
+      {activeTab === "data" && (
+        <div className="flex flex-col gap-6">
+          <FinancingDataPanel caseId={data.id} />
+          {/* The design's DAT DATA block. It sits under the financing figures because the figure it
+              holds is determined outside the platform and read by the approval, not computed here. */}
+          <CaseCollateralPanel caseId={data.id} />
+        </div>
+      )}
 
       {activeTab === "contracts" && (
         <FinancingContractsPanel caseId={data.id} />
@@ -225,14 +234,21 @@ export default function CaseDetailPage() {
       )}
 
       {activeTab === "documents" && (
-        /* case_type is the resolution key for the document set (PRD1042-1794 DRC usability); the case
-           object is loaded here, so the panel is handed the type rather than re-fetching it. */
-        <CaseDocumentRequirementsPanel
-          businessObjectId={data.id}
-          caseType={data.case_type}
-          uploadDisabled={data.owner_user_id === null}
-          uploadDisabledReason={t("detail.uploadBlockedUnclaimed")}
-        />
+        <div className="flex flex-col gap-8">
+          {/* The design splits this tab in two and says why on the screen: generated documents come
+              from the case data, the rest are uploaded. Produced first, because generating is what
+              unblocks the rest of the set. */}
+          <CaseGeneratedDocumentsPanel caseId={data.id} />
+
+          {/* case_type is the resolution key for the document set (PRD1042-1794 DRC usability); the
+              case object is loaded here, so the panel is handed the type rather than re-fetching it. */}
+          <CaseDocumentRequirementsPanel
+            businessObjectId={data.id}
+            caseType={data.case_type}
+            uploadDisabled={data.owner_user_id === null}
+            uploadDisabledReason={t("detail.uploadBlockedUnclaimed")}
+          />
+        </div>
       )}
 
       {!IMPLEMENTED_TABS.has(activeTab) && (

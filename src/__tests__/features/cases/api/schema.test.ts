@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest"
 import {
+  CombinedDocumentListResponseSchema,
+  GeneratedDocumentListResponseSchema,
   CaseSchema,
   CaseListItemSchema,
   CaseListResponseSchema,
@@ -520,5 +522,124 @@ describe("CaseProductTemplateResponseSchema", () => {
         version_status: "something_new",
       }).version_status
     ).toBe("something_new")
+  })
+})
+
+// ── The Documents tab (US 1.24, US 1.27) ─────────────────────────────────────────────────────────
+
+const generatedRow = {
+  document_type_code: "cover_sheet",
+  media_id: "00000000-0000-4000-8000-00000000ed01",
+  file_name: "Deckblatt_RR-2026-104.pdf",
+  produced_by: "00000000-0000-4000-8000-000000000005",
+  produced_at_utc: "2026-09-08T07:12:00Z",
+  produced_at_local: "2026-09-08T09:12:00+02:00",
+}
+
+describe("GeneratedDocumentListResponseSchema", () => {
+  it("parses an empty list — nothing generated yet is a real state", () => {
+    const parsed = GeneratedDocumentListResponseSchema.parse({
+      case_id: "00000000-0000-4000-8000-00000000c005",
+      documents: [],
+    })
+    expect(parsed.documents).toEqual([])
+  })
+
+  // The code has no declared enum, so an unfamiliar kind must pass through rather than throw and
+  // blank the tab.
+  it("accepts a document_type_code it has never seen", () => {
+    const parsed = GeneratedDocumentListResponseSchema.parse({
+      case_id: "00000000-0000-4000-8000-00000000c005",
+      documents: [
+        { ...generatedRow, document_type_code: "release_declaration" },
+      ],
+    })
+    expect(parsed.documents[0].document_type_code).toBe("release_declaration")
+  })
+
+  // Both timestamps are required. The local one is what a person reads, and deriving it from UTC
+  // here would re-introduce the timezone guessing the pair exists to avoid.
+  it("requires the local timestamp as well as the UTC one", () => {
+    const withoutLocal = Object.fromEntries(
+      Object.entries(generatedRow).filter(
+        ([key]) => key !== "produced_at_local"
+      )
+    )
+    expect(() =>
+      GeneratedDocumentListResponseSchema.parse({
+        case_id: "00000000-0000-4000-8000-00000000c005",
+        documents: [withoutLocal],
+      })
+    ).toThrow()
+  })
+
+  it("rejects a malformed media id", () => {
+    expect(() =>
+      GeneratedDocumentListResponseSchema.parse({
+        case_id: "00000000-0000-4000-8000-00000000c005",
+        documents: [{ ...generatedRow, media_id: "not-a-uuid" }],
+      })
+    ).toThrow()
+  })
+})
+
+describe("CombinedDocumentListResponseSchema", () => {
+  const build = {
+    id: "00000000-0000-4000-8000-0000000000cb",
+    case_id: "00000000-0000-4000-8000-00000000c005",
+    media_id: "00000000-0000-4000-8000-000000000cb1",
+    file_name: "Gesamtdokument_2026-09-08.pdf",
+    is_current: true,
+    build_kind: "full",
+    document_count: 6,
+    built_by: "00000000-0000-4000-8000-000000000005",
+    built_at: "2026-09-08T10:26:00Z",
+  }
+
+  it("parses a history holding a current build and a superseded one", () => {
+    const parsed = CombinedDocumentListResponseSchema.parse({
+      case_id: "00000000-0000-4000-8000-00000000c005",
+      builds: [
+        build,
+        {
+          ...build,
+          id: "00000000-0000-4000-8000-0000000000ca",
+          is_current: false,
+        },
+      ],
+    })
+    expect(parsed.builds.filter(b => b.is_current)).toHaveLength(1)
+  })
+
+  it("parses an empty history — no build yet", () => {
+    expect(
+      CombinedDocumentListResponseSchema.parse({
+        case_id: "00000000-0000-4000-8000-00000000c005",
+        builds: [],
+      }).builds
+    ).toEqual([])
+  })
+
+  // `is_current` is what the panel reads to decide which build to offer, so it must not be
+  // defaultable — a missing flag would silently make every build non-current.
+  it("requires is_current rather than defaulting it", () => {
+    const withoutFlag = Object.fromEntries(
+      Object.entries(build).filter(([key]) => key !== "is_current")
+    )
+    expect(() =>
+      CombinedDocumentListResponseSchema.parse({
+        case_id: "00000000-0000-4000-8000-00000000c005",
+        builds: [withoutFlag],
+      })
+    ).toThrow()
+  })
+
+  it("rejects a fractional document_count", () => {
+    expect(() =>
+      CombinedDocumentListResponseSchema.parse({
+        case_id: "00000000-0000-4000-8000-00000000c005",
+        builds: [{ ...build, document_count: 2.5 }],
+      })
+    ).toThrow()
   })
 })

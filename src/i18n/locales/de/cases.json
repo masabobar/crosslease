@@ -474,5 +474,88 @@
       "title": "Noch nicht umgesetzt",
       "description": "Für diesen Bereich liegt ein Design vor, er ist auf diesem Bildschirm aber noch nicht umgesetzt."
     }
+  },
+  "documents": {
+    "generated": {
+      "title": "Generierte Dokumente",
+      "subtitle": "Direkt aus den Falldaten erstellt. Alles andere auf diesem Tab wird hochgeladen.",
+      "count": "{{produced}} von {{total}} erstellt",
+      "missing": "Fehlt",
+      "present": "Generiert",
+      "generate": "Generieren",
+      "regenerate": "Neu generieren",
+      "produced": "Dokument generiert.",
+      "columns": {
+        "type": "Dokumentart",
+        "status": "Status",
+        "filename": "Dateiname",
+        "produced": "Erstellt"
+      },
+      "types": {
+        "cover_sheet": "Deckblatt",
+        "calculation_data_sheet": "Berechnungsdatenblatt",
+        "loan_offer": "Darlehensangebot",
+        "bank_settlement": "Bankabrechnung",
+        "payment_plan": "Zahlungsplan",
+        "financing_commitment": "Finanzierungszusage"
+      }
+    },
+    "handover": {
+      "title": "OS+ Transferdatei",
+      "subtitle": "CSV-Export für die Darlehensanlage in OS+.",
+      "export": "OS+ Datei exportieren"
+    },
+    "combined": {
+      "title": "Dokumente zusammenführen",
+      "subtitle": "Fasst alle generierten und hochgeladenen Dokumente zu einer PDF mit Inhaltsverzeichnis zusammen.",
+      "create": "Gesamtdokument erstellen",
+      "rebuild": "Neu erstellen",
+      "download": "Herunterladen",
+      "built": "Gesamtdokument erstellt.",
+      "current": "Aktueller Stand: {{count}} Dokumente, erstellt {{built}}."
+    }
+  },
+  "collateral": {
+    "title": "Sicherheiten (DAT-Daten)",
+    "total": "Gesamtwert der Sicherheiten",
+    "type": "Art der Sicherheit",
+    "typePlaceholder": "Art auswählen",
+    "lastSet": "Wert gesetzt",
+    "confirmedAt": "Bestätigt",
+    "editTotal": "Gesamtwert der Sicherheiten",
+    "save": "Speichern",
+    "saved": "Sicherheitenwert gespeichert.",
+    "invalidTotal": "Der Wert muss ein Betrag mit höchstens zwei Dezimalstellen sein.",
+    "absent": {
+      "title": "Keine Sicherheiten erfasst",
+      "description": "Für diesen Fall wurde noch nichts ermittelt. Alle Werte hier werden außerhalb der Plattform ermittelt."
+    },
+    "states": {
+      "clear": "Bestätigt",
+      "needs_recheck": "Neubewertung erforderlich",
+      "redetermined": "Bestätigung ausstehend"
+    },
+    "types": {
+      "chattel_mortgage": "Mobiliarsicherheit",
+      "assignment_of_receivables": "Forderungsabtretung",
+      "guarantee": "Bürgschaft"
+    },
+    "blocking": {
+      "title": "Genehmigung ist blockiert",
+      "needsRedetermine": "Die Paketzusammensetzung hat sich geändert; der Sicherheitenwert muss erneut ermittelt werden, bevor der Fall genehmigt werden kann.",
+      "needsConfirm": "Ein neuer Wert wurde ermittelt und muss nun von einer anderen Person bestätigt werden, bevor der Fall genehmigt werden kann."
+    },
+    "redetermine": {
+      "label": "Wert neu ermitteln",
+      "help": "Geben Sie den neu ermittelten Wert ein. Die Neubewertung wird nicht durch Bestätigung aufgehoben — ein neuer Wert ist erforderlich.",
+      "submit": "Neu ermitteln",
+      "done": "Neuer Sicherheitenwert erfasst. Er muss nun von einer anderen Person bestätigt werden."
+    },
+    "confirm": {
+      "help": "Sie bestätigen den neu ermittelten Wert. Dies ist das zweite Augenpaar.",
+      "submit": "Wert bestätigen",
+      "done": "Sicherheitenwert bestätigt.",
+      "notYou": "Sie haben diesen Wert ermittelt, daher muss ihn eine andere Person bestätigen."
+    }
   }
 }

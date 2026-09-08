@@ -474,5 +474,88 @@
       "title": "Not built yet",
       "description": "This area has a design but no implementation on this screen yet."
     }
+  },
+  "documents": {
+    "generated": {
+      "title": "Generated documents",
+      "subtitle": "Created directly from the case data. Everything else on this tab is uploaded.",
+      "count": "{{produced}} of {{total}} produced",
+      "missing": "Missing",
+      "present": "Generated",
+      "generate": "Generate",
+      "regenerate": "Regenerate",
+      "produced": "Document generated.",
+      "columns": {
+        "type": "Document type",
+        "status": "Status",
+        "filename": "Filename",
+        "produced": "Produced"
+      },
+      "types": {
+        "cover_sheet": "Cover sheet",
+        "calculation_data_sheet": "Calculation data sheet",
+        "loan_offer": "Loan offer",
+        "bank_settlement": "Bank settlement",
+        "payment_plan": "Payment plan",
+        "financing_commitment": "Financing commitment"
+      }
+    },
+    "handover": {
+      "title": "OS+ transfer file",
+      "subtitle": "CSV export for loan setup in OS+.",
+      "export": "Export OS+ file"
+    },
+    "combined": {
+      "title": "Merge documents",
+      "subtitle": "Combines all generated and uploaded documents into a PDF with a table of contents.",
+      "create": "Create complete document",
+      "rebuild": "Rebuild",
+      "download": "Download",
+      "built": "Combined document built.",
+      "current": "Current build: {{count}} documents, built {{built}}."
+    }
+  },
+  "collateral": {
+    "title": "Collateral (DAT data)",
+    "total": "Total collateral value",
+    "type": "Collateral type",
+    "typePlaceholder": "Select a type",
+    "lastSet": "Figure set",
+    "confirmedAt": "Confirmed",
+    "editTotal": "Total collateral value",
+    "save": "Save",
+    "saved": "Collateral value saved.",
+    "invalidTotal": "The value must be an amount with at most two decimal places.",
+    "absent": {
+      "title": "No collateral recorded",
+      "description": "Nothing has been determined for this case yet. Every figure here is obtained outside the platform."
+    },
+    "states": {
+      "clear": "Confirmed",
+      "needs_recheck": "Re-check needed",
+      "redetermined": "Awaiting confirmation"
+    },
+    "types": {
+      "chattel_mortgage": "Chattel mortgage",
+      "assignment_of_receivables": "Assignment of receivables",
+      "guarantee": "Guarantee"
+    },
+    "blocking": {
+      "title": "Approval is blocked",
+      "needsRedetermine": "The package composition changed, so the collateral figure must be determined again before the case can be approved.",
+      "needsConfirm": "A new figure has been determined and now needs confirming by someone else before the case can be approved."
+    },
+    "redetermine": {
+      "label": "Re-determine the value",
+      "help": "Enter the newly determined figure. The re-check does not clear by acknowledgement — a fresh value is required.",
+      "submit": "Re-determine",
+      "done": "New collateral value recorded. It now needs confirming by someone else."
+    },
+    "confirm": {
+      "help": "You are confirming the re-determined figure. This is the second pair of eyes.",
+      "submit": "Confirm value",
+      "done": "Collateral value confirmed.",
+      "notYou": "You determined this figure, so someone else must confirm it."
+    }
   }
 }

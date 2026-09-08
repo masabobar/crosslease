@@ -270,6 +270,7 @@
     },
     "statuses": {
       "missing": "Fehlt",
+      "outstanding": "Offen",
       "uploaded_pending_review": "Prüfung ausstehend",
       "fulfilled": "Erfüllt",
       "rejected": "Abgelehnt"

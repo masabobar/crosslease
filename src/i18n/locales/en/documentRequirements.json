@@ -270,6 +270,7 @@
     },
     "statuses": {
       "missing": "Missing",
+      "outstanding": "Outstanding",
       "uploaded_pending_review": "Awaiting review",
       "fulfilled": "Met",
       "rejected": "Rejected"

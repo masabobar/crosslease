@@ -633,3 +633,131 @@ export const CaseContractListResponseSchema = z.object({
 export type CaseContractListResponse = z.infer<
   typeof CaseContractListResponseSchema
 >
+
+// ── The case's Documents tab: generated documents and the combined build ─────────────────────────
+
+/**
+ * One document the platform produced from the case's own data — the design's "Generated documents"
+ * table.
+ *
+ * `document_type_code` is an **unconstrained wire string**: the contract declares no enum for it, so
+ * it is parsed as a string and labelled through i18n with the raw value as the fallback. The five
+ * generator endpoints name the kinds the platform can produce, but the backend is free to report a
+ * code this build has never heard of, and a screen that threw on one would be worse than a screen
+ * showing the code.
+ *
+ * There is no `status` field. A produced document **is** the row; a document type with no row has
+ * not been generated. So "Missing" in the design is the absence of a row, not a value — which is why
+ * the panel derives its status from the row's presence rather than reading one.
+ */
+export const GeneratedDocumentRowSchema = z.object({
+  document_type_code: z.string(),
+  media_id: z.string().uuid(),
+  file_name: z.string(),
+  produced_by: z.string().uuid(),
+  produced_at_utc: z.string(),
+  // The backend sends both; the local one is what a person should read, and computing it here from
+  // the UTC value would re-introduce the timezone guessing the pair exists to avoid.
+  produced_at_local: z.string(),
+})
+export type GeneratedDocumentRow = z.infer<typeof GeneratedDocumentRowSchema>
+
+export const GeneratedDocumentListResponseSchema = z.object({
+  case_id: z.string().uuid(),
+  documents: z.array(GeneratedDocumentRowSchema),
+})
+export type GeneratedDocumentListResponse = z.infer<
+  typeof GeneratedDocumentListResponseSchema
+>
+
+/**
+ * A combined-document build — the design's "MERGE DOCUMENTS … Combines all generated and uploaded
+ * documents into a PDF with table of contents."
+ *
+ * `is_current` matters: rebuilding supersedes rather than replaces, so the history keeps every build
+ * and exactly one is current. The panel offers the current one for download and never presents a
+ * superseded build as if it were the latest.
+ */
+export const CombinedDocumentResponseSchema = z.object({
+  id: z.string().uuid(),
+  case_id: z.string().uuid(),
+  media_id: z.string().uuid(),
+  file_name: z.string(),
+  is_current: z.boolean(),
+  build_kind: z.string(),
+  document_count: z.number().int(),
+  built_by: z.string().uuid(),
+  built_at: z.string(),
+})
+export type CombinedDocumentResponse = z.infer<
+  typeof CombinedDocumentResponseSchema
+>
+
+export const CombinedDocumentListResponseSchema = z.object({
+  case_id: z.string().uuid(),
+  builds: z.array(CombinedDocumentResponseSchema),
+})
+export type CombinedDocumentListResponse = z.infer<
+  typeof CombinedDocumentListResponseSchema
+>
+
+// ── Collateral / DAT data on the case (US 1.14) ──────────────────────────────────────────────────
+
+/**
+ * What kind of security backs the package. Three confirmed values and a **single** selection —
+ * the platform records the kind; it neither values collateral nor keeps a register of it.
+ */
+export const CollateralTypeSchema = z.enum([
+  "chattel_mortgage",
+  "assignment_of_receivables",
+  "guarantee",
+])
+export type CollateralType = z.infer<typeof CollateralTypeSchema>
+
+/**
+ * The re-check state, and the reason this screen has three buttons instead of one.
+ *
+ * When the package composition changes the externally-determined figure must be set again, and the
+ * re-check clears only through **three acts by two roles** — never confirmation alone:
+ *
+ * - `needs_recheck` — raised because the composition changed; approval is blocked;
+ * - `redetermined` — the preparing role has entered a **new figure** (a fresh number, not a click);
+ *   still blocked;
+ * - `clear` — the releasing role, a *different* person, has confirmed that re-determined figure.
+ *
+ * Confirming the old figure is impossible: confirm requires the `redetermined` state. That is why
+ * the panel never offers Confirm while the state is `needs_recheck`.
+ */
+export const CollateralRecheckStateSchema = z.enum([
+  "clear",
+  "needs_recheck",
+  "redetermined",
+])
+export type CollateralRecheckState = z.infer<
+  typeof CollateralRecheckStateSchema
+>
+
+export const CollateralValueItemSchema = z.object({
+  total_eur: z.string(),
+  set_by: z.string().uuid(),
+  set_at: z.string(),
+})
+export type CollateralValueItem = z.infer<typeof CollateralValueItemSchema>
+
+export const CollateralResponseSchema = z.object({
+  id: z.string().uuid(),
+  case_id: z.string().uuid(),
+  collateral_type: CollateralTypeSchema.nullable(),
+  // A decimal string, not a number: this is money and the calculation specification forbids
+  // parsing it into a binary float.
+  current_total_eur: z.string().nullable(),
+  evidence_document_id: z.string().nullable(),
+  recheck_state: CollateralRecheckStateSchema,
+  redetermined_by: z.string().uuid().nullable(),
+  redetermined_at: z.string().nullable(),
+  confirmed_by: z.string().uuid().nullable(),
+  confirmed_at: z.string().nullable(),
+  // Every figure the collateral has carried, so the four-eyes trail is readable rather than implied.
+  value_history: z.array(CollateralValueItemSchema),
+})
+export type CollateralResponse = z.infer<typeof CollateralResponseSchema>

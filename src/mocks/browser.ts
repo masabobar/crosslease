@@ -15,6 +15,8 @@ import { checklistHandlers } from "@/mocks/handlers/checklist"
 import { financingHandlers } from "@/mocks/handlers/financing"
 import { businessConfigHandlers } from "@/mocks/handlers/businessConfig"
 import { userHandlers } from "@/mocks/handlers/users"
+import { caseCollateralHandlers } from "@/mocks/handlers/caseCollateral"
+import { caseDocumentHandlers } from "@/mocks/handlers/caseDocuments"
 import { governedActionHandlers } from "@/mocks/handlers/governedActions"
 import { fallbackHandlers } from "@/mocks/handlers/fallback"
 
@@ -30,6 +32,8 @@ export const worker = setupWorker(
   ...caseHandlers,
   ...businessConfigHandlers,
   ...userHandlers,
+  ...caseCollateralHandlers,
+  ...caseDocumentHandlers,
   ...governedActionHandlers,
   ...fallbackHandlers
 )
