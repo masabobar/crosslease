@@ -27,6 +27,10 @@ import {
   LeaseObjectReadSchema,
   LesseeLinkResponseSchema,
   PaymentPlanResponseSchema,
+  BulkRemoveResponseSchema,
+  CaseActivityResponseSchema,
+  CaseCommentItemSchema,
+  CaseCommentListResponseSchema,
   ObjectClassificationResponseSchema,
   PackageTotalsReadSchema,
   SubmitResultResponseSchema,
@@ -38,6 +42,8 @@ import {
   type LeaseObjectRead,
   type LesseeLinkResponse,
   type PaymentPlanResponse,
+  type CaseActivityItem,
+  type CaseCommentItem,
 } from "@/features/cases/api/schema"
 import { LcNumberListResponseSchema } from "@/features/partners/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
@@ -76,6 +82,45 @@ const importBatchesById: Record<string, ImportBatchPreviewResponse> = {}
 const objectsByContractId: Record<string, LeaseObjectRead[]> = {}
 const lesseeByContractId: Record<string, LesseeLinkResponse> = {}
 const planByContractId: Record<string, PaymentPlanResponse> = {}
+const commentsByCaseId: Record<string, CaseCommentItem[]> = {}
+
+/**
+ * The case activity trail. Seeded lazily on first read so a case that has had nothing done to it
+ * still shows its creation, and appended to by the handlers that cause events.
+ */
+const activityByCaseId: Record<string, CaseActivityItem[]> = {}
+let auditSeq = 1000
+
+function pushActivity(
+  caseId: string,
+  fields: {
+    event_type: string
+    action_type: string
+    entity_type: string
+    entity_display: string | null
+    new_data: Record<string, unknown> | null
+  }
+): void {
+  auditSeq += 1
+  const rows = activityByCaseId[caseId] ?? []
+  activityByCaseId[caseId] = [
+    ...rows,
+    {
+      id: `00000000-0000-4000-8000-0000000ac${auditSeq.toString(16)}`,
+      audit_seq: auditSeq,
+      entity_id: null,
+      actor_id: FRONT_OFFICE_USER,
+      actor_type: "user",
+      actor_display: "Front Office",
+      actor_role_at_time: getMockRole(),
+      old_data: null,
+      changed_fields:
+        fields.new_data === null ? null : Object.keys(fields.new_data),
+      recorded_at: new Date().toISOString(),
+      ...fields,
+    },
+  ]
+}
 const guarantorsByContractId: Record<string, GuarantorListItem[]> = {}
 
 function hexPair(n: number): string {
@@ -644,6 +689,97 @@ export const caseHandlers = [
       return envelope(PaymentPlanResponseSchema.parse(plan))
     }
   ),
+
+  // ── US 1.12 / US 1.28: removal, activity and comments ─────────────────────
+  http.post(
+    `${API}/cases/:caseId/contracts/bulk-remove`,
+    async ({ params, request }) => {
+      const caseId = params.caseId as string
+      const body = (await request.json()) as {
+        contract_ids: string[]
+        reason: string
+      }
+      const before = mockCaseContractsByCaseId[caseId] ?? []
+      const ids = new Set(body.contract_ids)
+      mockCaseContractsByCaseId[caseId] = before.filter(c => !ids.has(c.id))
+      const removed = before.length - mockCaseContractsByCaseId[caseId].length
+
+      // The removal is an event on the case, which is what makes the reason worth requiring —
+      // recorded here so the Activity tab actually shows it.
+      pushActivity(caseId, {
+        event_type: "contracts_removed",
+        action_type: "delete",
+        entity_type: "contract",
+        entity_display: `${removed} contract(s)`,
+        new_data: { reason: body.reason },
+      })
+
+      return envelope(BulkRemoveResponseSchema.parse({ removed }))
+    }
+  ),
+
+  http.get(`${API}/cases/:caseId/activity`, ({ params, request }) => {
+    const url = new URL(request.url)
+    const rows = [...(activityByCaseId[params.caseId as string] ?? [])]
+      // Newest first for display, but the ordering key is audit_seq — two events can share a
+      // timestamp, a sequence cannot tie.
+      .sort((a, b) => b.audit_seq - a.audit_seq)
+    const perPage = Number(url.searchParams.get("per_page") ?? "25") || 25
+    const page = Number(url.searchParams.get("page") ?? "1") || 1
+    const start = (page - 1) * perPage
+
+    return envelope(
+      CaseActivityResponseSchema.parse({
+        activity: rows.slice(start, start + perPage),
+        total: rows.length,
+        page,
+        per_page: perPage,
+        total_pages: Math.max(1, Math.ceil(rows.length / perPage)),
+      })
+    )
+  }),
+
+  http.get(`${API}/cases/:caseId/comments`, ({ params }) => {
+    const rows = commentsByCaseId[params.caseId as string] ?? []
+    return envelope(
+      CaseCommentListResponseSchema.parse({
+        items: rows,
+        total: rows.length,
+        page: 1,
+        per_page: 50,
+      })
+    )
+  }),
+
+  http.post(`${API}/cases/:caseId/comments`, async ({ params, request }) => {
+    const caseId = params.caseId as string
+    const body = (await request.json()) as { body: string }
+    const rows = commentsByCaseId[caseId] ?? []
+
+    const comment = CaseCommentItemSchema.parse({
+      // 12 hex characters in the last segment. An earlier version used a `cm` prefix as a
+      // mnemonic for "comment"; `m` is not hex, so every POST failed the schema and MSW 500'd.
+      id: `00000000-0000-4000-8000-0000000c${(rows.length + 1)
+        .toString(16)
+        .padStart(4, "0")}`,
+      case_id: caseId,
+      author_id: FRONT_OFFICE_USER,
+      // The role AT THE TIME of writing, which is what the schema keeps.
+      author_role: getMockRole(),
+      body: body.body,
+      created_at: new Date().toISOString(),
+    })
+
+    commentsByCaseId[caseId] = [...rows, comment]
+    pushActivity(caseId, {
+      event_type: "comment_added",
+      action_type: "create",
+      entity_type: "comment",
+      entity_display: null,
+      new_data: null,
+    })
+    return envelope(comment)
+  }),
 
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {

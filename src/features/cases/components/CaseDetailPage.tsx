@@ -18,6 +18,7 @@ import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { CaseProgressBand } from "@/features/cases/components/CaseProgressBand"
 import { CaseWorkspaceHeader } from "@/features/cases/components/CaseWorkspaceHeader"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
+import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
@@ -74,6 +75,7 @@ const IMPLEMENTED_TABS = new Set<TabKey>([
   "data",
   "contracts",
   "documents",
+  "activity",
 ])
 
 export default function CaseDetailPage() {
@@ -187,6 +189,8 @@ export default function CaseDetailPage() {
       {activeTab === "contracts" && (
         <FinancingContractsPanel caseId={data.id} />
       )}
+
+      {activeTab === "activity" && <CaseActivityPanel caseId={data.id} />}
 
       {activeTab === "documents" && (
         /* case_type is the resolution key for the document set (PRD1042-1794 DRC usability); the case

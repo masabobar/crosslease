@@ -1,4 +1,18 @@
 {
+  "activity": {
+    "title": "Activity",
+    "exportCsv": "Export CSV",
+    "empty": "Nothing has happened on this case yet.",
+    "changedFields": "Changed: {{fields}}",
+    "pageOf": "Page {{page}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "comments": {
+      "title": "Comments ({{count}})",
+      "placeholder": "Add a comment",
+      "add": "Add"
+    }
+  },
   "caseTypes": {
     "refinancing_request": "Refinancing request",
     "package_redemption": "Package redemption",
@@ -186,6 +200,12 @@
       "manualComingSoon": "Manual contract entry is not built yet — it captures the lessee, the objects and the terms, and lands with US 1.6–1.9. Use the bulk file for now.",
       "manualEntry": "Manual contract entry",
       "manualPartial": "Manual entry captures lease objects today. The lessee, the contract terms and the payment plan follow with US 1.6, 1.9 and 1.11.",
+      "removalReasonPlaceholder": "Why are these being removed?",
+      "removeSelected": "Remove from request",
+      "removed": "{{count}} contract removed.",
+      "removed_other": "{{count}} contracts removed.",
+      "selectedCount": "{{count}} contract selected",
+      "selectedCount_other": "{{count}} contracts selected",
       "termMonths": "{{count}} month",
       "termMonths_other": "{{count}} months",
       "title": "Contracts",

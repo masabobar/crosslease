@@ -14,11 +14,22 @@ import {
 } from "@/components/ui/table"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
 import { formatDate, formatDecimalCurrency } from "@/lib/formatters"
-import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
+import { toast } from "sonner"
+import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
 import { BulkContractImportDialog } from "@/features/cases/components/BulkContractImportDialog"
 import { ManualContractEntryDialog } from "@/features/cases/components/ManualContractEntryDialog"
 import { ContractDeferredStateSchema } from "@/features/cases/api/schema"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { useBulkRemoveContracts } from "@/features/cases/hooks/useCaseActivity"
+import {
+  canRemove,
+  headerCheckState,
+  pruneSelection,
+  toggleAll,
+  toggleOne,
+} from "@/features/cases/contractSelection"
 
 type Props = {
   caseId: string
@@ -45,8 +56,17 @@ export function ContractsStep({ caseId }: Props) {
   const contracts = useCaseContracts(caseId)
   const [isBulkOpen, setBulkOpen] = useState(false)
   const [isManualOpen, setManualOpen] = useState(false)
+  // US 1.12 — removing contracts from the request. `reason` is required by the contract, so it is
+  // part of the state rather than a confirm-dialog afterthought.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [reason, setReason] = useState("")
+  const removeContracts = useBulkRemoveContracts()
 
   const items = contracts.data?.items ?? []
+  const ids = items.map(contract => contract.id)
+  // A selection must not outlive the rows it referred to — after a removal or a refetch the ids it
+  // held may be gone, and a stale id would make the header read "all selected" over fewer rows.
+  const chosen = pruneSelection(selected, ids)
 
   return (
     <div
@@ -112,11 +132,70 @@ export function ContractsStep({ caseId }: Props) {
         </p>
       )}
 
+      {chosen.size > 0 && (
+        <div
+          className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-4 py-3"
+          data-testid="case-wizard-removal-bar"
+        >
+          <span className="text-sm font-medium">
+            {t("wizard.contracts.selectedCount", { count: chosen.size })}
+          </span>
+          {/* The reason is required by BulkRemoveRequest, and rightly: the case is evidence, so a
+              contract that was in the request and then was not has to say why. */}
+          <Input
+            value={reason}
+            className="max-w-xs"
+            data-testid="case-wizard-removal-reason"
+            placeholder={t("wizard.contracts.removalReasonPlaceholder")}
+            onChange={event => setReason(event.target.value)}
+          />
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            data-testid="case-wizard-remove-selected"
+            disabled={removeContracts.isPending || !canRemove(chosen, reason)}
+            onClick={() =>
+              removeContracts.mutate(
+                {
+                  caseId,
+                  contractIds: [...chosen],
+                  reason: reason.trim(),
+                },
+                {
+                  onSuccess: result => {
+                    toast.success(
+                      t("wizard.contracts.removed", { count: result.removed })
+                    )
+                    setSelected(new Set())
+                    setReason("")
+                  },
+                  onError: err => showApiError(err, t),
+                }
+              )
+            }
+          >
+            {t("wizard.contracts.removeSelected")}
+          </Button>
+        </div>
+      )}
+
       {items.length > 0 && (
         <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  {/* BaseUI takes `indeterminate` as its own prop rather than a "mixed"
+                      checked value, so the three-state result is mapped here — the pure helper
+                      keeps the honest model. */}
+                  <Checkbox
+                    checked={headerCheckState(chosen, ids) === true}
+                    indeterminate={headerCheckState(chosen, ids) === "mixed"}
+                    data-testid="case-wizard-select-all"
+                    onCheckedChange={() => setSelected(toggleAll(chosen, ids))}
+                  />
+                </TableHead>
                 <TableHead>{t("wizard.contracts.columns.contract")}</TableHead>
                 <TableHead>{t("wizard.contracts.columns.start")}</TableHead>
                 <TableHead>{t("wizard.contracts.columns.term")}</TableHead>
@@ -132,6 +211,15 @@ export function ContractsStep({ caseId }: Props) {
                   key={contract.id}
                   data-testid={`case-wizard-contract-row-${contract.id}`}
                 >
+                  <TableCell>
+                    <Checkbox
+                      checked={chosen.has(contract.id)}
+                      data-testid={`case-wizard-select-${contract.id}`}
+                      onCheckedChange={() =>
+                        setSelected(toggleOne(chosen, contract.id))
+                      }
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     {contract.leasing_company_contract_number ??
                       contract.short_name ??

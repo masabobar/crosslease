@@ -501,6 +501,89 @@ export const PaymentPlanResponseSchema = z.object({
 })
 export type PaymentPlanResponse = z.infer<typeof PaymentPlanResponseSchema>
 
+/**
+ * Bulk removal of contracts from a request — US 1.12.
+ *
+ * **`reason` is required.** Removing a contract from a request is an auditable act, not a UI
+ * convenience: the case is evidence, and a contract that was in it and then was not has to say why.
+ * The UI therefore cannot offer a silent delete, which is why the confirm step asks for a reason
+ * rather than just confirming.
+ */
+export const BulkRemoveRequestSchema = z.object({
+  contract_ids: z.array(z.string().uuid()),
+  reason: z.string(),
+})
+export type BulkRemoveRequest = z.infer<typeof BulkRemoveRequestSchema>
+
+// Only a count comes back. The removed rows are not returned, so the caller re-reads the list.
+export const BulkRemoveResponseSchema = z.object({
+  removed: z.number().int(),
+})
+export type BulkRemoveResponse = z.infer<typeof BulkRemoveResponseSchema>
+
+/**
+ * The case activity trail — US 1.28, "follow what happened on the case".
+ *
+ * ── EVERY FIELD IS REQUIRED, MOST ARE NULLABLE ─────────────────────────────────────────────────
+ * Fifteen required keys, of which nine may be null. That is an audit record: the row always has the
+ * shape, and what is unknown is stated as null rather than omitted. `audit_seq` is the real
+ * ordering — `recorded_at` can tie, a sequence cannot.
+ *
+ * `action_type`, `event_type`, `entity_type` and `actor_type` are all unconstrained strings, so
+ * they render through a lookup with the raw value as the fallback. `old_data` / `new_data` are
+ * untyped objects — the before and after of whatever changed — and are deliberately not read by
+ * key; `changed_fields` names what moved, which is the part that can be shown.
+ */
+export const CaseActivityItemSchema = z.object({
+  id: z.string().uuid(),
+  audit_seq: z.number().int(),
+  entity_type: z.string(),
+  entity_id: z.string().nullable(),
+  entity_display: z.string().nullable(),
+  action_type: z.string(),
+  event_type: z.string(),
+  actor_id: z.string(),
+  actor_type: z.string(),
+  actor_display: z.string().nullable(),
+  actor_role_at_time: z.string().nullable(),
+  old_data: z.record(z.string(), z.unknown()).nullable(),
+  new_data: z.record(z.string(), z.unknown()).nullable(),
+  changed_fields: z.array(z.string()).nullable(),
+  recorded_at: z.string(),
+})
+export type CaseActivityItem = z.infer<typeof CaseActivityItemSchema>
+
+export const CaseActivityResponseSchema = z.object({
+  activity: z.array(CaseActivityItemSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  per_page: z.number().int(),
+  total_pages: z.number().int(),
+})
+export type CaseActivityResponse = z.infer<typeof CaseActivityResponseSchema>
+
+// Comments on a case (US 1.28). `author_role` is the role AT THE TIME, like the activity trail's
+// `actor_role_at_time` — a comment keeps the authority its author had when writing it.
+export const CaseCommentItemSchema = z.object({
+  id: z.string().uuid(),
+  case_id: z.string().uuid(),
+  author_id: z.string(),
+  author_role: z.string(),
+  body: z.string(),
+  created_at: z.string(),
+})
+export type CaseCommentItem = z.infer<typeof CaseCommentItemSchema>
+
+export const CaseCommentListResponseSchema = z.object({
+  items: z.array(CaseCommentItemSchema),
+  total: z.number().int(),
+  page: z.number().int(),
+  per_page: z.number().int(),
+})
+export type CaseCommentListResponse = z.infer<
+  typeof CaseCommentListResponseSchema
+>
+
 // The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
 // contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
 // `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they

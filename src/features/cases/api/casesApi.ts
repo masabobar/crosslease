@@ -21,6 +21,10 @@ import {
   GuarantorLinkResponseSchema,
   LesseeLinkResponseSchema,
   PaymentPlanResponseSchema,
+  BulkRemoveResponseSchema,
+  CaseActivityResponseSchema,
+  CaseCommentItemSchema,
+  CaseCommentListResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
@@ -44,6 +48,10 @@ import type {
   GuarantorLinkResponse,
   LesseeLinkResponse,
   PaymentPlanResponse,
+  BulkRemoveResponse,
+  CaseActivityResponse,
+  CaseCommentItem,
+  CaseCommentListResponse,
 } from "@/features/cases/api/schema"
 
 // GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
@@ -105,6 +113,9 @@ export const CASE_QUERY_KEYS = {
     ["contracts", "guarantors", contractId] as const,
   paymentPlan: (caseId: string, contractId: string) =>
     ["cases", "payment-plan", caseId, contractId] as const,
+  activity: (caseId: string, page: number) =>
+    ["cases", "activity", caseId, page] as const,
+  comments: (caseId: string) => ["cases", "comments", caseId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -466,4 +477,50 @@ export async function setManualPaymentPlan(
     { rows }
   )
   return PaymentPlanResponseSchema.parse(data)
+}
+
+// POST /cases/{case_id}/contracts/bulk-remove — US 1.12. `reason` is required by the contract.
+export async function bulkRemoveContracts(
+  caseId: string,
+  contractIds: string[],
+  reason: string
+): Promise<BulkRemoveResponse> {
+  const data = await api.post(`/cases/${caseId}/contracts/bulk-remove`, {
+    contract_ids: contractIds,
+    reason,
+  })
+  return BulkRemoveResponseSchema.parse(data)
+}
+
+// GET /cases/{case_id}/activity — US 1.28. Paged, ordered by the backend on `audit_seq`.
+export async function fetchCaseActivity(
+  caseId: string,
+  page: number,
+  perPage: number
+): Promise<CaseActivityResponse> {
+  const data = await api.get(`/cases/${caseId}/activity`, {
+    params: { page, per_page: perPage },
+  })
+  return CaseActivityResponseSchema.parse(data)
+}
+
+// The activity CSV export. A URL, not a fetch: the browser handles the download and cookie auth
+// makes a top-level navigation authenticated (the LC-portal download pattern).
+export function getCaseActivityExportUrl(caseId: string): string {
+  return `${api.defaults.baseURL}/cases/${caseId}/activity/export-csv`
+}
+
+export async function fetchCaseComments(
+  caseId: string
+): Promise<CaseCommentListResponse> {
+  const data = await api.get(`/cases/${caseId}/comments`)
+  return CaseCommentListResponseSchema.parse(data)
+}
+
+export async function addCaseComment(
+  caseId: string,
+  body: string
+): Promise<CaseCommentItem> {
+  const data = await api.post(`/cases/${caseId}/comments`, { body })
+  return CaseCommentItemSchema.parse(data)
 }

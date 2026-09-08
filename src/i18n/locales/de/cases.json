@@ -1,4 +1,18 @@
 {
+  "activity": {
+    "title": "Aktivität",
+    "exportCsv": "CSV exportieren",
+    "empty": "Zu diesem Fall ist noch nichts passiert.",
+    "changedFields": "Geändert: {{fields}}",
+    "pageOf": "Seite {{page}} von {{total}}",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "comments": {
+      "title": "Kommentare ({{count}})",
+      "placeholder": "Kommentar hinzufügen",
+      "add": "Hinzufügen"
+    }
+  },
   "caseTypes": {
     "refinancing_request": "Refinanzierungsanfrage",
     "package_redemption": "Paketablösung",
@@ -186,6 +200,12 @@
       "manualComingSoon": "Die manuelle Vertragserfassung ist noch nicht umgesetzt — sie erfasst Leasingnehmer, Objekte und Konditionen und kommt mit US 1.6–1.9. Bitte vorläufig die Massendatei verwenden.",
       "manualEntry": "Vertrag manuell erfassen",
       "manualPartial": "Die manuelle Erfassung deckt derzeit die Leasingobjekte ab. Leasingnehmer, Vertragskonditionen und Zahlungsplan folgen mit US 1.6, 1.9 und 1.11.",
+      "removalReasonPlaceholder": "Warum werden diese entfernt?",
+      "removeSelected": "Aus Antrag entfernen",
+      "removed": "{{count}} Vertrag entfernt.",
+      "removed_other": "{{count}} Verträge entfernt.",
+      "selectedCount": "{{count}} Vertrag ausgewählt",
+      "selectedCount_other": "{{count}} Verträge ausgewählt",
       "termMonths": "{{count}} Monat",
       "termMonths_other": "{{count}} Monate",
       "title": "Verträge",
