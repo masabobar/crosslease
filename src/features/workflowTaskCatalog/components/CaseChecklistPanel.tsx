@@ -5,21 +5,19 @@ import { ApiError } from "@/lib/api"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { useUsers } from "@/features/users/hooks/useUsers"
 import { CaseChecklistPhaseList } from "@/features/workflowTaskCatalog/components/CaseChecklistPhaseList"
-import { CasePhaseGatePanel } from "@/features/workflowTaskCatalog/components/CasePhaseGatePanel"
 import { useCaseChecklist } from "@/features/workflowTaskCatalog/hooks/useCaseChecklist"
 import { useCaseRequiredProjection } from "@/features/workflowTaskCatalog/hooks/useCaseRequiredProjection"
 import { useCaseProgress } from "@/features/cases/hooks/useCaseProgress"
 import { ApprovalConditionsPanel } from "@/features/financing/components/ApprovalConditionsPanel"
-import { useCasePhaseGates } from "@/features/workflowTaskCatalog/hooks/useCasePhaseGates"
-import {
-  CASE_CHECKLIST_WRITE_ALLOWED_ROLES,
-  CASE_PHASE_GATE_DECIDE_ALLOWED_ROLES,
-} from "@/features/workflowTaskCatalog/types"
+import { CASE_CHECKLIST_WRITE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
 /**
- * The runtime checklist of one case, as a panel: the item table, the phase gates, and
- * the phase gates.
+ * The runtime checklist of one case: its approval conditions, then its tasks grouped by phase.
+ *
+ * **There are no stage gates here.** A refinancing request does not have them — the phases are a
+ * grouping and a progress read, not something a person approves between. The gate panel was removed
+ * rather than hidden, so nothing re-introduces a decision the process does not make.
  *
  * Extracted from `CaseChecklistPage` so two surfaces can render the same thing — the standalone
  * deep-link route (which still owns the page chrome and reads the route param) and the case
@@ -55,25 +53,14 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
   // Read for the phase names and their order; each section's counts are computed from the items
   // themselves, so a failed progress query degrades to bare letters rather than blanking the list.
   const { data: progress } = useCaseProgress(businessObjectId)
-  const {
-    data: gates,
-    isError: isGatesError,
-    error: gatesError,
-  } = useCasePhaseGates(businessObjectId)
-
-  // Generous page size for the same reason the catalogue detail page uses one: `checked_by` and
-  // `gate_approver` are bare UUIDs, and an actor outside the fetched page falls back to the raw id.
+  // Generous page size for the same reason the catalogue detail page uses one: `checked_by` is a
+  // bare UUID, and an actor outside the fetched page falls back to the raw id.
   const { data: usersData } = useUsers({ per_page: 100 })
   const users = usersData?.users ?? []
 
   const canWrite = Boolean(
     currentUser?.role &&
     CASE_CHECKLIST_WRITE_ALLOWED_ROLES.includes(currentUser.role)
-  )
-  // Narrower than the backend on purpose — see CASE_PHASE_GATE_DECIDE_ALLOWED_ROLES in types.ts.
-  const canDecideGate = Boolean(
-    currentUser?.role &&
-    CASE_PHASE_GATE_DECIDE_ALLOWED_ROLES.includes(currentUser.role)
   )
 
   if (isLoading) {
@@ -152,24 +139,6 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
         canWrite={canWrite}
         users={users}
       />
-
-      <div>
-        {isGatesError ? (
-          <p
-            data-testid="case-phase-gates-error"
-            className="text-sm text-destructive"
-          >
-            {resolveApiErrorMessage(gatesError, t)}
-          </p>
-        ) : (
-          <CasePhaseGatePanel
-            businessObjectId={businessObjectId}
-            gates={gates ?? []}
-            canDecide={canDecideGate}
-            users={users}
-          />
-        )}
-      </div>
     </div>
   )
 }

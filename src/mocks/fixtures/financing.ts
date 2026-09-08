@@ -203,7 +203,31 @@ const CALCULATING_FINANCING: FinancingOverviewResponse = {
   figures_pending: true,
   bank_figures_visible: true,
   contracts: [],
-  covenants: [],
+  covenants: [
+    {
+      id: "00000000-0000-4000-8000-0000000de001",
+      condition_text: "Submit the balance sheet for 2024 by 30 September 2026.",
+      state: "open",
+      due_date: "2026-09-30",
+      step_reference: "Step 10",
+    },
+    {
+      id: "00000000-0000-4000-8000-0000000de002",
+      condition_text:
+        "Release declaration requested from the previous financier.",
+      state: "open",
+      due_date: "2026-10-15",
+      step_reference: "Step 10",
+    },
+    {
+      id: "00000000-0000-4000-8000-0000000de003",
+      condition_text:
+        "Confirm the vehicle registration documents are held for all objects.",
+      state: "met",
+      due_date: "2026-08-20",
+      step_reference: "Step 36",
+    },
+  ],
   open_covenant_count: 0,
   financing_history: [
     {

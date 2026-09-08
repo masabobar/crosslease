@@ -13,9 +13,15 @@
  *     delivered design shows **five** phases A–E (Application & credit review → Post-processing).
  *     They are different models. The fixture uses the implemented six.
  *
- * The step names and responsible roles are the design's own (`Add convenant.pdf`, `BO approval.pdf`):
- * steps 1–4 of phase A, with step 4 carrying four eyes.
+ * The step list is the client's own sheet ("Untitled spreadsheet - 44 steps"), in full: steps 1–44
+ * with step 33 split into **33a** and **33b**, so **45 rows**. It replaces the four placeholder
+ * steps this fixture used to carry, which made the Checklist tab show a fraction of the process.
+ *
+ * The phase bands follow the design's five: A covers 1–4, B 5–12, C 13–23, D 24–33b, E 34–44.
+ * Four eyes is set from the step's own wording — the "Control of…" and "Release of…" steps, and the
+ * one that names a "distinct second approver" — rather than assigned by hand.
  */
+import { mockUuid } from "@/mocks/uuid"
 import type {
   ChecklistItemResponse,
   PhaseGateResponse,
@@ -24,7 +30,8 @@ import type {
 const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 
 type Seed = {
-  n: number
+  /** The step id as the client's sheet numbers it — a string, because 33 is split into 33a / 33b. */
+  n: string
   code: string
   name: string
   role: "front_office" | "back_office_risk"
@@ -35,185 +42,393 @@ type Seed = {
 }
 
 const SEEDS: Seed[] = [
-  // Phase A — the four steps the design shows by name.
   {
-    n: 1,
-    code: "A-01",
-    name: "Pre-inquiry form created & saved",
+    n: "1",
+    code: "A-1",
+    name: "Pre-enquiry form created and saved",
     role: "front_office",
     stage: "pre_submission",
     status: "checked",
   },
   {
-    n: 2,
-    code: "A-02",
-    name: "Total commitment queried & saved",
+    n: "2",
+    code: "A-2",
+    name: "Total exposure queried and saved",
     role: "front_office",
     stage: "pre_submission",
     status: "checked",
   },
   {
-    n: 3,
-    code: "A-03",
-    name: "Check if lessee is already a customer",
+    n: "3",
+    code: "A-3",
+    name: "Check whether the lessee is a customer of the bank",
     role: "front_office",
     stage: "pre_submission",
     status: "checked",
   },
   {
-    n: 4,
-    code: "A-04",
-    name: "Process request & approve/reject",
-    role: "back_office_risk",
-    stage: "stage_1_review",
+    n: "4",
+    code: "A-4",
+    name: "Process the request and approve or reject it",
+    role: "front_office",
+    stage: "pre_submission",
     status: "open",
-    fourEyes: true,
   },
-
-  // Phase B — documents the bank names and the leasing company delivers.
   {
-    n: 5,
-    code: "B-01",
-    name: "Required documents requested",
+    n: "5",
+    code: "B-5",
+    name: "Settlement documents saved",
     role: "front_office",
     stage: "stage_1_review",
     status: "open",
   },
   {
-    n: 6,
-    code: "B-02",
-    name: "Uploaded documents checked",
+    n: "6",
+    code: "B-6",
+    name: "Settlement documents complete (yes / no)",
     role: "front_office",
     stage: "stage_1_review",
     status: "open",
   },
   {
-    n: 7,
-    code: "B-03",
-    name: "Document set signed off",
+    n: "7",
+    code: "B-7",
+    name: "Payment advice present",
+    role: "front_office",
+    stage: "stage_1_review",
+    status: "open",
+  },
+  {
+    n: "8",
+    code: "B-8",
+    name: "Pre-financing checked with the bank",
+    role: "front_office",
+    stage: "stage_1_review",
+    status: "open",
+  },
+  {
+    n: "9",
+    code: "B-9",
+    name: "Entered on the pre-financing list",
+    role: "front_office",
+    stage: "stage_1_review",
+    status: "open",
+  },
+  {
+    n: "10",
+    code: "B-10",
+    name: "Release declaration requested",
+    role: "front_office",
+    stage: "stage_1_review",
+    status: "open",
+  },
+  {
+    n: "11",
+    code: "B-11",
+    name: "Missing or incomplete documents requested",
+    role: "front_office",
+    stage: "stage_1_review",
+    status: "open",
+  },
+  {
+    n: "12",
+    code: "B-12",
+    name: "Back office informed that the refinancing rate period is expiring",
+    role: "front_office",
+    stage: "stage_1_review",
+    status: "open",
+  },
+  {
+    n: "13",
+    code: "C-13",
+    name: "Contract data entered in LeasySoft",
+    role: "back_office_risk",
+    stage: "stage_2_review",
+    status: "open",
+  },
+  {
+    n: "14",
+    code: "C-14",
+    name: "Guarantors and co-obligors entered in LeasySoft",
+    role: "back_office_risk",
+    stage: "stage_2_review",
+    status: "open",
+  },
+  {
+    n: "15",
+    code: "C-15",
+    name: "Bank settlement and repayment schedule created and saved",
+    role: "back_office_risk",
+    stage: "stage_2_review",
+    status: "open",
+  },
+  {
+    n: "16",
+    code: "C-16",
+    name: "Settlement documents checked for content (8 sub-points, incl. refinancing rate and expiry)",
+    role: "back_office_risk",
+    stage: "stage_2_review",
+    status: "open",
+  },
+  {
+    n: "17",
+    code: "C-17",
+    name: "Control of the bank settlement carried out",
     role: "back_office_risk",
     stage: "stage_2_review",
     status: "open",
     fourEyes: true,
   },
-
-  // Phase C — enrichment, calculation, core-system set-up.
   {
-    n: 8,
-    code: "C-01",
-    name: "Contract data entered",
-    role: "front_office",
+    n: "18",
+    code: "C-18",
+    name: "Loan set up in OS+ and the OS+ repayment schedule saved",
+    role: "back_office_risk",
     stage: "stage_2_review",
     status: "open",
   },
   {
-    n: 9,
-    code: "C-02",
-    name: "Sollbelastung recorded",
-    role: "front_office",
+    n: "19",
+    code: "C-19",
+    name: "Rate changes and residual value taken from the OS+ schedule",
+    role: "back_office_risk",
     stage: "stage_2_review",
     status: "open",
   },
   {
-    n: 10,
-    code: "C-03",
-    name: "Bank settlement & payment plan produced",
-    role: "front_office",
-    stage: "pre_disbursement",
+    n: "20",
+    code: "C-20",
+    name: "Event created for more than 5 pre-dated rate changes",
+    role: "back_office_risk",
+    stage: "stage_2_review",
     status: "open",
   },
   {
-    n: 11,
-    code: "C-04",
-    name: "Hand-over file exported to the core system",
-    role: "front_office",
-    stage: "pre_disbursement",
+    n: "21",
+    code: "C-21",
+    name: "Account collector recorded and saved",
+    role: "back_office_risk",
+    stage: "stage_2_review",
     status: "open",
   },
-
-  // Phase D — approval and disbursement.
   {
-    n: 12,
-    code: "D-01",
-    name: "Collateral determined",
+    n: "22",
+    code: "C-22",
+    name: "Contract number in the account note and the holding unit recorded",
+    role: "back_office_risk",
+    stage: "stage_2_review",
+    status: "open",
+  },
+  {
+    n: "23",
+    code: "C-23",
+    name: "Loan disbursement recorded and saved",
+    role: "back_office_risk",
+    stage: "stage_2_review",
+    status: "open",
+  },
+  {
+    n: "24",
+    code: "D-24",
+    name: "Loan offer created and saved",
     role: "back_office_risk",
     stage: "pre_disbursement",
     status: "open",
   },
   {
-    n: 13,
-    code: "D-02",
-    name: "Collateral controlled",
+    n: "25",
+    code: "D-25",
+    name: "Report to Treasury (form DF090965) - from 2 m EUR financing amount",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "26",
+    code: "D-26",
+    name: "Control of loan setup and rate change",
     role: "back_office_risk",
     stage: "pre_disbursement",
     status: "open",
     fourEyes: true,
   },
   {
-    n: 14,
-    code: "D-03",
-    name: "Disbursement confirmed",
+    n: "27",
+    code: "D-27",
+    name: "Control of the event(s) for more than 5 rate changes",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+    fourEyes: true,
+  },
+  {
+    n: "28",
+    code: "D-28",
+    name: "Release of rate change, account collector and disbursement in OS+",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+    fourEyes: true,
+  },
+  {
+    n: "29",
+    code: "D-29",
+    name: "Loan offer checked and signed",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "30",
+    code: "D-30",
+    name: "Booking voucher signed",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "31",
+    code: "D-31",
+    name: "Disbursement added to the pre-financing list",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "32",
+    code: "D-32",
+    name: "Loan offer and repayment schedule sent to the customer",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "33a",
+    code: "D-33a",
+    name: "Core-banking loan number recorded",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "33b",
+    code: "D-33b",
+    name: "Contract activated in LeasySoft",
+    role: "back_office_risk",
+    stage: "pre_disbursement",
+    status: "open",
+  },
+  {
+    n: "34",
+    code: "E-34",
+    name: "Cover sheet created and saved",
+    role: "back_office_risk",
+    stage: "servicing",
+    status: "open",
+  },
+  {
+    n: "35",
+    code: "E-35",
+    name: "Collateral recorded and saved",
+    role: "back_office_risk",
+    stage: "servicing",
+    status: "open",
+  },
+  {
+    n: "36",
+    code: "E-36",
+    name: "Vehicle valuation queried and saved (for vehicle security transfer)",
+    role: "back_office_risk",
+    stage: "servicing",
+    status: "open",
+  },
+  {
+    n: "37",
+    code: "E-37",
+    name: "Cover sheet filled in and signed",
+    role: "back_office_risk",
+    stage: "servicing",
+    status: "open",
+  },
+  {
+    n: "38",
+    code: "E-38",
+    name: "Control of the collateral recording carried out (distinct second approver)",
     role: "back_office_risk",
     stage: "servicing",
     status: "open",
     fourEyes: true,
   },
-
-  // Phase E — post-processing. Not optional and not minor: the spec is explicit that the interface
-  // must show something still open after the money has left.
   {
-    n: 15,
-    code: "E-01",
-    name: "Habenausgleich recorded",
-    role: "front_office",
+    n: "39",
+    code: "E-39",
+    name: "Customer-signed loan offer - identification performed, scanned and saved",
+    role: "back_office_risk",
     stage: "servicing",
     status: "open",
   },
   {
-    n: 16,
-    code: "E-02",
-    name: "Combined document built",
-    role: "front_office",
+    n: "40",
+    code: "E-40",
+    name: "Customer-signed loan offer (original) filed",
+    role: "back_office_risk",
     stage: "servicing",
     status: "open",
   },
   {
-    n: 17,
-    code: "E-03",
-    name: "Case filed electronically for ten-year retention",
-    role: "front_office",
+    n: "41",
+    code: "E-41",
+    name: "Archivability checked",
+    role: "back_office_risk",
     stage: "servicing",
     status: "open",
   },
-  // A step legitimately not applicable — the spec insists guarantor step 14 stays visible and is
-  // marked not applicable rather than hidden (D-14).
   {
-    n: 18,
-    code: "E-04",
-    name: "Guarantor documents filed",
-    role: "front_office",
+    n: "42",
+    code: "E-42",
+    name: "All individual documents merged",
+    role: "back_office_risk",
     stage: "servicing",
-    status: "not_applicable",
+    status: "open",
+  },
+  {
+    n: "43",
+    code: "E-43",
+    name: "Filed in the electronic archive",
+    role: "back_office_risk",
+    stage: "servicing",
+    status: "open",
+  },
+  {
+    n: "44",
+    code: "E-44",
+    name: "Case folder moved to 'done' on the refinancing drive",
+    role: "back_office_risk",
+    stage: "servicing",
+    status: "open",
   },
 ]
 
 export function mockChecklist(
   businessObjectId: string
 ): ChecklistItemResponse[] {
-  return SEEDS.map(s => ({
-    // 12 hex characters in the last segment — `000000` plus a four-digit number is only ten, and
-    // an invalid UUID here made the schema reject the entire checklist response (MSW then 500s), so
-    // the Checklist tab was blank in the prototype. Found by driving the browser.
-    id: `00000000-0000-4000-8000-00000000${String(9000 + s.n)}`,
+  return SEEDS.map((s, index) => ({
+    // Built through `mockUuid`, which refuses a non-hex tag — the step id is not usable as one
+    // ("33a" is fine, but a bare number is not 12 characters), so the row's index is the tag.
+    id: mockUuid(`c1${index.toString(16).padStart(2, "0")}`),
     business_object_id: businessObjectId,
-    source_catalog_task_id: `00000000-0000-4000-8000-00000000${String(8000 + s.n)}`,
+    source_catalog_task_id: mockUuid(
+      `c2${index.toString(16).padStart(2, "0")}`
+    ),
     task_code: s.code,
     task_name: s.name,
     is_mandatory: s.mandatory ?? true,
     weight: null,
     responsible_role: s.role,
     responsible_roles: null,
-    display_order: s.n,
+    // The list is already in the sheet's order, and the id is a string ("33a"), so the position
+    // carries the numbering the user reads.
+    display_order: index + 1,
     stage_categorization: s.stage,
     task_type: "checkbox",
     applicability: "always",
