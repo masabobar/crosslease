@@ -406,6 +406,59 @@ export type LeaseObjectListResponse = z.infer<
   typeof LeaseObjectListResponseSchema
 >
 
+/**
+ * Lessee and guarantors on a contract — the manual-entry modal's **Lessee** tab (US 1.6, US 1.7).
+ *
+ * ── EITHER AN EXISTING PARTNER OR A NEW IDENTITY ───────────────────────────────────────────────
+ * `LesseeCaptureRequest` and `GuarantorAddRequest` both take **`existing_partner_id` OR `identity`**
+ * — the second being a partner created in context, a discriminated union on `partner_type`
+ * (`legal_entity` / `natural_person` / `registered_sole_trader`). Only the *existing-partner* path
+ * is modelled here: create-in-context is a three-variant form of its own
+ * (`CREATE PARTNER modal.pdf`) and is tracked separately, so this schema declares the id branch and
+ * leaves `identity` out rather than half-typing it.
+ *
+ * `partner_status` comes back as an unconstrained string, so it is parsed as one — `PartnerStatus`
+ * exists in the registry but this response does not `$ref` it.
+ */
+export const LesseeLinkResponseSchema = z.object({
+  contract_id: z.string().uuid(),
+  lessee_partner_id: z.string().uuid(),
+  // True when the link created a partner rather than reusing one. The UI says so, because a newly
+  // created partner is not yet confirmed and the case will stall on it later.
+  is_new: z.boolean(),
+  partner_status: z.string(),
+})
+export type LesseeLinkResponse = z.infer<typeof LesseeLinkResponseSchema>
+
+export const GuarantorLinkResponseSchema = z.object({
+  link_id: z.string().uuid(),
+  contract_id: z.string().uuid(),
+  guarantor_partner_id: z.string().uuid(),
+  // Guarantor vs co-obligor — US 1.7 covers both, and this is what separates them. Unconstrained
+  // on the wire, so free text rather than an enum.
+  kind_of_obligation: z.string().nullable(),
+  is_new: z.boolean(),
+  partner_status: z.string(),
+})
+export type GuarantorLinkResponse = z.infer<typeof GuarantorLinkResponseSchema>
+
+// Unlike the contracts tab's lessee problem (Q-015), this list DOES carry a display name — so the
+// guarantor rows are self-describing and need no per-row partner fetch.
+export const GuarantorListItemSchema = z.object({
+  link_id: z.string().uuid(),
+  guarantor_partner_id: z.string().uuid(),
+  kind_of_obligation: z.string().nullable(),
+  display_name: z.string(),
+})
+export type GuarantorListItem = z.infer<typeof GuarantorListItemSchema>
+
+export const GuarantorListResponseSchema = z.object({
+  contract_id: z.string().uuid(),
+  count: z.number().int(),
+  guarantors: z.array(GuarantorListItemSchema),
+})
+export type GuarantorListResponse = z.infer<typeof GuarantorListResponseSchema>
+
 // The only *closed* enum on a contract read. `ContractType` and `AmortisationType` also exist in the
 // contract registry (`lease | hire_purchase`, `full | partial`) but are `$ref`'d **only** from
 // `ContractCreate` / `ContractEdit` — on `ContractRead` both arrive as bare `string | null`. So they

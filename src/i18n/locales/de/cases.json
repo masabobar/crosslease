@@ -195,19 +195,44 @@
       "title": "Neuer Refinanzierungsantrag"
     },
     "manual": {
-      "title": "Vertrag manuell erfassen",
-      "save": "Vertrag speichern",
-      "saved": "Vertrag zum Fall gespeichert.",
-      "tabs": {
-        "lessee": "Leasingnehmer",
-        "object": "Objekt",
-        "contractDetails": "Vertragsdaten",
-        "cashFlow": "Zahlungsstrom"
-      },
-      "pending": {
-        "lessee": "Die Erfassung des Leasingnehmers ist noch nicht umgesetzt (US 1.6). Die Endpunkte existieren — /contracts/{id}/lessee und die Vorschau — es fehlt also nur die Umsetzung.",
-        "contractDetails": "Die Erfassung der Vertragskonditionen ist noch nicht umgesetzt (US 1.9).",
-        "cashFlow": "Der Zahlungsplan ist noch nicht umgesetzt (US 1.11)."
+      "details": {
+        "save": "Vertragsdaten speichern",
+        "saved": "Vertragsdaten gespeichert.",
+        "errors": {
+          "termFormat": "Laufzeit in ganzen Monaten eingeben."
+        },
+        "contractType": {
+          "lease": "Leasing",
+          "hire_purchase": "Mietkauf"
+        },
+        "amortisationType": {
+          "full": "Vollamortisation",
+          "partial": "Teilamortisation"
+        },
+        "frequency": {
+          "monthly": "Monatlich",
+          "quarterly": "Vierteljährlich",
+          "semi_annual": "Halbjährlich",
+          "annual": "Jährlich",
+          "custom": "Individuell"
+        },
+        "fields": {
+          "select": "Auswählen",
+          "contractNumber": "Vertragsnummer der Leasinggesellschaft",
+          "shortName": "Kurzbezeichnung",
+          "contractType": "Vertragsart",
+          "amortisationType": "Amortisationsart",
+          "frequency": "Ratenfrequenz",
+          "termMonths": "Laufzeit (Monate)",
+          "contractStart": "Vertragsbeginn",
+          "netInstalment": "Nettorate (EUR)",
+          "residualValue": "Restwert (EUR)",
+          "specialPayment": "Sonderzahlung (EUR)",
+          "nonRefinanceable": "Nicht refinanzierbarer Anteil (EUR)",
+          "mileageLease": "Kilometerleasing",
+          "buyBack": "Rückkaufvereinbarung",
+          "putOption": "Andienungsrecht"
+        }
       },
       "object": {
         "heading": "Leasingobjekte ({{count}})",
@@ -241,7 +266,40 @@
           "appraisedValue": "Gutachterwert (EUR)",
           "specialPayment": "Sonderzahlung (EUR)"
         }
-      }
+      },
+      "parties": {
+        "lesseeHeading": "Leasingnehmer",
+        "lesseeLinked": "Leasingnehmer verknüpft",
+        "newPartner": "Neu angelegt — nicht bestätigt",
+        "guarantorHeading": "Bürgen und Mitverpflichtete ({{count}})",
+        "guarantorEmpty": "Keine Bürgen oder Mitverpflichteten auf diesem Vertrag.",
+        "addGuarantor": "Hinzufügen",
+        "kindOfObligation": "Art der Verpflichtung",
+        "obligations": {
+          "guarantor": "Bürge",
+          "co_obligor": "Mitverpflichteter"
+        },
+        "searchPlaceholder": "Mindestens 3 Zeichen des Partnernamens eingeben",
+        "noMatches": "Kein bestätigter Partner mit diesem Namen gefunden.",
+        "createAbsent": {
+          "title": "Eine noch nicht registrierte Partei kann hier nicht angelegt werden",
+          "description": "Es können nur bestätigte Partner aus dem Partnerregister verknüpft werden. Das Anlegen eines Partners an dieser Stelle ist ein separates Formular für drei Partnertypen und noch nicht umgesetzt — fehlt der Leasingnehmer oder ein Bürge, bitte zuerst in der Partnerverwaltung anlegen."
+        }
+      },
+      "pending": {
+        "lessee": "Die Erfassung des Leasingnehmers ist noch nicht umgesetzt (US 1.6). Die Endpunkte existieren — /contracts/{id}/lessee und die Vorschau — es fehlt also nur die Umsetzung.",
+        "contractDetails": "Die Erfassung der Vertragskonditionen ist noch nicht umgesetzt (US 1.9).",
+        "cashFlow": "Der Zahlungsplan ist noch nicht umgesetzt (US 1.11)."
+      },
+      "save": "Vertrag speichern",
+      "saved": "Vertrag zum Fall gespeichert.",
+      "tabs": {
+        "lessee": "Leasingnehmer",
+        "object": "Objekt",
+        "contractDetails": "Vertragsdaten",
+        "cashFlow": "Zahlungsstrom"
+      },
+      "title": "Vertrag manuell erfassen"
     },
     "steps": {
       "leasingCompany": {

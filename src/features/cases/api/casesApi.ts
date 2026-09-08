@@ -17,6 +17,9 @@ import {
   LeaseObjectListResponseSchema,
   LeaseObjectReadSchema,
   ObjectClassificationResponseSchema,
+  GuarantorListResponseSchema,
+  GuarantorLinkResponseSchema,
+  LesseeLinkResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
   CaseContractListResponse,
@@ -36,6 +39,9 @@ import type {
   LeaseObjectListResponse,
   LeaseObjectRead,
   ObjectClassificationResponse,
+  GuarantorListResponse,
+  GuarantorLinkResponse,
+  LesseeLinkResponse,
 } from "@/features/cases/api/schema"
 
 // GET /document-requirement-catalogs/case-types/startable — the case types the caller's bank has at
@@ -91,6 +97,10 @@ export const CASE_QUERY_KEYS = {
   objectClassification: ["object-classification"] as const,
   contractObjects: (contractId: string) =>
     ["contracts", "objects", contractId] as const,
+  contractLessee: (contractId: string) =>
+    ["contracts", "lessee", contractId] as const,
+  contractGuarantors: (contractId: string) =>
+    ["contracts", "guarantors", contractId] as const,
   startableCaseTypes: ["cases", "startable-case-types"] as const,
 } as const
 
@@ -351,5 +361,69 @@ export async function createCaseContract(
   body: Record<string, unknown>
 ): Promise<CaseContract> {
   const data = await api.post(`/cases/${caseId}/contracts`, body)
+  return CaseContractSchema.parse(data)
+}
+
+/**
+ * GET /contracts/{contract_id}/lessee — the lessee currently linked, or null.
+ *
+ * Returns `null` before a lessee is captured, the same convention as the case's leasing company.
+ */
+export async function fetchContractLessee(
+  contractId: string
+): Promise<LesseeLinkResponse | null> {
+  const data = await api.get(`/contracts/${contractId}/lessee`)
+  return data === null ? null : LesseeLinkResponseSchema.parse(data)
+}
+
+// POST /contracts/{contract_id}/lessee — links an existing partner as the lessee. The `identity`
+// branch (create in context) is not sent from here; see the schema note.
+export async function captureContractLessee(
+  contractId: string,
+  existingPartnerId: string
+): Promise<LesseeLinkResponse> {
+  const data = await api.post(`/contracts/${contractId}/lessee`, {
+    existing_partner_id: existingPartnerId,
+  })
+  return LesseeLinkResponseSchema.parse(data)
+}
+
+export async function fetchContractGuarantors(
+  contractId: string
+): Promise<GuarantorListResponse> {
+  const data = await api.get(`/contracts/${contractId}/guarantors`)
+  return GuarantorListResponseSchema.parse(data)
+}
+
+// POST /contracts/{contract_id}/guarantors — adds a guarantor or co-obligor (US 1.7). The kind of
+// obligation is what separates the two, and it is free text on the wire.
+export async function addContractGuarantor(
+  contractId: string,
+  existingPartnerId: string,
+  kindOfObligation: string
+): Promise<GuarantorLinkResponse> {
+  const data = await api.post(`/contracts/${contractId}/guarantors`, {
+    existing_partner_id: existingPartnerId,
+    kind_of_obligation: kindOfObligation,
+  })
+  return GuarantorLinkResponseSchema.parse(data)
+}
+
+// POST /contracts/{contract_id}/guarantors/{link_id}/remove — unlinks, rather than deleting the
+// partner. A POST and not a DELETE, which is the backend's choice.
+export async function removeContractGuarantor(
+  contractId: string,
+  linkId: string
+): Promise<void> {
+  await api.post(`/contracts/${contractId}/guarantors/${linkId}/remove`)
+}
+
+// PATCH /contracts/{contract_id} — edits a contract's terms (US 1.9). `ContractEdit` requires no
+// field, so a partial save is legitimate and the form sends whatever has been filled.
+export async function updateContract(
+  contractId: string,
+  body: Record<string, unknown>
+): Promise<CaseContract> {
+  const data = await api.patch(`/contracts/${contractId}`, body)
   return CaseContractSchema.parse(data)
 }

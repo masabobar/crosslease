@@ -195,19 +195,44 @@
       "title": "New refinancing request"
     },
     "manual": {
-      "title": "Manual contract entry",
-      "save": "Save contract",
-      "saved": "Contract saved to the case.",
-      "tabs": {
-        "lessee": "Lessee",
-        "object": "Object",
-        "contractDetails": "Contract details",
-        "cashFlow": "Cash flow"
-      },
-      "pending": {
-        "lessee": "Capturing the lessee is not built yet (US 1.6). Its endpoints exist — /contracts/{id}/lessee and its preview — so this is implementation, not a gap.",
-        "contractDetails": "Capturing the contract terms is not built yet (US 1.9).",
-        "cashFlow": "The payment plan is not built yet (US 1.11)."
+      "details": {
+        "save": "Save contract details",
+        "saved": "Contract details saved.",
+        "errors": {
+          "termFormat": "Enter the term in whole months."
+        },
+        "contractType": {
+          "lease": "Lease",
+          "hire_purchase": "Hire purchase"
+        },
+        "amortisationType": {
+          "full": "Full amortisation",
+          "partial": "Partial amortisation"
+        },
+        "frequency": {
+          "monthly": "Monthly",
+          "quarterly": "Quarterly",
+          "semi_annual": "Semi-annual",
+          "annual": "Annual",
+          "custom": "Custom"
+        },
+        "fields": {
+          "select": "Select",
+          "contractNumber": "Leasing company contract number",
+          "shortName": "Short name",
+          "contractType": "Contract type",
+          "amortisationType": "Amortisation type",
+          "frequency": "Instalment frequency",
+          "termMonths": "Term (months)",
+          "contractStart": "Contract start",
+          "netInstalment": "Net instalment (EUR)",
+          "residualValue": "Residual value (EUR)",
+          "specialPayment": "Special payment (EUR)",
+          "nonRefinanceable": "Non-refinanceable part (EUR)",
+          "mileageLease": "Mileage lease",
+          "buyBack": "Buy-back agreement",
+          "putOption": "Put option"
+        }
       },
       "object": {
         "heading": "Lease objects ({{count}})",
@@ -241,7 +266,40 @@
           "appraisedValue": "Appraised value (EUR)",
           "specialPayment": "Special payment (EUR)"
         }
-      }
+      },
+      "parties": {
+        "lesseeHeading": "Lessee",
+        "lesseeLinked": "Lessee linked",
+        "newPartner": "Newly created — not confirmed",
+        "guarantorHeading": "Guarantors and co-obligors ({{count}})",
+        "guarantorEmpty": "No guarantors or co-obligors on this contract.",
+        "addGuarantor": "Add",
+        "kindOfObligation": "Kind of obligation",
+        "obligations": {
+          "guarantor": "Guarantor",
+          "co_obligor": "Co-obligor"
+        },
+        "searchPlaceholder": "Type at least 3 characters of the partner name",
+        "noMatches": "No confirmed partner matches that name.",
+        "createAbsent": {
+          "title": "A party not yet in the registry cannot be added here",
+          "description": "Only confirmed partners from the bank's registry can be linked. Creating a partner in place is a separate form covering three partner types, and it is not built yet — if the lessee or a guarantor is missing, create them in Partner management first."
+        }
+      },
+      "pending": {
+        "lessee": "Capturing the lessee is not built yet (US 1.6). Its endpoints exist — /contracts/{id}/lessee and its preview — so this is implementation, not a gap.",
+        "contractDetails": "Capturing the contract terms is not built yet (US 1.9).",
+        "cashFlow": "The payment plan is not built yet (US 1.11)."
+      },
+      "save": "Save contract",
+      "saved": "Contract saved to the case.",
+      "tabs": {
+        "lessee": "Lessee",
+        "object": "Object",
+        "contractDetails": "Contract details",
+        "cashFlow": "Cash flow"
+      },
+      "title": "Manual contract entry"
     },
     "steps": {
       "leasingCompany": {

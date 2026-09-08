@@ -20,8 +20,12 @@ import {
   ImportBatchPreviewResponseSchema,
   ImportBatchResponseSchema,
   ImportCommitResponseSchema,
+  CaseContractSchema,
+  GuarantorLinkResponseSchema,
+  GuarantorListResponseSchema,
   LeaseObjectListResponseSchema,
   LeaseObjectReadSchema,
+  LesseeLinkResponseSchema,
   ObjectClassificationResponseSchema,
   PackageTotalsReadSchema,
   SubmitResultResponseSchema,
@@ -29,7 +33,9 @@ import {
   type CaseLeasingCompanyResponse,
   type CaseProductTemplateResponse,
   type ImportBatchPreviewResponse,
+  type GuarantorListItem,
   type LeaseObjectRead,
+  type LesseeLinkResponse,
 } from "@/features/cases/api/schema"
 import { LcNumberListResponseSchema } from "@/features/partners/api/schema"
 import { UserRoleSchema } from "@/features/users/api/schema"
@@ -45,6 +51,7 @@ import {
   mockLcNumbersByPartnerId,
 } from "@/mocks/fixtures/caseWizard"
 import { mockCases } from "@/mocks/fixtures/cases"
+import { mockPartners } from "@/mocks/fixtures/partners"
 import { getMockRole } from "@/mocks/role"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
 import { API } from "@/mocks/apiBase"
@@ -65,6 +72,8 @@ const importBatchesById: Record<string, ImportBatchPreviewResponse> = {}
 
 // Manual-entry lease objects, keyed by contract. Session-scoped like everything else here.
 const objectsByContractId: Record<string, LeaseObjectRead[]> = {}
+const lesseeByContractId: Record<string, LesseeLinkResponse> = {}
+const guarantorsByContractId: Record<string, GuarantorListItem[]> = {}
 
 function hexPair(n: number): string {
   return n.toString(16).padStart(2, "0")
@@ -393,6 +402,159 @@ export const caseHandlers = [
       return envelope(created)
     }
   ),
+
+  // POST /cases/{case_id}/contracts — creates an empty contract for manual entry. `ContractCreate`
+  // requires no field, so the modal creates the shell and the tabs fill it; without this the whole
+  // manual-entry route dead-ends on the fallback (found by driving the browser).
+  http.post(`${API}/cases/:caseId/contracts`, async ({ params, request }) => {
+    const caseId = params.caseId as string
+    const body = (await request.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >
+    const rows = mockCaseContractsByCaseId[caseId] ?? []
+
+    const created = CaseContractSchema.parse({
+      id: `00000000-0000-4000-8000-0000000d${(rows.length + 1)
+        .toString(16)
+        .padStart(2, "0")}01`,
+      leasing_company_contract_number: null,
+      lessee_partner_id: null,
+      short_name: null,
+      contract_type: null,
+      amortisation_type: null,
+      term_months: null,
+      net_instalment: null,
+      residual_value: null,
+      contract_start: null,
+      deferred_state: "active",
+      ...body,
+    })
+
+    mockCaseContractsByCaseId[caseId] = [...rows, created]
+    return envelope(created)
+  }),
+
+  // ── Manual entry: parties and terms (US 1.6, 1.7, 1.9) ────────────────────
+  http.get(`${API}/contracts/:contractId/lessee`, ({ params }) =>
+    envelope(lesseeByContractId[params.contractId as string] ?? null)
+  ),
+
+  http.post(
+    `${API}/contracts/:contractId/lessee`,
+    async ({ params, request }) => {
+      const contractId = params.contractId as string
+      const body = (await request.json()) as { existing_partner_id?: string }
+      const link = LesseeLinkResponseSchema.parse({
+        contract_id: contractId,
+        lessee_partner_id: body.existing_partner_id,
+        // False because this path links an EXISTING partner. The `identity` branch would set it
+        // true, and the tab surfaces that — but that branch is not built.
+        is_new: false,
+        partner_status: "confirmed",
+      })
+      lesseeByContractId[contractId] = link
+      return envelope(link)
+    }
+  ),
+
+  http.get(`${API}/contracts/:contractId/guarantors`, ({ params }) => {
+    const contractId = params.contractId as string
+    const rows = guarantorsByContractId[contractId] ?? []
+    return envelope(
+      GuarantorListResponseSchema.parse({
+        contract_id: contractId,
+        count: rows.length,
+        guarantors: rows,
+      })
+    )
+  }),
+
+  http.post(
+    `${API}/contracts/:contractId/guarantors`,
+    async ({ params, request }) => {
+      const contractId = params.contractId as string
+      const body = (await request.json()) as {
+        existing_partner_id?: string
+        kind_of_obligation?: string
+      }
+      const rows = guarantorsByContractId[contractId] ?? []
+      const linkId = `00000000-0000-4000-8000-0000000f${(rows.length + 1)
+        .toString(16)
+        .padStart(2, "0")}01`
+
+      // The list carries a display name, so the mock has to supply one — the real backend resolves
+      // it from the partner. Taken from the registry fixture so the row is not a bare id.
+      const partner = mockPartners.find(
+        pp => pp.partner_id === body.existing_partner_id
+      )
+
+      guarantorsByContractId[contractId] = [
+        ...rows,
+        {
+          link_id: linkId,
+          guarantor_partner_id: body.existing_partner_id as string,
+          kind_of_obligation: body.kind_of_obligation ?? null,
+          display_name: partner?.display_name ?? "Unknown partner",
+        },
+      ]
+
+      return envelope(
+        GuarantorLinkResponseSchema.parse({
+          link_id: linkId,
+          contract_id: contractId,
+          guarantor_partner_id: body.existing_partner_id,
+          kind_of_obligation: body.kind_of_obligation ?? null,
+          is_new: false,
+          partner_status: "confirmed",
+        })
+      )
+    }
+  ),
+
+  http.post(
+    `${API}/contracts/:contractId/guarantors/:linkId/remove`,
+    ({ params }) => {
+      const contractId = params.contractId as string
+      guarantorsByContractId[contractId] = (
+        guarantorsByContractId[contractId] ?? []
+      ).filter(g => g.link_id !== params.linkId)
+      return envelope(null)
+    }
+  ),
+
+  // PATCH /contracts/{contract_id} — the Contract details tab. Merges into whichever case holds
+  // the contract, so step 2's list and step 3's derived figures both reflect the edit.
+  http.patch(`${API}/contracts/:contractId`, async ({ params, request }) => {
+    const contractId = params.contractId as string
+    const body = (await request.json()) as Record<string, unknown>
+
+    for (const [caseId, rows] of Object.entries(mockCaseContractsByCaseId)) {
+      const index = rows.findIndex(r => r.id === contractId)
+      if (index === -1) continue
+      const merged = CaseContractSchema.parse({
+        ...rows[index],
+        ...body,
+        // Money comes back as decimal strings on a read even though the edit accepts numbers.
+        net_instalment:
+          body.net_instalment === null || body.net_instalment === undefined
+            ? rows[index].net_instalment
+            : String(body.net_instalment),
+        residual_value:
+          body.residual_value === null || body.residual_value === undefined
+            ? rows[index].residual_value
+            : String(body.residual_value),
+      })
+      mockCaseContractsByCaseId[caseId] = [
+        ...rows.slice(0, index),
+        merged,
+        ...rows.slice(index + 1),
+      ]
+      return envelope(merged)
+    }
+
+    return errorEnvelope("NOT_FOUND", "Contract not found", 404)
+  }),
 
   // GET /partners/{id}/lc-numbers — the bridge between the name search and the bind (Q-014).
   http.get(`${API}/partners/:partnerId/lc-numbers`, ({ params }) => {

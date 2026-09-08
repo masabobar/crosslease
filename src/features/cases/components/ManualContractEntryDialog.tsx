@@ -9,6 +9,8 @@ import { showApiError } from "@/lib/apiErrorMessage"
 import { createCaseContract } from "@/features/cases/api/casesApi"
 import { CASE_QUERY_KEYS } from "@/features/cases/api/casesApi"
 import { useQueryClient } from "@tanstack/react-query"
+import { ContractDetailsTab } from "@/features/cases/components/steps/ContractDetailsTab"
+import { LesseeTab } from "@/features/cases/components/steps/LesseeTab"
 import { ObjectTab } from "@/features/cases/components/steps/ObjectTab"
 
 // The design's four tabs, in its order.
@@ -23,7 +25,11 @@ type ManualEntryTab = (typeof MANUAL_ENTRY_TABS)[number]
 
 // The tabs with a form behind them today. Everything else says what it is waiting for rather than
 // rendering an empty pane — the same convention the case workspace uses for its design-only tabs.
-const IMPLEMENTED_TABS = new Set<ManualEntryTab>(["object"])
+const IMPLEMENTED_TABS = new Set<ManualEntryTab>([
+  "lessee",
+  "object",
+  "contractDetails",
+])
 
 type Props = {
   caseId: string
@@ -47,8 +53,11 @@ type Props = {
  * than papered over with a hidden cleanup that cannot actually run.
  *
  * ── WHAT IS BUILT ──────────────────────────────────────────────────────────────────────────────
- * The **Object** tab (US 1.8) in full. Lessee (US 1.6), Contract details (US 1.9) and Cash flow
- * (US 1.11) have verified endpoints but are not built yet; each says so.
+ * **Lessee** (US 1.6 + US 1.7 — guarantors and co-obligors share the tab), **Object** (US 1.8) and
+ * **Contract details** (US 1.9). **Cash flow** (US 1.11) is not built: it is a schedule editor
+ * (`SetManualPlanRequest` takes rows), and the calculation specification that governs what a plan
+ * means only landed on 2026-09-08 — building the editor before reading it against that spec would
+ * be guessing at a surface where the acceptance gate is 0.02 EUR.
  */
 export function ManualContractEntryDialog({
   caseId,
@@ -57,7 +66,8 @@ export function ManualContractEntryDialog({
 }: Props) {
   const { t } = useTranslation("cases")
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState<ManualEntryTab>("object")
+  // Opens on the design's first tab now that it is built.
+  const [tab, setTab] = useState<ManualEntryTab>("lessee")
   const [contractId, setContractId] = useState<string | null>(null)
   const [isCreating, setCreating] = useState(false)
 
@@ -102,8 +112,20 @@ export function ManualContractEntryDialog({
       <div className="max-h-[60vh] overflow-y-auto px-4 py-4">
         {isCreating && <Skeleton className="h-40 w-full" />}
 
+        {tab === "lessee" && !isCreating && (
+          <LesseeTab contractId={contractId} onNeedContract={ensureContract} />
+        )}
+
         {tab === "object" && !isCreating && (
           <ObjectTab contractId={contractId} onNeedContract={ensureContract} />
+        )}
+
+        {tab === "contractDetails" && !isCreating && (
+          <ContractDetailsTab
+            caseId={caseId}
+            contractId={contractId}
+            onNeedContract={ensureContract}
+          />
         )}
 
         {!IMPLEMENTED_TABS.has(tab) && (
