@@ -62,6 +62,11 @@ let conditionSeq = 0
 // a prefill, and the pending-figures state is only reachable if the fixture starts without one.
 
 const LIVE_CASE = "00000000-0000-4000-8000-00000000c005"
+// RR-2026-104 — the case the designs draw.
+const DESIGN_CASE = "00000000-0000-4000-8000-00000000c001"
+
+/** The cases that carry computed per-contract figures. */
+const CASES_WITH_FIGURES = [LIVE_CASE, DESIGN_CASE]
 
 type CalcState = {
   refinancing_rate: string | null
@@ -76,15 +81,21 @@ type CalcState = {
 const calcByCaseId: Record<string, CalcState> = {}
 
 function calcState(caseId: string): CalcState {
+  const seeded = caseId === DESIGN_CASE
   calcByCaseId[caseId] ??= {
-    refinancing_rate: null,
+    // Empty everywhere except the design's case: US 1.15 forbids a default, and the pending state
+    // is only reachable on a financing that has none.
+    refinancing_rate: seeded ? "4.650" : null,
     refinancing_quota_override: null,
-    // 98 % — the leasing company keeps two to five per cent of every instalment.
-    effective_quota: "0.98",
-    value_date: "2026-10-01",
-    committed_rate: null,
-    committed_rate_expiry: null,
-    rate_lock_days: null,
+    // 98 % — the leasing company keeps two to five per cent of every instalment. The design's case
+    // shows 97 %, which is the figure printed on its frames.
+    effective_quota: seeded ? "0.97" : "0.98",
+    value_date: seeded ? "2026-08-01" : "2026-10-01",
+    committed_rate: seeded ? "4.650" : null,
+    // Deliberately BEFORE the value date on the design's case, so the dummy's stale-rate warning
+    // is reachable: the rate was held for seven days from the quote and ran out first.
+    committed_rate_expiry: seeded ? "2026-07-24" : null,
+    rate_lock_days: seeded ? 7 : null,
   }
   return calcByCaseId[caseId]
 }
@@ -163,7 +174,7 @@ export const financingHandlers = [
         case_id: caseId,
         // Nothing is computed before the rate exists, so there are no components either.
         components:
-          hasRate && caseId === LIVE_CASE
+          hasRate && CASES_WITH_FIGURES.includes(caseId)
             ? COMPONENTS.map(c => ({
                 ...c,
                 calculated_as_of: "2026-09-08T09:00:00Z",
@@ -178,7 +189,7 @@ export const financingHandlers = [
     const caseId = params.caseId as string
     const hasRate = calcState(caseId).refinancing_rate !== null
     const rows =
-      hasRate && caseId === LIVE_CASE
+      hasRate && CASES_WITH_FIGURES.includes(caseId)
         ? COMPONENTS.map(c => ({
             contract_id: c.contract_id,
             status: c.status,

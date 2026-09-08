@@ -162,8 +162,6 @@
       "overridden": "Für diese Finanzierung überschrieben. Die Überschreibung wird protokolliert."
     },
     "figures": {
-      "title": "Finanzierungswerte",
-      "subtitle": "Von der Plattform aus den Verträgen dieses Antrags berechnet. Keiner dieser Werte ist eine Eingabe.",
       "financingAmount": "Finanzierungsbetrag",
       "financingAmountHint": "Der Barwert der refinanzierten Zahlungsströme. Dieser Wert wird gegen die Treasury-Schwelle gemessen.",
       "runningInstalment": "Darlehensrate",
@@ -204,6 +202,25 @@
         "rateField": "Das Zinssatzfeld — bearbeitbar bis zur Bankabrechnung",
         "settlementAndPlan": "Abrechnung und Plan — alles, ab der Darlehensanlage im Kernsystem"
       }
+    },
+    "terms": {
+      "title": "Bedingungen",
+      "subtitle": "Was Sie hier eingeben, steuert die Berechnung unten — ändern Sie einen Wert und das Ergebnis aktualisiert sich."
+    },
+    "result": {
+      "title": "Ergebnis",
+      "subtitle": "Aus den Bedingungen oben berechnet. Vorläufig, bis der Fall den Status „Committed“ erreicht."
+    },
+    "payoutHero": "Auszahlungsbetrag · genehmigtes Darlehen",
+    "valueDateLine": "Wertstellung {{date}}",
+    "calculatedBadge": "Berechnet",
+    "repayment": "Rückzahlung",
+    "pricing": "Preisgestaltung",
+    "rateValidUntil": "Zinssatz gültig bis",
+    "rateOutOfDate": "Abgelaufen",
+    "staleRate": {
+      "title": "Der festgeschriebene Zinssatz ist vor der Wertstellung abgelaufen",
+      "description": "Er war {{days}} Tage gebunden und lief am {{expiry}} ab, vor der Wertstellung am {{valueDate}}. Holen Sie ein neues Angebot ein oder dokumentieren Sie, warum er weiterhin gilt."
     }
   }
 }

@@ -28,6 +28,7 @@ import {
   canEditRate,
   formatRate,
   isCommittedRateFrozen,
+  isCommittedRateStale,
   isPlanFrozen,
   isRateEditable,
   isTreasuryThresholdCrossed,
@@ -200,7 +201,16 @@ export function CalculationPanel({ caseId }: Props) {
 
   return (
     <div className="flex flex-col gap-6" data-testid="calculation-panel">
-      {/* ── The inputs: the rate, and the value date. Not the quota. ── */}
+      {/* ── Terms ── */}
+      <div>
+        <h2 className="text-base font-semibold">
+          {t("calculation.terms.title")}
+        </h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {t("calculation.terms.subtitle")}
+        </p>
+      </div>
+
       <section className="rounded-lg border p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold">
@@ -372,18 +382,9 @@ export function CalculationPanel({ caseId }: Props) {
         )}
       </section>
 
-      {/* ── The derived figures ── */}
-      <section
-        className="rounded-lg border p-4"
-        data-testid="calculation-figures"
-      >
-        <h3 className="mb-1 text-sm font-semibold">
-          {t("calculation.figures.title")}
-        </h3>
-        <p className="mb-3 text-xs text-muted-foreground">
-          {t("calculation.figures.subtitle")}
-        </p>
-
+      {/* The derived figures. No heading of its own: the "Result" header above already carries
+          the dummy's sentence, and repeating it read as two sections. */}
+      <section data-testid="calculation-figures">
         {figuresPending ? (
           /* Pending rather than computed against an empty or assumed rate. Showing a zero here
              would be a figure the bank could act on. */
@@ -395,6 +396,52 @@ export function CalculationPanel({ caseId }: Props) {
           </Alert>
         ) : (
           <>
+            {/* The dummy leads the result with the payout amount, because it is what the whole
+                case is about. */}
+            <div
+              className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg bg-accent px-4 py-3"
+              data-testid="calculation-payout-hero"
+            >
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t("calculation.payoutHero")}
+                </p>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {figures.financingAmount === null
+                    ? "—"
+                    : formatDecimalCurrency(
+                        figures.financingAmount,
+                        EUR_CURRENCY_CODE
+                      )}
+                </p>
+                {record.value_date !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("calculation.valueDateLine", {
+                      date: formatDate(record.value_date),
+                    })}
+                  </p>
+                )}
+              </div>
+              <Badge data-testid="calculation-calculated-badge">
+                {t("calculation.calculatedBadge")}
+              </Badge>
+            </div>
+
+            {isCommittedRateStale(record) && (
+              /* A warning, never a block: the dummy offers "record why it still applies", so a
+                 rate past its expiry is a state the bank can proceed from deliberately. */
+              <Alert className="mb-3" data-testid="calculation-stale-rate">
+                <AlertTitle>{t("calculation.staleRate.title")}</AlertTitle>
+                <AlertDescription>
+                  {t("calculation.staleRate.description", {
+                    days: record.rate_lock_days ?? DEFAULT_RATE_LOCK_DAYS,
+                    expiry: formatDate(record.committed_rate_expiry ?? ""),
+                    valueDate: formatDate(record.value_date ?? ""),
+                  })}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {thresholdCrossed && (
               /* A warning, not a block: the case is flagged, the notice step becomes applicable,
                  and nothing already done is undone. */
@@ -414,33 +461,72 @@ export function CalculationPanel({ caseId }: Props) {
               </Alert>
             )}
 
-            <dl className="flex flex-col divide-y text-sm">
-              <Figure
-                label={t("calculation.figures.financingAmount")}
-                hint={t("calculation.figures.financingAmountHint")}
-                value={figures.financingAmount}
-                testId="calculation-figure-amount"
-                emphasis
-              />
-              <Figure
-                label={t("calculation.figures.runningInstalment")}
-                value={figures.runningInstalment}
-                testId="calculation-figure-running"
-              />
-              {/* Two rows, two names. Never one row called "final instalment" (R4). */}
-              <Figure
-                label={t("calculation.figures.scheduleFinalInstalment")}
-                hint={t("calculation.figures.scheduleFinalInstalmentHint")}
-                value={figures.scheduleFinalInstalment}
-                testId="calculation-figure-schedule-final"
-              />
-              <Figure
-                label={t("calculation.figures.quotadResidual")}
-                hint={t("calculation.figures.quotadResidualHint")}
-                value={figures.financedResidual}
-                testId="calculation-figure-quotad-residual"
-              />
-            </dl>
+            {/* The dummy's two cards. Repayment is what the borrower pays; Pricing is what it
+                costs. Splitting them is the design's, and it reads better than one long list. */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <section className="rounded-lg border p-4">
+                <h4 className="mb-2 text-sm font-semibold">
+                  {t("calculation.repayment")}
+                </h4>
+                <dl className="flex flex-col divide-y text-sm">
+                  <Figure
+                    label={t("calculation.figures.runningInstalment")}
+                    value={figures.runningInstalment}
+                    testId="calculation-figure-running"
+                  />
+                  {/* Two rows, two names. Never one row called "final instalment" (R4). */}
+                  <Figure
+                    label={t("calculation.figures.scheduleFinalInstalment")}
+                    hint={t("calculation.figures.scheduleFinalInstalmentHint")}
+                    value={figures.scheduleFinalInstalment}
+                    testId="calculation-figure-schedule-final"
+                  />
+                  <Figure
+                    label={t("calculation.figures.quotadResidual")}
+                    hint={t("calculation.figures.quotadResidualHint")}
+                    value={figures.financedResidual}
+                    testId="calculation-figure-quotad-residual"
+                  />
+                </dl>
+              </section>
+
+              <section className="rounded-lg border p-4">
+                <h4 className="mb-2 text-sm font-semibold">
+                  {t("calculation.pricing")}
+                </h4>
+                <dl className="flex flex-col divide-y text-sm">
+                  <div className="flex items-start justify-between gap-4 py-2">
+                    <dt className="text-muted-foreground">
+                      {t("calculation.rate.label")}
+                    </dt>
+                    <dd
+                      className="tabular-nums"
+                      data-testid="calculation-pricing-rate"
+                    >
+                      {currentRate ?? "—"}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4 py-2">
+                    <dt className="text-muted-foreground">
+                      {t("calculation.rateValidUntil")}
+                    </dt>
+                    <dd
+                      className="flex items-center gap-2 tabular-nums"
+                      data-testid="calculation-rate-valid-until"
+                    >
+                      {record.committed_rate_expiry === null
+                        ? "—"
+                        : formatDate(record.committed_rate_expiry)}
+                      {isCommittedRateStale(record) && (
+                        <Badge variant="secondary">
+                          {t("calculation.rateOutOfDate")}
+                        </Badge>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
           </>
         )}
 

@@ -227,3 +227,22 @@ export function quotaPercentToFraction(percent: string): string | null {
   if (value > 100) return null
   return String(Number((value / 100).toFixed(6)))
 }
+
+/**
+ * Whether the committed rate ran out before the value date — the click dummy's warning: *"The rate
+ * was quoted on X and held for Y, so it ran out on Z — before the value date. Quote it again or
+ * record why it still applies."*
+ *
+ * Both dates are plain `YYYY-MM-DD` strings, so they compare lexicographically without parsing —
+ * which also avoids the timezone shift a `new Date()` round-trip would introduce on a date-only
+ * value.
+ *
+ * It is a **warning, not a block**. The dummy offers "record why it still applies", so a rate past
+ * its expiry is a state the bank can proceed from deliberately; refusing to show the figures would
+ * be the screen making that call instead of the user.
+ */
+export function isCommittedRateStale(financing: FinancingRead): boolean {
+  const { committed_rate_expiry: expiry, value_date: valueDate } = financing
+  if (expiry === null || valueDate === null) return false
+  return expiry < valueDate
+}

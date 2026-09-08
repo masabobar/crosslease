@@ -162,8 +162,6 @@
       "overridden": "Overridden on this financing. The override is logged."
     },
     "figures": {
-      "title": "Financing figures",
-      "subtitle": "Calculated by the platform from the contracts in this request. None of these is an input.",
       "financingAmount": "Financing amount",
       "financingAmountHint": "The present value of the refinanced cash flows. This is the figure the Treasury threshold is measured against.",
       "runningInstalment": "Loan instalment",
@@ -204,6 +202,25 @@
         "rateField": "The rate field — editable until the bank settlement",
         "settlementAndPlan": "Settlement and plan — everything, from the loan creation in the core system"
       }
+    },
+    "terms": {
+      "title": "Terms",
+      "subtitle": "What you enter here drives the calculation below — change any value and the result updates."
+    },
+    "result": {
+      "title": "Result",
+      "subtitle": "Calculated from the terms above. Provisional until the case reaches Committed stage."
+    },
+    "payoutHero": "Payout amount · approved loan",
+    "valueDateLine": "value date {{date}}",
+    "calculatedBadge": "Calculated",
+    "repayment": "Repayment",
+    "pricing": "Pricing",
+    "rateValidUntil": "Rate valid until",
+    "rateOutOfDate": "Out of date",
+    "staleRate": {
+      "title": "The committed rate ran out before the value date",
+      "description": "It was held for {{days}} days and expired on {{expiry}}, before the value date of {{valueDate}}. Quote it again, or record why it still applies."
     }
   }
 }
