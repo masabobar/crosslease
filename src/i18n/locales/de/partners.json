@@ -128,7 +128,7 @@
         "taxIdVat": "Tax ID / VAT",
         "lei": "LEI",
         "commercialRegisterNo": "Commercial register no. (HRB)",
-        "foreignIdentifier": "Foreign identifier",
+        "foreignIdentifier": "Ausländische Kennung",
         "fullName": "Full name",
         "dateOfBirth": "Date of birth",
         "placeOfBirth": "Place of birth",
@@ -137,7 +137,10 @@
         "street": "Registered address",
         "city": "City",
         "postalCode": "Postal code",
-        "stateRegion": "State / Region"
+        "stateRegion": "State / Region",
+        "creditreformNo": "CREFO-Nummer",
+        "schufaNo": "Schufa-Nummer",
+        "industryCode": "Branchenschlüssel"
       }
     },
     "form": {
@@ -177,7 +180,9 @@
       "hints": {
         "hrbMandatoryDe": "Mandatory for DE registered entities",
         "taxIdMatching": "Used for deterministic matching where provided",
-        "leiFormat": "ISO 17442 format"
+        "leiFormat": "ISO 17442 format",
+        "identifiers": "Kennungen — CREFO für eine juristische Person, Schufa für eine natürliche Person. Register- und Steuernummer werden erfasst, aber nie zum Abgleich verwendet.",
+        "foreignIdentifier": "Für eine Partei ohne deutschen Registereintrag"
       },
       "errors": {
         "required": "Dieses Feld ist erforderlich.",

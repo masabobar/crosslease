@@ -81,6 +81,41 @@ const addressSchema = z.object({
   state_region: z.string().optional(),
 })
 
+/**
+ * The German legal forms the client's own design offers under "German legal form".
+ *
+ * Offered as **suggestions, not options**: `legal_form` is an unconstrained string on all three
+ * identity inputs, so turning it into a closed dropdown would have the UI narrow a wire contract
+ * the backend leaves open — a party carrying a form nobody listed would become unenterable. A
+ * datalist suggests these and still accepts anything typed, which is what the dummy's own pickers
+ * do.
+ */
+const GERMAN_LEGAL_FORMS = [
+  "Einzelunternehmen",
+  "e. K.",
+  "GbR",
+  "eGbR",
+  "OHG",
+  "KG",
+  "GmbH & Co. KG",
+  "UG (haftungsbeschränkt) & Co. KG",
+  "PartG",
+  "PartG mbB",
+  "GmbH",
+  "gGmbH",
+  "UG (haftungsbeschränkt)",
+  "AG",
+  "KGaA",
+  "SE",
+  "eG",
+  "e. V.",
+  "Stiftung",
+  "AöR",
+  "KöR",
+  "ausländische Rechtsform mit deutscher Zweigniederlassung",
+  "Sonstige",
+] as const
+
 const legalEntitySchema = z.object({
   partner_type: z.literal(PartnerTypeSchema.enum.legal_entity),
   legal_name: z.string().min(1, "required"),
@@ -94,6 +129,13 @@ const legalEntitySchema = z.object({
       message: "leiInvalid",
     }),
   commercial_register_no: z.string().optional(),
+  // The two identifiers the platform actually matches on, and the one it does not.
+  // `LegalEntityIdentityInput` has carried all three all along; this form simply never asked for
+  // them, which left the most important field on the party form — the CREFO number — unenterable.
+  creditreform_no: z.string().optional(),
+  schufa_no: z.string().optional(),
+  foreign_identifier: z.string().optional(),
+  industry_code: z.string().optional(),
   registered_address: addressSchema,
 })
 
@@ -105,6 +147,8 @@ const naturalPersonSchema = z.object({
   country: countryCodeSchema,
   birth_name: z.string().optional(),
   national_id: z.string().optional(),
+  creditreform_no: z.string().optional(),
+  schufa_no: z.string().optional(),
   registered_address: addressSchema,
 })
 
@@ -115,6 +159,8 @@ const registeredSoleTraderSchema = z.object({
   country: countryCodeSchema,
   tax_id_vat: z.string().optional(),
   commercial_register_no: z.string().optional(),
+  creditreform_no: z.string().optional(),
+  schufa_no: z.string().optional(),
   registered_address: addressSchema,
 })
 
@@ -602,8 +648,17 @@ function PartnerSubmitForm({
                   <Input
                     id="legal_form"
                     data-testid="field-legal_form"
+                    list="german-legal-forms"
                     {...register("legal_form" as keyof IdentityForm)}
                   />
+                  {/* NOTE: raw <datalist> — no shadcn equivalent. A Combobox would close the
+                      list, and `legal_form` is an open string on the wire (see
+                      GERMAN_LEGAL_FORMS). */}
+                  <datalist id="german-legal-forms">
+                    {GERMAN_LEGAL_FORMS.map(form => (
+                      <option key={form} value={form} />
+                    ))}
+                  </datalist>
                   {"legal_form" in errors && errors.legal_form && (
                     <p className="text-xs text-destructive">
                       {t(
@@ -614,6 +669,23 @@ function PartnerSubmitForm({
                 </div>
               ) : (
                 dateOfBirthField
+              )}
+              {/* Beside the legal form, as the dummy pairs them. Legal-entity-only, because
+                  `industry_code` is only on `LegalEntityIdentityInput`. */}
+              {isLegalEntity && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="industry_code">
+                    {t("submit.identityStep.fields.industryCode")}{" "}
+                    <span className="text-muted-foreground">
+                      ({t("submit.form.optional")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="industry_code"
+                    data-testid="field-industry_code"
+                    {...register("industry_code" as keyof IdentityForm)}
+                  />
+                </div>
               )}
             </div>
 
@@ -647,6 +719,38 @@ function PartnerSubmitForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 py-4 flex flex-col gap-6">
+            {/* The dummy's own note, and it is worth quoting rather than paraphrasing: it says
+                which identifiers the platform MATCHES on and which it merely records. That is the
+                difference between a field that prevents a duplicate and one that does not. */}
+            <p className="text-sm text-muted-foreground">
+              {t("submit.form.hints.identifiers")}
+            </p>
+
+            {/* CREFO and Schufa — the two the duplicate check anchors on, and the pair the note
+                above refers to. Present on all three identity inputs, so not gated on type. */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="creditreform_no">
+                  {t("submit.identityStep.fields.creditreformNo")}
+                </Label>
+                <Input
+                  id="creditreform_no"
+                  data-testid="field-creditreform_no"
+                  {...register("creditreform_no" as keyof IdentityForm)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="schufa_no">
+                  {t("submit.identityStep.fields.schufaNo")}
+                </Label>
+                <Input
+                  id="schufa_no"
+                  data-testid="field-schufa_no"
+                  {...register("schufa_no" as keyof IdentityForm)}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="country">
@@ -775,6 +879,22 @@ function PartnerSubmitForm({
                   )}
                   <p className="text-sm text-muted-foreground opacity-80">
                     {t("submit.form.hints.leiFormat")}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="foreign_identifier">
+                    {t("submit.identityStep.fields.foreignIdentifier")}{" "}
+                    <span className="text-muted-foreground">
+                      ({t("submit.form.optional")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="foreign_identifier"
+                    data-testid="field-foreign_identifier"
+                    {...register("foreign_identifier" as keyof IdentityForm)}
+                  />
+                  <p className="text-sm text-muted-foreground opacity-80">
+                    {t("submit.form.hints.foreignIdentifier")}
                   </p>
                 </div>
               </div>

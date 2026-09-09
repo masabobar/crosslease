@@ -137,7 +137,10 @@
         "street": "Registered address",
         "city": "City",
         "postalCode": "Postal code",
-        "stateRegion": "State / Region"
+        "stateRegion": "State / Region",
+        "creditreformNo": "CREFO number",
+        "schufaNo": "Schufa number",
+        "industryCode": "Industry code"
       }
     },
     "form": {
@@ -177,7 +180,9 @@
       "hints": {
         "hrbMandatoryDe": "Mandatory for DE registered entities",
         "taxIdMatching": "Used for deterministic matching where provided",
-        "leiFormat": "ISO 17442 format"
+        "leiFormat": "ISO 17442 format",
+        "identifiers": "Identifiers — CREFO for a legal entity, Schufa for a natural person. Register and tax number are captured, never matched on.",
+        "foreignIdentifier": "For a party with no German register entry"
       },
       "errors": {
         "required": "This field is required.",
