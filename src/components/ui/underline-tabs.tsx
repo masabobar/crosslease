@@ -42,6 +42,10 @@ export function UnderlineTabBar<T extends string>({
           onClick={() => onChange(tab.key)}
           className={cn(
             "pb-3 pt-0.5 px-1.5 text-sm font-medium leading-5 whitespace-nowrap transition-colors",
+            // Without this the browser draws its own box, which reads as a border around one tab
+            // in a bar whose whole idiom is an underline. A rounded ring says "focused" without
+            // competing with the active-tab underline.
+            "rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
             activeTab === tab.key
               ? "border-b-2 border-primary text-foreground -mb-px"
               : "text-foreground/60 hover:text-foreground",

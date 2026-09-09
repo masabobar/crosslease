@@ -102,6 +102,10 @@ export function ManualContractEntryDialog({
   )
   const [isCreating, setCreating] = useState(false)
   const [isSaving, setSaving] = useState(false)
+  // Create partner opens on top of this modal. Two popups drawn at once is two modals, not a
+  // stacking problem, so this one steps out of the way while that one is up — see DialogModal's
+  // `isConcealed`. It stays mounted, so the tab and the contract survive.
+  const [isNestedDialogOpen, setNestedDialogOpen] = useState(false)
   // The Contract details tab is the only surface holding unsaved form state, so it hands its
   // submit up and the footer's single Save flushes it. The design has one Save on the modal, not
   // one per tab.
@@ -129,7 +133,11 @@ export function ManualContractEntryDialog({
   }
 
   return (
-    <DialogModal open onOpenChange={open => !open && onOpenChange(false)}>
+    <DialogModal
+      open
+      isConcealed={isNestedDialogOpen}
+      onOpenChange={open => !open && onOpenChange(false)}
+    >
       <div className="px-4 py-4">
         <DialogHeader>
           <DialogTitle>
@@ -159,13 +167,18 @@ export function ManualContractEntryDialog({
         {isCreating && <Skeleton className="h-40 w-full" />}
 
         {tab === "lessee" && !isCreating && (
-          <LesseeTab contractId={contractId} onNeedContract={ensureContract} />
+          <LesseeTab
+            contractId={contractId}
+            onNeedContract={ensureContract}
+            onNestedDialogOpenChange={setNestedDialogOpen}
+          />
         )}
 
         {tab === "guarantors" && !isCreating && (
           <GuarantorsTab
             contractId={contractId}
             onNeedContract={ensureContract}
+            onNestedDialogOpenChange={setNestedDialogOpen}
           />
         )}
 

@@ -168,6 +168,18 @@ type DialogModalProps = {
    * the default width a table's last column is clipped by the popup edge.
    */
   size?: "default" | "lg"
+  /**
+   * Hide this dialog while a nested one is on screen, without closing it.
+   *
+   * Two stacked popups both drawn is not a stacking order problem, it is two modals at once: the
+   * parent pokes out around the child wherever it is taller or wider, and its footer offers a
+   * second, contradictory pair of buttons. The click dummy never shows two — `openModal` replaces
+   * what is there.
+   *
+   * `invisible` rather than unmounted on purpose: the parent keeps its state, so the entry behind
+   * the child is still there when the child closes.
+   */
+  isConcealed?: boolean
 }
 
 function DialogModal({
@@ -175,10 +187,14 @@ function DialogModal({
   onOpenChange,
   children,
   size = "default",
+  isConcealed = false,
 }: DialogModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
+        {/* The overlay is NOT concealed with the popup: BaseUI keeps one overlay for a nested
+            stack, so hiding the parent's took the dim away from the child too and left the page
+            behind at full brightness. Only the popup steps aside. */}
         <DialogOverlay className="bg-black/50" />
         <DialogPrimitive.Popup
           className={cn(
@@ -192,6 +208,7 @@ function DialogModal({
             size === "lg"
               ? "max-w-[min(920px,calc(100vw-2rem))]"
               : "max-w-[min(560px,calc(100vw-2rem))]",
+            isConcealed && "invisible",
             "duration-100",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
             "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
