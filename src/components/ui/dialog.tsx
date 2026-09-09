@@ -184,8 +184,14 @@ function DialogModal({
           className={cn(
             "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
             "bg-white rounded-2xl shadow-xl",
+            // The `min()` matters: a separate `max-w-[calc(100vw-2rem)]` gets overridden by the
+            // size's own `sm:max-w-*` at every width above the breakpoint, so the popup went back
+            // to sitting flush against both screen edges between 640px and its max-width. Folding
+            // both bounds into one value keeps the 1rem margin at every width.
             "w-full max-h-[90vh] overflow-y-auto",
-            size === "lg" ? "max-w-[920px]" : "max-w-[560px]",
+            size === "lg"
+              ? "max-w-[min(920px,calc(100vw-2rem))]"
+              : "max-w-[min(560px,calc(100vw-2rem))]",
             "duration-100",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
             "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"

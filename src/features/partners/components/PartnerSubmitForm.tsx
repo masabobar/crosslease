@@ -606,7 +606,7 @@ function PartnerSubmitForm({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="full_name">
                     {t("submit.identityStep.fields.fullName")}
@@ -639,7 +639,7 @@ function PartnerSubmitForm({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {isLegalEntity ? (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="legal_form">
@@ -728,7 +728,7 @@ function PartnerSubmitForm({
 
             {/* CREFO and Schufa — the two the duplicate check anchors on, and the pair the note
                 above refers to. Present on all three identity inputs, so not gated on type. */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="creditreform_no">
                   {t("submit.identityStep.fields.creditreformNo")}
@@ -751,7 +751,7 @@ function PartnerSubmitForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="country">
                   {t("submit.identityStep.fields.country")}
@@ -841,7 +841,7 @@ function PartnerSubmitForm({
             </div>
 
             {isLegalEntity && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="tax_id_vat">
                     {t("submit.identityStep.fields.taxIdVat")}{" "}
@@ -929,7 +929,7 @@ function PartnerSubmitForm({
             key={partnerType}
             className="px-4 py-4 flex flex-col gap-6"
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="street">
                   {t("submit.identityStep.fields.street")}
@@ -969,7 +969,7 @@ function PartnerSubmitForm({
                   )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="postal_code">
                   {t("submit.identityStep.fields.postalCode")}

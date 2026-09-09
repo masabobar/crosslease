@@ -27,7 +27,10 @@ export function UnderlineTabBar<T extends string>({
   return (
     <div
       className={cn(
-        "border-b border-border flex items-center gap-1",
+        // Scrolls rather than overflows: six tabs with German labels outgrow a narrow modal, and
+        // an overflowing bar hides its last tabs with no way to reach them. `pb-px` leaves room
+        // for the active tab's -mb-px underline, which the scroll container would otherwise clip.
+        "border-b border-border flex items-center gap-1 overflow-x-auto pb-px",
         className
       )}
     >
