@@ -328,11 +328,11 @@ const PROGRESS_PHASES = [
   {
     phase_name: "Application & credit review",
     position: 1,
-    steps_done: 3,
-    steps_applicable: 4,
+    steps_done: 2,
+    steps_applicable: 3,
   },
   {
-    phase_name: "Settlement documents",
+    phase_name: "Settlement documents & pre-financing",
     position: 2,
     steps_done: 0,
     steps_applicable: 8,
@@ -341,19 +341,19 @@ const PROGRESS_PHASES = [
     phase_name: "Data entry & loan setup",
     position: 3,
     steps_done: 0,
-    steps_applicable: 11,
+    steps_applicable: 9,
   },
   {
-    phase_name: "Approval & disbursement",
+    phase_name: "Release & disbursement",
     position: 4,
     steps_done: 0,
-    steps_applicable: 11,
+    steps_applicable: 9,
   },
   {
     phase_name: "Post-processing & archive",
     position: 5,
     steps_done: 0,
-    steps_applicable: 11,
+    steps_applicable: 12,
   },
 ] as const
 
