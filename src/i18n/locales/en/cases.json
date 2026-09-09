@@ -200,7 +200,7 @@
     },
     "company": {
       "searchLabel": "Select leasing company",
-      "searchPlaceholder": "Type at least 3 characters of the company name",
+      "searchPlaceholder": "Select or type to search",
       "noMatches": "No leasing company matches that name.",
       "selected": "Selected",
       "bind": "Use this company",
@@ -231,7 +231,9 @@
       "templateHelper": "Only templates the framework agreement allows can be picked.",
       "noTemplates": "The framework agreement allows no product templates",
       "templateResolved": "Set by the framework agreement.",
-      "portalLocked": "Pre-selected and locked — a portal request is always for your own company."
+      "portalLocked": "Pre-selected and locked — a portal request is always for your own company.",
+      "binding": "Binding…",
+      "retryBind": "Try again"
     },
     "contracts": {
       "bulkUpload": "Upload bulk file",
@@ -258,7 +260,8 @@
       "termMonths": "{{count}} month",
       "termMonths_other": "{{count}} months",
       "title": "Contracts",
-      "unnamedContract": "Contract without a number"
+      "unnamedContract": "Contract without a number",
+      "edit": "Edit"
     },
     "leasingCompany": {
       "title": "New refinancing request"
@@ -420,7 +423,8 @@
         "note": "The platform reproduces the lease; it does not re-price it.",
         "enable": "Non-linear payment plan",
         "enabled": "Non-linear payment plan is on"
-      }
+      },
+      "editTitle": "Edit contract"
     },
     "steps": {
       "leasingCompany": {
@@ -593,5 +597,16 @@
   },
   "actions": {
     "menuLabel": "Actions"
+  },
+  "dataTab": {
+    "company": {
+      "title": "Leasing company",
+      "leasingCompany": "Leasing company",
+      "frameworkAgreement": "Framework agreement",
+      "dealerNumber": "Dealer number",
+      "notBound": "No leasing company is bound to this case yet.",
+      "noAgreement": "none resolved",
+      "unnamed": "Name not recorded"
+    }
   }
 }

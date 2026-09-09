@@ -57,6 +57,10 @@
     "truncated": {
       "title": "Es werden nicht alle Verträge angezeigt",
       "description": "{{shown}} von {{total}} Verträgen dieses Antrags werden angezeigt."
+    },
+    "shareUndecided": "Für diesen Fall existiert noch keine Finanzierung, daher trägt kein Vertrag einen Darlehensanteil.",
+    "shareUnavailable": {
+      "title": "Die Darlehensanteile konnten nicht geladen werden"
     }
   },
   "covenantState": {

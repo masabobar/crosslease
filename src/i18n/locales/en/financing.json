@@ -57,6 +57,10 @@
     "truncated": {
       "title": "Not all contracts are shown",
       "description": "Showing {{shown}} of {{total}} contracts in this request."
+    },
+    "shareUndecided": "No financing exists on this case yet, so no contract carries a share of a loan.",
+    "shareUnavailable": {
+      "title": "The loan shares could not be loaded"
     }
   },
   "covenantState": {

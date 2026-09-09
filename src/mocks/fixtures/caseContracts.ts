@@ -17,11 +17,14 @@
  * The panel prefers the contract record over the financing ref, so the tab renders the wire
  * vocabulary — which is the point: it shows the reconciliation rather than the design's wording.
  *
- * Keyed to the three contracts of the LIVE financing on case `…c005` in `fixtures/financing.ts`.
+ * Keyed to the three contracts of the LIVE financing on case `…c005` and the two of the CALCULATING
+ * financing on the design case `…c001`, both in `fixtures/financing.ts`.
  */
 import type { CaseContract } from "@/features/cases/api/schema"
 
 const LIVE_FINANCING_CASE_ID = "00000000-0000-4000-8000-00000000c005"
+// RR-2026-104 — the case the design frames and the click dummy both show.
+const DESIGN_CASE_ID = "00000000-0000-4000-8000-00000000c001"
 
 // Two distinct lessees across three contracts, and one contract with none recorded — so the
 // wizard summary's derived lessee count is 2, not 3, which is the case worth having a fixture for.
@@ -83,6 +86,50 @@ const LIVE_FINANCING_CONTRACTS: CaseContract[] = [
   },
 ]
 
+/**
+ * The design case's two contracts.
+ *
+ * Its financing already referenced `…acd01` and `…acd02`, but nothing answered
+ * `GET /cases/…c001/contracts` for them — so the workspace's Contracts tab had two rows it could
+ * only flag as "terms missing", with neither Edit nor the checkbox available, because the case did
+ * not hold them. Reviewing the tab against the dummy was impossible for that reason alone.
+ */
+const DESIGN_CASE_CONTRACTS: CaseContract[] = [
+  {
+    id: "00000000-0000-4000-8000-0000000acd01",
+    leasing_company_contract_number: "PL-2025-00213",
+    lessee_partner_id: LESSEE_PARTNER_ID,
+    short_name: "Knaus Van TI Plus",
+    contract_type: "hire_purchase",
+    amortisation_type: "full",
+    term_months: 54,
+    net_instalment: "1840.00",
+    residual_value: "12500.00",
+    contract_residual: null,
+    target_closing_balance: null,
+    deviating_first_due_date: null,
+    contract_start: "2025-06-01",
+    deferred_state: "active",
+  },
+  {
+    id: "00000000-0000-4000-8000-0000000acd02",
+    leasing_company_contract_number: "PL-2025-00214",
+    lessee_partner_id: LESSEE_PARTNER_ID_2,
+    short_name: "Nordkap Spedition fleet",
+    contract_type: "lease",
+    amortisation_type: "partial",
+    term_months: 36,
+    net_instalment: "3120.75",
+    residual_value: "58000.00",
+    contract_residual: null,
+    target_closing_balance: null,
+    deviating_first_due_date: null,
+    contract_start: "2025-10-01",
+    deferred_state: "active",
+  },
+]
+
 export const mockCaseContractsByCaseId: Record<string, CaseContract[]> = {
   [LIVE_FINANCING_CASE_ID]: LIVE_FINANCING_CONTRACTS,
+  [DESIGN_CASE_ID]: DESIGN_CASE_CONTRACTS,
 }

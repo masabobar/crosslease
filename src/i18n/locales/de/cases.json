@@ -200,7 +200,7 @@
     },
     "company": {
       "searchLabel": "Leasinggesellschaft auswählen",
-      "searchPlaceholder": "Mindestens 3 Zeichen des Firmennamens eingeben",
+      "searchPlaceholder": "Auswählen oder tippen, um zu suchen",
       "noMatches": "Keine Leasinggesellschaft mit diesem Namen gefunden.",
       "selected": "Ausgewählt",
       "bind": "Diese Gesellschaft verwenden",
@@ -231,7 +231,9 @@
       "templateHelper": "Es können nur Templates gewählt werden, die der Rahmenvertrag zulässt.",
       "noTemplates": "Der Rahmenvertrag lässt kein Produkttemplate zu",
       "templateResolved": "Durch den Rahmenvertrag festgelegt.",
-      "portalLocked": "Vorausgewählt und gesperrt — eine Portalanfrage gilt immer für Ihr eigenes Unternehmen."
+      "portalLocked": "Vorausgewählt und gesperrt — eine Portalanfrage gilt immer für Ihr eigenes Unternehmen.",
+      "binding": "Wird verknüpft …",
+      "retryBind": "Erneut versuchen"
     },
     "contracts": {
       "bulkUpload": "Massendatei hochladen",
@@ -258,7 +260,8 @@
       "termMonths": "{{count}} Monat",
       "termMonths_other": "{{count}} Monate",
       "title": "Verträge",
-      "unnamedContract": "Vertrag ohne Nummer"
+      "unnamedContract": "Vertrag ohne Nummer",
+      "edit": "Bearbeiten"
     },
     "leasingCompany": {
       "title": "Neuer Refinanzierungsantrag"
@@ -420,7 +423,8 @@
         "note": "Die Plattform gibt den Leasingvertrag wieder; sie bepreist ihn nicht neu.",
         "enable": "Nichtlinearer Zahlungsplan",
         "enabled": "Nichtlinearer Zahlungsplan ist aktiv"
-      }
+      },
+      "editTitle": "Vertrag bearbeiten"
     },
     "steps": {
       "leasingCompany": {
@@ -593,5 +597,16 @@
   },
   "actions": {
     "menuLabel": "Aktionen"
+  },
+  "dataTab": {
+    "company": {
+      "title": "Leasinggesellschaft",
+      "leasingCompany": "Leasinggesellschaft",
+      "frameworkAgreement": "Rahmenvertrag",
+      "dealerNumber": "Händlernummer",
+      "notBound": "Diesem Fall ist noch keine Leasinggesellschaft zugeordnet.",
+      "noAgreement": "keiner ermittelt",
+      "unnamed": "Name nicht erfasst"
+    }
   }
 }

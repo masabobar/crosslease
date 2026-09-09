@@ -18,6 +18,7 @@ import { CaseActionsMenu } from "@/features/cases/components/CaseActionsMenu"
 import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { CaseCollateralPanel } from "@/features/cases/components/CaseCollateralPanel"
+import { CaseLeasingCompanyCard } from "@/features/cases/components/CaseLeasingCompanyCard"
 import {
   CaseDocumentExtras,
   CaseGeneratedDocumentsPanel,
@@ -161,12 +162,17 @@ export default function CaseDetailPage() {
           is deliberately no second financing screen that edits it. */}
       {activeTab === "calculations" && <CalculationPanel caseId={data.id} />}
 
+      {/* The dummy's Data tab leads with the case's own identity — company, agreement, dealer
+          number — then the DAT figure. Both were below or absent; the financing figures that used
+          to open the tab come from the Figma *financing* Data frame, which the dummy houses on a
+          Financings screen this app has no route for, so they stay, last. */}
       {activeTab === "data" && (
         <div className="flex flex-col gap-6">
-          <FinancingDataPanel caseId={data.id} />
-          {/* The design's DAT DATA block. It sits under the financing figures because the figure it
-              holds is determined outside the platform and read by the approval, not computed here. */}
+          <CaseLeasingCompanyCard caseId={data.id} />
+          {/* The design's DAT DATA block — the figure is determined outside the platform and read
+              by the approval, not computed here. */}
           <CaseCollateralPanel caseId={data.id} />
+          <FinancingDataPanel caseId={data.id} />
         </div>
       )}
 

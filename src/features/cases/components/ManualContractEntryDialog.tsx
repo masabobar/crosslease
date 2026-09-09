@@ -48,6 +48,15 @@ type ManualEntryTab =
 
 type Props = {
   caseId: string
+  /**
+   * An existing contract to open for editing.
+   *
+   * Omitted for the wizard's own "Manual contract entry", which creates one on first write. Passed
+   * by the workspace's Contracts tab, where the same four tabs are how a contract already on the
+   * case is edited — the dummy's per-row `Edit` opens this, and every tab writes to the same
+   * contract-scoped endpoints either way, so there is no second surface to build.
+   */
+  contractId?: string
   onOpenChange: (open: boolean) => void
   onSaved: () => void
 }
@@ -77,6 +86,7 @@ type Props = {
  */
 export function ManualContractEntryDialog({
   caseId,
+  contractId: existingContractId,
   onOpenChange,
   onSaved,
 }: Props) {
@@ -87,7 +97,9 @@ export function ManualContractEntryDialog({
   // Off by default, and the only way to reach the Payment plan tab. A linear plan is produced from
   // the contract's terms on save; this is the edge case, reached deliberately.
   const [isNonLinearPlan, setNonLinearPlan] = useState(false)
-  const [contractId, setContractId] = useState<string | null>(null)
+  const [contractId, setContractId] = useState<string | null>(
+    existingContractId ?? null
+  )
   const [isCreating, setCreating] = useState(false)
   const [isSaving, setSaving] = useState(false)
   // The Contract details tab is the only surface holding unsaved form state, so it hands its
@@ -98,6 +110,7 @@ export function ManualContractEntryDialog({
   // Created on demand rather than on mount, so opening the modal and closing it again without
   // touching anything leaves nothing behind.
   async function ensureContract(): Promise<string | null> {
+    // Already given one in edit mode, so nothing is ever created there.
     if (contractId !== null) return contractId
     setCreating(true)
     try {
@@ -119,7 +132,13 @@ export function ManualContractEntryDialog({
     <DialogModal open onOpenChange={open => !open && onOpenChange(false)}>
       <div className="px-4 py-4">
         <DialogHeader>
-          <DialogTitle>{t("wizard.manual.title")}</DialogTitle>
+          <DialogTitle>
+            {t(
+              existingContractId === undefined
+                ? "wizard.manual.title"
+                : "wizard.manual.editTitle"
+            )}
+          </DialogTitle>
         </DialogHeader>
       </div>
 

@@ -60,8 +60,9 @@ describe("buildFinancingContractRows", () => {
     })
   })
 
-  // The financing side drives the row set: dropping a contract the financing includes would make
-  // the table fail to reconcile against the financing's own contract count and loan total.
+  // A contract the financing includes but the case list does not return is appended, not dropped:
+  // the financing's own figure is real and losing it would make the table fail to reconcile
+  // against the financing's contract count and loan total.
   it("keeps a financing contract the case list does not return, flagged", () => {
     const rows = buildFinancingContractRows([financingRef()], [])
 
@@ -76,14 +77,36 @@ describe("buildFinancingContractRows", () => {
     })
   })
 
-  it("omits a case contract the financing does not include", () => {
+  // The case side drives the rows: this tab is where a contract is entered, edited and removed,
+  // and it is populated long before a financing exists. Driven from the financing it rendered
+  // nothing at all for every case that had not been approved yet.
+  it("keeps a case contract the financing does not include", () => {
     const rows = buildFinancingContractRows(
       [financingRef()],
       [caseContract(), caseContract({ id: OTHER_CONTRACT_ID })]
     )
 
-    expect(rows).toHaveLength(1)
-    expect(rows[0].contractId).toBe(CONTRACT_ID)
+    expect(rows).toHaveLength(2)
+    expect(rows.map(row => row.contractId)).toEqual([
+      CONTRACT_ID,
+      OTHER_CONTRACT_ID,
+    ])
+    // Not yet in the loan: the share is undecided, not zero.
+    const other = rows.find(row => row.contractId === OTHER_CONTRACT_ID)
+    expect(other?.inFinancing).toBe(false)
+    expect(other?.financingAmountShare).toBeNull()
+    expect(other?.objectCount).toBeNull()
+    expect(other?.termsMissing).toBe(false)
+  })
+
+  it("renders the whole contract set when there is no financing at all", () => {
+    const rows = buildFinancingContractRows(
+      [],
+      [caseContract(), caseContract({ id: OTHER_CONTRACT_ID })]
+    )
+
+    expect(rows).toHaveLength(2)
+    expect(rows.every(row => row.inFinancing)).toBe(false)
   })
 
   it("prefers the contract record's number over the financing reference's", () => {
@@ -154,7 +177,7 @@ describe("buildFinancingContractRows", () => {
     expect(row.objectCount).toBe(2)
   })
 
-  it("returns no rows when the financing includes no contracts", () => {
-    expect(buildFinancingContractRows([], [caseContract()])).toEqual([])
+  it("returns no rows when neither side holds a contract", () => {
+    expect(buildFinancingContractRows([], [])).toEqual([])
   })
 })

@@ -72,8 +72,31 @@ const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 // page, works. Not persisted: a reload is a clean slate, which is what you want from a prototype.
 const created: Case[] = []
 
-// Wizard step 1's bindings, session-scoped for the same reason as `created`.
-const boundByCaseId: Record<string, CaseLeasingCompanyResponse> = {}
+/**
+ * Wizard step 1's bindings, session-scoped for the same reason as `created`.
+ *
+ * Pre-seeded for the design case, because the workspace's Data tab reads this endpoint for its
+ * Leasing company card. Without a seed that card read "no leasing company is bound to this case
+ * yet" on the one case the design frames show — a correct state for a case mid-wizard, and the
+ * wrong one for a submitted request with a financing already on it.
+ */
+const boundByCaseId: Record<string, CaseLeasingCompanyResponse> = {
+  // RR-2026-104 — Premium Leasing GmbH, the company its own case row names.
+  "00000000-0000-4000-8000-00000000c001": {
+    lc_number: "4711",
+    name: "Premium Leasing GmbH",
+    address: null,
+    contact_person: null,
+    personennummer_os_plus: null,
+    agreement_reference: "FA-2026-004",
+    agreement_active: true,
+    vfe_amount_eur: "250.00",
+    refinancing_quota: "0.9700",
+    value_date_rule: null,
+    instalment_due_day: 1,
+    framework_volume_eur: "25000000.00",
+  },
+}
 const templateByCaseId: Record<string, CaseProductTemplateResponse> = {}
 
 // Wizard step 2's import batches, likewise. Mutated in place on commit so `rows_committed` reflects
