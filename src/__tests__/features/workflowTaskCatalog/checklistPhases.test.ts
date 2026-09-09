@@ -198,6 +198,23 @@ describe("the open and yours counts", () => {
     expect(groups[0].yoursCount).toBe(1)
   })
 
+  // "Resolved" is deliberately not "checked": a step marked not applicable is finished, so
+  // counting it as outstanding would leave a phase permanently short of its own total.
+  it("counts a not-applicable item as resolved, not as open", () => {
+    const groups = groupChecklistByPhase(
+      [
+        item({ task_code: "A-01", status: "open" }),
+        item({ task_code: "A-02", status: "checked" }),
+        item({ task_code: "A-03", status: "not_applicable" }),
+      ],
+      progress,
+      undefined
+    )
+    expect(groups[0].totalCount).toBe(3)
+    expect(groups[0].resolvedCount).toBe(2)
+    expect(groups[0].openCount).toBe(1)
+  })
+
   it("counts nothing as yours when the role is unknown", () => {
     const groups = groupChecklistByPhase(
       [item({ task_code: "A-01" })],
@@ -289,13 +306,21 @@ describe("phaseHeading", () => {
         name: "Application & credit review",
         items: [],
         openCount: 0,
+        resolvedCount: 0,
+        totalCount: 0,
         yoursCount: 0,
       })
     ).toBe("A · Application & credit review")
   })
 
   it("degrades to whichever half is known", () => {
-    const base = { items: [], openCount: 0, yoursCount: 0 }
+    const base = {
+      items: [],
+      openCount: 0,
+      resolvedCount: 0,
+      totalCount: 0,
+      yoursCount: 0,
+    }
     expect(phaseHeading({ ...base, letter: "E", name: null })).toBe("E")
     expect(phaseHeading({ ...base, letter: null, name: "Archive" })).toBe(
       "Archive"

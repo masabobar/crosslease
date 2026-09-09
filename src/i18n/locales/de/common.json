@@ -18,7 +18,6 @@
   "nav": {
     "leasingPlatform": "Leasing Platform",
     "dashboard": "Dashboard",
-    "operations": "Betrieb",
     "cases": "Fälle",
     "businessConfigurations": "Geschäftskonfiguration",
     "productTemplates": "Produktvorlagen",
@@ -27,10 +26,10 @@
     "documentRequirementCatalogs": "Dokumentenanforderungskataloge",
     "documentCatalog": "Dokumentenkatalog",
     "platformAdministration": "Plattformadministration",
-    "userManagement": "Benutzerverwaltung",
-    "partnerManagement": "Partnerverwaltung",
+    "userManagement": "Benutzer",
+    "partnerManagement": "Partner",
     "partnerDuplicates": "Duplikate & Zusammenführung",
-    "tenantManagement": "Mandantenverwaltung",
+    "tenantManagement": "Mandanten",
     "myTenant": "Mein Mandant",
     "coreBankingIntegration": "Core-Banking-Integration",
     "auditTrail": "Audit-Trail",
@@ -44,9 +43,10 @@
     "lcFrameworkAgreements": "Rahmenvereinbarungen",
     "pendingApprovals": "Ausstehende Genehmigungen",
     "myProfile": "Mein Profil",
-    "riskAndCompliance": "Risiko und Compliance",
-    "documents": "Dokumente",
-    "notBuilt": "Noch nicht umgesetzt — für diesen Bereich gibt es ein Design, aber keine Seiten."
+    "notBuilt": "Noch nicht umgesetzt — für diesen Bereich gibt es ein Design, aber keine Seiten.",
+    "financings": "Finanzierungen",
+    "contracts": "Verträge",
+    "reports": "Berichte"
   },
   "breadcrumb": {
     "home": "Startseite",

@@ -18,7 +18,6 @@
   "nav": {
     "leasingPlatform": "Leasing Platform",
     "dashboard": "Dashboard",
-    "operations": "Operations",
     "cases": "Cases",
     "businessConfigurations": "Business configuration",
     "productTemplates": "Product templates",
@@ -27,10 +26,10 @@
     "documentRequirementCatalogs": "Document requirement catalogs",
     "documentCatalog": "Document catalog",
     "platformAdministration": "Platform administration",
-    "userManagement": "User management",
-    "partnerManagement": "Partner Management",
+    "userManagement": "Users",
+    "partnerManagement": "Partners",
     "partnerDuplicates": "Duplication & merge",
-    "tenantManagement": "Tenant Management",
+    "tenantManagement": "Tenants",
     "myTenant": "My Tenant",
     "coreBankingIntegration": "Core Banking integration",
     "auditTrail": "Audit trail",
@@ -44,9 +43,10 @@
     "lcFrameworkAgreements": "Framework Agreements",
     "pendingApprovals": "Pending approvals",
     "myProfile": "My profile",
-    "riskAndCompliance": "Risk and compliance",
-    "documents": "Documents",
-    "notBuilt": "Not built yet — this section has a design but no screens."
+    "notBuilt": "Not built yet — this section has a design but no screens.",
+    "financings": "Financings",
+    "contracts": "Contracts",
+    "reports": "Reports"
   },
   "breadcrumb": {
     "home": "Home",

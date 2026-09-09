@@ -2,21 +2,26 @@ import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import {
+  BarChart2,
+  Building2,
   ChevronDown,
   ChevronRight,
   ChevronsLeft,
-  Shield,
-  ShieldCheck,
+  ClipboardList,
+  Coins,
+  FileSignature,
   FileText,
   Files,
-  BarChart2,
   FolderOpen,
+  Landmark,
   LayoutGrid,
+  Package,
   RefreshCcw,
   Send,
-  Settings2,
-  SlidersHorizontal,
-  Landmark,
+  Shield,
+  ShieldCheck,
+  UserCog,
+  Users,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -29,7 +34,6 @@ import { cn } from "@/lib/utils"
 import {
   PATHS,
   PLATFORM_ADMINISTRATION_PREFIX,
-  BUSINESS_CONFIGURATION_PREFIX,
   tenantDetail,
 } from "@/router/paths"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
@@ -170,12 +174,12 @@ function SidebarUnbuiltItem({
     >
       <Icon size={16} className="text-muted-foreground shrink-0" />
       {!isCollapsed && (
-        <>
-          <span className="flex-1 text-sm text-muted-foreground min-w-0 truncate">
-            {label}
-          </span>
-          <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-        </>
+        // No chevron. These are flat destinations in the dummy's nav, not groups — the chevron
+        // this carried while the rail had expandable sections read as "click to expand", which is
+        // a second wrong promise on top of the item already not going anywhere.
+        <span className="flex-1 text-sm text-muted-foreground min-w-0 truncate">
+          {label}
+        </span>
       )}
     </div>
   )
@@ -238,9 +242,6 @@ export function Sidebar() {
   const [isPlatformAdminExpanded, setIsPlatformAdminExpanded] = useState(() =>
     location.pathname.startsWith(PLATFORM_ADMINISTRATION_PREFIX)
   )
-  const [isBusinessConfigExpanded, setIsBusinessConfigExpanded] = useState(() =>
-    location.pathname.startsWith(BUSINESS_CONFIGURATION_PREFIX)
-  )
 
   const isDashboardActive = location.pathname === PATHS.DASHBOARD
   const isPlatformAdminActive = location.pathname.startsWith(
@@ -264,9 +265,6 @@ export function Sidebar() {
       !location.pathname.startsWith(PATHS.PARTNER_DUPLICATES))
   const isPartnerDuplicatesActive = location.pathname.startsWith(
     PATHS.PARTNER_DUPLICATES
-  )
-  const isBusinessConfigActive = location.pathname.startsWith(
-    BUSINESS_CONFIGURATION_PREFIX
   )
   const isCaseListActive =
     location.pathname === PATHS.CASE_LIST ||
@@ -412,19 +410,27 @@ export function Sidebar() {
         {/* Internal-only navigation — completely hidden for LC users */}
         {!isLcUser && (
           <>
-            {/* ── Flat top-level nav, in the Figma frames' order ──────────────────────────
-                Dashboard · Cases · Operations · Risk and compliance · Documents ·
-                Business configuration · Platform administration (`CREATE NEW.pdf` frame 1).
+            {/* ── The click dummy's NAV, in its order ──────────────────────────────────────
+                Dashboard · Cases · Financings · Contracts · Partners · Reports ·
+                Framework agreements · Product templates · Workflow task catalogs ·
+                Document catalog · Users · Tenants · Audit trail.
 
-                What changed and why: the design has no "Main" wrapper — Dashboard is a top-level
-                destination — and Cases sits at the top level rather than nested under Operations.
-                The old Main group's children (`Refinancing requests`, `Contracts`, `Financing`)
-                and the `Rules setup` item were inert spans with no route behind them and no
-                counterpart in the design, so they are gone rather than restyled.
+                What changed and why: this rail was previously the `CREATE NEW.pdf` frame's shape —
+                three unbuilt groups (Operations, Risk and compliance, Documents) plus a
+                `Business configuration` accordion holding the four catalogues. The dummy has
+                neither: it is one flat list, the catalogues sit at the top level, and Financings,
+                Contracts and Reports are named destinations rather than grouped ones. The dummy
+                supersedes the PDFs where they disagree, so the flat list wins.
 
-                Operations, Risk and compliance and Documents have no screens in this app. They are
-                rendered as visibly-unbuilt items so the design's shape survives without any of
-                them pretending to be a working link — see SidebarUnbuiltItem. */}
+                Financings, Contracts and Reports have no screen in this app and render as visibly
+                unbuilt, the same way the three old groups did — the shape survives without any of
+                them pretending to be a working link (see SidebarUnbuiltItem).
+
+                ── AND WHAT THE DUMMY HAS NO ENTRY FOR ──────────────────────────────────────
+                Pending approvals, Notification configuration, Core banking integration and My
+                tenant are working screens from other epics that the dummy — scoped to Epics 1–3 —
+                never draws. Dropping them to match it exactly would delete live navigation, so
+                they stay, gathered under Platform administration at the foot of the rail. */}
             <SidebarTopLevelLink
               to={PATHS.DASHBOARD}
               label={t("nav.dashboard")}
@@ -445,236 +451,216 @@ export function Sidebar() {
               />
             )}
 
+            {/* A financing has no route of its own — the backend exposes it only as a
+                sub-resource of its case, so it is read through the case workspace's tabs. */}
             <SidebarUnbuiltItem
-              label={t("nav.operations")}
-              testid="nav-operations-unbuilt"
-              icon={SlidersHorizontal}
-              isCollapsed={isCollapsed}
-              notBuiltLabel={t("nav.notBuilt")}
-            />
-
-            {/* The frame reads "Risk and compiance" — a typo in the design. Shipping it would put
-                the misspelling in front of users, so the label is corrected here and the defect is
-                recorded in the design extract's copy-defects section instead. */}
-            <SidebarUnbuiltItem
-              label={t("nav.riskAndCompliance")}
-              testid="nav-risk-and-compliance-unbuilt"
-              icon={ShieldCheck}
+              label={t("nav.financings")}
+              testid="nav-financings-unbuilt"
+              icon={Coins}
               isCollapsed={isCollapsed}
               notBuiltLabel={t("nav.notBuilt")}
             />
 
             <SidebarUnbuiltItem
-              label={t("nav.documents")}
-              testid="nav-documents-unbuilt"
-              icon={Files}
+              label={t("nav.contracts")}
+              testid="nav-contracts-unbuilt"
+              icon={FileSignature}
               isCollapsed={isCollapsed}
               notBuiltLabel={t("nav.notBuilt")}
             />
 
-            {/* ── Business configuration group (expandable) ── */}
-            <Collapsible
-              open={isBusinessConfigExpanded}
-              onOpenChange={setIsBusinessConfigExpanded}
-              className="flex flex-col gap-2"
-            >
-              <CollapsibleTrigger
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
-                  isBusinessConfigActive &&
-                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                )}
-              >
-                <Settings2
-                  size={16}
-                  className={cn(
-                    "shrink-0",
-                    !isBusinessConfigActive && "text-muted-foreground"
-                  )}
+            {canAccessPartnerRegistry && (
+              <>
+                <SidebarTopLevelLink
+                  to={PATHS.PARTNER_REGISTRY}
+                  label={t("nav.partnerManagement")}
+                  testid="nav-partner-registry"
+                  icon={Users}
+                  isActive={isPartnerRegistryActive}
+                  isCollapsed={isCollapsed}
                 />
+                {/* The one indented child left in the rail: duplicates are a view *of* the
+                    partner registry, not a destination beside it. */}
                 {!isCollapsed && (
-                  <>
-                    <span className="flex-1 text-left text-sm min-w-0 truncate">
-                      {t("nav.businessConfigurations")}
-                    </span>
-                    {isBusinessConfigExpanded ? (
-                      <ChevronDown
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isBusinessConfigActive && "text-muted-foreground"
-                        )}
-                      />
-                    ) : (
-                      <ChevronRight
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isBusinessConfigActive && "text-muted-foreground"
-                        )}
-                      />
-                    )}
-                  </>
-                )}
-              </CollapsibleTrigger>
-              {!isCollapsed && (
-                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
-                  {canAccessProductTemplates && (
-                    <SidebarNavLink
-                      to={PATHS.PRODUCT_TEMPLATE_LIST}
-                      label={t("nav.productTemplates")}
-                      testid="nav-product-templates"
-                      isActive={isProductTemplateListActive}
-                    />
-                  )}
-                  {canAccessFrameworkAgreements && (
-                    <SidebarNavLink
-                      to={PATHS.FRAMEWORK_AGREEMENT_LIST}
-                      label={t("nav.frameworkAgreements")}
-                      testid="nav-framework-agreements"
-                      isActive={isFrameworkAgreementListActive}
-                    />
-                  )}
-                  {canAccessWorkflowTaskCatalog && (
-                    <SidebarNavLink
-                      to={PATHS.WORKFLOW_TASK_CATALOG_LIST}
-                      label={t("nav.workflowTaskCatalogs")}
-                      testid="nav-workflow-task-catalogs"
-                      isActive={isWorkflowTaskCatalogListActive}
-                    />
-                  )}
-                  {canAccessDocumentRequirementCatalog && (
-                    <SidebarNavLink
-                      to={PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST}
-                      label={t("nav.documentCatalog")}
-                      testid="nav-document-requirement-catalogs"
-                      isActive={isDocumentRequirementCatalogListActive}
-                    />
-                  )}
-                </CollapsibleContent>
-              )}
-            </Collapsible>
-
-            {/* ── Platform administration group (expandable) ── */}
-            <Collapsible
-              open={isPlatformAdminExpanded}
-              onOpenChange={setIsPlatformAdminExpanded}
-              className="flex flex-col gap-2"
-            >
-              <CollapsibleTrigger
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
-                  isPlatformAdminActive &&
-                    "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                )}
-              >
-                <Shield
-                  size={16}
-                  className={cn(
-                    "shrink-0",
-                    !isPlatformAdminActive && "text-muted-foreground"
-                  )}
-                />
-                {!isCollapsed && (
-                  <>
-                    <span className="flex-1 text-left text-sm min-w-0 truncate">
-                      {t("nav.platformAdministration")}
-                    </span>
-                    {isPlatformAdminExpanded ? (
-                      <ChevronDown
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isPlatformAdminActive && "text-muted-foreground"
-                        )}
-                      />
-                    ) : (
-                      <ChevronRight
-                        size={16}
-                        className={cn(
-                          "shrink-0",
-                          !isPlatformAdminActive && "text-muted-foreground"
-                        )}
-                      />
-                    )}
-                  </>
-                )}
-              </CollapsibleTrigger>
-              {!isCollapsed && (
-                <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
-                  {canAccessUserManagement && (
-                    <SidebarNavLink
-                      to={PATHS.USER_MANAGEMENT}
-                      label={t("nav.userManagement")}
-                      testid="nav-user-management"
-                      isActive={isUserManagementActive}
-                    />
-                  )}
-                  {canAccessPendingApprovals && (
-                    <SidebarNavLink
-                      to={PATHS.PENDING_APPROVALS}
-                      label={t("nav.pendingApprovals")}
-                      testid="nav-pending-approvals"
-                      isActive={isPendingApprovalsActive}
-                    />
-                  )}
-                  {canAccessAuditTrail && (
-                    <SidebarNavLink
-                      to={PATHS.AUDIT_TRAIL}
-                      label={t("nav.auditTrail")}
-                      testid="nav-audit-trail"
-                      isActive={isAuditTrailActive}
-                    />
-                  )}
-                  {canAccessNotificationConfig && (
-                    <SidebarNavLink
-                      to={PATHS.NOTIFICATION_CONFIGURATION}
-                      label={t("nav.notificationConfiguration")}
-                      testid="nav-notification-configuration"
-                      isActive={isNotificationConfigActive}
-                    />
-                  )}
-                  {canAccessPartnerRegistry && (
-                    <SidebarNavLink
-                      to={PATHS.PARTNER_REGISTRY}
-                      label={t("nav.partnerManagement")}
-                      testid="nav-partner-registry"
-                      isActive={isPartnerRegistryActive}
-                    />
-                  )}
-                  {canAccessPartnerRegistry && (
+                  <div className="pl-8 pr-2">
                     <SidebarNavLink
                       to={PATHS.PARTNER_DUPLICATES}
                       label={t("nav.partnerDuplicates")}
                       testid="nav-partner-duplicates"
                       isActive={isPartnerDuplicatesActive}
-                      indent
                     />
+                  </div>
+                )}
+              </>
+            )}
+
+            <SidebarUnbuiltItem
+              label={t("nav.reports")}
+              testid="nav-reports-unbuilt"
+              icon={BarChart2}
+              isCollapsed={isCollapsed}
+              notBuiltLabel={t("nav.notBuilt")}
+            />
+
+            {canAccessFrameworkAgreements && (
+              <SidebarTopLevelLink
+                to={PATHS.FRAMEWORK_AGREEMENT_LIST}
+                label={t("nav.frameworkAgreements")}
+                testid="nav-framework-agreements"
+                icon={Landmark}
+                isActive={isFrameworkAgreementListActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {canAccessProductTemplates && (
+              <SidebarTopLevelLink
+                to={PATHS.PRODUCT_TEMPLATE_LIST}
+                label={t("nav.productTemplates")}
+                testid="nav-product-templates"
+                icon={Package}
+                isActive={isProductTemplateListActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {canAccessWorkflowTaskCatalog && (
+              <SidebarTopLevelLink
+                to={PATHS.WORKFLOW_TASK_CATALOG_LIST}
+                label={t("nav.workflowTaskCatalogs")}
+                testid="nav-workflow-task-catalogs"
+                icon={ClipboardList}
+                isActive={isWorkflowTaskCatalogListActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {canAccessDocumentRequirementCatalog && (
+              <SidebarTopLevelLink
+                to={PATHS.DOCUMENT_REQUIREMENT_CATALOG_LIST}
+                label={t("nav.documentCatalog")}
+                testid="nav-document-requirement-catalogs"
+                icon={Files}
+                isActive={isDocumentRequirementCatalogListActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {canAccessUserManagement && (
+              <SidebarTopLevelLink
+                to={PATHS.USER_MANAGEMENT}
+                label={t("nav.userManagement")}
+                testid="nav-user-management"
+                icon={UserCog}
+                isActive={isUserManagementActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {canAccessTenantManagement && (
+              <SidebarTopLevelLink
+                to={PATHS.TENANT_MANAGEMENT}
+                label={t("nav.tenantManagement")}
+                testid="nav-tenant-management"
+                icon={Building2}
+                isActive={isTenantManagementActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {canAccessAuditTrail && (
+              <SidebarTopLevelLink
+                to={PATHS.AUDIT_TRAIL}
+                label={t("nav.auditTrail")}
+                testid="nav-audit-trail"
+                icon={ShieldCheck}
+                isActive={isAuditTrailActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
+
+            {/* ── Platform administration: the screens the dummy has no entry for ── */}
+            {(canAccessPendingApprovals ||
+              canAccessNotificationConfig ||
+              ownTenantPath !== null) && (
+              <Collapsible
+                open={isPlatformAdminExpanded}
+                onOpenChange={setIsPlatformAdminExpanded}
+                className="flex flex-col gap-2"
+              >
+                <CollapsibleTrigger
+                  className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "w-full justify-start gap-2 px-2 h-auto py-2 rounded-[10px] font-normal",
+                    isPlatformAdminActive &&
+                      "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                   )}
-                  <span className="text-sm text-foreground whitespace-nowrap cursor-default">
-                    {t("nav.coreBankingIntegration")}
-                  </span>
-                  {canAccessTenantManagement && (
-                    <SidebarNavLink
-                      to={PATHS.TENANT_MANAGEMENT}
-                      label={t("nav.tenantManagement")}
-                      testid="nav-tenant-management"
-                      isActive={isTenantManagementActive}
-                    />
+                >
+                  <Shield
+                    size={16}
+                    className={cn(
+                      "shrink-0",
+                      !isPlatformAdminActive && "text-muted-foreground"
+                    )}
+                  />
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 text-left text-sm min-w-0 truncate">
+                        {t("nav.platformAdministration")}
+                      </span>
+                      {isPlatformAdminExpanded ? (
+                        <ChevronDown
+                          size={16}
+                          className={cn(
+                            "shrink-0",
+                            !isPlatformAdminActive && "text-muted-foreground"
+                          )}
+                        />
+                      ) : (
+                        <ChevronRight
+                          size={16}
+                          className={cn(
+                            "shrink-0",
+                            !isPlatformAdminActive && "text-muted-foreground"
+                          )}
+                        />
+                      )}
+                    </>
                   )}
-                  {ownTenantPath && (
-                    <SidebarNavLink
-                      to={ownTenantPath}
-                      label={t("nav.myTenant")}
-                      testid="nav-my-tenant"
-                      isActive={isTenantManagementActive}
-                    />
-                  )}
-                </CollapsibleContent>
-              )}
-            </Collapsible>
+                </CollapsibleTrigger>
+                {!isCollapsed && (
+                  <CollapsibleContent className="flex flex-col gap-3 pl-8 pr-2">
+                    {canAccessPendingApprovals && (
+                      <SidebarNavLink
+                        to={PATHS.PENDING_APPROVALS}
+                        label={t("nav.pendingApprovals")}
+                        testid="nav-pending-approvals"
+                        isActive={isPendingApprovalsActive}
+                      />
+                    )}
+                    {canAccessNotificationConfig && (
+                      <SidebarNavLink
+                        to={PATHS.NOTIFICATION_CONFIGURATION}
+                        label={t("nav.notificationConfiguration")}
+                        testid="nav-notification-configuration"
+                        isActive={isNotificationConfigActive}
+                      />
+                    )}
+                    <span className="text-sm text-foreground whitespace-nowrap cursor-default">
+                      {t("nav.coreBankingIntegration")}
+                    </span>
+                    {ownTenantPath && (
+                      <SidebarNavLink
+                        to={ownTenantPath}
+                        label={t("nav.myTenant")}
+                        testid="nav-my-tenant"
+                        isActive={isTenantManagementActive}
+                      />
+                    )}
+                  </CollapsibleContent>
+                )}
+              </Collapsible>
+            )}
           </>
         )}
       </nav>

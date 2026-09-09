@@ -495,9 +495,41 @@
     "systemActor": "System",
     "documentChecksSummary": "{{marked}} of {{total}} documents checked",
     "phases": {
-      "count": "{{open}} open · {{yours}} yours",
+      "countResolved": "{{resolved}}/{{total}} resolved",
+      "countWithOpen": "{{resolved}}/{{total}} resolved · {{open}} open",
       "unclassified": "Not assigned to a phase",
       "settledBy": "{{who}} · {{when}}"
+    },
+    "freezesBadge": "freezes",
+    "stepMoves": {
+      "commitsRequest": {
+        "label": "Commits the request and creates the financing",
+        "note": "The financing is created here and enters at Calculating."
+      },
+      "putsOnHold": {
+        "label": "Puts the case on hold",
+        "note": "The case waits on an external delivery, and returns to open when work continues."
+      },
+      "freezesInputs": {
+        "label": "Freeze point",
+        "note": "The contract set and the calculation inputs become read-only."
+      },
+      "closesWayBack": {
+        "label": "Closes the way back",
+        "note": "The settlement and the schedule freeze, and the rollback to calculating is no longer possible."
+      },
+      "releasesDisbursement": {
+        "label": "Releases the disbursement",
+        "note": "The four-eyes release. Every contract of the financing moves in one action."
+      },
+      "startsMoveToActive": {
+        "label": "Starts the move to active",
+        "note": "It completes at the archiving, so nothing moves yet."
+      },
+      "completesAndArchives": {
+        "label": "Completes and archives the case",
+        "note": "The archiving completes three moves at once."
+      }
     }
   },
   "caseTypes": {

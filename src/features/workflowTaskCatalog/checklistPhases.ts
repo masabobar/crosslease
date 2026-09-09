@@ -45,6 +45,16 @@ export type ChecklistPhaseGroup = {
   name: string | null
   items: ChecklistItemResponse[]
   openCount: number
+  /**
+   * Items that are settled either way — checked or not applicable.
+   *
+   * The dummy's count reads `2/3 resolved · 1 open`, and "resolved" is deliberately not "checked":
+   * a step marked not applicable is finished, so counting it as outstanding would leave a phase
+   * permanently short of its own total.
+   */
+  resolvedCount: number
+  /** Every item in the phase — the denominator of the resolved count. */
+  totalCount: number
   /** Open items this user's role is responsible for — the design's "N yours". */
   yoursCount: number
 }
@@ -181,6 +191,8 @@ function toGroup(
     name,
     items: sorted,
     openCount: open.length,
+    resolvedCount: sorted.length - open.length,
+    totalCount: sorted.length,
     yoursCount: open.filter(item => isOwnedByRole(item, role)).length,
   }
 }

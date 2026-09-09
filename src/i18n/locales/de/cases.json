@@ -476,9 +476,10 @@
       "case": "Fall",
       "contracts": "Verträge",
       "objects": "Objekte",
-      "payoutAmount": "Auszahlungsbetrag",
       "created": "Erstellt",
-      "none": "—"
+      "none": "—",
+      "financing": "Finanzierung",
+      "noFinancingYet": "existiert noch nicht"
     },
     "progress": {
       "label": "Fortschritt",
@@ -589,5 +590,8 @@
       "done": "Sicherheitenwert bestätigt.",
       "notYou": "Sie haben diesen Wert ermittelt, daher muss ihn eine andere Person bestätigen."
     }
+  },
+  "actions": {
+    "menuLabel": "Aktionen"
   }
 }

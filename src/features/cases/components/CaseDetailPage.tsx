@@ -1,25 +1,20 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
-import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import NotFoundPage from "@/features/errors/components/NotFoundPage"
-import { showApiError } from "@/lib/apiErrorMessage"
 import { isUuidRouteParam } from "@/lib/routeParams"
 import { useCase } from "@/features/cases/hooks/useCase"
 import { useCaseDataMeta } from "@/features/cases/hooks/useCaseDataMeta"
 import { useCaseProgress } from "@/features/cases/hooks/useCaseProgress"
-import { useClaimCase } from "@/features/cases/hooks/useClaimCase"
-import { useRejectCase } from "@/features/cases/hooks/useRejectCase"
-import { CaseTypeSchema } from "@/features/cases/api/schema"
 import { CaseProgressBand } from "@/features/cases/components/CaseProgressBand"
 import { CaseWorkspaceHeader } from "@/features/cases/components/CaseWorkspaceHeader"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
 import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel"
 import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDialog"
+import { CaseActionsMenu } from "@/features/cases/components/CaseActionsMenu"
 import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { CaseCollateralPanel } from "@/features/cases/components/CaseCollateralPanel"
@@ -30,10 +25,6 @@ import {
 import { CalculationPanel } from "@/features/financing/components/CalculationPanel"
 import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
 import { CaseChecklistPanel } from "@/features/workflowTaskCatalog/components/CaseChecklistPanel"
-
-// Terminal request states for a refinancing-request proposal: once committed or rejected there is
-// nothing left to claim or reject, so the header actions are hidden (the backend 409s either way).
-const TERMINAL_DISPLAY_STATUSES = new Set(["committed", "rejected"])
 
 /**
  * The case workspace.
@@ -104,8 +95,6 @@ export default function CaseDetailPage() {
   const { data, isLoading, isError, error } = useCase(caseId)
   const progress = useCaseProgress(caseId)
   const dataMeta = useCaseDataMeta(caseId)
-  const claimCase = useClaimCase()
-  const rejectCase = useRejectCase()
 
   // A param that is not a UUID can never name a case — render not-found rather than firing a request
   // the backend would reject.
@@ -136,59 +125,16 @@ export default function CaseDetailPage() {
     )
   }
 
-  const canActOnProposal =
-    data.owner_user_id === null &&
-    !TERMINAL_DISPLAY_STATUSES.has(data.display_status)
-
   return (
     <div className="p-8 flex flex-col gap-6" data-testid="case-detail-page">
       <CaseWorkspaceHeader
         caseData={data}
         contractCount={dataMeta.data?.contract_count}
         actions={
-          canActOnProposal ? (
-            <div className="flex items-center gap-2">
-              {/* Reject only applies to a refinancing request (the only type with a request
-                  status); the backend enforces the same, this just hides a control that would 409. */}
-              {data.case_type === CaseTypeSchema.enum.refinancing_request && (
-                <Button
-                  variant="outline"
-                  data-testid="case-reject-button"
-                  disabled={rejectCase.isPending || claimCase.isPending}
-                  onClick={() =>
-                    rejectCase.mutate(data.id, {
-                      onSuccess: () => toast.success(t("detail.rejectSuccess")),
-                      onError: err => showApiError(err, t),
-                    })
-                  }
-                >
-                  {t("detail.reject")}
-                </Button>
-              )}
-              {/* US 1.29. Offered alongside Take over rather than inside a tab: deciding is an
-                  act on the case, not a view of it. Hidden on a terminal case for the same reason
-                  claim and reject are — the backend 409s either way. */}
-              <Button
-                variant="outline"
-                data-testid="case-decide-button"
-                onClick={() => setDecisionOpen(true)}
-              >
-                {t("decision.title")}
-              </Button>
-              <Button
-                data-testid="case-take-over-button"
-                disabled={claimCase.isPending || rejectCase.isPending}
-                onClick={() =>
-                  claimCase.mutate(data.id, {
-                    onSuccess: () => toast.success(t("detail.takeOverSuccess")),
-                    onError: err => showApiError(err, t),
-                  })
-                }
-              >
-                {t("detail.takeOver")}
-              </Button>
-            </div>
-          ) : undefined
+          <CaseActionsMenu
+            caseRecord={data}
+            onDecide={() => setDecisionOpen(true)}
+          />
         }
       />
 
@@ -230,9 +176,10 @@ export default function CaseDetailPage() {
 
       {activeTab === "activity" && (
         <div className="flex flex-col gap-6">
-          {/* The state and its transitions sit with the trail rather than in the header: reading
-              what happened and moving the case on are the same job, and the trail is where a
-              transition's effect shows up. */}
+          {/* The state read-out sits with the trail, because reading what the case is and reading
+              what happened to it are the same job. The transitions themselves moved to the header's
+              Actions menu — they were duplicated here and in the header, split by nothing but where
+              each had been built. */}
           <CaseStatePanel caseRecord={data} />
           <CaseActivityPanel caseId={data.id} />
         </div>

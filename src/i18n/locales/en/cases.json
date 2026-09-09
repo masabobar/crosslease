@@ -476,9 +476,10 @@
       "case": "Case",
       "contracts": "Contracts",
       "objects": "Objects",
-      "payoutAmount": "Payout amount",
       "created": "Created",
-      "none": "—"
+      "none": "—",
+      "financing": "Financing",
+      "noFinancingYet": "does not exist yet"
     },
     "progress": {
       "label": "Progress",
@@ -589,5 +590,8 @@
       "done": "Collateral value confirmed.",
       "notYou": "You determined this figure, so someone else must confirm it."
     }
+  },
+  "actions": {
+    "menuLabel": "Actions"
   }
 }

@@ -495,9 +495,41 @@
     "systemActor": "System",
     "documentChecksSummary": "{{marked}} von {{total}} Dokumenten geprüft",
     "phases": {
-      "count": "{{open}} offen · {{yours}} für Sie",
+      "countResolved": "{{resolved}}/{{total}} erledigt",
+      "countWithOpen": "{{resolved}}/{{total}} erledigt · {{open}} offen",
       "unclassified": "Keiner Phase zugeordnet",
       "settledBy": "{{who}} · {{when}}"
+    },
+    "freezesBadge": "friert ein",
+    "stepMoves": {
+      "commitsRequest": {
+        "label": "Verbindlicht den Antrag und erzeugt die Finanzierung",
+        "note": "Die Finanzierung entsteht hier und startet im Status Kalkulation."
+      },
+      "putsOnHold": {
+        "label": "Setzt den Fall auf Warten",
+        "note": "Der Fall wartet auf eine externe Zulieferung und wird wieder offen, sobald weitergearbeitet wird."
+      },
+      "freezesInputs": {
+        "label": "Einfrierpunkt",
+        "note": "Der Vertragsbestand und die Kalkulationseingaben werden schreibgeschützt."
+      },
+      "closesWayBack": {
+        "label": "Schließt den Rückweg",
+        "note": "Abrechnung und Zahlungsplan werden eingefroren; die Rückkehr zur Kalkulation ist nicht mehr möglich."
+      },
+      "releasesDisbursement": {
+        "label": "Gibt die Auszahlung frei",
+        "note": "Die Vier-Augen-Freigabe. Alle Verträge der Finanzierung bewegen sich in einem Schritt."
+      },
+      "startsMoveToActive": {
+        "label": "Beginnt den Übergang auf aktiv",
+        "note": "Der Übergang endet mit der Archivierung, es bewegt sich also noch nichts."
+      },
+      "completesAndArchives": {
+        "label": "Schließt den Fall ab und archiviert ihn",
+        "note": "Die Archivierung vollzieht drei Übergänge auf einmal."
+      }
     }
   },
   "caseTypes": {
