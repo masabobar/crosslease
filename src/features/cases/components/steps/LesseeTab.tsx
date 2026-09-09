@@ -34,14 +34,6 @@ const SEARCH_DEBOUNCE_MS = 300
 type Props = {
   contractId: string | null
   onNeedContract: () => Promise<string | null>
-  /**
-   * Reported up so the manual-entry modal can conceal itself while Create partner is open.
-   *
-   * Two modals drawn at once is not a z-index problem — the parent pokes out around the child and
-   * offers a second footer. The picker is three components down from the dialog that has to know,
-   * hence the callback.
-   */
-  onNestedDialogOpenChange?: (isOpen: boolean) => void
 }
 
 /**
@@ -68,11 +60,7 @@ type Props = {
  * so offering it would move a failure from here to somewhere harder to explain. `is_new` on the
  * response exists for exactly that reason and is surfaced when it comes back true.
  */
-export function LesseeTab({
-  contractId,
-  onNeedContract,
-  onNestedDialogOpenChange,
-}: Props) {
+export function LesseeTab({ contractId, onNeedContract }: Props) {
   const lessee = useContractLessee(contractId ?? undefined)
 
   return (
@@ -82,7 +70,6 @@ export function LesseeTab({
         onNeedContract={onNeedContract}
         linkedPartnerId={lessee.data?.lessee_partner_id ?? null}
         isNew={lessee.data?.is_new ?? false}
-        onNestedDialogOpenChange={onNestedDialogOpenChange}
         partnerStatus={lessee.data?.partner_status ?? null}
         isLoading={lessee.isLoading}
       />
@@ -95,11 +82,7 @@ export function LesseeTab({
  * Lessee. They are a separate list against the contract (`/contracts/{id}/guarantors`), and the
  * design separates them because capturing a lessee and capturing sureties are different jobs.
  */
-export function GuarantorsTab({
-  contractId,
-  onNeedContract,
-  onNestedDialogOpenChange,
-}: Props) {
+export function GuarantorsTab({ contractId, onNeedContract }: Props) {
   const guarantors = useContractGuarantors(contractId ?? undefined)
 
   return (
@@ -108,7 +91,6 @@ export function GuarantorsTab({
         contractId={contractId}
         onNeedContract={onNeedContract}
         guarantors={guarantors.data?.guarantors ?? []}
-        onNestedDialogOpenChange={onNestedDialogOpenChange}
         isLoading={guarantors.isLoading}
         isError={guarantors.isError}
         error={guarantors.error}
@@ -124,13 +106,11 @@ function LesseeSection({
   isNew,
   partnerStatus,
   isLoading,
-  onNestedDialogOpenChange,
 }: {
   contractId: string | null
   onNeedContract: () => Promise<string | null>
   linkedPartnerId: string | null
   isNew: boolean
-  onNestedDialogOpenChange?: (isOpen: boolean) => void
   /**
    * The linked partner's registry status, unconstrained on the wire.
    *
@@ -231,7 +211,6 @@ function LesseeSection({
             <PartnerPicker
               testIdPrefix="lessee"
               isLinking={capture.isPending}
-              onNestedDialogOpenChange={onNestedDialogOpenChange}
               onPick={partnerId => {
                 setReplacing(false)
                 link(partnerId)
@@ -251,11 +230,9 @@ function GuarantorSection({
   isLoading,
   isError,
   error,
-  onNestedDialogOpenChange,
 }: {
   contractId: string | null
   onNeedContract: () => Promise<string | null>
-  onNestedDialogOpenChange?: (isOpen: boolean) => void
   guarantors: readonly {
     link_id: string
     guarantor_partner_id: string
@@ -383,7 +360,6 @@ function GuarantorSection({
           <PartnerPicker
             testIdPrefix="guarantor"
             isLinking={add.isPending}
-            onNestedDialogOpenChange={onNestedDialogOpenChange}
             onPick={link}
           />
 
@@ -414,23 +390,15 @@ function PartnerPicker({
   testIdPrefix,
   isLinking,
   onPick,
-  onNestedDialogOpenChange,
 }: {
   testIdPrefix: string
   isLinking: boolean
   onPick: (partnerId: string) => void
-  onNestedDialogOpenChange?: (isOpen: boolean) => void
 }) {
   const { t } = useTranslation("cases")
   const tenantId = useResolvedTenantId()
   const [search, setSearch] = useState("")
   const [isCreating, setCreating] = useState(false)
-
-  // Kept in one place so the parent modal is told whichever way the child opens or closes.
-  function setCreatingAndReport(next: boolean) {
-    setCreating(next)
-    onNestedDialogOpenChange?.(next)
-  }
   const debounced = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
   const partners = usePartnerList(tenantId, {
@@ -501,7 +469,7 @@ function PartnerPicker({
           size="sm"
           className="self-start"
           data-testid={`${testIdPrefix}-create-partner`}
-          onClick={() => setCreatingAndReport(true)}
+          onClick={() => setCreating(true)}
         >
           <Plus size={16} />
           {t("wizard.manual.parties.createPartner")}
@@ -511,7 +479,7 @@ function PartnerPicker({
       {isCreating && tenantId !== undefined && tenantId !== null && (
         <CreatePartnerDialog
           tenantId={tenantId}
-          onOpenChange={setCreatingAndReport}
+          onOpenChange={setCreating}
           onCreated={onPick}
         />
       )}

@@ -168,56 +168,93 @@ type DialogModalProps = {
    * the default width a table's last column is clipped by the popup edge.
    */
   size?: "default" | "lg"
-  /**
-   * Hide this dialog while a nested one is on screen, without closing it.
-   *
-   * Two stacked popups both drawn is not a stacking order problem, it is two modals at once: the
-   * parent pokes out around the child wherever it is taller or wider, and its footer offers a
-   * second, contradictory pair of buttons. The click dummy never shows two — `openModal` replaces
-   * what is there.
-   *
-   * `invisible` rather than unmounted on purpose: the parent keeps its state, so the entry behind
-   * the child is still there when the child closes.
-   */
-  isConcealed?: boolean
 }
+
+/**
+ * How a modal learns that one of its own descendants has opened.
+ *
+ * ── WHY THIS IS IN THE PRIMITIVE AND NOT PASSED AS A PROP ──────────────────────────────────────
+ * Two stacked popups both drawn is not a stacking-order problem, it is two modals at once: the
+ * parent pokes out around the child wherever it is taller or wider, and its footer offers a second,
+ * contradictory pair of buttons. The click dummy never shows two — `openModal` replaces what is
+ * there.
+ *
+ * This was first solved by threading a callback from the party picker up to the manual-entry
+ * modal. That fixed one pair and left every other pair broken: `Create partner` → `Add account`
+ * stacked exactly the same way one level deeper, at 920×286 behind 560×479. Any dialog can open
+ * any dialog, so the fix belongs where the nesting is — here, once.
+ *
+ * Modal nesting matches React-tree nesting (a dialog is rendered by the thing that opened it), so
+ * context carries the signal. A modal conceals itself while its count of open descendants is above
+ * zero. **No forwarding to grandparents is needed**: every intermediate modal is itself open and
+ * reports to its own parent, so a third-level dialog conceals the second, which already conceals
+ * the first.
+ */
+type DialogNesting = { reportOpen: (isOpen: boolean) => void }
+
+const DialogNestingContext = React.createContext<DialogNesting | null>(null)
 
 function DialogModal({
   open,
   onOpenChange,
   children,
   size = "default",
-  isConcealed = false,
 }: DialogModalProps) {
+  const parent = React.useContext(DialogNestingContext)
+  const [openDescendants, setOpenDescendants] = React.useState(0)
+
+  // Read through a ref so the effect below depends on `open` alone. The parent's `reportOpen` is
+  // a fresh closure every render, and depending on it directly would tear the report down and set
+  // it up again on each of the parent's renders.
+  const reportToParentRef = React.useRef(parent?.reportOpen)
+  React.useEffect(() => {
+    reportToParentRef.current = parent?.reportOpen
+  })
+
+  React.useEffect(() => {
+    if (!open) return
+    const report = reportToParentRef.current
+    report?.(true)
+    return () => report?.(false)
+  }, [open])
+
+  const nesting: DialogNesting = {
+    reportOpen: isOpen => setOpenDescendants(n => n + (isOpen ? 1 : -1)),
+  }
+
+  const isConcealed = openDescendants > 0
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPortal>
-        {/* The overlay is NOT concealed with the popup: BaseUI keeps one overlay for a nested
+    <DialogNestingContext.Provider value={nesting}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogPortal>
+          {/* The overlay is NOT concealed with the popup: BaseUI keeps one overlay for a nested
             stack, so hiding the parent's took the dim away from the child too and left the page
             behind at full brightness. Only the popup steps aside. */}
-        <DialogOverlay className="bg-black/50" />
-        <DialogPrimitive.Popup
-          className={cn(
-            "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
-            "bg-white rounded-2xl shadow-xl",
-            // The `min()` matters: a separate `max-w-[calc(100vw-2rem)]` gets overridden by the
-            // size's own `sm:max-w-*` at every width above the breakpoint, so the popup went back
-            // to sitting flush against both screen edges between 640px and its max-width. Folding
-            // both bounds into one value keeps the 1rem margin at every width.
-            "w-full max-h-[90vh] overflow-y-auto",
-            size === "lg"
-              ? "max-w-[min(920px,calc(100vw-2rem))]"
-              : "max-w-[min(560px,calc(100vw-2rem))]",
-            isConcealed && "invisible",
-            "duration-100",
-            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
-            "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-          )}
-        >
-          {children}
-        </DialogPrimitive.Popup>
-      </DialogPortal>
-    </Dialog>
+          <DialogOverlay className="bg-black/50" />
+          <DialogPrimitive.Popup
+            className={cn(
+              "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
+              "bg-white rounded-2xl shadow-xl",
+              // The `min()` matters: a separate `max-w-[calc(100vw-2rem)]` gets overridden by the
+              // size's own `sm:max-w-*` at every width above the breakpoint, so the popup went back
+              // to sitting flush against both screen edges between 640px and its max-width. Folding
+              // both bounds into one value keeps the 1rem margin at every width.
+              "w-full max-h-[90vh] overflow-y-auto",
+              size === "lg"
+                ? "max-w-[min(920px,calc(100vw-2rem))]"
+                : "max-w-[min(560px,calc(100vw-2rem))]",
+              isConcealed && "invisible",
+              "duration-100",
+              "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
+              "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+            )}
+          >
+            {children}
+          </DialogPrimitive.Popup>
+        </DialogPortal>
+      </Dialog>
+    </DialogNestingContext.Provider>
   )
 }
 
