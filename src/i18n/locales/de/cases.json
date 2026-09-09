@@ -206,8 +206,7 @@
       "bind": "Diese Gesellschaft verwenden",
       "lcNumber": "Händlernummer {{number}}",
       "noLcNumber": {
-        "title": "Diese Gesellschaft hat keine Händlernummer",
-        "description": "{{name}} kann keinem Fall zugeordnet werden: die Plattform identifiziert eine Leasinggesellschaft im Fall über ihre Händlernummer, und es ist keine erfasst. Bitte zuerst im Partnersatz hinterlegen."
+        "description": "Die Plattform identifiziert eine Leasinggesellschaft auf einem Fall über ihre Händlernummer; für {{name}} ist noch keine erfasst."
       },
       "agreement": "Rahmenvertrag",
       "agreementActive": "Aktiv",

@@ -4,17 +4,25 @@
  * Fixtures for the New refinancing request wizard's step 1: the Händlernummern a leasing company
  * holds, and the leasing-company/agreement block a case reads back after the bind.
  *
- * ── WHY TWO COMPANIES HAVE DIFFERENT NUMBER COUNTS ─────────────────────────────────────────────
+ * ── WHY THE COMPANIES HAVE DIFFERENT NUMBER COUNTS ─────────────────────────────────────────────
  * The spec records that a company holds **up to four** dealer numbers with no uniqueness rule, and
  * nothing says which one a request binds to (Q-014). Both shapes are therefore reachable here:
- * Premium Leasing holds three, so the picker appears; Nordic Fleet holds exactly one, so it does
- * not. Reviewing only the single-number company would hide the question the design never answered.
+ * Premium Leasing holds three and Nordic Fleet exactly one. Reviewing only the single-number
+ * company would hide the question the design never answered.
+ *
+ * ── AND WHY NONE HOLDS ZERO ────────────────────────────────────────────────────────────────────
+ * Baltic Machinery used to be absent from this map on purpose, so that step 1's "no dealer number"
+ * state could be reached. That was the wrong thing to make reachable *here*: the dummy's own
+ * eligibility rule is `status Confirmed && type Legal entity && lcNums.length > 0`, so a company
+ * with no number is never offered in its picker at all — the state cannot happen from the UI. All
+ * three companies therefore hold a number, and picking any of them binds.
  */
 import type { LcNumberResponse } from "@/features/partners/api/schema"
 import type { CaseLeasingCompanyResponse } from "@/features/cases/api/schema"
 import { LC_PARTNER_ID } from "@/mocks/fixtures/partners"
 
 const LC_NORDIC = "00000000-0000-4000-8000-00000000a002"
+const LC_BALTIC = "00000000-0000-4000-8000-00000000a003"
 
 function lcNumber(
   partnerId: string,
@@ -36,12 +44,14 @@ export const mockLcNumbersByPartnerId: Record<string, LcNumberResponse[]> = {
     lcNumber(LC_PARTNER_ID, "00000000-0000-4000-8000-00000000d002", "1043"),
     lcNumber(LC_PARTNER_ID, "00000000-0000-4000-8000-00000000d003", "2117"),
   ],
-  // Exactly one — the design's implicit assumption, where no picker is shown.
+  // Exactly one — the design's implicit assumption.
   [LC_NORDIC]: [
     lcNumber(LC_NORDIC, "00000000-0000-4000-8000-00000000d004", "3300"),
   ],
-  // Baltic Machinery is deliberately absent: a company with no dealer number cannot be bound at
-  // all, and step 1 says so rather than offering an unsatisfiable picker.
+  [LC_BALTIC]: [
+    lcNumber(LC_BALTIC, "00000000-0000-4000-8000-00000000d005", "5120"),
+    lcNumber(LC_BALTIC, "00000000-0000-4000-8000-00000000d006", "5121"),
+  ],
 }
 
 /**

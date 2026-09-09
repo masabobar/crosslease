@@ -206,8 +206,7 @@
       "bind": "Use this company",
       "lcNumber": "Dealer number {{number}}",
       "noLcNumber": {
-        "title": "This company has no dealer number",
-        "description": "{{name}} cannot be bound to a case: the platform identifies a leasing company on a case by its dealer number, and none is recorded. Add one on the partner record first."
+        "description": "The platform identifies a leasing company on a case by its dealer number, and {{name}} has none recorded yet."
       },
       "agreement": "Framework agreement",
       "agreementActive": "Active",

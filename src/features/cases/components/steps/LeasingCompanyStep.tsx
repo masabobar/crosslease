@@ -326,18 +326,30 @@ function LcNumberBind({
     )
   }
 
-  // The bind has no key to send. Nothing downstream can proceed, so this is stated rather than
-  // left as an empty picker the user cannot satisfy.
+  /**
+   * A company with no dealer number cannot be bound — but this is not an error the user caused, so
+   * it does not shout.
+   *
+   * It had been a red destructive alert, which read like a validation failure on a screen where the
+   * user had simply picked a name from a list. The dummy never shows anything of the sort because
+   * its picker cannot offer such a company in the first place: its eligibility rule requires at
+   * least one dealer number. This app cannot filter the same way — `/framework-agreements/lc-partners`
+   * returns `{id, legal_name}` and the numbers live behind a per-partner request, so pre-filtering
+   * the dropdown would mean one request per company.
+   *
+   * So the state stays reachable in principle and says so quietly. It is not reachable in the
+   * prototype: every company in the mock now holds a number, matching the dummy.
+   */
   if (lcNumber === null) {
     return (
-      <Alert variant="destructive" data-testid="case-wizard-lc-no-numbers">
-        <AlertTitle>{t("wizard.company.noLcNumber.title")}</AlertTitle>
-        <AlertDescription>
-          {t("wizard.company.noLcNumber.description", {
-            name: partner.legal_name,
-          })}
-        </AlertDescription>
-      </Alert>
+      <p
+        className="text-sm text-muted-foreground"
+        data-testid="case-wizard-lc-no-numbers"
+      >
+        {t("wizard.company.noLcNumber.description", {
+          name: partner.legal_name,
+        })}
+      </p>
     )
   }
 
