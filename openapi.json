@@ -18188,6 +18188,16 @@
             ],
             "title": "Vfe Amount Eur"
           },
+          "refinancing_quota": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Refinancing Quota"
+          },
           "payout_account_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -18324,6 +18334,7 @@
           "limit_breach",
           "bank_entity",
           "vfe_amount_eur",
+          "refinancing_quota",
           "payout_account_id",
           "collection_account_id",
           "special_conditions",

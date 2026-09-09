@@ -2792,6 +2792,7 @@ const FADetailResponse = z
     limit_breach: z.union([z.boolean(), z.null()]),
     bank_entity: z.union([z.string(), z.null()]),
     vfe_amount_eur: z.union([z.string(), z.null()]),
+    refinancing_quota: z.union([z.string(), z.null()]),
     payout_account_id: z.union([z.string(), z.null()]),
     collection_account_id: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
