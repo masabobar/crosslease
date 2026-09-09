@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Plus, Trash2 } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +12,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue"
 import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
 import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
+import { CreatePartnerDialog } from "@/features/partners/components/CreatePartnerDialog"
 import { PartnerStatusSchema } from "@/features/partners/api/schema"
 import {
   KIND_OF_OBLIGATION_OPTIONS,
@@ -40,14 +40,19 @@ type Props = {
  * Manual contract entry → **Lessee** tab. US 1.6 (the lessee) and US 1.7 (guarantors and
  * co-obligors), which share this surface because both are parties linked to the same contract.
  *
- * ── ONLY THE EXISTING-PARTNER PATH ─────────────────────────────────────────────────────────────
+ * ── BOTH PATHS: PICK AN EXISTING PARTNER, OR CREATE ONE HERE ────────────────────────────────────
  * `LesseeCaptureRequest` and `GuarantorAddRequest` each accept **`existing_partner_id` OR
- * `identity`** — the second creating a partner in place, as a discriminated union over three
- * partner types. This tab implements the id branch: search the bank's registry, pick, link.
+ * `identity`**. This tab uses the id branch for both: search the bank's registry and pick, or —
+ * when nothing matches — create the partner through `CreatePartnerDialog` and link the id it
+ * returns.
  *
- * Create-in-context is **not** built here. It is a three-variant form of its own
- * (`CREATE PARTNER modal.pdf`, ~12 fields per variant) and shipping a half-typed version of it
- * would be worse than saying so. The tab says it, and the gap is filed.
+ * Create-in-context used to be a notice saying it was not built, pointing at the partner registry.
+ * That meant abandoning a half-entered contract to go and add a party. The design's own flow
+ * (`CREATE PARTNER modal.pdf`) is search → "No matches found. Create new partner" → the create
+ * modal → the party linked, and that is now what happens.
+ *
+ * The created partner is **not confirmed** — `submitPartner` creates it pending confirmation — and
+ * the link response's `is_new` is what says so on screen, as the badge below already did.
  *
  * ── ONLY CONFIRMED PARTNERS ARE OFFERED ────────────────────────────────────────────────────────
  * The search is filtered to `confirmed`. A draft or pending-confirmation partner can be linked by
@@ -56,7 +61,6 @@ type Props = {
  * response exists for exactly that reason and is surfaced when it comes back true.
  */
 export function LesseeTab({ contractId, onNeedContract }: Props) {
-  const { t } = useTranslation("cases")
   const lessee = useContractLessee(contractId ?? undefined)
 
   return (
@@ -66,19 +70,9 @@ export function LesseeTab({ contractId, onNeedContract }: Props) {
         onNeedContract={onNeedContract}
         linkedPartnerId={lessee.data?.lessee_partner_id ?? null}
         isNew={lessee.data?.is_new ?? false}
+        partnerStatus={lessee.data?.partner_status ?? null}
         isLoading={lessee.isLoading}
       />
-
-      {/* The contract DOES support creating the party here — `LesseeCaptureRequest` carries an
-          `identity` branch for legal entity, natural person and sole proprietor. The form for it is
-          not built (three identity shapes, each with its own required fields), so this says the
-          route exists and where to go meanwhile, rather than claiming it is impossible. */}
-      <Alert data-testid="lessee-tab-create-in-context-absent">
-        <AlertTitle>{t("wizard.manual.parties.createAbsent.title")}</AlertTitle>
-        <AlertDescription>
-          {t("wizard.manual.parties.createAbsent.description")}
-        </AlertDescription>
-      </Alert>
     </div>
   )
 }
@@ -110,12 +104,22 @@ function LesseeSection({
   onNeedContract,
   linkedPartnerId,
   isNew,
+  partnerStatus,
   isLoading,
 }: {
   contractId: string | null
   onNeedContract: () => Promise<string | null>
   linkedPartnerId: string | null
   isNew: boolean
+  /**
+   * The linked partner's registry status, unconstrained on the wire.
+   *
+   * Shown when it is anything but `confirmed`, which is the state a party created in context
+   * arrives in. `is_new` does not cover this: it is true only when the link itself created the
+   * partner (the `identity` branch), so creating through the registry and linking by id reports
+   * `is_new: false` on a party that is nonetheless not yet a counterparty.
+   */
+  partnerStatus: string | null
   isLoading: boolean
 }) {
   const { t } = useTranslation("cases")
@@ -167,6 +171,16 @@ function LesseeSection({
                 {t("wizard.manual.parties.newPartner")}
               </Badge>
             )}
+            {partnerStatus !== null &&
+              partnerStatus !== PartnerStatusSchema.enum.confirmed && (
+                <Badge
+                  variant="secondary"
+                  data-testid="lessee-not-confirmed"
+                  title={t("wizard.manual.parties.notConfirmedHint")}
+                >
+                  {t("wizard.manual.parties.notConfirmed")}
+                </Badge>
+              )}
             {/* The dummy's action is Remove, then search or create again. There is no unlink
                 endpoint — `POST .../lessee` only ever sets one — so this reopens the picker and the
                 next pick REPLACES the link. Labelled "Choose a different lessee" rather than
@@ -384,6 +398,7 @@ function PartnerPicker({
   const { t } = useTranslation("cases")
   const tenantId = useResolvedTenantId()
   const [search, setSearch] = useState("")
+  const [isCreating, setCreating] = useState(false)
   const debounced = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
   const partners = usePartnerList(tenantId, {
@@ -411,6 +426,10 @@ function PartnerPicker({
         </p>
       )}
 
+      {/* The design puts the create route exactly here — "No matches found. Create new partner" —
+          because not finding the company by name is the moment you need it. It is also offered
+          below the results, so a user who knows the party is new does not have to type a name that
+          will not match first. */}
       {debounced.length >= MIN_SEARCH_LENGTH &&
         !partners.isLoading &&
         matches.length === 0 && (
@@ -439,6 +458,31 @@ function PartnerPicker({
           </span>
         </button>
       ))}
+
+      {/* Tenant-scoped: `POST /tenants/{id}/partners` needs one, and a System Admin has no single
+          tenant. Rather than embed the page's tenant-selection gate inside a modal, the route is
+          simply not offered without a resolved tenant — the search above still works. */}
+      {tenantId !== undefined && tenantId !== null && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="self-start"
+          data-testid={`${testIdPrefix}-create-partner`}
+          onClick={() => setCreating(true)}
+        >
+          <Plus size={16} />
+          {t("wizard.manual.parties.createPartner")}
+        </Button>
+      )}
+
+      {isCreating && tenantId !== undefined && tenantId !== null && (
+        <CreatePartnerDialog
+          tenantId={tenantId}
+          onOpenChange={setCreating}
+          onCreated={onPick}
+        />
+      )}
     </div>
   )
 }

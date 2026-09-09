@@ -397,13 +397,13 @@
         },
         "searchPlaceholder": "Type at least 3 characters of the partner name",
         "noMatches": "No confirmed partner matches that name.",
-        "createAbsent": {
-          "title": "Creating the party here is not built yet",
-          "description": "The endpoint supports it — a lessee can be captured by identity for a legal entity, a natural person or a sole proprietor — but the form is not built. Until it is, create the partner in Partner management and search for it here."
-        },
         "viewPartner": "View partner details",
         "replaceLessee": "Choose a different lessee",
-        "replaceNotice": "Picking a party below replaces the current lessee. Leaving without picking keeps it."
+        "replaceNotice": "Picking a party below replaces the current lessee. Leaving without picking keeps it.",
+        "createPartner": "Create new partner",
+        "partnerCreated": "Partner created and linked.",
+        "notConfirmed": "Awaiting confirmation",
+        "notConfirmedHint": "This party is not a confirmed counterparty yet. The case cannot complete on it until the partner registry confirms it."
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",

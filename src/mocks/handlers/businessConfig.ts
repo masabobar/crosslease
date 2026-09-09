@@ -24,6 +24,12 @@ import {
   TemplateStatusSchema,
 } from "@/features/productTemplates/api/schema"
 import { mockDuplicatePairs, mockPartners } from "@/mocks/fixtures/partners"
+import { mockUuid } from "@/mocks/uuid"
+import {
+  PartnerMatchResponseSchema,
+  PartnerSubmitResponseSchema,
+} from "@/features/partners/api/schema"
+import type { PartnerListItem } from "@/features/partners/api/schema"
 import {
   mockFrameworkAgreements,
   mockLcPartners,
@@ -55,8 +61,97 @@ function paginate<T>(url: URL, rows: T[], perPageDefault = 20) {
   }
 }
 
+/**
+ * Partners created in the session, so a party created inside the manual-entry modal is findable by
+ * the picker's search afterwards. Not persisted, like every other write here.
+ */
+let createdPartnerCount = 0
+
 export const businessConfigHandlers = [
   // ── Partners ──────────────────────────────────────────────────────────────
+  // The duplicate check that gates creation. Answers `no_match` on a name nothing resembles and
+  // `ambiguous` on one that shares a stem with a partner already on file, so both halves of
+  // MatchingReview are reachable — a review that only ever says "nothing found" would never show
+  // the candidate list it exists for.
+  http.post(`${API}/tenants/:tenantId/partners/match`, async ({ request }) => {
+    const body = (await request.json()) as {
+      identity?: { display_name?: unknown }
+    }
+    const name =
+      typeof body?.identity?.display_name === "string"
+        ? body.identity.display_name.trim().toLowerCase()
+        : ""
+
+    const stem = name.slice(0, 4)
+    const candidates =
+      stem.length >= 3
+        ? mockPartners.filter(p => p.display_name.toLowerCase().includes(stem))
+        : []
+
+    return envelope(
+      PartnerMatchResponseSchema.parse({
+        classification: candidates.length > 0 ? "ambiguous" : "no_match",
+        confidence: candidates.length > 0 ? "0.62" : null,
+        matched_partner_id: null,
+        candidate_summaries: candidates.slice(0, 3).map(p => ({
+          partner_id: p.partner_id,
+          display_name: p.display_name,
+          partner_type: p.partner_type,
+          status: p.status,
+          matched_anchors: ["display_name"],
+          confidence: "0.62",
+        })),
+        inputs_hash: `mock-${stem || "empty"}`,
+      })
+    )
+  }),
+
+  // Creates the partner. `status` is `pending_confirmation`, not `confirmed`: a partner created
+  // in context still has to be confirmed, and `is_new` is what the party link surfaces on the case.
+  http.post(`${API}/tenants/:tenantId/partners`, async ({ request }) => {
+    const body = (await request.json()) as {
+      identity?: {
+        display_name?: unknown
+        partner_type?: unknown
+        country?: unknown
+      }
+    }
+    const identity = body?.identity ?? {}
+    createdPartnerCount += 1
+    const created = {
+      partner_id: mockUuid(
+        `bf${createdPartnerCount.toString(16).padStart(2, "0")}`
+      ),
+      display_name:
+        typeof identity.display_name === "string" &&
+        identity.display_name !== ""
+          ? identity.display_name
+          : "New partner",
+      partner_type:
+        typeof identity.partner_type === "string"
+          ? identity.partner_type
+          : "legal_entity",
+      status: "pending_confirmation",
+      is_new: true,
+      governed_action_id: null,
+      country: typeof identity.country === "string" ? identity.country : "DE",
+    }
+
+    // Added to the registry list so the picker's search finds it next time, and the Partner
+    // registry screen shows it too — a created partner that vanished would be a lie.
+    mockPartners.unshift({
+      partner_id: created.partner_id,
+      display_name: created.display_name,
+      partner_type: created.partner_type as PartnerListItem["partner_type"],
+      status: "pending_confirmation",
+      country: created.country,
+      ubo_completeness_status: "missing",
+      roles: ["lessee"],
+    })
+
+    return envelope(PartnerSubmitResponseSchema.parse(created))
+  }),
+
   http.get(`${API}/tenants/:tenantId/partners/duplicates`, () =>
     envelope(
       DuplicatePairListResponseSchema.parse({

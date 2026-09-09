@@ -397,13 +397,13 @@
         },
         "searchPlaceholder": "Mindestens 3 Zeichen des Partnernamens eingeben",
         "noMatches": "Kein bestätigter Partner mit diesem Namen gefunden.",
-        "createAbsent": {
-          "title": "Das Anlegen der Partei hier ist noch nicht gebaut",
-          "description": "Der Endpunkt unterstützt es — ein Leasingnehmer kann über die Identität als juristische Person, natürliche Person oder Einzelunternehmen erfasst werden — aber das Formular fehlt. Bis dahin legen Sie den Partner in der Partnerverwaltung an und suchen ihn hier."
-        },
         "viewPartner": "Partnerdetails ansehen",
         "replaceLessee": "Anderen Leasingnehmer wählen",
-        "replaceNotice": "Die Auswahl unten ersetzt den aktuellen Leasingnehmer. Ohne Auswahl bleibt er unverändert."
+        "replaceNotice": "Die Auswahl unten ersetzt den aktuellen Leasingnehmer. Ohne Auswahl bleibt er unverändert.",
+        "createPartner": "Neuen Partner anlegen",
+        "partnerCreated": "Partner angelegt und verknüpft.",
+        "notConfirmed": "Bestätigung ausstehend",
+        "notConfirmedHint": "Diese Partei ist noch keine bestätigte Gegenpartei. Der Fall kann damit nicht abgeschlossen werden, bis das Partnerregister sie bestätigt."
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",

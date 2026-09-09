@@ -380,6 +380,17 @@ const PROGRESS_PHASES = [
   },
 ] as const
 
+/**
+ * The registry status of a partner being linked as a party.
+ *
+ * `partner_status` is what tells the case a party is not yet a real counterparty — most sharply for
+ * one created inside the manual-entry modal, which arrives `pending_confirmation`.
+ */
+function partnerStatusOf(partnerId: string | undefined): string {
+  const partner = mockPartners.find(p => p.partner_id === partnerId)
+  return partner?.status ?? "confirmed"
+}
+
 export const caseHandlers = [
   http.get(`${API}/cases/:businessObjectId/progress`, ({ params }) => {
     const phases = PROGRESS_PHASES.map(p => ({
@@ -633,10 +644,14 @@ export const caseHandlers = [
       const link = LesseeLinkResponseSchema.parse({
         contract_id: contractId,
         lessee_partner_id: body.existing_partner_id,
-        // False because this path links an EXISTING partner. The `identity` branch would set it
-        // true, and the tab surfaces that — but that branch is not built.
+        // False because this path links an EXISTING partner — including one just created through
+        // the registry and handed here by id. `is_new` is only true on the `identity` branch,
+        // where the link itself creates the partner.
         is_new: false,
-        partner_status: "confirmed",
+        // Read from the registry rather than hardcoded. A party created in context is
+        // `pending_confirmation`, and pretending every link is confirmed hid the one state the
+        // Lessee tab needs to warn about.
+        partner_status: partnerStatusOf(body.existing_partner_id),
       })
       lesseeByContractId[contractId] = link
       return envelope(link)
@@ -691,7 +706,7 @@ export const caseHandlers = [
           guarantor_partner_id: body.existing_partner_id,
           kind_of_obligation: body.kind_of_obligation ?? null,
           is_new: false,
-          partner_status: "confirmed",
+          partner_status: partnerStatusOf(body.existing_partner_id as string),
         })
       )
     }
