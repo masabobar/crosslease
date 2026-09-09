@@ -14,6 +14,12 @@ import type {
 } from "@/features/partners/components/PartnerSubmitForm"
 import { MatchingReview } from "@/features/partners/components/MatchingReview"
 import {
+  AssessmentTab,
+  ConnectionsTab,
+  DocumentsTab,
+  RelationshipsTab,
+} from "@/features/partners/components/CreatePartnerExtraTabs"
+import {
   addBankAccount,
   addLcNumber,
   matchPartner,
@@ -30,18 +36,37 @@ import type { AccountFormValues } from "@/features/partners/components/AccountFo
 const CREATE_FORM_ID = "create-partner-dialog-form"
 
 /**
- * The dummy's tab bar, minus the four tabs that have no endpoint.
+ * The dummy's six tabs, in its order.
  *
- * It draws six — `Party · Assessment · Bank accounts · Connections · Relationships · Documents`.
- * Two of them are real: Party is `POST /tenants/{id}/partners` (with `/partners/match` and
- * `/partners/{id}/lc-numbers`), Bank accounts is `POST /partners/{id}/bank-accounts`.
+ * ── TWO ARE WIRED, FOUR ARE THE DESIGN'S LAYOUT ────────────────────────────────────────────────
+ * `party` is `POST /tenants/{id}/partners` (with `/partners/match` and `/partners/{id}/lc-numbers`)
+ * and `accounts` is `POST /partners/{id}/bank-accounts`. Those two save.
  *
- * The other four have **nothing** in the contract — no partner-assessment resource, no
- * object-connections resource, no relationship graph (`/partners/{id}/ubo` answers a narrower
- * question), and no partner-document resource. Drawing them would put four tabs in front of a user
- * that collect entries and silently drop them, which `api-first.md` §4 exists to prevent. They are
- * reported as a contract gap instead.
+ * `assessment`, `connections`, `relationships` and `documents` have **no endpoint of any kind** —
+ * no partner-assessment resource, no object-connections resource, no relationship graph
+ * (`/partners/{id}/ubo` answers the narrower beneficial-owner question), no partner-document
+ * resource. They were left out twice for that reason and asked for twice, so they are built as the
+ * design's layout with the design's own sample rows, each carrying one line on screen saying it is
+ * not saved and naming the missing endpoint. Nothing there calls an API or declares a schema for
+ * one — see `CreatePartnerExtraTabs.tsx`.
+ *
+ * That distinction is the whole point, so it is drawn on the tab itself and not only here.
  */
+const CREATE_PARTNER_TABS = [
+  "party",
+  "assessment",
+  "accounts",
+  "connections",
+  "relationships",
+  "documents",
+] as const
+
+type CreatePartnerTab = (typeof CREATE_PARTNER_TABS)[number]
+
+/** The two the form owns. Everything else renders beside it, not inside it. */
+const FORM_TABS: readonly CreatePartnerTab[] = ["party", "accounts"]
+
+/** Both of the form's sections exist until it reports otherwise. */
 const DEFAULT_TABS: readonly PartnerFormSection[] = ["party", "accounts"]
 
 type Props = {
@@ -94,10 +119,18 @@ export function CreatePartnerDialog({
   const { t: tCases } = useTranslation("cases")
 
   const [view, setView] = useState<"form" | "matching">("form")
-  const [tab, setTab] = useState<PartnerFormSection>("party")
-  // The form reports which sections it has; a natural person has no accounts, so the tab goes
-  // rather than sitting over an empty panel.
-  const [tabs, setTabs] = useState<readonly PartnerFormSection[]>(DEFAULT_TABS)
+  const [tab, setTab] = useState<CreatePartnerTab>("party")
+  // The form reports which of ITS sections exist; a natural person has no accounts, so that tab
+  // goes rather than sitting over an empty panel. The four unwired tabs are always present.
+  const [formSections, setFormSections] =
+    useState<readonly PartnerFormSection[]>(DEFAULT_TABS)
+
+  const tabs = CREATE_PARTNER_TABS.filter(
+    key =>
+      !FORM_TABS.includes(key) ||
+      formSections.includes(key as PartnerFormSection)
+  )
+  const isFormTab = FORM_TABS.includes(tab)
   const [pending, setPending] = useState<{
     identity: PartnerIdentityInput
   } | null>(null)
@@ -192,7 +225,11 @@ export function CreatePartnerDialog({
   }
 
   return (
-    <DialogModal open onOpenChange={open => !open && onOpenChange(false)}>
+    <DialogModal
+      open
+      size="lg"
+      onOpenChange={open => !open && onOpenChange(false)}
+    >
       <div className="px-4 py-4">
         <DialogHeader>
           <DialogTitle>
@@ -218,58 +255,74 @@ export function CreatePartnerDialog({
       )}
 
       <div className="max-h-[60vh] overflow-y-auto px-4 py-4">
-        {view === "form" ? (
-          <PartnerSubmitForm
-            formId={CREATE_FORM_ID}
-            onSubmit={handleFormSubmit}
-            initialDraft={draft}
-            visibleSection={tab}
-            onAvailableSectionsChange={next => {
-              setTabs(next)
-              // Switching to a person while sitting on Bank accounts would leave the modal on a
-              // tab that no longer exists.
-              setTab(current => (next.includes(current) ? current : "party"))
-            }}
-            partyFooter={
-              /* The dummy's box at the foot of the Party tab: the note about which identifier
+        {/* The form stays mounted whichever tab is showing — unmounting it on a visit to
+            Documents would lose everything typed on Party. */}
+        {view === "form" && (
+          <>
+            <div hidden={!isFormTab}>
+              <PartnerSubmitForm
+                formId={CREATE_FORM_ID}
+                onSubmit={handleFormSubmit}
+                initialDraft={draft}
+                visibleSection={
+                  isFormTab ? (tab as PartnerFormSection) : "party"
+                }
+                onAvailableSectionsChange={next => {
+                  setFormSections(next)
+                  // Switching to a person while sitting on Bank accounts would leave the modal on a
+                  // tab that no longer exists. Only the form's own tabs can disappear.
+                  setTab(current =>
+                    FORM_TABS.includes(current) &&
+                    !next.includes(current as PartnerFormSection)
+                      ? "party"
+                      : current
+                  )
+                }}
+                partyFooter={
+                  /* The dummy's box at the foot of the Party tab: the note about which identifier
                  actually identifies the party, and the Check-for-duplicates button beside it.
 
                  It submits the form, exactly as the footer's Save party does, and that is not a
                  duplicated control by accident — the check IS how a party gets saved here. The
                  platform will not create one without it, so "check" and "save" reach the same
                  review; the dummy's own Save party could not skip it either. */
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border bg-muted/40 px-4 py-3">
-                <p className="text-sm text-muted-foreground">
-                  {tCases("wizard.manual.parties.identifierHint")}
-                </p>
-                <Button
-                  type="submit"
-                  form={CREATE_FORM_ID}
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                  disabled={matchMutation.isPending}
-                  data-testid="create-partner-check-duplicates"
-                >
-                  {tCases("wizard.manual.parties.checkForDuplicates")}
-                </Button>
-              </div>
-            }
+                  <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border bg-muted/40 px-4 py-3">
+                    <p className="text-sm text-muted-foreground">
+                      {tCases("wizard.manual.parties.identifierHint")}
+                    </p>
+                    <Button
+                      type="submit"
+                      form={CREATE_FORM_ID}
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      disabled={matchMutation.isPending}
+                      data-testid="create-partner-check-duplicates"
+                    >
+                      {tCases("wizard.manual.parties.checkForDuplicates")}
+                    </Button>
+                  </div>
+                }
+              />
+            </div>
+            {tab === "assessment" && <AssessmentTab />}
+            {tab === "connections" && <ConnectionsTab />}
+            {tab === "relationships" && <RelationshipsTab />}
+            {tab === "documents" && <DocumentsTab />}
+          </>
+        )}
+        {view === "matching" && pending && (
+          <MatchingReview
+            matchResult={matchResult}
+            identity={pending.identity}
+            isSubmitting={submitMutation.isPending}
+            onConfirmCreate={() => submitMutation.mutate(pending)}
+            onCancel={() => {
+              setView("form")
+              setMatchResult(null)
+              setPending(null)
+            }}
           />
-        ) : (
-          pending && (
-            <MatchingReview
-              matchResult={matchResult}
-              identity={pending.identity}
-              isSubmitting={submitMutation.isPending}
-              onConfirmCreate={() => submitMutation.mutate(pending)}
-              onCancel={() => {
-                setView("form")
-                setMatchResult(null)
-                setPending(null)
-              }}
-            />
-          )
         )}
       </div>
 

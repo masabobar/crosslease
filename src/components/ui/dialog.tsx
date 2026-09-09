@@ -162,9 +162,20 @@ type DialogModalProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   children: React.ReactNode
+  /**
+   * `lg` widens the popup for a modal that carries tables rather than a column of fields — the
+   * click dummy opens its own Create-partner modal at its large size for exactly that reason. At
+   * the default width a table's last column is clipped by the popup edge.
+   */
+  size?: "default" | "lg"
 }
 
-function DialogModal({ open, onOpenChange, children }: DialogModalProps) {
+function DialogModal({
+  open,
+  onOpenChange,
+  children,
+  size = "default",
+}: DialogModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
@@ -173,7 +184,8 @@ function DialogModal({ open, onOpenChange, children }: DialogModalProps) {
           className={cn(
             "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
             "bg-white rounded-2xl shadow-xl",
-            "w-full max-w-[560px] max-h-[90vh] overflow-y-auto",
+            "w-full max-h-[90vh] overflow-y-auto",
+            size === "lg" ? "max-w-[920px]" : "max-w-[560px]",
             "duration-100",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
             "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"

@@ -407,7 +407,11 @@
         "createPartnerTitle": "Partner anlegen",
         "createPartnerTabs": {
           "party": "Partei",
-          "accounts": "Bankkonten"
+          "assessment": "Bewertung",
+          "accounts": "Bankkonten",
+          "connections": "Verbindungen",
+          "relationships": "Beziehungen",
+          "documents": "Dokumente"
         },
         "identifierHint": "CREFO-Nummer oder Schufa-Nr. / PN empfohlen — eine davon identifiziert die Partei.",
         "checkForDuplicates": "Auf Duplikate prüfen",

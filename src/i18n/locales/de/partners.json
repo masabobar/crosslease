@@ -223,6 +223,58 @@
       "submitFailed": "Failed to submit partner. Please try again.",
       "lcNumberAddFailed": "Händlernummer {{number}} konnte nicht hinzugefügt werden.",
       "bankAccountAddFailed": "Konto {{iban}} konnte nicht hinzugefügt werden."
+    },
+    "extraTabs": {
+      "notStored": {
+        "assessment": "Dieser Tab zeigt nur das Layout des Designs — Einträge bleiben in diesem Fenster und werden nicht gespeichert. Die Plattform hat noch keinen Endpunkt für Partnerbewertungen.",
+        "connections": "Dieser Tab zeigt nur das Layout des Designs, mit den Beispielzeilen des Designs. Die Plattform hat noch keinen Endpunkt, der Verträge und Anfragen einer Partei auflistet.",
+        "relationships": "Dieser Tab zeigt nur das Layout des Designs — Einträge bleiben in diesem Fenster und werden nicht gespeichert. Die Plattform hat noch keinen Endpunkt für Beziehungen; /partners/{id}/ubo beantwortet nur die Frage nach dem wirtschaftlich Berechtigten.",
+        "documents": "Dieser Tab zeigt nur das Layout des Designs — es wird nichts hochgeladen und Einträge bleiben in diesem Fenster. Die Plattform hat noch keinen Endpunkt für Partnerdokumente."
+      },
+      "assessment": {
+        "source": "Quelle",
+        "asAt": "Stand",
+        "context": "Kontext",
+        "grade": "Note",
+        "index": "Index",
+        "add": "Bewertung hinzufügen",
+        "recordedBy": "Erfasst von",
+        "whatItSays": "Aussage",
+        "you": "Sie",
+        "rule": "Jeder Wert hier wird außerhalb der Plattform beobachtet. Es wird nichts bewertet. Ein falscher Eintrag wird stillgelegt und neu erfasst, nie an Ort und Stelle bearbeitet."
+      },
+      "connections": {
+        "object": "Objekt",
+        "role": "Rolle dieser Partei",
+        "leasingCompany": "Leasinggesellschaft",
+        "status": "Status"
+      },
+      "relationships": {
+        "otherParty": "Die andere Partei",
+        "otherPlaceholder": "Suche nach Name, Ort, CREFO- oder Schufa-Nummer",
+        "type": "Art der Beziehung",
+        "swap": "Richtung tauschen",
+        "share": "Anteil (%)",
+        "validFrom": "Gültig ab",
+        "validTo": "Gültig bis",
+        "add": "Beziehung hinzufügen",
+        "relatedParty": "Verbundene Partei",
+        "edgeColumn": "Die Beziehung, ausgeschrieben",
+        "thisParty": "diese Partei",
+        "pickFirst": "Wählen Sie zuerst die andere Partei",
+        "edge": "{{a}} ist {{type}} von {{b}}",
+        "edgeReversed": "{{a}} ist {{type}} von {{b}}"
+      },
+      "documents": {
+        "file": "Datei",
+        "type": "Dokumententyp",
+        "date": "Dokumentendatum",
+        "label": "Bezeichnung",
+        "upload": "Dokument hochladen",
+        "document": "Dokument",
+        "uploaded": "Hochgeladen",
+        "by": "Von"
+      }
     }
   },
   "detail": {

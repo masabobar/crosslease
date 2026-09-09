@@ -223,6 +223,58 @@
       "submitFailed": "Failed to submit partner. Please try again.",
       "lcNumberAddFailed": "Failed to add dealer number {{number}}.",
       "bankAccountAddFailed": "Failed to add bank account {{iban}}."
+    },
+    "extraTabs": {
+      "notStored": {
+        "assessment": "This tab is the design's layout only — entries stay in this window and are not saved. The platform has no partner-assessment endpoint yet.",
+        "connections": "This tab is the design's layout only, with the design's own sample rows. The platform has no endpoint that lists a party's contracts and requests yet.",
+        "relationships": "This tab is the design's layout only — entries stay in this window and are not saved. The platform has no relationship endpoint yet; /partners/{id}/ubo answers only the beneficial-owner question.",
+        "documents": "This tab is the design's layout only — nothing is uploaded and entries stay in this window. The platform has no partner-document endpoint yet."
+      },
+      "assessment": {
+        "source": "Source",
+        "asAt": "As at",
+        "context": "Context",
+        "grade": "Grade",
+        "index": "Index",
+        "add": "Add an assessment",
+        "recordedBy": "Recorded by",
+        "whatItSays": "What it says",
+        "you": "You",
+        "rule": "Every value here is observed outside the platform. Nothing is scored. A wrong entry is retired and re-added, never edited in place."
+      },
+      "connections": {
+        "object": "Object",
+        "role": "Role of this party",
+        "leasingCompany": "Leasing company",
+        "status": "Status"
+      },
+      "relationships": {
+        "otherParty": "The other party",
+        "otherPlaceholder": "Search by name, city, CREFO or Schufa number",
+        "type": "Type of relationship",
+        "swap": "Swap direction",
+        "share": "Share (%)",
+        "validFrom": "Valid from",
+        "validTo": "Valid to",
+        "add": "Add relationship",
+        "relatedParty": "Related party",
+        "edgeColumn": "The edge, written out",
+        "thisParty": "this party",
+        "pickFirst": "Pick the other party first",
+        "edge": "{{a}} is the {{type}} of {{b}}",
+        "edgeReversed": "{{a}} is the {{type}} of {{b}}"
+      },
+      "documents": {
+        "file": "File",
+        "type": "Document type",
+        "date": "Document date",
+        "label": "Label",
+        "upload": "Upload document",
+        "document": "Document",
+        "uploaded": "Uploaded",
+        "by": "By"
+      }
     }
   },
   "detail": {
