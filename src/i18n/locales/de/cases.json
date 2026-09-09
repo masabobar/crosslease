@@ -403,7 +403,15 @@
         "createPartner": "Neuen Partner anlegen",
         "partnerCreated": "Partner angelegt und verknüpft.",
         "notConfirmed": "Bestätigung ausstehend",
-        "notConfirmedHint": "Diese Partei ist noch keine bestätigte Gegenpartei. Der Fall kann damit nicht abgeschlossen werden, bis das Partnerregister sie bestätigt."
+        "notConfirmedHint": "Diese Partei ist noch keine bestätigte Gegenpartei. Der Fall kann damit nicht abgeschlossen werden, bis das Partnerregister sie bestätigt.",
+        "createPartnerTitle": "Partner anlegen",
+        "createPartnerTabs": {
+          "party": "Partei",
+          "accounts": "Bankkonten"
+        },
+        "identifierHint": "CREFO-Nummer oder Schufa-Nr. / PN empfohlen — eine davon identifiziert die Partei.",
+        "checkForDuplicates": "Auf Duplikate prüfen",
+        "saveParty": "Partei speichern"
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",

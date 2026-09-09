@@ -403,7 +403,15 @@
         "createPartner": "Create new partner",
         "partnerCreated": "Partner created and linked.",
         "notConfirmed": "Awaiting confirmation",
-        "notConfirmedHint": "This party is not a confirmed counterparty yet. The case cannot complete on it until the partner registry confirms it."
+        "notConfirmedHint": "This party is not a confirmed counterparty yet. The case cannot complete on it until the partner registry confirms it.",
+        "createPartnerTitle": "Create partner",
+        "createPartnerTabs": {
+          "party": "Party",
+          "accounts": "Bank accounts"
+        },
+        "identifierHint": "CREFO number or Schufa no. / PN recommended — one of them is what identifies the party.",
+        "checkForDuplicates": "Check for duplicates",
+        "saveParty": "Save party"
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",

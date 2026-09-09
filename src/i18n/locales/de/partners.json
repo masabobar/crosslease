@@ -187,6 +187,11 @@
         "invalidDealerNumber": "Geben Sie genau 4 Ziffern ein.",
         "ibanInvalid": "Geben Sie eine gültige IBAN ein: Ländercode, 2 Prüfziffern, dann 11-30 Buchstaben oder Ziffern.",
         "bicInvalid": "Geben Sie eine gültige BIC ein: 8 oder 11 Zeichen (Bank, Land, Ort, optionale Filiale)."
+      },
+      "entityTypeHints": {
+        "legal_entity": "GmbH, AG, KG, e. V.",
+        "registered_sole_trader": "e. K., im Register",
+        "natural_person": "eine Person, nicht im Register"
       }
     },
     "matchStep": {

@@ -4,9 +4,11 @@ import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { DialogHeader, DialogModal, DialogTitle } from "@/components/ui/dialog"
+import { UnderlineTabBar } from "@/components/ui/underline-tabs"
 import { showApiError } from "@/lib/apiErrorMessage"
 import { PartnerSubmitForm } from "@/features/partners/components/PartnerSubmitForm"
 import type {
+  PartnerFormSection,
   PartnerSubmitFormDraft,
   SubmitResult,
 } from "@/features/partners/components/PartnerSubmitForm"
@@ -26,6 +28,21 @@ import type { PartnerMatchResponse } from "@/features/partners/api/schema"
 import type { AccountFormValues } from "@/features/partners/components/AccountFormDialog"
 
 const CREATE_FORM_ID = "create-partner-dialog-form"
+
+/**
+ * The dummy's tab bar, minus the four tabs that have no endpoint.
+ *
+ * It draws six — `Party · Assessment · Bank accounts · Connections · Relationships · Documents`.
+ * Two of them are real: Party is `POST /tenants/{id}/partners` (with `/partners/match` and
+ * `/partners/{id}/lc-numbers`), Bank accounts is `POST /partners/{id}/bank-accounts`.
+ *
+ * The other four have **nothing** in the contract — no partner-assessment resource, no
+ * object-connections resource, no relationship graph (`/partners/{id}/ubo` answers a narrower
+ * question), and no partner-document resource. Drawing them would put four tabs in front of a user
+ * that collect entries and silently drop them, which `api-first.md` §4 exists to prevent. They are
+ * reported as a contract gap instead.
+ */
+const DEFAULT_TABS: readonly PartnerFormSection[] = ["party", "accounts"]
 
 type Props = {
   tenantId: string
@@ -77,6 +94,10 @@ export function CreatePartnerDialog({
   const { t: tCases } = useTranslation("cases")
 
   const [view, setView] = useState<"form" | "matching">("form")
+  const [tab, setTab] = useState<PartnerFormSection>("party")
+  // The form reports which sections it has; a natural person has no accounts, so the tab goes
+  // rather than sitting over an empty panel.
+  const [tabs, setTabs] = useState<readonly PartnerFormSection[]>(DEFAULT_TABS)
   const [pending, setPending] = useState<{
     identity: PartnerIdentityInput
   } | null>(null)
@@ -174,16 +195,66 @@ export function CreatePartnerDialog({
     <DialogModal open onOpenChange={open => !open && onOpenChange(false)}>
       <div className="px-4 py-4">
         <DialogHeader>
-          <DialogTitle>{t("submit.title")}</DialogTitle>
+          <DialogTitle>
+            {tCases("wizard.manual.parties.createPartnerTitle")}
+          </DialogTitle>
         </DialogHeader>
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto px-4 pb-4">
+      {/* The tab bar belongs to the form phase. The matching review is a decision about what was
+          entered, not another place to enter it. */}
+      {view === "form" && (
+        <UnderlineTabBar
+          tabs={tabs.map(key => ({
+            key,
+            label: tCases(
+              `wizard.manual.parties.createPartnerTabs.${key}` as "wizard.manual.parties.createPartnerTabs.party"
+            ),
+            testId: `create-partner-tab-${key}`,
+          }))}
+          activeTab={tab}
+          onChange={setTab}
+        />
+      )}
+
+      <div className="max-h-[60vh] overflow-y-auto px-4 py-4">
         {view === "form" ? (
           <PartnerSubmitForm
             formId={CREATE_FORM_ID}
             onSubmit={handleFormSubmit}
             initialDraft={draft}
+            visibleSection={tab}
+            onAvailableSectionsChange={next => {
+              setTabs(next)
+              // Switching to a person while sitting on Bank accounts would leave the modal on a
+              // tab that no longer exists.
+              setTab(current => (next.includes(current) ? current : "party"))
+            }}
+            partyFooter={
+              /* The dummy's box at the foot of the Party tab: the note about which identifier
+                 actually identifies the party, and the Check-for-duplicates button beside it.
+
+                 It submits the form, exactly as the footer's Save party does, and that is not a
+                 duplicated control by accident — the check IS how a party gets saved here. The
+                 platform will not create one without it, so "check" and "save" reach the same
+                 review; the dummy's own Save party could not skip it either. */
+              <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border bg-muted/40 px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  {tCases("wizard.manual.parties.identifierHint")}
+                </p>
+                <Button
+                  type="submit"
+                  form={CREATE_FORM_ID}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  disabled={matchMutation.isPending}
+                  data-testid="create-partner-check-duplicates"
+                >
+                  {tCases("wizard.manual.parties.checkForDuplicates")}
+                </Button>
+              </div>
+            }
           />
         ) : (
           pending && (
@@ -222,7 +293,7 @@ export function CreatePartnerDialog({
           >
             {matchMutation.isPending
               ? t("submit.form.submitting")
-              : t("submit.form.submitButton")}
+              : tCases("wizard.manual.parties.saveParty")}
           </Button>
         </div>
       )}

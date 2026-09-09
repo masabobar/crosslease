@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import type { DefaultValues } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SelectField } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
   Combobox,
@@ -121,7 +121,10 @@ const registeredSoleTraderSchema = z.object({
 type LegalEntityForm = z.infer<typeof legalEntitySchema>
 type NaturalPersonForm = z.infer<typeof naturalPersonSchema>
 type RegisteredSoleTraderForm = z.infer<typeof registeredSoleTraderSchema>
-type IdentityForm = LegalEntityForm | NaturalPersonForm | RegisteredSoleTraderForm
+type IdentityForm =
+  | LegalEntityForm
+  | NaturalPersonForm
+  | RegisteredSoleTraderForm
 
 function schemaForType(type: PartnerType) {
   if (type === PartnerTypeSchema.enum.natural_person) return naturalPersonSchema
@@ -151,10 +154,35 @@ type SubmitResult = {
   bankAccounts: AccountFormValues[]
 }
 
+/**
+ * Which group of sections is on screen.
+ *
+ * `undefined` shows all of them, which is the registry page's single-scroll layout and the default.
+ * A caller that tabs the form passes one of the two: the click dummy's Create-partner modal splits
+ * the party's own details from its bank accounts, so those are the two groups.
+ *
+ * The hidden group stays **mounted** — `hidden`, not unrendered. React Hook Form would keep the
+ * values either way, but an unmounted field cannot show its own validation message, so a submit
+ * failing on an off-tab field would fail silently. Every RHF-validated field is in `party`, and
+ * `accounts` carries no validation, so with both mounted no error can land out of sight.
+ */
+type PartnerFormSection = "party" | "accounts"
+
 type PartnerSubmitFormProps = {
   formId: string
   onSubmit: (result: SubmitResult) => void
   initialDraft?: PartnerSubmitFormDraft | null
+  visibleSection?: PartnerFormSection
+  /** Rendered at the foot of the party group — the dummy's duplicate-check box. */
+  partyFooter?: React.ReactNode
+  /**
+   * Which sections this form currently has, so a tabbed caller can drop a tab that has no content.
+   *
+   * Accounts are legal-entity-only, so choosing a natural person leaves the modal with a Bank
+   * accounts tab over an empty panel unless the tab list follows the type. The form owns the type,
+   * so it is the form that reports this.
+   */
+  onAvailableSectionsChange?: (sections: readonly PartnerFormSection[]) => void
 }
 
 // Backs the Dealer number section below — not a wire field on any identity shape yet (see
@@ -287,6 +315,9 @@ function PartnerSubmitForm({
   formId,
   onSubmit,
   initialDraft,
+  visibleSection,
+  partyFooter,
+  onAvailableSectionsChange,
 }: PartnerSubmitFormProps) {
   const { t } = useTranslation("partners")
   const [partnerType, setPartnerType] = useState<PartnerType>(
@@ -386,19 +417,63 @@ function PartnerSubmitForm({
 
   const isLegalEntity = partnerType === PartnerTypeSchema.enum.legal_entity
 
+  // Reported through a ref so the callback's identity — an inline arrow at every call site — does
+  // not re-fire this, and so it fires only when the answer actually changes.
+  const onSectionsRef = useRef(onAvailableSectionsChange)
+  useEffect(() => {
+    onSectionsRef.current = onAvailableSectionsChange
+  })
+  useEffect(() => {
+    onSectionsRef.current?.(
+      isLegalEntity ? (["party", "accounts"] as const) : (["party"] as const)
+    )
+  }, [isLegalEntity])
+
+  /**
+   * "Choose the party" — the click dummy's own control: one card per type, its name over a hint
+   * naming the legal forms it covers, rather than a dropdown whose options give no such clue.
+   *
+   * Three cards, not the dummy's four. The dummy splits a person into *commercial* and *private*;
+   * `PartnerType` on the wire is `legal_entity | natural_person | registered_sole_trader`, so a
+   * fourth card would be inventing a value the API cannot accept.
+   */
   const entityTypeField = (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor="entity_type">{t("submit.form.fields.entityType")}</Label>
-      <SelectField
-        id="entity_type"
+      <Label>{t("submit.form.fields.entityType")}</Label>
+      <div
+        className="grid gap-2 sm:grid-cols-3"
+        role="radiogroup"
+        aria-label={t("submit.form.fields.entityType")}
         data-testid="field-entity_type"
-        value={partnerType}
-        onValueChange={v => handleTypeChange(v as PartnerType)}
-        options={PARTNER_TYPE_OPTIONS.map(type => ({
-          value: type,
-          label: t(`type.${type}` as "type.legal_entity"),
-        }))}
-      />
+      >
+        {PARTNER_TYPE_OPTIONS.map(type => (
+          /* NOTE: raw <button> — a selectable card, not an action button. shadcn Button centres
+             its content and fixes a height, both wrong for a two-line left-aligned tile. */
+          <button
+            key={type}
+            type="button"
+            role="radio"
+            aria-checked={partnerType === type}
+            data-testid={`field-entity_type-${type}`}
+            onClick={() => handleTypeChange(type)}
+            className={cn(
+              "flex flex-col gap-0.5 rounded-lg border px-3 py-2 text-left",
+              partnerType === type
+                ? "border-primary bg-primary/5"
+                : "hover:bg-accent"
+            )}
+          >
+            <span className="text-sm font-medium">
+              {t(`type.${type}` as "type.legal_entity")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t(
+                `submit.form.entityTypeHints.${type}` as "submit.form.entityTypeHints.legal_entity"
+              )}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 
@@ -448,208 +523,264 @@ function PartnerSubmitForm({
         {...register("partner_type" as keyof IdentityForm)}
       />
 
-      {/* BASIC IDENTITY */}
-      <Card className="p-0 overflow-hidden">
-        <CardHeader className="bg-muted px-4 py-2 gap-0">
-          <CardTitle className="text-xs">
-            {t("submit.form.sections.basicIdentity")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 py-4 flex flex-col gap-6">
-          {isLegalEntity ? (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="legal_name">
-                {t("submit.identityStep.fields.legalName")}
-              </Label>
-              <Input
-                id="legal_name"
-                data-testid="field-legal_name"
-                {...register("legal_name" as keyof IdentityForm)}
-              />
-              {"legal_name" in errors && errors.legal_name && (
-                <p className="text-xs text-destructive">
-                  {t(
-                    `submit.form.errors.${errors.legal_name.message}` as "submit.form.errors.required"
-                  )}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
+      {/* ── The party's own details: identity, identifiers, address, dealer numbers ── */}
+      <div
+        hidden={visibleSection !== undefined && visibleSection !== "party"}
+        className="flex flex-col gap-4"
+      >
+        {/* BASIC IDENTITY */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader className="bg-muted px-4 py-2 gap-0">
+            <CardTitle className="text-xs">
+              {t("submit.form.sections.basicIdentity")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 py-4 flex flex-col gap-6">
+            {/* The dummy leads with "Choose the party", full width, above the name fields — the
+                type decides which fields follow, so asking for it second read backwards, and
+                squeezed into half a row the three cards' hints wrapped to four lines each. */}
+            {entityTypeField}
+
+            {isLegalEntity ? (
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="full_name">
-                  {t("submit.identityStep.fields.fullName")}
+                <Label htmlFor="legal_name">
+                  {t("submit.identityStep.fields.legalName")}
                 </Label>
                 <Input
-                  id="full_name"
-                  data-testid="field-full_name"
-                  {...register("full_name" as keyof IdentityForm)}
+                  id="legal_name"
+                  data-testid="field-legal_name"
+                  {...register("legal_name" as keyof IdentityForm)}
                 />
-                {"full_name" in errors && errors.full_name && (
+                {"legal_name" in errors && errors.legal_name && (
                   <p className="text-xs text-destructive">
                     {t(
-                      `submit.form.errors.${errors.full_name.message}` as "submit.form.errors.required"
+                      `submit.form.errors.${errors.legal_name.message}` as "submit.form.errors.required"
                     )}
                   </p>
                 )}
               </div>
-              {partnerType === PartnerTypeSchema.enum.natural_person && (
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="birth_name">
-                    {t("submit.identityStep.fields.birthName")}
+                  <Label htmlFor="full_name">
+                    {t("submit.identityStep.fields.fullName")}
                   </Label>
                   <Input
-                    id="birth_name"
-                    data-testid="field-birth_name"
-                    {...register("birth_name" as keyof IdentityForm)}
+                    id="full_name"
+                    data-testid="field-full_name"
+                    {...register("full_name" as keyof IdentityForm)}
                   />
+                  {"full_name" in errors && errors.full_name && (
+                    <p className="text-xs text-destructive">
+                      {t(
+                        `submit.form.errors.${errors.full_name.message}` as "submit.form.errors.required"
+                      )}
+                    </p>
+                  )}
+                </div>
+                {partnerType === PartnerTypeSchema.enum.natural_person && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="birth_name">
+                      {t("submit.identityStep.fields.birthName")}
+                    </Label>
+                    <Input
+                      id="birth_name"
+                      data-testid="field-birth_name"
+                      {...register("birth_name" as keyof IdentityForm)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              {isLegalEntity ? (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="legal_form">
+                    {t("submit.identityStep.fields.legalForm")}
+                  </Label>
+                  <Input
+                    id="legal_form"
+                    data-testid="field-legal_form"
+                    {...register("legal_form" as keyof IdentityForm)}
+                  />
+                  {"legal_form" in errors && errors.legal_form && (
+                    <p className="text-xs text-destructive">
+                      {t(
+                        `submit.form.errors.${errors.legal_form.message}` as "submit.form.errors.required"
+                      )}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                dateOfBirthField
+              )}
+            </div>
+
+            {partnerType === PartnerTypeSchema.enum.natural_person && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="place_of_birth">
+                  {t("submit.identityStep.fields.placeOfBirth")}
+                </Label>
+                <Input
+                  id="place_of_birth"
+                  data-testid="field-place_of_birth"
+                  {...register("place_of_birth" as keyof IdentityForm)}
+                />
+                {"place_of_birth" in errors && errors.place_of_birth && (
+                  <p className="text-xs text-destructive">
+                    {t(
+                      `submit.form.errors.${errors.place_of_birth.message}` as "submit.form.errors.required"
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* REGISTRY IDENTIFIERS */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader className="bg-muted px-4 py-2 gap-0">
+            <CardTitle className="text-xs">
+              {t("submit.form.sections.registryIdentifiers")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 py-4 flex flex-col gap-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="country">
+                  {t("submit.identityStep.fields.country")}
+                </Label>
+                <Controller
+                  key={partnerType}
+                  control={control}
+                  name={"country" as keyof IdentityForm}
+                  render={({ field }) => {
+                    const selectedCountry =
+                      COUNTRY_OPTIONS.find(o => o.value === field.value) ?? null
+                    return (
+                      <Combobox
+                        items={COUNTRY_OPTIONS}
+                        value={selectedCountry}
+                        onValueChange={option =>
+                          field.onChange(option?.value ?? "")
+                        }
+                      >
+                        <ComboboxInput
+                          id="country"
+                          data-testid="field-country"
+                          placeholder={t(
+                            "list.filters.countrySearchPlaceholder"
+                          )}
+                          showClear
+                          onFocus={selectOnFocus}
+                        />
+                        <ComboboxContent>
+                          <ComboboxList>
+                            <ComboboxEmpty>
+                              {t("list.filters.noCountriesFound")}
+                            </ComboboxEmpty>
+                            <ComboboxCollection>
+                              {(opt: { value: string; label: string }) => (
+                                <ComboboxItem key={opt.value} value={opt}>
+                                  {opt.label}
+                                </ComboboxItem>
+                              )}
+                            </ComboboxCollection>
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                    )
+                  }}
+                />
+                {"country" in errors && errors.country && (
+                  <p className="text-xs text-destructive">
+                    {t(
+                      `submit.form.errors.${errors.country.message}` as "submit.form.errors.required"
+                    )}
+                  </p>
+                )}
+              </div>
+              {partnerType === PartnerTypeSchema.enum.natural_person ? (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="national_id">
+                    {t("submit.identityStep.fields.nationalId")}{" "}
+                    <span className="text-muted-foreground">
+                      ({t("submit.form.optional")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="national_id"
+                    data-testid="field-national_id"
+                    {...register("national_id" as keyof IdentityForm)}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="commercial_register_no">
+                    {t("submit.identityStep.fields.commercialRegisterNo")}
+                  </Label>
+                  <Input
+                    id="commercial_register_no"
+                    data-testid="field-commercial_register_no"
+                    disabled={!isCommercialRegisterFieldEditable}
+                    {...register(
+                      "commercial_register_no" as keyof IdentityForm
+                    )}
+                  />
+                  <p className="text-sm text-muted-foreground opacity-80">
+                    {t("submit.form.hints.hrbMandatoryDe")}
+                  </p>
                 </div>
               )}
             </div>
-          )}
 
-          <div className="grid grid-cols-2 gap-4">
-            {isLegalEntity ? (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="legal_form">
-                  {t("submit.identityStep.fields.legalForm")}
-                </Label>
-                <Input
-                  id="legal_form"
-                  data-testid="field-legal_form"
-                  {...register("legal_form" as keyof IdentityForm)}
-                />
-                {"legal_form" in errors && errors.legal_form && (
-                  <p className="text-xs text-destructive">
-                    {t(
-                      `submit.form.errors.${errors.legal_form.message}` as "submit.form.errors.required"
-                    )}
+            {isLegalEntity && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="tax_id_vat">
+                    {t("submit.identityStep.fields.taxIdVat")}{" "}
+                    <span className="text-muted-foreground">
+                      ({t("submit.form.optional")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="tax_id_vat"
+                    data-testid="field-tax_id_vat"
+                    {...register("tax_id_vat" as keyof IdentityForm)}
+                  />
+                  <p className="text-sm text-muted-foreground opacity-80">
+                    {t("submit.form.hints.taxIdMatching")}
                   </p>
-                )}
-              </div>
-            ) : (
-              dateOfBirthField
-            )}
-            {entityTypeField}
-          </div>
-
-          {partnerType === PartnerTypeSchema.enum.natural_person && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="place_of_birth">
-                {t("submit.identityStep.fields.placeOfBirth")}
-              </Label>
-              <Input
-                id="place_of_birth"
-                data-testid="field-place_of_birth"
-                {...register("place_of_birth" as keyof IdentityForm)}
-              />
-              {"place_of_birth" in errors && errors.place_of_birth && (
-                <p className="text-xs text-destructive">
-                  {t(
-                    `submit.form.errors.${errors.place_of_birth.message}` as "submit.form.errors.required"
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="lei">
+                    {t("submit.identityStep.fields.lei")}{" "}
+                    <span className="text-muted-foreground">
+                      ({t("submit.form.optional")})
+                    </span>
+                  </Label>
+                  <Input
+                    id="lei"
+                    data-testid="field-lei"
+                    {...register("lei" as keyof IdentityForm)}
+                  />
+                  {"lei" in errors && errors.lei && (
+                    <p className="text-xs text-destructive">
+                      {t(
+                        `submit.form.errors.${errors.lei.message}` as "submit.form.errors.required"
+                      )}
+                    </p>
                   )}
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* REGISTRY IDENTIFIERS */}
-      <Card className="p-0 overflow-hidden">
-        <CardHeader className="bg-muted px-4 py-2 gap-0">
-          <CardTitle className="text-xs">
-            {t("submit.form.sections.registryIdentifiers")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 py-4 flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="country">
-                {t("submit.identityStep.fields.country")}
-              </Label>
-              <Controller
-                key={partnerType}
-                control={control}
-                name={"country" as keyof IdentityForm}
-                render={({ field }) => {
-                  const selectedCountry =
-                    COUNTRY_OPTIONS.find(o => o.value === field.value) ?? null
-                  return (
-                    <Combobox
-                      items={COUNTRY_OPTIONS}
-                      value={selectedCountry}
-                      onValueChange={option =>
-                        field.onChange(option?.value ?? "")
-                      }
-                    >
-                      <ComboboxInput
-                        id="country"
-                        data-testid="field-country"
-                        placeholder={t("list.filters.countrySearchPlaceholder")}
-                        showClear
-                        onFocus={selectOnFocus}
-                      />
-                      <ComboboxContent>
-                        <ComboboxList>
-                          <ComboboxEmpty>
-                            {t("list.filters.noCountriesFound")}
-                          </ComboboxEmpty>
-                          <ComboboxCollection>
-                            {(opt: { value: string; label: string }) => (
-                              <ComboboxItem key={opt.value} value={opt}>
-                                {opt.label}
-                              </ComboboxItem>
-                            )}
-                          </ComboboxCollection>
-                        </ComboboxList>
-                      </ComboboxContent>
-                    </Combobox>
-                  )
-                }}
-              />
-              {"country" in errors && errors.country && (
-                <p className="text-xs text-destructive">
-                  {t(
-                    `submit.form.errors.${errors.country.message}` as "submit.form.errors.required"
-                  )}
-                </p>
-              )}
-            </div>
-            {partnerType === PartnerTypeSchema.enum.natural_person ? (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="national_id">
-                  {t("submit.identityStep.fields.nationalId")}{" "}
-                  <span className="text-muted-foreground">
-                    ({t("submit.form.optional")})
-                  </span>
-                </Label>
-                <Input
-                  id="national_id"
-                  data-testid="field-national_id"
-                  {...register("national_id" as keyof IdentityForm)}
-                />
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="commercial_register_no">
-                  {t("submit.identityStep.fields.commercialRegisterNo")}
-                </Label>
-                <Input
-                  id="commercial_register_no"
-                  data-testid="field-commercial_register_no"
-                  disabled={!isCommercialRegisterFieldEditable}
-                  {...register("commercial_register_no" as keyof IdentityForm)}
-                />
-                <p className="text-sm text-muted-foreground opacity-80">
-                  {t("submit.form.hints.hrbMandatoryDe")}
-                </p>
+                  <p className="text-sm text-muted-foreground opacity-80">
+                    {t("submit.form.hints.leiFormat")}
+                  </p>
+                </div>
               </div>
             )}
-          </div>
 
-          {isLegalEntity && (
-            <div className="grid grid-cols-2 gap-4">
+            {partnerType === PartnerTypeSchema.enum.registered_sole_trader && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="tax_id_vat">
                   {t("submit.identityStep.fields.taxIdVat")}{" "}
@@ -662,147 +793,108 @@ function PartnerSubmitForm({
                   data-testid="field-tax_id_vat"
                   {...register("tax_id_vat" as keyof IdentityForm)}
                 />
-                <p className="text-sm text-muted-foreground opacity-80">
-                  {t("submit.form.hints.taxIdMatching")}
-                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ADDRESS */}
+        <Card className="p-0 overflow-hidden">
+          <CardHeader className="bg-muted px-4 py-2 gap-0">
+            <CardTitle className="text-xs">
+              {t("submit.form.sections.address")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent
+            key={partnerType}
+            className="px-4 py-4 flex flex-col gap-6"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="street">
+                  {t("submit.identityStep.fields.street")}
+                </Label>
+                <Input
+                  id="street"
+                  data-testid="field-street"
+                  {...register(
+                    "registered_address.street" as keyof IdentityForm
+                  )}
+                />
+                {"registered_address" in errors &&
+                  errors.registered_address?.street && (
+                    <p className="text-xs text-destructive">
+                      {t(
+                        `submit.form.errors.${errors.registered_address.street.message}` as "submit.form.errors.required"
+                      )}
+                    </p>
+                  )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="lei">
-                  {t("submit.identityStep.fields.lei")}{" "}
+                <Label htmlFor="city">
+                  {t("submit.identityStep.fields.city")}
+                </Label>
+                <Input
+                  id="city"
+                  data-testid="field-city"
+                  {...register("registered_address.city" as keyof IdentityForm)}
+                />
+                {"registered_address" in errors &&
+                  errors.registered_address?.city && (
+                    <p className="text-xs text-destructive">
+                      {t(
+                        `submit.form.errors.${errors.registered_address.city.message}` as "submit.form.errors.required"
+                      )}
+                    </p>
+                  )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="postal_code">
+                  {t("submit.identityStep.fields.postalCode")}
+                </Label>
+                <Input
+                  id="postal_code"
+                  data-testid="field-postal_code"
+                  {...register(
+                    "registered_address.postal_code" as keyof IdentityForm
+                  )}
+                />
+                {"registered_address" in errors &&
+                  errors.registered_address?.postal_code && (
+                    <p className="text-xs text-destructive">
+                      {t(
+                        `submit.form.errors.${errors.registered_address.postal_code.message}` as "submit.form.errors.required"
+                      )}
+                    </p>
+                  )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="state_region">
+                  {t("submit.identityStep.fields.stateRegion")}{" "}
                   <span className="text-muted-foreground">
                     ({t("submit.form.optional")})
                   </span>
                 </Label>
                 <Input
-                  id="lei"
-                  data-testid="field-lei"
-                  {...register("lei" as keyof IdentityForm)}
+                  id="state_region"
+                  data-testid="field-state_region"
+                  {...register(
+                    "registered_address.state_region" as keyof IdentityForm
+                  )}
                 />
-                {"lei" in errors && errors.lei && (
-                  <p className="text-xs text-destructive">
-                    {t(
-                      `submit.form.errors.${errors.lei.message}` as "submit.form.errors.required"
-                    )}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground opacity-80">
-                  {t("submit.form.hints.leiFormat")}
-                </p>
               </div>
             </div>
-          )}
+          </CardContent>
+        </Card>
 
-          {partnerType === PartnerTypeSchema.enum.registered_sole_trader && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tax_id_vat">
-                {t("submit.identityStep.fields.taxIdVat")}{" "}
-                <span className="text-muted-foreground">
-                  ({t("submit.form.optional")})
-                </span>
-              </Label>
-              <Input
-                id="tax_id_vat"
-                data-testid="field-tax_id_vat"
-                {...register("tax_id_vat" as keyof IdentityForm)}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Both sections are legal_entity-only: neither Händlernummer nor Accounts applies to
+          a natural person or a registered sole trader.
 
-      {/* ADDRESS */}
-      <Card className="p-0 overflow-hidden">
-        <CardHeader className="bg-muted px-4 py-2 gap-0">
-          <CardTitle className="text-xs">
-            {t("submit.form.sections.address")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent
-          key={partnerType}
-          className="px-4 py-4 flex flex-col gap-6"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="street">
-                {t("submit.identityStep.fields.street")}
-              </Label>
-              <Input
-                id="street"
-                data-testid="field-street"
-                {...register("registered_address.street" as keyof IdentityForm)}
-              />
-              {"registered_address" in errors &&
-                errors.registered_address?.street && (
-                  <p className="text-xs text-destructive">
-                    {t(
-                      `submit.form.errors.${errors.registered_address.street.message}` as "submit.form.errors.required"
-                    )}
-                  </p>
-                )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="city">
-                {t("submit.identityStep.fields.city")}
-              </Label>
-              <Input
-                id="city"
-                data-testid="field-city"
-                {...register("registered_address.city" as keyof IdentityForm)}
-              />
-              {"registered_address" in errors &&
-                errors.registered_address?.city && (
-                  <p className="text-xs text-destructive">
-                    {t(
-                      `submit.form.errors.${errors.registered_address.city.message}` as "submit.form.errors.required"
-                    )}
-                  </p>
-                )}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="postal_code">
-                {t("submit.identityStep.fields.postalCode")}
-              </Label>
-              <Input
-                id="postal_code"
-                data-testid="field-postal_code"
-                {...register(
-                  "registered_address.postal_code" as keyof IdentityForm
-                )}
-              />
-              {"registered_address" in errors &&
-                errors.registered_address?.postal_code && (
-                  <p className="text-xs text-destructive">
-                    {t(
-                      `submit.form.errors.${errors.registered_address.postal_code.message}` as "submit.form.errors.required"
-                    )}
-                  </p>
-                )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="state_region">
-                {t("submit.identityStep.fields.stateRegion")}{" "}
-                <span className="text-muted-foreground">
-                  ({t("submit.form.optional")})
-                </span>
-              </Label>
-              <Input
-                id="state_region"
-                data-testid="field-state_region"
-                {...register(
-                  "registered_address.state_region" as keyof IdentityForm
-                )}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Both sections are legal_entity-only: neither Händlernummer nor Accounts applies to
-          a natural person or a registered sole trader. */}
-      {isLegalEntity && (
-        <>
+          Dealer numbers sit in the party group, where the dummy puts them; accounts are the
+          second group, which is its own tab in the modal. */}
+        {isLegalEntity && (
           <EditableEntryTable
             sectionTitle={t("submit.form.sections.dealerNumber")}
             entriesColumnLabel={t("submit.form.entriesColumn")}
@@ -818,17 +910,26 @@ function PartnerSubmitForm({
             }
             invalidHint={t("submit.form.errors.invalidDealerNumber")}
           />
+        )}
 
+        {partyFooter}
+      </div>
+
+      {/* ── Bank accounts ── */}
+      {isLegalEntity && (
+        <div
+          hidden={visibleSection !== undefined && visibleSection !== "accounts"}
+        >
           <AccountsSection
             accounts={accounts}
             onAdd={handleAddAccount}
             onEdit={handleEditAccount}
           />
-        </>
+        </div>
       )}
     </form>
   )
 }
 
 export { PartnerSubmitForm }
-export type { SubmitResult, PartnerSubmitFormDraft }
+export type { SubmitResult, PartnerSubmitFormDraft, PartnerFormSection }
