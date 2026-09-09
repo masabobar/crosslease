@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pencil, Plus } from "lucide-react"
+import { Pencil, Plus, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -17,13 +17,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { EUR_CURRENCY_CODE } from "@/lib/constants"
-import { formatDate, formatDecimalCurrency } from "@/lib/formatters"
+import { formatDecimalCurrency } from "@/lib/formatters"
 import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { ApiError } from "@/lib/api"
 import { ContractDeferredStateSchema } from "@/features/cases/api/schema"
 import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
 import { useBulkRemoveContracts } from "@/features/cases/hooks/useCaseActivity"
 import { ManualContractEntryDialog } from "@/features/cases/components/ManualContractEntryDialog"
+import { BulkContractImportDialog } from "@/features/cases/components/BulkContractImportDialog"
 import {
   canRemove,
   headerCheckState,
@@ -92,6 +93,7 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [reason, setReason] = useState("")
   const [isEntryOpen, setEntryOpen] = useState(false)
+  const [isImportOpen, setImportOpen] = useState(false)
   const [editingContractId, setEditingContractId] = useState<string | null>(
     null
   )
@@ -146,6 +148,9 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
       className="flex flex-col gap-4"
       data-testid="financing-contracts-panel"
     >
+      {/* Both entry routes, as the dummy draws them above the table. The MiLK upload had been
+          reachable only from wizard step 2, so a case whose contract set needed a second batch
+          after submission had no way to load one from the workspace. */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button
           type="button"
@@ -155,6 +160,15 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
         >
           <Plus size={16} />
           {tCases("wizard.contracts.manualEntry")}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          data-testid="financing-contracts-bulk-upload"
+          onClick={() => setImportOpen(true)}
+        >
+          <Upload size={16} />
+          {tCases("wizard.contracts.bulkUpload")}
         </Button>
       </div>
 
@@ -217,7 +231,22 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
               )
             }
           >
+            <Trash2 size={14} />
             {tCases("wizard.contracts.removeSelected")}
+          </Button>
+          {/* The dummy pairs the delete with a Cancel that clears the selection rather than
+              leaving the bar as the only way out of it. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="financing-contracts-clear-selection"
+            onClick={() => {
+              setSelected(new Set())
+              setReason("")
+            }}
+          >
+            {tCases("wizard.actions.cancel")}
           </Button>
         </div>
       )}
@@ -264,12 +293,13 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
                     }
                   />
                 </TableHead>
+                {/* The dummy's four: contract, term, objects — then the two figures no other
+                    surface in this app shows. Start date, instalment and residual value are gone
+                    from here; they are on the contract's own Contract details tab, which the row's
+                    Edit opens, so the table no longer repeats them. */}
                 <TableHead>{t("contracts.columns.contract")}</TableHead>
-                <TableHead>{t("contracts.columns.objects")}</TableHead>
-                <TableHead>{t("contracts.columns.start")}</TableHead>
                 <TableHead>{t("contracts.columns.term")}</TableHead>
-                <TableHead>{t("contracts.columns.instalment")}</TableHead>
-                <TableHead>{t("contracts.columns.residualValue")}</TableHead>
+                <TableHead>{t("contracts.columns.objects")}</TableHead>
                 <TableHead>{t("contracts.columns.share")}</TableHead>
                 <TableHead>{t("contracts.columns.state")}</TableHead>
                 <TableHead className="w-16" />
@@ -309,29 +339,14 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
                     )}
                   </TableCell>
                   <TableCell className="tabular-nums">
-                    {row.objectCount === null
-                      ? "—"
-                      : t("contracts.objectCount", { count: row.objectCount })}
-                  </TableCell>
-                  <TableCell className="tabular-nums">
-                    {formatDate(row.contractStart)}
-                  </TableCell>
-                  <TableCell className="tabular-nums">
                     {row.termMonths === null
                       ? "—"
                       : t("contracts.termMonths", { count: row.termMonths })}
                   </TableCell>
                   <TableCell className="tabular-nums">
-                    {formatDecimalCurrency(
-                      row.netInstalment,
-                      EUR_CURRENCY_CODE
-                    )}
-                  </TableCell>
-                  <TableCell className="tabular-nums">
-                    {formatDecimalCurrency(
-                      row.residualValue,
-                      EUR_CURRENCY_CODE
-                    )}
+                    {row.objectCount === null
+                      ? "—"
+                      : t("contracts.objectCount", { count: row.objectCount })}
                   </TableCell>
                   <TableCell className="tabular-nums">
                     {formatDecimalCurrency(
@@ -378,6 +393,14 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {isImportOpen && (
+        <BulkContractImportDialog
+          caseId={caseId}
+          onOpenChange={setImportOpen}
+          onCommitted={() => setImportOpen(false)}
+        />
       )}
 
       {isEntryOpen && (

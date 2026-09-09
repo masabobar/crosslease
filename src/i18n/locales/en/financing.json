@@ -40,10 +40,7 @@
     "columns": {
       "contract": "Contract",
       "objects": "Objects",
-      "start": "Start date",
       "term": "Term",
-      "instalment": "Instalment",
-      "residualValue": "Residual value",
       "share": "Share of the loan",
       "state": "State"
     },

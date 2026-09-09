@@ -159,20 +159,28 @@ export default function CaseDetailPage() {
       )}
 
       {/* The Calculation area (US 1.15) — the authorised surface for the refinancing rate. There
-          is deliberately no second financing screen that edits it. */}
-      {activeTab === "calculations" && <CalculationPanel caseId={data.id} />}
+          is deliberately no second financing screen that edits it.
 
-      {/* The dummy's Data tab leads with the case's own identity — company, agreement, dealer
-          number — then the DAT figure. Both were below or absent; the financing figures that used
-          to open the tab come from the Figma *financing* Data frame, which the dummy houses on a
-          Financings screen this app has no route for, so they stay, last. */}
-      {activeTab === "data" && (
+          `FinancingDataPanel` sits here rather than on Data because this is where the dummy puts
+          those figures: its Calculations tab is Terms above a Result carrying the instalment, the
+          rate, the refinancing ratio, payout to net acquisition cost, interest over the term and
+          the present values. Its Data tab carries none of them. They had been opening the Data tab
+          off the Figma *financing* Data frame, which is a different screen. */}
+      {activeTab === "calculations" && (
         <div className="flex flex-col gap-6">
+          <CalculationPanel caseId={data.id} />
+          <FinancingDataPanel caseId={data.id} />
+        </div>
+      )}
+
+      {/* The dummy's Data tab is exactly two cards, side by side: the case's own identity —
+          company, agreement, dealer number — and the DAT figure. Nothing else was ever on it. */}
+      {activeTab === "data" && (
+        <div className="grid items-start gap-6 lg:grid-cols-2">
           <CaseLeasingCompanyCard caseId={data.id} />
           {/* The design's DAT DATA block — the figure is determined outside the platform and read
               by the approval, not computed here. */}
           <CaseCollateralPanel caseId={data.id} />
-          <FinancingDataPanel caseId={data.id} />
         </div>
       )}
 

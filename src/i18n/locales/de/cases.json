@@ -252,7 +252,7 @@
       "empty": "Keine Verträge erfasst",
       "manualEntry": "Vertrag manuell erfassen",
       "removalReasonPlaceholder": "Warum werden diese entfernt?",
-      "removeSelected": "Aus Antrag entfernen",
+      "removeSelected": "Auswahl löschen",
       "removed": "{{count}} Vertrag entfernt.",
       "removed_other": "{{count}} Verträge entfernt.",
       "selectedCount": "{{count}} Vertrag ausgewählt",
@@ -553,8 +553,8 @@
     }
   },
   "collateral": {
-    "title": "Sicherheiten (DAT-Daten)",
-    "total": "Gesamtwert der Sicherheiten",
+    "title": "DAT-Daten",
+    "total": "Gesamter DAT-Wert",
     "type": "Art der Sicherheit",
     "typePlaceholder": "Art auswählen",
     "lastSet": "Wert gesetzt",

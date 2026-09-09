@@ -40,10 +40,7 @@
     "columns": {
       "contract": "Vertrag",
       "objects": "Objekte",
-      "start": "Beginn",
       "term": "Laufzeit",
-      "instalment": "Rate",
-      "residualValue": "Restwert",
       "share": "Anteil am Darlehen",
       "state": "Status"
     },

@@ -252,7 +252,7 @@
       "empty": "No entered contracts",
       "manualEntry": "Manual contract entry",
       "removalReasonPlaceholder": "Why are these being removed?",
-      "removeSelected": "Remove from request",
+      "removeSelected": "Delete selected",
       "removed": "{{count}} contract removed.",
       "removed_other": "{{count}} contracts removed.",
       "selectedCount": "{{count}} contract selected",
@@ -553,8 +553,8 @@
     }
   },
   "collateral": {
-    "title": "Collateral (DAT data)",
-    "total": "Total collateral value",
+    "title": "DAT data",
+    "total": "Total DAT value",
     "type": "Collateral type",
     "typePlaceholder": "Select a type",
     "lastSet": "Figure set",
