@@ -153,6 +153,24 @@ const CaseType = z.enum([
   "asset_event",
 ])
 const CaseStatus = z.enum(["open", "waiting", "done", "cancelled"])
+const RequestStatus = z.enum([
+  "draft",
+  "submitted",
+  "missing_information",
+  "rework",
+  "committed",
+  "rejected",
+  "cancelled",
+])
+const FinancingStatus = z.enum([
+  "draft",
+  "calculating",
+  "ready_for_setup",
+  "disbursed",
+  "active",
+  "ended",
+  "cancelled",
+])
 const CaseDisplayStatus = z.enum([
   "open",
   "waiting",
@@ -170,6 +188,7 @@ const CaseDisplayStatus = z.enum([
   "active",
   "ended",
 ])
+const CasePrimaryEntity = z.enum(["financing", "refinancing_request", "case"])
 const CaseOrigin = z.enum(["wizard", "portal", "bulk_file", "migrated"])
 const CaseResponse = z
   .object({
@@ -177,7 +196,10 @@ const CaseResponse = z
     case_reference: z.string(),
     case_type: CaseType,
     case_status: CaseStatus,
+    request_status: z.union([RequestStatus, z.null()]).optional(),
+    financing_status: z.union([FinancingStatus, z.null()]).optional(),
     display_status: CaseDisplayStatus,
+    primary_entity: CasePrimaryEntity,
     origin: CaseOrigin,
     owner_user_id: z.union([z.string(), z.null()]),
     lc_partner_id: z.union([z.string(), z.null()]),
@@ -191,13 +213,18 @@ const CaseResponse = z
 const StartCaseRequest = z.object({ case_type: CaseType }).passthrough()
 const case_type = z.union([CaseType, z.null()]).optional()
 const status = z.union([CaseDisplayStatus, z.null()]).optional()
+const assignee_id = z.union([z.string(), z.null()]).optional()
+const waiting_on_role = z.union([UserRole, z.null()]).optional()
 const CaseListItem = z
   .object({
     id: z.string().uuid(),
     case_reference: z.string(),
     case_type: CaseType,
     case_status: CaseStatus,
+    request_status: z.union([RequestStatus, z.null()]).optional(),
+    financing_status: z.union([FinancingStatus, z.null()]).optional(),
     display_status: CaseDisplayStatus,
+    primary_entity: CasePrimaryEntity,
     origin: CaseOrigin,
     owner_user_id: z.union([z.string(), z.null()]),
     lc_partner_id: z.union([z.string(), z.null()]),
@@ -218,14 +245,6 @@ const CaseListResponse = z
 const AssignCaseRequest = z
   .object({ assignee_id: z.string().uuid() })
   .passthrough()
-const RequestStatus = z.enum([
-  "draft",
-  "submitted",
-  "missing_information",
-  "rework",
-  "committed",
-  "rejected",
-])
 const DecideRequestRequest = z
   .object({
     outcome: RequestStatus,
@@ -515,6 +534,7 @@ const CasePartyMatchResponse = z
     parties: z.array(PartyMatchItem),
   })
   .passthrough()
+const CommentVisibility = z.enum(["internal", "external"])
 const CaseCommentItem = z
   .object({
     id: z.string().uuid(),
@@ -522,6 +542,7 @@ const CaseCommentItem = z
     author_id: z.string().uuid(),
     author_role: z.string(),
     body: z.string(),
+    visibility: CommentVisibility,
     created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
@@ -534,27 +555,43 @@ const CaseCommentListResponse = z
   })
   .passthrough()
 const AddCaseCommentRequest = z
-  .object({ body: z.string().min(1).max(2000) })
+  .object({
+    body: z.string().min(1).max(2000),
+    visibility: CommentVisibility.optional(),
+  })
+  .passthrough()
+const LcCaseListItem = z
+  .object({
+    id: z.string().uuid(),
+    case_reference: z.string(),
+    case_type: CaseType,
+    case_status: CaseStatus,
+    display_status: CaseDisplayStatus,
+    primary_entity: CasePrimaryEntity,
+    financing_status: z.union([FinancingStatus, z.null()]).optional(),
+    agreement_reference: z.union([z.string(), z.null()]).optional(),
+    origin: CaseOrigin,
+    created_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const LcCaseListResponse = z
+  .object({ items: z.array(LcCaseListItem), total: z.number().int() })
   .passthrough()
 const LcCaseDetailResponse = z
   .object({
     id: z.string().uuid(),
     case_reference: z.string(),
     case_type: CaseType,
+    case_status: CaseStatus,
     display_status: CaseDisplayStatus,
+    primary_entity: CasePrimaryEntity,
+    financing_status: z.union([FinancingStatus, z.null()]).optional(),
+    agreement_reference: z.union([z.string(), z.null()]).optional(),
     origin: CaseOrigin,
     created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
 const FinancingKind = z.enum(["single", "package"])
-const FinancingStatus = z.enum([
-  "calculating",
-  "ready_for_setup",
-  "disbursed",
-  "active",
-  "ended",
-  "cancelled",
-])
 const FinancingRead = z
   .object({
     id: z.string().uuid(),
@@ -858,7 +895,6 @@ const FinancingRemainingBalanceResponse = z
     remaining_balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
   })
   .passthrough()
-const search = z.union([z.string(), z.null()]).optional()
 const FinancingListItem = z
   .object({
     id: z.string().uuid(),
@@ -885,6 +921,7 @@ const FinancingListResponse = z
   })
   .passthrough()
 const ContractDeferredState = z.enum(["active", "deferred"])
+const ContractStatus = z.enum(["active", "cancelled"])
 const ContractCompleteness = z.enum(["complete", "incomplete"])
 const ContractRead = z
   .object({
@@ -894,6 +931,7 @@ const ContractRead = z
     contract_type: z.union([z.string(), z.null()]),
     contract_residual: z.union([z.string(), z.null()]),
     deferred_state: ContractDeferredState,
+    contract_status: ContractStatus,
     batch_id: z.union([z.string(), z.null()]),
     contract_origin: z.union([z.string(), z.null()]),
     completeness: ContractCompleteness,
@@ -1129,9 +1167,9 @@ const LegalEntityIdentityInput = z
     industry_code: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
-const NaturalPersonIdentityInput = z
+const PersonIdentityInput = z
   .object({
-    partner_type: z.string(),
+    partner_type: z.enum(["person_commercial", "person_private"]),
     full_name: z.string(),
     date_of_birth: z.string(),
     place_of_birth: z.string(),
@@ -1143,7 +1181,7 @@ const NaturalPersonIdentityInput = z
     schufa_no: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
-const SoleProprietorIdentityInput = z
+const SoleTraderIdentityInput = z
   .object({
     partner_type: z.string(),
     full_name: z.string(),
@@ -1160,15 +1198,16 @@ const LesseePreviewRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
       LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
     ]),
   })
   .passthrough()
 const PartnerType = z.enum([
   "legal_entity",
-  "natural_person",
-  "registered_sole_trader",
+  "person_commercial",
+  "person_private",
+  "sole_trader",
 ])
 const CandidateSummary = z
   .object({
@@ -1195,8 +1234,8 @@ const LesseeCaptureRequest = z
     identity: z.union([
       z.discriminatedUnion("partner_type", [
         LegalEntityIdentityInput,
-        NaturalPersonIdentityInput,
-        SoleProprietorIdentityInput,
+        PersonIdentityInput,
+        SoleTraderIdentityInput,
       ]),
       z.null(),
     ]),
@@ -1211,6 +1250,7 @@ const LesseeLinkResponse = z
     partner_status: z.string(),
   })
   .passthrough()
+const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
 const RegisteredAddress = z
   .object({
     street: z.union([z.string(), z.null()]),
@@ -1234,9 +1274,9 @@ const LegalEntityIdentityDetail = z
     foreign_identifier: z.union([z.string(), z.null()]),
   })
   .passthrough()
-const NaturalPersonIdentityDetail = z
+const PersonIdentityDetail = z
   .object({
-    partner_type: z.string(),
+    partner_type: z.enum(["person_commercial", "person_private"]),
     full_name: z.string(),
     date_of_birth: z.string(),
     place_of_birth: z.string(),
@@ -1246,7 +1286,7 @@ const NaturalPersonIdentityDetail = z
     registered_address: z.union([RegisteredAddress, z.null()]),
   })
   .passthrough()
-const SoleProprietorIdentityDetail = z
+const SoleTraderIdentityDetail = z
   .object({
     partner_type: z.string(),
     full_name: z.string(),
@@ -1263,11 +1303,11 @@ const PartnerDetailResponse = z
     display_name: z.string(),
     partner_type: PartnerType,
     status: z.string(),
-    ubo_completeness_status: z.string(),
+    ubo_completeness_status: UboCompletenessStatus,
     identity: z.discriminatedUnion("partner_type", [
       LegalEntityIdentityDetail,
-      NaturalPersonIdentityDetail,
-      SoleProprietorIdentityDetail,
+      PersonIdentityDetail,
+      SoleTraderIdentityDetail,
     ]),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
@@ -1277,8 +1317,8 @@ const GuarantorPreviewRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
       LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
     ]),
   })
   .passthrough()
@@ -1288,8 +1328,8 @@ const GuarantorAddRequest = z
     identity: z.union([
       z.discriminatedUnion("partner_type", [
         LegalEntityIdentityInput,
-        NaturalPersonIdentityInput,
-        SoleProprietorIdentityInput,
+        PersonIdentityInput,
+        SoleTraderIdentityInput,
       ]),
       z.null(),
     ]),
@@ -1805,6 +1845,19 @@ const SeedPackagesResponse = z
 const ModuleActionRequest = z
   .object({ justification: z.string().min(10) })
   .passthrough()
+const ModuleActivationResponse = z
+  .object({
+    action: GovernedActionResponse,
+    module_key: z.string(),
+    module_status: z.string(),
+    pending_approval_note: z
+      .string()
+      .optional()
+      .default(
+        "Module activation is pending a second System Admin's approval (POST /governed-actions/{id}/approve). The module stays in 'pending_enforcement' and its routes answer 404 until approved. Track pending approvals at GET /governed-actions?status=pending."
+      ),
+  })
+  .passthrough()
 const ModuleDeactivateRequest = z
   .object({ justification: z.string().min(20) })
   .passthrough()
@@ -1975,8 +2028,8 @@ const PartnerSubmitRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
       LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
     ]),
   })
   .passthrough()
@@ -2065,7 +2118,7 @@ const UboOwnershipRecordResponse = z
   .passthrough()
 const PartnerUboResponse = z
   .object({
-    ubo_completeness_status: z.string(),
+    ubo_completeness_status: UboCompletenessStatus,
     records: z.array(UboOwnershipRecordResponse),
   })
   .passthrough()
@@ -2266,8 +2319,8 @@ const PartnerMatchRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
       LegalEntityIdentityInput,
-      NaturalPersonIdentityInput,
-      SoleProprietorIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
     ]),
   })
   .passthrough()
@@ -2281,7 +2334,6 @@ const PartnerStatus = z.enum([
   "pending_archive",
 ])
 const PartnerRole = z.enum(["lessee", "guarantor", "supplier"])
-const UboCompletenessStatus = z.enum(["missing", "partial", "complete"])
 const PartnerListItem = z
   .object({
     partner_id: z.string(),
@@ -2289,7 +2341,7 @@ const PartnerListItem = z
     partner_type: PartnerType,
     status: z.string(),
     country: z.union([z.string(), z.null()]),
-    ubo_completeness_status: z.string(),
+    ubo_completeness_status: UboCompletenessStatus,
     roles: z.array(z.string()),
   })
   .passthrough()
@@ -3255,6 +3307,13 @@ const TaskDefinitionItem = z
     four_eyes: z.boolean(),
     exclusion_task_ids: z.array(z.string().uuid()),
     four_eyes_exclusion_wide: z.boolean(),
+    is_decision_step: z.boolean(),
+    is_no_way_back: z.boolean(),
+    completion_case_status_target: z.union([z.string(), z.null()]),
+    completion_entity_targets: z.union([
+      z.object({}).partial().passthrough(),
+      z.null(),
+    ]),
     generated_document_ref: z.union([z.string(), z.null()]),
     trigger_event: z.union([z.string(), z.null()]),
     permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
@@ -3354,6 +3413,12 @@ const AddTaskRequest = z
       .union([z.array(z.string().uuid()), z.null()])
       .optional(),
     four_eyes_exclusion_wide: z.boolean().optional().default(false),
+    is_decision_step: z.boolean().optional().default(false),
+    is_no_way_back: z.boolean().optional().default(false),
+    completion_case_status_target: z.union([z.string(), z.null()]).optional(),
+    completion_entity_targets: z
+      .union([z.object({}).partial().passthrough(), z.null()])
+      .optional(),
     phase_id: z.union([z.string(), z.null()]).optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
     doc_requirement_pin_mode: z
@@ -3391,6 +3456,13 @@ const TaskResponseWithWarnings = z
     four_eyes: z.boolean(),
     exclusion_task_ids: z.array(z.string().uuid()),
     four_eyes_exclusion_wide: z.boolean(),
+    is_decision_step: z.boolean(),
+    is_no_way_back: z.boolean(),
+    completion_case_status_target: z.union([z.string(), z.null()]),
+    completion_entity_targets: z.union([
+      z.object({}).partial().passthrough(),
+      z.null(),
+    ]),
     generated_document_ref: z.union([z.string(), z.null()]),
     trigger_event: z.union([z.string(), z.null()]),
     permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
@@ -3438,6 +3510,13 @@ const TaskResponse = z
     four_eyes: z.boolean(),
     exclusion_task_ids: z.array(z.string().uuid()),
     four_eyes_exclusion_wide: z.boolean(),
+    is_decision_step: z.boolean(),
+    is_no_way_back: z.boolean(),
+    completion_case_status_target: z.union([z.string(), z.null()]),
+    completion_entity_targets: z.union([
+      z.object({}).partial().passthrough(),
+      z.null(),
+    ]),
     generated_document_ref: z.union([z.string(), z.null()]),
     trigger_event: z.union([z.string(), z.null()]),
     permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
@@ -3483,6 +3562,13 @@ const UpdateTaskRequest = z
     four_eyes: z.union([z.boolean(), z.null()]),
     exclusion_task_ids: z.union([z.array(z.string().uuid()), z.null()]),
     four_eyes_exclusion_wide: z.union([z.boolean(), z.null()]),
+    is_decision_step: z.union([z.boolean(), z.null()]),
+    is_no_way_back: z.union([z.boolean(), z.null()]),
+    completion_case_status_target: z.union([z.string(), z.null()]),
+    completion_entity_targets: z.union([
+      z.object({}).partial().passthrough(),
+      z.null(),
+    ]),
     generated_document_ref: z.union([z.string(), z.null()]),
     trigger_event: z.union([z.string(), z.null()]),
     permitted_outcomes: z.union([z.array(StateTransitionOutcome), z.null()]),
@@ -3533,7 +3619,12 @@ const MaterializeChecklistRequest = z
     amount_eur: z.union([z.number(), z.string(), z.null()]).optional(),
   })
   .passthrough()
-const ChecklistItemStatus = z.enum(["open", "checked", "not_applicable"])
+const ChecklistItemStatus = z.enum([
+  "open",
+  "done",
+  "not_required",
+  "not_available",
+])
 const ChecklistCloseActor = z.enum(["person", "system"])
 const DocumentCheckMark = z.enum(["in_order", "not_in_order", "not_applicable"])
 const ChecklistItemCheckResponse = z
@@ -3571,6 +3662,8 @@ const ChecklistItemResponse = z
     responsible_roles: z.union([z.array(UserRole), z.null()]).optional(),
     doc_requirement_ref: z.union([z.string(), z.null()]).optional(),
     four_eyes: z.boolean().optional().default(false),
+    is_decision_step: z.boolean().optional().default(false),
+    is_no_way_back: z.boolean().optional().default(false),
     status: ChecklistItemStatus,
     note: z.union([z.string(), z.null()]),
     checked_by: z.union([z.string(), z.null()]),
@@ -4041,16 +4134,20 @@ export const schemas = {
   StartFollowUpRequest,
   CaseType,
   CaseStatus,
+  RequestStatus,
+  FinancingStatus,
   CaseDisplayStatus,
+  CasePrimaryEntity,
   CaseOrigin,
   CaseResponse,
   StartCaseRequest,
   case_type,
   status,
+  assignee_id,
+  waiting_on_role,
   CaseListItem,
   CaseListResponse,
   AssignCaseRequest,
-  RequestStatus,
   DecideRequestRequest,
   SubmitResultResponse,
   CaseLeasingCompanyResponse,
@@ -4086,12 +4183,14 @@ export const schemas = {
   CombinedDocumentListResponse,
   PartyMatchItem,
   CasePartyMatchResponse,
+  CommentVisibility,
   CaseCommentItem,
   CaseCommentListResponse,
   AddCaseCommentRequest,
+  LcCaseListItem,
+  LcCaseListResponse,
   LcCaseDetailResponse,
   FinancingKind,
-  FinancingStatus,
   FinancingRead,
   ObjectRef,
   FinancingContractRef,
@@ -4126,10 +4225,10 @@ export const schemas = {
   ContractContributionListResponse,
   PerContractSideResponse,
   FinancingRemainingBalanceResponse,
-  search,
   FinancingListItem,
   FinancingListResponse,
   ContractDeferredState,
+  ContractStatus,
   ContractCompleteness,
   ContractRead,
   ContractListResponse,
@@ -4155,18 +4254,19 @@ export const schemas = {
   LeaseObjectRemove,
   RegisteredAddressInput,
   LegalEntityIdentityInput,
-  NaturalPersonIdentityInput,
-  SoleProprietorIdentityInput,
+  PersonIdentityInput,
+  SoleTraderIdentityInput,
   LesseePreviewRequest,
   PartnerType,
   CandidateSummary,
   PartnerMatchResponse,
   LesseeCaptureRequest,
   LesseeLinkResponse,
+  UboCompletenessStatus,
   RegisteredAddress,
   LegalEntityIdentityDetail,
-  NaturalPersonIdentityDetail,
-  SoleProprietorIdentityDetail,
+  PersonIdentityDetail,
+  SoleTraderIdentityDetail,
   PartnerDetailResponse,
   GuarantorPreviewRequest,
   GuarantorAddRequest,
@@ -4232,6 +4332,7 @@ export const schemas = {
   SeedPackageEntry,
   SeedPackagesResponse,
   ModuleActionRequest,
+  ModuleActivationResponse,
   ModuleDeactivateRequest,
   InitiateRoleChangeRequest,
   AuditorPeriodUpdateReason,
@@ -4292,7 +4393,6 @@ export const schemas = {
   PartnerMatchRequest,
   PartnerStatus,
   PartnerRole,
-  UboCompletenessStatus,
   PartnerListItem,
   PartnerListResponse,
   MatchingEvidenceItem,
@@ -4499,37 +4599,37 @@ const endpoints = makeApi([
       {
         name: "entity_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "action_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "event_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "entity_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "actor_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "actor_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "trigger_source",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "sensitive",
@@ -4539,12 +4639,12 @@ const endpoints = makeApi([
       {
         name: "from_dt",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "to_dt",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -4607,27 +4707,27 @@ const endpoints = makeApi([
       {
         name: "action_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "event_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "actor_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "actor_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "trigger_source",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "sensitive",
@@ -4637,12 +4737,12 @@ const endpoints = makeApi([
       {
         name: "from_dt",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "to_dt",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -5139,7 +5239,17 @@ and invalidates all active sessions.`,
 three fields. The query resolves that choice onto the stored sets and never runs on the derived
 value. &#x60;&#x60;unclaimed&#x60;&#x60; is the view for cases that came in from a leasing company and have not been
 picked up by the bank — whether the interface renders it as a tab, a saved view or a filter is a
-design decision and not a scope one.`,
+design decision and not a scope one.
+
+&#x60;&#x60;assignee_id&#x60;&#x60; filters to one colleague&#x27;s cases (US 1.52). It is the explicit form of &#x60;&#x60;mine&#x60;&#x60;
+(which is the caller&#x27;s own id); an explicit &#x60;&#x60;assignee_id&#x60;&#x60; wins over &#x60;&#x60;mine&#x60;&#x60;. The tenant scope
+is enforced in the repository query, so an id from another tenant simply matches nothing.
+
+&#x60;&#x60;waiting_on_role&#x60;&#x60; answers &quot;whose action is this case waiting for&quot; — the responsible-role set
+of the case&#x27;s currently-open checklist step (US 1.52). It is a different question from
+&#x60;&#x60;domain/waiting.py&#x60;&#x60;&#x27;s &#x60;&#x60;WaitingOn&#x60;&#x60;, which is bank-vs-leasing-company and derived from the
+request status; this one is front-office-vs-back-office and reads the checklist. A case with no
+open step, or whose open step carries no role set, matches neither role.`,
     requestFormat: "json",
     parameters: [
       {
@@ -5163,6 +5273,11 @@ design decision and not a scope one.`,
         schema: z.boolean().optional().default(false),
       },
       {
+        name: "assignee_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
         name: "unassigned",
         type: "Query",
         schema: z.boolean().optional().default(false),
@@ -5171,6 +5286,11 @@ design decision and not a scope one.`,
         name: "my_work_list",
         type: "Query",
         schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "waiting_on_role",
+        type: "Query",
+        schema: waiting_on_role,
       },
       {
         name: "oldest_first",
@@ -5307,6 +5427,35 @@ design decision and not a scope one.`,
       },
     ],
     response: ChecklistItemCheckResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:business_object_id/checklist/items/:item_id/undo",
+    alias:
+      "undo_item_api_v1_cases__business_object_id__checklist_items__item_id__undo_post",
+    description: `US 1.46 — Take back the last resolved checklist step (return it to OPEN). One step at a time,
+blocked past a no-way-back step. FO/BO, non-disclosure 404 like the rest of the runtime.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "business_object_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "item_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ChecklistItemResponse,
     errors: [
       {
         status: 422,
@@ -5929,13 +6078,19 @@ the on-hold case state is what sends the leasing company to look.`,
 Append-only — a comment is never edited or deleted; the thread is the record of what was said.
 Both sides write: the bank (front / back office) and the leasing company on its own case. Each
 comment records the author&#x27;s role at the time, so the reader sees which side spoke. Audited
-(&#x60;&#x60;CASE_COMMENT_ADDED&#x60;&#x60;); NO outbound notification of any kind in this slice.`,
+(&#x60;&#x60;CASE_COMMENT_ADDED&#x60;&#x60;); NO outbound notification of any kind in this slice.
+
+**Visibility (US 1.53 part 1, PO answer A4):** &#x60;visibility&#x60; defaults to &#x60;INTERNAL&#x60; — bank-only,
+never served to a leasing-company user. Making a comment &#x60;EXTERNAL&#x60; is an explicit choice. An LC
+author is pinned to &#x60;EXTERNAL&#x60; in the service whatever it sends, so the customer cannot write a
+comment its own side would never see. Notifying the LC of an external comment is deliberately
+NOT here — A4 keeps it open (channel unconfirmed, no read surface exists).`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: z.object({ body: z.string().min(1).max(2000) }).passthrough(),
+        schema: AddCaseCommentRequest,
       },
       {
         name: "case_id",
@@ -5970,7 +6125,7 @@ are excluded. Each row carries its derived completeness for the badge.`,
       {
         name: "batch_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "limit",
@@ -6963,6 +7118,39 @@ disbursement. Front office and back office add; a role outside that set is refus
 
 Front office and back office settle. A non-open condition (already met/waived/expired) is a 409;
 an unknown condition, or a cross-tenant / unknown financing, is 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "condition_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ApprovalConditionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/financing/conditions/:condition_id/undo",
+    alias:
+      "undo_financing_condition_api_v1_cases__case_id__financing_conditions__condition_id__undo_post",
+    description: `Undo a settlement — MET → OPEN, re-arming the disbursement block (US 1.51).
+
+The mirror of settle, and the same front-office / back-office capability: a MET condition returns
+to OPEN and its settlement metadata is cleared. A condition that is not MET (still open, or waived
+/ expired) is a 409 &#x60;APPROVAL_CONDITION_NOT_UNDOABLE&#x60;; an unknown condition, or a cross-tenant /
+unknown financing, is 404.`,
     requestFormat: "json",
     parameters: [
       {
@@ -8307,12 +8495,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "case_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "business_object_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: CompletenessResponse,
@@ -8425,12 +8613,12 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "object_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "case_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: RuntimeRequirementSurfaceResponse,
@@ -8457,7 +8645,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "case_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: MaterializationResponse,
@@ -8604,7 +8792,7 @@ roles only (FO / BO / BPU); the LC and every platform role answer 404 (non-discl
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
@@ -8652,7 +8840,7 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
@@ -8709,7 +8897,7 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
@@ -8729,12 +8917,12 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "valid_from",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "valid_until",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -8865,7 +9053,7 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "type",
@@ -8875,12 +9063,12 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "from",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "to",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "per_page",
@@ -8890,7 +9078,7 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "cursor",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: FAAuditHistoryResponse,
@@ -8917,12 +9105,12 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "reason",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "type",
@@ -8932,12 +9120,12 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "from",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "to",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: z.unknown(),
@@ -9305,7 +9493,7 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
@@ -9325,12 +9513,12 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
       {
         name: "valid_from",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "valid_until",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: z.unknown(),
@@ -9376,7 +9564,7 @@ Auditors see only actions scoped to their tenant.`,
       {
         name: "initiator_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -9595,7 +9783,17 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
     alias: "list_lc_cases_api_v1_lc_cases_get",
     description: `The leasing company&#x27;s own cases (its raised proposals and any the bank has since taken over).
 
-Defaults to newest-first (&#x60;&#x60;oldest_first&#x3D;False&#x60;&#x60;), unlike the bank&#x27;s queue-oriented &#x60;&#x60;/cases&#x60;&#x60;.`,
+Defaults to newest-first (&#x60;&#x60;oldest_first&#x3D;False&#x60;&#x60;), unlike the bank&#x27;s queue-oriented &#x60;&#x60;/cases&#x60;&#x60;.
+
+**Answers &#x60;LcCaseListResponse&#x60;, not the bank&#x27;s &#x60;CaseListResponse&#x60; (changed 2026-09-11).** This
+route used to reuse the bank list model as &quot;a thin, clearly-named alias&quot;, which handed a
+leasing-company user &#x60;owner_user_id&#x60;, &#x60;created_by&#x60;, &#x60;decision_round&#x60;, &#x60;request_status&#x60;,
+&#x60;routing_exception&#x60; and &#x60;origin_financing_id&#x60; — &#x60;decision_round&#x60; being, in effect, how many
+times the bank sent the request back. PRD1042-1951 withholds the bank&#x27;s internal review
+information by name and requires the restriction to be &quot;enforced at query level and never by
+hiding things in the interface&quot;, so the projection is the guard: those fields are absent from
+the model and cannot be re-exposed by a serializer change. The detail route below was already
+least-privilege; only the list had been aliased.`,
     requestFormat: "json",
     parameters: [
       {
@@ -9614,7 +9812,7 @@ Defaults to newest-first (&#x60;&#x60;oldest_first&#x3D;False&#x60;&#x60;), unli
         schema: z.number().int().gte(0).optional().default(0),
       },
     ],
-    response: CaseListResponse,
+    response: LcCaseListResponse,
     errors: [
       {
         status: 422,
@@ -9670,17 +9868,17 @@ separate &#x60;&#x60;GET /lc/obligations/{case_id}&#x60;&#x60;; the bank↔LC co
       {
         name: "catalog_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "object_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "case_type",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: LCObligationResponse,
@@ -10032,7 +10230,7 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       {
         name: "cursor",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "per_page",
@@ -10063,7 +10261,7 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       {
         name: "cursor",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "per_page",
@@ -10813,7 +11011,7 @@ Accessible to all authenticated users.`,
       {
         name: "framework_agreement_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
     ],
     response: SelectableTemplatesResponse,
@@ -10863,7 +11061,7 @@ On reject/withdraw/expire the tenant is archived.
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
@@ -10878,22 +11076,22 @@ On reject/withdraw/expire the tenant is archived.
       {
         name: "country",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "from_date",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "to_date",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "module_key",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "module_active",
@@ -11059,17 +11257,17 @@ On reject/withdraw/expire the tenant is archived.
       {
         name: "from_date",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "to_date",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "cursor",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "per_page",
@@ -11378,7 +11576,7 @@ No existing sessions are invalidated immediately.
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -11569,8 +11767,12 @@ Requires &#x60;system_admin&#x60; role.`,
     alias:
       "activate_tenant_module_api_v1_tenants__tenant_id__modules__module_key__activate_post",
     description: `Initiate a Four-Eyes module activation request for an active tenant.
-Returns a GovernedActionResponse with status&#x3D;pending.
-A second System Admin must approve via POST /governed-actions/{id}/approve.`,
+
+The module is set to &#x60;pending_enforcement&#x60; and a SECOND System Admin must approve via
+POST /governed-actions/{id}/approve before it becomes active. Until then the module&#x27;s routes
+answer 404 (existence non-disclosure). The 201 response (BUG-015) states the pending state
+explicitly so the caller is not surprised by that 404; track approvals at
+GET /governed-actions?status&#x3D;pending.`,
     requestFormat: "json",
     parameters: [
       {
@@ -11589,7 +11791,7 @@ A second System Admin must approve via POST /governed-actions/{id}/approve.`,
         schema: z.string(),
       },
     ],
-    response: GovernedActionResponse,
+    response: ModuleActivationResponse,
     errors: [
       {
         status: 422,
@@ -11672,7 +11874,7 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
@@ -11780,12 +11982,12 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "status",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -11846,7 +12048,7 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "role",
@@ -11861,17 +12063,17 @@ Requires &#x60;system_admin&#x60; role.`,
       {
         name: "tenant_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "last_login_from",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "last_login_to",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "page",
@@ -12257,7 +12459,7 @@ Max 3 concurrent jobs per user → &#x60;429&#x60; if exceeded.
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "role",
@@ -12272,17 +12474,17 @@ Max 3 concurrent jobs per user → &#x60;429&#x60; if exceeded.
       {
         name: "tenant_id",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "last_login_from",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "last_login_to",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "format",
@@ -12521,7 +12723,7 @@ Creates a &#x60;MediaObject&#x60; record. File is served via &#x60;GET /api/v1/m
       {
         name: "search",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "catalog_layer",
@@ -12660,7 +12862,7 @@ BPU + Support + Auditor (read). Cursor-paginated, newest first.`,
       {
         name: "cursor",
         type: "Query",
-        schema: search,
+        schema: assignee_id,
       },
       {
         name: "per_page",

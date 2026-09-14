@@ -567,7 +567,7 @@
       "get": {
         "tags": ["Cases"],
         "summary": "List Cases",
-        "description": "The case list.\n\n``status`` takes one displayed value, because a user picks \"waiting\" rather than filling in\nthree fields. The query resolves that choice onto the stored sets and never runs on the derived\nvalue. ``unclaimed`` is the view for cases that came in from a leasing company and have not been\npicked up by the bank — whether the interface renders it as a tab, a saved view or a filter is a\ndesign decision and not a scope one.",
+        "description": "The case list.\n\n``status`` takes one displayed value, because a user picks \"waiting\" rather than filling in\nthree fields. The query resolves that choice onto the stored sets and never runs on the derived\nvalue. ``unclaimed`` is the view for cases that came in from a leasing company and have not been\npicked up by the bank — whether the interface renders it as a tab, a saved view or a filter is a\ndesign decision and not a scope one.\n\n``assignee_id`` filters to one colleague's cases (US 1.52). It is the explicit form of ``mine``\n(which is the caller's own id); an explicit ``assignee_id`` wins over ``mine``. The tenant scope\nis enforced in the repository query, so an id from another tenant simply matches nothing.\n\n``waiting_on_role`` answers \"whose action is this case waiting for\" — the responsible-role set\nof the case's currently-open checklist step (US 1.52). It is a different question from\n``domain/waiting.py``'s ``WaitingOn``, which is bank-vs-leasing-company and derived from the\nrequest status; this one is front-office-vs-back-office and reads the checklist. A case with no\nopen step, or whose open step carries no role set, matches neither role.",
         "operationId": "list_cases_api_v1_cases_get",
         "parameters": [
           {
@@ -617,6 +617,20 @@
             "description": "Cases you own."
           },
           {
+            "name": "assignee_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "description": "Cases owned by a specific colleague (US 1.52 assignee filter).",
+              "title": "Assignee Id"
+            },
+            "description": "Cases owned by a specific colleague (US 1.52 assignee filter)."
+          },
+          {
             "name": "unassigned",
             "in": "query",
             "required": false,
@@ -639,6 +653,20 @@
               "title": "My Work List"
             },
             "description": "Case types routed to your role."
+          },
+          {
+            "name": "waiting_on_role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/UserRole" },
+                { "type": "null" }
+              ],
+              "description": "Cases whose currently-open checklist step is the responsibility of this role (US 1.52 waiting-on filter). Only front_office and back_office are authorable on a step, so any other role matches nothing.",
+              "title": "Waiting On Role"
+            },
+            "description": "Cases whose currently-open checklist step is the responsibility of this role (US 1.52 waiting-on filter). Only front_office and back_office are authorable on a step, so any other role matches nothing."
           },
           {
             "name": "oldest_first",
@@ -2152,7 +2180,7 @@
       "post": {
         "tags": ["Cases"],
         "summary": "Add Case Comment",
-        "description": "Add a comment to the case thread (PRD1042-1893 item 18).\n\nAppend-only — a comment is never edited or deleted; the thread is the record of what was said.\nBoth sides write: the bank (front / back office) and the leasing company on its own case. Each\ncomment records the author's role at the time, so the reader sees which side spoke. Audited\n(``CASE_COMMENT_ADDED``); NO outbound notification of any kind in this slice.",
+        "description": "Add a comment to the case thread (PRD1042-1893 item 18).\n\nAppend-only — a comment is never edited or deleted; the thread is the record of what was said.\nBoth sides write: the bank (front / back office) and the leasing company on its own case. Each\ncomment records the author's role at the time, so the reader sees which side spoke. Audited\n(``CASE_COMMENT_ADDED``); NO outbound notification of any kind in this slice.\n\n**Visibility (US 1.53 part 1, PO answer A4):** `visibility` defaults to `INTERNAL` — bank-only,\nnever served to a leasing-company user. Making a comment `EXTERNAL` is an explicit choice. An LC\nauthor is pinned to `EXTERNAL` in the service whatever it sends, so the customer cannot write a\ncomment its own side would never see. Notifying the LC of an external comment is deliberately\nNOT here — A4 keeps it open (channel unconfirmed, no read surface exists).",
         "operationId": "add_case_comment_api_v1_cases__case_id__comments_post",
         "parameters": [
           {
@@ -2194,7 +2222,7 @@
       "get": {
         "tags": ["Cases — LC"],
         "summary": "List Lc Cases",
-        "description": "The leasing company's own cases (its raised proposals and any the bank has since taken over).\n\nDefaults to newest-first (``oldest_first=False``), unlike the bank's queue-oriented ``/cases``.",
+        "description": "The leasing company's own cases (its raised proposals and any the bank has since taken over).\n\nDefaults to newest-first (``oldest_first=False``), unlike the bank's queue-oriented ``/cases``.\n\n**Answers `LcCaseListResponse`, not the bank's `CaseListResponse` (changed 2026-09-11).** This\nroute used to reuse the bank list model as \"a thin, clearly-named alias\", which handed a\nleasing-company user `owner_user_id`, `created_by`, `decision_round`, `request_status`,\n`routing_exception` and `origin_financing_id` — `decision_round` being, in effect, how many\ntimes the bank sent the request back. PRD1042-1951 withholds the bank's internal review\ninformation by name and requires the restriction to be \"enforced at query level and never by\nhiding things in the interface\", so the projection is the guard: those fields are absent from\nthe model and cannot be re-exposed by a serializer change. The detail route below was already\nleast-privilege; only the list had been aliased.",
         "operationId": "list_lc_cases_api_v1_lc_cases_get",
         "parameters": [
           {
@@ -2236,7 +2264,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CaseListResponse" }
+                "schema": { "$ref": "#/components/schemas/LcCaseListResponse" }
               }
             }
           },
@@ -2799,6 +2827,52 @@
         "summary": "Settle Financing Condition",
         "description": "Settle an approval condition — a factual entry, OPEN → MET, no dual control (PRD1042-1937).\n\nFront office and back office settle. A non-open condition (already met/waived/expired) is a 409;\nan unknown condition, or a cross-tenant / unknown financing, is 404.",
         "operationId": "settle_financing_condition_api_v1_cases__case_id__financing_conditions__condition_id__settle_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "condition_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Condition Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalConditionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/financing/conditions/{condition_id}/undo": {
+      "post": {
+        "tags": ["Financing"],
+        "summary": "Undo Financing Condition",
+        "description": "Undo a settlement — MET → OPEN, re-arming the disbursement block (US 1.51).\n\nThe mirror of settle, and the same front-office / back-office capability: a MET condition returns\nto OPEN and its settlement metadata is cleared. A condition that is not MET (still open, or waived\n/ expired) is a 409 `APPROVAL_CONDITION_NOT_UNDOABLE`; an unknown condition, or a cross-tenant /\nunknown financing, is 404.",
+        "operationId": "undo_financing_condition_api_v1_cases__case_id__financing_conditions__condition_id__undo_post",
         "parameters": [
           {
             "name": "case_id",
@@ -6296,7 +6370,7 @@
       "post": {
         "tags": ["Modules"],
         "summary": "Activate Tenant Module",
-        "description": "Initiate a Four-Eyes module activation request for an active tenant.\nReturns a GovernedActionResponse with status=pending.\nA second System Admin must approve via POST /governed-actions/{id}/approve.",
+        "description": "Initiate a Four-Eyes module activation request for an active tenant.\n\nThe module is set to `pending_enforcement` and a SECOND System Admin must approve via\nPOST /governed-actions/{id}/approve before it becomes active. Until then the module's routes\nanswer 404 (existence non-disclosure). The 201 response (BUG-015) states the pending state\nexplicitly so the caller is not surprised by that 404; track approvals at\nGET /governed-actions?status=pending.",
         "operationId": "activate_tenant_module_api_v1_tenants__tenant_id__modules__module_key__activate_post",
         "parameters": [
           {
@@ -6330,7 +6404,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GovernedActionResponse"
+                  "$ref": "#/components/schemas/ModuleActivationResponse"
                 }
               }
             }
@@ -11648,6 +11722,52 @@
         }
       }
     },
+    "/api/v1/cases/{business_object_id}/checklist/items/{item_id}/undo": {
+      "post": {
+        "tags": ["Workflow Task Catalog — Runtime"],
+        "summary": "Undo Item",
+        "description": "US 1.46 — Take back the last resolved checklist step (return it to OPEN). One step at a time,\nblocked past a no-way-back step. FO/BO, non-disclosure 404 like the rest of the runtime.",
+        "operationId": "undo_item_api_v1_cases__business_object_id__checklist_items__item_id__undo_post",
+        "parameters": [
+          {
+            "name": "business_object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Business Object Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{business_object_id}/checklist/items/{item_id}/checks/{check_id}": {
       "patch": {
         "tags": ["Workflow Task Catalog — Runtime"],
@@ -13683,6 +13803,10 @@
             "maxLength": 2000,
             "minLength": 1,
             "title": "Body"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CommentVisibility",
+            "default": "internal"
           }
         },
         "type": "object",
@@ -13934,6 +14058,30 @@
             "type": "boolean",
             "title": "Four Eyes Exclusion Wide",
             "default": false
+          },
+          "is_decision_step": {
+            "type": "boolean",
+            "title": "Is Decision Step",
+            "default": false
+          },
+          "is_no_way_back": {
+            "type": "boolean",
+            "title": "Is No Way Back",
+            "default": false
+          },
+          "completion_case_status_target": {
+            "anyOf": [
+              { "type": "string", "maxLength": 30 },
+              { "type": "null" }
+            ],
+            "title": "Completion Case Status Target"
+          },
+          "completion_entity_targets": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Completion Entity Targets"
           },
           "phase_id": {
             "anyOf": [
@@ -14937,6 +15085,7 @@
           },
           "author_role": { "type": "string", "title": "Author Role" },
           "body": { "type": "string", "title": "Body" },
+          "visibility": { "$ref": "#/components/schemas/CommentVisibility" },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -14950,6 +15099,7 @@
           "author_id",
           "author_role",
           "body",
+          "visibility",
           "created_at"
         ],
         "title": "CaseCommentItem"
@@ -15295,8 +15445,23 @@
           "case_reference": { "type": "string", "title": "Case Reference" },
           "case_type": { "$ref": "#/components/schemas/CaseType" },
           "case_status": { "$ref": "#/components/schemas/CaseStatus" },
+          "request_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RequestStatus" },
+              { "type": "null" }
+            ]
+          },
+          "financing_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingStatus" },
+              { "type": "null" }
+            ]
+          },
           "display_status": {
             "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "primary_entity": {
+            "$ref": "#/components/schemas/CasePrimaryEntity"
           },
           "origin": { "$ref": "#/components/schemas/CaseOrigin" },
           "owner_user_id": {
@@ -15347,6 +15512,7 @@
           "case_type",
           "case_status",
           "display_status",
+          "primary_entity",
           "origin",
           "owner_user_id",
           "lc_partner_id",
@@ -15398,6 +15564,12 @@
         "required": ["case_id", "submission_blocked", "parties"],
         "title": "CasePartyMatchResponse",
         "description": "The case's parties + their match outcomes (PRD1042-1929, US 1.13).\n\n``submission_blocked`` surfaces the submission hard-stop condition (an unresolved duplicate or an\nambiguous/candidate party) — the submit gate (US-1.17) ENFORCES it; this read only shows it."
+      },
+      "CasePrimaryEntity": {
+        "type": "string",
+        "enum": ["financing", "refinancing_request", "case"],
+        "title": "CasePrimaryEntity",
+        "description": "Which of a case's three status carriers is the one that governs its display (US 1.49).\n\nThe primary-entity rule (`derive_display_status`) reads the finest available carrier — the\nfinancing outranks the request, the request outranks the case. This enum names WHICH carrier won,\nso the interface can label the shown status with the record it belongs to (a \"Financing\" /\n\"Request\" / \"Case\" strip) without re-deriving the rule on the client. It is derived on read from\nthe same inputs as the display status and never stored."
       },
       "CaseProductTemplateResponse": {
         "properties": {
@@ -15487,8 +15659,23 @@
           "case_reference": { "type": "string", "title": "Case Reference" },
           "case_type": { "$ref": "#/components/schemas/CaseType" },
           "case_status": { "$ref": "#/components/schemas/CaseStatus" },
+          "request_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RequestStatus" },
+              { "type": "null" }
+            ]
+          },
+          "financing_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingStatus" },
+              { "type": "null" }
+            ]
+          },
           "display_status": {
             "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "primary_entity": {
+            "$ref": "#/components/schemas/CasePrimaryEntity"
           },
           "origin": { "$ref": "#/components/schemas/CaseOrigin" },
           "owner_user_id": {
@@ -15539,6 +15726,7 @@
           "case_type",
           "case_status",
           "display_status",
+          "primary_entity",
           "origin",
           "owner_user_id",
           "lc_partner_id",
@@ -15902,6 +16090,16 @@
             "title": "Four Eyes",
             "default": false
           },
+          "is_decision_step": {
+            "type": "boolean",
+            "title": "Is Decision Step",
+            "default": false
+          },
+          "is_no_way_back": {
+            "type": "boolean",
+            "title": "Is No Way Back",
+            "default": false
+          },
           "status": { "$ref": "#/components/schemas/ChecklistItemStatus" },
           "note": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -15954,7 +16152,7 @@
       },
       "ChecklistItemStatus": {
         "type": "string",
-        "enum": ["open", "checked", "not_applicable"],
+        "enum": ["open", "done", "not_required", "not_available"],
         "title": "ChecklistItemStatus"
       },
       "CollateralRecheckState": {
@@ -16122,6 +16320,12 @@
         ],
         "title": "CombinedDocumentResponse",
         "description": "A built combined document for a case (PRD1042-1943, US 1.27)."
+      },
+      "CommentVisibility": {
+        "type": "string",
+        "enum": ["internal", "external"],
+        "title": "CommentVisibility",
+        "description": "Who a case comment is for (PRD1042-1951 / US 1.53 part 1, PO answer A4 2026-09-11).\n\nThe thread was built as one shared record — its model docstring still reads \"One thread, both\nsides see all of it\". That is what this enum ends: a comment now names its audience, and the\nleasing company never receives an ``INTERNAL`` one.\n\n**``INTERNAL`` is the default.** Per A4 the bank writes internally unless it deliberately\nchooses otherwise — making a comment external is an explicit user action, so the safe value is\nthe one that does not reach the customer by accident. Note this is the opposite of the BACKFILL\ndefault: rows written before this field existed were genuinely shared correspondence the LC has\nalready read, so the migration sets them ``EXTERNAL`` rather than retroactively hiding history.\n\nEnforced at query level in ``CaseCommentService.list_comments`` — A4 is explicit that the\nrestriction is a system-level one, not something the interface hides."
       },
       "CommitRateRequest": {
         "properties": {
@@ -16689,6 +16893,7 @@
           "deferred_state": {
             "$ref": "#/components/schemas/ContractDeferredState"
           },
+          "contract_status": { "$ref": "#/components/schemas/ContractStatus" },
           "batch_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -16844,6 +17049,7 @@
           "contract_type",
           "contract_residual",
           "deferred_state",
+          "contract_status",
           "batch_id",
           "contract_origin",
           "completeness",
@@ -16869,6 +17075,12 @@
         "required": ["reason"],
         "title": "ContractRemove",
         "description": "The reason a contract is removed — required, and preserved with the soft-removed record."
+      },
+      "ContractStatus": {
+        "type": "string",
+        "enum": ["active", "cancelled"],
+        "title": "ContractStatus",
+        "description": "The contract's own lifecycle status (US-1.56 — the cancellation cascade).\n\nDistinct from ``ContractDeferredState`` (live vs held-back within an open request) and from the\nsoft-delete carriers (``removed_at`` / ``removal_reason``): this is the terminal lifecycle marker a\ncontract carries when its parent case is cancelled. The 44-step matrix's lease-contract value set did\nnot carry ``Cancelled`` (it lists Draft…Closed); the PO's cancellation-cascade decision (Additional\nNotes, 2026-09-11) adds it — every contract of a cancelled case moves to ``CANCELLED`` as a stored\nstatus, not a derivation. The default for a live contract is ``ACTIVE``."
       },
       "ContractType": {
         "type": "string",
@@ -19466,6 +19678,7 @@
       "FinancingStatus": {
         "type": "string",
         "enum": [
+          "draft",
           "calculating",
           "ready_for_setup",
           "disbursed",
@@ -19474,7 +19687,7 @@
           "cancelled"
         ],
         "title": "FinancingStatus",
-        "description": "The financing's state.\n\nDefined here because the derived display status reads it, **not** because the case stores it.\nThe Financing entity does not exist yet; until it does, no case can carry one of these values\nand the derivation never reaches its financing branch. No financing status column is added to\nthe case — the financing owns its own state, and a second carrier here would drift from it.\n\n`ENDED` is the planned end of a financing, not a failure. `CANCELLED` (PRD1042-1952, US 1.36) is\na state of the financing, not merely an action: cancellation *is* a financing state per the state\nmatrix, reachable from any non-terminal state, and terminal like `ENDED`. It lives here for the\nsame reason every other financing status does — the derived display status reads it, and a second\ncarrier would drift. The allowed transitions between these states are defined once, in\n`financing/domain/transitions.py` (the single source of truth for legality); this enum only names\nthe states."
+        "description": "The financing's state.\n\nDefined here because the derived display status reads it, **not** because the case stores it.\nThe Financing entity does not exist yet; until it does, no case can carry one of these values\nand the derivation never reaches its financing branch. No financing status column is added to\nthe case — the financing owns its own state, and a second carrier here would drift from it.\n\n`DRAFT` is the entry state of the nine-value model formalised at PO level on 10 Sep 2026 (the\n44-step matrix v1.1, hub Q-024): a financing is created with the case and starts in `Draft`, and\nthe primary-entity rule reads it (`Financing.status = Draft` → the Refinancing Request is primary).\n**The value + the `Draft → Calculating` (A-3) transition + the primary-entity branch are built; no\ncode mints a `Draft` financing yet** — the creation semantics (when it is minted, the loan-kind\nhandling with no contracts, and the reject/rework fate) are the CrossLease-owed items still open on\nQ-042, and are deliberately not guessed. Until minting lands, the enum value is inert exactly like\nthe others were before US-1.21.\n\n`ENDED` is the planned end of a financing, not a failure. `CANCELLED` (PRD1042-1952, US 1.36) is\na state of the financing, not merely an action: cancellation *is* a financing state per the state\nmatrix, reachable from any non-terminal state, and terminal like `ENDED`. It lives here for the\nsame reason every other financing status does — the derived display status reads it, and a second\ncarrier would drift. The allowed transitions between these states are defined once, in\n`financing/domain/transitions.py` (the single source of truth for legality); this enum only names\nthe states."
       },
       "FollowUpEvent": {
         "type": "string",
@@ -19832,15 +20045,16 @@
               {
                 "oneOf": [
                   { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
-                  { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
-                  { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+                  { "$ref": "#/components/schemas/PersonIdentityInput" },
+                  { "$ref": "#/components/schemas/SoleTraderIdentityInput" }
                 ],
                 "discriminator": {
                   "propertyName": "partner_type",
                   "mapping": {
                     "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
-                    "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                    "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
+                    "person_commercial": "#/components/schemas/PersonIdentityInput",
+                    "person_private": "#/components/schemas/PersonIdentityInput",
+                    "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
                   }
                 }
               },
@@ -19940,16 +20154,17 @@
           "identity": {
             "oneOf": [
               { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
-              { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
-              { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+              { "$ref": "#/components/schemas/PersonIdentityInput" },
+              { "$ref": "#/components/schemas/SoleTraderIdentityInput" }
             ],
             "title": "Identity",
             "discriminator": {
               "propertyName": "partner_type",
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
-                "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
+                "person_commercial": "#/components/schemas/PersonIdentityInput",
+                "person_private": "#/components/schemas/PersonIdentityInput",
+                "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
               }
             }
           }
@@ -20760,8 +20975,22 @@
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "case_reference": { "type": "string", "title": "Case Reference" },
           "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "case_status": { "$ref": "#/components/schemas/CaseStatus" },
           "display_status": {
             "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "primary_entity": {
+            "$ref": "#/components/schemas/CasePrimaryEntity"
+          },
+          "financing_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingStatus" },
+              { "type": "null" }
+            ]
+          },
+          "agreement_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Agreement Reference"
           },
           "origin": { "$ref": "#/components/schemas/CaseOrigin" },
           "created_at": {
@@ -20775,12 +21004,71 @@
           "id",
           "case_reference",
           "case_type",
+          "case_status",
           "display_status",
+          "primary_entity",
           "origin",
           "created_at"
         ],
         "title": "LcCaseDetailResponse",
-        "description": "A leasing company's restricted view of one of its own cases (US 1.35 / PRD1042-1951).\n\nThe same record the bank sees, through a narrower window: only what the leasing company may see.\n`display_status` is derived (never stored) from the finest available carrier — it folds the\nfinancing state in once a financing exists, and preserves the MISSING_INFORMATION vs REWORK\ndistinction (their external labels are a display question, 1951-OQ-02). The bounded field set IS\nthe access control: bank-internal fields are absent by construction and cannot leak — no\n`case_status`, no `owner_user_id`, no `request_status`, no `product_template_id` /\n`framework_agreement_id`, no financing figures (rate / loan number / loan account), no checklist,\nno calculation, no pricing. Enforced at query level (company + tenant scope), never by hiding in\nthe UI. There is deliberately no bank-side counterpart to this schema — it is not a copy of\n`CaseResponse` with fields removed, it is its own least-privilege projection."
+        "description": "A leasing company's restricted view of one of its own cases (US 1.35 / PRD1042-1951).\n\nThe same record the bank sees, through a narrower window: only what the leasing company may see.\n`display_status` is derived (never stored) from the finest available carrier — it folds the\nfinancing state in once a financing exists, and preserves the MISSING_INFORMATION vs REWORK\ndistinction (their external labels are a display question, 1951-OQ-02). `case_status` and\n`primary_entity` are added by US 1.49: the LC sees BOTH the case's own lifecycle state and the\nprimary-entity status, and `primary_entity` names which record the shown status belongs to. Those\nare non-sensitive lifecycle labels (open / waiting / done / cancelled and a record name) — the\ndeliberate widening the primary-entity story requires, not a leak. The bounded field set is still\nthe access control: bank-internal fields remain absent by construction and cannot leak — no\n`owner_user_id`, no `request_status`, no `product_template_id` / `framework_agreement_id`, no\nfinancing figures (rate / loan number / loan account), no checklist, no calculation, no pricing.\nEnforced at query level (company + tenant scope), never by hiding in the UI. There is deliberately\nno bank-side counterpart to this schema — it is not a copy of `CaseResponse` with fields removed,\nit is its own least-privilege projection."
+      },
+      "LcCaseListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_reference": { "type": "string", "title": "Case Reference" },
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "case_status": { "$ref": "#/components/schemas/CaseStatus" },
+          "display_status": {
+            "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "primary_entity": {
+            "$ref": "#/components/schemas/CasePrimaryEntity"
+          },
+          "financing_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingStatus" },
+              { "type": "null" }
+            ]
+          },
+          "agreement_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Agreement Reference"
+          },
+          "origin": { "$ref": "#/components/schemas/CaseOrigin" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_reference",
+          "case_type",
+          "case_status",
+          "display_status",
+          "primary_entity",
+          "origin",
+          "created_at"
+        ],
+        "title": "LcCaseListItem",
+        "description": "One row of a leasing company's own case list (US 1.35 / PRD1042-1951).\n\n**Deliberately not `CaseListItem`.** Until 2026-09-11 `GET /lc/cases` answered with the bank's\nown list model — described in the route as \"a thin, clearly-named alias\" — which handed a\nleasing-company user `owner_user_id`, `created_by`, `decision_round`, `request_status`,\n`routing_exception` and `origin_financing_id`. `decision_round` alone states how many times the\nbank returned the request, which is the \"internal review notes\" the story withholds by name.\nThe detail projection had always been least-privilege; only the list was aliased. The field set\nhere is the access control, exactly as in `LcCaseDetailResponse`: bank-internal fields are\nabsent by construction and cannot be leaked by a future serializer change.\n\nSame fields as the detail projection. They are kept as two models rather than one alias because\na list and a detail diverge on their own schedules, and the next field added to one must be a\ndecision about the other rather than an accident."
+      },
+      "LcCaseListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/LcCaseListItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": ["items", "total"],
+        "title": "LcCaseListResponse",
+        "description": "The leasing company's own case list.\n\nNo `counts_by_status`: that facet is the bank work list's queue instrument, grouped over stored\nbank columns, and no portal surface consumes it. Leaving it out keeps the projection to what the\nportal actually shows."
       },
       "LcNumberCreateRequest": {
         "properties": {
@@ -21483,15 +21771,16 @@
               {
                 "oneOf": [
                   { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
-                  { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
-                  { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+                  { "$ref": "#/components/schemas/PersonIdentityInput" },
+                  { "$ref": "#/components/schemas/SoleTraderIdentityInput" }
                 ],
                 "discriminator": {
                   "propertyName": "partner_type",
                   "mapping": {
                     "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
-                    "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                    "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
+                    "person_commercial": "#/components/schemas/PersonIdentityInput",
+                    "person_private": "#/components/schemas/PersonIdentityInput",
+                    "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
                   }
                 }
               },
@@ -21534,16 +21823,17 @@
           "identity": {
             "oneOf": [
               { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
-              { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
-              { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+              { "$ref": "#/components/schemas/PersonIdentityInput" },
+              { "$ref": "#/components/schemas/SoleTraderIdentityInput" }
             ],
             "title": "Identity",
             "discriminator": {
               "propertyName": "partner_type",
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
-                "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
+                "person_commercial": "#/components/schemas/PersonIdentityInput",
+                "person_private": "#/components/schemas/PersonIdentityInput",
+                "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
               }
             }
           }
@@ -22027,6 +22317,22 @@
         "required": ["justification"],
         "title": "ModuleActionRequest"
       },
+      "ModuleActivationResponse": {
+        "properties": {
+          "action": { "$ref": "#/components/schemas/GovernedActionResponse" },
+          "module_key": { "type": "string", "title": "Module Key" },
+          "module_status": { "type": "string", "title": "Module Status" },
+          "pending_approval_note": {
+            "type": "string",
+            "title": "Pending Approval Note",
+            "default": "Module activation is pending a second System Admin's approval (POST /governed-actions/{id}/approve). The module stays in 'pending_enforcement' and its routes answer 404 until approved. Track pending approvals at GET /governed-actions?status=pending."
+          }
+        },
+        "type": "object",
+        "required": ["action", "module_key", "module_status"],
+        "title": "ModuleActivationResponse",
+        "description": "BUG-015 — the 201 body of a module-activation request.\n\nActivation is a Four-Eyes governed action: the module is set to `pending_enforcement` and a SECOND\nSystem Admin must approve before it becomes `active`. Until then every route the module gates\nanswers a generic 404 (existence non-disclosure, by design). The bare `GovernedActionResponse`\ncarried nothing about the module's new state, so an admin read \"201 Created\" as \"the module is now\nusable\" and was surprised by the downstream 404. This response makes the state explicit — the\ngoverned action PLUS the module's `pending_enforcement` status and where to track the approval."
+      },
       "ModuleDeactivateRequest": {
         "properties": {
           "justification": {
@@ -22038,102 +22344,6 @@
         "type": "object",
         "required": ["justification"],
         "title": "ModuleDeactivateRequest"
-      },
-      "NaturalPersonIdentityDetail": {
-        "properties": {
-          "partner_type": {
-            "type": "string",
-            "const": "natural_person",
-            "title": "Partner Type"
-          },
-          "full_name": { "type": "string", "title": "Full Name" },
-          "date_of_birth": {
-            "type": "string",
-            "format": "date",
-            "title": "Date Of Birth"
-          },
-          "place_of_birth": { "type": "string", "title": "Place Of Birth" },
-          "country": { "type": "string", "title": "Country" },
-          "birth_name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Birth Name"
-          },
-          "national_id": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "National Id"
-          },
-          "registered_address": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddress" },
-              { "type": "null" }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "partner_type",
-          "full_name",
-          "date_of_birth",
-          "place_of_birth",
-          "country",
-          "birth_name",
-          "national_id",
-          "registered_address"
-        ],
-        "title": "NaturalPersonIdentityDetail"
-      },
-      "NaturalPersonIdentityInput": {
-        "properties": {
-          "partner_type": {
-            "type": "string",
-            "const": "natural_person",
-            "title": "Partner Type"
-          },
-          "full_name": { "type": "string", "title": "Full Name" },
-          "date_of_birth": {
-            "type": "string",
-            "format": "date",
-            "title": "Date Of Birth"
-          },
-          "place_of_birth": { "type": "string", "title": "Place Of Birth" },
-          "country": {
-            "type": "string",
-            "maxLength": 2,
-            "minLength": 2,
-            "title": "Country"
-          },
-          "birth_name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Birth Name"
-          },
-          "national_id": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "National Id"
-          },
-          "registered_address": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/RegisteredAddressInput" },
-              { "type": "null" }
-            ]
-          },
-          "creditreform_no": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Creditreform No"
-          },
-          "schufa_no": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Schufa No"
-          }
-        },
-        "type": "object",
-        "required": [
-          "partner_type",
-          "full_name",
-          "date_of_birth",
-          "place_of_birth",
-          "country"
-        ],
-        "title": "NaturalPersonIdentityInput"
       },
       "NewOrUsed": {
         "type": "string",
@@ -22456,22 +22666,22 @@
           "partner_type": { "$ref": "#/components/schemas/PartnerType" },
           "status": { "type": "string", "title": "Status" },
           "ubo_completeness_status": {
-            "type": "string",
-            "title": "Ubo Completeness Status"
+            "$ref": "#/components/schemas/UboCompletenessStatus"
           },
           "identity": {
             "oneOf": [
               { "$ref": "#/components/schemas/LegalEntityIdentityDetail" },
-              { "$ref": "#/components/schemas/NaturalPersonIdentityDetail" },
-              { "$ref": "#/components/schemas/SoleProprietorIdentityDetail" }
+              { "$ref": "#/components/schemas/PersonIdentityDetail" },
+              { "$ref": "#/components/schemas/SoleTraderIdentityDetail" }
             ],
             "title": "Identity",
             "discriminator": {
               "propertyName": "partner_type",
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityDetail",
-                "natural_person": "#/components/schemas/NaturalPersonIdentityDetail",
-                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityDetail"
+                "person_commercial": "#/components/schemas/PersonIdentityDetail",
+                "person_private": "#/components/schemas/PersonIdentityDetail",
+                "sole_trader": "#/components/schemas/SoleTraderIdentityDetail"
               }
             }
           },
@@ -22510,8 +22720,7 @@
             "title": "Country"
           },
           "ubo_completeness_status": {
-            "type": "string",
-            "title": "Ubo Completeness Status"
+            "$ref": "#/components/schemas/UboCompletenessStatus"
           },
           "roles": {
             "items": { "type": "string" },
@@ -22551,16 +22760,17 @@
           "identity": {
             "oneOf": [
               { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
-              { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
-              { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+              { "$ref": "#/components/schemas/PersonIdentityInput" },
+              { "$ref": "#/components/schemas/SoleTraderIdentityInput" }
             ],
             "title": "Identity",
             "discriminator": {
               "propertyName": "partner_type",
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
-                "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
+                "person_commercial": "#/components/schemas/PersonIdentityInput",
+                "person_private": "#/components/schemas/PersonIdentityInput",
+                "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
               }
             }
           }
@@ -22651,16 +22861,17 @@
           "identity": {
             "oneOf": [
               { "$ref": "#/components/schemas/LegalEntityIdentityInput" },
-              { "$ref": "#/components/schemas/NaturalPersonIdentityInput" },
-              { "$ref": "#/components/schemas/SoleProprietorIdentityInput" }
+              { "$ref": "#/components/schemas/PersonIdentityInput" },
+              { "$ref": "#/components/schemas/SoleTraderIdentityInput" }
             ],
             "title": "Identity",
             "discriminator": {
               "propertyName": "partner_type",
               "mapping": {
                 "legal_entity": "#/components/schemas/LegalEntityIdentityInput",
-                "natural_person": "#/components/schemas/NaturalPersonIdentityInput",
-                "registered_sole_trader": "#/components/schemas/SoleProprietorIdentityInput"
+                "person_commercial": "#/components/schemas/PersonIdentityInput",
+                "person_private": "#/components/schemas/PersonIdentityInput",
+                "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
               }
             }
           }
@@ -22708,14 +22919,18 @@
       },
       "PartnerType": {
         "type": "string",
-        "enum": ["legal_entity", "natural_person", "registered_sole_trader"],
+        "enum": [
+          "legal_entity",
+          "person_commercial",
+          "person_private",
+          "sole_trader"
+        ],
         "title": "PartnerType"
       },
       "PartnerUboResponse": {
         "properties": {
           "ubo_completeness_status": {
-            "type": "string",
-            "title": "Ubo Completeness Status"
+            "$ref": "#/components/schemas/UboCompletenessStatus"
           },
           "records": {
             "items": {
@@ -22871,6 +23086,102 @@
         "type": "object",
         "required": ["requirement_code", "classification", "status"],
         "title": "PerRequirementStatusResponse"
+      },
+      "PersonIdentityDetail": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "enum": ["person_commercial", "person_private"],
+            "title": "Partner Type"
+          },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "place_of_birth": { "type": "string", "title": "Place Of Birth" },
+          "country": { "type": "string", "title": "Country" },
+          "birth_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Birth Name"
+          },
+          "national_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "National Id"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_type",
+          "full_name",
+          "date_of_birth",
+          "place_of_birth",
+          "country",
+          "birth_name",
+          "national_id",
+          "registered_address"
+        ],
+        "title": "PersonIdentityDetail"
+      },
+      "PersonIdentityInput": {
+        "properties": {
+          "partner_type": {
+            "type": "string",
+            "enum": ["person_commercial", "person_private"],
+            "title": "Partner Type"
+          },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Of Birth"
+          },
+          "place_of_birth": { "type": "string", "title": "Place Of Birth" },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "birth_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Birth Name"
+          },
+          "national_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "National Id"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddressInput" },
+              { "type": "null" }
+            ]
+          },
+          "creditreform_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Creditreform No"
+          },
+          "schufa_no": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Schufa No"
+          }
+        },
+        "type": "object",
+        "required": [
+          "partner_type",
+          "full_name",
+          "date_of_birth",
+          "place_of_birth",
+          "country"
+        ],
+        "title": "PersonIdentityInput"
       },
       "PhaseGateResponse": {
         "properties": {
@@ -23403,7 +23714,8 @@
           "missing_information",
           "rework",
           "committed",
-          "rejected"
+          "rejected",
+          "cancelled"
         ],
         "title": "RequestStatus",
         "description": "The refinancing request's state.\n\n`MISSING_INFORMATION` and `REWORK` are separate values and must not be merged: the first is a\nquestion back to the submitter, the second is a structured correction loop. `COMMITTED` is a\nstatus of the request and never of the financing (PRD1042-1918)."
@@ -24294,11 +24606,11 @@
         "title": "SetValueDateRequest",
         "description": "Set the refinancing start / value date on the financing (PRD1042-1931, US 1.15)."
       },
-      "SoleProprietorIdentityDetail": {
+      "SoleTraderIdentityDetail": {
         "properties": {
           "partner_type": {
             "type": "string",
-            "const": "registered_sole_trader",
+            "const": "sole_trader",
             "title": "Partner Type"
           },
           "full_name": { "type": "string", "title": "Full Name" },
@@ -24333,13 +24645,13 @@
           "commercial_register_no",
           "registered_address"
         ],
-        "title": "SoleProprietorIdentityDetail"
+        "title": "SoleTraderIdentityDetail"
       },
-      "SoleProprietorIdentityInput": {
+      "SoleTraderIdentityInput": {
         "properties": {
           "partner_type": {
             "type": "string",
-            "const": "registered_sole_trader",
+            "const": "sole_trader",
             "title": "Partner Type"
           },
           "full_name": { "type": "string", "title": "Full Name" },
@@ -24379,7 +24691,7 @@
         },
         "type": "object",
         "required": ["partner_type", "full_name", "date_of_birth", "country"],
-        "title": "SoleProprietorIdentityInput"
+        "title": "SoleTraderIdentityInput"
       },
       "StartCaseRequest": {
         "properties": {
@@ -24773,6 +25085,22 @@
             "type": "boolean",
             "title": "Four Eyes Exclusion Wide"
           },
+          "is_decision_step": {
+            "type": "boolean",
+            "title": "Is Decision Step"
+          },
+          "is_no_way_back": { "type": "boolean", "title": "Is No Way Back" },
+          "completion_case_status_target": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Completion Case Status Target"
+          },
+          "completion_entity_targets": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Completion Entity Targets"
+          },
           "generated_document_ref": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -24890,6 +25218,10 @@
           "four_eyes",
           "exclusion_task_ids",
           "four_eyes_exclusion_wide",
+          "is_decision_step",
+          "is_no_way_back",
+          "completion_case_status_target",
+          "completion_entity_targets",
           "generated_document_ref",
           "trigger_event",
           "permitted_outcomes",
@@ -25025,6 +25357,22 @@
             "type": "boolean",
             "title": "Four Eyes Exclusion Wide"
           },
+          "is_decision_step": {
+            "type": "boolean",
+            "title": "Is Decision Step"
+          },
+          "is_no_way_back": { "type": "boolean", "title": "Is No Way Back" },
+          "completion_case_status_target": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Completion Case Status Target"
+          },
+          "completion_entity_targets": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Completion Entity Targets"
+          },
           "generated_document_ref": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -25136,6 +25484,10 @@
           "four_eyes",
           "exclusion_task_ids",
           "four_eyes_exclusion_wide",
+          "is_decision_step",
+          "is_no_way_back",
+          "completion_case_status_target",
+          "completion_entity_targets",
           "generated_document_ref",
           "trigger_event",
           "permitted_outcomes",
@@ -25256,6 +25608,22 @@
             "type": "boolean",
             "title": "Four Eyes Exclusion Wide"
           },
+          "is_decision_step": {
+            "type": "boolean",
+            "title": "Is Decision Step"
+          },
+          "is_no_way_back": { "type": "boolean", "title": "Is No Way Back" },
+          "completion_case_status_target": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Completion Case Status Target"
+          },
+          "completion_entity_targets": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Completion Entity Targets"
+          },
           "generated_document_ref": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -25373,6 +25741,10 @@
           "four_eyes",
           "exclusion_task_ids",
           "four_eyes_exclusion_wide",
+          "is_decision_step",
+          "is_no_way_back",
+          "completion_case_status_target",
+          "completion_entity_targets",
           "generated_document_ref",
           "trigger_event",
           "permitted_outcomes",
@@ -26520,6 +26892,28 @@
           "four_eyes_exclusion_wide": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Four Eyes Exclusion Wide"
+          },
+          "is_decision_step": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Decision Step"
+          },
+          "is_no_way_back": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is No Way Back"
+          },
+          "completion_case_status_target": {
+            "anyOf": [
+              { "type": "string", "maxLength": 30 },
+              { "type": "null" }
+            ],
+            "title": "Completion Case Status Target"
+          },
+          "completion_entity_targets": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Completion Entity Targets"
           },
           "generated_document_ref": {
             "anyOf": [
