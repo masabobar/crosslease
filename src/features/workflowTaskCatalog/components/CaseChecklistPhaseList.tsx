@@ -1,14 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Lock,
-  Minus,
-  Shield,
-  TrendingUp,
-} from "lucide-react"
+import { Check, ChevronDown, ChevronRight, Minus, Shield } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,16 +16,12 @@ import { CaseChecklistItemStatusBadge } from "@/features/workflowTaskCatalog/com
 import { SetChecklistItemStatusDialog } from "@/features/workflowTaskCatalog/components/SetChecklistItemStatusDialog"
 import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import {
+  canRoleActOn,
   groupChecklistByPhase,
-  isOwnedByRole,
   phaseHeading,
-  responsibleRolesOf,
+  stepRoles,
   taskNumber,
 } from "@/features/workflowTaskCatalog/checklistPhases"
-import {
-  isFreezingStep,
-  stepMoveFor,
-} from "@/features/workflowTaskCatalog/checklistStepMoves"
 import type { ChecklistItemResponse } from "@/features/workflowTaskCatalog/api/runtimeSchema"
 import type { ChecklistPhaseGroup } from "@/features/workflowTaskCatalog/checklistPhases"
 import type { UserListItem } from "@/features/users/api/schema"
@@ -58,6 +46,13 @@ type Props = {
  * header rows alone. So the phases arrive collapsed with the first one open, exactly as the dummy
  * does, and a reader opens the phase they are working in rather than scrolling past the four they
  * are not.
+ *
+ * ── WHOSE TURN IT IS, RATHER THAN WHAT THE STEP MOVES ──────────────────────────────────────────
+ * The 14 Sep final replaced the row's three tags — the blue "commits the request" pill, the freeze
+ * tag and a four-eyes badge — with **one role tag**, coloured by whether the reader's own role
+ * group may act, and it gates the tick on the same answer. That is the question a checklist row is
+ * actually asked: whose turn is this. Four eyes moved onto the task's name as an icon, because it
+ * is a property of the task and the badges beside it describe state.
  *
  * `Collapsible` rather than `Accordion`: several phases are legitimately open at once, and the rows
  * change height in place (resolving a task adds its "settled by" line), which the accordion
@@ -176,7 +171,7 @@ function PhaseSection({
               key={item.id}
               item={item}
               number={taskNumber(item, index)}
-              isYours={isOwnedByRole(item, currentRole)}
+              canAct={canRoleActOn(item, currentRole)}
               canWrite={canWrite}
               users={users}
               onSetStatus={onSetStatus}
@@ -191,14 +186,14 @@ function PhaseSection({
 function TaskRow({
   item,
   number,
-  isYours,
+  canAct,
   canWrite,
   users,
   onSetStatus,
 }: {
   item: ChecklistItemResponse
   number: number
-  isYours: boolean
+  canAct: boolean
   canWrite: boolean
   users: readonly UserListItem[]
   onSetStatus: (item: ChecklistItemResponse) => void
@@ -208,7 +203,11 @@ function TaskRow({
   const isChecked = item.status === ChecklistItemStatusSchema.enum.checked
   const isNotApplicable =
     item.status === ChecklistItemStatusSchema.enum.not_applicable
-  const move = stepMoveFor(item.task_code)
+  const roles = stepRoles(item)
+  // A step another role group owns is readable, not actionable — the dummy disables its tick and
+  // says so on the role tag. The backend enforces the same; this stops the user finding out by
+  // being refused.
+  const isActionable = isOpen && canWrite && canAct
 
   return (
     <li
@@ -229,7 +228,7 @@ function TaskRow({
           "mt-0.5 size-5 shrink-0 rounded-full",
           isNotApplicable && "border-dashed"
         )}
-        disabled={!isOpen || !canWrite}
+        disabled={!isActionable}
         aria-label={t("caseChecklist.actions.setStatus")}
         data-testid={`case-checklist-tick-${item.id}`}
         onClick={() => onSetStatus(item)}
@@ -249,62 +248,47 @@ function TaskRow({
             data-testid={`case-checklist-item-name-${item.id}`}
           >
             {item.task_name ?? item.task_code ?? item.id}
+            {/* Four eyes is an icon on the name now, not a badge in the row. It is a property of
+                the task rather than a state of it, and as a badge it sat in a line of badges that
+                do describe state. */}
+            {item.four_eyes && (
+              <Shield
+                size={14}
+                className="ml-1.5 inline shrink-0 align-text-bottom text-muted-foreground"
+                aria-label={t("caseChecklist.fourEyesBadge")}
+                data-testid={`case-checklist-four-eyes-${item.id}`}
+              />
+            )}
           </p>
 
-          {/* What resolving this step sets in motion — the dummy's blue pill. The tooltip carries
-              the consequence, which is the part the step's own wording never says. */}
-          {move !== null && (
-            <Badge
-              variant="outline"
-              className="border-primary/30 bg-primary/5 font-normal text-primary"
-              title={t(
-                `caseChecklist.stepMoves.${move}.note` as "caseChecklist.stepMoves.commitsRequest.note"
-              )}
-              data-testid={`case-checklist-move-${item.id}`}
-            >
-              <TrendingUp size={12} />
-              {t(
-                `caseChecklist.stepMoves.${move}.label` as "caseChecklist.stepMoves.commitsRequest.label"
-              )}
-            </Badge>
-          )}
-
-          {isFreezingStep(item.task_code) && (
-            <Badge
-              variant="outline"
-              className="font-normal"
-              data-testid={`case-checklist-freezes-${item.id}`}
-            >
-              <Lock size={12} />
-              {t("caseChecklist.freezesBadge")}
-            </Badge>
-          )}
-
-          {item.four_eyes && (
-            <Badge variant="secondary" className="font-normal">
-              <Shield size={12} />
-              {t("caseChecklist.fourEyesBadge")}
-            </Badge>
-          )}
-
-          {/* The role the task belongs to — the design's Front Office / Back Office badge.
-              Rendered from the role set the wire declares, translated, never as the raw value. */}
-          {responsibleRolesOf(item).map(role => (
-            <Badge
-              key={role}
-              variant={isYours ? "default" : "outline"}
-              className="font-normal"
-              data-testid={`case-checklist-role-${item.id}-${role}`}
-            >
-              {/* One label set already covers both vocabularies — the catalogue's
-                  TaskResponsibleRole and the platform's UserRole — so either field's value
-                  resolves, with the raw value as the last resort. */}
-              {t(
-                `detail.taskSheet.responsibleRoles.${role}` as "detail.taskSheet.responsibleRoles.front_office",
-                { defaultValue: role }
-              )}
-            </Badge>
-          ))}
+          {/* One role tag, coloured by whether this user's role group may act. The dummy replaced
+              the row's three separate tags — the move pill, the freeze tag and a four-eyes badge —
+              with this single one, because the question a reader has on a checklist row is whose
+              turn it is. */}
+          <Badge
+            variant={canAct ? "default" : "outline"}
+            className="font-normal"
+            title={t(
+              canAct
+                ? "caseChecklist.roleTag.yours"
+                : "caseChecklist.roleTag.other"
+            )}
+            data-testid={`case-checklist-role-${item.id}`}
+          >
+            {/* One label set already covers both vocabularies — the catalogue's
+                TaskResponsibleRole and the platform's UserRole — so either field's value
+                resolves, with the raw value as the last resort. */}
+            {roles.length === 0
+              ? t("caseChecklist.roleTag.anyone")
+              : roles
+                  .map(role =>
+                    t(
+                      `detail.taskSheet.responsibleRoles.${role}` as "detail.taskSheet.responsibleRoles.front_office",
+                      { defaultValue: role }
+                    )
+                  )
+                  .join(t("caseChecklist.roleTag.or"))}
+          </Badge>
 
           {!item.is_mandatory && (
             <span className="text-xs text-muted-foreground">
@@ -337,7 +321,7 @@ function TaskRow({
             OPEN → checked/not_applicable exactly once and then raises
             WTC_CHECKLIST_ITEM_IMMUTABLE, so a settled task gets no control rather than a
             button guaranteed to fail. */}
-        {canWrite && isOpen && (
+        {isActionable && (
           <Button
             type="button"
             variant="outline"

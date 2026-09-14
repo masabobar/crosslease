@@ -217,3 +217,30 @@ export function taskNumber(
 ): number {
   return item.display_order ?? indexInGroup + 1
 }
+
+/**
+ * Whether this user's role group may **act** on a task, as against merely read it.
+ *
+ * The 14 Sep dummy gates the tick on this and colours the role tag by it: *"Your role group — you
+ * can act on this step"* against *"Another role group — you can read it but not act on it"*.
+ *
+ * A task that names **no** role is actionable by anyone. The dummy's own `canActOn` would refuse
+ * it, but that is an accident of its fixture always naming one: refusing here would leave a task
+ * nobody on the platform could ever resolve, which is worse than letting a role act on a task that
+ * did not ask for it.
+ */
+export function canRoleActOn(
+  item: ChecklistItemResponse,
+  role: UserRole | undefined
+): boolean {
+  if (responsibleRolesOf(item).length === 0) return true
+  return isOwnedByRole(item, role)
+}
+
+/**
+ * The single role label the dummy prints on a row — `Front office`, or `Back office or Risk` when a
+ * task names several. Returns the raw wire values; the caller translates each.
+ */
+export function stepRoles(item: ChecklistItemResponse): string[] {
+  return responsibleRolesOf(item)
+}

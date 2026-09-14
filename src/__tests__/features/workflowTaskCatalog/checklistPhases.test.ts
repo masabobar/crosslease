@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  canRoleActOn,
   groupChecklistByPhase,
   isOwnedByRole,
   phaseHeading,
@@ -337,5 +338,50 @@ describe("taskNumber", () => {
   // So a section is never numbered with blanks.
   it("falls back to the position within the section", () => {
     expect(taskNumber(item({ display_order: null }), 2)).toBe(3)
+  })
+})
+
+describe("canRoleActOn", () => {
+  it("lets the named role group act", () => {
+    expect(
+      canRoleActOn(item({ responsible_roles: ["back_office"] }), "back_office")
+    ).toBe(true)
+  })
+
+  // Readable, not actionable — the dummy disables the tick and says so on the role tag.
+  it("refuses a role group the task does not name", () => {
+    expect(
+      canRoleActOn(item({ responsible_roles: ["back_office"] }), "front_office")
+    ).toBe(false)
+  })
+
+  it("honours the catalogue alias", () => {
+    expect(
+      canRoleActOn(
+        item({ responsible_roles: null, responsible_role: "back_office_risk" }),
+        "back_office"
+      )
+    ).toBe(true)
+  })
+
+  /**
+   * A task naming no role is actionable by anyone. The dummy's own `canActOn` would refuse it —
+   * an accident of its fixture always naming one — and refusing here would leave a task nobody on
+   * the platform could ever resolve, which is worse than letting a role act on one that did not
+   * ask for it.
+   */
+  it("lets anyone act on a task that names no role", () => {
+    expect(
+      canRoleActOn(
+        item({ responsible_roles: [], responsible_role: null }),
+        "front_office"
+      )
+    ).toBe(true)
+  })
+
+  it("refuses an unknown role on a task that does name one", () => {
+    expect(
+      canRoleActOn(item({ responsible_roles: ["back_office"] }), undefined)
+    ).toBe(false)
   })
 })
