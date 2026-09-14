@@ -21,8 +21,9 @@
   },
   "type": {
     "legal_entity": "Legal entity",
-    "natural_person": "Natural person",
-    "registered_sole_trader": "Registered sole trader"
+    "sole_trader": "Sole trader",
+    "person_commercial": "Person, commercial",
+    "person_private": "Person, private"
   },
   "role": {
     "lessee": "Lessee",
@@ -195,8 +196,9 @@
       },
       "entityTypeHints": {
         "legal_entity": "GmbH, AG, KG, e. V.",
-        "registered_sole_trader": "e. K., registered",
-        "natural_person": "a person, not registered"
+        "sole_trader": "e. K., registered",
+        "person_commercial": "freelancer, not registered",
+        "person_private": "a consumer"
       }
     },
     "matchStep": {

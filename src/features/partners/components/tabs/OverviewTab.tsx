@@ -48,9 +48,7 @@ function OverviewTab({ partner, roles }: OverviewTabProps) {
         </SectionCard>
 
         <div className="flex flex-col gap-6 flex-1 min-w-0">
-          <SectionCard
-            title={t("detail.overview.classificationSectionTitle")}
-          >
+          <SectionCard title={t("detail.overview.classificationSectionTitle")}>
             <DetailRow label={t("detail.overview.fields.entityType")}>
               <PartnerTypeBadge type={partner.partner_type} />
             </DetailRow>

@@ -66,7 +66,7 @@ function CaptureUboDialog({ open, onOpenChange, partnerId }: Props) {
   const partnerOptions = (partnersData?.items ?? [])
     .filter(
       p =>
-        p.partner_type === PartnerTypeSchema.enum.natural_person &&
+        p.partner_type === PartnerTypeSchema.enum.person_commercial &&
         p.partner_id !== partnerId
     )
     .map(p => ({ value: p.partner_id, label: p.display_name }))

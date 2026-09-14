@@ -9,8 +9,8 @@ import {
   IdentityChangeStatusSchema,
   RegisteredAddressSchema,
   LegalEntityIdentityDetailSchema,
-  NaturalPersonIdentityDetailSchema,
-  RegisteredSoleTraderIdentityDetailSchema,
+  PersonCommercialIdentityDetailSchema,
+  SoleTraderIdentityDetailSchema,
   PartnerIdentityDetailSchema,
   PartnerListItemSchema,
   PartnerListResponseSchema,
@@ -50,8 +50,8 @@ describe("PartnerTypeSchema", () => {
   it("accepts all valid values", () => {
     for (const v of [
       "legal_entity",
-      "natural_person",
-      "registered_sole_trader",
+      "person_commercial",
+      "sole_trader",
     ] as const) {
       expect(() => PartnerTypeSchema.parse(v)).not.toThrow()
     }
@@ -253,7 +253,7 @@ describe("LegalEntityIdentityDetailSchema", () => {
     expect(() =>
       LegalEntityIdentityDetailSchema.parse({
         ...valid,
-        partner_type: "natural_person",
+        partner_type: "person_commercial",
       })
     ).toThrow()
   })
@@ -265,9 +265,9 @@ describe("LegalEntityIdentityDetailSchema", () => {
   })
 })
 
-describe("NaturalPersonIdentityDetailSchema", () => {
+describe("PersonCommercialIdentityDetailSchema", () => {
   const valid = {
-    partner_type: "natural_person",
+    partner_type: "person_commercial",
     full_name: "Max Mustermann",
     date_of_birth: "1985-03-15",
     place_of_birth: "Munich",
@@ -278,18 +278,20 @@ describe("NaturalPersonIdentityDetailSchema", () => {
   }
 
   it("accepts a valid natural person", () => {
-    expect(() => NaturalPersonIdentityDetailSchema.parse(valid)).not.toThrow()
+    expect(() =>
+      PersonCommercialIdentityDetailSchema.parse(valid)
+    ).not.toThrow()
   })
 
   it("rejects missing required fields", () => {
     const rest = { ...valid }
     delete (rest as Partial<typeof valid>).full_name
-    expect(() => NaturalPersonIdentityDetailSchema.parse(rest)).toThrow()
+    expect(() => PersonCommercialIdentityDetailSchema.parse(rest)).toThrow()
   })
 
   it("rejects wrong partner_type", () => {
     expect(() =>
-      NaturalPersonIdentityDetailSchema.parse({
+      PersonCommercialIdentityDetailSchema.parse({
         ...valid,
         partner_type: "legal_entity",
       })
@@ -297,9 +299,9 @@ describe("NaturalPersonIdentityDetailSchema", () => {
   })
 })
 
-describe("RegisteredSoleTraderIdentityDetailSchema", () => {
+describe("SoleTraderIdentityDetailSchema", () => {
   const valid = {
-    partner_type: "registered_sole_trader",
+    partner_type: "sole_trader",
     full_name: "Hans Meier",
     date_of_birth: "1970-06-01",
     country: "DE",
@@ -309,12 +311,12 @@ describe("RegisteredSoleTraderIdentityDetailSchema", () => {
   }
 
   it("accepts a valid sole proprietor", () => {
-    expect(() => RegisteredSoleTraderIdentityDetailSchema.parse(valid)).not.toThrow()
+    expect(() => SoleTraderIdentityDetailSchema.parse(valid)).not.toThrow()
   })
 
   it("rejects wrong partner_type", () => {
     expect(() =>
-      RegisteredSoleTraderIdentityDetailSchema.parse({
+      SoleTraderIdentityDetailSchema.parse({
         ...valid,
         partner_type: "guarantor",
       })
@@ -1016,7 +1018,10 @@ describe("LcNumberResponseSchema", () => {
 
   it("rejects a non-datetime created_at", () => {
     expect(() =>
-      LcNumberResponseSchema.parse({ ...validLcNumber, created_at: "not-a-date" })
+      LcNumberResponseSchema.parse({
+        ...validLcNumber,
+        created_at: "not-a-date",
+      })
     ).toThrow()
   })
 

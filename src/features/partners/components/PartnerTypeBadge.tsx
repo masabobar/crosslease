@@ -6,11 +6,17 @@ const TYPE_CONFIG: Record<PartnerType, { container: string; text: string }> = {
     container: "bg-[#ede9fe]",
     text: "text-[#5b21b6]",
   },
-  natural_person: {
+  person_commercial: {
     container: "bg-[#dbeafe]",
     text: "text-[#1d4ed8]",
   },
-  registered_sole_trader: {
+  // The two person shapes are told apart, not merged into one colour: which of them a party is
+  // decides whether consumer-credit rules apply to it.
+  person_private: {
+    container: "bg-[#e0f2fe]",
+    text: "text-[#075985]",
+  },
+  sole_trader: {
     container: "bg-[#d1fae5]",
     text: "text-[#065f46]",
   },

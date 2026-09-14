@@ -20,9 +20,10 @@
     "pending_archive": "Pending archive"
   },
   "type": {
-    "legal_entity": "Legal entity",
-    "natural_person": "Natural person",
-    "registered_sole_trader": "Registered sole trader"
+    "legal_entity": "Juristische Person",
+    "sole_trader": "Einzelkaufmann",
+    "person_commercial": "Person, gewerblich",
+    "person_private": "Person, privat"
   },
   "role": {
     "lessee": "Lessee",
@@ -195,8 +196,9 @@
       },
       "entityTypeHints": {
         "legal_entity": "GmbH, AG, KG, e. V.",
-        "registered_sole_trader": "e. K., im Register",
-        "natural_person": "eine Person, nicht im Register"
+        "sole_trader": "e. K., im Register",
+        "person_commercial": "Freiberufler, nicht im Register",
+        "person_private": "eine Privatperson"
       }
     },
     "matchStep": {

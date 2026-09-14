@@ -420,7 +420,7 @@ export type LeaseObjectListResponse = z.infer<
  * ── EITHER AN EXISTING PARTNER OR A NEW IDENTITY ───────────────────────────────────────────────
  * `LesseeCaptureRequest` and `GuarantorAddRequest` both take **`existing_partner_id` OR `identity`**
  * — the second being a partner created in context, a discriminated union on `partner_type`
- * (`legal_entity` / `natural_person` / `registered_sole_trader`). Only the *existing-partner* path
+ * (`legal_entity` / `person_commercial` / `sole_trader`). Only the *existing-partner* path
  * is modelled here: create-in-context is a three-variant form of its own
  * (`CREATE PARTNER modal.pdf`) and is tracked separately, so this schema declares the id branch and
  * leaves `identity` out rather than half-typing it.

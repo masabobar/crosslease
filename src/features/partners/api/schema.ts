@@ -5,8 +5,12 @@ import { OptionalUserRoleSchema } from "@/features/users/api/schema"
 
 export const PartnerTypeSchema = z.enum([
   "legal_entity",
-  "natural_person",
-  "registered_sole_trader",
+  // The four the click dummy has always drawn. `natural_person` split into a commercial person
+  // (a freelancer, not registered) and a private one (a consumer), and `registered_sole_trader`
+  // was renamed `sole_trader`, when the backend shipped this on 14 Sep.
+  "person_commercial",
+  "person_private",
+  "sole_trader",
 ])
 export type PartnerType = z.infer<typeof PartnerTypeSchema>
 
@@ -83,22 +87,41 @@ export type LegalEntityIdentityDetail = z.infer<
   typeof LegalEntityIdentityDetailSchema
 >
 
-export const NaturalPersonIdentityDetailSchema = z.object({
-  partner_type: z.literal("natural_person"),
-  full_name: z.string(),
-  date_of_birth: z.string(),
-  place_of_birth: z.string(),
-  country: z.string(),
-  birth_name: z.string().nullable(),
-  national_id: z.string().nullable(),
-  registered_address: RegisteredAddressSchema.nullable(),
-})
-export type NaturalPersonIdentityDetail = z.infer<
-  typeof NaturalPersonIdentityDetailSchema
->
+/**
+ * Both person shapes carry the identical fields — `PersonIdentityDetail` in the contract is one
+ * schema whose `partner_type` is an enum of the two.
+ *
+ * It is declared here as a **factory over one literal** so the discriminated union below can hold
+ * a member per value. A single member with `z.enum([...])` as its discriminator parses correctly
+ * but does not narrow on the negative branch, so the sole-trader block downstream still saw the
+ * person shape in its union and would not compile.
+ */
+const personIdentityDetailFor = <
+  T extends "person_commercial" | "person_private",
+>(
+  partnerType: T
+) =>
+  z.object({
+    partner_type: z.literal(partnerType),
+    full_name: z.string(),
+    date_of_birth: z.string(),
+    place_of_birth: z.string(),
+    country: z.string(),
+    birth_name: z.string().nullable(),
+    national_id: z.string().nullable(),
+    registered_address: RegisteredAddressSchema.nullable(),
+  })
 
-export const RegisteredSoleTraderIdentityDetailSchema = z.object({
-  partner_type: z.literal("registered_sole_trader"),
+export const PersonCommercialIdentityDetailSchema =
+  personIdentityDetailFor("person_commercial")
+export const PersonPrivateIdentityDetailSchema =
+  personIdentityDetailFor("person_private")
+export type PersonIdentityDetail =
+  | z.infer<typeof PersonCommercialIdentityDetailSchema>
+  | z.infer<typeof PersonPrivateIdentityDetailSchema>
+
+export const SoleTraderIdentityDetailSchema = z.object({
+  partner_type: z.literal("sole_trader"),
   full_name: z.string(),
   date_of_birth: z.string(),
   country: z.string(),
@@ -106,16 +129,17 @@ export const RegisteredSoleTraderIdentityDetailSchema = z.object({
   commercial_register_no: z.string().nullable(),
   registered_address: RegisteredAddressSchema.nullable(),
 })
-export type RegisteredSoleTraderIdentityDetail = z.infer<
-  typeof RegisteredSoleTraderIdentityDetailSchema
+export type SoleTraderIdentityDetail = z.infer<
+  typeof SoleTraderIdentityDetailSchema
 >
 
 export const PartnerIdentityDetailSchema = z.discriminatedUnion(
   "partner_type",
   [
     LegalEntityIdentityDetailSchema,
-    NaturalPersonIdentityDetailSchema,
-    RegisteredSoleTraderIdentityDetailSchema,
+    PersonCommercialIdentityDetailSchema,
+    PersonPrivateIdentityDetailSchema,
+    SoleTraderIdentityDetailSchema,
   ]
 )
 export type PartnerIdentityDetail = z.infer<typeof PartnerIdentityDetailSchema>

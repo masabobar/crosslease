@@ -48,7 +48,14 @@ const BLANK_ADDRESS = {
 }
 
 const COUNTRY_OPTIONS = COUNTRIES.map(c => ({ value: c.code, label: c.name }))
-const PARTNER_TYPE_OPTIONS = PartnerTypeSchema.options
+// The dummy's own order — the two commercial shapes, then the two person ones — rather than the
+// enum's alphabetical one, which put `person_commercial` second and split the pair.
+const PARTNER_TYPE_OPTIONS = [
+  PartnerTypeSchema.enum.legal_entity,
+  PartnerTypeSchema.enum.sole_trader,
+  PartnerTypeSchema.enum.person_commercial,
+  PartnerTypeSchema.enum.person_private,
+] as const
 const VALID_COUNTRY_CODES = new Set(COUNTRY_OPTIONS.map(o => o.value))
 
 // The Country field is a free-typeable Combobox — browser address autofill can
@@ -140,7 +147,7 @@ const legalEntitySchema = z.object({
 })
 
 const naturalPersonSchema = z.object({
-  partner_type: z.literal(PartnerTypeSchema.enum.natural_person),
+  partner_type: z.literal(PartnerTypeSchema.enum.person_commercial),
   full_name: z.string().min(1, "required"),
   date_of_birth: dateOfBirthSchema,
   place_of_birth: z.string().min(1, "required"),
@@ -153,7 +160,7 @@ const naturalPersonSchema = z.object({
 })
 
 const registeredSoleTraderSchema = z.object({
-  partner_type: z.literal(PartnerTypeSchema.enum.registered_sole_trader),
+  partner_type: z.literal(PartnerTypeSchema.enum.sole_trader),
   full_name: z.string().min(1, "required"),
   date_of_birth: dateOfBirthSchema,
   country: countryCodeSchema,
@@ -173,8 +180,9 @@ type IdentityForm =
   | RegisteredSoleTraderForm
 
 function schemaForType(type: PartnerType) {
-  if (type === PartnerTypeSchema.enum.natural_person) return naturalPersonSchema
-  if (type === PartnerTypeSchema.enum.registered_sole_trader)
+  if (type === PartnerTypeSchema.enum.person_commercial)
+    return naturalPersonSchema
+  if (type === PartnerTypeSchema.enum.sole_trader)
     return registeredSoleTraderSchema
   return legalEntitySchema
 }
@@ -479,15 +487,16 @@ function PartnerSubmitForm({
    * "Choose the party" — the click dummy's own control: one card per type, its name over a hint
    * naming the legal forms it covers, rather than a dropdown whose options give no such clue.
    *
-   * Three cards, not the dummy's four. The dummy splits a person into *commercial* and *private*;
-   * `PartnerType` on the wire is `legal_entity | natural_person | registered_sole_trader`, so a
-   * fourth card would be inventing a value the API cannot accept.
+   * Four cards, in the dummy's order. It had been three, on the grounds that a fourth would invent
+   * a wire value — which was true until 14 Sep, when the backend split `natural_person` into
+   * `person_commercial` and `person_private` and renamed `registered_sole_trader` to `sole_trader`.
+   * The dummy had drawn four all along.
    */
   const entityTypeField = (
     <div className="flex flex-col gap-1.5">
       <Label>{t("submit.form.fields.entityType")}</Label>
       <div
-        className="grid gap-2 sm:grid-cols-3"
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4"
         role="radiogroup"
         aria-label={t("submit.form.fields.entityType")}
         data-testid="field-entity_type"
@@ -624,7 +633,7 @@ function PartnerSubmitForm({
                     </p>
                   )}
                 </div>
-                {partnerType === PartnerTypeSchema.enum.natural_person && (
+                {partnerType === PartnerTypeSchema.enum.person_commercial && (
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="birth_name">
                       {t("submit.identityStep.fields.birthName")}
@@ -689,7 +698,7 @@ function PartnerSubmitForm({
               )}
             </div>
 
-            {partnerType === PartnerTypeSchema.enum.natural_person && (
+            {partnerType === PartnerTypeSchema.enum.person_commercial && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="place_of_birth">
                   {t("submit.identityStep.fields.placeOfBirth")}
@@ -806,7 +815,7 @@ function PartnerSubmitForm({
                   </p>
                 )}
               </div>
-              {partnerType === PartnerTypeSchema.enum.natural_person ? (
+              {partnerType === PartnerTypeSchema.enum.person_commercial ? (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="national_id">
                     {t("submit.identityStep.fields.nationalId")}{" "}
@@ -900,7 +909,7 @@ function PartnerSubmitForm({
               </div>
             )}
 
-            {partnerType === PartnerTypeSchema.enum.registered_sole_trader && (
+            {partnerType === PartnerTypeSchema.enum.sole_trader && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="tax_id_vat">
                   {t("submit.identityStep.fields.taxIdVat")}{" "}

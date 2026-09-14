@@ -121,7 +121,7 @@ export type LegalEntityIdentityInput = {
 }
 
 export type NaturalPersonIdentityInput = {
-  partner_type: "natural_person"
+  partner_type: "person_commercial"
   full_name: string
   date_of_birth: string
   place_of_birth: string
@@ -132,7 +132,7 @@ export type NaturalPersonIdentityInput = {
 }
 
 export type RegisteredSoleTraderIdentityInput = {
-  partner_type: "registered_sole_trader"
+  partner_type: "sole_trader"
   full_name: string
   date_of_birth: string
   country: string

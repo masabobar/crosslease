@@ -39,7 +39,7 @@ export const ANCHOR_FIELDS: Record<PartnerType, AnchorField[]> = {
       labelKey: "submit.identityStep.fields.foreignIdentifier",
     },
   ],
-  natural_person: [
+  person_commercial: [
     { key: "full_name", labelKey: "submit.identityStep.fields.fullName" },
     {
       key: "date_of_birth",
@@ -53,7 +53,21 @@ export const ANCHOR_FIELDS: Record<PartnerType, AnchorField[]> = {
     { key: "birth_name", labelKey: "submit.identityStep.fields.birthName" },
     { key: "national_id", labelKey: "submit.identityStep.fields.nationalId" },
   ],
-  registered_sole_trader: [
+  person_private: [
+    { key: "full_name", labelKey: "submit.identityStep.fields.fullName" },
+    {
+      key: "date_of_birth",
+      labelKey: "submit.identityStep.fields.dateOfBirth",
+    },
+    {
+      key: "place_of_birth",
+      labelKey: "submit.identityStep.fields.placeOfBirth",
+    },
+    { key: "country", labelKey: "submit.identityStep.fields.country" },
+    { key: "birth_name", labelKey: "submit.identityStep.fields.birthName" },
+    { key: "national_id", labelKey: "submit.identityStep.fields.nationalId" },
+  ],
+  sole_trader: [
     { key: "full_name", labelKey: "submit.identityStep.fields.fullName" },
     {
       key: "date_of_birth",

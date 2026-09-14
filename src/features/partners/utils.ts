@@ -31,14 +31,29 @@ const COMMERCIAL_REGISTER_COUNTRY = "DE"
 
 // HRB/HRA (Handelsregister) numbers are a German-specific concept (US 13.1 /
 // PRD1042-747 field spec) — natural persons never have this anchor, and
-// legal_entity/registered_sole_trader only hold one when registered in DE. Shared
+// legal_entity/sole_trader only hold one when registered in DE. Shared
 // across PartnerSubmitForm (create), ProposeIdentityChangeDialog (edit), and
 // PartnerIdentityFields (read) so all three agree on where the field applies.
+/**
+ * Whether a partner type is one of the two **person** shapes.
+ *
+ * `natural_person` became `person_commercial` (a freelancer, not registered) and `person_private`
+ * (a consumer) on 14 Sep. They carry the identical identity shape — `PersonIdentityInput` — and
+ * differ only in what the party *is*, so every rule that used to ask "is this a natural person"
+ * asks this instead. Spelling both values out at each branch is how one of them gets forgotten.
+ */
+export function isPersonType(partnerType: PartnerType): boolean {
+  return (
+    partnerType === PartnerTypeSchema.enum.person_commercial ||
+    partnerType === PartnerTypeSchema.enum.person_private
+  )
+}
+
 export function isCommercialRegisterApplicable(
   partnerType: PartnerType,
   country: string | null | undefined
 ): boolean {
-  if (partnerType === PartnerTypeSchema.enum.natural_person) return false
+  if (isPersonType(partnerType)) return false
   return (country ?? "").toUpperCase() === COMMERCIAL_REGISTER_COUNTRY
 }
 

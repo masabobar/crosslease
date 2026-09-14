@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { DetailRow } from "@/features/partners/components/PartnerDetailPrimitives"
 import { isCommercialRegisterApplicable } from "@/features/partners/utils"
+import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import type { PartnerIdentityDetail } from "@/features/partners/api/schema"
 
 function formatAddressLines(
@@ -76,7 +77,15 @@ function PartnerIdentityFields({
     )
   }
 
-  if (identity.partner_type === "natural_person") {
+  // Both person shapes render the same block: `PersonIdentityInput` is one schema and the two
+  // differ only in what the party is, not in what it carries. Matching one value alone left the
+  // other falling through to the sole-trader block and reading fields it does not have.
+  // Spelled out rather than using `isPersonType`: a boolean helper does not narrow the identity
+  // union, and this branch reads fields that only the person shape has.
+  if (
+    identity.partner_type === PartnerTypeSchema.enum.person_commercial ||
+    identity.partner_type === PartnerTypeSchema.enum.person_private
+  ) {
     return (
       <>
         <DetailRow label={t("detail.overview.fields.fullName")}>

@@ -69,7 +69,7 @@ export const mockPartners: PartnerListItem[] = [
   {
     partner_id: "00000000-0000-4000-8000-00000000b005",
     display_name: "Alpine Equipment GmbH",
-    partner_type: "registered_sole_trader",
+    partner_type: "sole_trader",
     status: "pending_confirmation",
     country: "AT",
     ubo_completeness_status: "missing",
@@ -78,7 +78,7 @@ export const mockPartners: PartnerListItem[] = [
   {
     partner_id: "00000000-0000-4000-8000-00000000b006",
     display_name: "Hofer, Katharina",
-    partner_type: "natural_person",
+    partner_type: "person_commercial",
     status: "confirmed",
     country: "AT",
     ubo_completeness_status: "complete",
