@@ -11,7 +11,8 @@
       "title": "Comments ({{count}})",
       "placeholder": "Add a comment",
       "add": "Add"
-    }
+    },
+    "unknownAuthor": "Unknown author"
   },
   "caseTypes": {
     "refinancing_request": "Refinancing request",

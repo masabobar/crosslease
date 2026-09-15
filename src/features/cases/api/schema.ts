@@ -668,6 +668,9 @@ export const CaseCommentItemSchema = z.object({
   case_id: z.string().uuid(),
   author_id: z.string(),
   author_role: z.string(),
+  // The author's name, resolved by the backend. Nullable because a comment can outlive the
+  // account that wrote it — the role beside it is what stays true either way.
+  author_display: z.string().nullable(),
   body: z.string(),
   created_at: z.string(),
 })

@@ -191,15 +191,25 @@ export function CaseActivityPanel({ caseId }: Props) {
               className="rounded-lg border px-4 py-3 text-sm"
               data-testid={`case-comment-${comment.id}`}
             >
+              {/* The dummy leads with who wrote it, then the comment. `author_display` is the
+                  backend's own resolution; the role beside it is the authority the author held at
+                  the time, for the same reason the trail keeps `actor_role_at_time`. */}
+              <p className="mb-1 text-xs">
+                <span className="font-medium text-foreground">
+                  {comment.author_display ?? t("activity.unknownAuthor")}
+                </span>
+                <span className="text-muted-foreground">
+                  {" · "}
+                  {t(
+                    `users:roles.${comment.author_role}` as "users:roles.front_office",
+                    { defaultValue: comment.author_role }
+                  )}
+                </span>
+              </p>
               <p>{comment.body}</p>
+              {/* The role moved up beside the author, so this is the timestamp alone rather than
+                  the same role printed twice. */}
               <p className="mt-1 text-xs text-muted-foreground">
-                {/* The role the author held when they wrote it, for the same reason the trail
-                    keeps `actor_role_at_time`. */}
-                {t(
-                  `users:roles.${comment.author_role}` as "users:roles.front_office",
-                  { defaultValue: comment.author_role }
-                )}
-                {" · "}
                 {formatDateTime(comment.created_at)}
               </p>
             </div>

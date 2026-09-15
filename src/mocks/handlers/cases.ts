@@ -67,6 +67,7 @@ import {
 import { mockCases } from "@/mocks/fixtures/cases"
 import { mockPartners } from "@/mocks/fixtures/partners"
 import { getMockRole } from "@/mocks/role"
+import { mockUser } from "@/mocks/fixtures/users"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
 import { mockUuid } from "@/mocks/uuid"
 import { mockLesseePartners } from "@/mocks/fixtures/partners"
@@ -330,6 +331,7 @@ function seedComments(caseId: string): CaseCommentItem[] {
       // Unconstrained on the wire, so the panel labels it through i18n with the raw value as the
       // fallback — the leasing company is a legitimate author here.
       author_role: "leasing_company_user",
+      author_display: "Anna Müller",
       body: "The vehicle registration document is missing for CT-1000. Please upload it so we can move this on.",
       created_at: "2026-08-05T13:30:00Z",
     },
@@ -1155,6 +1157,9 @@ export const caseHandlers = [
       author_id: FRONT_OFFICE_USER,
       // The role AT THE TIME of writing, which is what the schema keeps.
       author_role: getMockRole(),
+      // The backend resolves the name; the mock reads the signed-in fixture so a comment just
+      // written is attributed to whoever wrote it rather than to a placeholder.
+      author_display: `${mockUser(getMockRole()).first_name} ${mockUser(getMockRole()).last_name}`,
       body: body.body,
       created_at: new Date().toISOString(),
     })
