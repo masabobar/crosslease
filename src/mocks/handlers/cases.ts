@@ -36,6 +36,7 @@ import {
   PackageTotalsReadSchema,
   SubmitResultResponseSchema,
   type Case,
+  type CaseListItem,
   type CaseLeasingCompanyResponse,
   type CaseProductTemplateResponse,
   type ImportBatchPreviewResponse,
@@ -70,7 +71,7 @@ const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 
 // Newly started cases live here for the session so that creating one, then landing on its detail
 // page, works. Not persisted: a reload is a clean slate, which is what you want from a prototype.
-const created: Case[] = []
+const created: CaseListItem[] = []
 
 /**
  * Wizard step 1's bindings, session-scoped for the same reason as `created`.
@@ -285,11 +286,11 @@ const EMPTY_LEASE_OBJECT = {
   removed_at: null,
 }
 
-function allCases(): Case[] {
+function allCases(): CaseListItem[] {
   return [...created, ...mockCases]
 }
 
-function applyFilters(url: URL, rows: Case[]): Case[] {
+function applyFilters(url: URL, rows: CaseListItem[]): CaseListItem[] {
   const caseType = url.searchParams.get("case_type")
   const status = url.searchParams.get("status")
   const flag = (name: string) => url.searchParams.get(name) === "true"
@@ -303,6 +304,31 @@ function applyFilters(url: URL, rows: Case[]): Case[] {
   if (status) {
     const wanted = status.toLowerCase()
     out = out.filter(c => c.display_status.toLowerCase() === wanted)
+  }
+
+  // The four the 14 Sep contract added. Honoured here rather than ignored, because a filter the
+  // mock silently drops looks like a filter that does not work.
+  const origin = url.searchParams.get("origin")
+  if (origin) out = out.filter(c => c.origin === origin)
+
+  const lcPartnerId = url.searchParams.get("lc_partner_id")
+  if (lcPartnerId) out = out.filter(c => c.lc_partner_id === lcPartnerId)
+
+  const waitingOnRole = url.searchParams.get("waiting_on_role")
+  if (waitingOnRole) {
+    out = out.filter(c => (c.waiting_on_roles ?? []).includes(waitingOnRole))
+  }
+
+  // Matched against the two columns a reader would actually type into a search box — the reference
+  // and the leasing company.
+  const search = url.searchParams.get("search")
+  if (search) {
+    const wanted = search.trim().toLowerCase()
+    out = out.filter(
+      c =>
+        c.case_reference.toLowerCase().includes(wanted) ||
+        (c.lc_partner_name ?? "").toLowerCase().includes(wanted)
+    )
   }
 
   // The work-list scoping toggles. `unclaimed` and `unassigned` both mean "nobody owns it" on this
@@ -320,7 +346,7 @@ function applyFilters(url: URL, rows: Case[]): Case[] {
   }
 
   // Age is a sort criterion the spec calls out explicitly (§5.1).
-  const byCreated = (a: Case, b: Case) =>
+  const byCreated = (a: CaseListItem, b: CaseListItem) =>
     a.created_at.localeCompare(b.created_at)
   out = [...out].sort(
     flag("oldest_first") ? byCreated : (a, b) => byCreated(b, a)
@@ -1053,7 +1079,10 @@ export const caseHandlers = [
     }
 
     const seq = created.length + 1
-    const next: Case = {
+    // A `CaseListItem`, not a bare `Case`: the row goes straight into the list, and the list's
+    // own required fields — `primary_entity` above all — are what the list schema parses. Created
+    // as a `Case` it parsed as a detail response and then blanked the whole list on the way back.
+    const next: CaseListItem = {
       id: `00000000-0000-4000-8000-0000000cf${String(seq).padStart(3, "0")}`,
       case_reference: `RR-2026-${String(200 + seq)}`,
       case_type: parsed.data,
@@ -1065,6 +1094,21 @@ export const caseHandlers = [
       routing_exception: false,
       created_by: "Front Office",
       created_at: new Date().toISOString(),
+      lc_partner_name: "Premium Leasing GmbH",
+      lessee_count: 0,
+      contract_count: 0,
+      // A case that has just been started sits at the first step of phase A and waits on whoever
+      // opens it.
+      phase: "A",
+      step_order: 1,
+      waiting_on_roles: ["front_office"],
+      rate_due_date: null,
+      primary_entity: "case",
+      financing_status: null,
+      request_status: "draft",
+      decision_round: 0,
+      last_activity_at: new Date().toISOString(),
+      last_activity_by_name: "Front Office",
     }
     created.unshift(next)
     return envelope(CaseResponseSchema.parse(next), "CASE_STARTED")

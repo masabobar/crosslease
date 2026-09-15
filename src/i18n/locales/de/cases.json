@@ -89,10 +89,31 @@
         "leasingCompany": "Leasinggesellschaft",
         "contracts": "Verträge",
         "phase": "Phase",
-        "lastActivity": "Letzte Aktivität"
+        "lastActivity": "Letzte Aktivität",
+        "initiatedBy": "Initiiert von",
+        "waitingOn": "Wartet auf",
+        "rateDue": "Refinanzierungssatz fällig"
       },
       "phaseLabel": "Phase {{letter}}",
-      "stepLabel": "Schritt {{position}}/{{total}}"
+      "stepLabel": "Schritt {{position}}",
+      "originBank": "die Bank",
+      "originPortal": "{{company}}, über das Portal",
+      "rolesOr": " oder ",
+      "rateDueToday": "heute",
+      "rateDueIn": "in {{count}} Tag",
+      "rateDueIn_other": "in {{count}} Tagen",
+      "rateDueOverdue": "vor {{count}} Tag",
+      "rateDueOverdue_other": "vor {{count}} Tagen",
+      "roles": {
+        "front_office": "Front Office",
+        "back_office": "Back Office",
+        "back_office_risk": "Back Office / Risiko",
+        "compliance": "Compliance",
+        "legal": "Recht",
+        "treasury": "Treasury",
+        "support": "Support",
+        "system": "System"
+      }
     },
     "emptyState": {
       "title": "Noch keine Fälle",
@@ -107,6 +128,14 @@
     "pagination": {
       "previous": "Zurück",
       "next": "Weiter"
+    },
+    "filters": {
+      "origins": {
+        "wizard": "Front Office",
+        "portal": "Leasingnehmer-Portal",
+        "bulk_file": "Sammeldatei",
+        "migrated": "Migriert"
+      }
     }
   },
   "start": {

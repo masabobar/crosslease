@@ -2,7 +2,8 @@ import { useTranslation } from "react-i18next"
 import { TableEmptyState } from "@/components/ui/empty"
 import { formatDate } from "@/lib/formatters"
 import { CaseStatusBadge } from "@/features/cases/components/CaseStatusBadge"
-import { phaseLetter } from "@/features/cases/utils"
+import { daysUntilDate, rateDueTone } from "@/features/cases/utils"
+import { cn } from "@/lib/utils"
 import type { CaseListItem } from "@/features/cases/api/schema"
 
 /**
@@ -23,6 +24,9 @@ const COL_COMPANY = "w-[220px] shrink-0"
 const COL_CONTRACTS = "w-[100px] shrink-0"
 const COL_STATUS = "w-[170px] shrink-0"
 const COL_PHASE = "w-[130px] shrink-0"
+const COL_ORIGIN = "w-[190px] shrink-0"
+const COL_WAITING = "w-[170px] shrink-0"
+const COL_RATE_DUE = "w-[150px] shrink-0"
 const COL_ACTIVITY = "w-[180px] shrink-0"
 const ROW_H = "min-h-[60px]"
 const SKELETON_COUNT = 5
@@ -32,9 +36,25 @@ const HEADER_COLUMNS = [
   { width: COL_COMPANY, labelKey: "list.table.columns.leasingCompany" },
   { width: COL_CONTRACTS, labelKey: "list.table.columns.contracts" },
   { width: COL_STATUS, labelKey: "list.table.columns.status" },
+  { width: COL_ORIGIN, labelKey: "list.table.columns.initiatedBy" },
   { width: COL_PHASE, labelKey: "list.table.columns.phase" },
+  { width: COL_WAITING, labelKey: "list.table.columns.waitingOn" },
+  { width: COL_RATE_DUE, labelKey: "list.table.columns.rateDue" },
   { width: COL_ACTIVITY, labelKey: "list.table.columns.lastActivity" },
 ] as const
+
+/** "3 days ago" / "today" / "in 5 days" — the dummy's own wording under the date. */
+function useRateDueNote() {
+  const { t } = useTranslation("cases")
+  return (dueDate: string): string => {
+    const days = daysUntilDate(dueDate)
+    if (days === null) return ""
+    if (days < 0)
+      return t("list.table.rateDueOverdue", { count: Math.abs(days) })
+    if (days === 0) return t("list.table.rateDueToday")
+    return t("list.table.rateDueIn", { count: days })
+  }
+}
 
 type Props = {
   rows: CaseListItem[]
@@ -50,6 +70,7 @@ export function CaseTable({
   onRowClick,
 }: Props) {
   const { t } = useTranslation("cases")
+  const rateDueNote = useRateDueNote()
 
   return (
     // The six columns do not compress below roughly 1000px, so the table scrolls inside its own
@@ -138,28 +159,86 @@ export function CaseTable({
                 <CaseStatusBadge status={row.display_status} />
               </div>
 
-              {/* "Phase A" over "Step 1/5", where the fraction is the phase's ordinal — see
-                  api/schema.ts. `title` carries the phase's actual name, which the design has no
-                  room for but which is the only thing here that says what the phase IS. */}
+              {/* "Initiated by" — who started it over how it arrived. The dummy prints "the bank"
+                  for anything the bank raised and "<company>, through the portal" for a portal
+                  case, which is the distinction that matters on this list. */}
+              <div className={`${COL_ORIGIN} px-3 py-2`}>
+                <p className="text-sm text-foreground leading-tight truncate">
+                  {row.created_by}
+                </p>
+                <p className="text-xs text-muted-foreground leading-tight truncate">
+                  {row.origin === "portal"
+                    ? t("list.table.originPortal", {
+                        company: row.lc_partner_name ?? "",
+                      })
+                    : t("list.table.originBank")}
+                </p>
+              </div>
+
+              {/* "Phase B" over "Step 9/45". The fraction used to be the phase's ordinal (A→1/5)
+                  off the retired `phase_position` / `phase_count` pair; `step_order` is the step's
+                  position in the whole catalogue, which says how far the case has actually got.
+                  The denominator is not on the wire — the dummy reads it off the catalogue per case
+                  type — so the numerator stands alone until it lands. */}
               <div className={`${COL_PHASE} px-3 py-2`}>
-                {phaseLetter(row.phase_position) === null ? (
+                {row.phase === null || row.phase === undefined ? (
                   <span className="text-sm text-muted-foreground">—</span>
                 ) : (
-                  <div title={row.phase_name ?? undefined}>
+                  <div>
                     <p className="text-sm text-foreground leading-tight">
-                      {t("list.table.phaseLabel", {
-                        letter: phaseLetter(row.phase_position),
-                      })}
+                      {t("list.table.phaseLabel", { letter: row.phase })}
                     </p>
-                    {row.phase_count ? (
-                      <p className="text-xs text-muted-foreground leading-tight">
-                        {t("list.table.stepLabel", {
-                          position: row.phase_position,
-                          total: row.phase_count,
-                        })}
-                      </p>
-                    ) : null}
+                    {row.step_order !== null &&
+                      row.step_order !== undefined && (
+                        <p className="text-xs text-muted-foreground leading-tight">
+                          {t("list.table.stepLabel", {
+                            position: row.step_order,
+                          })}
+                        </p>
+                      )}
                   </div>
+                )}
+              </div>
+
+              {/* "Waiting on" — the role group whose turn it is. A finished case waits on nobody,
+                  and the wire says so by sending none rather than by sending a role. */}
+              <div className={`${COL_WAITING} px-3 py-2`}>
+                {(row.waiting_on_roles ?? []).length === 0 ? (
+                  <span className="text-sm text-muted-foreground">—</span>
+                ) : (
+                  <p className="text-sm text-foreground leading-tight">
+                    {(row.waiting_on_roles ?? [])
+                      .map(role =>
+                        t(
+                          `list.table.roles.${role}` as "list.table.roles.front_office",
+                          { defaultValue: role }
+                        )
+                      )
+                      .join(t("list.table.rolesOr"))}
+                  </p>
+                )}
+              </div>
+
+              {/* "Refinancing rate due" — the date over how close it is, coloured once it is near
+                  or past. A rate quote that has run out is the single thing on this list that
+                  makes a case urgent, so it is the one cell allowed to use colour. */}
+              <div className={`${COL_RATE_DUE} px-3 py-2`}>
+                {row.rate_due_date ? (
+                  <>
+                    <p className="text-sm text-foreground leading-tight">
+                      {formatDate(row.rate_due_date)}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-xs leading-tight",
+                        rateDueTone(row.rate_due_date)
+                      )}
+                    >
+                      {rateDueNote(row.rate_due_date)}
+                    </p>
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
                 )}
               </div>
 
@@ -169,9 +248,9 @@ export function CaseTable({
                     <p className="text-sm text-foreground leading-tight">
                       {formatDate(row.last_activity_at)}
                     </p>
-                    {row.last_activity_by && (
+                    {row.last_activity_by_name && (
                       <p className="text-xs text-muted-foreground truncate leading-tight">
-                        {row.last_activity_by}
+                        {row.last_activity_by_name}
                       </p>
                     )}
                   </>

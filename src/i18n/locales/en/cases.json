@@ -89,10 +89,31 @@
         "leasingCompany": "Leasing company",
         "contracts": "Contracts",
         "phase": "Phase",
-        "lastActivity": "Last activity"
+        "lastActivity": "Last activity",
+        "initiatedBy": "Initiated by",
+        "waitingOn": "Waiting on",
+        "rateDue": "Refinancing rate due"
       },
       "phaseLabel": "Phase {{letter}}",
-      "stepLabel": "Step {{position}}/{{total}}"
+      "stepLabel": "Step {{position}}",
+      "originBank": "the bank",
+      "originPortal": "{{company}}, through the portal",
+      "rolesOr": " or ",
+      "rateDueToday": "today",
+      "rateDueIn": "in {{count}} day",
+      "rateDueIn_other": "in {{count}} days",
+      "rateDueOverdue": "{{count}} day ago",
+      "rateDueOverdue_other": "{{count}} days ago",
+      "roles": {
+        "front_office": "Front Office",
+        "back_office": "Back Office",
+        "back_office_risk": "Back Office / Risk",
+        "compliance": "Compliance",
+        "legal": "Legal",
+        "treasury": "Treasury",
+        "support": "Support",
+        "system": "System"
+      }
     },
     "emptyState": {
       "title": "No cases yet",
@@ -107,6 +128,14 @@
     "pagination": {
       "previous": "Previous",
       "next": "Next"
+    },
+    "filters": {
+      "origins": {
+        "wizard": "Front Office",
+        "portal": "Leasing Company User",
+        "bulk_file": "Bulk file",
+        "migrated": "Migrated"
+      }
     }
   },
   "start": {

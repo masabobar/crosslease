@@ -36,13 +36,26 @@ export type CaseDisplayStatus = z.infer<typeof CaseDisplayStatusSchema>
 
 // Shared field shape behind both CaseListItem and CaseResponse — the two describe the same wire
 // entity, so the detail response composes from the list item rather than duplicating fields.
+/**
+ * `origin` and `primary_entity` are declared enums on the wire now, so they are parsed as enums
+ * rather than as free strings — an unexpected value fails at the boundary instead of reaching a
+ * label lookup that silently prints it.
+ */
+export const CaseOriginSchema = z.enum([
+  "wizard",
+  "portal",
+  "bulk_file",
+  "migrated",
+])
+export type CaseOrigin = z.infer<typeof CaseOriginSchema>
+
 export const CaseSchema = z.object({
   id: z.string().uuid(),
   case_reference: z.string(),
   case_type: CaseTypeSchema,
   case_status: CaseStatusSchema,
   display_status: CaseDisplayStatusSchema,
-  origin: z.string(),
+  origin: CaseOriginSchema,
   owner_user_id: z.string().uuid().nullable(),
   lc_partner_id: z.string().uuid().nullable(),
   routing_exception: z.boolean(),
@@ -80,26 +93,50 @@ export type Case = z.infer<typeof CaseSchema>
  *
  * Tracked as a backend gap; the columns disappear the day the fields land as required.
  */
+/** Which of the three records the list's Status column is currently reporting. */
+export const CasePrimaryEntitySchema = z.enum([
+  "financing",
+  "refinancing_request",
+  "case",
+])
+export type CasePrimaryEntity = z.infer<typeof CasePrimaryEntitySchema>
+
 export const CaseListItemSchema = CaseSchema.extend({
-  // Design column "Leasing company / Lessee". Only the leasing-company half is requested — there
-  // is no lessee anywhere on the case, and resolving one would mean a request per row.
+  // Design column "Leasing company / Lessee".
   lc_partner_name: z.string().nullable().optional(),
+  // The lessee half. There is still no lessee *name* on the case — `lessee_count` is what the
+  // contract carries — so the column shows how many rather than who.
+  lessee_count: z.number().int().default(0),
   // Design column "Contracts".
   contract_count: z.number().int().nullable().optional(),
-  // Design column "Phase" — rendered as "Phase A" over "Step 1/5".
-  //
-  // The fraction is the phase's ORDINAL, not progress within it. Across all eight rows of the
-  // frame the numerator equals the phase letter's position (A→1/5, C→3/5, D→4/5, E→5/5) and the
-  // denominator never moves off 5. So it needs the position and the phase count, not the
-  // `steps_done` / `steps_applicable` pair that `PhaseProgressResponse` carries — those describe
-  // step completion inside a phase, which this column does not show.
-  phase_name: z.string().nullable().optional(),
-  phase_position: z.number().int().nullable().optional(),
-  phase_count: z.number().int().nullable().optional(),
-  // Design column "Last activity" — a timestamp over the person who caused it. The design shows a
-  // display name, not an id, so this is a name.
+  /**
+   * Design column "Phase" — `Phase B` over `Step 9/45`.
+   *
+   * This replaces `phase_name` / `phase_position` / `phase_count`, which the backend retired. The
+   * old trio made the fraction the phase's **ordinal** (A→1/5); `step_order` makes it the step's
+   * position in the whole catalogue, which is what the final dummy shows and a far more useful
+   * number — it says how far the case has actually got, not which of five phases it is in.
+   *
+   * The denominator is not on the wire at all: the dummy reads it off the catalogue per case type.
+   * Filed rather than invented — the column renders the numerator alone until it lands.
+   */
+  phase: z.string().nullable().optional(),
+  step_order: z.number().int().nullable().optional(),
+  // Design column "Waiting on" — the role group whose turn it is, from the current step.
+  waiting_on_roles: z.array(z.string()).nullable().optional(),
+  // Design column "Refinancing rate due" — a date the list colours by how close it is.
+  rate_due_date: z.string().nullable().optional(),
+  // The sub-line under Status: which record that status belongs to.
+  primary_entity: CasePrimaryEntitySchema,
+  // The two statuses the derived `display_status` folds together, now carried separately so the
+  // list can say which one it is showing.
+  financing_status: z.string().nullable().optional(),
+  request_status: z.string().nullable().optional(),
+  decision_round: z.number().int().default(0),
+  // Design column "Last activity" — a timestamp over the person who caused it. `last_activity_by`
+  // was renamed `last_activity_by_name`; the design shows a display name, not an id.
   last_activity_at: z.string().nullable().optional(),
-  last_activity_by: z.string().nullable().optional(),
+  last_activity_by_name: z.string().nullable().optional(),
 })
 export type CaseListItem = z.infer<typeof CaseListItemSchema>
 

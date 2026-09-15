@@ -29,3 +29,28 @@ export function phaseLetter(
   const ordinal = hasPosition ? position - 1 : fallbackIndex!
   return PHASE_LETTERS[ordinal] ?? String(ordinal + 1)
 }
+
+/**
+ * How near a quoted refinancing rate is to running out, as a tone class.
+ *
+ * The final dummy colours this one cell and no other on the list, and rightly: a rate quote that
+ * has expired is the single thing that makes a case urgent rather than merely open. Past due is
+ * destructive, within three days is a warning, anything further off is unremarkable and gets the
+ * ordinary muted treatment.
+ */
+export function rateDueTone(dueDate: string): string {
+  const days = daysUntilDate(dueDate)
+  if (days === null) return "text-muted-foreground"
+  if (days < 0) return "text-destructive"
+  if (days <= 3) return "text-warning"
+  return "text-muted-foreground"
+}
+
+/** Whole days from today to a date, or null when it cannot be read. */
+export function daysUntilDate(dueDate: string): number | null {
+  const due = new Date(`${dueDate}T00:00:00`)
+  if (Number.isNaN(due.getTime())) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.round((due.getTime() - today.getTime()) / 86_400_000)
+}

@@ -94,6 +94,14 @@ export type CaseListParams = {
   mine?: boolean
   unassigned?: boolean
   my_work_list?: boolean
+  // Added by the 14 Sep contract, and between them they back the final dummy's whole toolbar:
+  // Search, Initiated by, Leasing company, Waiting on and Assignee. Before these the search box
+  // could only filter the rows already on screen.
+  search?: string
+  origin?: string
+  lc_partner_id?: string
+  waiting_on_role?: string
+  assignee_id?: string
   oldest_first?: boolean
   limit?: number
   // The list endpoint pages with limit+offset and returns `total`, which is what the design's

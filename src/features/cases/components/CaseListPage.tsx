@@ -13,7 +13,9 @@ import { caseDetail } from "@/router/paths"
 import { CaseTable } from "@/features/cases/components/CaseTable"
 import { StartCaseDialog } from "@/features/cases/components/StartCaseDialog"
 import { useCases } from "@/features/cases/hooks/useCases"
-import { CaseTypeSchema } from "@/features/cases/api/schema"
+import { CaseOriginSchema, CaseTypeSchema } from "@/features/cases/api/schema"
+import { useDebouncedValue } from "@/hooks/useDebouncedValue"
+import { useFrameworkAgreementLcPartners } from "@/features/frameworkAgreements/hooks/useFrameworkAgreementLcPartners"
 import {
   CASE_DISPLAY_STATUS_BADGE_VARIANT,
   CASE_START_ALLOWED_ROLES,
@@ -21,6 +23,24 @@ import {
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 
 const PAGE_SIZE = 10
+const SEARCH_DEBOUNCE_MS = 300
+
+/**
+ * The role groups a step can wait on — the catalogue's `TaskResponsibleRole`, which is what
+ * `waiting_on_roles` carries on each row and what `waiting_on_role` filters by.
+ *
+ * Listed rather than read off a schema because the value is a plain string on the wire: the
+ * contract declares `waiting_on_roles` as `string[]`, so there is no enum to enumerate.
+ */
+const WAITING_ON_ROLES = [
+  "front_office",
+  "back_office_risk",
+  "compliance",
+  "legal",
+  "treasury",
+  "support",
+  "system",
+] as const
 
 // `display_status` is a plain string on the wire — the backend widens the set independently, so
 // there is no enum to enumerate. The badge-variant map is this codebase's existing list of the
@@ -38,15 +58,13 @@ const KNOWN_DISPLAY_STATUSES = Object.keys(CASE_DISPLAY_STATUS_BADGE_VARIANT)
  * `unassigned` / `unclaimed` params, which the design does not surface at all; they are dropped
  * rather than kept alongside, because a toolbar that is the design plus extras is not the design.
  *
- * ── SEARCH IS PAGE-LOCAL, AND THAT IS A GAP ────────────────────────────────────────────────────
- * `GET /cases` has no search or query parameter — its only filters are `case_type`, `status` and
- * the three scope booleans. So the search box filters **the rows already on screen**, not the whole
- * list, and the row count next to it says so. It is wired this way rather than omitted because the
- * control is in the design and a page-local filter does something real; the day the backend gains a
- * `search` param this moves into the query and the caveat goes away.
- *
- * Case type, status and the pager are all backed by real query parameters (`case_type`, `status`,
- * `limit`, `offset`, and `total` in the response).
+ * ── EVERY FILTER REACHES THE SERVER ────────────────────────────────────────────────────────────
+ * Search used to be page-local: `GET /cases` had no query parameter, so the box filtered the rows
+ * already on screen and the count beside it said so. The 14 Sep contract added `search`, `origin`,
+ * `lc_partner_id`, `waiting_on_role` and `assignee_id`, so the caveat is gone — every control here
+ * narrows the whole list, and there is deliberately **no** second filter over the returned rows: a
+ * page-local pass on top of a server-side one would silently drop rows the backend matched on
+ * purpose.
  */
 export default function CaseListPage() {
   const { t } = useTranslation("cases")
@@ -56,33 +74,47 @@ export default function CaseListPage() {
   const [search, setSearch] = useState("")
   const [caseType, setCaseType] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
+  // The three the 14 Sep contract added query parameters for. The final dummy's toolbar carries
+  // them beside Status, and all three filter the whole list rather than the page.
+  const [origin, setOrigin] = useState<string | null>(null)
+  const [lcPartnerId, setLcPartnerId] = useState<string | null>(null)
+  const [waitingOnRole, setWaitingOnRole] = useState<string | null>(null)
 
   const { data: currentUser } = useCurrentUser()
+  const lcPartners = useFrameworkAgreementLcPartners()
   const canStartCase =
     !!currentUser && CASE_START_ALLOWED_ROLES.includes(currentUser.role)
+
+  // Debounced so typing a reference costs one request after the pause rather than one per
+  // character, now that the search reaches the server.
+  const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS)
 
   const { data, isLoading, isError, error } = useCases({
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
     ...(caseType ? { case_type: caseType } : {}),
     ...(status ? { status } : {}),
+    ...(origin ? { origin } : {}),
+    ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
+    ...(waitingOnRole ? { waiting_on_role: waitingOnRole } : {}),
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
   })
 
   const total = data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const pageNumbers = data ? buildPageNumbers(page, totalPages) : []
 
-  // Page-local only — see the note above. Matched against the two identifying columns the reader
-  // would actually type into a search box.
-  const query = search.trim().toLowerCase()
-  const rows = (data?.items ?? []).filter(
-    row =>
-      query === "" ||
-      row.case_reference.toLowerCase().includes(query) ||
-      (row.lc_partner_name ?? "").toLowerCase().includes(query)
-  )
+  // Whatever the server returned for the query above — no second filter here. A page-local filter
+  // on top of a server-side one would silently drop rows the backend deliberately matched.
+  const rows = data?.items ?? []
 
-  const hasActiveFilters = caseType !== null || status !== null || query !== ""
+  const hasActiveFilters =
+    caseType !== null ||
+    status !== null ||
+    origin !== null ||
+    lcPartnerId !== null ||
+    waitingOnRole !== null ||
+    search.trim() !== ""
 
   // A filter change invalidates the current page number — page 3 of the unfiltered list is very
   // likely past the end of the filtered one.
@@ -95,6 +127,9 @@ export default function CaseListPage() {
 
   const setCaseTypeFilter = applyFilter(setCaseType)
   const setStatusFilter = applyFilter(setStatus)
+  const setOriginFilter = applyFilter(setOrigin)
+  const setLcPartnerFilter = applyFilter(setLcPartnerId)
+  const setWaitingOnFilter = applyFilter(setWaitingOnRole)
 
   return (
     <div className="p-8">
@@ -168,8 +203,80 @@ export default function CaseListPage() {
           ))}
         </FilterButton>
 
-        {/* The count is here because the search above it is page-local: it tells the reader how
-            many of the loaded rows they are looking at, which is the honest framing. */}
+        {/* Initiated by — how the case arrived. `CaseOriginSchema.options` rather than a hand-kept
+            list, so a value the backend adds to the enum shows up here without a second edit. */}
+        <FilterButton
+          label={t("list.table.columns.initiatedBy")}
+          count={origin ? 1 : 0}
+          data-testid="case-origin-filter"
+        >
+          {CaseOriginSchema.options.map(option => (
+            <FilterCheckboxOption
+              key={option}
+              checked={origin === option}
+              data-testid={`case-origin-option-${option}`}
+              onClick={() => setOriginFilter(origin === option ? null : option)}
+            >
+              {t(
+                `list.filters.origins.${option}` as "list.filters.origins.wizard",
+                {
+                  defaultValue: option,
+                }
+              )}
+            </FilterCheckboxOption>
+          ))}
+        </FilterButton>
+
+        {/* Leasing company — the eligible list the wizard's own picker reads, so the two cannot
+            offer different companies. */}
+        <FilterButton
+          label={t("list.table.columns.leasingCompany")}
+          count={lcPartnerId ? 1 : 0}
+          data-testid="case-lc-filter"
+        >
+          {(lcPartners.data?.items ?? []).map(partner => (
+            <FilterCheckboxOption
+              key={partner.id}
+              checked={lcPartnerId === partner.id}
+              data-testid={`case-lc-option-${partner.id}`}
+              onClick={() =>
+                setLcPartnerFilter(
+                  lcPartnerId === partner.id ? null : partner.id
+                )
+              }
+            >
+              {partner.legal_name}
+            </FilterCheckboxOption>
+          ))}
+        </FilterButton>
+
+        {/* Waiting on — the role group whose turn it is. The values are the catalogue's own
+            `TaskResponsibleRole`, which is what `waiting_on_roles` carries on each row. */}
+        <FilterButton
+          label={t("list.table.columns.waitingOn")}
+          count={waitingOnRole ? 1 : 0}
+          data-testid="case-waiting-filter"
+        >
+          {WAITING_ON_ROLES.map(option => (
+            <FilterCheckboxOption
+              key={option}
+              checked={waitingOnRole === option}
+              data-testid={`case-waiting-option-${option}`}
+              onClick={() =>
+                setWaitingOnFilter(waitingOnRole === option ? null : option)
+              }
+            >
+              {t(
+                `list.table.roles.${option}` as "list.table.roles.front_office",
+                {
+                  defaultValue: option,
+                }
+              )}
+            </FilterCheckboxOption>
+          ))}
+        </FilterButton>
+
+        {/* Now that every control narrows the whole list, this is "N of M", both from the server. */}
         {!isLoading && !isError && (
           <span
             className="text-sm text-muted-foreground"
