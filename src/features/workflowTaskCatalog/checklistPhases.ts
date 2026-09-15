@@ -244,3 +244,32 @@ export function canRoleActOn(
 export function stepRoles(item: ChecklistItemResponse): string[] {
   return responsibleRolesOf(item)
 }
+
+/**
+ * The step that releases the disbursement — the four-eyes release that moves every contract of the
+ * financing in one action.
+ *
+ * Keyed by task code for the reason the deleted `checklistStepMoves` module gave: the client
+ * sheet's step number (28) is not on the wire, and `display_order` is a position that shifts the
+ * moment a task is added or made inapplicable.
+ */
+export const DISBURSEMENT_RELEASE_TASK_CODE = "D-5"
+
+/**
+ * Whether an open approval condition holds this step.
+ *
+ * The 14 Sep final adds this: *"Covenants block the disbursement: the step that moves the financing
+ * to Disbursed cannot be resolved while one is open."* It is the one place on the checklist where a
+ * step is held by something that is **not** on the checklist, which is exactly why the row has to
+ * say so — otherwise the tick is simply dead with no reason on screen.
+ */
+export function isHeldByOpenConditions(
+  item: ChecklistItemResponse,
+  openConditionCount: number
+): boolean {
+  if (openConditionCount <= 0) return false
+  return (
+    (item.task_code ?? "").trim().toUpperCase() ===
+    DISBURSEMENT_RELEASE_TASK_CODE
+  )
+}

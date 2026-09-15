@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   canRoleActOn,
   groupChecklistByPhase,
+  isHeldByOpenConditions,
   isOwnedByRole,
   phaseHeading,
   phaseLetterFromTaskCode,
@@ -383,5 +384,28 @@ describe("canRoleActOn", () => {
     expect(
       canRoleActOn(item({ responsible_roles: ["back_office"] }), undefined)
     ).toBe(false)
+  })
+})
+
+describe("isHeldByOpenConditions", () => {
+  /**
+   * The 14 Sep final: "Covenants block the disbursement — the step that moves the financing to
+   * Disbursed cannot be resolved while one is open." It is the one place a checklist step is held
+   * by something that is not on the checklist.
+   */
+  it("holds the disbursement release while a condition is open", () => {
+    expect(isHeldByOpenConditions(item({ task_code: "D-5" }), 1)).toBe(true)
+    expect(isHeldByOpenConditions(item({ task_code: "d-5" }), 3)).toBe(true)
+  })
+
+  it("releases it once none is open", () => {
+    expect(isHeldByOpenConditions(item({ task_code: "D-5" }), 0)).toBe(false)
+  })
+
+  // Only that one step. An open condition does not freeze the whole checklist.
+  it("holds no other step", () => {
+    for (const code of ["A-3", "C-1", "D-4", "D-50", "E-12", null]) {
+      expect(isHeldByOpenConditions(item({ task_code: code }), 2)).toBe(false)
+    }
   })
 })

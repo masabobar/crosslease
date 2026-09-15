@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +25,7 @@ import {
   useAddApprovalCondition,
   useApprovalConditions,
   useRequestConditionWaiver,
+  useUndoApprovalCondition,
   useSettleApprovalCondition,
 } from "@/features/financing/hooks/useApprovalConditions"
 
@@ -55,6 +57,7 @@ export function ApprovalConditionsPanel({ caseId }: Props) {
   const add = useAddApprovalCondition()
   const settle = useSettleApprovalCondition()
   const waive = useRequestConditionWaiver()
+  const undo = useUndoApprovalCondition()
 
   const [isAdding, setAdding] = useState(false)
   const [text, setText] = useState("")
@@ -182,6 +185,34 @@ export function ApprovalConditionsPanel({ caseId }: Props) {
                           {t("conditions.waive")}
                         </Button>
                       </div>
+                    )}
+
+                    {/* The dummy's Undo on a settled condition. Until the backend added
+                        `.../conditions/{id}/undo` on 14 Sep a condition marked met in error had no
+                        way back and the row simply stayed wrong. Offered only once settled, because
+                        there is nothing to undo on an open one. */}
+                    {condition.state !==
+                      ApprovalConditionStateSchema.enum.open && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        data-testid={`approval-condition-undo-${condition.id}`}
+                        disabled={undo.isPending}
+                        onClick={() =>
+                          undo.mutate(
+                            { caseId, conditionId: condition.id },
+                            {
+                              onSuccess: () =>
+                                toast.success(t("conditions.undone")),
+                              onError: err => showApiError(err, t),
+                            }
+                          )
+                        }
+                      >
+                        <RotateCcw size={14} />
+                        {t("conditions.undo")}
+                      </Button>
                     )}
                   </TableCell>
                 </TableRow>

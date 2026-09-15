@@ -505,7 +505,9 @@
       "other": "Eine andere Rollengruppe — Sie können ihn lesen, aber nicht bearbeiten",
       "anyone": "Jede Rolle",
       "or": " oder "
-    }
+    },
+    "heldByConditions": "Blockiert durch {{count}} offene Bedingung",
+    "heldByConditions_other": "Blockiert durch {{count}} offene Bedingungen"
   },
   "caseTypes": {
     "refinancing_request": "Hauptrefinanzierungsprozess",

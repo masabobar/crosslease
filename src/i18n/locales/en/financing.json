@@ -27,7 +27,9 @@
       "expiry": "Waiver valid until",
       "submit": "Request approval",
       "requested": "Waiver requested — it now needs a second approver."
-    }
+    },
+    "undo": "Undo",
+    "undone": "The condition is open again."
   },
   "contracts": {
     "empty": "This financing includes no contracts.",

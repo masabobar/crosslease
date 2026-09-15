@@ -18,6 +18,7 @@ import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/ru
 import {
   canRoleActOn,
   groupChecklistByPhase,
+  isHeldByOpenConditions,
   phaseHeading,
   stepRoles,
   taskNumber,
@@ -34,6 +35,8 @@ type Props = {
   progress: CaseProgressResponse | undefined
   canWrite: boolean
   users: readonly UserListItem[]
+  /** Open approval conditions — they hold the disbursement step. See `isHeldByOpenConditions`. */
+  openConditionCount: number
 }
 
 /**
@@ -68,6 +71,7 @@ export function CaseChecklistPhaseList({
   progress,
   canWrite,
   users,
+  openConditionCount,
 }: Props) {
   const { data: currentUser } = useCurrentUser()
   const [activeItem, setActiveItem] = useState<ChecklistItemResponse | null>(
@@ -89,6 +93,7 @@ export function CaseChecklistPhaseList({
             defaultOpen={index === 0}
             canWrite={canWrite}
             users={users}
+            openConditionCount={openConditionCount}
             currentRole={currentUser?.role}
             onSetStatus={setActiveItem}
           />
@@ -111,6 +116,7 @@ function PhaseSection({
   defaultOpen,
   canWrite,
   users,
+  openConditionCount,
   currentRole,
   onSetStatus,
 }: {
@@ -118,6 +124,7 @@ function PhaseSection({
   defaultOpen: boolean
   canWrite: boolean
   users: readonly UserListItem[]
+  openConditionCount: number
   currentRole: UserRole | undefined
   onSetStatus: (item: ChecklistItemResponse) => void
 }) {
@@ -172,6 +179,11 @@ function PhaseSection({
               item={item}
               number={taskNumber(item, index)}
               canAct={canRoleActOn(item, currentRole)}
+              heldByConditions={isHeldByOpenConditions(
+                item,
+                openConditionCount
+              )}
+              openConditionCount={openConditionCount}
               canWrite={canWrite}
               users={users}
               onSetStatus={onSetStatus}
@@ -187,6 +199,8 @@ function TaskRow({
   item,
   number,
   canAct,
+  heldByConditions,
+  openConditionCount,
   canWrite,
   users,
   onSetStatus,
@@ -194,6 +208,8 @@ function TaskRow({
   item: ChecklistItemResponse
   number: number
   canAct: boolean
+  heldByConditions: boolean
+  openConditionCount: number
   canWrite: boolean
   users: readonly UserListItem[]
   onSetStatus: (item: ChecklistItemResponse) => void
@@ -207,7 +223,7 @@ function TaskRow({
   // A step another role group owns is readable, not actionable — the dummy disables its tick and
   // says so on the role tag. The backend enforces the same; this stops the user finding out by
   // being refused.
-  const isActionable = isOpen && canWrite && canAct
+  const isActionable = isOpen && canWrite && canAct && !heldByConditions
 
   return (
     <li
@@ -289,6 +305,20 @@ function TaskRow({
                   )
                   .join(t("caseChecklist.roleTag.or"))}
           </Badge>
+
+          {/* The one place a checklist step is held by something that is not on the checklist, so
+              it says so on the row rather than leaving a dead tick. */}
+          {heldByConditions && (
+            <Badge
+              variant="secondary"
+              className="font-normal"
+              data-testid={`case-checklist-held-${item.id}`}
+            >
+              {t("caseChecklist.heldByConditions", {
+                count: openConditionCount,
+              })}
+            </Badge>
+          )}
 
           {!item.is_mandatory && (
             <span className="text-xs text-muted-foreground">

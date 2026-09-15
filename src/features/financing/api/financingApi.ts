@@ -82,6 +82,25 @@ export async function settleApprovalCondition(
 }
 
 /**
+ * Takes a settled condition back to open — `POST .../conditions/{id}/undo`, added by the backend on
+ * 14 Sep alongside the checklist item's own undo.
+ *
+ * The Milestone 1 final dummy draws it as **Undo** on a settled covenant, beside nothing else: a
+ * condition that was marked met in error had, until this endpoint, no way back at all, and the row
+ * simply stayed wrong. It returns the condition, so the row re-renders from the answer rather than
+ * from an assumption about what undoing did.
+ */
+export async function undoApprovalCondition(
+  caseId: string,
+  conditionId: string
+): Promise<ApprovalConditionResponse> {
+  const data = await api.post(
+    `/cases/${caseId}/financing/conditions/${conditionId}/undo`
+  )
+  return ApprovalConditionResponseSchema.parse(data)
+}
+
+/**
  * Waiving is NOT immediate — it returns a **governed action**.
  *
  * The endpoint answers `GovernedActionResponse`, not a condition: a waiver needs a second pair of

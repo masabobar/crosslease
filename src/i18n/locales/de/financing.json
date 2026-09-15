@@ -27,7 +27,9 @@
       "expiry": "Verzicht gültig bis",
       "submit": "Genehmigung beantragen",
       "requested": "Verzicht beantragt — er braucht nun einen zweiten Genehmiger."
-    }
+    },
+    "undo": "Rückgängig",
+    "undone": "Die Bedingung ist wieder offen."
   },
   "contracts": {
     "empty": "Diese Finanzierung enthält keine Verträge.",

@@ -7,6 +7,7 @@ import {
   fetchApprovalConditions,
   requestConditionWaiver,
   settleApprovalCondition,
+  undoApprovalCondition,
 } from "@/features/financing/api/financingApi"
 import type {
   ApprovalConditionListResponse,
@@ -90,5 +91,26 @@ export function useRequestConditionWaiver(): UseMutationResult<
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["governed-actions"] })
     },
+  })
+}
+
+/**
+ * Undo a settled condition.
+ *
+ * Invalidated the same way as settling, through `invalidateConditions`, because the overview's
+ * `open_covenant_count` moves with it — a condition coming back to open re-holds the payout, and
+ * the Data tab's count would otherwise disagree with this list.
+ */
+export function useUndoApprovalCondition(): UseMutationResult<
+  ApprovalConditionResponse,
+  Error,
+  { caseId: string; conditionId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ caseId, conditionId }) =>
+      undoApprovalCondition(caseId, conditionId),
+    onSuccess: (_result, { caseId }) =>
+      invalidateConditions(queryClient, caseId),
   })
 }

@@ -9,6 +9,7 @@ import { useCaseChecklist } from "@/features/workflowTaskCatalog/hooks/useCaseCh
 import { useCaseRequiredProjection } from "@/features/workflowTaskCatalog/hooks/useCaseRequiredProjection"
 import { useCaseProgress } from "@/features/cases/hooks/useCaseProgress"
 import { ApprovalConditionsPanel } from "@/features/financing/components/ApprovalConditionsPanel"
+import { useApprovalConditions } from "@/features/financing/hooks/useApprovalConditions"
 import { CASE_CHECKLIST_WRITE_ALLOWED_ROLES } from "@/features/workflowTaskCatalog/types"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 
@@ -41,6 +42,15 @@ type Props = {
 export function CaseChecklistPanel({ businessObjectId }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
   const { data: currentUser } = useCurrentUser()
+
+  // Read here rather than inside the list, because the same query backs the conditions block below
+  // it — one request, and the two cannot disagree about how many are open.
+  //
+  // `open_count` is the response's own figure rather than a filter over `conditions`: the list can
+  // be paged or filtered and the count cannot, and the number that holds the disbursement has to be
+  // the backend's, not this screen's arithmetic over whatever it happened to receive.
+  const conditions = useApprovalConditions(businessObjectId)
+  const openConditionCount = conditions.data?.open_count ?? 0
 
   const {
     data: items,
@@ -122,12 +132,6 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
         </Alert>
       )}
 
-      {/* The click dummy is explicit (Figma V2, 1 Sep 2026): approval conditions belong on this
-          tab, BEFORE the checklist — not in the Calculation area and not on Data, where they were.
-          They gate the payout, so they are read before the task list rather than beside the
-          figures. */}
-      <ApprovalConditionsPanel caseId={businessObjectId} />
-
       {/* Phase sections, not one flat table — the design groups the tasks under
           `A · Application & credit review` with an `N open · M yours` count, which is what makes
           "where is this case, and is it waiting on me" readable at a glance. The phase names come
@@ -138,7 +142,18 @@ export function CaseChecklistPanel({ businessObjectId }: Props) {
         progress={progress}
         canWrite={canWrite}
         users={users}
+        openConditionCount={openConditionCount}
       />
+
+      {/* Below the task list, where the 14 Sep final puts it. It had been above, on the earlier
+          dummy's word. The order matters for what the tab is *for*: the steps are the work, and the
+          conditions are what the work is held against — reading them first pushed 41 steps below
+          a block that is usually empty.
+
+          They still belong on this tab rather than in the Calculation area or on Data (Q-008,
+          answered 8 Sep: approval conditions belong to the financing, and "Approval Conditions" is
+          the confirmed term, retiring "Covenants"). */}
+      <ApprovalConditionsPanel caseId={businessObjectId} />
     </div>
   )
 }

@@ -505,7 +505,9 @@
       "other": "Another role group — you can read it but not act on it",
       "anyone": "Any role",
       "or": " or "
-    }
+    },
+    "heldByConditions": "Held by {{count}} open condition",
+    "heldByConditions_other": "Held by {{count}} open conditions"
   },
   "caseTypes": {
     "refinancing_request": "Main Refinancing Process",
