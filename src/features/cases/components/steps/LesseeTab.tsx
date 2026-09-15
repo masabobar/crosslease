@@ -386,7 +386,7 @@ function GuarantorSection({
  * filtered to confirmed partners for the reason given on the tab. Same shape as
  * `CaptureUboDialog`, which solves the identical problem for UBOs.
  */
-function PartnerPicker({
+export function PartnerPicker({
   testIdPrefix,
   isLinking,
   onPick,

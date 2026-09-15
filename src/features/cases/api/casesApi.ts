@@ -7,8 +7,12 @@ import {
   GeneratedDocumentListResponseSchema,
 } from "@/features/cases/api/schema"
 import type {
+  CollateralListResponse,
   CollateralResponse,
   CollateralType,
+  ContractCollateralResponse,
+  ContractCollateralType,
+  ObligationKind,
   CombinedDocumentListResponse,
   CombinedDocumentResponse,
   GeneratedDocumentListResponse,
@@ -32,6 +36,8 @@ import {
   LeaseObjectReadSchema,
   ObjectClassificationResponseSchema,
   GuarantorListResponseSchema,
+  CollateralListResponseSchema,
+  ContractCollateralResponseSchema,
   GuarantorLinkResponseSchema,
   LesseeLinkResponseSchema,
   PaymentPlanResponseSchema,
@@ -134,6 +140,8 @@ export const CASE_QUERY_KEYS = {
     ["contracts", "lessee", contractId] as const,
   contractGuarantors: (contractId: string) =>
     ["contracts", "guarantors", contractId] as const,
+  contractCollaterals: (contractId: string) =>
+    ["contracts", "collaterals", contractId] as const,
   paymentPlan: (caseId: string, contractId: string) =>
     ["cases", "payment-plan", caseId, contractId] as const,
   activity: (caseId: string, page: number) =>
@@ -463,6 +471,65 @@ export async function addContractGuarantor(
     kind_of_obligation: kindOfObligation,
   })
   return GuarantorLinkResponseSchema.parse(data)
+}
+
+/**
+ * The contract's collaterals (PRD1042-2167).
+ *
+ * This is the surface the design calls **Collaterals**, and it subsumes the separate guarantor
+ * list: per the endpoint's own description a party is given *only* for a `GUARANTEE`, and
+ * `kind_of_obligation` on that collateral is what separates a guarantor from a co-obligor. So a
+ * guarantee recorded here is the guarantor link, rather than a second thing to keep in step.
+ */
+export async function fetchContractCollaterals(
+  contractId: string
+): Promise<CollateralListResponse> {
+  const data = await api.get(`/contracts/${contractId}/collaterals`)
+  return CollateralListResponseSchema.parse(data)
+}
+
+/**
+ * Add one collateral.
+ *
+ * The party arguments are optional because the service **rejects** them on a security deposit or a
+ * buy-back agreement and requires exactly one on a guarantee — so the caller decides, and sending
+ * an empty party on the other two types would be a 422 the user cannot read.
+ */
+export async function addContractCollateral(input: {
+  contractId: string
+  collateralType: ContractCollateralType
+  value: string | null
+  existingPartnerId?: string
+  kindOfObligation?: ObligationKind
+  evidenceDocumentId?: string
+}): Promise<ContractCollateralResponse> {
+  const data = await api.post(`/contracts/${input.contractId}/collaterals`, {
+    collateral_type: input.collateralType,
+    value: input.value,
+    ...(input.existingPartnerId
+      ? { existing_partner_id: input.existingPartnerId }
+      : {}),
+    ...(input.kindOfObligation
+      ? { kind_of_obligation: input.kindOfObligation }
+      : {}),
+    ...(input.evidenceDocumentId
+      ? { evidence_document_id: input.evidenceDocumentId }
+      : {}),
+  })
+  return ContractCollateralResponseSchema.parse(data)
+}
+
+// POST .../collaterals/{id}/remove — a soft remove, so the reason is required and the history is
+// kept. A POST and not a DELETE, which is the backend's choice.
+export async function removeContractCollateral(
+  contractId: string,
+  collateralId: string,
+  reason: string
+): Promise<void> {
+  await api.post(
+    `/contracts/${contractId}/collaterals/${collateralId}/remove`,
+    { reason }
+  )
 }
 
 // POST /contracts/{contract_id}/guarantors/{link_id}/remove — unlinks, rather than deleting the

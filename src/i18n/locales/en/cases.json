@@ -474,8 +474,8 @@
       "saved": "Contract saved to the case.",
       "tabs": {
         "lessee": "Lessee",
-        "guarantors": "Guarantors / co-obligors",
         "objects": "Objects",
+        "collaterals": "Collaterals",
         "contractDetails": "Contract details",
         "paymentPlan": "Payment plan"
       },
@@ -488,7 +488,34 @@
         "enable": "Non-linear payment plan",
         "enabled": "Non-linear payment plan is on"
       },
-      "editTitle": "Edit contract"
+      "editTitle": "Edit contract",
+      "collaterals": {
+        "heading": "Collaterals",
+        "add": "Add collateral",
+        "empty": "No collaterals recorded.",
+        "save": "Save collateral",
+        "valueLabel": "Value (EUR)",
+        "evidenceAttached": "Attached",
+        "removeTitle": "Remove this collateral?",
+        "removeDescription": "The collateral is kept in the contract's history. Say why it is being removed.",
+        "reasonPlaceholder": "Reason for removal",
+        "removeConfirm": "Remove",
+        "columns": {
+          "type": "Type",
+          "value": "Value",
+          "partner": "Partner",
+          "document": "Document"
+        },
+        "types": {
+          "GUARANTEE": "Guarantee",
+          "SECURITY_DEPOSIT": "Security deposit",
+          "BUY_BACK_AGREEMENT": "Buy-back agreement"
+        },
+        "obligations": {
+          "guarantee": "Guarantee",
+          "co_obligation": "Co-obligation"
+        }
+      }
     },
     "steps": {
       "leasingCompany": {

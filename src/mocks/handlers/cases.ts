@@ -25,6 +25,9 @@ import {
   GuarantorLinkResponseSchema,
   GuarantorListResponseSchema,
   LeaseObjectListResponseSchema,
+  CollateralListItemSchema,
+  CollateralListResponseSchema,
+  ContractCollateralResponseSchema,
   LeaseObjectReadSchema,
   LesseeLinkResponseSchema,
   PaymentPlanResponseSchema,
@@ -41,6 +44,7 @@ import {
   type CaseProductTemplateResponse,
   type ImportBatchPreviewResponse,
   type GuarantorListItem,
+  type CollateralListItem,
   type LeaseObjectRead,
   type LesseeLinkResponse,
   type PaymentPlanResponse,
@@ -65,6 +69,7 @@ import { mockPartners } from "@/mocks/fixtures/partners"
 import { getMockRole } from "@/mocks/role"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
 import { mockUuid } from "@/mocks/uuid"
+import { mockLesseePartners } from "@/mocks/fixtures/partners"
 import { API } from "@/mocks/apiBase"
 
 const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
@@ -155,6 +160,31 @@ const objectsByContractId: Record<string, LeaseObjectRead[]> = {
     seededObject("00000000-0000-4000-8000-0000000acc03", 1, "Reefer trailer"),
   ],
 }
+// Contract collaterals, seeded so the dummy's two rows — a deposit with no party and a guarantee
+// with one — are both on screen the first time the tab is opened.
+const collateralsByContractId: Record<string, CollateralListItem[]> = {
+  "00000000-0000-4000-8000-0000000acc01": [
+    {
+      collateral_id: "00000000-0000-4000-8000-0000000c01a1",
+      collateral_type: "SECURITY_DEPOSIT",
+      value: "15000.00",
+      guarantor_partner_id: null,
+      guarantor_display_name: null,
+      evidence_document_id: "00000000-0000-4000-8000-0000000c01d1",
+      kind_of_obligation: null,
+    },
+    {
+      collateral_id: "00000000-0000-4000-8000-0000000c01a2",
+      collateral_type: "GUARANTEE",
+      value: "45000.00",
+      guarantor_partner_id: "00000000-0000-4000-8000-00000000a101",
+      guarantor_display_name: "Sofia Reinhardt",
+      evidence_document_id: "00000000-0000-4000-8000-0000000c01d2",
+      kind_of_obligation: "guarantee",
+    },
+  ],
+}
+
 const lesseeByContractId: Record<string, LesseeLinkResponse> = {}
 const planByContractId: Record<string, PaymentPlanResponse> = {}
 const commentsByCaseId: Record<string, CaseCommentItem[]> = {}
@@ -647,6 +677,70 @@ export const caseHandlers = [
     envelope(
       ObjectClassificationResponseSchema.parse({ groups: mockObjectGroups })
     )
+  ),
+
+  http.get(`${API}/contracts/:contractId/collaterals`, ({ params }) => {
+    const contractId = params.contractId as string
+    const collaterals = collateralsByContractId[contractId] ?? []
+    return envelope(
+      CollateralListResponseSchema.parse({
+        contract_id: contractId,
+        collaterals,
+        count: collaterals.length,
+      })
+    )
+  }),
+
+  http.post(
+    `${API}/contracts/:contractId/collaterals`,
+    async ({ params, request }) => {
+      const contractId = params.contractId as string
+      const body = (await request.json()) as Record<string, unknown>
+      const existing = collateralsByContractId[contractId] ?? []
+      const created = {
+        collateral_id: `00000000-0000-4000-8000-0000000c0${(existing.length + 3)
+          .toString(16)
+          .padStart(2, "0")}a`,
+        collateral_type: body.collateral_type as string,
+        value: (body.value as string | null) ?? null,
+        guarantor_partner_id: (body.existing_partner_id as string) ?? null,
+        // The real service resolves the party's name; the mock reads it out of the seeded lessee
+        // book so the Partner column is not a bare id.
+        guarantor_display_name: body.existing_partner_id
+          ? (mockLesseePartners[body.existing_partner_id as string]?.name ??
+            "Linked partner")
+          : null,
+        evidence_document_id: (body.evidence_document_id as string) ?? null,
+        kind_of_obligation: (body.kind_of_obligation as string) ?? null,
+      }
+      collateralsByContractId[contractId] = [
+        ...existing,
+        CollateralListItemSchema.parse(created),
+      ]
+      return envelope(
+        ContractCollateralResponseSchema.parse({
+          collateral_id: created.collateral_id,
+          contract_id: contractId,
+          collateral_type: created.collateral_type,
+          value: created.value,
+          guarantor_partner_id: created.guarantor_partner_id,
+          evidence_document_id: created.evidence_document_id,
+          kind_of_obligation: created.kind_of_obligation,
+        }),
+        "COLLATERAL_ADDED"
+      )
+    }
+  ),
+
+  http.post(
+    `${API}/contracts/:contractId/collaterals/:collateralId/remove`,
+    ({ params }) => {
+      const contractId = params.contractId as string
+      collateralsByContractId[contractId] = (
+        collateralsByContractId[contractId] ?? []
+      ).filter(row => row.collateral_id !== params.collateralId)
+      return envelope({ removed: true }, "COLLATERAL_REMOVED")
+    }
   ),
 
   http.get(`${API}/contracts/:contractId/objects`, ({ params }) => {

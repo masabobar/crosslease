@@ -474,8 +474,8 @@
       "saved": "Vertrag zum Fall gespeichert.",
       "tabs": {
         "lessee": "Leasingnehmer",
-        "guarantors": "Bürgen / Mitverpflichtete",
         "objects": "Objekte",
+        "collaterals": "Sicherheiten",
         "contractDetails": "Vertragsdetails",
         "paymentPlan": "Zahlungsplan"
       },
@@ -488,7 +488,34 @@
         "enable": "Nichtlinearer Zahlungsplan",
         "enabled": "Nichtlinearer Zahlungsplan ist aktiv"
       },
-      "editTitle": "Vertrag bearbeiten"
+      "editTitle": "Vertrag bearbeiten",
+      "collaterals": {
+        "heading": "Sicherheiten",
+        "add": "Sicherheit hinzufügen",
+        "empty": "Keine Sicherheiten erfasst.",
+        "save": "Sicherheit speichern",
+        "valueLabel": "Wert (EUR)",
+        "evidenceAttached": "Beigefügt",
+        "removeTitle": "Diese Sicherheit entfernen?",
+        "removeDescription": "Die Sicherheit bleibt in der Vertragshistorie erhalten. Bitte den Grund angeben.",
+        "reasonPlaceholder": "Grund der Entfernung",
+        "removeConfirm": "Entfernen",
+        "columns": {
+          "type": "Art",
+          "value": "Wert",
+          "partner": "Partner",
+          "document": "Dokument"
+        },
+        "types": {
+          "GUARANTEE": "Bürgschaft",
+          "SECURITY_DEPOSIT": "Kaution",
+          "BUY_BACK_AGREEMENT": "Rückkaufvereinbarung"
+        },
+        "obligations": {
+          "guarantee": "Bürgschaft",
+          "co_obligation": "Mitverpflichtung"
+        }
+      }
     },
     "steps": {
       "leasingCompany": {

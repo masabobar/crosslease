@@ -497,6 +497,60 @@ export const GuarantorListItemSchema = z.object({
 })
 export type GuarantorListItem = z.infer<typeof GuarantorListItemSchema>
 
+// ── Contract collaterals (PRD1042-2167) ───────────────────────────────────────
+
+// The wire values are SCREAMING_SNAKE here, unlike every other contract enum on this API — the
+// backend's own `ContractCollateralType`. Matched exactly rather than normalised.
+export const ContractCollateralTypeSchema = z.enum([
+  "GUARANTEE",
+  "SECURITY_DEPOSIT",
+  "BUY_BACK_AGREEMENT",
+])
+export type ContractCollateralType = z.infer<
+  typeof ContractCollateralTypeSchema
+>
+
+// What a guaranteeing party actually takes on. Only a GUARANTEE carries one; omitted means
+// `guarantee`, which is the backend's own documented default.
+export const ObligationKindSchema = z.enum(["guarantee", "co_obligation"])
+export type ObligationKind = z.infer<typeof ObligationKindSchema>
+
+// Money arrives as either a number or a decimal string depending on the endpoint, so the union is
+// the honest shape rather than a coercion that would silently round.
+export const CollateralListItemSchema = z.object({
+  collateral_id: z.string().uuid(),
+  collateral_type: ContractCollateralTypeSchema,
+  value: z.union([z.number(), z.string()]).nullable(),
+  guarantor_partner_id: z.string().uuid().nullable(),
+  // Unlike the contract list's lessee, this list carries the name — so no per-row partner fetch.
+  guarantor_display_name: z.string().nullable(),
+  evidence_document_id: z.string().nullable(),
+  kind_of_obligation: ObligationKindSchema.nullable(),
+})
+export type CollateralListItem = z.infer<typeof CollateralListItemSchema>
+
+export const CollateralListResponseSchema = z.object({
+  contract_id: z.string().uuid(),
+  collaterals: z.array(CollateralListItemSchema),
+  count: z.number().int(),
+})
+export type CollateralListResponse = z.infer<
+  typeof CollateralListResponseSchema
+>
+
+export const ContractCollateralResponseSchema = z.object({
+  collateral_id: z.string().uuid(),
+  contract_id: z.string().uuid(),
+  collateral_type: ContractCollateralTypeSchema,
+  value: z.union([z.number(), z.string()]).nullable(),
+  guarantor_partner_id: z.string().uuid().nullable(),
+  evidence_document_id: z.string().nullable(),
+  kind_of_obligation: ObligationKindSchema.nullable(),
+})
+export type ContractCollateralResponse = z.infer<
+  typeof ContractCollateralResponseSchema
+>
+
 export const GuarantorListResponseSchema = z.object({
   contract_id: z.string().uuid(),
   count: z.number().int(),

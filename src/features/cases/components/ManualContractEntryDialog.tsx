@@ -11,10 +11,8 @@ import { CASE_QUERY_KEYS } from "@/features/cases/api/casesApi"
 import { useQueryClient } from "@tanstack/react-query"
 import { CashFlowTab } from "@/features/cases/components/steps/CashFlowTab"
 import { ContractDetailsTab } from "@/features/cases/components/steps/ContractDetailsTab"
-import {
-  GuarantorsTab,
-  LesseeTab,
-} from "@/features/cases/components/steps/LesseeTab"
+import { CollateralsTab } from "@/features/cases/components/steps/CollateralsTab"
+import { LesseeTab } from "@/features/cases/components/steps/LesseeTab"
 import { ObjectTab } from "@/features/cases/components/steps/ObjectTab"
 
 /**
@@ -33,10 +31,12 @@ import { ObjectTab } from "@/features/cases/components/steps/ObjectTab"
  * list of Type / Value / Guarantor rows. There is no per-contract collateral endpoint and no
  * guarantor-per-collateral field, so the tab would be a form that cannot save (Q-022).
  */
+// The dummy's own order: who the contract is with, what it covers, what secures it, then its
+// terms.
 const BASE_MANUAL_ENTRY_TABS = [
   "lessee",
-  "guarantors",
   "objects",
+  "collaterals",
   "contractDetails",
 ] as const
 
@@ -162,8 +162,8 @@ export function ManualContractEntryDialog({
           <LesseeTab contractId={contractId} onNeedContract={ensureContract} />
         )}
 
-        {tab === "guarantors" && !isCreating && (
-          <GuarantorsTab
+        {tab === "collaterals" && !isCreating && (
+          <CollateralsTab
             contractId={contractId}
             onNeedContract={ensureContract}
           />
