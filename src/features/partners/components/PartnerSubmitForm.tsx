@@ -27,6 +27,7 @@ import {
   isCommercialRegisterApplicable,
   isNotFutureDate,
   isValidLcNumber,
+  hasLeiFormat,
   isValidLei,
 } from "@/features/partners/utils"
 import { PartnerTypeSchema } from "@/features/partners/api/schema"
@@ -132,9 +133,11 @@ const legalEntitySchema = z.object({
   lei: z
     .string()
     .optional()
-    .refine(v => !v || isValidLei(v), {
-      message: "leiInvalid",
-    }),
+    // Two rules, two messages. One message for both said "must be exactly 20 alphanumeric
+    // characters" to a user whose entry was exactly that and had failed the check digits, leaving
+    // nothing to act on.
+    .refine(v => !v || hasLeiFormat(v), { message: "leiFormat" })
+    .refine(v => !v || isValidLei(v), { message: "leiChecksum" }),
   commercial_register_no: z.string().optional(),
   // The two identifiers the platform actually matches on, and the one it does not.
   // `LegalEntityIdentityInput` has carried all three all along; this form simply never asked for

@@ -9,6 +9,7 @@ import {
   isValidBic,
   isValidIban,
   isValidLcNumber,
+  hasLeiFormat,
   isValidLei,
   normalizeIban,
 } from "@/features/partners/utils"
@@ -87,6 +88,24 @@ describe("isCommercialRegisterApplicable", () => {
 })
 
 describe("isValidLei", () => {
+  /**
+   * Published LEIs, which is the whole point: the rule this replaces moved the first four
+   * characters to the end before taking the remainder — IBAN's rule, not a LEI's — and rejected
+   * every one of these. An optional field that cannot accept a single valid value is a field you
+   * can only leave empty.
+   */
+  const REAL_LEIS = [
+    "5493001KJTIIGC8Y1R12",
+    "529900T8BM49AURSDO55",
+    "213800QILIUD4ROSUO03",
+    "7LTWFZYICNSX8D621K86",
+    "549300GKFG0RYRRQ1414",
+  ]
+
+  it("accepts a real LEI", () => {
+    for (const lei of REAL_LEIS) expect(isValidLei(lei)).toBe(true)
+  })
+
   it("rejects anything that is not 20 alphanumeric characters", () => {
     expect(isValidLei("")).toBe(false)
     expect(isValidLei("ABC")).toBe(false)
@@ -95,26 +114,31 @@ describe("isValidLei", () => {
     expect(isValidLei("7LTWFZYICNSX8D621K8-")).toBe(false) // non-alphanumeric
   })
 
-  it("trims and upper-cases before validating", () => {
-    // Same string, three ways — whichever verdict the checksum reaches, the
-    // normalisation must not change it.
-    const verdict = isValidLei("529900T8BM49AURSDO55")
-    expect(isValidLei("  529900T8BM49AURSDO55  ")).toBe(verdict)
-    expect(isValidLei("529900t8bm49aursdo55")).toBe(verdict)
+  // 20 alphanumeric characters and still wrong — the case the single error message used to
+  // describe as "must be exactly 20 alphanumeric characters".
+  it("rejects 20 valid characters whose check digits do not match", () => {
+    expect(isValidLei("12345678901234567890")).toBe(false)
+    expect(isValidLei("AAAAAAAAAAAAAAAAAAAA")).toBe(false)
+    // One real LEI with two of its body characters transposed.
+    expect(isValidLei("5493001KJTIIGC8Y1R21")).toBe(false)
   })
 
-  // CHARACTERIZATION TEST — pins current behaviour, which is WRONG on purpose.
-  // isValidLei mirrors refinext-api's `_lei_checksum_valid()`, and both apply the
-  // IBAN rearrangement (first 4 chars moved to the end) that ISO 17442 does not
-  // use. The consequence is that every real LEI fails. See Q-065 in
-  // .project-management/input/open-questions.md.
-  //
-  // When the BE drops the rearrangement, flip these two expectations together
-  // with the one-line fix in utils.ts — this test failing is the signal, not a
-  // regression.
-  it("currently rejects real LEIs (mirrors the BE's rearrangement bug — Q-065)", () => {
-    expect(isValidLei("7LTWFZYICNSX8D621K86")).toBe(false)
-    expect(isValidLei("5493001KJTIIGC8Y1R12")).toBe(false)
+  it("trims and upper-cases before validating", () => {
+    expect(isValidLei("  529900T8BM49AURSDO55  ")).toBe(true)
+    expect(isValidLei("529900t8bm49aursdo55")).toBe(true)
+  })
+})
+
+describe("hasLeiFormat", () => {
+  // The format half on its own, so the form can say which of the two rules an entry broke.
+  it("passes 20 alphanumeric characters whatever the check digits say", () => {
+    expect(hasLeiFormat("12345678901234567890")).toBe(true)
+    expect(hasLeiFormat("529900T8BM49AURSDO55")).toBe(true)
+  })
+
+  it("fails on length or on a non-alphanumeric character", () => {
+    expect(hasLeiFormat("12345678901234567890$X")).toBe(false)
+    expect(hasLeiFormat("1234567890123456789")).toBe(false)
   })
 })
 

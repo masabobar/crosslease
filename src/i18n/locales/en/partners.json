@@ -188,11 +188,12 @@
       "errors": {
         "required": "This field is required.",
         "invalidCountry": "Select a country from the list.",
-        "leiInvalid": "LEI must be exactly 20 alphanumeric characters (ISO 17442).",
         "dateOfBirthInFuture": "Date of birth cannot be in the future.",
         "invalidDealerNumber": "Enter exactly 4 digits.",
         "ibanInvalid": "Enter a valid IBAN: country code, 2 check digits, then 11-30 letters or digits.",
-        "bicInvalid": "Enter a valid BIC: 8 or 11 characters (bank, country, location, optional branch)."
+        "bicInvalid": "Enter a valid BIC: 8 or 11 characters (bank, country, location, optional branch).",
+        "leiFormat": "LEI must be exactly 20 alphanumeric characters (ISO 17442).",
+        "leiChecksum": "That is 20 characters, but the last two are the LEI's check digits and they do not match the rest. Check the code for a typo."
       },
       "entityTypeHints": {
         "legal_entity": "GmbH, AG, KG, e. V.",

@@ -57,22 +57,49 @@ export function isCommercialRegisterApplicable(
   return (country ?? "").toUpperCase() === COMMERCIAL_REGISTER_COUNTRY
 }
 
-// Mirrors LegalEntityIdentityInput.validate_lei in refinext-api's partner_schemas.py —
-// ISO 17442 mod-97: move first 4 chars to end, convert letters to digits, check
-// mod 97 == 1. Lives here rather than inline in the form so the checksum that has
-// to agree with the backend is unit-testable.
-export function isValidLei(raw: string): boolean {
-  const lei = raw.trim().toUpperCase()
-  if (!/^[A-Z0-9]{20}$/.test(lei)) return false
-  const rearranged = lei.slice(4) + lei.slice(0, 4)
+const LEI_FORMAT = /^[A-Z0-9]{20}$/
+
+/** ISO 7064 MOD 97-10 over a string, letters counted as A=10 … Z=35. */
+function mod97(value: string): number {
   let remainder = 0
-  for (const char of rearranged) {
+  for (const char of value) {
     const digits = /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char
     for (const digit of digits) {
       remainder = (remainder * 10 + Number(digit)) % 97
     }
   }
-  return remainder === 1
+  return remainder
+}
+
+/** Whether a string is 20 alphanumeric characters — the shape of a LEI, before its check digits. */
+export function hasLeiFormat(raw: string): boolean {
+  return LEI_FORMAT.test(raw.trim().toUpperCase())
+}
+
+/**
+ * Whether a LEI's two check digits are right — ISO 17442, ISO 7064 MOD 97-10 over the **whole
+ * twenty characters**.
+ *
+ * ── THE BUG THIS REPLACES ──────────────────────────────────────────────────────────────────────
+ * This used to move the first four characters to the end before taking the remainder. That is
+ * **IBAN's** rule, not a LEI's, and it made the field reject every real LEI there is: five
+ * published ones — 5493001KJTIIGC8Y1R12, 529900T8BM49AURSDO55, 213800QILIUD4ROSUO03,
+ * 7LTWFZYICNSX8D621K86, 549300GKFG0RYRRQ1414 — all give a remainder of 1 as written and none give
+ * 1 rearranged. An optional field that cannot accept a single valid value is a field you can only
+ * leave empty.
+ *
+ * The old unit test hedged — *"whichever verdict the checksum reaches"* — which is the tell: it
+ * was written without a known-good LEI to check against, so it asserted nothing about the maths.
+ *
+ * The comment it carried claimed to mirror `validate_lei` in the backend's `partner_schemas.py`.
+ * That repository is not on this machine, so whether the backend rearranges too is unverified —
+ * if it does, a valid LEI will now pass here and be refused there, which is a backend defect to
+ * file rather than a reason to keep rejecting valid input.
+ */
+export function isValidLei(raw: string): boolean {
+  const lei = raw.trim().toUpperCase()
+  if (!LEI_FORMAT.test(lei)) return false
+  return mod97(lei) === 1
 }
 
 // RHF returns "" (not undefined) for optional text inputs the user never touched.
