@@ -3909,7 +3909,7 @@
       "patch": {
         "tags": ["Contracts"],
         "summary": "Edit Contract",
-        "description": "Edit a contract's captured fields. Guarded by the request's write window.",
+        "description": "Edit a contract's captured fields. Guarded by the request's write window.\n\nA true partial update (BUG-029): ``model_fields_set`` is the set of fields this request actually\ncarried, so an omitted field keeps its stored value while one sent explicitly as ``null`` is\ncleared. Without it every absent field would reach the service as ``None`` and overwrite the row.",
         "operationId": "edit_contract_api_v1_contracts__contract_id__patch",
         "parameters": [
           {
@@ -4181,7 +4181,7 @@
       "patch": {
         "tags": ["Contracts"],
         "summary": "Edit Lease Object",
-        "description": "Edit a lease object's captured fields (PRD1042-1924, US 1.8). Write-window + role gated.",
+        "description": "Edit a lease object's captured fields (PRD1042-1924, US 1.8). Write-window + role gated.\n\nPartial, on the same mechanism as the contract edit above (BUG-029): ``model_fields_set`` separates\n\"not sent\" from \"sent as null\".",
         "operationId": "edit_lease_object_api_v1_objects__object_id__patch",
         "parameters": [
           {
@@ -17251,6 +17251,35 @@
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Put Option"
           },
+          "sale_and_lease_back": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sale And Lease Back"
+          },
+          "sublease": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sublease"
+          },
+          "contract_end": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Contract End"
+          },
+          "residual_value_due_on": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Residual Value Due On"
+          },
+          "remarks": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Remarks"
+          },
           "batch_id": {
             "anyOf": [
               { "type": "string", "format": "uuid" },
@@ -17405,6 +17434,35 @@
           "put_option": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Put Option"
+          },
+          "sale_and_lease_back": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sale And Lease Back"
+          },
+          "sublease": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sublease"
+          },
+          "contract_end": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Contract End"
+          },
+          "residual_value_due_on": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Residual Value Due On"
+          },
+          "remarks": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Remarks"
           }
         },
         "type": "object",
@@ -17590,6 +17648,32 @@
           "put_option": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Put Option"
+          },
+          "sale_and_lease_back": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sale And Lease Back"
+          },
+          "sublease": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sublease"
+          },
+          "contract_end": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Contract End"
+          },
+          "residual_value_due_on": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Residual Value Due On"
+          },
+          "remarks": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Remarks"
           },
           "amortisation_warning": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -18998,6 +19082,14 @@
             ],
             "title": "Collection Account Id"
           },
+          "payout_account_iban": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Payout Account Iban"
+          },
+          "collection_account_iban": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Collection Account Iban"
+          },
           "special_conditions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Special Conditions"
@@ -19123,6 +19215,8 @@
           "refinancing_quota",
           "payout_account_id",
           "collection_account_id",
+          "payout_account_iban",
+          "collection_account_iban",
           "special_conditions",
           "special_bank_settlement",
           "effective_from",
@@ -21844,6 +21938,13 @@
               { "type": "null" }
             ],
             "title": "Dat Evidence Document Id"
+          },
+          "location_and_region": {
+            "anyOf": [
+              { "type": "string", "maxLength": 255 },
+              { "type": "null" }
+            ],
+            "title": "Location And Region"
           }
         },
         "type": "object",
@@ -21998,6 +22099,13 @@
               { "type": "null" }
             ],
             "title": "Dat Evidence Document Id"
+          },
+          "location_and_region": {
+            "anyOf": [
+              { "type": "string", "maxLength": 255 },
+              { "type": "null" }
+            ],
+            "title": "Location And Region"
           }
         },
         "type": "object",
@@ -22139,6 +22247,10 @@
             ],
             "title": "Dat Evidence Document Id"
           },
+          "location_and_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Location And Region"
+          },
           "removed_at": {
             "anyOf": [
               { "type": "string", "format": "date-time" },
@@ -22209,6 +22321,7 @@
           "value_as_at",
           "dat_evidence_status",
           "dat_evidence_document_id",
+          "location_and_region",
           "removed_at",
           "removal_reason",
           "created_by",

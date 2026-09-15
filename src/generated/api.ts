@@ -979,6 +979,11 @@ const ContractRead = z
     residual_value: z.union([z.string(), z.null()]).optional(),
     buy_back_agreement: z.union([z.boolean(), z.null()]).optional(),
     put_option: z.union([z.boolean(), z.null()]).optional(),
+    sale_and_lease_back: z.union([z.boolean(), z.null()]).optional(),
+    sublease: z.union([z.boolean(), z.null()]).optional(),
+    contract_end: z.union([z.string(), z.null()]).optional(),
+    residual_value_due_on: z.union([z.string(), z.null()]).optional(),
+    remarks: z.union([z.string(), z.null()]).optional(),
     amortisation_warning: z.union([z.string(), z.null()]).optional(),
     settlement_blockers: z.array(z.string()).optional(),
   })
@@ -1015,6 +1020,11 @@ const ContractCreate = z
     residual_value: z.union([z.number(), z.string(), z.null()]),
     buy_back_agreement: z.union([z.boolean(), z.null()]),
     put_option: z.union([z.boolean(), z.null()]),
+    sale_and_lease_back: z.union([z.boolean(), z.null()]),
+    sublease: z.union([z.boolean(), z.null()]),
+    contract_end: z.union([z.string(), z.null()]),
+    residual_value_due_on: z.union([z.string(), z.null()]),
+    remarks: z.union([z.string(), z.null()]),
     batch_id: z.union([z.string(), z.null()]),
   })
   .partial()
@@ -1054,6 +1064,11 @@ const ContractEdit = z
     residual_value: z.union([z.number(), z.string(), z.null()]),
     buy_back_agreement: z.union([z.boolean(), z.null()]),
     put_option: z.union([z.boolean(), z.null()]),
+    sale_and_lease_back: z.union([z.boolean(), z.null()]),
+    sublease: z.union([z.boolean(), z.null()]),
+    contract_end: z.union([z.string(), z.null()]),
+    residual_value_due_on: z.union([z.string(), z.null()]),
+    remarks: z.union([z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -1099,6 +1114,7 @@ const LeaseObjectRead = z
     value_as_at: z.union([z.string(), z.null()]),
     dat_evidence_status: z.union([z.string(), z.null()]),
     dat_evidence_document_id: z.union([z.string(), z.null()]),
+    location_and_region: z.union([z.string(), z.null()]),
     removed_at: z.union([z.string(), z.null()]),
     removal_reason: z.union([z.string(), z.null()]),
     created_by: z.string().uuid(),
@@ -1136,6 +1152,7 @@ const LeaseObjectCreate = z
     value_as_at: z.union([z.string(), z.null()]),
     dat_evidence_status: z.union([DATEvidenceStatus, z.null()]),
     dat_evidence_document_id: z.union([z.string(), z.null()]),
+    location_and_region: z.union([z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -1160,6 +1177,7 @@ const LeaseObjectEdit = z
     value_as_at: z.union([z.string(), z.null()]),
     dat_evidence_status: z.union([DATEvidenceStatus, z.null()]),
     dat_evidence_document_id: z.union([z.string(), z.null()]),
+    location_and_region: z.union([z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -2944,6 +2962,8 @@ const FADetailResponse = z
     refinancing_quota: z.union([z.string(), z.null()]),
     payout_account_id: z.union([z.string(), z.null()]),
     collection_account_id: z.union([z.string(), z.null()]),
+    payout_account_iban: z.union([z.string(), z.null()]),
+    collection_account_iban: z.union([z.string(), z.null()]),
     special_conditions: z.union([z.string(), z.null()]),
     special_bank_settlement: z.union([z.string(), z.null()]),
     effective_from: z.union([z.string(), z.null()]),
@@ -8274,7 +8294,11 @@ work continues in the case workspace, not the wizard.`,
     method: "patch",
     path: "/api/v1/contracts/:contract_id",
     alias: "edit_contract_api_v1_contracts__contract_id__patch",
-    description: `Edit a contract&#x27;s captured fields. Guarded by the request&#x27;s write window.`,
+    description: `Edit a contract&#x27;s captured fields. Guarded by the request&#x27;s write window.
+
+A true partial update (BUG-029): &#x60;&#x60;model_fields_set&#x60;&#x60; is the set of fields this request actually
+carried, so an omitted field keeps its stored value while one sent explicitly as &#x60;&#x60;null&#x60;&#x60; is
+cleared. Without it every absent field would reach the service as &#x60;&#x60;None&#x60;&#x60; and overwrite the row.`,
     requestFormat: "json",
     parameters: [
       {
@@ -10310,7 +10334,10 @@ of config, not a release.`,
     method: "patch",
     path: "/api/v1/objects/:object_id",
     alias: "edit_lease_object_api_v1_objects__object_id__patch",
-    description: `Edit a lease object&#x27;s captured fields (PRD1042-1924, US 1.8). Write-window + role gated.`,
+    description: `Edit a lease object&#x27;s captured fields (PRD1042-1924, US 1.8). Write-window + role gated.
+
+Partial, on the same mechanism as the contract edit above (BUG-029): &#x60;&#x60;model_fields_set&#x60;&#x60; separates
+&quot;not sent&quot; from &quot;sent as null&quot;.`,
     requestFormat: "json",
     parameters: [
       {
