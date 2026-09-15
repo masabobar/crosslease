@@ -127,3 +127,25 @@ export const mockDuplicatePairs: DuplicateCandidatePairResponse[] = [
     resolution_note: null,
   },
 ]
+
+/**
+ * The two lessees the design case's contracts point at.
+ *
+ * They are not in `mockPartners` because that fixture backs the *partner list* screen, whose rows
+ * are leasing companies and merge candidates. A lessee is a different population — it is reached
+ * only through a contract — so it is seeded here rather than padding the list screen with rows the
+ * design does not show.
+ */
+export const mockLesseePartners: Record<
+  string,
+  { name: string; city: string }
+> = {
+  "00000000-0000-4000-8000-00000000a101": {
+    name: "Tom Smith GmbH",
+    city: "Hamburg",
+  },
+  "00000000-0000-4000-8000-00000000a102": {
+    name: "Nordkap Spedition GmbH",
+    city: "Kiel",
+  },
+}

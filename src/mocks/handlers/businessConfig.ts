@@ -10,6 +10,7 @@
 import { http } from "msw"
 import {
   DuplicatePairListResponseSchema,
+  PartnerDetailResponseSchema,
   PartnerListResponseSchema,
 } from "@/features/partners/api/schema"
 import {
@@ -23,7 +24,11 @@ import {
   TemplateListResponseSchema,
   TemplateStatusSchema,
 } from "@/features/productTemplates/api/schema"
-import { mockDuplicatePairs, mockPartners } from "@/mocks/fixtures/partners"
+import {
+  mockDuplicatePairs,
+  mockLesseePartners,
+  mockPartners,
+} from "@/mocks/fixtures/partners"
 import { mockUuid } from "@/mocks/uuid"
 import {
   PartnerMatchResponseSchema,
@@ -150,6 +155,52 @@ export const businessConfigHandlers = [
     })
 
     return envelope(PartnerSubmitResponseSchema.parse(created))
+  }),
+
+  /**
+   * One partner, by id.
+   *
+   * Reached from the wizard's contract table, which resolves each row's `lessee_partner_id` into a
+   * name — `ContractRead` carries only the id. Unmocked it hit the 501 fallback and every row fell
+   * back to printing the leasing company's own contract number, which is the identifier a bank
+   * reader can do least with.
+   */
+  http.get(`${API}/partners/:partnerId`, ({ params }) => {
+    const id = params.partnerId as string
+    const lessee = mockLesseePartners[id]
+    const listed = mockPartners.find(partner => partner.partner_id === id)
+    const name = lessee?.name ?? listed?.display_name
+    if (!name) return errorEnvelope("NOT_FOUND", "Partner not found", 404)
+
+    return envelope(
+      PartnerDetailResponseSchema.parse({
+        partner_id: id,
+        display_name: name,
+        partner_type: "legal_entity",
+        status: "confirmed",
+        ubo_completeness_status: "complete",
+        identity: {
+          partner_type: "legal_entity",
+          legal_name: name,
+          legal_form: "GmbH",
+          country: listed?.country ?? "DE",
+          tax_id_vat: null,
+          lei: null,
+          commercial_register_no: null,
+          registered_address: lessee
+            ? {
+                street: "Hafenstraße 12",
+                postal_code: "20095",
+                city: lessee.city,
+                country: "DE",
+              }
+            : null,
+          foreign_identifier: null,
+        },
+        created_at: "2026-02-04T09:00:00Z",
+        updated_at: "2026-07-18T11:30:00Z",
+      })
+    )
   }),
 
   http.get(`${API}/tenants/:tenantId/partners/duplicates`, () =>

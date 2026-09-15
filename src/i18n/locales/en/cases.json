@@ -282,7 +282,9 @@
         "start": "Start date",
         "term": "Term",
         "instalment": "Instalment",
-        "state": "State"
+        "state": "State",
+        "contractLessee": "Contract / lessee",
+        "objects": "Objects"
       },
       "deferredState": {
         "active": "Active",
@@ -305,6 +307,12 @@
         "title": "Are you sure?",
         "description": "{{count}} contract will be removed from this request.",
         "description_other": "{{count}} contracts will be removed from this request."
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "contractType": {
+        "lease": "Finance lease",
+        "hire_purchase": "Hire purchase"
       }
     },
     "leasingCompany": {

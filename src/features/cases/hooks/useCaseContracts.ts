@@ -15,10 +15,15 @@ import type { CaseContractListResponse } from "@/features/cases/api/schema"
  * (possibly empty), so there is no ordinary-404 state to short-circuit — a failure here is a real
  * failure and the default retry is appropriate.
  */
-export function useCaseContracts(caseId: string | undefined) {
+export function useCaseContracts(
+  caseId: string | undefined,
+  page?: { limit: number; offset: number }
+) {
   return useQuery<CaseContractListResponse>({
-    queryKey: CASE_QUERY_KEYS.contracts(caseId ?? ""),
-    queryFn: () => fetchCaseContracts(caseId as string),
+    queryKey: CASE_QUERY_KEYS.contracts(caseId ?? "", page),
+    queryFn: () => fetchCaseContracts(caseId as string, page),
     enabled: Boolean(caseId),
+    // Paging must not blank the table between pages — the pager would jump as the rows vanish.
+    placeholderData: previous => previous,
   })
 }

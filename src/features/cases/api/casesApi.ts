@@ -117,7 +117,8 @@ export const CASE_QUERY_KEYS = {
   detail: (caseId: string) => ["cases", "detail", caseId] as const,
   dataMeta: (caseId: string) => ["cases", "data-meta", caseId] as const,
   progress: (caseId: string) => ["cases", "progress", caseId] as const,
-  contracts: (caseId: string) => ["cases", "contracts", caseId] as const,
+  contracts: (caseId: string, page?: { limit: number; offset: number }) =>
+    ["cases", "contracts", caseId, page ?? null] as const,
   leasingCompany: (caseId: string) =>
     ["cases", "leasing-company", caseId] as const,
   productTemplate: (caseId: string) =>
@@ -181,10 +182,14 @@ export async function fetchCaseDataMeta(caseId: string): Promise<CaseDataMeta> {
 // financing workspace's Contracts tab, which joins these display fields onto the per-contract
 // financing figures (the financing endpoints carry only ids and shares, not terms).
 export async function fetchCaseContracts(
-  caseId: string
+  caseId: string,
+  page?: { limit: number; offset: number }
 ): Promise<CaseContractListResponse> {
   const data = await api.get(`/cases/${caseId}/contracts`, {
-    params: { limit: CASE_CONTRACT_LIMIT },
+    // Unpaged callers keep the old ceiling. The wizard's own table pages, because a case can hold
+    // 134 contracts and the dummy shows a pager under it — pulling all of them to render ten is
+    // what `offset` exists to avoid.
+    params: page ?? { limit: CASE_CONTRACT_LIMIT },
   })
   return CaseContractListResponseSchema.parse(data)
 }

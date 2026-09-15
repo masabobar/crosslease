@@ -282,7 +282,9 @@
         "start": "Beginn",
         "term": "Laufzeit",
         "instalment": "Rate",
-        "state": "Status"
+        "state": "Status",
+        "contractLessee": "Vertrag / Leasingnehmer",
+        "objects": "Objekte"
       },
       "deferredState": {
         "active": "Aktiv",
@@ -305,6 +307,12 @@
         "title": "Sind Sie sicher?",
         "description": "{{count}} Vertrag wird aus diesem Antrag entfernt.",
         "description_other": "{{count}} Verträge werden aus diesem Antrag entfernt."
+      },
+      "previous": "Zurück",
+      "next": "Weiter",
+      "contractType": {
+        "lease": "Finanzierungsleasing",
+        "hire_purchase": "Mietkauf"
       }
     },
     "leasingCompany": {

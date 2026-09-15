@@ -108,8 +108,53 @@ const templateByCaseId: Record<string, CaseProductTemplateResponse> = {}
 // that a batch is spent — re-opening a committed batch must not offer to commit it twice.
 const importBatchesById: Record<string, ImportBatchPreviewResponse> = {}
 
-// Manual-entry lease objects, keyed by contract. Session-scoped like everything else here.
-const objectsByContractId: Record<string, LeaseObjectRead[]> = {}
+// Lease objects, keyed by contract. Session-scoped like everything else here, but seeded rather
+// than empty: the wizard's contract table has an **Objects** column, and every contract answering
+// zero made the column read as a defect rather than as a case nobody has entered objects for.
+function seededObject(
+  contractId: string,
+  index: number,
+  description: string
+): LeaseObjectRead {
+  return LeaseObjectReadSchema.parse({
+    id: `${contractId.slice(0, -2)}${(0xe0 + index).toString(16)}`,
+    contract_id: contractId,
+    object_number: index,
+    object_group: "Wohnmobil",
+    object_sub_group: "Diesel-Hybrid",
+    object_description: description,
+    manufacturer: "Mercedes-Benz",
+    brand: "Sprinter",
+    year_of_manufacture: 2024,
+    chassis_or_serial_number: `WDB90626${index}L1234567`,
+    registration_plate: `HH-TS ${1000 + index}`,
+    vehicle_registration_document_number: null,
+    new_or_used: "new",
+    acquisition_cost: "48500.00",
+    residual_value: "12400.00",
+    special_payment: null,
+    market_value: null,
+    appraised_value: null,
+    value_as_at: null,
+    market_value_indicator: null,
+    dat_evidence_status: null,
+    dat_evidence_document_id: null,
+    removed_at: null,
+  })
+}
+
+const objectsByContractId: Record<string, LeaseObjectRead[]> = {
+  "00000000-0000-4000-8000-0000000acc01": [
+    seededObject("00000000-0000-4000-8000-0000000acc01", 1, "Refrigerated van"),
+    seededObject("00000000-0000-4000-8000-0000000acc01", 2, "Box trailer"),
+  ],
+  "00000000-0000-4000-8000-0000000acc02": [
+    seededObject("00000000-0000-4000-8000-0000000acc02", 1, "Tractor unit"),
+  ],
+  "00000000-0000-4000-8000-0000000acc03": [
+    seededObject("00000000-0000-4000-8000-0000000acc03", 1, "Reefer trailer"),
+  ],
+}
 const lesseeByContractId: Record<string, LesseeLinkResponse> = {}
 const planByContractId: Record<string, PaymentPlanResponse> = {}
 const commentsByCaseId: Record<string, CaseCommentItem[]> = {}
@@ -1054,10 +1099,18 @@ export const caseHandlers = [
   // GET /cases/{case_id}/contracts — the Contracts tab's terms half. A case with no fixture entry
   // answers an empty page rather than 404: every case has a contract set, possibly empty, so an
   // empty list is the honest shape and the tab's empty state is a real state.
-  http.get(`${API}/cases/:caseId/contracts`, ({ params }) => {
-    const items = mockCaseContractsByCaseId[params.caseId as string] ?? []
+  http.get(`${API}/cases/:caseId/contracts`, ({ params, request }) => {
+    const all = mockCaseContractsByCaseId[params.caseId as string] ?? []
+    // Paged, because the wizard's table pages. Answering the whole list to a request that asked
+    // for ten would make the pager draw the right page numbers over the wrong rows.
+    const url = new URL(request.url)
+    const limit = Number(url.searchParams.get("limit") ?? all.length)
+    const offset = Number(url.searchParams.get("offset") ?? 0)
     return envelope(
-      CaseContractListResponseSchema.parse({ items, total: items.length })
+      CaseContractListResponseSchema.parse({
+        items: all.slice(offset, offset + limit),
+        total: all.length,
+      })
     )
   }),
 
