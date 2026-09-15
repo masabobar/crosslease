@@ -558,6 +558,7 @@ const CaseCommentItem = z
     case_id: z.string().uuid(),
     author_id: z.string().uuid(),
     author_role: z.string(),
+    author_display: z.union([z.string(), z.null()]).optional(),
     body: z.string(),
     visibility: CommentVisibility,
     created_at: z.string().datetime({ offset: true }),
@@ -933,6 +934,8 @@ const FinancingListItem = z
     calculation_state: z.string(),
     loan_number: z.union([z.string(), z.null()]),
     created_at: z.string().datetime({ offset: true }),
+    lc_partner_name: z.union([z.string(), z.null()]).optional(),
+    contract_count: z.number().int().optional().default(0),
   })
   .passthrough()
 const FinancingListResponse = z
@@ -9174,9 +9177,11 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
     alias: "list_financings_api_v1_financings_get",
     description: `The financings inventory of the tenant (PRD1042-1949, US 1.33) — sortable, filterable, paged.
 
-Rows carry the stored carriers only: the deal figures stay deferred (1931-OQ-03), and
-Sollbelastung / Habenausgleich are not built (1949-OQ-01 — source of truth unresolved). Bank
-roles only (FO / BO / BPU); the LC and every platform role answer 404 (non-disclosure).`,
+Three columns of the approved prototype still have no carrier and are absent: the payout
+amount (definition answered by 1931-OQ-03, carrier not built), the account number, and
+Sollbelastung / Habenbelastung (provenance unresolved — Q-058). The &#x60;Outstanding&#x60; filter is
+derived from the last two and waits on the same answer. Bank roles only (FO / BO / BPU); the LC
+and every platform role answer 404 (non-disclosure).`,
     requestFormat: "json",
     parameters: [
       {

@@ -3555,7 +3555,7 @@
       "get": {
         "tags": ["Financing"],
         "summary": "List Financings",
-        "description": "The financings inventory of the tenant (PRD1042-1949, US 1.33) — sortable, filterable, paged.\n\nRows carry the stored carriers only: the deal figures stay deferred (1931-OQ-03), and\nSollbelastung / Habenausgleich are not built (1949-OQ-01 — source of truth unresolved). Bank\nroles only (FO / BO / BPU); the LC and every platform role answer 404 (non-disclosure).",
+        "description": "The financings inventory of the tenant (PRD1042-1949, US 1.33) — sortable, filterable, paged.\n\nThree columns of the approved prototype still have no carrier and are absent: the payout\namount (definition answered by 1931-OQ-03, carrier not built), the account number, and\nSollbelastung / Habenbelastung (provenance unresolved — Q-058). The `Outstanding` filter is\nderived from the last two and waits on the same answer. Bank roles only (FO / BO / BPU); the LC\nand every platform role answer 404 (non-disclosure).",
         "operationId": "list_financings_api_v1_financings_get",
         "parameters": [
           {
@@ -15472,6 +15472,10 @@
             "title": "Author Id"
           },
           "author_role": { "type": "string", "title": "Author Role" },
+          "author_display": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Author Display"
+          },
           "body": { "type": "string", "title": "Body" },
           "visibility": { "$ref": "#/components/schemas/CommentVisibility" },
           "created_at": {
@@ -19977,6 +19981,15 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "lc_partner_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lc Partner Name"
+          },
+          "contract_count": {
+            "type": "integer",
+            "title": "Contract Count",
+            "default": 0
           }
         },
         "type": "object",
@@ -19995,7 +20008,7 @@
           "created_at"
         ],
         "title": "FinancingListItem",
-        "description": "One row of the standalone financings list (PRD1042-1949, US 1.33).\n\nCarries the stored carriers only: the deal FIGURES stay deferred (1931-OQ-03), and\nSollbelastung / Habenausgleich are NOT here — their source of truth is unresolved (1949-OQ-01)."
+        "description": "One row of the standalone financings list (PRD1042-1949, US 1.33; widened by US-1.65).\n\nThree of the approved prototype's columns still have no carrier and are NOT here:\n\n* **payout amount** — 1931-OQ-03 answered the *definition* on 2026-09-09 (three measurement\n  bases; in two of them the payout is an input, not a computation), but no field on the\n  financing holds it yet;\n* **Sollbelastung / Habenbelastung** — provenance unresolved (Q-058). The prototype settles\n  their shape (an amount plus its own date each) and derives the `Outstanding` filter from\n  them, so that filter waits on the same answer;\n* **account no.** — no carrier, and which account it names is undefined.\n\nRendering any of them would be fake UI (`api-first.md` §4), so the frontend marks those columns\nunavailable rather than drawing a zero or an em dash that reads as \"this row has none\"."
       },
       "FinancingListResponse": {
         "properties": {
