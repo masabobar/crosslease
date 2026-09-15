@@ -241,10 +241,11 @@
       "templateResolved": "Durch den Rahmenvertrag festgelegt.",
       "portalLocked": "Vorausgewählt und gesperrt — eine Portalanfrage gilt immer für Ihr eigenes Unternehmen.",
       "binding": "Wird verknüpft …",
-      "retryBind": "Erneut versuchen"
+      "retryBind": "Erneut versuchen",
+      "agreementResolvedHint": "Der eine aktive Rahmenvertrag dieser Leasinggesellschaft."
     },
     "contracts": {
-      "bulkUpload": "Massendatei hochladen",
+      "bulkUpload": "MILK-Datei hochladen",
       "chooseEntry": "Erfassungsweg wählen",
       "columns": {
         "contract": "Vertrag",

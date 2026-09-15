@@ -178,6 +178,22 @@ export function LeasingCompanyStep({
             </ComboboxContent>
           </Combobox>
 
+          {/* The dummy echoes the chosen company under the field with an Active badge, so the
+              answer to "which company did I just pick" is on screen rather than only inside a
+              combobox input. Its own line reads "Name, City" — `city` is on neither
+              `FALCPartnerItem` nor `CaseLeasingCompanyResponse`, so the name stands alone. */}
+          {selectedPartner !== null && (
+            <div
+              className="mt-2 flex items-center justify-between gap-3 rounded-lg border px-4 py-2.5 text-sm"
+              data-testid="case-wizard-lc-chosen"
+            >
+              <span className="font-medium">{selectedPartner.legal_name}</span>
+              <Badge variant="default">
+                {t("wizard.company.agreementActive")}
+              </Badge>
+            </div>
+          )}
+
           {partners.isLoading && (
             <Skeleton
               className="mt-2 h-4 w-40"
@@ -434,6 +450,13 @@ function AgreementBlock({
           )}
         </Badge>
       </div>
+
+      {/* The dummy's own line under the resolved agreement. It is the sentence that explains why
+          there is no dropdown here — D-79: one active agreement per leasing company, determined by
+          the company. Without it the read-only field reads as a field that failed to load. */}
+      <p className="mb-3 text-xs text-muted-foreground">
+        {t("wizard.company.agreementResolvedHint")}
+      </p>
 
       <dl className="flex flex-col gap-2 text-sm">
         <Row

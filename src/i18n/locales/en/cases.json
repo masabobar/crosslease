@@ -241,10 +241,11 @@
       "templateResolved": "Set by the framework agreement.",
       "portalLocked": "Pre-selected and locked — a portal request is always for your own company.",
       "binding": "Binding…",
-      "retryBind": "Try again"
+      "retryBind": "Try again",
+      "agreementResolvedHint": "The one active agreement for this leasing company."
     },
     "contracts": {
-      "bulkUpload": "Upload bulk file",
+      "bulkUpload": "Upload MILK file",
       "chooseEntry": "Choose contract entry",
       "columns": {
         "contract": "Contract",
