@@ -31,6 +31,7 @@ import {
   CatalogDetailResponseSchema,
   CatalogListResponseSchema,
   CatalogResponseSchema,
+  SuspendCatalogResponseSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
 import type {
   CataloguePhase,
@@ -189,6 +190,20 @@ export const workflowTaskCatalogHandlers = [
         // Mutated in place so the row's state — and therefore which actions its menu offers —
         // reflects what just happened.
         found.catalog_state = nextState
+        // Suspend answers a different shape from its two neighbours: it reports the cases already
+        // resolved against the catalogue, which is what the confirm tells the reader it affected.
+        // Parsing through the schema the client actually uses is what catches that.
+        if (action === "suspend") {
+          return envelope(
+            SuspendCatalogResponseSchema.parse({
+              catalog_id: found.id,
+              catalog_state: nextState,
+              product_template_id: found.entity_id,
+              affected_case_ids: [],
+            }),
+            "CATALOG_UPDATED"
+          )
+        }
         return envelope(
           CatalogResponseSchema.parse(mockCatalogDetail(found)),
           "CATALOG_UPDATED"

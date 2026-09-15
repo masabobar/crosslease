@@ -47,7 +47,13 @@
       "openEnded": "Open ended",
       "actionsMenuLabel": "Row actions",
       "actions": {
-        "openDetail": "Open detail"
+        "edit": "Edit",
+        "activate": "Activate",
+        "suspend": "Suspend",
+        "reactivate": "Reactivate",
+        "activated": "{{name}} is now active.",
+        "suspended": "{{name}} is suspended.",
+        "reactivated": "{{name}} is active again."
       },
       "notApplicable": "—"
     },

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { QueryClient, UseMutationResult } from "@tanstack/react-query"
 import {
   reactivateWorkflowTaskCatalog,
+  activateWorkflowTaskCatalog,
   suspendWorkflowTaskCatalog,
   WORKFLOW_TASK_CATALOG_QUERY_KEYS,
 } from "@/features/workflowTaskCatalog/api/workflowTaskCatalogApi"
@@ -52,6 +53,20 @@ async function settleLifecycleTransition(
     (cached: CatalogDetailResponse | undefined) =>
       cached ? { ...cached, catalog_state: catalogState } : cached
   )
+}
+
+export function useActivateWorkflowTaskCatalog(): UseMutationResult<
+  CatalogResponse,
+  Error,
+  string
+> {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (catalogId: string) => activateWorkflowTaskCatalog(catalogId),
+    onSuccess: (result, catalogId) =>
+      settleLifecycleTransition(queryClient, catalogId, result.catalog_state),
+  })
 }
 
 export function useSuspendWorkflowTaskCatalog(): UseMutationResult<

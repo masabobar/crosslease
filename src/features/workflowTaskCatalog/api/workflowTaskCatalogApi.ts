@@ -106,6 +106,16 @@ export async function createWorkflowTaskCatalog(
 // than on a permission string.
 // Suspending is never refused — it reports the cases already resolved against the catalogue so
 // the caller can say what it affected, then proceeds.
+// Draft → Active. The lifecycle comment above dates from PRD1042-2148, when creation WAS
+// activation and `draft` was unreachable; the contract has since grown this route and the list
+// carries draft rows, so the transition is offered again.
+export async function activateWorkflowTaskCatalog(
+  catalogId: string
+): Promise<CatalogResponse> {
+  const data = await api.post(`/workflow-task-catalogs/${catalogId}/activate`)
+  return CatalogResponseSchema.parse(data)
+}
+
 export async function suspendWorkflowTaskCatalog(
   catalogId: string
 ): Promise<SuspendCatalogResponse> {

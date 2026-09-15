@@ -158,6 +158,7 @@ export default function WorkflowTaskCatalogListPage() {
             isLoading={isLoading}
             hasActiveFilters={hasActiveFilters}
             templateNames={templateNames}
+            canManage={canManage}
             onOpenDetail={id => navigate(workflowTaskCatalogDetail(id))}
           />
         )}

@@ -47,7 +47,13 @@
       "openEnded": "Unbefristet",
       "actionsMenuLabel": "Zeilenaktionen",
       "actions": {
-        "openDetail": "Details öffnen"
+        "edit": "Bearbeiten",
+        "activate": "Aktivieren",
+        "suspend": "Aussetzen",
+        "reactivate": "Reaktivieren",
+        "activated": "{{name}} ist jetzt aktiv.",
+        "suspended": "{{name}} ist ausgesetzt.",
+        "reactivated": "{{name}} ist wieder aktiv."
       },
       "notApplicable": "—"
     },

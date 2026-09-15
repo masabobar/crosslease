@@ -49,6 +49,9 @@ type Props = {
   // templates with a published version valid today, so a catalog bound to a template that has
   // since been superseded resolves to nothing and falls back to the id.
   templateNames: Map<string, string>
+  // Whether the signed-in role may move a catalogue through its lifecycle. Bank Power User only —
+  // the transition routes answer 404 to everyone else.
+  canManage: boolean
   onOpenDetail: (catalogId: string) => void
 }
 
@@ -57,6 +60,7 @@ function WorkflowTaskCatalogTable({
   isLoading,
   hasActiveFilters,
   templateNames,
+  canManage,
   onOpenDetail,
 }: Props) {
   const { t } = useTranslation("workflowTaskCatalog")
@@ -118,7 +122,16 @@ function WorkflowTaskCatalogTable({
           <div
             key={row.id}
             data-testid={`catalog-row-${row.id}`}
-            className={`flex border-b border-border last:border-b-0 ${ROW_H} items-center hover:bg-muted/40 transition-colors`}
+            role="button"
+            tabIndex={0}
+            className={`flex border-b border-border last:border-b-0 ${ROW_H} cursor-pointer items-center hover:bg-muted/40 transition-colors`}
+            onClick={() => onOpenDetail(row.id)}
+            onKeyDown={event => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                onOpenDetail(row.id)
+              }
+            }}
           >
             <div className={`${COL_NAME} p-2`}>
               <p className="text-sm font-medium truncate text-foreground leading-tight">
@@ -180,9 +193,18 @@ function WorkflowTaskCatalogTable({
             <div className={`${COL_STATE} p-2`}>
               <WorkflowTaskCatalogStateBadge state={row.catalog_state} />
             </div>
-            <div className="shrink-0 w-10 p-2 flex items-center justify-center">
+            {/* The row opens the detail, so the menu's own clicks must not bubble into it —
+                otherwise every menu item would navigate away before it could act. */}
+            <div
+              className="shrink-0 w-10 p-2 flex items-center justify-center"
+              onClick={event => event.stopPropagation()}
+              onKeyDown={event => event.stopPropagation()}
+            >
               <WorkflowTaskCatalogRowActionsMenu
                 catalogId={row.id}
+                catalogName={row.catalog_name}
+                catalogState={row.catalog_state}
+                canManage={canManage}
                 onOpenDetail={() => onOpenDetail(row.id)}
               />
             </div>
