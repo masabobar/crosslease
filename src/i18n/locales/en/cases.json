@@ -135,7 +135,8 @@
         "portal": "Leasing Company User",
         "bulk_file": "Bulk file",
         "migrated": "Migrated"
-      }
+      },
+      "assignee": "Assignee"
     }
   },
   "start": {
@@ -677,5 +678,13 @@
       "noAgreement": "none resolved",
       "unnamed": "Name not recorded"
     }
+  },
+  "assignee": {
+    "trigger": "Add assignee",
+    "searchPlaceholder": "Type a name",
+    "assignToMe": "Assign to me",
+    "assigned": "Case assigned to {{name}}.",
+    "noMatches": "No active users match.",
+    "loadFailed": "The user list could not be loaded."
   }
 }

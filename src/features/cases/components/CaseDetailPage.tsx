@@ -15,6 +15,7 @@ import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/c
 import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel"
 import { CaseDecisionDialog } from "@/features/cases/components/CaseDecisionDialog"
 import { CaseActionsMenu } from "@/features/cases/components/CaseActionsMenu"
+import { CaseAssigneeMenu } from "@/features/cases/components/CaseAssigneeMenu"
 import { CaseStatePanel } from "@/features/cases/components/CaseStatePanel"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
 import { CaseCollateralPanel } from "@/features/cases/components/CaseCollateralPanel"
@@ -144,15 +145,21 @@ export default function CaseDetailPage() {
         isLoading={progress.isLoading}
       />
 
-      <UnderlineTabBar
-        tabs={TAB_KEYS.map(key => ({
-          key,
-          label: t(`workspace.tabs.${key}` as "workspace.tabs.checklist"),
-          testId: `case-tab-${key}`,
-        }))}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
+      {/* The dummy sits `Add assignee` on the tab row rather than in the header, beside the tabs
+          it applies to. It is not a case action — it does not move the case — so it deliberately
+          stays out of the `Actions` menu above. */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <UnderlineTabBar
+          tabs={TAB_KEYS.map(key => ({
+            key,
+            label: t(`workspace.tabs.${key}` as "workspace.tabs.checklist"),
+            testId: `case-tab-${key}`,
+          }))}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
+        <CaseAssigneeMenu caseRecord={data} />
+      </div>
 
       {activeTab === "checklist" && (
         <CaseChecklistPanel businessObjectId={data.id} />

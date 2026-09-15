@@ -345,6 +345,20 @@ export async function claimCase(caseId: string): Promise<CaseResponse> {
   return CaseResponseSchema.parse(data)
 }
 
+// POST /cases/{id}/assign — hand the case to a named person inside the role that already holds it.
+// The endpoint's own description is the rule the UI has to respect: "Manual assignment within a
+// role. The platform never picks the person." So there is no auto-assign affordance anywhere —
+// every assignment names someone. Returns the updated case, `owner_user_id` included.
+export async function assignCase(
+  caseId: string,
+  assigneeId: string
+): Promise<CaseResponse> {
+  const data = await api.post(`/cases/${caseId}/assign`, {
+    assignee_id: assigneeId,
+  })
+  return CaseResponseSchema.parse(data)
+}
+
 // POST /cases/{id}/reject — the bank declines an unclaimed LC proposal. The request moves to
 // rejected and the leasing company sees it on its own case. Returns the updated case.
 export async function rejectCase(caseId: string): Promise<CaseResponse> {

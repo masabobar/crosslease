@@ -21,8 +21,13 @@ import {
   CASE_START_ALLOWED_ROLES,
 } from "@/features/cases/types"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { useUsers } from "@/features/users/hooks/useUsers"
+import { UserStatusSchema } from "@/features/users/api/schema"
 
 const PAGE_SIZE = 10
+
+// Enough to cover a bank's own front/back office without turning the menu into a scroll list.
+const ASSIGNEE_OPTION_LIMIT = 50
 const SEARCH_DEBOUNCE_MS = 300
 
 /**
@@ -79,9 +84,18 @@ export default function CaseListPage() {
   const [origin, setOrigin] = useState<string | null>(null)
   const [lcPartnerId, setLcPartnerId] = useState<string | null>(null)
   const [waitingOnRole, setWaitingOnRole] = useState<string | null>(null)
+  // The dummy's fifth control. `assignee_id` takes a user id, not a role, so unlike its four
+  // neighbours the options cannot come from an enum — they are the tenant's own people.
+  const [assigneeId, setAssigneeId] = useState<string | null>(null)
 
   const { data: currentUser } = useCurrentUser()
   const lcPartners = useFrameworkAgreementLcPartners()
+  // Only people who can actually hold a case. A suspended or invited account would filter the list
+  // down to rows nobody can be working, which is a filter that can only ever return nothing.
+  const assignableUsers = useUsers({
+    status: [UserStatusSchema.enum.active],
+    per_page: ASSIGNEE_OPTION_LIMIT,
+  })
   const canStartCase =
     !!currentUser && CASE_START_ALLOWED_ROLES.includes(currentUser.role)
 
@@ -97,6 +111,7 @@ export default function CaseListPage() {
     ...(origin ? { origin } : {}),
     ...(lcPartnerId ? { lc_partner_id: lcPartnerId } : {}),
     ...(waitingOnRole ? { waiting_on_role: waitingOnRole } : {}),
+    ...(assigneeId ? { assignee_id: assigneeId } : {}),
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
   })
 
@@ -114,6 +129,7 @@ export default function CaseListPage() {
     origin !== null ||
     lcPartnerId !== null ||
     waitingOnRole !== null ||
+    assigneeId !== null ||
     search.trim() !== ""
 
   // A filter change invalidates the current page number — page 3 of the unfiltered list is very
@@ -127,6 +143,7 @@ export default function CaseListPage() {
 
   const setCaseTypeFilter = applyFilter(setCaseType)
   const setStatusFilter = applyFilter(setStatus)
+  const setAssigneeFilter = applyFilter(setAssigneeId)
   const setOriginFilter = applyFilter(setOrigin)
   const setLcPartnerFilter = applyFilter(setLcPartnerId)
   const setWaitingOnFilter = applyFilter(setWaitingOnRole)
@@ -272,6 +289,27 @@ export default function CaseListPage() {
                   defaultValue: option,
                 }
               )}
+            </FilterCheckboxOption>
+          ))}
+        </FilterButton>
+
+        {/* Assignee — who personally holds the case, as against `Waiting on`, which is the role
+            group whose turn it is. They answer different questions and the dummy carries both. */}
+        <FilterButton
+          label={t("list.filters.assignee")}
+          count={assigneeId ? 1 : 0}
+          data-testid="case-assignee-filter"
+        >
+          {(assignableUsers.data?.users ?? []).map(user => (
+            <FilterCheckboxOption
+              key={user.id}
+              checked={assigneeId === user.id}
+              data-testid={`case-assignee-option-${user.id}`}
+              onClick={() =>
+                setAssigneeFilter(assigneeId === user.id ? null : user.id)
+              }
+            >
+              {user.first_name} {user.last_name}
             </FilterCheckboxOption>
           ))}
         </FilterButton>

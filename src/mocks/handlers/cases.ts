@@ -73,6 +73,10 @@ const FRONT_OFFICE_USER = "00000000-0000-4000-8000-000000000005"
 // page, works. Not persisted: a reload is a clean slate, which is what you want from a prototype.
 const created: CaseListItem[] = []
 
+// Session-scoped assignments made through `Add assignee`. Kept outside the fixtures so a reload
+// returns to the seeded state, the same as every other mock mutation here.
+const assignedOwnerByCaseId: Record<string, string> = {}
+
 /**
  * Wizard step 1's bindings, session-scoped for the same reason as `created`.
  *
@@ -328,6 +332,15 @@ function applyFilters(url: URL, rows: CaseListItem[]): CaseListItem[] {
       c =>
         c.case_reference.toLowerCase().includes(wanted) ||
         (c.lc_partner_name ?? "").toLowerCase().includes(wanted)
+    )
+  }
+
+  // Who each case has been assigned to this session, so the Assignee filter has something to
+  // match on after the menu has been used.
+  const assignee = url.searchParams.get("assignee_id")
+  if (assignee) {
+    out = out.filter(
+      c => (assignedOwnerByCaseId[c.id] ?? c.owner_user_id) === assignee
     )
   }
 
@@ -1119,6 +1132,20 @@ export const caseHandlers = [
     if (!found) return notFound()
     const claimed = { ...found, owner_user_id: FRONT_OFFICE_USER }
     return envelope(CaseResponseSchema.parse(claimed), "CASE_CLAIMED")
+  }),
+
+  http.post(`${API}/cases/:caseId/assign`, async ({ params, request }) => {
+    const found = allCases().find(c => c.id === params.caseId)
+    if (!found) return notFound()
+    const body = (await request.json()) as { assignee_id: string }
+    // The assignment has to persist: the list filters on `assignee_id`, so a handler that
+    // echoed the change without keeping it would hand back a case the very next list request
+    // contradicts.
+    assignedOwnerByCaseId[found.id] = body.assignee_id
+    return envelope(
+      CaseResponseSchema.parse({ ...found, owner_user_id: body.assignee_id }),
+      "CASE_ASSIGNED"
+    )
   }),
 
   http.post(`${API}/cases/:caseId/reject`, ({ params }) => {

@@ -135,7 +135,8 @@
         "portal": "Leasingnehmer-Portal",
         "bulk_file": "Sammeldatei",
         "migrated": "Migriert"
-      }
+      },
+      "assignee": "Bearbeiter"
     }
   },
   "start": {
@@ -677,5 +678,13 @@
       "noAgreement": "keiner ermittelt",
       "unnamed": "Name nicht erfasst"
     }
+  },
+  "assignee": {
+    "trigger": "Bearbeiter hinzufügen",
+    "searchPlaceholder": "Namen eingeben",
+    "assignToMe": "Mir zuweisen",
+    "assigned": "Vorgang an {{name}} zugewiesen.",
+    "noMatches": "Keine aktiven Benutzer gefunden.",
+    "loadFailed": "Die Benutzerliste konnte nicht geladen werden."
   }
 }
