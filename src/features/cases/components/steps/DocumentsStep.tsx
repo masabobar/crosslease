@@ -48,9 +48,10 @@ export function DocumentsStep({
       className="flex flex-col gap-6"
       data-testid="case-wizard-step-documents"
     >
+      {/* No heading of its own — the wizard shell already titles the step, and two identical
+          headings stacked read as a rendering fault. */}
       <div className="text-center">
-        <h2 className="text-xl font-semibold">{t("wizard.documents.title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {t(
             isPortalUser
               ? "wizard.documents.subtitlePortal"

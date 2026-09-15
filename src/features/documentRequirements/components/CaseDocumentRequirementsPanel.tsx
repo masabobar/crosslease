@@ -1,5 +1,6 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ExternalLink } from "lucide-react"
+import { ChevronRight, ExternalLink } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -91,6 +92,9 @@ export function CaseDocumentRequirementsPanel({
   uploadDisabledReason?: string
 }) {
   const { t } = useTranslation("documentRequirements")
+  // One row's detail open at a time — the panel is read top to bottom, and several open blocks
+  // push the rows below them off the screen.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const { data: currentUser } = useCurrentUser()
   // One catalogue per bank, so the single global default IS the case's catalogue — resolved, never
@@ -197,11 +201,17 @@ export function CaseDocumentRequirementsPanel({
       <div className="border border-border rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
+            {/* The dummy's four columns. Requirement code and applicable case types moved into
+                the row's own disclosure — they describe the requirement rather than its state, and
+                the state is what a reader scans the table for.
+
+                Its **Party** and **Files** columns are not here: `RuntimeRequirementItem` carries
+                neither a party nor a file count (only a single `linked_document_id`), so per
+                `api-first.md` §4 they are omitted rather than drawn from invented data. */}
             <TableRow>
+              <TableHead className="w-10" />
               <TableHead>{t("caseDocuments.columns.documentType")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.requirement")}</TableHead>
               <TableHead>{t("caseDocuments.columns.classification")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.caseTypes")}</TableHead>
               <TableHead>{t("caseDocuments.columns.status")}</TableHead>
               <TableHead>{t("caseDocuments.columns.document")}</TableHead>
               <TableHead>{t("caseDocuments.columns.actions")}</TableHead>
@@ -212,6 +222,10 @@ export function CaseDocumentRequirementsPanel({
               <RequirementRow
                 key={item.requirement_definition_id}
                 item={item}
+                isExpanded={expandedId === item.requirement_definition_id}
+                onToggle={open =>
+                  setExpandedId(open ? item.requirement_definition_id : null)
+                }
                 catalogId={catalogId}
                 businessObjectId={businessObjectId}
                 canUpload={canUpload}
@@ -242,6 +256,8 @@ function RequirementRow({
   canReview,
   uploadDisabled,
   uploadDisabledReason,
+  isExpanded,
+  onToggle,
 }: {
   item: RuntimeRequirementItem
   catalogId: string
@@ -250,6 +266,8 @@ function RequirementRow({
   canReview: boolean
   uploadDisabled?: boolean
   uploadDisabledReason?: string
+  isExpanded: boolean
+  onToggle: (open: boolean) => void
 }) {
   const { t } = useTranslation("documentRequirements")
   const notApplicable = t("caseDocuments.notApplicable")
@@ -261,90 +279,160 @@ function RequirementRow({
     canReview && REVIEWABLE_STATUSES.has(item.fulfilment_status)
 
   return (
-    <TableRow
-      data-testid={`case-documents-row-${item.requirement_definition_id}`}
-    >
-      <TableCell className="font-medium">{item.document_type_name}</TableCell>
-      <TableCell>{item.requirement_code}</TableCell>
-      <TableCell>
-        {t(
-          `requirement.classifications.${item.classification}` as "requirement.classifications.mandatory",
-          { defaultValue: item.classification }
-        )}
-      </TableCell>
-      <TableCell>
-        {/* The case types this requirement applies to — the axis the set is keyed by. Each row
-            carries its own so the surface says which case types it belongs to. */}
-        {item.applicable_case_types.length > 0
-          ? item.applicable_case_types
-              .map(caseType =>
-                t(`caseTypes.${caseType}` as "caseTypes.refinancing_request", {
-                  defaultValue: caseType,
-                })
-              )
-              .join(", ")
-          : notApplicable}
-      </TableCell>
-      <TableCell>
-        <span
-          className={cn(
-            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-            FULFILMENT_STATUS_CLASSES[item.fulfilment_status] ??
-              "bg-muted text-muted-foreground"
-          )}
-          data-testid={`case-documents-status-${item.requirement_definition_id}`}
-        >
-          {t(
-            `caseDocuments.statuses.${item.fulfilment_status}` as "caseDocuments.statuses.missing",
-            { defaultValue: item.fulfilment_status }
-          )}
-        </span>
-        {item.is_blocking && (
-          <span className="ml-2 text-xs text-destructive">
-            {t("caseDocuments.blocks")}
+    <>
+      <TableRow
+        data-testid={`case-documents-row-${item.requirement_definition_id}`}
+      >
+        <TableCell className="w-10">
+          <button
+            type="button"
+            className="text-muted-foreground"
+            aria-expanded={isExpanded}
+            aria-label={t("caseDocuments.toggleDetail")}
+            data-testid={`case-documents-toggle-${item.requirement_definition_id}`}
+            onClick={() => onToggle(!isExpanded)}
+          >
+            <ChevronRight
+              size={16}
+              className={
+                isExpanded
+                  ? "rotate-90 transition-transform"
+                  : "transition-transform"
+              }
+            />
+          </button>
+        </TableCell>
+        <TableCell className="font-medium">
+          <span className="flex items-center gap-2">
+            {item.document_type_name}
+            {/* The dummy's red dot. It marks the rows that are actually holding the case, which the
+              status alone does not say — an optional document can be Missing without blocking. */}
+            {item.is_blocking && (
+              <span
+                className="size-2 shrink-0 rounded-full bg-destructive"
+                title={t("caseDocuments.blocks")}
+                data-testid={`case-documents-blocking-${item.requirement_definition_id}`}
+              />
+            )}
           </span>
-        )}
-      </TableCell>
-      <TableCell>
-        {/* Item 5: the document that met a requirement is openable by whoever works the case, not
+        </TableCell>
+        <TableCell>
+          {t(
+            `requirement.classifications.${item.classification}` as "requirement.classifications.mandatory",
+            { defaultValue: item.classification }
+          )}
+        </TableCell>
+        <TableCell>
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+              FULFILMENT_STATUS_CLASSES[item.fulfilment_status] ??
+                "bg-muted text-muted-foreground"
+            )}
+            data-testid={`case-documents-status-${item.requirement_definition_id}`}
+          >
+            {t(
+              `caseDocuments.statuses.${item.fulfilment_status}` as "caseDocuments.statuses.missing",
+              { defaultValue: item.fulfilment_status }
+            )}
+          </span>
+        </TableCell>
+        <TableCell>
+          {/* Item 5: the document that met a requirement is openable by whoever works the case, not
             only by whoever uploaded it. The media endpoint authenticates from the session cookie, so
             a plain link is authenticated and no token goes into a URL. */}
-        {item.linked_document_id ? (
-          <a
-            href={getCaseDocumentUrl(item.linked_document_id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            data-testid={`case-documents-open-${item.requirement_definition_id}`}
-          >
-            {t("caseDocuments.openDocument")}
-            <ExternalLink size={14} />
-          </a>
-        ) : (
-          <span className="text-sm text-muted-foreground">{notApplicable}</span>
-        )}
-      </TableCell>
-      <TableCell>
-        {showUpload ? (
-          <CaseDocumentUploadButton
-            catalogId={catalogId}
-            businessObjectId={businessObjectId}
-            requirementDefinitionId={item.requirement_definition_id}
-            requirementLabel={item.document_type_name}
-            disabled={uploadDisabled}
-            disabledReason={uploadDisabledReason}
-          />
-        ) : showReview ? (
-          <CaseDocumentReviewActions
-            catalogId={catalogId}
-            businessObjectId={businessObjectId}
-            requirementDefinitionId={item.requirement_definition_id}
-            requirementLabel={item.document_type_name}
-          />
-        ) : (
-          <span className="text-sm text-muted-foreground">{notApplicable}</span>
-        )}
-      </TableCell>
-    </TableRow>
+          {item.linked_document_id ? (
+            <a
+              href={getCaseDocumentUrl(item.linked_document_id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              data-testid={`case-documents-open-${item.requirement_definition_id}`}
+            >
+              {t("caseDocuments.openDocument")}
+              <ExternalLink size={14} />
+            </a>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {notApplicable}
+            </span>
+          )}
+        </TableCell>
+        <TableCell>
+          {showUpload ? (
+            <CaseDocumentUploadButton
+              catalogId={catalogId}
+              businessObjectId={businessObjectId}
+              requirementDefinitionId={item.requirement_definition_id}
+              requirementLabel={item.document_type_name}
+              disabled={uploadDisabled}
+              disabledReason={uploadDisabledReason}
+            />
+          ) : showReview ? (
+            <CaseDocumentReviewActions
+              catalogId={catalogId}
+              businessObjectId={businessObjectId}
+              requirementDefinitionId={item.requirement_definition_id}
+              requirementLabel={item.document_type_name}
+            />
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {notApplicable}
+            </span>
+          )}
+        </TableCell>
+      </TableRow>
+
+      {isExpanded && (
+        <TableRow
+          data-testid={`case-documents-detail-${item.requirement_definition_id}`}
+        >
+          <TableCell colSpan={6} className="bg-muted/30">
+            <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-xs text-muted-foreground">
+                  {t("caseDocuments.columns.requirement")}
+                </dt>
+                <dd>{item.requirement_code}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">
+                  {t("caseDocuments.detail.stage")}
+                </dt>
+                <dd>{item.stage_categorization ?? notApplicable}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">
+                  {t("caseDocuments.detail.origin")}
+                </dt>
+                <dd>
+                  {t(
+                    `requirement.origins.${item.document_origin}` as "requirement.origins.uploaded",
+                    { defaultValue: item.document_origin }
+                  )}
+                </dd>
+              </div>
+              <div className="sm:col-span-3">
+                <dt className="text-xs text-muted-foreground">
+                  {t("caseDocuments.columns.caseTypes")}
+                </dt>
+                <dd>
+                  {item.applicable_case_types.length > 0
+                    ? item.applicable_case_types
+                        .map(caseType =>
+                          t(
+                            `caseTypes.${caseType}` as "caseTypes.refinancing_request",
+                            { defaultValue: caseType }
+                          )
+                        )
+                        .join(", ")
+                    : notApplicable}
+                </dd>
+              </div>
+            </dl>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   )
 }

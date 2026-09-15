@@ -147,7 +147,11 @@
     },
     "documentTypesUnavailable": "The document types could not be loaded. Reload the page — creating a requirement without one would leave it unfulfillable.",
     "noDocumentTypes": "No document types are registered yet. Add one to the registry before creating a requirement.",
-    "selectDocumentType": "Select a document type"
+    "selectDocumentType": "Select a document type",
+    "origins": {
+      "uploaded": "Uploaded",
+      "generated": "Generated"
+    }
   },
   "documentType": {
     "list": {
@@ -261,9 +265,9 @@
     "columns": {
       "documentType": "Document type",
       "requirement": "Requirement",
-      "classification": "Binding",
+      "classification": "Required",
       "caseTypes": "Case types",
-      "status": "Status",
+      "status": "State",
       "document": "Document",
       "upload": "Upload",
       "actions": "Actions"
@@ -296,6 +300,11 @@
       "reject": "Reject {{requirement}}",
       "checkedSuccess": "Document marked as checked",
       "rejectedSuccess": "Document rejected — the requirement is open again"
+    },
+    "toggleDetail": "Show requirement detail",
+    "detail": {
+      "stage": "Stage",
+      "origin": "Origin"
     }
   }
 }
