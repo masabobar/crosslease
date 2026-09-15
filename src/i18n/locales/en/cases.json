@@ -122,7 +122,16 @@
       "submit": "Start case"
     },
     "success": "Case started.",
-    "caseTypeNoRequirements": "{{type}} (no requirements configured)"
+    "caseTypeNoRequirements": "{{type}} (no requirements configured)",
+    "caseTypeHints": {
+      "refinancing_request": "Refinance a portfolio of leasing contracts with the bank.",
+      "object_swap": "Replace an object inside a financed contract.",
+      "lessee_change": "Transfer a contract to a different lessee.",
+      "extension": "Extend the term of a financed contract.",
+      "package_redemption": "Redeem a package of contracts early.",
+      "asset_event": "Record a total loss, theft or write-off on a financed object.",
+      "single_redemption": "Redeem a single contract out of a financing early."
+    }
   },
   "state": {
     "title": "State",
@@ -260,7 +269,12 @@
       "termMonths_other": "{{count}} months",
       "title": "Contracts",
       "unnamedContract": "Contract without a number",
-      "edit": "Edit"
+      "edit": "Edit",
+      "confirmRemoval": {
+        "title": "Are you sure?",
+        "description": "{{count}} contract will be removed from this request.",
+        "description_other": "{{count}} contracts will be removed from this request."
+      }
     },
     "leasingCompany": {
       "title": "New refinancing request"

@@ -1,7 +1,17 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, Upload } from "lucide-react"
+import { Plus, Trash2, Upload } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -60,6 +70,7 @@ export function ContractsStep({ caseId }: Props) {
   // part of the state rather than a confirm-dialog afterthought.
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [reason, setReason] = useState("")
+  const [isConfirmingRemoval, setConfirmingRemoval] = useState(false)
   const removeContracts = useBulkRemoveContracts()
 
   const items = contracts.data?.items ?? []
@@ -146,30 +157,77 @@ export function ContractsStep({ caseId }: Props) {
             size="sm"
             data-testid="case-wizard-remove-selected"
             disabled={removeContracts.isPending || !canRemove(chosen, reason)}
-            onClick={() =>
-              removeContracts.mutate(
-                {
-                  caseId,
-                  contractIds: [...chosen],
-                  reason: reason.trim(),
-                },
-                {
-                  onSuccess: result => {
-                    toast.success(
-                      t("wizard.contracts.removed", { count: result.removed })
-                    )
-                    setSelected(new Set())
-                    setReason("")
-                  },
-                  onError: err => showApiError(err, t),
-                }
-              )
-            }
+            onClick={() => setConfirmingRemoval(true)}
           >
+            <Trash2 size={14} />
             {t("wizard.contracts.removeSelected")}
+          </Button>
+          {/* The dummy pairs the delete with a Cancel that clears the selection, so getting out of
+              the bar does not mean unticking rows one at a time. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="case-wizard-clear-selection"
+            onClick={() => {
+              setSelected(new Set())
+              setReason("")
+            }}
+          >
+            {t("wizard.actions.cancel")}
           </Button>
         </div>
       )}
+
+      {/* The dummy asks before removing and names what goes — "N contracts will be removed from
+          this request." A reason field beside a button is a form, not a confirmation: it says what
+          to record, never that anything is about to be destroyed. */}
+      <AlertDialog
+        open={isConfirmingRemoval}
+        onOpenChange={open => !open && setConfirmingRemoval(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("wizard.contracts.confirmRemoval.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("wizard.contracts.confirmRemoval.description", {
+                count: chosen.size,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="case-wizard-removal-keep">
+              {t("wizard.actions.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="case-wizard-removal-confirm"
+              onClick={() =>
+                removeContracts.mutate(
+                  { caseId, contractIds: [...chosen], reason: reason.trim() },
+                  {
+                    onSuccess: result => {
+                      toast.success(
+                        t("wizard.contracts.removed", { count: result.removed })
+                      )
+                      setSelected(new Set())
+                      setReason("")
+                      setConfirmingRemoval(false)
+                    },
+                    onError: err => {
+                      showApiError(err, t)
+                      setConfirmingRemoval(false)
+                    },
+                  }
+                )
+              }
+            >
+              {t("wizard.contracts.removeSelected")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {items.length > 0 && (
         <div className="overflow-x-auto rounded-lg border">

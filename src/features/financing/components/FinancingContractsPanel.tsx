@@ -3,6 +3,16 @@ import { useTranslation } from "react-i18next"
 import { Pencil, Plus, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -94,6 +104,7 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
   const [reason, setReason] = useState("")
   const [isEntryOpen, setEntryOpen] = useState(false)
   const [isImportOpen, setImportOpen] = useState(false)
+  const [isConfirmingRemoval, setConfirmingRemoval] = useState(false)
   const [editingContractId, setEditingContractId] = useState<string | null>(
     null
   )
@@ -213,23 +224,7 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
             size="sm"
             data-testid="financing-contracts-remove-selected"
             disabled={removeContracts.isPending || !canRemove(chosen, reason)}
-            onClick={() =>
-              removeContracts.mutate(
-                { caseId, contractIds: [...chosen], reason: reason.trim() },
-                {
-                  onSuccess: result => {
-                    toast.success(
-                      tCases("wizard.contracts.removed", {
-                        count: result.removed,
-                      })
-                    )
-                    setSelected(new Set())
-                    setReason("")
-                  },
-                  onError: err => showApiError(err, tCases),
-                }
-              )
-            }
+            onClick={() => setConfirmingRemoval(true)}
           >
             <Trash2 size={14} />
             {tCases("wizard.contracts.removeSelected")}
@@ -394,6 +389,56 @@ export function FinancingContractsPanel({ caseId }: { caseId: string }) {
           </Table>
         </div>
       )}
+
+      {/* The same ask as the wizard's step 2: name what goes before it goes. */}
+      <AlertDialog
+        open={isConfirmingRemoval}
+        onOpenChange={open => !open && setConfirmingRemoval(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {tCases("wizard.contracts.confirmRemoval.title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {tCases("wizard.contracts.confirmRemoval.description", {
+                count: chosen.size,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="financing-contracts-removal-keep">
+              {tCases("wizard.actions.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="financing-contracts-removal-confirm"
+              onClick={() =>
+                removeContracts.mutate(
+                  { caseId, contractIds: [...chosen], reason: reason.trim() },
+                  {
+                    onSuccess: result => {
+                      toast.success(
+                        tCases("wizard.contracts.removed", {
+                          count: result.removed,
+                        })
+                      )
+                      setSelected(new Set())
+                      setReason("")
+                      setConfirmingRemoval(false)
+                    },
+                    onError: err => {
+                      showApiError(err, tCases)
+                      setConfirmingRemoval(false)
+                    },
+                  }
+                )
+              }
+            >
+              {tCases("wizard.contracts.removeSelected")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isImportOpen && (
         <BulkContractImportDialog

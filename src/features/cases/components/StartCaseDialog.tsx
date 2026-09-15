@@ -1,4 +1,4 @@
-import { useForm, Controller } from "react-hook-form"
+import { useForm, useWatch, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useNavigate } from "react-router-dom"
@@ -75,6 +75,9 @@ function StartCaseDialog({ onOpenChange, redirectTo }: Props) {
     resolver: zodResolver(startCaseSchema),
     defaultValues: { caseType: CaseTypeSchema.enum.refinancing_request },
   })
+  // `useWatch`, not `watch()`: the latter is an incompatible-library call that makes the React
+  // Compiler skip this component entirely — the same reason `date-inputs.md` §3 mandates it.
+  const selectedCaseType = useWatch({ control, name: "caseType" })
 
   function resolveMessage(message: string | undefined): string | undefined {
     return resolveFormMessage(message, t, "start.errors")
@@ -154,6 +157,18 @@ function StartCaseDialog({ onOpenChange, redirectTo }: Props) {
                 />
               )}
             />
+            {/* The dummy puts a line under the select saying what the chosen type is. Our reason
+                text sat only on the disabled options, so a user picking an available type read
+                nothing at all about what they were starting. */}
+            <p
+              className="mt-1.5 text-xs text-muted-foreground"
+              data-testid="start-case-type-hint"
+            >
+              {t(
+                `start.caseTypeHints.${selectedCaseType}` as "start.caseTypeHints.refinancing_request",
+                { defaultValue: "" }
+              )}
+            </p>
             {errors.caseType && (
               <p className="mt-1 text-sm text-destructive">
                 {resolveMessage(errors.caseType.message)}

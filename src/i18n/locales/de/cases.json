@@ -122,7 +122,16 @@
       "submit": "Fall anlegen"
     },
     "success": "Fall angelegt.",
-    "caseTypeNoRequirements": "{{type}} (keine Anforderungen konfiguriert)"
+    "caseTypeNoRequirements": "{{type}} (keine Anforderungen konfiguriert)",
+    "caseTypeHints": {
+      "refinancing_request": "Ein Portfolio von Leasingverträgen bei der Bank refinanzieren.",
+      "object_swap": "Ein Objekt innerhalb eines finanzierten Vertrags austauschen.",
+      "lessee_change": "Einen Vertrag auf einen anderen Leasingnehmer übertragen.",
+      "extension": "Die Laufzeit eines finanzierten Vertrags verlängern.",
+      "package_redemption": "Ein Vertragspaket vorzeitig ablösen.",
+      "asset_event": "Totalschaden, Diebstahl oder Abschreibung eines finanzierten Objekts erfassen.",
+      "single_redemption": "Einen einzelnen Vertrag aus einer Finanzierung vorzeitig ablösen."
+    }
   },
   "state": {
     "title": "Status",
@@ -260,7 +269,12 @@
       "termMonths_other": "{{count}} Monate",
       "title": "Verträge",
       "unnamedContract": "Vertrag ohne Nummer",
-      "edit": "Bearbeiten"
+      "edit": "Bearbeiten",
+      "confirmRemoval": {
+        "title": "Sind Sie sicher?",
+        "description": "{{count}} Vertrag wird aus diesem Antrag entfernt.",
+        "description_other": "{{count}} Verträge werden aus diesem Antrag entfernt."
+      }
     },
     "leasingCompany": {
       "title": "Neuer Refinanzierungsantrag"
