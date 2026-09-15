@@ -215,6 +215,7 @@ const case_type = z.union([CaseType, z.null()]).optional()
 const status = z.union([CaseDisplayStatus, z.null()]).optional()
 const assignee_id = z.union([z.string(), z.null()]).optional()
 const waiting_on_role = z.union([UserRole, z.null()]).optional()
+const origin = z.union([CaseOrigin, z.null()]).optional()
 const CaseListItem = z
   .object({
     id: z.string().uuid(),
@@ -233,6 +234,15 @@ const CaseListItem = z
     decision_round: z.number().int().optional().default(0),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
+    contract_count: z.number().int().optional().default(0),
+    lessee_count: z.number().int().optional().default(0),
+    lc_partner_name: z.union([z.string(), z.null()]).optional(),
+    waiting_on_roles: z.union([z.array(z.string()), z.null()]).optional(),
+    phase: z.union([z.string(), z.null()]).optional(),
+    step_order: z.union([z.number(), z.null()]).optional(),
+    rate_due_date: z.union([z.string(), z.null()]).optional(),
+    last_activity_at: z.union([z.string(), z.null()]).optional(),
+    last_activity_by_name: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const CaseListResponse = z
@@ -313,21 +323,22 @@ const CollateralValueItem = z
     set_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const CollateralResponse = z
-  .object({
-    id: z.string().uuid(),
-    case_id: z.string().uuid(),
-    collateral_type: z.union([CollateralType, z.null()]),
-    current_total_eur: z.union([z.string(), z.null()]),
-    evidence_document_id: z.union([z.string(), z.null()]),
-    recheck_state: CollateralRecheckState,
-    redetermined_by: z.union([z.string(), z.null()]),
-    redetermined_at: z.union([z.string(), z.null()]),
-    confirmed_by: z.union([z.string(), z.null()]),
-    confirmed_at: z.union([z.string(), z.null()]),
-    value_history: z.array(CollateralValueItem),
-  })
-  .passthrough()
+const app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse =
+  z
+    .object({
+      id: z.string().uuid(),
+      case_id: z.string().uuid(),
+      collateral_type: z.union([CollateralType, z.null()]),
+      current_total_eur: z.union([z.string(), z.null()]),
+      evidence_document_id: z.union([z.string(), z.null()]),
+      recheck_state: CollateralRecheckState,
+      redetermined_by: z.union([z.string(), z.null()]),
+      redetermined_at: z.union([z.string(), z.null()]),
+      confirmed_by: z.union([z.string(), z.null()]),
+      confirmed_at: z.union([z.string(), z.null()]),
+      value_history: z.array(CollateralValueItem),
+    })
+    .passthrough()
 const ReviewFinancingSummary = z
   .object({
     refinancing_rate: z.union([z.string(), z.null()]),
@@ -345,7 +356,10 @@ const CaseReviewResponse = z
     contracts: z.array(ReviewContractItem),
     contract_count: z.number().int(),
     residual_sum: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    collateral: z.union([CollateralResponse, z.null()]),
+    collateral: z.union([
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+      z.null(),
+    ]),
     financing: z.union([ReviewFinancingSummary, z.null()]),
   })
   .passthrough()
@@ -369,7 +383,10 @@ const CaseDataResponse = z
     contract_count: z.number().int(),
     residual_sum: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     financing: z.union([CaseDataFinancingBlock, z.null()]),
-    collateral: z.union([CollateralResponse, z.null()]),
+    collateral: z.union([
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+      z.null(),
+    ]),
     absent_blocks: z.array(z.string()),
   })
   .passthrough()
@@ -544,6 +561,9 @@ const CaseCommentItem = z
     body: z.string(),
     visibility: CommentVisibility,
     created_at: z.string().datetime({ offset: true }),
+    edited_at: z.union([z.string(), z.null()]).optional(),
+    deleted_at: z.union([z.string(), z.null()]).optional(),
+    is_deleted: z.boolean(),
   })
   .passthrough()
 const CaseCommentListResponse = z
@@ -559,6 +579,9 @@ const AddCaseCommentRequest = z
     body: z.string().min(1).max(2000),
     visibility: CommentVisibility.optional(),
   })
+  .passthrough()
+const EditCaseCommentRequest = z
+  .object({ body: z.string().min(1).max(2000) })
   .passthrough()
 const LcCaseListItem = z
   .object({
@@ -1313,6 +1336,12 @@ const PartnerDetailResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const LesseeUnlinkResponse = z
+  .object({
+    contract_id: z.string().uuid(),
+    lessee_partner_id: z.null().optional(),
+  })
+  .passthrough()
 const GuarantorPreviewRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
@@ -1363,6 +1392,73 @@ const GuarantorListResponse = z
   })
   .passthrough()
 const GuarantorRemoveRequest = z
+  .object({ reason: z.string().min(1).max(255) })
+  .passthrough()
+const CollateralPreviewRequest = z
+  .object({
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
+    ]),
+  })
+  .passthrough()
+const ContractCollateralType = z.enum([
+  "GUARANTEE",
+  "SECURITY_DEPOSIT",
+  "BUY_BACK_AGREEMENT",
+])
+const ObligationKind = z.enum(["guarantee", "co_obligation"])
+const CollateralAddRequest = z
+  .object({
+    collateral_type: ContractCollateralType,
+    value: z.union([z.number(), z.string(), z.null()]).optional(),
+    evidence_document_id: z.union([z.string(), z.null()]).optional(),
+    existing_partner_id: z.union([z.string(), z.null()]).optional(),
+    identity: z
+      .union([
+        z.discriminatedUnion("partner_type", [
+          LegalEntityIdentityInput,
+          PersonIdentityInput,
+          SoleTraderIdentityInput,
+        ]),
+        z.null(),
+      ])
+      .optional(),
+    kind_of_obligation: z.union([ObligationKind, z.null()]).optional(),
+  })
+  .passthrough()
+const app__modules__contracts__interfaces__http__schemas__collateral_schemas__CollateralResponse =
+  z
+    .object({
+      collateral_id: z.string().uuid(),
+      contract_id: z.string().uuid(),
+      collateral_type: z.string(),
+      value: z.union([z.string(), z.null()]),
+      guarantor_partner_id: z.union([z.string(), z.null()]),
+      evidence_document_id: z.union([z.string(), z.null()]),
+      kind_of_obligation: z.union([z.string(), z.null()]),
+    })
+    .passthrough()
+const CollateralListItem = z
+  .object({
+    collateral_id: z.string().uuid(),
+    collateral_type: z.string(),
+    value: z.union([z.string(), z.null()]),
+    guarantor_partner_id: z.union([z.string(), z.null()]),
+    guarantor_display_name: z.union([z.string(), z.null()]),
+    evidence_document_id: z.union([z.string(), z.null()]),
+    kind_of_obligation: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const CollateralListResponse = z
+  .object({
+    contract_id: z.string().uuid(),
+    count: z.number().int(),
+    collaterals: z.array(CollateralListItem),
+  })
+  .passthrough()
+const CollateralRemoveRequest = z
   .object({ reason: z.string().min(1).max(255) })
   .passthrough()
 const Body_upload_contract_import_api_v1_cases__case_id__contracts_import_post =
@@ -2914,7 +3010,13 @@ const ReactivateFARequest = z
   .object({ justification: z.string().min(20).max(1000) })
   .passthrough()
 const FALCPartnerItem = z
-  .object({ id: z.string().uuid(), legal_name: z.string() })
+  .object({
+    id: z.string().uuid(),
+    legal_name: z.string(),
+    registered_address: z
+      .union([z.object({}).partial().passthrough(), z.null()])
+      .optional(),
+  })
   .passthrough()
 const FALCPartnersResponse = z
   .object({ items: z.array(FALCPartnerItem) })
@@ -4073,7 +4175,7 @@ const DocumentTypeResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const origin = z.union([DocumentTypeOrigin, z.null()]).optional()
+const origin__2 = z.union([DocumentTypeOrigin, z.null()]).optional()
 const role_scope = z.union([DocumentRoleScope, z.null()]).optional()
 const DocumentTypeListResponse = z
   .object({ items: z.array(DocumentTypeResponse), total: z.number().int() })
@@ -4145,6 +4247,7 @@ export const schemas = {
   status,
   assignee_id,
   waiting_on_role,
+  origin,
   CaseListItem,
   CaseListResponse,
   AssignCaseRequest,
@@ -4156,7 +4259,7 @@ export const schemas = {
   CollateralType,
   CollateralRecheckState,
   CollateralValueItem,
-  CollateralResponse,
+  app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
   ReviewFinancingSummary,
   CaseReviewResponse,
   CaseDataFinancingBlock,
@@ -4187,6 +4290,7 @@ export const schemas = {
   CaseCommentItem,
   CaseCommentListResponse,
   AddCaseCommentRequest,
+  EditCaseCommentRequest,
   LcCaseListItem,
   LcCaseListResponse,
   LcCaseDetailResponse,
@@ -4268,12 +4372,21 @@ export const schemas = {
   PersonIdentityDetail,
   SoleTraderIdentityDetail,
   PartnerDetailResponse,
+  LesseeUnlinkResponse,
   GuarantorPreviewRequest,
   GuarantorAddRequest,
   GuarantorLinkResponse,
   GuarantorListItem,
   GuarantorListResponse,
   GuarantorRemoveRequest,
+  CollateralPreviewRequest,
+  ContractCollateralType,
+  ObligationKind,
+  CollateralAddRequest,
+  app__modules__contracts__interfaces__http__schemas__collateral_schemas__CollateralResponse,
+  CollateralListItem,
+  CollateralListResponse,
+  CollateralRemoveRequest,
   Body_upload_contract_import_api_v1_cases__case_id__contracts_import_post,
   ImportBatchResponse,
   ImportRowItem,
@@ -4572,7 +4685,7 @@ export const schemas = {
   DocumentTypeOrigin,
   CreateDocumentTypeRequest,
   DocumentTypeResponse,
-  origin,
+  origin__2,
   role_scope,
   DocumentTypeListResponse,
   UpdateDocumentTypeRequest,
@@ -5293,6 +5406,21 @@ open step, or whose open step carries no role set, matches neither role.`,
         schema: waiting_on_role,
       },
       {
+        name: "search",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "origin",
+        type: "Query",
+        schema: origin,
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
         name: "oldest_first",
         type: "Query",
         schema: z.boolean().optional().default(true),
@@ -5752,7 +5880,8 @@ with no path (Power User, Auditor, LC, ...) and a cross-tenant/other-company cas
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -5778,7 +5907,8 @@ and the confirmer must differ from the re-determiner (403). Clears the re-check.
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -5806,7 +5936,8 @@ and the confirmer must differ from the re-determiner (403). Clears the re-check.
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -5832,7 +5963,8 @@ step 3 of the object-swap / lessee-change catalogues are not built yet — defer
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -5863,7 +5995,8 @@ Requires a pending re-check (409 if none). Writes a fresh value and moves the st
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -5892,7 +6025,8 @@ per-vehicle cap it is stored capped. Front office only.`,
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -5920,7 +6054,8 @@ per-vehicle cap it is stored capped. Front office only.`,
         schema: z.string().uuid(),
       },
     ],
-    response: CollateralResponse,
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
     errors: [
       {
         status: 422,
@@ -6094,6 +6229,79 @@ NOT here — A4 keeps it open (channel unconfirmed, no read surface exists).`,
       },
       {
         name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/cases/:case_id/comments/:comment_id",
+    alias:
+      "edit_case_comment_api_v1_cases__case_id__comments__comment_id__patch",
+    description: `Edit a comment on the case thread (US-1.61) — **author only**.
+
+Only the comment&#x27;s own author may edit it; a non-owner (even one who may read the case) is
+refused with 403. The body is rewritten and an &#x60;&#x60;edited_at&#x60;&#x60; marker is stamped; visibility and
+authorship never change. A soft-deleted comment cannot be edited (409). Audited
+(&#x60;&#x60;CASE_COMMENT_EDITED&#x60;&#x60;).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ body: z.string().min(1).max(2000) }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/cases/:case_id/comments/:comment_id",
+    alias:
+      "delete_case_comment_api_v1_cases__case_id__comments__comment_id__delete",
+    description: `Soft-delete a comment on the case thread (US-1.61) — **author only**.
+
+A delete does NOT remove the comment from the thread. The row stays in place and in order as a
+tombstone (&#x60;&#x60;body&#x60;&#x60; cleared, &#x60;&#x60;deleted_at&#x60;&#x60; / &#x60;&#x60;deleted_by&#x60;&#x60; stamped) so the trace survives —
+a GDPR-safe record that a comment existed and was removed, never a hole. Only the author may
+delete; a non-owner is refused (403); a second delete is refused (409). The tombstoned item is
+returned (200, not 204) because the FE keeps rendering the row. Audited
+(&#x60;&#x60;CASE_COMMENT_DELETED&#x60;&#x60;).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
         type: "Path",
         schema: z.string().uuid(),
       },
@@ -8090,6 +8298,136 @@ work continues in the case workspace, not the wizard.`,
   },
   {
     method: "post",
+    path: "/api/v1/contracts/:contract_id/collaterals",
+    alias: "add_collateral_api_v1_contracts__contract_id__collaterals_post",
+    description: `Add a collateral to a contract (PRD1042-2167, unblocks US 1.45).
+
+Type is GUARANTEE / SECURITY_DEPOSIT / BUY_BACK_AGREEMENT. A GUARANTEE requires exactly one of
+&#x60;&#x60;identity&#x60;&#x60; (create-confirmed) / &#x60;&#x60;existing_partner_id&#x60;&#x60; (link) and also assigns the party the
+guarantor role on this contract; the other two types reject a party. FO + BO + LC-own; only in the
+request&#x27;s write window. Any number of collaterals per contract; the same live guarantee party twice
+is refused.
+
+&#x60;&#x60;kind_of_obligation&#x60;&#x60; says what the party takes on — &#x60;&#x60;guarantee&#x60;&#x60; or &#x60;&#x60;co_obligation&#x60;&#x60; (Q-051).
+Guarantee-only, like the party; omitted means &#x60;&#x60;guarantee&#x60;&#x60;.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CollateralAddRequest,
+      },
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__contracts__interfaces__http__schemas__collateral_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/:contract_id/collaterals",
+    alias: "list_collaterals_api_v1_contracts__contract_id__collaterals_get",
+    description: `The live collaterals on a contract (PRD1042-2167). A Guarantee row carries its party&#x27;s name.
+
+A contract with no collateral returns an empty list — normal, not incomplete. FO + BO + LC-own.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CollateralListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:contract_id/collaterals/:collateral_id/remove",
+    alias:
+      "remove_collateral_api_v1_contracts__contract_id__collaterals__collateral_id__remove_post",
+    description: `Soft-remove a collateral from a contract (PRD1042-2167) — history preserved.
+
+Sets removed-at + removal-reason; the row leaves the live set but is never deleted. A Guarantee
+collateral also soft-removes the guarantor link it created, so the derived role does not outlive it.
+FO + BO + LC-own; only in the request&#x27;s write window.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ reason: z.string().min(1).max(255) }).passthrough(),
+      },
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "collateral_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__contracts__interfaces__http__schemas__collateral_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:contract_id/collaterals/preview",
+    alias:
+      "preview_collateral_partner_api_v1_contracts__contract_id__collaterals_preview_post",
+    description: `Search the partner register for a Guarantee&#x27;s party before anything is created (PRD1042-2167).
+
+Search-before-typing for the GUARANTEE case: returns the match candidates so the caller can link an
+existing partner rather than create a duplicate. Creates nothing. FO + BO + LC-own.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: CollateralPreviewRequest,
+      },
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerMatchResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
     path: "/api/v1/contracts/:contract_id/defer",
     alias: "defer_contract_api_v1_contracts__contract_id__defer_post",
     description: `Hold a contract back within the request — reactivatable, not rejected (PRD1042-1928).`,
@@ -8311,6 +8649,33 @@ the caller can link one rather than create a duplicate. Creates nothing.`,
       },
     ],
     response: PartnerMatchResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:contract_id/lessee/remove",
+    alias: "remove_lessee_api_v1_contracts__contract_id__lessee_remove_post",
+    description: `Unlink the lessee from a contract (PRD1042-2165).
+
+Clears the contract&#x27;s &#x60;&#x60;lessee_partner_id&#x60;&#x60; — the partner stays in the registry; only this
+contract&#x27;s lessee slot is emptied, so the contract becomes incomplete until a lessee is
+re-captured. FO + BO + LC-own; only in the request&#x27;s write window. A contract with no lessee is a
+404. No body — this is a column null, not a soft-remove with a reason.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LesseeUnlinkResponse,
     errors: [
       {
         status: 422,
@@ -11640,7 +12005,7 @@ No existing sessions are invalidated immediately.
       {
         name: "origin",
         type: "Query",
-        schema: origin,
+        schema: origin__2,
       },
       {
         name: "role_scope",
