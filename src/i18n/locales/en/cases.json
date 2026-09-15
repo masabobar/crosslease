@@ -446,6 +446,10 @@
         "label": "Contracts",
         "description": "Entry route & list"
       },
+      "documents": {
+        "label": "Upload documents",
+        "description": "Required by the product"
+      },
       "summary": {
         "label": "Summary",
         "description": "Review & submit"
@@ -474,6 +478,16 @@
       "objectsAbsent": {
         "title": "Number of objects is not shown",
         "description": "The platform has no object count for a request before it is approved, so this figure cannot be included in the summary. It becomes available on the financing."
+      }
+    },
+    "documents": {
+      "title": "Upload documents",
+      "subtitlePortal": "The documents the bank product catalogue asks for. They have to be uploaded before the request can be submitted.",
+      "subtitleBank": "The documents the bank product catalogue asks for. Optional for a bank user — they can also be uploaded on the Documents tab after submission.",
+      "missing": {
+        "title": "{{count}} required document still missing",
+        "title_other": "{{count}} required documents still missing",
+        "description": "The request cannot be submitted until they are uploaded."
       }
     }
   },

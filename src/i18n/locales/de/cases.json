@@ -446,6 +446,10 @@
         "label": "Verträge",
         "description": "Erfassungsweg & Liste"
       },
+      "documents": {
+        "label": "Dokumente hochladen",
+        "description": "Vom Produkt verlangt"
+      },
       "summary": {
         "label": "Zusammenfassung",
         "description": "Prüfen & einreichen"
@@ -474,6 +478,16 @@
       "objectsAbsent": {
         "title": "Anzahl Objekte wird nicht angezeigt",
         "description": "Für einen Antrag vor der Genehmigung liegt keine Objektanzahl vor, daher kann dieser Wert nicht in die Zusammenfassung aufgenommen werden. Er steht auf der Finanzierung zur Verfügung."
+      }
+    },
+    "documents": {
+      "title": "Dokumente hochladen",
+      "subtitlePortal": "Die Dokumente, die der Bankproduktkatalog verlangt. Sie müssen hochgeladen werden, bevor der Antrag eingereicht werden kann.",
+      "subtitleBank": "Die Dokumente, die der Bankproduktkatalog verlangt. Für Bankbenutzer optional — sie können auch nach der Einreichung im Tab Dokumente hochgeladen werden.",
+      "missing": {
+        "title": "{{count}} erforderliches Dokument fehlt noch",
+        "title_other": "{{count}} erforderliche Dokumente fehlen noch",
+        "description": "Der Antrag kann erst eingereicht werden, wenn sie hochgeladen sind."
       }
     }
   },

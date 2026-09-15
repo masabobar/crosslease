@@ -17,6 +17,8 @@ import { useCaseContracts } from "@/features/cases/hooks/useCaseContracts"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import { LEASING_COMPANY_USER_ROLE } from "@/features/users/types"
 import { useSubmitCase } from "@/features/cases/hooks/useSubmitCase"
+import { useBlockingDocumentCount } from "@/features/documentRequirements/hooks/useBlockingDocumentCount"
+import { DocumentsStep } from "@/features/cases/components/steps/DocumentsStep"
 import { ContractsStep } from "@/features/cases/components/steps/ContractsStep"
 import { SummaryStep } from "@/features/cases/components/steps/SummaryStep"
 import { LeasingCompanyStep } from "@/features/cases/components/steps/LeasingCompanyStep"
@@ -60,6 +62,10 @@ export default function StartCaseWizardPage() {
   const contracts = useCaseContracts(isValidId ? caseId : undefined)
   const { data: currentUser } = useCurrentUser()
   const submitCase = useSubmitCase()
+  const blockingDocumentCount = useBlockingDocumentCount(
+    isValidId ? caseId : undefined,
+    caseQuery.data?.case_type
+  )
 
   const [step, setStep] = useState<CaseWizardStep>(CASE_WIZARD_STEPS[0])
 
@@ -91,9 +97,13 @@ export default function StartCaseWizardPage() {
 
   const progress = {
     isLeasingCompanyBound,
-    // Committed contracts, not the bulk preview's candidate rows: step 3 summarises what is in the
-    // case, so a batch uploaded but never committed must not open it.
+    // Committed contracts, not the bulk preview's candidate rows: the summary reports what is in
+    // the case, so a batch uploaded but never committed must not open it.
     hasContracts: (contracts.data?.total ?? 0) > 0,
+    // The backend's own `is_blocking` per requirement, not a mandatory-and-missing count derived
+    // again here — a second judgement can disagree with the one Submit is checked against.
+    hasBlockingDocuments: blockingDocumentCount > 0,
+    isPortalUser,
   }
 
   const back = previousStep(step)
@@ -162,6 +172,15 @@ export default function StartCaseWizardPage() {
           )}
 
           {step === "contracts" && <ContractsStep caseId={caseId as string} />}
+
+          {step === "documents" && (
+            <DocumentsStep
+              caseId={caseId as string}
+              caseType={caseQuery.data?.case_type}
+              isPortalUser={isPortalUser}
+              blockingCount={blockingDocumentCount}
+            />
+          )}
 
           {step === "summary" && (
             <SummaryStep
