@@ -30,6 +30,7 @@ import {
   ContractCollateralResponseSchema,
   LeaseObjectReadSchema,
   LesseeLinkResponseSchema,
+  LesseeUnlinkResponseSchema,
   PaymentPlanResponseSchema,
   BulkRemoveResponseSchema,
   CaseActivityResponseSchema,
@@ -145,6 +146,7 @@ function seededObject(
     market_value: null,
     appraised_value: null,
     value_as_at: null,
+    location_and_region: null,
     market_value_indicator: null,
     dat_evidence_status: null,
     dat_evidence_document_id: null,
@@ -190,6 +192,7 @@ const collateralsByContractId: Record<string, CollateralListItem[]> = {
 }
 
 const lesseeByContractId: Record<string, LesseeLinkResponse> = {}
+const lesseeRemovedContractIds = new Set<string>()
 const planByContractId: Record<string, PaymentPlanResponse> = {}
 const commentsByCaseId: Record<string, CaseCommentItem[]> = {}
 
@@ -846,6 +849,7 @@ export const caseHandlers = [
     const contractId = params.contractId as string
     const captured = lesseeByContractId[contractId]
     if (captured) return envelope(captured)
+    if (lesseeRemovedContractIds.has(contractId)) return envelope(null)
 
     // Fall back to the contract's own `lessee_partner_id`. The fixture contracts carry one, and
     // answering `null` for them made every seeded contract open on the empty picker — a state the
@@ -862,6 +866,24 @@ export const caseHandlers = [
         is_new: false,
         partner_status: "confirmed",
       })
+    )
+  }),
+
+  http.post(`${API}/contracts/:contractId/lessee/remove`, ({ params }) => {
+    const contractId = params.contractId as string
+    const removed = lesseeByContractId[contractId]?.lessee_partner_id ?? null
+    // `LesseeLinkResponse` cannot express "none" — its `lessee_partner_id` is non-nullable, which
+    // is why the endpoint answers a different shape. So the removal is remembered separately;
+    // deleting the entry alone would let the GET fall back to the contract fixture's own
+    // `lessee_partner_id` and silently re-link what was just removed.
+    delete lesseeByContractId[contractId]
+    lesseeRemovedContractIds.add(contractId)
+    return envelope(
+      LesseeUnlinkResponseSchema.parse({
+        contract_id: contractId,
+        lessee_partner_id: removed,
+      }),
+      "LESSEE_REMOVED"
     )
   }),
 

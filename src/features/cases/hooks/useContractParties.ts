@@ -7,11 +7,13 @@ import {
   fetchContractGuarantors,
   fetchContractLessee,
   removeContractGuarantor,
+  removeContractLessee,
 } from "@/features/cases/api/casesApi"
 import type {
   GuarantorLinkResponse,
   GuarantorListResponse,
   LesseeLinkResponse,
+  LesseeUnlinkResponse,
 } from "@/features/cases/api/schema"
 
 // The lessee linked to a contract (US 1.6). `null` until one is captured.
@@ -20,6 +22,22 @@ export function useContractLessee(contractId: string | undefined) {
     queryKey: CASE_QUERY_KEYS.contractLessee(contractId ?? ""),
     queryFn: () => fetchContractLessee(contractId as string),
     enabled: Boolean(contractId),
+  })
+}
+
+export function useRemoveLessee(): UseMutationResult<
+  LesseeUnlinkResponse,
+  Error,
+  string
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (contractId: string) => removeContractLessee(contractId),
+    onSuccess: (_result, contractId) => {
+      void queryClient.invalidateQueries({
+        queryKey: CASE_QUERY_KEYS.contractLessee(contractId),
+      })
+    },
   })
 }
 

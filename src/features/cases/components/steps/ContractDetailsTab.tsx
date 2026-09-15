@@ -3,11 +3,12 @@ import { useEffect, useRef } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FieldRequirement, Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
 import { SelectField } from "@/components/ui/select"
 import { showApiError } from "@/lib/apiErrorMessage"
 import { resolveFormMessage } from "@/lib/formMessages"
@@ -82,6 +83,8 @@ export function ContractDetailsTab({
   const mileageLease = useWatch({ control, name: "mileage_lease" })
   const buyBack = useWatch({ control, name: "buy_back_agreement" })
   const putOption = useWatch({ control, name: "put_option" })
+  const saleAndLeaseBack = useWatch({ control, name: "sale_and_lease_back" })
+  const sublease = useWatch({ control, name: "sublease" })
 
   async function onSubmit(values: ContractDetailsFormValues) {
     const id = contractId ?? (await onNeedContract())
@@ -121,22 +124,22 @@ export function ContractDetailsTab({
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.details.fields.contractNumber")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.details.fields.contractNumber")}
+        >
           <Input
             data-testid="contract-number-input"
             {...register("leasing_company_contract_number")}
           />
         </Field>
-        <Field label={t("wizard.manual.details.fields.shortName")}>
-          <Input
-            data-testid="contract-short-name-input"
-            {...register("short_name")}
-          />
-        </Field>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.details.fields.contractType")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.details.fields.contractType")}
+        >
           <SelectField
             data-testid="contract-type-select"
             value={contractType}
@@ -150,7 +153,10 @@ export function ContractDetailsTab({
             }))}
           />
         </Field>
-        <Field label={t("wizard.manual.details.fields.amortisationType")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.details.fields.amortisationType")}
+        >
           <SelectField
             data-testid="contract-amortisation-select"
             value={amortisation}
@@ -167,7 +173,10 @@ export function ContractDetailsTab({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.details.fields.frequency")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.details.fields.frequency")}
+        >
           <SelectField
             data-testid="contract-frequency-select"
             value={frequency}
@@ -182,6 +191,7 @@ export function ContractDetailsTab({
           />
         </Field>
         <Field
+          requirement="required"
           label={t("wizard.manual.details.fields.termMonths")}
           error={resolveFormMessage(
             errors.term_months?.message,
@@ -197,7 +207,10 @@ export function ContractDetailsTab({
         </Field>
       </div>
 
-      <Field label={t("wizard.manual.details.fields.contractStart")}>
+      <Field
+        requirement="required"
+        label={t("wizard.manual.details.fields.contractStart")}
+      >
         {/* No minDate: this is an EXISTING lease being brought into a refinancing request, so its
             start is in the past by definition — flooring it at today would refuse every real
             contract (date-inputs.md §4, the historical case). */}
@@ -209,28 +222,40 @@ export function ContractDetailsTab({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.details.fields.netInstalment")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.details.fields.netInstalment")}
+        >
           <Input
             inputMode="decimal"
             data-testid="contract-instalment-input"
             {...register("net_instalment")}
           />
         </Field>
-        <Field label={t("wizard.manual.details.fields.residualValue")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.details.fields.residualValue")}
+        >
           <Input
             inputMode="decimal"
             data-testid="contract-residual-input"
             {...register("residual_value")}
           />
         </Field>
-        <Field label={t("wizard.manual.details.fields.specialPayment")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.specialPayment")}
+        >
           <Input
             inputMode="decimal"
             data-testid="contract-special-payment-input"
             {...register("special_payment")}
           />
         </Field>
-        <Field label={t("wizard.manual.details.fields.nonRefinanceable")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.nonRefinanceable")}
+        >
           <Input
             inputMode="decimal"
             data-testid="contract-non-refinanceable-input"
@@ -238,14 +263,20 @@ export function ContractDetailsTab({
           />
         </Field>
         {/* The contract's own residual, as distinct from the value the refinancing works from. */}
-        <Field label={t("wizard.manual.details.fields.contractResidual")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.contractResidual")}
+        >
           <Input
             inputMode="decimal"
             data-testid="contract-contract-residual-input"
             {...register("contract_residual")}
           />
         </Field>
-        <Field label={t("wizard.manual.details.fields.targetClosingBalance")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.targetClosingBalance")}
+        >
           <Input
             inputMode="decimal"
             data-testid="contract-target-closing-balance-input"
@@ -254,7 +285,10 @@ export function ContractDetailsTab({
         </Field>
         {/* Only set when the first instalment does not fall one full period after the value date;
             the engine then charges that first period pro rata on the 30/360 count. */}
-        <Field label={t("wizard.manual.details.fields.deviatingFirstDueDate")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.deviatingFirstDueDate")}
+        >
           <Input
             type="date"
             data-testid="contract-deviating-first-due-date-input"
@@ -263,35 +297,96 @@ export function ContractDetailsTab({
         </Field>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Tick
+      <div className="grid gap-4 sm:grid-cols-2">
+        <YesNo
           testId="contract-mileage-lease"
-          checked={mileageLease}
+          value={mileageLease}
           onChange={v => setValue("mileage_lease", v)}
           label={t("wizard.manual.details.fields.mileageLease")}
         />
-        <Tick
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.shortName")}
+        >
+          <Input
+            data-testid="contract-short-name-input"
+            {...register("short_name")}
+          />
+        </Field>
+        <YesNo
+          testId="contract-sale-and-lease-back"
+          value={saleAndLeaseBack}
+          onChange={v => setValue("sale_and_lease_back", v)}
+          label={t("wizard.manual.details.fields.saleAndLeaseBack")}
+        />
+        <YesNo
+          testId="contract-sublease"
+          value={sublease}
+          onChange={v => setValue("sublease", v)}
+          label={t("wizard.manual.details.fields.sublease")}
+        />
+        <YesNo
           testId="contract-buy-back"
-          checked={buyBack}
+          value={buyBack}
           onChange={v => setValue("buy_back_agreement", v)}
           label={t("wizard.manual.details.fields.buyBack")}
         />
-        <Tick
+        <YesNo
           testId="contract-put-option"
-          checked={putOption}
+          value={putOption}
           onChange={v => setValue("put_option", v)}
           label={t("wizard.manual.details.fields.putOption")}
         />
+        {/* The three the 16 Sep refresh added. `contract_end` and `residual_value_due_on` are
+            dates the leasing company writes; `remarks` is the free text the dummy puts beside
+            them. */}
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.residualValueDueOn")}
+        >
+          <Input
+            type="date"
+            data-testid="contract-residual-value-due-on-input"
+            {...register("residual_value_due_on")}
+          />
+        </Field>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.details.fields.contractEnd")}
+        >
+          <Input
+            type="date"
+            data-testid="contract-end-input"
+            {...register("contract_end")}
+          />
+        </Field>
+        <div className="sm:col-span-2">
+          <Field
+            requirement="optional"
+            label={t("wizard.manual.details.fields.remarks")}
+          >
+            <Textarea
+              rows={3}
+              placeholder={t("wizard.manual.details.fields.remarksPlaceholder")}
+              data-testid="contract-remarks-input"
+              {...register("remarks")}
+            />
+          </Field>
+        </div>
       </div>
       {onToggleNonLinearPlan !== undefined && (
         /* The dummy's card at the foot of this tab. A linear plan needs no table — it is produced
            from the terms above on save — so the table is reached through this switch and not
            offered by default. */
         <section
-          className="rounded-lg border p-4"
+          className="rounded-lg border"
           data-testid="contract-plan-switch"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* The dummy captions the block, which is what separates it from the fields above. */}
+          <p className="border-b px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("wizard.manual.plan.heading")}
+          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <p className="text-sm font-medium">
                 {t("wizard.manual.plan.producedFrom")}
@@ -320,42 +415,81 @@ export function ContractDetailsTab({
   )
 }
 
-function Tick({
+/**
+ * A Yes / No pair, which is how the dummy asks every one of this tab's boolean questions.
+ *
+ * A tick would be shorter, but it cannot distinguish "No" from "not answered" — and on a contract
+ * that is the difference between recording that there is no buy-back agreement and not having
+ * looked. The pair makes the answer explicit, which is why the design uses it.
+ */
+function YesNo({
   testId,
-  checked,
+  value,
   onChange,
   label,
 }: {
   testId: string
-  checked: boolean
+  value: boolean
   onChange: (value: boolean) => void
   label: string
 }) {
+  const { t } = useTranslation("cases")
+  const { t: tCommon } = useTranslation("common")
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <Checkbox
-        data-testid={testId}
-        checked={checked}
-        onCheckedChange={value => onChange(value === true)}
-      />
-      {label}
-    </label>
+    <div>
+      <Label className="mb-1.5">
+        {label}
+        <FieldRequirement
+          requirement="optional"
+          optionalLabel={tCommon("form.optional")}
+        />
+      </Label>
+      <RadioGroup
+        value={value ? "yes" : "no"}
+        onValueChange={next => onChange(next === "yes")}
+        className="flex flex-col gap-1"
+      >
+        {(["yes", "no"] as const).map(option => (
+          <label key={option} className="flex items-center gap-2 text-sm">
+            <RadioGroupItem
+              value={option}
+              data-testid={`${testId}-${option}`}
+            />
+            {t(
+              `wizard.manual.details.${option}` as "wizard.manual.details.yes"
+            )}
+          </label>
+        ))}
+      </RadioGroup>
+    </div>
   )
 }
 
 function Field({
   label,
+  requirement,
   error,
   children,
 }: {
   label: string
+  /**
+   * `ContractCreate` requires **nothing** — the modal creates a shell and fills it tab by tab — so
+   * these stars come from the design rather than the contract. They say what a contract needs to
+   * be usable, which is a product rule the dummy states and the wire does not.
+   */
+  requirement: "required" | "optional"
   error?: string
   children: React.ReactNode
 }) {
+  const { t } = useTranslation("common")
   return (
     <div>
       <Label error={error !== undefined} className="mb-1.5">
         {label}
+        <FieldRequirement
+          requirement={requirement}
+          optionalLabel={t("form.optional")}
+        />
       </Label>
       {children}
       {error !== undefined && (

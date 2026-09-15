@@ -375,24 +375,32 @@
         },
         "fields": {
           "select": "Auswählen",
-          "contractNumber": "Vertragsnummer der Leasinggesellschaft",
-          "shortName": "Kurzbezeichnung",
+          "contractNumber": "LG-Vertragsnummer",
+          "shortName": "Kurzname",
           "contractType": "Vertragsart",
           "amortisationType": "Amortisationsart",
-          "frequency": "Ratenfrequenz",
+          "frequency": "Zahlungsfrequenz",
           "termMonths": "Laufzeit (Monate)",
           "contractStart": "Vertragsbeginn",
-          "netInstalment": "Nettorate (EUR)",
+          "netInstalment": "Nettoleasingrate (EUR)",
           "residualValue": "Restwert (EUR)",
           "specialPayment": "Sonderzahlung (EUR)",
           "nonRefinanceable": "Nicht refinanzierbarer Anteil (EUR)",
           "mileageLease": "Kilometerleasing",
-          "buyBack": "Rückkaufvereinbarung",
-          "putOption": "Andienungsrecht",
+          "buyBack": "Rückkaufvereinbarung (RKV)",
+          "putOption": "Andienungsrecht (ADR)",
           "contractResidual": "Vertragsrestwert (EUR)",
           "targetClosingBalance": "Ziel-Restsaldo (EUR)",
-          "deviatingFirstDueDate": "Abweichender erster Fälligkeitstermin"
-        }
+          "deviatingFirstDueDate": "Abweichende Fälligkeit 1. Rate",
+          "saleAndLeaseBack": "Sale-and-lease-back",
+          "sublease": "Untervermietung",
+          "residualValueDueOn": "Restwert fällig am",
+          "contractEnd": "Vertragsende",
+          "remarks": "Bemerkungen",
+          "remarksPlaceholder": "Freitext"
+        },
+        "yes": "Ja",
+        "no": "Nein"
       },
       "object": {
         "heading": "Leasingobjekte ({{count}})",
@@ -430,7 +438,8 @@
           "marketValueInOrder": "Marktwert ist i.O.",
           "datEvidence": "DAT-Nachweis",
           "datEvidencePlaceholder": "Status auswählen",
-          "subGroupHelp": "Bei einer Fahrzeuggruppe ist dies die Kraftstoffart. Ein Feld, nicht zwei — „Kraftstoffart“ ist nur ihr Berichtsname im Fahrzeugfall."
+          "subGroupHelp": "Bei einer Fahrzeuggruppe ist dies die Kraftstoffart. Ein Feld, nicht zwei — „Kraftstoffart“ ist nur ihr Berichtsname im Fahrzeugfall.",
+          "locationAndRegion": "Standort und Region"
         },
         "datEvidence": {
           "pending": "Ausstehend",
@@ -479,7 +488,8 @@
           "sole_trader": "Einzelunternehmer",
           "person_commercial": "Gewerblich",
           "person_private": "Privat"
-        }
+        },
+        "removeLessee": "Entfernen"
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",
@@ -497,7 +507,8 @@
         "producedFrom": "Aus den Bedingungen oben erzeugt",
         "note": "Die Plattform gibt den Leasingvertrag wieder; sie bepreist ihn nicht neu.",
         "enable": "Nichtlinearer Zahlungsplan",
-        "enabled": "Nichtlinearer Zahlungsplan ist aktiv"
+        "enabled": "Nichtlinearer Zahlungsplan ist aktiv",
+        "heading": "Zahlungsplan"
       },
       "editTitle": "Vertrag bearbeiten",
       "collaterals": {

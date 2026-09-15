@@ -375,24 +375,32 @@
         },
         "fields": {
           "select": "Select",
-          "contractNumber": "Leasing company contract number",
-          "shortName": "Short name",
+          "contractNumber": "LC contract number",
+          "shortName": "Short name (Kurzname)",
           "contractType": "Contract type",
           "amortisationType": "Amortisation type",
-          "frequency": "Instalment frequency",
+          "frequency": "Payment frequency",
           "termMonths": "Term (months)",
           "contractStart": "Contract start",
-          "netInstalment": "Net instalment (EUR)",
+          "netInstalment": "Net lease rate (EUR)",
           "residualValue": "Residual value (EUR)",
           "specialPayment": "Special payment (EUR)",
           "nonRefinanceable": "Non-refinanceable part (EUR)",
-          "mileageLease": "Mileage lease",
-          "buyBack": "Buy-back agreement",
-          "putOption": "Put option",
+          "mileageLease": "Kilometer leasing",
+          "buyBack": "Buy-back agreement (RKV)",
+          "putOption": "Put option (ADR)",
           "contractResidual": "Contract residual (EUR)",
           "targetClosingBalance": "Target closing balance (EUR)",
-          "deviatingFirstDueDate": "Deviating first due date"
-        }
+          "deviatingFirstDueDate": "Deviating due date 1st rate",
+          "saleAndLeaseBack": "Sale and lease back",
+          "sublease": "Sublease",
+          "residualValueDueOn": "Residual value due on",
+          "contractEnd": "Contract end",
+          "remarks": "Remarks",
+          "remarksPlaceholder": "Free text"
+        },
+        "yes": "Yes",
+        "no": "No"
       },
       "object": {
         "heading": "Lease objects ({{count}})",
@@ -414,8 +422,8 @@
           "groupPlaceholder": "Select an object group",
           "subGroup": "Object sub-group",
           "subGroupPlaceholder": "Select a sub-group",
-          "manufacturer": "Manufacturer",
-          "brand": "Brand",
+          "manufacturer": "Hersteller",
+          "brand": "Marke",
           "yearOfManufacture": "Year of manufacture",
           "chassis": "Chassis / Serial no.",
           "plate": "Licence plate",
@@ -430,7 +438,8 @@
           "marketValueInOrder": "Market value is in order (i.O.)",
           "datEvidence": "DAT evidence",
           "datEvidencePlaceholder": "Select a state",
-          "subGroupHelp": "For a vehicle group this is the fuel type. One field, not two — “fuel type” is only its report name in the vehicle case."
+          "subGroupHelp": "For a vehicle group this is the fuel type. One field, not two — “fuel type” is only its report name in the vehicle case.",
+          "locationAndRegion": "Location and region"
         },
         "datEvidence": {
           "pending": "Pending",
@@ -479,7 +488,8 @@
           "sole_trader": "Sole trader",
           "person_commercial": "Commercial",
           "person_private": "Private"
-        }
+        },
+        "removeLessee": "Remove"
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",
@@ -497,7 +507,8 @@
         "producedFrom": "Produced from the terms above",
         "note": "The platform reproduces the lease; it does not re-price it.",
         "enable": "Non-linear payment plan",
-        "enabled": "Non-linear payment plan is on"
+        "enabled": "Non-linear payment plan is on",
+        "heading": "Payment plan"
       },
       "editTitle": "Edit contract",
       "collaterals": {

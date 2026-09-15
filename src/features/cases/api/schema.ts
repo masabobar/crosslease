@@ -434,6 +434,8 @@ export const LeaseObjectReadSchema = z.object({
   market_value: MoneySchema,
   appraised_value: MoneySchema,
   value_as_at: z.string().nullable(),
+  // Added to LeaseObjectRead in the 16 Sep contract refresh.
+  location_and_region: z.string().nullable(),
   market_value_indicator: MarketValueIndicatorSchema.nullable(),
   dat_evidence_status: DatEvidenceStatusSchema.nullable(),
   dat_evidence_document_id: z.string().nullable(),
@@ -473,6 +475,14 @@ export const LesseeLinkResponseSchema = z.object({
   is_new: z.boolean(),
   partner_status: z.string(),
 })
+// POST /contracts/{id}/lessee/remove — unlinks the party from the contract. `lessee_partner_id`
+// is the id that WAS linked, so the caller can say what it removed.
+export const LesseeUnlinkResponseSchema = z.object({
+  contract_id: z.string().uuid(),
+  lessee_partner_id: z.string().uuid().nullable(),
+})
+export type LesseeUnlinkResponse = z.infer<typeof LesseeUnlinkResponseSchema>
+
 export type LesseeLinkResponse = z.infer<typeof LesseeLinkResponseSchema>
 
 export const GuarantorLinkResponseSchema = z.object({
@@ -711,9 +721,8 @@ export type ContractDeferredState = z.infer<typeof ContractDeferredStateSchema>
 export const CaseContractSchema = z.object({
   id: z.string().uuid(),
   leasing_company_contract_number: z.string().nullable(),
-  // Read only to count distinct lessees for the wizard's summary (US 1.17). The wire carries no
-  // lessee *name* here — just this id — which is why the Contracts tab does not render a lessee
-  // column (Q-015) even though the summary can still count them.
+  // Just the id — the wire carries no lessee *name* here, so the Contracts tab resolves it
+  // through the partner registry for the rows on the page it is showing (Q-015).
   lessee_partner_id: z.string().uuid().nullable(),
   short_name: z.string().nullable(),
   contract_type: z.string().nullable(),

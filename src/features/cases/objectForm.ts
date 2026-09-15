@@ -50,6 +50,7 @@ export const objectFormSchema = z.object({
    * "valuation performed" flag — the contract is explicit that the earlier candidate for that was
    * withdrawn. It states the recorded market value is in order, which is a different claim.
    */
+  location_and_region: z.string(),
   market_value_in_order: z.boolean(),
   /**
    * DAT evidence is held as **status plus the document reference only** — no per-object DAT value
@@ -78,62 +79,9 @@ export const EMPTY_OBJECT_FORM: ObjectFormValues = {
   special_payment: "",
   residual_value: "",
   value_as_at: "",
+  location_and_region: "",
   market_value_in_order: false,
   dat_evidence_status: "",
-}
-
-/**
- * A saved object read back into the form's own value shape.
- *
- * Every field on the form is a string (or a checkbox boolean) because the inputs are uncontrolled
- * text — so nulls and numbers off the wire become "" and `String(...)` here rather than each field
- * guarding for itself. `toObjectPayload` is the inverse.
- */
-export function objectFormValuesFrom(object: {
-  object_group: string | null
-  object_sub_group: string | null
-  object_description: string | null
-  manufacturer: string | null
-  brand: string | null
-  year_of_manufacture: number | null
-  chassis_or_serial_number: string | null
-  registration_plate: string | null
-  vehicle_registration_document_number: string | null
-  new_or_used: ObjectFormValues["new_or_used"] | null
-  acquisition_cost: number | string | null
-  market_value: number | string | null
-  appraised_value: number | string | null
-  special_payment: number | string | null
-  residual_value: number | string | null
-  value_as_at: string | null
-  market_value_indicator: string | null
-  dat_evidence_status: ObjectFormValues["dat_evidence_status"] | null
-}): ObjectFormValues {
-  const text = (value: string | number | null) =>
-    value === null ? "" : String(value)
-
-  return {
-    object_group: text(object.object_group),
-    object_sub_group: text(object.object_sub_group),
-    object_description: text(object.object_description),
-    manufacturer: text(object.manufacturer),
-    brand: text(object.brand),
-    year_of_manufacture: text(object.year_of_manufacture),
-    chassis_or_serial_number: text(object.chassis_or_serial_number),
-    registration_plate: text(object.registration_plate),
-    vehicle_registration_document_number: text(
-      object.vehicle_registration_document_number
-    ),
-    new_or_used: object.new_or_used ?? "",
-    acquisition_cost: text(object.acquisition_cost),
-    market_value: text(object.market_value),
-    appraised_value: text(object.appraised_value),
-    special_payment: text(object.special_payment),
-    residual_value: text(object.residual_value),
-    value_as_at: text(object.value_as_at),
-    market_value_in_order: object.market_value_indicator === "in_order",
-    dat_evidence_status: object.dat_evidence_status ?? "",
-  }
 }
 
 /**
@@ -214,6 +162,7 @@ export function toObjectPayload(
     special_payment: moneyOrNull(values.special_payment),
     residual_value: moneyOrNull(values.residual_value),
     value_as_at: textOrNull(values.value_as_at),
+    location_and_region: textOrNull(values.location_and_region),
     // The enum carries one value, so the tick maps to it or to null.
     market_value_indicator: values.market_value_in_order ? "i_o" : null,
     // Vehicle-only: DAT evidence is a vehicle concept, and sending a status for a non-vehicle
@@ -251,6 +200,7 @@ export function toObjectFormValues(object: LeaseObjectRead): ObjectFormValues {
     special_payment: money(object.special_payment),
     residual_value: money(object.residual_value),
     value_as_at: object.value_as_at ?? "",
+    location_and_region: object.location_and_region ?? "",
     market_value_in_order: object.market_value_indicator === "i_o",
     dat_evidence_status: object.dat_evidence_status ?? "",
   }

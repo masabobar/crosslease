@@ -129,7 +129,13 @@ export function ManualContractEntryDialog({
   }
 
   return (
-    <DialogModal open onOpenChange={open => !open && onOpenChange(false)}>
+    // Wide, as the dummy draws it: two columns of contract terms and a full object form do not
+    // fit the default width without every field becoming a slot.
+    <DialogModal
+      open
+      size="lg"
+      onOpenChange={open => !open && onOpenChange(false)}
+    >
       <div className="px-4 py-4">
         <DialogHeader>
           <DialogTitle>

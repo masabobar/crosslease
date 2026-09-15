@@ -122,5 +122,8 @@
   },
   "prototype": {
     "banner": "Prototype — all data on this screen is mocked. Nothing is saved and nothing is real."
+  },
+  "form": {
+    "optional": "optional"
   }
 }

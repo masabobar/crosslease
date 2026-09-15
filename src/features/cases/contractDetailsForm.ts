@@ -53,6 +53,13 @@ export const contractDetailsFormSchema = z.object({
   mileage_lease: z.boolean(),
   buy_back_agreement: z.boolean(),
   put_option: z.boolean(),
+  // Landed on ContractCreate/ContractEdit/ContractRead in the 16 Sep refresh, which is the only
+  // reason the design's last five contract fields could be built.
+  sale_and_lease_back: z.boolean(),
+  sublease: z.boolean(),
+  residual_value_due_on: z.string(),
+  contract_end: z.string(),
+  remarks: z.string(),
 })
 
 export type ContractDetailsFormValues = z.infer<
@@ -77,6 +84,11 @@ export const EMPTY_CONTRACT_DETAILS_FORM: ContractDetailsFormValues = {
   mileage_lease: false,
   buy_back_agreement: false,
   put_option: false,
+  sale_and_lease_back: false,
+  sublease: false,
+  residual_value_due_on: "",
+  contract_end: "",
+  remarks: "",
 }
 
 function textOrNull(value: string): string | null {
@@ -118,6 +130,11 @@ export function toContractEditPayload(
     contract_residual: moneyOrNull(values.contract_residual),
     target_closing_balance: moneyOrNull(values.target_closing_balance),
     deviating_first_due_date: textOrNull(values.deviating_first_due_date),
+    residual_value_due_on: textOrNull(values.residual_value_due_on),
+    contract_end: textOrNull(values.contract_end),
+    remarks: textOrNull(values.remarks),
+    sale_and_lease_back: values.sale_and_lease_back,
+    sublease: values.sublease,
     // Booleans are always sent: a cleared tick is a real answer ("no buy-back"), and omitting it
     // on a PATCH would leave the previous value in place.
     mileage_lease: values.mileage_lease,

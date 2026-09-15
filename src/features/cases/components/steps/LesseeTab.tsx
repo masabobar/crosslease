@@ -1,11 +1,9 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { SelectField } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PATHS } from "@/router/paths"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
@@ -17,16 +15,11 @@ import { CreatePartnerDialog } from "@/features/partners/components/CreatePartne
 import { PartnerStatusSchema } from "@/features/partners/api/schema"
 import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 import type { TFunction } from "i18next"
+import { isPartnerUsableAsParty } from "@/features/cases/contractParties"
 import {
-  KIND_OF_OBLIGATION_OPTIONS,
-  isPartnerUsableAsParty,
-} from "@/features/cases/contractParties"
-import {
-  useAddGuarantor,
   useCaptureLessee,
-  useContractGuarantors,
   useContractLessee,
-  useRemoveGuarantor,
+  useRemoveLessee,
 } from "@/features/cases/hooks/useContractParties"
 
 // Below three characters the registry search matches most of the book — the same threshold the
@@ -113,28 +106,6 @@ export function LesseeTab({ contractId, onNeedContract }: Props) {
   )
 }
 
-/**
- * **Guarantors / co-obligors** — its own tab, as the click dummy has it, rather than a block under
- * Lessee. They are a separate list against the contract (`/contracts/{id}/guarantors`), and the
- * design separates them because capturing a lessee and capturing sureties are different jobs.
- */
-export function GuarantorsTab({ contractId, onNeedContract }: Props) {
-  const guarantors = useContractGuarantors(contractId ?? undefined)
-
-  return (
-    <div className="flex flex-col gap-6" data-testid="guarantors-tab">
-      <GuarantorSection
-        contractId={contractId}
-        onNeedContract={onNeedContract}
-        guarantors={guarantors.data?.guarantors ?? []}
-        isLoading={guarantors.isLoading}
-        isError={guarantors.isError}
-        error={guarantors.error}
-      />
-    </div>
-  )
-}
-
 function LesseeSection({
   contractId,
   onNeedContract,
@@ -160,8 +131,8 @@ function LesseeSection({
 }) {
   const { t } = useTranslation("cases")
   const capture = useCaptureLessee()
+  const removeLessee = useRemoveLessee()
   const partner = usePartnerDetail(linkedPartnerId)
-  const [isReplacing, setReplacing] = useState(false)
 
   async function link(partnerId: string) {
     const id = contractId ?? (await onNeedContract())
@@ -180,7 +151,7 @@ function LesseeSection({
 
       {isLoading && <Skeleton className="h-16 w-full" />}
 
-      {!isLoading && linkedPartnerId !== null && !isReplacing ? (
+      {!isLoading && linkedPartnerId !== null ? (
         <div
           className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm"
           data-testid="lessee-linked"
@@ -225,199 +196,39 @@ function LesseeSection({
                   {t("wizard.manual.parties.notConfirmed")}
                 </Badge>
               )}
-            {/* The dummy's action is Remove, then search or create again. There is no unlink
-                endpoint — `POST .../lessee` only ever sets one — so this reopens the picker and the
-                next pick REPLACES the link. Labelled "Choose a different lessee" rather than
-                "Remove" so it does not promise a deletion that cannot happen: leaving the modal
-                without picking again keeps the current lessee. */}
+            {/* The dummy's `Remove`, and it now means what it says: `POST .../lessee/remove`
+                unlinks the party and the picker reopens on the empty state. It had been labelled
+                "Choose a different lessee" precisely because that route did not exist and the only
+                way out was to pick a replacement. */}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              data-testid="lessee-replace"
-              onClick={() => setReplacing(true)}
+              data-testid="lessee-remove"
+              disabled={removeLessee.isPending || contractId === null}
+              onClick={() =>
+                contractId !== null &&
+                removeLessee.mutate(contractId, {
+                  onError: err => showApiError(err, t),
+                })
+              }
             >
-              {t("wizard.manual.parties.replaceLessee")}
+              {t("wizard.manual.parties.removeLessee")}
             </Button>
           </div>
         </div>
       ) : (
         !isLoading && (
           <>
-            {isReplacing && linkedPartnerId !== null && (
-              <p
-                className="mb-2 text-xs text-muted-foreground"
-                data-testid="lessee-replace-notice"
-              >
-                {t("wizard.manual.parties.replaceNotice")}
-              </p>
-            )}
+            {/* Reached when no lessee is linked — none captured yet, or Remove just unlinked
+                one. Both are the same state and get the same picker. */}
             <PartnerPicker
               testIdPrefix="lessee"
               isLinking={capture.isPending}
-              onPick={partnerId => {
-                setReplacing(false)
-                link(partnerId)
-              }}
+              onPick={partnerId => link(partnerId)}
             />
           </>
         )
-      )}
-    </section>
-  )
-}
-
-function GuarantorSection({
-  contractId,
-  onNeedContract,
-  guarantors,
-  isLoading,
-  isError,
-  error,
-}: {
-  contractId: string | null
-  onNeedContract: () => Promise<string | null>
-  guarantors: readonly {
-    link_id: string
-    guarantor_partner_id: string
-    kind_of_obligation: string | null
-    display_name: string
-  }[]
-  isLoading: boolean
-  isError: boolean
-  error: Error | null
-}) {
-  const { t } = useTranslation("cases")
-  const add = useAddGuarantor()
-  const remove = useRemoveGuarantor()
-  const [isAdding, setAdding] = useState(false)
-  const [kind, setKind] = useState<string>(KIND_OF_OBLIGATION_OPTIONS[0])
-
-  async function link(partnerId: string) {
-    const id = contractId ?? (await onNeedContract())
-    if (id === null) return
-    add.mutate(
-      { contractId: id, partnerId, kindOfObligation: kind },
-      {
-        onSuccess: () => setAdding(false),
-        onError: err => showApiError(err, t),
-      }
-    )
-  }
-
-  return (
-    <section data-testid="guarantor-section">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">
-          {t("wizard.manual.parties.guarantorHeading", {
-            count: guarantors.length,
-          })}
-        </h3>
-        {!isAdding && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            data-testid="guarantor-add-button"
-            onClick={() => setAdding(true)}
-          >
-            <Plus size={16} />
-            {t("wizard.manual.parties.addGuarantor")}
-          </Button>
-        )}
-      </div>
-
-      {isLoading && <Skeleton className="h-16 w-full" />}
-
-      {isError && (
-        <p className="text-sm text-destructive" data-testid="guarantor-error">
-          {resolveApiErrorMessage(error, t)}
-        </p>
-      )}
-
-      {!isLoading && !isError && guarantors.length === 0 && !isAdding && (
-        <p
-          className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground"
-          data-testid="guarantor-empty"
-        >
-          {t("wizard.manual.parties.guarantorEmpty")}
-        </p>
-      )}
-
-      <div className="flex flex-col gap-2">
-        {guarantors.map(g => (
-          <div
-            key={g.link_id}
-            className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
-            data-testid={`guarantor-row-${g.link_id}`}
-          >
-            <div>
-              {/* This list carries a display name, unlike the financing Contracts tab (Q-015) —
-                  so no per-row partner fetch is needed. */}
-              <p className="font-medium">{g.display_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {g.kind_of_obligation ?? "—"}
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              data-testid={`guarantor-remove-${g.link_id}`}
-              disabled={remove.isPending || contractId === null}
-              onClick={() =>
-                remove.mutate(
-                  { contractId: contractId as string, linkId: g.link_id },
-                  { onError: err => showApiError(err, t) }
-                )
-              }
-            >
-              <Trash2 size={16} />
-            </Button>
-          </div>
-        ))}
-      </div>
-
-      {isAdding && (
-        <div
-          className="mt-3 flex flex-col gap-3 rounded-lg border p-4"
-          data-testid="guarantor-add-form"
-        >
-          <div>
-            <Label htmlFor="kind-of-obligation" className="mb-1.5">
-              {t("wizard.manual.parties.kindOfObligation")}
-            </Label>
-            <SelectField
-              id="kind-of-obligation"
-              data-testid="guarantor-kind-select"
-              value={kind}
-              onValueChange={setKind}
-              options={KIND_OF_OBLIGATION_OPTIONS.map(value => ({
-                value,
-                label: t(
-                  `wizard.manual.parties.obligations.${value}` as "wizard.manual.parties.obligations.guarantor"
-                ),
-              }))}
-            />
-          </div>
-
-          <PartnerPicker
-            testIdPrefix="guarantor"
-            isLinking={add.isPending}
-            onPick={link}
-          />
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-end"
-            data-testid="guarantor-add-cancel"
-            onClick={() => setAdding(false)}
-          >
-            {t("wizard.actions.cancel")}
-          </Button>
-        </div>
       )}
     </section>
   )

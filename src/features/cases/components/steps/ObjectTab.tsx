@@ -20,7 +20,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FieldRequirement, Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SelectField } from "@/components/ui/select"
 import { DatEvidenceStatusSchema } from "@/features/cases/api/schema"
@@ -38,7 +38,7 @@ import {
 } from "@/features/cases/hooks/useContractObjects"
 import {
   EMPTY_OBJECT_FORM,
-  objectFormValuesFrom,
+  toObjectFormValues,
   isVehicleGroup,
   objectFormSchema,
   subGroupsFor,
@@ -228,7 +228,7 @@ export function ObjectTab({ contractId, onNeedContract }: Props) {
             <ObjectForm
               groups={groups}
               isSaving={updateObject.isPending}
-              initialValues={objectFormValuesFrom(object)}
+              initialValues={toObjectFormValues(object)}
               onCancel={() => setExpandedId(null)}
               onSubmit={values => handleUpdate(object.id, values)}
             />
@@ -345,7 +345,10 @@ function ObjectForm({
       data-testid="object-tab-form"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <Field label={t("wizard.manual.object.fields.description")}>
+      <Field
+        requirement="required"
+        label={t("wizard.manual.object.fields.description")}
+      >
         <Input
           data-testid="object-description-input"
           {...register("object_description")}
@@ -353,7 +356,10 @@ function ObjectForm({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.object.fields.group")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.object.fields.group")}
+        >
           <SelectField
             data-testid="object-group-select"
             value={groupCode}
@@ -371,7 +377,10 @@ function ObjectForm({
           />
         </Field>
 
-        <Field label={t("wizard.manual.object.fields.manufacturer")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.manufacturer")}
+        >
           <Input
             data-testid="object-manufacturer-input"
             {...register("manufacturer")}
@@ -383,7 +392,10 @@ function ObjectForm({
           the group above it and only exists for a vehicle. */}
       {isVehicle && subGroups.length > 0 && (
         <div className="ml-4 border-l pl-4">
-          <Field label={t("wizard.manual.object.fields.subGroup")}>
+          <Field
+            requirement="optional"
+            label={t("wizard.manual.object.fields.subGroup")}
+          >
             <SelectField
               data-testid="object-sub-group-select"
               value={subGroupCode}
@@ -404,10 +416,14 @@ function ObjectForm({
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.object.fields.brand")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.brand")}
+        >
           <Input data-testid="object-brand-input" {...register("brand")} />
         </Field>
         <Field
+          requirement="optional"
           label={t("wizard.manual.object.fields.yearOfManufacture")}
           error={resolveFormMessage(
             errors.year_of_manufacture?.message,
@@ -429,20 +445,29 @@ function ObjectForm({
           data-testid="object-vehicle-fields"
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t("wizard.manual.object.fields.chassis")}>
+            <Field
+              requirement="required"
+              label={t("wizard.manual.object.fields.chassis")}
+            >
               <Input
                 data-testid="object-chassis-input"
                 {...register("chassis_or_serial_number")}
               />
             </Field>
-            <Field label={t("wizard.manual.object.fields.plate")}>
+            <Field
+              requirement="optional"
+              label={t("wizard.manual.object.fields.plate")}
+            >
               <Input
                 data-testid="object-plate-input"
                 {...register("registration_plate")}
               />
             </Field>
           </div>
-          <Field label={t("wizard.manual.object.fields.zlb")}>
+          <Field
+            requirement="optional"
+            label={t("wizard.manual.object.fields.zlb")}
+          >
             <Input
               data-testid="object-zlb-input"
               {...register("vehicle_registration_document_number")}
@@ -454,7 +479,10 @@ function ObjectForm({
               the package instead. The design's "Select File" is not offered because attaching the
               document needs a media upload endpoint scoped to an object, which does not exist;
               `dat_evidence_document_id` can only be set to a document that already exists. */}
-          <Field label={t("wizard.manual.object.fields.datEvidence")}>
+          <Field
+            requirement="optional"
+            label={t("wizard.manual.object.fields.datEvidence")}
+          >
             <SelectField
               data-testid="object-dat-evidence-select"
               value={datEvidence}
@@ -478,7 +506,10 @@ function ObjectForm({
         </div>
       )}
 
-      <Field label={t("wizard.manual.object.fields.newOrUsed")}>
+      <Field
+        requirement="optional"
+        label={t("wizard.manual.object.fields.newOrUsed")}
+      >
         <RadioGroup
           value={newOrUsed === "" ? undefined : newOrUsed}
           onValueChange={value =>
@@ -501,35 +532,50 @@ function ObjectForm({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("wizard.manual.object.fields.acquisitionCost")}>
+        <Field
+          requirement="required"
+          label={t("wizard.manual.object.fields.acquisitionCost")}
+        >
           <Input
             inputMode="decimal"
             data-testid="object-nac-input"
             {...register("acquisition_cost")}
           />
         </Field>
-        <Field label={t("wizard.manual.object.fields.marketValue")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.marketValue")}
+        >
           <Input
             inputMode="decimal"
             data-testid="object-market-value-input"
             {...register("market_value")}
           />
         </Field>
-        <Field label={t("wizard.manual.object.fields.appraisedValue")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.appraisedValue")}
+        >
           <Input
             inputMode="decimal"
             data-testid="object-appraised-value-input"
             {...register("appraised_value")}
           />
         </Field>
-        <Field label={t("wizard.manual.object.fields.specialPayment")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.specialPayment")}
+        >
           <Input
             inputMode="decimal"
             data-testid="object-special-payment-input"
             {...register("special_payment")}
           />
         </Field>
-        <Field label={t("wizard.manual.object.fields.residualValue")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.residualValue")}
+        >
           <Input
             inputMode="decimal"
             data-testid="object-residual-value-input"
@@ -537,11 +583,25 @@ function ObjectForm({
           />
         </Field>
         {/* The date the figures above are as at — the design prints one beside its values. */}
-        <Field label={t("wizard.manual.object.fields.valueAsAt")}>
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.valueAsAt")}
+        >
           <Input
             type="date"
             data-testid="object-value-as-at-input"
             {...register("value_as_at")}
+          />
+        </Field>
+        {/* Landed on `LeaseObjectCreate` in the 16 Sep contract refresh, which is the only reason
+            the design's last object field could be built. */}
+        <Field
+          requirement="optional"
+          label={t("wizard.manual.object.fields.locationAndRegion")}
+        >
+          <Input
+            data-testid="object-location-and-region-input"
+            {...register("location_and_region")}
           />
         </Field>
       </div>
@@ -585,17 +645,32 @@ function ObjectForm({
 
 function Field({
   label,
+  requirement,
   error,
   children,
 }: {
   label: string
+  /**
+   * The dummy marks every field `*` or `(optional)`.
+   *
+   * Worth saying plainly: `LeaseObjectCreate` requires **nothing** — every field is optional on the
+   * wire, because the modal creates a shell and fills it tab by tab. So the four stars come from
+   * the design, not the contract: they are the product's rule about what an object needs to be
+   * usable, and they are enforced in the form schema for the same reason.
+   */
+  requirement: "required" | "optional"
   error?: string
   children: React.ReactNode
 }) {
+  const { t } = useTranslation("common")
   return (
     <div>
       <Label error={error !== undefined} className="mb-1.5">
         {label}
+        <FieldRequirement
+          requirement={requirement}
+          optionalLabel={t("form.optional")}
+        />
       </Label>
       {children}
       {error !== undefined && (

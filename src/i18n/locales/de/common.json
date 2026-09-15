@@ -122,5 +122,8 @@
   },
   "prototype": {
     "banner": "Prototyp — alle Daten auf diesem Bildschirm sind simuliert. Es wird nichts gespeichert und nichts ist echt."
+  },
+  "form": {
+    "optional": "optional"
   }
 }

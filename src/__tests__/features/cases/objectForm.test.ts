@@ -177,6 +177,7 @@ describe("toObjectFormValues", () => {
       market_value: null,
       appraised_value: 91000,
       value_as_at: null,
+      location_and_region: "Hamburg / Nord",
       market_value_indicator: null,
       dat_evidence_status: "uploaded",
       dat_evidence_document_id: "doc-1",

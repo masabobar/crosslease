@@ -8,6 +8,7 @@ import {
 } from "@/features/cases/api/schema"
 import type {
   CollateralListResponse,
+  LesseeUnlinkResponse,
   CollateralResponse,
   CollateralType,
   ContractCollateralResponse,
@@ -39,6 +40,7 @@ import {
   CollateralListResponseSchema,
   ContractCollateralResponseSchema,
   GuarantorLinkResponseSchema,
+  LesseeUnlinkResponseSchema,
   LesseeLinkResponseSchema,
   PaymentPlanResponseSchema,
   BulkRemoveResponseSchema,
@@ -470,6 +472,13 @@ export async function fetchContractGuarantors(
 
 // POST /contracts/{contract_id}/guarantors — adds a guarantor or co-obligor (US 1.7). The kind of
 // obligation is what separates the two, and it is free text on the wire.
+export async function removeContractLessee(
+  contractId: string
+): Promise<LesseeUnlinkResponse> {
+  const data = await api.post(`/contracts/${contractId}/lessee/remove`)
+  return LesseeUnlinkResponseSchema.parse(data)
+}
+
 export async function addContractGuarantor(
   contractId: string,
   existingPartnerId: string,
