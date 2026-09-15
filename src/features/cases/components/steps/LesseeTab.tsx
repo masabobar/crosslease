@@ -12,8 +12,11 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue"
 import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
 import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
+import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { CreatePartnerDialog } from "@/features/partners/components/CreatePartnerDialog"
 import { PartnerStatusSchema } from "@/features/partners/api/schema"
+import type { PartnerDetailResponse } from "@/features/partners/api/schema"
+import type { TFunction } from "i18next"
 import {
   KIND_OF_OBLIGATION_OPTIONS,
   isPartnerUsableAsParty,
@@ -30,6 +33,39 @@ import {
 // partner registry and the UBO dialog use.
 const MIN_SEARCH_LENGTH = 3
 const SEARCH_DEBOUNCE_MS = 300
+
+/**
+ * The one-line description under a linked party's name — city, kind of party, register number.
+ *
+ * Built from whatever the registry actually returned rather than from a fixed template: a sole
+ * trader has no commercial register number and a foreign partner may have no address, and a line
+ * reading "— · — · —" is worse than a shorter one.
+ */
+function describePartner(
+  partner: PartnerDetailResponse | undefined,
+  t: TFunction<"cases">
+): string {
+  if (!partner) return ""
+  const identity = partner.identity
+  const city =
+    "registered_address" in identity
+      ? (identity.registered_address?.city ?? null)
+      : null
+  const register =
+    "commercial_register_no" in identity
+      ? identity.commercial_register_no
+      : null
+
+  return [
+    city,
+    t(
+      `wizard.manual.parties.partnerTypes.${partner.partner_type}` as "wizard.manual.parties.partnerTypes.legal_entity"
+    ),
+    register,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+}
 
 type Props = {
   contractId: string | null
@@ -124,6 +160,7 @@ function LesseeSection({
 }) {
   const { t } = useTranslation("cases")
   const capture = useCaptureLessee()
+  const partner = usePartnerDetail(linkedPartnerId)
   const [isReplacing, setReplacing] = useState(false)
 
   async function link(partnerId: string) {
@@ -149,10 +186,17 @@ function LesseeSection({
           data-testid="lessee-linked"
         >
           <div className="min-w-0">
+            {/* The dummy names the party and describes it — a raw UUID told the reader nothing
+                and was the only thing on the card that identified the lessee. The subtitle is the
+                registry's own detail: where it sits, what kind of party it is, and the register
+                number a bank reader would check it against. */}
             <p className="font-medium">
-              {t("wizard.manual.parties.lesseeLinked")}
+              {partner.data?.display_name ??
+                t("wizard.manual.parties.lesseeLinked")}
             </p>
-            <p className="text-xs text-muted-foreground">{linkedPartnerId}</p>
+            <p className="text-xs text-muted-foreground">
+              {describePartner(partner.data, t) || linkedPartnerId}
+            </p>
             {/* The click dummy's link, opening in a new tab: the party is inspected in the partner
                 register, not edited from inside this modal. */}
             <a

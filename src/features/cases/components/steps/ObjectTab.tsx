@@ -2,8 +2,23 @@ import { useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
-import { Plus } from "lucide-react"
+import { ChevronRight, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -18,9 +33,12 @@ import {
   useContractObjects,
   useCreateContractObject,
   useObjectClassification,
+  useRemoveContractObject,
+  useUpdateContractObject,
 } from "@/features/cases/hooks/useContractObjects"
 import {
   EMPTY_OBJECT_FORM,
+  objectFormValuesFrom,
   isVehicleGroup,
   objectFormSchema,
   subGroupsFor,
@@ -61,7 +79,14 @@ export function ObjectTab({ contractId, onNeedContract }: Props) {
   const classification = useObjectClassification()
   const objects = useContractObjects(contractId ?? undefined)
   const createObject = useCreateContractObject()
+  const updateObject = useUpdateContractObject()
+  const removeObject = useRemoveContractObject()
   const [isAdding, setAdding] = useState(false)
+  // One object open at a time: the cards are full forms, and two open at once is two sets of the
+  // same field labels stacked on each other.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [removingId, setRemovingId] = useState<string | null>(null)
+  const [removeReason, setRemoveReason] = useState("")
 
   const groups = classification.data?.groups ?? []
   const existing = objects.data?.objects ?? []
@@ -73,6 +98,24 @@ export function ObjectTab({ contractId, onNeedContract }: Props) {
       <p className="text-sm text-destructive" data-testid="object-tab-error">
         {resolveApiErrorMessage(classification.error, t)}
       </p>
+    )
+  }
+
+  function handleUpdate(objectId: string, values: ObjectFormValues) {
+    if (contractId === null) return
+    updateObject.mutate(
+      {
+        contractId,
+        objectId,
+        body: toObjectPayload(
+          values,
+          isVehicleGroup(groups, values.object_group)
+        ),
+      },
+      {
+        onSuccess: () => setExpandedId(null),
+        onError: err => showApiError(err, t),
+      }
     )
   }
 
@@ -124,23 +167,73 @@ export function ObjectTab({ contractId, onNeedContract }: Props) {
         </p>
       )}
 
+      {/* The dummy draws each object as an open card with its fields and a delete icon, not as a
+          summary line. It is a disclosure rather than always-open because a contract can carry a
+          dozen objects and a dozen open forms is not a form anyone can fill. */}
       {existing.map(object => (
-        <div
+        <Collapsible
           key={object.id}
-          className="rounded-lg border bg-muted/30 px-4 py-3 text-sm"
-          data-testid={`object-tab-saved-${object.id}`}
+          open={expandedId === object.id}
+          onOpenChange={open => setExpandedId(open ? object.id : null)}
+          className="rounded-lg border bg-muted/30"
         >
-          <p className="font-medium">
-            {t("wizard.manual.object.savedTitle", {
-              number: object.object_number,
-            })}
-          </p>
-          <p className="text-muted-foreground">
-            {[object.object_group, object.brand, object.registration_plate]
-              .filter(part => part !== null && part !== "")
-              .join(" · ") || t("wizard.manual.object.savedEmpty")}
-          </p>
-        </div>
+          <div className="flex items-center gap-2 px-4 py-3 text-sm">
+            <CollapsibleTrigger
+              className="flex flex-1 items-center gap-2 text-left"
+              data-testid={`object-tab-saved-${object.id}`}
+            >
+              <ChevronRight
+                size={16}
+                className={
+                  expandedId === object.id
+                    ? "rotate-90 transition-transform"
+                    : "transition-transform"
+                }
+              />
+              <span>
+                <span className="block font-medium">
+                  {t("wizard.manual.object.savedTitle", {
+                    number: object.object_number,
+                  })}
+                </span>
+                <span className="block text-muted-foreground">
+                  {[
+                    // The wire carries the group's CODE; the reader wants its name.
+                    groups.find(group => group.code === object.object_group)
+                      ?.name ?? object.object_group,
+                    object.brand,
+                    object.registration_plate,
+                  ]
+                    .filter(part => part !== null && part !== "")
+                    .join(" · ") || t("wizard.manual.object.savedEmpty")}
+                </span>
+              </span>
+            </CollapsibleTrigger>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid={`object-tab-remove-${object.id}`}
+              onClick={() => {
+                setRemovingId(object.id)
+                setRemoveReason("")
+              }}
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+
+          <CollapsibleContent className="border-t px-4 py-4">
+            <ObjectForm
+              groups={groups}
+              isSaving={updateObject.isPending}
+              initialValues={objectFormValuesFrom(object)}
+              onCancel={() => setExpandedId(null)}
+              onSubmit={values => handleUpdate(object.id, values)}
+            />
+          </CollapsibleContent>
+        </Collapsible>
       ))}
 
       {isAdding && (
@@ -151,6 +244,61 @@ export function ObjectTab({ contractId, onNeedContract }: Props) {
           onSubmit={handleSubmit}
         />
       )}
+
+      {/* `LeaseObjectRemove` requires a reason and the removal is soft, so the trash icon asks for
+          one rather than inventing it — the same shape the contract and collateral removals use. */}
+      <AlertDialog
+        open={removingId !== null}
+        onOpenChange={open => {
+          if (!open) setRemovingId(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("wizard.manual.object.removeTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("wizard.manual.object.removeDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <Input
+            value={removeReason}
+            data-testid="object-remove-reason"
+            placeholder={t("wizard.manual.object.reasonPlaceholder")}
+            onChange={event => setRemoveReason(event.target.value)}
+          />
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("wizard.actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="object-remove-confirm"
+              disabled={
+                removeObject.isPending ||
+                removeReason.trim() === "" ||
+                contractId === null ||
+                removingId === null
+              }
+              onClick={() =>
+                removeObject.mutate(
+                  {
+                    contractId: contractId as string,
+                    objectId: removingId as string,
+                    reason: removeReason.trim(),
+                  },
+                  {
+                    onSuccess: () => setRemovingId(null),
+                    onError: err => showApiError(err, t),
+                  }
+                )
+              }
+            >
+              {t("wizard.manual.object.removeConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -158,11 +306,14 @@ export function ObjectTab({ contractId, onNeedContract }: Props) {
 function ObjectForm({
   groups,
   isSaving,
+  initialValues,
   onCancel,
   onSubmit,
 }: {
   groups: readonly ObjectGroupItem[]
   isSaving: boolean
+  /** Omitted when adding; a saved object's own values when editing one in place. */
+  initialValues?: ObjectFormValues
   onCancel: () => void
   onSubmit: (values: ObjectFormValues) => void
 }) {
@@ -175,7 +326,7 @@ function ObjectForm({
     formState: { errors },
   } = useForm<ObjectFormValues>({
     resolver: zodResolver(objectFormSchema),
-    defaultValues: EMPTY_OBJECT_FORM,
+    defaultValues: initialValues ?? EMPTY_OBJECT_FORM,
   })
 
   // `useWatch`, not `watch`: choosing a group must reveal or hide the vehicle fields immediately,

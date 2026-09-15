@@ -186,7 +186,9 @@ export const businessConfigHandlers = [
           country: listed?.country ?? "DE",
           tax_id_vat: null,
           lei: null,
-          commercial_register_no: null,
+          commercial_register_no: lessee
+            ? "HRB 94120 · Creditreform PRT-DE-0044120"
+            : null,
           registered_address: lessee
             ? {
                 street: "Hafenstraße 12",

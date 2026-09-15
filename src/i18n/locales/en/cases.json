@@ -434,7 +434,11 @@
         "datEvidence": {
           "pending": "Pending",
           "uploaded": "Uploaded"
-        }
+        },
+        "removeTitle": "Remove this object?",
+        "removeDescription": "The object is kept in the contract's history. Say why it is being removed.",
+        "reasonPlaceholder": "Reason for removal",
+        "removeConfirm": "Remove"
       },
       "parties": {
         "lesseeHeading": "Lessee",
@@ -468,7 +472,13 @@
         },
         "identifierHint": "CREFO number or Schufa no. / PN recommended — one of them is what identifies the party.",
         "checkForDuplicates": "Check for duplicates",
-        "saveParty": "Save party"
+        "saveParty": "Save party",
+        "partnerTypes": {
+          "legal_entity": "Legal entity",
+          "sole_trader": "Sole trader",
+          "person_commercial": "Commercial",
+          "person_private": "Private"
+        }
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",

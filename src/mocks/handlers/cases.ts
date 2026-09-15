@@ -125,8 +125,11 @@ function seededObject(
     id: `${contractId.slice(0, -2)}${(0xe0 + index).toString(16)}`,
     contract_id: contractId,
     object_number: index,
-    object_group: "Wohnmobil",
-    object_sub_group: "Diesel-Hybrid",
+    // The group and sub-group are stored as CODES, not display names — `isVehicleGroup`
+    // matches on the code, and a display name here hid the chassis and plate fields on a
+    // vehicle.
+    object_group: "WOHNMOBIL",
+    object_sub_group: "DIESEL",
     object_description: description,
     manufacturer: "Mercedes-Benz",
     brand: "Sprinter",
@@ -679,6 +682,33 @@ export const caseHandlers = [
     )
   ),
 
+  http.patch(`${API}/objects/:objectId`, async ({ params, request }) => {
+    const objectId = params.objectId as string
+    const body = (await request.json()) as Record<string, unknown>
+    for (const [contractId, objects] of Object.entries(objectsByContractId)) {
+      const index = objects.findIndex(object => object.id === objectId)
+      if (index === -1) continue
+      const updated = LeaseObjectReadSchema.parse({
+        ...objects[index],
+        ...body,
+      })
+      objectsByContractId[contractId] = objects.with(index, updated)
+      return envelope(updated, "OBJECT_UPDATED")
+    }
+    return notFound()
+  }),
+
+  http.post(`${API}/objects/:objectId/remove`, ({ params }) => {
+    for (const [contractId, objects] of Object.entries(objectsByContractId)) {
+      if (!objects.some(object => object.id === params.objectId)) continue
+      objectsByContractId[contractId] = objects.filter(
+        object => object.id !== params.objectId
+      )
+      return envelope({ removed: true }, "OBJECT_REMOVED")
+    }
+    return notFound()
+  }),
+
   http.get(`${API}/contracts/:contractId/collaterals`, ({ params }) => {
     const contractId = params.contractId as string
     const collaterals = collateralsByContractId[contractId] ?? []
@@ -810,9 +840,28 @@ export const caseHandlers = [
   }),
 
   // ── Manual entry: parties and terms (US 1.6, 1.7, 1.9) ────────────────────
-  http.get(`${API}/contracts/:contractId/lessee`, ({ params }) =>
-    envelope(lesseeByContractId[params.contractId as string] ?? null)
-  ),
+  http.get(`${API}/contracts/:contractId/lessee`, ({ params }) => {
+    const contractId = params.contractId as string
+    const captured = lesseeByContractId[contractId]
+    if (captured) return envelope(captured)
+
+    // Fall back to the contract's own `lessee_partner_id`. The fixture contracts carry one, and
+    // answering `null` for them made every seeded contract open on the empty picker — a state the
+    // case is not actually in, and the one the design's captured-lessee card exists to show.
+    const seeded = Object.values(mockCaseContractsByCaseId)
+      .flat()
+      .find(contract => contract.id === contractId)
+    if (!seeded?.lessee_partner_id) return envelope(null)
+
+    return envelope(
+      LesseeLinkResponseSchema.parse({
+        contract_id: contractId,
+        lessee_partner_id: seeded.lessee_partner_id,
+        is_new: false,
+        partner_status: "confirmed",
+      })
+    )
+  }),
 
   http.post(
     `${API}/contracts/:contractId/lessee`,

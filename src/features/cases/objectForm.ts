@@ -83,6 +83,60 @@ export const EMPTY_OBJECT_FORM: ObjectFormValues = {
 }
 
 /**
+ * A saved object read back into the form's own value shape.
+ *
+ * Every field on the form is a string (or a checkbox boolean) because the inputs are uncontrolled
+ * text — so nulls and numbers off the wire become "" and `String(...)` here rather than each field
+ * guarding for itself. `toObjectPayload` is the inverse.
+ */
+export function objectFormValuesFrom(object: {
+  object_group: string | null
+  object_sub_group: string | null
+  object_description: string | null
+  manufacturer: string | null
+  brand: string | null
+  year_of_manufacture: number | null
+  chassis_or_serial_number: string | null
+  registration_plate: string | null
+  vehicle_registration_document_number: string | null
+  new_or_used: ObjectFormValues["new_or_used"] | null
+  acquisition_cost: number | string | null
+  market_value: number | string | null
+  appraised_value: number | string | null
+  special_payment: number | string | null
+  residual_value: number | string | null
+  value_as_at: string | null
+  market_value_indicator: string | null
+  dat_evidence_status: ObjectFormValues["dat_evidence_status"] | null
+}): ObjectFormValues {
+  const text = (value: string | number | null) =>
+    value === null ? "" : String(value)
+
+  return {
+    object_group: text(object.object_group),
+    object_sub_group: text(object.object_sub_group),
+    object_description: text(object.object_description),
+    manufacturer: text(object.manufacturer),
+    brand: text(object.brand),
+    year_of_manufacture: text(object.year_of_manufacture),
+    chassis_or_serial_number: text(object.chassis_or_serial_number),
+    registration_plate: text(object.registration_plate),
+    vehicle_registration_document_number: text(
+      object.vehicle_registration_document_number
+    ),
+    new_or_used: object.new_or_used ?? "",
+    acquisition_cost: text(object.acquisition_cost),
+    market_value: text(object.market_value),
+    appraised_value: text(object.appraised_value),
+    special_payment: text(object.special_payment),
+    residual_value: text(object.residual_value),
+    value_as_at: text(object.value_as_at),
+    market_value_in_order: object.market_value_indicator === "in_order",
+    dat_evidence_status: object.dat_evidence_status ?? "",
+  }
+}
+
+/**
  * Whether the selected group is a vehicle.
  *
  * This is what the design's indentation encodes: `Fuel type` (the sub-group) sits nested under

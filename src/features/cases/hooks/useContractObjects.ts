@@ -5,6 +5,7 @@ import {
   createContractObject,
   fetchContractObjects,
   fetchObjectClassification,
+  removeContractObject,
   updateContractObject,
 } from "@/features/cases/api/casesApi"
 import { FIVE_MINUTES_MS } from "@/lib/constants"
@@ -46,6 +47,23 @@ export function useCreateContractObject(): UseMutationResult<
     mutationFn: ({ contractId, body }) =>
       createContractObject(contractId, body),
     onSuccess: (_object, { contractId }) => {
+      void queryClient.invalidateQueries({
+        queryKey: CASE_QUERY_KEYS.contractObjects(contractId),
+      })
+    },
+  })
+}
+
+export function useRemoveContractObject(): UseMutationResult<
+  void,
+  Error,
+  { contractId: string; objectId: string; reason: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ objectId, reason }) =>
+      removeContractObject(objectId, reason),
+    onSuccess: (_result, { contractId }) => {
       void queryClient.invalidateQueries({
         queryKey: CASE_QUERY_KEYS.contractObjects(contractId),
       })

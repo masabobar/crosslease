@@ -418,6 +418,15 @@ export async function updateContractObject(
   return LeaseObjectReadSchema.parse(data)
 }
 
+// POST /objects/{object_id}/remove — a soft remove with a recorded reason, the same shape the
+// contract and collateral removals use.
+export async function removeContractObject(
+  objectId: string,
+  reason: string
+): Promise<void> {
+  await api.post(`/objects/${objectId}/remove`, { reason })
+}
+
 // POST /cases/{case_id}/contracts — creates a contract manually (US 1.9). `ContractCreate` has 19
 // fields and requires none, so the modal creates the contract first and fills its tabs afterwards.
 export async function createCaseContract(

@@ -434,7 +434,11 @@
         "datEvidence": {
           "pending": "Ausstehend",
           "uploaded": "Hochgeladen"
-        }
+        },
+        "removeTitle": "Dieses Objekt entfernen?",
+        "removeDescription": "Das Objekt bleibt in der Vertragshistorie erhalten. Bitte den Grund angeben.",
+        "reasonPlaceholder": "Grund der Entfernung",
+        "removeConfirm": "Entfernen"
       },
       "parties": {
         "lesseeHeading": "Leasingnehmer",
@@ -468,7 +472,13 @@
         },
         "identifierHint": "CREFO-Nummer oder Schufa-Nr. / PN empfohlen — eine davon identifiziert die Partei.",
         "checkForDuplicates": "Auf Duplikate prüfen",
-        "saveParty": "Partei speichern"
+        "saveParty": "Partei speichern",
+        "partnerTypes": {
+          "legal_entity": "Juristische Person",
+          "sole_trader": "Einzelunternehmer",
+          "person_commercial": "Gewerblich",
+          "person_private": "Privat"
+        }
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",
