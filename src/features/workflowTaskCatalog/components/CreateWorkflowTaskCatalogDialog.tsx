@@ -1,19 +1,15 @@
-import { useForm, Controller } from "react-hook-form"
+import { useForm, useWatch, Controller } from "react-hook-form"
+import { parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
-import {
-  DialogModal,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
+import { DialogModal, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { applyApiFieldErrors } from "@/lib/apiFieldErrors"
 import { useSelectableProductTemplates } from "@/features/frameworkAgreements/hooks/useSelectableProductTemplates"
 import { useCreateWorkflowTaskCatalog } from "@/features/workflowTaskCatalog/hooks/useCreateWorkflowTaskCatalog"
@@ -41,24 +37,32 @@ const globalDefaultCatalogSchema = z.object({
   catalogName: z.string().trim().min(1, "required"),
   caseType: z.string().min(1, "required"),
   productTemplate: z.string(),
+  validFrom: z.string(),
+  validUntil: z.string(),
 })
 
 const productSpecificCatalogSchema = z.object({
   catalogName: z.string().trim().min(1, "required"),
   caseType: z.string().min(1, "required"),
   productTemplate: z.string().min(1, "required"),
+  validFrom: z.string(),
+  validUntil: z.string(),
 })
 
 type CreateCatalogFormValues = {
   catalogName: string
   caseType: string
   productTemplate: string
+  validFrom: string
+  validUntil: string
 }
 
 const EMPTY_FORM_VALUES: CreateCatalogFormValues = {
   catalogName: "",
   caseType: "",
   productTemplate: "",
+  validFrom: "",
+  validUntil: "",
 }
 
 type Props = {
@@ -134,6 +138,10 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
         // used to be derived from a chosen Entity type, which capped the axis at the two case
         // types an entity type maps to and put the superseded vocabulary on screen.
         case_type: CaseTypeSchema.parse(values.caseType),
+        // Blank means "not set", which the wire spells as null — an empty string would fail the
+        // endpoint's date format.
+        valid_from: values.validFrom === "" ? null : values.validFrom,
+        valid_until: values.validUntil === "" ? null : values.validUntil,
       },
       {
         onSuccess: response => {
@@ -165,41 +173,55 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
     )
   }
 
+  // Watched, not read once at render: choosing a start date has to move the end picker's floor
+  // immediately (`date-inputs.md` §3).
+  const validFrom = useWatch({ control, name: "validFrom" })
+
   return (
     <DialogModal open onOpenChange={o => !o && handleClose()}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="px-4 py-4">
           <DialogHeader>
-            <DialogTitle>{t("create.title")}</DialogTitle>
-            <DialogDescription>
+            {/* The title names the layer, as the design does. It had been one generic title with
+                the layer relegated to a subtitle — which made two different dialogs look like one
+                dialog opened twice. */}
+            <DialogTitle>
               {t(
                 isGlobalDefault
-                  ? "create.subtitleGlobalDefault"
-                  : "create.subtitleProductSpecific"
+                  ? "create.titleGlobalDefault"
+                  : "create.titleProductSpecific"
               )}
-            </DialogDescription>
+            </DialogTitle>
           </DialogHeader>
         </div>
 
         <div className="flex flex-col gap-4 px-4 py-4 max-h-[60vh] overflow-y-auto">
+          {/* The Catalog layer read-out is gone. It was a locked field restating the button the
+              user had just pressed, and its own hint ("automatically set to null…") described an
+              internal field rather than anything the reader can act on. The title carries the
+              layer now. */}
           <div>
-            <Label className="mb-2">{t("create.fields.catalogLayer")}</Label>
-            <div
-              data-testid="create-catalog-layer-locked"
-              className="flex h-8 items-center justify-between rounded-lg border border-input bg-muted/40 px-2.5 text-sm text-muted-foreground"
+            <Label
+              htmlFor="create-catalog-name"
+              error={!!errors.catalogName}
+              className="mb-2"
             >
-              <span>
-                {t(`catalogLayers.${layer}` as "catalogLayers.global_default")}
-              </span>
-              <Lock size={14} />
-            </div>
+              {t("create.fields.catalogName")}
+            </Label>
+            <Input
+              id="create-catalog-name"
+              data-testid="create-catalog-name-input"
+              error={!!errors.catalogName}
+              {...register("catalogName")}
+            />
             <p className="mt-2 text-sm text-muted-foreground opacity-80">
-              {t(
-                isGlobalDefault
-                  ? "create.fields.catalogLayerHintGlobalDefault"
-                  : "create.fields.catalogLayerHintProductSpecific"
-              )}
+              {t("create.fields.catalogNameHint")}
             </p>
+            {errors.catalogName && (
+              <p className="mt-1 text-sm text-destructive">
+                {resolveMessage(errors.catalogName.message)}
+              </p>
+            )}
           </div>
 
           <div>
@@ -245,47 +267,10 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
             )}
           </div>
 
-          <div>
-            <Label
-              htmlFor="create-catalog-name"
-              error={!!errors.catalogName}
-              className="mb-2"
-            >
-              {t("create.fields.catalogName")}
-            </Label>
-            <Input
-              id="create-catalog-name"
-              data-testid="create-catalog-name-input"
-              error={!!errors.catalogName}
-              {...register("catalogName")}
-            />
-            <p className="mt-2 text-sm text-muted-foreground opacity-80">
-              {t("create.fields.catalogNameHint")}
-            </p>
-            {errors.catalogName && (
-              <p className="mt-1 text-sm text-destructive">
-                {resolveMessage(errors.catalogName.message)}
-              </p>
-            )}
-          </div>
-
-          {isGlobalDefault ? (
-            <div>
-              <Label className="mb-2">
-                {t("create.fields.productTemplate")}
-              </Label>
-              <div
-                data-testid="create-catalog-product-template-locked"
-                className="flex h-8 items-center justify-between rounded-lg border border-input bg-muted/40 px-2.5 text-sm text-muted-foreground"
-              >
-                <span>{t("create.fields.productTemplateNotApplicable")}</span>
-                <Lock size={14} />
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground opacity-80">
-                {t("create.fields.productTemplateLockedHint")}
-              </p>
-            </div>
-          ) : (
+          {/* A global default has no product template, so the field is not rendered at all. It had
+              been a locked read-out saying "not applicable" — a control that exists only to refuse,
+              in a dialog whose title already says which layer this is. */}
+          {!isGlobalDefault && (
             <div>
               <Label
                 htmlFor="create-catalog-product-template"
@@ -337,6 +322,64 @@ function CreateWorkflowTaskCatalogDialog({ layer, onOpenChange }: Props) {
               )}
             </div>
           )}
+
+          {/* Valid from / Valid until. `CreateCatalogRequest` has carried both since the endpoint
+              shipped and this dialog never asked for either, so every catalogue was created open
+              ended whatever the author intended. Both are optional on the wire and stay optional
+              here. */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="create-catalog-valid-from" className="mb-2">
+                {t("create.fields.validFrom")}
+              </Label>
+              <Controller
+                control={control}
+                name="validFrom"
+                render={({ field }) => (
+                  <DatePicker
+                    id="create-catalog-valid-from"
+                    data-testid="create-catalog-valid-from"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-catalog-valid-until" className="mb-2">
+                {t("create.fields.validUntil")}
+              </Label>
+              <Controller
+                control={control}
+                name="validUntil"
+                render={({ field }) => (
+                  <DatePicker
+                    id="create-catalog-valid-until"
+                    data-testid="create-catalog-valid-until"
+                    value={field.value}
+                    onChange={field.onChange}
+                    // The end of a validity window cannot precede its start — `date-inputs.md` §3:
+                    // the floor is watched, not captured once at render.
+                    minDate={validFrom ? parseISO(validFrom) : undefined}
+                  />
+                )}
+              />
+            </div>
+          </div>
+
+          {/* The design's own line, and the only place the reader learns the rule the backend
+              enforces — one global default per case type, and nothing resolves a catalogue until
+              it is activated. */}
+          <p
+            className="text-sm text-muted-foreground"
+            data-testid="create-catalog-rule-hint"
+          >
+            {t(
+              isGlobalDefault
+                ? "create.ruleGlobalDefault"
+                : "create.ruleProductSpecific"
+            )}
+          </p>
         </div>
 
         <div className="flex items-center justify-end gap-1.5 px-4 py-4 border-t bg-slate-50/50 rounded-b-2xl">

@@ -333,8 +333,16 @@ export type CatalogListResponse = z.infer<typeof CatalogListResponseSchema>
 export const CreateCatalogRequestSchema = z.object({
   catalog_name: z.string().min(1).max(200),
   catalog_layer: CatalogLayerSchema,
-  // PRD1042-2150 — the creation wizard no longer asks for a validity window and the backend
-  // no longer requires one, so neither date is part of the create contract.
+  /**
+   * The validity window is back.
+   *
+   * PRD1042-2150 took it out of the creation wizard, and this schema recorded that the backend no
+   * longer required one — which was read as "no longer has one". `CreateCatalogRequest` carries
+   * both dates today, and the client's own design for this dialog asks for both. Optional on the
+   * wire, so a catalogue created without them is still open ended.
+   */
+  valid_from: z.string().nullable().optional(),
+  valid_until: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   entity_id: z.string().uuid().nullable().optional(),
   case_type: CaseTypeSchema,

@@ -66,29 +66,27 @@
     }
   },
   "create": {
-    "title": "Workflow-Aufgabenkatalog erstellen",
-    "subtitleGlobalDefault": "Einen neuen globalen Standard-Workflow-Aufgabenkatalog erstellen.",
-    "subtitleProductSpecific": "Einen neuen produktspezifischen Workflow-Aufgabenkatalog erstellen.",
     "fields": {
-      "catalogLayer": "Katalogebene",
-      "catalogLayerHintGlobalDefault": "Wird für globale Standardkataloge automatisch auf null gesetzt.",
-      "catalogLayerHintProductSpecific": "Automatisch auf produktspezifisch gesetzt. Kann nicht geändert werden.",
       "catalogName": "Katalogname",
       "catalogNameHint": "Muss innerhalb der gewählten Fallart eindeutig sein.",
       "productTemplate": "Zugehörige Produktvorlage",
-      "productTemplateNotApplicable": "Nicht zutreffend für globalen Standard",
-      "productTemplateLockedHint": "Für diesen Katalogtyp festgelegt. Kann nicht geändert werden.",
       "productTemplatePlaceholder": "Auswählen",
       "productTemplateHint": "Nur aktive Produktvorlagen sind verfügbar.",
       "productTemplateEmpty": "Es ist keine Produktvorlage mit einer aktiven veröffentlichten Version verfügbar, daher kann noch kein produktspezifischer Katalog erstellt werden.",
       "caseType": "Fallart",
-      "caseTypePlaceholder": "Auswählen"
+      "caseTypePlaceholder": "Auswählen",
+      "validFrom": "Gültig ab",
+      "validUntil": "Gültig bis"
     },
     "actions": {
       "cancel": "Abbrechen",
       "submit": "Katalog erstellen"
     },
-    "success": "Katalog erstellt."
+    "success": "Katalog erstellt.",
+    "titleGlobalDefault": "Globalen Standardkatalog anlegen",
+    "titleProductSpecific": "Produktspezifischen Katalog anlegen",
+    "ruleGlobalDefault": "Ein globaler Standard je Fallart. Er beginnt als Entwurf, und kein Fall löst ihn auf, bis er aktiviert ist.",
+    "ruleProductSpecific": "Er erbt den globalen Standard derselben Fallart und kann ihn überschreiben, abschalten oder ergänzen."
   },
   "detail": {
     "tabs": {

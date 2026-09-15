@@ -66,29 +66,27 @@
     }
   },
   "create": {
-    "title": "Create workflow task catalog",
-    "subtitleGlobalDefault": "Create a new Global Default workflow task catalog.",
-    "subtitleProductSpecific": "Create a new Product-Specific workflow task catalog.",
     "fields": {
-      "catalogLayer": "Catalog layer",
-      "catalogLayerHintGlobalDefault": "Automatically set to null for global default catalogs.",
-      "catalogLayerHintProductSpecific": "Automatically set to product-specific. Cannot be changed.",
       "catalogName": "Catalog name",
       "catalogNameHint": "Must be unique within the selected case type.",
       "productTemplate": "Applicable product template",
-      "productTemplateNotApplicable": "Not applicable for global default",
-      "productTemplateLockedHint": "Fixed for this catalog type. Cannot be changed.",
       "productTemplatePlaceholder": "Select",
       "productTemplateHint": "Only active Product Templates are available.",
       "productTemplateEmpty": "No product template with an active published version is available, so a product-specific catalog cannot be created yet.",
       "caseType": "Case type",
-      "caseTypePlaceholder": "Select"
+      "caseTypePlaceholder": "Select",
+      "validFrom": "Valid from",
+      "validUntil": "Valid until"
     },
     "actions": {
       "cancel": "Cancel",
       "submit": "Create catalog"
     },
-    "success": "Catalog created."
+    "success": "Catalog created.",
+    "titleGlobalDefault": "Create global default catalog",
+    "titleProductSpecific": "Create product-specific catalog",
+    "ruleGlobalDefault": "One global default per case type. It starts as a draft and no case resolves it until it is activated.",
+    "ruleProductSpecific": "It inherits the global default for the same case type and may override, switch off or supplement it."
   },
   "detail": {
     "tabs": {
