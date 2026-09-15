@@ -593,6 +593,7 @@ const LcCaseListItem = z
     primary_entity: CasePrimaryEntity,
     financing_status: z.union([FinancingStatus, z.null()]).optional(),
     agreement_reference: z.union([z.string(), z.null()]).optional(),
+    contract_count: z.number().int().optional().default(0),
     origin: CaseOrigin,
     created_at: z.string().datetime({ offset: true }),
   })

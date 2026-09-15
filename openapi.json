@@ -21616,6 +21616,11 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Agreement Reference"
           },
+          "contract_count": {
+            "type": "integer",
+            "title": "Contract Count",
+            "default": 0
+          },
           "origin": { "$ref": "#/components/schemas/CaseOrigin" },
           "created_at": {
             "type": "string",
