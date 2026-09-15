@@ -15,6 +15,8 @@
 import { http } from "msw"
 import {
   DocumentRequirementCatalogListResponseSchema,
+  DocumentRequirementListResponseSchema,
+  DocumentTypeListResponseSchema,
   RuntimeRequirementSurfaceResponseSchema,
 } from "@/features/documentRequirements/api/schema"
 import {
@@ -92,6 +94,38 @@ export const caseDocumentHandlers = [
         total_pages: 1,
       })
     )
+  ),
+
+  /**
+   * The catalogue's own requirement definitions, as against the runtime surface for one case.
+   *
+   * The Add-task dialog's Document linkage section reads this to offer a requirement to pin a task
+   * to. Unmocked it hit the 501 fallback, so that section sat loading inside an otherwise working
+   * dialog. Answered empty on purpose: the design's own screenshot reads "No active document
+   * requirements exist for this tenant yet", which is the honest state for a tenant whose document
+   * catalogue has not been authored — and an empty list is a real answer where a 501 is not.
+   */
+  http.get(`${API}/document-requirement-catalogs/:catalogId/requirements`, () =>
+    envelope(
+      DocumentRequirementListResponseSchema.parse({
+        items: [],
+        page: 1,
+        per_page: 25,
+        total: 0,
+        total_pages: 1,
+      })
+    )
+  ),
+
+  /**
+   * The tenant's document types, which the same dialog loads alongside the requirements above.
+   *
+   * Empty for the same reason and it has to stay consistent with it: a type list with entries and a
+   * requirement list without would describe a tenant that defined document types and then never used
+   * one, which is not the state the design's caption describes.
+   */
+  http.get(`${API}/tenants/:tenantId/document-types`, () =>
+    envelope(DocumentTypeListResponseSchema.parse({ items: [], total: 0 }))
   ),
 
   http.get(

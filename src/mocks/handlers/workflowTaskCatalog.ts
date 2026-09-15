@@ -17,16 +17,26 @@ import { API } from "@/mocks/apiBase"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
 import { mockUuid } from "@/mocks/uuid"
 import {
+  catalogVersionId,
   mockCatalogDetail,
   mockWorkflowTaskCatalogs,
 } from "@/mocks/fixtures/workflowTaskCatalog"
 import {
+  AuditTrailResponseSchema,
+  CataloguePhaseListSchema,
+  CataloguePhaseSchema,
   CatalogCaseTypeItemSchema,
+  FieldRegistryListSchema,
+  TaskResponseWithWarningsSchema,
   CatalogDetailResponseSchema,
   CatalogListResponseSchema,
   CatalogResponseSchema,
 } from "@/features/workflowTaskCatalog/api/schema"
-import type { CatalogListItem } from "@/features/workflowTaskCatalog/api/schema"
+import type {
+  CataloguePhase,
+  CatalogListItem,
+  TaskResponseWithWarnings,
+} from "@/features/workflowTaskCatalog/api/schema"
 
 // Session-scoped, like every other write here: creating a catalogue then finding it in the list
 // works, and a reload starts clean.
@@ -65,6 +75,12 @@ function applyCatalogFilters(url: URL, rows: CatalogListItem[]) {
 }
 
 let createdCount = 0
+let phaseCount = 0
+let taskCount = 0
+
+// Session-scoped, keyed by the catalogue version the panels address.
+const phasesByVersion: Record<string, CataloguePhase[]> = {}
+const tasksByVersion: Record<string, TaskResponseWithWarnings[]> = {}
 
 export const workflowTaskCatalogHandlers = [
   // Declared before the parameterised detail route so the literal path is not shadowed.
@@ -181,9 +197,226 @@ export const workflowTaskCatalogHandlers = [
     )
   ),
 
+  // ── Stages and tasks ───────────────────────────────────────────────────────
+  // Both hang off the catalogue's current version — there is no versions endpoint, so the version
+  // is derived from the catalogue id and every handler below addresses the same one.
+  http.get(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/phases`,
+    ({ params }) =>
+      envelope(
+        CataloguePhaseListSchema.parse(
+          phasesByVersion[params.versionId as string] ?? []
+        )
+      )
+  ),
+
+  http.post(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/phases`,
+    async ({ params, request }) => {
+      const versionId = params.versionId as string
+      const body = (await request.json()) as {
+        name?: string
+        position?: number
+      }
+      const existing = phasesByVersion[versionId] ?? []
+      phaseCount += 1
+      const created: CataloguePhase = {
+        id: mockUuid(`e1a${phaseCount.toString(16)}`),
+        catalog_version_id: versionId,
+        name: body.name ?? "Untitled stage",
+        // The backend appends at max+1 when no position is sent, which is what the panel relies
+        // on rather than computing one itself.
+        position: body.position ?? existing.length + 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      phasesByVersion[versionId] = [...existing, created]
+      return envelope(CataloguePhaseSchema.parse(created), "PHASE_ADDED")
+    }
+  ),
+
+  http.patch(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/phases/:phaseId`,
+    async ({ params, request }) => {
+      const rows = phasesByVersion[params.versionId as string] ?? []
+      const found = rows.find(p => p.id === params.phaseId)
+      if (!found) return errorEnvelope("NOT_FOUND", "No such stage.", 404)
+      const body = (await request.json()) as { name?: string }
+      if (body.name !== undefined) found.name = body.name
+      found.updated_at = new Date().toISOString()
+      return envelope(CataloguePhaseSchema.parse(found), "PHASE_UPDATED")
+    }
+  ),
+
+  http.post(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/phases/reorder`,
+    async ({ params, request }) => {
+      const versionId = params.versionId as string
+      const body = (await request.json()) as { phase_ids?: string[] }
+      const rows = phasesByVersion[versionId] ?? []
+      const order = body.phase_ids ?? []
+      phasesByVersion[versionId] = [...rows]
+        .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+        .map((phase, index) => ({ ...phase, position: index + 1 }))
+      return envelope(
+        CataloguePhaseListSchema.parse(phasesByVersion[versionId]),
+        "PHASES_REORDERED"
+      )
+    }
+  ),
+
+  http.delete(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/phases/:phaseId`,
+    ({ params }) => {
+      const versionId = params.versionId as string
+      phasesByVersion[versionId] = (phasesByVersion[versionId] ?? []).filter(
+        p => p.id !== params.phaseId
+      )
+      return envelope(null, "PHASE_DELETED")
+    }
+  ),
+
+  http.post(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/tasks`,
+    async ({ params, request }) => {
+      const versionId = params.versionId as string
+      const body = (await request.json()) as Record<string, unknown>
+      const existing = tasksByVersion[versionId] ?? []
+      taskCount += 1
+      const created = TaskResponseWithWarningsSchema.parse({
+        id: mockUuid(`e2a${taskCount.toString(16)}`),
+        catalog_version_id: versionId,
+        layer_action: body.layer_action ?? "supplement",
+        // Server-assigned and stable within a catalogue — it is the number the bank says out loud
+        // ("step 4 rejects"), which is why the sheet does not offer it.
+        task_number: existing.length + 1,
+        task_code: body.task_code ?? null,
+        task_name: body.task_name ?? null,
+        task_description: body.task_description ?? null,
+        category: body.category ?? null,
+        responsible_role: null,
+        responsible_roles: body.responsible_roles ?? null,
+        is_mandatory: body.is_mandatory ?? null,
+        weight: body.weight ?? null,
+        display_order: body.display_order ?? existing.length + 1,
+        stage_categorization: body.stage_categorization ?? null,
+        applicable_process_contexts: body.applicable_process_contexts ?? null,
+        is_active: body.is_active ?? true,
+        parent_task_id: null,
+        phase_id: body.phase_id ?? null,
+        generated_document_ref: null,
+        trigger_event: null,
+        permitted_outcomes: null,
+        lifecycle_entity: null,
+        capture_section_name: null,
+        doc_requirement_ref: body.doc_requirement_ref ?? null,
+        doc_requirement_pin_mode: null,
+        conditional_trigger: body.conditional_trigger ?? null,
+        task_type: body.task_type ?? null,
+        applicability: body.applicability ?? null,
+        four_eyes_sign_off: body.four_eyes_sign_off ?? false,
+        four_eyes_exclusion_wide: body.four_eyes_exclusion_wide ?? false,
+        exclusion_task_ids: body.exclusion_task_ids ?? [],
+        warnings: [],
+      })
+      tasksByVersion[versionId] = [...existing, created]
+      return envelope(created, "TASK_ADDED")
+    }
+  ),
+
+  http.patch(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/tasks/:taskId`,
+    async ({ params, request }) => {
+      const rows = tasksByVersion[params.versionId as string] ?? []
+      const found = rows.find(t => t.id === params.taskId)
+      if (!found) return errorEnvelope("NOT_FOUND", "No such task.", 404)
+      Object.assign(found, (await request.json()) as object)
+      return envelope(
+        TaskResponseWithWarningsSchema.parse(found),
+        "TASK_UPDATED"
+      )
+    }
+  ),
+
+  http.delete(
+    `${API}/workflow-task-catalogs/:catalogId/versions/:versionId/tasks/:taskId`,
+    ({ params }) => {
+      const versionId = params.versionId as string
+      tasksByVersion[versionId] = (tasksByVersion[versionId] ?? []).filter(
+        t => t.id !== params.taskId
+      )
+      return envelope(null, "TASK_DELETED")
+    }
+  ),
+
+  // The catalogue is edited in place, so this log IS the change history — the page says as much.
+  http.get(
+    `${API}/workflow-task-catalogs/:catalogId/audit-trail`,
+    ({ params }) => {
+      const found = catalogs.find(c => c.id === params.catalogId)
+      const actor = "00000000-0000-4000-8000-000000000003"
+      const events = [
+        {
+          id: mockUuid("e3a1"),
+          event_type: "catalog.created",
+          action_type: "create",
+          actor_id: actor,
+          actor_role_at_time: "bank_power_user",
+          actor_display: "Power User",
+          recorded_at: found?.created_at ?? new Date().toISOString(),
+          entity_display: "Catalog created",
+          old_data: null,
+          new_data: null,
+          changed_fields: null,
+        },
+      ]
+      return envelope(
+        AuditTrailResponseSchema.parse({ events, next_cursor: null })
+      )
+    }
+  ),
+
+  // Read-only: this app has no authoring surface for the registry itself, so it exists to resolve
+  // a `field_registry_id` to a human label on an applicability condition.
+  http.get(`${API}/workflow-task-catalogs/field-registry`, () =>
+    envelope(
+      FieldRegistryListSchema.parse([
+        {
+          id: mockUuid("e4a1"),
+          field_key: "financing_amount",
+          field_type: "decimal",
+          label: "Financing amount",
+          data_available: true,
+        },
+        {
+          id: mockUuid("e4a2"),
+          field_key: "contract_count",
+          field_type: "integer",
+          label: "Number of contracts",
+          data_available: true,
+        },
+        {
+          id: mockUuid("e4a3"),
+          field_key: "lc_partner_id",
+          field_type: "uuid",
+          label: "Leasing company",
+          data_available: false,
+        },
+      ])
+    )
+  ),
+
   http.get(`${API}/workflow-task-catalogs/:catalogId`, ({ params }) => {
     const found = catalogs.find(c => c.id === params.catalogId)
     if (!found) return errorEnvelope("NOT_FOUND", "No such catalogue.", 404)
-    return envelope(CatalogDetailResponseSchema.parse(mockCatalogDetail(found)))
+    return envelope(
+      CatalogDetailResponseSchema.parse({
+        ...mockCatalogDetail(found),
+        // The detail response carries the version's tasks inline; the phases have their own
+        // endpoint. Read from the same store the task mutations write to, so adding one shows up
+        // without a second source of truth.
+        tasks: tasksByVersion[catalogVersionId(found.id)] ?? [],
+      })
+    )
   }),
 ]

@@ -24,6 +24,19 @@ import type {
 // A template that actually exists in `fixtures/businessConfig.ts`. The table resolves the name
 // client-side from `entity_id` and falls back to printing the raw UUID when it cannot — which is
 // what a made-up id produced here, and what the column looked like before this was corrected.
+/**
+ * A catalogue's current version id, derived from its own id so the two always agree.
+ *
+ * The task and phase endpoints are all version-scoped, and the version is only obtainable from the
+ * detail response — there is no versions endpoint to look one up — so a stable derivation keeps
+ * every handler addressing the same version without a second fixture to keep in step.
+ */
+export function catalogVersionId(catalogId: string): string {
+  // `f` and not a letter like `v`: the result has to stay a valid UUID, and `UuidSchema` rejects
+  // anything outside hex — the sort of fixture mistake `mockUuid` exists to catch.
+  return `${catalogId.slice(0, -4)}f${catalogId.slice(-3)}`
+}
+
 const TEST_1_TEMPLATE = "00000000-0000-4000-8000-00000000f001"
 
 export const mockWorkflowTaskCatalogs: CatalogListItem[] = [
@@ -113,7 +126,11 @@ export function mockCatalogDetail(row: CatalogListItem): CatalogDetailResponse {
     created_by: "00000000-0000-4000-8000-000000000003",
     updated_at: row.created_at,
     tenant_id: "00000000-0000-4000-8000-0000000000ff",
-    current_version_id: null,
+    // Authoring hangs off this: `canEditTasks` on the detail page is false without it, which is
+    // what left the page with no Stages panel, no Add task and a "read only" caption on a Draft.
+    // A real catalogue always has a current version; returning null modelled a state the backend
+    // does not produce.
+    current_version_id: catalogVersionId(row.id),
     // The detail page's own tabs load tasks and phases from their own endpoints; the catalogue
     // itself carries none inline.
     tasks: [],
