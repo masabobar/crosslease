@@ -2142,6 +2142,28 @@ const MergeInitiateResponse = z
     status: z.string(),
   })
   .passthrough()
+const AssessmentAttributeResponse = z
+  .object({
+    id: z.string(),
+    code: z.string(),
+    name: z.string(),
+    value_type: z.string(),
+    value_range: z.union([z.string(), z.null()]),
+    scale_hint: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const AssessmentSourceTypeResponse = z
+  .object({
+    id: z.string(),
+    code: z.string(),
+    name: z.string(),
+    free_text_only: z.boolean(),
+    attributes: z.array(AssessmentAttributeResponse),
+  })
+  .passthrough()
+const AssessmentCatalogueResponse = z
+  .object({ source_types: z.array(AssessmentSourceTypeResponse) })
+  .passthrough()
 const PartnerSubmitRequest = z
   .object({
     identity: z.discriminatedUnion("partner_type", [
@@ -2432,6 +2454,62 @@ const MergeHistoryResponse = z
     partner_id: z.string(),
     items: z.array(MergeLineageRecordResponse),
   })
+  .passthrough()
+const AssessmentValueResponse = z
+  .object({
+    attribute_id: z.string(),
+    attribute_code: z.string(),
+    attribute_name: z.string(),
+    value_number: z.union([z.string(), z.null()]),
+    value_text: z.union([z.string(), z.null()]),
+    no_value_supplied: z.boolean(),
+  })
+  .passthrough()
+const AssessmentResponse = z
+  .object({
+    id: z.string(),
+    partner_id: z.string(),
+    source_type_id: z.string(),
+    source_type_code: z.string(),
+    source_type_name: z.string(),
+    report_date: z.string(),
+    source_reference: z.union([z.string(), z.null()]),
+    case_id: z.union([z.string(), z.null()]),
+    contract_id: z.union([z.string(), z.null()]),
+    role: z.union([z.string(), z.null()]),
+    context_note: z.union([z.string(), z.null()]),
+    cancelled_at: z.union([z.string(), z.null()]),
+    cancel_reason: z.union([z.string(), z.null()]),
+    created_by: z.string(),
+    created_at: z.string().datetime({ offset: true }),
+    values: z.array(AssessmentValueResponse),
+  })
+  .passthrough()
+const AssessmentListResponse = z
+  .object({ partner_id: z.string(), items: z.array(AssessmentResponse) })
+  .passthrough()
+const AssessmentValueInput = z
+  .object({
+    attribute_id: z.string(),
+    value_number: z.union([z.number(), z.string(), z.null()]).optional(),
+    value_text: z.union([z.string(), z.null()]).optional(),
+    no_value_supplied: z.boolean().optional().default(false),
+  })
+  .passthrough()
+const AssessmentCreateRequest = z
+  .object({
+    source_type_id: z.string(),
+    report_date: z.string(),
+    source_reference: z.union([z.string(), z.null()]).optional(),
+    case_id: z.union([z.string(), z.null()]).optional(),
+    contract_id: z.union([z.string(), z.null()]).optional(),
+    role: z.union([z.string(), z.null()]).optional(),
+    context_note: z.union([z.string(), z.null()]).optional(),
+    values: z.array(AssessmentValueInput).optional(),
+  })
+  .passthrough()
+const AssessmentCancelRequest = z
+  .object({ reason: z.string().min(1).max(500) })
   .passthrough()
 const PartnerMatchRequest = z
   .object({
@@ -4494,6 +4572,9 @@ export const schemas = {
   MergeReasonCode,
   MergeInitiateRequest,
   MergeInitiateResponse,
+  AssessmentAttributeResponse,
+  AssessmentSourceTypeResponse,
+  AssessmentCatalogueResponse,
   PartnerSubmitRequest,
   PartnerSubmitResponse,
   ResolutionEventSummary,
@@ -4531,6 +4612,12 @@ export const schemas = {
   IdentityChangeDetailResponse,
   MergeLineageRecordResponse,
   MergeHistoryResponse,
+  AssessmentValueResponse,
+  AssessmentResponse,
+  AssessmentListResponse,
+  AssessmentValueInput,
+  AssessmentCreateRequest,
+  AssessmentCancelRequest,
   PartnerMatchRequest,
   PartnerStatus,
   PartnerRole,
@@ -10516,6 +10603,85 @@ Partial, on the same mechanism as the contract edit above (BUG-029): &#x60;&#x60
   },
   {
     method: "get",
+    path: "/api/v1/partners/:id/assessments",
+    alias: "list_assessments_api_v1_partners__id__assessments_get",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: AssessmentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/assessments",
+    alias: "capture_assessment_api_v1_partners__id__assessments_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AssessmentCreateRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: AssessmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/:id/assessments/:assessment_id/cancel",
+    alias:
+      "cancel_assessment_api_v1_partners__id__assessments__assessment_id__cancel_post",
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ reason: z.string().min(1).max(500) }).passthrough(),
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "assessment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: AssessmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
     path: "/api/v1/partners/:id/bank-accounts",
     alias: "list_bank_accounts_api_v1_partners__id__bank_accounts_get",
     requestFormat: "json",
@@ -10966,6 +11132,13 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/assessment-catalogue",
+    alias: "get_assessment_catalogue_api_v1_partners_assessment_catalogue_get",
+    requestFormat: "json",
+    response: AssessmentCatalogueResponse,
   },
   {
     method: "post",

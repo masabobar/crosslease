@@ -7801,6 +7801,25 @@
         }
       }
     },
+    "/api/v1/partners/assessment-catalogue": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "Credit assessment catalogue",
+        "operationId": "get_assessment_catalogue_api_v1_partners_assessment_catalogue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentCatalogueResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/{id}": {
       "get": {
         "tags": ["Partners"],
@@ -8694,6 +8713,135 @@
                 "schema": {
                   "$ref": "#/components/schemas/MergeHistoryResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/assessments": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List credit assessments of a partner",
+        "operationId": "list_assessments_api_v1_partners__id__assessments_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Capture a credit assessment",
+        "operationId": "capture_assessment_api_v1_partners__id__assessments_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AssessmentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/assessments/{assessment_id}/cancel": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Cancel a credit assessment with a reason",
+        "operationId": "cancel_assessment_api_v1_partners__id__assessments__assessment_id__cancel_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assessment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentCancelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AssessmentResponse" }
               }
             }
           },
@@ -14709,6 +14857,279 @@
         "type": "object",
         "required": ["justification", "irreversibility_acknowledgement"],
         "title": "ArchiveTenantRequest"
+      },
+      "AssessmentAttributeResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "code": { "type": "string", "title": "Code" },
+          "name": { "type": "string", "title": "Name" },
+          "value_type": { "type": "string", "title": "Value Type" },
+          "value_range": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Value Range"
+          },
+          "scale_hint": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Scale Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "value_type",
+          "value_range",
+          "scale_hint"
+        ],
+        "title": "AssessmentAttributeResponse"
+      },
+      "AssessmentCancelRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": ["reason"],
+        "title": "AssessmentCancelRequest"
+      },
+      "AssessmentCatalogueResponse": {
+        "properties": {
+          "source_types": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentSourceTypeResponse"
+            },
+            "type": "array",
+            "title": "Source Types"
+          }
+        },
+        "type": "object",
+        "required": ["source_types"],
+        "title": "AssessmentCatalogueResponse"
+      },
+      "AssessmentCreateRequest": {
+        "properties": {
+          "source_type_id": { "type": "string", "title": "Source Type Id" },
+          "report_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Report Date"
+          },
+          "source_reference": {
+            "anyOf": [
+              { "type": "string", "maxLength": 200 },
+              { "type": "null" }
+            ],
+            "title": "Source Reference"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          },
+          "contract_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contract Id"
+          },
+          "role": {
+            "anyOf": [
+              { "type": "string", "maxLength": 50 },
+              { "type": "null" }
+            ],
+            "title": "Role"
+          },
+          "context_note": {
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
+            "title": "Context Note"
+          },
+          "values": {
+            "items": { "$ref": "#/components/schemas/AssessmentValueInput" },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": ["source_type_id", "report_date"],
+        "title": "AssessmentCreateRequest"
+      },
+      "AssessmentListResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/AssessmentResponse" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "AssessmentListResponse"
+      },
+      "AssessmentResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "source_type_id": { "type": "string", "title": "Source Type Id" },
+          "source_type_code": { "type": "string", "title": "Source Type Code" },
+          "source_type_name": { "type": "string", "title": "Source Type Name" },
+          "report_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Report Date"
+          },
+          "source_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Source Reference"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          },
+          "contract_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contract Id"
+          },
+          "role": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Role"
+          },
+          "context_note": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Context Note"
+          },
+          "cancelled_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Cancelled At"
+          },
+          "cancel_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cancel Reason"
+          },
+          "created_by": { "type": "string", "title": "Created By" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "values": {
+            "items": { "$ref": "#/components/schemas/AssessmentValueResponse" },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "partner_id",
+          "source_type_id",
+          "source_type_code",
+          "source_type_name",
+          "report_date",
+          "source_reference",
+          "case_id",
+          "contract_id",
+          "role",
+          "context_note",
+          "cancelled_at",
+          "cancel_reason",
+          "created_by",
+          "created_at",
+          "values"
+        ],
+        "title": "AssessmentResponse"
+      },
+      "AssessmentSourceTypeResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "code": { "type": "string", "title": "Code" },
+          "name": { "type": "string", "title": "Name" },
+          "free_text_only": { "type": "boolean", "title": "Free Text Only" },
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentAttributeResponse"
+            },
+            "type": "array",
+            "title": "Attributes"
+          }
+        },
+        "type": "object",
+        "required": ["id", "code", "name", "free_text_only", "attributes"],
+        "title": "AssessmentSourceTypeResponse"
+      },
+      "AssessmentValueInput": {
+        "properties": {
+          "attribute_id": { "type": "string", "title": "Attribute Id" },
+          "value_number": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Value Number"
+          },
+          "value_text": {
+            "anyOf": [
+              { "type": "string", "maxLength": 2000 },
+              { "type": "null" }
+            ],
+            "title": "Value Text"
+          },
+          "no_value_supplied": {
+            "type": "boolean",
+            "title": "No Value Supplied",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["attribute_id"],
+        "title": "AssessmentValueInput"
+      },
+      "AssessmentValueResponse": {
+        "properties": {
+          "attribute_id": { "type": "string", "title": "Attribute Id" },
+          "attribute_code": { "type": "string", "title": "Attribute Code" },
+          "attribute_name": { "type": "string", "title": "Attribute Name" },
+          "value_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Value Number"
+          },
+          "value_text": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Value Text"
+          },
+          "no_value_supplied": {
+            "type": "boolean",
+            "title": "No Value Supplied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attribute_id",
+          "attribute_code",
+          "attribute_name",
+          "value_number",
+          "value_text",
+          "no_value_supplied"
+        ],
+        "title": "AssessmentValueResponse"
       },
       "AssetCategory": {
         "type": "string",
