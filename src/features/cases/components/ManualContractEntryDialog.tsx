@@ -138,13 +138,10 @@ export function ManualContractEntryDialog({
     >
       <div className="px-4 py-4">
         <DialogHeader>
-          <DialogTitle>
-            {t(
-              existingContractId === undefined
-                ? "wizard.manual.title"
-                : "wizard.manual.editTitle"
-            )}
-          </DialogTitle>
+          {/* One title either way, as the dummy has it: the modal is the same surface whether it
+              is creating a contract or opening one that exists, and "Edit contract" claimed a
+              distinction the tabs themselves do not make. */}
+          <DialogTitle>{t("wizard.manual.title")}</DialogTitle>
         </DialogHeader>
       </div>
 

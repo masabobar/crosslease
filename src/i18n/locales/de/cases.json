@@ -297,8 +297,8 @@
       "removeSelected": "Auswahl löschen",
       "removed": "{{count}} Vertrag entfernt.",
       "removed_other": "{{count}} Verträge entfernt.",
-      "selectedCount": "{{count}} Vertrag ausgewählt",
-      "selectedCount_other": "{{count}} Verträge ausgewählt",
+      "selectedCount": "{{count}} ausgewählt",
+      "selectedCount_other": "{{count}} ausgewählt",
       "termMonths": "{{count}} Monat",
       "termMonths_other": "{{count}} Monate",
       "title": "Verträge",
@@ -510,7 +510,6 @@
         "enabled": "Nichtlinearer Zahlungsplan ist aktiv",
         "heading": "Zahlungsplan"
       },
-      "editTitle": "Vertrag bearbeiten",
       "collaterals": {
         "heading": "Sicherheiten",
         "add": "Sicherheit hinzufügen",

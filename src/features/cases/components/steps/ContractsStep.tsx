@@ -170,51 +170,6 @@ export function ContractsStep({ caseId }: Props) {
           </p>
         )}
 
-        {chosen.size > 0 && (
-          <div
-            className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-4 py-3"
-            data-testid="case-wizard-removal-bar"
-          >
-            <span className="text-sm font-medium">
-              {t("wizard.contracts.selectedCount", { count: chosen.size })}
-            </span>
-            {/* The reason is required by BulkRemoveRequest, and rightly: the case is evidence, so a
-              contract that was in the request and then was not has to say why. */}
-            <Input
-              value={reason}
-              className="max-w-xs"
-              data-testid="case-wizard-removal-reason"
-              placeholder={t("wizard.contracts.removalReasonPlaceholder")}
-              onChange={event => setReason(event.target.value)}
-            />
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              data-testid="case-wizard-remove-selected"
-              disabled={removeContracts.isPending || !canRemove(chosen, reason)}
-              onClick={() => setConfirmingRemoval(true)}
-            >
-              <Trash2 size={14} />
-              {t("wizard.contracts.removeSelected")}
-            </Button>
-            {/* The dummy pairs the delete with a Cancel that clears the selection, so getting out of
-              the bar does not mean unticking rows one at a time. */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              data-testid="case-wizard-clear-selection"
-              onClick={() => {
-                setSelected(new Set())
-                setReason("")
-              }}
-            >
-              {t("wizard.actions.cancel")}
-            </Button>
-          </div>
-        )}
-
         {/* The dummy asks before removing and names what goes — "N contracts will be removed from
           this request." A reason field beside a button is a form, not a confirmation: it says what
           to record, never that anything is about to be destroyed. */}
@@ -233,12 +188,25 @@ export function ContractsStep({ caseId }: Props) {
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
+
+            {/* Required by `BulkRemoveRequest`, and rightly: the case is evidence, so a contract
+                that was in the request and then was not has to say why. */}
+            <Input
+              value={reason}
+              data-testid="case-wizard-removal-reason"
+              placeholder={t("wizard.contracts.removalReasonPlaceholder")}
+              onChange={event => setReason(event.target.value)}
+            />
+
             <AlertDialogFooter>
               <AlertDialogCancel data-testid="case-wizard-removal-keep">
                 {t("wizard.actions.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 data-testid="case-wizard-removal-confirm"
+                disabled={
+                  removeContracts.isPending || !canRemove(chosen, reason)
+                }
                 onClick={() =>
                   removeContracts.mutate(
                     { caseId, contractIds: [...chosen], reason: reason.trim() },
@@ -269,6 +237,50 @@ export function ContractsStep({ caseId }: Props) {
 
         {items.length > 0 && (
           <div className="overflow-x-auto border-t">
+            {/* The dummy puts the selection bar INSIDE the card, directly above the header row, so
+                it reads as a state of this table rather than as a second box floating above it. It
+                carries no reason field: `BulkRemoveRequest` requires one, but a text input beside a
+                delete button is a form, and the place to say why something is being destroyed is
+                the confirmation that says it is about to be. */}
+            {chosen.size > 0 && (
+              <div
+                className="flex flex-wrap items-center justify-between gap-2 border-b bg-primary/5 px-4 py-2.5"
+                data-testid="case-wizard-removal-bar"
+              >
+                <span className="text-sm font-medium text-primary">
+                  {t("wizard.contracts.selectedCount", { count: chosen.size })}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-destructive text-destructive hover:bg-destructive/10"
+                    data-testid="case-wizard-remove-selected"
+                    disabled={removeContracts.isPending}
+                    onClick={() => {
+                      setReason("")
+                      setConfirmingRemoval(true)
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    {t("wizard.contracts.removeSelected")}
+                  </Button>
+                  {/* Clears the selection, so getting out of the bar does not mean unticking rows
+                      one at a time. */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid="case-wizard-clear-selection"
+                    onClick={() => setSelected(new Set())}
+                  >
+                    {t("wizard.actions.cancel")}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Table>
               <TableHeader>
                 <TableRow>

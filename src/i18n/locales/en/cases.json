@@ -297,8 +297,8 @@
       "removeSelected": "Delete selected",
       "removed": "{{count}} contract removed.",
       "removed_other": "{{count}} contracts removed.",
-      "selectedCount": "{{count}} contract selected",
-      "selectedCount_other": "{{count}} contracts selected",
+      "selectedCount": "{{count}} selected",
+      "selectedCount_other": "{{count}} selected",
       "termMonths": "{{count}} month",
       "termMonths_other": "{{count}} months",
       "title": "Contracts",
@@ -510,7 +510,6 @@
         "enabled": "Non-linear payment plan is on",
         "heading": "Payment plan"
       },
-      "editTitle": "Edit contract",
       "collaterals": {
         "heading": "Collaterals",
         "add": "Add collateral",
