@@ -62,6 +62,16 @@ function describePartner(
 
 type Props = {
   contractId: string | null
+  /**
+   * Carried over from the last contract entered on this request, for a NEW contract only.
+   *
+   * Shown as the chosen party before the contract exists, so the tab opens on an answer rather
+   * than on an empty search. The link itself is written when the contract is created — see the
+   * dialog's `ensureContract`.
+   */
+  inheritedPartnerId?: string
+  /** Drops the carried-over party, for when it is not the one this contract is with. */
+  onClearInherited: () => void
   onNeedContract: () => Promise<string | null>
 }
 
@@ -89,15 +99,29 @@ type Props = {
  * so offering it would move a failure from here to somewhere harder to explain. `is_new` on the
  * response exists for exactly that reason and is surfaced when it comes back true.
  */
-export function LesseeTab({ contractId, onNeedContract }: Props) {
+export function LesseeTab({
+  contractId,
+  inheritedPartnerId,
+  onClearInherited,
+  onNeedContract,
+}: Props) {
   const lessee = useContractLessee(contractId ?? undefined)
+
+  // Before the contract exists there is nothing to read a link from, so the inherited party stands
+  // in. Once it exists the contract's own answer is the only one that counts — including when that
+  // answer is "none", which is what Remove leaves behind.
+  const linkedPartnerId =
+    contractId === null
+      ? (inheritedPartnerId ?? null)
+      : (lessee.data?.lessee_partner_id ?? null)
 
   return (
     <div className="flex flex-col gap-6" data-testid="lessee-tab">
       <LesseeSection
         contractId={contractId}
         onNeedContract={onNeedContract}
-        linkedPartnerId={lessee.data?.lessee_partner_id ?? null}
+        linkedPartnerId={linkedPartnerId}
+        onClearInherited={onClearInherited}
         isNew={lessee.data?.is_new ?? false}
         partnerStatus={lessee.data?.partner_status ?? null}
         isLoading={lessee.isLoading}
@@ -109,6 +133,7 @@ export function LesseeTab({ contractId, onNeedContract }: Props) {
 function LesseeSection({
   contractId,
   onNeedContract,
+  onClearInherited,
   linkedPartnerId,
   isNew,
   partnerStatus,
@@ -116,6 +141,7 @@ function LesseeSection({
 }: {
   contractId: string | null
   onNeedContract: () => Promise<string | null>
+  onClearInherited: () => void
   linkedPartnerId: string | null
   isNew: boolean
   /**
@@ -205,13 +231,18 @@ function LesseeSection({
               variant="outline"
               size="sm"
               data-testid="lessee-remove"
-              disabled={removeLessee.isPending || contractId === null}
-              onClick={() =>
-                contractId !== null &&
+              disabled={removeLessee.isPending}
+              onClick={() => {
+                // Before the contract exists there is nothing to unlink — the party on screen is
+                // the one carried over, so Remove drops that instead. Same button, same meaning.
+                if (contractId === null) {
+                  onClearInherited()
+                  return
+                }
                 removeLessee.mutate(contractId, {
                   onError: err => showApiError(err, t),
                 })
-              }
+              }}
             >
               {t("wizard.manual.parties.removeLessee")}
             </Button>

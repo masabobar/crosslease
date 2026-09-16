@@ -825,7 +825,10 @@ export const caseHandlers = [
         .toString(16)
         .padStart(2, "0")}01`,
       leasing_company_contract_number: null,
-      lessee_partner_id: null,
+      // Honoured rather than hardcoded null: the manual-entry modal creates a contract already
+      // carrying the lessee it inherited, and a mock that dropped it would show the party chosen
+      // and then lose it on the first refetch.
+      lessee_partner_id: (body.lessee_partner_id as string | undefined) ?? null,
       short_name: null,
       contract_type: null,
       amortisation_type: null,

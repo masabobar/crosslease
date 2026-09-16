@@ -107,6 +107,14 @@ export function ContractsStep({ caseId }: Props) {
   )
   const { countsById } = useContractObjectCounts(ids)
 
+  // The party a new contract starts on. `/cases/{id}/contracts` answers in insertion order and
+  // carries no created_at, so "the last one that has a lessee" is the closest thing to "the one
+  // entered most recently" the wire supports — and on a request that is one leasing company's book
+  // it is almost always the right guess anyway.
+  const inheritedLesseePartnerId = items.findLast(
+    contract => contract.lessee_partner_id !== null
+  )?.lessee_partner_id
+
   const total = contracts.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / CONTRACT_PAGE_SIZE))
   const pageNumbers = contracts.data ? buildPageNumbers(page, totalPages) : []
@@ -434,6 +442,7 @@ export function ContractsStep({ caseId }: Props) {
       {isManualOpen && (
         <ManualContractEntryDialog
           caseId={caseId}
+          inheritedLesseePartnerId={inheritedLesseePartnerId ?? undefined}
           onOpenChange={setManualOpen}
           onSaved={() => void contracts.refetch()}
         />

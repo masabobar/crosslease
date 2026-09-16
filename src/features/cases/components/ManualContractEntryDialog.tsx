@@ -57,6 +57,21 @@ type Props = {
    * contract-scoped endpoints either way, so there is no second surface to build.
    */
   contractId?: string
+  /**
+   * The lessee to carry over into a NEW contract — the one on the last contract already entered on
+   * this request.
+   *
+   * A request is usually one leasing company's book, and the same lessee often holds several of the
+   * contracts in it, so retyping the party for each one is the common case rather than the edge.
+   * It is only ever a starting point: the tab shows it as the chosen party with Remove beside it,
+   * exactly as a lessee picked by hand.
+   *
+   * Deliberately NOT the case's leasing company. `lc_partner_id` on the case and
+   * `lessee_partner_id` on the contract are two different parties — the leasing company is the one
+   * being refinanced, the lessee is its customer — and defaulting one to the other would record the
+   * wrong counterparty on every manually entered contract.
+   */
+  inheritedLesseePartnerId?: string
   onOpenChange: (open: boolean) => void
   onSaved: () => void
 }
@@ -87,6 +102,7 @@ type Props = {
 export function ManualContractEntryDialog({
   caseId,
   contractId: existingContractId,
+  inheritedLesseePartnerId,
   onOpenChange,
   onSaved,
 }: Props) {
@@ -100,6 +116,12 @@ export function ManualContractEntryDialog({
   const [contractId, setContractId] = useState<string | null>(
     existingContractId ?? null
   )
+  // The inherited lessee, until the contract exists to hold it. Owned here rather than in the tab
+  // because `ensureContract` is what writes it, and Remove has to be able to clear it before there
+  // is any contract to remove it FROM.
+  const [pendingLesseePartnerId, setPendingLesseePartnerId] = useState<
+    string | undefined
+  >(existingContractId === undefined ? inheritedLesseePartnerId : undefined)
   const [isCreating, setCreating] = useState(false)
   const [isSaving, setSaving] = useState(false)
   // The Contract details tab is the only surface holding unsaved form state, so it hands its
@@ -114,7 +136,15 @@ export function ManualContractEntryDialog({
     if (contractId !== null) return contractId
     setCreating(true)
     try {
-      const created = await createCaseContract(caseId, {})
+      // The inherited lessee rides along on creation rather than as a second call: `ContractCreate`
+      // takes `lessee_partner_id`, so the contract exists already carrying it and there is no
+      // window where it is half-applied.
+      const created = await createCaseContract(
+        caseId,
+        pendingLesseePartnerId === undefined
+          ? {}
+          : { lessee_partner_id: pendingLesseePartnerId }
+      )
       setContractId(created.id)
       void queryClient.invalidateQueries({
         queryKey: CASE_QUERY_KEYS.contracts(caseId),
@@ -162,7 +192,12 @@ export function ManualContractEntryDialog({
         {isCreating && <Skeleton className="h-40 w-full" />}
 
         {tab === "lessee" && !isCreating && (
-          <LesseeTab contractId={contractId} onNeedContract={ensureContract} />
+          <LesseeTab
+            contractId={contractId}
+            inheritedPartnerId={pendingLesseePartnerId}
+            onClearInherited={() => setPendingLesseePartnerId(undefined)}
+            onNeedContract={ensureContract}
+          />
         )}
 
         {tab === "collaterals" && !isCreating && (
@@ -221,9 +256,19 @@ export function ManualContractEntryDialog({
           onClick={async () => {
             setSaving(true)
             try {
-              // Nothing has been entered on any tab yet, so there is no contract to save. Creating
-              // an empty one here would leave a blank row on the case that cannot be deleted.
-              if (contractId === null) {
+              // An inherited lessee is shown on the Lessee tab but not written until the contract
+              // exists, so saving straight from that tab has to create it — otherwise the modal
+              // would close on a party the user saw chosen and the case never received. Read the
+              // returned id rather than the state, which this handler's closure cannot see change.
+              const savedContractId =
+                contractId === null && pendingLesseePartnerId !== undefined
+                  ? await ensureContract()
+                  : contractId
+
+              // Nothing has been entered on any tab, and nothing was carried over, so there is no
+              // contract to save. Creating an empty one here would leave a blank row on the case
+              // that cannot be deleted.
+              if (savedContractId === null) {
                 toast.error(t("wizard.manual.nothingToSave"))
                 return
               }
