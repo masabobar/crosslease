@@ -462,7 +462,7 @@
           "guarantor": "Bürge",
           "co_obligor": "Mitverpflichteter"
         },
-        "searchPlaceholder": "Mindestens 3 Zeichen des Partnernamens eingeben",
+        "searchPlaceholder": "Partnerregister durchsuchen",
         "noMatches": "Kein bestätigter Partner mit diesem Namen gefunden.",
         "viewPartner": "Partnerdetails ansehen",
         "replaceLessee": "Anderen Leasingnehmer wählen",
@@ -489,7 +489,10 @@
           "person_commercial": "Gewerblich",
           "person_private": "Privat"
         },
-        "removeLessee": "Entfernen"
+        "removeLessee": "Entfernen",
+        "noneSelected": "Kein Partner ausgewählt",
+        "addPartner": "Partner hinzufügen",
+        "select": "Auswählen"
       },
       "save": "Vertrag speichern",
       "saved": "Vertrag zum Fall gespeichert.",

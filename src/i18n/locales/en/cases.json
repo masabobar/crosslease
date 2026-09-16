@@ -462,7 +462,7 @@
           "guarantor": "Guarantor",
           "co_obligor": "Co-obligor"
         },
-        "searchPlaceholder": "Type at least 3 characters of the partner name",
+        "searchPlaceholder": "Search partner register",
         "noMatches": "No confirmed partner matches that name.",
         "viewPartner": "View partner details",
         "replaceLessee": "Choose a different lessee",
@@ -489,7 +489,10 @@
           "person_commercial": "Commercial",
           "person_private": "Private"
         },
-        "removeLessee": "Remove"
+        "removeLessee": "Remove",
+        "noneSelected": "No partner selected",
+        "addPartner": "Add partner",
+        "select": "Select"
       },
       "save": "Save contract",
       "saved": "Contract saved to the case.",

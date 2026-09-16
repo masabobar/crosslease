@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Plus, X } from "lucide-react"
+import { Check, Plus, X } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { SelectField } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -141,16 +140,19 @@ export function CollateralsTab({ contractId, onNeedContract }: Props) {
         </p>
       )}
 
-      {!collaterals.isLoading && !collaterals.isError && rows.length === 0 && (
-        <p
-          className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground"
-          data-testid="collateral-empty"
-        >
-          {t("wizard.manual.collaterals.empty")}
-        </p>
-      )}
+      {!collaterals.isLoading &&
+        !collaterals.isError &&
+        rows.length === 0 &&
+        !isAdding && (
+          <p
+            className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground"
+            data-testid="collateral-empty"
+          >
+            {t("wizard.manual.collaterals.empty")}
+          </p>
+        )}
 
-      {rows.length > 0 && (
+      {(rows.length > 0 || isAdding) && (
         <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
@@ -167,7 +169,7 @@ export function CollateralsTab({ contractId, onNeedContract }: Props) {
                 <TableHead>
                   {t("wizard.manual.collaterals.columns.document")}
                 </TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="w-24" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -213,98 +215,104 @@ export function CollateralsTab({ contractId, onNeedContract }: Props) {
                   </TableCell>
                 </TableRow>
               ))}
+
+              {/* The prototype adds a collateral as a ROW in this table, not as a form stacked
+                  beneath it: the thing being built is a row, and a separate block made the reader
+                  fill in one shape to produce another. */}
+              {isAdding && (
+                <TableRow
+                  className="bg-muted/40"
+                  data-testid="collateral-add-row"
+                >
+                  <TableCell className="align-top">
+                    <SelectField
+                      data-testid="collateral-type-select"
+                      value={type}
+                      onValueChange={next =>
+                        setType(next as ContractCollateralType)
+                      }
+                      options={COLLATERAL_TYPES.map(option => ({
+                        value: option,
+                        label: t(
+                          `wizard.manual.collaterals.types.${option}` as "wizard.manual.collaterals.types.GUARANTEE"
+                        ),
+                      }))}
+                    />
+                    {/* Kept, though the prototype's row omits it: it is the only thing that
+                        separates a guarantor from a co-obligor (Q-051), and the backend's silent
+                        default is `guarantee` — so dropping it would make a co-obligation
+                        unrecordable rather than merely unasked. */}
+                    {needsParty(type) && (
+                      <SelectField
+                        className="mt-2"
+                        data-testid="collateral-kind-select"
+                        value={kind}
+                        onValueChange={next => setKind(next as ObligationKind)}
+                        options={OBLIGATION_KINDS.map(option => ({
+                          value: option,
+                          label: t(
+                            `wizard.manual.collaterals.obligations.${option}` as "wizard.manual.collaterals.obligations.guarantee"
+                          ),
+                        }))}
+                      />
+                    )}
+                  </TableCell>
+
+                  <TableCell className="align-top">
+                    <Input
+                      inputMode="decimal"
+                      placeholder="0 EUR"
+                      value={value}
+                      data-testid="collateral-value-input"
+                      onChange={event => setValue(event.target.value)}
+                    />
+                  </TableCell>
+
+                  <TableCell className="align-top" colSpan={2}>
+                    {/* A party belongs to a guarantee alone — the service rejects one on the other
+                        two types — so the picker appears with the type rather than always. */}
+                    {needsParty(type) ? (
+                      <PartnerPicker
+                        testIdPrefix="collateral"
+                        isLinking={add.isPending}
+                        onPick={partnerId => void submit(partnerId)}
+                      />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="align-top text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {/* A guarantee is saved by picking its party, which is the one required
+                          field, so the tick is only the way to commit the other two types. */}
+                      {!needsParty(type) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          data-testid="collateral-save"
+                          disabled={add.isPending}
+                          onClick={() => void submit()}
+                        >
+                          <Check size={16} />
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        data-testid="collateral-add-cancel"
+                        onClick={reset}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
-        </div>
-      )}
-
-      {isAdding && (
-        <div
-          className="flex flex-col gap-3 rounded-lg border p-4"
-          data-testid="collateral-add-form"
-        >
-          <div>
-            <Label htmlFor="collateral-type" className="mb-1.5">
-              {t("wizard.manual.collaterals.columns.type")}
-            </Label>
-            <SelectField
-              id="collateral-type"
-              data-testid="collateral-type-select"
-              value={type}
-              onValueChange={next => setType(next as ContractCollateralType)}
-              options={COLLATERAL_TYPES.map(option => ({
-                value: option,
-                label: t(
-                  `wizard.manual.collaterals.types.${option}` as "wizard.manual.collaterals.types.GUARANTEE"
-                ),
-              }))}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="collateral-value" className="mb-1.5">
-              {t("wizard.manual.collaterals.valueLabel")}
-            </Label>
-            <Input
-              id="collateral-value"
-              inputMode="decimal"
-              value={value}
-              data-testid="collateral-value-input"
-              onChange={event => setValue(event.target.value)}
-            />
-          </div>
-
-          {needsParty(type) ? (
-            <>
-              <div>
-                <Label htmlFor="collateral-kind" className="mb-1.5">
-                  {t("wizard.manual.parties.kindOfObligation")}
-                </Label>
-                <SelectField
-                  id="collateral-kind"
-                  data-testid="collateral-kind-select"
-                  value={kind}
-                  onValueChange={next => setKind(next as ObligationKind)}
-                  options={OBLIGATION_KINDS.map(option => ({
-                    value: option,
-                    label: t(
-                      `wizard.manual.collaterals.obligations.${option}` as "wizard.manual.collaterals.obligations.guarantee"
-                    ),
-                  }))}
-                />
-              </div>
-
-              {/* A guarantee is saved by picking its party — that is the one required field, so
-                  picking is also the submit rather than a separate button that can be forgotten. */}
-              <PartnerPicker
-                testIdPrefix="collateral"
-                isLinking={add.isPending}
-                onPick={partnerId => void submit(partnerId)}
-              />
-            </>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              className="self-end"
-              data-testid="collateral-save"
-              disabled={add.isPending}
-              onClick={() => void submit()}
-            >
-              {t("wizard.manual.collaterals.save")}
-            </Button>
-          )}
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-end"
-            data-testid="collateral-add-cancel"
-            onClick={reset}
-          >
-            {t("wizard.actions.cancel")}
-          </Button>
         </div>
       )}
 

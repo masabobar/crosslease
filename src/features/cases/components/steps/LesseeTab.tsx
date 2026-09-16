@@ -11,6 +11,7 @@ import { resolveApiErrorMessage, showApiError } from "@/lib/apiErrorMessage"
 import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
 import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
+import { usePartnersByIds } from "@/features/partners/hooks/usePartnersByIds"
 import { CreatePartnerDialog } from "@/features/partners/components/CreatePartnerDialog"
 import { PartnerStatusSchema } from "@/features/partners/api/schema"
 import type { PartnerDetailResponse } from "@/features/partners/api/schema"
@@ -22,9 +23,10 @@ import {
   useRemoveLessee,
 } from "@/features/cases/hooks/useContractParties"
 
-// Below three characters the registry search matches most of the book — the same threshold the
-// partner registry and the UBO dialog use.
-const MIN_SEARCH_LENGTH = 3
+// Two, as the prototype's picker uses: below that the search matches most of the book. The
+// partner registry screen and the UBO dialog use three; this one is a narrower list read inside a
+// modal, where getting to a hit in fewer keystrokes matters more.
+const MIN_SEARCH_LENGTH = 2
 const SEARCH_DEBOUNCE_MS = 300
 
 /**
@@ -268,9 +270,17 @@ function LesseeSection({
 /**
  * Searches the bank's partner registry and links one.
  *
- * Debounced so typing a name costs one request after the pause rather than one per character, and
- * filtered to confirmed partners for the reason given on the tab. Same shape as
- * `CaptureUboDialog`, which solves the identical problem for UBOs.
+ * ── SEARCH FIRST, NOT A LIST ───────────────────────────────────────────────────────────────────
+ * The prototype's `partnerPicker` shows **"No partner selected"** beside a search box and an
+ * `Add partner` button, and renders nothing else until two characters have been typed. Listing the
+ * whole registry up front, as this did, is a different screen: it reads as "pick one of these
+ * five" on a bank whose register runs to thousands, and it buries the search that is the actual
+ * way in.
+ *
+ * ── A HIT IS ONE LINE ──────────────────────────────────────────────────────────────────────────
+ * `Name · City · CREFO <number>` with `Select` on the right, exactly as the prototype's `.pdrop-r`
+ * has it. The bare country code the rows used to carry on the right is not enough to tell two
+ * companies of similar name apart, which is the whole job of this list.
  */
 export function PartnerPicker({
   testIdPrefix,
@@ -287,82 +297,123 @@ export function PartnerPicker({
   const [isCreating, setCreating] = useState(false)
   const debounced = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
+  const isSearching = debounced.length >= MIN_SEARCH_LENGTH
   const partners = usePartnerList(tenantId, {
     status: [PartnerStatusSchema.enum.confirmed],
-    search: debounced.length >= MIN_SEARCH_LENGTH ? debounced : undefined,
+    search: isSearching ? debounced : undefined,
   })
 
-  const matches = (partners.data?.items ?? []).filter(isPartnerUsableAsParty)
+  const matches = isSearching
+    ? (partners.data?.items ?? []).filter(isPartnerUsableAsParty)
+    : []
+
+  // `PartnerListItem` carries a country and nothing else, so the city and register number the
+  // prototype's rows show have to come from the detail. Bounded by what is on screen — a search
+  // returns a handful of hits, not the register — and React Query dedupes them against the same
+  // details the linked-party card already reads.
+  const { partnersById } = usePartnersByIds(
+    matches.map(partner => partner.partner_id)
+  )
+
+  const canCreate = tenantId !== undefined && tenantId !== null
 
   return (
-    <div className="flex flex-col gap-2">
-      <Input
-        data-testid={`${testIdPrefix}-search-input`}
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder={t("wizard.manual.parties.searchPlaceholder")}
-      />
+    <div className="flex flex-col">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+        <span className="text-sm text-muted-foreground">
+          {t("wizard.manual.parties.noneSelected")}
+        </span>
+        <div className="flex items-center gap-2">
+          <Input
+            className="w-64 max-w-full"
+            data-testid={`${testIdPrefix}-search-input`}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t("wizard.manual.parties.searchPlaceholder")}
+          />
+          {/* Tenant-scoped: `POST /tenants/{id}/partners` needs one, and a System Admin has no
+              single tenant. Rather than embed the page's tenant-selection gate inside a modal, the
+              route is simply not offered without a resolved tenant — the search still works.
+
+              Always visible, never only after a search comes back empty: the prototype's own note
+              says so, and a user who knows the party is new should not have to type a name that
+              will not match first. */}
+          {canCreate && (
+            <Button
+              type="button"
+              variant="outline"
+              data-testid={`${testIdPrefix}-create-partner`}
+              onClick={() => setCreating(true)}
+            >
+              <Plus size={15} />
+              {t("wizard.manual.parties.addPartner")}
+            </Button>
+          )}
+        </div>
+      </div>
 
       {partners.isError && (
         <p
-          className="text-sm text-destructive"
+          className="mt-2 text-sm text-destructive"
           data-testid={`${testIdPrefix}-search-error`}
         >
           {resolveApiErrorMessage(partners.error, t)}
         </p>
       )}
 
-      {/* The design puts the create route exactly here — "No matches found. Create new partner" —
-          because not finding the company by name is the moment you need it. It is also offered
-          below the results, so a user who knows the party is new does not have to type a name that
-          will not match first. */}
-      {debounced.length >= MIN_SEARCH_LENGTH &&
-        !partners.isLoading &&
-        matches.length === 0 && (
-          <p
-            className="text-sm text-muted-foreground"
-            data-testid={`${testIdPrefix}-no-matches`}
-          >
-            {t("wizard.manual.parties.noMatches")}
-          </p>
-        )}
+      {isSearching && !partners.isError && (
+        <div className="-mt-px overflow-hidden rounded-b-lg border">
+          {matches.map(partner => (
+            <button
+              key={partner.partner_id}
+              type="button"
+              disabled={isLinking}
+              data-testid={`${testIdPrefix}-result-${partner.partner_id}`}
+              onClick={() => onPick(partner.partner_id)}
+              className="flex w-full items-center justify-between gap-3 border-b px-4 py-3 text-left text-sm last:border-b-0 hover:bg-accent disabled:opacity-50"
+            >
+              {/* NOTE: raw <button> — a selectable result row, not an action button; shadcn Button
+                  centres its content and fixes a height, both wrong for a full-width row. */}
+              <span className="min-w-0 truncate">
+                <span className="font-medium">{partner.display_name}</span>
+                <span className="text-muted-foreground">
+                  {" · "}
+                  {partnerResultMeta(
+                    partnersById.get(partner.partner_id),
+                    partner.country
+                  )}
+                </span>
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {t("wizard.manual.parties.select")}
+              </span>
+            </button>
+          ))}
 
-      {matches.map(partner => (
-        <button
-          key={partner.partner_id}
-          type="button"
-          disabled={isLinking}
-          data-testid={`${testIdPrefix}-result-${partner.partner_id}`}
-          onClick={() => onPick(partner.partner_id)}
-          className="flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm hover:bg-accent disabled:opacity-50"
-        >
-          {/* NOTE: raw <button> — a selectable result row, not an action button; shadcn Button
-              centres its content and fixes a height, both wrong for a full-width row. */}
-          <span className="font-medium">{partner.display_name}</span>
-          <span className="text-xs text-muted-foreground">
-            {partner.country}
-          </span>
-        </button>
-      ))}
-
-      {/* Tenant-scoped: `POST /tenants/{id}/partners` needs one, and a System Admin has no single
-          tenant. Rather than embed the page's tenant-selection gate inside a modal, the route is
-          simply not offered without a resolved tenant — the search above still works. */}
-      {tenantId !== undefined && tenantId !== null && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="self-start"
-          data-testid={`${testIdPrefix}-create-partner`}
-          onClick={() => setCreating(true)}
-        >
-          <Plus size={16} />
-          {t("wizard.manual.parties.createPartner")}
-        </Button>
+          {!partners.isLoading && matches.length === 0 && (
+            <div
+              className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm text-muted-foreground"
+              data-testid={`${testIdPrefix}-no-matches`}
+            >
+              {t("wizard.manual.parties.noMatches")}
+              {canCreate && (
+                <button
+                  type="button"
+                  className="text-primary underline underline-offset-2"
+                  data-testid={`${testIdPrefix}-create-partner-inline`}
+                  onClick={() => setCreating(true)}
+                >
+                  {/* NOTE: raw <button> — the prototype renders this as a link inside a sentence,
+                      which a shadcn Button's padding and height would break. */}
+                  {t("wizard.manual.parties.createPartner")}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
-      {isCreating && tenantId !== undefined && tenantId !== null && (
+      {isCreating && canCreate && (
         <CreatePartnerDialog
           tenantId={tenantId}
           onOpenChange={setCreating}
@@ -371,4 +422,28 @@ export function PartnerPicker({
       )}
     </div>
   )
+}
+
+/**
+ * The rest of a hit's line — `City · CREFO <number>`, as the prototype's result rows carry.
+ *
+ * Falls back to the country the list itself gives when the detail has not arrived or holds neither:
+ * a country alone is the least useful of the three for telling two similarly-named companies apart,
+ * which is why it is the fallback rather than the default.
+ */
+function partnerResultMeta(
+  detail: PartnerDetailResponse | undefined,
+  country: string | null
+): string {
+  const identity = detail?.identity
+  const parts = [
+    identity && "registered_address" in identity
+      ? identity.registered_address?.city
+      : null,
+    identity && "commercial_register_no" in identity
+      ? identity.commercial_register_no
+      : null,
+  ].filter(Boolean)
+
+  return parts.length > 0 ? parts.join(" · ") : (country ?? "")
 }
