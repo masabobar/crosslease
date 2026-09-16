@@ -13,9 +13,11 @@ import {
 } from "@/components/ui/table"
 import { TableEmptyState } from "@/components/ui/empty"
 import { cn } from "@/lib/utils"
+import { formatDateTime } from "@/lib/formatters"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { getCaseDocumentUrl } from "@/features/documentRequirements/api/documentRequirementsApi"
 import { useCaseDocumentRequirements } from "@/features/documentRequirements/hooks/useCaseDocumentRequirements"
+import { useCaseDocumentRows } from "@/features/documentRequirements/hooks/useCaseDocumentRows"
 import { useDocumentRequirementCatalogList } from "@/features/documentRequirements/hooks/useDocumentRequirementCatalogList"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
@@ -25,7 +27,10 @@ import {
 } from "@/features/users/types"
 import { CaseDocumentUploadButton } from "@/features/documentRequirements/components/CaseDocumentUploadButton"
 import { CaseDocumentReviewActions } from "@/features/documentRequirements/components/CaseDocumentReviewActions"
-import type { RuntimeRequirementItem } from "@/features/documentRequirements/api/schema"
+import type {
+  CaseDocumentRow,
+  RuntimeRequirementItem,
+} from "@/features/documentRequirements/api/schema"
 
 // PRD1042-1794 item 6 — a requirement that has no acceptable document yet can be uploaded against.
 // Keyed off the row's own status so a status added on the backend simply does not offer the control
@@ -95,6 +100,7 @@ export function CaseDocumentRequirementsPanel({
   // One row's detail open at a time — the panel is read top to bottom, and several open blocks
   // push the rows below them off the screen.
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const caseDocuments = useCaseDocumentRows(businessObjectId)
 
   const { data: currentUser } = useCurrentUser()
   // One catalogue per bank, so the single global default IS the case's catalogue — resolved, never
@@ -159,6 +165,16 @@ export function CaseDocumentRequirementsPanel({
     )
   }
 
+  // The party and the files, keyed by requirement so the rows can look theirs up. A failure here
+  // leaves those two columns blank rather than blocking the table: what is required and what is
+  // holding the case is the surface's answer, and it has already arrived.
+  const filedByRequirementId = new Map(
+    (caseDocuments.data?.documents ?? []).map(row => [
+      row.requirement_definition_id,
+      row,
+    ])
+  )
+
   // "Which of the missing ones are holding the case" — the backend already derives blocking from
   // mandatory membership and the row's status, so this is a filter rather than a second judgement.
   const blocking = surface.requirements.filter(r => r.is_blocking)
@@ -201,19 +217,22 @@ export function CaseDocumentRequirementsPanel({
       <div className="border border-border rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
-            {/* The dummy's four columns. Requirement code and applicable case types moved into
-                the row's own disclosure — they describe the requirement rather than its state, and
-                the state is what a reader scans the table for.
+            {/* The prototype's columns. **Party** and **Files** had been left out on the grounds
+                that nothing carried them — true of `RuntimeRequirementItem`, which holds one
+                `linked_document_id` and no party, but not of `GET /cases/{id}/documents`, which
+                carries `role_scope` and the files themselves. The two are read together: the
+                surface owns what is required and what blocks, that endpoint owns who it belongs to
+                and what has been filed.
 
-                Its **Party** and **Files** columns are not here: `RuntimeRequirementItem` carries
-                neither a party nor a file count (only a single `linked_document_id`), so per
-                `api-first.md` §4 they are omitted rather than drawn from invented data. */}
+                The separate Document column is gone with them — a row's files are what the
+                disclosure opens on, which is also where the prototype puts them. */}
             <TableRow>
               <TableHead className="w-10" />
               <TableHead>{t("caseDocuments.columns.documentType")}</TableHead>
+              <TableHead>{t("caseDocuments.columns.party")}</TableHead>
+              <TableHead>{t("caseDocuments.columns.files")}</TableHead>
               <TableHead>{t("caseDocuments.columns.classification")}</TableHead>
               <TableHead>{t("caseDocuments.columns.status")}</TableHead>
-              <TableHead>{t("caseDocuments.columns.document")}</TableHead>
               <TableHead>{t("caseDocuments.columns.actions")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -222,6 +241,7 @@ export function CaseDocumentRequirementsPanel({
               <RequirementRow
                 key={item.requirement_definition_id}
                 item={item}
+                filed={filedByRequirementId.get(item.requirement_definition_id)}
                 isExpanded={expandedId === item.requirement_definition_id}
                 onToggle={open =>
                   setExpandedId(open ? item.requirement_definition_id : null)
@@ -256,6 +276,7 @@ function RequirementRow({
   canReview,
   uploadDisabled,
   uploadDisabledReason,
+  filed,
   isExpanded,
   onToggle,
 }: {
@@ -266,6 +287,8 @@ function RequirementRow({
   canReview: boolean
   uploadDisabled?: boolean
   uploadDisabledReason?: string
+  /** The party and the files, from `GET /cases/{id}/documents`. Absent while it loads or fails. */
+  filed?: CaseDocumentRow
   isExpanded: boolean
   onToggle: (open: boolean) => void
 }) {
@@ -316,6 +339,18 @@ function RequirementRow({
             )}
           </span>
         </TableCell>
+        {/* `lessee` / `guarantor` / `case` — the party the document belongs to. */}
+        <TableCell className="text-muted-foreground">
+          {filed?.role_scope
+            ? t(
+                `caseDocuments.parties.${filed.role_scope}` as "caseDocuments.parties.case",
+                { defaultValue: filed.role_scope }
+              )
+            : notApplicable}
+        </TableCell>
+        <TableCell className="tabular-nums">
+          {filed && filed.files.length > 0 ? filed.files.length : notApplicable}
+        </TableCell>
         <TableCell>
           {t(
             `requirement.classifications.${item.classification}` as "requirement.classifications.mandatory",
@@ -336,27 +371,6 @@ function RequirementRow({
               { defaultValue: item.fulfilment_status }
             )}
           </span>
-        </TableCell>
-        <TableCell>
-          {/* Item 5: the document that met a requirement is openable by whoever works the case, not
-            only by whoever uploaded it. The media endpoint authenticates from the session cookie, so
-            a plain link is authenticated and no token goes into a URL. */}
-          {item.linked_document_id ? (
-            <a
-              href={getCaseDocumentUrl(item.linked_document_id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-              data-testid={`case-documents-open-${item.requirement_definition_id}`}
-            >
-              {t("caseDocuments.openDocument")}
-              <ExternalLink size={14} />
-            </a>
-          ) : (
-            <span className="text-sm text-muted-foreground">
-              {notApplicable}
-            </span>
-          )}
         </TableCell>
         <TableCell>
           {showUpload ? (
@@ -387,7 +401,39 @@ function RequirementRow({
         <TableRow
           data-testid={`case-documents-detail-${item.requirement_definition_id}`}
         >
-          <TableCell colSpan={6} className="bg-muted/30">
+          <TableCell colSpan={7} className="bg-muted/30">
+            {/* What has actually been filed against this requirement — the prototype opens the row
+                on exactly this, and says so plainly when there is nothing. */}
+            <div className="mb-3 flex flex-col gap-1">
+              {/* The file name is the link. The separate Document column that used to carry
+                  `Open` is gone with the prototype's layout, and its capability had to go
+                  somewhere — a requirement can hold several files and that column could only ever
+                  point at one. The media endpoint authenticates from the session cookie, so a
+                  plain link is authenticated and no token goes into a URL. */}
+              {(filed?.files ?? []).map(file => (
+                <div key={file.document_id} className="text-sm">
+                  <a
+                    href={getCaseDocumentUrl(file.document_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    data-testid={`case-documents-open-${file.document_id}`}
+                  >
+                    {file.file_name}
+                    <ExternalLink size={13} />
+                  </a>
+                  <span className="block text-xs text-muted-foreground">
+                    {formatDateTime(file.uploaded_at_utc)}
+                  </span>
+                </div>
+              ))}
+              {(filed?.files.length ?? 0) === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {t("caseDocuments.detail.nothingFiled")}
+                </p>
+              )}
+            </div>
+
             <dl className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
               <div>
                 <dt className="text-xs text-muted-foreground">

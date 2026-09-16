@@ -270,7 +270,9 @@
       "status": "Status",
       "document": "Dokument",
       "upload": "Hochladen",
-      "actions": "Aktionen"
+      "actions": "Aktionen",
+      "party": "Partei",
+      "files": "Dateien"
     },
     "statuses": {
       "missing": "Fehlt",
@@ -304,7 +306,13 @@
     "toggleDetail": "Anforderungsdetails anzeigen",
     "detail": {
       "stage": "Phase",
-      "origin": "Herkunft"
+      "origin": "Herkunft",
+      "nothingFiled": "Zu dieser Anforderung wurde noch nichts eingereicht."
+    },
+    "parties": {
+      "case": "Vorgang",
+      "lessee": "Leasingnehmer",
+      "guarantor": "Bürge"
     }
   }
 }

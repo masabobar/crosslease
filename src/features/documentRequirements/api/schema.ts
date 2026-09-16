@@ -280,6 +280,44 @@ export const FulfilmentStatusSchema = z.enum([
 ])
 export type FulfilmentStatus = z.infer<typeof FulfilmentStatusSchema>
 
+/**
+ * A case's documents, grouped by the requirement they are filed against.
+ *
+ * `GET /cases/{id}/documents` — not the runtime requirement surface. It carries the two things the
+ * surface does not: `role_scope`, which is the party the document belongs to, and the actual
+ * `files`. The design's Party and Files columns had been left out on the grounds that neither
+ * existed; they exist here.
+ */
+export const CaseDocumentFileSchema = z.object({
+  document_id: z.string(),
+  file_name: z.string(),
+  uploaded_at_utc: z.string(),
+  uploaded_at_local: z.string().nullable(),
+})
+export type CaseDocumentFile = z.infer<typeof CaseDocumentFileSchema>
+
+export const CaseDocumentRowSchema = z.object({
+  requirement_definition_id: z.string(),
+  requirement_code: z.string(),
+  document_type_code: z.string(),
+  document_type_name: z.string(),
+  // `lessee` / `guarantor` / `case`, unconstrained on the wire — labelled through i18n with the
+  // raw value as the fallback, the same way the fulfilment status is.
+  role_scope: z.string().nullable(),
+  classification: z.string(),
+  status: z.string(),
+  files: z.array(CaseDocumentFileSchema),
+})
+export type CaseDocumentRow = z.infer<typeof CaseDocumentRowSchema>
+
+export const CaseDocumentListResponseSchema = z.object({
+  case_id: z.string().uuid(),
+  documents: z.array(CaseDocumentRowSchema),
+})
+export type CaseDocumentListResponse = z.infer<
+  typeof CaseDocumentListResponseSchema
+>
+
 export const RuntimeRequirementItemSchema = z.object({
   requirement_definition_id: z.string().uuid(),
   requirement_code: z.string(),

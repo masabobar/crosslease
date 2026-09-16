@@ -270,7 +270,9 @@
       "status": "State",
       "document": "Document",
       "upload": "Upload",
-      "actions": "Actions"
+      "actions": "Actions",
+      "party": "Party",
+      "files": "Files"
     },
     "statuses": {
       "missing": "Missing",
@@ -304,7 +306,13 @@
     "toggleDetail": "Show requirement detail",
     "detail": {
       "stage": "Stage",
-      "origin": "Origin"
+      "origin": "Origin",
+      "nothingFiled": "Nothing filed against this requirement yet."
+    },
+    "parties": {
+      "case": "Case",
+      "lessee": "Lessee",
+      "guarantor": "Guarantor"
     }
   }
 }

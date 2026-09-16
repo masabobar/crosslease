@@ -14,6 +14,7 @@
  */
 import { http } from "msw"
 import {
+  CaseDocumentListResponseSchema,
   DocumentRequirementCatalogListResponseSchema,
   DocumentRequirementListResponseSchema,
   DocumentTypeListResponseSchema,
@@ -126,6 +127,86 @@ export const caseDocumentHandlers = [
    */
   http.get(`${API}/tenants/:tenantId/document-types`, () =>
     envelope(DocumentTypeListResponseSchema.parse({ items: [], total: 0 }))
+  ),
+
+  /**
+   * The case's documents grouped by requirement.
+   *
+   * Keyed to the SAME `requirement_definition_id`s the runtime surface below answers with — the
+   * wizard's table joins the two, so a mock whose ids drifted would leave every Party and Files
+   * cell empty while both requests succeeded.
+   *
+   * The rows are the prototype's own: a case-scoped requirement with nothing filed, two filed
+   * against a lessee, and one against a named guarantor.
+   */
+  http.get(`${API}/cases/:caseId/documents`, ({ params }) =>
+    envelope(
+      CaseDocumentListResponseSchema.parse({
+        case_id: params.caseId as string,
+        documents: [
+          {
+            requirement_definition_id: mockUuid("d1"),
+            requirement_code: "ZB2",
+            document_type_code: "ZLB_II",
+            document_type_name: "Z B II vehicle registration",
+            role_scope: "lessee",
+            classification: "mandatory",
+            status: "missing",
+            files: [],
+          },
+          {
+            requirement_definition_id: mockUuid("d2"),
+            requirement_code: "LOAN_SIGNED",
+            document_type_code: "LOAN_OFFER",
+            document_type_name: "Signed loan offer",
+            role_scope: "case",
+            classification: "mandatory",
+            status: "uploaded_pending_review",
+            files: [
+              {
+                document_id: mockUuid("df1"),
+                file_name: "Loan_offer_signed_CASE-2026-104-v2.pdf",
+                uploaded_at_utc: "2026-08-06T09:12:00Z",
+                uploaded_at_local: "2026-08-06T11:12:00+02:00",
+              },
+              {
+                document_id: mockUuid("df3"),
+                file_name: "Loan_offer_signed_CASE-2026-104.pdf",
+                uploaded_at_utc: "2026-08-05T14:40:00Z",
+                uploaded_at_local: "2026-08-05T16:40:00+02:00",
+              },
+            ],
+          },
+          {
+            requirement_definition_id: mockUuid("d3"),
+            requirement_code: "MASTER_AGREEMENT",
+            document_type_code: "RKV",
+            document_type_name: "RKV, buy back agreement",
+            role_scope: "lessee",
+            classification: "mandatory",
+            status: "fulfilled",
+            files: [
+              {
+                document_id: mockUuid("df2"),
+                file_name: "Rahmenkaufvertrag_2026.pdf",
+                uploaded_at_utc: "2026-07-24T07:05:00Z",
+                uploaded_at_local: "2026-07-24T09:05:00+02:00",
+              },
+            ],
+          },
+          {
+            requirement_definition_id: mockUuid("d4"),
+            requirement_code: "MISC",
+            document_type_code: "MISC",
+            document_type_name: "Miscellaneous",
+            role_scope: "guarantor",
+            classification: "optional",
+            status: "missing",
+            files: [],
+          },
+        ],
+      })
+    )
   ),
 
   http.get(

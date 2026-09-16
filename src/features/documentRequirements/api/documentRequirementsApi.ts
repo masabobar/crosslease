@@ -1,6 +1,7 @@
 import { api } from "@/lib/api"
 import {
   AddRequirementRequestSchema,
+  CaseDocumentListResponseSchema,
   CreateDocumentRequirementCatalogRequestSchema,
   CreateDocumentTypeRequestSchema,
   DocumentRequirementCatalogDetailResponseSchema,
@@ -16,6 +17,7 @@ import {
   UpdateRequirementRequestSchema,
 } from "@/features/documentRequirements/api/schema"
 import type {
+  CaseDocumentListResponse,
   CreateDocumentTypeRequest,
   DocumentType,
   DocumentTypeListResponse,
@@ -55,6 +57,8 @@ export const DOCUMENT_REQUIREMENT_QUERY_KEYS = {
     ["document-requirements", "requirements"] as const,
   detail: (catalogId: string) =>
     ["document-requirements", "catalogs", "detail", catalogId] as const,
+  caseDocuments: (caseId: string) =>
+    ["document-requirements", "case-documents", caseId] as const,
 } as const
 
 // The endpoint caps per_page server-side; these are the widest useful pages for a picker.
@@ -274,4 +278,18 @@ export async function transitionFulfilmentStatus(
       transition_reason: args.transitionReason ?? null,
     }
   )
+}
+
+/**
+ * The case's documents grouped by requirement — the party each belongs to and the files filed
+ * against it.
+ *
+ * Read alongside the runtime requirement surface rather than instead of it: the surface owns the
+ * fulfilment state and what blocks, this owns the party and the files. Neither carries the other.
+ */
+export async function fetchCaseDocuments(
+  caseId: string
+): Promise<CaseDocumentListResponse> {
+  const data = await api.get(`/cases/${caseId}/documents`)
+  return CaseDocumentListResponseSchema.parse(data)
 }
