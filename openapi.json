@@ -19493,6 +19493,41 @@
           "limit_breach": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Limit Breach"
+          },
+          "refinancing_quota": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Refinancing Quota"
+          },
+          "vfe_amount_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Vfe Amount Eur"
+          },
+          "max_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Max Volume Eur"
+          },
+          "template_count": {
+            "type": "integer",
+            "title": "Template Count",
+            "default": 0
           }
         },
         "type": "object",

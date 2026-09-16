@@ -2903,6 +2903,10 @@ const FAListItemResponse = z
     is_expired: z.boolean(),
     utilization_pct: z.union([z.string(), z.null()]),
     limit_breach: z.union([z.boolean(), z.null()]),
+    refinancing_quota: z.union([z.string(), z.null()]).optional(),
+    vfe_amount_eur: z.union([z.string(), z.null()]).optional(),
+    max_volume_eur: z.union([z.string(), z.null()]).optional(),
+    template_count: z.number().int().optional().default(0),
   })
   .passthrough()
 const FAListResponse = z
