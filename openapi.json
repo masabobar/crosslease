@@ -7990,6 +7990,42 @@
         }
       }
     },
+    "/api/v1/partners/{id}/connections": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Partner Connections",
+        "description": "Where this party already appears — its contracts and the requests carrying them.\n\nPARTNER_VIEW, the same read right as the other partner-scoped reads: it excludes support_user\nand leasing_company_user, and an LC must not learn which other companies a party deals with.",
+        "operationId": "list_partner_connections_api_v1_partners__id__connections_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerConnectionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/{id}/ubo": {
       "post": {
         "tags": ["Partners"],
@@ -23846,6 +23882,50 @@
         },
         "type": "object",
         "title": "PartnerConfirmRequest"
+      },
+      "PartnerConnectionItem": {
+        "properties": {
+          "object_type": { "type": "string", "title": "Object Type" },
+          "object_id": { "type": "string", "title": "Object Id" },
+          "label": { "type": "string", "title": "Label" },
+          "role": { "type": "string", "title": "Role" },
+          "case_id": { "type": "string", "title": "Case Id" },
+          "leasing_company_partner_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Leasing Company Partner Id"
+          },
+          "leasing_company_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Leasing Company Name"
+          },
+          "status": { "type": "string", "title": "Status" }
+        },
+        "type": "object",
+        "required": [
+          "object_type",
+          "object_id",
+          "label",
+          "role",
+          "case_id",
+          "leasing_company_partner_id",
+          "leasing_company_name",
+          "status"
+        ],
+        "title": "PartnerConnectionItem",
+        "description": "One place this party already appears — a contract it is on, or the request that carries it.\n\nThe read model behind the Create-partner modal's Connections tab: before creating a party a\nclerk needs to see where an existing one is already engaged, in which role, for whom, and in\nwhat state. It is a projection over existing links (``Contract.lessee_partner_id`` and\n``ContractGuarantor``), never a new carrier — nothing here is stored.\n\n``status`` is the CASE display status (``cases/domain/status.py::derive_display_status``), for\ncontracts too, and that is deliberate: the state a user reads off a contract (\"draft\",\n\"committed\") is the state of the deal it rides in, while ``Contract.contract_status`` only\ndistinguishes active from cancelled. A cancelled contract overrides its case's value — a\ncancelled row must never read as live."
+      },
+      "PartnerConnectionsResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/PartnerConnectionItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "PartnerConnectionsResponse"
       },
       "PartnerDetailResponse": {
         "properties": {

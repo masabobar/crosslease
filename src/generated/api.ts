@@ -2236,6 +2236,21 @@ const PartnerRolesResponse = z
     history: z.array(RoleHistoryEntry),
   })
   .passthrough()
+const PartnerConnectionItem = z
+  .object({
+    object_type: z.string(),
+    object_id: z.string(),
+    label: z.string(),
+    role: z.string(),
+    case_id: z.string(),
+    leasing_company_partner_id: z.union([z.string(), z.null()]),
+    leasing_company_name: z.union([z.string(), z.null()]),
+    status: z.string(),
+  })
+  .passthrough()
+const PartnerConnectionsResponse = z
+  .object({ partner_id: z.string(), items: z.array(PartnerConnectionItem) })
+  .passthrough()
 const UboOwnershipRequest = z
   .object({
     ubo_partner_id: z.string().uuid(),
@@ -4583,6 +4598,8 @@ export const schemas = {
   RoleAssignmentSummary,
   RoleHistoryEntry,
   PartnerRolesResponse,
+  PartnerConnectionItem,
+  PartnerConnectionsResponse,
   UboOwnershipRequest,
   UboOwnershipRecordResponse,
   PartnerUboResponse,
@@ -10807,6 +10824,31 @@ risk-sensitive roles are governed separately via partner_role_assign.`,
       },
     ],
     response: ConfirmationHistoryResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:id/connections",
+    alias: "list_partner_connections_api_v1_partners__id__connections_get",
+    description: `Where this party already appears — its contracts and the requests carrying them.
+
+PARTNER_VIEW, the same read right as the other partner-scoped reads: it excludes support_user
+and leasing_company_user, and an LC must not learn which other companies a party deals with.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerConnectionsResponse,
     errors: [
       {
         status: 422,
