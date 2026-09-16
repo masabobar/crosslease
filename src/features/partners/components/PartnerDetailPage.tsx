@@ -20,6 +20,7 @@ import {
   RolesList,
 } from "@/features/partners/components/tabs/OverviewTab"
 import { ResolutionCandidatesTab } from "@/features/partners/components/tabs/ResolutionCandidatesTab"
+import { AssessmentTab } from "@/features/partners/components/tabs/AssessmentTab"
 import { RolesTab } from "@/features/partners/components/tabs/RolesTab"
 import { UboTab } from "@/features/partners/components/tabs/UboTab"
 import { IdentityChangesTab } from "@/features/partners/components/tabs/IdentityChangesTab"
@@ -47,6 +48,7 @@ import {
 
 type TabKey =
   | "overview"
+  | "assessment"
   | "resolution"
   | "roles"
   | "ubo"
@@ -244,6 +246,13 @@ export default function PartnerDetailPage() {
               label: t("detail.tabs.overview"),
               testId: "tab-overview",
             },
+            // The prototype's second partner tab. Its endpoints landed on 16 Sep; before that it
+            // had no backing at all, which is why it is only here now.
+            {
+              key: "assessment" as const,
+              label: t("detail.tabs.assessment"),
+              testId: "tab-assessment",
+            },
             ...(showResolutionTab
               ? [
                   {
@@ -298,6 +307,9 @@ export default function PartnerDetailPage() {
           )}
           {activeTab === "resolution" && showResolutionTab && (
             <ResolutionCandidatesTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "assessment" && (
+            <AssessmentTab partnerId={partner.partner_id} />
           )}
           {activeTab === "roles" && <RolesTab partnerId={partner.partner_id} />}
           {activeTab === "ubo" && (

@@ -293,7 +293,8 @@
       "identityChanges": "Identity changes",
       "confirmationHistory": "Confirmation history",
       "mergeHistory": "Merge history",
-      "decisionHistory": "Decision history"
+      "decisionHistory": "Decision history",
+      "assessment": "Assessment"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -716,5 +717,38 @@
     "submit": "Reject partner",
     "submitting": "Rejecting…",
     "success": "Partner rejected."
+  },
+  "assessment": {
+    "heading": "Assessments",
+    "subtitle": "Credit-agency and internal reports held against this party, newest first.",
+    "add": "Add assessment",
+    "addTitle": "Add assessment",
+    "save": "Save assessment",
+    "cancelEntry": "Cancel",
+    "added": "Assessment recorded.",
+    "reportedOn": "Reported {{date}}",
+    "noValueSupplied": "No value supplied",
+    "freeTextOnly": "This source carries no structured values — the note below is the report.",
+    "valuesHeading": "{{source}} values",
+    "cancelled": "Cancelled",
+    "cancelAction": "Cancel assessment",
+    "keep": "Keep it",
+    "cancelledOn": "Cancelled {{when}} · {{reason}}",
+    "empty": {
+      "title": "No assessments recorded",
+      "description": "Nothing has been filed against this party yet."
+    },
+    "cancelConfirm": {
+      "title": "Cancel this assessment?",
+      "description": "It stays on the record and keeps its reason — an assessment that informed a decision has to remain readable.",
+      "reasonPlaceholder": "Reason for cancelling"
+    },
+    "fields": {
+      "sourceType": "Source",
+      "sourcePlaceholder": "Select a source",
+      "reportDate": "Report date",
+      "sourceReference": "Source reference",
+      "contextNote": "Note"
+    }
   }
 }

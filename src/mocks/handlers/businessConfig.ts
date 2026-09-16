@@ -9,6 +9,12 @@
  */
 import { http } from "msw"
 import {
+  AssessmentCatalogueResponseSchema,
+  AssessmentListResponseSchema,
+  AssessmentSchema,
+} from "@/features/partners/api/assessmentSchema"
+import type { Assessment } from "@/features/partners/api/assessmentSchema"
+import {
   DuplicatePairListResponseSchema,
   PartnerDetailResponseSchema,
   PartnerListResponseSchema,
@@ -71,6 +77,154 @@ function paginate<T>(url: URL, rows: T[], perPageDefault = 20) {
  * the picker's search afterwards. Not persisted, like every other write here.
  */
 let createdPartnerCount = 0
+
+// Session-scoped assessments, seeded on first read so the tab opens on a record rather than on an
+// empty state — the shapes that matter are one with values and one already cancelled.
+const assessmentsByPartnerId: Record<string, Assessment[]> = {}
+
+function seedAssessments(partnerId: string): Assessment[] {
+  const seeded = [
+    AssessmentSchema.parse({
+      id: mockUuid("a5e1"),
+      partner_id: partnerId,
+      source_type_id: mockUuid("a5c1"),
+      source_type_code: "CREFO",
+      source_type_name: "Creditreform",
+      report_date: "2026-08-12",
+      source_reference: "PRT-DE-0044120",
+      case_id: null,
+      contract_id: null,
+      role: null,
+      context_note: "Pulled for the refinancing request of August.",
+      cancelled_at: null,
+      cancel_reason: null,
+      created_by: "00000000-0000-4000-8000-000000000003",
+      created_at: "2026-08-12T08:40:00Z",
+      values: [
+        {
+          attribute_id: mockUuid("a5a1"),
+          attribute_code: "SOLVENCY_INDEX",
+          attribute_name: "Solvency index",
+          value_number: "212",
+          value_text: null,
+          no_value_supplied: false,
+        },
+        {
+          attribute_id: mockUuid("a5a2"),
+          attribute_code: "CREDIT_LIMIT",
+          attribute_name: "Recommended credit limit",
+          value_number: "250000.00",
+          value_text: null,
+          no_value_supplied: false,
+        },
+        {
+          // The agency returned nothing for this one — a different fact from nobody filling it in.
+          attribute_id: mockUuid("a5a3"),
+          attribute_code: "PAYMENT_BEHAVIOUR",
+          attribute_name: "Payment behaviour",
+          value_number: null,
+          value_text: null,
+          no_value_supplied: true,
+        },
+      ],
+    }),
+    AssessmentSchema.parse({
+      id: mockUuid("a5e2"),
+      partner_id: partnerId,
+      source_type_id: mockUuid("a5c2"),
+      source_type_code: "SCHUFA",
+      source_type_name: "Schufa",
+      report_date: "2026-05-03",
+      source_reference: null,
+      case_id: null,
+      contract_id: null,
+      role: null,
+      context_note: null,
+      cancelled_at: "2026-06-01T10:15:00Z",
+      cancel_reason: "Superseded by the August Creditreform report.",
+      created_by: "00000000-0000-4000-8000-000000000003",
+      created_at: "2026-05-03T09:00:00Z",
+      values: [
+        {
+          attribute_id: mockUuid("a5a4"),
+          attribute_code: "SCORE",
+          attribute_name: "Score",
+          value_number: "94",
+          value_text: null,
+          no_value_supplied: false,
+        },
+      ],
+    }),
+  ]
+  assessmentsByPartnerId[partnerId] = seeded
+  return seeded
+}
+
+// The catalogue is the only place attribute names live, so a created record reads them back from
+// it — echoing the request alone would produce a row the list cannot label.
+const ASSESSMENT_ATTRIBUTE_NAMES: Record<
+  string,
+  { code: string; name: string }
+> = {
+  [mockUuid("a5a1")]: { code: "SOLVENCY_INDEX", name: "Solvency index" },
+  [mockUuid("a5a2")]: {
+    code: "CREDIT_LIMIT",
+    name: "Recommended credit limit",
+  },
+  [mockUuid("a5a3")]: { code: "PAYMENT_BEHAVIOUR", name: "Payment behaviour" },
+  [mockUuid("a5a4")]: { code: "SCORE", name: "Score" },
+}
+
+const ASSESSMENT_SOURCE_NAMES: Record<string, { code: string; name: string }> =
+  {
+    [mockUuid("a5c1")]: { code: "CREFO", name: "Creditreform" },
+    [mockUuid("a5c2")]: { code: "SCHUFA", name: "Schufa" },
+    [mockUuid("a5c3")]: { code: "INTERNAL", name: "Internal assessment" },
+  }
+
+function buildAssessment(
+  partnerId: string,
+  body: Record<string, unknown>,
+  index: number
+): Assessment {
+  const sourceTypeId = body.source_type_id as string
+  const source = ASSESSMENT_SOURCE_NAMES[sourceTypeId] ?? {
+    code: "UNKNOWN",
+    name: "Assessment",
+  }
+  const values = (body.values ?? []) as Record<string, unknown>[]
+
+  return AssessmentSchema.parse({
+    id: mockUuid(`a5f${index.toString(16)}`),
+    partner_id: partnerId,
+    source_type_id: sourceTypeId,
+    source_type_code: source.code,
+    source_type_name: source.name,
+    report_date: body.report_date as string,
+    source_reference: (body.source_reference as string) ?? null,
+    case_id: null,
+    contract_id: null,
+    role: null,
+    context_note: (body.context_note as string) ?? null,
+    cancelled_at: null,
+    cancel_reason: null,
+    created_by: "00000000-0000-4000-8000-000000000003",
+    created_at: new Date().toISOString(),
+    values: values.map(value => {
+      const attribute = ASSESSMENT_ATTRIBUTE_NAMES[
+        value.attribute_id as string
+      ] ?? { code: "UNKNOWN", name: "Value" }
+      return {
+        attribute_id: value.attribute_id as string,
+        attribute_code: attribute.code,
+        attribute_name: attribute.name,
+        value_number: (value.value_number as string) ?? null,
+        value_text: (value.value_text as string) ?? null,
+        no_value_supplied: value.no_value_supplied === true,
+      }
+    }),
+  })
+}
 
 export const businessConfigHandlers = [
   // ── Partners ──────────────────────────────────────────────────────────────
@@ -165,6 +319,119 @@ export const businessConfigHandlers = [
    * back to printing the leasing company's own contract number, which is the identifier a bank
    * reader can do least with.
    */
+  /**
+   * The assessment catalogue — the source types a tenant records reports from, each with its own
+   * attributes. It is what builds the create form, so the two shapes here are the ones that matter:
+   * a structured source with a numeric scale, and a free-text-only one with no attributes at all.
+   */
+  http.get(`${API}/partners/assessment-catalogue`, () =>
+    envelope(
+      AssessmentCatalogueResponseSchema.parse({
+        source_types: [
+          {
+            id: mockUuid("a5c1"),
+            code: "CREFO",
+            name: "Creditreform",
+            free_text_only: false,
+            attributes: [
+              {
+                id: mockUuid("a5a1"),
+                code: "SOLVENCY_INDEX",
+                name: "Solvency index",
+                value_type: "number",
+                value_range: "100–600",
+                scale_hint: "lower is better",
+              },
+              {
+                id: mockUuid("a5a2"),
+                code: "CREDIT_LIMIT",
+                name: "Recommended credit limit",
+                value_type: "number",
+                value_range: null,
+                scale_hint: "EUR",
+              },
+              {
+                id: mockUuid("a5a3"),
+                code: "PAYMENT_BEHAVIOUR",
+                name: "Payment behaviour",
+                value_type: "text",
+                value_range: null,
+                scale_hint: null,
+              },
+            ],
+          },
+          {
+            id: mockUuid("a5c2"),
+            code: "SCHUFA",
+            name: "Schufa",
+            free_text_only: false,
+            attributes: [
+              {
+                id: mockUuid("a5a4"),
+                code: "SCORE",
+                name: "Score",
+                value_type: "number",
+                value_range: "0–100",
+                scale_hint: "higher is better",
+              },
+            ],
+          },
+          {
+            id: mockUuid("a5c3"),
+            code: "INTERNAL",
+            name: "Internal assessment",
+            free_text_only: true,
+            attributes: [],
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/assessments`, ({ params }) => {
+    const partnerId = params.partnerId as string
+    return envelope(
+      AssessmentListResponseSchema.parse({
+        partner_id: partnerId,
+        items: assessmentsByPartnerId[partnerId] ?? seedAssessments(partnerId),
+      })
+    )
+  }),
+
+  http.post(
+    `${API}/partners/:partnerId/assessments`,
+    async ({ params, request }) => {
+      const partnerId = params.partnerId as string
+      const body = (await request.json()) as Record<string, unknown>
+      const existing =
+        assessmentsByPartnerId[partnerId] ?? seedAssessments(partnerId)
+      const created = buildAssessment(partnerId, body, existing.length)
+      assessmentsByPartnerId[partnerId] = [created, ...existing]
+      return envelope(created, "ASSESSMENT_CREATED")
+    }
+  ),
+
+  http.post(
+    `${API}/partners/:partnerId/assessments/:assessmentId/cancel`,
+    async ({ params, request }) => {
+      const partnerId = params.partnerId as string
+      const body = (await request.json()) as { reason: string }
+      const rows =
+        assessmentsByPartnerId[partnerId] ?? seedAssessments(partnerId)
+      const index = rows.findIndex(row => row.id === params.assessmentId)
+      if (index === -1) {
+        return errorEnvelope("NOT_FOUND", "No such assessment", 404)
+      }
+      const cancelled = AssessmentSchema.parse({
+        ...rows[index],
+        cancelled_at: new Date().toISOString(),
+        cancel_reason: body.reason,
+      })
+      assessmentsByPartnerId[partnerId] = rows.with(index, cancelled)
+      return envelope(cancelled, "ASSESSMENT_CANCELLED")
+    }
+  ),
+
   http.get(`${API}/partners/:partnerId`, ({ params }) => {
     const id = params.partnerId as string
     const lessee = mockLesseePartners[id]

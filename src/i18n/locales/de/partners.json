@@ -293,7 +293,8 @@
       "identityChanges": "Identity changes",
       "confirmationHistory": "Confirmation history",
       "mergeHistory": "Merge history",
-      "decisionHistory": "Entscheidungshistorie"
+      "decisionHistory": "Entscheidungshistorie",
+      "assessment": "Bewertung"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -716,5 +717,38 @@
     "submit": "Reject partner",
     "submitting": "Rejecting…",
     "success": "Partner rejected."
+  },
+  "assessment": {
+    "heading": "Bewertungen",
+    "subtitle": "Auskunfteien- und interne Berichte zu diesem Partner, neueste zuerst.",
+    "add": "Bewertung hinzufügen",
+    "addTitle": "Bewertung hinzufügen",
+    "save": "Bewertung speichern",
+    "cancelEntry": "Abbrechen",
+    "added": "Bewertung erfasst.",
+    "reportedOn": "Berichtet am {{date}}",
+    "noValueSupplied": "Kein Wert geliefert",
+    "freeTextOnly": "Diese Quelle führt keine strukturierten Werte – die Notiz unten ist der Bericht.",
+    "valuesHeading": "Werte: {{source}}",
+    "cancelled": "Storniert",
+    "cancelAction": "Bewertung stornieren",
+    "keep": "Behalten",
+    "cancelledOn": "Storniert {{when}} · {{reason}}",
+    "empty": {
+      "title": "Keine Bewertungen erfasst",
+      "description": "Zu diesem Partner wurde noch nichts eingereicht."
+    },
+    "cancelConfirm": {
+      "title": "Diese Bewertung stornieren?",
+      "description": "Sie bleibt mit ihrem Grund erhalten – eine Bewertung, die eine Entscheidung gestützt hat, muss lesbar bleiben.",
+      "reasonPlaceholder": "Grund der Stornierung"
+    },
+    "fields": {
+      "sourceType": "Quelle",
+      "sourcePlaceholder": "Quelle auswählen",
+      "reportDate": "Berichtsdatum",
+      "sourceReference": "Quellenreferenz",
+      "contextNote": "Notiz"
+    }
   }
 }
