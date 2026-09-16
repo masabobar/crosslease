@@ -374,10 +374,15 @@ export function PartnerPicker({
             >
               {/* NOTE: raw <button> — a selectable result row, not an action button; shadcn Button
                   centres its content and fixes a height, both wrong for a full-width row. */}
-              <span className="min-w-0 truncate">
-                <span className="font-medium">{partner.display_name}</span>
-                <span className="text-muted-foreground">
-                  {" · "}
+              {/* Two lines: the name, and the address under it. The register number rides on the
+                  second line because it identifies the same thing the address does — which of two
+                  similarly-named companies this row is. The country code that used to sit alone on
+                  the right could never answer that. */}
+              <span className="min-w-0">
+                <span className="block truncate font-medium">
+                  {partner.display_name}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
                   {partnerResultMeta(
                     partnersById.get(partner.partner_id),
                     partner.country
@@ -425,7 +430,7 @@ export function PartnerPicker({
 }
 
 /**
- * The rest of a hit's line — `City · CREFO <number>`, as the prototype's result rows carry.
+ * The line under a hit's name — the partner's address and register number.
  *
  * Falls back to the country the list itself gives when the detail has not arrived or holds neither:
  * a country alone is the least useful of the three for telling two similarly-named companies apart,
@@ -436,10 +441,19 @@ function partnerResultMeta(
   country: string | null
 ): string {
   const identity = detail?.identity
-  const parts = [
+  const address =
     identity && "registered_address" in identity
-      ? identity.registered_address?.city
-      : null,
+      ? identity.registered_address
+      : null
+
+  const parts = [
+    // The street and the town, in the order an address is written.
+    [
+      address?.street,
+      [address?.postal_code, address?.city].filter(Boolean).join(" "),
+    ]
+      .filter(Boolean)
+      .join(", "),
     identity && "commercial_register_no" in identity
       ? identity.commercial_register_no
       : null,
