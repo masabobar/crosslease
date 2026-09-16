@@ -12,10 +12,13 @@ import {
   AssessmentCatalogueResponseSchema,
   AssessmentListResponseSchema,
   AssessmentSchema,
+  PartnerConnectionsResponseSchema,
 } from "@/features/partners/api/assessmentSchema"
 import type { Assessment } from "@/features/partners/api/assessmentSchema"
 import {
+  BankAccountListResponseSchema,
   DuplicatePairListResponseSchema,
+  PartnerRolesResponseSchema,
   PartnerDetailResponseSchema,
   PartnerListResponseSchema,
 } from "@/features/partners/api/schema"
@@ -382,6 +385,130 @@ export const businessConfigHandlers = [
             name: "Internal assessment",
             free_text_only: true,
             attributes: [],
+          },
+        ],
+      })
+    )
+  ),
+
+  /**
+   * The party's roles and its bank accounts — the two tabs the partner detail opened on a 501.
+   *
+   * Both are real endpoints; only the mock was missing, which made two working screens read as
+   * broken ones. The role list is where a party's risk-sensitive assignments are reviewed, so one
+   * seeded row carries that flag rather than every row being the easy case.
+   */
+  http.get(`${API}/partners/:partnerId/roles`, ({ params }) =>
+    envelope(
+      PartnerRolesResponseSchema.parse({
+        partner_id: params.partnerId as string,
+        roles: [
+          {
+            role_assignment_id: mockUuid("a6c1"),
+            role: "lessee",
+            status: "active",
+            is_risk_sensitive: false,
+            assigned_by: {
+              user_id: "00000000-0000-4000-8000-000000000003",
+              display_name: "Power User",
+              email: "bank_power_user@prototype.example.com",
+            },
+            assigned_at: "2026-02-04T09:10:00Z",
+            note: null,
+            governed_action_id: null,
+          },
+          {
+            role_assignment_id: mockUuid("a6c2"),
+            role: "guarantor",
+            status: "active",
+            // Risk-sensitive: a guarantor assignment is what a reviewer is looking for here.
+            is_risk_sensitive: true,
+            assigned_by: {
+              user_id: "00000000-0000-4000-8000-000000000003",
+              display_name: "Power User",
+              email: "bank_power_user@prototype.example.com",
+            },
+            assigned_at: "2026-07-18T11:30:00Z",
+            note: "Guarantee recorded on PL-2025-00213.",
+            governed_action_id: null,
+          },
+        ],
+        history: [],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/bank-accounts`, ({ params }) =>
+    envelope(
+      BankAccountListResponseSchema.parse({
+        partner_id: params.partnerId as string,
+        items: [
+          {
+            id: mockUuid("a6b1"),
+            partner_id: params.partnerId as string,
+            iban: "DE89370400440532013000",
+            account_number: "0532013000",
+            holder_name: "Premium Leasing GmbH",
+            bank_name: "Commerzbank",
+            bic: "COBADEFFXXX",
+            status: "active",
+            created_at: "2026-02-04T09:10:00Z",
+            closed_at: null,
+          },
+          {
+            // A closed account — the list has to keep showing it, which is why `closed_at` is a
+            // field rather than a reason to drop the row.
+            id: mockUuid("a6b2"),
+            partner_id: params.partnerId as string,
+            iban: "DE02120300000000202051",
+            account_number: null,
+            holder_name: "Premium Leasing GmbH",
+            bank_name: "Deutsche Kreditbank",
+            bic: "BYLADEM1001",
+            status: "closed",
+            created_at: "2025-05-12T08:00:00Z",
+            closed_at: "2026-06-30T00:00:00Z",
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/connections`, ({ params }) =>
+    envelope(
+      PartnerConnectionsResponseSchema.parse({
+        partner_id: params.partnerId as string,
+        items: [
+          {
+            object_type: "contract",
+            object_id: "00000000-0000-4000-8000-0000000acc01",
+            label: "PL-2025-00211 · Volvo FH 460",
+            role: "lessee",
+            case_id: "00000000-0000-4000-8000-00000000c005",
+            leasing_company_partner_id: "00000000-0000-4000-8000-00000000a001",
+            leasing_company_name: "Premium Leasing GmbH",
+            status: "active",
+          },
+          {
+            object_type: "contract",
+            object_id: "00000000-0000-4000-8000-0000000acd01",
+            label: "PL-2025-00213 · Knaus Van TI Plus",
+            role: "guarantor",
+            case_id: "00000000-0000-4000-8000-00000000c001",
+            leasing_company_partner_id: "00000000-0000-4000-8000-00000000a001",
+            leasing_company_name: "Premium Leasing GmbH",
+            status: "active",
+          },
+          {
+            // A connection with no leasing company behind it — the column has to survive that.
+            object_type: "case",
+            object_id: "00000000-0000-4000-8000-00000000c001",
+            label: "RR-2026-104",
+            role: "lessee",
+            case_id: "00000000-0000-4000-8000-00000000c001",
+            leasing_company_partner_id: null,
+            leasing_company_name: null,
+            status: "open",
           },
         ],
       })

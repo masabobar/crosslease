@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next"
+import { usePartnersByIds } from "@/features/partners/hooks/usePartnersByIds"
+import type { PartnerDetailResponse } from "@/features/partners/api/schema"
 import { TableEmptyState } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
 import { Archive, Handshake, MoreHorizontal } from "lucide-react"
@@ -24,7 +26,10 @@ import type { PartnerActionType } from "@/features/partners/types"
 // visual verification, so it is deliberately not a drop-in change.
 const COL_NAME = "flex-1 min-w-[200px] max-w-[320px]"
 const COL_ROLES = "w-[200px] shrink-0"
-const COL_COUNTRY = "w-[90px] shrink-0"
+// Location, not a bare country code: the prototype shows where a party actually sits, which
+// is what tells two similarly-named companies apart.
+const COL_LOCATION = "w-[170px] shrink-0"
+const COL_IDENTIFIERS = "w-[210px] shrink-0"
 const COL_STATUS = "w-[160px] shrink-0"
 const COL_UBO = "w-[130px] shrink-0"
 const COL_ACTIONS = "shrink-0 ml-auto flex items-center justify-center p-2"
@@ -88,6 +93,36 @@ type PartnerTableProps = {
   onSubmitPartner?: () => void
 }
 
+/**
+ * `City · Country`, from the partner's registered address.
+ *
+ * Falls back to the country the list itself carries — a country alone is thin, but it is what the
+ * list endpoint gives and it is better than an empty cell while the detail is in flight.
+ */
+function partnerLocation(
+  detail: PartnerDetailResponse | undefined,
+  country: string | null
+): string {
+  const identity = detail?.identity
+  const address =
+    identity && "registered_address" in identity
+      ? identity.registered_address
+      : null
+  const parts = [address?.city, address?.country ?? country].filter(Boolean)
+  return parts.length > 0 ? parts.join(" · ") : "—"
+}
+
+/** The commercial register number, where the party has one — a person or sole trader may not. */
+function partnerRegisterNumber(
+  detail: PartnerDetailResponse | undefined
+): string {
+  const identity = detail?.identity
+  if (identity && "commercial_register_no" in identity) {
+    return identity.commercial_register_no ?? "—"
+  }
+  return "—"
+}
+
 function PartnerTable({
   partners,
   isLoading,
@@ -98,6 +133,9 @@ function PartnerTable({
   onSubmitPartner,
 }: PartnerTableProps) {
   const { t } = useTranslation("partners")
+  const { partnersById } = usePartnersByIds(
+    partners.map(partner => partner.partner_id)
+  )
 
   return (
     <div
@@ -115,9 +153,14 @@ function PartnerTable({
           {t("list.table.columns.role")}
         </div>
         <div
-          className={`${COL_COUNTRY} text-sm font-medium text-foreground px-2`}
+          className={`${COL_LOCATION} text-sm font-medium text-foreground px-2`}
         >
-          {t("list.table.columns.country")}
+          {t("list.table.columns.location")}
+        </div>
+        <div
+          className={`${COL_IDENTIFIERS} text-sm font-medium text-foreground px-2`}
+        >
+          {t("list.table.columns.identifiers")}
         </div>
         <div
           className={`${COL_STATUS} text-sm font-medium text-foreground px-2`}
@@ -145,8 +188,11 @@ function PartnerTable({
               <div className={`${COL_ROLES} p-2`}>
                 <div className="bg-muted rounded h-4 animate-pulse w-28" />
               </div>
-              <div className={`${COL_COUNTRY} p-2`}>
-                <div className="bg-muted rounded h-4 animate-pulse w-8" />
+              <div className={`${COL_LOCATION} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-24" />
+              </div>
+              <div className={`${COL_IDENTIFIERS} p-2`}>
+                <div className="bg-muted rounded h-4 animate-pulse w-32" />
               </div>
               <div className={`${COL_STATUS} p-2`}>
                 <div className="bg-muted rounded-full h-5 animate-pulse w-20" />
@@ -235,9 +281,20 @@ function PartnerTable({
                 </span>
               )}
             </div>
-            <div className={`${COL_COUNTRY} p-2`}>
+            {/* City and country, and the register number beside it. `PartnerListItem` carries a
+                country and nothing else, so both come from the detail of the rows on this page —
+                bounded by the page size, and already cached by whatever opened one of them. */}
+            <div className={`${COL_LOCATION} p-2`}>
               <span className="text-sm text-muted-foreground">
-                {partner.country ?? "—"}
+                {partnerLocation(
+                  partnersById.get(partner.partner_id),
+                  partner.country
+                )}
+              </span>
+            </div>
+            <div className={`${COL_IDENTIFIERS} p-2`}>
+              <span className="text-sm text-muted-foreground">
+                {partnerRegisterNumber(partnersById.get(partner.partner_id))}
               </span>
             </div>
             <div className={`${COL_STATUS} p-2`}>

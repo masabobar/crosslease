@@ -76,7 +76,9 @@
         "role": "Role",
         "country": "Country",
         "status": "Status",
-        "uboStatus": "UBO status"
+        "uboStatus": "UBO status",
+        "location": "Location",
+        "identifiers": "Identifiers"
       },
       "actions": {
         "archive": "Archive"
@@ -294,7 +296,8 @@
       "confirmationHistory": "Confirmation history",
       "mergeHistory": "Merge history",
       "decisionHistory": "Decision history",
-      "assessment": "Assessment"
+      "assessment": "Assessment",
+      "connections": "Connections"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -749,6 +752,34 @@
       "reportDate": "Report date",
       "sourceReference": "Source reference",
       "contextNote": "Note"
+    }
+  },
+  "connections": {
+    "heading": "Connections",
+    "subtitle": "Every place this party appears across the book, and in what role.",
+    "openCase": "Open case",
+    "empty": {
+      "title": "Not connected to anything yet",
+      "description": "This party is not attached to a case, contract or object."
+    },
+    "columns": {
+      "object": "Attached to",
+      "role": "Role",
+      "leasingCompany": "Leasing company",
+      "case": "Case",
+      "status": "Status"
+    },
+    "objectTypes": {
+      "contract": "Contract",
+      "case": "Case",
+      "object": "Lease object"
+    },
+    "roles": {
+      "lessee": "Lessee",
+      "guarantor": "Guarantor",
+      "co_obligor": "Co-obligor",
+      "leasing_company": "Leasing company",
+      "supplier": "Supplier"
     }
   }
 }

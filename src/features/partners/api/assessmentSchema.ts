@@ -82,3 +82,30 @@ export const AssessmentListResponseSchema = z.object({
 export type AssessmentListResponse = z.infer<
   typeof AssessmentListResponseSchema
 >
+
+/**
+ * Where a party appears across the book — `GET /partners/{id}/connections`.
+ *
+ * One row per place the party is attached: a case, a contract, an object. `object_type` says
+ * which, and `role` says what the party is there (lessee, guarantor, supplier). Read-only: the
+ * connection is a consequence of the business record, not something authored here.
+ */
+export const PartnerConnectionSchema = z.object({
+  object_type: z.string(),
+  object_id: z.string(),
+  label: z.string(),
+  role: z.string(),
+  case_id: z.string(),
+  leasing_company_partner_id: z.string().nullable(),
+  leasing_company_name: z.string().nullable(),
+  status: z.string(),
+})
+export type PartnerConnection = z.infer<typeof PartnerConnectionSchema>
+
+export const PartnerConnectionsResponseSchema = z.object({
+  partner_id: z.string().uuid(),
+  items: z.array(PartnerConnectionSchema),
+})
+export type PartnerConnectionsResponse = z.infer<
+  typeof PartnerConnectionsResponseSchema
+>

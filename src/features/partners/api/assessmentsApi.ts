@@ -3,12 +3,25 @@ import {
   AssessmentCatalogueResponseSchema,
   AssessmentListResponseSchema,
   AssessmentSchema,
+  PartnerConnectionsResponseSchema,
 } from "@/features/partners/api/assessmentSchema"
 import type {
   Assessment,
   AssessmentCatalogueResponse,
   AssessmentListResponse,
+  PartnerConnectionsResponse,
 } from "@/features/partners/api/assessmentSchema"
+
+export const PARTNER_CONNECTION_QUERY_KEYS = {
+  list: (partnerId: string) => ["partners", "connections", partnerId] as const,
+}
+
+export async function fetchPartnerConnections(
+  partnerId: string
+): Promise<PartnerConnectionsResponse> {
+  const data = await api.get(`/partners/${partnerId}/connections`)
+  return PartnerConnectionsResponseSchema.parse(data)
+}
 
 export const ASSESSMENT_QUERY_KEYS = {
   // Tenant-wide and rarely changing — the same catalogue backs every partner's form.

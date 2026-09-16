@@ -76,7 +76,9 @@
         "role": "Rolle",
         "country": "Land",
         "status": "Status",
-        "uboStatus": "UBO-Status"
+        "uboStatus": "UBO-Status",
+        "location": "Standort",
+        "identifiers": "Kennungen"
       },
       "actions": {
         "archive": "Archivieren"
@@ -294,7 +296,8 @@
       "confirmationHistory": "Confirmation history",
       "mergeHistory": "Merge history",
       "decisionHistory": "Entscheidungshistorie",
-      "assessment": "Bewertung"
+      "assessment": "Bewertung",
+      "connections": "Verbindungen"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -749,6 +752,34 @@
       "reportDate": "Berichtsdatum",
       "sourceReference": "Quellenreferenz",
       "contextNote": "Notiz"
+    }
+  },
+  "connections": {
+    "heading": "Verbindungen",
+    "subtitle": "Überall, wo dieser Partner im Bestand vorkommt, und in welcher Rolle.",
+    "openCase": "Vorgang öffnen",
+    "empty": {
+      "title": "Noch keine Verbindungen",
+      "description": "Dieser Partner ist keinem Vorgang, Vertrag oder Objekt zugeordnet."
+    },
+    "columns": {
+      "object": "Zugeordnet zu",
+      "role": "Rolle",
+      "leasingCompany": "Leasinggesellschaft",
+      "case": "Vorgang",
+      "status": "Status"
+    },
+    "objectTypes": {
+      "contract": "Vertrag",
+      "case": "Vorgang",
+      "object": "Leasingobjekt"
+    },
+    "roles": {
+      "lessee": "Leasingnehmer",
+      "guarantor": "Bürge",
+      "co_obligor": "Mitverpflichteter",
+      "leasing_company": "Leasinggesellschaft",
+      "supplier": "Lieferant"
     }
   }
 }

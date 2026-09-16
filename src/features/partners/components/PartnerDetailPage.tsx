@@ -21,6 +21,7 @@ import {
 } from "@/features/partners/components/tabs/OverviewTab"
 import { ResolutionCandidatesTab } from "@/features/partners/components/tabs/ResolutionCandidatesTab"
 import { AssessmentTab } from "@/features/partners/components/tabs/AssessmentTab"
+import { ConnectionsTab } from "@/features/partners/components/tabs/ConnectionsTab"
 import { RolesTab } from "@/features/partners/components/tabs/RolesTab"
 import { UboTab } from "@/features/partners/components/tabs/UboTab"
 import { IdentityChangesTab } from "@/features/partners/components/tabs/IdentityChangesTab"
@@ -49,6 +50,7 @@ import {
 type TabKey =
   | "overview"
   | "assessment"
+  | "connections"
   | "resolution"
   | "roles"
   | "ubo"
@@ -253,6 +255,11 @@ export default function PartnerDetailPage() {
               label: t("detail.tabs.assessment"),
               testId: "tab-assessment",
             },
+            {
+              key: "connections" as const,
+              label: t("detail.tabs.connections"),
+              testId: "tab-connections",
+            },
             ...(showResolutionTab
               ? [
                   {
@@ -310,6 +317,9 @@ export default function PartnerDetailPage() {
           )}
           {activeTab === "assessment" && (
             <AssessmentTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "connections" && (
+            <ConnectionsTab partnerId={partner.partner_id} />
           )}
           {activeTab === "roles" && <RolesTab partnerId={partner.partner_id} />}
           {activeTab === "ubo" && (

@@ -3,16 +3,19 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query"
 import { FIVE_MINUTES_MS } from "@/lib/constants"
 import {
   ASSESSMENT_QUERY_KEYS,
+  PARTNER_CONNECTION_QUERY_KEYS,
   cancelPartnerAssessment,
   createPartnerAssessment,
   fetchAssessmentCatalogue,
   fetchPartnerAssessments,
+  fetchPartnerConnections,
   type AssessmentValueInput,
 } from "@/features/partners/api/assessmentsApi"
 import type {
   Assessment,
   AssessmentCatalogueResponse,
   AssessmentListResponse,
+  PartnerConnectionsResponse,
 } from "@/features/partners/api/assessmentSchema"
 
 export function useAssessmentCatalogue(): UseQueryResult<
@@ -33,6 +36,16 @@ export function usePartnerAssessments(
   return useQuery({
     queryKey: ASSESSMENT_QUERY_KEYS.list(partnerId ?? ""),
     queryFn: () => fetchPartnerAssessments(partnerId as string),
+    enabled: Boolean(partnerId),
+  })
+}
+
+export function usePartnerConnections(
+  partnerId: string | undefined
+): UseQueryResult<PartnerConnectionsResponse, Error> {
+  return useQuery({
+    queryKey: PARTNER_CONNECTION_QUERY_KEYS.list(partnerId ?? ""),
+    queryFn: () => fetchPartnerConnections(partnerId as string),
     enabled: Boolean(partnerId),
   })
 }
