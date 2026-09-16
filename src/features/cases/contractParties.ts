@@ -31,6 +31,11 @@ export type KindOfObligation = (typeof KIND_OF_OBLIGATION_OPTIONS)[number]
  * An archived or merged partner is excluded for the obvious reason: it is not a counterparty any
  * more, and merged records point somewhere else.
  */
+// The role a party plays in a contract, as the registry records it. Only the lessee one is read
+// here; the rest are listed so the wire value is not a bare string at the call site.
+export const PARTNER_ROLE_LESSEE = "lessee"
+export const PARTNER_ROLE_LEASING_COMPANY = "leasing_company"
+
 export function isPartnerUsableAsParty(partner: PartnerListItem): boolean {
   return partner.status === PartnerStatusSchema.enum.confirmed
 }

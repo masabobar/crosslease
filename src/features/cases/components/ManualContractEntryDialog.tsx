@@ -9,6 +9,14 @@ import { showApiError } from "@/lib/apiErrorMessage"
 import { createCaseContract } from "@/features/cases/api/casesApi"
 import { CASE_QUERY_KEYS } from "@/features/cases/api/casesApi"
 import { useQueryClient } from "@tanstack/react-query"
+import { useResolvedTenantId } from "@/hooks/useResolvedTenantId"
+import { usePartnerList } from "@/features/partners/hooks/usePartnerList"
+import { PartnerStatusSchema } from "@/features/partners/api/schema"
+import {
+  PARTNER_ROLE_LEASING_COMPANY,
+  PARTNER_ROLE_LESSEE,
+  isPartnerUsableAsParty,
+} from "@/features/cases/contractParties"
 import { CashFlowTab } from "@/features/cases/components/steps/CashFlowTab"
 import { ContractDetailsTab } from "@/features/cases/components/steps/ContractDetailsTab"
 import { CollateralsTab } from "@/features/cases/components/steps/CollateralsTab"
@@ -116,12 +124,40 @@ export function ManualContractEntryDialog({
   const [contractId, setContractId] = useState<string | null>(
     existingContractId ?? null
   )
-  // The inherited lessee, until the contract exists to hold it. Owned here rather than in the tab
-  // because `ensureContract` is what writes it, and Remove has to be able to clear it before there
-  // is any contract to remove it FROM.
-  const [pendingLesseePartnerId, setPendingLesseePartnerId] = useState<
-    string | undefined
-  >(existingContractId === undefined ? inheritedLesseePartnerId : undefined)
+  // A new contract opens on a lessee already chosen: the one carried over from the last contract
+  // entered, and failing that the first confirmed partner in the registry — a request whose first
+  // contract is being entered has nothing to inherit, and that is the case the empty picker kept
+  // turning up on.
+  //
+  // PROTOTYPE DEFAULT, and only that. Picking an arbitrary counterparty for the user is not a rule
+  // any bank would want; it exists so the screen is never reviewed on an empty state. When this
+  // stops being a prototype, drop `defaultPartnerId` and keep the inheritance.
+  const tenantId = useResolvedTenantId()
+  const registryPartners = usePartnerList(tenantId, {
+    status: [PartnerStatusSchema.enum.confirmed],
+  })
+  const usableParties = (registryPartners.data?.items ?? []).filter(
+    isPartnerUsableAsParty
+  )
+  // Prefer a party the registry already records as a lessee, and never fall back onto a leasing
+  // company: that is the party being refinanced, not its customer, and starting every contract on
+  // it would put the wrong counterparty one keystroke from being saved.
+  const defaultPartnerId = (
+    usableParties.find(partner =>
+      partner.roles.includes(PARTNER_ROLE_LESSEE)
+    ) ??
+    usableParties.find(
+      partner => !partner.roles.includes(PARTNER_ROLE_LEASING_COMPANY)
+    )
+  )?.partner_id
+
+  // Derived rather than state, so it settles as soon as the registry answers instead of being
+  // captured empty on the first render. `isLesseeCleared` is what Remove sets.
+  const [isLesseeCleared, setLesseeCleared] = useState(false)
+  const pendingLesseePartnerId =
+    existingContractId !== undefined || isLesseeCleared
+      ? undefined
+      : (inheritedLesseePartnerId ?? defaultPartnerId)
   const [isCreating, setCreating] = useState(false)
   const [isSaving, setSaving] = useState(false)
   // The Contract details tab is the only surface holding unsaved form state, so it hands its
@@ -195,7 +231,7 @@ export function ManualContractEntryDialog({
           <LesseeTab
             contractId={contractId}
             inheritedPartnerId={pendingLesseePartnerId}
-            onClearInherited={() => setPendingLesseePartnerId(undefined)}
+            onClearInherited={() => setLesseeCleared(true)}
             onNeedContract={ensureContract}
           />
         )}

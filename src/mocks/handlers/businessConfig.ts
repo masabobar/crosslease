@@ -186,15 +186,18 @@ export const businessConfigHandlers = [
           country: listed?.country ?? "DE",
           tax_id_vat: null,
           lei: null,
-          commercial_register_no: lessee ? "Creditreform PRT-DE-0044120" : null,
-          registered_address: lessee
-            ? {
-                street: "Hafenstraße 12",
-                postal_code: "20095",
-                city: lessee.city,
-                country: "DE",
-              }
-            : null,
+          // Every listed partner gets a register number and an address, not just the two seeded
+          // lessees: the manual-entry card shows city · type · register, and a party resolved from
+          // the registry rendered as a name over a single word looked like a half-loaded card.
+          commercial_register_no: lessee
+            ? "Creditreform PRT-DE-0044120"
+            : `Creditreform PRT-${listed?.country ?? "DE"}-00${id.slice(-5, -1)}`,
+          registered_address: {
+            street: "Hafenstraße 12",
+            postal_code: "20095",
+            city: lessee?.city ?? "Hamburg",
+            country: listed?.country ?? "DE",
+          },
           foreign_identifier: null,
         },
         created_at: "2026-02-04T09:00:00Z",
