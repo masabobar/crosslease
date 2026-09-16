@@ -263,6 +263,35 @@ export const DISBURSEMENT_RELEASE_TASK_CODE = "D-5"
  * step is held by something that is **not** on the checklist, which is exactly why the row has to
  * say so — otherwise the tick is simply dead with no reason on screen.
  */
+/**
+ * The one open step in a phase that may be resolved right now.
+ *
+ * ── WHY THE CHECKLIST IS LINEAR ────────────────────────────────────────────────────────────────
+ * The prototype is explicit and repeats itself about it — *"It should be one by one. It should be
+ * linear."* Only the lowest-ordered open step of a phase can be ticked; the ones after it are
+ * readable but not actionable. Working elsewhere in the app is not restricted — only the ticking.
+ *
+ * ── THIS IS ENFORCED HERE, NOT BY THE CONTRACT ─────────────────────────────────────────────────
+ * `openapi.json` expresses no ordering rule on `set_item_status`, so this is a product rule the
+ * UI applies rather than a refusal it mirrors. Said plainly because it cuts the other way from the
+ * usual gating: if the backend turns out to be stricter nothing breaks, but if it is deliberately
+ * permissive this is the thing to relax.
+ *
+ * Returns `null` when the phase has no open step left.
+ */
+export function nextActionableItemId(
+  items: readonly ChecklistItemResponse[]
+): string | null {
+  const open = items.filter(
+    item => item.status === ChecklistItemStatusSchema.enum.open
+  )
+  if (open.length === 0) return null
+
+  // The list arrives in display order and `display_order` may be absent, so position is the
+  // fallback — the same ordering the phase grouping already reads.
+  return open[0].id
+}
+
 export function isHeldByOpenConditions(
   item: ChecklistItemResponse,
   openConditionCount: number

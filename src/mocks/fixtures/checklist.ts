@@ -42,6 +42,12 @@ type Seed = {
   status: ChecklistItemResponse["status"]
   fourEyes?: boolean
   mandatory?: boolean
+  /** Present when the step applies only under a condition — its presence IS `applicability: rule`. */
+  condition?: string
+  /** Where the case is approved or rejected. */
+  decision?: boolean
+  /** Nothing after it can undo it. */
+  noWayBack?: boolean
 }
 
 const SEEDS: Seed[] = [
@@ -69,11 +75,13 @@ const SEEDS: Seed[] = [
     stage: "pre_submission",
     status: "open",
     fourEyes: true,
+    decision: true,
   },
   {
     n: "5",
     code: "B-1",
     name: "Settlement documents saved",
+    condition: "Only when the financing exceeds the treasury threshold.",
     role: "front_office",
     stage: "stage_1_review",
     status: "open",
@@ -246,6 +254,9 @@ const SEEDS: Seed[] = [
     stage: "pre_disbursement",
     status: "open",
     fourEyes: true,
+    // The disbursement is the point nothing after it can undo, and it is the step approval
+    // conditions hold — both states the row has to be able to show.
+    noWayBack: true,
   },
   {
     n: "29",
@@ -400,7 +411,12 @@ export function mockChecklist(
     display_order: index + 1,
     stage_categorization: s.stage,
     task_type: "checkbox",
-    applicability: "always",
+    // A handful of steps genuinely apply only under a condition — the prototype marks those
+    // `conditional` and prints the condition as the tag's tooltip, which needs both fields.
+    applicability: s.condition === undefined ? "always" : "rule",
+    condition_text: s.condition ?? null,
+    is_decision_step: s.decision ?? false,
+    is_no_way_back: s.noWayBack ?? false,
     four_eyes: s.fourEyes ?? false,
     doc_requirement_ref: null,
     status: s.status,

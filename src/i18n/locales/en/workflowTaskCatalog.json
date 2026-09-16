@@ -511,7 +511,9 @@
       "or": " or "
     },
     "heldByConditions": "Held by {{count}} open condition",
-    "heldByConditions_other": "Held by {{count}} open conditions"
+    "heldByConditions_other": "Held by {{count}} open conditions",
+    "conditional": "conditional",
+    "noWayBack": "No way back point — nothing after this can undo it"
   },
   "caseTypes": {
     "refinancing_request": "Main Refinancing Process",

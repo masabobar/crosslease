@@ -1,6 +1,13 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Check, ChevronDown, ChevronRight, Minus, Shield } from "lucide-react"
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  Minus,
+  Shield,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { formatDateTime } from "@/lib/formatters"
 import { resolveUserDisplayName } from "@/features/users/utils"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
+import { TaskApplicabilitySchema } from "@/features/workflowTaskCatalog/api/schema"
 import { CaseChecklistItemStatusBadge } from "@/features/workflowTaskCatalog/components/CaseChecklistStatusBadge"
 import { SetChecklistItemStatusDialog } from "@/features/workflowTaskCatalog/components/SetChecklistItemStatusDialog"
 import { ChecklistItemStatusSchema } from "@/features/workflowTaskCatalog/api/runtimeSchema"
@@ -19,6 +27,7 @@ import {
   canRoleActOn,
   groupChecklistByPhase,
   isHeldByOpenConditions,
+  nextActionableItemId,
   phaseHeading,
   stepRoles,
   taskNumber,
@@ -132,6 +141,8 @@ function PhaseSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const heading = phaseHeading(group)
   const key = group.letter ?? "unclassified"
+  // Linear: only the phase's lowest open step is tickable — see `nextActionableItemId`.
+  const nextActionableId = nextActionableItemId(group.items)
 
   return (
     <Collapsible
@@ -185,6 +196,7 @@ function PhaseSection({
               )}
               openConditionCount={openConditionCount}
               canWrite={canWrite}
+              isNextInPhase={item.id === nextActionableId}
               users={users}
               onSetStatus={onSetStatus}
             />
@@ -202,6 +214,7 @@ function TaskRow({
   heldByConditions,
   openConditionCount,
   canWrite,
+  isNextInPhase,
   users,
   onSetStatus,
 }: {
@@ -211,6 +224,8 @@ function TaskRow({
   heldByConditions: boolean
   openConditionCount: number
   canWrite: boolean
+  /** Whether this is the phase's lowest open step — the only one the prototype lets you tick. */
+  isNextInPhase: boolean
   users: readonly UserListItem[]
   onSetStatus: (item: ChecklistItemResponse) => void
 }) {
@@ -223,7 +238,8 @@ function TaskRow({
   // A step another role group owns is readable, not actionable — the dummy disables its tick and
   // says so on the role tag. The backend enforces the same; this stops the user finding out by
   // being refused.
-  const isActionable = isOpen && canWrite && canAct && !heldByConditions
+  const isActionable =
+    isOpen && isNextInPhase && canWrite && canAct && !heldByConditions
 
   return (
     <li
@@ -275,7 +291,31 @@ function TaskRow({
                 data-testid={`case-checklist-four-eyes-${item.id}`}
               />
             )}
+            {/* A step nothing after it can undo. Marked on the name for the same reason four eyes
+                is: it is a property of the task, not a state of it. */}
+            {item.is_no_way_back && (
+              <Lock
+                size={13}
+                className="ml-1.5 inline shrink-0 align-text-bottom text-muted-foreground"
+                aria-label={t("caseChecklist.noWayBack")}
+                data-testid={`case-checklist-no-way-back-${item.id}`}
+              />
+            )}
           </p>
+
+          {/* `applicability: "rule"` — the step applies only when its condition holds. The tag is
+              what the prototype shows; `condition_text` is the only place a reader learns WHICH
+              condition, so it is the tooltip rather than being dropped. */}
+          {item.applicability === TaskApplicabilitySchema.enum.rule && (
+            <Badge
+              variant="outline"
+              className="font-normal"
+              title={item.condition_text ?? undefined}
+              data-testid={`case-checklist-conditional-${item.id}`}
+            >
+              {t("caseChecklist.conditional")}
+            </Badge>
+          )}
 
           {/* One role tag, coloured by whether this user's role group may act. The dummy replaced
               the row's three separate tags — the move pill, the freeze tag and a four-eyes badge —
@@ -346,7 +386,12 @@ function TaskRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <CaseChecklistItemStatusBadge status={item.status} />
+        {/* Only for the outcomes the tick cannot show. A checked step has a filled circle and an
+            open one an empty circle — repeating that as a badge beside it is the row saying the
+            same thing twice, which is why the prototype badges neither. */}
+        {!isChecked && !isOpen && (
+          <CaseChecklistItemStatusBadge status={item.status} />
+        )}
         {/* Offered only while the item is open: `set_item_status` accepts
             OPEN → checked/not_applicable exactly once and then raises
             WTC_CHECKLIST_ITEM_IMMUTABLE, so a settled task gets no control rather than a

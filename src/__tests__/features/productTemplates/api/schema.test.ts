@@ -432,7 +432,6 @@ describe("ProductTemplateWizardFormSchema", () => {
       })
     ).toThrow()
   })
-
 })
 
 describe("ProductTemplatePublishFormSchema", () => {
@@ -508,7 +507,6 @@ describe("ProductTemplatePublishFormSchema", () => {
       "minTermExceedsMax"
     )
   })
-
 })
 
 const validVersionSummary = {

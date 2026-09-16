@@ -511,7 +511,9 @@
       "or": " oder "
     },
     "heldByConditions": "Blockiert durch {{count}} offene Bedingung",
-    "heldByConditions_other": "Blockiert durch {{count}} offene Bedingungen"
+    "heldByConditions_other": "Blockiert durch {{count}} offene Bedingungen",
+    "conditional": "bedingt",
+    "noWayBack": "Point of no return – danach nicht mehr umkehrbar"
   },
   "caseTypes": {
     "refinancing_request": "Hauptrefinanzierungsprozess",

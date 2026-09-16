@@ -97,6 +97,13 @@ export const ChecklistItemResponseSchema = z.object({
   stage_categorization: StageCategorizationSchema.nullish(),
   task_type: TaskTypeSchema.nullish(),
   applicability: TaskApplicabilitySchema.nullish(),
+  // What `applicability: "rule"` actually says, in words — the prototype prints it as the tooltip
+  // on the `conditional` tag, which is the only place a reader learns WHICH condition.
+  condition_text: z.string().nullish(),
+  // Two flags the prototype marks on the row: a decision step is where the case is approved or
+  // rejected, and a no-way-back point is one nothing after it can undo.
+  is_decision_step: z.boolean().default(false),
+  is_no_way_back: z.boolean().default(false),
   four_eyes: z.boolean().default(false),
   doc_requirement_ref: z.string().uuid().nullish(),
   status: ChecklistItemStatusSchema,

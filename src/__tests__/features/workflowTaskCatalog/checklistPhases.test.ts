@@ -3,6 +3,7 @@ import {
   canRoleActOn,
   groupChecklistByPhase,
   isHeldByOpenConditions,
+  nextActionableItemId,
   isOwnedByRole,
   phaseHeading,
   phaseLetterFromTaskCode,
@@ -24,6 +25,8 @@ function item(
     task_code: "A-01",
     task_name: "Pre-inquiry form created & saved",
     is_mandatory: true,
+    is_decision_step: false,
+    is_no_way_back: false,
     weight: null,
     responsible_role: null,
     responsible_roles: ["front_office"],
@@ -407,5 +410,40 @@ describe("isHeldByOpenConditions", () => {
     for (const code of ["A-3", "C-1", "D-4", "D-50", "E-12", null]) {
       expect(isHeldByOpenConditions(item({ task_code: code }), 2)).toBe(false)
     }
+  })
+})
+
+describe("nextActionableItemId", () => {
+  it("names the first open item", () => {
+    const items = [
+      item({ status: "checked" }),
+      item({ status: "open" }),
+      item({ status: "open" }),
+    ]
+    expect(nextActionableItemId(items)).toBe(items[1].id)
+  })
+
+  // The rule is "the lowest OPEN one", not "the one after the last settled one": a phase whose
+  // settled items are interleaved must still offer the earliest open step.
+  it("skips settled items wherever they sit", () => {
+    const items = [
+      item({ status: "not_applicable" }),
+      item({ status: "checked" }),
+      item({ status: "open" }),
+    ]
+    expect(nextActionableItemId(items)).toBe(items[2].id)
+  })
+
+  it("returns null when the phase has nothing open", () => {
+    expect(
+      nextActionableItemId([
+        item({ status: "checked" }),
+        item({ status: "checked" }),
+      ])
+    ).toBeNull()
+  })
+
+  it("returns null for an empty phase", () => {
+    expect(nextActionableItemId([])).toBeNull()
   })
 })
