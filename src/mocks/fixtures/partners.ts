@@ -129,7 +129,7 @@ export const mockDuplicatePairs: DuplicateCandidatePairResponse[] = [
 ]
 
 /**
- * The two lessees the design case's contracts point at.
+ * The lessees the design case's contracts point at.
  *
  * They are not in `mockPartners` because that fixture backs the *partner list* screen, whose rows
  * are leasing companies and merge candidates. A lessee is a different population — it is reached
@@ -147,5 +147,17 @@ export const mockLesseePartners: Record<
   "00000000-0000-4000-8000-00000000a102": {
     name: "Nordkap Spedition GmbH",
     city: "Kiel",
+  },
+  "00000000-0000-4000-8000-00000000a103": {
+    name: "Baltic Cold Chain AB",
+    city: "Malmö",
+  },
+  "00000000-0000-4000-8000-00000000a104": {
+    name: "Donau Transporte KG",
+    city: "Linz",
+  },
+  "00000000-0000-4000-8000-00000000a105": {
+    name: "Alpine Baugeräte GmbH",
+    city: "Salzburg",
   },
 }

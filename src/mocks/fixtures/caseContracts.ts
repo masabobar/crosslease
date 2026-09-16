@@ -30,6 +30,50 @@ const DESIGN_CASE_ID = "00000000-0000-4000-8000-00000000c001"
 // wizard summary's derived lessee count is 2, not 3, which is the case worth having a fixture for.
 const LESSEE_PARTNER_ID = "00000000-0000-4000-8000-00000000a101"
 const LESSEE_PARTNER_ID_2 = "00000000-0000-4000-8000-00000000a102"
+const LESSEE_PARTNER_ID_3 = "00000000-0000-4000-8000-00000000a103"
+const LESSEE_PARTNER_ID_4 = "00000000-0000-4000-8000-00000000a104"
+const LESSEE_PARTNER_ID_5 = "00000000-0000-4000-8000-00000000a105"
+
+/**
+ * The rest of the leasing company's book, so the wizard's contract table has more than one page.
+ *
+ * It had three contracts and a page size of five, so the pager never rendered — which is what made
+ * the step look unfinished against a dummy that shows `Previous 1 2 3 … Next`. A refinancing
+ * request IS the "500 contracts of which 20" case (the bulk-remove endpoint says so in as many
+ * words), so a handful of rows was never a realistic fixture either.
+ *
+ * One row deliberately carries no lessee and one is deferred: both are states the table has to
+ * render, and every row being conveniently complete is how they stop being exercised.
+ */
+function bookContract(index: number): CaseContract {
+  const lessees = [
+    LESSEE_PARTNER_ID,
+    LESSEE_PARTNER_ID_2,
+    LESSEE_PARTNER_ID_3,
+    LESSEE_PARTNER_ID_4,
+    LESSEE_PARTNER_ID_5,
+  ]
+  return {
+    id: `00000000-0000-4000-8000-0000000ace${index.toString(16).padStart(2, "0")}`,
+    leasing_company_contract_number: `PL-2025-00${220 + index}`,
+    lessee_partner_id: index === 4 ? null : lessees[index % lessees.length],
+    short_name: null,
+    contract_type: index % 3 === 0 ? "hire_purchase" : "lease",
+    amortisation_type: index % 2 === 0 ? "full" : "partial",
+    term_months: [36, 48, 60, 72][index % 4],
+    net_instalment: `${1200 + index * 145}.00`,
+    residual_value: `${8000 + index * 1500}.00`,
+    contract_residual: null,
+    target_closing_balance: null,
+    deviating_first_due_date: null,
+    contract_start: "2025-07-01",
+    deferred_state: index === 7 ? "deferred" : "active",
+  }
+}
+
+const LEASING_BOOK: CaseContract[] = Array.from({ length: 12 }, (_, index) =>
+  bookContract(index + 1)
+)
 
 const LIVE_FINANCING_CONTRACTS: CaseContract[] = [
   {
@@ -68,7 +112,7 @@ const LIVE_FINANCING_CONTRACTS: CaseContract[] = [
   {
     id: "00000000-0000-4000-8000-0000000acc03",
     leasing_company_contract_number: "PL-2025-00213",
-    lessee_partner_id: null,
+    lessee_partner_id: LESSEE_PARTNER_ID_3,
     short_name: "Linde H30 forklift",
     contract_type: "lease",
     amortisation_type: "partial",
@@ -130,6 +174,6 @@ const DESIGN_CASE_CONTRACTS: CaseContract[] = [
 ]
 
 export const mockCaseContractsByCaseId: Record<string, CaseContract[]> = {
-  [LIVE_FINANCING_CASE_ID]: LIVE_FINANCING_CONTRACTS,
+  [LIVE_FINANCING_CASE_ID]: [...LIVE_FINANCING_CONTRACTS, ...LEASING_BOOK],
   [DESIGN_CASE_ID]: DESIGN_CASE_CONTRACTS,
 }

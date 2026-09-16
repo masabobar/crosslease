@@ -50,9 +50,9 @@ import {
   toggleOne,
 } from "@/features/cases/contractSelection"
 
-// The dummy's own page: three rows visible with a `1 2 3 …` pager beneath. Ten keeps the pager
-// meaningful on a real case without making the per-row object lookups a burst.
-const CONTRACT_PAGE_SIZE = 10
+// The dummy shows a short page under a `Previous 1 2 3 … Next` pager, which is also what keeps the
+// per-row lessee and object lookups from firing in a burst — they are bounded by this number.
+const CONTRACT_PAGE_SIZE = 5
 
 type Props = {
   caseId: string
