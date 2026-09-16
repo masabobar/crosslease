@@ -179,6 +179,9 @@ const DocumentCatalogPage = lazy(
 const CaseListPage = lazy(
   () => import("@/features/cases/components/CaseListPage")
 )
+const FinancingListPage = lazy(
+  () => import("@/features/financing/components/FinancingListPage")
+)
 const CaseDetailPage = lazy(
   () => import("@/features/cases/components/CaseDetailPage")
 )
@@ -588,6 +591,18 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={CASE_DOCUMENT_REQUIREMENTS_READ_ALLOWED_ROLES}>
               <CaseDocumentRequirementsPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        // Same read gate as the case list, for the same reason: a financing is a case's outcome,
+        // so whoever may read the case may read the list of what came out of it.
+        path: PATHS.FINANCING_LIST,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_READ_ALLOWED_ROLES}>
+              <FinancingListPage />
             </RoleGuard>
           </Suspense>
         ),

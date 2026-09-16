@@ -78,6 +78,9 @@ export const PATHS = {
   // is how Front/Back Office reach a case's documents; before this there was no way to a case's
   // document surface except typing the CASE_DOCUMENT_REQUIREMENTS URL by hand.
   CASE_LIST: "/cases",
+  // The financings list. There is deliberately no detail route: every financing endpoint other
+  // than this list is case-scoped, so a row opens its case workspace.
+  FINANCING_LIST: "/financings",
   CASE_DETAIL: "/cases/:caseId",
   // The New refinancing request wizard (US 1.1–1.5, 1.17). Nested under the case because every
   // step writes to a case-scoped endpoint, so the case exists before the wizard opens — see

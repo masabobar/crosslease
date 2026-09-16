@@ -225,5 +225,42 @@
       "title": "Der festgeschriebene Zinssatz ist vor der Wertstellung abgelaufen",
       "description": "Er war {{days}} Tage gebunden und lief am {{expiry}} ab, vor der Wertstellung am {{valueDate}}. Holen Sie ein neues Angebot ein oder dokumentieren Sie, warum er weiterhin gilt."
     }
+  },
+  "list": {
+    "title": "Finanzierungen",
+    "subtitle": "Eine Finanzierung entsteht aus einem genehmigten Refinanzierungsantrag. Sie kann hier nicht angelegt werden.",
+    "export": "Exportieren",
+    "searchPlaceholder": "Nach Referenz, Darlehensnummer oder Leasinggesellschaft suchen",
+    "count": "{{shown}} von {{total}}",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "emptyFiltered": "Keine Finanzierung entspricht diesen Filtern.",
+    "empty": {
+      "title": "Noch keine Finanzierungen",
+      "description": "Eine Finanzierung erscheint hier, sobald ein Refinanzierungsantrag genehmigt wurde."
+    },
+    "columns": {
+      "reference": "Finanzierung",
+      "leasingCompany": "Leasinggesellschaft",
+      "rate": "Satz",
+      "valueDate": "Valutadatum",
+      "loanNumber": "Darlehensnummer",
+      "contracts": "Verträge",
+      "status": "Status",
+      "kind": "Art"
+    }
+  },
+  "statuses": {
+    "draft": "Entwurf",
+    "calculating": "In Berechnung",
+    "ready_for_setup": "Bereit zur Einrichtung",
+    "disbursed": "Ausgezahlt",
+    "active": "Aktiv",
+    "ended": "Beendet",
+    "cancelled": "Storniert"
+  },
+  "kinds": {
+    "single": "Einzeldarlehen",
+    "package": "Paketdarlehen"
   }
 }

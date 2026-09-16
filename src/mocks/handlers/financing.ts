@@ -28,6 +28,12 @@ import {
   isWizardCase,
   mockRemainingBalanceByCaseId,
 } from "@/mocks/fixtures/financing"
+import {
+  FinancingListItemSchema,
+  FinancingListResponseSchema,
+} from "@/features/financing/api/financingListSchema"
+import { mockCases } from "@/mocks/fixtures/cases"
+import { mockUuid } from "@/mocks/uuid"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
 import { API } from "@/mocks/apiBase"
 
@@ -163,6 +169,73 @@ function financingRecord(caseId: string) {
 }
 
 export const financingHandlers = [
+  /**
+   * The financings list — the one financing route that is not case-scoped.
+   *
+   * Derived from the cases rather than kept as a second fixture: a financing IS the outcome of a
+   * case, so a list built from anything else would drift from the case it claims to have come out
+   * of. Only cases that actually reached a financing are listed.
+   */
+  http.get(`${API}/financings`, ({ request }) => {
+    const url = new URL(request.url)
+    const page = Number(url.searchParams.get("page") ?? 1)
+    const perPage = Number(url.searchParams.get("per_page") ?? 25)
+    const search = (url.searchParams.get("search") ?? "").trim().toLowerCase()
+    const status = url.searchParams.get("status")
+    const kind = url.searchParams.get("kind")
+
+    let rows = mockCases
+      .filter(row => mockFinancingFor(row.id) !== undefined)
+      .map((row, index) => {
+        const overview = mockFinancingFor(row.id)
+        return FinancingListItemSchema.parse({
+          id: mockUuid(`f1${index.toString(16).padStart(2, "0")}`),
+          case_id: row.id,
+          case_reference: row.case_reference,
+          financing_reference:
+            overview?.financing_reference ??
+            row.case_reference.replace("RR", "FIN"),
+          // The case's own financing status is the financing's status — there is not a second one.
+          status: overview?.status ?? "calculating",
+          kind:
+            overview?.kind ??
+            ((row.contract_count ?? 0) > 1 ? "package" : "single"),
+          refinancing_rate: overview?.refinancing_rate ?? null,
+          // The overview carries no value date — the case's own rate due date is the closest
+          // thing the fixtures hold, and the column shows a dash where there is none.
+          value_date: row.rate_due_date,
+          loan_number: overview?.loan_number ?? null,
+          lc_number: null,
+          lc_partner_name: row.lc_partner_name,
+          contract_count: row.contract_count ?? 0,
+          calculation_state: overview?.status ?? "not_started",
+          created_at: row.created_at,
+        })
+      })
+
+    if (search) {
+      rows = rows.filter(
+        row =>
+          row.financing_reference.toLowerCase().includes(search) ||
+          (row.lc_partner_name ?? "").toLowerCase().includes(search) ||
+          (row.loan_number ?? "").toLowerCase().includes(search)
+      )
+    }
+    if (status) rows = rows.filter(row => row.status === status)
+    if (kind) rows = rows.filter(row => row.kind === kind)
+
+    const start = (page - 1) * perPage
+    return envelope(
+      FinancingListResponseSchema.parse({
+        items: rows.slice(start, start + perPage),
+        total: rows.length,
+        page,
+        per_page: perPage,
+        total_pages: Math.max(1, Math.ceil(rows.length / perPage)),
+      })
+    )
+  }),
+
   http.get(`${API}/cases/:caseId/financing`, ({ params }) => {
     const caseId = params.caseId as string
     if (mockFinancingFor(caseId) === undefined) {

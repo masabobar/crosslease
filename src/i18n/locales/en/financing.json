@@ -225,5 +225,42 @@
       "title": "The committed rate ran out before the value date",
       "description": "It was held for {{days}} days and expired on {{expiry}}, before the value date of {{valueDate}}. Quote it again, or record why it still applies."
     }
+  },
+  "list": {
+    "title": "Financings",
+    "subtitle": "A financing is the outcome of an approved refinancing request. It cannot be created here.",
+    "export": "Export",
+    "searchPlaceholder": "Search by reference, loan number or leasing company",
+    "count": "{{shown}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "emptyFiltered": "No financing matches these filters.",
+    "empty": {
+      "title": "No financings yet",
+      "description": "A financing appears here once a refinancing request has been approved."
+    },
+    "columns": {
+      "reference": "Financing",
+      "leasingCompany": "Leasing company",
+      "rate": "Rate",
+      "valueDate": "Value date",
+      "loanNumber": "Loan number",
+      "contracts": "Contracts",
+      "status": "Status",
+      "kind": "Kind"
+    }
+  },
+  "statuses": {
+    "draft": "Draft",
+    "calculating": "Calculating",
+    "ready_for_setup": "Ready for setup",
+    "disbursed": "Disbursed",
+    "active": "Active",
+    "ended": "Ended",
+    "cancelled": "Cancelled"
+  },
+  "kinds": {
+    "single": "Single loan",
+    "package": "Package loan"
   }
 }

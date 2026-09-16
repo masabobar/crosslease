@@ -266,6 +266,9 @@ export function Sidebar() {
   const isPartnerDuplicatesActive = location.pathname.startsWith(
     PATHS.PARTNER_DUPLICATES
   )
+  const isFinancingListActive = location.pathname.startsWith(
+    PATHS.FINANCING_LIST
+  )
   const isCaseListActive =
     location.pathname === PATHS.CASE_LIST ||
     location.pathname.startsWith(PATHS.CASE_LIST + "/")
@@ -451,15 +454,19 @@ export function Sidebar() {
               />
             )}
 
-            {/* A financing has no route of its own — the backend exposes it only as a
-                sub-resource of its case, so it is read through the case workspace's tabs. */}
-            <SidebarUnbuiltItem
-              label={t("nav.financings")}
-              testid="nav-financings-unbuilt"
-              icon={Coins}
-              isCollapsed={isCollapsed}
-              notBuiltLabel={t("nav.notBuilt")}
-            />
+            {/* `GET /financings` is the one financing route that is not case-scoped, so the list
+                has a screen. A row opens its case: that is where every other financing endpoint
+                hangs, and where the balance, pricing and contracts already are. */}
+            {canAccessCases && (
+              <SidebarTopLevelLink
+                to={PATHS.FINANCING_LIST}
+                label={t("nav.financings")}
+                testid="nav-financings"
+                icon={Coins}
+                isActive={isFinancingListActive}
+                isCollapsed={isCollapsed}
+              />
+            )}
 
             <SidebarUnbuiltItem
               label={t("nav.contracts")}
